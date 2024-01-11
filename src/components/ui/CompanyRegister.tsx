@@ -40,12 +40,9 @@ export function CompanyRegister() {
 
   const onSubmit = async (companyData: any) => {
     try {
-      console.log('datos de la compañia: ', companyData)
       const company = await insertCompany(companyData)
-
-      console.log('Company', company)
     } catch (err) {
-      console.log(err)
+      console.error('Ocurrió un error:', err)
     }
   }
 
