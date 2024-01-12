@@ -1,13 +1,6 @@
 import { supabase } from '@/supabase/supabase'
+import { login, singUp } from '@/types/types'
 
-type singUp = {
-  email: string
-  password: string
-}
-type login = {
-  email: string
-  password: string
-}
 export const useAuthData = () => {
   return {
     singUp: async (credentials: singUp) => {

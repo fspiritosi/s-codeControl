@@ -16,7 +16,7 @@ import { registerSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
-import { User } from '../types/loggedUserType'
+import { User } from '../types/types'
 
 export function RegisterForm() {
   const { singUp } = useAuthData()
