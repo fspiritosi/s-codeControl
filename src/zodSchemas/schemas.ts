@@ -23,8 +23,8 @@ export const registerSchema = z
       .trim(),
     document: z
       .string()
-      .min(6, {
-        message: 'El documento debe tener al menos 6 caracteres.',
+      .min(7, {
+        message: 'El documento debe tener al menos 7 caracteres.',
       })
       .max(9999999999, {
         message: 'El documento debe tener menos de 11 caracteres.',
