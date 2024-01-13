@@ -10,9 +10,6 @@ export const useProfileData = () => {
           .from('profile')
           .insert([credentials])
           .select()
-        toast({
-          title: 'Datos extra del perfil',
-        })
         return data
       } catch (err) {
         return err

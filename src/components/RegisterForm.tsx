@@ -12,15 +12,24 @@ import {
 import { Input } from '@/components/ui/input'
 import { useAuthData } from '@/hooks/useAuthData'
 import { useProfileData } from '@/hooks/useProfileData'
+import { User } from '@/types/types'
 import { registerSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
-import { User } from '../types/types'
+import { CloseEyeIcon } from './svg/closeEye'
+import { EyeIcon } from './svg/openEye'
+import { Toggle } from './ui/toggle'
+import { useToast } from './ui/use-toast'
 
 export function RegisterForm() {
   const { singUp } = useAuthData()
   const { insertProfile } = useProfileData()
+  const [showPasswords, setShowPasswords] = useState(false)
+  const router = useRouter()
+  const { toast } = useToast()
 
   // 1. Definir el form.
   const form = useForm<z.infer<typeof registerSchema>>({
@@ -41,16 +50,19 @@ export function RegisterForm() {
     const { email, password, confirmPassword, ...rest } = credentials
     try {
       const userData = (await singUp({ email, password })) as User
-      const profile = await insertProfile({
+      await insertProfile({
         ...rest,
         credentialId: userData.user?.id,
         email,
       })
-      //!Hay que redirigir al dashboard
-      console.log('User', userData.user)
-      console.log('Profile', profile)
+      router.push('/login')
     } catch (err) {
-      console.log(err)
+      toast({
+        title: 'Error',
+        description:
+        'no hemos podido registrar el usuario',
+        variant:"destructive"
+      })
     }
   }
 
@@ -65,7 +77,7 @@ export function RegisterForm() {
               <FormItem>
                 <FormLabel>Nombre</FormLabel>
                 <FormControl>
-                  <Input placeholder="nombre" {...field} />
+                  <Input placeholder="Escribe tu nombre aquí" {...field} />
                 </FormControl>
                 <FormDescription>Por favor ingresa tu nombre.</FormDescription>
                 <FormMessage />
@@ -79,7 +91,7 @@ export function RegisterForm() {
               <FormItem>
                 <FormLabel>Apellido</FormLabel>
                 <FormControl>
-                  <Input placeholder="apellido" {...field} />
+                  <Input placeholder="Tu apellido" {...field} />
                 </FormControl>
                 <FormDescription>
                   Por favor ingresa tu apellido.
@@ -95,7 +107,11 @@ export function RegisterForm() {
               <FormItem>
                 <FormLabel>Correo</FormLabel>
                 <FormControl>
-                  <Input placeholder="correo" autoComplete="email" {...field} />
+                  <Input
+                    placeholder="ejemplo@correo.com"
+                    autoComplete="email"
+                    {...field}
+                  />
                 </FormControl>
                 <FormDescription>Por favor ingresa tu correo.</FormDescription>
                 <FormMessage />
@@ -108,14 +124,22 @@ export function RegisterForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Contraseña</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="contraseña"
-                    type="password"
-                    autoComplete="new-password"
-                    {...field}
-                  />
-                </FormControl>
+                <div className="flex gap-2">
+                  <FormControl>
+                    <Input
+                      placeholder="Elige una contraseña segura"
+                      type={showPasswords ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      {...field}
+                    />
+                  </FormControl>
+                  <Toggle
+                    onClick={() => setShowPasswords(!showPasswords)}
+                    variant={'outline'}
+                  >
+                    {showPasswords ? <CloseEyeIcon /> : <EyeIcon />}
+                  </Toggle>
+                </div>
                 <FormDescription>
                   Por favor ingresa tu contraseña.
                 </FormDescription>
@@ -129,14 +153,22 @@ export function RegisterForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Confirmar contraseña</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Confirmar contraseña"
-                    type="password"
-                    autoComplete="new-password"
-                    {...field}
-                  />
-                </FormControl>
+                <div className="flex gap-2">
+                  <FormControl>
+                    <Input
+                      placeholder="Repite tu contraseña"
+                      type={showPasswords ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      {...field}
+                    />
+                  </FormControl>
+                  <Toggle
+                    onClick={() => setShowPasswords(!showPasswords)}
+                    variant={'outline'}
+                  >
+                    {showPasswords ? <CloseEyeIcon /> : <EyeIcon />}
+                  </Toggle>
+                </div>
                 <FormDescription>
                   Por favor ingresa otra vez tu contraseña.
                 </FormDescription>
@@ -152,7 +184,7 @@ export function RegisterForm() {
                 <FormLabel>Documento</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="documento"
+                    placeholder="Número de identificación"
                     maxLength={10}
                     onKeyPress={event => {
                       // Prevenir la entrada de caracteres no numéricos
@@ -178,7 +210,7 @@ export function RegisterForm() {
                 <FormLabel>Fecha de nacimiento</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="fecha de nacimiento"
+                    placeholder="DD/MM/AAAA"
                     type="date"
                     max={
                       new Date(
@@ -197,7 +229,20 @@ export function RegisterForm() {
               </FormItem>
             )}
           />
-          <Button type="submit">Crear cuenta</Button>
+          <div className="flex w-full justify-center flex-col items-center gap-5">
+            <Button
+              className="w-[100%] sm:w-[80%] lg:w-[60%] self-center"
+              type="submit"
+            >
+              Ingresar
+            </Button>
+            <p className="text-[0.9rem]">
+              ¿Ya tienes una cuenta?{' '}
+              <a href="/login" className=" text-blue-400 ml-1">
+                Inicia sesión aquí
+              </a>
+            </p>
+          </div>
         </form>
       </Form>
     </div>

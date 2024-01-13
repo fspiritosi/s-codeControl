@@ -16,7 +16,7 @@ export default function Register() {
       />
     </section>
      
-      <section className=" md:w-1/2 w-[80%] lg:p-12 p-0 flex flex-col justify-center rounded-3xl min-h-screen mb-20">
+      <section className=" md:w-1/2 w-[80%] lg:p-24 p-0 flex flex-col justify-center rounded-3xl min-h-screen md:p-0">
         <h2 className="self-center text-2xl pb-5 text-pretty text-center">¡Estás a un paso de unirte a nosotros!</h2>
         <RegisterForm />
       </section>

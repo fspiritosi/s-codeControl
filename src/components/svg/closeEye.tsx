@@ -5,11 +5,11 @@ export const CloseEyeIcon = () => (
     width="28"
     height="28"
     viewBox="0 0 24 24"
-    stroke-width="1.5"
+    strokeWidth="1.5"
     stroke="#000000"
     fill="none"
-    stroke-linecap="round"
-    stroke-linejoin="round"
+    strokeLinecap="round"
+    strokeLinejoin="round"
   >
     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
     <path d="M10.585 10.587a2 2 0 0 0 2.829 2.828" />

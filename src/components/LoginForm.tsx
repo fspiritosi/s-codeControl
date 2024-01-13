@@ -24,7 +24,7 @@ import { Separator } from './ui/separator'
 import { useToast } from './ui/use-toast'
 
 export function LoginForm() {
-  const { login } = useAuthData()
+  const { login, googleLogin } = useAuthData()
   const { toast } = useToast()
   const [showPassword, setShowPassword] = useState(false)
 
@@ -40,15 +40,19 @@ export function LoginForm() {
     try {
       const user = await login(credentials)
       toast({
-        title: 'Iniciando',
+        title: 'Credenciales correctas',
+        description: 'Te has logueado correctamente',
       })
-      console.log(user)
     } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: `${error}`,
-      })
       console.log(error)
+    }
+  }
+  const loginGooglePrivider = async () => {
+    try {
+      const user = await googleLogin()
+      return user
+    } catch (error) {
+      return error
     }
   }
 
@@ -62,9 +66,13 @@ export function LoginForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="m-2">Correo</FormLabel>
+                  <FormLabel className="m-2">Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="correo" {...field} />
+                    <Input
+                      placeholder="ejemplo@correo.com"
+                      autoComplete="email"
+                      {...field}
+                    />
                   </FormControl>
                   <FormDescription>
                     Por favor ingresa tu correo.
@@ -84,7 +92,8 @@ export function LoginForm() {
                   <FormControl>
                     <Input
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="contraseña"
+                      placeholder="mi contraseña segura"
+                      autoComplete="current-password"
                       {...field}
                     />
                   </FormControl>
@@ -99,21 +108,28 @@ export function LoginForm() {
                   <FormDescription>
                     Por favor ingresa tu contraseña.
                   </FormDescription>
-                  <a href="#" className="text-blue-400 text-[0.8rem]">
-                    Olvidasde tu contraseña?
+                  <a
+                    href="/pass-recovery"
+                    className="text-blue-400 text-[0.8rem]"
+                  >
+                    Olvidaste tu contraseña?
                   </a>
                 </div>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <div className="flex w-full justify-center">
+          <div className="flex w-full justify-center flex-col items-center gap-5">
             <Button
               className="w-[100%] sm:w-[80%] lg:w-[60%] self-center"
               type="submit"
             >
               Ingresar
             </Button>
+            <a href="/register" className="text-[0.8rem]">
+              ¿No tienes una cuenta?{' '}
+              <span className="text-blue-400 ml-1">Créate una aquí</span>
+            </a>
           </div>
         </form>
       </Form>
@@ -121,12 +137,16 @@ export function LoginForm() {
         orientation="horizontal"
         className="my-6 w-[70%] self-center"
       />
-      <Button className="w-[100%] sm:w-[80%] lg:w-[60%] self-center">
+      <Button
+        variant="outline"
+        className="w-[100%] sm:w-[80%] lg:w-[60%] self-center"
+        onClick={loginGooglePrivider}
+      >
         <span className="mr-2">
           {' '}
           <GoogleIcon />
         </span>{' '}
-        O inicia sesion con google
+        Inicia sesión con Google
       </Button>
     </div>
   )
