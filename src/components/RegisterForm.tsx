@@ -15,6 +15,7 @@ import { useProfileData } from '@/hooks/useProfileData'
 import { User } from '@/types/types'
 import { registerSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { AuthError } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -56,12 +57,11 @@ export function RegisterForm() {
         email,
       })
       router.push('/login')
-    } catch (err) {
+    } catch (err: AuthError | any) {
       toast({
         title: 'Error',
-        description:
-        'no hemos podido registrar el usuario',
-        variant:"destructive"
+        description: `${err?.message}`,
+        variant: 'destructive',
       })
     }
   }

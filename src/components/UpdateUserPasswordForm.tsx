@@ -11,6 +11,7 @@ import {
 import { useAuthData } from '@/hooks/useAuthData'
 import { changePassSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { AuthError } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -34,13 +35,17 @@ export const UpdateUserPasswordForm = () => {
   const onSubmit = async (values: z.infer<typeof changePassSchema>) => {
     try {
       await updateUser(values)
+      toast({
+        title: 'Contraseña actualizada',
+        description:
+          'Tu contraseña ha sido cambiada con éxito. Ya puedes iniciar sesión con tu nueva contraseña.',
+      })
       router.push('/login')
-    } catch (error) {
+    } catch (error: AuthError | any) {
       toast({
         title: 'Error',
-        description:
-        'no hemos podido actualizar la contraseña',
-        variant:"destructive"
+        description: `${error.message}`,
+        variant: 'destructive',
       })
     }
   }

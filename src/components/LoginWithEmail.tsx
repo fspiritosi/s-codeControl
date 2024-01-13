@@ -2,6 +2,7 @@
 import { useAuthData } from '@/hooks/useAuthData'
 import { recoveryPassSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { AuthError } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -37,8 +38,12 @@ function LoginWithEmail() {
         description: 'Ingresa la nueva contraseña',
       })
       redirect('/login')
-    } catch (error) {
-      console.log(error)
+    } catch (error: AuthError | any) {
+      toast({
+        title: 'Error',
+        description: `${error?.message}`,
+        variant: 'destructive',
+      })
     }
   }
 

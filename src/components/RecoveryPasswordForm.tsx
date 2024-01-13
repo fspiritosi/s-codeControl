@@ -11,6 +11,7 @@ import {
 import { useAuthData } from '@/hooks/useAuthData'
 import { recoveryPassSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { AuthError } from '@supabase/supabase-js'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { Button } from './ui/button'
@@ -30,8 +31,12 @@ export const RecoveryPasswordForm = () => {
   const onSubmit = async (values: z.infer<typeof recoveryPassSchema>) => {
     try {
       await recoveryPassword(values.email)
-    } catch (error) {
-      console.log(error)
+    } catch (error: AuthError | any) {
+      toast({
+        title: 'Error',
+        description: `${error?.message}`,
+        variant: 'destructive',
+      })
     }
   }
 

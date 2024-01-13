@@ -14,6 +14,7 @@ import { Toggle } from '@/components/ui/toggle'
 import { useAuthData } from '@/hooks/useAuthData'
 import { loginSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { AuthError } from '@supabase/supabase-js'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
@@ -43,16 +44,23 @@ export function LoginForm() {
         title: 'Credenciales correctas',
         description: 'Te has logueado correctamente',
       })
-    } catch (error) {
-      console.log(error)
+    } catch (error: AuthError | any) {
+      toast({
+        variant: 'destructive',
+        title: `${error.message}`,
+      })
     }
   }
   const loginGooglePrivider = async () => {
     try {
       const user = await googleLogin()
       return user
-    } catch (error) {
-      return error
+    } catch (error: AuthError | any) {
+      toast({
+        title: 'Error',
+        description: `${error?.message}`,
+        variant: 'destructive',
+      })
     }
   }
 
