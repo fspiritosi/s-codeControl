@@ -1,4 +1,5 @@
 'use client'
+import React from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -11,7 +12,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-
+import { UploadImage } from '@/components/UploadImage'
 import { useCompanyData } from '@/hooks/useCompanyData'
 import { companySchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -34,17 +35,46 @@ export function CompanyRegister() {
       city: '',
       country: '',
       industry: '',
-      company_logo: '',
     },
   })
 
+  const onImageChange = (imageUrl: string) => {
+    form.setValue('company_logo', imageUrl)
+  }
+
+  const onUploadSuccess = (imageUrl: string) => {}
+
   const onSubmit = async (companyData: any) => {
     try {
-      const company = await insertCompany(companyData)
+      // Procesa los valores antes de enviarlos a la base de datos
+      const processedCompanyData = {
+        ...companyData,
+        company_name: processText(companyData.company_name),
+        company_cuit: processText(companyData.company_cuit),
+        website: processText(companyData.website),
+        city: processText(companyData.city),
+        country: processText(companyData.country),
+        contact_email: processText(companyData.contact_email),
+        contact_phone: processText(companyData.contact_phone),
+        address: processText(companyData.address),
+        industry: processText(companyData.industry),
+      }
+
+      // Insertar la compañía con los datos procesados
+      const company = await insertCompany(processedCompanyData)
     } catch (err) {
       console.error('Ocurrió un error:', err)
     }
   }
+
+  const processText = (text: string): string =>
+    text
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w\s]/gi, '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_')
 
   return (
     <Form {...form}>
@@ -65,6 +95,26 @@ export function CompanyRegister() {
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="company_cuit"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>CUIT de la compañia</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="CUIT de la compañia xx-xxxxxxxx-x"
+                  maxLength={13}
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>Por favor ingresa el CUIT .</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="description"
@@ -81,6 +131,7 @@ export function CompanyRegister() {
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="website"
@@ -97,24 +148,7 @@ export function CompanyRegister() {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="company_cuit"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>CUIT de la compañia</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="CUIT de la compañia"
-                  maxLength={13}
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>Por favor ingresa el CUIT .</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+
         <FormField
           control={form.control}
           name="contact_email"
@@ -129,6 +163,7 @@ export function CompanyRegister() {
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="contact_phone"
@@ -145,6 +180,7 @@ export function CompanyRegister() {
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="address"
@@ -159,6 +195,7 @@ export function CompanyRegister() {
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="city"
@@ -175,6 +212,7 @@ export function CompanyRegister() {
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="country"
@@ -191,6 +229,7 @@ export function CompanyRegister() {
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="industry"
@@ -207,6 +246,7 @@ export function CompanyRegister() {
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="company_logo"
@@ -214,7 +254,12 @@ export function CompanyRegister() {
             <FormItem>
               <FormLabel>Logo</FormLabel>
               <FormControl>
-                <Input placeholder="logo" {...field} />
+                <UploadImage
+                  onImageChange={(imageUrl: string) =>
+                    form.setValue('company_logo', imageUrl)
+                  }
+                  onUploadSuccess={onUploadSuccess}
+                />
               </FormControl>
               <FormDescription>
                 Por favor ingresa el logo de tu compañia
@@ -223,6 +268,7 @@ export function CompanyRegister() {
             </FormItem>
           )}
         />
+
         <Button type="submit">Registrar Compañía</Button>
       </form>
     </Form>

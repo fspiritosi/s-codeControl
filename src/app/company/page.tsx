@@ -1,5 +1,5 @@
 //import { RegisterForm } from '@/components/RegisterForm'
-import { CompanyRegister } from '@/components/ui/CompanyRegister'
+import { CompanyRegister } from '@/components/CompanyRegister'
 export default function companyRegister() {
   return (
     <main className="flex justify-center items-center py-10 flex-col bg-black/5">

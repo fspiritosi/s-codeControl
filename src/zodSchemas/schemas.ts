@@ -105,13 +105,12 @@ export const companySchema = z.object({
       message:
         'Industry debe contener solo letras y espacios, con un límite de hasta 50 caracteres',
     }),
-  company_logo: z
-    .string()
-    .url()
-    .refine(
-      value => value.startsWith('http://') || value.startsWith('https://'),
-      {
-        message: 'Company logo debe contener una URL válida',
-      },
-    ),
+  company_logo: z.string(),
+  // .url()
+  // .refine(
+  //   value => value.startsWith('http://') || value.startsWith('https://'),
+  //   {
+  //     message: 'Company logo debe contener una URL válida',
+  //   },
+  // ),
 })
