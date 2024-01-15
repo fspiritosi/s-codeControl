@@ -7,6 +7,20 @@ export const loginSchema = z.object({
   }),
 })
 
+const passwordSchema = z
+  .string()
+  .min(8, { message: 'La contraseña debe tener al menos 8 caracteres.' })
+  .regex(/[A-Z]/, {
+    message: 'La contraseña debe tener al menos una mayúscula.',
+  })
+  .regex(/[a-z]/, {
+    message: 'La contraseña debe tener al menos una minúscula.',
+  })
+  .regex(/[0-9]/, { message: 'La contraseña debe tener al menos un número.' })
+  .regex(/[^A-Za-z0-9]/, {
+    message: 'La contraseña debe tener al menos un carácter especial.',
+  })
+
 export const registerSchema = z
   .object({
     firstName: z
@@ -23,8 +37,8 @@ export const registerSchema = z
       .trim(),
     document: z
       .string()
-      .min(6, {
-        message: 'El documento debe tener al menos 6 caracteres.',
+      .min(7, {
+        message: 'El documento debe tener al menos 7 caracteres.',
       })
       .max(9999999999, {
         message: 'El documento debe tener menos de 11 caracteres.',
@@ -43,15 +57,21 @@ export const registerSchema = z
       })
       .trim(),
     email: z.string().email(),
-    password: z.string().min(6, {
-      message: 'La contraseña debe tener al menos 6 caracteres.',
-    }),
-    confirmPassword: z
-      .string()
-      .min(6, {
-        message: 'La contraseña debe tener al menos 6 caracteres.',
-      })
-      .trim(),
+    password: passwordSchema,
+    confirmPassword: passwordSchema
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    message: 'Las contraseñas no coinciden.',
+    path: ['confirmPassword'],
+  })
+
+export const recoveryPassSchema = z.object({
+  email: z.string().email({ message: 'Email invalido' }),
+})
+export const changePassSchema = z
+  .object({
+    password: passwordSchema,
+    confirmPassword: passwordSchema,
   })
   .refine(data => data.password === data.confirmPassword, {
     message: 'Las contraseñas no coinciden.',
