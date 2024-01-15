@@ -1,7 +1,5 @@
 import Link from 'next/link'
 import SideLinks from './SideLinks'
-//import NavLinks from '@/app/ui/dashboard/nav-links'
-//import AcmeLogo from '@/app/ui/acme-logo'
 
 export default function SideBar() {
   return (
