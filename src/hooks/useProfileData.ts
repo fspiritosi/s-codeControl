@@ -1,4 +1,3 @@
-import { toast } from '@/components/ui/use-toast'
 import { supabase } from '@/supabase/supabase'
 import { profile } from '@/types/types'
 
@@ -10,6 +9,22 @@ export const useProfileData = () => {
           .from('profile')
           .insert([credentials])
           .select()
+        return data
+      } catch (err) {
+        return err
+      }
+    },
+    filterByEmail: async (email: string | null) => {
+      try {
+        const { data, error } = await supabase
+          .from('profile')
+          .select('*')
+          .eq('email', email)
+
+        if (error) {
+          console.log(error)
+        }
+
         return data
       } catch (err) {
         return err

@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { useAuthData } from '@/hooks/useAuthData'
 import { useProfileData } from '@/hooks/useProfileData'
-import { User } from '@/types/types'
+import { LoggedUser } from '@/types/types'
 import { registerSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AuthError } from '@supabase/supabase-js'
@@ -50,11 +50,16 @@ export function RegisterForm() {
   const onSubmit = async (credentials: z.infer<typeof registerSchema>) => {
     const { email, password, confirmPassword, ...rest } = credentials
     try {
-      const userData = (await singUp({ email, password })) as User
+      const userData = (await singUp({ email, password })) as LoggedUser
+
       await insertProfile({
         ...rest,
-        credentialId: userData.user?.id,
+        credentialId: userData.user?.id || '',
         email,
+      })
+      toast({
+        title: 'Registro exitoso',
+        description: 'Tu cuenta ha sido creada con éxito.',
       })
       router.push('/login')
     } catch (err: AuthError | any) {

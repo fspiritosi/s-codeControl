@@ -1,4 +1,4 @@
-export type User = {
+export type LoggedUser = {
   session: null | string
   user: {
     app_metadata: {
@@ -18,10 +18,15 @@ export type User = {
   } | null
 }
 
+export type Userprofile = {}
+
 export type profile = {
+  id?:string
+  company_id?: string
+  created_at?:string
   firstName: string
   lastName: string
-  credentialId: string | undefined
+  credentialId: string
   document: string
   birthdate: string
   email: string

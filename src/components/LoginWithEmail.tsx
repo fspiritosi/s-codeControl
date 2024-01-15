@@ -3,7 +3,7 @@ import { useAuthData } from '@/hooks/useAuthData'
 import { recoveryPassSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AuthError } from '@supabase/supabase-js'
-import { redirect } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { Button } from './ui/button'
@@ -22,6 +22,7 @@ import { useToast } from './ui/use-toast'
 function LoginWithEmail() {
   const { loginOnlyEmail } = useAuthData()
   const { toast } = useToast()
+  const router = useRouter()
 
   const form = useForm<z.infer<typeof recoveryPassSchema>>({
     resolver: zodResolver(recoveryPassSchema),
@@ -37,7 +38,7 @@ function LoginWithEmail() {
         title: 'Actualiza tu contraseña',
         description: 'Ingresa la nueva contraseña',
       })
-      redirect('/login')
+      router.push('/reset_password/update-user')
     } catch (error: AuthError | any) {
       toast({
         title: 'Error',

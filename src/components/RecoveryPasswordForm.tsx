@@ -31,6 +31,10 @@ export const RecoveryPasswordForm = () => {
   const onSubmit = async (values: z.infer<typeof recoveryPassSchema>) => {
     try {
       await recoveryPassword(values.email)
+      toast({
+        title: 'Hemos enviado un email!',
+        description:'Si existe una cuenta creada con ese email recibiras un correo con las instrucciones',
+      })
     } catch (error: AuthError | any) {
       toast({
         title: 'Error',

@@ -15,6 +15,7 @@ import { useAuthData } from '@/hooks/useAuthData'
 import { loginSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AuthError } from '@supabase/supabase-js'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
@@ -28,6 +29,7 @@ export function LoginForm() {
   const { login, googleLogin } = useAuthData()
   const { toast } = useToast()
   const [showPassword, setShowPassword] = useState(false)
+  const router = useRouter()
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -39,11 +41,8 @@ export function LoginForm() {
 
   const onSubmit = async (credentials: z.infer<typeof loginSchema>) => {
     try {
-      const user = await login(credentials)
-      toast({
-        title: 'Credenciales correctas',
-        description: 'Te has logueado correctamente',
-      })
+      await login(credentials)
+      router.push('/dashboard')
     } catch (error: AuthError | any) {
       toast({
         variant: 'destructive',
@@ -117,7 +116,7 @@ export function LoginForm() {
                     Por favor ingresa tu contraseña.
                   </FormDescription>
                   <a
-                    href="/pass-recovery"
+                    href="/reset_password"
                     className="text-blue-400 text-[0.8rem]"
                   >
                     Olvidaste tu contraseña?
