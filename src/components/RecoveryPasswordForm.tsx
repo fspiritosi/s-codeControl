@@ -63,7 +63,7 @@ export const RecoveryPasswordForm = () => {
             </FormItem>
           )}
         />
-        <Button type="submit">Submit</Button>
+        <Button type="submit">Recuperar contraseña</Button>
       </form>
     </Form>
   )

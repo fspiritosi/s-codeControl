@@ -16,6 +16,7 @@ import { LoggedUser } from '@/types/types'
 import { registerSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AuthError } from '@supabase/supabase-js'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -243,9 +244,9 @@ export function RegisterForm() {
             </Button>
             <p className="text-[0.9rem]">
               ¿Ya tienes una cuenta?{' '}
-              <a href="/login" className=" text-blue-400 ml-1">
+              <Link href="/login" className=" text-blue-400 ml-1">
                 Inicia sesión aquí
-              </a>
+              </Link>
             </p>
           </div>
         </form>

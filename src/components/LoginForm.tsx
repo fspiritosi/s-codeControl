@@ -15,6 +15,7 @@ import { useAuthData } from '@/hooks/useAuthData'
 import { loginSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AuthError } from '@supabase/supabase-js'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -115,12 +116,12 @@ export function LoginForm() {
                   <FormDescription>
                     Por favor ingresa tu contraseña.
                   </FormDescription>
-                  <a
+                  <Link
                     href="/reset_password"
                     className="text-blue-400 text-[0.8rem]"
                   >
                     Olvidaste tu contraseña?
-                  </a>
+                  </Link>
                 </div>
                 <FormMessage />
               </FormItem>
@@ -133,10 +134,10 @@ export function LoginForm() {
             >
               Ingresar
             </Button>
-            <a href="/register" className="text-[0.8rem]">
+            <Link href="/register" className="text-[0.8rem]">
               ¿No tienes una cuenta?{' '}
               <span className="text-blue-400 ml-1">Créate una aquí</span>
-            </a>
+            </Link>
           </div>
         </form>
       </Form>

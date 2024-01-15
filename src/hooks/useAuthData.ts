@@ -1,4 +1,3 @@
-'use client'
 import { supabase } from '@/supabase/supabase'
 import { login, profile, singUp } from '@/types/types'
 import { useProfileData } from './useProfileData'
@@ -48,7 +47,9 @@ export const useAuthData = () => {
     updateUser: async ({ password }: updatePassword) => {
       const email = localStorage.getItem('email')
       const user = (await filterByEmail(email)) as profile[]
-      if (user.length === 0) throw new Error('User not found')
+      console.log(user)
+    if (user.length === 0) throw new Error('Usuario no encontrado')
+      localStorage.removeItem('email')
 
       const { data, error } = await supabase.auth.admin.updateUserById(
         user[0].credentialId,
