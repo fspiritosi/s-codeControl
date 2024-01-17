@@ -22,6 +22,7 @@ import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { CloseEyeIcon } from './svg/closeEye'
 import { GoogleIcon } from './svg/google'
+import { Loader } from './svg/loader'
 import { EyeIcon } from './svg/openEye'
 import { Separator } from './ui/separator'
 import { useToast } from './ui/use-toast'
@@ -30,6 +31,7 @@ export function LoginForm() {
   const { login, googleLogin } = useAuthData()
   const { toast } = useToast()
   const [showPassword, setShowPassword] = useState(false)
+  const [showLoader, setShowLoader] = useState(false)
   const router = useRouter()
 
   const form = useForm<z.infer<typeof loginSchema>>({
@@ -42,15 +44,19 @@ export function LoginForm() {
 
   const onSubmit = async (credentials: z.infer<typeof loginSchema>) => {
     try {
+      setShowLoader(true)
       await login(credentials)
       router.push('/dashboard')
     } catch (error: AuthError | any) {
       toast({
         variant: 'destructive',
-        title: `${error.message}`,
+        title: error.message,
       })
+    } finally {
+      setShowLoader(false)
     }
   }
+
   const loginGooglePrivider = async () => {
     try {
       const user = await googleLogin()
@@ -131,8 +137,9 @@ export function LoginForm() {
             <Button
               className="w-[100%] sm:w-[80%] lg:w-[60%] self-center"
               type="submit"
+              disabled={showLoader}
             >
-              Ingresar
+              {showLoader ? <Loader /> : 'Iniciar sesión'}
             </Button>
             <Link href="/register" className="text-[0.8rem]">
               ¿No tienes una cuenta?{' '}

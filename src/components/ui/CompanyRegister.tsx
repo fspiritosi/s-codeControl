@@ -15,11 +15,14 @@ import { Textarea } from '@/components/ui/textarea'
 import { useCompanyData } from '@/hooks/useCompanyData'
 import { companySchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
+import { Loader } from '../svg/loader'
 
 export function CompanyRegister() {
   const { insertCompany } = useCompanyData()
+  const [showLoader, setShowLoader] = useState(false)
 
   const form = useForm<z.infer<typeof companySchema>>({
     resolver: zodResolver(companySchema),
@@ -40,9 +43,12 @@ export function CompanyRegister() {
 
   const onSubmit = async (companyData: any) => {
     try {
+      setShowLoader(true)
       const company = await insertCompany(companyData)
     } catch (err) {
       console.error('Ocurrió un error:', err)
+    } finally {
+      setShowLoader(false)
     }
   }
 
@@ -223,7 +229,10 @@ export function CompanyRegister() {
             </FormItem>
           )}
         />
-        <Button type="submit">Registrar Compañía</Button>
+        <Button type="submit" disabled={showLoader}>
+          Registrar Compañía
+          {showLoader ? <Loader /> : 'Registrar Compañía'}
+        </Button>
       </form>
     </Form>
   )

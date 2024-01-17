@@ -12,14 +12,17 @@ import { useAuthData } from '@/hooks/useAuthData'
 import { recoveryPassSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AuthError } from '@supabase/supabase-js'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { Loader } from './svg/loader'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { useToast } from './ui/use-toast'
 export const RecoveryPasswordForm = () => {
   const { recoveryPassword } = useAuthData()
   const { toast } = useToast()
+  const [showLoader, setShowLoader] = useState(false)
 
   const form = useForm<z.infer<typeof recoveryPassSchema>>({
     resolver: zodResolver(recoveryPassSchema),
@@ -30,10 +33,12 @@ export const RecoveryPasswordForm = () => {
 
   const onSubmit = async (values: z.infer<typeof recoveryPassSchema>) => {
     try {
+      setShowLoader(true)
       await recoveryPassword(values.email)
       toast({
         title: 'Hemos enviado un email!',
-        description:'Si existe una cuenta creada con ese email recibiras un correo con las instrucciones',
+        description:
+          'Si existe una cuenta creada con ese email recibiras un correo con las instrucciones',
       })
     } catch (error: AuthError | any) {
       toast({
@@ -41,6 +46,8 @@ export const RecoveryPasswordForm = () => {
         description: `${error?.message}`,
         variant: 'destructive',
       })
+    } finally {
+      setShowLoader(false)
     }
   }
 
@@ -63,7 +70,9 @@ export const RecoveryPasswordForm = () => {
             </FormItem>
           )}
         />
-        <Button type="submit">Recuperar contraseña</Button>
+        <Button disabled={showLoader} type="submit">
+          {showLoader ? <Loader /> : 'Enviar'}
+        </Button>
       </form>
     </Form>
   )

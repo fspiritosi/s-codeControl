@@ -1,11 +1,5 @@
 import * as z from 'zod'
 
-export const loginSchema = z.object({
-  email: z.string().email({ message: 'Email invalido' }),
-  password: z.string().min(6, {
-    message: 'La contraseña debe tener al menos 6 caracteres.',
-  }),
-})
 
 const passwordSchema = z
   .string()
@@ -20,6 +14,12 @@ const passwordSchema = z
   .regex(/[^A-Za-z0-9]/, {
     message: 'La contraseña debe tener al menos un carácter especial.',
   })
+
+  export const loginSchema = z.object({
+    email: z.string().email({ message: 'Email invalido' }),
+    password:passwordSchema,
+  })
+  
 
 export const registerSchema = z
   .object({
