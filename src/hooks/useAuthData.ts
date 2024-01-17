@@ -1,13 +1,15 @@
-import { supabase } from '@/supabase/supabase'
 import { login, profile, singUp } from '@/types/types'
+import { supabase } from '../../supabase/supabase'
+import { useEdgeFunctions } from './useEdgeFunctions'
 import { useProfileData } from './useProfileData'
 
 export const useAuthData = () => {
-  type email = string
   type updatePassword = {
     password: string
   }
   const { filterByEmail } = useProfileData()
+
+  const {errorTranslate} = useEdgeFunctions()
   return {
     singUp: async (credentials: singUp) => {
       let { data, error } = await supabase.auth.signUp({
@@ -19,7 +21,8 @@ export const useAuthData = () => {
       })
 
       if (error) {
-        throw new Error(`${error?.message}`)
+        const message = ( await errorTranslate(error.message))
+        throw new Error( String(message).replaceAll('"', ''))
       }
       return data
     },
@@ -28,11 +31,12 @@ export const useAuthData = () => {
       console.log(data)
 
       if (error) {
-        throw new Error(`${error.message}`)
+       const message = ( await errorTranslate(error.message))
+        throw new Error( String(message).replaceAll('"', ''))
       }
       return data
     },
-    recoveryPassword: async (email: email) => {
+    recoveryPassword: async (email: string) => {
       localStorage.setItem('email', email)
 
       let { data, error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -40,7 +44,8 @@ export const useAuthData = () => {
       })
 
       if (error) {
-        throw new Error(`${error?.message}`)
+        const message = ( await errorTranslate(error.message))
+        throw new Error( String(message).replaceAll('"', ''))
       }
       return data
     },
@@ -56,7 +61,8 @@ export const useAuthData = () => {
         { password },
       )
       if (error) {
-        throw new Error(`${error?.message}`)
+        const message = ( await errorTranslate(error.message))
+        throw new Error( String(message).replaceAll('"', ''))
       }
       return data
     },
@@ -65,11 +71,12 @@ export const useAuthData = () => {
         provider: 'google',
       })
       if (error) {
-        throw new Error(`${error?.message}`)
+        const message = ( await errorTranslate(error.message))
+        throw new Error( String(message).replaceAll('"', ''))
       }
       return data
     },
-    loginOnlyEmail: async (email: email) => {
+    loginOnlyEmail: async (email: string) => {
       let { data, error } = await supabase.auth.signInWithOtp({
         email,
         options: {
@@ -77,9 +84,9 @@ export const useAuthData = () => {
         },
       })
 
-      console.log(data)
       if (error) {
-        throw new Error(`${error?.message}`)
+        const message = ( await errorTranslate(error.message))
+        throw new Error( String(message).replaceAll('"', ''))
       }
       return data
     },
@@ -90,7 +97,8 @@ export const useAuthData = () => {
       } = await supabase.auth.getUser(token)
 
       if (error) {
-        throw new Error(error?.message)
+        const message = ( await errorTranslate(error.message))
+        throw new Error( String(message).replaceAll('"', ''))
       }
       return user
     },

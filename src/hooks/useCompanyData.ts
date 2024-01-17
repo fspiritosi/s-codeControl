@@ -1,22 +1,28 @@
 import { toast } from '@/components/ui/use-toast'
-import { supabase } from '@/supabase/supabase'
 import { company } from '@/types/types'
+import { supabase } from '../../supabase/supabase'
+import { useEdgeFunctions } from './useEdgeFunctions'
 
 export const useCompanyData = () => {
+  const {errorTranslate} = useEdgeFunctions()
   return {
     insertCompany: async (companyData: company) => {
-      try {
-        const { data } = await supabase
+      
+        const { data, error } = await supabase
           .from('company')
           .insert([companyData])
           .select()
         toast({
           title: 'Datos cargados',
         })
+
+        if (error) {
+          const message = ( await errorTranslate(error.message))
+          throw new Error( String(message).replaceAll('"', ''))
+        }
+
         return data
-      } catch (err) {
-        return err
-      }
+     
     },
   }
 }

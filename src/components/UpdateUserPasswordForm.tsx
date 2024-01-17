@@ -70,6 +70,7 @@ export const UpdateUserPasswordForm = () => {
                   <Input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="contraseña segura"
+                    autoComplete="new-password"
                     {...field}
                   />
                 </FormControl>
@@ -98,6 +99,7 @@ export const UpdateUserPasswordForm = () => {
                   <Input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="contraseña segura"
+                    autoComplete="new-password"
                     {...field}
                   />
                 </FormControl>

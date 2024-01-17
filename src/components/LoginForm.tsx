@@ -47,10 +47,11 @@ export function LoginForm() {
     } catch (error: AuthError | any) {
       toast({
         variant: 'destructive',
-        title: `${error.message}`,
+        title: error.message,
       })
     }
   }
+
   const loginGooglePrivider = async () => {
     try {
       const user = await googleLogin()
