@@ -28,7 +28,7 @@ export const useAuthData = () => {
     },
     login: async (credentials: login) => {
       let { data, error } = await supabase.auth.signInWithPassword(credentials)
-      console.log(data)
+     
 
       if (error) {
        const message = ( await errorTranslate(error.message))
@@ -52,7 +52,7 @@ export const useAuthData = () => {
     updateUser: async ({ password }: updatePassword) => {
       const email = localStorage.getItem('email')
       const user = (await filterByEmail(email)) as profile[]
-      console.log(user)
+     
     if (user.length === 0) throw new Error('Usuario no encontrado')
       localStorage.removeItem('email')
 
