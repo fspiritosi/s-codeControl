@@ -1,30 +1,38 @@
-import { toast } from '@/components/ui/use-toast'
-import { supabase } from '@/supabase/supabase'
-
-type profile = {
-  firstName: string
-  lastName: string
-  credentialId: string | undefined
-  document: string
-  birthdate: string
-  email: string
-}
+import { profile } from '@/types/types'
+import { supabase } from '../../supabase/supabase'
+import { useEdgeFunctions } from './useEdgeFunctions'
 
 export const useProfileData = () => {
+  const {errorTranslate} = useEdgeFunctions()
   return {
     insertProfile: async (credentials: profile) => {
-      try {
-        const { data, error } = await supabase
+      
+        const { data,error } = await supabase
           .from('profile')
           .insert([credentials])
           .select()
-        toast({
-          title: 'Datos extra del perfil',
-        })
+
+          if (error) {
+            const message = ( await errorTranslate(error.message))
+            throw new Error( String(message).replaceAll('"', ''))
+          }
         return data
-      } catch (err) {
-        return err
-      }
+    
+    },
+    filterByEmail: async (email: string | null) => {
+    
+        const { data, error } = await supabase
+          .from('profile')
+          .select('*')
+          .eq('email', email)
+
+          if (error) {
+            const message = ( await errorTranslate(error.message))
+            throw new Error( String(message).replaceAll('"', ''))
+          }
+
+        return data
+   
     },
   }
 }
