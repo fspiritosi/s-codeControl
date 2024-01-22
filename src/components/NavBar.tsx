@@ -1,7 +1,7 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/supabase/supabase'
+import { supabase } from '../../supabase/supabase'
 import { Button } from './ui/button'
 export default function NavBar() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
