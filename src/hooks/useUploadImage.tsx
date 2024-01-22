@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { supabase } from '@/supabase/supabase'
+import { supabase } from '../../supabase/supabase'
 
 export const useImageUpload = () => {
   const [loading, setLoading] = useState(false)
