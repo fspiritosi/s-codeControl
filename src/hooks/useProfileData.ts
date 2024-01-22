@@ -1,5 +1,5 @@
 import { toast } from '@/components/ui/use-toast'
-import { supabase } from '@/supabase/supabase'
+import { supabase } from '../../supabase/supabase'
 
 type profile = {
   firstName: string

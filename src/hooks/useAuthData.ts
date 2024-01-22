@@ -1,4 +1,4 @@
-import { supabase } from '@/supabase/supabase'
+import { supabase } from '../../supabase/supabase'
 
 type singUp = {
   email: string

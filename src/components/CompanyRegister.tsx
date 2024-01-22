@@ -25,7 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { supabase } from '@/supabase/supabase'
 
 export function CompanyRegister() {
   const { insertCompany, fetchProvinces, fetchCities, provinces, cities } =

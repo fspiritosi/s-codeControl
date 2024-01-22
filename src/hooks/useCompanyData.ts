@@ -1,7 +1,9 @@
 import { toast } from '@/components/ui/use-toast'
-import { supabase } from '@/supabase/supabase'
+import { supabase } from '../../supabase/supabase'
 import { UUID } from 'crypto'
 import { useState } from 'react'
+import { useEdgeFunctions } from './useEdgeFunctions'
+
 type company = {
   company_name: string
   company_cuit: string
