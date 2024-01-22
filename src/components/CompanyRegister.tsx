@@ -25,6 +25,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+<<<<<<< HEAD
+=======
+import { supabase } from '@/supabase/supabase'
+>>>>>>> 226860e (modificación de formulario)
 
 export function CompanyRegister() {
   const { insertCompany, fetchProvinces, fetchCities, provinces, cities } =
