@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -18,9 +18,22 @@ import { companySchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { supabase } from '@/supabase/supabase'
 
 export function CompanyRegister() {
-  const { insertCompany } = useCompanyData()
+  const { insertCompany, fetchProvinces, fetchCities, provinces, cities } =
+    useCompanyData()
+  const [selectedCities, setSelectedCities] = useState<any[]>([])
+  const [selectedProvince, setSelectedProvince] = useState<Province | null>(
+    null,
+  )
 
   const form = useForm<z.infer<typeof companySchema>>({
     resolver: zodResolver(companySchema),
@@ -32,9 +45,11 @@ export function CompanyRegister() {
       contact_email: '',
       contact_phone: '',
       address: '',
-      city: '',
-      country: '',
+      city: 0,
+      country: 'argentina',
+      province_id: 0,
       industry: '',
+      employees: null,
     },
   })
 
@@ -44,28 +59,76 @@ export function CompanyRegister() {
 
   const onUploadSuccess = (imageUrl: string) => {}
 
-  const onSubmit = async (companyData: any) => {
+  interface Province {
+    id: number
+    name: string
+  }
+
+  interface City {
+    id: number
+    city_name: string
+    province_id: number
+  }
+
+  const handleProvinceChange = (selectedProvinceName: string) => {
+    //Buscar el objeto Province correspondiente al selectedProvinceId
+    const selectedProvince: Province | undefined = provinces.find(
+      p => p.name === selectedProvinceName,
+    )
+    if (selectedProvince) {
+      form.setValue('province_id', selectedProvince.id)
+      setSelectedProvince(selectedProvince)
+    }
+  }
+
+  const handleCityChange = (selectedCityName: string) => {
+    // Buscar el objeto City correspondiente al selectedCityName
+    const selectedCity: City | undefined = cities.find(
+      c => c.city_name === selectedCityName,
+    )
+    if (selectedCity) {
+      form.setValue('city', selectedCity.id)
+      setSelectedCities([selectedCity])
+      console.log(selectedCity.id, selectedCity.city_name)
+    }
+  }
+
+  const onSubmit = async (companyData: z.infer<typeof companySchema>) => {
     try {
-      // Procesa los valores antes de enviarlos a la base de datos
+      //Procesa los valores antes de enviarlos a la base de datos
       const processedCompanyData = {
         ...companyData,
         company_name: processText(companyData.company_name),
         company_cuit: processText(companyData.company_cuit),
         website: processText(companyData.website),
-        city: processText(companyData.city),
         country: processText(companyData.country),
+        province_id: companyData.province_id,
+        city: companyData.city,
         contact_email: processText(companyData.contact_email),
         contact_phone: processText(companyData.contact_phone),
         address: processText(companyData.address),
         industry: processText(companyData.industry),
+        employees: companyData.employees,
       }
 
-      // Insertar la compañía con los datos procesados
+      //Insertar la compañía con los datos procesados
       const company = await insertCompany(processedCompanyData)
+      //const company = await insertCompany(companyData)
+      console.log('Resultado de la inserción:', company)
     } catch (err) {
       console.error('Ocurrió un error:', err)
     }
   }
+
+  useEffect(() => {
+    fetchProvinces()
+  }, [])
+  useEffect(() => {
+    console.log('Valor de selectedProvince:', selectedProvince)
+    if (selectedProvince) {
+      fetchCities(selectedProvince.id)
+    }
+  }, [selectedProvince])
 
   const processText = (text: string): string =>
     text
@@ -196,40 +259,56 @@ export function CompanyRegister() {
           )}
         />
 
+        {/* <FormField
+          control={form.control}
+          name="country"
+          render={({ field }) => ( */}
+        <Select>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Selecciona un país" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="argentina">Argentina</SelectItem>
+          </SelectContent>
+        </Select>
+        {/* )}
+        /> */}
+        <FormField
+          control={form.control}
+          name="province_id"
+          render={({ field }) => (
+            <Select onValueChange={handleProvinceChange}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Selecciona una provincia" />
+              </SelectTrigger>
+              <SelectContent>
+                {provinces.map(province => (
+                  <SelectItem key={province.id} value={province.name}>
+                    {province.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
         <FormField
           control={form.control}
           name="city"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Ciudad</FormLabel>
-              <FormControl>
-                <Input placeholder="ciudad" {...field} />
-              </FormControl>
-              <FormDescription>
-                Por favor ingresa la ciudad de tu compañia
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
+            <Select onValueChange={handleCityChange}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Selecciona una ciudad" />
+              </SelectTrigger>
+              <SelectContent>
+                {cities.map(city => (
+                  <SelectItem key={city.id} value={city.city_name}>
+                    {city.city_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
         />
-
-        <FormField
-          control={form.control}
-          name="country"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Pais</FormLabel>
-              <FormControl>
-                <Input placeholder="Pais" {...field} />
-              </FormControl>
-              <FormDescription>
-                Por favor ingresa el Pais de tu compañia
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <FormField
           control={form.control}
           name="industry"
