@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import { UploadImage } from '@/components/UploadImage'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -11,13 +11,6 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { UploadImage } from '@/components/UploadImage'
-import { useCompanyData } from '@/hooks/useCompanyData'
-import { companySchema } from '@/zodSchemas/schemas'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
-import * as z from 'zod'
 import {
   Select,
   SelectContent,
@@ -25,15 +18,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { supabase } from '../../supabase/supabase'
+import { Textarea } from '@/components/ui/textarea'
+import { useCompanyData } from '@/hooks/useCompanyData'
+import { companySchema } from '@/zodSchemas/schemas'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import * as z from 'zod'
+import { Loader } from './svg/loader'
 
 export function CompanyRegister() {
   const { insertCompany, fetchProvinces, fetchCities, provinces, cities } =
-    useCompanyData()
-  const [selectedCities, setSelectedCities] = useState<any[]>([])
-  const [selectedProvince, setSelectedProvince] = useState<Province | null>(
-    null,
-  )
+  useCompanyData()
+const [selectedCities, setSelectedCities] = useState<any[]>([])
+const [selectedProvince, setSelectedProvince] = useState<Province | null>(
+  null,)
+  const [showLoader, setShowLoader] = useState(false)
 
   const form = useForm<z.infer<typeof companySchema>>({
     resolver: zodResolver(companySchema),
@@ -115,8 +115,11 @@ export function CompanyRegister() {
       const company = await insertCompany(processedCompanyData)
       //const company = await insertCompany(companyData)
       console.log('Resultado de la inserción:', company)
+      setShowLoader(true)
     } catch (err) {
       console.error('Ocurrió un error:', err)
+    } finally {
+      setShowLoader(false)
     }
   }
 
@@ -347,9 +350,12 @@ export function CompanyRegister() {
             </FormItem>
           )}
         />
-
-        <Button type="submit">Registrar Compañía</Button>
+        <Button type="submit" disabled={showLoader}>
+          Registrar Compañía
+          {showLoader ? <Loader /> : 'Registrar Compañía'}
+        </Button>
       </form>
     </Form>
   )
 }
+

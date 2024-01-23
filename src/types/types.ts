@@ -21,9 +21,15 @@ export type LoggedUser = {
 export type Userprofile = {}
 
 export type profile = {
+<<<<<<< HEAD
   id?: string
   company_id?: string
   created_at?: string
+=======
+  id?:string
+  company_id?: string
+  created_at?:string
+>>>>>>> dev
   firstName: string
   lastName: string
   credentialId: string
@@ -40,12 +46,19 @@ export type company = {
   contact_email: string
   contact_phone: string
   address: string
+<<<<<<< HEAD
   city: number
   country: string
   industry: string
   company_logo: string
   province_id: number
   employees: null
+=======
+  city: string
+  country: string
+  industry: string
+  company_logo: string
+>>>>>>> dev
 }
 
 export type singUp = {
