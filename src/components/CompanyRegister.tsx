@@ -269,7 +269,7 @@ const [selectedProvince, setSelectedProvince] = useState<Province | null>(
           name="country"
           render={({ field }) => ( */}
         <Select>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="">
             <SelectValue placeholder="Selecciona un país" />
           </SelectTrigger>
           <SelectContent>
@@ -283,7 +283,7 @@ const [selectedProvince, setSelectedProvince] = useState<Province | null>(
           name="province_id"
           render={({ field }) => (
             <Select onValueChange={handleProvinceChange}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="">
                 <SelectValue placeholder="Selecciona una provincia" />
               </SelectTrigger>
               <SelectContent>
@@ -301,7 +301,7 @@ const [selectedProvince, setSelectedProvince] = useState<Province | null>(
           name="city"
           render={({ field }) => (
             <Select onValueChange={handleCityChange}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="">
                 <SelectValue placeholder="Selecciona una ciudad" />
               </SelectTrigger>
               <SelectContent>
