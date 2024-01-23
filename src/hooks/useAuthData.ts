@@ -1,8 +1,13 @@
-import { login, profile, singUp } from '@/types/types'
 import { supabase } from '../../supabase/supabase'
-import { useEdgeFunctions } from './useEdgeFunctions'
-import { useProfileData } from './useProfileData'
 
+type singUp = {
+  email: string
+  password: string
+}
+type login = {
+  email: string
+  password: string
+}
 export const useAuthData = () => {
   type updatePassword = {
     password: string
