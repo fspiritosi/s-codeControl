@@ -125,12 +125,14 @@ const [selectedProvince, setSelectedProvince] = useState<Province | null>(
 
   useEffect(() => {
     fetchProvinces()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => {
     console.log('Valor de selectedProvince:', selectedProvince)
     if (selectedProvince) {
       fetchCities(selectedProvince.id)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProvince])
 
   const processText = (text: string): string =>
