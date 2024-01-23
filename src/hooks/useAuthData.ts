@@ -66,7 +66,7 @@ export const useAuthData = () => {
       let { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options:{
-          redirectTo: 'http://localhost:3000/dashboard',
+          redirectTo: `${window.location.href}/auth/callback`,
         }
       })
       if (error) {

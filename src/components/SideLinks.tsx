@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 
 const links = [
   { name: 'Dashboard', href: '/dashboard' },
+  { name: 'Añadir empleado', href: '/dashboard/new_employee' },
   {
     name: 'Registrar Compañia',
     href: '/dashboard/company',
