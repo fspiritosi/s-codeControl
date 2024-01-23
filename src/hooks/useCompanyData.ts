@@ -1,24 +1,13 @@
 import { toast } from '@/components/ui/use-toast'
-import { supabase } from '@/supabase/supabase'
-
-type company = {
-  company_name: string
-  company_cuit: string
-  description: string
-  website: string
-  contact_email: string
-  contact_phone: string
-  address: string
-  city: string
-  country: string
-  industry: string
-  company_logo: string
-}
+import { company } from '@/types/types'
+import { supabase } from '../../supabase/supabase'
+import { useEdgeFunctions } from './useEdgeFunctions'
 
 export const useCompanyData = () => {
+  const {errorTranslate} = useEdgeFunctions()
   return {
     insertCompany: async (companyData: company) => {
-      try {
+      
         const { data, error } = await supabase
           .from('company')
           .insert([companyData])
@@ -26,10 +15,14 @@ export const useCompanyData = () => {
         toast({
           title: 'Datos cargados',
         })
+
+        if (error) {
+          const message = ( await errorTranslate(error.message))
+          throw new Error( String(message).replaceAll('"', ''))
+        }
+
         return data
-      } catch (err) {
-        return err
-      }
+     
     },
   }
 }

@@ -1,12 +1,14 @@
+import { CompanyLogoBackground } from '@/components/CompanyLogoBackground'
 import { LoginForm } from '@/components/LoginForm'
 
 export default function Login() {
   return (
-    <main className="flex justify-center items-center h-screen flex-col bg-black/5">
-      <div className="bg-white sm:w-1/2 p-10 rounded-xl flex flex-col">
-        <h2 className="self-center text-2xl pb-5">Login</h2>
+    <main className="flex items-center h-screen bg-black/5 justify-between flex-col md:flex-row bg-white">
+      <CompanyLogoBackground />
+      <section className=" md:w-1/2 w-[80%] p-0 md:p-12 lg:p-24 flex flex-col justify-center rounded-3xl">
+        <h2 className="text-2xl pb-5">¡Es un placer verte de nuevo!</h2>
         <LoginForm />
-      </div>
+      </section>
     </main>
   )
 }
