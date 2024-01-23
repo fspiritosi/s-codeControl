@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Logo from '../../../public/logoLetrasNegras.png'
 import { RiMenu3Line } from 'react-icons/ri'
 import { useState } from 'react'
-import MotionTransition from '../MotionTransition'
+import MotionTransition from './Animation/MotionTransition'
 
 function Header() {
   //--Estados locales--//
