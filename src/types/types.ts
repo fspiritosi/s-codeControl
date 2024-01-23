@@ -1,3 +1,5 @@
+import React from "react"
+
 export type LoggedUser = {
   session: null | string
   user: {
@@ -21,9 +23,9 @@ export type LoggedUser = {
 export type Userprofile = {}
 
 export type profile = {
-  id?:string
+  id?: string
   company_id?: string
-  created_at?:string
+  created_at?: string
   firstName: string
   lastName: string
   credentialId: string
@@ -50,7 +52,13 @@ export type singUp = {
   email: string
   password: string
 }
+
 export type login = {
   email: string
   password: string
+}
+
+export type MotionTransitionProps = {
+  children: React.ReactNode;
+  className?: string
 }

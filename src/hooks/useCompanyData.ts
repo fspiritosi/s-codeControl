@@ -4,25 +4,23 @@ import { supabase } from '../../supabase/supabase'
 import { useEdgeFunctions } from './useEdgeFunctions'
 
 export const useCompanyData = () => {
-  const {errorTranslate} = useEdgeFunctions()
+  const { errorTranslate } = useEdgeFunctions()
   return {
     insertCompany: async (companyData: company) => {
-      
-        const { data, error } = await supabase
-          .from('company')
-          .insert([companyData])
-          .select()
-        toast({
-          title: 'Datos cargados',
-        })
+      const { data, error } = await supabase
+        .from('company')
+        .insert([companyData])
+        .select()
+      toast({
+        title: 'Datos cargados',
+      })
 
-        if (error) {
-          const message = ( await errorTranslate(error.message))
-          throw new Error( String(message).replaceAll('"', ''))
-        }
+      if (error) {
+        const message = await errorTranslate(error.message)
+        throw new Error(String(message).replaceAll('"', ''))
+      }
 
-        return data
-     
+      return data
     },
   }
 }

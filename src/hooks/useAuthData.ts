@@ -9,7 +9,7 @@ export const useAuthData = () => {
   }
   const { filterByEmail } = useProfileData()
 
-  const {errorTranslate} = useEdgeFunctions()
+  const { errorTranslate } = useEdgeFunctions()
   return {
     singUp: async (credentials: singUp) => {
       let { data, error } = await supabase.auth.signUp({
@@ -21,18 +21,17 @@ export const useAuthData = () => {
       })
 
       if (error) {
-        const message = ( await errorTranslate(error.message))
-        throw new Error( String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error.message)
+        throw new Error(String(message).replaceAll('"', ''))
       }
       return data
     },
     login: async (credentials: login) => {
       let { data, error } = await supabase.auth.signInWithPassword(credentials)
-     
 
       if (error) {
-       const message = ( await errorTranslate(error.message))
-        throw new Error( String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error.message)
+        throw new Error(String(message).replaceAll('"', ''))
       }
       return data
     },
@@ -44,16 +43,16 @@ export const useAuthData = () => {
       })
 
       if (error) {
-        const message = ( await errorTranslate(error.message))
-        throw new Error( String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error.message)
+        throw new Error(String(message).replaceAll('"', ''))
       }
       return data
     },
     updateUser: async ({ password }: updatePassword) => {
       const email = localStorage.getItem('email')
       const user = (await filterByEmail(email)) as profile[]
-     
-    if (user.length === 0) throw new Error('Usuario no encontrado')
+
+      if (user.length === 0) throw new Error('Usuario no encontrado')
       localStorage.removeItem('email')
 
       const { data, error } = await supabase.auth.admin.updateUserById(
@@ -61,8 +60,8 @@ export const useAuthData = () => {
         { password },
       )
       if (error) {
-        const message = ( await errorTranslate(error.message))
-        throw new Error( String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error.message)
+        throw new Error(String(message).replaceAll('"', ''))
       }
       return data
     },
@@ -71,8 +70,8 @@ export const useAuthData = () => {
         provider: 'google',
       })
       if (error) {
-        const message = ( await errorTranslate(error.message))
-        throw new Error( String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error.message)
+        throw new Error(String(message).replaceAll('"', ''))
       }
       return data
     },
@@ -85,8 +84,8 @@ export const useAuthData = () => {
       })
 
       if (error) {
-        const message = ( await errorTranslate(error.message))
-        throw new Error( String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error.message)
+        throw new Error(String(message).replaceAll('"', ''))
       }
       return data
     },
@@ -97,8 +96,8 @@ export const useAuthData = () => {
       } = await supabase.auth.getUser(token)
 
       if (error) {
-        const message = ( await errorTranslate(error.message))
-        throw new Error( String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error.message)
+        throw new Error(String(message).replaceAll('"', ''))
       }
       return user
     },
