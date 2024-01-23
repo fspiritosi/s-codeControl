@@ -1,5 +1,6 @@
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextRequest, NextResponse } from 'next/server'
+import {useSearchParams} from 'next/navigation'
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
