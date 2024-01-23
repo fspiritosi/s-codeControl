@@ -21,15 +21,9 @@ export type LoggedUser = {
 export type Userprofile = {}
 
 export type profile = {
-<<<<<<< HEAD
   id?: string
   company_id?: string
   created_at?: string
-=======
-  id?:string
-  company_id?: string
-  created_at?:string
->>>>>>> dev
   firstName: string
   lastName: string
   credentialId: string
