@@ -351,7 +351,6 @@ const [selectedProvince, setSelectedProvince] = useState<Province | null>(
           )}
         />
         <Button type="submit" disabled={showLoader}>
-          Registrar Compañía
           {showLoader ? <Loader /> : 'Registrar Compañía'}
         </Button>
       </form>
