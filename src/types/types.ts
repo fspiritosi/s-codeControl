@@ -42,10 +42,12 @@ export type company = {
   contact_email: string
   contact_phone: string
   address: string
-  city: string
+  city: number
   country: string
   industry: string
   company_logo: string
+  province_id: number
+  employees: null
 }
 
 export type singUp = {
