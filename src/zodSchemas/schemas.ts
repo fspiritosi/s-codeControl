@@ -20,6 +20,9 @@ const passwordSchema = z
     password:passwordSchema,
   })
   
+  export const employeeSchema = z.object({
+    name: z.string()
+  })
 
 export const registerSchema = z
   .object({

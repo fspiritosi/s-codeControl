@@ -6,7 +6,7 @@ import { useProfileData } from './useProfileData'
 export const useAuthData = () => {
   const { filterByEmail } = useProfileData()
   const {errorTranslate} = useEdgeFunctions()
-  
+
   return {
     singUp: async (credentials: singUp) => {
       let { data, error } = await supabase.auth.signUp({
@@ -66,6 +66,9 @@ export const useAuthData = () => {
     googleLogin: async () => {
       let { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
+        options:{
+          redirectTo: 'http://localhost:3000/dashboard',
+        }
       })
       if (error) {
         const message = ( await errorTranslate(error.message))

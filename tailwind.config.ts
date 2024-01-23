@@ -59,6 +59,7 @@ const config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       keyframes: {
+        
         spin: {
           from: { transform: 'rotate(0deg)' },
           to: { transform: 'rotate(360deg)' },
