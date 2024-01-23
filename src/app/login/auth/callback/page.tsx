@@ -1,7 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import { supabase } from '../../../../supabase/supabase'
+import { supabase } from '../../../../../supabase/supabase'
 
 export default  function Callback() {
   const router = useRouter()
