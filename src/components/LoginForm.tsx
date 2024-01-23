@@ -154,7 +154,7 @@ export function LoginForm() {
       />
       <Button
         variant="outline"
-        className="w-[100%] sm:w-[80%] lg:w-[60%] self-center"
+        className="w-[100%] sm:w-[80%] lg:w-[60%] self-center mb-7"
         onClick={loginGooglePrivider}
       >
         <span className="mr-2">

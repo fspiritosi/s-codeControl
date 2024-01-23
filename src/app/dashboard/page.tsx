@@ -1,3 +1,7 @@
-export default function Page() {
-  return <main>ESTAS LOGUEADO</main>
+export default function Home() {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+      <p>Dashboard</p>
+    </main>
+  )
 }

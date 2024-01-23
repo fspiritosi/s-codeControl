@@ -4,12 +4,9 @@ import { useEdgeFunctions } from './useEdgeFunctions'
 import { useProfileData } from './useProfileData'
 
 export const useAuthData = () => {
-  type updatePassword = {
-    password: string
-  }
   const { filterByEmail } = useProfileData()
-
   const {errorTranslate} = useEdgeFunctions()
+
   return {
     singUp: async (credentials: singUp) => {
       let { data, error } = await supabase.auth.signUp({
@@ -49,7 +46,7 @@ export const useAuthData = () => {
       }
       return data
     },
-    updateUser: async ({ password }: updatePassword) => {
+    updateUser: async ({ password }: {password:string}) => {
       const email = localStorage.getItem('email')
       const user = (await filterByEmail(email)) as profile[]
      
@@ -69,6 +66,9 @@ export const useAuthData = () => {
     googleLogin: async () => {
       let { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
+        options:{
+          redirectTo: 'http://localhost:3000/dashboard',
+        }
       })
       if (error) {
         const message = ( await errorTranslate(error.message))

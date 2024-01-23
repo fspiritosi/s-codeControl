@@ -1,3 +1,4 @@
+import { UUID } from 'crypto'
 import * as z from 'zod'
 
 
@@ -20,6 +21,9 @@ const passwordSchema = z
     password:passwordSchema,
   })
   
+  export const employeeSchema = z.object({
+    name: z.string()
+  })
 
 export const registerSchema = z
   .object({
@@ -104,20 +108,10 @@ export const companySchema = z.object({
       message:
         'Address debe contener solo letras y números y tener hasta 50 caracteres',
     }),
-  city: z
-    .string()
-    .max(50)
-    .regex(/^[a-zA-Z\s]{1,50}$/, {
-      message:
-        'City debe contener solo letras y espacios, con un límite de hasta 50 caracteres',
-    }),
-  country: z
-    .string()
-    .max(50)
-    .regex(/^[a-zA-Z\s]{1,50}$/, {
-      message:
-        'Country debe contener solo letras y espacios, con un límite de hasta 50 caracteres',
-    }),
+
+  country: z.string(),
+
+  province_id: z.number(),
   industry: z
     .string()
     .max(50)
@@ -125,13 +119,8 @@ export const companySchema = z.object({
       message:
         'Industry debe contener solo letras y espacios, con un límite de hasta 50 caracteres',
     }),
-  company_logo: z
-    .string()
-    .url()
-    .refine(
-      value => value.startsWith('http://') || value.startsWith('https://'),
-      {
-        message: 'Company logo debe contener una URL válida',
-      },
-    ),
+  city: z.number(),
+
+  company_logo: z.string(),
+  employees: z.string().nullable(),
 })
