@@ -64,3 +64,10 @@ export type MotionTransitionProps = {
   children: React.ReactNode;
   className?: string
 }
+
+export type BestBussinesData = {
+  id: number,
+  icon: React.ReactNode,
+  title: string,
+  description: string
+}[]
