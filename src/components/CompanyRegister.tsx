@@ -28,11 +28,22 @@ import * as z from 'zod'
 import { Loader } from './svg/loader'
 
 export function CompanyRegister() {
-  const { insertCompany, fetchProvinces, fetchCities, provinces, cities } =
-  useCompanyData()
-const [selectedCities, setSelectedCities] = useState<any[]>([])
-const [selectedProvince, setSelectedProvince] = useState<Province | null>(
-  null,)
+  const {
+    insertCompany,
+    fetchProvinces,
+    fetchCities,
+    provinces,
+    cities,
+    fetchIndustryType,
+    industry,
+  } = useCompanyData()
+  const [selectedCities, setSelectedCities] = useState<City[]>([])
+  const [selectedProvince, setSelectedProvince] = useState<Province | null>(
+    null,
+  )
+  const [selectedIndustry, setSelectedIndustry] = useState<Industry | null>(
+    null,
+  )
   const [showLoader, setShowLoader] = useState(false)
 
   const form = useForm<z.infer<typeof companySchema>>({
@@ -70,6 +81,11 @@ const [selectedProvince, setSelectedProvince] = useState<Province | null>(
     province_id: number
   }
 
+  interface Industry {
+    id: number
+    name: string
+  }
+
   const handleProvinceChange = (selectedProvinceName: string) => {
     //Buscar el objeto Province correspondiente al selectedProvinceId
     const selectedProvince: Province | undefined = provinces.find(
@@ -90,6 +106,17 @@ const [selectedProvince, setSelectedProvince] = useState<Province | null>(
       form.setValue('city', selectedCity.id)
       setSelectedCities([selectedCity])
       console.log(selectedCity.id, selectedCity.city_name)
+    }
+  }
+
+  const handleIndustryChange = (selectedIndustryType: string) => {
+    const selectedIndustry: Industry | undefined = industry.find(
+      p => p.name === selectedIndustryType,
+    )
+    if (selectedIndustry) {
+      form.setValue('industry', selectedIndustry.name)
+      setSelectedIndustry(selectedIndustry)
+      console.log('industria: ', selectedIndustry)
     }
   }
 
@@ -125,16 +152,16 @@ const [selectedProvince, setSelectedProvince] = useState<Province | null>(
 
   useEffect(() => {
     fetchProvinces()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => {
     console.log('Valor de selectedProvince:', selectedProvince)
     if (selectedProvince) {
       fetchCities(selectedProvince.id)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProvince])
-
+  useEffect(() => {
+    fetchIndustryType()
+  }, [industry])
   const processText = (text: string): string =>
     text
       .normalize('NFD')
@@ -269,7 +296,7 @@ const [selectedProvince, setSelectedProvince] = useState<Province | null>(
           name="country"
           render={({ field }) => ( */}
         <Select>
-          <SelectTrigger className="">
+          <SelectTrigger>
             <SelectValue placeholder="Selecciona un país" />
           </SelectTrigger>
           <SelectContent>
@@ -283,7 +310,7 @@ const [selectedProvince, setSelectedProvince] = useState<Province | null>(
           name="province_id"
           render={({ field }) => (
             <Select onValueChange={handleProvinceChange}>
-              <SelectTrigger className="">
+              <SelectTrigger>
                 <SelectValue placeholder="Selecciona una provincia" />
               </SelectTrigger>
               <SelectContent>
@@ -301,7 +328,7 @@ const [selectedProvince, setSelectedProvince] = useState<Province | null>(
           name="city"
           render={({ field }) => (
             <Select onValueChange={handleCityChange}>
-              <SelectTrigger className="">
+              <SelectTrigger>
                 <SelectValue placeholder="Selecciona una ciudad" />
               </SelectTrigger>
               <SelectContent>
@@ -318,16 +345,18 @@ const [selectedProvince, setSelectedProvince] = useState<Province | null>(
           control={form.control}
           name="industry"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Industria</FormLabel>
-              <FormControl>
-                <Input placeholder="industria" {...field} />
-              </FormControl>
-              <FormDescription>
-                Por favor ingresa la Industria de tu compañia
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
+            <Select onValueChange={handleIndustryChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona una Industria" />
+              </SelectTrigger>
+              <SelectContent>
+                {industry.map(industry => (
+                  <SelectItem key={industry.id} value={industry.name}>
+                    {industry.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
         />
 
@@ -359,4 +388,3 @@ const [selectedProvince, setSelectedProvince] = useState<Province | null>(
     </Form>
   )
 }
-

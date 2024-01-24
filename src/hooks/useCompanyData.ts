@@ -23,6 +23,7 @@ type company = {
 export const useCompanyData = () => {
   const [provinces, setProvinces] = useState<any[]>([])
   const [cities, setCities] = useState<any[]>([])
+  const [industry, setIndustry] = useState<any[]>([])
 
   const insertCompany = async (companyData: Omit<company, 'employees'>) => {
     try {
@@ -48,8 +49,9 @@ export const useCompanyData = () => {
       if (error) {
         console.error('Error al obtener las provincias:', error)
       } else {
-        //console.log(fetchedProvinces)
+        
         setProvinces(fetchedProvinces || [])
+        console.log('provincias obtenidas: ',fetchedProvinces)
       }
     } catch (error) {
       console.error('Ocurrió un error al obtener las provincias:', error)
@@ -73,11 +75,30 @@ export const useCompanyData = () => {
     }
   }
 
+  const fetchIndustryType = async () => {
+    try {
+      const { data: fetchedIndustryType, error } = await supabase
+        .from('industry_type')
+        .select('*')
+        
+      if (error) {
+        console.error('Error al obtener las industrias:', error)
+      } else {
+        setIndustry(fetchedIndustryType || [])
+       
+      }
+    } catch (error) {
+      console.error('Ocurrió un error al obtener las industrias:', error)
+    }
+  }
+
   return {
     insertCompany,
     fetchProvinces,
     fetchCities,
+    fetchIndustryType,
     provinces,
     cities,
+    industry
   }
 }
