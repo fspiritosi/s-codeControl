@@ -29,10 +29,11 @@ import { Loader } from './svg/loader'
 
 export function CompanyRegister() {
   const { insertCompany, fetchProvinces, fetchCities, provinces, cities } =
-  useCompanyData()
-const [selectedCities, setSelectedCities] = useState<any[]>([])
-const [selectedProvince, setSelectedProvince] = useState<Province | null>(
-  null,)
+    useCompanyData()
+  const [selectedCities, setSelectedCities] = useState<any[]>([])
+  const [selectedProvince, setSelectedProvince] = useState<Province | null>(
+    null,
+  )
   const [showLoader, setShowLoader] = useState(false)
 
   const form = useForm<z.infer<typeof companySchema>>({
@@ -125,14 +126,14 @@ const [selectedProvince, setSelectedProvince] = useState<Province | null>(
 
   useEffect(() => {
     fetchProvinces()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => {
     console.log('Valor de selectedProvince:', selectedProvince)
     if (selectedProvince) {
       fetchCities(selectedProvince.id)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProvince])
 
   const processText = (text: string): string =>
@@ -359,4 +360,3 @@ const [selectedProvince, setSelectedProvince] = useState<Province | null>(
     </Form>
   )
 }
-

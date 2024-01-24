@@ -16,12 +16,12 @@ type Props = {
 export const SelectWithData = ({ label, placeholder, options }: Props) => {
   return (
     <>
-      <Label htmlFor={label}>{label}</Label>
+      <Label className='ml-2' htmlFor={label}>{label}</Label>
       <Select required>
-        <SelectTrigger>
+        <SelectTrigger className="">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent >
           {options?.map((option, index) => (
             <SelectItem key={index} value={option}>
               {option}

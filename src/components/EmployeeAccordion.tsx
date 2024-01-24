@@ -20,7 +20,6 @@ import {
   nacionaliOptions,
   typeOfContract,
 } from '@/types/enums'
-import React from 'react'
 import { SelectWithData } from './SelectWithData'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
@@ -67,7 +66,7 @@ export const EmployeeAccordion = async () => {
       placeholder: 'Numero de documento',
     },
     {
-      label: 'Pais de nacimiento',
+      label: 'País de nacimiento',
       type: 'select',
       placeholder: 'Pais de nacimiento',
       options: countryOptions,
@@ -85,7 +84,7 @@ export const EmployeeAccordion = async () => {
       options: civilStateOptions,
     },
     {
-      label: 'Nivel de instruccion',
+      label: 'Nivel de instrucción',
       type: 'select',
       placeholder: 'Nivel de instruccion',
       options: instrutionsOptions,
@@ -178,31 +177,37 @@ export const EmployeeAccordion = async () => {
   ]
 
   return (
-    <Accordion type="multiple" className="w-1/2">
+    <Accordion type="multiple" className="w-full">
       <AccordionItem value="personal-data">
-        <AccordionTrigger>Datos Personales</AccordionTrigger>
-        <AccordionContent>
-          <div className="grid w-full max-w-sm items-center gap-1.5">
+        <AccordionTrigger className="text-2xl">
+          Datos Personales
+        </AccordionTrigger>
+        <AccordionContent className="w-full ">
+          <div className="min-w-full max-w-sm flex flex-wrap gap-8">
             {PERSONALDATA.map((data, index) => {
               if (data.type === 'select') {
                 return (
-                  <SelectWithData
-                    key={index}
-                    label={data.label}
-                    placeholder={data.placeholder}
-                    options={data.options}
-                  />
+                  <div key={index} className="w-[300px] flex flex-col gap-2">
+                    <SelectWithData
+                      label={data.label}
+                      placeholder={data.placeholder}
+                      options={data.options}
+                    />
+                  </div>
                 )
               } else {
                 return (
-                  <React.Fragment key={index}>
-                    <Label htmlFor={data.label}>{data.label}</Label>
+                  <div key={index} className="w-[300px] flex flex-col gap-2">
+                    <Label htmlFor={data.label} className="ml-2">
+                      {data.label}
+                    </Label>
                     <Input
                       type={data.type}
                       id={data.label}
                       placeholder={data.placeholder}
+                      className="w-[300px] bg-white"
                     />
-                  </React.Fragment>
+                  </div>
                 )
               }
             })}
@@ -210,29 +215,35 @@ export const EmployeeAccordion = async () => {
         </AccordionContent>
       </AccordionItem>
       <AccordionItem value="contact-data">
-        <AccordionTrigger>Datos de contacto</AccordionTrigger>
+        <AccordionTrigger className="text-2xl">
+          Datos de contacto
+        </AccordionTrigger>
         <AccordionContent>
-          <div className="grid w-full max-w-sm items-center gap-1.5">
+          <div className="min-w-full max-w-sm flex flex-wrap gap-8">
             {CONTACTDATA.map((data, index) => {
               if (data.type === 'select') {
                 return (
-                  <SelectWithData
-                    key={index}
-                    label={data.label}
-                    placeholder={data.placeholder}
-                    options={data.options}
-                  />
+                  <div key={index} className="w-[300px] flex flex-col gap-2">
+                    <SelectWithData
+                      key={index}
+                      label={data.label}
+                      placeholder={data.placeholder}
+                      options={data.options}
+                    />
+                  </div>
                 )
               } else {
                 return (
-                  <React.Fragment key={index}>
-                    <Label htmlFor={data.label}>{data.label}</Label>
+                  <div key={index} className="w-[300px] flex flex-col gap-2">
+                    <Label htmlFor={data.label} className="ml-2">
+                      {data.label}{' '}
+                    </Label>
                     <Input
                       type={data.type}
                       id={data.label}
                       placeholder={data.placeholder}
                     />
-                  </React.Fragment>
+                  </div>
                 )
               }
             })}
@@ -240,29 +251,33 @@ export const EmployeeAccordion = async () => {
         </AccordionContent>
       </AccordionItem>
       <AccordionItem value="laboral-data">
-        <AccordionTrigger>Datos laborales</AccordionTrigger>
+        <AccordionTrigger className="text-2xl">
+          Datos laborales
+        </AccordionTrigger>
         <AccordionContent>
-          <div className="grid w-full max-w-sm items-center gap-1.5">
+          <div className="min-w-full max-w-sm flex flex-wrap gap-8">
             {LABORALDATA.map((data, index) => {
               if (data.type === 'select') {
                 return (
-                  <SelectWithData
-                    key={index}
-                    label={data.label}
-                    placeholder={data.placeholder}
-                    options={data.options}
-                  />
+                  <div key={index} className="w-[300px] flex flex-col gap-2">
+                    <SelectWithData
+                      key={index}
+                      label={data.label}
+                      placeholder={data.placeholder}
+                      options={data.options}
+                    />
+                  </div>
                 )
               } else {
                 return (
-                  <React.Fragment key={index}>
-                    <Label htmlFor={data.label}>{data.label}</Label>
+                  <div key={index} className="w-[300px] flex flex-col gap-2">
+                    <Label htmlFor={data.label} className="ml-2">{data.label}</Label>
                     <Input
                       type={data.type}
                       id={data.label}
                       placeholder={data.placeholder}
                     />
-                  </React.Fragment>
+                  </div>
                 )
               }
             })}
