@@ -246,7 +246,7 @@ export function RegisterForm() {
               type="submit"
               disabled={showLoader}
             >
-               {showLoader ? <Loader /> : 'Ingresar'}
+              {showLoader ? <Loader /> : 'Ingresar'}
             </Button>
             <p className="text-[0.9rem]">
               ¿Ya tienes una cuenta?{' '}

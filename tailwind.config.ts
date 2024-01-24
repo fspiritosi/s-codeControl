@@ -67,10 +67,9 @@ const config = {
         dash: {
           '0%': { strokeDasharray: '1, 150', strokeDashoffset: '0' },
           '50%': { strokeDasharray: '100, 150', strokeDashoffset: '-25px' },
-          '100%': {  strokeDasharray: '1,150',
-            strokeDashoffset:'-59px' },
+          '100%': { strokeDasharray: '1,150', strokeDashoffset: '-59px' },
         },
-      
+
         'accordion-down': {
           from: { height: '0' },
           to: { height: 'var(--radix-accordion-content-height)' },
@@ -83,11 +82,10 @@ const config = {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'spin': 'spin 2s linear infinite',
-        'dash': 'dash 1.5s ease-in-out infinite',
+        spin: 'spin 2s linear infinite',
+        dash: 'dash 1.5s ease-in-out infinite',
       },
     },
-    
   },
   plugins: [require('tailwindcss-animate')],
 } satisfies Config
