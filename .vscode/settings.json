@@ -4,14 +4,8 @@
   },
   "cSpell.enabled": true,
   "cSpell.language": "en",
-  "cSpell.words": [
-    "hookform",
-    "Parens",
-    "supabase"
-  ],
-  "deno.enablePaths": [
-    "supabase/functions"
-  ],
+  "cSpell.words": ["hookform", "Parens", "supabase"],
+  "deno.enablePaths": ["supabase/functions"],
   "deno.lint": true,
   "deno.unstable": true
 }

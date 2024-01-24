@@ -1,7 +1,6 @@
 import { UUID } from 'crypto'
 import * as z from 'zod'
 
-
 const passwordSchema = z
   .string()
   .min(8, { message: 'La contraseña debe tener al menos 8 caracteres.' })
@@ -62,7 +61,7 @@ export const registerSchema = z
       .trim(),
     email: z.string().email(),
     password: passwordSchema,
-    confirmPassword: passwordSchema
+    confirmPassword: passwordSchema,
   })
   .refine(data => data.password === data.confirmPassword, {
     message: 'Las contraseñas no coinciden.',
