@@ -71,3 +71,16 @@ export type BestBussinesData = {
   title: string,
   description: string
 }[]
+
+export type names =
+  | 'lastname'
+  | 'firstname'
+  | 'nationality'
+  | 'cuil'
+  | 'document_type'
+  | 'document_number'
+  | 'birthplace'
+  | 'genre'
+  | 'marital_status'
+  | 'level_of_education'
+  | 'picture'
