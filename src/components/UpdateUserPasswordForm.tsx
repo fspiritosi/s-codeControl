@@ -17,6 +17,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { CloseEyeIcon } from './svg/closeEye'
+import { Loader } from './svg/loader'
 import { EyeIcon } from './svg/openEye'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
@@ -26,6 +27,7 @@ import { useToast } from './ui/use-toast'
 export const UpdateUserPasswordForm = () => {
   const { updateUser } = useAuthData()
   const [showPassword, setShowPassword] = useState(false)
+  const [showLoader, setShowLoader] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -39,6 +41,7 @@ export const UpdateUserPasswordForm = () => {
 
   const onSubmit = async (values: z.infer<typeof changePassSchema>) => {
     try {
+      setShowLoader(true)
       await updateUser(values)
       toast({
         title: 'Contraseña actualizada',
@@ -52,6 +55,7 @@ export const UpdateUserPasswordForm = () => {
         variant: 'destructive',
       })
     } finally {
+      setShowLoader(false)
       router.push('/login')
     }
   }
@@ -70,6 +74,7 @@ export const UpdateUserPasswordForm = () => {
                   <Input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="contraseña segura"
+                    autoComplete="new-password"
                     {...field}
                   />
                 </FormControl>
@@ -98,6 +103,7 @@ export const UpdateUserPasswordForm = () => {
                   <Input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="contraseña segura"
+                    autoComplete="new-password"
                     {...field}
                   />
                 </FormControl>
@@ -115,7 +121,9 @@ export const UpdateUserPasswordForm = () => {
             </FormItem>
           )}
         />
-        <Button type="submit">Cambiar contraseña</Button>
+        <Button type="submit" disabled={showLoader}>
+          {showLoader ? <Loader /> : 'Cambiar contraseña'}
+        </Button>
       </form>
     </Form>
   )

@@ -1,34 +1,34 @@
-import { supabase } from '@/supabase/supabase'
 import { profile } from '@/types/types'
+import { supabase } from '../../supabase/supabase'
+import { useEdgeFunctions } from './useEdgeFunctions'
 
 export const useProfileData = () => {
+  const { errorTranslate } = useEdgeFunctions()
   return {
     insertProfile: async (credentials: profile) => {
-      try {
-        const { data } = await supabase
-          .from('profile')
-          .insert([credentials])
-          .select()
-        return data
-      } catch (err) {
-        return err
+      const { data, error } = await supabase
+        .from('profile')
+        .insert([credentials])
+        .select()
+
+      if (error) {
+        const message = await errorTranslate(error.message)
+        throw new Error(String(message).replaceAll('"', ''))
       }
+      return data
     },
     filterByEmail: async (email: string | null) => {
-      try {
-        const { data, error } = await supabase
-          .from('profile')
-          .select('*')
-          .eq('email', email)
+      const { data, error } = await supabase
+        .from('profile')
+        .select('*')
+        .eq('email', email)
 
-        if (error) {
-          console.log(error)
-        }
-
-        return data
-      } catch (err) {
-        return err
+      if (error) {
+        const message = await errorTranslate(error.message)
+        throw new Error(String(message).replaceAll('"', ''))
       }
+
+      return data
     },
   }
 }

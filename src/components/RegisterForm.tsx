@@ -25,11 +25,13 @@ import { CloseEyeIcon } from './svg/closeEye'
 import { EyeIcon } from './svg/openEye'
 import { Toggle } from './ui/toggle'
 import { useToast } from './ui/use-toast'
+import { Loader } from './svg/loader'
 
 export function RegisterForm() {
   const { singUp } = useAuthData()
   const { insertProfile } = useProfileData()
   const [showPasswords, setShowPasswords] = useState(false)
+  const [showLoader, setShowLoader] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -49,6 +51,7 @@ export function RegisterForm() {
 
   // 2. Definir la función submit.
   const onSubmit = async (credentials: z.infer<typeof registerSchema>) => {
+    setShowLoader(true)
     const { email, password, confirmPassword, ...rest } = credentials
     try {
       const userData = (await singUp({ email, password })) as LoggedUser
@@ -69,6 +72,8 @@ export function RegisterForm() {
         description: `${err?.message}`,
         variant: 'destructive',
       })
+    } finally {
+      setShowLoader(false)
     }
   }
 
@@ -239,8 +244,9 @@ export function RegisterForm() {
             <Button
               className="w-[100%] sm:w-[80%] lg:w-[60%] self-center"
               type="submit"
+              disabled={showLoader}
             >
-              Ingresar
+              {showLoader ? <Loader /> : 'Ingresar'}
             </Button>
             <p className="text-[0.9rem]">
               ¿Ya tienes una cuenta?{' '}

@@ -1,5 +1,11 @@
 {
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "cSpell.enabled": true,
   "cSpell.language": "en",
   "cSpell.words": ["hookform", "Parens", "supabase"],
-  "cSpell.enabled": true
+  "deno.enablePaths": ["supabase/functions"],
+  "deno.lint": true,
+  "deno.unstable": true
 }
