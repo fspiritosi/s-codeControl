@@ -7,12 +7,17 @@ import { useImageUpload } from '@/hooks/useUploadImage'
 interface UploadImageProps {
   onImageChange: (imageUrl: string) => void
   onUploadSuccess: (imageUrl: string) => void
+  style?: React.CSSProperties
+  inputStyle?: React.CSSProperties
 }
 
 export function UploadImage({
   onImageChange,
   onUploadSuccess,
+  style,
+  inputStyle,
 }: UploadImageProps) {
+
   const { uploadImage, loading } = useImageUpload()
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [base64Image, setBase64Image] = useState<string>('')
@@ -51,20 +56,27 @@ export function UploadImage({
   }
 
   return (
+    <>
     <div>
+
       <label htmlFor="fileInput">Seleccionar imagen:</label>
       <Input
         type="file"
         accept="image/*"
         onChange={handleImageChange}
         id="fileInput"
+        style={{ ...inputStyle }}
       />
+    </div>
+
+<div className='flex items-center w-[300px] justify-around'>
 
       {base64Image && (
         <img
           src={base64Image}
           alt="Vista previa de la imagen"
-          style={{ maxWidth: '100%', marginTop: '10px' }}
+          
+          style={{ maxWidth: '100%', marginTop: '10px', ...style}}
         />
       )}
       {loading}
@@ -73,6 +85,7 @@ export function UploadImage({
           Confirmar y Subir
         </Button>
       )}
-    </div>
+</div>
+    </>
   )
 }
