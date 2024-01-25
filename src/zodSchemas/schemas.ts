@@ -161,10 +161,11 @@ export const accordionSchema = z.object({
     invalid_type_error: 'Nivel de educacion invalido'
   }),
   picture: z
-  .string()
-  .refine((value) => value.trim().length > 0, {
-    message: 'El archivo no puede estar vacío.',
-  }).optional(),
+  .string().optional()
+  // .refine((value) => value.trim().length > 0, {
+  //   message: 'El archivo no puede estar vacío.',
+  // }),
+  ,
   street : z.string().min(2, {
     message: 'La calle debe tener al menos 2 caracteres.',
  }),
