@@ -1,98 +1,156 @@
+'use client'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { useCountriesStore } from '@/store/countries'
 import {
-  fetchCitys,
-  fetchContractors,
-  fetchCountrys,
-  fetchHierarchy,
-  fetchProvinces,
-  fetchworkDiagram,
-} from '@/lib/utils'
-import {
-  civilStateOptions,
-  documentOptions,
-  genderOptions,
-  instrutionsOptions,
-  nacionaliOptions,
-  typeOfContract,
+  civilStateOptionsENUM,
+  documentOptionsENUM,
+  genderOptionsENUM,
+  instrutionsOptionsENUM,
+  nacionaliOptionsENUM,
+  typeOfContractENUM,
 } from '@/types/enums'
+import { names } from '@/types/types'
+import { accordionSchema } from '@/zodSchemas/schemas'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
 import { SelectWithData } from './SelectWithData'
+import { UploadImage } from './UploadImage'
+import { Button } from './ui/button'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from './ui/form'
 import { Input } from './ui/input'
-import { Label } from './ui/label'
 
-export const EmployeeAccordion = async () => {
-  const countryOptions = await fetchCountrys()
-  const provincesOptions = await fetchProvinces()
-  const citysOptions = await fetchCitys()
-  const hierarchyOptions = await fetchHierarchy()
-  const workDiagramOptions = await fetchworkDiagram()
-  const contractorCompanies = await fetchContractors()
+type Province = {
+  id: number
+  name: string
+}
+
+export const EmployeeAccordion = () => {
+  const fetchCityValues = useCountriesStore(state => state.fetchCities)
+  const provincesOptions = useCountriesStore(state => state.provinces)
+  const citysOptions = useCountriesStore(state => state.cities)
+  const countryOptions = useCountriesStore(state => state.countries)
+  const hierarchyOptions = useCountriesStore(state => state.hierarchy)
+  const workDiagramOptions = useCountriesStore(state => state.workDiagram)
+  const contractorCompanies = useCountriesStore(state => state.contractors)
+
+  const form = useForm<z.infer<typeof accordionSchema>>({
+    resolver: zodResolver(accordionSchema),
+    defaultValues: {
+      lastname: '',
+      firstname: '',
+      nationality: undefined,
+      cuil: '',
+      document_type: undefined,
+      document_number: '',
+      birthplace: undefined,
+      genre: undefined,
+      marital_status: undefined,
+      level_of_education: undefined,
+      picture: '',
+      street: '',
+      street_number: '',
+      province: undefined,
+      city: undefined,
+      postal_code: '',
+      phone: '',
+      email: '',
+      file: '',
+      hierarchical_position: undefined,
+      company_position: '',
+      workflow_diagram: undefined,
+      normal_hours: '',
+      type_of_contract: undefined,
+      allocated_to: undefined,
+      date_of_admission: '',
+    },
+  })
 
   const PERSONALDATA = [
     {
       label: 'Nombre',
       type: 'text',
       placeholder: 'Nombre',
+      name: 'firstname',
     },
     {
       label: 'Apellido',
       type: 'text',
       placeholder: 'Apellido',
+      name: 'lastname',
     },
     {
       label: 'Nacionalidad',
       type: 'select',
       placeholder: 'Nacionalidad',
-      options: nacionaliOptions,
+      options: nacionaliOptionsENUM,
+      name: 'nationality',
     },
     {
       label: 'CUIL',
       type: 'text',
       placeholder: 'CUIL',
+      name: 'cuil',
     },
     {
       label: 'Tipo de documento',
       type: 'select',
       placeholder: 'Tipo de documento',
-      options: documentOptions,
+      options: documentOptionsENUM,
+      name: 'document_type',
     },
     {
       label: 'Numero de documento',
       type: 'text',
       placeholder: 'Numero de documento',
+      name: 'document_number',
     },
     {
       label: 'País de nacimiento',
       type: 'select',
       placeholder: 'Pais de nacimiento',
       options: countryOptions,
+      name: 'birthplace',
     },
     {
       label: 'Sexo',
       type: 'select',
       placeholder: 'Sexo',
-      options: genderOptions,
+      options: genderOptionsENUM,
+      name: 'genre',
     },
     {
       label: 'Estado civil',
       type: 'select',
       placeholder: 'Estado civil',
-      options: civilStateOptions,
+      options: civilStateOptionsENUM,
+      name: 'marital_status',
     },
     {
       label: 'Nivel de instrucción',
       type: 'select',
       placeholder: 'Nivel de instruccion',
-      options: instrutionsOptions,
+      options: instrutionsOptionsENUM,
+      name: 'level_of_education',
     },
     {
       label: 'Foto',
       type: 'file',
       placeholder: 'Foto',
+      name: 'picture',
     },
   ]
   const CONTACTDATA = [
@@ -100,38 +158,45 @@ export const EmployeeAccordion = async () => {
       label: 'Calle',
       type: 'text',
       placeholder: 'Calle',
+      name: 'street',
     },
     {
       label: 'Altura',
       type: 'text',
       placeholder: 'Altura',
+      name: 'street_number',
     },
     {
       label: 'Provincia',
       type: 'select',
       placeholder: 'Provincia',
       options: provincesOptions,
+      name: 'province',
     },
     {
       label: 'Ciudad',
       type: 'select',
       placeholder: 'Ciudad',
       options: citysOptions,
+      name: 'city',
     },
     {
       label: 'Codigo postal',
       type: 'text',
       placeholder: 'Codigo postal',
+      name: 'postal_code',
     },
     {
       label: 'Telefono',
       type: 'text',
       placeholder: 'Telefono',
+      name: 'phone',
     },
     {
       label: 'Email',
       type: 'text',
       placeholder: 'Email',
+      name: 'email',
     },
   ]
   const LABORALDATA = [
@@ -139,151 +204,341 @@ export const EmployeeAccordion = async () => {
       label: 'Legajo', //!Number
       type: 'text',
       placeholder: 'Legajo',
+      name: 'file',
     },
     {
       label: 'Puesto Jerarquico',
       type: 'select',
       placeholder: 'Puesto Jerarquico',
       options: hierarchyOptions,
+      name: 'hierarchical_position',
     },
     {
       label: 'Puesto en la empresa',
       type: 'text',
       placeholder: 'Puesto en la empresa',
+      name: 'company_position',
     },
     {
       label: 'Diagrama de trabajo',
       type: 'select',
       placeholder: 'Diagrama de trabajo',
       options: workDiagramOptions,
+      name: 'workflow_diagram',
     },
     {
       label: 'Horas normales', //!Number
       type: 'text',
       placeholder: 'Horas normales',
+      name: 'normal_hours',
     },
     {
       label: 'Tipo de contrato',
       type: 'select',
       placeholder: 'Tipo de contrato',
-      options: typeOfContract,
+      options: typeOfContractENUM,
+      name: 'type_of_contract',
     },
     {
       label: 'Afectado A',
       type: 'select',
       placeholder: 'Afectado A',
       options: contractorCompanies,
+      name: 'allocated_to',
+    },
+    {
+      label: 'Fecha de ingreso',
+      type: 'date',
+      placeholder: 'Fecha de ingreso',
+      name: 'date_of_admission',
     },
   ]
 
+  const handleProvinceChange = (name: any) => {
+    const provinceId = provincesOptions.find(
+      (province: Province) => province.name === name,
+    )?.id
+    fetchCityValues(provinceId)
+  }
+
+  // 2. Define a submit handler.
+  function onSubmit(values: z.infer<typeof accordionSchema>) {
+    // Do something with the form values.
+    // ✅ This will be type-safe and validated.
+    console.log(values)
+  }
+  const onUploadSuccess = (imageUrl: string) => {}
+
   return (
-    <Accordion type="multiple" className="w-full">
-      <AccordionItem value="personal-data">
-        <AccordionTrigger className="text-2xl">
-          Datos Personales
-        </AccordionTrigger>
-        <AccordionContent className="w-full ">
-          <div className="min-w-full max-w-sm flex flex-wrap gap-8">
-            {PERSONALDATA.map((data, index) => {
-              if (data.type === 'select') {
-                return (
-                  <div key={index} className="w-[300px] flex flex-col gap-2">
-                    <SelectWithData
-                      label={data.label}
-                      placeholder={data.placeholder}
-                      options={data.options}
-                    />
-                  </div>
-                )
-              } else {
-                return (
-                  <div key={index} className="w-[300px] flex flex-col gap-2">
-                    <Label htmlFor={data.label} className="ml-2">
-                      {data.label}
-                    </Label>
-                    <Input
-                      type={data.type}
-                      id={data.label}
-                      placeholder={data.placeholder}
-                      className="w-[300px] bg-white"
-                    />
-                  </div>
-                )
-              }
-            })}
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-      <AccordionItem value="contact-data">
-        <AccordionTrigger className="text-2xl">
-          Datos de contacto
-        </AccordionTrigger>
-        <AccordionContent>
-          <div className="min-w-full max-w-sm flex flex-wrap gap-8">
-            {CONTACTDATA.map((data, index) => {
-              if (data.type === 'select') {
-                return (
-                  <div key={index} className="w-[300px] flex flex-col gap-2">
-                    <SelectWithData
-                      key={index}
-                      label={data.label}
-                      placeholder={data.placeholder}
-                      options={data.options}
-                    />
-                  </div>
-                )
-              } else {
-                return (
-                  <div key={index} className="w-[300px] flex flex-col gap-2">
-                    <Label htmlFor={data.label} className="ml-2">
-                      {data.label}{' '}
-                    </Label>
-                    <Input
-                      type={data.type}
-                      id={data.label}
-                      placeholder={data.placeholder}
-                    />
-                  </div>
-                )
-              }
-            })}
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-      <AccordionItem value="laboral-data">
-        <AccordionTrigger className="text-2xl">
-          Datos laborales
-        </AccordionTrigger>
-        <AccordionContent>
-          <div className="min-w-full max-w-sm flex flex-wrap gap-8">
-            {LABORALDATA.map((data, index) => {
-              if (data.type === 'select') {
-                return (
-                  <div key={index} className="w-[300px] flex flex-col gap-2">
-                    <SelectWithData
-                      key={index}
-                      label={data.label}
-                      placeholder={data.placeholder}
-                      options={data.options}
-                    />
-                  </div>
-                )
-              } else {
-                return (
-                  <div key={index} className="w-[300px] flex flex-col gap-2">
-                    <Label htmlFor={data.label} className="ml-2">{data.label}</Label>
-                    <Input
-                      type={data.type}
-                      id={data.label}
-                      placeholder={data.placeholder}
-                    />
-                  </div>
-                )
-              }
-            })}
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
+        <Accordion type="multiple" className="w-full">
+          <AccordionItem value="personal-data">
+            <AccordionTrigger className="text-2xl">
+              Datos personales
+            </AccordionTrigger>
+            <AccordionContent className="w-full ">
+              <div className="min-w-full max-w-sm flex flex-wrap gap-8 items-center">
+                {PERSONALDATA.map((data, index) => {
+                  if (data.type === 'file') {
+                    return (
+                      <div
+                        key={index}
+                        className="w-[300px] flex  gap-2"
+                      >
+                        <FormField
+                          control={form.control}
+                          name={data.name as names}
+                          render={({ field }) => (
+                            <FormItem className=''>
+                              
+                              <FormControl>
+                                <div className='flex items-center gap-8 '>
+
+                                <UploadImage
+                                  onImageChange={(imageUrl: string) =>
+                                    form.setValue('picture', imageUrl)
+                                  }
+                                  onUploadSuccess={onUploadSuccess}
+                                  style={{ width: '100px' }}
+                                  inputStyle={{ width: '400px',maxWidth:'300px' }}
+                                />
+                                </div>
+                              </FormControl>
+
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )
+                  }
+                  if (data.type === 'select') {
+                    return (
+                      <div
+                        key={index}
+                        className="w-[300px] flex flex-col gap-2"
+                      >
+                        <FormField
+                          control={form.control}
+                          name={data.name as names}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{data.label}</FormLabel>
+                              <FormControl>
+                                <SelectWithData
+                                  placeholder={data.placeholder}
+                                  options={data.options}
+                                  onChange={field.onChange}
+                                  value={field.value || ''}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )
+                  } else {
+                    return (
+                      <div
+                        key={index}
+                        className="w-[300px] flex flex-col gap-2 "
+                      >
+                        <FormField
+                          control={form.control}
+                          name={data.name as names}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{data.label}</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type={data.type}
+                                  id={data.label}
+                                  placeholder={data.placeholder}
+                                  className="w-[300px] bg-white"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )
+                  }
+                })}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="contact-data">
+            <AccordionTrigger className="text-2xl">
+              Datos de contacto
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="min-w-full max-w-sm flex flex-wrap gap-8">
+                {CONTACTDATA.map((data, index) => {
+                  if (data.type === 'select') {
+                    return (
+                      <div
+                        key={index}
+                        className="w-[300px] flex flex-col gap-2"
+                      >
+                        <FormField
+                          control={form.control}
+                          name={data.name as names}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{data.label}</FormLabel>
+                              <FormControl>
+                                <SelectWithData
+                                  placeholder={data.placeholder}
+                                  options={data.options}
+                                  onChange={event => {
+                                    if (data.name === 'province') {
+                                      handleProvinceChange(event)
+                                    }
+
+                                    field.onChange(event)
+                                  }}
+                                  value={field.value || ''}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )
+                  } else {
+                    return (
+                      <div
+                        key={index}
+                        className="w-[300px] flex flex-col gap-2"
+                      >
+                        <FormField
+                          control={form.control}
+                          name={data.name as names}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{data.label}</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type={data.type}
+                                  id={data.label}
+                                  placeholder={data.placeholder}
+                                  className="w-[300px] bg-white"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )
+                  }
+                })}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="laboral-data">
+            <AccordionTrigger className="text-2xl">
+              Datos laborales
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="min-w-full max-w-sm flex flex-wrap gap-8">
+                {LABORALDATA.map((data, index) => {
+                  if (data.type === 'date') {
+                    ;<div key={index} className="w-[300px] flex flex-col gap-2">
+                      <FormField
+                        control={form.control}
+                        name={data.name as names}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{data.label}</FormLabel>
+                            <FormControl>
+                              <Input
+                                type={data.type}
+                                id={data.label}
+                                placeholder={data.placeholder}
+                                className="w-[300px] bg-white"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  }
+                  if (data.type === 'select') {
+                    return (
+                      <div
+                        key={index}
+                        className="w-[300px] flex flex-col gap-2"
+                      >
+                        <FormField
+                          control={form.control}
+                          name={data.name as names}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{data.label}</FormLabel>
+                              <FormControl>
+                                <SelectWithData
+                                  placeholder={data.placeholder}
+                                  options={data.options}
+                                  onChange={event => {
+                                    if (data.name === 'province') {
+                                      handleProvinceChange(event)
+                                    }
+
+                                    field.onChange(event)
+                                  }}
+                                  value={field.value || ''}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )
+                  } else {
+                    return (
+                      <div
+                        key={index}
+                        className="w-[300px] flex flex-col gap-2"
+                      >
+                        <FormField
+                          control={form.control}
+                          name={data.name as names}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{data.label}</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type={data.type}
+                                  id={data.label}
+                                  placeholder={data.placeholder}
+                                  className="w-[300px] bg-white"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )
+                  }
+                })}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          <Button type="submit">Submit</Button>
+        </Accordion>
+      </form>
+    </Form>
   )
 }
