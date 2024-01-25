@@ -17,11 +17,12 @@ import {
 import { names } from '@/types/types'
 import { accordionSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { SelectWithData } from './SelectWithData'
 import { UploadImage } from './UploadImage'
+import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import {
   Form,
@@ -47,6 +48,13 @@ export const EmployeeAccordion = () => {
   const workDiagramOptions = useCountriesStore(state => state.workDiagram)
   const contractorCompanies = useCountriesStore(state => state.contractors)
 
+  function getAccordionName(inputName: any) {
+    // Divide el nombre del campo de entrada en partes
+    const parts = inputName.split('-')
+
+    // Devuelve la primera parte como el nombre del acordeón
+    return parts[0]
+  }
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
     defaultValues: {
@@ -68,7 +76,7 @@ export const EmployeeAccordion = () => {
       postal_code: '',
       phone: '',
       email: '',
-      file: '',
+      file: undefined,
       hierarchical_position: undefined,
       company_position: '',
       workflow_diagram: undefined,
@@ -78,6 +86,51 @@ export const EmployeeAccordion = () => {
       date_of_admission: '',
     },
   })
+
+  const [accordion1Errors, setAccordion1Errors] = useState(false)
+  const [accordion2Errors, setAccordion2Errors] = useState(false)
+  const [accordion3Errors, setAccordion3Errors] = useState(false)
+
+  useEffect(() => {
+    const { errors } = form.formState
+
+    // Inicializa un nuevo estado de error para los acordeones
+    const acordeon1 = []
+    const acordeon2 = []
+    const acordeon3 = []
+
+    // Itera sobre los errores de validación
+    for (const error of Object.keys(errors)) {
+      //Si todos los acordeones tienen errores parar de iterar
+
+      if (PERSONALDATA.find(e => e.name === error)) {
+        acordeon1.push(error)
+      }
+      if (CONTACTDATA.find(e => e.name === error)) {
+        acordeon2.push(error)
+      }
+      if (LABORALDATA.find(e => e.name === error)) {
+        acordeon3.push(error)
+      }
+    }
+    if (acordeon1.length > 0) {
+      setAccordion1Errors(true)
+    } else {
+      setAccordion1Errors(false)
+    }
+    if (acordeon2.length > 0) {
+      setAccordion2Errors(true)
+    } else {
+      setAccordion2Errors(false)
+    }
+    if (acordeon3.length > 0) {
+      setAccordion3Errors(true)
+    } else {
+      setAccordion3Errors(false)
+    }
+
+    // Actualiza el estado de error de los acordeones
+  }, [form.formState.errors])
 
   const PERSONALDATA = [
     {
@@ -274,35 +327,43 @@ export const EmployeeAccordion = () => {
       <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
         <Accordion type="multiple" className="w-full">
           <AccordionItem value="personal-data">
-            <AccordionTrigger className="text-2xl">
-              Datos personales
+            <AccordionTrigger className="text-2xl hover:no-underline">
+              <div className="flex gap-5 items-center flex-wrap">
+                <span className="hover:underline"> Datos personales </span>
+                {accordion1Errors && (
+                  <Badge
+                    className="h-6 hover:no-underline"
+                    variant="destructive"
+                  >
+                    Falta corregir algunos campos
+                  </Badge>
+                )}
+              </div>
             </AccordionTrigger>
             <AccordionContent className="w-full ">
               <div className="min-w-full max-w-sm flex flex-wrap gap-8 items-center">
                 {PERSONALDATA.map((data, index) => {
                   if (data.type === 'file') {
                     return (
-                      <div
-                        key={index}
-                        className="w-[300px] flex  gap-2"
-                      >
+                      <div key={index} className="w-[300px] flex  gap-2">
                         <FormField
                           control={form.control}
                           name={data.name as names}
                           render={({ field }) => (
-                            <FormItem className=''>
-                              
+                            <FormItem className="">
                               <FormControl>
-                                <div className='flex items-center gap-8 '>
-
-                                <UploadImage
-                                  onImageChange={(imageUrl: string) =>
-                                    form.setValue('picture', imageUrl)
-                                  }
-                                  onUploadSuccess={onUploadSuccess}
-                                  style={{ width: '100px' }}
-                                  inputStyle={{ width: '400px',maxWidth:'300px' }}
-                                />
+                                <div className="flex items-center gap-8 ">
+                                  <UploadImage
+                                    onImageChange={(imageUrl: string) =>
+                                      form.setValue('picture', imageUrl)
+                                    }
+                                    onUploadSuccess={onUploadSuccess}
+                                    style={{ width: '100px' }}
+                                    inputStyle={{
+                                      width: '400px',
+                                      maxWidth: '300px',
+                                    }}
+                                  />
                                 </div>
                               </FormControl>
 
@@ -372,8 +433,15 @@ export const EmployeeAccordion = () => {
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="contact-data">
-            <AccordionTrigger className="text-2xl">
-              Datos de contacto
+            <AccordionTrigger className="text-2xl transition-all hover:no-underline">
+              <div className="flex gap-5 items-center flex-wrap">
+                <span className="hover:underline"> Datos de contacto </span>
+                {accordion2Errors && (
+                  <Badge className="h-6" variant="destructive">
+                    Falta corregir algunos campos
+                  </Badge>
+                )}
+              </div>
             </AccordionTrigger>
             <AccordionContent>
               <div className="min-w-full max-w-sm flex flex-wrap gap-8">
@@ -443,14 +511,21 @@ export const EmployeeAccordion = () => {
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="laboral-data">
-            <AccordionTrigger className="text-2xl">
-              Datos laborales
+            <AccordionTrigger className="text-2xl hover:no-underline">
+              <div className="flex gap-5 items-center flex-wrap hover:no-underline">
+                <span className="hover:underline">Datos laborales</span>
+                {accordion3Errors && (
+                  <Badge className="h-6" variant="destructive">
+                    Faltan corregir algunos campos
+                  </Badge>
+                )}
+              </div>
             </AccordionTrigger>
             <AccordionContent>
               <div className="min-w-full max-w-sm flex flex-wrap gap-8">
                 {LABORALDATA.map((data, index) => {
                   if (data.type === 'date') {
-                    ;<div key={index} className="w-[300px] flex flex-col gap-2">
+                    <div key={index} className="w-[300px] flex flex-col gap-2">
                       <FormField
                         control={form.control}
                         name={data.name as names}
