@@ -20,21 +20,21 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useCompanyData } from '@/hooks/useCompanyData'
+import { useCountriesStore } from '@/store/countries'
 import { companySchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { Loader } from './svg/loader'
 
 export function CompanyRegister() {
-  const { insertCompany, fetchProvinces, fetchCities, provinces, cities } =
-    useCompanyData()
-  const [selectedCities, setSelectedCities] = useState<any[]>([])
-  const [selectedProvince, setSelectedProvince] = useState<Province | null>(
-    null,
-  )
+  const { insertCompany } = useCompanyData()
   const [showLoader, setShowLoader] = useState(false)
+
+  const provincesValues = useCountriesStore(state => state.provinces)
+  const citiesValues = useCountriesStore(state => state.cities)
+  const fetchCityValues = useCountriesStore(state => state.fetchCities)
 
   const form = useForm<z.infer<typeof companySchema>>({
     resolver: zodResolver(companySchema),
@@ -67,34 +67,31 @@ export function CompanyRegister() {
 
   interface City {
     id: number
-    city_name: string
+    name: string
     province_id: number
   }
 
   const handleProvinceChange = (selectedProvinceName: string) => {
     //Buscar el objeto Province correspondiente al selectedProvinceId
-    const selectedProvince: Province | undefined = provinces.find(
+    const selectedProvince = provincesValues.find(
       p => p.name === selectedProvinceName,
     )
     if (selectedProvince) {
+      fetchCityValues(selectedProvince.id)
       form.setValue('province_id', selectedProvince.id)
-      setSelectedProvince(selectedProvince)
     }
   }
 
   const handleCityChange = (selectedCityName: string) => {
     // Buscar el objeto City correspondiente al selectedCityName
-    const selectedCity: City | undefined = cities.find(
-      c => c.city_name === selectedCityName,
-    )
+    const selectedCity = citiesValues.find(c => c.name === selectedCityName)
     if (selectedCity) {
       form.setValue('city', selectedCity.id)
-      setSelectedCities([selectedCity])
-      console.log(selectedCity.id, selectedCity.city_name)
     }
   }
 
   const onSubmit = async (companyData: z.infer<typeof companySchema>) => {
+    console.log(companyData)
     try {
       //Procesa los valores antes de enviarlos a la base de datos
       const processedCompanyData = {
@@ -123,18 +120,6 @@ export function CompanyRegister() {
       setShowLoader(false)
     }
   }
-
-  useEffect(() => {
-    fetchProvinces()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-  useEffect(() => {
-    console.log('Valor de selectedProvince:', selectedProvince)
-    if (selectedProvince) {
-      fetchCities(selectedProvince.id)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedProvince])
 
   const processText = (text: string): string =>
     text
@@ -288,7 +273,7 @@ export function CompanyRegister() {
                 <SelectValue placeholder="Selecciona una provincia" />
               </SelectTrigger>
               <SelectContent>
-                {provinces.map(province => (
+                {provincesValues?.map(province => (
                   <SelectItem key={province.id} value={province.name}>
                     {province.name}
                   </SelectItem>
@@ -306,9 +291,9 @@ export function CompanyRegister() {
                 <SelectValue placeholder="Selecciona una ciudad" />
               </SelectTrigger>
               <SelectContent>
-                {cities.map(city => (
-                  <SelectItem key={city.id} value={city.city_name}>
-                    {city.city_name}
+                {citiesValues?.map(city => (
+                  <SelectItem key={city.id} value={city.name}>
+                    {city.name}
                   </SelectItem>
                 ))}
               </SelectContent>
