@@ -48,13 +48,6 @@ export const EmployeeAccordion = () => {
   const workDiagramOptions = useCountriesStore(state => state.workDiagram)
   const contractorCompanies = useCountriesStore(state => state.contractors)
 
-  function getAccordionName(inputName: any) {
-    // Divide el nombre del campo de entrada en partes
-    const parts = inputName.split('-')
-
-    // Devuelve la primera parte como el nombre del acordeón
-    return parts[0]
-  }
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
     defaultValues: {
