@@ -352,8 +352,9 @@ export const EmployeeAccordion = () => {
                           render={({ field }) => (
                             <FormItem className="">
                               <FormControl>
-                                <div className="flex items-center gap-8 ">
+                              <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
                                   <UploadImage
+                                   labelInput="Subir foto"
                                     onImageChange={(imageUrl: string) =>
                                       form.setValue('picture', imageUrl)
                                     }
