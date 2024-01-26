@@ -1,14 +1,18 @@
 'use client'
-import React, { ChangeEvent, useState } from 'react'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { useImageUpload } from '@/hooks/useUploadImage'
+import React, { ChangeEvent, useState } from 'react'
+import { FormDescription, FormLabel } from './ui/form'
 
 interface UploadImageProps {
   onImageChange: (imageUrl: string) => void
   onUploadSuccess: (imageUrl: string) => void
   style?: React.CSSProperties
   inputStyle?: React.CSSProperties
+  label?: string
+  desciption?: string
+  labelInput?: string
 }
 
 export function UploadImage({
@@ -16,8 +20,10 @@ export function UploadImage({
   onUploadSuccess,
   style,
   inputStyle,
+  label,
+  desciption,
+  labelInput,
 }: UploadImageProps) {
-
   const { uploadImage, loading } = useImageUpload()
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [base64Image, setBase64Image] = useState<string>('')
@@ -57,35 +63,39 @@ export function UploadImage({
 
   return (
     <>
-    <div>
-
-      <label htmlFor="fileInput">Seleccionar imagen:</label>
-      <Input
-        type="file"
-        accept="image/*"
-        onChange={handleImageChange}
-        id="fileInput"
-        style={{ ...inputStyle }}
-      />
-    </div>
-
-<div className='flex items-center w-[300px] justify-around'>
-
-      {base64Image && (
-        <img
-          src={base64Image}
-          alt="Vista previa de la imagen"
-          
-          style={{ maxWidth: '100%', marginTop: '10px', ...style}}
+      <div className="flex flex-col  space-y-2">
+        <FormLabel>{labelInput}</FormLabel>
+        <Input
+          type="file"
+          accept="image/*"
+          className="self-center"
+          onChange={handleImageChange}
+          id="fileInput"
+          style={{ ...inputStyle }}
         />
-      )}
-      {loading}
-      {imageFile && (
-        <Button onClick={handleUpload} disabled={loading}>
-          Confirmar y Subir
-        </Button>
-      )}
-</div>
+        {desciption && (
+          <FormDescription className="max-w-[300px] p-0 m-0">
+            {desciption}
+          </FormDescription>
+        )}
+      </div>
+
+      <div className="flex items-center w-[300px] justify-around bg-slate-200 rounded-xl">
+        {base64Image && (
+          <img
+            src={base64Image}
+            className="rounded-xl my-1"
+            alt="Vista previa de la imagen"
+            style={{ maxWidth: '100%', ...style }}
+          />
+        )}
+        {loading}
+        {imageFile && (
+          <Button onClick={handleUpload} disabled={loading}>
+            Confirmar y Subir
+          </Button>
+        )}
+      </div>
     </>
   )
 }
