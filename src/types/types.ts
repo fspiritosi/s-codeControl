@@ -22,7 +22,7 @@ export type LoggedUser = {
 
 export type Userprofile = {}
 
-export type profile = {
+export type profileUser = {
   id?: string
   company_id?: string
   created_at?: string
@@ -82,3 +82,19 @@ export type names =
   | 'marital_status'
   | 'level_of_education'
   | 'picture'
+
+
+
+
+
+
+  export type Employee = {
+    id: string
+    foto: string
+    nombre: string
+    email: string
+    cuil: string
+    document: string
+  }
+
+  
