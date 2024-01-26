@@ -91,7 +91,7 @@ export function CompanyRegister() {
   }
 
   const onSubmit = async (companyData: z.infer<typeof companySchema>) => {
-    console.log(companyData)
+   
     try {
       //Procesa los valores antes de enviarlos a la base de datos
       const processedCompanyData = {
@@ -110,9 +110,11 @@ export function CompanyRegister() {
       }
 
       //Insertar la compañía con los datos procesados
-      const company = await insertCompany(processedCompanyData)
-      //const company = await insertCompany(companyData)
-      console.log('Resultado de la inserción:', company)
+      const company = await insertCompany({
+        ...processedCompanyData,
+        company_logo: processedCompanyData.company_logo || '',
+      })
+
       setShowLoader(true)
     } catch (err) {
       console.error('Ocurrió un error:', err)
@@ -391,12 +393,11 @@ export function CompanyRegister() {
               </FormItem>
             )}
           />
-          
         </div>
 
-          <Button type="submit" className='mt-5' disabled={showLoader}>
-            {showLoader ? <Loader /> : 'Registrar Compañía'}
-          </Button>
+        <Button type="submit" className="mt-5" disabled={showLoader}>
+          {showLoader ? <Loader /> : 'Registrar Compañía'}
+        </Button>
       </form>
     </Form>
   )
