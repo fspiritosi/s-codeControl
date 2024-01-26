@@ -24,11 +24,13 @@ export default function NavBar() {
   }
 
   return (
-    <nav className="flex items-center justify-between bg-gray-800 text-white p-4 rounded-md mb-2">
+    <nav className="flex items-center justify-between text-white p-4 mb-2 bg-slate-800">
       <div className="flex items-center">
-        <Link href="/" passHref className="text-white text-2xl font-bold">
-          Home
-        </Link>
+        <Link
+          href="/"
+          passHref
+          className="text-white text-2xl font-bold"
+        ></Link>
       </div>
 
       <div className="flex items-center">

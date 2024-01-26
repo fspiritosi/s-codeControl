@@ -31,13 +31,19 @@ export const useCompanyData = () => {
         .from('company')
         .insert([companyData])
         .select()
+     if (error) {
+      console.error('Error al insertar en la tabla company:', error);
+    } else {
       toast({
         title: 'Datos cargados',
-      })
-      return data
-    } catch (err) {
-      return err
+      });
     }
+
+    return data;
+  } catch (err) {
+    console.error('Ocurrió un error en insertCompany:', err);
+    return err;
+  }
   }
 
   const fetchProvinces = async () => {

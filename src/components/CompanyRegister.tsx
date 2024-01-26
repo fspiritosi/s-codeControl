@@ -110,13 +110,15 @@ export function CompanyRegister() {
   }
 
   const handleIndustryChange = (selectedIndustryType: string) => {
-    const selectedIndustry: Industry | undefined = industry.find(
-      p => p.name === selectedIndustryType,
-    )
-    if (selectedIndustry) {
-      form.setValue('industry', selectedIndustry.name)
-      setSelectedIndustry(selectedIndustry)
-      console.log('industria: ', selectedIndustry)
+    if (selectedIndustryType !== selectedIndustry?.name) {
+      const selectedIndustry: Industry | undefined = industry.find(
+        p => p.name === selectedIndustryType,
+      )
+      if (selectedIndustry) {
+        form.setValue('industry', selectedIndustry.name)
+        setSelectedIndustry(selectedIndustry)
+        console.log('industria: ', selectedIndustry)
+      }
     }
   }
 
@@ -161,7 +163,7 @@ export function CompanyRegister() {
   }, [selectedProvince])
   useEffect(() => {
     fetchIndustryType()
-  }, [industry])
+  }, [])
   const processText = (text: string): string =>
     text
       .normalize('NFD')
