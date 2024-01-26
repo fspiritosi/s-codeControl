@@ -43,9 +43,7 @@ export function RegisterForm() {
       lastName: '',
       email: '',
       password: '',
-      confirmPassword: '',
-      document: '',
-      birthdate: '',
+      confirmPassword: ''
     },
   })
 
@@ -187,59 +185,7 @@ export function RegisterForm() {
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="document"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Documento</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Número de identificación"
-                    maxLength={10}
-                    onKeyPress={event => {
-                      // Prevenir la entrada de caracteres no numéricos
-                      if (!/[0-9]/.test(event.key)) {
-                        event.preventDefault()
-                      }
-                    }}
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Por favor ingresa tu documento.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="birthdate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Fecha de nacimiento</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="DD/MM/AAAA"
-                    type="date"
-                    max={
-                      new Date(
-                        new Date().setFullYear(new Date().getFullYear() - 18),
-                      )
-                        .toISOString()
-                        .split('T')[0]
-                    }
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Por favor ingresa tu fecha de nacimiento.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+       
           <div className="flex w-full justify-center flex-col items-center gap-5">
             <Button
               className="w-[100%] sm:w-[80%] lg:w-[60%] self-center"

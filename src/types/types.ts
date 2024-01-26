@@ -29,8 +29,6 @@ export type profile = {
   firstName: string
   lastName: string
   credentialId: string
-  document: string
-  birthdate: string
   email: string
 }
 
@@ -71,3 +69,16 @@ export type BestBussinesData = {
   title: string,
   description: string
 }[]
+
+export type names =
+  | 'lastname'
+  | 'firstname'
+  | 'nationality'
+  | 'cuil'
+  | 'document_type'
+  | 'document_number'
+  | 'birthplace'
+  | 'genre'
+  | 'marital_status'
+  | 'level_of_education'
+  | 'picture'

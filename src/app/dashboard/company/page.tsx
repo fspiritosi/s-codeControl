@@ -2,9 +2,10 @@
 import { CompanyRegister } from '@/components/CompanyRegister'
 export default function companyRegister() {
   return (
-    <main className="flex justify-center items-center py-10 flex-col bg-black/5">
-      <div className="bg-white sm:w-1/2 p-10 rounded-xl flex flex-col">
-        <h2 className="self-center text-2xl pb-5">Registrar Compañía</h2>
+    <main className="">
+        <h2 className=" text-3xl pb-5 pl-10">Registrar Compañía</h2>
+        <p className='pl-10 max-w-1/2'>Completa este formulario con los datos de tu nueva compañia</p>
+      <div className="bg-white  p-10 rounded-xl flex w-full">
         <CompanyRegister />
       </div>
     </main>

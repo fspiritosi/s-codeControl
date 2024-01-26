@@ -1,22 +1,24 @@
-export const nacionaliOptions = ['Argentino', 'Extranjero']
-export const documentOptions = ['DNI', 'LE', 'LC', 'PASAPORTE']
-export const genderOptions = ['Masculino', 'Femenino', 'No Declarado']
-export const civilStateOptions = [
+
+export const nacionaliOptionsENUM = ['Argentino', 'Extranjero']
+export const documentOptionsENUM = ['DNI', 'LE', 'LC', 'PASAPORTE']
+export const genderOptionsENUM = ['Masculino', 'Femenino', 'No Declarado']
+export const civilStateOptionsENUM = [
   'Casado',
   'Soltero',
   'Divorciado',
   'Viudo',
   'Separado',
 ]
-export const instrutionsOptions = [
+export const instrutionsOptionsENUM = [
   'Primario',
   'Secundario',
   'Terciario',
   'Universitario',
   'PosGrado',
 ]
-export const typeOfContract = [
+export const typeOfContractENUM = [
   'Período de prueba',
   'A tiempo indeterminado',
   'Plazo fijo',
 ]
+

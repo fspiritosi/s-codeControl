@@ -20,20 +20,21 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useCompanyData } from '@/hooks/useCompanyData'
+import { useCountriesStore } from '@/store/countries'
 import { companySchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { Loader } from './svg/loader'
 
 export function CompanyRegister() {
-  const { insertCompany, fetchProvinces, fetchCities, provinces, cities } =
-  useCompanyData()
-const [selectedCities, setSelectedCities] = useState<any[]>([])
-const [selectedProvince, setSelectedProvince] = useState<Province | null>(
-  null,)
+  const { insertCompany } = useCompanyData()
   const [showLoader, setShowLoader] = useState(false)
+
+  const provincesValues = useCountriesStore(state => state.provinces)
+  const citiesValues = useCountriesStore(state => state.cities)
+  const fetchCityValues = useCountriesStore(state => state.fetchCities)
 
   const form = useForm<z.infer<typeof companySchema>>({
     resolver: zodResolver(companySchema),
@@ -66,34 +67,31 @@ const [selectedProvince, setSelectedProvince] = useState<Province | null>(
 
   interface City {
     id: number
-    city_name: string
+    name: string
     province_id: number
   }
 
   const handleProvinceChange = (selectedProvinceName: string) => {
     //Buscar el objeto Province correspondiente al selectedProvinceId
-    const selectedProvince: Province | undefined = provinces.find(
+    const selectedProvince = provincesValues.find(
       p => p.name === selectedProvinceName,
     )
     if (selectedProvince) {
+      fetchCityValues(selectedProvince.id)
       form.setValue('province_id', selectedProvince.id)
-      setSelectedProvince(selectedProvince)
     }
   }
 
   const handleCityChange = (selectedCityName: string) => {
     // Buscar el objeto City correspondiente al selectedCityName
-    const selectedCity: City | undefined = cities.find(
-      c => c.city_name === selectedCityName,
-    )
+    const selectedCity = citiesValues.find(c => c.name === selectedCityName)
     if (selectedCity) {
       form.setValue('city', selectedCity.id)
-      setSelectedCities([selectedCity])
-      console.log(selectedCity.id, selectedCity.city_name)
     }
   }
 
   const onSubmit = async (companyData: z.infer<typeof companySchema>) => {
+    console.log(companyData)
     try {
       //Procesa los valores antes de enviarlos a la base de datos
       const processedCompanyData = {
@@ -123,18 +121,6 @@ const [selectedProvince, setSelectedProvince] = useState<Province | null>(
     }
   }
 
-  useEffect(() => {
-    fetchProvinces()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-  useEffect(() => {
-    console.log('Valor de selectedProvince:', selectedProvince)
-    if (selectedProvince) {
-      fetchCities(selectedProvince.id)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedProvince])
-
   const processText = (text: string): string =>
     text
       .normalize('NFD')
@@ -146,217 +132,272 @@ const [selectedProvince, setSelectedProvince] = useState<Province | null>(
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="company_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nombre de la compañia</FormLabel>
-              <FormControl>
-                <Input placeholder="nombre de la compañia" {...field} />
-              </FormControl>
-              <FormDescription>
-                Por favor ingresa el nombre de la compañia.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <div className=" flex flex-wrap gap-8 items-center w-full">
+          <FormField
+            control={form.control}
+            name="company_name"
+            render={({ field }) => (
+              <FormItem className="flex flex-col justify-center">
+                <FormLabel>Nombre de la compañia</FormLabel>
+                <FormControl>
+                  <Input
+                    className="max-w-[350px] w-[300px]"
+                    placeholder="nombre de la compañia"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Por favor ingresa el nombre de la compañia.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="company_cuit"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>CUIT de la compañia</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="CUIT de la compañia xx-xxxxxxxx-x"
-                  maxLength={13}
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>Por favor ingresa el CUIT .</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="company_cuit"
+            render={({ field }) => (
+              <FormItem className="flex flex-col justify-center max-w-[300px]">
+                <FormLabel>CUIT de la compañia</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="xx-xxxxxxxx-x"
+                    className="max-w-[400px] w-[300px]"
+                    maxLength={13}
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>Por favor ingresa el CUIT .</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Descripción</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Descripción de la compañía" {...field} />
-              </FormControl>
-              <FormDescription>
-                Por favor ingresa la descripción de la compañia.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="website"
+            render={({ field }) => (
+              <FormItem className="flex flex-col justify-center">
+                <FormLabel>Sitio Web</FormLabel>
+                <FormControl>
+                  <Input
+                    className="max-w-[350px]  w-[300px]"
+                    placeholder="sitio web"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Por favor ingresa el sitio web de la compañia.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="website"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Sitio Web</FormLabel>
-              <FormControl>
-                <Input placeholder="sitio web" {...field} />
-              </FormControl>
-              <FormDescription>
-                Por favor ingresa el sitio web de la compañia.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="contact_email"
+            render={({ field }) => (
+              <FormItem className="flex flex-col justify-center ">
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input
+                    className="max-w-[350px]  w-[300px]"
+                    placeholder="email"
+                    autoComplete="email"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>Por favor ingresa tu email.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="contact_email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input placeholder="email" autoComplete="email" {...field} />
-              </FormControl>
-              <FormDescription>Por favor ingresa tu email.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="contact_phone"
+            render={({ field }) => (
+              <FormItem className="flex flex-col justify-center max-w-[300px]">
+                <FormLabel>Número de telefono</FormLabel>
+                <FormControl>
+                  <Input
+                    className="max-w-[350px]  w-[300px]"
+                    placeholder="número de telefono"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription className="max-w-[300px]">
+                  Por favor ingresa el número de telefono de la compañia.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="contact_phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Número de telefono</FormLabel>
-              <FormControl>
-                <Input placeholder="número de telefono" {...field} />
-              </FormControl>
-              <FormDescription>
-                Por favor ingresa el número de telefono de la compañia.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="address"
+            render={({ field }) => (
+              <FormItem className="flex flex-col justify-center">
+                <FormLabel>Dirección</FormLabel>
+                <FormControl>
+                  <Input
+                    className="max-w-[350px]  w-[300px]"
+                    placeholder="dirección"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription className="max-w-[300px]">
+                  Por favor ingresa tu dirección
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="address"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Dirección</FormLabel>
-              <FormControl>
-                <Input placeholder="dirección" {...field} />
-              </FormControl>
-              <FormDescription>Por favor ingresa tu dirección</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="country"
+            render={({ field }) => (
+              <FormItem className="flex flex-col justify-center">
+                <FormLabel>Seleccione un pais</FormLabel>
+                <Select>
+                  <SelectTrigger className="max-w-[350px]  w-[300px]">
+                    <SelectValue placeholder="Selecciona un país" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="argentina">Argentina</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription className="max-w-[300px]">
+                  Por favor ingresa tu dirección
+                </FormDescription>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="province_id"
+            render={({ field }) => (
+              <FormItem className="flex flex-col justify-center">
+                <FormLabel>Seleccione una provincia</FormLabel>
+                <Select onValueChange={handleProvinceChange}>
+                  <SelectTrigger className="max-w-[350px]  w-[300px]">
+                    <SelectValue placeholder="Selecciona una provincia" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {provincesValues?.map(province => (
+                      <SelectItem key={province.id} value={province.name}>
+                        {province.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription className="max-w-[300px]">
+                  Por favor selecciona tu provincia
+                </FormDescription>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="city"
+            render={({ field }) => (
+              <FormItem className="flex flex-col justify-center">
+                <FormLabel>Seleccione una ciudad</FormLabel>
+                <Select onValueChange={handleCityChange}>
+                  <SelectTrigger className="max-w-[350px] w-[300px]">
+                    <SelectValue placeholder="Selecciona una ciudad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {citiesValues?.map(city => (
+                      <SelectItem key={city.id} value={city.name}>
+                        {city.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription className="max-w-[300px]">
+                  Por favor selecciona tu ciudad
+                </FormDescription>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="industry"
+            render={({ field }) => (
+              <FormItem className="flex flex-col justify-center max-w-[300px]">
+                <FormLabel>Industria</FormLabel>
+                <FormControl>
+                  <Input
+                    className="max-w-[350px]  w-[300px]"
+                    placeholder="industria"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription className="max-w-[300px]">
+                  Por favor ingresa la Industria de tu compañia
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        {/* <FormField
-          control={form.control}
-          name="country"
-          render={({ field }) => ( */}
-        <Select>
-          <SelectTrigger className="">
-            <SelectValue placeholder="Selecciona un país" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="argentina">Argentina</SelectItem>
-          </SelectContent>
-        </Select>
-        {/* )}
-        /> */}
-        <FormField
-          control={form.control}
-          name="province_id"
-          render={({ field }) => (
-            <Select onValueChange={handleProvinceChange}>
-              <SelectTrigger className="">
-                <SelectValue placeholder="Selecciona una provincia" />
-              </SelectTrigger>
-              <SelectContent>
-                {provinces.map(province => (
-                  <SelectItem key={province.id} value={province.name}>
-                    {province.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="city"
-          render={({ field }) => (
-            <Select onValueChange={handleCityChange}>
-              <SelectTrigger className="">
-                <SelectValue placeholder="Selecciona una ciudad" />
-              </SelectTrigger>
-              <SelectContent>
-                {cities.map(city => (
-                  <SelectItem key={city.id} value={city.city_name}>
-                    {city.city_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="industry"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Industria</FormLabel>
-              <FormControl>
-                <Input placeholder="industria" {...field} />
-              </FormControl>
-              <FormDescription>
-                Por favor ingresa la Industria de tu compañia
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="company_logo"
+            render={({ field }) => (
+              <FormItem className=" max-w-[600px] flex flex-col justify-center">
+                <FormControl>
+                  <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
+                    <UploadImage
+                      labelInput="Logo"
+                      desciption="Sube el logo de tu compañia"
+                      style={{ width: '100px' }}
+                      onImageChange={(imageUrl: string) =>
+                        form.setValue('company_logo', imageUrl)
+                      }
+                      onUploadSuccess={onUploadSuccess}
+                      inputStyle={{ width: '300px' }}
+                    />
+                  </div>
+                </FormControl>
 
-        <FormField
-          control={form.control}
-          name="company_logo"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Logo</FormLabel>
-              <FormControl>
-                <UploadImage
-                  onImageChange={(imageUrl: string) =>
-                    form.setValue('company_logo', imageUrl)
-                  }
-                  onUploadSuccess={onUploadSuccess}
-                />
-              </FormControl>
-              <FormDescription>
-                Por favor ingresa el logo de tu compañia
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" disabled={showLoader}>
-          {showLoader ? <Loader /> : 'Registrar Compañía'}
-        </Button>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem className="flex flex-col justify-center">
+                <FormLabel>Descripción</FormLabel>
+                <FormControl>
+                  <Textarea
+                    className="max-w-[350px] w-[300px]"
+                    placeholder="Descripción de la compañía"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription className="max-w-[300px]">
+                  Por favor ingresa la descripción de la compañia.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+        </div>
+
+          <Button type="submit" className='mt-5' disabled={showLoader}>
+            {showLoader ? <Loader /> : 'Registrar Compañía'}
+          </Button>
       </form>
     </Form>
   )
 }
-
