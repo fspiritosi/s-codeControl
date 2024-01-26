@@ -1,8 +1,10 @@
+'use client'
 import { toast } from '@/components/ui/use-toast'
-import { supabase } from '../../supabase/supabase'
+import { useLoggedUserStore } from '@/store/loggedUser'
 import { UUID } from 'crypto'
-import { useState } from 'react'
+import { supabase } from '../../supabase/supabase'
 import { useEdgeFunctions } from './useEdgeFunctions'
+
 
 type company = {
   company_name: string
@@ -20,7 +22,13 @@ type company = {
   employees: UUID
 }
 
+/**
+ * Custom hook for handling company data.
+ * @returns An object containing the `insertCompany` function.
+ */
+
 export const useCompanyData = () => {
+  const {errorTranslate} = useEdgeFunctions()
 
   const insertCompany = async (companyData: Omit<company, 'employees'>) => {
     try {
@@ -28,9 +36,25 @@ export const useCompanyData = () => {
         .from('company')
         .insert([companyData])
         .select()
+
+      const id = data?.[0].id
+      const profile = useLoggedUserStore.getState().profile
+      const { data: data2, error: error2 } = await supabase
+        .from('profile')
+        .update({
+          company_id: [id],
+        })
+        .eq('id', profile?.[0].id)
+
+      if (error || error2) {
+        const message = await errorTranslate(error?.message || error2?.message || '')
+        throw new Error(String(message).replaceAll('"', ''))
+      }
+
       toast({
         title: 'Datos cargados',
       })
+      
       return data
     } catch (err) {
       return err
