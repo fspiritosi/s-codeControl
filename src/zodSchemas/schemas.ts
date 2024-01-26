@@ -37,15 +37,6 @@ export const registerSchema = z
         message: 'El nombre solo puede contener letras.',
       })
       .trim(),
-    document: z
-      .string()
-      .min(7, {
-        message: 'El documento debe tener al menos 7 caracteres.',
-      })
-      .max(9999999999, {
-        message: 'El documento debe tener menos de 11 caracteres.',
-      }),
-    birthdate: z.string(),
     lastName: z
       .string()
       .min(2, {
@@ -93,11 +84,11 @@ export const companySchema = z.object({
       },
     ),
   description: z.string().max(200),
-  website: z.string().url(),
+  website: z.string().url(), 
   contact_email: z.string().email(),
   contact_phone: z.string().refine(value => /^\+?[0-9]{1,25}$/.test(value), {
     message:
-      'Phone debe contener solo números y opcionalmente un signo + al principio, con un límite de hasta 25 caracteres',
+      'El número de teléfono debe contener solo números',
   }),
   address: z
     .string()
