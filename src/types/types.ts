@@ -29,8 +29,6 @@ export type profile = {
   firstName: string
   lastName: string
   credentialId: string
-  document: string
-  birthdate: string
   email: string
 }
 
