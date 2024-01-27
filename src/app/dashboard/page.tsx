@@ -1,9 +1,10 @@
 // 'use client'
 
+import { AlertComponent } from '@/components/AlertComponent'
 import { Employee } from '@/types/types'
 import { columns } from './columns'
 import { DataTable } from './data-table'
-import { AlertComponent } from '@/components/AlertComponent'
+// import { useLoggedUserStore } from '@/store/loggedUser'
 
 async function getData(): Promise<Employee[]> {
   // Fetch data from your API here.
@@ -127,18 +128,18 @@ async function getData(): Promise<Employee[]> {
       cuil: '20-76543210-9',
       document: '76543210',
       foto: 'Photo',
-    }
-
+    },
   ]
 }
 
 export default async function Home() {
+  //! La pagina se teien que recargar cada vez que pasa un cambio en estado global de la compañia seleccionada  (Probablemente tenga que ser reenderizada en el cliente)
 
   const data = await getData()
 
   return (
     <main className="flex flex-col ">
-     <AlertComponent />
+      <AlertComponent />
       <h2 className="text-3xl">Empleados</h2>
       <div className="container mx-auto pt-10">
         <DataTable columns={columns} data={data} />
