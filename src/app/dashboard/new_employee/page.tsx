@@ -1,11 +1,14 @@
-import { EmployeeAccordion } from '@/components/EmployeeAccordion';
+import { EmployeeAccordion } from '@/components/EmployeeAccordion'
 
-const NewEmployeePage= () => {
-   
+const NewEmployeePage = () => {
+  return (
+    <main className="text-3xl">
+      <h2>Añadir nuevo empleado</h2>
+      <section className='flex justify-center pt-8'>
+        <EmployeeAccordion />
+      </section>
+    </main>
+  )
+}
 
-    return (
-       <EmployeeAccordion />
-    )
-};
-
-export default NewEmployeePage;
+export default NewEmployeePage

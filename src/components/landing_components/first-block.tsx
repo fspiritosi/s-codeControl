@@ -14,7 +14,7 @@ function FirstBlock() {
         <div>
           <Reveal>
           <h1 className='text-5xl font-semibold'>
-            Gesioná 
+            Gestioná 
             <span className='block text-blue-400'>eficientemente</span>
             todos tus procesos
           </h1>
