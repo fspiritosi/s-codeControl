@@ -23,7 +23,7 @@ import { useCompanyData } from '@/hooks/useCompanyData'
 import { useCountriesStore } from '@/store/countries'
 import { companySchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { Loader } from './svg/loader'
@@ -31,9 +31,11 @@ import { useLoggedUserStore } from '@/store/loggedUser'
 
 export function CompanyRegister() {
   const profile = useLoggedUserStore(state => state.profile)
-  const { insertCompany } = useCompanyData()
+  const { insertCompany, fetchIndustryType, industry } = useCompanyData()
   const [showLoader, setShowLoader] = useState(false)
-
+  const [selectedIndustry, setSelectedIndustry] = useState<Industry | null>(
+    null,
+  )
   const provincesValues = useCountriesStore(state => state.provinces)
   const citiesValues = useCountriesStore(state => state.cities)
   const fetchCityValues = useCountriesStore(state => state.fetchCities)
@@ -97,18 +99,22 @@ export function CompanyRegister() {
     }
   }
 
-  // const handleIndustryChange = (selectedIndustryType: string) => {
-  //   if (selectedIndustryType !== selectedIndustry?.name) {
-  //     const selectedIndustry: Industry | undefined = industry.find(
-  //       p => p.name === selectedIndustryType,
-  //     )
-  //     if (selectedIndustry) {
-  //       form.setValue('industry', selectedIndustry.name)
-  //       setSelectedIndustry(selectedIndustry)
-  //       console.log('industria: ', selectedIndustry)
-  //     }
-  //   }
-  //}
+  const handleIndustryChange = (selectedIndustryType: string) => {
+    if (selectedIndustryType !== selectedIndustry?.name) {
+      const selectedIndustry: Industry | undefined = industry.find(
+        p => p.name === selectedIndustryType,
+      )
+      if (selectedIndustry) {
+        form.setValue('industry', selectedIndustry.name)
+        setSelectedIndustry(selectedIndustry)
+        console.log('industria: ', selectedIndustry)
+      }
+    }
+  }
+
+  useEffect(() => {
+    fetchIndustryType()
+  }, [])
 
   const onSubmit = async (companyData: z.infer<typeof companySchema>) => {
     try {
@@ -354,7 +360,7 @@ export function CompanyRegister() {
               </FormItem>
             )}
           />
-          <FormField
+          {/* <FormField
             control={form.control}
             name="industry"
             render={({ field }) => (
@@ -371,6 +377,31 @@ export function CompanyRegister() {
                   Por favor ingresa la Industria de tu compañia
                 </FormDescription>
                 <FormMessage />
+              </FormItem>
+            )}
+          /> */}
+
+          <FormField
+            control={form.control}
+            name="industry"
+            render={({ field }) => (
+              <FormItem className="flex flex-col justify-center max-w-[300px]">
+                <FormLabel>Seleccione una Industria</FormLabel>
+                <Select onValueChange={handleIndustryChange}>
+                  <SelectTrigger className="max-w-[350px] w-[300px]">
+                    <SelectValue placeholder="Selecciona una Industria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {industry.map(industry => (
+                      <SelectItem key={industry.id} value={industry.name}>
+                        {industry.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription className="max-w-[300px]">
+                  Por favor selecciona tu Industria
+                </FormDescription>
               </FormItem>
             )}
           />

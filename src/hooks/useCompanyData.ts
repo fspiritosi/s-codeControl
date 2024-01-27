@@ -4,6 +4,7 @@ import { useLoggedUserStore } from '@/store/loggedUser'
 import { UUID } from 'crypto'
 import { supabase } from '../../supabase/supabase'
 import { useEdgeFunctions } from './useEdgeFunctions'
+import {useState} from 'react'
 import { company } from '@/types/types'
 
 /**
@@ -13,7 +14,7 @@ import { company } from '@/types/types'
 
 export const useCompanyData = () => {
   const {errorTranslate} = useEdgeFunctions()
-
+  const [industry, setIndustry] = useState<any[]>([])
   const insertCompany = async (companyData: Omit<company, 'employees'>) => {
     try {
 
@@ -37,7 +38,25 @@ export const useCompanyData = () => {
     }
   }
 
+   const fetchIndustryType = async () => {
+    try {
+      const { data: fetchedIndustryType, error } = await supabase
+        .from('industry_type')
+        .select('*')
+        
+      if (error) {
+        console.error('Error al obtener las industrias:', error)
+      } else {
+        setIndustry(fetchedIndustryType || [])
+       
+      }
+    } catch (error) {
+      console.error('Ocurrió un error al obtener las industrias:', error)
+    }
+  }
   return {
     insertCompany,
+    fetchIndustryType,
+    industry,
   }
 }
