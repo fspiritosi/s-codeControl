@@ -1,4 +1,3 @@
-'use client'
 import { company, profileUser } from '@/types/types'
 import { User } from '@supabase/supabase-js'
 import create from 'zustand'
@@ -21,7 +20,8 @@ interface State {
  * @returns An object containing the store's state properties.
  */
 export const useLoggedUserStore = create<State>((set, get) => {
-  const selectedCompany = localStorage.getItem('selectedCompany')
+
+  const selectedCompany = typeof window !== 'undefined' ? window.localStorage?.getItem('selectedCompany') : null;
 
   const setActualCompany = (company: company) => {
     set({ actualCompany: company })
@@ -37,9 +37,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
       console.error('Error al obtener el perfil:', error)
     } else {
       set({ allCompanies: data || [] })
-
-
-
 
       if (data.length > 1) {
         // hay mas de una empresa
@@ -70,7 +67,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
         // no hay empresas
         set({ showNoCompanyAlert: true })
       }
-
     }
   }
 
@@ -79,6 +75,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
       .from('profile')
       .select('*')
       .eq('credential_id', id)
+
+      
 
     if (error) {
       console.error('Error al obtener el perfil:', error)
@@ -97,9 +95,14 @@ export const useLoggedUserStore = create<State>((set, get) => {
       set({ credentialUser: user })
     }
 
-    profileUser(user?.id || '')
+   
+    if (typeof window !== 'undefined') {
+      profileUser(user?.id || '')
+    }
   }
-  loggedUser()
+  if (typeof window !== 'undefined') {
+    loggedUser()
+  }
 
   return {
     credentialUser: get()?.credentialUser,

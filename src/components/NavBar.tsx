@@ -12,7 +12,7 @@ export default function NavBar() {
           passHref
           className="text-white text-2xl font-bold"
         >
-          {actualCompany?.company_name.toUpperCase()}
+          {actualCompany?.company_name?.toUpperCase()}
         </Link>
       </div>
 

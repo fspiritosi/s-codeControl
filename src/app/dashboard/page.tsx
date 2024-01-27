@@ -1,14 +1,19 @@
-// 'use client'
+'use client'
 
 import { AlertComponent } from '@/components/AlertComponent'
-import { Employee } from '@/types/types'
 import { columns } from './columns'
 import { DataTable } from './data-table'
 // import { useLoggedUserStore } from '@/store/loggedUser'
 
-async function getData(): Promise<Employee[]> {
-  // Fetch data from your API here.
-  return [
+// async function getData(): Promise<Employee[]> {
+//   // Fetch data from your API here.
+//   return
+// }
+
+export default function Home() {
+  //! La pagina se teien que recargar cada vez que pasa un cambio en estado global de la compañia seleccionada  (Probablemente tenga que ser reenderizada en el cliente)
+
+  const data = [
     {
       id: '728ed52f',
       nombre: 'Juan Perez',
@@ -130,12 +135,6 @@ async function getData(): Promise<Employee[]> {
       foto: 'Photo',
     },
   ]
-}
-
-export default async function Home() {
-  //! La pagina se teien que recargar cada vez que pasa un cambio en estado global de la compañia seleccionada  (Probablemente tenga que ser reenderizada en el cliente)
-
-  const data = await getData()
 
   return (
     <main className="flex flex-col ">

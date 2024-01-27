@@ -129,14 +129,20 @@ export function CompanyRegister() {
     }
   }
 
-  const processText = (text: string): string =>
-    text
+  const processText = (text: string): string | any => {
+    if (text === undefined) {
+      // Puedes decidir qué hacer aquí si text es undefined.
+      // Por ejemplo, podrías devolver una cadena vacía, lanzar un error, etc.
+      return '';
+    }
+    return text
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^\w\s]/gi, '')
       .trim()
       .toLowerCase()
-      .replace(/\s+/g, '_')
+      .replace(/\s+/g, '_');
+  }
 
   return (
     <Form {...form}>

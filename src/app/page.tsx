@@ -1,3 +1,4 @@
+
 import BestBusines from '@/components/landing_components/BestBusines'
 import CounterData from '@/components/landing_components/CounterData'
 import FirstBlock from '@/components/landing_components/first-block'
