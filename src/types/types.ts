@@ -1,3 +1,4 @@
+import { UUID } from 'crypto'
 import React from "react"
 
 export type LoggedUser = {
@@ -24,7 +25,6 @@ export type Userprofile = {}
 
 export type profileUser = {
   id?: string
-  company_id?: string
   created_at?: string
   firstName: string
   lastName: string
@@ -45,7 +45,8 @@ export type company = {
   industry: string
   company_logo: string
   province_id: number
-  employees: null
+  employees: UUID
+  owner_id: string | undefined
 }
 
 export type singUp = {
