@@ -107,8 +107,7 @@ export const companySchema = z.object({
         'Industry debe contener solo letras y espacios, con un límite de hasta 50 caracteres',
     }),
   city: z.number(),
-
-  company_logo: z.string(),
+  company_logo: z.string().optional(),
   employees: z.string().nullable(),
 })
 

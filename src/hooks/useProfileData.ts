@@ -1,11 +1,11 @@
-import { profile } from '@/types/types'
+import { profileUser } from '@/types/types'
 import { supabase } from '../../supabase/supabase'
 import { useEdgeFunctions } from './useEdgeFunctions'
 
 export const useProfileData = () => {
   const { errorTranslate } = useEdgeFunctions()
   return {
-    insertProfile: async (credentials: profile) => {
+    insertProfile: async (credentials: profileUser) => {
       const { data, error } = await supabase
         .from('profile')
         .insert([credentials])
