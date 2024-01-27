@@ -27,8 +27,10 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { Loader } from './svg/loader'
+import { useLoggedUserStore } from '@/store/loggedUser'
 
 export function CompanyRegister() {
+  const profile = useLoggedUserStore((state) => state.profile)
   const { insertCompany } = useCompanyData()
   const [showLoader, setShowLoader] = useState(false)
 
@@ -109,10 +111,14 @@ export function CompanyRegister() {
         employees: companyData.employees,
       }
 
+        
+
       //Insertar la compañía con los datos procesados
       const company = await insertCompany({
         ...processedCompanyData,
         company_logo: processedCompanyData.company_logo || '',
+        owner_id:profile?.[0].id
+
       })
 
       setShowLoader(true)
