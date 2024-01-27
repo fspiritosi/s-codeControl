@@ -30,7 +30,7 @@ import { Loader } from './svg/loader'
 import { useLoggedUserStore } from '@/store/loggedUser'
 
 export function CompanyRegister() {
-  const profile = useLoggedUserStore((state) => state.profile)
+  const profile = useLoggedUserStore(state => state.profile)
   const { insertCompany } = useCompanyData()
   const [showLoader, setShowLoader] = useState(false)
 
@@ -108,23 +108,9 @@ export function CompanyRegister() {
   //       console.log('industria: ', selectedIndustry)
   //     }
   //   }
-  }
-
-  const handleIndustryChange = (selectedIndustryType: string) => {
-    if (selectedIndustryType !== selectedIndustry?.name) {
-      const selectedIndustry: Industry | undefined = industry.find(
-        p => p.name === selectedIndustryType,
-      )
-      if (selectedIndustry) {
-        form.setValue('industry', selectedIndustry.name)
-        setSelectedIndustry(selectedIndustry)
-        console.log('industria: ', selectedIndustry)
-      }
-    }
-  }
+  //}
 
   const onSubmit = async (companyData: z.infer<typeof companySchema>) => {
-   
     try {
       //Procesa los valores antes de enviarlos a la base de datos
       const processedCompanyData = {
@@ -142,14 +128,11 @@ export function CompanyRegister() {
         employees: companyData.employees,
       }
 
-        
-
       //Insertar la compañía con los datos procesados
       const company = await insertCompany({
         ...processedCompanyData,
         company_logo: processedCompanyData.company_logo || '',
-        owner_id:profile?.[0].id
-
+        owner_id: profile?.[0].id,
       })
 
       setShowLoader(true)
@@ -164,7 +147,7 @@ export function CompanyRegister() {
     if (text === undefined) {
       // Puedes decidir qué hacer aquí si text es undefined.
       // Por ejemplo, podrías devolver una cadena vacía, lanzar un error, etc.
-      return '';
+      return ''
     }
     return text
       .normalize('NFD')
@@ -172,7 +155,7 @@ export function CompanyRegister() {
       .replace(/[^\w\s]/gi, '')
       .trim()
       .toLowerCase()
-      .replace(/\s+/g, '_');
+      .replace(/\s+/g, '_')
   }
 
   return (
@@ -318,7 +301,7 @@ export function CompanyRegister() {
                   </SelectContent>
                 </Select>
                 <FormDescription className="max-w-[300px]">
-                  Por favor ingresa tu dirección
+                  Por favor ingresa tu Pais
                 </FormDescription>
               </FormItem>
             )}

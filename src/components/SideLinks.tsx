@@ -55,7 +55,7 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
             key={link.name}
             href={link.href}
             className={`flex h-[48px] grow items-center justify-center gap-6 rounded-md bg-slate-800 p-3 text-white font-medium hover:bg-blue-500 hover:shadow-[0px_0px_05px_05px_rgb(255,255,255,0.40)] hover:text-white  md:flex-none md:justify-start md:p-2 md:px-3 ${
-              pathname === link.href ? 'bg-white text-black' : ''
+              pathname === link.href ? 'bg-white text-slate-800' : ''
             }`}
           >
             {expanded ? ( // Mostrar solo el icono si la barra lateral está expandida
