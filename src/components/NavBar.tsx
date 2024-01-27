@@ -5,7 +5,7 @@ import { useLoggedUserStore } from '@/store/loggedUser'
 export default function NavBar() {
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   return (
-    <nav className="flex items-center justify-between bg-gray-800 text-white p-4 rounded-md mb-2">
+    <nav className="flex items-center justify-between text-white p-4 mb-2 bg-slate-800">
       <div className="flex items-center">
         <Link
           href="/dashboard"

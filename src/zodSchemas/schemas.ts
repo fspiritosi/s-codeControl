@@ -99,13 +99,8 @@ export const companySchema = z.object({
     }),
   country: z.string(),
   province_id: z.number(),
-  industry: z
-    .string()
-    .max(50)
-    .regex(/^[a-zA-Z\s]{1,50}$/, {
-      message:
-        'Industry debe contener solo letras y espacios, con un límite de hasta 50 caracteres',
-    }),
+  industry: z.string(),
+    
   city: z.number(),
   company_logo: z.string().optional(),
   employees: z.string().nullable(),

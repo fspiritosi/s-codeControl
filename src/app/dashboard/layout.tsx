@@ -15,7 +15,7 @@ export default function DashboardLayout({
   return (
     <div className="flex">
       <SideBar />
-      <div className="flex flex-col w-full mt-1 md:mt-4">
+      <div className="flex flex-col w-full mt-1 md:mt-0">
         <NavBar />
         <div className=" md:px-12">{children}</div>
       </div>

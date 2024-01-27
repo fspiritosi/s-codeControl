@@ -23,17 +23,19 @@ import { useCompanyData } from '@/hooks/useCompanyData'
 import { useCountriesStore } from '@/store/countries'
 import { companySchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { Loader } from './svg/loader'
 import { useLoggedUserStore } from '@/store/loggedUser'
 
 export function CompanyRegister() {
-  const profile = useLoggedUserStore((state) => state.profile)
-  const { insertCompany } = useCompanyData()
+  const profile = useLoggedUserStore(state => state.profile)
+  const { insertCompany, fetchIndustryType, industry } = useCompanyData()
   const [showLoader, setShowLoader] = useState(false)
-
+  const [selectedIndustry, setSelectedIndustry] = useState<Industry | null>(
+    null,
+  )
   const provincesValues = useCountriesStore(state => state.provinces)
   const citiesValues = useCountriesStore(state => state.cities)
   const fetchCityValues = useCountriesStore(state => state.fetchCities)
@@ -73,6 +75,11 @@ export function CompanyRegister() {
     province_id: number
   }
 
+  interface Industry {
+    id: number
+    name: string
+  }
+
   const handleProvinceChange = (selectedProvinceName: string) => {
     //Buscar el objeto Province correspondiente al selectedProvinceId
     const selectedProvince = provincesValues.find(
@@ -92,8 +99,24 @@ export function CompanyRegister() {
     }
   }
 
+  const handleIndustryChange = (selectedIndustryType: string) => {
+    if (selectedIndustryType !== selectedIndustry?.name) {
+      const selectedIndustry: Industry | undefined = industry.find(
+        p => p.name === selectedIndustryType,
+      )
+      if (selectedIndustry) {
+        form.setValue('industry', selectedIndustry.name)
+        setSelectedIndustry(selectedIndustry)
+        console.log('industria: ', selectedIndustry)
+      }
+    }
+  }
+
+  useEffect(() => {
+    fetchIndustryType()
+  }, [])
+
   const onSubmit = async (companyData: z.infer<typeof companySchema>) => {
-   
     try {
       //Procesa los valores antes de enviarlos a la base de datos
       const processedCompanyData = {
@@ -111,14 +134,11 @@ export function CompanyRegister() {
         employees: companyData.employees,
       }
 
-        
-
       //Insertar la compañía con los datos procesados
       const company = await insertCompany({
         ...processedCompanyData,
         company_logo: processedCompanyData.company_logo || '',
-        owner_id:profile?.[0].id
-
+        owner_id: profile?.[0].id,
       })
 
       setShowLoader(true)
@@ -133,7 +153,7 @@ export function CompanyRegister() {
     if (text === undefined) {
       // Puedes decidir qué hacer aquí si text es undefined.
       // Por ejemplo, podrías devolver una cadena vacía, lanzar un error, etc.
-      return '';
+      return ''
     }
     return text
       .normalize('NFD')
@@ -141,7 +161,7 @@ export function CompanyRegister() {
       .replace(/[^\w\s]/gi, '')
       .trim()
       .toLowerCase()
-      .replace(/\s+/g, '_');
+      .replace(/\s+/g, '_')
   }
 
   return (
@@ -287,7 +307,7 @@ export function CompanyRegister() {
                   </SelectContent>
                 </Select>
                 <FormDescription className="max-w-[300px]">
-                  Por favor ingresa tu dirección
+                  Por favor ingresa tu Pais
                 </FormDescription>
               </FormItem>
             )}
@@ -340,7 +360,7 @@ export function CompanyRegister() {
               </FormItem>
             )}
           />
-          <FormField
+          {/* <FormField
             control={form.control}
             name="industry"
             render={({ field }) => (
@@ -357,6 +377,31 @@ export function CompanyRegister() {
                   Por favor ingresa la Industria de tu compañia
                 </FormDescription>
                 <FormMessage />
+              </FormItem>
+            )}
+          /> */}
+
+          <FormField
+            control={form.control}
+            name="industry"
+            render={({ field }) => (
+              <FormItem className="flex flex-col justify-center max-w-[300px]">
+                <FormLabel>Seleccione una Industria</FormLabel>
+                <Select onValueChange={handleIndustryChange}>
+                  <SelectTrigger className="max-w-[350px] w-[300px]">
+                    <SelectValue placeholder="Selecciona una Industria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {industry.map(industry => (
+                      <SelectItem key={industry.id} value={industry.name}>
+                        {industry.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription className="max-w-[300px]">
+                  Por favor selecciona tu Industria
+                </FormDescription>
               </FormItem>
             )}
           />
