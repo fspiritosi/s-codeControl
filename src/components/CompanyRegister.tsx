@@ -20,14 +20,15 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useCompanyData } from '@/hooks/useCompanyData'
+import { useImageUpload } from '@/hooks/useUploadImage'
 import { useCountriesStore } from '@/store/countries'
+import { useLoggedUserStore } from '@/store/loggedUser'
 import { companySchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { Loader } from './svg/loader'
-import { useLoggedUserStore } from '@/store/loggedUser'
 
 export function CompanyRegister() {
   const profile = useLoggedUserStore(state => state.profile)
@@ -36,9 +37,11 @@ export function CompanyRegister() {
   const [selectedIndustry, setSelectedIndustry] = useState<Industry | null>(
     null,
   )
+  const uploadImageRef = useRef();
   const provincesValues = useCountriesStore(state => state.provinces)
   const citiesValues = useCountriesStore(state => state.cities)
   const fetchCityValues = useCountriesStore(state => state.fetchCities)
+  const { uploadImage, loading } = useImageUpload()
 
   const form = useForm<z.infer<typeof companySchema>>({
     resolver: zodResolver(companySchema),
@@ -60,19 +63,6 @@ export function CompanyRegister() {
 
   const onImageChange = (imageUrl: string) => {
     form.setValue('company_logo', imageUrl)
-  }
-
-  const onUploadSuccess = (imageUrl: string) => {}
-
-  interface Province {
-    id: number
-    name: string
-  }
-
-  interface City {
-    id: number
-    name: string
-    province_id: number
   }
 
   interface Industry {
@@ -107,7 +97,6 @@ export function CompanyRegister() {
       if (selectedIndustry) {
         form.setValue('industry', selectedIndustry.name)
         setSelectedIndustry(selectedIndustry)
-        console.log('industria: ', selectedIndustry)
       }
     }
   }
@@ -115,6 +104,8 @@ export function CompanyRegister() {
   useEffect(() => {
     fetchIndustryType()
   }, [])
+
+  //
 
   const onSubmit = async (companyData: z.infer<typeof companySchema>) => {
     try {
@@ -140,6 +131,7 @@ export function CompanyRegister() {
         company_logo: processedCompanyData.company_logo || '',
         owner_id: profile?.[0].id,
       })
+      
 
       setShowLoader(true)
     } catch (err) {
@@ -415,12 +407,13 @@ export function CompanyRegister() {
                   <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
                     <UploadImage
                       labelInput="Logo"
+                      imageBucket="logo"
                       desciption="Sube el logo de tu compañia"
                       style={{ width: '100px' }}
                       onImageChange={(imageUrl: string) =>
                         form.setValue('company_logo', imageUrl)
                       }
-                      onUploadSuccess={onUploadSuccess}
+                      // onUploadSuccess={onUploadSuccess}
                       inputStyle={{ width: '300px' }}
                     />
                   </div>
