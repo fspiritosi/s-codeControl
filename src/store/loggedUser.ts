@@ -63,7 +63,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
         setActualCompany(data[0])
       }
       if (data.length === 0) {
-        console.log('no hay empresas')
         // no hay empresas
         set({ showNoCompanyAlert: true })
       }
@@ -85,6 +84,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       howManyCompanies(data[0].id)
     }
   }
+
 
   const loggedUser = async () => {
     const {

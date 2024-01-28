@@ -131,12 +131,11 @@ export const accordionSchema = z.object({
   .string()
   .min(7, {
     message: 'El documento debe tener al menos 7 caracteres.',
-  })
-  .max(9999999999, {
+  }).max(10, {
     message: 'El documento debe tener menos de 11 caracteres.',
   }),
   birthplace: z.string(),
-  genre: z.enum(['Masculino', 'Femenino', 'Otro'],{
+  gender: z.enum(['Masculino', 'Femenino', 'Otro'],{
     invalid_type_error: 'Genero invalido'
   }),
   marital_status: z.enum(['Soltero', 'Casado', 'Divorciado', 'Viudo'],{
@@ -145,19 +144,18 @@ export const accordionSchema = z.object({
   level_of_education: z.enum(['Primario', 'Secundario', 'Terciario', 'Universitario','Posgrado'],{
     invalid_type_error: 'Nivel de educacion invalido'
   }),
-  picture: z
-  .string().optional()
-  // .refine((value) => value.trim().length > 0, {
-  //   message: 'El archivo no puede estar vacío.',
-  // }),
-  ,
+  picture: z.string().refine((value) => {
+    return value.trim().length > 0;
+  }, {
+    message: 'Se debe seleccionar la foto y subirla.',
+  }),
   street : z.string().min(2, {
     message: 'La calle debe tener al menos 2 caracteres.',
  }),
  street_number : z.string().min(1, {
     message: 'El número debe tener al menos 1 caracteres.',
  }),
- province: z.string(),
+ province: z.string({ description: 'La provincia es requerida.'}),
  city: z.string(),
  postal_code: z.string().min(4, {
     message: 'El código postal debe tener al menos 4 caracteres.',
@@ -165,6 +163,8 @@ export const accordionSchema = z.object({
  ,
  phone : z.string().min(4, {
     message: 'El teléfono debe tener al menos 4 caracteres.',
+ }).max(15, {
+    message: 'El teléfono debe tener menos de 15 caracteres.',
  }),
  email: z.string().email(),
  file: z.string().refine((value) => value.trim().length > 0, {
