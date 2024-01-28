@@ -83,8 +83,13 @@ export function DataTable<TData, TValue>({
               .getAllColumns()
               .filter(column => column.getCanHide())
               .map(column => {
-                if (column.id === 'actions') return null
-                
+                if (
+                  column.id === 'actions' ||
+                  typeof column.columnDef.header !== 'string'
+                ) {
+                  return null
+                }
+
                 return (
                   <DropdownMenuCheckboxItem
                     key={column.id}
@@ -92,7 +97,7 @@ export function DataTable<TData, TValue>({
                     checked={column.getIsVisible()}
                     onCheckedChange={value => column.toggleVisibility(!!value)}
                   >
-                    {column.id}
+                    {column.columnDef.header}
                   </DropdownMenuCheckboxItem>
                 )
               })}
@@ -106,7 +111,7 @@ export function DataTable<TData, TValue>({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead className='text-center text-balance' key={header.id}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -127,7 +132,7 @@ export function DataTable<TData, TValue>({
                   data-state={row.getIsSelected() && 'selected'}
                 >
                   {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className='text-center whitespace-nowrap'>
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext(),
