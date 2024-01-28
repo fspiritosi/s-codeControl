@@ -5,6 +5,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { useEmployeesData } from '@/hooks/useEmployeesData'
 import { useCountriesStore } from '@/store/countries'
 import {
   civilStateOptionsENUM,
@@ -14,9 +21,11 @@ import {
   nacionaliOptionsENUM,
   typeOfContractENUM,
 } from '@/types/enums'
+
 import { names } from '@/types/types'
 import { accordionSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { PostgrestError } from '@supabase/supabase-js'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -33,6 +42,7 @@ import {
   FormMessage,
 } from './ui/form'
 import { Input } from './ui/input'
+import { useToast } from './ui/use-toast'
 
 type Province = {
   id: number
@@ -47,6 +57,8 @@ export const EmployeeAccordion = () => {
   const hierarchyOptions = useCountriesStore(state => state.hierarchy)
   const workDiagramOptions = useCountriesStore(state => state.workDiagram)
   const contractorCompanies = useCountriesStore(state => state.contractors)
+  const { createEmployee } = useEmployeesData()
+  const { toast } = useToast()
 
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
@@ -58,7 +70,7 @@ export const EmployeeAccordion = () => {
       document_type: undefined,
       document_number: '',
       birthplace: undefined,
-      genre: undefined,
+      gender: undefined,
       marital_status: undefined,
       level_of_education: undefined,
       picture: '',
@@ -69,7 +81,7 @@ export const EmployeeAccordion = () => {
       postal_code: '',
       phone: '',
       email: '',
-      file: undefined,
+      file: '',
       hierarchical_position: undefined,
       company_position: '',
       workflow_diagram: undefined,
@@ -83,6 +95,7 @@ export const EmployeeAccordion = () => {
   const [accordion1Errors, setAccordion1Errors] = useState(false)
   const [accordion2Errors, setAccordion2Errors] = useState(false)
   const [accordion3Errors, setAccordion3Errors] = useState(false)
+  const [availableToSubmit, setAvailableToSubmit] = useState(false)
 
   useEffect(() => {
     const { errors } = form.formState
@@ -176,7 +189,7 @@ export const EmployeeAccordion = () => {
       type: 'select',
       placeholder: 'Sexo',
       options: genderOptionsENUM,
-      name: 'genre',
+      name: 'gender',
     },
     {
       label: 'Estado civil',
@@ -309,11 +322,34 @@ export const EmployeeAccordion = () => {
 
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof accordionSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values)
+    const finalValues = {
+      ...values,
+      allocated_to: String(
+        contractorCompanies.find(e => e.name === values.allocated_to)?.id,
+      ),
+      province: String(
+        provincesOptions.find(e => e.name === values.province)?.id,
+      ),
+      birthplace: String(
+        countryOptions.find(e => e.name === values.birthplace)?.id,
+      ),
+      city: String(citysOptions.find(e => e.name === values.city)?.id),
+      hierarchical_position: String(
+        hierarchyOptions.find(e => e.name === values.hierarchical_position)?.id,
+      ),
+      workflow_diagram: String(
+        workDiagramOptions.find(e => e.name === values.workflow_diagram)?.id,
+      ),
+    }
+    try {
+      createEmployee(finalValues)
+    } catch (error: PostgrestError | any) {
+      toast({
+        variant: 'destructive',
+        title: error.message,
+      })
+    }
   }
-  const onUploadSuccess = (imageUrl: string) => {}
 
   return (
     <Form {...form}>
@@ -345,14 +381,15 @@ export const EmployeeAccordion = () => {
                           render={({ field }) => (
                             <FormItem className="">
                               <FormControl>
-                              <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
+                                <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
                                   <UploadImage
-                                   labelInput="Subir foto"
+                                    imageBucket="employee_photos"
+                                    labelInput="Subir foto"
+                                    setAvailableToSubmit={setAvailableToSubmit}
                                     onImageChange={(imageUrl: string) =>
                                       form.setValue('picture', imageUrl)
                                     }
-                                    onUploadSuccess={onUploadSuccess}
-                                    style={{ width: '100px' }}
+                                    field={field}
                                     inputStyle={{
                                       width: '400px',
                                       maxWidth: '300px',
@@ -519,7 +556,7 @@ export const EmployeeAccordion = () => {
               <div className="min-w-full max-w-sm flex flex-wrap gap-8">
                 {LABORALDATA.map((data, index) => {
                   if (data.type === 'date') {
-                    <div key={index} className="w-[300px] flex flex-col gap-2">
+                    ;<div key={index} className="w-[300px] flex flex-col gap-2">
                       <FormField
                         control={form.control}
                         name={data.name as names}
@@ -605,7 +642,25 @@ export const EmployeeAccordion = () => {
               </div>
             </AccordionContent>
           </AccordionItem>
-          <Button type="submit">Submit</Button>
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <p className="w-fit">
+                  <Button type="submit" disabled={!availableToSubmit}>
+                    Agregar empleado
+                  </Button>
+                </p>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[250px]">
+                {availableToSubmit &&
+                !accordion1Errors &&
+                !accordion2Errors &&
+                !accordion3Errors
+                  ? '¡Todo listo para agregar el empleado!'
+                  : '¡Completa todos los campos para agregar el empleado, asegurate de subir la imagen!'}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </Accordion>
       </form>
     </Form>
