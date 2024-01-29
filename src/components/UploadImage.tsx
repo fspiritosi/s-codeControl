@@ -1,24 +1,44 @@
 'use client'
-import React, { ChangeEvent, useState } from 'react'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { useImageUpload } from '@/hooks/useUploadImage'
+import React, { ChangeEvent, useState } from 'react'
+import { Button } from './ui/button'
+import { FormDescription, FormLabel } from './ui/form'
+import { useToast } from './ui/use-toast'
 
 interface UploadImageProps {
   onImageChange: (imageUrl: string) => void
-  onUploadSuccess: (imageUrl: string) => void
+  // onUploadSuccess?: (imageUrl: string) => void
+  style?: React.CSSProperties
+  inputStyle?: React.CSSProperties
+  label?: string
+  desciption?: string
+  labelInput?: string
+  imageBucket: string
+  field?: any
+  setAvailableToSubmit?: (value: boolean) => void
 }
 
 export function UploadImage({
   onImageChange,
-  onUploadSuccess,
+  // onUploadSuccess,
+  style,
+  inputStyle,
+  desciption,
+  labelInput,
+  imageBucket,
+  setAvailableToSubmit,
+  field,
 }: UploadImageProps) {
   const { uploadImage, loading } = useImageUpload()
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [base64Image, setBase64Image] = useState<string>('')
+  const [disabled, setDisabled] = useState<boolean>(false)
+  const { toast } = useToast()
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+    console.log(file)
     if (file) {
       setImageFile(file)
 
@@ -37,42 +57,68 @@ export function UploadImage({
     if (imageFile) {
       try {
         // Subir la imagen a Supabase Storage y obtener la URL
-        const uploadedImageUrl = await uploadImage(imageFile)
+        const uploadedImageUrl = await uploadImage(imageFile, imageBucket)
 
         // Llamar a la función de cambio de imagen con la URL
         onImageChange(uploadedImageUrl)
 
         // Llamar a la función de éxito de carga con la URL
-        onUploadSuccess(uploadedImageUrl)
-      } catch (error) {
-        console.error('Error al subir la imagen:', error)
+        // onUploadSuccess(uploadedImageUrl)
+        if (setAvailableToSubmit) setAvailableToSubmit(true)
+        setDisabled(true)
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: error.message,
+        })
       }
     }
   }
 
   return (
-    <div>
-      <label htmlFor="fileInput">Seleccionar imagen:</label>
-      <Input
-        type="file"
-        accept="image/*"
-        onChange={handleImageChange}
-        id="fileInput"
-      />
-
-      {base64Image && (
-        <img
-          src={base64Image}
-          alt="Vista previa de la imagen"
-          style={{ maxWidth: '100%', marginTop: '10px' }}
+    <>
+      <div className="flex flex-col  space-y-2">
+        <FormLabel>{labelInput}</FormLabel>
+        <Input
+          type="file"
+          accept="image/*"
+          // {...field}
+          onChange={(event: ChangeEvent<HTMLInputElement>) => {
+            if (field) {
+              // field?.onChange(event) // Mantén el funcionamiento del {...field}
+              handleImageChange(event) // Accede al archivo file del input
+            } else {
+              handleImageChange(event) // Accede al archivo file del input
+            }
+          }}
+          className="self-center"
+          id="fileInput"
+          style={{ ...inputStyle }}
         />
-      )}
-      {loading}
-      {imageFile && (
-        <Button onClick={handleUpload} disabled={loading}>
-          Confirmar y Subir
-        </Button>
-      )}
-    </div>
+        {desciption && (
+          <FormDescription className="max-w-[300px] p-0 m-0">
+            {desciption}
+          </FormDescription>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 justify-around  rounded-xl">
+        {base64Image && (
+          <img
+            src={base64Image}
+            // style={{ ...style }}
+            className="rounded-xl my-1 max-w-[150px] max-h-[120px] p-2 bg-slate-200"
+            alt="Vista previa de la imagen"
+          />
+        )}
+
+        {loading}
+        {imageFile && (
+          <Button onClick={handleUpload} disabled={loading || disabled}>
+            {disabled ? 'Imagen subida' : 'Subir imagen'}
+          </Button>
+        )}
+      </div>
+    </>
   )
 }

@@ -1,83 +1,62 @@
+'use client'
 import { toast } from '@/components/ui/use-toast'
-import { supabase } from '../../supabase/supabase'
+import { useLoggedUserStore } from '@/store/loggedUser'
 import { UUID } from 'crypto'
-import { useState } from 'react'
+import { supabase } from '../../supabase/supabase'
 import { useEdgeFunctions } from './useEdgeFunctions'
+import {useState} from 'react'
+import { company } from '@/types/types'
 
-type company = {
-  company_name: string
-  company_cuit: string
-  description: string
-  website: string
-  contact_email: string
-  contact_phone: string
-  address: string
-  city: number
-  country: string
-  industry: string
-  company_logo: string
-  province_id: number
-  employees: UUID
-}
+/**
+ * Custom hook for handling company data.
+ * @returns An object containing the `insertCompany` function.
+ */
 
 export const useCompanyData = () => {
-  const [provinces, setProvinces] = useState<any[]>([])
-  const [cities, setCities] = useState<any[]>([])
-
+  const {errorTranslate} = useEdgeFunctions()
+  const [industry, setIndustry] = useState<any[]>([])
   const insertCompany = async (companyData: Omit<company, 'employees'>) => {
     try {
+
       const { data, error } = await supabase
         .from('company')
         .insert([companyData])
         .select()
+
+      if (error ) {
+        const message = await errorTranslate(error?.message)
+        throw new Error(String(message).replaceAll('"', ''))
+      }
+
       toast({
         title: 'Datos cargados',
       })
+      
       return data
     } catch (err) {
       return err
     }
   }
 
-  const fetchProvinces = async () => {
+   const fetchIndustryType = async () => {
     try {
-      const { data: fetchedProvinces, error } = await supabase
-        .from('provinces')
+      const { data: fetchedIndustryType, error } = await supabase
+        .from('industry_type')
         .select('*')
-
+        
       if (error) {
-        console.error('Error al obtener las provincias:', error)
+        console.error('Error al obtener las industrias:', error)
       } else {
-        //console.log(fetchedProvinces)
-        setProvinces(fetchedProvinces || [])
+        setIndustry(fetchedIndustryType || [])
+       
       }
     } catch (error) {
-      console.error('Ocurrió un error al obtener las provincias:', error)
+      console.error('Ocurrió un error al obtener las industrias:', error)
     }
   }
-
-  const fetchCities = async (provinceId: any) => {
-    try {
-      const { data: fetchCities, error } = await supabase
-        .from('cities')
-        .select('*')
-        .eq('province_id', provinceId)
-
-      if (error) {
-        console.error('Error al obtener las ciudades:', error)
-      } else {
-        setCities(fetchCities || [])
-      }
-    } catch (error) {
-      console.error('Ocurrió un error al obtener las ciudades:', error)
-    }
-  }
-
   return {
     insertCompany,
-    fetchProvinces,
-    fetchCities,
-    provinces,
-    cities,
+    fetchIndustryType,
+    industry,
   }
 }

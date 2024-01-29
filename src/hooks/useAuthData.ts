@@ -1,8 +1,15 @@
-import { login, profile, singUp } from '@/types/types'
+import { login, profileUser, singUp } from '@/types/types'
 import { supabase } from '../../supabase/supabase'
 import { useEdgeFunctions } from './useEdgeFunctions'
 import { useProfileData } from './useProfileData'
 
+/**
+ * Custom hook for handling authentication data.
+ * Provides functions for signing up, logging in, password recovery, updating user password,
+ * Google login, logging in with email only, and getting user session.
+ *
+ * @returns An object containing the authentication functions.
+ */
 export const useAuthData = () => {
   const { filterByEmail } = useProfileData()
   const {errorTranslate} = useEdgeFunctions()
@@ -47,7 +54,7 @@ export const useAuthData = () => {
     },
     updateUser: async ({ password }: {password:string}) => {
       const email = localStorage.getItem('email')
-      const user = (await filterByEmail(email)) as profile[]
+      const user = (await filterByEmail(email)) as profileUser[]
 
       if (user.length === 0) throw new Error('Usuario no encontrado')
       localStorage.removeItem('email')
@@ -79,7 +86,7 @@ export const useAuthData = () => {
       let { data, error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: 'http://localhost:3000/reset_password/update-user',
+          emailRedirectTo: `${window.location.href}/auth/callback`
         },
       })
 
