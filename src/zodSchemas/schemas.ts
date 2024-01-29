@@ -167,9 +167,7 @@ export const accordionSchema = z.object({
     message: 'El teléfono debe tener al menos 4 caracteres.',
  }),
  email: z.string().email(),
- file: z.string().refine((value) => value.trim().length > 0, {
-  message: 'El archivo no puede estar vacío.',
- }),
+ file: z.string().max(10,{message:"El legajo no debe tener mas de 10 caracteres"}).min(1),
  hierarchical_position: z.enum(['Director', 'Supervisor', 'Gerente','Operativo','Administrativo'],{
   invalid_type_error: 'Posicion jerarquica invalida'
  }),
