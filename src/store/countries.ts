@@ -2,18 +2,22 @@ import create from 'zustand'
 import { supabase } from '../../supabase/supabase'
 
 type Province  = {
-
   id: number
   name: string
 }
+type generic ={
+  id: number
+  name: string
+  created_at: string
+}
 interface State {
-  countries: string[]
+  countries: generic[]
   provinces: Province[]
   cities: Province[]
   fetchCities: (provinceId: any) => void
-  hierarchy: string[]
-  workDiagram: string[]
-  contractors: string[]
+  hierarchy: generic[]
+  workDiagram: generic[]
+  contractors: generic[]
 }
 export const useCountriesStore = create<State>((set, get) => {
   const fetchCountrys = async () => {
