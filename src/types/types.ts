@@ -30,6 +30,7 @@ export type profileUser = {
   lastName: string
   credentialId: string
   email: string
+  avatar: string
 }
 
 export type company = {
