@@ -68,7 +68,7 @@ export const columns: ColumnDef<Colum>[] = [
             <DropdownMenuItem
               onClick={() => navigator.clipboard.writeText(user.id)}
             >
-              Copiar ID del empleado
+              Copiar DNI
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Ver empleado</DropdownMenuItem>
