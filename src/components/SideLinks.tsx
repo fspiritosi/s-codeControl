@@ -49,8 +49,10 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
           <Link
             key={link.name}
             href={link.href}
-            className={`flex h-[48px] grow items-center justify-center gap-1 rounded-md bg-slate-800 p-3 text-white font-medium hover:bg-blue-500 hover:shadow-[0px_0px_05px_05px_rgb(255,255,255,0.40)] hover:text-white  md:flex-none md:justify-start md:p-2 md:px-3 ${
-              pathname === link.href ? 'bg-white text-black' : ''
+            className={`${
+              pathname === link.href
+                ? 'flex h-[48px] grow items-center justify-center gap-1 rounded-md bg-white p-3 text-black font-medium  md:flex-none md:justify-start md:p-2 md:px-3'
+                : 'flex h-[48px] grow items-center justify-center gap-1 rounded-md bg-slate-800 p-3 text-white font-medium hover:bg-blue-500 hover:shadow-[0px_0px_05px_05px_rgb(255,255,255,0.40)] hover:text-white  md:flex-none md:justify-start md:p-2 md:px-3 '
             }`}
           >
             {expanded ? ( // Mostrar solo el icono si la barra lateral está expandida
