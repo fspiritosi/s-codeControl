@@ -8,6 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { Button } from './ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { MdDomainAdd } from 'react-icons/md'
 import { IoMdAddCircleOutline } from 'react-icons/io'
@@ -16,40 +17,33 @@ export default function NavBar() {
   const actualUser = useLoggedUserStore(state => state.profile)
   const avatarUrl =
     actualUser && actualUser.length > 0 ? actualUser[0].avatar : ''
-  const [isOpen, setIsOpen] = useState(false)
-  let timer: any
-  const handlePopoverEnter = () => {
-    clearTimeout(timer)
-    setIsOpen(true)
-  }
 
-  const handlePopoverLeave = () => {
-    timer = setTimeout(() => {
-      setIsOpen(false)
-    }, -500)
-  }
+  const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <nav className="flex items-center justify-between text-white p-4 mb-2 bg-slate-800">
+    <nav className="flex flex-grow items-center justify-between text-white p-4 mb-2 bg-slate-800">
       <div className="flex items-center">
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger>
             <div onPointerEnter={() => setIsOpen(true)}>
               <Link href="/dashboard/company" passHref>
-                <button className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-md">
-                  <MdDomainAdd />
+                <Button className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-md">
+                  <MdDomainAdd size={24} />
                   <span>Empresa</span>
-                </button>
+                </Button>
               </Link>
             </div>
           </PopoverTrigger>
-          <PopoverContent onPointerLeave={() => setIsOpen(false)}>
+          <PopoverContent
+            onPointerLeave={() => setIsOpen(false)}
+            className="bg-slate-800"
+          >
             <Link
               href="/dashboard/company/"
               passHref
-              className="text-gray-900 hover:text-gray-600 block flex items-center gap-1 px-4 py-2 text-sm"
+              className="text-white hover:text-sky-600 block flex items-center gap-1 px-4 py-2 text-sm"
             >
-              <IoMdAddCircleOutline />
+              <IoMdAddCircleOutline size={30} />
               <span>Registrar Empresa</span>
             </Link>
           </PopoverContent>
@@ -65,7 +59,7 @@ export default function NavBar() {
         </Link>
       </div>
 
-      <div className="flex items-center">
+      <div className="flex items">
         <Popover>
           <PopoverTrigger>
             <Avatar>
