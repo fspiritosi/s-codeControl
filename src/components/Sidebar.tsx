@@ -1,7 +1,8 @@
 'use client'
+
 import Link from 'next/link'
 import SideLinks from './SideLinks'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Logo1 from '../../public/logo-azul.png'
 import Logo from '../../public/logoLetrasBlancas.png'
@@ -9,27 +10,42 @@ import {
   TbLayoutSidebarRightExpand,
   TbLayoutSidebarLeftExpand,
 } from 'react-icons/tb'
-interface SideBarProps {
-  expanded: boolean
-}
+
 export default function SideBar() {
   const [expanded, setExpanded] = useState(true)
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setExpanded(false)
+      } else {
+        setExpanded(true)
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [])
 
   const toggleSidebar = () => {
     setExpanded(!expanded)
   }
+
   return (
     <div
-      className={`flex-grow justify-bettween h-full md:flex-col d:space-x-0 md:space-y-2 px-3 py-0 md:px-2 ${
+      className={`flex flex-col h-full px-3 py-0 md:px-2 bg-slate-800 ${
         expanded ? 'expanded' : 'collapsed'
-      } bg-slate-800 height: 100vh`}
-      style={{ height: '150vh', width: expanded ? 200 : '68px' }}
+      }`}
+      style={{ width: expanded ? 200 : '68px', height: '100vh' }}
     >
       <Link
         className={`flex h-20 items-center justify-center rounded-md bg-slate-800 p-4${
           expanded ? '40' : '40'
         }`}
-        href="/"
+        href="/dashboard"
       >
         <div
           className={`flex items-center justify-center `}
@@ -39,9 +55,8 @@ export default function SideBar() {
             <Image
               src={Logo}
               alt="Logo code control"
-              layout="responsive"
-              width={100}
-              height={100}
+              width={150}
+              height={150}
             />
           ) : (
             <Image src={Logo1} alt="Logo code control" layout="responsive" />
@@ -49,14 +64,10 @@ export default function SideBar() {
         </div>
       </Link>
 
-      <div className="flex grow flex-row justify-between space-x-2 md:flex-col md:space-x-0 md:space-y-2">
+      <div className="flex flex-col mt-2 space-y-2">
         <button
-          className="mt-2 px-3 py-1 text-white bg-slate-800 rounded-md hover:text-blue-600 focus:outline-none"
+          className="px-3 py-1 text-white bg-slate-800 ml-auto rounded-md hover:text-blue-600 focus:outline-none justify-rigth"
           onClick={toggleSidebar}
-          style={{
-            display: 'flex',
-            justifyContent: expanded ? 'flex-end' : 'flex-end',
-          }}
         >
           {expanded ? (
             <TbLayoutSidebarRightExpand size={20} />
@@ -64,8 +75,7 @@ export default function SideBar() {
             <TbLayoutSidebarLeftExpand size={20} />
           )}
         </button>
-        <SideLinks expanded={expanded} />{' '}
-        {/* Pasar el estado expanded a SideLinks */}
+        <SideLinks expanded={expanded} />
       </div>
     </div>
   )
