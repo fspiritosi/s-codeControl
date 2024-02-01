@@ -21,7 +21,7 @@ export default function NavBar() {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <nav className="flex flex-grow items-center justify-between text-white p-4 mb-2 bg-slate-800">
+    <nav className="flex flex-shrink items-center justify-between text-white p-4 mb-2 bg-slate-800">
       <div className="flex items-center">
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger>
@@ -49,7 +49,7 @@ export default function NavBar() {
           </PopoverContent>
         </Popover>
       </div>
-      <div className="flex items-center">
+      <div className="flex items-center flex-grow">
         <Link
           href="/dashboard"
           passHref
@@ -59,7 +59,7 @@ export default function NavBar() {
         </Link>
       </div>
 
-      <div className="flex items">
+      <div className="flex-shrink">
         <Popover>
           <PopoverTrigger>
             <Avatar>
