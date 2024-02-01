@@ -1,14 +1,14 @@
 'use client'
-import Link from 'next/link'
-import SideLinks from './SideLinks'
-import React, { useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
+import { useState } from 'react'
+import {
+  TbLayoutSidebarLeftExpand,
+  TbLayoutSidebarRightExpand,
+} from 'react-icons/tb'
 import Logo1 from '../../public/logo-azul.png'
 import Logo from '../../public/logoLetrasBlancas.png'
-import {
-  TbLayoutSidebarRightExpand,
-  TbLayoutSidebarLeftExpand,
-} from 'react-icons/tb'
+import SideLinks from './SideLinks'
 interface SideBarProps {
   expanded: boolean
 }
