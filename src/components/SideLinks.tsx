@@ -23,7 +23,7 @@ const links = [
   },
   {
     name: 'Empleados',
-    href: '/dashboard/new_employee',
+    href: '/dashboard/employee',
     icon: <MdOutlinePersonAddAlt size={sizeIcons} />,
   },
   {
