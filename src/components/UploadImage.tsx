@@ -35,11 +35,11 @@ export function UploadImage({
   const [base64Image, setBase64Image] = useState<string>('')
   const [disabled, setDisabled] = useState<boolean>(false)
   const { toast } = useToast()
-  console.log(imageFile)
+  // console.log(imageFile)
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    console.log(file)
+    // console.log(file)
     if (file) {
       setImageFile(file)
 
