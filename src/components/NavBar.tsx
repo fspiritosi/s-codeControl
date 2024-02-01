@@ -25,17 +25,21 @@ export default function NavBar() {
       <div className="flex items-center">
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger>
-            <div onPointerEnter={() => setIsOpen(true)}>
-              <Link href="/dashboard/company" passHref>
-                <Button className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-md">
-                  <MdDomainAdd size={24} />
-                  <span>Empresa</span>
-                </Button>
+            <div onMouseEnter={() => setIsOpen(true)}>
+              <Link
+                href="/dashboard/company"
+                passHref
+                className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-md"
+              >
+                {/* <Button className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-md"> */}
+                <MdDomainAdd size={24} />
+                <span>Empresa</span>
+                {/* </Button> */}
               </Link>
             </div>
           </PopoverTrigger>
           <PopoverContent
-            onPointerLeave={() => setIsOpen(false)}
+            onMouseLeave={() => setIsOpen(false)}
             className="bg-slate-800"
           >
             <Link
