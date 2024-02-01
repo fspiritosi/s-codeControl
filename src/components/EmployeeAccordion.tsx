@@ -22,10 +22,13 @@ import {
   typeOfContractENUM,
 } from '@/types/enums'
 
+import { cn } from '@/lib/utils'
 import { names } from '@/types/types'
 import { accordionSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { PostgrestError } from '@supabase/supabase-js'
+import { CalendarIcon } from '@radix-ui/react-icons'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -33,6 +36,7 @@ import { SelectWithData } from './SelectWithData'
 import { UploadImage } from './UploadImage'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
+import { Calendar } from './ui/calendar'
 import {
   Form,
   FormControl,
@@ -42,7 +46,9 @@ import {
   FormMessage,
 } from './ui/form'
 import { Input } from './ui/input'
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 import { useToast } from './ui/use-toast'
+import { PostgrestError } from '@supabase/supabase-js'
 
 type Province = {
   id: number
@@ -59,6 +65,8 @@ export const EmployeeAccordion = () => {
   const contractorCompanies = useCountriesStore(state => state.contractors)
   const { createEmployee } = useEmployeesData()
   const { toast } = useToast()
+
+  // console.log(citysOptions)
 
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
@@ -88,7 +96,7 @@ export const EmployeeAccordion = () => {
       normal_hours: '',
       type_of_contract: undefined,
       allocated_to: undefined,
-      date_of_admission: '',
+      date_of_admission: undefined,
     },
   })
 
@@ -136,7 +144,8 @@ export const EmployeeAccordion = () => {
     }
 
     // Actualiza el estado de error de los acordeones
-  }, [form.formState.errors])
+    // que se ejecute cuando cambie el estado de error y cuando ya no haya errores
+  }, [form.formState.errors, form.formState.isDirty, form.formState.isValid])
 
   const PERSONALDATA = [
     {
@@ -261,9 +270,10 @@ export const EmployeeAccordion = () => {
   const LABORALDATA = [
     {
       label: 'Legajo', //!Number
-      type: 'text',
+      type: 'number',
       placeholder: 'Legajo',
       name: 'file',
+      pattern: '[0-9]+',
     },
     {
       label: 'Puesto Jerarquico',
@@ -287,9 +297,11 @@ export const EmployeeAccordion = () => {
     },
     {
       label: 'Horas normales', //!Number
-      type: 'text',
+      type: 'number',
       placeholder: 'Horas normales',
       name: 'normal_hours',
+      pattern: '[0-9]+',
+      inputMode: 'numeric',
     },
     {
       label: 'Tipo de contrato',
@@ -307,7 +319,7 @@ export const EmployeeAccordion = () => {
     },
     {
       label: 'Fecha de ingreso',
-      type: 'date',
+
       placeholder: 'Fecha de ingreso',
       name: 'date_of_admission',
     },
@@ -322,11 +334,10 @@ export const EmployeeAccordion = () => {
 
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof accordionSchema>) {
+    // console.log('values', values)
     const finalValues = {
       ...values,
-      allocated_to: String(
-        contractorCompanies.find(e => e.name === values.allocated_to)?.id,
-      ),
+      date_of_admission: values.date_of_admission?.toISOString(),
       province: String(
         provincesOptions.find(e => e.name === values.province)?.id,
       ),
@@ -386,9 +397,9 @@ export const EmployeeAccordion = () => {
                                     imageBucket="employee_photos"
                                     labelInput="Subir foto"
                                     setAvailableToSubmit={setAvailableToSubmit}
-                                    onImageChange={(imageUrl: string) =>
+                                    onImageChange={(imageUrl: string) => {
                                       form.setValue('picture', imageUrl)
-                                    }
+                                    }}
                                     field={field}
                                     inputStyle={{
                                       width: '400px',
@@ -417,14 +428,15 @@ export const EmployeeAccordion = () => {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>{data.label}</FormLabel>
-                              <FormControl>
-                                <SelectWithData
-                                  placeholder={data.placeholder}
-                                  options={data.options}
-                                  onChange={field.onChange}
-                                  value={field.value || ''}
-                                />
-                              </FormControl>
+
+                              <SelectWithData
+                                placeholder={data.placeholder}
+                                options={data.options}
+                                onChange={field.onChange}
+                                value={field.value || ''}
+                                field={{ ...field }}
+                              />
+
                               <FormMessage />
                             </FormItem>
                           )}
@@ -492,7 +504,13 @@ export const EmployeeAccordion = () => {
                               <FormControl>
                                 <SelectWithData
                                   placeholder={data.placeholder}
+                                  field={{ ...field }}
                                   options={data.options}
+                                  handleProvinceChange={
+                                    data.label === 'Provincia'
+                                      ? handleProvinceChange
+                                      : undefined
+                                  }
                                   onChange={event => {
                                     if (data.name === 'province') {
                                       handleProvinceChange(event)
@@ -555,30 +573,67 @@ export const EmployeeAccordion = () => {
             <AccordionContent>
               <div className="min-w-full max-w-sm flex flex-wrap gap-8">
                 {LABORALDATA.map((data, index) => {
-                  if (data.type === 'date') {
-                    ;<div key={index} className="w-[300px] flex flex-col gap-2">
-                      <FormField
-                        control={form.control}
-                        name={data.name as names}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{data.label}</FormLabel>
-                            <FormControl>
-                              <Input
-                                type={data.type}
-                                id={data.label}
-                                placeholder={data.placeholder}
-                                className="w-[300px] bg-white"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                  if (data.name === 'date_of_admission') {
+                    return (
+                      <div
+                        key={index}
+                        className="w-[300px] flex flex-col gap-2"
+                      >
+                        <FormField
+                          control={form.control}
+                          name="date_of_admission"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                              <FormLabel>Fecha de ingreso</FormLabel>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <FormControl>
+                                    <Button
+                                      variant={'outline'}
+                                      className={cn(
+                                        'w-[300px] pl-3 text-left font-normal',
+                                        !field.value && 'text-muted-foreground',
+                                      )}
+                                    >
+                                      {field.value ? (
+                                        format(field.value, 'PPP', {
+                                          locale: es,
+                                        })
+                                      ) : (
+                                        <span>Elegir fecha</span>
+                                      )}
+                                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                  </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                  className="w-auto p-0"
+                                  align="start"
+                                >
+                                  <Calendar
+                                    captionLayout="dropdown-buttons"
+                                    mode="single"
+                                    selected={new Date()}
+                                    onSelect={field.onChange}
+                                    disabled={date =>
+                                      date > new Date() ||
+                                      date < new Date('1900-01-01')
+                                    }
+                                    initialFocus
+                                    locale={es}
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )
                   }
                   if (data.type === 'select') {
+                    const isMultiple =
+                      data.name === 'allocated_to' ? true : false
                     return (
                       <div
                         key={index}
@@ -593,12 +648,10 @@ export const EmployeeAccordion = () => {
                               <FormControl>
                                 <SelectWithData
                                   placeholder={data.placeholder}
+                                  isMultiple={isMultiple}
                                   options={data.options}
+                                  field={{ ...field }}
                                   onChange={event => {
-                                    if (data.name === 'province') {
-                                      handleProvinceChange(event)
-                                    }
-
                                     field.onChange(event)
                                   }}
                                   value={field.value || ''}
@@ -627,6 +680,7 @@ export const EmployeeAccordion = () => {
                                   type={data.type}
                                   id={data.label}
                                   placeholder={data.placeholder}
+                                  pattern={data.pattern}
                                   className="w-[300px] bg-white"
                                   {...field}
                                 />
@@ -646,7 +700,9 @@ export const EmployeeAccordion = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <p className="w-fit">
-                  <Button type="submit" disabled={!availableToSubmit}>
+                  <Button type="submit">
+                    {' '}
+                    {/*  disabled={!availableToSubmit} */}
                     Agregar empleado
                   </Button>
                 </p>
