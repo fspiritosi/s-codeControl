@@ -33,7 +33,7 @@ export default function NavBar() {
               >
                 {/* <Button className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-md"> */}
                 <MdDomainAdd size={24} />
-                <span>Empresa</span>
+                <span className='p-2'> {actualCompany?.company_name?.toUpperCase()}</span>
                 {/* </Button> */}
               </Link>
             </div>
@@ -45,7 +45,7 @@ export default function NavBar() {
             <Link
               href="/dashboard/company/"
               passHref
-              className="text-white hover:text-sky-600 block flex items-center gap-1 px-4 py-2 text-sm"
+              className="text-white hover:text-sky-600 flex items-center gap-1 px-4 py-2 text-sm"
             >
               <IoMdAddCircleOutline size={30} />
               <span>Registrar Empresa</span>
@@ -53,16 +53,7 @@ export default function NavBar() {
           </PopoverContent>
         </Popover>
       </div>
-      <div className="flex items-center flex-grow">
-        <Link
-          href="/dashboard"
-          passHref
-          className="text-white text-2xl font-bold"
-        >
-          {actualCompany?.company_name?.toUpperCase()}
-        </Link>
-      </div>
-
+   
       <div className="flex-shrink">
         <Popover>
           <PopoverTrigger>
