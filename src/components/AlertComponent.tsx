@@ -21,11 +21,8 @@ export const AlertComponent = () => {
   const setActualCompany = useLoggedUserStore(state => state.setActualCompany)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
-  // const [selectedCompany, setSelectedCompany] = useState('')
 
-  // const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   setSelectedCompany(event.target.value)
-  // }
+  console.log(actualCompany)
 
   const handleAlertClose = (company: company) => {
     setActualCompany(company)
