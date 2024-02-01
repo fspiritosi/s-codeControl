@@ -47,6 +47,7 @@ export default function Callback() {
           <Skeleton className="h-4 mt-2" />
           <Skeleton className="h-4 mt-2" />
           <Skeleton className="h-52 w-full mt-2" />
+          <Skeleton className="h-52 w-full mt-2" />
         </section>
       </div>
     </main>
