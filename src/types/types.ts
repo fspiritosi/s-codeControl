@@ -46,7 +46,7 @@ export type company = {
   industry: string
   company_logo: string
   province_id: number
-  employees: UUID
+  employees_id: string[]
   owner_id: string | undefined
 }
 
@@ -97,21 +97,21 @@ export type Employee = {
   gender: string | undefined
   marital_status: string | undefined
   level_of_education: string | undefined //!si
-  picture: string | undefined
+  picture?: string | undefined
   street: string
   street_number: string
   province: string | undefined
   city: string | undefined 
   postal_code: string
   phone: string
-  email: string //!si
-  file: File | undefined | string
+  email?: string //!si
+  file: undefined | null | string | number
   hierarchical_position: string | undefined //!si
   company_position: string //!si
   workflow_diagram: string
   normal_hours: string //!si
   type_of_contract: string | undefined //!si
-  allocated_to: string | undefined //!si
-  date_of_admission: string
+  allocated_to: string | undefined | string[] //!si
+  date_of_admission: Date | undefined | string
   full_name?: string //!si
 }
