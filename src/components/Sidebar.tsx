@@ -59,10 +59,9 @@ export default function SideBar() {
               src={Logo}
               alt="Logo code control"
               width={150}
-              height={150}
             />
           ) : (
-            <Image src={Logo1} alt="Logo code control" layout="responsive" />
+            <Image src={Logo1} alt="Logo code control"  />
           )}
         </div>
       </Link>
