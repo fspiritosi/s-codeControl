@@ -29,10 +29,12 @@ type Props = {
   handleProvinceChange?: (value: string) => void
   editing?: boolean
   selectedValues?: string[]
+  disabled?: boolean
 }
 
 export const SelectWithData = ({
   label,
+  disabled,
   placeholder,
   options,
   onChange,
@@ -67,8 +69,9 @@ export const SelectWithData = ({
             </SelectTrigger>
           </FormControl>
           <SelectContent>
-            {options?.map((option: multiple, index: number) => {
-              const isChecked = selectedValues?.includes(option.id)
+            {options?.map((option: multiple) => {
+              // const isChecked = selectedValues?.includes(option.id)
+              // console.log(field.value, 'field.value')
               return (
                 <div
                   key={option.id}
@@ -76,24 +79,21 @@ export const SelectWithData = ({
                 >
                   <Checkbox
                     id={option.id}
-                    checked={isChecked}
+                    checked={field.value?.includes(option.id)}
+                    disabled={disabled}
                     onCheckedChange={checked => {
                       return checked
-                        ? field.onChange([...(field?.value || []), option.id])
+                        ? field.onChange([...field.value, option.id])
                         : field.onChange(
-                            field.value?.filter((value: any) => {
-                              value !== option.id
-                            }),
+                            field.value?.filter(
+                              (value: any) => value !== option.id,
+                            ),
                           )
                     }}
                   />
                   <label
                     htmlFor="terms"
-                    className={`text-sm font-medium leading-none ${
-                      isChecked
-                        ? 'peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
-                        : ''
-                    }`}
+                    className={`text-sm font-medium leading-none`}
                   >
                     {option.name}
                   </label>
@@ -129,7 +129,7 @@ export const SelectWithData = ({
         </FormControl>
         <SelectContent>
           {dataToRender?.map((option: Province, index: number) => (
-            <SelectItem key={index} value={String(option)}>
+            <SelectItem disabled={disabled} key={index} value={String(option)}>
               {String(option)}
             </SelectItem>
           ))}
