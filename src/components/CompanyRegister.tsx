@@ -57,7 +57,7 @@ export function CompanyRegister() {
       country: 'argentina',
       province_id: 0,
       industry: '',
-      employees: null,
+      employees_id: null,
     },
   })
 
@@ -122,7 +122,7 @@ export function CompanyRegister() {
         contact_phone: processText(companyData.contact_phone),
         address: processText(companyData.address),
         industry: processText(companyData.industry),
-        employees: companyData.employees,
+        employees_id: [companyData.employees_id],
       }
 
       //Insertar la compañía con los datos procesados

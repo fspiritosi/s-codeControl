@@ -10,17 +10,13 @@ export const useEmployeesData = () => {
     
 return{
     createEmployee: async (employee: Employee) => {
-        console.log(employee)
         const { data, error } = await supabase
         .from('companies_employees')
         .insert({...employee,
-            allocated_to:[ employee.allocated_to],
             company_id: company?.id,
         })
-        console.log(data)
 
         if (error) {
-            console.log(error)
             const message = await errorTranslate(error.message)
             throw new Error(String(message).replaceAll('"', ''))
           }

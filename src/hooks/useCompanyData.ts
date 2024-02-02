@@ -15,7 +15,7 @@ import { company } from '@/types/types'
 export const useCompanyData = () => {
   const {errorTranslate} = useEdgeFunctions()
   const [industry, setIndustry] = useState<any[]>([])
-  const insertCompany = async (companyData: Omit<company, 'employees'>) => {
+  const insertCompany = async (companyData: Omit<company, 'employees_id'>) => {
     try {
 
       const { data, error } = await supabase

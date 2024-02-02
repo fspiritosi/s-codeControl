@@ -1,6 +1,6 @@
 import { company, profileUser } from '@/types/types'
 import { User } from '@supabase/supabase-js'
-import create from 'zustand'
+import {create} from 'zustand'
 import { supabase } from '../../supabase/supabase'
 
 interface State {
@@ -26,12 +26,14 @@ export const useLoggedUserStore = create<State>((set, get) => {
   const setActualCompany = (company: company) => {
     set({ actualCompany: company })
   }
-
+  
   const howManyCompanies = async (id: string) => {
     const { data, error } = await supabase
       .from('company')
       .select('*')
       .eq('owner_id', id)
+      
+      
 
     if (error) {
       console.error('Error al obtener el perfil:', error)
