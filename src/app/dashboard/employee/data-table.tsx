@@ -73,57 +73,23 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
   const allOptions = {
-    document_type: [
-      'Todos',
-      ...Array.from(new Set(data.map((item: any) => item.document_type))),
-    ],
-    hierarchical_position: [
-      'Todos',
-      ...Array.from(
-        new Set(data.map((item: any) => item.hierarchical_position)),
-      ),
-    ],
-    type_of_contract: [
-      'Todos',
-      ...Array.from(new Set(data.map((item: any) => item.type_of_contract))),
-    ],
-    allocated_to: [
-      'Todos',
-      ...Array.from(new Set(data.map((item: any) => item.allocated_to))),
-    ],
-    nationality: [
-      'Todos',
-      ...Array.from(new Set(data.map((item: any) => item.nationality))),
-    ],
-    birthplace: [
-      'Todos',
-      ...Array.from(new Set(data.map((item: any) => item.birthplace))),
-    ],
-    gender: [
-      'Todos',
-      ...Array.from(new Set(data.map((item: any) => item.gender))),
-    ],
-    marital_status: [
-      'Todos',
-      ...Array.from(new Set(data.map((item: any) => item.marital_status))),
-    ],
-    level_of_education: [
-      'Todos',
-      ...Array.from(new Set(data.map((item: any) => item.level_of_education))),
-    ],
-    province: [
-      'Todos',
-      ...Array.from(new Set(data.map((item: any) => item.province))),
-    ],
-    affiliate_status: [
-      'Todos',
-      ...Array.from(new Set(data.map((item: any) => item.affiliate_status))),
-    ],
-    city: ['Todos', ...Array.from(new Set(data.map((item: any) => item.city)))],
-    hierrical_position: [
-      'Todos',
-      ...Array.from(new Set(data.map((item: any) => item.hierrical_position))),
-    ],
+    document_type: createOptions('document_type'),
+    hierarchical_position: createOptions('hierarchical_position'),
+    type_of_contract: createOptions('type_of_contract'),
+    allocated_to: createOptions('allocated_to'),
+    nationality: createOptions('nationality'),
+    birthplace: createOptions('birthplace'),
+    gender: createOptions('gender'),
+    marital_status: createOptions('marital_status'),
+    level_of_education: createOptions('level_of_education'),
+    province: createOptions('province'),
+    affiliate_status: createOptions('affiliate_status'),
+    city: createOptions('city'),
+    hierrical_position: createOptions('hierrical_position'),
+  };
+
+  function createOptions(key: string) {
+    return ['Todos', ...Array.from(new Set(data.map((item: any) => item[key])))];
   }
 
   const selectHeader = {
