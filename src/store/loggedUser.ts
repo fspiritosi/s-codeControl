@@ -1,6 +1,6 @@
 import { company, profileUser } from '@/types/types'
 import { User } from '@supabase/supabase-js'
-import create from 'zustand'
+import {create} from 'zustand'
 import { supabase } from '../../supabase/supabase'
 
 interface State {

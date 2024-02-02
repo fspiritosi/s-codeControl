@@ -1,11 +1,11 @@
-import create from 'zustand'
+import {create} from 'zustand'
 import { supabase } from '../../supabase/supabase'
 
 type Province  = {
   id: number
   name: string
 }
-type generic ={
+export type generic ={
   id: number
   name: string
   created_at: string
