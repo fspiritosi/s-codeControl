@@ -32,6 +32,7 @@ import { es } from 'date-fns/locale'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { CheckboxReactHookFormMultiple } from './CheckboxSelect'
 import { SelectWithData } from './SelectWithData'
 import { UploadImage } from './UploadImage'
 import { Badge } from './ui/badge'
@@ -326,15 +327,15 @@ export const EmployeeAccordion = () => {
   ]
 
   const handleProvinceChange = (name: any) => {
+    console.log(name)
     const provinceId = provincesOptions.find(
-      (province: Province) => province.name === name,
+      (province: Province) => province.name.trim() === name,
     )?.id
     fetchCityValues(provinceId)
   }
 
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof accordionSchema>) {
-    // console.log('values', values)
     const finalValues = {
       ...values,
       date_of_admission: values.date_of_admission?.toISOString(),
@@ -634,6 +635,30 @@ export const EmployeeAccordion = () => {
                   if (data.type === 'select') {
                     const isMultiple =
                       data.name === 'allocated_to' ? true : false
+
+                    if (isMultiple) {
+                      return (
+                        <div
+                        key={index}
+                        className="w-[300px] flex flex-col gap-2 justify-center"
+                      >
+                        <FormField
+                          control={form.control}
+                          name={data.name as names}
+                          render={({ field }) => (
+
+                          <CheckboxReactHookFormMultiple
+                          options={data.options}
+                          placeholder='Afectado a'
+                          field={field}
+                          key={data.name}
+                        />
+                          )}
+                        />
+                      </div>
+                    
+                      )
+                    }
                     return (
                       <div
                         key={index}
