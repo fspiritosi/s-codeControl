@@ -1,4 +1,43 @@
 'use client'
+const getUser = (id: string) => {
+  const data = [
+    {
+      email: 'juan.perez@example.com',
+      cuil: '29-12345678-9',
+      document_number: '12345678',
+      company_position: 'Gerente',
+      normal_hours: '8',
+      type_of_contract: 'A tiempo indeterminado',
+      allocated_to: [
+        '5fb4c23f-c734-492e-ad76-1b744c8c26e2',
+        'a33dc8c3-0b18-4d1e-885b-bcd4144234c2',
+      ],
+      picture: 'picture.com',
+      nationality: 'Argentina',
+      lastname: 'Pérez',
+      firstname: 'Juan',
+      document_type: 'DNI',
+      birthplace: 'Argentina',
+      gender: 'Masculino',
+      marital_status: 'Soltero',
+      level_of_education: 'Universitario',
+      street: 'Calle 123',
+      street_number: '456',
+      province: 'Buenos Aires',
+      postal_code: '1234',
+      phone: '12345678',
+      file: '456',
+      date_of_admission: '01/09/2030',
+      affiliate_status: 'Convenio',
+      city: '3 de febrero',
+      hierarchical_position: 'Gerente',
+      workflow_diagram: 'Lunes a Viernes',
+    },
+  ]
+
+  return data.find(user => user.document_number === id)
+}
+
 import {
   Accordion,
   AccordionContent,
@@ -22,22 +61,11 @@ import {
   typeOfContractENUM,
 } from '@/types/enums'
 
-import { cn } from '@/lib/utils'
-import { names } from '@/types/types'
-import { accordionSchema } from '@/zodSchemas/schemas'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { CalendarIcon } from '@radix-ui/react-icons'
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
-import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { CheckboxReactHookFormMultiple } from './CheckboxSelect'
-import { SelectWithData } from './SelectWithData'
-import { UploadImage } from './UploadImage'
-import { Badge } from './ui/badge'
-import { Button } from './ui/button'
-import { Calendar } from './ui/calendar'
+import { SelectWithData } from '@/components/SelectWithData'
+import { UploadImage } from '@/components/UploadImage'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
 import {
   Form,
   FormControl,
@@ -45,18 +73,35 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from './ui/form'
-import { Input } from './ui/input'
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
-import { useToast } from './ui/use-toast'
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { useToast } from '@/components/ui/use-toast'
+import { cn } from '@/lib/utils'
+import { names } from '@/types/types'
+import { accordionSchema } from '@/zodSchemas/schemas'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { CalendarIcon } from '@radix-ui/react-icons'
 import { PostgrestError } from '@supabase/supabase-js'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { CheckboxDefaultValues } from '@/components/CheckboxDefValues'
 
 type Province = {
   id: number
   name: string
 }
 
-export const EmployeeAccordion = () => {
+export default function page({ params }: { params: any }) {
+  const { document } = params
+  const user = getUser(document)
   const fetchCityValues = useCountriesStore(state => state.fetchCities)
   const provincesOptions = useCountriesStore(state => state.provinces)
   const citysOptions = useCountriesStore(state => state.cities)
@@ -67,36 +112,12 @@ export const EmployeeAccordion = () => {
   const { createEmployee } = useEmployeesData()
   const { toast } = useToast()
 
-
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
     defaultValues: {
-      lastname: '',
-      firstname: '',
-      nationality: undefined,
-      cuil: '',
-      document_type: undefined,
-      document_number: '',
-      birthplace: undefined,
-      gender: undefined,
-      marital_status: undefined,
-      level_of_education: undefined,
-      picture: '',
-      street: '',
-      street_number: '',
-      province: undefined,
-      city: undefined,
-      postal_code: '',
-      phone: '',
-      email: '',
-      file: '',
-      hierarchical_position: undefined,
-      company_position: '',
-      workflow_diagram: undefined,
-      normal_hours: '',
-      type_of_contract: undefined,
-      allocated_to: undefined,
-      date_of_admission: undefined,
+      ...user,
+      allocated_to: user?.allocated_to,
+      date_of_admission: new Date(user?.date_of_admission ?? ''),
     },
   })
 
@@ -105,7 +126,16 @@ export const EmployeeAccordion = () => {
   const [accordion3Errors, setAccordion3Errors] = useState(false)
   const [availableToSubmit, setAvailableToSubmit] = useState(false)
 
+  const provinceId = provincesOptions?.find(
+    (province: Province) => province.name.trim() === user?.province,
+  )?.id
+
   useEffect(() => {
+    if (provinceId) {
+      fetchCityValues(provinceId)
+    }
+
+
     const { errors } = form.formState
 
     // Inicializa un nuevo estado de error para los acordeones
@@ -145,7 +175,7 @@ export const EmployeeAccordion = () => {
 
     // Actualiza el estado de error de los acordeones
     // que se ejecute cuando cambie el estado de error y cuando ya no haya errores
-  }, [form.formState.errors, form.formState.isDirty, form.formState.isValid])
+  }, [form.formState.errors, provinceId])
 
   const PERSONALDATA = [
     {
@@ -334,37 +364,43 @@ export const EmployeeAccordion = () => {
 
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof accordionSchema>) {
-    const finalValues = {
-      ...values,
-      date_of_admission: values.date_of_admission?.toISOString(),
-      province: String(
-        provincesOptions.find(e => e.name === values.province)?.id,
-      ),
-      birthplace: String(
-        countryOptions.find(e => e.name === values.birthplace)?.id,
-      ),
-      city: String(citysOptions.find(e => e.name === values.city)?.id),
-      hierarchical_position: String(
-        hierarchyOptions.find(e => e.name === values.hierarchical_position)?.id,
-      ),
-      workflow_diagram: String(
-        workDiagramOptions.find(e => e.name === values.workflow_diagram)?.id,
-      ),
-    }
-    try {
-      createEmployee(finalValues)
-    } catch (error: PostgrestError | any) {
-      toast({
-        variant: 'destructive',
-        title: error.message,
-      })
-    }
+   
+    // const finalValues = {
+    //   ...values,
+    //   date_of_admission: values.date_of_admission?.toISOString(),
+    //   province: String(
+    //     provincesOptions.find(e => e.name === values.province)?.id,
+    //   ),
+    //   birthplace: String(
+    //     countryOptions.find(e => e.name === values.birthplace)?.id,
+    //   ),
+    //   city: String(citysOptions.find(e => e.name === values.city)?.id),
+    //   hierarchical_position: String(
+    //     hierarchyOptions.find(e => e.name === values.hierarchical_position)?.id,
+    //   ),
+    //   workflow_diagram: String(
+    //     workDiagramOptions.find(e => e.name === values.workflow_diagram)?.id,
+    //   ),
+    // }
+    // try {
+    //   createEmployee(finalValues)
+    // } catch (error: PostgrestError | any) {
+    //   toast({
+    //     variant: 'destructive',
+    //     title: error.message,
+    //   })
+    // }
   }
 
   return (
+    <>
+   <header className='flex flex-col gap-4 mt-6'>
+        <h2 className="text-4xl">Ver Empleados</h2>
+        <p>Esta sección muestra un formulario para ver los datos de los empleados:</p>
+      </header>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
-        <Accordion type="multiple" className="w-full">
+        <Accordion className="w-full" type="multiple" defaultValue={["personal-data","laboral-data",'contact-data']}>
           <AccordionItem value="personal-data">
             <AccordionTrigger className="text-2xl hover:no-underline">
               <div className="flex gap-5 items-center flex-wrap">
@@ -393,6 +429,7 @@ export const EmployeeAccordion = () => {
                               <FormControl>
                                 <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
                                   <UploadImage
+                                  disabledInput={true}
                                     imageBucket="employee_photos"
                                     labelInput="Subir foto"
                                     setAvailableToSubmit={setAvailableToSubmit}
@@ -424,21 +461,25 @@ export const EmployeeAccordion = () => {
                         <FormField
                           control={form.control}
                           name={data.name as names}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{data.label}</FormLabel>
+                          render={({ field }) => {
+                            return (
+                              <FormItem>
+                                <FormLabel>{data.label}</FormLabel>
 
-                              <SelectWithData
-                                placeholder={data.placeholder}
-                                options={data.options}
-                                onChange={field.onChange}
-                                value={field.value || ''}
-                                field={{ ...field }}
-                              />
+                                <SelectWithData
+                                  disabled={true}
+                                  placeholder={data.placeholder}
+                                  options={data.options}
+                                  onChange={field.onChange}
+                                  editing={true}
+                                  value={field.value || ''}
+                                  field={{ ...field }}
+                                />
 
-                              <FormMessage />
-                            </FormItem>
-                          )}
+                                <FormMessage />
+                              </FormItem>
+                            )
+                          }}
                         />
                       </div>
                     )
@@ -456,6 +497,7 @@ export const EmployeeAccordion = () => {
                               <FormLabel>{data.label}</FormLabel>
                               <FormControl>
                                 <Input
+                                  disabled={true}
                                   type={data.type}
                                   id={data.label}
                                   placeholder={data.placeholder}
@@ -497,32 +539,36 @@ export const EmployeeAccordion = () => {
                         <FormField
                           control={form.control}
                           name={data.name as names}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{data.label}</FormLabel>
-                              <FormControl>
-                                <SelectWithData
-                                  placeholder={data.placeholder}
-                                  field={{ ...field }}
-                                  options={data.options}
-                                  handleProvinceChange={
-                                    data.label === 'Provincia'
-                                      ? handleProvinceChange
-                                      : undefined
-                                  }
-                                  onChange={event => {
-                                    if (data.name === 'province') {
-                                      handleProvinceChange(event)
+                          render={({ field }) => {
+                            return (
+                              <FormItem>
+                                <FormLabel>{data.label}</FormLabel>
+                                <FormControl>
+                                  <SelectWithData
+                                    placeholder={data.placeholder}
+                                    field={{ ...field }}
+                                    options={data.options}
+                                    disabled={true}
+                                    editing={true}
+                                    value={field.value || ''}
+                                    handleProvinceChange={
+                                      data.label === 'Provincia'
+                                        ? handleProvinceChange
+                                        : undefined
                                     }
+                                    onChange={event => {
+                                      if (data.name === 'province') {
+                                        handleProvinceChange(event)
+                                      }
 
-                                    field.onChange(event)
-                                  }}
-                                  value={field.value || ''}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
+                                      field.onChange(event)
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )
+                          }}
                         />
                       </div>
                     )
@@ -540,6 +586,7 @@ export const EmployeeAccordion = () => {
                               <FormLabel>{data.label}</FormLabel>
                               <FormControl>
                                 <Input
+                                disabled={true}
                                   type={data.type}
                                   id={data.label}
                                   placeholder={data.placeholder}
@@ -589,6 +636,7 @@ export const EmployeeAccordion = () => {
                                   <FormControl>
                                     <Button
                                       variant={'outline'}
+                                      disabled={true}
                                       className={cn(
                                         'w-[300px] pl-3 text-left font-normal',
                                         !field.value && 'text-muted-foreground',
@@ -634,29 +682,31 @@ export const EmployeeAccordion = () => {
                     const isMultiple =
                       data.name === 'allocated_to' ? true : false
 
-                    if (isMultiple) {
-                      return (
-                        <div
-                        key={index}
-                        className="w-[300px] flex flex-col gap-2 justify-center"
-                      >
-                        <FormField
-                          control={form.control}
-                          name={data.name as names}
-                          render={({ field }) => (
-
-                          <CheckboxReactHookFormMultiple
-                          options={data.options}
-                          placeholder='Afectado a'
-                          field={field}
-                          key={data.name}
-                        />
-                          )}
-                        />
-                      </div>
-                    
-                      )
-                    }
+                      if (isMultiple) {
+                        return (
+                          <div
+                          key={index}
+                          className="w-[300px] flex flex-col gap-2 justify-center"
+                        >
+                          <FormField
+                            control={form.control}
+                            name={data.name as names}
+                            render={({ field }) => (
+  
+                            <CheckboxDefaultValues
+                            options={data.options}
+                            disabled={true}
+                            field={field}
+                            placeholder='Afectado a'
+                            // field={field}
+                            // key={data.name}
+                          />
+                            )}
+                          />
+                        </div>
+                      
+                        )
+                      }
                     return (
                       <div
                         key={index}
@@ -665,24 +715,27 @@ export const EmployeeAccordion = () => {
                         <FormField
                           control={form.control}
                           name={data.name as names}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{data.label}</FormLabel>
-                              <FormControl>
-                                <SelectWithData
-                                  placeholder={data.placeholder}
-                                  isMultiple={isMultiple}
-                                  options={data.options}
-                                  field={{ ...field }}
-                                  onChange={event => {
-                                    field.onChange(event)
-                                  }}
-                                  value={field.value || ''}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
+                          render={({ field }) => {
+                            return (
+                              <FormItem>
+                                <FormLabel>{data.label}</FormLabel>
+                                <FormControl>
+                                  <SelectWithData
+                                  disabled={true}
+                                    placeholder={data.placeholder}
+                                    isMultiple={isMultiple}
+                                    options={data.options}
+                                    field={{ ...field }}
+                                    onChange={event => {
+                                      field.onChange(event)
+                                    }}
+                                    value={field.value || ''}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )
+                          }}
                         />
                       </div>
                     )
@@ -700,6 +753,7 @@ export const EmployeeAccordion = () => {
                               <FormLabel>{data.label}</FormLabel>
                               <FormControl>
                                 <Input
+                                disabled={true}
                                   type={data.type}
                                   id={data.label}
                                   placeholder={data.placeholder}
@@ -719,29 +773,10 @@ export const EmployeeAccordion = () => {
               </div>
             </AccordionContent>
           </AccordionItem>
-          <TooltipProvider delayDuration={100}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <p className="w-fit">
-                  <Button type="submit">
-                    {' '}
-                    {/*  disabled={!availableToSubmit} */}
-                    Agregar empleado
-                  </Button>
-                </p>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-[250px]">
-                {availableToSubmit &&
-                !accordion1Errors &&
-                !accordion2Errors &&
-                !accordion3Errors
-                  ? '¡Todo listo para agregar el empleado!'
-                  : '¡Completa todos los campos para agregar el empleado, asegurate de subir la imagen!'}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+      
         </Accordion>
       </form>
     </Form>
+    </>
   )
 }

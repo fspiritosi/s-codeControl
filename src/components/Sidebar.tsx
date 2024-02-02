@@ -1,15 +1,18 @@
 'use client'
 
-import Link from 'next/link'
-import SideLinks from './SideLinks'
-import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import {
+  TbLayoutSidebarLeftExpand,
+  TbLayoutSidebarRightExpand,
+} from 'react-icons/tb'
 import Logo1 from '../../public/logo-azul.png'
 import Logo from '../../public/logoLetrasBlancas.png'
-import {
-  TbLayoutSidebarRightExpand,
-  TbLayoutSidebarLeftExpand,
-} from 'react-icons/tb'
+import SideLinks from './SideLinks'
+interface SideBarProps {
+  expanded: boolean
+}
 
 export default function SideBar() {
   const [expanded, setExpanded] = useState(true)
@@ -56,10 +59,9 @@ export default function SideBar() {
               src={Logo}
               alt="Logo code control"
               width={150}
-              height={150}
             />
           ) : (
-            <Image src={Logo1} alt="Logo code control" layout="responsive" />
+            <Image src={Logo1} alt="Logo code control"  />
           )}
         </div>
       </Link>
