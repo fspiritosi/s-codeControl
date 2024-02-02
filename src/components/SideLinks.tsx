@@ -1,16 +1,16 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
 import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 import {
-  MdOutlineSpaceDashboard,
-  MdOutlinePersonAddAlt,
-  MdListAlt,
   MdHelpOutline,
-  MdOutlinePhoneIphone,
+  MdListAlt,
   MdOutlineKeyboardArrowDown,
   MdOutlineKeyboardArrowUp,
+  MdOutlinePersonAddAlt,
+  MdOutlinePhoneIphone,
+  MdOutlineSpaceDashboard,
 } from 'react-icons/md'
 
 const sizeIcons = 24
@@ -25,15 +25,15 @@ const links = [
     name: 'Empleados',
     href: '/dashboard/employee',
     icon: <MdOutlinePersonAddAlt size={sizeIcons} />,
-    submenu: [
-      { name: 'Submenu Item 1', href: '/dashboard/submenu1' },
-      { name: 'Submenu Item 2', href: '/dashboard/submenu2' },
-    ],
   },
   {
     name: 'Equipos',
     href: '/dashboard/#',
     icon: <MdOutlinePhoneIphone size={sizeIcons} />,
+    submenu: [
+      { name: 'Submenu Item 1', href: '/dashboard/submenu1' },
+      { name: 'Submenu Item 2', href: '/dashboard/submenu2' },
+    ],
   },
   {
     name: 'Documentación',
