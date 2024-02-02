@@ -17,11 +17,13 @@ interface UploadImageProps {
   imageBucket: string
   field?: any
   setAvailableToSubmit?: (value: boolean) => void
+  disabledInput?: boolean
 }
 
 export function UploadImage({
   onImageChange,
   // onUploadSuccess,
+  disabledInput,
   style,
   inputStyle,
   desciption,
@@ -82,6 +84,7 @@ export function UploadImage({
         <FormLabel>{labelInput}</FormLabel>
         <Input
           type="file"
+          disabled={disabledInput}
           accept="image/*"
           // {...field}
           onChange={(event: ChangeEvent<HTMLInputElement>) => {
