@@ -74,7 +74,11 @@ export const columns: ColumnDef<Colum>[] = [
               Copiar DNI
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Ver empleado</DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link href={`/dashboard/employee/view/${user.document_number}`}>
+                Ver empleado
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem>
               <Link href={`/dashboard/employee/edit/${user.document_number}`}>
                 Editar empleado
