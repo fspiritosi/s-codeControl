@@ -67,7 +67,6 @@ export const EmployeeAccordion = () => {
   const { createEmployee } = useEmployeesData()
   const { toast } = useToast()
 
-  // console.log(citysOptions)
 
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
@@ -327,7 +326,6 @@ export const EmployeeAccordion = () => {
   ]
 
   const handleProvinceChange = (name: any) => {
-    console.log(name)
     const provinceId = provincesOptions.find(
       (province: Province) => province.name.trim() === name,
     )?.id

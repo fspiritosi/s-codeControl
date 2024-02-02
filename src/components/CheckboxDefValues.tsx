@@ -25,8 +25,6 @@ export function CheckboxDefaultValues({
   placeholder,
   disabled,
 }: Props) {
-    console.log(field.value?.length, 'field.value')
-    console.log(field.value, 'field.value')
 
     function SelectValue(  ) {
         // Obtén el valor actual del select de alguna manera

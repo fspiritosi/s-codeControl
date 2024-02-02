@@ -364,7 +364,7 @@ export default function page({ params }: { params: any }) {
 
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof accordionSchema>) {
-    console.log(values)
+   
     // const finalValues = {
     //   ...values,
     //   date_of_admission: values.date_of_admission?.toISOString(),

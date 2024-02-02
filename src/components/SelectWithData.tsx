@@ -70,8 +70,6 @@ export const SelectWithData = ({
           </FormControl>
           <SelectContent>
             {options?.map((option: multiple) => {
-              // const isChecked = selectedValues?.includes(option.id)
-              // console.log(field.value, 'field.value')
               return (
                 <div
                   key={option.id}

@@ -12,7 +12,6 @@ const getAllFiles = async (legajo:string) => {
   .select('*')
   .eq('credential_id', user?.id)
 
-  // console.log(profile.data?.[0].id)
 
   const {data} = await supabase.
   from('company')
