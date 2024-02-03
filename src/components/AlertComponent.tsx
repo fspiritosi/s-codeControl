@@ -44,10 +44,10 @@ export const AlertComponent = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Parece que tienes varias compañias creadas
+              Parece que tienes varias compañías creadas
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Para poder administrar tu empresa debes seleccionar una compañia.
+              Para poder administrar tu empresa debes seleccionar una compañía.
               ¿Deseas seleccionar una?
             </AlertDialogDescription>
             {allCompanies.map((company, index) => (
@@ -77,7 +77,7 @@ export const AlertComponent = () => {
                       htmlFor={`company-${index}`}
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 p-0"
                     >
-                      Usar como compañia principal
+                      Usar como compañía principal
                     </label>
                   </span>
                 </AlertDialogDescription> */}
@@ -93,16 +93,16 @@ export const AlertComponent = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Parece que no tienes ninguna compañia creada
+              Parece que no tienes ninguna compañía creada
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Para poder administrar tu empresa debes crear una compañia
+              Para poder administrar tu empresa debes crear una compañía
               primero. ¿Deseas crear una?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction>
-              <Link href="/dashboard/company">Crear compañia</Link>
+              <Link href="/dashboard/company">Crear compañía</Link>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
