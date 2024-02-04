@@ -20,15 +20,19 @@ const getAllFiles = async (legajo:string) => {
 
 
   const { data: employee } = await supabase
-    .from('companies_employees')
+    .from('employees')
     .select('*')
-    .eq('company_id', data?.[0].id)
+    // .eq('company_id', data?.[0].id)
     .eq('file', legajo)
 
 
     if (employee && employee.length > 0) {
-      return false
+      console.log(
+        'El legajo ya existe'
+      );
+      return true
     } else {
+      console.log('El legajo no existe');
       return true
     }
 
