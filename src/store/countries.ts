@@ -78,7 +78,7 @@ export const useCountriesStore = create<State>((set, get) => {
   }
   const fetchContractors = async () => {
     const { data: contractors, error } = await supabase
-      .from('contractor_companies')
+      .from('contractors')
       .select('*')
 
     if (error) {
