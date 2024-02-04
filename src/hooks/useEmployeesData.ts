@@ -11,7 +11,7 @@ export const useEmployeesData = () => {
 return{
     createEmployee: async (employee: Employee) => {
         const { data, error } = await supabase
-        .from('companies_employees')
+        .from('employees')
         .insert({...employee,
             company_id: company?.id,
         })
