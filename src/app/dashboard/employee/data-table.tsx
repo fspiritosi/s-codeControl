@@ -86,11 +86,13 @@ export function DataTable<TData, TValue>({
     affiliate_status: createOptions('affiliate_status'),
     city: createOptions('city'),
     hierrical_position: createOptions('hierrical_position'),
-  };
+  }
 
   function createOptions(key: string) {
-    return ['Todos', ...Array.from(new Set(data.map((item: any) => item[key])))];
+    const values = data.flatMap((item: any) => item[key])
+    return ['Todos', ...Array.from(new Set(values))]
   }
+  console.log(allOptions)
 
   const selectHeader = {
     document_type: {
@@ -111,7 +113,7 @@ export function DataTable<TData, TValue>({
     allocated_to: {
       name: 'allocated_to',
       option: allOptions.allocated_to,
-      label: 'Asignado a',
+      label: 'Afectado a',
     },
     nationality: {
       name: 'nationality',
@@ -247,43 +249,45 @@ export function DataTable<TData, TValue>({
                         ? null
                         : flexRender(
                             header.id in selectHeader ? (
-                              <Select
-                                value={
-                                  table
-                                    .getColumn(header.id)
-                                    ?.getFilterValue() as string
-                                }
-                                onValueChange={event => {
-                                  if (event === 'Todos') {
+                              <div className="flex justify-center">
+                                <Select
+                                  value={
                                     table
                                       .getColumn(header.id)
-                                      ?.setFilterValue('')
-                                  } else {
-                                    table
-                                      .getColumn(header.id)
-                                      ?.setFilterValue(event)
+                                      ?.getFilterValue() as string
                                   }
-                                }}
-                              >
-                                <SelectTrigger className="w-[180px]">
-                                  <SelectValue
-                                    placeholder={
-                                      header.column.columnDef.header as string
+                                  onValueChange={event => {
+                                    if (event === 'Todos') {
+                                      table.getColumn(header.id)?.setFilterValue('');
+                                    } else {
+                                      if (header.column.columnDef.header === 'Afectado a') {
+                                        table.getColumn(header.id)?.setFilterValue(event);
+                                      } else {
+                                        table.getColumn(header.id)?.setFilterValue(event);
+                                      }
                                     }
-                                  />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    {selectHeader[
-                                      header.id as keyof typeof selectHeader
-                                    ]?.option?.map((option: string) => (
-                                      <SelectItem key={option} value={option}>
-                                        {option}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectGroup>
-                                </SelectContent>
-                              </Select>
+                                  }}
+                                >
+                                  <SelectTrigger className="w-[180px]">
+                                    <SelectValue
+                                      placeholder={
+                                        header.column.columnDef.header as string
+                                      }
+                                    />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectGroup>
+                                      {selectHeader[
+                                        header.id as keyof typeof selectHeader
+                                      ]?.option?.map((option: string) => (
+                                        <SelectItem key={option} value={option}>
+                                          {option}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             ) : (
                               header.column.columnDef.header
                             ),
@@ -302,17 +306,19 @@ export function DataTable<TData, TValue>({
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
                 >
-                  {row.getVisibleCells().map(cell => (
-                    <TableCell
-                      key={cell.id}
-                      className="text-center whitespace-nowrap"
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
+                  {row.getVisibleCells().map(cell => {
+                    return (
+                      <TableCell
+                        key={cell.id}
+                        className="text-center whitespace-nowrap"
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    )
+                  })}
                 </TableRow>
               ))
             ) : (
