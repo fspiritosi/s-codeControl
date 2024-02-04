@@ -8,7 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { Button } from './ui/button'
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { MdDomainAdd } from 'react-icons/md'
 import { IoMdAddCircleOutline } from 'react-icons/io'
@@ -27,14 +27,15 @@ export default function NavBar() {
           <PopoverTrigger>
             <div onMouseEnter={() => setIsOpen(true)}>
               <Link
-                href="/dashboard/company"
+                href="/dashboard/company/"
                 passHref
                 className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-md"
               >
-                {/* <Button className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-md"> */}
                 <MdDomainAdd size={24} />
-                <span className='p-2'> {actualCompany?.company_name?.toUpperCase()}</span>
-                {/* </Button> */}
+                <span className="p-2">
+                  {' '}
+                  {actualCompany?.company_name?.toUpperCase()}
+                </span>
               </Link>
             </div>
           </PopoverTrigger>
@@ -43,7 +44,7 @@ export default function NavBar() {
             className="bg-slate-800"
           >
             <Link
-              href="/dashboard/company/"
+              href="/dashboard/company/new"
               passHref
               className="text-white hover:text-sky-600 flex items-center gap-1 px-4 py-2 text-sm"
             >
@@ -53,7 +54,7 @@ export default function NavBar() {
           </PopoverContent>
         </Popover>
       </div>
-   
+
       <div className="flex-shrink">
         <Popover>
           <PopoverTrigger>

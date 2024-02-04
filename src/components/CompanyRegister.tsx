@@ -29,15 +29,16 @@ import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { Loader } from './svg/loader'
-
+import { useRouter } from 'next/navigation'
 export function CompanyRegister() {
+  const router = useRouter()
   const profile = useLoggedUserStore(state => state.profile)
   const { insertCompany, fetchIndustryType, industry } = useCompanyData()
   const [showLoader, setShowLoader] = useState(false)
   const [selectedIndustry, setSelectedIndustry] = useState<Industry | null>(
     null,
   )
-  const uploadImageRef = useRef();
+  const uploadImageRef = useRef()
   const provincesValues = useCountriesStore(state => state.provinces)
   const citiesValues = useCountriesStore(state => state.cities)
   const fetchCityValues = useCountriesStore(state => state.fetchCities)
@@ -131,8 +132,7 @@ export function CompanyRegister() {
         company_logo: processedCompanyData.company_logo || '',
         owner_id: profile?.[0].id,
       })
-      
-
+      router.push('/dashboard/company')
       setShowLoader(true)
     } catch (err) {
       console.error('Ocurrió un error:', err)

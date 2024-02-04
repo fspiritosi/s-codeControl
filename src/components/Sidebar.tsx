@@ -56,12 +56,14 @@ export default function SideBar() {
         >
           {expanded ? (
             <Image
+              placeholder="blur"
+              priority={true}
               src={Logo}
               alt="Logo code control"
               width={150}
             />
           ) : (
-            <Image src={Logo1} alt="Logo code control"  />
+            <Image src={Logo1} alt="Logo code control" />
           )}
         </div>
       </Link>

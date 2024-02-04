@@ -49,6 +49,7 @@ export type company = {
   province_id: number
   employees_id: string[]
   owner_id: string | undefined
+  //user_id: string | undefined
 }
 
 export type singUp = {

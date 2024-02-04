@@ -122,7 +122,15 @@ export const companySchema = z.object({
       },
     ),
   description: z.string().max(200),
-  website: z.string().url(), 
+  website: z.string().refine((value) => {
+    if (value === '') return true;
+
+    const urlRegex = /^(?:(?:https?|ftp):\/\/)?(?:www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+([/?].*)?$/i;
+
+    return urlRegex.test(value);
+  }, {
+    message: "La URL proporcionada no es válida."
+  }), 
   contact_email: z.string().email(),
   contact_phone: z.string().refine(value => /^\+?[0-9]{1,25}$/.test(value), {
     message:
