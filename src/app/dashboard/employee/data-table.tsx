@@ -101,7 +101,7 @@ export function DataTable<TData, TValue>({
     hierarchical_position: {
       name: 'hierarchical_position',
       option: allOptions.hierarchical_position,
-      label: 'Posicion jerarquica',
+      label: 'Posición jerárquica',
     },
     type_of_contract: {
       name: 'type_of_contract',
@@ -156,7 +156,7 @@ export function DataTable<TData, TValue>({
     hierrical_position: {
       name: 'hierrical_position',
       option: allOptions.hierrical_position,
-      label: 'Posicion jerarquica',
+      label: 'Posición jerárquica',
     },
   }
 
@@ -176,7 +176,7 @@ export function DataTable<TData, TValue>({
       columnFilters,
     },
   })
-  const totalWidth = 'calc(100vw - 320px)'
+  const totalWidth = 'calc(100vw - 297px)'
   return (
     <div>
       <div className="flex items-center py-4">

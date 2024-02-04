@@ -165,16 +165,16 @@ export function CompanyRegister() {
             name="company_name"
             render={({ field }) => (
               <FormItem className="flex flex-col justify-center">
-                <FormLabel>Nombre de la compañia</FormLabel>
+                <FormLabel>Nombre de la compañía</FormLabel>
                 <FormControl>
                   <Input
                     className="max-w-[350px] w-[300px]"
-                    placeholder="nombre de la compañia"
+                    placeholder="nombre de la compañía"
                     {...field}
                   />
                 </FormControl>
                 <FormDescription>
-                  Por favor ingresa el nombre de la compañia.
+                  Por favor ingresa el nombre de la compañía.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -186,7 +186,7 @@ export function CompanyRegister() {
             name="company_cuit"
             render={({ field }) => (
               <FormItem className="flex flex-col justify-center max-w-[300px]">
-                <FormLabel>CUIT de la compañia</FormLabel>
+                <FormLabel>CUIT de la compañía</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="xx-xxxxxxxx-x"
@@ -215,7 +215,7 @@ export function CompanyRegister() {
                   />
                 </FormControl>
                 <FormDescription>
-                  Por favor ingresa el sitio web de la compañia.
+                  Por favor ingresa el sitio web de la compañía.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -247,16 +247,16 @@ export function CompanyRegister() {
             name="contact_phone"
             render={({ field }) => (
               <FormItem className="flex flex-col justify-center max-w-[300px]">
-                <FormLabel>Número de telefono</FormLabel>
+                <FormLabel>Número de teléfono</FormLabel>
                 <FormControl>
                   <Input
                     className="max-w-[350px]  w-[300px]"
-                    placeholder="número de telefono"
+                    placeholder="número de teléfono"
                     {...field}
                   />
                 </FormControl>
                 <FormDescription className="max-w-[300px]">
-                  Por favor ingresa el número de telefono de la compañia.
+                  Por favor ingresa el número de teléfono de la compañía.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -289,7 +289,7 @@ export function CompanyRegister() {
             name="country"
             render={({ field }) => (
               <FormItem className="flex flex-col justify-center">
-                <FormLabel>Seleccione un pais</FormLabel>
+                <FormLabel>Seleccione un país</FormLabel>
                 <Select>
                   <SelectTrigger className="max-w-[350px]  w-[300px]">
                     <SelectValue placeholder="Selecciona un país" />
@@ -299,7 +299,7 @@ export function CompanyRegister() {
                   </SelectContent>
                 </Select>
                 <FormDescription className="max-w-[300px]">
-                  Por favor ingresa tu Pais
+                  Por favor ingresa tu país
                 </FormDescription>
               </FormItem>
             )}
@@ -366,7 +366,7 @@ export function CompanyRegister() {
                   />
                 </FormControl>
                 <FormDescription className="max-w-[300px]">
-                  Por favor ingresa la Industria de tu compañia
+                  Por favor ingresa la Industria de tu compañía
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -408,7 +408,7 @@ export function CompanyRegister() {
                     <UploadImage
                       labelInput="Logo"
                       imageBucket="logo"
-                      desciption="Sube el logo de tu compañia"
+                      desciption="Sube el logo de tu compañía"
                       style={{ width: '100px' }}
                       onImageChange={(imageUrl: string) =>
                         form.setValue('company_logo', imageUrl)
@@ -437,7 +437,7 @@ export function CompanyRegister() {
                   />
                 </FormControl>
                 <FormDescription className="max-w-[300px]">
-                  Por favor ingresa la descripción de la compañia.
+                  Por favor ingresa la descripción de la compañía.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
