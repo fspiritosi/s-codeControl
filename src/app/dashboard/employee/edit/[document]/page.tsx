@@ -219,7 +219,7 @@ export default function page({ params }: { params: any }) {
     {
       label: 'País de nacimiento',
       type: 'select',
-      placeholder: 'Pais de nacimiento',
+      placeholder: 'País de nacimiento',
       options: countryOptions,
       name: 'birthplace',
     },
@@ -285,9 +285,9 @@ export default function page({ params }: { params: any }) {
       name: 'postal_code',
     },
     {
-      label: 'Telefono',
+      label: 'Teléfono',
       type: 'text',
-      placeholder: 'Telefono',
+      placeholder: 'Teléfono',
       name: 'phone',
     },
     {

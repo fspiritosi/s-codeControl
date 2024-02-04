@@ -22,19 +22,21 @@ import {
   typeOfContractENUM,
 } from '@/types/enums'
 
+import { useImageUpload } from '@/hooks/useUploadImage'
 import { cn } from '@/lib/utils'
 import { names } from '@/types/types'
 import { accordionSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon } from '@radix-ui/react-icons'
+import { PostgrestError } from '@supabase/supabase-js'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { useEffect, useState } from 'react'
+import { ChangeEvent, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { CheckboxReactHookFormMultiple } from './CheckboxSelect'
+import { ImageHander } from './ImageHandler'
 import { SelectWithData } from './SelectWithData'
-import { UploadImage } from './UploadImage'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { Calendar } from './ui/calendar'
@@ -49,7 +51,6 @@ import {
 import { Input } from './ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 import { useToast } from './ui/use-toast'
-import { PostgrestError } from '@supabase/supabase-js'
 
 type Province = {
   id: number
@@ -66,7 +67,6 @@ export const EmployeeAccordion = () => {
   const contractorCompanies = useCountriesStore(state => state.contractors)
   const { createEmployee } = useEmployeesData()
   const { toast } = useToast()
-
 
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
@@ -103,7 +103,7 @@ export const EmployeeAccordion = () => {
   const [accordion1Errors, setAccordion1Errors] = useState(false)
   const [accordion2Errors, setAccordion2Errors] = useState(false)
   const [accordion3Errors, setAccordion3Errors] = useState(false)
-  const [availableToSubmit, setAvailableToSubmit] = useState(false)
+  // const [availableToSubmit, setAvailableToSubmit] = useState(false)
 
   useEffect(() => {
     const { errors } = form.formState
@@ -189,7 +189,7 @@ export const EmployeeAccordion = () => {
     {
       label: 'País de nacimiento',
       type: 'select',
-      placeholder: 'Pais de nacimiento',
+      placeholder: 'País de nacimiento',
       options: countryOptions,
       name: 'birthplace',
     },
@@ -210,7 +210,7 @@ export const EmployeeAccordion = () => {
     {
       label: 'Nivel de instrucción',
       type: 'select',
-      placeholder: 'Nivel de instruccion',
+      placeholder: 'Nivel de instrucción',
       options: instrutionsOptionsENUM,
       name: 'level_of_education',
     },
@@ -249,15 +249,15 @@ export const EmployeeAccordion = () => {
       name: 'city',
     },
     {
-      label: 'Codigo postal',
+      label: 'Código postal',
       type: 'text',
-      placeholder: 'Codigo postal',
+      placeholder: 'Código postal',
       name: 'postal_code',
     },
     {
-      label: 'Telefono',
+      label: 'Teléfono',
       type: 'text',
-      placeholder: 'Telefono',
+      placeholder: 'Teléfono',
       name: 'phone',
     },
     {
@@ -276,9 +276,9 @@ export const EmployeeAccordion = () => {
       pattern: '[0-9]+',
     },
     {
-      label: 'Puesto Jerarquico',
+      label: 'Puesto Jerárquico',
       type: 'select',
-      placeholder: 'Puesto Jerarquico',
+      placeholder: 'Puesto Jerárquico',
       options: hierarchyOptions,
       name: 'hierarchical_position',
     },
@@ -333,33 +333,103 @@ export const EmployeeAccordion = () => {
   }
 
   // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof accordionSchema>) {
+  async function onSubmit(values: z.infer<typeof accordionSchema>) {
+    const fileExtension = imageFile?.name.split('.').pop()
     const finalValues = {
       ...values,
       date_of_admission: values.date_of_admission?.toISOString(),
       province: String(
-        provincesOptions.find(e => e.name === values.province)?.id,
+        provincesOptions.find(e => e.name.trim() === values.province)?.id,
       ),
       birthplace: String(
         countryOptions.find(e => e.name === values.birthplace)?.id,
       ),
-      city: String(citysOptions.find(e => e.name === values.city)?.id),
+      city: String(citysOptions.find(e => e.name.trim() === values.city)?.id),
       hierarchical_position: String(
         hierarchyOptions.find(e => e.name === values.hierarchical_position)?.id,
       ),
       workflow_diagram: String(
         workDiagramOptions.find(e => e.name === values.workflow_diagram)?.id,
       ),
+      picture: `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/employee_photos/${values.document_number}.${fileExtension}`,
     }
+    console.log(finalValues)
+
     try {
-      createEmployee(finalValues)
+      await createEmployee(finalValues)
+      try {
+        await handleUpload()
+      } catch (error: PostgrestError | any) {
+        toast({
+          variant: 'destructive',
+          title: error.message,
+        })
+      }
     } catch (error: PostgrestError | any) {
+      // Manejar el error de la primera petición
       toast({
         variant: 'destructive',
         title: error.message,
       })
     }
   }
+
+  const { uploadImage, loading } = useImageUpload()
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [base64Image, setBase64Image] = useState<string>('')
+  // const [disabled, setDisabled] = useState<boolean>(true)
+
+  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    // console.log('handleImageChange')
+    const file = event.target.files?.[0]
+    // console.log(file?.name);
+    console.log(file, 'file');
+
+    if (file) {
+      setImageFile(file)
+      // Convertir la imagen a base64
+      const reader = new FileReader()
+      reader.onload = e => {
+        if (e.target && typeof e.target.result === 'string') {
+          setBase64Image(e.target.result)
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleUpload = async () => {
+    const document_number = form.getValues('document_number')
+    const fileExtension = imageFile?.name.split('.').pop()
+    if (imageFile) {
+      try {
+        const renamedFile = new File(
+          [imageFile],
+          `${document_number}.${fileExtension}`,
+          { type: `image/${fileExtension}` }
+        );
+        console.log(renamedFile,'renamedFile');
+        // Subir la imagen a Supabase Storage y obtener la URL
+        await uploadImage(renamedFile, 'employee_photos')
+
+        // Llamar a la función de cambio de imagen con la URL
+        // onImageChange(uploadedImageUrl)
+
+        // Llamar a la función de éxito de carga con la URL
+        // onUploadSuccess(uploadedImageUrl)
+        //  setAvailableToSubmit(true)
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: error.message,
+        })
+      }
+    }
+  }
+
+  // const onImageChange = (imageUrl: string) => {
+  //   form.setValue('picture', imageUrl)
+  // }
 
   return (
     <Form {...form}>
@@ -392,13 +462,13 @@ export const EmployeeAccordion = () => {
                             <FormItem className="">
                               <FormControl>
                                 <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
-                                  <UploadImage
+                                  <ImageHander
                                     imageBucket="employee_photos"
                                     labelInput="Subir foto"
-                                    setAvailableToSubmit={setAvailableToSubmit}
-                                    onImageChange={(imageUrl: string) => {
-                                      form.setValue('picture', imageUrl)
-                                    }}
+                                    handleImageChange={handleImageChange}
+                                    base64Image={base64Image} //nueva
+                                    loading={loading} //nueva
+                                    imageFile={imageFile} //nueva
                                     field={field}
                                     inputStyle={{
                                       width: '400px',
@@ -637,24 +707,22 @@ export const EmployeeAccordion = () => {
                     if (isMultiple) {
                       return (
                         <div
-                        key={index}
-                        className="w-[300px] flex flex-col gap-2 justify-center"
-                      >
-                        <FormField
-                          control={form.control}
-                          name={data.name as names}
-                          render={({ field }) => (
-
-                          <CheckboxReactHookFormMultiple
-                          options={data.options}
-                          placeholder='Afectado a'
-                          field={field}
-                          key={data.name}
-                        />
-                          )}
-                        />
-                      </div>
-                    
+                          key={index}
+                          className="w-[300px] flex flex-col gap-2 justify-center"
+                        >
+                          <FormField
+                            control={form.control}
+                            name={data.name as names}
+                            render={({ field }) => (
+                              <CheckboxReactHookFormMultiple
+                                options={data.options}
+                                placeholder="Afectado a"
+                                field={field}
+                                key={data.name}
+                              />
+                            )}
+                          />
+                        </div>
                       )
                     }
                     return (
@@ -731,10 +799,7 @@ export const EmployeeAccordion = () => {
                 </p>
               </TooltipTrigger>
               <TooltipContent className="max-w-[250px]">
-                {availableToSubmit &&
-                !accordion1Errors &&
-                !accordion2Errors &&
-                !accordion3Errors
+                {!accordion1Errors && !accordion2Errors && !accordion3Errors
                   ? '¡Todo listo para agregar el empleado!'
                   : '¡Completa todos los campos para agregar el empleado, asegurate de subir la imagen!'}
               </TooltipContent>

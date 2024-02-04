@@ -25,7 +25,7 @@ export const useCountriesStore = create<State>((set, get) => {
       .from('countries')
       .select('*')
     if (error) {
-      console.error('Error al obtener los paises:', error)
+      console.error('Error al obtener los países:', error)
     } else {
       set({ countries: fetchCountries || [] })
     }

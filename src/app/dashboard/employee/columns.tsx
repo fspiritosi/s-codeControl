@@ -118,11 +118,11 @@ export const columns: ColumnDef<Colum>[] = [
   },
   {
     accessorKey: 'hierarchical_position',
-    header: 'Posicion jerarquica',
+    header: 'Posición jerárquica',
   },
   {
     accessorKey: 'company_position',
-    header: 'Posicion en la empresa',
+    header: 'Posición en la empresa',
   },
   {
     accessorKey: 'normal_hours',
@@ -162,7 +162,7 @@ export const columns: ColumnDef<Colum>[] = [
   },
   {
     accessorKey: 'gender',
-    header: 'Genero',
+    header: 'Género',
   },
   {
     accessorKey: 'marital_status',
@@ -190,7 +190,7 @@ export const columns: ColumnDef<Colum>[] = [
   },
   {
     accessorKey: 'phone',
-    header: 'Telefono',
+    header: 'Teléfono',
   },
   {
     accessorKey: 'file',
@@ -210,7 +210,7 @@ export const columns: ColumnDef<Colum>[] = [
   },
   {
     accessorKey: 'hierrical_position',
-    header: 'Posicion jerarquica',
+    header: 'Posición jerárquica',
   },
   {
     accessorKey: 'workflow_diagram',
