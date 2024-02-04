@@ -1,6 +1,6 @@
 import { company, profileUser } from '@/types/types'
 import { User } from '@supabase/supabase-js'
-import {create} from 'zustand'
+import { create } from 'zustand'
 import { supabase } from '../../supabase/supabase'
 
 interface State {
@@ -29,9 +29,42 @@ export const useLoggedUserStore = create<State>((set, get) => {
   
   const howManyCompanies = async (id: string) => {
     const { data, error } = await supabase
-      .from('company')
-      .select('*')
-      .eq('owner_id', id)
+    .from('company')
+    .select(`
+      *,
+      city (
+        name
+      ),
+      province_id (
+        name
+      ),
+      companies_employees (
+       employees(
+        *,
+        city (
+          name
+        ),
+        province(
+          name
+        ),
+        workflow_diagram(
+          name
+        ),
+        hierarchical_position(
+          name
+        ),
+        birthplace(
+          name
+        ),
+      contractor_employee(
+        contractors(
+          name
+        )
+      )
+       )
+      )
+    `)
+    .eq('owner_id', id)
       
       
 
