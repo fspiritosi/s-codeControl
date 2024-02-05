@@ -198,9 +198,10 @@ export function DataTable<TData, TValue>({
     {},
   )
   useEffect(() => {
+    const newData = [...data]
     table.setState((state) => ({
       ...state,
-      rows: data,
+      rows: newData,
     }));
   }, [data])
   
