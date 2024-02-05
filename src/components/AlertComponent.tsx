@@ -22,8 +22,6 @@ export const AlertComponent = () => {
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
 
-  console.log(actualCompany)
-
   const handleAlertClose = (company: company) => {
     setActualCompany(company)
     localStorage.setItem('selectedCompany', company.company_name)
