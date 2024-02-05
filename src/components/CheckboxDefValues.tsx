@@ -25,20 +25,18 @@ export function CheckboxDefaultValues({
   placeholder,
   disabled,
 }: Props) {
+  function SelectValue() {
+    // Obtén el valor actual del select de alguna manera
+    const value = `${field?.value?.length || 0} elementos seleccionados`
 
-    function SelectValue(  ) {
-        // Obtén el valor actual del select de alguna manera
-        const value = `${field.value?.length} elementos seleccionados`
-      
-        // Si no hay ningún valor seleccionado, muestra el placeholder
-        if (!value) {
-          return <div>{placeholder}</div>
-        }
-      
-        // Si hay un valor seleccionado, muestra el valor
-        return <div>{value}</div>
-      }
-      
+    // Si no hay ningún valor seleccionado, muestra el placeholder
+    if (!value) {
+      return <div>{placeholder}</div>
+    }
+
+    // Si hay un valor seleccionado, muestra el valor
+    return <div>{value}</div>
+  }
 
   return (
     <>
@@ -48,9 +46,7 @@ export function CheckboxDefaultValues({
       <Select onValueChange={field?.onChange} defaultValue={field?.value?.[0]}>
         <FormControl>
           <SelectTrigger>
-            <SelectValue 
-              
-            />
+            <SelectValue />
           </SelectTrigger>
         </FormControl>
         <SelectContent>
@@ -63,13 +59,13 @@ export function CheckboxDefaultValues({
               >
                 <FormControl>
                   <Checkbox
-                   disabled={disabled}
-                    checked={field.value?.includes(String(item.id))}
+                    disabled={disabled}
+                    checked={field?.value?.includes(String(item.id))}
                     onCheckedChange={checked => {
-                      const updatedValue = field.value || [] // Initialize as an empty array if field.value is undefined
+                      const updatedValue = field?.value || [] // Initialize as an empty array if field.value is undefined
                       return checked
-                        ? field.onChange([...updatedValue, item.id])
-                        : field.onChange(
+                        ? field?.onChange([...updatedValue, item.id])
+                        : field?.onChange(
                             updatedValue.filter(
                               (value: any) => value !== String(item.id),
                             ),
