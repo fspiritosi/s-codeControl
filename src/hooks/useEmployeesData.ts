@@ -20,14 +20,11 @@ export const useEmployeesData = () => {
       return data
     },
     updateEmployee: async (employee: Employee) => {
-      console.log(employee, 'employee');
       const { data, error } = await supabase
         .from('employees')
         .update(employee)
         .eq('document_number', employee?.document_number)
         .select()
-        
-        console.log(data);
         
       if (error) {
         const message = await errorTranslate(error.message)
