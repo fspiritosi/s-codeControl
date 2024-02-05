@@ -42,7 +42,7 @@ export default function SideBar() {
       className={`flex flex-col h-full px-3 py-0 md:px-2 bg-slate-800 ${
         expanded ? 'expanded' : 'collapsed'
       }`}
-      style={{ width: expanded ? 200 : '68px', height: '100vh' }}
+      style={{ width: expanded ? 200 : '68px', height: '150vh' }}
     >
       <Link
         className={`flex h-20 items-center justify-center rounded-md bg-slate-800 p-4${
