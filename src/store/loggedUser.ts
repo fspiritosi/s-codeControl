@@ -8,7 +8,7 @@ interface State {
   profile: profileUser[]
   showNoCompanyAlert: boolean
   showMultiplesCompaniesAlert: boolean
-  allCompanies: company[]
+  allCompanies: companyData[]
   actualCompany: companyData | null
   setActualCompany: (company: companyData) => void
   employees : any

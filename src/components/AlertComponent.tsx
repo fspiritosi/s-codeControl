@@ -9,7 +9,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { company } from '@/types/types'
+import { company, companyData } from '@/types/types'
 import Link from 'next/link'
 import { supabase } from '../../supabase/supabase'
 
@@ -22,7 +22,7 @@ export const AlertComponent = () => {
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
 
-  const handleAlertClose = (company: company) => {
+  const handleAlertClose = (company:companyData) => {
     setActualCompany(company)
     localStorage.setItem('selectedCompany', company.company_name)
   }
