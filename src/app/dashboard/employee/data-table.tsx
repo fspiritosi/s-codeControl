@@ -44,14 +44,15 @@ import { useLoggedUserStore } from '@/store/loggedUser'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
-  data: TData[]
+  initialData: TData[]
 }
 
 export function DataTable<TData, TValue>({
   columns,
-  data,
+  initialData,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
+  const [data, setData] = useState(initialData); // 
   const defaultVisibleColumns = [
     'full_name',
     'email',
@@ -197,13 +198,17 @@ export function DataTable<TData, TValue>({
   const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
     {},
   )
+
+
   useEffect(() => {
-    const newData = [...data]
-    table.setState((state) => ({
-      ...state,
-      rows: newData,
-    }));
-  }, [data])
+    // const newData = [...data]
+    // table.setState((state) => ({
+    //   ...state,
+    //   rows: newData,
+    // }));
+
+    setData(initialData)
+  }, [initialData])
   
   return (
     <div>
