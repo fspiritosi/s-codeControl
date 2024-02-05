@@ -20,15 +20,17 @@ const getAllFiles = async (legajo:string) => {
 
 
   const { data: employee } = await supabase
-    .from('companies_employees')
+    .from('employees')
     .select('*')
-    .eq('company_id', data?.[0].id)
+    // .eq('company_id', data?.[0].id)
     .eq('file', legajo)
 
 
     if (employee && employee.length > 0) {
-      return false
+     
+      return true
     } else {
+     
       return true
     }
 

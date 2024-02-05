@@ -51,6 +51,7 @@ import {
 import { Input } from './ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 import { useToast } from './ui/use-toast'
+import { useRouter } from 'next/navigation'
 
 type Province = {
   id: number
@@ -67,6 +68,7 @@ export const EmployeeAccordion = () => {
   const contractorCompanies = useCountriesStore(state => state.contractors)
   const { createEmployee } = useEmployeesData()
   const { toast } = useToast()
+  const router = useRouter()
 
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
@@ -353,7 +355,6 @@ export const EmployeeAccordion = () => {
       ),
       picture: `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/employee_photos/${values.document_number}.${fileExtension}`,
     }
-    console.log(finalValues)
 
     try {
       await createEmployee(finalValues)
@@ -365,6 +366,7 @@ export const EmployeeAccordion = () => {
           title: error.message,
         })
       }
+      router.push('/dashboard/employee')
     } catch (error: PostgrestError | any) {
       // Manejar el error de la primera petición
       toast({
@@ -380,10 +382,8 @@ export const EmployeeAccordion = () => {
   // const [disabled, setDisabled] = useState<boolean>(true)
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
-    // console.log('handleImageChange')
+
     const file = event.target.files?.[0]
-    // console.log(file?.name);
-    console.log(file, 'file');
 
     if (file) {
       setImageFile(file)
@@ -406,9 +406,9 @@ export const EmployeeAccordion = () => {
         const renamedFile = new File(
           [imageFile],
           `${document_number}.${fileExtension}`,
-          { type: `image/${fileExtension}` }
-        );
-        console.log(renamedFile,'renamedFile');
+          { type: `image/${fileExtension}` },
+        )
+       
         // Subir la imagen a Supabase Storage y obtener la URL
         await uploadImage(renamedFile, 'employee_photos')
 
@@ -791,7 +791,7 @@ export const EmployeeAccordion = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <p className="w-fit">
-                  <Button type="submit">
+                  <Button type="submit" className="mt-5">
                     {' '}
                     {/*  disabled={!availableToSubmit} */}
                     Agregar empleado
