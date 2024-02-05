@@ -23,7 +23,7 @@ const EmployeePage = () => {
         <p>Aquí se muestra una tabla con los empleados registrados:</p>
       </header>
 
-      <DataTable columns={columns} data={data || []} />
+      <DataTable columns={columns} initialData={data || []} />
       <div className="mt-4">
         <Link
           href="/dashboard/employee/new"
