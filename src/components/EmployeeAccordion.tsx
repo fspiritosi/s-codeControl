@@ -355,7 +355,6 @@ export const EmployeeAccordion = () => {
       ),
       picture: `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/employee_photos/${values.document_number}.${fileExtension}`,
     }
-    console.log(finalValues)
 
     try {
       await createEmployee(finalValues)
@@ -367,7 +366,7 @@ export const EmployeeAccordion = () => {
           title: error.message,
         })
       }
-      router.push('/dashboard/employees')
+      router.push('/dashboard/employee')
     } catch (error: PostgrestError | any) {
       // Manejar el error de la primera petición
       toast({
@@ -383,10 +382,8 @@ export const EmployeeAccordion = () => {
   // const [disabled, setDisabled] = useState<boolean>(true)
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
-    // console.log('handleImageChange')
+
     const file = event.target.files?.[0]
-    // console.log(file?.name);
-    console.log(file, 'file')
 
     if (file) {
       setImageFile(file)
@@ -411,7 +408,7 @@ export const EmployeeAccordion = () => {
           `${document_number}.${fileExtension}`,
           { type: `image/${fileExtension}` },
         )
-        console.log(renamedFile, 'renamedFile')
+       
         // Subir la imagen a Supabase Storage y obtener la URL
         await uploadImage(renamedFile, 'employee_photos')
 
