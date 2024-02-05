@@ -1,4 +1,4 @@
-import { company, profileUser } from '@/types/types'
+import { company, companyData, profileUser } from '@/types/types'
 import { User } from '@supabase/supabase-js'
 import { create } from 'zustand'
 import { supabase } from '../../supabase/supabase'
@@ -9,8 +9,11 @@ interface State {
   showNoCompanyAlert: boolean
   showMultiplesCompaniesAlert: boolean
   allCompanies: company[]
-  actualCompany: company | null
-  setActualCompany: (company: company) => void
+  actualCompany: companyData | null
+  setActualCompany: (company: companyData) => void
+  employees : any
+  setEmployees: (employees: any) => void
+  isLoading: boolean
 }
 
 /**
@@ -20,12 +23,103 @@ interface State {
  * @returns An object containing the store's state properties.
  */
 export const useLoggedUserStore = create<State>((set, get) => {
-
+  set({isLoading: true})
+  
   const selectedCompany = typeof window !== 'undefined' ? window.localStorage?.getItem('selectedCompany') : null;
 
-  const setActualCompany = (company: company) => {
+  const setActualCompany = (company: companyData) => {
     set({ actualCompany: company })
+
+    const employees = get()?.actualCompany?.companies_employees.map(({ employees }) => {
+      return {
+        full_name: employees.firstname + ' ' + employees.lastname,
+        email: employees.email,
+        cuil: employees.cuil,
+        document_number: employees.document_number,
+        hierarchical_position: employees.hierarchical_position.name,
+        company_position: employees.company_position,
+        normal_hours: employees.normal_hours,
+        type_of_contract: employees.type_of_contract,
+        allocated_to: employees.contractor_employee
+          .map(({ contractors }) => contractors.name)
+          .join(', '),
+        picture: employees.picture,
+        nationality: employees.nationality,
+        lastname: employees.lastname,
+        firstname: employees.firstname,
+        document_type: employees.document_type,
+        birthplace: employees.birthplace.name.trim(),
+        gender: employees.gender,
+        marital_status: employees.marital_status,
+        level_of_education: employees.level_of_education,
+        street: employees.street,
+        street_number: employees.street_number,
+        province: employees.province.name.trim(),
+        postal_code: employees.postal_code,
+        phone: employees.phone,
+        file: employees.file,
+        date_of_admission: employees.date_of_admission,
+        affiliate_status: employees.affiliate_status,
+        city: employees.city.name.trim(),
+        hierrical_position: employees.hierarchical_position.name,
+        workflow_diagram: employees.workflow_diagram.name,
+        contractor_employee: employees.contractor_employee
+          .map(({ contractors }) => contractors.id)
+      }
+    })
+
+    set({ employees })
+    set({isLoading: false})
   }
+
+  const channels = supabase.channel('custom-all-channel')
+  .on(
+    'postgres_changes',
+    { event: '*', schema: 'public', table: 'employees' },
+    (payload) => {
+      const employees = get()?.actualCompany?.companies_employees.map(({ employees }) => {
+        return {
+          full_name: employees.firstname + ' ' + employees.lastname,
+          email: employees.email,
+          cuil: employees.cuil,
+          document_number: employees.document_number,
+          hierarchical_position: employees.hierarchical_position.name,
+          company_position: employees.company_position,
+          normal_hours: employees.normal_hours,
+          type_of_contract: employees.type_of_contract,
+          allocated_to: employees.contractor_employee
+            .map(({ contractors }) => contractors.name)
+            .join(', '),
+          picture: employees.picture,
+          nationality: employees.nationality,
+          lastname: employees.lastname,
+          firstname: employees.firstname,
+          document_type: employees.document_type,
+          birthplace: employees.birthplace.name.trim(),
+          gender: employees.gender,
+          marital_status: employees.marital_status,
+          level_of_education: employees.level_of_education,
+          street: employees.street,
+          street_number: employees.street_number,
+          province: employees.province.name.trim(),
+          postal_code: employees.postal_code,
+          phone: employees.phone,
+          file: employees.file,
+          date_of_admission: employees.date_of_admission,
+          affiliate_status: employees.affiliate_status,
+          city: employees.city.name.trim(),
+          hierrical_position: employees.hierarchical_position.name,
+          workflow_diagram: employees.workflow_diagram.name,
+          contractor_employee: employees.contractor_employee
+            .map(({ contractors }) => contractors.id)
+        }
+      })
+      set({ employees })
+    }
+  )
+  .subscribe()
+
+
   
   const howManyCompanies = async (id: string) => {
     const { data, error } = await supabase
@@ -58,7 +152,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
         ),
       contractor_employee(
         contractors(
-          name
+          *
         )
       )
        )
@@ -146,6 +240,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
     showMultiplesCompaniesAlert: get()?.showMultiplesCompaniesAlert,
     allCompanies: get()?.allCompanies,
     actualCompany: get()?.actualCompany,
-    setActualCompany,
+    setActualCompany: (company: companyData) => setActualCompany(company),
+    employees: get()?.employees,
+    setEmployees: (employees: any) => set({ employees }),
+    isLoading: get()?.isLoading
   }
 })
