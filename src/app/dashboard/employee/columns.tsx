@@ -134,7 +134,7 @@ export const columns: ColumnDef<Colum>[] = [
   },
   {
     accessorKey: 'allocated_to',
-    header: 'Asignado a',
+    header: 'Afectado a',
   },
   {
     accessorKey: 'picture',

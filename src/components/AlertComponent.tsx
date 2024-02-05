@@ -9,9 +9,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { company } from '@/types/types'
+import { company, companyData } from '@/types/types'
 import Link from 'next/link'
-import { useState } from 'react'
+import { supabase } from '../../supabase/supabase'
 
 export const AlertComponent = () => {
   const showAlert = useLoggedUserStore(state => state.showNoCompanyAlert)
@@ -22,23 +22,18 @@ export const AlertComponent = () => {
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
 
-  console.log(actualCompany)
-
-  const handleAlertClose = (company: company) => {
+  const handleAlertClose = (company:companyData) => {
     setActualCompany(company)
     localStorage.setItem('selectedCompany', company.company_name)
   }
+
 
   //si actualCompany no es null, no mostrar alerta
   //si actualCompany es null, mostrar alerta
   //si actualCompany es null y allCompanies tiene mas de 1, mostrar alerta
   //si actualCompany es null y allCompanies tiene 1, no mostrar alerta
 
-
-
   return (
-    
-
     (showMultipleAlert && actualCompany && (
       <AlertDialog defaultOpen>
         <AlertDialogContent>

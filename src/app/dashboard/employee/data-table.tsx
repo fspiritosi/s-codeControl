@@ -29,7 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useState } from 'react'
+import { use, useEffect, useRef, useState } from 'react'
 
 import {
   Select,
@@ -39,17 +39,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useLoggedUserStore } from '@/store/loggedUser'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
-  data: TData[]
+  initialData: TData[]
 }
 
 export function DataTable<TData, TValue>({
   columns,
-  data,
+  initialData,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
+  const [data, setData] = useState(initialData); // 
   const defaultVisibleColumns = [
     'full_name',
     'email',
@@ -71,6 +74,7 @@ export function DataTable<TData, TValue>({
     }, {}),
   )
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const loader = useLoggedUserStore(state => state.isLoading)
 
   const allOptions = {
     document_type: createOptions('document_type'),
@@ -86,10 +90,12 @@ export function DataTable<TData, TValue>({
     affiliate_status: createOptions('affiliate_status'),
     city: createOptions('city'),
     hierrical_position: createOptions('hierrical_position'),
-  };
+  }
+  console.log(data)
 
   function createOptions(key: string) {
-    return ['Todos', ...Array.from(new Set(data.map((item: any) => item[key])))];
+    const values = data?.flatMap((item: any) => item[key])
+    return [...Array.from(new Set(values))]
   }
 
   const selectHeader = {
@@ -111,7 +117,7 @@ export function DataTable<TData, TValue>({
     allocated_to: {
       name: 'allocated_to',
       option: allOptions.allocated_to,
-      label: 'Asignado a',
+      label: 'Afectado a',
     },
     nationality: {
       name: 'nationality',
@@ -160,7 +166,7 @@ export function DataTable<TData, TValue>({
     },
   }
 
-  const table = useReactTable({
+  let table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
@@ -177,6 +183,33 @@ export function DataTable<TData, TValue>({
     },
   })
   const totalWidth = 'calc(100vw - 297px)'
+
+  const handleClearFilters = () => {
+    table.getAllColumns().forEach(column => {
+      column.setFilterValue('')
+    })
+    // tambien quiero que los selects se limpien al hacer click en limpiar filtros
+    const newSelectValues = { ...selectValues }
+    Object.keys(newSelectValues).forEach(key => {
+      newSelectValues[key] = '' // o el valor predeterminado que desees
+    })
+    setSelectValues(newSelectValues)
+  }
+  const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
+    {},
+  )
+
+
+  useEffect(() => {
+    // const newData = [...data]
+    // table.setState((state) => ({
+    //   ...state,
+    //   rows: newData,
+    // }));
+
+    setData(initialData)
+  }, [initialData])
+  
   return (
     <div>
       <div className="flex items-center py-4">
@@ -190,6 +223,14 @@ export function DataTable<TData, TValue>({
           }
           className="max-w-sm"
         />
+        <Button
+          variant="outline"
+          size="default"
+          className="ml-2"
+          onClick={handleClearFilters}
+        >
+          Limpiar filtros
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
@@ -247,43 +288,67 @@ export function DataTable<TData, TValue>({
                         ? null
                         : flexRender(
                             header.id in selectHeader ? (
-                              <Select
-                                value={
-                                  table
-                                    .getColumn(header.id)
-                                    ?.getFilterValue() as string
-                                }
-                                onValueChange={event => {
-                                  if (event === 'Todos') {
-                                    table
-                                      .getColumn(header.id)
-                                      ?.setFilterValue('')
-                                  } else {
-                                    table
-                                      .getColumn(header.id)
-                                      ?.setFilterValue(event)
-                                  }
-                                }}
-                              >
-                                <SelectTrigger className="w-[180px]">
-                                  <SelectValue
-                                    placeholder={
-                                      header.column.columnDef.header as string
+                              header.id === 'allocated_to' ? (
+                                <div className="flex justify-center">
+                                  <Input
+                                    placeholder="Buscar por afectación"
+                                    value={
+                                      table
+                                        .getColumn('allocated_to')
+                                        ?.getFilterValue() as string
                                     }
+                                    onChange={event =>
+                                      table
+                                        .getColumn('allocated_to')
+                                        ?.setFilterValue(event.target.value)
+                                    }
+                                    className="max-w-sm"
                                   />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    {selectHeader[
-                                      header.id as keyof typeof selectHeader
-                                    ]?.option?.map((option: string) => (
-                                      <SelectItem key={option} value={option}>
-                                        {option}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectGroup>
-                                </SelectContent>
-                              </Select>
+                                </div>
+                              ) : (
+                                <div className="flex justify-center">
+                                  <Select
+                                    value={
+                                      selectValues[header.id] ||
+                                      (table
+                                        .getColumn(header.id)
+                                        ?.getFilterValue() as string)
+                                    }
+                                    onValueChange={event => {
+                                      table
+                                        .getColumn(header.id)
+                                        ?.setFilterValue(event)
+                                      setSelectValues({
+                                        ...selectValues,
+                                        [header.id]: event,
+                                      })
+                                    }}
+                                  >
+                                    <SelectTrigger className="w-[180px]">
+                                      <SelectValue
+                                        placeholder={
+                                          header.column.columnDef
+                                            .header as string
+                                        }
+                                      />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectGroup>
+                                        {selectHeader[
+                                          header.id as keyof typeof selectHeader
+                                        ]?.option?.map((option: string) => (
+                                          <SelectItem
+                                            key={option}
+                                            value={option}
+                                          >
+                                            {option}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectGroup>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              )
                             ) : (
                               header.column.columnDef.header
                             ),
@@ -302,17 +367,19 @@ export function DataTable<TData, TValue>({
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
                 >
-                  {row.getVisibleCells().map(cell => (
-                    <TableCell
-                      key={cell.id}
-                      className="text-center whitespace-nowrap"
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
+                  {row.getVisibleCells().map(cell => {
+                    return (
+                      <TableCell
+                        key={cell.id}
+                        className="text-center whitespace-nowrap"
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    )
+                  })}
                 </TableRow>
               ))
             ) : (
@@ -321,7 +388,30 @@ export function DataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  {loader ? (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex justify-between">
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                      </div>
+                      <div className="flex justify-between">
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                      </div>
+                    </div>
+                  ) : (
+                    'No hay empleados registrados'
+                  )}
                 </TableCell>
               </TableRow>
             )}
