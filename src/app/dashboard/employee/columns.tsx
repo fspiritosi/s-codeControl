@@ -6,6 +6,14 @@
 
 import { Button } from '@/components/ui/button'
 import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -16,6 +24,8 @@ import {
 import { ColumnDef } from '@tanstack/react-table'
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react'
 import Link from 'next/link'
+import { useState } from 'react'
+import { supabase } from '../../../../supabase/supabase'
 
 type Colum = {
   full_name: string
@@ -54,10 +64,44 @@ export const columns: ColumnDef<Colum>[] = [
   {
     id: 'actions',
     cell: ({ row }: { row: any }) => {
+      const [showModal, setShowModal] = useState(false)
+      const [document, setDocument] = useState('')
       const user = row.original
+
+      const handleOpenModal = (id: string) => {
+        setDocument(id)
+        setShowModal(!showModal)
+      }
+
+      const handleDelete = async () => {
+
+        await supabase
+          .from('employees')
+          .update({ is_active: false })
+          .eq('document_number', document)
+          .select()
+
+        setShowModal(!showModal)
+      }
 
       return (
         <DropdownMenu>
+          {showModal && (
+            <Dialog defaultOpen onOpenChange={() => setShowModal(!showModal)}>
+              <DialogContent>
+                <DialogTitle>Eliminar empleado</DialogTitle>
+                <DialogDescription>
+                  ¿Estás seguro de que deseas eliminar este empleado?
+                </DialogDescription>
+                <DialogFooter>
+                  <Button variant="destructive" onClick={() => handleDelete()}>
+                    Eliminar
+                  </Button>
+                  <DialogClose>Cancelar</DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
               <span className="sr-only">Open menu</span>
@@ -75,14 +119,22 @@ export const columns: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              <Link href={`/dashboard/employee/view/${user.document_number}`}>
+              <Link href={`/dashboard/employee/view/${user?.document_number}`}>
                 Ver empleado
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Link href={`/dashboard/employee/edit/${user.document_number}`}>
+              <Link href={`/dashboard/employee/edit/${user?.document_number}`}>
                 Editar empleado
               </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Button
+                variant="destructive"
+                onClick={() => handleOpenModal(user?.document_number)}
+              >
+                Eliminar empleado
+              </Button>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
