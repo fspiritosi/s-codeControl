@@ -1,23 +1,18 @@
 'use client'
 import { AlertComponent } from '@/components/AlertComponent'
+import { useLoggedUserStore } from '@/store/loggedUser'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { columns } from './columns'
 import { DataTable } from './data-table'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { useEffect, useState } from 'react'
 
 const EmployeePage = () => {
   const [data, setData] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
 
   const employees = useLoggedUserStore(state => state.employees)
 
   useEffect(() => {
-    const getData = async () => {
-      setData(employees)
-    }
-
-    getData()
+    setData(employees)
   }, [employees])
 
   return (
