@@ -107,6 +107,7 @@ export type companyData = {
         workflow_diagram: {
           name: string;
         };
+        is_active: boolean;
         date_of_admission: string;
         level_of_education: string;
         contractor_employee: {
