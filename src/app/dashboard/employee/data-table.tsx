@@ -29,7 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useState } from 'react'
+import { use, useEffect, useRef, useState } from 'react'
 
 import {
   Select,
@@ -90,6 +90,7 @@ export function DataTable<TData, TValue>({
     city: createOptions('city'),
     hierrical_position: createOptions('hierrical_position'),
   }
+  console.log(data)
 
   function createOptions(key: string) {
     const values = data?.flatMap((item: any) => item[key])
@@ -164,7 +165,7 @@ export function DataTable<TData, TValue>({
     },
   }
 
-  const table = useReactTable({
+  let table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
@@ -196,9 +197,13 @@ export function DataTable<TData, TValue>({
   const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
     {},
   )
-
-  console.log(selectValues)
-
+  useEffect(() => {
+    table.setState((state) => ({
+      ...state,
+      rows: data,
+    }));
+  }, [data])
+  
   return (
     <div>
       <div className="flex items-center py-4">
