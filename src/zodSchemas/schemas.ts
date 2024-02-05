@@ -27,12 +27,10 @@ const getAllFiles = async (legajo:string) => {
 
 
     if (employee && employee.length > 0) {
-      console.log(
-        'El legajo ya existe'
-      );
+     
       return true
     } else {
-      console.log('El legajo no existe');
+     
       return true
     }
 
