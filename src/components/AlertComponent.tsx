@@ -22,11 +22,10 @@ export const AlertComponent = () => {
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
 
-  const handleAlertClose = (company:companyData) => {
+  const handleAlertClose = (company: companyData) => {
     setActualCompany(company)
     localStorage.setItem('selectedCompany', company.company_name)
   }
-
 
   //si actualCompany no es null, no mostrar alerta
   //si actualCompany es null, mostrar alerta

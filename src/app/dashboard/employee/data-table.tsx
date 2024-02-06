@@ -29,7 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { use, useEffect, useRef, useState } from 'react'
+import { use, useEffect, useReducer, useRef, useState } from 'react'
 
 import {
   Select,
@@ -41,18 +41,18 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLoggedUserStore } from '@/store/loggedUser'
+import { useRouter } from 'next/navigation'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
-  initialData: TData[]
+  data: TData[]
 }
 
 export function DataTable<TData, TValue>({
   columns,
-  initialData,
+  data,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
-  const [data, setData] = useState(initialData); // 
   const defaultVisibleColumns = [
     'full_name',
     'email',
@@ -90,12 +90,12 @@ export function DataTable<TData, TValue>({
     affiliate_status: createOptions('affiliate_status'),
     city: createOptions('city'),
     hierrical_position: createOptions('hierrical_position'),
+    workflow_diagram: createOptions('workflow_diagram'),
   }
-  console.log(data)
 
   function createOptions(key: string) {
-    const values = data?.flatMap((item: any) => item[key])
-    return [...Array.from(new Set(values))]
+    const values = data?.flatMap((item: any) => item?.[key])
+    return ['Todos', ...Array.from(new Set(values))]
   }
 
   const selectHeader = {
@@ -164,6 +164,12 @@ export function DataTable<TData, TValue>({
       option: allOptions.hierrical_position,
       label: 'Posición jerárquica',
     },
+    workflow_diagram: {
+      name: 'workflow_diagram',
+      option: allOptions.workflow_diagram,
+      label: 'Diagrama de flujo',
+    },
+    
   }
 
   let table = useReactTable({
@@ -184,32 +190,38 @@ export function DataTable<TData, TValue>({
   })
   const totalWidth = 'calc(100vw - 297px)'
 
+
+
+  const router = useRouter()
+
   const handleClearFilters = () => {
     table.getAllColumns().forEach(column => {
       column.setFilterValue('')
     })
-    // tambien quiero que los selects se limpien al hacer click en limpiar filtros
-    const newSelectValues = { ...selectValues }
-    Object.keys(newSelectValues).forEach(key => {
-      newSelectValues[key] = '' // o el valor predeterminado que desees
+    router.push('/dashboard/employee')
+
+    setSelectValues({
+      hierarchical_position: 'Todos',
+      type_of_contract: 'Todos',
+      allocated_to: 'Todos',
+      document_type: 'Todos',
+      nationality: 'Todos',
+      birthplace: 'Todos',
+      gender: 'Todos',
+      marital_status: 'Todos',
+      level_of_education: 'Todos',
+      province: 'Todos',
+      affiliate_status: 'Todos',
+      city: 'Todos',
+      hierrical_position: 'Todos',
     })
-    setSelectValues(newSelectValues)
   }
+
   const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
     {},
   )
 
 
-  useEffect(() => {
-    // const newData = [...data]
-    // table.setState((state) => ({
-    //   ...state,
-    //   rows: newData,
-    // }));
-
-    setData(initialData)
-  }, [initialData])
-  
   return (
     <div>
       <div className="flex items-center py-4">
@@ -231,6 +243,7 @@ export function DataTable<TData, TValue>({
         >
           Limpiar filtros
         </Button>
+      
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
@@ -308,13 +321,18 @@ export function DataTable<TData, TValue>({
                               ) : (
                                 <div className="flex justify-center">
                                   <Select
-                                    value={
-                                      selectValues[header.id] ||
-                                      (table
-                                        .getColumn(header.id)
-                                        ?.getFilterValue() as string)
-                                    }
+                                    value={selectValues[header.id]}
                                     onValueChange={event => {
+                                      if (event === 'Todos') {
+                                        table
+                                          .getColumn(header.id)
+                                          ?.setFilterValue('')
+                                        setSelectValues({
+                                          ...selectValues,
+                                          [header.id]: event,
+                                        })
+                                        return
+                                      }
                                       table
                                         .getColumn(header.id)
                                         ?.setFilterValue(event)

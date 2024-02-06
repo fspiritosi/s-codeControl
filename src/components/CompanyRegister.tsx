@@ -111,8 +111,9 @@ export function CompanyRegister() {
   const onSubmit = async (companyData: z.infer<typeof companySchema>) => {
     try {
       //Procesa los valores antes de enviarlos a la base de datos
+      const {employees_id,...rest} = companyData
       const processedCompanyData = {
-        ...companyData,
+        ...rest,
         company_name: processText(companyData.company_name),
         company_cuit: processText(companyData.company_cuit),
         website: processText(companyData.website),
@@ -123,7 +124,6 @@ export function CompanyRegister() {
         contact_phone: processText(companyData.contact_phone),
         address: processText(companyData.address),
         industry: processText(companyData.industry),
-        employees_id: [companyData.employees_id],
       }
 
       //Insertar la compañía con los datos procesados

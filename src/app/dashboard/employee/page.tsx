@@ -2,18 +2,13 @@
 import { AlertComponent } from '@/components/AlertComponent'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { columns } from './columns'
 import { DataTable } from './data-table'
+import { useRouter } from 'next/navigation'
 
 const EmployeePage = () => {
-  const [data, setData] = useState([])
-
   const employees = useLoggedUserStore(state => state.employees)
-
-  useEffect(() => {
-    setData(employees)
-  }, [employees])
 
   return (
     <main className="flex flex-col ">
@@ -23,7 +18,7 @@ const EmployeePage = () => {
         <p>Aquí se muestra una tabla con los empleados registrados:</p>
       </header>
 
-      <DataTable columns={columns} initialData={data || []} />
+      <DataTable columns={columns} data={employees || []} />
       <div className="mt-4">
         <Link
           href="/dashboard/employee/new"
