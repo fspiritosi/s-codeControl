@@ -32,10 +32,11 @@ export default function NavBar() {
                 className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-md"
               >
                 <MdDomainAdd size={24} />
-                <span className="p-2">
+                {/* <span className="p-2">
                   {' '}
                   {actualCompany?.company_name?.toUpperCase()}
-                </span>
+                </span> */}
+                <img src={actualCompany?.company_logo} width="90" height="50" />
               </Link>
             </div>
           </PopoverTrigger>

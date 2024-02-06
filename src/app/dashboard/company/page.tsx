@@ -32,10 +32,10 @@ export default function allCompany() {
   }
 
   return (
-    <main className="bg-slate-400">
+    <main className="bg-white">
       <h2 className="text-3xl pb-5 pl-10">Todas las Compañias</h2>
       <p className="pl-10 max-w-1/2">Aquí se verán todas las compañías</p>
-      <div className="bg-white rounded-lg shadow-md p-4">
+      <div className="bg-slate-400 rounded-lg shadow-md p-4">
         <CardsGrid companies={allCompanies} onCardClick={handleCardClick} />
       </div>
 

@@ -151,7 +151,7 @@ export const companySchema = z.object({
     
   city: z.number(),
   company_logo: z.string().optional(),
-  employees_id: z.string().nullable(),
+  //employees_id: z.string().nullable(),
 })
 
 export const accordionSchema = z.object({

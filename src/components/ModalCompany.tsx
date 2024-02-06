@@ -1,7 +1,11 @@
 import React from 'react'
 import Modal from 'react-modal'
+import { CompanyRegister } from './CompanyRegister' // Importa tu formulario de registro de compañía
 import { company } from '@/types/types'
 import { formatCompanyName } from '@/lib/utils'
+import { useLoggedUserStore } from '@/store/loggedUser'
+import { useState } from 'react'
+import { Button } from './ui/button'
 type ModalCompanyProps = {
   isOpen: boolean
   onClose: () => void
@@ -13,13 +17,20 @@ const ModalCompany: React.FC<ModalCompanyProps> = ({
   onClose,
   selectedCard,
 }) => {
+  const [formEnabled, setFormEnabled] = useState(false)
+
+  const toggleFormEnabled = () => {
+    setFormEnabled(prevState => !prevState)
+  }
+
+  const actualCompany = useLoggedUserStore(state => state.actualCompany)
   return (
     <Modal isOpen={isOpen} onRequestClose={onClose}>
       {selectedCard && (
         <div className="flex flex-col h-full">
-          <button onClick={onClose} className="self-end p-2">
+          <Button onClick={onClose} className="self-end p-2">
             X
-          </button>
+          </Button>
           <div className="flex flex-1">
             <div className="flex-1 p-4">
               <h2 className="text-2xl font-bold">
@@ -31,9 +42,17 @@ const ModalCompany: React.FC<ModalCompanyProps> = ({
               <img
                 src={selectedCard.company_logo}
                 className="max-w-full h-auto"
+                alt="Company Logo"
+                width={150}
+                height={70}
               />
             </div>
           </div>
+          <Button onClick={toggleFormEnabled}>
+            {formEnabled ? 'Deshabilitar Edición' : 'Habilitar Edición'}
+          </Button>
+          <br />
+          <CompanyRegister company={selectedCard} formEnabled={formEnabled} />
         </div>
       )}
     </Modal>

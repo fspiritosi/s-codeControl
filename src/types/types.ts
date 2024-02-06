@@ -46,7 +46,7 @@ export type company = {
   industry: string
   company_logo: string
   province_id: number
-  employees_id: string[]
+  //employees_id: string[]
   owner_id: string | undefined
   
 }

@@ -30,7 +30,18 @@ import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { Loader } from './svg/loader'
 import { useRouter } from 'next/navigation'
-export function CompanyRegister() {
+import { company } from '@/types/types'
+interface CompanyRegisterProps {
+  company: company | null
+  formEnabled: boolean
+}
+export function CompanyRegister({
+  company,
+  formEnabled,
+}: CompanyRegisterProps) {
+  //const formEnabled = !company
+  const formEnabledProp = company ? formEnabled : true
+
   const router = useRouter()
   const profile = useLoggedUserStore(state => state.profile)
   const { insertCompany, fetchIndustryType, industry } = useCompanyData()
@@ -46,20 +57,23 @@ export function CompanyRegister() {
 
   const form = useForm<z.infer<typeof companySchema>>({
     resolver: zodResolver(companySchema),
-    defaultValues: {
-      company_name: '',
-      company_cuit: '',
-      description: '',
-      website: '',
-      contact_email: '',
-      contact_phone: '',
-      address: '',
-      city: 0,
-      country: 'argentina',
-      province_id: 0,
-      industry: '',
-      employees_id: null,
-    },
+    defaultValues: company
+      ? company
+      : {
+          //defaultValues: {
+          company_name: '',
+          company_cuit: '',
+          description: '',
+          website: '',
+          contact_email: '',
+          contact_phone: '',
+          address: '',
+          city: 0,
+          country: 'argentina',
+          province_id: 0,
+          industry: '',
+          //employees_id: null,
+        },
   })
 
   const onImageChange = (imageUrl: string) => {
@@ -111,9 +125,8 @@ export function CompanyRegister() {
   const onSubmit = async (companyData: z.infer<typeof companySchema>) => {
     try {
       //Procesa los valores antes de enviarlos a la base de datos
-      const {employees_id,...rest} = companyData
       const processedCompanyData = {
-        ...rest,
+        ...companyData,
         company_name: processText(companyData.company_name),
         company_cuit: processText(companyData.company_cuit),
         website: processText(companyData.website),
@@ -124,6 +137,7 @@ export function CompanyRegister() {
         contact_phone: processText(companyData.contact_phone),
         address: processText(companyData.address),
         industry: processText(companyData.industry),
+        //employees_id: [companyData.employees_id],
       }
 
       //Insertar la compañía con los datos procesados
@@ -168,6 +182,7 @@ export function CompanyRegister() {
                 <FormLabel>Nombre de la compañía</FormLabel>
                 <FormControl>
                   <Input
+                    disabled={!formEnabledProp}
                     className="max-w-[350px] w-[300px]"
                     placeholder="nombre de la compañía"
                     {...field}
@@ -189,6 +204,7 @@ export function CompanyRegister() {
                 <FormLabel>CUIT de la compañía</FormLabel>
                 <FormControl>
                   <Input
+                    disabled={!formEnabledProp}
                     placeholder="xx-xxxxxxxx-x"
                     className="max-w-[400px] w-[300px]"
                     maxLength={13}
@@ -209,6 +225,7 @@ export function CompanyRegister() {
                 <FormLabel>Sitio Web</FormLabel>
                 <FormControl>
                   <Input
+                    disabled={!formEnabledProp}
                     className="max-w-[350px]  w-[300px]"
                     placeholder="sitio web"
                     {...field}
@@ -230,6 +247,7 @@ export function CompanyRegister() {
                 <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input
+                    disabled={!formEnabledProp}
                     className="max-w-[350px]  w-[300px]"
                     placeholder="email"
                     autoComplete="email"
@@ -250,6 +268,7 @@ export function CompanyRegister() {
                 <FormLabel>Número de teléfono</FormLabel>
                 <FormControl>
                   <Input
+                    disabled={!formEnabledProp}
                     className="max-w-[350px]  w-[300px]"
                     placeholder="número de teléfono"
                     {...field}
@@ -271,6 +290,7 @@ export function CompanyRegister() {
                 <FormLabel>Dirección</FormLabel>
                 <FormControl>
                   <Input
+                    disabled={!formEnabledProp}
                     className="max-w-[350px]  w-[300px]"
                     placeholder="dirección"
                     {...field}
@@ -290,9 +310,9 @@ export function CompanyRegister() {
             render={({ field }) => (
               <FormItem className="flex flex-col justify-center">
                 <FormLabel>Seleccione un país</FormLabel>
-                <Select>
+                <Select disabled={!formEnabledProp}>
                   <SelectTrigger className="max-w-[350px]  w-[300px]">
-                    <SelectValue placeholder="Selecciona un país" />
+                    <SelectValue placeholder={company?.country} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="argentina">Argentina</SelectItem>
@@ -310,9 +330,12 @@ export function CompanyRegister() {
             render={({ field }) => (
               <FormItem className="flex flex-col justify-center">
                 <FormLabel>Seleccione una provincia</FormLabel>
-                <Select onValueChange={handleProvinceChange}>
+                <Select
+                  disabled={!formEnabled}
+                  onValueChange={handleProvinceChange}
+                >
                   <SelectTrigger className="max-w-[350px]  w-[300px]">
-                    <SelectValue placeholder="Selecciona una provincia" />
+                    <SelectValue placeholder="Seleccione una provincia" />
                   </SelectTrigger>
                   <SelectContent>
                     {provincesValues?.map(province => (
@@ -334,9 +357,12 @@ export function CompanyRegister() {
             render={({ field }) => (
               <FormItem className="flex flex-col justify-center">
                 <FormLabel>Seleccione una ciudad</FormLabel>
-                <Select onValueChange={handleCityChange}>
+                <Select
+                  disabled={!formEnabled}
+                  onValueChange={handleCityChange}
+                >
                   <SelectTrigger className="max-w-[350px] w-[300px]">
-                    <SelectValue placeholder="Selecciona una ciudad" />
+                    <SelectValue placeholder="Seleccione una ciudad" />
                   </SelectTrigger>
                   <SelectContent>
                     {citiesValues?.map(city => (
@@ -352,26 +378,6 @@ export function CompanyRegister() {
               </FormItem>
             )}
           />
-          {/* <FormField
-            control={form.control}
-            name="industry"
-            render={({ field }) => (
-              <FormItem className="flex flex-col justify-center max-w-[300px]">
-                <FormLabel>Industria</FormLabel>
-                <FormControl>
-                  <Input
-                    className="max-w-[350px]  w-[300px]"
-                    placeholder="industria"
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription className="max-w-[300px]">
-                  Por favor ingresa la Industria de tu compañía
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          /> */}
 
           <FormField
             control={form.control}
@@ -379,9 +385,12 @@ export function CompanyRegister() {
             render={({ field }) => (
               <FormItem className="flex flex-col justify-center max-w-[300px]">
                 <FormLabel>Seleccione una Industria</FormLabel>
-                <Select onValueChange={handleIndustryChange}>
+                <Select
+                  disabled={!formEnabledProp}
+                  onValueChange={handleIndustryChange}
+                >
                   <SelectTrigger className="max-w-[350px] w-[300px]">
-                    <SelectValue placeholder="Selecciona una Industria" />
+                    <SelectValue placeholder={company?.industry} />
                   </SelectTrigger>
                   <SelectContent>
                     {industry.map(industry => (
@@ -431,6 +440,7 @@ export function CompanyRegister() {
                 <FormLabel>Descripción</FormLabel>
                 <FormControl>
                   <Textarea
+                    disabled={!formEnabledProp}
                     className="max-w-[350px] w-[300px]"
                     placeholder="Descripción de la compañía"
                     {...field}
