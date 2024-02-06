@@ -358,6 +358,10 @@ export const EmployeeAccordion = () => {
 
     try {
       await createEmployee(finalValues)
+      toast({
+        variant: 'default',
+        title: 'Empleado agregado correctamente',
+      })
       try {
         await handleUpload()
       } catch (error: PostgrestError | any) {
@@ -408,16 +412,7 @@ export const EmployeeAccordion = () => {
           `${document_number}.${fileExtension}`,
           { type: `image/${fileExtension}` },
         )
-       
-        // Subir la imagen a Supabase Storage y obtener la URL
         await uploadImage(renamedFile, 'employee_photos')
-
-        // Llamar a la función de cambio de imagen con la URL
-        // onImageChange(uploadedImageUrl)
-
-        // Llamar a la función de éxito de carga con la URL
-        // onUploadSuccess(uploadedImageUrl)
-        //  setAvailableToSubmit(true)
       } catch (error: any) {
         toast({
           variant: 'destructive',
@@ -426,10 +421,6 @@ export const EmployeeAccordion = () => {
       }
     }
   }
-
-  // const onImageChange = (imageUrl: string) => {
-  //   form.setValue('picture', imageUrl)
-  // }
 
   return (
     <Form {...form}>
