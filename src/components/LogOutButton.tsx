@@ -14,7 +14,10 @@ export const LogOutButton = () => {
     }
   }
   return (
-    <Button onClick={handleLogout} className="text-white bg-blue-300">
+    <Button
+      onClick={handleLogout}
+      className="text-white bg-blue-300 hover:bg-blue-600"
+    >
       Cerrar Sesión
     </Button>
   )

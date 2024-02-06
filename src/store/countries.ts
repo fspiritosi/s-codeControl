@@ -1,11 +1,11 @@
-import create from 'zustand'
+import {create} from 'zustand'
 import { supabase } from '../../supabase/supabase'
 
 type Province  = {
   id: number
   name: string
 }
-type generic ={
+export type generic ={
   id: number
   name: string
   created_at: string
@@ -25,7 +25,7 @@ export const useCountriesStore = create<State>((set, get) => {
       .from('countries')
       .select('*')
     if (error) {
-      console.error('Error al obtener los paises:', error)
+      console.error('Error al obtener los países:', error)
     } else {
       set({ countries: fetchCountries || [] })
     }
@@ -78,7 +78,7 @@ export const useCountriesStore = create<State>((set, get) => {
   }
   const fetchContractors = async () => {
     const { data: contractors, error } = await supabase
-      .from('contractor-companies')
+      .from('contractors')
       .select('*')
 
     if (error) {

@@ -1,4 +1,3 @@
-import { UUID } from 'crypto'
 import React from "react"
 
 export type LoggedUser = {
@@ -30,6 +29,7 @@ export type profileUser = {
   lastName: string
   credentialId: string
   email: string
+  avatar?: string
 }
 
 export type company = {
@@ -46,8 +46,82 @@ export type company = {
   industry: string
   company_logo: string
   province_id: number
-  employees: UUID
+  employees_id: string[]
   owner_id: string | undefined
+}
+
+export type companyData = {
+    id: string;
+    company_name: string;
+    description: string;
+    website: string;
+    contact_email: string;
+    contact_phone: string;
+    address: string;
+    city: {
+      name: string;
+    };
+    country: string;
+    industry: string;
+    company_logo: string;
+    is_active?: boolean;
+    company_cuit: string;
+    province_id: {
+      name: string;
+    };
+    owner_id: string;
+    companies_employees: {
+      employees: {
+        id: string;
+        city: {
+          name: string;
+        };
+        cuil: string;
+        file: string;
+        email: string;
+        phone: string;
+        gender: string;
+        street: string;
+        picture: string;
+        lastname: string;
+        province: {
+          name: string;
+        };
+        firstname: string;
+        birthplace: {
+          name: string;
+        };
+        company_id: string;
+        created_at: string;
+        nationality: string;
+        postal_code: string;
+        allocated_to: string[];
+        normal_hours: number;
+        document_type: string;
+        street_number: string;
+        marital_status: string;
+        document_number: string;
+        affiliate_status: null | string; // asumí que puede ser null o string
+        company_position: string;
+        type_of_contract: string;
+        workflow_diagram: {
+          name: string;
+        };
+        is_active: boolean;
+        date_of_admission: string;
+        level_of_education: string;
+        contractor_employee: {
+          contractors: {
+            name: string;
+            id: string;
+          };
+        }[];
+        hierarchical_position: {
+          name: string;
+        };
+      };
+    }[];
+  
 }
 
 export type singUp = {
@@ -97,21 +171,21 @@ export type Employee = {
   gender: string | undefined
   marital_status: string | undefined
   level_of_education: string | undefined //!si
-  picture: string | undefined
+  picture?: string | undefined
   street: string
   street_number: string
   province: string | undefined
   city: string | undefined 
   postal_code: string
   phone: string
-  email: string //!si
-  file: File | undefined | string
+  email?: string //!si
+  file: undefined | null | string | number
   hierarchical_position: string | undefined //!si
   company_position: string //!si
   workflow_diagram: string
   normal_hours: string //!si
   type_of_contract: string | undefined //!si
-  allocated_to: string | undefined //!si
-  date_of_admission: string
+  allocated_to: string | undefined | string[] //!si
+  date_of_admission: Date | undefined | string
   full_name?: string //!si
 }

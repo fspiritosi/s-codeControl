@@ -1,5 +1,5 @@
 
-export const nacionaliOptionsENUM = ['Argentino', 'Extranjero']
+export const nacionaliOptionsENUM = ['Argentina', 'Extranjero']
 export const documentOptionsENUM = ['DNI', 'LE', 'LC', 'PASAPORTE']
 export const genderOptionsENUM = ['Masculino', 'Femenino', 'No Declarado']
 export const civilStateOptionsENUM = [

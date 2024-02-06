@@ -22,17 +22,24 @@ import {
   typeOfContractENUM,
 } from '@/types/enums'
 
+import { useImageUpload } from '@/hooks/useUploadImage'
+import { cn } from '@/lib/utils'
 import { names } from '@/types/types'
 import { accordionSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { CalendarIcon } from '@radix-ui/react-icons'
 import { PostgrestError } from '@supabase/supabase-js'
-import { useEffect, useState } from 'react'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
+import { ChangeEvent, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { CheckboxReactHookFormMultiple } from './CheckboxSelect'
+import { ImageHander } from './ImageHandler'
 import { SelectWithData } from './SelectWithData'
-import { UploadImage } from './UploadImage'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
+import { Calendar } from './ui/calendar'
 import {
   Form,
   FormControl,
@@ -42,7 +49,9 @@ import {
   FormMessage,
 } from './ui/form'
 import { Input } from './ui/input'
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 import { useToast } from './ui/use-toast'
+import { useRouter } from 'next/navigation'
 
 type Province = {
   id: number
@@ -59,6 +68,7 @@ export const EmployeeAccordion = () => {
   const contractorCompanies = useCountriesStore(state => state.contractors)
   const { createEmployee } = useEmployeesData()
   const { toast } = useToast()
+  const router = useRouter()
 
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
@@ -88,14 +98,14 @@ export const EmployeeAccordion = () => {
       normal_hours: '',
       type_of_contract: undefined,
       allocated_to: undefined,
-      date_of_admission: '',
+      date_of_admission: undefined,
     },
   })
 
   const [accordion1Errors, setAccordion1Errors] = useState(false)
   const [accordion2Errors, setAccordion2Errors] = useState(false)
   const [accordion3Errors, setAccordion3Errors] = useState(false)
-  const [availableToSubmit, setAvailableToSubmit] = useState(false)
+  // const [availableToSubmit, setAvailableToSubmit] = useState(false)
 
   useEffect(() => {
     const { errors } = form.formState
@@ -136,7 +146,8 @@ export const EmployeeAccordion = () => {
     }
 
     // Actualiza el estado de error de los acordeones
-  }, [form.formState.errors])
+    // que se ejecute cuando cambie el estado de error y cuando ya no haya errores
+  }, [form.formState.errors, form.formState.isDirty, form.formState.isValid])
 
   const PERSONALDATA = [
     {
@@ -180,7 +191,7 @@ export const EmployeeAccordion = () => {
     {
       label: 'País de nacimiento',
       type: 'select',
-      placeholder: 'Pais de nacimiento',
+      placeholder: 'País de nacimiento',
       options: countryOptions,
       name: 'birthplace',
     },
@@ -201,7 +212,7 @@ export const EmployeeAccordion = () => {
     {
       label: 'Nivel de instrucción',
       type: 'select',
-      placeholder: 'Nivel de instruccion',
+      placeholder: 'Nivel de instrucción',
       options: instrutionsOptionsENUM,
       name: 'level_of_education',
     },
@@ -240,15 +251,15 @@ export const EmployeeAccordion = () => {
       name: 'city',
     },
     {
-      label: 'Codigo postal',
+      label: 'Código postal',
       type: 'text',
-      placeholder: 'Codigo postal',
+      placeholder: 'Código postal',
       name: 'postal_code',
     },
     {
-      label: 'Telefono',
+      label: 'Teléfono',
       type: 'text',
-      placeholder: 'Telefono',
+      placeholder: 'Teléfono',
       name: 'phone',
     },
     {
@@ -261,14 +272,15 @@ export const EmployeeAccordion = () => {
   const LABORALDATA = [
     {
       label: 'Legajo', //!Number
-      type: 'text',
+      type: 'number',
       placeholder: 'Legajo',
       name: 'file',
+      pattern: '[0-9]+',
     },
     {
-      label: 'Puesto Jerarquico',
+      label: 'Puesto Jerárquico',
       type: 'select',
-      placeholder: 'Puesto Jerarquico',
+      placeholder: 'Puesto Jerárquico',
       options: hierarchyOptions,
       name: 'hierarchical_position',
     },
@@ -287,9 +299,11 @@ export const EmployeeAccordion = () => {
     },
     {
       label: 'Horas normales', //!Number
-      type: 'text',
+      type: 'number',
       placeholder: 'Horas normales',
       name: 'normal_hours',
+      pattern: '[0-9]+',
+      inputMode: 'numeric',
     },
     {
       label: 'Tipo de contrato',
@@ -307,7 +321,7 @@ export const EmployeeAccordion = () => {
     },
     {
       label: 'Fecha de ingreso',
-      type: 'date',
+
       placeholder: 'Fecha de ingreso',
       name: 'date_of_admission',
     },
@@ -315,41 +329,107 @@ export const EmployeeAccordion = () => {
 
   const handleProvinceChange = (name: any) => {
     const provinceId = provincesOptions.find(
-      (province: Province) => province.name === name,
+      (province: Province) => province.name.trim() === name,
     )?.id
     fetchCityValues(provinceId)
   }
 
   // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof accordionSchema>) {
+  async function onSubmit(values: z.infer<typeof accordionSchema>) {
+    const fileExtension = imageFile?.name.split('.').pop()
     const finalValues = {
       ...values,
-      allocated_to: String(
-        contractorCompanies.find(e => e.name === values.allocated_to)?.id,
-      ),
+      date_of_admission: values.date_of_admission?.toISOString(),
       province: String(
-        provincesOptions.find(e => e.name === values.province)?.id,
+        provincesOptions.find(e => e.name.trim() === values.province)?.id,
       ),
       birthplace: String(
         countryOptions.find(e => e.name === values.birthplace)?.id,
       ),
-      city: String(citysOptions.find(e => e.name === values.city)?.id),
+      city: String(citysOptions.find(e => e.name.trim() === values.city)?.id),
       hierarchical_position: String(
         hierarchyOptions.find(e => e.name === values.hierarchical_position)?.id,
       ),
       workflow_diagram: String(
         workDiagramOptions.find(e => e.name === values.workflow_diagram)?.id,
       ),
+      picture: `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/employee_photos/${values.document_number}.${fileExtension}`,
     }
+
     try {
-      createEmployee(finalValues)
+      await createEmployee(finalValues)
+      try {
+        await handleUpload()
+      } catch (error: PostgrestError | any) {
+        toast({
+          variant: 'destructive',
+          title: error.message,
+        })
+      }
+      router.push('/dashboard/employee')
     } catch (error: PostgrestError | any) {
+      // Manejar el error de la primera petición
       toast({
         variant: 'destructive',
         title: error.message,
       })
     }
   }
+
+  const { uploadImage, loading } = useImageUpload()
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [base64Image, setBase64Image] = useState<string>('')
+  // const [disabled, setDisabled] = useState<boolean>(true)
+
+  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+
+    const file = event.target.files?.[0]
+
+    if (file) {
+      setImageFile(file)
+      // Convertir la imagen a base64
+      const reader = new FileReader()
+      reader.onload = e => {
+        if (e.target && typeof e.target.result === 'string') {
+          setBase64Image(e.target.result)
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleUpload = async () => {
+    const document_number = form.getValues('document_number')
+    const fileExtension = imageFile?.name.split('.').pop()
+    if (imageFile) {
+      try {
+        const renamedFile = new File(
+          [imageFile],
+          `${document_number}.${fileExtension}`,
+          { type: `image/${fileExtension}` },
+        )
+       
+        // Subir la imagen a Supabase Storage y obtener la URL
+        await uploadImage(renamedFile, 'employee_photos')
+
+        // Llamar a la función de cambio de imagen con la URL
+        // onImageChange(uploadedImageUrl)
+
+        // Llamar a la función de éxito de carga con la URL
+        // onUploadSuccess(uploadedImageUrl)
+        //  setAvailableToSubmit(true)
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: error.message,
+        })
+      }
+    }
+  }
+
+  // const onImageChange = (imageUrl: string) => {
+  //   form.setValue('picture', imageUrl)
+  // }
 
   return (
     <Form {...form}>
@@ -382,13 +462,13 @@ export const EmployeeAccordion = () => {
                             <FormItem className="">
                               <FormControl>
                                 <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
-                                  <UploadImage
+                                  <ImageHander
                                     imageBucket="employee_photos"
                                     labelInput="Subir foto"
-                                    setAvailableToSubmit={setAvailableToSubmit}
-                                    onImageChange={(imageUrl: string) =>
-                                      form.setValue('picture', imageUrl)
-                                    }
+                                    handleImageChange={handleImageChange}
+                                    base64Image={base64Image} //nueva
+                                    loading={loading} //nueva
+                                    imageFile={imageFile} //nueva
                                     field={field}
                                     inputStyle={{
                                       width: '400px',
@@ -417,14 +497,15 @@ export const EmployeeAccordion = () => {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>{data.label}</FormLabel>
-                              <FormControl>
-                                <SelectWithData
-                                  placeholder={data.placeholder}
-                                  options={data.options}
-                                  onChange={field.onChange}
-                                  value={field.value || ''}
-                                />
-                              </FormControl>
+
+                              <SelectWithData
+                                placeholder={data.placeholder}
+                                options={data.options}
+                                onChange={field.onChange}
+                                value={field.value || ''}
+                                field={{ ...field }}
+                              />
+
                               <FormMessage />
                             </FormItem>
                           )}
@@ -492,7 +573,13 @@ export const EmployeeAccordion = () => {
                               <FormControl>
                                 <SelectWithData
                                   placeholder={data.placeholder}
+                                  field={{ ...field }}
                                   options={data.options}
+                                  handleProvinceChange={
+                                    data.label === 'Provincia'
+                                      ? handleProvinceChange
+                                      : undefined
+                                  }
                                   onChange={event => {
                                     if (data.name === 'province') {
                                       handleProvinceChange(event)
@@ -555,30 +642,89 @@ export const EmployeeAccordion = () => {
             <AccordionContent>
               <div className="min-w-full max-w-sm flex flex-wrap gap-8">
                 {LABORALDATA.map((data, index) => {
-                  if (data.type === 'date') {
-                    ;<div key={index} className="w-[300px] flex flex-col gap-2">
-                      <FormField
-                        control={form.control}
-                        name={data.name as names}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{data.label}</FormLabel>
-                            <FormControl>
-                              <Input
-                                type={data.type}
-                                id={data.label}
-                                placeholder={data.placeholder}
-                                className="w-[300px] bg-white"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                  if (data.name === 'date_of_admission') {
+                    return (
+                      <div
+                        key={index}
+                        className="w-[300px] flex flex-col gap-2"
+                      >
+                        <FormField
+                          control={form.control}
+                          name="date_of_admission"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                              <FormLabel>Fecha de ingreso</FormLabel>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <FormControl>
+                                    <Button
+                                      variant={'outline'}
+                                      className={cn(
+                                        'w-[300px] pl-3 text-left font-normal',
+                                        !field.value && 'text-muted-foreground',
+                                      )}
+                                    >
+                                      {field.value ? (
+                                        format(field.value, 'PPP', {
+                                          locale: es,
+                                        })
+                                      ) : (
+                                        <span>Elegir fecha</span>
+                                      )}
+                                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                  </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                  className="w-auto p-0"
+                                  align="start"
+                                >
+                                  <Calendar
+                                    captionLayout="dropdown-buttons"
+                                    mode="single"
+                                    selected={new Date()}
+                                    onSelect={field.onChange}
+                                    disabled={date =>
+                                      date > new Date() ||
+                                      date < new Date('1900-01-01')
+                                    }
+                                    initialFocus
+                                    locale={es}
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )
                   }
                   if (data.type === 'select') {
+                    const isMultiple =
+                      data.name === 'allocated_to' ? true : false
+
+                    if (isMultiple) {
+                      return (
+                        <div
+                          key={index}
+                          className="w-[300px] flex flex-col gap-2 justify-center"
+                        >
+                          <FormField
+                            control={form.control}
+                            name={data.name as names}
+                            render={({ field }) => (
+                              <CheckboxReactHookFormMultiple
+                                options={data.options}
+                                placeholder="Afectado a"
+                                field={field}
+                                key={data.name}
+                              />
+                            )}
+                          />
+                        </div>
+                      )
+                    }
                     return (
                       <div
                         key={index}
@@ -593,12 +739,10 @@ export const EmployeeAccordion = () => {
                               <FormControl>
                                 <SelectWithData
                                   placeholder={data.placeholder}
+                                  isMultiple={isMultiple}
                                   options={data.options}
+                                  field={{ ...field }}
                                   onChange={event => {
-                                    if (data.name === 'province') {
-                                      handleProvinceChange(event)
-                                    }
-
                                     field.onChange(event)
                                   }}
                                   value={field.value || ''}
@@ -627,6 +771,7 @@ export const EmployeeAccordion = () => {
                                   type={data.type}
                                   id={data.label}
                                   placeholder={data.placeholder}
+                                  pattern={data.pattern}
                                   className="w-[300px] bg-white"
                                   {...field}
                                 />
@@ -646,16 +791,15 @@ export const EmployeeAccordion = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <p className="w-fit">
-                  <Button type="submit" disabled={!availableToSubmit}>
+                  <Button type="submit" className="mt-5">
+                    {' '}
+                    {/*  disabled={!availableToSubmit} */}
                     Agregar empleado
                   </Button>
                 </p>
               </TooltipTrigger>
               <TooltipContent className="max-w-[250px]">
-                {availableToSubmit &&
-                !accordion1Errors &&
-                !accordion2Errors &&
-                !accordion3Errors
+                {!accordion1Errors && !accordion2Errors && !accordion3Errors
                   ? '¡Todo listo para agregar el empleado!'
                   : '¡Completa todos los campos para agregar el empleado, asegurate de subir la imagen!'}
               </TooltipContent>

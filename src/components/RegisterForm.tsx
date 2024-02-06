@@ -43,7 +43,7 @@ export function RegisterForm() {
       lastName: '',
       email: '',
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
     },
   })
 
@@ -185,7 +185,7 @@ export function RegisterForm() {
               </FormItem>
             )}
           />
-       
+
           <div className="flex w-full justify-center flex-col items-center gap-5">
             <Button
               className="w-[100%] sm:w-[80%] lg:w-[60%] self-center"
