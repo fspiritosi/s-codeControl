@@ -59,10 +59,10 @@ import { supabase } from '../../../../supabase/supabase'
 
 const formSchema = z.object({
   reason_for_termination: z.string({
-    required_error: 'La razón de la terminación es requerida.',
+    required_error: 'La razón de la baja es requerida.',
   }),
   termination_date: z.date({
-    required_error: 'La fecha de terminación es requerida.',
+    required_error: 'La fecha de baja es requerida.',
   }),
 })
 
@@ -179,7 +179,7 @@ export const columns: ColumnDef<Colum>[] = [
                           name="reason_for_termination"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Razon de terminación</FormLabel>
+                              <FormLabel>MOtivo de Baja</FormLabel>
                               <Select
                                 onValueChange={field.onChange}
                                 defaultValue={field.value}
@@ -220,7 +220,7 @@ export const columns: ColumnDef<Colum>[] = [
                           name="termination_date"
                           render={({ field }) => (
                             <FormItem className="flex flex-col">
-                              <FormLabel>Fecha de terminación</FormLabel>
+                              <FormLabel>Fecha de Baja</FormLabel>
                               <Popover>
                                 <PopoverTrigger asChild>
                                   <FormControl>
