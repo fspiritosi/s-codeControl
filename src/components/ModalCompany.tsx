@@ -22,13 +22,15 @@ const ModalCompany: React.FC<ModalCompanyProps> = ({
   const toggleFormEnabled = () => {
     setFormEnabled(prevState => !prevState)
   }
-
+  const handleCloseModal = () => {
+    onClose()
+  }
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   return (
     <Modal isOpen={isOpen} onRequestClose={onClose}>
       {selectedCard && (
         <div className="flex flex-col h-full">
-          <Button onClick={onClose} className="self-end p-2">
+          <Button onClick={handleCloseModal} className="self-end p-2">
             X
           </Button>
           <div className="flex flex-1">

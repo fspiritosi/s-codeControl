@@ -1,11 +1,23 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { CardsGrid } from '../../../components/CardsGrid'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import ModalCompany from '@/components/ModalCompany'
 import { company } from '@/types/types'
+import Modal from 'react-modal'
+import { useRouter } from 'next/navigation'
 
+function setupModalAppElement() {
+  if (window.document) {
+    Modal.setAppElement('body') // Ajusta el selector según la estructura de tu aplicación
+  }
+}
 export default function allCompany() {
+  const router = useRouter()
+  useEffect(() => {
+    setupModalAppElement()
+  }, [])
+
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
   const [modalIsOpen, setModalIsOpen] = useState(false)
   const [selectedCard, setSelectedCard] = useState<company | null>(null)
@@ -21,6 +33,7 @@ export default function allCompany() {
 
   const handleCloseModal = () => {
     setModalIsOpen(false)
+    router.refresh()
   }
 
   if (!allCompanies) {

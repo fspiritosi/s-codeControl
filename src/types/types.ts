@@ -41,15 +41,27 @@ export type company = {
   contact_email: string
   contact_phone: string
   address: string
-  city: number
+  city:{
+    id:number
+    name: string
+  }
+    
   country: string
   industry: string
   company_logo: string
-  province_id: number
+  province_id:{
+    id:number
+    name: string
+  }
   //employees_id: string[]
   owner_id: string | undefined
   
 }
+
+export type industry_type = {
+  id:number
+  name:string
+}[];
 
 export type companyData = {
     id: string;
@@ -61,6 +73,7 @@ export type companyData = {
     address: string;
     city: {
       name: string;
+      id: number;
     };
     country: string;
     industry: string;
@@ -69,6 +82,7 @@ export type companyData = {
     company_cuit: string;
     province_id: {
       name: string;
+      id:number;
     };
     owner_id: string;
     companies_employees: {

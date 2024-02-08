@@ -1,16 +1,16 @@
 import React from 'react'
-import { company } from '@/types/types'
+import { company, companyData } from '@/types/types'
 import { formatCompanyName } from '@/lib/utils'
 interface CardsGridProps {
-  companies: company[]
-  onCardClick: (card: company) => void
+  companies: companyData[]
+  onCardClick: (card: companyData) => void
 }
 
 export const CardsGrid: React.FC<CardsGridProps> = ({
   companies,
   onCardClick,
 }) => {
-  const handleCardClick = (card: company) => {
+  const handleCardClick = (card: companyData) => {
     onCardClick(card)
   }
 
@@ -20,7 +20,7 @@ export const CardsGrid: React.FC<CardsGridProps> = ({
         <div
           key={companyItems.id}
           className="card hover:cursor-pointer bg-white rounded-lg shadow-md p-4"
-          onClick={() => handleCardClick(companyItems)} // Agrega el manejador de eventos onClick
+          onClick={() => handleCardClick(companyItems)}
         >
           <h3 className="text-xl font-semibold text-center">
             {formatCompanyName(companyItems.company_name)}

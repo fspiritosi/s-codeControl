@@ -30,7 +30,7 @@ import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { Loader } from './svg/loader'
 import { useRouter } from 'next/navigation'
-import { company } from '@/types/types'
+import { company, industry_type, companyData } from '@/types/types'
 interface CompanyRegisterProps {
   company: company | null
   formEnabled: boolean
@@ -39,16 +39,15 @@ export function CompanyRegister({
   company,
   formEnabled,
 }: CompanyRegisterProps) {
-  //const formEnabled = !company
   const formEnabledProp = company ? formEnabled : true
 
   const router = useRouter()
   const profile = useLoggedUserStore(state => state.profile)
-  const { insertCompany, fetchIndustryType, industry } = useCompanyData()
+  const { insertCompany, fetchIndustryType, updateCompany } = useCompanyData()
   const [showLoader, setShowLoader] = useState(false)
-  const [selectedIndustry, setSelectedIndustry] = useState<Industry | null>(
-    null,
-  )
+  const [selectedIndustry, setSelectedIndustry] =
+    useState<industry_type | null>(null)
+  const [industry, setIndustry] = useState<Industry[]>([])
   const uploadImageRef = useRef()
   const provincesValues = useCountriesStore(state => state.provinces)
   const citiesValues = useCountriesStore(state => state.cities)
@@ -60,7 +59,6 @@ export function CompanyRegister({
     defaultValues: company
       ? company
       : {
-          //defaultValues: {
           company_name: '',
           company_cuit: '',
           description: '',
@@ -72,7 +70,6 @@ export function CompanyRegister({
           country: 'argentina',
           province_id: 0,
           industry: '',
-          //employees_id: null,
         },
   })
 
@@ -80,7 +77,7 @@ export function CompanyRegister({
     form.setValue('company_logo', imageUrl)
   }
 
-  interface Industry {
+  type Industry = {
     id: number
     name: string
   }
@@ -105,22 +102,31 @@ export function CompanyRegister({
   }
 
   const handleIndustryChange = (selectedIndustryType: string) => {
-    if (selectedIndustryType !== selectedIndustry?.name) {
-      const selectedIndustry: Industry | undefined = industry.find(
-        p => p.name === selectedIndustryType,
-      )
-      if (selectedIndustry) {
-        form.setValue('industry', selectedIndustry.name)
-        setSelectedIndustry(selectedIndustry)
-      }
+    const selectedIndustry = industry.find(
+      ind => ind.name === selectedIndustryType,
+    )
+    if (selectedIndustry) {
+      console.log('selected: ', selectedIndustry.name)
+      form.setValue('industry', selectedIndustry.name)
     }
   }
 
   useEffect(() => {
-    fetchIndustryType()
-  }, [])
+    const fetchData = async () => {
+      try {
+        const fetchedIndustry = await fetchIndustryType()
+        if (fetchedIndustry) {
+          setIndustry(fetchedIndustry)
+        } else {
+          console.error('La función fetchIndustryType() devolvió null.')
+        }
+      } catch (error) {
+        console.error('Error al obtener las industrias:', error)
+      }
+    }
 
-  //
+    fetchData()
+  }, [])
 
   const onSubmit = async (companyData: z.infer<typeof companySchema>) => {
     try {
@@ -131,30 +137,39 @@ export function CompanyRegister({
         company_cuit: processText(companyData.company_cuit),
         website: processText(companyData.website),
         country: processText(companyData.country),
-        province_id: companyData.province_id,
-        city: companyData.city,
+        province_id: companyData.province_id.id,
+        city: companyData.city.id,
         contact_email: processText(companyData.contact_email),
         contact_phone: processText(companyData.contact_phone),
         address: processText(companyData.address),
         industry: processText(companyData.industry),
-        //employees_id: [companyData.employees_id],
       }
 
       //Insertar la compañía con los datos procesados
-      const company = await insertCompany({
-        ...processedCompanyData,
-        company_logo: processedCompanyData.company_logo || '',
-        owner_id: profile?.[0].id,
-      })
-      router.push('/dashboard/company')
-      setShowLoader(true)
+      let updatedCompany
+
+      if (company && company.id) {
+        updatedCompany = await updateCompany(company.id, {
+          ...processedCompanyData,
+          company_logo: processedCompanyData.company_logo || '',
+          owner_id: profile?.[0].id,
+        })
+      } else {
+        updatedCompany = await insertCompany({
+          ...processedCompanyData,
+          company_logo: processedCompanyData.company_logo || '',
+          owner_id: profile?.[0].id,
+        })
+      }
+      if (updatedCompany) {
+        router.push('/dashboard/company')
+      }
     } catch (err) {
       console.error('Ocurrió un error:', err)
     } finally {
       setShowLoader(false)
     }
   }
-
   const processText = (text: string): string | any => {
     if (text === undefined) {
       // Puedes decidir qué hacer aquí si text es undefined.
@@ -163,11 +178,9 @@ export function CompanyRegister({
     }
     return text
       .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^\w\s]/gi, '')
+      .replace(/[\u0300-\u036f'"]/g, '')
       .trim()
       .toLowerCase()
-      .replace(/\s+/g, '_')
   }
 
   return (
@@ -205,7 +218,7 @@ export function CompanyRegister({
                 <FormControl>
                   <Input
                     disabled={!formEnabledProp}
-                    placeholder="xx-xxxxxxxx-x"
+                    placeholder="xxxxxxxxxxx"
                     className="max-w-[400px] w-[300px]"
                     maxLength={13}
                     {...field}
@@ -331,11 +344,11 @@ export function CompanyRegister({
               <FormItem className="flex flex-col justify-center">
                 <FormLabel>Seleccione una provincia</FormLabel>
                 <Select
-                  disabled={!formEnabled}
+                  disabled={!formEnabledProp}
                   onValueChange={handleProvinceChange}
                 >
                   <SelectTrigger className="max-w-[350px]  w-[300px]">
-                    <SelectValue placeholder="Seleccione una provincia" />
+                    <SelectValue placeholder={company?.province_id.name} />
                   </SelectTrigger>
                   <SelectContent>
                     {provincesValues?.map(province => (
@@ -358,11 +371,14 @@ export function CompanyRegister({
               <FormItem className="flex flex-col justify-center">
                 <FormLabel>Seleccione una ciudad</FormLabel>
                 <Select
-                  disabled={!formEnabled}
+                  disabled={!formEnabledProp}
                   onValueChange={handleCityChange}
                 >
                   <SelectTrigger className="max-w-[350px] w-[300px]">
-                    <SelectValue placeholder="Seleccione una ciudad" />
+                    <SelectValue
+                      defaultValue={company?.city.id}
+                      placeholder={company?.city.name}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {citiesValues?.map(city => (
@@ -393,9 +409,9 @@ export function CompanyRegister({
                     <SelectValue placeholder={company?.industry} />
                   </SelectTrigger>
                   <SelectContent>
-                    {industry.map(industry => (
-                      <SelectItem key={industry.id} value={industry.name}>
-                        {industry.name}
+                    {industry?.map(ind => (
+                      <SelectItem key={ind.id} value={ind.name}>
+                        {ind.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -455,8 +471,19 @@ export function CompanyRegister({
           />
         </div>
 
-        <Button type="submit" className="mt-5" disabled={showLoader}>
-          {showLoader ? <Loader /> : 'Registrar Compañía'}
+        <Button
+          disabled={!formEnabledProp}
+          type="submit"
+          className="mt-5"
+          //disabled={showLoader}
+        >
+          {showLoader ? (
+            <Loader />
+          ) : company ? (
+            'Editar Compañia'
+          ) : (
+            'Registrar Compañía'
+          )}
         </Button>
       </form>
     </Form>
