@@ -45,7 +45,6 @@ export type company = {
     id:number
     name: string
   }
-    
   country: string
   industry: string
   company_logo: string
@@ -53,7 +52,7 @@ export type company = {
     id:number
     name: string
   }
-  //employees_id: string[]
+  by_defect: boolean
   owner_id: string | undefined
   
 }
@@ -71,6 +70,7 @@ export type companyData = {
     contact_email: string;
     contact_phone: string;
     address: string;
+    by_defect: boolean
     city: {
       name: string;
       id: number;

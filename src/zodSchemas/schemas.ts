@@ -149,6 +149,7 @@ export const companySchema = z.object({
     
   city: z.any(),
   company_logo: z.string().optional(),
+  by_defect:z.boolean()
   //employees_id: z.string().nullable(),
 })
 

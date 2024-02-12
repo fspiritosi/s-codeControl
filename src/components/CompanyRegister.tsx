@@ -1,6 +1,8 @@
 'use client'
 import { UploadImage } from '@/components/UploadImage'
 import { Button } from '@/components/ui/button'
+import { useToast } from './ui/use-toast'
+import { Checkbox } from './ui/checkbox'
 import {
   Form,
   FormControl,
@@ -36,8 +38,8 @@ interface CompanyRegisterProps {
   formEnabled: boolean
 }
 export function CompanyRegister({
-  company,
-  formEnabled,
+  company = null,
+  formEnabled = true,
 }: CompanyRegisterProps) {
   const formEnabledProp = company ? formEnabled : true
 
@@ -53,6 +55,7 @@ export function CompanyRegister({
   const citiesValues = useCountriesStore(state => state.cities)
   const fetchCityValues = useCountriesStore(state => state.fetchCities)
   const { uploadImage, loading } = useImageUpload()
+  const { toast } = useToast()
 
   const form = useForm<z.infer<typeof companySchema>>({
     resolver: zodResolver(companySchema),
@@ -70,6 +73,7 @@ export function CompanyRegister({
           country: 'argentina',
           province_id: 0,
           industry: '',
+          by_defect: false,
         },
   })
 
@@ -106,7 +110,6 @@ export function CompanyRegister({
       ind => ind.name === selectedIndustryType,
     )
     if (selectedIndustry) {
-      console.log('selected: ', selectedIndustry.name)
       form.setValue('industry', selectedIndustry.name)
     }
   }
@@ -137,8 +140,8 @@ export function CompanyRegister({
         company_cuit: processText(companyData.company_cuit),
         website: processText(companyData.website),
         country: processText(companyData.country),
-        province_id: companyData.province_id.id,
-        city: companyData.city.id,
+        province_id: companyData.province_id,
+        city: companyData.city,
         contact_email: processText(companyData.contact_email),
         contact_phone: processText(companyData.contact_phone),
         address: processText(companyData.address),
@@ -153,16 +156,29 @@ export function CompanyRegister({
           ...processedCompanyData,
           company_logo: processedCompanyData.company_logo || '',
           owner_id: profile?.[0].id,
+          //by_defect: false,
+        })
+        toast({
+          variant: 'default',
+          title: 'Compañía actualizada',
+          description: `La compañía ha sido actualizada`,
         })
       } else {
         updatedCompany = await insertCompany({
           ...processedCompanyData,
           company_logo: processedCompanyData.company_logo || '',
           owner_id: profile?.[0].id,
+          //by_defect: false,
+        })
+        toast({
+          variant: 'default',
+          title: 'Compañía Creada exitosamente',
+          description: `La compañía ha sido creada`,
         })
       }
       if (updatedCompany) {
         router.push('/dashboard/company')
+        router.refresh
       }
     } catch (err) {
       console.error('Ocurrió un error:', err)
@@ -346,9 +362,10 @@ export function CompanyRegister({
                 <Select
                   disabled={!formEnabledProp}
                   onValueChange={handleProvinceChange}
+                  defaultValue={company?.province_id?.name}
                 >
                   <SelectTrigger className="max-w-[350px]  w-[300px]">
-                    <SelectValue placeholder={company?.province_id.name} />
+                    <SelectValue placeholder={field.value} />
                   </SelectTrigger>
                   <SelectContent>
                     {provincesValues?.map(province => (
@@ -373,12 +390,10 @@ export function CompanyRegister({
                 <Select
                   disabled={!formEnabledProp}
                   onValueChange={handleCityChange}
+                  defaultValue={company?.city?.name}
                 >
                   <SelectTrigger className="max-w-[350px] w-[300px]">
-                    <SelectValue
-                      defaultValue={company?.city.id}
-                      placeholder={company?.city.name}
-                    />
+                    <SelectValue placeholder={field.value} />
                   </SelectTrigger>
                   <SelectContent>
                     {citiesValues?.map(city => (
@@ -469,6 +484,28 @@ export function CompanyRegister({
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name="by_defect"
+            render={({ field }) => (
+              <FormItem className="flex flex-col justify-center">
+                <FormLabel>
+                  Marcar para seleccionar Compañia por defecto
+                </FormLabel>
+                <FormControl>
+                  <Checkbox
+                    disabled={!formEnabledProp}
+                    defaultChecked={company ? company.by_defect : false}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormDescription className="max-w-[300px]">
+                  Compañia por defecto
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         <Button
@@ -477,13 +514,10 @@ export function CompanyRegister({
           className="mt-5"
           //disabled={showLoader}
         >
-          {showLoader ? (
+          {/* {showLoader ? (
             <Loader />
-          ) : company ? (
-            'Editar Compañia'
-          ) : (
-            'Registrar Compañía'
-          )}
+          ) :  */}
+          {company ? 'Editar Compañia' : 'Registrar Compañía'}
         </Button>
       </form>
     </Form>

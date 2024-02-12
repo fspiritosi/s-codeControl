@@ -1,5 +1,5 @@
-import { company, industry_type } from './../types/types';
 'use client'
+import { company, industry_type } from './../types/types';
 import { toast } from '@/components/ui/use-toast'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { UUID } from 'crypto'
@@ -13,15 +13,41 @@ import {useState} from 'react'
 
 export const useCompanyData = () => {
   const {errorTranslate} = useEdgeFunctions()
-  const [industry, setIndustry] = useState<any[]>([])
+  //const [industry, setIndustry] = useState<any[]>([])
   
   return{
+
+    fetchAllCompany : async ()=>{
+        let { data: company, error } = await supabase
+        .from('company')
+        .select('*')
+        
+        if (error ) {
+        const message = await errorTranslate(error?.message)
+        throw new Error(String(message).replaceAll('"', ''))
+      }
+      return company
+              
+    },
+
+    findByOwner : async (owner: any)=>{
+          let { data: company, error } = await supabase
+          .from('company')
+          .select("*")
+          .eq('owner_id', 'owner')
+
+          if (error ) {
+            const message = await errorTranslate(error?.message)
+            throw new Error(String(message).replaceAll('"', ''))
+      }
+      return company
+    },
     insertCompany : async (company: company) => {
       const { data, error } = await supabase
          .from('company')
-         .insert([company])
+         .insert(company)
          .select()
-
+          
       if (error ) {
         const message = await errorTranslate(error?.message)
         throw new Error(String(message).replaceAll('"', ''))
