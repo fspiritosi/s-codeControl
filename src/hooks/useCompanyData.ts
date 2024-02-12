@@ -68,6 +68,36 @@ export const useCompanyData = () => {
       }
       return data
     },
+    LogicDeleteCompany : async (companyId: string) => {
+    
+        const { data, error } = await supabase
+            .from('company')
+            .update({ is_Active: false }) // Establece is_Active en false para el borrado lógico
+            .eq('id', companyId)
+            .select();
+        if (error) {
+        const message = await errorTranslate(error.message)
+        throw new Error(String(message).replaceAll('"', ''))
+      }
+      return data
+
+
+    },
+
+
+    deleteCompany : async (companyId: string)=>{
+
+        const { error } = await supabase
+          .from('company')
+          .delete()
+          .eq('id', 'companyId')
+
+        if (error) {
+        const message = await errorTranslate(error.message)
+        throw new Error(String(message).replaceAll('"', ''))
+      }
+          
+    },
 
      fetchIndustryType : async () => {
       
