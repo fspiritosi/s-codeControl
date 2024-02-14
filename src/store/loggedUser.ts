@@ -137,10 +137,12 @@ export const useLoggedUserStore = create<State>((set, get) => {
     .select(`
       *,
       city (
-        name
+        name,
+        id
       ),
       province_id (
-        name
+        name,
+        id
       ),
       companies_employees (
        employees(

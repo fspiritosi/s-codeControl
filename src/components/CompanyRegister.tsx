@@ -1,6 +1,8 @@
 'use client'
 import { UploadImage } from '@/components/UploadImage'
 import { Button } from '@/components/ui/button'
+import { useToast } from './ui/use-toast'
+import { Checkbox } from './ui/checkbox'
 import {
   Form,
   FormControl,
@@ -29,43 +31,57 @@ import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { Loader } from './svg/loader'
+import { useRouter } from 'next/navigation'
+import { company, industry_type, companyData } from '@/types/types'
+interface CompanyRegisterProps {
+  company: company | null
+  formEnabled: boolean
+}
+export function CompanyRegister({
+  company = null,
+  formEnabled = true,
+}: CompanyRegisterProps) {
+  const formEnabledProp = company ? formEnabled : true
 
-export function CompanyRegister() {
+  const router = useRouter()
   const profile = useLoggedUserStore(state => state.profile)
-  const { insertCompany, fetchIndustryType, industry } = useCompanyData()
+  const { insertCompany, fetchIndustryType, updateCompany } = useCompanyData()
   const [showLoader, setShowLoader] = useState(false)
-  const [selectedIndustry, setSelectedIndustry] = useState<Industry | null>(
-    null,
-  )
-  const uploadImageRef = useRef();
+  const [selectedIndustry, setSelectedIndustry] =
+    useState<industry_type | null>(null)
+  const [industry, setIndustry] = useState<Industry[]>([])
+  const uploadImageRef = useRef()
   const provincesValues = useCountriesStore(state => state.provinces)
   const citiesValues = useCountriesStore(state => state.cities)
   const fetchCityValues = useCountriesStore(state => state.fetchCities)
   const { uploadImage, loading } = useImageUpload()
+  const { toast } = useToast()
 
   const form = useForm<z.infer<typeof companySchema>>({
     resolver: zodResolver(companySchema),
-    defaultValues: {
-      company_name: '',
-      company_cuit: '',
-      description: '',
-      website: '',
-      contact_email: '',
-      contact_phone: '',
-      address: '',
-      city: 0,
-      country: 'argentina',
-      province_id: 0,
-      industry: '',
-      employees_id: null,
-    },
+    defaultValues: company
+      ? company
+      : {
+          company_name: '',
+          company_cuit: '',
+          description: '',
+          website: '',
+          contact_email: '',
+          contact_phone: '',
+          address: '',
+          city: 0,
+          country: 'argentina',
+          province_id: 0,
+          industry: '',
+          by_defect: false,
+        },
   })
 
   const onImageChange = (imageUrl: string) => {
     form.setValue('company_logo', imageUrl)
   }
 
-  interface Industry {
+  type Industry = {
     id: number
     name: string
   }
@@ -90,29 +106,36 @@ export function CompanyRegister() {
   }
 
   const handleIndustryChange = (selectedIndustryType: string) => {
-    if (selectedIndustryType !== selectedIndustry?.name) {
-      const selectedIndustry: Industry | undefined = industry.find(
-        p => p.name === selectedIndustryType,
-      )
-      if (selectedIndustry) {
-        form.setValue('industry', selectedIndustry.name)
-        setSelectedIndustry(selectedIndustry)
-      }
+    const selectedIndustry = industry.find(
+      ind => ind.name === selectedIndustryType,
+    )
+    if (selectedIndustry) {
+      form.setValue('industry', selectedIndustry.name)
     }
   }
 
   useEffect(() => {
-    fetchIndustryType()
-  }, [])
+    const fetchData = async () => {
+      try {
+        const fetchedIndustry = await fetchIndustryType()
+        if (fetchedIndustry) {
+          setIndustry(fetchedIndustry)
+        } else {
+          console.error('La función fetchIndustryType() devolvió null.')
+        }
+      } catch (error) {
+        console.error('Error al obtener las industrias:', error)
+      }
+    }
 
-  //
+    fetchData()
+  }, [])
 
   const onSubmit = async (companyData: z.infer<typeof companySchema>) => {
     try {
       //Procesa los valores antes de enviarlos a la base de datos
-      const {employees_id,...rest} = companyData
       const processedCompanyData = {
-        ...rest,
+        ...companyData,
         company_name: processText(companyData.company_name),
         company_cuit: processText(companyData.company_cuit),
         website: processText(companyData.website),
@@ -126,21 +149,43 @@ export function CompanyRegister() {
       }
 
       //Insertar la compañía con los datos procesados
-      const company = await insertCompany({
-        ...processedCompanyData,
-        company_logo: processedCompanyData.company_logo || '',
-        owner_id: profile?.[0].id,
-      })
-      
+      let updatedCompany
 
-      setShowLoader(true)
+      if (company && company.id) {
+        updatedCompany = await updateCompany(company.id, {
+          ...processedCompanyData,
+          company_logo: processedCompanyData.company_logo || '',
+          owner_id: profile?.[0].id,
+          //by_defect: false,
+        })
+        toast({
+          variant: 'default',
+          title: 'Compañía actualizada',
+          description: `La compañía ha sido actualizada`,
+        })
+      } else {
+        updatedCompany = await insertCompany({
+          ...processedCompanyData,
+          company_logo: processedCompanyData.company_logo || '',
+          owner_id: profile?.[0].id,
+          //by_defect: false,
+        })
+        toast({
+          variant: 'default',
+          title: 'Compañía Creada exitosamente',
+          description: `La compañía ha sido creada`,
+        })
+      }
+      if (updatedCompany) {
+        router.push('/dashboard/company')
+        router.refresh
+      }
     } catch (err) {
       console.error('Ocurrió un error:', err)
     } finally {
       setShowLoader(false)
     }
   }
-
   const processText = (text: string): string | any => {
     if (text === undefined) {
       // Puedes decidir qué hacer aquí si text es undefined.
@@ -149,11 +194,9 @@ export function CompanyRegister() {
     }
     return text
       .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^\w\s]/gi, '')
+      .replace(/[\u0300-\u036f'"]/g, '')
       .trim()
       .toLowerCase()
-      .replace(/\s+/g, '_')
   }
 
   return (
@@ -168,6 +211,7 @@ export function CompanyRegister() {
                 <FormLabel>Nombre de la compañía</FormLabel>
                 <FormControl>
                   <Input
+                    disabled={!formEnabledProp}
                     className="max-w-[350px] w-[300px]"
                     placeholder="nombre de la compañía"
                     {...field}
@@ -189,7 +233,8 @@ export function CompanyRegister() {
                 <FormLabel>CUIT de la compañía</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="xx-xxxxxxxx-x"
+                    disabled={!formEnabledProp}
+                    placeholder="xxxxxxxxxxx"
                     className="max-w-[400px] w-[300px]"
                     maxLength={13}
                     {...field}
@@ -209,6 +254,7 @@ export function CompanyRegister() {
                 <FormLabel>Sitio Web</FormLabel>
                 <FormControl>
                   <Input
+                    disabled={!formEnabledProp}
                     className="max-w-[350px]  w-[300px]"
                     placeholder="sitio web"
                     {...field}
@@ -230,6 +276,7 @@ export function CompanyRegister() {
                 <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input
+                    disabled={!formEnabledProp}
                     className="max-w-[350px]  w-[300px]"
                     placeholder="email"
                     autoComplete="email"
@@ -250,6 +297,7 @@ export function CompanyRegister() {
                 <FormLabel>Número de teléfono</FormLabel>
                 <FormControl>
                   <Input
+                    disabled={!formEnabledProp}
                     className="max-w-[350px]  w-[300px]"
                     placeholder="número de teléfono"
                     {...field}
@@ -271,6 +319,7 @@ export function CompanyRegister() {
                 <FormLabel>Dirección</FormLabel>
                 <FormControl>
                   <Input
+                    disabled={!formEnabledProp}
                     className="max-w-[350px]  w-[300px]"
                     placeholder="dirección"
                     {...field}
@@ -290,9 +339,9 @@ export function CompanyRegister() {
             render={({ field }) => (
               <FormItem className="flex flex-col justify-center">
                 <FormLabel>Seleccione un país</FormLabel>
-                <Select>
+                <Select disabled={!formEnabledProp}>
                   <SelectTrigger className="max-w-[350px]  w-[300px]">
-                    <SelectValue placeholder="Selecciona un país" />
+                    <SelectValue placeholder={company?.country} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="argentina">Argentina</SelectItem>
@@ -310,9 +359,13 @@ export function CompanyRegister() {
             render={({ field }) => (
               <FormItem className="flex flex-col justify-center">
                 <FormLabel>Seleccione una provincia</FormLabel>
-                <Select onValueChange={handleProvinceChange}>
+                <Select
+                  disabled={!formEnabledProp}
+                  onValueChange={handleProvinceChange}
+                  defaultValue={company?.province_id?.name}
+                >
                   <SelectTrigger className="max-w-[350px]  w-[300px]">
-                    <SelectValue placeholder="Selecciona una provincia" />
+                    <SelectValue placeholder={field.value} />
                   </SelectTrigger>
                   <SelectContent>
                     {provincesValues?.map(province => (
@@ -334,9 +387,13 @@ export function CompanyRegister() {
             render={({ field }) => (
               <FormItem className="flex flex-col justify-center">
                 <FormLabel>Seleccione una ciudad</FormLabel>
-                <Select onValueChange={handleCityChange}>
+                <Select
+                  disabled={!formEnabledProp}
+                  onValueChange={handleCityChange}
+                  defaultValue={company?.city?.name}
+                >
                   <SelectTrigger className="max-w-[350px] w-[300px]">
-                    <SelectValue placeholder="Selecciona una ciudad" />
+                    <SelectValue placeholder={field.value} />
                   </SelectTrigger>
                   <SelectContent>
                     {citiesValues?.map(city => (
@@ -352,26 +409,6 @@ export function CompanyRegister() {
               </FormItem>
             )}
           />
-          {/* <FormField
-            control={form.control}
-            name="industry"
-            render={({ field }) => (
-              <FormItem className="flex flex-col justify-center max-w-[300px]">
-                <FormLabel>Industria</FormLabel>
-                <FormControl>
-                  <Input
-                    className="max-w-[350px]  w-[300px]"
-                    placeholder="industria"
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription className="max-w-[300px]">
-                  Por favor ingresa la Industria de tu compañía
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          /> */}
 
           <FormField
             control={form.control}
@@ -379,14 +416,17 @@ export function CompanyRegister() {
             render={({ field }) => (
               <FormItem className="flex flex-col justify-center max-w-[300px]">
                 <FormLabel>Seleccione una Industria</FormLabel>
-                <Select onValueChange={handleIndustryChange}>
+                <Select
+                  disabled={!formEnabledProp}
+                  onValueChange={handleIndustryChange}
+                >
                   <SelectTrigger className="max-w-[350px] w-[300px]">
-                    <SelectValue placeholder="Selecciona una Industria" />
+                    <SelectValue placeholder={company?.industry} />
                   </SelectTrigger>
                   <SelectContent>
-                    {industry.map(industry => (
-                      <SelectItem key={industry.id} value={industry.name}>
-                        {industry.name}
+                    {industry?.map(ind => (
+                      <SelectItem key={ind.id} value={ind.name}>
+                        {ind.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -431,6 +471,7 @@ export function CompanyRegister() {
                 <FormLabel>Descripción</FormLabel>
                 <FormControl>
                   <Textarea
+                    disabled={!formEnabledProp}
                     className="max-w-[350px] w-[300px]"
                     placeholder="Descripción de la compañía"
                     {...field}
@@ -443,10 +484,40 @@ export function CompanyRegister() {
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name="by_defect"
+            render={({ field }) => (
+              <FormItem className="flex flex-col justify-center">
+                <FormLabel>
+                  Marcar para seleccionar Compañia por defecto
+                </FormLabel>
+                <FormControl>
+                  <Checkbox
+                    disabled={!formEnabledProp}
+                    defaultChecked={company ? company.by_defect : false}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormDescription className="max-w-[300px]">
+                  Compañia por defecto
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
-        <Button type="submit" className="mt-5" disabled={showLoader}>
-          {showLoader ? <Loader /> : 'Registrar Compañía'}
+        <Button
+          disabled={!formEnabledProp}
+          type="submit"
+          className="mt-5"
+          //disabled={showLoader}
+        >
+          {/* {showLoader ? (
+            <Loader />
+          ) :  */}
+          {company ? 'Editar Compañia' : 'Registrar Compañía'}
         </Button>
       </form>
     </Form>
