@@ -7,6 +7,7 @@ import { company } from '@/types/types'
 import Modal from 'react-modal'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../../../supabase/supabase'
+import { useCompanyData } from '@/hooks/useCompanyData'
 
 function setupModalAppElement() {
   if (window.document) {
@@ -16,6 +17,7 @@ function setupModalAppElement() {
 
 export default function allCompany() {
   const router = useRouter()
+  const { fetchCompanies } = useCompanyData()
 
   useEffect(() => {
     setupModalAppElement()
@@ -54,17 +56,6 @@ export default function allCompany() {
     router.refresh()
   }
 
-  const fetchCompanies = async () => {
-    // Obtener las compañías actualizadas de Supabase
-    const { data, error } = await supabase.from('company').select('*')
-    if (error) {
-      console.error('Error al obtener las compañías:', error)
-    } else {
-      // Actualizar el estado global con las nuevas compañías
-      useLoggedUserStore.setState({ allCompanies: data || [] })
-    }
-  }
-
   if (!allCompanies) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -72,7 +63,7 @@ export default function allCompany() {
       </div>
     )
   }
-
+  console.log('este es allCompany: ', allCompanies)
   return (
     <main className="bg-white">
       <h2 className="text-3xl pb-5 pl-10">Todas las Compañias</h2>

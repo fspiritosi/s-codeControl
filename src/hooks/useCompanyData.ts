@@ -112,6 +112,19 @@ export const useCompanyData = () => {
         return data
       
     },
+
+     fetchCompanies : async () => {
+    // Obtener las compañías actualizadas de Supabase
+    const { data, error } = await supabase
+      .from('company')
+      .select('*, province_id(id, name), city(id, name)')
+    if (error) {
+      console.error('Error al obtener las compañías:', error)
+    } else {
+      // Actualizar el estado global con las nuevas compañías
+      useLoggedUserStore.setState({ allCompanies: data || [] })
+    }
+  }
   
   }
 }

@@ -365,10 +365,14 @@ export function CompanyRegister({
                 <Select
                   disabled={!formEnabledProp}
                   onValueChange={handleProvinceChange}
-                  defaultValue={company?.province_id?.name}
+                  //defaultValue={company?.province_id?.name}
                 >
                   <SelectTrigger className="max-w-[350px]  w-[300px]">
-                    <SelectValue placeholder={field.value} />
+                    <SelectValue
+                      placeholder={
+                        field.value.name ? field.value.name : field.value
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {provincesValues?.map(province => (
@@ -393,10 +397,15 @@ export function CompanyRegister({
                 <Select
                   disabled={!formEnabledProp}
                   onValueChange={handleCityChange}
-                  defaultValue={company?.city.name}
+                  //defaultValue={company?.city.name}
+                  //defaultValue={field.value}
                 >
                   <SelectTrigger className="max-w-[350px] w-[300px]">
-                    <SelectValue placeholder={field.value} />
+                    <SelectValue
+                      placeholder={
+                        field.value.name ? field.value.name : field.value
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {citiesValues?.map(city => (
