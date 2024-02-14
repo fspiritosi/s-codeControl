@@ -33,6 +33,7 @@ import * as z from 'zod'
 import { Loader } from './svg/loader'
 import { useRouter } from 'next/navigation'
 import { company, industry_type, companyData } from '@/types/types'
+import { FilePenLine } from 'lucide-react'
 interface CompanyRegisterProps {
   company: company | null
   formEnabled: boolean
@@ -140,14 +141,16 @@ export function CompanyRegister({
         company_cuit: processText(companyData.company_cuit),
         website: processText(companyData.website),
         country: processText(companyData.country),
-        province_id: companyData.province_id,
-        city: companyData.city,
+        province_id: companyData.province_id.id
+          ? companyData.province_id.id
+          : companyData.province_id,
+        city: companyData.city.id ? companyData.city.id : companyData.city,
         contact_email: processText(companyData.contact_email),
         contact_phone: processText(companyData.contact_phone),
         address: processText(companyData.address),
         industry: processText(companyData.industry),
       }
-
+      console.log('este es processedData: ', processedCompanyData)
       //Insertar la compañía con los datos procesados
       let updatedCompany
 
@@ -390,7 +393,7 @@ export function CompanyRegister({
                 <Select
                   disabled={!formEnabledProp}
                   onValueChange={handleCityChange}
-                  defaultValue={company?.city?.name}
+                  defaultValue={company?.city.name}
                 >
                   <SelectTrigger className="max-w-[350px] w-[300px]">
                     <SelectValue placeholder={field.value} />
