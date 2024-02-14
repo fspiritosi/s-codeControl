@@ -63,7 +63,7 @@ export default function allCompany() {
       </div>
     )
   }
-  console.log('este es allCompany: ', allCompanies)
+
   return (
     <main className="bg-white">
       <h2 className="text-3xl pb-5 pl-10">Todas las Compañias</h2>

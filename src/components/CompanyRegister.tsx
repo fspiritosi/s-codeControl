@@ -150,7 +150,7 @@ export function CompanyRegister({
         address: processText(companyData.address),
         industry: processText(companyData.industry),
       }
-      console.log('este es processedData: ', processedCompanyData)
+
       //Insertar la compañía con los datos procesados
       let updatedCompany
 
