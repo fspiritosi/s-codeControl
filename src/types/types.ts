@@ -25,8 +25,8 @@ export type Userprofile = {}
 export type profileUser = {
   id?: string
   created_at?: string
-  firstName: string
-  lastName: string
+  firstname: string
+  lastname: string
   credentialId: string
   email: string
   avatar?: string
@@ -185,7 +185,7 @@ export type Employee = {
   workflow_diagram: string
   normal_hours: string //!si
   type_of_contract: string | undefined //!si
-  allocated_to: string | undefined | string[] //!si
+  allocated_to?: string | undefined | string[] //!si
   date_of_admission: Date | undefined | string
   full_name?: string //!si
 }
