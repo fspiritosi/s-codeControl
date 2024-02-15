@@ -164,7 +164,7 @@ export const columns: ColumnDef<Colum>[] = [
               <DialogContent>
                 <DialogTitle>Eliminar empleado</DialogTitle>
                 <DialogDescription>
-                  ¿Estás seguro de que deseas eliminar este empleado?, completa
+                  ¿Estás seguro de que deseas eliminar este empleado?<br /> Completa
                   los campos para continuar.
                 </DialogDescription>
                 <DialogFooter>
@@ -179,7 +179,7 @@ export const columns: ColumnDef<Colum>[] = [
                           name="reason_for_termination"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>MOtivo de Baja</FormLabel>
+                              <FormLabel>Motivo de baja</FormLabel>
                               <Select
                                 onValueChange={field.onChange}
                                 defaultValue={field.value}
@@ -197,13 +197,13 @@ export const columns: ColumnDef<Colum>[] = [
                                     Renuncia
                                   </SelectItem>
                                   <SelectItem value="Despido con causa">
-                                    Despido con Causa
+                                    Despido con causa
                                   </SelectItem>
                                   <SelectItem value="Acuerdo de partes">
-                                    Acuerdo de Partes
+                                    Acuerdo de partes
                                   </SelectItem>
                                   <SelectItem value="Fin de contrato">
-                                    Fin de Contrato
+                                    Fin de contrato
                                   </SelectItem>
                                 </SelectContent>
                               </Select>
@@ -220,7 +220,7 @@ export const columns: ColumnDef<Colum>[] = [
                           name="termination_date"
                           render={({ field }) => (
                             <FormItem className="flex flex-col">
-                              <FormLabel>Fecha de Baja</FormLabel>
+                              <FormLabel>Fecha de baja</FormLabel>
                               <Popover>
                                 <PopoverTrigger asChild>
                                   <FormControl>
