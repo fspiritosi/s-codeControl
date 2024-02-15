@@ -10,12 +10,14 @@ import {
 import Logo1 from '../../public/logo-azul.png'
 import Logo from '../../public/logoLetrasBlancas.png'
 import SideLinks from './SideLinks'
+import { useSidebarOpen } from '@/store/sidebar'
 interface SideBarProps {
   expanded: boolean
 }
 
 export default function SideBar() {
-  const [expanded, setExpanded] = useState(true)
+  // const [expanded, setExpanded] = useState(true)
+  const {expanded,setExpanded} = useSidebarOpen()
 
   useEffect(() => {
     const handleResize = () => {
