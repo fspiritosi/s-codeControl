@@ -115,14 +115,20 @@ export const companySchema = z.object({
   }).max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),
   company_cuit: z
     .string()
-    .refine(
-      value => value.length === 13 && value[2] === '-' && value[11] === '-',
-      {
-        message: 'El CUIT se debe ingresar con el formato xx-xxxxxxxx-x',
-      },
-    ),
+    .refine(value => /^\d{11}$/.test(value), {
+        message: 'El CUIT debe contener 11 números.',
+    }),
+
   description: z.string().max(200),
-  website: z.string().url().max(500, { message: 'La compañia debe tener menos de 500 caracteres.' }), 
+  website: z.string().refine((value) => {
+    if (value === '') return true;
+
+    const urlRegex = /^(?:(?:https?|ftp):\/\/)?(?:www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+([/?].*)?$/i;
+
+    return urlRegex.test(value);
+  }, {
+    message: "La URL proporcionada no es válida."
+  }), 
   contact_email: z.string().email(),
   contact_phone: z.string().refine(value => /^\+?[0-9]{1,25}$/.test(value), {
     message:
@@ -136,12 +142,13 @@ export const companySchema = z.object({
         'Address debe contener solo letras y números y tener hasta 50 caracteres',
     }),
   country: z.string(),
-  province_id: z.number(),
+  province_id: z.any(),
   industry: z.string(),
     
-  city: z.number(),
+  city: z.any(),
   company_logo: z.string().optional(),
-  employees_id: z.string().nullable(),
+  by_defect:z.boolean()
+  //employees_id: z.string().nullable(),
 })
 
 export const accordionSchema = z.object({
