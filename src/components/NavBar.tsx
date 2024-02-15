@@ -54,6 +54,19 @@ export default function NavBar() {
                     />
                   </Link>
                 ))}
+              {!allCompanies?.find(
+                companyItem => companyItem.by_defect === true,
+              ) && (
+                <div>
+                  <Link
+                    href={`/dashboard/company`}
+                    passHref
+                    className="text-white flex items-center gap-2 p-1 bg-slate-500 border-2 rounded-md"
+                  >
+                    Empresa
+                  </Link>
+                </div>
+              )}
             </div>
           </PopoverTrigger>
           <PopoverContent

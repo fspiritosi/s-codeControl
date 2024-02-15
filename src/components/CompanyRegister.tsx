@@ -33,6 +33,7 @@ import * as z from 'zod'
 import { Loader } from './svg/loader'
 import { useRouter } from 'next/navigation'
 import { company, industry_type, companyData } from '@/types/types'
+import { FilePenLine } from 'lucide-react'
 interface CompanyRegisterProps {
   company: company | null
   formEnabled: boolean
@@ -140,8 +141,10 @@ export function CompanyRegister({
         company_cuit: processText(companyData.company_cuit),
         website: processText(companyData.website),
         country: processText(companyData.country),
-        province_id: companyData.province_id,
-        city: companyData.city,
+        province_id: companyData.province_id.id
+          ? companyData.province_id.id
+          : companyData.province_id,
+        city: companyData.city.id ? companyData.city.id : companyData.city,
         contact_email: processText(companyData.contact_email),
         contact_phone: processText(companyData.contact_phone),
         address: processText(companyData.address),
@@ -362,10 +365,14 @@ export function CompanyRegister({
                 <Select
                   disabled={!formEnabledProp}
                   onValueChange={handleProvinceChange}
-                  defaultValue={company?.province_id?.name}
+                  //defaultValue={company?.province_id?.name}
                 >
                   <SelectTrigger className="max-w-[350px]  w-[300px]">
-                    <SelectValue placeholder={field.value} />
+                    <SelectValue
+                      placeholder={
+                        field.value.name ? field.value.name : field.value
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {provincesValues?.map(province => (
@@ -390,10 +397,15 @@ export function CompanyRegister({
                 <Select
                   disabled={!formEnabledProp}
                   onValueChange={handleCityChange}
-                  defaultValue={company?.city?.name}
+                  //defaultValue={company?.city.name}
+                  //defaultValue={field.value}
                 >
                   <SelectTrigger className="max-w-[350px] w-[300px]">
-                    <SelectValue placeholder={field.value} />
+                    <SelectValue
+                      placeholder={
+                        field.value.name ? field.value.name : field.value
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {citiesValues?.map(city => (
