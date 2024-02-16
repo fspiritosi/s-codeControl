@@ -7,7 +7,8 @@ import { DataEquipment } from './data-equipment'
 
 const pruebaArray = [
   {
-    picture: 'imagen1.jpg',
+    picture:
+      'https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/logo/descargagasyoil.png',
     type_of_vehicle: 'tipo1',
     domain: 'dominio1',
     chassis: 'chasis1',
@@ -59,9 +60,12 @@ const pruebaArray = [
 export default function Equipment() {
   //const employees = useLoggedUserStore(state => state.employees)
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-2">
-      Equipos
-      <DataEquipment columns={columns} data={pruebaArray || []} />
-    </div>
+    <main className="bg-white">
+      <h2 className="text-3xl pb-5 pl-10">Todos los Equipos</h2>
+      <p className="pl-10 max-w-1/2">Aquí se verán todos los Equipos</p>
+      <div className="flex flex-col items-center justify-center min-h-screen py-2">
+        <DataEquipment columns={columns} data={pruebaArray || []} />
+      </div>
+    </main>
   )
 }

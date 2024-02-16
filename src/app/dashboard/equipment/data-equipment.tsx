@@ -30,7 +30,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { use, useEffect, useReducer, useRef, useState } from 'react'
-
+import Link from 'next/link'
 import {
   Select,
   SelectContent,
@@ -42,6 +42,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { useRouter } from 'next/navigation'
+import { Url } from 'next/dist/shared/lib/router/router'
 
 interface DataEquipmentProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
@@ -340,10 +341,24 @@ export function DataEquipment<TData, TValue>({
                         key={cell.id}
                         className="text-center whitespace-nowrap"
                       >
-                        {flexRender(
+                        {cell.column.id === 'picture' ? (
+                          <Link href={cell.getValue() as any} target="_blank">
+                            <img
+                              src={cell.getValue() as any}
+                              alt="Foto"
+                              style={{ width: '68px', height: '68px' }}
+                            />
+                          </Link>
+                        ) : (
+                          flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )
+                        )}
+                        {/* {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext(),
-                        )}
+                        )} */}
                       </TableCell>
                     )
                   })}

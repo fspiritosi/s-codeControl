@@ -265,12 +265,12 @@ export const columns: ColumnDef<Colum>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Opciones</DropdownMenuLabel>
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => navigator.clipboard.writeText(equipment.domain)}
             >
               Copiar Dominio
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
             <DropdownMenuItem>
               <Link href={`/dashboard/employee/view/${equipment?.domain}`}>
                 Ver equipo
