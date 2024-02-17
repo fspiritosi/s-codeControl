@@ -15,7 +15,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import { vehicleSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   CaretSortIcon,
@@ -26,7 +25,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../supabase/supabase'
-import { AddBrandModal } from './AddBrandModal'
+import { Modal } from './Modal'
 import {
   FormControl,
   FormDescription,
@@ -36,6 +35,13 @@ import {
   FormMessage,
 } from './ui/form'
 import { Input } from './ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select'
 import { useToast } from './ui/use-toast'
 
 type generic = {
@@ -62,25 +68,120 @@ export const VehiclesForm = () => {
     brand: [],
     models: [],
   })
-  useEffect(() => {
-    const fetchData = async () => {
-      let { data: types_of_vehicles } = await supabase
-        .from('types_of_vehicles')
-        .select('*')
+  const [isRequired, setIsRequired] = useState(false)
 
-      let { data: brand_vehicles } = await supabase
-        .from('brand_vehicles')
-        .select('*')
-
-      setData({
-        models: [],
-        tipe_of_vehicles: types_of_vehicles as generic[],
-        brand: (brand_vehicles || []).map(e => {
-          return { label: e.name as string, id: e.id as string }
-        }),
+  const vehicleSchema = z.object({
+    brand: z.string({
+      required_error: 'La marca es requerida',
+    }),
+    model: z.string({
+      required_error: 'El modelo es requerido',
+    }),
+    year: z
+      .number({ required_error: 'El año es requerido' })
+      .min(1900, {
+        message: 'El año debe ser mayor a 1900',
       })
-    }
+      .max(2023, {
+        message: 'El año debe ser menor a 2023',
+      }),
+    engine: z
+      .string({
+        required_error: 'El motor es requerido',
+      })
+      .min(2, {
+        message: 'El motor debe tener al menos 2 caracteres.',
+      })
+      .max(15, { message: 'El motor debe tener menos de 15 caracteres.' }),
+    type_of_vehicle: z.string({ required_error: 'El tipo es requerido' }),
+    chassis: isRequired
+      ? z
+          .string({
+            required_error: 'El chasis es requerido',
+          })
+          .min(2, {
+            message: 'El chasis debe tener al menos 2 caracteres.',
+          })
+          .max(15, { message: 'El chasis debe tener menos de 15 caracteres.' })
+      : z.string().optional(),
+    domain: isRequired
+      ? z
+          .string({
+            required_error: 'El dominio es requerido',
+          })
+          .min(3, {
+            message: 'El dominio debe tener al menos 3 caracteres.',
+          })
+          .max(7, { message: 'El dominio debe tener menos de 7 caracteres.' })
+      : z.string().optional(),
+    serie: isRequired
+      ? z.string().optional()
+      : z
+          .string({
+            required_error: 'La serie es requerida',
+          })
+          .min(3, {
+            message: 'La serie debe tener al menos 3 caracteres.',
+          })
+          .max(15, { message: 'La serie debe tener menos de 15 caracteres.' }),
+    intern_number: z
+      .string({
+        required_error: 'El número interno es requerido',
+      })
+      .min(2, {
+        message: 'El número interno debe tener al menos 2 caracteres.',
+      })
+      .max(15, {
+        message: 'El número interno debe tener menos de 15 caracteres.',
+      }),
+    picture: z.string({ required_error: 'La imagen es requerida' }).min(10, {
+      message: 'La imagen debe tener al menos 10 caracteres.',
+    }),
+  })
 
+  const fetchData = async () => {
+    let { data: types_of_vehicles } = await supabase
+      .from('types_of_vehicles')
+      .select('*')
+
+    let { data: brand_vehicles } = await supabase
+      .from('brand_vehicles')
+      .select('*')
+
+    setData({
+      models: [],
+      tipe_of_vehicles: types_of_vehicles as generic[],
+      brand: (brand_vehicles || []).map(e => {
+        return { label: e.name as string, id: e.id as string }
+      }),
+    })
+  }
+
+  supabase
+    .channel('custom-all-channel')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'brand_vehicles' },
+      () => {
+        fetchData()
+      },
+    )
+    .subscribe()
+
+  supabase
+    .channel('custom-all-channel')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'model_vehicles' },
+      () => {
+        const brand = form.getValues('brand')
+        const brand_id = data.brand.find(e => e.label === brand)?.id as string
+        fetchModels(brand_id || '')
+      },
+    )
+    .subscribe()
+
+  useEffect(() => {
     fetchData()
   }, [])
 
@@ -91,7 +192,7 @@ export const VehiclesForm = () => {
   const form = useForm<z.infer<typeof vehicleSchema>>({
     resolver: zodResolver(vehicleSchema),
     defaultValues: {
-      year: '',
+      year: 0,
       engine: '',
       chassis: '',
       serie: '',
@@ -107,7 +208,6 @@ export const VehiclesForm = () => {
       .select('*')
       .eq('brand', brand_id)
 
-    console.log(model_vehicles)
     setData({
       ...data,
       models: model_vehicles as generic[],
@@ -117,15 +217,6 @@ export const VehiclesForm = () => {
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof vehicleSchema>) {
     const { type_of_vehicle, brand, model } = values
-
-    console.log({
-      ...values,
-      type_of_vehicle: data.tipe_of_vehicles.find(
-        e => e.name === type_of_vehicle,
-      )?.id,
-      brand: data.brand.find(e => e.label === brand)?.id,
-      model: data.models.find(e => e.name === model)?.id,
-    })
 
     try {
       const { data: insertData } = await supabase
@@ -148,12 +239,12 @@ export const VehiclesForm = () => {
             title: 'Vehículo registrado',
             description: 'El vehículo fue registrado con éxito',
           })
-        } catch (error) {
-          console.log('error', error)
-        }
+        } catch (error) {}
       }
     } catch (error) {
-      console.log('error', error)
+      toast({
+        title: 'Error al registrar el vehículo',
+      })
     }
   }
 
@@ -169,7 +260,7 @@ export const VehiclesForm = () => {
               control={form.control}
               name="type_of_vehicle"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
+                <FormItem className="flex flex-col min-w-[250px]">
                   <FormLabel>Tipo de vehículo</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
@@ -205,6 +296,11 @@ export const VehiclesForm = () => {
                               key={option}
                               onSelect={() => {
                                 form.setValue('type_of_vehicle', option)
+                                if (option === 'Vehículos') {
+                                  setIsRequired(true)
+                                } else {
+                                  setIsRequired(false)
+                                }
                               }}
                             >
                               {option}
@@ -233,7 +329,7 @@ export const VehiclesForm = () => {
               control={form.control}
               name="brand"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
+                <FormItem className="flex flex-col min-w-[250px]">
                   <FormLabel>Marca</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
@@ -262,7 +358,7 @@ export const VehiclesForm = () => {
                           className="h-9"
                         />
                         <CommandEmpty className="py-2 px-2">
-                          <AddBrandModal>
+                          <Modal modal="addBrand" fetchData={fetchData}>
                             <Button
                               variant="outline"
                               role="combobox"
@@ -274,27 +370,19 @@ export const VehiclesForm = () => {
                               Agregar marca
                               <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
-                          </AddBrandModal>
+                          </Modal>
                         </CommandEmpty>
                         <CommandGroup>
                           {vehicleBrands.map(option => (
                             <CommandItem
                               value={option.label}
                               key={option.label}
-                              onSelect={async () => {
+                              onSelect={() => {
                                 form.setValue('brand', option.label)
                                 const brand_id = data.brand.find(
                                   e => e.label === option.label,
                                 )?.id
                                 fetchModels(brand_id as string)
-
-                                // setVehicleModels(() =>
-                                //   models.filter(
-                                //     e =>
-                                //       e.name ===
-                                //       option.label.toLocaleLowerCase(),
-                                //   ),
-                                // )
                               }}
                             >
                               {option.label}
@@ -323,7 +411,7 @@ export const VehiclesForm = () => {
               control={form.control}
               name="model"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
+                <FormItem className="flex flex-col min-w-[250px]">
                   <FormLabel>Modelo</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
@@ -352,7 +440,11 @@ export const VehiclesForm = () => {
                           className="h-9"
                         />
                         <CommandEmpty className="py-2 px-2">
-                          <AddBrandModal>
+                          <Modal
+                            modal="addModel"
+                            fetchModels={fetchModels}
+                            brandOptions={data.brand}
+                          >
                             <Button
                               variant="outline"
                               role="combobox"
@@ -364,7 +456,7 @@ export const VehiclesForm = () => {
                               Agregar modelo
                               <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
-                          </AddBrandModal>
+                          </Modal>
                         </CommandEmpty>
                         <CommandGroup>
                           {vehicleModels.map(option => (
@@ -401,7 +493,7 @@ export const VehiclesForm = () => {
               control={form.control}
               name="year"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
+                <FormItem className="flex flex-col min-w-[250px]">
                   <FormLabel>Año</FormLabel>
                   <Input
                     {...field}
@@ -421,7 +513,7 @@ export const VehiclesForm = () => {
               control={form.control}
               name="engine"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
+                <FormItem className="flex flex-col min-w-[250px]">
                   <FormLabel>Motor del vehículo</FormLabel>
                   <Input
                     {...field}
@@ -443,8 +535,11 @@ export const VehiclesForm = () => {
               control={form.control}
               name="chassis"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Chasis del vehículo</FormLabel>
+                <FormItem className="flex flex-col min-w-[250px]">
+                  <FormLabel>
+                    Chasis del vehículo{' '}
+                    {isRequired ? <span style={{ color: 'red' }}>*</span> : ''}
+                  </FormLabel>
                   <Input
                     {...field}
                     type="text"
@@ -465,17 +560,26 @@ export const VehiclesForm = () => {
               control={form.control}
               name="serie"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Serie del vehículo</FormLabel>
-                  <Input
-                    {...field}
-                    type="text"
-                    className="input w-[250px]"
-                    placeholder="Ingrese la serie"
-                    onChange={e => {
-                      form.setValue('serie', e.target.value)
-                    }}
-                  />
+                <FormItem className="flex flex-col min-w-[250px]">
+                  <FormLabel>
+                    Serie del vehículo{' '}
+                    {isRequired ? '' : <span style={{ color: 'red' }}>*</span>}
+                  </FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione la serie" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="serie 1">serie 1</SelectItem>
+                      <SelectItem value="serie 2">serie 2</SelectItem>
+                      <SelectItem value="serie 3">serie 3</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormDescription>
                     Ingrese la serie del vehículo
                   </FormDescription>
@@ -487,8 +591,11 @@ export const VehiclesForm = () => {
               control={form.control}
               name="domain"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Dominio del vehículo</FormLabel>
+                <FormItem className="flex flex-col min-w-[250px]">
+                  <FormLabel>
+                    Dominio del vehículo{' '}
+                    {isRequired ? <span style={{ color: 'red' }}>*</span> : ''}
+                  </FormLabel>
                   <Input
                     {...field}
                     type="text"
@@ -509,7 +616,7 @@ export const VehiclesForm = () => {
               control={form.control}
               name="intern_number"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
+                <FormItem className="flex flex-col min-w-[250px]">
                   <FormLabel>Número interno del vehículo</FormLabel>
                   <Input
                     {...field}
@@ -531,7 +638,7 @@ export const VehiclesForm = () => {
               control={form.control}
               name="picture"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
+                <FormItem className="flex flex-col min-w-[250px]">
                   <FormLabel>Imagen del vehículo</FormLabel>
                   <Input
                     {...field}
