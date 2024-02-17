@@ -1,13 +1,13 @@
 'use client'
-import React, { useState, useEffect } from 'react'
-import { CardsGrid } from '../../../components/CardsGrid'
-import { useLoggedUserStore } from '@/store/loggedUser'
 import ModalCompany from '@/components/ModalCompany'
-import { company } from '@/types/types'
-import Modal from 'react-modal'
-import { useRouter } from 'next/navigation'
-import { supabase } from '../../../../supabase/supabase'
 import { useCompanyData } from '@/hooks/useCompanyData'
+import { useLoggedUserStore } from '@/store/loggedUser'
+import { company } from '@/types/types'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import Modal from 'react-modal'
+import { supabase } from '../../../../supabase/supabase'
+import { CardsGrid } from '../../../components/CardsGrid'
 
 function setupModalAppElement() {
   if (window.document) {
@@ -21,13 +21,12 @@ export default function allCompany() {
 
   useEffect(() => {
     setupModalAppElement()
-    const subscription = supabase
+    supabase
       .channel('custom-all-channel')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'company' },
         payload => {
-          console.log('Change received!', payload)
           fetchCompanies()
         },
       )
