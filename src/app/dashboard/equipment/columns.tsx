@@ -118,7 +118,7 @@ export const columns: ColumnDef<Colum>[] = [
               termination_date: data.termination_date,
               reason_for_termination: data.reason_for_termination,
             })
-            .eq('domain', domain)
+            .eq('domain', equipment.domain)
             .select()
 
           setShowModal(!showModal)
