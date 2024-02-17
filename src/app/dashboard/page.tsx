@@ -1,11 +1,3 @@
-'use client'
-
-// import { useLoggedUserStore } from '@/store/loggedUser'
-
-// async function getData(): Promise<Employee[]> {
-//   // Fetch data from your API here.
-//   return
-// }
 
 export default function Home() {
   return (

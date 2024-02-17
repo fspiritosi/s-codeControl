@@ -2,10 +2,8 @@
 import { AlertComponent } from '@/components/AlertComponent'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import Link from 'next/link'
-import { useState } from 'react'
 import { columns } from './columns'
 import { DataTable } from './data-table'
-import { useRouter } from 'next/navigation'
 
 const EmployeePage = () => {
   const employees = useLoggedUserStore(state => state.employees)

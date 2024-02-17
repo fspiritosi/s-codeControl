@@ -25,15 +25,11 @@ const getAllFiles = async (legajo:string) => {
     // .eq('company_id', data?.[0].id)
     .eq('file', legajo)
 
-
     if (employee && employee.length > 0) {
-     
       return true
     } else {
-     
       return true
     }
-
 }
 
 
@@ -43,6 +39,7 @@ const getAllFiles = async (legajo:string) => {
 const passwordSchema = z
   .string()
   .min(8, { message: 'La contraseña debe tener al menos 8 caracteres.' })
+  .max(50, { message: 'La contraseña debe tener menos de 50 caracteres.' })
   .regex(/[A-Z]/, {
     message: 'La contraseña debe tener al menos una mayúscula.',
   })
@@ -54,18 +51,18 @@ const passwordSchema = z
     message: 'La contraseña debe tener al menos un carácter especial.',
   })
 
-  export const loginSchema = z.object({
-    email: z.string().email({ message: 'Email invalido' }),
-    password:passwordSchema,
-  })
-  
-  export const employeeSchema = z.object({
-    name: z.string()
-  })
+export const loginSchema = z.object({
+  email: z.string().email({ message: 'Email inválido' }),
+  password: passwordSchema,
+})
+
+export const employeeSchema = z.object({
+  name: z.string().max(25, { message: 'El nombre debe tener menos de 25 caracteres.' })
+})
 
 export const registerSchema = z
   .object({
-    firstName: z
+    firstname: z
       .string()
       .min(2, {
         message: 'El nombre debe tener al menos 2 caracteres.',
@@ -77,7 +74,7 @@ export const registerSchema = z
         message: 'El nombre solo puede contener letras.',
       })
       .trim(),
-    lastName: z
+    lastname: z
       .string()
       .min(2, {
         message: 'El apellido debe tener al menos 2 caracteres.',
@@ -89,7 +86,7 @@ export const registerSchema = z
         message: 'El apellido solo puede contener letras.',
       })
       .trim(),
-    email: z.string().email(),
+    email: z.string().email({ message: 'Email inválido' }),
     password: passwordSchema,
     confirmPassword: passwordSchema,
   })
@@ -99,8 +96,9 @@ export const registerSchema = z
   })
 
 export const recoveryPassSchema = z.object({
-  email: z.string().email({ message: 'Email invalido' }),
+  email: z.string().email({ message: 'Email inválido' }),
 })
+
 export const changePassSchema = z
   .object({
     password: passwordSchema,
@@ -114,7 +112,7 @@ export const changePassSchema = z
 export const companySchema = z.object({
   company_name: z.string().min(2, {
     message: 'El nombre debe tener al menos 2 caracteres.',
-  }),
+  }).max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),
   company_cuit: z
     .string()
     .refine(value => /^\d{11}$/.test(value), {
@@ -157,10 +155,10 @@ export const accordionSchema = z.object({
   full_name: z.string().min(2, {}).optional(),
   lastname: z.string().min(2, {
     message: 'El apellido debe tener al menos 2 caracteres.',
-  }),
+  }).max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),
   firstname: z.string().min(2, {
     message: 'El nombre debe tener al menos 2 caracteres.',
-  }),
+  }).max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),
   nationality: z.string({
     required_error: "La nacionalidad es requerida",
   }),
@@ -193,10 +191,10 @@ export const accordionSchema = z.object({
   picture: z.string().optional(),
   street: z.string().min(2, {
     message: 'La calle debe tener al menos 2 caracteres.',
-  }),
+  }).max(30, { message: 'La compañia debe tener menos de 30 caracteres.' }),
   street_number: z.string().min(1, {
     message: 'El número debe tener al menos 1 caracteres.',
-  }),
+  }).max(7, { message: 'La compañia debe tener menos de 7 caracteres.' }),
   province: z.string({
     required_error: "La provincia es requerida"
   }),
@@ -205,7 +203,7 @@ export const accordionSchema = z.object({
   }),
   postal_code: z.string().min(4, {
     message: 'El código postal debe tener al menos 4 caracteres.',
-  }),
+  }).max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),
   phone: z.string().min(4, {
     message: 'El teléfono debe tener al menos 4 caracteres.',
   }).max(15, {
@@ -236,13 +234,13 @@ export const accordionSchema = z.object({
   }),
   company_position: z.string().min(3, {
     message: 'El cargo debe tener al menos 3 caracteres.',
-  }),
+  }).max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),
   workflow_diagram: z.string({required_error: "El diagrama de flujo es requerido"}),
-  normal_hours: z.string().refine((value) => value.trim().length > 0, {
-    message: 'El archivo no puede estar vacío.',
+  normal_hours: z.string().max(3, { message: 'La compañia debe tener menos de 3 caracteres.' }).refine((value) => value.trim().length > 0, {
+    message: 'Las horas normales son requeridas',
   }),
   type_of_contract: z.string({required_error: "El tipo de contrato es requerido"}),
-  allocated_to: z.array(z.string()),
+  allocated_to: z.array(z.string()).optional(),
   date_of_admission: z.date({
     required_error: "La fecha de ingreso es requerida",
   }).optional(),
