@@ -31,6 +31,7 @@ import { CalendarIcon } from '@radix-ui/react-icons'
 import { PostgrestError } from '@supabase/supabase-js'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { useRouter } from 'next/navigation'
 import { ChangeEvent, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -51,7 +52,6 @@ import {
 import { Input } from './ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 import { useToast } from './ui/use-toast'
-import { useRouter } from 'next/navigation'
 
 type Province = {
   id: number
@@ -386,7 +386,6 @@ export const EmployeeAccordion = () => {
   // const [disabled, setDisabled] = useState<boolean>(true)
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
-
     const file = event.target.files?.[0]
 
     if (file) {
@@ -416,7 +415,9 @@ export const EmployeeAccordion = () => {
       } catch (error: any) {
         toast({
           variant: 'destructive',
-          title: error.message,
+          title: 'Error al subir la imagen',
+          description:
+            'No pudimos registrar la imagen, pero el ususario fue registrado correctamente',
         })
       }
     }
@@ -454,13 +455,10 @@ export const EmployeeAccordion = () => {
                               <FormControl>
                                 <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
                                   <ImageHander
-                                    imageBucket="employee_photos"
+                                    desciption="El archivo debe ser una imagen de 10MB o menos."
                                     labelInput="Subir foto"
                                     handleImageChange={handleImageChange}
                                     base64Image={base64Image} //nueva
-                                    loading={loading} //nueva
-                                    imageFile={imageFile} //nueva
-                                    field={field}
                                     inputStyle={{
                                       width: '400px',
                                       maxWidth: '300px',

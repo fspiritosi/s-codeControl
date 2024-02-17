@@ -29,7 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { use, useEffect, useReducer, useRef, useState } from 'react'
+import { useState } from 'react'
 
 import {
   Select,
@@ -41,6 +41,7 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLoggedUserStore } from '@/store/loggedUser'
+import { useSidebarOpen } from '@/store/sidebar'
 import { useRouter } from 'next/navigation'
 
 interface DataTableProps<TData, TValue> {
@@ -169,7 +170,6 @@ export function DataTable<TData, TValue>({
       option: allOptions.workflow_diagram,
       label: 'Diagrama de flujo',
     },
-    
   }
 
   let table = useReactTable({
@@ -188,9 +188,8 @@ export function DataTable<TData, TValue>({
       columnFilters,
     },
   })
-  const totalWidth = 'calc(100vw - 297px)'
-
-
+  const { expanded } = useSidebarOpen()
+  const totalWidth = `calc(100vw - ${expanded ? '296px' : '167px'})`
 
   const router = useRouter()
 
@@ -198,7 +197,6 @@ export function DataTable<TData, TValue>({
     table.getAllColumns().forEach(column => {
       column.setFilterValue('')
     })
-    router.push('/dashboard/employee')
 
     setSelectValues({
       hierarchical_position: 'Todos',
@@ -221,7 +219,6 @@ export function DataTable<TData, TValue>({
     {},
   )
 
-
   return (
     <div>
       <div className="flex items-center py-4">
@@ -243,7 +240,7 @@ export function DataTable<TData, TValue>({
         >
           Limpiar filtros
         </Button>
-      
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
