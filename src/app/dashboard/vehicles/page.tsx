@@ -5,7 +5,10 @@ const NewEmployeePage = () => {
     <main className="">
       <header className="flex flex-col gap-4 mt-6">
         <h2 className="text-4xl">Agregar equipos</h2>
-        <p>Aquí se muestra una tabla todos los equipos</p>
+        <p>
+          Complete el formulario para agregar un nuevo equipo a la flota de
+          vehículos.
+        </p>
       </header>
       <section className="flex pt-8">
         <VehiclesForm />
