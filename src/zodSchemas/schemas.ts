@@ -259,7 +259,7 @@ export const vehicleSchema = z.object({
     message: 'El año debe ser mayor a 1900',
   }).max(2023, {
     message: 'El año debe ser menor a 2023',
-  }),
+  }).or(z.string()),
   engine: z.string({
     required_error: 'El motor es requerido',
   }).min(2, {
@@ -287,6 +287,9 @@ export const vehicleSchema = z.object({
     message: 'El número interno debe tener al menos 2 caracteres.',
   }).max(15, {
     message: 'El número interno debe tener menos de 15 caracteres.',
+  }),
+  picture: z.string({required_error: 'La imagen es requerida'}).min(10, {
+    message: 'La imagen debe tener al menos 10 caracteres.',
   }),
 
 })
