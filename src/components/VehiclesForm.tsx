@@ -22,9 +22,10 @@ import {
   CheckIcon,
   PlusCircledIcon,
 } from '@radix-ui/react-icons'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { supabase } from '../../supabase/supabase'
 import { AddBrandModal } from './AddBrandModal'
 import {
   FormControl,
@@ -35,41 +36,125 @@ import {
   FormMessage,
 } from './ui/form'
 import { Input } from './ui/input'
+import { useToast } from './ui/use-toast'
+
+type generic = {
+  name: string
+  id: string
+}
+
+type dataType = {
+  tipe_of_vehicles: generic[]
+  brand: {
+    label: string
+    id: string
+  }[]
+  models: {
+    name: string
+    id: string
+  }[]
+}
 
 export const VehiclesForm = () => {
-  const vehicleBrands = [
-    { label: 'Toyota', value: 'toyota' },
-    { label: 'Honda', value: 'honda' },
-    { label: 'Ford', value: 'ford' },
-    { label: 'Chevrolet', value: 'chevrolet' },
-    { label: 'Nissan', value: 'nissan' },
-    { label: 'Volkswagen', value: 'volkswagen' },
-    { label: 'BMW', value: 'bmw' },
-    { label: 'Mercedes-Benz', value: 'mercedes-benz' },
-    { label: 'Audi', value: 'audi' },
-  ]
-  const models = [
-    { label: 'Corolla', value: 'corolla', brand: 'toyota' },
-    { label: 'Civic', value: 'civic', brand: 'honda' },
-    { label: 'Fiesta', value: 'fiesta', brand: 'ford' },
-    { label: 'Aveo', value: 'aveo', brand: 'chevrolet' },
-    { label: 'Sentra', value: 'sentra', brand: 'nissan' },
-    { label: 'Jetta', value: 'jetta', brand: 'volkswagen' },
-    { label: 'Serie 3', value: 'serie-3', brand: 'bmw' },
-    { label: 'Clase C', value: 'clase-c', brand: 'mercedes-benz' },
-    { label: 'A4', value: 'a4', brand: 'audi' },
-  ]
-  const types = ['Vehiclulo de carga', 'Vehículo de pasajeros']
-  const [vehicleModels, setVehicleModels] = useState(models)
+  const { toast } = useToast()
+  const [data, setData] = useState<dataType>({
+    tipe_of_vehicles: [],
+    brand: [],
+    models: [],
+  })
+  useEffect(() => {
+    const fetchData = async () => {
+      let { data: types_of_vehicles } = await supabase
+        .from('types_of_vehicles')
+        .select('*')
+
+      let { data: brand_vehicles } = await supabase
+        .from('brand_vehicles')
+        .select('*')
+
+      setData({
+        models: [],
+        tipe_of_vehicles: types_of_vehicles as generic[],
+        brand: (brand_vehicles || []).map(e => {
+          return { label: e.name as string, id: e.id as string }
+        }),
+      })
+    }
+
+    fetchData()
+  }, [])
+
+  const vehicleBrands = data.brand
+  const types = data.tipe_of_vehicles?.map(e => e.name)
+  const vehicleModels = data.models
+
   const form = useForm<z.infer<typeof vehicleSchema>>({
     resolver: zodResolver(vehicleSchema),
+    defaultValues: {
+      year: '',
+      engine: '',
+      chassis: '',
+      serie: '',
+      domain: '',
+      intern_number: '',
+      picture: '',
+    },
   })
 
+  const fetchModels = async (brand_id: string) => {
+    let { data: model_vehicles } = await supabase
+      .from('model_vehicles')
+      .select('*')
+      .eq('brand', brand_id)
+
+    console.log(model_vehicles)
+    setData({
+      ...data,
+      models: model_vehicles as generic[],
+    })
+  }
+
   // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof vehicleSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values)
+  async function onSubmit(values: z.infer<typeof vehicleSchema>) {
+    const { type_of_vehicle, brand, model } = values
+
+    console.log({
+      ...values,
+      type_of_vehicle: data.tipe_of_vehicles.find(
+        e => e.name === type_of_vehicle,
+      )?.id,
+      brand: data.brand.find(e => e.label === brand)?.id,
+      model: data.models.find(e => e.name === model)?.id,
+    })
+
+    try {
+      const { data: insertData } = await supabase
+        .from('vehicles')
+        .insert([
+          {
+            ...values,
+            type_of_vehicle: data.tipe_of_vehicles.find(
+              e => e.name === type_of_vehicle,
+            )?.id,
+            brand: data.brand.find(e => e.label === brand)?.id,
+            model: data.models.find(e => e.name === model)?.id,
+          },
+        ])
+        .select()
+
+      if (insertData) {
+        try {
+          toast({
+            title: 'Vehículo registrado',
+            description: 'El vehículo fue registrado con éxito',
+          })
+        } catch (error) {
+          console.log('error', error)
+        }
+      }
+    } catch (error) {
+      console.log('error', error)
+    }
   }
 
   return (
@@ -110,20 +195,11 @@ export const VehiclesForm = () => {
                           placeholder="Buscar tipo de vehículo..."
                           className="h-9"
                         />
-                        <CommandEmpty className="py-2 px-2">
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className={cn(
-                              'w-full justify-between',
-                              !field.value && 'text-muted-foreground',
-                            )}
-                          >
-                            <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
+                        <CommandEmpty>
+                          No se encontro ningun resultado
                         </CommandEmpty>
                         <CommandGroup>
-                          {types.map(option => (
+                          {types?.map(option => (
                             <CommandItem
                               value={option}
                               key={option}
@@ -172,7 +248,7 @@ export const VehiclesForm = () => {
                         >
                           {field.value
                             ? vehicleBrands.find(
-                                option => option.value === field.value,
+                                option => option.label === field.value,
                               )?.label
                             : 'Seleccionar marca'}
                           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -204,19 +280,28 @@ export const VehiclesForm = () => {
                           {vehicleBrands.map(option => (
                             <CommandItem
                               value={option.label}
-                              key={option.value}
-                              onSelect={() => {
-                                form.setValue('brand', option.value)
-                                setVehicleModels(() =>
-                                  models.filter(e => e.brand === option.value),
-                                )
+                              key={option.label}
+                              onSelect={async () => {
+                                form.setValue('brand', option.label)
+                                const brand_id = data.brand.find(
+                                  e => e.label === option.label,
+                                )?.id
+                                fetchModels(brand_id as string)
+
+                                // setVehicleModels(() =>
+                                //   models.filter(
+                                //     e =>
+                                //       e.name ===
+                                //       option.label.toLocaleLowerCase(),
+                                //   ),
+                                // )
                               }}
                             >
                               {option.label}
                               <CheckIcon
                                 className={cn(
                                   'ml-auto h-4 w-4',
-                                  option.value === field.value
+                                  option.label === field.value
                                     ? 'opacity-100'
                                     : 'opacity-0',
                                 )}
@@ -253,8 +338,8 @@ export const VehiclesForm = () => {
                         >
                           {field.value
                             ? vehicleModels.find(
-                                option => option.value === field.value,
-                              )?.label
+                                option => option.name === field.value,
+                              )?.name
                             : 'Seleccionar modelo'}
                           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
@@ -267,32 +352,34 @@ export const VehiclesForm = () => {
                           className="h-9"
                         />
                         <CommandEmpty className="py-2 px-2">
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className={cn(
-                              'w-full justify-between',
-                              !field.value && 'text-muted-foreground',
-                            )}
-                          >
-                            Agregar modelo
-                            <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
+                          <AddBrandModal>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                'w-full justify-between',
+                                !field.value && 'text-muted-foreground',
+                              )}
+                            >
+                              Agregar modelo
+                              <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </AddBrandModal>
                         </CommandEmpty>
                         <CommandGroup>
                           {vehicleModels.map(option => (
                             <CommandItem
-                              value={option.label}
-                              key={option.value}
+                              value={option.name}
+                              key={option.name}
                               onSelect={() => {
-                                form.setValue('model', option.value)
+                                form.setValue('model', option.name)
                               }}
                             >
-                              {option.label}
+                              {option.name}
                               <CheckIcon
                                 className={cn(
                                   'ml-auto h-4 w-4',
-                                  option.value === field.value
+                                  option.name === field.value
                                     ? 'opacity-100'
                                     : 'opacity-0',
                                 )}
@@ -435,6 +522,28 @@ export const VehiclesForm = () => {
                   />
                   <FormDescription>
                     Ingrese el número interno del vehículo
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="picture"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Imagen del vehículo</FormLabel>
+                  <Input
+                    {...field}
+                    type="text"
+                    className="input w-[250px]"
+                    placeholder="Ingrese la URL de la imagen"
+                    onChange={e => {
+                      form.setValue('picture', e.target.value)
+                    }}
+                  />
+                  <FormDescription>
+                    Ingrese la URL de la imagen del vehículo
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
