@@ -49,8 +49,7 @@ export default function NavBar() {
                   >
                     <img
                       src={companyItem.company_logo}
-                      width="90"
-                      height="50"
+                      style={{ width: '78px', height: '40px' }}
                     />
                   </Link>
                 ))}
@@ -89,11 +88,12 @@ export default function NavBar() {
                   className="text-white gap-1 flex justify-center items-center w-20 h-20"
                 >
                   <img
-                    className="text-white items-center flex gap-1 bg-slate-500 border-2 rounded-md w-60 h-20"
+                    className="hover:cursor-pointer shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-md w-60 h-20"
                     src={companyItems.company_logo}
-                    width="60p"
-                    height="20p"
+                    // width="60p"
+                    // height="20p"
                     alt="Logo de la empresa"
+                    style={{ width: '78px', height: '40px' }}
                   />
                 </div>
               ))}

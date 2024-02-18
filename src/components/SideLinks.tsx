@@ -31,8 +31,8 @@ const links = [
     href: '/dashboard/vehicles',
     icon: <MdOutlinePhoneIphone size={sizeIcons} />,
     submenu: [
-      { name: 'Submenu Item 1', href: '/dashboard/submenu1' },
-      { name: 'Submenu Item 2', href: '/dashboard/submenu2' },
+      { name: 'Vehículos', href: '/dashboard/equipment' },
+      { name: 'Otros', href: '/dashboard/equipment' },
     ],
   },
   {
@@ -66,7 +66,7 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
           <Link
             href={link.href}
             className={`flex h-[48px] grow items-center justify-center gap-1 rounded-md p-3 text-black font-medium md:flex-none md:justify-start md:p-2 md:px-3 ${
-              pathname === link.href
+              pathname === link.href || pathname === link.submenu?.[0]?.href
                 ? 'bg-white text-black'
                 : 'bg-slate-800 text-white hover:bg-blue-500 hover:shadow-[0px_0px_05px_05px_rgb(255,255,255,0.40)] hover:text-white'
             }`}
