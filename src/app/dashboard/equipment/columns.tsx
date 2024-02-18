@@ -56,6 +56,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../../../supabase/supabase'
+import { useLoggedUserStore } from '@/store/loggedUser'
 
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -272,7 +273,7 @@ export const columns: ColumnDef<Colum>[] = [
               Copiar Dominio
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Link href={`/dashboard/employee/view/${equipment?.domain}`}>
+              <Link href={`/dashboard/vehicles/view/${equipment?.domain}`}>
                 Ver equipo
               </Link>
             </DropdownMenuItem>

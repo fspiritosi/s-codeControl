@@ -40,21 +40,27 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useLoggedUserStore } from '@/store/loggedUser'
 import { useRouter } from 'next/navigation'
 import { Url } from 'next/dist/shared/lib/router/router'
+import { useLoggedUserStore } from '@/store/loggedUser'
 
 interface DataEquipmentProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
   data: TData[]
+  allCompany: any[]
 }
 
 export function DataEquipment<TData, TValue>({
   columns,
   data,
+  allCompany,
 }: DataEquipmentProps<TData, TValue>) {
+  //const allCompany = useLoggedUserStore(state => state.allCompanies)
+
+  const activeCompanies = allCompany?.filter(company => company.is_active)
+  console.log(activeCompanies)
   const [sorting, setSorting] = useState<SortingState>([])
-  const defaultVisibleColumns = ['domain', 'year', 'brand', 'model']
+  const defaultVisibleColumns = ['domain', 'year', 'brand', 'model', 'foto']
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     columns.reduce((acc: any, column: any) => {
       acc[column.accessorKey] = defaultVisibleColumns.includes(
