@@ -278,7 +278,7 @@ export const columns: ColumnDef<Colum>[] = [
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Link href={`/dashboard/employee/edit/${equipment?.domain}`}>
+              <Link href={`/dashboard/vehicles/edit/${equipment?.domain}`}>
                 Editar equipo
               </Link>
             </DropdownMenuItem>

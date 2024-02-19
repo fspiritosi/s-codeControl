@@ -24,8 +24,8 @@ import {
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { supabase } from '../../supabase/supabase'
-import { Modal } from './Modal'
+import { supabase } from '../../../../../../supabase/supabase'
+import { Modal } from '../../../../../components/Modal'
 import {
   FormControl,
   FormDescription,
@@ -33,17 +33,30 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from './ui/form'
-import { Input } from './ui/input'
+} from '../../../../../components/ui/form'
+import { Input } from '../../../../../components/ui/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select'
-import { useToast } from './ui/use-toast'
-import { useLoggedUserStore } from '@/store/loggedUser'
+} from '../../../../../components/ui/select'
+import { useToast } from '../../../../../components/ui/use-toast'
+import { ExecOptionsWithStringEncoding } from 'child_process'
+import { isUndefined } from 'util'
+type VehicleType = {
+  year: number
+  engine: string
+  chassis: string
+  serie: string
+  domain: string
+  intern_number: string
+  picture: string
+  type_of_vehicle: number
+  brand: string
+  model: string
+}
 type generic = {
   name: string
   id: string
@@ -61,7 +74,11 @@ type dataType = {
   }[]
 }
 
-export const VehiclesForm = () => {
+export default function page({ params }: { params: any }) {
+  const { domain } = params
+  //const employees = useLoggedUserStore(state => state.employees)
+
+  const [vehicle, setVehicle] = useState<VehicleType | null>(null)
   const { toast } = useToast()
   const [data, setData] = useState<dataType>({
     tipe_of_vehicles: [],
@@ -70,13 +87,40 @@ export const VehiclesForm = () => {
   })
   const [isRequired, setIsRequired] = useState(false)
 
+  useEffect(() => {
+    const fetchVehicleData = async () => {
+      try {
+        // Fetch vehicle data by domain from your API or database
+        const { data: vehicleData, error } = await supabase
+          .from('vehicles')
+          .select('*')
+          .eq('domain', domain)
+          .single() // Assuming domain is unique
+
+        if (error) {
+          console.error('Error al obtener los datos del vehículo:', error)
+        } else {
+          setVehicle(vehicleData) // Set vehicle data to state
+        }
+      } catch (error) {
+        console.error('Error al obtener los datos del vehículo:', error)
+      }
+    }
+
+    fetchVehicleData() // Fetch vehicle data when the component mounts
+  }, [domain])
+
   const vehicleSchema = z.object({
-    brand: z.string({
-      required_error: 'La marca es requerida',
-    }),
-    model: z.string({
-      required_error: 'El modelo es requerido',
-    }),
+    brand: z
+      .string({
+        required_error: 'La marca es requerida',
+      })
+      .optional(), // Marca opcional
+    model: z
+      .string({
+        required_error: 'El modelo es requerido',
+      })
+      .optional(), // Modelo opcional
     year: z
       .number({ required_error: 'El año es requerido' })
       .min(1900, {
@@ -84,59 +128,43 @@ export const VehiclesForm = () => {
       })
       .max(2023, {
         message: 'El año debe ser menor a 2023',
-      }),
+      })
+      .optional(), // Año opcional
     engine: z
-      .string({
-        required_error: 'El motor es requerido',
-      })
-      .min(2, {
-        message: 'El motor debe tener al menos 2 caracteres.',
-      })
-      .max(15, { message: 'El motor debe tener menos de 15 caracteres.' }),
-    type_of_vehicle: z.string({ required_error: 'El tipo es requerido' }),
-    chassis: isRequired
-      ? z
-          .string({
-            required_error: 'El chasis es requerido',
-          })
-          .min(2, {
-            message: 'El chasis debe tener al menos 2 caracteres.',
-          })
-          .max(15, { message: 'El chasis debe tener menos de 15 caracteres.' })
-      : z.string().optional(),
-    domain: isRequired
-      ? z
-          .string({
-            required_error: 'El dominio es requerido',
-          })
-          .min(3, {
-            message: 'El dominio debe tener al menos 3 caracteres.',
-          })
-          .max(7, { message: 'El dominio debe tener menos de 7 caracteres.' })
-      : z.string().optional(),
-    serie: isRequired
-      ? z.string().optional()
-      : z
-          .string({
-            required_error: 'La serie es requerida',
-          })
-          .min(3, {
-            message: 'La serie debe tener al menos 3 caracteres.',
-          })
-          .max(15, { message: 'La serie debe tener menos de 15 caracteres.' }),
+      .string()
+      //   .string({
+      //     required_error: 'El motor es requerido',
+      //   })
+      //   .min(2, {
+      //     message: 'El motor debe tener al menos 2 caracteres.',
+      //   })
+      //   .max(15, { message: 'El motor debe tener menos de 15 caracteres.' }),
+      .optional(), // Motor opcional
+    type_of_vehicle: z
+      .string({ required_error: 'El tipo es requerido' })
+      .optional(), // Tipo de vehículo opcional
+    chassis: z.string().optional(), // Chasis opcional
+    domain: z.string().optional(), // Dominio opcional
+    serie: z.string().optional(), // Serie opcional
     intern_number: z
-      .string({
-        required_error: 'El número interno es requerido',
-      })
-      .min(2, {
-        message: 'El número interno debe tener al menos 2 caracteres.',
-      })
-      .max(15, {
-        message: 'El número interno debe tener menos de 15 caracteres.',
-      }),
-    picture: z.string({ required_error: 'La imagen es requerida' }).min(10, {
-      message: 'La imagen debe tener al menos 10 caracteres.',
-    }),
+      .string()
+      //   .string({
+      //     required_error: 'El número interno es requerido',
+      //   })
+      //   .min(2, {
+      //     message: 'El número interno debe tener al menos 2 caracteres.',
+      //   })
+      //   .max(15, {
+      //     message: 'El número interno debe tener menos de 15 caracteres.',
+      //   })
+      .optional(), // Número interno opcional
+    picture: z
+      .string()
+      //   .string({ required_error: 'La imagen es requerida' })
+      //   .min(10, {
+      //     message: 'La imagen debe tener al menos 10 caracteres.',
+      //   })
+      .optional(), // Imagen opcional
   })
 
   const fetchData = async () => {
@@ -189,16 +217,28 @@ export const VehiclesForm = () => {
   const types = data.tipe_of_vehicles?.map(e => e.name)
   const vehicleModels = data.models
 
+  //   const form = useForm<z.infer<typeof vehicleSchema>>({
+  //     resolver: zodResolver(vehicleSchema),
+  //     defaultValues: {
+  //       year: undefined,
+  //       engine: '',
+  //       chassis: '',
+  //       serie: '',
+  //       domain: '',
+  //       intern_number: '',
+  //       picture: '',
+  //     },
+  //   })
   const form = useForm<z.infer<typeof vehicleSchema>>({
     resolver: zodResolver(vehicleSchema),
     defaultValues: {
-      year: 0,
-      engine: '',
-      chassis: '',
-      serie: '',
-      domain: '',
-      intern_number: '',
-      picture: '',
+      year: vehicle?.year || undefined,
+      engine: vehicle?.engine || '',
+      chassis: vehicle?.chassis || '',
+      serie: vehicle?.serie || '',
+      domain: vehicle?.domain || '',
+      intern_number: vehicle?.intern_number || '',
+      picture: vehicle?.picture || '',
     },
   })
 
@@ -213,39 +253,53 @@ export const VehiclesForm = () => {
       models: model_vehicles as generic[],
     })
   }
-  const actualCompany = useLoggedUserStore(state => state.actualCompany)
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof vehicleSchema>) {
-    const { type_of_vehicle, brand, model } = values
-    const companyId = actualCompany?.id
+    const {
+      type_of_vehicle,
+      brand,
+      model,
+      year,
+      engine,
+      chassis,
+      serie,
+      domain,
+      intern_number,
+      picture,
+    } = values
+
     try {
-      const { data: insertData } = await supabase
+      const { data: updateData } = await supabase
         .from('vehicles')
-        .insert([
-          {
-            ...values,
-            type_of_vehicle: data.tipe_of_vehicles.find(
-              e => e.name === type_of_vehicle,
-            )?.id,
-            brand: data.brand.find(e => e.label === brand)?.id,
-            model: data.models.find(e => e.name === model)?.id,
-            company_id: actualCompany?.id,
-          },
-        ])
+        .update({
+          type_of_vehicle: data.tipe_of_vehicles.find(
+            e => e.name === type_of_vehicle,
+          )?.id,
+          brand: data.brand.find(e => e.label === brand)?.id,
+          model: data.models.find(e => e.name === model)?.id,
+          year: values.year,
+          engine: values.engine,
+          chassis: values.chassis,
+          serie: values.serie,
+          domain: values.domain,
+          intern_number: values.intern_number,
+          picture: values.picture,
+        })
+        .eq('domain', vehicle?.domain)
         .select()
 
-      if (insertData) {
+      if (updateData) {
         try {
           toast({
-            title: 'Vehículo registrado',
-            description: 'El vehículo fue registrado con éxito',
+            title: 'Vehículo editado',
+            description: 'El vehículo fue editado con éxito',
           })
         } catch (error) {}
       }
     } catch (error) {
       toast({
-        title: 'Error al registrar el vehículo',
+        title: 'Error al editar el vehículo',
       })
     }
   }
@@ -268,8 +322,10 @@ export const VehiclesForm = () => {
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
+                          disabled={false}
                           variant="outline"
                           role="combobox"
+                          value={vehicle?.type_of_vehicle}
                           className={cn(
                             'w-[250px] justify-between',
                             !field.value && 'text-muted-foreground',
@@ -285,6 +341,7 @@ export const VehiclesForm = () => {
                     <PopoverContent className="w-[250px] p-0">
                       <Command>
                         <CommandInput
+                          disabled={false}
                           placeholder="Buscar tipo de vehículo..."
                           className="h-9"
                         />
@@ -337,16 +394,18 @@ export const VehiclesForm = () => {
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
+                          disabled={false}
                           variant="outline"
                           role="combobox"
+                          value={vehicle?.brand}
                           className={cn(
                             'w-[250px] justify-between',
                             !field.value && 'text-muted-foreground',
                           )}
                         >
-                          {field.value
+                          {vehicle?.brand
                             ? vehicleBrands.find(
-                                option => option.label === field.value,
+                                option => option.id === vehicle?.brand,
                               )?.label
                             : 'Seleccionar marca'}
                           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -356,12 +415,14 @@ export const VehiclesForm = () => {
                     <PopoverContent className="w-[250px] p-0">
                       <Command>
                         <CommandInput
+                          disabled={false}
                           placeholder="Buscar marca..."
                           className="h-9"
                         />
                         <CommandEmpty className="py-2 px-2">
                           <Modal modal="addBrand" fetchData={fetchData}>
                             <Button
+                              disabled={false}
                               variant="outline"
                               role="combobox"
                               className={cn(
@@ -419,6 +480,7 @@ export const VehiclesForm = () => {
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
+                          disabled={false}
                           variant="outline"
                           role="combobox"
                           className={cn(
@@ -426,10 +488,10 @@ export const VehiclesForm = () => {
                             !field.value && 'text-muted-foreground',
                           )}
                         >
-                          {field.value
+                          {vehicle?.model
                             ? vehicleModels.find(
-                                option => option.name === field.value,
-                              )?.name
+                                option => option.id === vehicle?.model,
+                              )?.name || vehicle?.model
                             : 'Seleccionar modelo'}
                           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
@@ -438,6 +500,7 @@ export const VehiclesForm = () => {
                     <PopoverContent className="w-[250px] p-0">
                       <Command>
                         <CommandInput
+                          disabled={false}
                           placeholder="Buscar modelo..."
                           className="h-9"
                         />
@@ -448,6 +511,7 @@ export const VehiclesForm = () => {
                             brandOptions={data.brand}
                           >
                             <Button
+                              disabled={false}
                               variant="outline"
                               role="combobox"
                               className={cn(
@@ -502,6 +566,11 @@ export const VehiclesForm = () => {
                     type="number"
                     className="input w-[250px]"
                     placeholder="Año"
+                    value={
+                      field.value !== undefined
+                        ? field.value
+                        : vehicle?.year || ''
+                    }
                     onChange={e => {
                       form.setValue('year', Number(e.target.value))
                     }}
@@ -519,9 +588,11 @@ export const VehiclesForm = () => {
                   <FormLabel>Motor del vehículo</FormLabel>
                   <Input
                     {...field}
+                    disabled={false}
                     type="text"
                     className="input w-[250px]"
                     placeholder="Ingrese el tipo de motor"
+                    value={vehicle?.engine}
                     onChange={e => {
                       form.setValue('engine', e.target.value)
                     }}
@@ -544,9 +615,13 @@ export const VehiclesForm = () => {
                   </FormLabel>
                   <Input
                     {...field}
+                    disabled={false}
                     type="text"
                     className="input w-[250px]"
                     placeholder="Ingrese el chasis"
+                    value={
+                      field.value !== '' ? field.value : vehicle?.chassis || ''
+                    }
                     onChange={e => {
                       form.setValue('chassis', e.target.value)
                     }}
@@ -568,12 +643,13 @@ export const VehiclesForm = () => {
                     {isRequired ? '' : <span style={{ color: 'red' }}>*</span>}
                   </FormLabel>
                   <Select
+                    disabled={false}
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    defaultValue={vehicle?.serie}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccione la serie" />
+                        <SelectValue placeholder={vehicle?.serie} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -600,9 +676,13 @@ export const VehiclesForm = () => {
                   </FormLabel>
                   <Input
                     {...field}
+                    disabled={false}
                     type="text"
                     className="input w-[250px]"
                     placeholder="Ingrese el dominio"
+                    value={
+                      field.value !== '' ? field.value : vehicle?.domain || ''
+                    }
                     onChange={e => {
                       form.setValue('domain', e.target.value)
                     }}
@@ -622,9 +702,15 @@ export const VehiclesForm = () => {
                   <FormLabel>Número interno del vehículo</FormLabel>
                   <Input
                     {...field}
+                    disabled={false}
                     type="text"
                     className="input w-[250px]"
                     placeholder="Ingrese el número interno"
+                    value={
+                      field.value !== ''
+                        ? field.value
+                        : vehicle?.intern_number || ''
+                    }
                     onChange={e => {
                       form.setValue('intern_number', e.target.value)
                     }}
@@ -644,9 +730,13 @@ export const VehiclesForm = () => {
                   <FormLabel>Imagen del vehículo</FormLabel>
                   <Input
                     {...field}
+                    disabled={false}
                     type="text"
                     className="input w-[250px]"
                     placeholder="Ingrese la URL de la imagen"
+                    value={
+                      field.value !== '' ? field.value : vehicle?.picture || ''
+                    }
                     onChange={e => {
                       form.setValue('picture', e.target.value)
                     }}
@@ -659,7 +749,9 @@ export const VehiclesForm = () => {
               )}
             />
           </div>
-          <Button type="submit">Registrar vehículo</Button>
+          <Button disabled={false} type="submit">
+            Editar vehículo
+          </Button>
         </form>
       </Form>
     </>

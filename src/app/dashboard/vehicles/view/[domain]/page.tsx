@@ -305,6 +305,7 @@ export default function page({ params }: { params: any }) {
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
+                          disabled={true}
                           variant="outline"
                           role="combobox"
                           className={cn(
@@ -322,6 +323,7 @@ export default function page({ params }: { params: any }) {
                     <PopoverContent className="w-[250px] p-0">
                       <Command>
                         <CommandInput
+                          disabled={true}
                           placeholder="Buscar tipo de vehículo..."
                           className="h-9"
                         />
@@ -374,6 +376,7 @@ export default function page({ params }: { params: any }) {
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
+                          disabled={true}
                           variant="outline"
                           role="combobox"
                           className={cn(
@@ -393,12 +396,14 @@ export default function page({ params }: { params: any }) {
                     <PopoverContent className="w-[250px] p-0">
                       <Command>
                         <CommandInput
+                          disabled={true}
                           placeholder="Buscar marca..."
                           className="h-9"
                         />
                         <CommandEmpty className="py-2 px-2">
                           <Modal modal="addBrand" fetchData={fetchData}>
                             <Button
+                              disabled={true}
                               variant="outline"
                               role="combobox"
                               className={cn(
@@ -456,6 +461,7 @@ export default function page({ params }: { params: any }) {
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
+                          disabled={true}
                           variant="outline"
                           role="combobox"
                           className={cn(
@@ -475,6 +481,7 @@ export default function page({ params }: { params: any }) {
                     <PopoverContent className="w-[250px] p-0">
                       <Command>
                         <CommandInput
+                          disabled={true}
                           placeholder="Buscar modelo..."
                           className="h-9"
                         />
@@ -485,6 +492,7 @@ export default function page({ params }: { params: any }) {
                             brandOptions={data.brand}
                           >
                             <Button
+                              disabled={true}
                               variant="outline"
                               role="combobox"
                               className={cn(
@@ -536,6 +544,7 @@ export default function page({ params }: { params: any }) {
                   <FormLabel>Año</FormLabel>
                   <Input
                     {...field}
+                    disabled={true}
                     type="number"
                     className="input w-[250px]"
                     placeholder="Año"
@@ -557,6 +566,7 @@ export default function page({ params }: { params: any }) {
                   <FormLabel>Motor del vehículo</FormLabel>
                   <Input
                     {...field}
+                    disabled={true}
                     type="text"
                     className="input w-[250px]"
                     placeholder="Ingrese el tipo de motor"
@@ -583,6 +593,7 @@ export default function page({ params }: { params: any }) {
                   </FormLabel>
                   <Input
                     {...field}
+                    disabled={true}
                     type="text"
                     className="input w-[250px]"
                     placeholder="Ingrese el chasis"
@@ -608,6 +619,7 @@ export default function page({ params }: { params: any }) {
                     {isRequired ? '' : <span style={{ color: 'red' }}>*</span>}
                   </FormLabel>
                   <Select
+                    disabled={true}
                     onValueChange={field.onChange}
                     defaultValue={vehicle?.serie}
                   >
@@ -640,6 +652,7 @@ export default function page({ params }: { params: any }) {
                   </FormLabel>
                   <Input
                     {...field}
+                    disabled={true}
                     type="text"
                     className="input w-[250px]"
                     placeholder="Ingrese el dominio"
@@ -663,6 +676,7 @@ export default function page({ params }: { params: any }) {
                   <FormLabel>Número interno del vehículo</FormLabel>
                   <Input
                     {...field}
+                    disabled={true}
                     type="text"
                     className="input w-[250px]"
                     placeholder="Ingrese el número interno"
@@ -686,6 +700,7 @@ export default function page({ params }: { params: any }) {
                   <FormLabel>Imagen del vehículo</FormLabel>
                   <Input
                     {...field}
+                    disabled={true}
                     type="text"
                     className="input w-[250px]"
                     placeholder="Ingrese la URL de la imagen"
@@ -702,7 +717,9 @@ export default function page({ params }: { params: any }) {
               )}
             />
           </div>
-          <Button type="submit">Registrar vehículo</Button>
+          <Button disabled={true} type="submit">
+            Registrar vehículo
+          </Button>
         </form>
       </Form>
     </>

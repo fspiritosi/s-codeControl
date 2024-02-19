@@ -62,13 +62,14 @@ const pruebaArray = [
 export default function Equipment() {
   const [vehiclesData, setVehiclesData] = useState<unknown[]>([])
   const allCompany = useLoggedUserStore(state => state.allCompanies)
-
+  const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const fetchVehicles = async () => {
     try {
       const { data: vehicles, error } = await supabase
         .from('vehicles')
         .select('*')
         .eq('is_active', true)
+        .eq('company_id', actualCompany?.id)
       if (error) {
         console.error('Error al obtener los vehículos:', error)
       } else {
