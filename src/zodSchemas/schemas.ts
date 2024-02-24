@@ -153,16 +153,16 @@ export const companySchema = z.object({
 
 export const accordionSchema = z.object({
   full_name: z.string().min(2, {}).optional(),
-  lastname: z.string().min(2, {
+  lastname: z.string({required_error:'El apellido es requerido'}).min(2, {
     message: 'El apellido debe tener al menos 2 caracteres.',
   }).max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),
-  firstname: z.string().min(2, {
+  firstname: z.string({required_error:'El nombre es requerido'}).min(2, {
     message: 'El nombre debe tener al menos 2 caracteres.',
   }).max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),
   nationality: z.string({
     required_error: "La nacionalidad es requerida",
   }),
-  cuil: z.string().refine(
+  cuil: z.string({required_error:'El cuil es requerido'}).refine(
     value => value.length === 13 && value[2] === '-' && value[11] === '-',
     {
       message: 'El CUIT se debe ingresar con el formato xx-xxxxxxxx-x',
@@ -171,7 +171,7 @@ export const accordionSchema = z.object({
   document_type: z.string({
     required_error: "El tipo de documento es requerido"
   }),
-  document_number: z.string().min(7, {
+  document_number: z.string({required_error:'El numero de documento es requerido'}).min(7, {
     message: 'El documento debe tener al menos 7 caracteres.',
   }).max(10, {
     message: 'El documento debe tener menos de 11 caracteres.',
@@ -189,10 +189,10 @@ export const accordionSchema = z.object({
     required_error: "El nivel de educación es requerido"
   }),
   picture: z.string().optional(),
-  street: z.string().min(2, {
+  street: z.string({required_error:'la calle es requerida'}).min(2, {
     message: 'La calle debe tener al menos 2 caracteres.',
   }).max(30, { message: 'La compañia debe tener menos de 30 caracteres.' }),
-  street_number: z.string().min(1, {
+  street_number: z.string({required_error:'la altura es requerida'}).min(1, {
     message: 'El número debe tener al menos 1 caracteres.',
   }).max(7, { message: 'La compañia debe tener menos de 7 caracteres.' }),
   province: z.string({
@@ -201,10 +201,10 @@ export const accordionSchema = z.object({
   city: z.string({
     required_error: "La ciudad es requerida"
   }),
-  postal_code: z.string().min(4, {
+  postal_code: z.string({required_error:'El codigo postal es requerido'}).min(4, {
     message: 'El código postal debe tener al menos 4 caracteres.',
   }).max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),
-  phone: z.string().min(4, {
+  phone: z.string({required_error:'El numero de teléfono es requerido'}).min(4, {
     message: 'El teléfono debe tener al menos 4 caracteres.',
   }).max(15, {
     message: 'El teléfono debe tener menos de 15 caracteres.',
@@ -213,7 +213,7 @@ export const accordionSchema = z.object({
     message: 'Email inválido'
   }).optional(),
   file: z.string({
-    description: 'El número de legajo es obligatorio'
+   required_error: "El legajo es requerido"
   })
     .regex(/^[0-9]+$/, {
       message: 'No se pueden ingresar valores negativos ni símbolos'
@@ -230,18 +230,18 @@ export const accordionSchema = z.object({
       message: "El legajo ya existe"
     }),
   hierarchical_position: z.string({
-    required_error: "El cargo jerárquico es requerido"
+    required_error: "El nivel jerárquico es requerido"
   }),
-  company_position: z.string().min(3, {
+  company_position: z.string({
+   required_error: "El cargo es requerido"
+  }).min(3, {
     message: 'El cargo debe tener al menos 3 caracteres.',
   }).max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),
   workflow_diagram: z.string({required_error: "El diagrama de flujo es requerido"}),
-  normal_hours: z.string().max(3, { message: 'La compañia debe tener menos de 3 caracteres.' }).refine((value) => value.trim().length > 0, {
-    message: 'Las horas normales son requeridas',
-  }),
+  normal_hours: z.string({required_error:'Las horas normales son requeridas'}).max(3, { message: 'La compañia debe tener menos de 3 caracteres.' }),
   type_of_contract: z.string({required_error: "El tipo de contrato es requerido"}),
   allocated_to: z.array(z.string()).optional(),
   date_of_admission: z.date({
     required_error: "La fecha de ingreso es requerida",
-  }).optional(),
+  }).or(z.string()),
 })

@@ -339,7 +339,10 @@ export const EmployeeAccordion = () => {
     const fileExtension = imageFile?.name.split('.').pop()
     const finalValues = {
       ...values,
-      date_of_admission: values.date_of_admission?.toISOString(),
+      date_of_admission:
+        values.date_of_admission instanceof Date
+          ? values.date_of_admission.toISOString()
+          : values.date_of_admission,
       province: String(
         provincesOptions.find(e => e.name.trim() === values.province)?.id,
       ),
@@ -380,7 +383,7 @@ export const EmployeeAccordion = () => {
     }
   }
 
-  const { uploadImage, loading } = useImageUpload()
+  const { uploadImage } = useImageUpload()
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [base64Image, setBase64Image] = useState<string>('')
   // const [disabled, setDisabled] = useState<boolean>(true)
@@ -455,7 +458,6 @@ export const EmployeeAccordion = () => {
                               <FormControl>
                                 <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
                                   <ImageHander
-                                    desciption="El archivo debe ser una imagen de 10MB o menos."
                                     labelInput="Subir foto"
                                     handleImageChange={handleImageChange}
                                     base64Image={base64Image} //nueva
@@ -485,7 +487,7 @@ export const EmployeeAccordion = () => {
                           name={data.name as names}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{data.label}</FormLabel>
+                              <FormLabel>{data.label} </FormLabel>
 
                               <SelectWithData
                                 placeholder={data.placeholder}

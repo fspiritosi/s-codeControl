@@ -49,6 +49,7 @@ export default function NavBar() {
                   >
                     <img
                       src={companyItem.company_logo}
+                      alt="Company Logo"
                       style={{ width: '78px', height: '40px' }}
                     />
                   </Link>

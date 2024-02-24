@@ -125,6 +125,8 @@ export type companyData = {
         is_active: boolean;
         date_of_admission: string;
         level_of_education: string;
+        reason_for_termination: string;
+        termination_date: string;
         contractor_employee: {
           contractors: {
             name: string;

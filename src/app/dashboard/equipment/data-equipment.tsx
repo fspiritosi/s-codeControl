@@ -87,7 +87,7 @@ export function DataEquipment<TData, TValue>({
     type_of_vehicle: {
       name: 'type_of_vehicle',
       option: allOptions.type_of_vehicle,
-      label: 'Tipo de vehículo',
+      label: 'Tipo de equipo',
     },
     // domain: {
     //   name: 'domain',

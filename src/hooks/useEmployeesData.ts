@@ -23,7 +23,7 @@ export const useEmployeesData = () => {
       const { data, error } = await supabase
         .from('employees')
         .update(employee)
-        .eq('document_number', employee?.document_number)
+        .eq('document_number', employee.document_number)
         .select()
         
       if (error) {
