@@ -60,10 +60,9 @@ export function DataEquipment<TData, TValue>({
   const defaultVisibleColumns = [
     'domain',
     'year',
-    'types_of_vehicles',
     'type_of_vehicle',
-    'brand_vehicles',
-    'model_vehicles',
+    'brand',
+    'model',
     'picture',
   ]
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(

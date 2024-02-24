@@ -274,7 +274,7 @@ export const VehiclesForm = () => {
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof vehicleSchema>) {
-    const { type_of_vehicle, brand, model } = values
+    const { type_of_vehicle, brand, model, domain } = values
     const companyId = actualCompany?.id
     try {
       const { data: vehicle, error } = await supabase

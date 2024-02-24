@@ -58,8 +58,20 @@ export default function Equipment() {
 
   return (
     <main className="bg-white">
-      <h2 className="text-3xl pb-5 pl-10">Todos los Equipos</h2>
-      <p className="pl-10 max-w-1/2">Aquí se verán todos los Equipos</p>
+      <header className="flex gap-4 mt-6 justify-between items-center">
+        <div>
+          <h2 className="text-4xl">Equipos</h2>
+          <p>Aquí se muestran todos los Equipos:</p>
+        </div>
+        <div className="">
+          <Link
+            href="/dashboard/equipment/new"
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Agregar nuevo equipo
+          </Link>
+        </div>
+      </header>
       <div className="flex flex-col items-center justify-center min-h-screen py-2">
         <DataEquipment
           columns={columns}
