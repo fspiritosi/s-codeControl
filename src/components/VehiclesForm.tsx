@@ -14,17 +14,21 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { useImageUpload } from '@/hooks/useUploadImage'
 import { cn } from '@/lib/utils'
+import { useLoggedUserStore } from '@/store/loggedUser'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   CaretSortIcon,
   CheckIcon,
   PlusCircledIcon,
 } from '@radix-ui/react-icons'
-import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { ChangeEvent, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../supabase/supabase'
+import { ImageHander } from './ImageHandler'
 import { Modal } from './Modal'
 import {
   FormControl,
@@ -35,13 +39,6 @@ import {
   FormMessage,
 } from './ui/form'
 import { Input } from './ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select'
 import { useToast } from './ui/use-toast'
 
 type generic = {
@@ -59,16 +56,25 @@ type dataType = {
     name: string
     id: string
   }[]
+  types: {
+    name: string
+    id: string
+  }[]
 }
 
 export const VehiclesForm = () => {
   const { toast } = useToast()
+  const actualCompany = useLoggedUserStore(state => state.actualCompany)
+
   const [data, setData] = useState<dataType>({
     tipe_of_vehicles: [],
     brand: [],
     models: [],
+    types: [],
   })
-  const [isRequired, setIsRequired] = useState(false)
+
+  const router = useRouter()
+  const [hideInput, setHideInput] = useState(false)
 
   const vehicleSchema = z.object({
     brand: z.string({
@@ -94,7 +100,7 @@ export const VehiclesForm = () => {
       })
       .max(15, { message: 'El motor debe tener menos de 15 caracteres.' }),
     type_of_vehicle: z.string({ required_error: 'El tipo es requerido' }),
-    chassis: isRequired
+    chassis: hideInput
       ? z
           .string({
             required_error: 'El chasis es requerido',
@@ -104,17 +110,64 @@ export const VehiclesForm = () => {
           })
           .max(15, { message: 'El chasis debe tener menos de 15 caracteres.' })
       : z.string().optional(),
-    domain: isRequired
+    domain: hideInput
       ? z
           .string({
             required_error: 'El dominio es requerido',
           })
-          .min(3, {
-            message: 'El dominio debe tener al menos 3 caracteres.',
+          .min(6, {
+            message: 'El dominio debe tener al menos 6 caracteres.',
           })
           .max(7, { message: 'El dominio debe tener menos de 7 caracteres.' })
+          .refine(
+            e => {
+              //old regex para validar dominio AAA000 (3 letras y 3 numeros)
+              const year = form.getValues('year')
+
+              const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/
+              if (year < 2016) {
+                return oldRegex.test(e)
+              } else {
+                return true
+              }
+            },
+            {
+              message: 'El dominio debe tener el formato AAA000.',
+            },
+          )
+          .refine(
+            e => {
+              //new regex para validar dominio AA000AA
+              const year = form.getValues('year')
+
+              const newRegex = /^[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$/
+              if (year >= 2016) {
+                return newRegex.test(e)
+              } else {
+                return true
+              }
+            },
+            {
+              message: 'El dominio debe tener el formato AA000AA.',
+            },
+          )
+          .refine(
+            async (domain: string) => {
+              let { data: vehicles, error } = await supabase
+                .from('vehicles')
+                .select('*')
+                .eq('domain', domain.toUpperCase())
+
+              if (vehicles?.[0]) {
+                return false
+              } else {
+                return true
+              }
+            },
+            { message: 'El dominio ya existe' },
+          )
       : z.string().optional(),
-    serie: isRequired
+    serie: hideInput
       ? z.string().optional()
       : z
           .string({
@@ -134,9 +187,10 @@ export const VehiclesForm = () => {
       .max(15, {
         message: 'El número interno debe tener menos de 15 caracteres.',
       }),
-    picture: z.string({ required_error: 'La imagen es requerida' }).min(10, {
-      message: 'La imagen debe tener al menos 10 caracteres.',
-    }),
+    picture: z.string().optional(),
+    type: hideInput
+      ? z.string().optional()
+      : z.string({ required_error: 'El tipo es requerido' }),
   })
 
   const fetchData = async () => {
@@ -148,12 +202,15 @@ export const VehiclesForm = () => {
       .from('brand_vehicles')
       .select('*')
 
+    let { data: type, error } = await supabase.from('type').select('*')
+
     setData({
-      models: [],
+      ...data,
       tipe_of_vehicles: types_of_vehicles as generic[],
       brand: (brand_vehicles || []).map(e => {
         return { label: e.name as string, id: e.id as string }
       }),
+      types: type as generic[],
     })
   }
 
@@ -188,6 +245,7 @@ export const VehiclesForm = () => {
   const vehicleBrands = data.brand
   const types = data.tipe_of_vehicles?.map(e => e.name)
   const vehicleModels = data.models
+  const types_vehicles = data.types?.map(e => e.name)
 
   const form = useForm<z.infer<typeof vehicleSchema>>({
     resolver: zodResolver(vehicleSchema),
@@ -216,35 +274,88 @@ export const VehiclesForm = () => {
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof vehicleSchema>) {
-    const { type_of_vehicle, brand, model } = values
-
+    const { type_of_vehicle, brand, model, domain } = values
     try {
-      const { data: insertData } = await supabase
+      const { data: vehicle, error } = await supabase
         .from('vehicles')
         .insert([
           {
             ...values,
+            domain: domain?.toUpperCase(),
             type_of_vehicle: data.tipe_of_vehicles.find(
               e => e.name === type_of_vehicle,
             )?.id,
             brand: data.brand.find(e => e.label === brand)?.id,
             model: data.models.find(e => e.name === model)?.id,
+            type: data.types.find(e => e.name === values.type)?.id,
+            company_id: actualCompany?.id
           },
         ])
         .select()
 
-      if (insertData) {
+      const id = vehicle?.[0].id
+      const fileExtension = imageFile?.name.split('.').pop()
+      if (imageFile) {
         try {
-          toast({
-            title: 'Vehículo registrado',
-            description: 'El vehículo fue registrado con éxito',
+          const renamedFile = new File([imageFile], `${id}.${fileExtension}`, {
+            type: `image/${fileExtension}`,
           })
-        } catch (error) {}
+          await uploadImage(renamedFile, 'vehicle_photos')
+
+          try {
+            const vehicleImage = `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/vehicle_photos/${id}.${fileExtension}`
+            const { data, error } = await supabase
+              .from('vehicles')
+              .update({ picture: vehicleImage })
+              .eq('id', id)
+          } catch (error) {}
+        } catch (error: any) {
+          toast({
+            variant: 'destructive',
+            title: 'Error al subir la imagen',
+            description:
+              'No pudimos registrar la imagen, pero el ususario fue registrado correctamente',
+          })
+        }
+      }
+
+      if (!error) {
+        toast({
+          title: 'Vehículo registrado',
+          description: 'El vehículo fue registrado con éxito',
+        })
+        router.push('/dashboard/equipment')
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Error al registrar el vehículo',
+        })
       }
     } catch (error) {
       toast({
         title: 'Error al registrar el vehículo',
       })
+    }
+  }
+
+  const { uploadImage } = useImageUpload()
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [base64Image, setBase64Image] = useState<string>('')
+  // const [disabled, setDisabled] = useState<boolean>(true)
+
+  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+
+    if (file) {
+      setImageFile(file)
+      // Convertir la imagen a base64
+      const reader = new FileReader()
+      reader.onload = e => {
+        if (e.target && typeof e.target.result === 'string') {
+          setBase64Image(e.target.result)
+        }
+      }
+      reader.readAsDataURL(file)
     }
   }
 
@@ -261,7 +372,9 @@ export const VehiclesForm = () => {
               name="type_of_vehicle"
               render={({ field }) => (
                 <FormItem className="flex flex-col min-w-[250px]">
-                  <FormLabel>Tipo de vehículo</FormLabel>
+                  <FormLabel>
+                    Tipo de equipo <span style={{ color: 'red' }}>*</span>{' '}
+                  </FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -275,7 +388,7 @@ export const VehiclesForm = () => {
                         >
                           {field.value
                             ? field.value
-                            : 'Seleccionar tipo de vehículo'}
+                            : 'Seleccionar tipo de equipo'}
                           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -283,7 +396,7 @@ export const VehiclesForm = () => {
                     <PopoverContent className="w-[250px] p-0">
                       <Command>
                         <CommandInput
-                          placeholder="Buscar tipo de vehículo..."
+                          placeholder="Buscar tipo de equipo..."
                           className="h-9"
                         />
                         <CommandEmpty>
@@ -296,10 +409,12 @@ export const VehiclesForm = () => {
                               key={option}
                               onSelect={() => {
                                 form.setValue('type_of_vehicle', option)
+                                // setHideInput(option === 'Otros')
                                 if (option === 'Vehículos') {
-                                  setIsRequired(true)
-                                } else {
-                                  setIsRequired(false)
+                                  setHideInput(true)
+                                }
+                                if (option === 'Otros') {
+                                  setHideInput(false)
                                 }
                               }}
                             >
@@ -319,7 +434,7 @@ export const VehiclesForm = () => {
                     </PopoverContent>
                   </Popover>
                   <FormDescription>
-                    Selecciona el tipo de vehículo
+                    Selecciona el tipo de equipo
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -330,7 +445,9 @@ export const VehiclesForm = () => {
               name="brand"
               render={({ field }) => (
                 <FormItem className="flex flex-col min-w-[250px]">
-                  <FormLabel>Marca</FormLabel>
+                  <FormLabel>
+                    Marca <span style={{ color: 'red' }}>*</span>
+                  </FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -412,7 +529,9 @@ export const VehiclesForm = () => {
               name="model"
               render={({ field }) => (
                 <FormItem className="flex flex-col min-w-[250px]">
-                  <FormLabel>Modelo</FormLabel>
+                  <FormLabel>
+                    Modelo <span style={{ color: 'red' }}>*</span>
+                  </FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -482,9 +601,7 @@ export const VehiclesForm = () => {
                       </Command>
                     </PopoverContent>
                   </Popover>
-                  <FormDescription>
-                    Selecciona el modelo del vehículo
-                  </FormDescription>
+                  <FormDescription>Selecciona el modelo del</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -494,7 +611,9 @@ export const VehiclesForm = () => {
               name="year"
               render={({ field }) => (
                 <FormItem className="flex flex-col min-w-[250px]">
-                  <FormLabel>Año</FormLabel>
+                  <FormLabel>
+                    Año <span style={{ color: 'red' }}>*</span>
+                  </FormLabel>
                   <Input
                     {...field}
                     type="number"
@@ -533,12 +652,83 @@ export const VehiclesForm = () => {
             />
             <FormField
               control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem
+                  className={cn(
+                    'flex flex-col min-w-[250px]',
+                    form.getValues('type_of_vehicle') && hideInput && 'hidden',
+                  )}
+                >
+                  <FormLabel>
+                    Tipo <span style={{ color: 'red' }}>*</span>{' '}
+                  </FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            'w-[250px] justify-between',
+                            !field.value && 'text-muted-foreground',
+                          )}
+                        >
+                          {field.value ? field.value : 'Seleccionar tipo'}
+                          <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[250px] p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder="Buscar tipo..."
+                          className="h-9"
+                        />
+                        <CommandEmpty>
+                          No se encontro ningun resultado
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {types_vehicles?.map(option => (
+                            <CommandItem
+                              value={option}
+                              key={option}
+                              onSelect={() => {
+                                form.setValue('type', option)
+                              }}
+                            >
+                              {option}
+                              <CheckIcon
+                                className={cn(
+                                  'ml-auto h-4 w-4',
+                                  option === field.value
+                                    ? 'opacity-100'
+                                    : 'opacity-0',
+                                )}
+                              />
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <FormDescription>Selecciona el tipo</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="chassis"
               render={({ field }) => (
-                <FormItem className="flex flex-col min-w-[250px]">
+                <FormItem
+                  className={cn(
+                    'flex flex-col min-w-[250px]',
+                    !hideInput && 'hidden',
+                  )}
+                >
                   <FormLabel>
-                    Chasis del vehículo{' '}
-                    {isRequired ? <span style={{ color: 'red' }}>*</span> : ''}
+                    Chasis del vehículo <span style={{ color: 'red' }}>*</span>
                   </FormLabel>
                   <Input
                     {...field}
@@ -560,26 +750,24 @@ export const VehiclesForm = () => {
               control={form.control}
               name="serie"
               render={({ field }) => (
-                <FormItem className="flex flex-col min-w-[250px]">
+                <FormItem
+                  className={cn(
+                    'flex flex-col min-w-[250px]',
+                    form.getValues('type_of_vehicle') && hideInput && 'hidden',
+                  )}
+                >
                   <FormLabel>
-                    Serie del vehículo{' '}
-                    {isRequired ? '' : <span style={{ color: 'red' }}>*</span>}
+                    Serie del vehículo <span style={{ color: 'red' }}>*</span>
                   </FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione la serie" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="serie 1">serie 1</SelectItem>
-                      <SelectItem value="serie 2">serie 2</SelectItem>
-                      <SelectItem value="serie 3">serie 3</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    {...field}
+                    type="text"
+                    className="input w-[250px]"
+                    placeholder="Ingrese la serie"
+                    onChange={e => {
+                      form.setValue('serie', e.target.value)
+                    }}
+                  />
                   <FormDescription>
                     Ingrese la serie del vehículo
                   </FormDescription>
@@ -591,10 +779,14 @@ export const VehiclesForm = () => {
               control={form.control}
               name="domain"
               render={({ field }) => (
-                <FormItem className="flex flex-col min-w-[250px]">
+                <FormItem
+                  className={cn(
+                    'flex flex-col min-w-[250px]',
+                    !hideInput && 'hidden',
+                  )}
+                >
                   <FormLabel>
-                    Dominio del vehículo{' '}
-                    {isRequired ? <span style={{ color: 'red' }}>*</span> : ''}
+                    Dominio del vehículo <span style={{ color: 'red' }}>*</span>
                   </FormLabel>
                   <Input
                     {...field}
@@ -617,7 +809,10 @@ export const VehiclesForm = () => {
               name="intern_number"
               render={({ field }) => (
                 <FormItem className="flex flex-col min-w-[250px]">
-                  <FormLabel>Número interno del vehículo</FormLabel>
+                  <FormLabel>
+                    Número interno del vehículo{' '}
+                    <span style={{ color: 'red' }}>*</span>
+                  </FormLabel>
                   <Input
                     {...field}
                     type="text"
@@ -634,28 +829,33 @@ export const VehiclesForm = () => {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="picture"
-              render={({ field }) => (
-                <FormItem className="flex flex-col min-w-[250px]">
-                  <FormLabel>Imagen del vehículo</FormLabel>
-                  <Input
-                    {...field}
-                    type="text"
-                    className="input w-[250px]"
-                    placeholder="Ingrese la URL de la imagen"
-                    onChange={e => {
-                      form.setValue('picture', e.target.value)
-                    }}
-                  />
-                  <FormDescription>
-                    Ingrese la URL de la imagen del vehículo
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="w-[300px] flex  gap-2">
+              <FormField
+                control={form.control}
+                name="picture"
+                render={({ field }) => (
+                  <FormItem className="">
+                    <FormControl>
+                      <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
+                        <ImageHander
+                          labelInput="Subir foto"
+                          required={true}
+                          desciption="Subir foto del vehículo"
+                          handleImageChange={handleImageChange}
+                          base64Image={base64Image} //nueva
+                          inputStyle={{
+                            width: '400px',
+                            maxWidth: '300px',
+                          }}
+                        />
+                      </div>
+                    </FormControl>
+
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
           <Button type="submit">Registrar vehículo</Button>
         </form>
