@@ -69,6 +69,7 @@ const formSchema = z.object({
 
 type Colum = {
   picture: string
+  types_of_vehicles: { name: string }
   type_of_vehicle: string
   domain: string
   chassis: string
@@ -285,7 +286,7 @@ export const columns: ColumnDef<Colum>[] = [
             <DropdownMenuItem>
               <Button
                 variant="destructive"
-                onClick={() => handleOpenModal(user?.document_number)}
+                onClick={() => handleOpenModal(equipment?.domain)}
                 className="text-sm"
               >
                 Eliminar equipo
@@ -315,10 +316,12 @@ export const columns: ColumnDef<Colum>[] = [
     accessorKey: 'chassis',
     header: 'Chassis',
   },
+
   {
-    accessorKey: 'type_of_vehicle',
-    header: 'Tipo de vehículo',
+    accessorKey: 'types_of_vehicles',
+    header: 'Tipos de vehículos',
   },
+
   {
     accessorKey: 'engine',
     header: 'Motor',

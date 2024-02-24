@@ -54,8 +54,11 @@ type VehicleType = {
   intern_number: string
   picture: string
   type_of_vehicle: number
+  brand_vehicles: { name: string }
   brand: string
+  model_vehicles: { name: string }
   model: string
+  id: string
 }
 type generic = {
   name: string
@@ -76,7 +79,6 @@ type dataType = {
 
 export default function page({ params }: { params: any }) {
   const { domain } = params
-  //const employees = useLoggedUserStore(state => state.employees)
 
   const [vehicle, setVehicle] = useState<VehicleType | null>(null)
   const { toast } = useToast()
@@ -87,27 +89,51 @@ export default function page({ params }: { params: any }) {
   })
   const [isRequired, setIsRequired] = useState(false)
 
+  const preloadFormData = (vehicleData: VehicleType) => {
+    form.setValue('type_of_vehicle', vehicleData.type_of_vehicle.toString())
+    form.setValue('brand', vehicle?.brand)
+    form.setValue('model', vehicle?.model)
+    form.setValue('year', Number(vehicleData.year))
+    form.setValue('engine', vehicleData.engine)
+    form.setValue('chassis', vehicleData.chassis)
+    form.setValue('serie', vehicleData.serie)
+    form.setValue('domain', vehicleData.domain)
+    form.setValue('intern_number', vehicleData.intern_number)
+    form.setValue('picture', vehicleData.picture)
+  }
+  useEffect(() => {
+    if (vehicle) {
+      preloadFormData(vehicle)
+    }
+  }, [vehicle])
+
   useEffect(() => {
     const fetchVehicleData = async () => {
       try {
-        // Fetch vehicle data by domain from your API or database
         const { data: vehicleData, error } = await supabase
           .from('vehicles')
-          .select('*')
+          .select('*, brand_vehicles(name), model_vehicles(name)')
           .eq('domain', domain)
-          .single() // Assuming domain is unique
+        //.single()
 
         if (error) {
           console.error('Error al obtener los datos del vehículo:', error)
         } else {
-          setVehicle(vehicleData) // Set vehicle data to state
+          const transformedData = vehicleData.map((item: VehicleType) => ({
+            ...item,
+            // types_of_vehicles: item.types_of_vehicles.name,
+            brand: item.brand_vehicles.name,
+            model: item.model_vehicles.name,
+          }))
+
+          setVehicle(transformedData[0])
         }
       } catch (error) {
         console.error('Error al obtener los datos del vehículo:', error)
       }
     }
 
-    fetchVehicleData() // Fetch vehicle data when the component mounts
+    fetchVehicleData()
   }, [domain])
 
   const vehicleSchema = z.object({
@@ -115,12 +141,12 @@ export default function page({ params }: { params: any }) {
       .string({
         required_error: 'La marca es requerida',
       })
-      .optional(), // Marca opcional
+      .optional(),
     model: z
       .string({
         required_error: 'El modelo es requerido',
       })
-      .optional(), // Modelo opcional
+      .optional(),
     year: z
       .number({ required_error: 'El año es requerido' })
       .min(1900, {
@@ -129,42 +155,25 @@ export default function page({ params }: { params: any }) {
       .max(2023, {
         message: 'El año debe ser menor a 2023',
       })
-      .optional(), // Año opcional
+      .optional(),
     engine: z
       .string()
-      //   .string({
-      //     required_error: 'El motor es requerido',
-      //   })
-      //   .min(2, {
-      //     message: 'El motor debe tener al menos 2 caracteres.',
-      //   })
-      //   .max(15, { message: 'El motor debe tener menos de 15 caracteres.' }),
-      .optional(), // Motor opcional
+
+      .optional(),
     type_of_vehicle: z
       .string({ required_error: 'El tipo es requerido' })
-      .optional(), // Tipo de vehículo opcional
-    chassis: z.string().optional(), // Chasis opcional
-    domain: z.string().optional(), // Dominio opcional
-    serie: z.string().optional(), // Serie opcional
+      .optional(),
+    chassis: z.string().optional(),
+    domain: z.string().optional(),
+    serie: z.string().optional(),
     intern_number: z
       .string()
-      //   .string({
-      //     required_error: 'El número interno es requerido',
-      //   })
-      //   .min(2, {
-      //     message: 'El número interno debe tener al menos 2 caracteres.',
-      //   })
-      //   .max(15, {
-      //     message: 'El número interno debe tener menos de 15 caracteres.',
-      //   })
-      .optional(), // Número interno opcional
+
+      .optional(),
     picture: z
       .string()
-      //   .string({ required_error: 'La imagen es requerida' })
-      //   .min(10, {
-      //     message: 'La imagen debe tener al menos 10 caracteres.',
-      //   })
-      .optional(), // Imagen opcional
+
+      .optional(),
   })
 
   const fetchData = async () => {
@@ -217,18 +226,6 @@ export default function page({ params }: { params: any }) {
   const types = data.tipe_of_vehicles?.map(e => e.name)
   const vehicleModels = data.models
 
-  //   const form = useForm<z.infer<typeof vehicleSchema>>({
-  //     resolver: zodResolver(vehicleSchema),
-  //     defaultValues: {
-  //       year: undefined,
-  //       engine: '',
-  //       chassis: '',
-  //       serie: '',
-  //       domain: '',
-  //       intern_number: '',
-  //       picture: '',
-  //     },
-  //   })
   const form = useForm<z.infer<typeof vehicleSchema>>({
     resolver: zodResolver(vehicleSchema),
     defaultValues: {
@@ -270,7 +267,7 @@ export default function page({ params }: { params: any }) {
     } = values
 
     try {
-      const { data: updateData } = await supabase
+      await supabase
         .from('vehicles')
         .update({
           type_of_vehicle: data.tipe_of_vehicles.find(
@@ -278,25 +275,21 @@ export default function page({ params }: { params: any }) {
           )?.id,
           brand: data.brand.find(e => e.label === brand)?.id,
           model: data.models.find(e => e.name === model)?.id,
-          year: values.year,
-          engine: values.engine,
-          chassis: values.chassis,
-          serie: values.serie,
-          domain: values.domain,
-          intern_number: values.intern_number,
-          picture: values.picture,
+          year: year,
+          engine: engine,
+          chassis: chassis,
+          serie: serie,
+          domain: domain,
+          intern_number: intern_number,
+          picture: picture,
         })
-        .eq('domain', vehicle?.domain)
+        .eq('id', vehicle?.id)
         .select()
 
-      if (updateData) {
-        try {
-          toast({
-            title: 'Vehículo editado',
-            description: 'El vehículo fue editado con éxito',
-          })
-        } catch (error) {}
-      }
+      toast({
+        title: 'Vehículo editado',
+        description: 'El vehículo fue editado con éxito',
+      })
     } catch (error) {
       toast({
         title: 'Error al editar el vehículo',
@@ -325,15 +318,15 @@ export default function page({ params }: { params: any }) {
                           disabled={false}
                           variant="outline"
                           role="combobox"
-                          value={vehicle?.type_of_vehicle}
+                          value={field.value}
                           className={cn(
                             'w-[250px] justify-between',
                             !field.value && 'text-muted-foreground',
                           )}
                         >
-                          {field.value
-                            ? field.value
-                            : 'Seleccionar tipo de vehículo'}
+                          {field.value === '1'
+                            ? (field.value = 'Vehículos')
+                            : (field.value = 'Otros')}
                           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -405,7 +398,7 @@ export default function page({ params }: { params: any }) {
                         >
                           {vehicle?.brand
                             ? vehicleBrands.find(
-                                option => option.id === vehicle?.brand,
+                                option => option.label === field.value,
                               )?.label
                             : 'Seleccionar marca'}
                           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -489,10 +482,11 @@ export default function page({ params }: { params: any }) {
                           )}
                         >
                           {vehicle?.model
-                            ? vehicleModels.find(
-                                option => option.id === vehicle?.model,
+                            ? vehicleModels?.find(
+                                option => option.id === vehicle.model,
                               )?.name || vehicle?.model
-                            : 'Seleccionar modelo'}
+                            : 'Seleccionar marca'}
+
                           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -589,13 +583,9 @@ export default function page({ params }: { params: any }) {
                   <Input
                     {...field}
                     disabled={false}
-                    type="text"
                     className="input w-[250px]"
                     placeholder="Ingrese el tipo de motor"
-                    value={vehicle?.engine}
-                    onChange={e => {
-                      form.setValue('engine', e.target.value)
-                    }}
+                    value={field.value}
                   />
                   <FormDescription>
                     Ingrese el tipo de motor del vehículo
@@ -683,6 +673,7 @@ export default function page({ params }: { params: any }) {
                     value={
                       field.value !== '' ? field.value : vehicle?.domain || ''
                     }
+                    defaultValue={vehicle?.domain}
                     onChange={e => {
                       form.setValue('domain', e.target.value)
                     }}

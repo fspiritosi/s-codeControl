@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { LogOutButton } from './LogOutButton'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import {
@@ -35,20 +35,31 @@ export default function NavBar() {
   //   setActualCompany(company) // Actualiza actualCompany con la empresa seleccionada
   //   setIsOpen(false) // Cierra el desplegable después de seleccionar la empresa
   // }
-  const openModal = (companies: any) => {
-    setSelectedCompany(companies)
-    setIsModalOpen(true)
-  }
+  // const openModal = (companies: any) => {
+  //   setSelectedCompany(companies)
+  //   setIsModalOpen(true)
+  // }
+  useEffect(() => {
+    if (!actualCompany && allCompanies && allCompanies.length > 0) {
+      const defaultCompany = allCompanies.find(
+        companyItem => companyItem.by_defect === true,
+      )
+      if (defaultCompany) {
+        setActualCompany(defaultCompany)
+      }
+    }
+  }, [actualCompany, allCompanies, setActualCompany])
   const redirectToCompanyDashboard = () => {
     if (actualCompany) {
       const companyId = actualCompany.id // Suponiendo que tienes una propiedad 'id' en tu objeto actualCompany
       router.push(`/dashboard/company/actualCompany/${companyId}`)
     }
   }
+
   console.log(actualCompany?.id)
 
   return (
-    <nav className="flex flex-shrink items-center justify-between text-white p-4 mb-2 bg-slate-800">
+    <nav className=" flex flex-shrink items-center justify-between  text-white p-4 mb-2 bg-slate-800">
       <div className="flex items-center">
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger>
@@ -57,11 +68,12 @@ export default function NavBar() {
                 <Link
                   href={`/dashboard/company`}
                   passHref
-                  className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-md"
+                  className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px"
                 >
                   <img
+                    className=" shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px"
                     src={actualCompany.company_logo}
-                    style={{ width: '78px', height: '40px' }}
+                    style={{ width: '40px', height: '40px' }}
                   />
                 </Link>
               ) : (
@@ -72,11 +84,13 @@ export default function NavBar() {
                       key={companyItem.id}
                       href={`/dashboard/company`}
                       passHref
-                      className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-md"
+                      className=" shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px "
+                      //className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px"
                     >
                       <img
                         src={companyItem.company_logo}
-                        style={{ width: '78px', height: '40px' }}
+                        style={{ width: '40px', height: '40px' }}
+                        className="hover:cursor-pointer shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px"
                       />
                     </Link>
                   ))
@@ -90,7 +104,8 @@ export default function NavBar() {
                     <Link
                       href={`/dashboard/company/`}
                       passHref
-                      className="text-white flex items-center gap-2 p-1 bg-slate-500 border-2 rounded-md"
+                      className="shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px "
+                      //className="text-white flex items-center gap-2 p-1 bg-slate-500 border-2 rounded-md"
                     >
                       Empresa
                     </Link>
@@ -128,7 +143,7 @@ export default function NavBar() {
           </PopoverTrigger>
           <PopoverContent
             onMouseLeave={() => setIsOpen(false)}
-            className="bg-slate-800"
+            className="bg-slate-600 border-0"
           >
             <Link
               href="/dashboard/company/new"
@@ -149,13 +164,22 @@ export default function NavBar() {
                   className="text-white gap-1 flex justify-center items-center w-20 h-20"
                 >
                   <img
-                    className="hover:cursor-pointer shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-md w-60 h-20"
+                    className="hover:cursor-pointer shadow-md text-white ml-auto items-center flex gap-0 bg-slate-500 border-2 rounded-full w-40 h-40"
                     src={companyItems.company_logo}
                     // width="60p"
                     // height="20p"
                     alt="Logo de la empresa"
-                    style={{ width: '78px', height: '40px' }}
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                    }}
                   />
+                  <span
+                    className="text-inline ml-auto"
+                    style={{ marginRight: '10px', float: 'left' }}
+                  >
+                    {companyItems.company_name}
+                  </span>
                 </div>
               ))}
             </div>
