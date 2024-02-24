@@ -28,7 +28,7 @@ const links = [
   },
   {
     name: 'Equipos',
-    href: '/dashboard/vehicles',
+    href: '/dashboard/equipment/new',
     icon: <MdOutlinePhoneIphone size={sizeIcons} />,
     submenu: [
       { name: 'Todos', href: '/dashboard/equipment' },

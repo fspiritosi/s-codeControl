@@ -3,7 +3,7 @@
 import { Checkbox } from '@/components/ui/checkbox'
 import { FormControl, FormItem, FormLabel } from '@/components/ui/form'
 import { Label } from './ui/label'
-import { Select, SelectContent, SelectTrigger, SelectValue } from './ui/select'
+import { Select, SelectContent, SelectTrigger } from './ui/select'
 
 type generic = {
   id: number
@@ -17,6 +17,7 @@ type Props = {
   placeholder: string
   defaultValues?: string[]
   disabled?: boolean
+  required?: boolean
 }
 
 export function CheckboxDefaultValues({
@@ -24,6 +25,7 @@ export function CheckboxDefaultValues({
   field,
   placeholder,
   disabled,
+  required,
 }: Props) {
   function SelectValue() {
     // Obtén el valor actual del select de alguna manera
@@ -41,7 +43,7 @@ export function CheckboxDefaultValues({
   return (
     <>
       <Label className="ml-2" htmlFor="Allocated_to">
-        Afectado A
+        Afectado A <span style={{ color: 'red' }}>{required ? '*' : ''}</span>
       </Label>
       <Select onValueChange={field?.onChange} defaultValue={field?.value?.[0]}>
         <FormControl>

@@ -4,6 +4,16 @@
 
 'use client'
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
@@ -46,11 +56,13 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions'
 import { cn } from '@/lib/utils'
+import { useLoggedUserStore } from '@/store/loggedUser'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { DotsVerticalIcon } from '@radix-ui/react-icons'
 import { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { ArrowUpDown, CalendarIcon, MoreHorizontal } from 'lucide-react'
+import { ArrowUpDown, CalendarIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -104,12 +116,25 @@ export const columns: ColumnDef<Colum>[] = [
     id: 'actions',
     cell: ({ row }: { row: any }) => {
       const [showModal, setShowModal] = useState(false)
+      const [integerModal, setIntegerModal] = useState(false)
       const [document, setDocument] = useState('')
       const user = row.original
 
       const handleOpenModal = (id: string) => {
         setDocument(id)
         setShowModal(!showModal)
+      }
+
+      const setInactiveEmployees = useLoggedUserStore(
+        state => state.setInactiveEmployees,
+      )
+      const setShowDeletedEmployees = useLoggedUserStore(
+        state => state.setShowDeletedEmployees,
+      )
+
+      const handleOpenIntegerModal = (id: string) => {
+        setDocument(id)
+        setIntegerModal(!integerModal)
       }
 
       const { errorTranslate } = useEdgeFunctions()
@@ -122,6 +147,36 @@ export const columns: ColumnDef<Colum>[] = [
       })
 
       const { toast } = useToast()
+
+      async function reintegerEmployee() {
+        try {
+          await supabase
+            .from('employees')
+            .update({
+              is_active: true,
+              termination_date: null,
+              reason_for_termination: null,
+            })
+            .eq('document_number', document)
+            .select()
+
+          setIntegerModal(!integerModal)
+          setInactiveEmployees()
+          setShowDeletedEmployees(false)
+          toast({
+            variant: 'default',
+            title: 'Empleado reintegrado',
+            description: `El empleado ${user.full_name} ha sido reintegrado`,
+          })
+        } catch (error: any) {
+          const message = await errorTranslate(error?.message)
+          toast({
+            variant: 'destructive',
+            title: 'Error al reintegrar al empleado',
+            description: message,
+          })
+        }
+      }
 
       async function onSubmit(values: z.infer<typeof formSchema>) {
         const data = {
@@ -151,7 +206,7 @@ export const columns: ColumnDef<Colum>[] = [
           const message = await errorTranslate(error?.message)
           toast({
             variant: 'destructive',
-            title: 'Error al eliminar empleado',
+            title: 'Error al dar de baja al empleado',
             description: message,
           })
         }
@@ -159,13 +214,36 @@ export const columns: ColumnDef<Colum>[] = [
 
       return (
         <DropdownMenu>
+          {integerModal && (
+            <AlertDialog
+              defaultOpen
+              onOpenChange={() => setIntegerModal(!integerModal)}
+            >
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    ¿Estás completamente seguro?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {`Estás a punto de reintegrar al empleado ${user.full_name}, quien fue dado de baja por ${user.reason_for_termination} el día ${user.termination_date}. Al reintegrar al empleado, se borrarán estas razones. Si estás seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => reintegerEmployee()}>
+                    Continuar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
           {showModal && (
             <Dialog defaultOpen onOpenChange={() => setShowModal(!showModal)}>
               <DialogContent>
-                <DialogTitle>Eliminar empleado</DialogTitle>
+                <DialogTitle>Dar de baja</DialogTitle>
                 <DialogDescription>
-                  ¿Estás seguro de que deseas eliminar este empleado?<br /> Completa
-                  los campos para continuar.
+                  ¿Estás seguro de que deseas eliminar este empleado?
+                  <br /> Completa los campos para continuar.
                 </DialogDescription>
                 <DialogFooter>
                   <div className="w-full">
@@ -274,9 +352,6 @@ export const columns: ColumnDef<Colum>[] = [
                         </div>
                       </form>
                     </Form>
-                    {/* <Button variant="destructive" onClick={() => handleDelete()}>
-                    Eliminar
-                  </Button> */}
                   </div>
                 </DialogFooter>
               </DialogContent>
@@ -285,7 +360,7 @@ export const columns: ColumnDef<Colum>[] = [
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
               <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
+              <DotsVerticalIcon className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -299,23 +374,37 @@ export const columns: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              <Link href={`/dashboard/employee/view/${user?.document_number}`}>
+              <Link
+                href={`/dashboard/employee/action?action=view&document=${user?.document_number}`}
+              >
                 Ver empleado
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Link href={`/dashboard/employee/edit/${user?.document_number}`}>
+              <Link
+                href={`/dashboard/employee/action?action=edit&document=${user?.document_number}`}
+              >
                 Editar empleado
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Button
-                variant="destructive"
-                onClick={() => handleOpenModal(user?.document_number)}
-                className="text-sm"
-              >
-                Eliminar empleado
-              </Button>
+              {user.is_active ? (
+                <Button
+                  variant="destructive"
+                  onClick={() => handleOpenModal(user?.document_number)}
+                  className="text-sm"
+                >
+                  Dar de baja
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  onClick={() => handleOpenIntegerModal(user?.document_number)}
+                  className="text-sm"
+                >
+                  Reintegrar Empleado
+                </Button>
+              )}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -448,5 +537,9 @@ export const columns: ColumnDef<Colum>[] = [
   {
     accessorKey: 'workflow_diagram',
     header: 'Diagrama de flujo',
+  },
+  {
+    accessorKey: 'showUnavaliableEmployees',
+    header: 'Ver empleados dados de baja',
   },
 ]

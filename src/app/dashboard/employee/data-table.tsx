@@ -36,22 +36,30 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { useSidebarOpen } from '@/store/sidebar'
-import { useRouter } from 'next/navigation'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
   data: TData[]
+  setInactiveEmployees: () => void
+  setActivesEmployees: () => void
+  showDeletedEmployees: boolean
+  setShowDeletedEmployees: (showDeletedEmployees: boolean) => void
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  setActivesEmployees,
+  setInactiveEmployees,
+  showDeletedEmployees,
+  setShowDeletedEmployees,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const defaultVisibleColumns = [
@@ -74,6 +82,8 @@ export function DataTable<TData, TValue>({
       return acc
     }, {}),
   )
+  // const [showDeletedEmployees, setShowDeletedEmployees] = useState(false)
+
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const loader = useLoggedUserStore(state => state.isLoading)
 
@@ -191,8 +201,6 @@ export function DataTable<TData, TValue>({
   const { expanded } = useSidebarOpen()
   const totalWidth = `calc(100vw - ${expanded ? '296px' : '167px'})`
 
-  const router = useRouter()
-
   const handleClearFilters = () => {
     table.getAllColumns().forEach(column => {
       column.setFilterValue('')
@@ -214,6 +222,8 @@ export function DataTable<TData, TValue>({
       hierrical_position: 'Todos',
     })
   }
+
+  const maxRows = ['20', '40', '60', '80', '100']
 
   const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
     {},
@@ -241,40 +251,74 @@ export function DataTable<TData, TValue>({
           Limpiar filtros
         </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columnas
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="max-h-[50dvh] overflow-y-auto"
-          >
-            {table
-              .getAllColumns()
-              .filter(column => column.getCanHide())
-              .map(column => {
-                if (
-                  column.id === 'actions' ||
-                  typeof column.columnDef.header !== 'string'
-                ) {
-                  return null
-                }
+        <div className="w-full flex justify-end gap-2">
+          <Select onValueChange={e => table.setPageSize(Number(e))}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Cantidad de filas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Filas por página</SelectLabel>
+                {maxRows.map((option: string) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
 
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={value => column.toggleVisibility(!!value)}
-                  >
-                    {column.columnDef.header}
-                  </DropdownMenuCheckboxItem>
-                )
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">Columnas</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="max-h-[50dvh] overflow-y-auto"
+            >
+              {table
+                .getAllColumns()
+                .filter(column => column.getCanHide())
+                .map(column => {
+                  if (
+                    column.id === 'actions' ||
+                    typeof column.columnDef.header !== 'string'
+                  ) {
+                    return null
+                  }
+
+                  if (column.id === 'showUnavaliableEmployees') {
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={column.id}
+                        className="capitalize text-red-400"
+                        checked={showDeletedEmployees}
+                        onCheckedChange={value => {
+                          setShowDeletedEmployees(!!value)
+                          value ? setInactiveEmployees() : setActivesEmployees()
+                        }}
+                      >
+                        {column.columnDef.header}
+                      </DropdownMenuCheckboxItem>
+                    )
+                  }
+
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={value =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {column.columnDef.header}
+                    </DropdownMenuCheckboxItem>
+                  )
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       <div
         className="rounded-md border"
@@ -377,26 +421,31 @@ export function DataTable<TData, TValue>({
           </TableHeader>
           <TableBody className="max-w-[50vw] overflow-x-auto">
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map(row => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                >
-                  {row.getVisibleCells().map(cell => {
-                    return (
-                      <TableCell
-                        key={cell.id}
-                        className="text-center whitespace-nowrap"
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    )
-                  })}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map(row => {
+                return (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                  >
+                    {row.getVisibleCells().map(cell => {
+                      let is_active = (cell.row.original as any).is_active
+                      return (
+                        <TableCell
+                          key={cell.id}
+                          className={`text-center whitespace-nowrap ${
+                            is_active ? '' : 'text-red-500'
+                          }`}
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                )
+              })
             ) : (
               <TableRow>
                 <TableCell
@@ -424,8 +473,10 @@ export function DataTable<TData, TValue>({
                         <Skeleton className="h-7 w-[13%]" />
                       </div>
                     </div>
+                  ) : showDeletedEmployees ? (
+                    'No hay empleados inactivos'
                   ) : (
-                    'No hay empleados registrados'
+                    'No hay empleados activos'
                   )}
                 </TableCell>
               </TableRow>
