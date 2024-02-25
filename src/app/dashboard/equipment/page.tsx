@@ -6,43 +6,82 @@ import { columns } from './columns'
 import { DataEquipment } from './data-equipment'
 import { supabase } from '../../../../supabase/supabase'
 import { useEffect, useState } from 'react'
-
+import { useRouter, useSearchParams } from 'next/navigation'
 export default function Equipment() {
   const [vehiclesData, setVehiclesData] = useState<unknown[]>([])
   const allCompany = useLoggedUserStore(state => state.allCompanies)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
+  const useSearch = useSearchParams()
+  const type = useSearch.get('type')
+
+  useEffect(() => {
+    // Aquí puedes realizar operaciones basadas en el valor de 'type'
+    fetchVehicles()
+    console.log('Tipo de filtrado:', type)
+  }, [type])
+  console.log('este es type: ', type)
   const fetchVehicles = async () => {
     try {
-      const { data: vehicles, error } = await supabase
-        .from('vehicles')
-        .select(
-          `*,
+      if (!actualCompany?.id) {
+        console.error('No se ha seleccionado una compañía')
+        return
+      }
+      if (type) {
+        const { data: vehicles, error } = await supabase
+          .from('vehicles')
+          .select(
+            `*,
         types_of_vehicles(name),
         brand_vehicles(name),
         model_vehicles(name)`,
-        )
-        .eq('is_active', true)
-        .eq('company_id', actualCompany?.id)
+          )
+          .eq('is_active', true)
+          .eq('company_id', actualCompany?.id)
+          .eq('type_of_vehicle', type)
 
-      if (error) {
-        console.error('Error al obtener los vehículos:', error)
+        if (error) {
+          console.error('Error al obtener los vehículos:', error)
+        } else {
+          const transformedData = vehicles.map(item => ({
+            ...item,
+            types_of_vehicles: item.types_of_vehicles.name,
+            brand: item.brand_vehicles.name,
+            model: item.model_vehicles.name,
+          }))
+          setVehiclesData(transformedData)
+        }
       } else {
-        const transformedData = vehicles.map(item => ({
-          ...item,
-          types_of_vehicles: item.types_of_vehicles.name,
-          brand: item.brand_vehicles.name,
-          model: item.model_vehicles.name,
-        }))
-        setVehiclesData(transformedData)
+        const { data: vehicles, error } = await supabase
+          .from('vehicles')
+          .select(
+            `*,
+        types_of_vehicles(name),
+        brand_vehicles(name),
+        model_vehicles(name)`,
+          )
+          .eq('is_active', true)
+          .eq('company_id', actualCompany?.id)
+
+        if (error) {
+          console.error('Error al obtener los vehículos:', error)
+        } else {
+          const transformedData = vehicles.map(item => ({
+            ...item,
+            types_of_vehicles: item.types_of_vehicles.name,
+            brand: item.brand_vehicles.name,
+            model: item.model_vehicles.name,
+          }))
+          setVehiclesData(transformedData)
+        }
       }
     } catch (error) {
       console.error('Error al obtener los vehículos:', error)
     }
   }
 
-  useEffect(() => {
-    fetchVehicles()
-  }, [])
+  // useEffect(() => {
+  //   fetchVehicles()
+  // }, [])
   useEffect(() => {
     const channels = supabase
       .channel('custom-all-channel')

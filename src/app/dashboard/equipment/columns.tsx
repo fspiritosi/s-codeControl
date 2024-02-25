@@ -128,13 +128,13 @@ export const columns: ColumnDef<Colum>[] = [
           toast({
             variant: 'default',
             title: 'Equipo eliminado',
-            description: `El equipo ${equipment.domain} ha sido eliminado`,
+            description: `El equipo ${equipment.domain} ha sido dado de baja`,
           })
         } catch (error: any) {
           const message = await errorTranslate(error?.message)
           toast({
             variant: 'destructive',
-            title: 'Error al eliminar equipo',
+            title: 'Error al dar de baja el equipo',
             description: message,
           })
         }
@@ -145,9 +145,9 @@ export const columns: ColumnDef<Colum>[] = [
           {showModal && (
             <Dialog defaultOpen onOpenChange={() => setShowModal(!showModal)}>
               <DialogContent>
-                <DialogTitle>Eliminar Equipo</DialogTitle>
+                <DialogTitle>Dar de baja Equipo</DialogTitle>
                 <DialogDescription>
-                  ¿Estás seguro de que deseas eliminar este equipo?, completa
+                  ¿Estás seguro de que deseas dar de baja este equipo?, completa
                   los campos para continuar.
                 </DialogDescription>
                 <DialogFooter>
@@ -185,7 +185,7 @@ export const columns: ColumnDef<Colum>[] = [
                                 </SelectContent>
                               </Select>
                               <FormDescription>
-                                Elige la razón por la que deseas eliminar el
+                                Elige la razón por la que deseas dar de baja el
                                 equipo
                               </FormDescription>
                               <FormMessage />
@@ -245,7 +245,7 @@ export const columns: ColumnDef<Colum>[] = [
                         />
                         <div className="flex gap-4 justify-end">
                           <Button variant="destructive" type="submit">
-                            Eliminar
+                            Dar de Baja
                           </Button>
                           <DialogClose>Cancelar</DialogClose>
                         </div>
@@ -289,7 +289,7 @@ export const columns: ColumnDef<Colum>[] = [
                 onClick={() => handleOpenModal(equipment?.domain)}
                 className="text-sm"
               >
-                Eliminar equipo
+                Dar de baja equipo
               </Button>
             </DropdownMenuItem>
           </DropdownMenuContent>

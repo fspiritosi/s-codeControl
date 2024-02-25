@@ -13,6 +13,16 @@ import {
   MdOutlineSpaceDashboard,
 } from 'react-icons/md'
 
+export async function getServerSideProps(context: any) {
+  const { params } = context
+  const { type } = params
+  return {
+    props: {
+      type,
+    },
+  }
+}
+
 const sizeIcons = 24
 
 const links = [
@@ -32,8 +42,8 @@ const links = [
     icon: <MdOutlinePhoneIphone size={sizeIcons} />,
     submenu: [
       { name: 'Todos', href: '/dashboard/equipment' },
-      { name: 'Vehículos', href: '/dashboard/equipment' },
-      { name: 'Otros', href: '/dashboard/equipment' },
+      { name: 'Vehículos', href: '/dashboard/equipment?type=1' },
+      { name: 'Otros', href: '/dashboard/equipment?type=2' },
     ],
   },
   {
