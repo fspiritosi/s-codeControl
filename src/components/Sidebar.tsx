@@ -17,7 +17,7 @@ interface SideBarProps {
 
 export default function SideBar() {
   // const [expanded, setExpanded] = useState(true)
-  const {expanded,setExpanded} = useSidebarOpen()
+  const { expanded, setExpanded } = useSidebarOpen()
 
   useEffect(() => {
     const handleResize = () => {

@@ -51,11 +51,13 @@ import { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { ArrowUpDown, CalendarIcon, MoreHorizontal } from 'lucide-react'
+import { DotsVerticalIcon } from '@radix-ui/react-icons'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../../../supabase/supabase'
+import { useLoggedUserStore } from '@/store/loggedUser'
 
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -68,6 +70,7 @@ const formSchema = z.object({
 
 type Colum = {
   picture: string
+  types_of_vehicles: { name: string }
   type_of_vehicle: string
   domain: string
   chassis: string
@@ -126,13 +129,13 @@ export const columns: ColumnDef<Colum>[] = [
           toast({
             variant: 'default',
             title: 'Equipo eliminado',
-            description: `El equipo ${equipment.domain} ha sido eliminado`,
+            description: `El equipo ${equipment.domain} ha sido dado de baja`,
           })
         } catch (error: any) {
           const message = await errorTranslate(error?.message)
           toast({
             variant: 'destructive',
-            title: 'Error al eliminar equipo',
+            title: 'Error al dar de baja el equipo',
             description: message,
           })
         }
@@ -143,9 +146,9 @@ export const columns: ColumnDef<Colum>[] = [
           {showModal && (
             <Dialog defaultOpen onOpenChange={() => setShowModal(!showModal)}>
               <DialogContent>
-                <DialogTitle>Eliminar Equipo</DialogTitle>
+                <DialogTitle>Dar de baja Equipo</DialogTitle>
                 <DialogDescription>
-                  ¿Estás seguro de que deseas eliminar este equipo?, completa
+                  ¿Estás seguro de que deseas dar de baja este equipo?, completa
                   los campos para continuar.
                 </DialogDescription>
                 <DialogFooter>
@@ -183,7 +186,7 @@ export const columns: ColumnDef<Colum>[] = [
                                 </SelectContent>
                               </Select>
                               <FormDescription>
-                                Elige la razón por la que deseas eliminar el
+                                Elige la razón por la que deseas dar de baja el
                                 equipo
                               </FormDescription>
                               <FormMessage />
@@ -243,7 +246,7 @@ export const columns: ColumnDef<Colum>[] = [
                         />
                         <div className="flex gap-4 justify-end">
                           <Button variant="destructive" type="submit">
-                            Eliminar
+                            Dar de Baja
                           </Button>
                           <DialogClose>Cancelar</DialogClose>
                         </div>
@@ -260,7 +263,7 @@ export const columns: ColumnDef<Colum>[] = [
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
               <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
+              <DotsVerticalIcon className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -272,22 +275,26 @@ export const columns: ColumnDef<Colum>[] = [
               Copiar Dominio
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Link href={`/dashboard/employee/view/${equipment?.domain}`}>
+              <Link
+                href={`/dashboard/equipment/action?action=view&id=${equipment?.id}`}
+              >
                 Ver equipo
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Link href={`/dashboard/employee/edit/${equipment?.domain}`}>
+              <Link
+                href={`/dashboard/equipment/action?action=edit&id=${equipment?.id}`}
+              >
                 Editar equipo
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Button
                 variant="destructive"
-                onClick={() => handleOpenModal(user?.document_number)}
+                onClick={() => handleOpenModal(equipment?.id)}
                 className="text-sm"
               >
-                Eliminar equipo
+                Dar de baja equipo
               </Button>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -314,10 +321,12 @@ export const columns: ColumnDef<Colum>[] = [
     accessorKey: 'chassis',
     header: 'Chassis',
   },
+
   {
-    accessorKey: 'type_of_vehicle',
-    header: 'Tipo de vehículo',
+    accessorKey: 'types_of_vehicles',
+    header: 'Tipos de vehículos',
   },
+
   {
     accessorKey: 'engine',
     header: 'Motor',

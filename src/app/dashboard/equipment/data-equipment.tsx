@@ -29,7 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { use, useEffect, useReducer, useRef, useState } from 'react'
+import { useContext, useEffect, useReducer, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   Select,
@@ -40,21 +40,31 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useLoggedUserStore } from '@/store/loggedUser'
 import { useRouter } from 'next/navigation'
 import { Url } from 'next/dist/shared/lib/router/router'
+import { useLoggedUserStore } from '@/store/loggedUser'
+import { DataTable } from '../employee/data-table'
 
 interface DataEquipmentProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
   data: TData[]
+  allCompany: any[]
 }
 
 export function DataEquipment<TData, TValue>({
   columns,
   data,
+  allCompany,
 }: DataEquipmentProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
-  const defaultVisibleColumns = ['domain', 'year', 'brand', 'model']
+  const defaultVisibleColumns = [
+    'domain',
+    'year',
+    'type_of_vehicle',
+    'brand',
+    'model',
+    'picture',
+  ]
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     columns.reduce((acc: any, column: any) => {
       acc[column.accessorKey] = defaultVisibleColumns.includes(
@@ -68,26 +78,35 @@ export function DataEquipment<TData, TValue>({
 
   const allOptions = {
     type_of_vehicle: createOptions('type_of_vehicle'),
+    types_of_vehicles: createOptions('types_of_vehicles'),
     // domain: createOptions('domain'),
     // chassis: createOptions('chassis'),
     //engine: createOptions('engine'),
     //serie: createOptions('serie'),
     //intern_number: createOptions('intern_number'),
     year: createOptions('year'),
-    brand: createOptions('brand'),
-    model: createOptions('model'),
+    brand: createOptions('brand_vehicles'),
+    model: createOptions('model_vehicles'),
   }
 
   function createOptions(key: string) {
-    const values = data?.flatMap((item: any) => item?.[key])
+    const values = data?.map((item: any) =>
+      item?.[key]?.name ? item?.[key]?.name : item?.[key],
+    )
+
     return ['Todos', ...Array.from(new Set(values))]
   }
 
   const selectHeader = {
     type_of_vehicle: {
-      name: 'type_of_vehicle',
+      name: 'types_of_vehicles',
       option: allOptions.type_of_vehicle,
       label: 'Tipo de equipo',
+    },
+    types_of_vehicles: {
+      name: 'types_of_vehicles.name',
+      option: allOptions.types_of_vehicles,
+      label: 'Tipos de vehículos',
     },
     // domain: {
     //   name: 'domain',
@@ -147,6 +166,7 @@ export function DataEquipment<TData, TValue>({
       columnFilters,
     },
   })
+
   const totalWidth = 'calc(100vw - 297px)'
 
   const router = useRouter()
@@ -158,7 +178,8 @@ export function DataEquipment<TData, TValue>({
     router.push('/dashboard/equipment')
 
     setSelectValues({
-      type_of_vehicle: 'Todos',
+      types_of_vehicles: 'Todos',
+      type_of_vehicle: 'todos',
       domain: 'Todos',
       chassis: 'Todos',
       engine: 'Todos',

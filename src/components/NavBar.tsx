@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { LogOutButton } from './LogOutButton'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import {
@@ -12,13 +12,16 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { MdDomainAdd } from 'react-icons/md'
 import { IoMdAddCircleOutline } from 'react-icons/io'
-
+import { companyData } from '@/types/types'
 import { company } from '@/types/types'
 import allCompany from '@/app/dashboard/company/page'
 import ModalCompany from '@/components/ModalCompany'
+import { useRouter } from 'next/navigation'
+
 export default function NavBar() {
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
+  const setActualCompany = useLoggedUserStore(state => state.setActualCompany)
   const actualUser = useLoggedUserStore(state => state.profile)
   const avatarUrl =
     actualUser && actualUser.length > 0 ? actualUser[0].avatar : ''
@@ -26,19 +29,89 @@ export default function NavBar() {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const router = useRouter()
 
-  const openModal = (companies: any) => {
-    setSelectedCompany(companies)
-    setIsModalOpen(true)
+  // const selectCompany = (company: companyData) => {
+  //   setActualCompany(company) // Actualiza actualCompany con la empresa seleccionada
+  //   setIsOpen(false) // Cierra el desplegable después de seleccionar la empresa
+  // }
+  // const openModal = (companies: any) => {
+  //   setSelectedCompany(companies)
+  //   setIsModalOpen(true)
+  // }
+  useEffect(() => {
+    if (!actualCompany && allCompanies && allCompanies.length > 0) {
+      const defaultCompany = allCompanies.find(
+        companyItem => companyItem.by_defect === true,
+      )
+      if (defaultCompany) {
+        setActualCompany(defaultCompany)
+      }
+    }
+  }, [actualCompany, allCompanies, setActualCompany])
+  const redirectToCompanyDashboard = () => {
+    if (actualCompany) {
+      const companyId = actualCompany.id // Suponiendo que tienes una propiedad 'id' en tu objeto actualCompany
+      router.push(`/dashboard/company/actualCompany/${companyId}`)
+    }
   }
 
+  console.log(actualCompany?.id)
+
   return (
-    <nav className="flex flex-shrink items-center justify-between text-white p-4 mb-2 bg-slate-800">
+    <nav className=" flex flex-shrink items-center justify-between  text-white p-4 mb-2 bg-slate-800">
       <div className="flex items-center">
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger>
             <div onMouseEnter={() => setIsOpen(true)}>
-              {allCompanies
+              {actualCompany ? (
+                <Link
+                  href={`/dashboard/company`}
+                  passHref
+                  className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px"
+                >
+                  <img
+                    className=" shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px"
+                    src={actualCompany.company_logo}
+                    style={{ width: '40px', height: '40px' }}
+                  />
+                </Link>
+              ) : (
+                allCompanies
+                  ?.filter(companyItem => companyItem.by_defect === true)
+                  .map(companyItem => (
+                    <Link
+                      key={companyItem.id}
+                      href={`/dashboard/company`}
+                      passHref
+                      className=" shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px "
+                      //className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px"
+                    >
+                      <img
+                        src={companyItem.company_logo}
+                        style={{ width: '40px', height: '40px' }}
+                        className="hover:cursor-pointer shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px"
+                      />
+                    </Link>
+                  ))
+              )}
+
+              {!actualCompany &&
+                !allCompanies?.find(
+                  companyItem => companyItem.by_defect === true,
+                ) && (
+                  <div>
+                    <Link
+                      href={`/dashboard/company/`}
+                      passHref
+                      className="shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px "
+                      //className="text-white flex items-center gap-2 p-1 bg-slate-500 border-2 rounded-md"
+                    >
+                      Empresa
+                    </Link>
+                  </div>
+                )}
+              {/* {allCompanies
                 ?.filter(companyItem => companyItem.by_defect === true)
                 .map(companyItem => (
                   <Link
@@ -66,12 +139,12 @@ export default function NavBar() {
                     Empresa
                   </Link>
                 </div>
-              )}
+              )} */}
             </div>
           </PopoverTrigger>
           <PopoverContent
             onMouseLeave={() => setIsOpen(false)}
-            className="bg-slate-800"
+            className="bg-slate-600 border-0"
           >
             <Link
               href="/dashboard/company/new"
@@ -85,17 +158,29 @@ export default function NavBar() {
               {allCompanies?.map(companyItems => (
                 <div
                   key={companyItems.id}
-                  onClick={() => openModal(companyItems)}
+                  onClick={() => {
+                    setActualCompany(companyItems)
+                    redirectToCompanyDashboard()
+                  }}
                   className="text-white gap-1 flex justify-center items-center w-20 h-20"
                 >
                   <img
-                    className="hover:cursor-pointer shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-md w-60 h-20"
+                    className="hover:cursor-pointer shadow-md text-white ml-auto items-center flex gap-0 bg-slate-500 border-2 rounded-full w-40 h-40"
                     src={companyItems.company_logo}
                     // width="60p"
                     // height="20p"
                     alt="Logo de la empresa"
-                    style={{ width: '78px', height: '40px' }}
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                    }}
                   />
+                  <span
+                    className="text-inline ml-auto"
+                    style={{ marginRight: '10px', float: 'left' }}
+                  >
+                    {companyItems.company_name}
+                  </span>
                 </div>
               ))}
             </div>
