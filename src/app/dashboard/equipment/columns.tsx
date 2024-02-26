@@ -276,14 +276,14 @@ export const columns: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Link
-                href={`/dashboard/equipment/action?action=view&domain=${equipment?.domain}`}
+                href={`/dashboard/equipment/action?action=view&id=${equipment?.id}`}
               >
                 Ver equipo
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Link
-                href={`/dashboard/equipment/action?action=edit&domain=${equipment?.domain}`}
+                href={`/dashboard/equipment/action?action=edit&id=${equipment?.id}`}
               >
                 Editar equipo
               </Link>
@@ -291,7 +291,7 @@ export const columns: ColumnDef<Colum>[] = [
             <DropdownMenuItem>
               <Button
                 variant="destructive"
-                onClick={() => handleOpenModal(equipment?.domain)}
+                onClick={() => handleOpenModal(equipment?.id)}
                 className="text-sm"
               >
                 Dar de baja equipo

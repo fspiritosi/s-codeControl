@@ -104,7 +104,7 @@ export default function Equipment() {
         </div>
         <div className="">
           <Link
-            href="/dashboard/equipment/action?action=new&domain=${equipment?.domain}"
+            href="/dashboard/equipment/action?action=new"
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
           >
             Agregar nuevo equipo
