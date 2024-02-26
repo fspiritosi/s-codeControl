@@ -22,146 +22,123 @@ interface State {
 }
 
 const setEmployeesToShow = (employees: any) => {
-  return employees?.map(({ employees }: any) => {
+
+   const employee = employees?.map(( employees : any) => {
     return {
-      full_name: employees.firstname + ' ' + employees.lastname,
-      email: employees.email,
-      cuil: employees.cuil,
-      document_number: employees.document_number,
-      hierarchical_position: employees.hierarchical_position.name,
-      company_position: employees.company_position,
-      normal_hours: employees.normal_hours,
-      type_of_contract: employees.type_of_contract,
-      allocated_to: employees.contractor_employee
-        .map(({ contractors }: any) => contractors.name)
-        .join(', '),
-      picture: employees.picture,
-      nationality: employees.nationality,
-      lastname: employees.lastname,
-      firstname: employees.firstname,
-      document_type: employees.document_type,
-      birthplace: employees.birthplace.name.trim(),
-      gender: employees.gender,
-      marital_status: employees.marital_status,
-      level_of_education: employees.level_of_education,
-      street: employees.street,
-      street_number: employees.street_number,
-      province: employees.province.name.trim(),
-      postal_code: employees.postal_code,
-      phone: employees.phone,
-      file: employees.file,
-      date_of_admission: employees.date_of_admission,
-      affiliate_status: employees.affiliate_status,
-      city: employees.city.name.trim(),
-      hierrical_position: employees.hierarchical_position.name,
-      workflow_diagram: employees.workflow_diagram.name,
-      contractor_employee: employees.contractor_employee
-        .map(({ contractors }: any) => contractors.id),
-      is_active: employees.is_active,
-      reason_for_termination: employees.reason_for_termination,
-      termination_date: employees.termination_date,
+      full_name: employees?.firstname + ' ' + employees?.lastname,
+      email: employees?.email,
+      cuil: employees?.cuil,
+      document_number: employees?.document_number,
+      hierarchical_position: employees?.hierarchical_position?.name,
+      company_position: employees?.company_position,
+      normal_hours: employees?.normal_hours,
+      type_of_contract: employees?.type_of_contract,
+      allocated_to: employees?.contractor_employee
+        ?.map(({ contractors }: any) => contractors?.name)
+        ?.join(', '),
+      picture: employees?.picture,
+      nationality: employees?.nationality,
+      lastname: employees?.lastname,
+      firstname: employees?.firstname,
+      document_type: employees?.document_type,
+      birthplace: employees?.birthplace?.name?.trim(),
+      gender: employees?.gender,
+      marital_status: employees?.marital_status,
+      level_of_education: employees?.level_of_education,
+      street: employees?.street,
+      street_number: employees?.street_number,
+      province: employees?.province?.name?.trim(),
+      postal_code: employees?.postal_code,
+      phone: employees?.phone,
+      file: employees?.file,
+      date_of_admission: employees?.date_of_admission,
+      affiliate_status: employees?.affiliate_status,
+      city: employees?.city?.name?.trim(),
+      hierrical_position: employees?.hierarchical_position?.name,
+      workflow_diagram: employees?.workflow_diagram?.name,
+      contractor_employee: employees?.contractor_employee
+        ?.map(({ contractors }: any) => contractors?.id),
+      is_active: employees?.is_active,
+      reason_for_termination: employees?.reason_for_termination,
+      termination_date: employees?.termination_date,
     }
+    
   })
+
+   return employee
 }
 
 export const useLoggedUserStore = create<State>((set, get) => {
   set({ isLoading: true })
   set({ showDeletedEmployees: false })
 
-  let selectedCompany:companyData[] 
-  const setInactiveEmployees = () => {
-    const company = get()?.actualCompany
-    const inactiveEmployees = company?.companies_employees.filter(({ employees }: any) => !employees.is_active)
-    const employeesToShow = setEmployeesToShow(inactiveEmployees)
+  let selectedCompany: companyData[]
+
+  const setInactiveEmployees = async() => {
+    const employeesToShow = await getEmployees(false)
     set({ employeesToShow })
   }
 
   // const [showDeletedEmployees, setShowDeletedEmployees] = useState(false)
+  const getEmployees = async (active:boolean) => {
+    let { data: employees, error } = await supabase
+    .from('employees')
+    .select(
+      `*, city (
+            name
+          ),
+          province(
+            name
+          ),
+          workflow_diagram(
+            name
+          ),
+          hierarchical_position(
+            name
+          ),
+          birthplace(
+            name
+          ),
+          contractor_employee(
+            contractors(
+              *
+            )
+          )`,
+    )
+    .eq('company_id', get()?.actualCompany?.id)
+    .eq('is_active', active)
 
-  const setActivesEmployees = () => {
-    const employees = get()?.employees
-    const employeesToShow = employees.filter((employee: any) => employee.is_active === true)
+    const employeesToShow = setEmployeesToShow(employees)
+    return employeesToShow
+  }
+
+  const setActivesEmployees = async () => {
+    const employeesToShow = await getEmployees(true)
     set({ employeesToShow })
   }
 
   const setActualCompany = (company: companyData) => {
     set({ actualCompany: company })
-
-    const activeEmployees = company?.companies_employees.filter(({ employees }: any) => employees.is_active)
-    const employees = setEmployeesToShow(activeEmployees)
-
-    set({ employees })
-    set({ employeesToShow: employees})
+    setActivesEmployees()
     set({ isLoading: false })
   }
 
-  const fetchCompanies = async () => {
-    let { data: company, error } = await supabase
-      .from('company')
-      .select(`
-        *,
-        city (
-          name
-        ),
-        province_id (
-          name
-        ),
-        companies_employees (
-          employees(
-            *,
-            city (
-              name
-            ),
-            province(
-              name
-            ),
-            workflow_diagram(
-              name
-            ),
-            hierarchical_position(
-              name
-            ),
-            birthplace(
-              name
-            ),
-            contractor_employee(
-              contractors(
-                *
-              )
-            )
-          )
-        )
-      `)
-      .eq('id', get()?.actualCompany?.id)
-
-    setActualCompany(company?.[0])
-  }
-
-  supabase.channel('custom-all-channel')
+  supabase
+    .channel('custom-all-channel')
     .on(
       'postgres_changes',
-      { event: '*', schema: 'public', table: 'employees' },
+      { event: '*', schema: 'public', table: 'company' },
       () => {
-        fetchCompanies()
-      }
+        howManyCompanies(get()?.profile?.[0]?.id || '')
+      },
     )
     .subscribe()
-
-    
- supabase.channel('custom-all-channel')
-.on(
-  'postgres_changes',
-  { event: '*', schema: 'public', table: 'company' },
-  () => {
-    howManyCompanies(get()?.profile?.[0]?.id || '')
-  }
-)
-.subscribe()
 
   const howManyCompanies = async (id: string) => {
     const { data, error } = await supabase
       .from('company')
-      .select(`
+      .select(
+        `
         *,
         city (
           name,
@@ -196,22 +173,22 @@ export const useLoggedUserStore = create<State>((set, get) => {
             )
           )
         )
-      `)
+      `,
+      )
       .eq('owner_id', id)
-
-      
 
     if (error) {
       console.error('Error al obtener el perfil:', error)
     } else {
       set({ allCompanies: data || [] })
-      selectedCompany = get()?.allCompanies?.filter(company => company.by_defect)
-      
+      selectedCompany = get()?.allCompanies?.filter(
+        company => company.by_defect,
+      )
 
       if (data.length > 1) {
         if (selectedCompany) {
           //
-         setActualCompany(selectedCompany[0])
+          setActualCompany(selectedCompany[0])
         } else {
           set({ showMultiplesCompaniesAlert: true })
         }
@@ -273,6 +250,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     setInactiveEmployees: () => setInactiveEmployees(),
     setActivesEmployees: () => setActivesEmployees(),
     showDeletedEmployees: get()?.showDeletedEmployees,
-    setShowDeletedEmployees: (showDeletedEmployees: boolean) => set({ showDeletedEmployees }),
+    setShowDeletedEmployees: (showDeletedEmployees: boolean) =>
+      set({ showDeletedEmployees }),
   }
 })
