@@ -51,6 +51,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { ArrowUpDown, CalendarIcon, MoreHorizontal } from 'lucide-react'
+import { DotsVerticalIcon } from '@radix-ui/react-icons'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -262,7 +263,7 @@ export const columns: ColumnDef<Colum>[] = [
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
               <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
+              <DotsVerticalIcon className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -274,12 +275,16 @@ export const columns: ColumnDef<Colum>[] = [
               Copiar Dominio
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Link href={`/dashboard/vehicles/view/${equipment?.domain}`}>
+              <Link
+                href={`/dashboard/equipment/action?action=view&domain=${equipment?.domain}`}
+              >
                 Ver equipo
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Link href={`/dashboard/vehicles/edit/${equipment?.domain}`}>
+              <Link
+                href={`/dashboard/equipment/action?action=edit&domain=${equipment?.domain}`}
+              >
                 Editar equipo
               </Link>
             </DropdownMenuItem>
