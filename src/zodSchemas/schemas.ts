@@ -155,7 +155,7 @@ export const accordionSchema = z.object({
   full_name: z.string().min(2, {}).optional(),
   lastname: z.string({required_error:'El apellido es requerido'}).min(2, {
     message: 'El apellido debe tener al menos 2 caracteres.',
-  }).max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),
+  }).max(15, { message: 'El lastname debe tener menos de 15 caracteres.' }),
   firstname: z.string({required_error:'El nombre es requerido'}).min(2, {
     message: 'El nombre debe tener al menos 2 caracteres.',
   }).max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),

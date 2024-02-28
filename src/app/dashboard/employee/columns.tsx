@@ -128,9 +128,13 @@ export const columns: ColumnDef<Colum>[] = [
       const setInactiveEmployees = useLoggedUserStore(
         state => state.setInactiveEmployees,
       )
+      const setActivesEmployees = useLoggedUserStore(
+        state => state.setActivesEmployees,
+      )
       const setShowDeletedEmployees = useLoggedUserStore(
         state => state.setShowDeletedEmployees,
       )
+      const employees = useLoggedUserStore(state => state.employeesToShow)
 
       const handleOpenIntegerModal = (id: string) => {
         setDocument(id)
