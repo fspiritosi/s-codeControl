@@ -1112,7 +1112,6 @@ export default function VehiclesForm2() {
                       <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
                         <ImageHander
                           labelInput="Subir foto"
-                          required={true}
                           desciption="Subir foto del vehículo"
                           handleImageChange={handleImageChange}
                           base64Image={base64Image} //nueva
