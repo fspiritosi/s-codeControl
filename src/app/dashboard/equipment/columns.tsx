@@ -3,7 +3,16 @@
  */
 
 'use client'
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
@@ -49,11 +58,11 @@ import { cn } from '@/lib/utils'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { es, id } from 'date-fns/locale'
 import { ArrowUpDown, CalendarIcon, MoreHorizontal } from 'lucide-react'
 import { DotsVerticalIcon } from '@radix-ui/react-icons'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../../../supabase/supabase'
@@ -80,6 +89,8 @@ type Colum = {
   year: string
   brand: string
   model: string
+  is_active: boolean
+  showInactive: boolean
 }
 
 export const columns: ColumnDef<Colum>[] = [
@@ -87,13 +98,38 @@ export const columns: ColumnDef<Colum>[] = [
     id: 'actions',
     cell: ({ row }: { row: any }) => {
       const [showModal, setShowModal] = useState(false)
-      // const [document, setDocument] = useState('')
+      const [integerModal, setIntegerModal] = useState(false)
       const [domain, setDomain] = useState('')
-      const user = row.original
+      //const user = row.original
+      const [showInactive, setShowInactive] = useState<boolean>(false)
+      const [showDeletedEquipment, setShowDeletedEquipment] = useState(false)
       const equipment = row.original
+
       const handleOpenModal = (id: string) => {
         setDomain(id)
         setShowModal(!showModal)
+      }
+
+      const fetchInactiveEquipment = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('vehicles')
+            .select('*')
+            .eq('is_active', false)
+
+          if (error) {
+            console.error(error)
+          }
+        } catch (error) {
+          console.error(error)
+        }
+      }
+      useEffect(() => {
+        fetchInactiveEquipment()
+      }, [])
+      const handleOpenIntegerModal = (id: string) => {
+        setDomain(id)
+        setIntegerModal(!integerModal)
       }
 
       const { errorTranslate } = useEdgeFunctions()
@@ -106,6 +142,36 @@ export const columns: ColumnDef<Colum>[] = [
       })
 
       const { toast } = useToast()
+
+      async function reintegerEquipment() {
+        try {
+          const { data, error } = await supabase
+            .from('vehicles')
+            .update({
+              is_active: true,
+              termination_date: null,
+              reason_for_termination: null,
+            })
+            .eq('id', equipment.id)
+            .select()
+
+          setIntegerModal(!integerModal)
+          //setInactive(data as any)
+          setShowDeletedEquipment(false)
+          toast({
+            variant: 'default',
+            title: 'Equipo reintegrado',
+            description: `El equipo ${equipment?.engine} ha sido reintegrado`,
+          })
+        } catch (error: any) {
+          const message = await errorTranslate(error?.message)
+          toast({
+            variant: 'destructive',
+            title: 'Error al reintegrar el equipo',
+            description: message,
+          })
+        }
+      }
 
       async function onSubmit(values: z.infer<typeof formSchema>) {
         const data = {
@@ -121,7 +187,7 @@ export const columns: ColumnDef<Colum>[] = [
               termination_date: data.termination_date,
               reason_for_termination: data.reason_for_termination,
             })
-            .eq('domain', equipment.domain)
+            .eq('id', equipment.id)
             .select()
 
           setShowModal(!showModal)
@@ -140,9 +206,35 @@ export const columns: ColumnDef<Colum>[] = [
           })
         }
       }
+      const handleToggleInactive = () => {
+        setShowInactive(!showInactive)
+      }
 
       return (
         <DropdownMenu>
+          {integerModal && (
+            <AlertDialog
+              defaultOpen
+              onOpenChange={() => setIntegerModal(!integerModal)}
+            >
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    ¿Estás completamente seguro?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {`Estás a punto de reintegrar al equipo ${equipment.id}, quien fue dado de baja por ${equipment.reason_for_termination} el día ${equipment.termination_date}. Al reintegrar al equipo, se borrarán estas razones. Si estás seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => reintegerEquipment()}>
+                    Continuar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
           {showModal && (
             <Dialog defaultOpen onOpenChange={() => setShowModal(!showModal)}>
               <DialogContent>
@@ -289,13 +381,23 @@ export const columns: ColumnDef<Colum>[] = [
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Button
-                variant="destructive"
-                onClick={() => handleOpenModal(equipment?.id)}
-                className="text-sm"
-              >
-                Dar de baja equipo
-              </Button>
+              {equipment.is_active ? (
+                <Button
+                  variant="destructive"
+                  onClick={() => handleOpenModal(equipment?.id)}
+                  className="text-sm"
+                >
+                  Dar de baja equipo
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  onClick={() => handleOpenIntegerModal(equipment.id)}
+                  className="text-sm"
+                >
+                  Reintegrar Equipo
+                </Button>
+              )}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -354,5 +456,9 @@ export const columns: ColumnDef<Colum>[] = [
   {
     accessorKey: 'picture',
     header: 'Foto',
+  },
+  {
+    accessorKey: 'is_active',
+    header: 'Ver equipos dados de baja',
   },
 ]
