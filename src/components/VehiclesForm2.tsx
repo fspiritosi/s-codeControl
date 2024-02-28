@@ -844,6 +844,7 @@ export default function VehiclesForm2() {
                   </FormLabel>
                   <Input
                     {...field}
+                    disabled={readOnly}
                     type="number"
                     className="input w-[250px]"
                     placeholder="Año"

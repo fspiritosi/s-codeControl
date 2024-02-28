@@ -90,7 +90,7 @@ type Colum = {
   brand: string
   model: string
   is_active: boolean
-  showDeletedEquipment: boolean
+  showInactive: boolean
 }
 
 export const columns: ColumnDef<Colum>[] = [
@@ -101,7 +101,7 @@ export const columns: ColumnDef<Colum>[] = [
       const [integerModal, setIntegerModal] = useState(false)
       const [domain, setDomain] = useState('')
       //const user = row.original
-      const [inactiveEquipment, setInactiveEquipment] = useState([])
+      const [showInactive, setShowInactive] = useState<boolean>(false)
       const [showDeletedEquipment, setShowDeletedEquipment] = useState(false)
       const equipment = row.original
 
@@ -119,11 +119,7 @@ export const columns: ColumnDef<Colum>[] = [
 
           if (error) {
             console.error(error)
-          } else {
-            setInactiveEquipment(data as any)
           }
-
-          console.log('Equipos inactivos actualizados:', data)
         } catch (error) {
           console.error(error)
         }
@@ -160,7 +156,7 @@ export const columns: ColumnDef<Colum>[] = [
             .select()
 
           setIntegerModal(!integerModal)
-          setInactiveEquipment(data as any)
+          //setInactive(data as any)
           setShowDeletedEquipment(false)
           toast({
             variant: 'default',
@@ -209,6 +205,9 @@ export const columns: ColumnDef<Colum>[] = [
             description: message,
           })
         }
+      }
+      const handleToggleInactive = () => {
+        setShowInactive(!showInactive)
       }
 
       return (

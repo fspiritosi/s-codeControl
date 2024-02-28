@@ -51,12 +51,15 @@ interface DataEquipmentProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
   data: TData[]
   allCompany: any[]
+  showInactive: boolean
+  setShowInactive: (showInactive: boolean) => void
 }
 
 export function DataEquipment<TData, TValue>({
   columns,
   data,
-  //setInactiveEquipment,
+  showInactive,
+  setShowInactive,
   allCompany,
 }: DataEquipmentProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
@@ -76,7 +79,7 @@ export function DataEquipment<TData, TValue>({
       return acc
     }, {}),
   )
-  const [showInactive, setShowInactive] = useState<boolean>(false)
+  //const [showInactive, setShowInactive] = useState<boolean>(false)
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const loader = useLoggedUserStore(state => state.isLoading)
   const filteredData = showInactive
@@ -85,7 +88,7 @@ export function DataEquipment<TData, TValue>({
   const allOptions = {
     type_of_vehicle: createOptions('type_of_vehicle'),
     types_of_vehicles: createOptions('types_of_vehicles'),
-    is_active: createOptions('is_active'),
+    //is_active: createOptions('is_active'),
     // domain: createOptions('domain'),
     // chassis: createOptions('chassis'),
     //engine: createOptions('engine'),
@@ -201,6 +204,9 @@ export function DataEquipment<TData, TValue>({
   const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
     {},
   )
+  // const handleToggleInactive = () => {
+  //   setShowInactive(!showInactive)
+  // }
 
   return (
     <div>
@@ -258,17 +264,25 @@ export function DataEquipment<TData, TValue>({
                   ) {
                     return null
                   }
-                  if (column.id === 'actions') {
+                  if (column.id === 'is_active') {
                     return (
-                      <DropdownMenuCheckboxItem
-                        key={column.id}
-                        className="capitalize  text-red-400"
-                        checked={showInactive}
-                        onChange={() => setShowInactive(!showInactive)}
-                        onCheckedChange={value => column.toggleVisibility(true)}
-                      >
-                        {column.columnDef.header}
-                      </DropdownMenuCheckboxItem>
+                      <>
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          className="capitalize  text-red-400"
+                          checked={showInactive}
+                          //onChange={() => setShowInactive(!showInactive)}
+                          onClick={() => setShowInactive(!showInactive)}
+                          onCheckedChange={value =>
+                            column.toggleVisibility(true)
+                          }
+                        >
+                          {column.columnDef.header}
+                        </DropdownMenuCheckboxItem>
+                        {/* <button onClick={() => setShowInactive(!showInactive)}>
+                          Ver equipos dados de baja
+                        </button> */}
+                      </>
                     )
                   }
                   return (
@@ -395,10 +409,14 @@ export function DataEquipment<TData, TValue>({
                   data-state={row.getIsSelected() && 'selected'}
                 >
                   {row.getVisibleCells().map(cell => {
-                    return (
+                    let is_active = (cell.row.original as any).is_active
+                    return (showInactive && !is_active) ||
+                      (!showInactive && is_active) ? (
                       <TableCell
                         key={cell.id}
-                        className="text-center whitespace-nowrap"
+                        className={`text-center whitespace-nowrap ${
+                          is_active ? '' : 'text-red-500'
+                        }`}
                       >
                         {cell.column.id === 'picture' ? (
                           <Link href={cell.getValue() as any} target="_blank">
@@ -414,12 +432,8 @@ export function DataEquipment<TData, TValue>({
                             cell.getContext(),
                           )
                         )}
-                        {/* {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )} */}
                       </TableCell>
-                    )
+                    ) : null
                   })}
                 </TableRow>
               ))

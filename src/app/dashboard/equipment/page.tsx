@@ -13,13 +13,15 @@ export default function Equipment() {
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const useSearch = useSearchParams()
   const type = useSearch.get('type')
-  const [inactiveEquipment, setInactiveEquipment] = useState([])
+  const [showInactive, setShowInactive] = useState(false)
+
+  const handleToggleInactive = () => {
+    setShowInactive(!showInactive)
+  }
   useEffect(() => {
-    // Aquí puedes realizar operaciones basadas en el valor de 'type'
     fetchVehicles()
-    console.log('Tipo de filtrado:', type)
   }, [type])
-  console.log('este es type: ', type)
+
   const fetchVehicles = async () => {
     try {
       if (!actualCompany?.id) {
@@ -116,6 +118,8 @@ export default function Equipment() {
           columns={columns}
           data={vehiclesData || []}
           allCompany={allCompany}
+          showInactive={showInactive}
+          setShowInactive={setShowInactive}
         />
       </div>
     </main>
