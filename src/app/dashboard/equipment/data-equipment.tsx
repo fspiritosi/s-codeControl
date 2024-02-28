@@ -36,6 +36,7 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
@@ -44,16 +45,21 @@ import { useRouter } from 'next/navigation'
 import { Url } from 'next/dist/shared/lib/router/router'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { DataTable } from '../employee/data-table'
+import { useSidebarOpen } from '@/store/sidebar'
 
 interface DataEquipmentProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
   data: TData[]
   allCompany: any[]
+  showInactive: boolean
+  setShowInactive: (showInactive: boolean) => void
 }
 
 export function DataEquipment<TData, TValue>({
   columns,
   data,
+  showInactive,
+  setShowInactive,
   allCompany,
 }: DataEquipmentProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
@@ -73,12 +79,16 @@ export function DataEquipment<TData, TValue>({
       return acc
     }, {}),
   )
+  //const [showInactive, setShowInactive] = useState<boolean>(false)
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const loader = useLoggedUserStore(state => state.isLoading)
-
+  const filteredData = showInactive
+    ? data.filter((item: any) => item.is_active === false)
+    : data
   const allOptions = {
     type_of_vehicle: createOptions('type_of_vehicle'),
     types_of_vehicles: createOptions('types_of_vehicles'),
+    //is_active: createOptions('is_active'),
     // domain: createOptions('domain'),
     // chassis: createOptions('chassis'),
     //engine: createOptions('engine'),
@@ -166,16 +176,16 @@ export function DataEquipment<TData, TValue>({
       columnFilters,
     },
   })
+  const { expanded } = useSidebarOpen()
+  const totalWidth = `calc(100vw - ${expanded ? '296px' : '167px'})`
 
-  const totalWidth = 'calc(100vw - 297px)'
-
-  const router = useRouter()
+  //const router = useRouter()
 
   const handleClearFilters = () => {
     table.getAllColumns().forEach(column => {
       column.setFilterValue('')
     })
-    router.push('/dashboard/equipment')
+    //router.push('/dashboard/equipment')
 
     setSelectValues({
       types_of_vehicles: 'Todos',
@@ -190,10 +200,13 @@ export function DataEquipment<TData, TValue>({
       model: 'Todos',
     })
   }
-
+  const maxRows = ['20', '40', '60', '80', '100']
   const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
     {},
   )
+  // const handleToggleInactive = () => {
+  //   setShowInactive(!showInactive)
+  // }
 
   return (
     <div>
@@ -215,40 +228,79 @@ export function DataEquipment<TData, TValue>({
           Limpiar filtros
         </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columnas
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="max-h-[50dvh] overflow-y-auto"
-          >
-            {table
-              .getAllColumns()
-              .filter(column => column.getCanHide())
-              .map(column => {
-                if (
-                  column.id === 'actions' ||
-                  typeof column.columnDef.header !== 'string'
-                ) {
-                  return null
-                }
-
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={value => column.toggleVisibility(!!value)}
-                  >
-                    {column.columnDef.header}
-                  </DropdownMenuCheckboxItem>
-                )
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="w-full flex justify-end gap-2">
+          <Select onValueChange={e => table.setPageSize(Number(e))}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Cantidad de filas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Filas por página</SelectLabel>
+                {maxRows.map((option: string) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="ml-auto">
+                Columnas
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="max-h-[50dvh] overflow-y-auto"
+            >
+              {table
+                .getAllColumns()
+                .filter(column => column.getCanHide())
+                .map(column => {
+                  if (
+                    column.id === 'actions' ||
+                    typeof column.columnDef.header !== 'string'
+                  ) {
+                    return null
+                  }
+                  if (column.id === 'is_active') {
+                    return (
+                      <>
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          className="capitalize  text-red-400"
+                          checked={showInactive}
+                          //onChange={() => setShowInactive(!showInactive)}
+                          onClick={() => setShowInactive(!showInactive)}
+                          onCheckedChange={value =>
+                            column.toggleVisibility(true)
+                          }
+                        >
+                          {column.columnDef.header}
+                        </DropdownMenuCheckboxItem>
+                        {/* <button onClick={() => setShowInactive(!showInactive)}>
+                          Ver equipos dados de baja
+                        </button> */}
+                      </>
+                    )
+                  }
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={value =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {column.columnDef.header}
+                    </DropdownMenuCheckboxItem>
+                  )
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       <div
         className="rounded-md border"
@@ -357,10 +409,14 @@ export function DataEquipment<TData, TValue>({
                   data-state={row.getIsSelected() && 'selected'}
                 >
                   {row.getVisibleCells().map(cell => {
-                    return (
+                    let is_active = (cell.row.original as any).is_active
+                    return (showInactive && !is_active) ||
+                      (!showInactive && is_active) ? (
                       <TableCell
                         key={cell.id}
-                        className="text-center whitespace-nowrap"
+                        className={`text-center whitespace-nowrap ${
+                          is_active ? '' : 'text-red-500'
+                        }`}
                       >
                         {cell.column.id === 'picture' ? (
                           <Link href={cell.getValue() as any} target="_blank">
@@ -376,12 +432,8 @@ export function DataEquipment<TData, TValue>({
                             cell.getContext(),
                           )
                         )}
-                        {/* {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )} */}
                       </TableCell>
-                    )
+                    ) : null
                   })}
                 </TableRow>
               ))
