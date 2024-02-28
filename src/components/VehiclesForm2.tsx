@@ -23,6 +23,9 @@ import {
 } from '@radix-ui/react-icons'
 import { ChangeEvent, useEffect, useState } from 'react'
 
+import { useImageUpload } from '@/hooks/useUploadImage'
+import { useLoggedUserStore } from '@/store/loggedUser'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../supabase/supabase'
@@ -36,21 +39,9 @@ import {
   FormMessage,
 } from '../components/ui/form'
 import { Input } from '../components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../components/ui/select'
 import { useToast } from '../components/ui/use-toast'
-import { ExecOptionsWithStringEncoding } from 'child_process'
-import { isUndefined } from 'util'
-import { useSearchParams } from 'next/navigation'
-import { useRouter, usePathname } from 'next/navigation'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { useImageUpload } from '@/hooks/useUploadImage'
 import { ImageHander } from './ImageHandler'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 type VehicleType = {
   year: number
   engine: string
@@ -540,23 +531,45 @@ export default function VehiclesForm2() {
   return (
     <section className={`${accion === 'new' ? 'w-full' : 'w-[75%]'} `}>
       <header className="flex justify-between gap-4 mt-6">
-        <div>
-          <h2 className="text-4xl">
-            {accion === 'edit'
-              ? 'Editar equipo'
-              : accion === 'view'
-                ? `Equipo ${vehicle?.type_of_vehicle} ${vehicle?.intern_number}`
-                : 'Agregar equipo'}
-          </h2>
-          <p>
-            {accion === 'edit' || accion === 'view'
-              ? `${
-                  readOnly
-                    ? 'Vista previa de equipo'
-                    : ' En esta vista puedes editar los datos del equipo'
-                }`
-              : 'Agrega un nuevo equipo'}
-          </p>
+        <div className="mb-8">
+          {accion === 'edit' || accion === 'view' ? (
+            <div className="flex items-center gap-2">
+              <Avatar className="h-[13vh] w-[13vh]">
+                <AvatarImage
+                  className="object-cover border-2 border-black/30 rounded-full"
+                  src={
+                    vehicle?.picture ||
+                    'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80'
+                  }
+                  alt="Imagen del empleado"
+                />
+                <AvatarFallback>CC</AvatarFallback>
+              </Avatar>
+              <p className="text-2xl">
+                Tipo de equipo: {vehicle?.type.name} <br />
+                Numero interno: {vehicle?.intern_number}
+              </p>
+            </div>
+          ) : (
+            <>
+              <h2 className="text-4xl">
+                {accion === 'edit'
+                  ? 'Editar equipo'
+                  : accion === 'view'
+                    ? `Equipo ${vehicle?.type_of_vehicle} ${vehicle?.intern_number}`
+                    : 'Agregar equipo'}
+              </h2>
+              <p>
+                {accion === 'edit' || accion === 'view'
+                  ? `${
+                      readOnly
+                        ? 'Vista previa de equipo'
+                        : ' En esta vista puedes editar los datos del equipo'
+                    }`
+                  : 'Agrega un nuevo equipo'}
+              </p>
+            </>
+          )}
         </div>
         <div>
           {readOnly && accion === 'view' && (
@@ -566,7 +579,7 @@ export default function VehiclesForm2() {
                 setReadOnly(false)
               }}
             >
-              Habiliar edicion
+              Habiliar edición
             </Button>
           )}
         </div>
@@ -1099,7 +1112,6 @@ export default function VehiclesForm2() {
                       <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
                         <ImageHander
                           labelInput="Subir foto"
-                          required={true}
                           desciption="Subir foto del vehículo"
                           handleImageChange={handleImageChange}
                           base64Image={base64Image} //nueva

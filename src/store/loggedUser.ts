@@ -115,6 +115,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
   const setActivesEmployees = async () => {
     const employeesToShow = await getEmployees(true)
     set({ employeesToShow })
+    set({ employees:employeesToShow })
   }
 
   const setActualCompany = (company: companyData) => {
