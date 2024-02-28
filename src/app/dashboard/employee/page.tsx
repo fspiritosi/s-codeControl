@@ -36,19 +36,17 @@ const EmployeePage = () => {
 
   return (
     <main className="flex flex-col ">
-      <header className="flex gap-4 mt-6 justify-between items-center">
+      <header className="flex gap-4 mt-6 justify-between items-center flex-wrap">
         <div>
-          <h2 className="text-4xl">Empleados</h2>
+          <h2 className="text-4xl mb-3">Empleados</h2>
           <p>Aquí se muestra una tabla con los empleados registrados:</p>
         </div>
-        <div className="">
           <Link
             href="/dashboard/employee/action?action=new"
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
           >
             Agregar nuevo empleado
           </Link>
-        </div>
       </header>
 
       <DataTable
