@@ -13,7 +13,7 @@ export default function Equipment() {
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const useSearch = useSearchParams()
   const type = useSearch.get('type')
-
+  const [inactiveEquipment, setInactiveEquipment] = useState([])
   useEffect(() => {
     // Aquí puedes realizar operaciones basadas en el valor de 'type'
     fetchVehicles()
@@ -35,7 +35,7 @@ export default function Equipment() {
         brand_vehicles(name),
         model_vehicles(name)`,
           )
-          .eq('is_active', true)
+          //.eq('is_active', true)
           .eq('company_id', actualCompany?.id)
           .eq('type_of_vehicle', type)
 
@@ -59,7 +59,7 @@ export default function Equipment() {
         brand_vehicles(name),
         model_vehicles(name)`,
           )
-          .eq('is_active', true)
+          //.eq('is_active', true)
           .eq('company_id', actualCompany?.id)
 
         if (error) {

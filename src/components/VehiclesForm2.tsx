@@ -47,7 +47,7 @@ import { useToast } from '../components/ui/use-toast'
 import { ExecOptionsWithStringEncoding } from 'child_process'
 import { isUndefined } from 'util'
 import { useSearchParams } from 'next/navigation'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { useImageUpload } from '@/hooks/useUploadImage'
 import { ImageHander } from './ImageHandler'
@@ -96,6 +96,7 @@ export default function VehiclesForm2() {
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const [vehicle, setVehicle] = useState<VehicleType | null>(null)
   const { toast } = useToast()
+  const pathname = usePathname()
   const [data, setData] = useState<dataType>({
     tipe_of_vehicles: [],
     brand: [],
@@ -262,7 +263,10 @@ export default function VehiclesForm2() {
                 .select('*')
                 .eq('domain', domain.toUpperCase())
 
-              if (vehicles?.[0]) {
+              if (
+                vehicles?.[0] &&
+                pathname === '/dashboard/equipment/action?action=new'
+              ) {
                 return false
               } else {
                 return true
@@ -489,12 +493,38 @@ export default function VehiclesForm2() {
           engine: engine,
           chassis: chassis,
           serie: serie,
-          domain: domain,
+          domain: domain?.toUpperCase(),
           intern_number: intern_number,
           picture: picture,
         })
         .eq('id', vehicle?.id)
         .select()
+
+      const id = vehicle?.id
+      const fileExtension = imageFile?.name.split('.').pop()
+      if (imageFile) {
+        try {
+          const renamedFile = new File([imageFile], `${id}.${fileExtension}`, {
+            type: `image/${fileExtension}`,
+          })
+          await uploadImage(renamedFile, 'vehicle_photos')
+
+          try {
+            const vehicleImage = `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/vehicle_photos/${id}.${fileExtension}`
+            const { data, error } = await supabase
+              .from('vehicles')
+              .update({ picture: vehicleImage })
+              .eq('id', id)
+          } catch (error) {}
+        } catch (error: any) {
+          toast({
+            variant: 'destructive',
+            title: 'Error al subir la imagen',
+            description:
+              'No pudimos registrar la imagen, pero el ususario fue registrado correctamente',
+          })
+        }
+      }
 
       toast({
         title: 'Vehículo editado',
@@ -564,7 +594,7 @@ export default function VehiclesForm2() {
                           disabled={readOnly}
                           variant="outline"
                           role="combobox"
-                          value={field.value}
+                          value={vehicle?.type_of_vehicle}
                           className={cn(
                             'w-[250px] justify-between',
                             !field.value && 'text-muted-foreground',
@@ -584,12 +614,6 @@ export default function VehiclesForm2() {
                           placeholder="Buscar tipo de vehículo..."
                           className="h-9"
                           //value={field.value}
-
-                          value={
-                            vehicle && vehicle.type_of_vehicle === 'Vehículos'
-                              ? field.value
-                              : 'Otros'
-                          }
                         />
                         <CommandEmpty>
                           No se encontro ningun resultado
@@ -662,7 +686,7 @@ export default function VehiclesForm2() {
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[250px] p-0">
+                    <PopoverContent className="w-[250px] p-0 max-h-[200px] overflow-y-auto">
                       <Command>
                         <CommandInput
                           disabled={readOnly}
@@ -745,7 +769,7 @@ export default function VehiclesForm2() {
                             ? vehicleModels?.find(
                                 option => option.id === vehicle.model,
                               )?.name || vehicle?.model
-                            : 'Seleccionar marca'}
+                            : 'Seleccionar modelo'}
 
                           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
@@ -1078,6 +1102,7 @@ export default function VehiclesForm2() {
                           desciption="Subir foto del vehículo"
                           handleImageChange={handleImageChange}
                           base64Image={base64Image} //nueva
+                          disabled={readOnly}
                           inputStyle={{
                             width: '400px',
                             maxWidth: '300px',

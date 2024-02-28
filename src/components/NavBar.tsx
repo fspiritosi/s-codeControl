@@ -162,24 +162,28 @@ export default function NavBar() {
                     setActualCompany(companyItems)
                     redirectToCompanyDashboard()
                   }}
-                  className="text-white gap-1 flex justify-center items-center w-20 h-20"
+                  className="text-white gap-1 flex justify-left items-center w-20 h-20"
+                  style={{ whiteSpace: 'nowrap' }}
                 >
                   <img
                     className="hover:cursor-pointer shadow-md text-white ml-auto items-center flex gap-0 bg-slate-500 border-2 rounded-full w-40 h-40"
                     src={companyItems.company_logo}
-                    // width="60p"
-                    // height="20p"
                     alt="Logo de la empresa"
                     style={{
                       width: '40px',
                       height: '40px',
                     }}
                   />
+
                   <span
-                    className="text-inline ml-auto"
-                    style={{ marginRight: '10px', float: 'left' }}
+                    className="hover:cursor-pointer  hover:text-sky-600 text-inline ml-auto"
+                    style={{
+                      marginLeft: '5px',
+                      marginRight: '5px',
+                      float: 'right',
+                    }}
                   >
-                    {companyItems.company_name}
+                    {companyItems.company_name.toUpperCase()}
                   </span>
                 </div>
               ))}
@@ -203,7 +207,7 @@ export default function NavBar() {
               <AvatarFallback>CN</AvatarFallback>
             </Avatar>
           </PopoverTrigger>
-          <PopoverContent className="bg-slate-800">
+          <PopoverContent className="bg-slate-600 border-0">
             <LogOutButton />
           </PopoverContent>
         </Popover>
