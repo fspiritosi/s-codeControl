@@ -1,5 +1,5 @@
 import { DocumentationDrawer } from '@/components/DocumentationDrawer'
-import EmployeeAccordionCopy from '@/components/EmployeeAccordionCopy'
+import EmployeeAccordionCopy from '@/components/EmployeeAccordion'
 
 export default function EmployeeFormAction({
   searchParams,

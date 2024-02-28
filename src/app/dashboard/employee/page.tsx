@@ -1,6 +1,7 @@
 'use client'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import Link from 'next/link'
+import { supabase } from '../../../../supabase/supabase'
 import { columns } from './columns'
 import { DataTable } from './data-table'
 
@@ -18,10 +19,23 @@ const EmployeePage = () => {
   const setShowDeletedEmployees = useLoggedUserStore(
     state => state.setShowDeletedEmployees,
   )
+  supabase
+    .channel('custom-all-channel')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'employees' },
+      () => {
+        if (showDeletedEmployees) {
+          setInactiveEmployees()
+        } else {
+          setActivesEmployees()
+        }
+      },
+    )
+    .subscribe()
 
   return (
     <main className="flex flex-col ">
-
       <header className="flex gap-4 mt-6 justify-between items-center">
         <div>
           <h2 className="text-4xl">Empleados</h2>

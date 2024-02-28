@@ -56,7 +56,7 @@ export default function NavBar() {
     }
   }
 
-  console.log(actualCompany?.id)
+  // console.log(actualCompany?.id)
 
   return (
     <nav className=" flex flex-shrink items-center justify-between  text-white p-4 mb-2 bg-slate-800">
