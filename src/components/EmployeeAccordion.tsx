@@ -57,13 +57,14 @@ import { ChangeEvent, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { ImageHander } from './ImageHandler'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 
 type Province = {
   id: number
   name: string
 }
 
-export default function EmployeeAccordionCopy() {
+export default function EmployeeAccordion() {
   const searchParams = useSearchParams()
   const document = searchParams.get('document')
   const [accion, setAccion] = useState(searchParams.get('action'))
@@ -71,6 +72,7 @@ export default function EmployeeAccordionCopy() {
   const [user, setUser] = useState(
     employees?.find((user: any) => user.document_number === document),
   )
+
   const { uploadImage } = useImageUpload()
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [base64Image, setBase64Image] = useState<string>('')
@@ -179,14 +181,10 @@ export default function EmployeeAccordionCopy() {
     if (JSON.stringify(foundUser) !== JSON.stringify(user)) {
       setUser(foundUser)
 
-      let fecha = foundUser?.date_of_admission
-      let partes = fecha?.split('-')
-      let nuevaFecha = `${partes?.[2]}/${partes?.[1]}/${partes?.[0]}`
-
       form.reset({
         ...foundUser,
         allocated_to: foundUser?.contractor_employee,
-        date_of_admission: new Date(nuevaFecha),
+        date_of_admission: foundUser?.date_of_admission,
         normal_hours: String(foundUser?.normal_hours),
       })
     }
@@ -507,21 +505,39 @@ export default function EmployeeAccordionCopy() {
     <section className={`${accion === 'new' ? 'w-full' : 'w-[75%]'} `}>
       <header className="flex justify-between gap-4 mt-6">
         <div>
-          <h2 className="text-4xl">
-            {accion === 'edit'
-              ? 'Editar empleado'
-              : accion === 'view'
-                ? `Empleado ${user?.firstname} ${user?.lastname}`
-                : 'Agregar empleado'}
-          </h2>
-          <p>
+          {accion === 'edit' || accion === 'view' ? (
+            <div className="flex items-center gap-2">
+              <Avatar className="h-[13vh] w-[13vh]">
+                <AvatarImage
+                  className="object-cover border-2 border-black/30 rounded-full"
+                  src={
+                    user?.picture ||
+                    'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80'
+                  }
+                  alt="Imagen del empleado"
+                />
+                <AvatarFallback>{`${user?.firstname[0] || 'C'}${
+                  user?.lastname[0] || 'C'
+                }`}</AvatarFallback>
+              </Avatar>
+              <h2 className="text-5xl">
+                {`${user?.firstname || 'cargando...'}
+                ${user?.lastname || ''}`}
+              </h2>
+            </div>
+          ) : (
+            <h2 className="text-4xl">
+              {accion === 'edit' ? 'Editar empleado' : 'Agregar empleado'}
+            </h2>
+          )}
+          <p className="mt-3">
             {accion === 'edit' || accion === 'view'
               ? `${
                   readOnly
-                    ? 'Vista previa de empleado'
-                    : ' En esta vista puedes editar los datos del empleado'
+                    ? 'Esta es una vista previa de los datos del empleado. Puedes ver y editar la información del empleado en esta sección. Si deseas realizar cambios, habilita la edición haciendo clic en el botón "Habilitar edición".'
+                    : 'Aquí puedes editar la información del empleado'
                 }`
-              : 'Agrega un nuevo empleado'}
+              : 'Completa los datos del nuevo empleado'}
           </p>
         </div>
         <div>
@@ -532,7 +548,7 @@ export default function EmployeeAccordionCopy() {
                 setReadOnly(false)
               }}
             >
-              Habiliar edicion
+              Habiliar edición
             </Button>
           )}
         </div>
@@ -615,6 +631,7 @@ export default function EmployeeAccordionCopy() {
                                   </FormLabel>
 
                                   <SelectWithData
+                                    disabled={readOnly}
                                     placeholder={data.placeholder}
                                     options={data.options}
                                     onChange={field.onChange}
@@ -698,6 +715,7 @@ export default function EmployeeAccordionCopy() {
                                   </FormLabel>
                                   <FormControl>
                                     <SelectWithData
+                                      disabled={readOnly}
                                       placeholder={data.placeholder}
                                       field={{ ...field }}
                                       options={data.options}
@@ -786,7 +804,10 @@ export default function EmployeeAccordionCopy() {
                             render={({ field }) => {
                               const value = field.value
 
-                              if (value === 'undefined/undefined/undefined') {
+                              if (
+                                value === 'undefined/undefined/undefined' ||
+                                value === 'Invalid Date'
+                              ) {
                                 field.value = ''
                               }
 
@@ -800,6 +821,7 @@ export default function EmployeeAccordionCopy() {
                                     <PopoverTrigger asChild>
                                       <FormControl>
                                         <Button
+                                          disabled={readOnly}
                                           variant={'outline'}
                                           className={cn(
                                             'w-[300px] pl-3 text-left font-normal',
@@ -863,6 +885,7 @@ export default function EmployeeAccordionCopy() {
                               name={data.name as names}
                               render={({ field }) => (
                                 <CheckboxDefaultValues
+                                  disabled={readOnly}
                                   options={data.options}
                                   required={true}
                                   field={field}
@@ -890,6 +913,7 @@ export default function EmployeeAccordionCopy() {
                                   </FormLabel>
                                   <FormControl>
                                     <SelectWithData
+                                      disabled={readOnly}
                                       placeholder={data.placeholder}
                                       isMultiple={isMultiple}
                                       options={data.options}
