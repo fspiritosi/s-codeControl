@@ -14,21 +14,21 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { useImageUpload } from '@/hooks/useUploadImage'
 import { cn } from '@/lib/utils'
-import { useLoggedUserStore } from '@/store/loggedUser'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   CaretSortIcon,
   CheckIcon,
   PlusCircledIcon,
 } from '@radix-ui/react-icons'
-import { useRouter } from 'next/navigation'
 import { ChangeEvent, useEffect, useState } from 'react'
+
+import { useImageUpload } from '@/hooks/useUploadImage'
+import { useLoggedUserStore } from '@/store/loggedUser'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../supabase/supabase'
-import { ImageHander } from './ImageHandler'
 import { Modal } from './Modal'
 import {
   FormControl,
@@ -40,7 +40,25 @@ import {
 } from './ui/form'
 import { Input } from './ui/input'
 import { useToast } from './ui/use-toast'
-
+import { ImageHander } from './ImageHandler'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+type VehicleType = {
+  year: number
+  engine: string
+  chassis: string
+  serie: string
+  domain: string
+  intern_number: string
+  picture: string
+  type_of_vehicle: string
+  types_of_vehicles: { name: string }
+  brand_vehicles: { name: string }
+  brand: string
+  model_vehicles: { name: string }
+  model: string
+  type: { name: string }
+  id: string
+}
 type generic = {
   name: string
   id: string
@@ -62,27 +80,94 @@ type dataType = {
   }[]
 }
 
-export const VehiclesForm = () => {
-  const { toast } = useToast()
+export default function VehiclesForm2() {
+  const searchParams = useSearchParams()
+  const id = searchParams.get('id')
+  const [accion, setAccion] = useState(searchParams.get('action'))
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
-
+  const [vehicle, setVehicle] = useState<VehicleType | null>(null)
+  const { toast } = useToast()
+  const pathname = usePathname()
   const [data, setData] = useState<dataType>({
     tipe_of_vehicles: [],
     brand: [],
     models: [],
     types: [],
   })
+  const [isRequired, setIsRequired] = useState(false)
 
+  const preloadFormData = (vehicleData: VehicleType) => {
+    form.setValue('type_of_vehicle', vehicleData.type_of_vehicle.toString())
+    form.setValue('brand', vehicle?.brand)
+    form.setValue('model', vehicle?.model)
+    form.setValue('year', Number(vehicleData.year))
+    form.setValue('engine', vehicleData.engine)
+    form.setValue('chassis', vehicleData.chassis)
+    form.setValue('serie', vehicleData.serie)
+    form.setValue('domain', vehicleData.domain)
+    form.setValue('intern_number', vehicleData.intern_number)
+    form.setValue('picture', vehicleData.picture)
+    form.setValue('type', vehicleData.type.name)
+  }
+  useEffect(() => {
+    if (vehicle) {
+      preloadFormData(vehicle)
+    }
+  }, [vehicle])
+
+  useEffect(() => {
+    if (vehicle && vehicle.type_of_vehicle === 'Vehículos') {
+      setHideInput(true)
+    }
+    if (!vehicle) {
+      setHideInput(false)
+    }
+  }, [vehicle])
+
+  useEffect(() => {
+    const fetchVehicleData = async () => {
+      try {
+        const { data: vehicleData, error } = await supabase
+          .from('vehicles')
+          .select(
+            '*, brand_vehicles(name), model_vehicles(name),types_of_vehicles(name),type(name)',
+          )
+          .eq('id', id)
+        //.single()
+
+        if (error) {
+          console.error('Error al obtener los datos del vehículo:', error)
+        } else {
+          const transformedData = vehicleData.map((item: VehicleType) => ({
+            ...item,
+            type_of_vehicle: item.types_of_vehicles.name,
+            brand: item.brand_vehicles.name,
+            model: item.model_vehicles.name,
+            type: item.type,
+          }))
+
+          setVehicle(transformedData[0])
+        }
+      } catch (error) {
+        console.error('Error al obtener los datos del vehículo:', error)
+      }
+    }
+
+    fetchVehicleData()
+  }, [id])
   const router = useRouter()
   const [hideInput, setHideInput] = useState(false)
-
   const vehicleSchema = z.object({
-    brand: z.string({
-      required_error: 'La marca es requerida',
-    }),
-    model: z.string({
-      required_error: 'El modelo es requerido',
-    }),
+    brand: z
+      .string({
+        required_error: 'La marca es requerida',
+      })
+      .optional(),
+    model: z
+      .string({
+        required_error: 'El modelo es requerido',
+      })
+      .optional(),
     year: z
       .number({ required_error: 'El año es requerido' })
       .min(1900, {
@@ -90,7 +175,8 @@ export const VehiclesForm = () => {
       })
       .max(2023, {
         message: 'El año debe ser menor a 2023',
-      }),
+      })
+      .optional(),
     engine: z
       .string({
         required_error: 'El motor es requerido',
@@ -99,6 +185,7 @@ export const VehiclesForm = () => {
         message: 'El motor debe tener al menos 2 caracteres.',
       })
       .max(15, { message: 'El motor debe tener menos de 15 caracteres.' }),
+
     type_of_vehicle: z.string({ required_error: 'El tipo es requerido' }),
     chassis: hideInput
       ? z
@@ -125,10 +212,14 @@ export const VehiclesForm = () => {
               const year = form.getValues('year')
 
               const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/
-              if (year < 2016) {
-                return oldRegex.test(e)
+              if (year !== undefined) {
+                if (year < 2016) {
+                  return oldRegex.test(e)
+                } else {
+                  return true
+                }
               } else {
-                return true
+                return 0
               }
             },
             {
@@ -141,10 +232,15 @@ export const VehiclesForm = () => {
               const year = form.getValues('year')
 
               const newRegex = /^[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$/
-              if (year >= 2016) {
-                return newRegex.test(e)
+              if (year !== undefined) {
+                // Aquí puedes usar year de manera segura
+                if (year >= 2016) {
+                  return newRegex.test(e)
+                } else {
+                  return true
+                }
               } else {
-                return true
+                return 0
               }
             },
             {
@@ -158,7 +254,10 @@ export const VehiclesForm = () => {
                 .select('*')
                 .eq('domain', domain.toUpperCase())
 
-              if (vehicles?.[0]) {
+              if (
+                vehicles?.[0] &&
+                pathname === '/dashboard/equipment/action?action=new'
+              ) {
                 return false
               } else {
                 return true
@@ -192,6 +291,7 @@ export const VehiclesForm = () => {
       ? z.string().optional()
       : z.string({ required_error: 'El tipo es requerido' }),
   })
+  const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false)
 
   const fetchData = async () => {
     let { data: types_of_vehicles } = await supabase
@@ -201,9 +301,7 @@ export const VehiclesForm = () => {
     let { data: brand_vehicles } = await supabase
       .from('brand_vehicles')
       .select('*')
-
     let { data: type, error } = await supabase.from('type').select('*')
-
     setData({
       ...data,
       tipe_of_vehicles: types_of_vehicles as generic[],
@@ -250,13 +348,13 @@ export const VehiclesForm = () => {
   const form = useForm<z.infer<typeof vehicleSchema>>({
     resolver: zodResolver(vehicleSchema),
     defaultValues: {
-      year: 0,
-      engine: '',
-      chassis: '',
-      serie: '',
-      domain: '',
-      intern_number: '',
-      picture: '',
+      year: vehicle?.year || undefined,
+      engine: vehicle?.engine || '',
+      chassis: vehicle?.chassis || '',
+      serie: vehicle?.serie || '',
+      domain: vehicle?.domain || '',
+      intern_number: vehicle?.intern_number || '',
+      picture: vehicle?.picture || '',
     },
   })
 
@@ -273,7 +371,7 @@ export const VehiclesForm = () => {
   }
 
   // 2. Define a submit handler.
-  async function onSubmit(values: z.infer<typeof vehicleSchema>) {
+  async function onCreate(values: z.infer<typeof vehicleSchema>) {
     const { type_of_vehicle, brand, model, domain } = values
     //const companyId = actualCompany?.id
     try {
@@ -338,11 +436,9 @@ export const VehiclesForm = () => {
       })
     }
   }
-
   const { uploadImage } = useImageUpload()
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [base64Image, setBase64Image] = useState<string>('')
-  // const [disabled, setDisabled] = useState<boolean>(true)
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -360,11 +456,139 @@ export const VehiclesForm = () => {
     }
   }
 
+  async function onUpdate(values: z.infer<typeof vehicleSchema>) {
+    const {
+      type_of_vehicle,
+      brand,
+      model,
+      year,
+      engine,
+      chassis,
+      serie,
+      domain,
+      intern_number,
+      picture,
+      type,
+    } = values
+
+    try {
+      await supabase
+        .from('vehicles')
+        .update({
+          type_of_vehicle: data.tipe_of_vehicles.find(
+            e => e.name === type_of_vehicle,
+          )?.id,
+          brand: data.brand.find(e => e.label === brand)?.id,
+          model: data.models.find(e => e.name === model)?.id,
+          year: year,
+          engine: engine,
+          chassis: chassis,
+          serie: serie,
+          domain: domain?.toUpperCase(),
+          intern_number: intern_number,
+          picture: picture,
+        })
+        .eq('id', vehicle?.id)
+        .select()
+
+      const id = vehicle?.id
+      const fileExtension = imageFile?.name.split('.').pop()
+      if (imageFile) {
+        try {
+          const renamedFile = new File([imageFile], `${id}.${fileExtension}`, {
+            type: `image/${fileExtension}`,
+          })
+          await uploadImage(renamedFile, 'vehicle_photos')
+
+          try {
+            const vehicleImage = `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/vehicle_photos/${id}.${fileExtension}`
+            const { data, error } = await supabase
+              .from('vehicles')
+              .update({ picture: vehicleImage })
+              .eq('id', id)
+          } catch (error) {}
+        } catch (error: any) {
+          toast({
+            variant: 'destructive',
+            title: 'Error al subir la imagen',
+            description:
+              'No pudimos registrar la imagen, pero el ususario fue registrado correctamente',
+          })
+        }
+      }
+
+      toast({
+        title: 'Vehículo editado',
+        description: 'El vehículo fue editado con éxito',
+      })
+    } catch (error) {
+      toast({
+        title: 'Error al editar el vehículo',
+      })
+    }
+  }
+
   return (
-    <>
+    <section className={`${accion === 'new' ? 'w-full' : 'w-[75%]'} `}>
+      <header className="flex justify-between gap-4 mt-6">
+        <div className="mb-8">
+          {accion === 'edit' || accion === 'view' ? (
+            <div className="flex items-center gap-2">
+              <Avatar className="h-[13vh] w-[13vh]">
+                <AvatarImage
+                  className="object-cover border-2 border-black/30 rounded-full"
+                  src={
+                    vehicle?.picture ||
+                    'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80'
+                  }
+                  alt="Imagen del empleado"
+                />
+                <AvatarFallback>CC</AvatarFallback>
+              </Avatar>
+              <p className="text-2xl">
+                Tipo de equipo: {vehicle?.type.name} <br />
+                Numero interno: {vehicle?.intern_number}
+              </p>
+            </div>
+          ) : (
+            <>
+              <h2 className="text-4xl">
+                {accion === 'edit'
+                  ? 'Editar equipo'
+                  : accion === 'view'
+                    ? `Equipo ${vehicle?.type_of_vehicle} ${vehicle?.intern_number}`
+                    : 'Agregar equipo'}
+              </h2>
+              <p>
+                {accion === 'edit' || accion === 'view'
+                  ? `${
+                      readOnly
+                        ? 'Vista previa de equipo'
+                        : ' En esta vista puedes editar los datos del equipo'
+                    }`
+                  : 'Agrega un nuevo equipo'}
+              </p>
+            </>
+          )}
+        </div>
+        <div>
+          {readOnly && accion === 'view' && (
+            <Button
+              variant="default"
+              onClick={() => {
+                setReadOnly(false)
+              }}
+            >
+              Habilitar edición
+            </Button>
+          )}
+        </div>
+      </header>
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(
+            accion === 'edit' || accion === 'view' ? onUpdate : onCreate,
+          )}
           className="space-y-8 w-full"
         >
           <div className=" flex gap-[2vw] flex-wrap items-center">
@@ -380,8 +604,10 @@ export const VehiclesForm = () => {
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
+                          disabled={readOnly}
                           variant="outline"
                           role="combobox"
+                          value={vehicle?.type_of_vehicle}
                           className={cn(
                             'w-[250px] justify-between',
                             !field.value && 'text-muted-foreground',
@@ -397,8 +623,10 @@ export const VehiclesForm = () => {
                     <PopoverContent className="w-[250px] p-0">
                       <Command>
                         <CommandInput
-                          placeholder="Buscar tipo de equipo..."
+                          disabled={readOnly}
+                          placeholder="Buscar tipo de vehículo..."
                           className="h-9"
+                          //value={field.value}
                         />
                         <CommandEmpty>
                           No se encontro ningun resultado
@@ -410,7 +638,7 @@ export const VehiclesForm = () => {
                               key={option}
                               onSelect={() => {
                                 form.setValue('type_of_vehicle', option)
-                                // setHideInput(option === 'Otros')
+
                                 if (option === 'Vehículos') {
                                   setHideInput(true)
                                 }
@@ -435,7 +663,7 @@ export const VehiclesForm = () => {
                     </PopoverContent>
                   </Popover>
                   <FormDescription>
-                    Selecciona el tipo de equipo
+                    Selecciona el tipo de vehículo
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -453,31 +681,36 @@ export const VehiclesForm = () => {
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
+                          disabled={readOnly}
                           variant="outline"
                           role="combobox"
+                          value={field.value}
                           className={cn(
                             'w-[250px] justify-between',
                             !field.value && 'text-muted-foreground',
                           )}
                         >
-                          {field.value
+                          {/* {vehicle?.brand
                             ? vehicleBrands.find(
                                 option => option.label === field.value,
                               )?.label
-                            : 'Seleccionar marca'}
+                            : 'Seleccionar marca'} */}
+                          {field.value || 'Seleccionar marca'}
                           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[250px] p-0">
+                    <PopoverContent className="w-[250px] p-0 max-h-[200px] overflow-y-auto">
                       <Command>
                         <CommandInput
+                          disabled={readOnly}
                           placeholder="Buscar marca..."
                           className="h-9"
                         />
                         <CommandEmpty className="py-2 px-2">
                           <Modal modal="addBrand" fetchData={fetchData}>
                             <Button
+                              disabled={readOnly}
                               variant="outline"
                               role="combobox"
                               className={cn(
@@ -531,12 +764,14 @@ export const VehiclesForm = () => {
               render={({ field }) => (
                 <FormItem className="flex flex-col min-w-[250px]">
                   <FormLabel>
+                    {' '}
                     Modelo <span style={{ color: 'red' }}>*</span>
                   </FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
+                          disabled={readOnly}
                           variant="outline"
                           role="combobox"
                           className={cn(
@@ -544,11 +779,13 @@ export const VehiclesForm = () => {
                             !field.value && 'text-muted-foreground',
                           )}
                         >
-                          {field.value
-                            ? vehicleModels.find(
-                                option => option.name === field.value,
-                              )?.name
-                            : 'Seleccionar modelo'}
+                          {/* {vehicle?.model
+                            ? vehicleModels?.find(
+                                option => option.id === vehicle.model,
+                              )?.name || vehicle?.model
+                            : 'Seleccionar modelo'} */}
+                          {field.value || 'Seleccionar marca'}
+
                           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -556,6 +793,7 @@ export const VehiclesForm = () => {
                     <PopoverContent className="w-[250px] p-0">
                       <Command>
                         <CommandInput
+                          disabled={readOnly}
                           placeholder="Buscar modelo..."
                           className="h-9"
                         />
@@ -566,6 +804,7 @@ export const VehiclesForm = () => {
                             brandOptions={data.brand}
                           >
                             <Button
+                              disabled={readOnly}
                               variant="outline"
                               role="combobox"
                               className={cn(
@@ -602,7 +841,9 @@ export const VehiclesForm = () => {
                       </Command>
                     </PopoverContent>
                   </Popover>
-                  <FormDescription>Selecciona el modelo del</FormDescription>
+                  <FormDescription>
+                    Selecciona el modelo del vehículo
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -613,13 +854,20 @@ export const VehiclesForm = () => {
               render={({ field }) => (
                 <FormItem className="flex flex-col min-w-[250px]">
                   <FormLabel>
+                    {' '}
                     Año <span style={{ color: 'red' }}>*</span>
                   </FormLabel>
                   <Input
                     {...field}
+                    disabled={readOnly}
                     type="number"
                     className="input w-[250px]"
                     placeholder="Año"
+                    value={
+                      field.value !== undefined
+                        ? field.value
+                        : vehicle?.year || ''
+                    }
                     onChange={e => {
                       form.setValue('year', Number(e.target.value))
                     }}
@@ -637,12 +885,10 @@ export const VehiclesForm = () => {
                   <FormLabel>Motor del vehículo</FormLabel>
                   <Input
                     {...field}
-                    type="text"
+                    disabled={readOnly}
                     className="input w-[250px]"
                     placeholder="Ingrese el tipo de motor"
-                    onChange={e => {
-                      form.setValue('engine', e.target.value)
-                    }}
+                    value={field.value}
                   />
                   <FormDescription>
                     Ingrese el tipo de motor del vehículo
@@ -658,7 +904,7 @@ export const VehiclesForm = () => {
                 <FormItem
                   className={cn(
                     'flex flex-col min-w-[250px]',
-                    form.getValues('type_of_vehicle') && hideInput && 'hidden',
+                    form.getValues('type_of_vehicle'),
                   )}
                 >
                   <FormLabel>
@@ -670,12 +916,22 @@ export const VehiclesForm = () => {
                         <Button
                           variant="outline"
                           role="combobox"
+                          disabled={readOnly}
+                          value={field.value}
+                          // value={
+                          //   vehicle?.type.name
+                          //     ? vehicle?.type.name
+                          //     : field.value
+                          // }
                           className={cn(
                             'w-[250px] justify-between',
                             !field.value && 'text-muted-foreground',
                           )}
                         >
-                          {field.value ? field.value : 'Seleccionar tipo'}
+                          {/* {vehicle?.type.name
+                            ? vehicle?.type.name
+                            : field.value} */}
+                          {field.value ? field.value : 'Seleccione tipo'}
                           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -729,13 +985,17 @@ export const VehiclesForm = () => {
                   )}
                 >
                   <FormLabel>
-                    Chasis del vehículo <span style={{ color: 'red' }}>*</span>
+                    Chasis del vehículo<span style={{ color: 'red' }}>*</span>
                   </FormLabel>
                   <Input
                     {...field}
+                    disabled={readOnly}
                     type="text"
                     className="input w-[250px]"
                     placeholder="Ingrese el chasis"
+                    value={
+                      field.value !== '' ? field.value : vehicle?.chassis || ''
+                    }
                     onChange={e => {
                       form.setValue('chassis', e.target.value)
                     }}
@@ -758,17 +1018,20 @@ export const VehiclesForm = () => {
                   )}
                 >
                   <FormLabel>
-                    Serie del vehículo <span style={{ color: 'red' }}>*</span>
+                    Serie del vehículo<span style={{ color: 'red' }}>*</span>
                   </FormLabel>
                   <Input
                     {...field}
                     type="text"
+                    disabled={readOnly}
                     className="input w-[250px]"
                     placeholder="Ingrese la serie"
                     onChange={e => {
                       form.setValue('serie', e.target.value)
                     }}
+                    defaultValue={vehicle?.serie}
                   />
+
                   <FormDescription>
                     Ingrese la serie del vehículo
                   </FormDescription>
@@ -787,13 +1050,18 @@ export const VehiclesForm = () => {
                   )}
                 >
                   <FormLabel>
-                    Dominio del vehículo <span style={{ color: 'red' }}>*</span>
+                    Dominio del vehículo<span style={{ color: 'red' }}>*</span>
                   </FormLabel>
                   <Input
                     {...field}
+                    disabled={readOnly}
                     type="text"
                     className="input w-[250px]"
                     placeholder="Ingrese el dominio"
+                    value={
+                      field.value !== '' ? field.value : vehicle?.domain || ''
+                    }
+                    defaultValue={vehicle?.domain}
                     onChange={e => {
                       form.setValue('domain', e.target.value)
                     }}
@@ -811,14 +1079,20 @@ export const VehiclesForm = () => {
               render={({ field }) => (
                 <FormItem className="flex flex-col min-w-[250px]">
                   <FormLabel>
-                    Número interno del vehículo{' '}
+                    Número interno del vehículo
                     <span style={{ color: 'red' }}>*</span>
                   </FormLabel>
                   <Input
                     {...field}
+                    disabled={readOnly}
                     type="text"
                     className="input w-[250px]"
                     placeholder="Ingrese el número interno"
+                    value={
+                      field.value !== ''
+                        ? field.value
+                        : vehicle?.intern_number || ''
+                    }
                     onChange={e => {
                       form.setValue('intern_number', e.target.value)
                     }}
@@ -840,10 +1114,10 @@ export const VehiclesForm = () => {
                       <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
                         <ImageHander
                           labelInput="Subir foto"
-                          required={true}
                           desciption="Subir foto del vehículo"
                           handleImageChange={handleImageChange}
                           base64Image={base64Image} //nueva
+                          disabled={readOnly}
                           inputStyle={{
                             width: '400px',
                             maxWidth: '300px',
@@ -858,9 +1132,13 @@ export const VehiclesForm = () => {
               />
             </div>
           </div>
-          <Button type="submit">Registrar vehículo</Button>
+          <Button type="submit" className="mt-5" disabled={readOnly}>
+            {accion === 'edit' || accion === 'view'
+              ? 'Guardar cambios'
+              : 'Agregar equipo'}
+          </Button>
         </form>
       </Form>
-    </>
+    </section>
   )
 }

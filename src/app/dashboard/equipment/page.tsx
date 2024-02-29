@@ -104,9 +104,7 @@ export default function Equipment() {
   if (type === '2') {
     equipo = 'Otros'
   }
-  // if (pathname == '/dashboard/equipment') {
-  //   equipo = 'Equipos'
-  // }
+
   return (
     <main className="bg-white">
       <header className="flex gap-4 mt-6 justify-between items-center">
