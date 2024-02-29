@@ -6,7 +6,7 @@ import { columns } from './columns'
 import { DataEquipment } from './data-equipment'
 import { supabase } from '../../../../supabase/supabase'
 import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 export default function Equipment() {
   const [vehiclesData, setVehiclesData] = useState<unknown[]>([])
   const allCompany = useLoggedUserStore(state => state.allCompanies)
@@ -14,7 +14,7 @@ export default function Equipment() {
   const useSearch = useSearchParams()
   const type = useSearch.get('type')
   const [showInactive, setShowInactive] = useState(false)
-  const pathname = usePathname()
+
   const handleToggleInactive = () => {
     setShowInactive(!showInactive)
   }
