@@ -579,7 +579,7 @@ export default function VehiclesForm2() {
                 setReadOnly(false)
               }}
             >
-              Habiliar edición
+              Habilitar edición
             </Button>
           )}
         </div>
@@ -684,17 +684,18 @@ export default function VehiclesForm2() {
                           disabled={readOnly}
                           variant="outline"
                           role="combobox"
-                          value={vehicle?.brand}
+                          value={field.value}
                           className={cn(
                             'w-[250px] justify-between',
                             !field.value && 'text-muted-foreground',
                           )}
                         >
-                          {vehicle?.brand
+                          {/* {vehicle?.brand
                             ? vehicleBrands.find(
                                 option => option.label === field.value,
                               )?.label
-                            : 'Seleccionar marca'}
+                            : 'Seleccionar marca'} */}
+                          {field.value || 'Seleccionar marca'}
                           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -778,11 +779,12 @@ export default function VehiclesForm2() {
                             !field.value && 'text-muted-foreground',
                           )}
                         >
-                          {vehicle?.model
+                          {/* {vehicle?.model
                             ? vehicleModels?.find(
                                 option => option.id === vehicle.model,
                               )?.name || vehicle?.model
-                            : 'Seleccionar modelo'}
+                            : 'Seleccionar modelo'} */}
+                          {field.value || 'Seleccionar marca'}
 
                           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
@@ -1130,7 +1132,7 @@ export default function VehiclesForm2() {
               />
             </div>
           </div>
-          <Button type="submit" className="mt-5">
+          <Button type="submit" className="mt-5" disabled={readOnly}>
             {accion === 'edit' || accion === 'view'
               ? 'Guardar cambios'
               : 'Agregar equipo'}

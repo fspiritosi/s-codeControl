@@ -71,7 +71,7 @@ export default function NavBar() {
                   className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px"
                 >
                   <img
-                    className=" shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px"
+                    className=" shadow-md text-white items-center flex gap-1 bg-slate-500 border-0 rounded-full w-40px h-40px"
                     src={actualCompany.company_logo}
                     style={{ width: '40px', height: '40px' }}
                   />

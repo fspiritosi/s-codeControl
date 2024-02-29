@@ -6,7 +6,7 @@ import { columns } from './columns'
 import { DataEquipment } from './data-equipment'
 import { supabase } from '../../../../supabase/supabase'
 import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 export default function Equipment() {
   const [vehiclesData, setVehiclesData] = useState<unknown[]>([])
   const allCompany = useLoggedUserStore(state => state.allCompanies)
@@ -14,7 +14,7 @@ export default function Equipment() {
   const useSearch = useSearchParams()
   const type = useSearch.get('type')
   const [showInactive, setShowInactive] = useState(false)
-
+  const pathname = usePathname()
   const handleToggleInactive = () => {
     setShowInactive(!showInactive)
   }
@@ -97,12 +97,22 @@ export default function Equipment() {
       .subscribe()
   }, [])
 
+  let equipo = 'Equipos'
+  if (type === '1') {
+    equipo = 'Vehículos'
+  }
+  if (type === '2') {
+    equipo = 'Otros'
+  }
+  // if (pathname == '/dashboard/equipment') {
+  //   equipo = 'Equipos'
+  // }
   return (
     <main className="bg-white">
       <header className="flex gap-4 mt-6 justify-between items-center">
         <div>
-          <h2 className="text-4xl">Equipos</h2>
-          <p>Aquí se muestran todos los Equipos:</p>
+          <h2 className="text-4xl">{equipo}</h2>
+          <p>Aquí se muestran todos los {equipo}:</p>
         </div>
         <div className="">
           <Link
