@@ -1,5 +1,5 @@
 import { DocumentationDrawer } from '@/components/DocumentationDrawer'
-import VehiclesForm2 from '../../../../components/VehiclesForm2'
+import VehiclesForm from '../../../../components/VehiclesForm'
 
 export default function EmployeeFormAction({
   searchParams,
@@ -8,7 +8,7 @@ export default function EmployeeFormAction({
 }) {
   return (
     <main className="flex w-full justify-between">
-      <VehiclesForm2 />
+      <VehiclesForm />
       {searchParams.action === 'new' ? false : <DocumentationDrawer />}
     </main>
   )

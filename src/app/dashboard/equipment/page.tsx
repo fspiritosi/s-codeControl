@@ -97,12 +97,20 @@ export default function Equipment() {
       .subscribe()
   }, [])
 
+  let equipo = 'Equipos'
+  if (type === '1') {
+    equipo = 'Vehículos'
+  }
+  if (type === '2') {
+    equipo = 'Otros'
+  }
+
   return (
     <main className="bg-white">
       <header className="flex gap-4 mt-6 justify-between items-center">
         <div>
-          <h2 className="text-4xl">Equipos</h2>
-          <p>Aquí se muestran todos los Equipos:</p>
+          <h2 className="text-4xl">{equipo}</h2>
+          <p>Aquí se muestran todos los {equipo}:</p>
         </div>
         <div className="">
           <Link
