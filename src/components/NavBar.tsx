@@ -8,6 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { ModeToggle} from '@/components/ui/ToogleDarkButton'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { MdDomainAdd } from 'react-icons/md'
@@ -198,19 +199,22 @@ export default function NavBar() {
           />
         )}
       </div>
+      <div className='flex gap-8 items-center'>
+        <ModeToggle/>
+        <div className="flex-shrink">
+          <Popover>
+            <PopoverTrigger>
+              <Avatar>
+                <AvatarImage src={avatarUrl} />
+                <AvatarFallback>CN</AvatarFallback>
+              </Avatar>
+            </PopoverTrigger>
+            <PopoverContent className="bg-slate-600 border-0">
+              <LogOutButton />
+            </PopoverContent>
+          </Popover>
+        </div>
 
-      <div className="flex-shrink">
-        <Popover>
-          <PopoverTrigger>
-            <Avatar>
-              <AvatarImage src={avatarUrl} />
-              <AvatarFallback>CN</AvatarFallback>
-            </Avatar>
-          </PopoverTrigger>
-          <PopoverContent className="bg-slate-600 border-0">
-            <LogOutButton />
-          </PopoverContent>
-        </Popover>
       </div>
     </nav>
   )
