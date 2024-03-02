@@ -1,21 +1,22 @@
 export function handleSupabaseError(error: any): string {
-    console.log(error,'Este es el error nativo ');
     let errorMessage = error.message;
-    console.log(errorMessage,'este es el error no nattivo');
+    console.log(error,'error');
     switch (error.code) {
         case '22001':
-            errorMessage = 'Error: el valor de la consulta está fuera del rango';
+            errorMessage = 'El valor ingresado está fuera del rango permitido';
             break;
         case '23502':
-            errorMessage = 'Error: un valor nulo viola la restricción NOT NULL';
+            errorMessage = 'Por favor, completa todos los campos obligatorios';
             break;
         case '23505':
-            errorMessage = 'Error: un valor duplicado viola la restricción de unicidad';
+            errorMessage = 'El valor ingresado ya existe, por favor ingresa uno diferente';
+            break;
+        case '42501':
+            errorMessage = 'No tienes permisos para realizar esta operación';
             break;
         // Agrega más casos según sea necesario
         default:
-            errorMessage = 'Ha ocurrido un error al realizar la petición a Supabase';
+            errorMessage = 'Ha ocurrido un error al procesar la solicitud';
     }
-    console.log(errorMessage,'este es el error final');
     return errorMessage;
 }
