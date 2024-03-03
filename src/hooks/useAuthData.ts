@@ -12,7 +12,7 @@ import { useProfileData } from './useProfileData'
  */
 export const useAuthData = () => {
   const { filterByEmail } = useProfileData()
-  const {errorTranslate} = useEdgeFunctions()
+  const { errorTranslate } = useEdgeFunctions()
 
   return {
     singUp: async (credentials: singUp) => {
@@ -52,7 +52,7 @@ export const useAuthData = () => {
       }
       return data
     },
-    updateUser: async ({ password }: {password:string}) => {
+    updateUser: async ({ password }: { password: string }) => {
       const email = localStorage.getItem('email')
       const user = (await filterByEmail(email)) as profileUser[]
 
@@ -72,9 +72,9 @@ export const useAuthData = () => {
     googleLogin: async () => {
       let { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options:{
+        options: {
           redirectTo: `${window.location.href}/auth/callback`,
-        }
+        },
       })
       if (error) {
         const message = await errorTranslate(error.message)
@@ -86,7 +86,7 @@ export const useAuthData = () => {
       let { data, error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.href}/auth/callback`
+          emailRedirectTo: `${window.location.href}/auth/callback`,
         },
       })
 

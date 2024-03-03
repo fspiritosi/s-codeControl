@@ -40,7 +40,7 @@ export const AlertComponent = () => {
   //si actualCompany es null y allCompanies tiene 1, no mostrar alerta
 
   return (
-    (showMultipleAlert  && (
+    (showMultipleAlert && (
       <AlertDialog defaultOpen>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -58,7 +58,7 @@ export const AlertComponent = () => {
                   key={index}
                   className="w-full"
                 >
-                 {company.company_name}
+                  {company.company_name}
                 </AlertDialogAction>
                 {/* <AlertDialogDescription>
                   <span className="flex items-center p-2 gap-2 justify-center">

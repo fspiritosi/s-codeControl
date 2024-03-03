@@ -22,8 +22,7 @@ interface State {
 }
 
 const setEmployeesToShow = (employees: any) => {
-
-   const employee = employees?.map(( employees : any) => {
+  const employee = employees?.map((employees: any) => {
     return {
       full_name: employees?.firstname + ' ' + employees?.lastname,
       email: employees?.email,
@@ -56,16 +55,16 @@ const setEmployeesToShow = (employees: any) => {
       city: employees?.city?.name?.trim(),
       hierrical_position: employees?.hierarchical_position?.name,
       workflow_diagram: employees?.workflow_diagram?.name,
-      contractor_employee: employees?.contractor_employee
-        ?.map(({ contractors }: any) => contractors?.id),
+      contractor_employee: employees?.contractor_employee?.map(
+        ({ contractors }: any) => contractors?.id,
+      ),
       is_active: employees?.is_active,
       reason_for_termination: employees?.reason_for_termination,
       termination_date: employees?.termination_date,
     }
-    
   })
 
-   return employee
+  return employee
 }
 
 export const useLoggedUserStore = create<State>((set, get) => {
@@ -74,17 +73,17 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
   let selectedCompany: companyData[]
 
-  const setInactiveEmployees = async() => {
+  const setInactiveEmployees = async () => {
     const employeesToShow = await getEmployees(false)
     set({ employeesToShow })
   }
 
   // const [showDeletedEmployees, setShowDeletedEmployees] = useState(false)
-  const getEmployees = async (active:boolean) => {
+  const getEmployees = async (active: boolean) => {
     let { data: employees, error } = await supabase
-    .from('employees')
-    .select(
-      `*, city (
+      .from('employees')
+      .select(
+        `*, city (
             name
           ),
           province(
@@ -104,9 +103,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
               *
             )
           )`,
-    )
-    .eq('company_id', get()?.actualCompany?.id)
-    .eq('is_active', active)
+      )
+      .eq('company_id', get()?.actualCompany?.id)
+      .eq('is_active', active)
 
     const employeesToShow = setEmployeesToShow(employees)
     return employeesToShow
@@ -115,7 +114,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
   const setActivesEmployees = async () => {
     const employeesToShow = await getEmployees(true)
     set({ employeesToShow })
-    set({ employees:employeesToShow })
+    set({ employees: employeesToShow })
   }
 
   const setActualCompany = (company: companyData) => {

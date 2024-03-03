@@ -5,9 +5,12 @@ import { useEdgeFunctions } from './useEdgeFunctions'
 
 export const useImageUpload = () => {
   const [loading, setLoading] = useState(false)
-  const {errorTranslate} = useEdgeFunctions()
+  const { errorTranslate } = useEdgeFunctions()
 
-  const uploadImage = async (file: File, imageBucket: string): Promise<string> => {
+  const uploadImage = async (
+    file: File,
+    imageBucket: string,
+  ): Promise<string> => {
     try {
       setLoading(true)
 

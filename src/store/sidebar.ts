@@ -20,6 +20,6 @@ export const useSidebarOpen = create<State>((set, get) => {
 
   return {
     expanded: get().expanded,
-    setExpanded
+    setExpanded,
   }
 })

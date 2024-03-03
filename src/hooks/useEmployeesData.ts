@@ -25,7 +25,7 @@ export const useEmployeesData = () => {
         .update(employee)
         .eq('document_number', employee.document_number)
         .select()
-        
+
       if (error) {
         const message = await errorTranslate(error.message)
         throw new Error(String(message).replaceAll('"', ''))
