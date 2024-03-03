@@ -6,7 +6,7 @@ export default function companyRegister() {
       <p className="pl-10 max-w-1/2">
         Completa este formulario con los datos de tu nueva compañia
       </p>
-      <div className="bg-white  p-10 rounded-xl flex w-full">
+      <div className="  p-10 rounded-xl flex w-full">
         <CompanyRegister company={null} formEnabled={true} />
       </div>
     </main>

@@ -20,7 +20,7 @@ export const CardsGrid: React.FC<CardsGridProps> = ({
       {activeCompanies.map(companyItems => (
         <div
           key={companyItems.id}
-          className="card hover:cursor-pointer bg-white rounded-lg shadow-md p-4"
+          className="card hover:cursor-pointer bg-white text-black rounded-lg shadow-md p-4"
           onClick={() => handleCardClick(companyItems)}
         >
           <h3 className="text-xl font-semibold text-center">

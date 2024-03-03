@@ -14,7 +14,11 @@ export const useImageUpload = () => {
       // Subir la imagen a Supabase Storage
       const { data, error } = await supabase.storage
         .from(imageBucket)
-        .upload(`${file.name}`, file)
+        .upload(`${file.name}`, file,{
+        //.upload('public/image.png', file, {
+          cacheControl: '3600',
+          upsert: true,
+        })
 
       if (error) {
         const message = await errorTranslate(error?.message)
