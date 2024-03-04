@@ -96,6 +96,18 @@ export default function Equipment() {
       )
       .subscribe()
   }, [])
+  useEffect(() => {
+    const channels = supabase
+      .channel('custom-all-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'storage', table: 'objects' },
+        payload => {
+          fetchVehicles()
+        },
+      )
+      .subscribe()
+  }, [])
 
   let equipo = 'Equipos'
   if (type === '1') {
@@ -106,7 +118,7 @@ export default function Equipment() {
   }
 
   return (
-    <main className="bg-white">
+    <main className="">
       <header className="flex gap-4 mt-6 justify-between items-center">
         <div>
           <h2 className="text-4xl">{equipo}</h2>
