@@ -25,6 +25,9 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 
+import { Separator } from "@/components/ui/separator"
+
+
 
 import { buttonVariants } from "@/components/ui/button"
 import { supabase } from '../../../supabase/supabase'
@@ -108,7 +111,20 @@ let doc_equipos = document_types?.filter(doc => doc.applies === "Equipos")
       </Link>
         </CardFooter>
       </Card>
-      
+      <Separator />
+      <Table>
+      <TableHeader>
+                  <TableRow>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead>Empresa</TableHead>
+                    <TableHead>Recurso</TableHead>
+                    <TableHead>Nombre del Documento</TableHead>
+                    <TableHead className="w-[100px]">Multirecurso</TableHead>
+                    <TableHead className="w-[100px]">Vence</TableHead>
+                    <TableHead className="w-[100px]">Auditar</TableHead>
+                  </TableRow>
+                </TableHeader>
+      </Table>
     </section>
   )
 }
