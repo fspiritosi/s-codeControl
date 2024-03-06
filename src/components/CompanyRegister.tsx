@@ -458,6 +458,7 @@ export function CompanyRegister({
                 <FormControl>
                   <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
                     <UploadImage
+                      companyId={company?.id as string}
                       labelInput="Logo"
                       imageBucket="logo"
                       desciption="Sube el logo de tu compañía"

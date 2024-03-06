@@ -23,7 +23,7 @@ export const CardsGrid: React.FC<CardsGridProps> = ({
           className="card hover:cursor-pointer bg-white text-black rounded-lg shadow-md p-4"
           onClick={() => handleCardClick(companyItems)}
         >
-          <h3 className="text-xl font-semibold text-center">
+          <h3 className=" font-semibold text-center overflow-hidden whitespace-wrap ">
             {formatCompanyName(companyItems.company_name)}
           </h3>
           <img src={companyItems.company_logo} alt="Logo de la empresa" />
