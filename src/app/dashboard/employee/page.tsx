@@ -41,12 +41,12 @@ const EmployeePage = () => {
           <h2 className="text-4xl mb-3">Empleados</h2>
           <p>Aquí se muestra una tabla con los empleados registrados:</p>
         </div>
-          <Link
-            href="/dashboard/employee/action?action=new"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Agregar nuevo empleado
-          </Link>
+        <Link
+          href="/dashboard/employee/action?action=new"
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        >
+          Agregar nuevo empleado
+        </Link>
       </header>
 
       <DataTable

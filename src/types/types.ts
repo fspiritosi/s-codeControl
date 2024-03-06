@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 
 export type LoggedUser = {
   session: null | string
@@ -41,104 +41,102 @@ export type company = {
   contact_email: string
   contact_phone: string
   address: string
-  city:{
-    id:number
+  city: {
+    id: number
     name: string
   }
   country: string
   industry: string
   company_logo: string
-  province_id:{
-    id:number
+  province_id: {
+    id: number
     name: string
   }
   by_defect: boolean
   owner_id: string | undefined
-  
 }
 
 export type industry_type = {
-  id:number
-  name:string
-}[];
+  id: number
+  name: string
+}[]
 
 export type companyData = {
-    id: string;
-    company_name: string;
-    description: string;
-    website: string;
-    contact_email: string;
-    contact_phone: string;
-    address: string;
-    by_defect: boolean
-    city: {
-      name: string;
-      id: number;
-    };
-    country: string;
-    industry: string;
-    company_logo: string;
-    is_active?: boolean;
-    company_cuit: string;
-    province_id: {
-      name: string;
-      id:number;
-    };
-    owner_id: string;
-    companies_employees: {
-      employees: {
-        id: string;
-        city: {
-          name: string;
-        };
-        cuil: string;
-        file: string;
-        email: string;
-        phone: string;
-        gender: string;
-        street: string;
-        picture: string;
-        lastname: string;
-        province: {
-          name: string;
-        };
-        firstname: string;
-        birthplace: {
-          name: string;
-        };
-        company_id: string;
-        created_at: string;
-        nationality: string;
-        postal_code: string;
-        allocated_to: string[];
-        normal_hours: number;
-        document_type: string;
-        street_number: string;
-        marital_status: string;
-        document_number: string;
-        affiliate_status: null | string; // asumí que puede ser null o string
-        company_position: string;
-        type_of_contract: string;
-        workflow_diagram: {
-          name: string;
-        };
-        is_active: boolean;
-        date_of_admission: string;
-        level_of_education: string;
-        reason_for_termination: string;
-        termination_date: string;
-        contractor_employee: {
-          contractors: {
-            name: string;
-            id: string;
-          };
-        }[];
-        hierarchical_position: {
-          name: string;
-        };
-      };
-    }[];
-  
+  id: string
+  company_name: string
+  description: string
+  website: string
+  contact_email: string
+  contact_phone: string
+  address: string
+  by_defect: boolean
+  city: {
+    name: string
+    id: number
+  }
+  country: string
+  industry: string
+  company_logo: string
+  is_active?: boolean
+  company_cuit: string
+  province_id: {
+    name: string
+    id: number
+  }
+  owner_id: string
+  companies_employees: {
+    employees: {
+      id: string
+      city: {
+        name: string
+      }
+      cuil: string
+      file: string
+      email: string
+      phone: string
+      gender: string
+      street: string
+      picture: string
+      lastname: string
+      province: {
+        name: string
+      }
+      firstname: string
+      birthplace: {
+        name: string
+      }
+      company_id: string
+      created_at: string
+      nationality: string
+      postal_code: string
+      allocated_to: string[]
+      normal_hours: number
+      document_type: string
+      street_number: string
+      marital_status: string
+      document_number: string
+      affiliate_status: null | string // asumí que puede ser null o string
+      company_position: string
+      type_of_contract: string
+      workflow_diagram: {
+        name: string
+      }
+      is_active: boolean
+      date_of_admission: string
+      level_of_education: string
+      reason_for_termination: string
+      termination_date: string
+      contractor_employee: {
+        contractors: {
+          name: string
+          id: string
+        }
+      }[]
+      hierarchical_position: {
+        name: string
+      }
+    }
+  }[]
 }
 
 export type singUp = {
@@ -152,14 +150,14 @@ export type login = {
 }
 
 export type MotionTransitionProps = {
-  children: React.ReactNode;
+  children: React.ReactNode
   className?: string
 }
 
 export type BestBussinesData = {
-  id: number,
-  icon: React.ReactNode,
-  title: string,
+  id: number
+  icon: React.ReactNode
+  title: string
   description: string
 }[]
 
@@ -192,7 +190,7 @@ export type Employee = {
   street: string
   street_number: string
   province: string | undefined
-  city: string | undefined 
+  city: string | undefined
   postal_code: string
   phone: string
   email?: string //!si

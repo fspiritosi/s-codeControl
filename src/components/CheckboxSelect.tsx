@@ -59,7 +59,11 @@ export function CheckboxReactHookFormMultiple({ options, field }: Props) {
       <Select onValueChange={field?.onChange} defaultValue={field?.value || ''}>
         <FormControl>
           <SelectTrigger>
-            <SelectValue placeholder={`${field.value?.length || 0} elementos seleccionados`} />
+            <SelectValue
+              placeholder={`${
+                field.value?.length || 0
+              } elementos seleccionados`}
+            />
           </SelectTrigger>
         </FormControl>
         <SelectContent>

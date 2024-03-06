@@ -1,11 +1,11 @@
-import {create} from 'zustand'
+import { create } from 'zustand'
 import { supabase } from '../../supabase/supabase'
 
-type Province  = {
+type Province = {
   id: number
   name: string
 }
-export type generic ={
+export type generic = {
   id: number
   name: string
   created_at: string
@@ -63,7 +63,6 @@ export const useCountriesStore = create<State>((set, get) => {
     } else {
       set({ hierarchy: hierarchy || [] })
     }
-   
   }
   const fetchworkDiagram = async () => {
     const { data: workDiagram, error } = await supabase
