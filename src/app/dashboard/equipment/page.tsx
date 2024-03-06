@@ -7,6 +7,7 @@ import { DataEquipment } from './data-equipment'
 import { supabase } from '../../../../supabase/supabase'
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { object } from 'zod'
 export default function Equipment() {
   const [vehiclesData, setVehiclesData] = useState<unknown[]>([])
   const allCompany = useLoggedUserStore(state => state.allCompanies)
@@ -102,6 +103,7 @@ export default function Equipment() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'storage', table: 'objects' },
+
         payload => {
           fetchVehicles()
         },

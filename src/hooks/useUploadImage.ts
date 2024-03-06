@@ -13,13 +13,13 @@ export const useImageUpload = () => {
   ): Promise<string> => {
     try {
       setLoading(true)
-
+      
       // Subir la imagen a Supabase Storage
       const { data, error } = await supabase.storage
         .from(imageBucket)
         .upload(`${file.name}`, file,{
         //.upload('public/image.png', file, {
-          cacheControl: '3600',
+          cacheControl: '1',
           upsert: true,
         })
 
@@ -29,6 +29,8 @@ export const useImageUpload = () => {
       }
 
       // Obtener la URL de la imagen cargada
+       
+
       const imageUrl = `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/${imageBucket}/${data?.path}`
 
       return imageUrl
