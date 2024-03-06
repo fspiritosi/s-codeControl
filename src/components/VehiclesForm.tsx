@@ -42,6 +42,7 @@ import { Input } from './ui/input'
 import { useToast } from './ui/use-toast'
 import { ImageHander } from './ImageHandler'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+
 type VehicleType = {
   year: number
   engine: string
@@ -501,7 +502,7 @@ export default function VehiclesForm2() {
           await uploadImage(renamedFile, 'vehicle_photos')
 
           try {
-            const vehicleImage = `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/vehicle_photos/${id}.${fileExtension}`
+            const vehicleImage = `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/vehicle_photos/${id}.${fileExtension}?timestamp=${Date.now()}`
             const { data, error } = await supabase
               .from('vehicles')
               .update({ picture: vehicleImage })
