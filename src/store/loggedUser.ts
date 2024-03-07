@@ -19,6 +19,8 @@ interface State {
   setActivesEmployees: () => void
   showDeletedEmployees: boolean
   setShowDeletedEmployees: (showDeletedEmployees: boolean) => void
+  vehicles: any
+
 }
 
 const setEmployeesToShow = (employees: any) => {
@@ -78,6 +80,16 @@ export const useLoggedUserStore = create<State>((set, get) => {
     set({ employeesToShow })
   }
 
+  const vehicles = async () => {
+    const { data, error } = await supabase.from('vehicles').select('*').eq('company_id', get()?.actualCompany?.id).eq('is_active', true)
+    if (error) {
+      console.error('Error al obtener los vehículos:', error)
+    } else {
+      set({ vehicles: data || [] })
+    }
+
+  }
+
   // const [showDeletedEmployees, setShowDeletedEmployees] = useState(false)
   const getEmployees = async (active: boolean) => {
     let { data: employees, error } = await supabase
@@ -121,6 +133,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     set({ actualCompany: company })
     setActivesEmployees()
     set({ isLoading: false })
+    vehicles()
   }
 
   supabase
@@ -252,5 +265,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
     showDeletedEmployees: get()?.showDeletedEmployees,
     setShowDeletedEmployees: (showDeletedEmployees: boolean) =>
       set({ showDeletedEmployees }),
+    vehicles: get()?.vehicles,
   }
 })
