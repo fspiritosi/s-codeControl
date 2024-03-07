@@ -503,7 +503,7 @@ export default function EmployeeAccordion() {
 
   return (
     <section className={`${accion === 'new' ? 'w-full' : 'w-[75%]'} `}>
-      <header className="flex justify-between gap-4 mt-6">
+      <header className="flex justify-between gap-4 mt-6 flex-wrap">
         <div>
           {accion === 'edit' || accion === 'view' ? (
             <div className="flex items-center gap-2">
@@ -530,7 +530,7 @@ export default function EmployeeAccordion() {
               {accion === 'edit' ? 'Editar empleado' : 'Agregar empleado'}
             </h2>
           )}
-          <p className="mt-3">
+          <p className="mt-3 max-w-[700px]">
             {accion === 'edit' || accion === 'view'
               ? `${
                   readOnly
@@ -543,7 +543,7 @@ export default function EmployeeAccordion() {
         <div>
           {readOnly && accion === 'view' && (
             <Button
-              variant="default"
+            variant="primary"
               onClick={() => {
                 setReadOnly(false)
               }}
