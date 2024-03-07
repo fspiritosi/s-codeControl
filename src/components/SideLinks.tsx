@@ -48,7 +48,7 @@ const links = [
   },
   {
     name: 'Documentación',
-    href: '/dashboard/#',
+    href: '/dashboard/document',
     icon: <MdListAlt size={sizeIcons} />,
   },
   {
