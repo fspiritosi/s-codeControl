@@ -5,7 +5,8 @@ import React, { ChangeEvent, useState } from 'react'
 import { Button } from './ui/button'
 import { FormDescription, FormLabel } from './ui/form'
 import { useToast } from './ui/use-toast'
-
+import { useLoggedUserStore } from '@/store/loggedUser'
+import { supabase } from '../../supabase/supabase'
 interface UploadImageProps {
   onImageChange: (imageUrl: string) => void
   // onUploadSuccess?: (imageUrl: string) => void
@@ -18,6 +19,7 @@ interface UploadImageProps {
   field?: any
   setAvailableToSubmit?: (value: boolean) => void
   disabledInput?: boolean
+  companyId: string
 }
 
 export function UploadImage({
@@ -31,6 +33,7 @@ export function UploadImage({
   imageBucket,
   setAvailableToSubmit,
   field,
+  companyId,
 }: UploadImageProps) {
   const { uploadImage, loading } = useImageUpload()
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -58,11 +61,21 @@ export function UploadImage({
   const handleUpload = async () => {
     if (imageFile) {
       try {
-        // Subir la imagen a Supabase Storage y obtener la URL
-        const uploadedImageUrl = await uploadImage(imageFile, imageBucket)
+        const fileExtension = 'jpg'
+        const renamedFile = new File(
+          [imageFile],
+          `${companyId}.${fileExtension}`,
+          {
+            type: `image/${fileExtension}`,
+          },
+        )
 
+        // Subir la imagen a Supabase Storage y obtener la URL
+        const uploadedImageUrl = await uploadImage(renamedFile, imageBucket)
+
+        const companyImage = `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/logo/${companyId}.${fileExtension}?timestamp=${Date.now()}`
         // Llamar a la función de cambio de imagen con la URL
-        onImageChange(uploadedImageUrl)
+        onImageChange(companyImage)
 
         // Llamar a la función de éxito de carga con la URL
         // onUploadSuccess(uploadedImageUrl)

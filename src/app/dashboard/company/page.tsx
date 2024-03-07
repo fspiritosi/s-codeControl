@@ -37,6 +37,20 @@ export default function allCompany() {
     // }
   }, [])
 
+  useEffect(() => {
+    const channels = supabase
+      .channel('custom-all-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'storage', table: 'objects' },
+
+        payload => {
+          fetchCompanies()
+        },
+      )
+      .subscribe()
+  }, [])
+
   const [modalIsOpen, setModalIsOpen] = useState(false)
   const [selectedCard, setSelectedCard] = useState<company | null>(null)
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
