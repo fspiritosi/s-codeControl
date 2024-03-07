@@ -1,8 +1,11 @@
 'use client'
+
+import { useState } from 'react'
+import NewDocumentModal from './NewDocumentModal'
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'
 import { Separator } from './ui/separator'
-import { useState } from 'react'
+
 export const DocumentationDrawer = () => {
   const documentation = [
     'Documento 1.pdf',
@@ -13,7 +16,6 @@ export const DocumentationDrawer = () => {
   ]
   const [selectAll, setSelectAll] = useState<boolean>(false)
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([])
-
   const handleSelectAll = () => {
     if (!selectAll) {
       setSelectedDocuments([...documentation])
@@ -32,8 +34,10 @@ export const DocumentationDrawer = () => {
   }
 
   return (
-    <aside className="bg-slate-800 w-[20%] h-full rounded-2xl  text-white p-4">
+    <aside className="bg-slate-800 w-[20%] h-full rounded-2xl  text-white p-4 min-w-[300px]">
       <h2 className="text-center text-xl mb-5">Documentación del empleado</h2>
+      <Separator className="mb-4" />
+      {/* <Separator className="mb-4" /> */}
       <p className="pl-2">
         <Checkbox
           className="bg-white"
@@ -60,8 +64,11 @@ export const DocumentationDrawer = () => {
       <Separator className="my-4" />
       <footer className="bg-white p-4 text-black rounded-2xl flex flex-col justify-center items-center">
         <h3>{selectedDocuments.length} documentos seleccionados</h3>
-        <Button>Descargar seleccionados</Button>
+        <Button variant="primary">Descargar seleccionados</Button>
       </footer>
+      <div className="flex w-full justify-center pt-3">
+        <NewDocumentModal />
+      </div>
     </aside>
   )
 }
