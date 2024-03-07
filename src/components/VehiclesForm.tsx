@@ -575,7 +575,7 @@ export default function VehiclesForm2() {
         <div>
           {readOnly && accion === 'view' && (
             <Button
-              variant="default"
+            variant="primary"
               onClick={() => {
                 setReadOnly(false)
               }}
