@@ -2,8 +2,10 @@
 import { Documents } from "@/types/types"
 import { supabase } from "../../supabase/supabase" 
 import { useEdgeFunctions } from './useEdgeFunctions'
+import { useLoggedUserStore } from '@/store/loggedUser'
 export const useDocument = () => {
  const { errorTranslate } = useEdgeFunctions()
+ const {actualCompany}= useLoggedUserStore()
     
  return{
 
@@ -21,9 +23,9 @@ export const useDocument = () => {
       return data
     },
 
-    updateDocument: async (id: string, documents: Documents) => {
+    updateDocumentEquipment: async (id: string, documents: Documents) => {
       const { data, error } = await supabase
-        .from('documents')
+        .from('documents_equipment')
         .update(documents)
         .eq('id', documents.id)
         .select()
@@ -35,13 +37,55 @@ export const useDocument = () => {
       return data
     },
 
-    fetchAllDocuments: async () => {
-      let { data: documents, error } = await supabase.from('documents').select('*')
+    updateDocumentEmployees: async (id: string, documents: Documents) => {
+      const { data, error } = await supabase
+        .from('documents_employees')
+        .update(documents)
+        .eq('id', documents.id)
+        .select()
+
+      if (error) {
+        const message = await errorTranslate(error.message)
+        throw new Error(String(message).replaceAll('"', ''))
+      }
+      return data
+    },
+    fetchDocumentEmployeesByCompany: async () => {
+      console.log("este es actualCompany: ", actualCompany)
+      let { data: documents, error } = await supabase.from('documents_employees').select(`
+            *,
+            employees:employees(id, company_id)
+        `)
+        .not('employees', 'is', null)
+        .eq('employees.company_id', actualCompany?.id);
+        
+ 
 
       if (error) {
         const message = await errorTranslate(error?.message)
         throw new Error(String(message).replaceAll('"', ''))
       }
+      console.log('document: ', documents)
+      return documents
+    },
+
+    fetchDocumentEquipmentByCompany: async () => {
+      //console.log("este es actualCompany: ", actualCompany)
+      //let { data: documents, error } = await supabase.from('documents_equipment').select()
+      let { data: documents, error } = await supabase.from('documents_equipment').select(`
+            *,
+            vehicles:vehicles(id, company_id)
+        `)
+        .not('vehicles', 'is', null)
+        .eq('vehicles.company_id', actualCompany?.id);
+        
+ 
+
+      if (error) {
+        const message = await errorTranslate(error?.message)
+        throw new Error(String(message).replaceAll('"', ''))
+      }
+      console.log('document: ', documents)
       return documents
     },
 

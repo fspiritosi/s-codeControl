@@ -211,8 +211,7 @@ export type Documents = {
   id?:string
   id_storage: string | null
   id_document_types: string | null
-  applies_equipment:string | null
-  applies_employee:string | null
+  applies:string | null
   validity:Date | null
   state:string
   is_active: boolean
