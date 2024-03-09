@@ -1,4 +1,6 @@
+import { UUID } from 'crypto'
 import React from 'react'
+import { EnumValues } from 'zod'
 
 export type LoggedUser = {
   session: null | string
@@ -203,4 +205,15 @@ export type Employee = {
   allocated_to?: string | undefined | string[] //!si
   date_of_admission: Date | undefined | string
   full_name?: string //!si
+}
+
+export type Documents = {
+  id?:string
+  id_storage: string | null
+  id_document_types: string | null
+  applies:string | null
+  validity:Date | null
+  state:string
+  is_active: boolean
+  user_id: string | undefined
 }
