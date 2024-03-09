@@ -12,7 +12,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -436,9 +436,19 @@ export function DataTable<TData, TValue>({
                             is_active ? '' : 'text-red-500'
                           }`}
                         >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
+                          {cell.column.id === 'picture' ? (
+                            <Link href={cell.getValue() as any} target="_blank">
+                              <img
+                                src={cell.getValue() as any}
+                                alt="Foto"
+                                style={{ width: '48px', height: '48px' }}
+                              />
+                            </Link>
+                          ) : (
+                            flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )
                           )}
                         </TableCell>
                       )

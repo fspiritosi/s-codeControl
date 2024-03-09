@@ -1,4 +1,5 @@
 'use client'
+import { supabase } from '../../supabase/supabase'
 import {
   Accordion,
   AccordionContent,
@@ -51,7 +52,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon } from '@radix-ui/react-icons'
 import { PostgrestError } from '@supabase/supabase-js'
 import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { es, id } from 'date-fns/locale'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ChangeEvent, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -449,6 +450,7 @@ export default function EmployeeAccordion() {
 
     try {
       await updateEmployee(finalValues)
+      await handleUpload()
       toast({
         variant: 'default',
         title: 'Empleado actualizado',
@@ -481,6 +483,7 @@ export default function EmployeeAccordion() {
 
   const handleUpload = async () => {
     const document_number = form.getValues('document_number')
+
     const fileExtension = imageFile?.name.split('.').pop()
     if (imageFile) {
       try {
@@ -490,6 +493,11 @@ export default function EmployeeAccordion() {
           { type: `image/${fileExtension}` },
         )
         await uploadImage(renamedFile, 'employee_photos')
+        const employeeImage = `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/employee_photos/${document_number}.${fileExtension}?timestamp=${Date.now()}`
+        const { data, error } = await supabase
+          .from('employees')
+          .update({ picture: employeeImage })
+          .eq('document_number', document_number)
       } catch (error: any) {
         toast({
           variant: 'destructive',
