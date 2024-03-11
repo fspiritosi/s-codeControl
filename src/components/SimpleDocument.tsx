@@ -60,8 +60,8 @@ export default function SimpleDocument({
   handleSimpleModalOpen,
 }: {
   resource: string | undefined
-  open: boolean
-  handleSimpleModalOpen: () => void
+  open?: boolean
+  handleSimpleModalOpen?: () => void
 }) {
   const searchParams = useSearchParams()
   const document = searchParams.get('document')
@@ -145,7 +145,7 @@ export default function SimpleDocument({
   const [filteredResources, setFilteredResources] = useState(data)
   const [inputValue, setInputValue] = useState<string>('')
   let url: undefined | string = undefined
-  
+
   if (window !== undefined) {
     url = window.location.href
   }
