@@ -27,6 +27,7 @@ const setEmployeesToShow = (employees: any) => {
   const employee = employees?.map((employees: any) => {
     return {
       full_name: employees?.firstname + ' ' + employees?.lastname,
+      id: employees?.id,
       email: employees?.email,
       cuil: employees?.cuil,
       document_number: employees?.document_number,

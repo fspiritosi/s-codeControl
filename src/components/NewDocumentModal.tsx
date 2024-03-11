@@ -1,16 +1,10 @@
 'use client'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-import { Dispatch, SetStateAction, useState } from 'react'
+import { Dispatch, SetStateAction } from 'react'
 import MultiResourceDocument from './MultiResourceDocument'
 import SimpleDocument from './SimpleDocument'
-import { Button } from './ui/button'
 
 export default function NewDocumentModal({
   setIsOpen,
@@ -21,64 +15,58 @@ export default function NewDocumentModal({
   isOpen: boolean
   multiresource: boolean | undefined
 }) {
-  const [resource, setResource] = useState<string | undefined>(undefined)
-  const [multiresourceOpen, setMultiresourceOpen] = useState<boolean>(false)
-  const handleOpen = (boolean: boolean, resource: string) => {
-    setResource(resource)
-
-    if (!multiresource) {
-      setOpen(true)
-    } else {
-      setMultiresourceOpen(true)
-    }
-
-    setIsOpen(false)
-  }
-
-  const [open, setOpen] = useState(false)
-
-  const handleSimpleModalOpen = () => {
-    setOpen(!open)
-  }
-  const handleMultiResourceModalOpen = () => {
-    setMultiresourceOpen(!multiresourceOpen)
+  const handleOpen = () => {
+    setIsOpen(!isOpen)
   }
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {`El nuevo documento estara vinculado a los empleados o equipos?`}
-            </DialogTitle>
-            <DialogDescription>
-              {`Selecciiona si el documento que vas a crear estara vinculado a los empleados o a los equipos.`}
-            </DialogDescription>
-            <div className="flex justify-evenly w-full pt-3">
-              <Button
-                onClick={() => handleOpen(true, 'empleado')}
-                type="submit"
-              >
-                Empleados
-              </Button>
-              <Button onClick={() => handleOpen(false, 'equipo')} type="submit">
-                Equipos
-              </Button>
-            </div>
-          </DialogHeader>
+      <Dialog open={isOpen} onOpenChange={handleOpen}>
+        <DialogContent className='max-h-[90dvh] overflow-y-scroll'>
+          <Tabs defaultValue="Empleados" className="p-2"  >
+            <TabsList className="grid w-full grid-cols-2 ">
+              <TabsTrigger value="Empleados">Empleados</TabsTrigger>
+              <TabsTrigger value="Equipos">Equipos</TabsTrigger>
+            </TabsList>
+            <TabsContent value="Empleados">
+              {multiresource ? (
+                <MultiResourceDocument
+                  resource="empleado" //empleado o equipo
+                  handleOpen={handleOpen} //funcion para abrir/cerrar
+                />
+              ) : (
+                <SimpleDocument
+                  resource="empleado" //empleado o equipo
+                  handleOpen={handleOpen} //funcion para abrir/cerrar
+                />
+              )}
+            </TabsContent>
+            <TabsContent value="Equipos">
+              {multiresource ? (
+                <MultiResourceDocument
+                  resource="equipo" //empleado o equipo
+                  handleOpen={handleOpen} //funcion para abrir/cerrar
+                />
+              ) : (
+                <SimpleDocument
+                  resource="equipo" //empleado o equipo
+                  handleOpen={handleOpen} //funcion para abrir/cerrar
+                />
+              )}
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
-      <SimpleDocument
-        resource={resource}
-        open={open}
-        handleSimpleModalOpen={handleSimpleModalOpen}
+      {/* <SimpleDocument
+        resource={resource} //empleado o equipo
+        open={open} //abierto por defecto
+        handleSimpleModalOpen={handleSimpleModalOpen} //funcion para abrir/cerrar
       />
       <MultiResourceDocument
-        resource={resource}
-        multiresourceOpen={multiresourceOpen}
-        handleMultiResourceModalOpen={handleMultiResourceModalOpen}
-      />
+        resource={resource} //empleado o equipo
+        multiresourceOpen={multiresourceOpen} //abierto por defecto
+        handleMultiResourceModalOpen={handleMultiResourceModalOpen} //funcion para abrir/cerrar
+      /> */}
     </>
   )
 }

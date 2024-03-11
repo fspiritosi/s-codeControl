@@ -1,11 +1,16 @@
 'use client'
 
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { useState } from 'react'
 import SimpleDocument from './SimpleDocument'
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'
 import { Separator } from './ui/separator'
-import NewDocumentModal from './NewDocumentModal'
 
 export const DocumentationDrawer = () => {
   const documentation = [
@@ -45,6 +50,12 @@ export const DocumentationDrawer = () => {
       ? 'equipo'
       : undefined
 
+  const [open, setOpen] = useState(false)
+
+  const handleOpen = () => {
+    setOpen(!open)
+  }
+
   return (
     <aside className="bg-slate-800 w-[20%] h-full rounded-2xl  text-white p-4 min-w-[300px]">
       <h2 className="text-center text-xl mb-5">Documentación del empleado</h2>
@@ -79,7 +90,17 @@ export const DocumentationDrawer = () => {
         <Button variant="primary">Descargar seleccionados</Button>
       </footer>
       <div className="flex w-full justify-center pt-3">
-      <SimpleDocument resource={resource}/>
+        {/* <SimpleDocument resource={resource}/> */}
+        <AlertDialog open={open} onOpenChange={handleOpen}>
+          <AlertDialogTrigger asChild>
+            <Button variant="primary">Subir documento</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <SimpleDocument resource={resource} handleOpen={handleOpen} />
+            </AlertDialogHeader>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </aside>
   )
