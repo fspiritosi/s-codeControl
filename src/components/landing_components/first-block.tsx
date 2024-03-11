@@ -4,10 +4,13 @@ import React from 'react'
 import { Button } from '../ui/button'
 import MotionTransition from './Animation/MotionTransition'
 import Image from 'next/image'
-import ImageBg from '../../../public/bg-fondo.png'
+import Logo_blanco from '../../../public/logoLetrasBlancas.png'
+import Logo_negro from '../../../public/logoLetrasNegras.png'
 import { Reveal } from './Animation/Reveal'
+import { useTheme } from 'next-themes'
 
 function FirstBlock() {
+  const {theme} = useTheme()
   return (
     <div className="relative p-4 md:py-40">
       <div className="grid max-w-5xl mx-auto md:grid-cols-2">
@@ -37,7 +40,7 @@ function FirstBlock() {
         </div>
         <MotionTransition className="flex items-center justify-center">
           <Image
-            src={ImageBg}
+            src={theme === 'dark' ? Logo_blanco : Logo_negro} 
             alt="imagen de fondo"
             width={450}
             height={450}

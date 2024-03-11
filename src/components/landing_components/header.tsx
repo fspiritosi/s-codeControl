@@ -2,13 +2,16 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import Logo from '../../../public/logoLetrasNegras.png'
+import Logo_Blanco from '../../../public/logoLetrasBlancas.png'
 import { RiMenu3Line } from 'react-icons/ri'
 import { useState } from 'react'
 import MotionTransition from './Animation/MotionTransition'
+import { useTheme } from 'next-themes'
 
 function Header() {
   //--Estados locales--//
   const [openMobileMenu, setOpenMobileMenu] = useState(false)
+  const { theme } = useTheme();
 
   //-- Data --//
 
@@ -41,7 +44,7 @@ function Header() {
     <MotionTransition>
       <nav className="flex flex-wrap items-center justify-between max-w-5xl p-4 mx-auto md:py-4">
         <Link href="/" className="flex items-center">
-          <Image src={Logo} width={120} height={60} alt="codeControl Logo" />
+          <Image src={theme == "light" ? Logo : Logo_Blanco} width={120} height={60} alt="codeControl Logo" />
         </Link>
         <RiMenu3Line
           className="block text-3xl md:hidden cursor-pointer"
