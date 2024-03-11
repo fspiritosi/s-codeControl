@@ -60,7 +60,7 @@ export default function NavBar() {
   // console.log(actualCompany?.id)
 
   return (
-    <nav className=" flex flex-shrink items-center justify-between  text-white p-4 mb-2 bg-slate-800">
+    <nav className=" flex flex-shrink items-center justify-between  text-white p-4 mb-2 ">
       <div className="flex items-center">
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger>
