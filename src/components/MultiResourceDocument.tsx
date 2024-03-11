@@ -8,10 +8,16 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CaretSortIcon, CheckIcon } from '@radix-ui/react-icons'
+import {
+  CalendarIcon,
+  CaretSortIcon,
+  CheckIcon,
+  Cross1Icon,
+} from '@radix-ui/react-icons'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -46,16 +52,27 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 import { ChangeEvent, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../supabase/supabase'
+import { Badge } from './ui/badge'
+import { Calendar } from './ui/calendar'
 import { Input } from './ui/input'
+import { Label } from './ui/label'
+import { Switch } from './ui/switch'
 
 export default function MultiResourceDocument({
   resource,
+  handleMultiResourceModalOpen,
+  multiresourceOpen,
 }: {
-  resource: 'empleado' | 'equipo'
+  resource: string | undefined
+  handleMultiResourceModalOpen: () => void
+  multiresourceOpen: boolean
 }) {
   const [documenTypes, setDocumentTypes] = useState<any[] | null>([])
+  const [expiredDate, setExpiredDate] = useState(false)
   const vehicles = useLoggedUserStore(state => state.vehicles)?.reduce(
     (acc: any, act: { year: string; intern_number: string }) => {
       const data = {
@@ -92,8 +109,11 @@ export default function MultiResourceDocument({
   }
 
   useEffect(() => {
+    form.reset()
+    setFile(undefined)
+    setSelectedResources([])
     fetchDocumentTypes()
-  }, [])
+  }, [resource])
 
   const formSchema = z.object({
     document: z
@@ -112,7 +132,10 @@ export default function MultiResourceDocument({
     }),
     resources: z
       .array(z.string(), { required_error: 'Los recursos son requeridos' })
-      .min(2, 'Selecciona al menos dos recursos'),
+      .min(2, 'Selecciona al menos dos recursos'), //! Cambiar a 1 si se necesita que sea solo uno
+    validity: expiredDate
+      ? z.date({ required_error: 'Falta ingresar la fecha de vencimiento' })
+      : z.date().optional(),
   })
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -137,15 +160,21 @@ export default function MultiResourceDocument({
     console.log(finalValues)
   }
 
-  const [open, setOpen] = useState(true)
-  const handleOpen = () => {
-    setOpen(!open)
-  }
-
   const fileInputRef = useRef<HTMLInputElement>(null)
-
+  let url: undefined | string = undefined
+  if (typeof window !== 'undefined') {
+    url = window.location.href
+  }
   return (
-    <AlertDialog open={open} onOpenChange={handleOpen}>
+    <AlertDialog
+      open={multiresourceOpen}
+      onOpenChange={handleMultiResourceModalOpen}
+    >
+      <AlertDialogTrigger
+        className={`${cn(url?.includes('/document') ? 'hidden' : '')}`}
+      >
+        Agregar documento
+      </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Documento Multirecurso</AlertDialogTitle>
@@ -346,15 +375,91 @@ export default function MultiResourceDocument({
                       </PopoverContent>
                     </Popover>
                     <FormDescription>
-                      {` Selecciona al menos dos recursos para vincular el
+                      {` Selecciona al menos dos recursos para vincular el 
                       documento. Puedes buscar por  ${
                         resource === 'empleado' ? 'nombre' : 'numero interno'
                       } o ${resource === 'empleado' ? 'documento' : 'año'}.`}
+                      {/* //! Cambiar a 1 si se necesita que sea solo uno */}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="expired">¿Tiene fecha de vencimiento?</Label>
+                <Switch
+                  id="expired"
+                  onCheckedChange={() => setExpiredDate(!expiredDate)}
+                />
+              </div>
+              {expiredDate && (
+                <FormField
+                  control={form.control}
+                  name="validity"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Fecha de vencimiento</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={'outline'}
+                              className={cn(
+                                'pl-3 text-left font-normal',
+                                !field.value && 'text-muted-foreground',
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, 'PPP', { locale: es })
+                              ) : (
+                                <span>Seleccionar fecha de vencimiento</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="center">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={date => date < new Date()}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormDescription>
+                        La fecha de vencimiento del documento
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              <div className="container overflow-y-scroll max-h-[200px] space-x-1 flex w-full flex-wrap text-sm items-center gap-y-2">
+                {selectedResources.map((resource, index) => {
+                  const resourceData = resources.find((element: any) => {
+                    return element.document === resource
+                  })
+                  return (
+                    <Badge
+                      key={index}
+                      variant="destructive"
+                      onClick={() => {
+                        const updatedResources = selectedResources.filter(
+                          res => res !== resource,
+                        )
+                        setSelectedResources(updatedResources)
+                        form.setValue('resources', updatedResources)
+                      }}
+                      className="w-fit h-4 cursor-pointer m-0 p-3"
+                    >
+                      {resourceData?.name}{' '}
+                      <Cross1Icon className="ml-2 h-4 w-4 shrink-0 opacity-80" />
+                    </Badge>
+                  )
+                })}
+              </div>
 
               <div className="flex justify-evenly">
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>

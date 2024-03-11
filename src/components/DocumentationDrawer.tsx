@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import NewDocumentModal from './NewDocumentModal'
+import SimpleDocument from './SimpleDocument'
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'
 import { Separator } from './ui/separator'
+import NewDocumentModal from './NewDocumentModal'
 
 export const DocumentationDrawer = () => {
   const documentation = [
@@ -32,6 +33,17 @@ export const DocumentationDrawer = () => {
       setSelectedDocuments([...selectedDocuments, document])
     }
   }
+
+  let url = ''
+
+  if (typeof window !== 'undefined') {
+    url = window.location.href
+  }
+  const resource = url.includes('employee')
+    ? 'empleado'
+    : url.includes('equipment')
+      ? 'equipo'
+      : undefined
 
   return (
     <aside className="bg-slate-800 w-[20%] h-full rounded-2xl  text-white p-4 min-w-[300px]">
@@ -67,7 +79,7 @@ export const DocumentationDrawer = () => {
         <Button variant="primary">Descargar seleccionados</Button>
       </footer>
       <div className="flex w-full justify-center pt-3">
-        <NewDocumentModal />
+      <SimpleDocument resource={resource}/>
       </div>
     </aside>
   )

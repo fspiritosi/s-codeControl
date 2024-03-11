@@ -1,67 +1,84 @@
+'use client'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 
-import { useState } from 'react'
+import { Dispatch, SetStateAction, useState } from 'react'
 import MultiResourceDocument from './MultiResourceDocument'
 import SimpleDocument from './SimpleDocument'
 import { Button } from './ui/button'
 
-export default function NewDocumentModal() {
-  const [multiresource, setMultiresource] = useState<boolean | undefined>(
-    undefined,
-  )
-  const [isOpen, setIsOpen] = useState<boolean>(false)
+export default function NewDocumentModal({
+  setIsOpen,
+  isOpen,
+  multiresource,
+}: {
+  setIsOpen: Dispatch<SetStateAction<boolean>>
+  isOpen: boolean
+  multiresource: boolean | undefined
+}) {
+  const [resource, setResource] = useState<string | undefined>(undefined)
+  const [multiresourceOpen, setMultiresourceOpen] = useState<boolean>(false)
+  const handleOpen = (boolean: boolean, resource: string) => {
+    setResource(resource)
 
-  let url = ''
+    if (!multiresource) {
+      setOpen(true)
+    } else {
+      setMultiresourceOpen(true)
+    }
 
-  if (typeof window !== 'undefined') {
-    url = window.location.href
-  }
-  const resource = url.includes('employee') ? 'empleado' : 'equipo'
-  const handleOpen = (boolean: boolean) => {
-    setMultiresource(boolean)
     setIsOpen(false)
   }
 
-  const handleReset = () => {
-    setMultiresource(undefined)
-    setIsOpen(!isOpen)
+  const [open, setOpen] = useState(false)
+
+  const handleSimpleModalOpen = () => {
+    setOpen(!open)
+  }
+  const handleMultiResourceModalOpen = () => {
+    setMultiresourceOpen(!multiresourceOpen)
   }
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={handleReset}>
-        <DialogTrigger className="bg-blue-500 hover:bg-blue-800 text-primary-foreground shadow py-2 px-3 rounded-lg text-[14px]">
-          Crear nuevo documento
-        </DialogTrigger>
+      <Dialog open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {` ¿El documento que deseas subir abarca múltiples
-             ${resource}?`}
+              {`El nuevo documento estara vinculado a los empleados o equipos?`}
             </DialogTitle>
             <DialogDescription>
-              {`El documento estara vinculado a mas de un ${resource}?`}
+              {`Selecciiona si el documento que vas a crear estara vinculado a los empleados o a los equipos.`}
             </DialogDescription>
             <div className="flex justify-evenly w-full pt-3">
-              <Button onClick={() => handleOpen(true)} type="submit">
-                Si, es multirecurso
+              <Button
+                onClick={() => handleOpen(true, 'empleado')}
+                type="submit"
+              >
+                Empleados
               </Button>
-              <Button onClick={() => handleOpen(false)} type="submit">
-                No, no es multirecurso
+              <Button onClick={() => handleOpen(false, 'equipo')} type="submit">
+                Equipos
               </Button>
             </div>
           </DialogHeader>
         </DialogContent>
       </Dialog>
-      {multiresource === true && <MultiResourceDocument resource={resource} />}
-      {multiresource === false && <SimpleDocument resource={resource} />}
+      <SimpleDocument
+        resource={resource}
+        open={open}
+        handleSimpleModalOpen={handleSimpleModalOpen}
+      />
+      <MultiResourceDocument
+        resource={resource}
+        multiresourceOpen={multiresourceOpen}
+        handleMultiResourceModalOpen={handleMultiResourceModalOpen}
+      />
     </>
   )
 }

@@ -1,5 +1,4 @@
 'use client'
-import { supabase } from '../../supabase/supabase'
 import {
   Accordion,
   AccordionContent,
@@ -22,11 +21,11 @@ import {
   nacionaliOptionsENUM,
   typeOfContractENUM,
 } from '@/types/enums'
+import { supabase } from '../../supabase/supabase'
 
 import { CheckboxDefaultValues } from '@/components/CheckboxDefValues'
 import { SelectWithData } from '@/components/SelectWithData'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
   Form,
@@ -52,13 +51,14 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon } from '@radix-ui/react-icons'
 import { PostgrestError } from '@supabase/supabase-js'
 import { format } from 'date-fns'
-import { es, id } from 'date-fns/locale'
+import { es } from 'date-fns/locale'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ChangeEvent, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { ImageHander } from './ImageHandler'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import { Button } from './ui/button'
 
 type Province = {
   id: number
@@ -551,7 +551,7 @@ export default function EmployeeAccordion() {
         <div>
           {readOnly && accion === 'view' && (
             <Button
-            variant="primary"
+              variant="primary"
               onClick={() => {
                 setReadOnly(false)
               }}
@@ -830,7 +830,7 @@ export default function EmployeeAccordion() {
                                       <FormControl>
                                         <Button
                                           disabled={readOnly}
-                                          variant={'outline'}
+                                          variant="outline"
                                           className={cn(
                                             'w-[300px] pl-3 text-left font-normal',
                                             !field.value &&
