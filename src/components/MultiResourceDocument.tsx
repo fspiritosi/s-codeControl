@@ -439,7 +439,7 @@ export default function MultiResourceDocument({
                 return (
                   <Badge
                     key={index}
-                    variant="destructive"
+                    variant="outline"
                     onClick={() => {
                       const updatedResources = selectedResources.filter(
                         res => res !== resource,
@@ -450,7 +450,7 @@ export default function MultiResourceDocument({
                     className="w-fit h-4 cursor-pointer m-0 p-3"
                   >
                     {resourceData?.name}{' '}
-                    <Cross1Icon className="ml-2 h-4 w-4 shrink-0 opacity-80" />
+                    <Cross1Icon className="ml-2 h-4 w-4 shrink-0 opacity-80 text-red-700" />
                   </Badge>
                 )
               })}
