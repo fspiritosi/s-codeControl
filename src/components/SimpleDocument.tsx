@@ -47,10 +47,12 @@ import { Separator } from './ui/separator'
 import { Switch } from './ui/switch'
 export default function SimpleDocument({
   resource,
-  handleOpen,
+  index,
+  refSubmit,
 }: {
   resource: string | undefined
-  handleOpen?: () => void
+  index: number
+  refSubmit: React.RefObject<HTMLButtonElement>
 }) {
   const searchParams = useSearchParams()
   const document = searchParams.get('document')
@@ -127,7 +129,7 @@ export default function SimpleDocument({
     defaultValues: {},
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!files?.name) {
       form.setError('document', { message: 'El documento es requerido' })
       return
@@ -143,13 +145,17 @@ export default function SimpleDocument({
     const user_id = employees?.find((e: any) => e?.document === values.applies)
       ?.id
 
-    let finalValues
+    let finalValues: any
     if (resource === 'equipo') {
       finalValues = { ...values, document: files, applies: vehicle_id }
     } else {
       finalValues = { ...values, document: files, applies: user_id }
     }
     console.log(finalValues, 'values')
+
+    let { data: type, error } = await supabase.from('type').select('*')
+
+    console.log(type, 'type')
   }
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -161,12 +167,7 @@ export default function SimpleDocument({
     url = window.location.href
   }
   return (
-    <div>
-      <h2 className="text-lg font-semibold">Documento No multirecurso</h2>
-      <Separator className="my-1" />
-      <p className="text-sm text-muted-foreground mb-3">
-        Sube los documentos que necesitas
-      </p>
+    <>
       <div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -417,14 +418,15 @@ export default function SimpleDocument({
                 )}
               />
             )}
-            <Separator className="my-1" />
-            <div className="flex justify-evenly">
-              <Button onClick={handleOpen}>Cancel</Button>
-              <Button type="submit">Subir documentos</Button>
+            <Separator className=" bg-black mt-5" />
+            <div className=" justify-evenly hidden">
+              <Button ref={refSubmit} type="submit">
+                Subir documentos
+              </Button>
             </div>
           </form>
         </Form>
       </div>
-    </div>
+    </>
   )
 }
