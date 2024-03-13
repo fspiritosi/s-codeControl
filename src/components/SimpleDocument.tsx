@@ -45,6 +45,10 @@ import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Separator } from './ui/separator'
 import { Switch } from './ui/switch'
+import { useDocument } from '@/hooks/useDocuments'
+import { profile } from 'console'
+import { useToast } from './ui/use-toast'
+
 export default function SimpleDocument({
   resource,
   handleOpen,
@@ -57,7 +61,7 @@ export default function SimpleDocument({
   const id = searchParams.get('id')
   const [documenTypes, setDocumentTypes] = useState<any[] | null>([])
   const [expiredDate, setExpiredDate] = useState(false)
-
+  const { toast } = useToast()
   const fetchDocumentTypes = async () => {
     const applies = resource === 'empleado' ? 'Persona' : 'Equipos'
 
@@ -108,6 +112,7 @@ export default function SimpleDocument({
     [],
   )
 
+  const user = useLoggedUserStore(state => state.credentialUser?.id)
   const vehicles = useLoggedUserStore(state => state.vehicles)?.reduce(
     (acc: any, act: { domain: string; serie: string; id: string }) => {
       const data = {
@@ -126,17 +131,24 @@ export default function SimpleDocument({
     resolver: zodResolver(formSchema),
     defaultValues: {},
   })
+  const {
+    insertDocumentEmployees,
+    insertDocumentEquipment,
+    uploadDocumentFile,
+  } = useDocument()
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!files?.name) {
       form.setError('document', { message: 'El documento es requerido' })
       return
     }
+    const fileUrl = await uploadDocumentFile(files, 'document_files')
+
     const vehicle_id = vehicles?.find((vehicle: any) => {
       return (
-        vehicle.id === values.applies ||
-        vehicle.document === values.applies ||
-        vehicle.name === values.applies
+        vehicle?.id === values.applies ||
+        vehicle?.document === values.applies ||
+        vehicle?.name === values.applies
       )
     })?.id
 
@@ -145,11 +157,39 @@ export default function SimpleDocument({
 
     let finalValues
     if (resource === 'equipo') {
-      finalValues = { ...values, document: files, applies: vehicle_id }
+      //finalValues = { ...values, document: files, applies: vehicle_id }
+      finalValues = {
+        ...values,
+        document_url: fileUrl,
+        id_storage: null,
+        state: 'presentado',
+        is_active: true,
+        applies: vehicle_id,
+        user_id: user,
+      }
+
+      insertDocumentEquipment(finalValues)
     } else {
-      finalValues = { ...values, document: files, applies: user_id }
+      //finalValues = { ...values, document: files, applies: user_id }
+      finalValues = {
+        ...values,
+        document_url: fileUrl,
+        id_storage: null,
+        state: 'presentado',
+        is_active: true,
+        applies: user_id,
+        user_id: user,
+      }
+
+      insertDocumentEmployees(finalValues)
     }
-    console.log(finalValues, 'values')
+
+    toast({
+      title: 'Documento cargado',
+      description: 'El documento fue cargado con éxito',
+    })
+
+    //console.log(finalValues, 'values')
   }
 
   const fileInputRef = useRef<HTMLInputElement>(null)

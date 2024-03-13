@@ -9,9 +9,9 @@ export const useDocument = () => {
     
  return{
 
-    insertDocument: async (documents: Documents) => {
+    insertDocumentEmployees: async (documents: any) => {
       const { data, error } = await supabase
-        .from('documents')
+        .from('documents_employees')
         .insert(documents)
         .select()
 
@@ -22,6 +22,76 @@ export const useDocument = () => {
       }
       return data
     },
+
+    insertDocumentEquipment: async (documents: any) => {
+      const { data, error } = await supabase
+        .from('documents_equipment')
+        .insert(documents)
+        .select()
+
+      if (error) {
+        console.error()
+        const message = await errorTranslate(error?.message)
+        throw new Error(String(message).replaceAll('"', ''))
+      }
+      return data
+    },
+
+    insertMultiDocumentEmployees: async (documents: any) => {
+  const { applies, ...rest } = documents; // documents contiene todos los datos excepto los IDs a los que aplica
+
+  const insertedRows = [];
+
+  // Iterar sobre cada id al que aplica
+  for (const id of applies) {
+    // Combinar los datos restantes con el id actual
+    const dataWithId = { ...rest, applies: id};
+
+    // Insertar en la tabla documents_employees
+    const { data, error } = await supabase
+      .from('documents_employees')
+      .insert(dataWithId)
+      .select();
+
+    if (error) {
+      console.error();
+      const message = await errorTranslate(error?.message);
+      throw new Error(String(message).replaceAll('"', ''));
+    }
+
+    insertedRows.push(data[0]); // Añadir los datos insertados al array de resultados
+  }
+
+  return insertedRows;
+},
+
+insertMultiDocumentEquipment: async (documents: any) => {
+  const { applies, ...rest } = documents; // documents contiene todos los datos excepto los IDs a los que aplica
+
+  const insertedRows = [];
+
+  // Iterar sobre cada id al que aplica
+  for (const id of applies) {
+    
+    const dataWithId = { ...rest, applies: id};
+   
+    
+    const { data, error } = await supabase
+      .from('documents_equipment')
+      .insert(dataWithId)
+      .select();
+
+    if (error) {
+      console.error();
+      const message = await errorTranslate(error?.message);
+      throw new Error(String(message).replaceAll('"', ''));
+    }
+
+    insertedRows.push(data[0]); // Añadir los datos insertados al array de resultados
+  }
+
+  return insertedRows;
+},
 
     updateDocumentEquipment: async (id: string, documents: Documents) => {
       const { data, error } = await supabase
@@ -51,7 +121,7 @@ export const useDocument = () => {
       return data
     },
     fetchDocumentEmployeesByCompany: async () => {
-      console.log("este es actualCompany: ", actualCompany)
+      
       let { data: documents, error } = await supabase.from('documents_employees').select(`
             *,
             employees:employees(id, company_id)
@@ -65,13 +135,12 @@ export const useDocument = () => {
         const message = await errorTranslate(error?.message)
         throw new Error(String(message).replaceAll('"', ''))
       }
-      console.log('document: ', documents)
+     
       return documents
     },
 
     fetchDocumentEquipmentByCompany: async () => {
-      //console.log("este es actualCompany: ", actualCompany)
-      //let { data: documents, error } = await supabase.from('documents_equipment').select()
+      
       let { data: documents, error } = await supabase.from('documents_equipment').select(`
             *,
             vehicles:vehicles(id, company_id)
@@ -85,7 +154,7 @@ export const useDocument = () => {
         const message = await errorTranslate(error?.message)
         throw new Error(String(message).replaceAll('"', ''))
       }
-      console.log('document: ', documents)
+      
       return documents
     },
 
