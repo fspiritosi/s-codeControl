@@ -1,5 +1,18 @@
 'use client'
 
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table'
+
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -16,21 +29,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table'
-import { useState } from 'react'
-
-import { Badge } from '@/components/ui/badge'
+import { useContext, useEffect, useReducer, useRef, useState } from 'react'
+import Link from 'next/link'
 import {
   Select,
   SelectContent,
@@ -41,156 +41,98 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useRouter } from 'next/navigation'
+import { Url } from 'next/dist/shared/lib/router/router'
 import { useLoggedUserStore } from '@/store/loggedUser'
+import { DataTable } from '../employee/data-table'
 import { useSidebarOpen } from '@/store/sidebar'
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[] | any
+interface DataDocumentsEmployeesProps<TData, TValue> {
+  columEmp: ColumnDef<TData, TValue>[] | any
   data: TData[]
-  setInactiveEmployees: () => void
-  setActivesEmployees: () => void
-  showDeletedEmployees: boolean
-  setShowDeletedEmployees: (showDeletedEmployees: boolean) => void
+  //allCompany: any[]
+  showInactive: boolean
+  setShowInactive: (showInactive: boolean) => void
 }
 
-export function DataTable<TData, TValue>({
-  columns,
+export function DataDocumentsEmployees<TData, TValue>({
+  columEmp,
   data,
-  setActivesEmployees,
-  setInactiveEmployees,
-  showDeletedEmployees,
-  setShowDeletedEmployees,
-}: DataTableProps<TData, TValue>) {
+  showInactive,
+  setShowInactive,
+  //allCompany,
+}: DataDocumentsEmployeesProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const defaultVisibleColumns = [
-    'full_name',
-    'status',
-    'cuil',
-    'document_number',
-    'document_type',
-    'hierarchical_position',
-    'company_position',
-    'normal_hours',
-    'type_of_contract',
-    'allocated_to',
+    'id_document_types',
+    'validity',
+    'state',
+    'applies',
+    'document_url',
+    'is_active',
   ]
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-    columns.reduce((acc: any, column: any) => {
+    columEmp.reduce((acc: any, column: any) => {
       acc[column.accessorKey] = defaultVisibleColumns.includes(
         column.accessorKey,
       )
       return acc
     }, {}),
   )
-  // const [showDeletedEmployees, setShowDeletedEmployees] = useState(false)
-
+  //const [showInactive, setShowInactive] = useState<boolean>(false)
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const loader = useLoggedUserStore(state => state.isLoading)
-
+  const filteredData = showInactive
+    ? data.filter((item: any) => item.is_active === false)
+    : data
   const allOptions = {
-    document_type: createOptions('document_type'),
-    hierarchical_position: createOptions('hierarchical_position'),
-    type_of_contract: createOptions('type_of_contract'),
-    allocated_to: createOptions('allocated_to'),
-    nationality: createOptions('nationality'),
-    birthplace: createOptions('birthplace'),
-    gender: createOptions('gender'),
-    marital_status: createOptions('marital_status'),
-    level_of_education: createOptions('level_of_education'),
-    province: createOptions('province'),
-    affiliate_status: createOptions('affiliate_status'),
-    city: createOptions('city'),
-    hierrical_position: createOptions('hierrical_position'),
-    workflow_diagram: createOptions('workflow_diagram'),
-    status: createOptions('status'),
+    id_document_types: createOptions('id_document_types'),
+    validity: createOptions('validity'),
+    state: createOptions('state'),
+    applies: createOptions('applies'),
+    is_active: createOptions('is_active'),
   }
 
   function createOptions(key: string) {
-    const values = data?.flatMap((item: any) => item?.[key])
+    const values = data?.map((item: any) =>
+      item?.[key]?.name ? item?.[key]?.name : item?.[key],
+    )
+
     return ['Todos', ...Array.from(new Set(values))]
   }
 
   const selectHeader = {
-    document_type: {
-      name: 'document_type',
-      option: allOptions.document_type,
+    id_document_types: {
+      name: 'id_document_types',
+      option: allOptions.id_document_types,
       label: 'Tipo de documento',
     },
-    hierarchical_position: {
-      name: 'hierarchical_position',
-      option: allOptions.hierarchical_position,
-      label: 'Posición jerárquica',
+    validity: {
+      name: 'validity',
+      option: allOptions.validity,
+      label: 'Validez',
     },
-    type_of_contract: {
-      name: 'type_of_contract',
-      option: allOptions.type_of_contract,
-      label: 'Tipo de contrato',
-    },
-    allocated_to: {
-      name: 'allocated_to',
-      option: allOptions.allocated_to,
-      label: 'Afectado a',
-    },
-    nationality: {
-      name: 'nationality',
-      option: allOptions.nationality,
-      label: 'Nacionalidad',
-    },
-    birthplace: {
-      name: 'birthplace',
-      option: allOptions.birthplace,
-      label: 'Lugar de nacimiento',
-    },
-    gender: {
-      name: 'gender',
-      option: allOptions.gender,
-      label: 'Genero',
-    },
-    marital_status: {
-      name: 'marital_status',
-      option: allOptions.marital_status,
-      label: 'Estado civil',
-    },
-    level_of_education: {
-      name: 'level_of_education',
-      option: allOptions.level_of_education,
-      label: 'Nivel de educacion',
-    },
-    province: {
-      name: 'province',
-      option: allOptions.province,
-      label: 'Provincia',
-    },
-    affiliate_status: {
-      name: 'affiliate_status',
-      option: allOptions.affiliate_status,
-      label: 'Estado de afiliado',
-    },
-    city: {
-      name: 'city',
-      option: allOptions.city,
-      label: 'Ciudad',
-    },
-    hierrical_position: {
-      name: 'hierrical_position',
-      option: allOptions.hierrical_position,
-      label: 'Posición jerárquica',
-    },
-    workflow_diagram: {
-      name: 'workflow_diagram',
-      option: allOptions.workflow_diagram,
-      label: 'Diagrama de flujo',
-    },
-    status: {
-      name: 'status',
-      option: allOptions.status,
+
+    state: {
+      name: 'state',
+      option: allOptions.state,
       label: 'Estado',
+    },
+    applies: {
+      name: 'applies',
+      option: allOptions.applies,
+      label: 'Aplica a',
+    },
+    is_active: {
+      name: 'is_active',
+      option: allOptions.is_active,
+      label: 'Activo',
     },
   }
 
   let table = useReactTable({
     data,
-    columns,
+    columns: columEmp,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
@@ -207,44 +149,44 @@ export function DataTable<TData, TValue>({
   const { expanded } = useSidebarOpen()
   const totalWidth = `calc(100vw - ${expanded ? '296px' : '167px'})`
 
+  //const router = useRouter()
+
   const handleClearFilters = () => {
     table.getAllColumns().forEach(column => {
       column.setFilterValue('')
     })
+    //router.push('/dashboard/equipment')
 
     setSelectValues({
-      hierarchical_position: 'Todos',
-      type_of_contract: 'Todos',
-      allocated_to: 'Todos',
-      document_type: 'Todos',
-      nationality: 'Todos',
-      birthplace: 'Todos',
-      gender: 'Todos',
-      marital_status: 'Todos',
-      level_of_education: 'Todos',
-      province: 'Todos',
-      affiliate_status: 'Todos',
-      city: 'Todos',
-      hierrical_position: 'Todos',
+      id_document_types: 'Todos',
+      validity: 'todos',
+      state: 'Todos',
+      applies: 'Todos',
+      is_active: 'Todos',
     })
   }
-
   const maxRows = ['20', '40', '60', '80', '100']
-
   const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
     {},
   )
+  // const handleToggleInactive = () => {
+  //   setShowInactive(!showInactive)
+  // }
 
   return (
     <div>
-      <div className="flex items-center py-4 flex-wrap">
+      <div className="flex items-center py-4">
         <Input
-          placeholder="Buscar por nombre"
+          placeholder="Buscar por tipo de documento"
           value={
-            (table.getColumn('full_name')?.getFilterValue() as string) ?? ''
+            (table
+              .getColumn('id_document_types')
+              ?.getFilterValue() as string) ?? ''
           }
           onChange={event =>
-            table.getColumn('full_name')?.setFilterValue(event.target.value)
+            table
+              .getColumn('id_document_types')
+              ?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -257,7 +199,7 @@ export function DataTable<TData, TValue>({
           Limpiar filtros
         </Button>
 
-        <div className=" flex gap-2 ml-2 flex-wrap">
+        <div className="w-full flex justify-end gap-2">
           <Select onValueChange={e => table.setPageSize(Number(e))}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Cantidad de filas" />
@@ -273,10 +215,11 @@ export function DataTable<TData, TValue>({
               </SelectGroup>
             </SelectContent>
           </Select>
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">Columnas</Button>
+              <Button variant="outline" className="ml-auto">
+                Columnas
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
@@ -292,23 +235,27 @@ export function DataTable<TData, TValue>({
                   ) {
                     return null
                   }
-
-                  if (column.id === 'showUnavaliableEmployees') {
+                  if (column.id === 'is_active') {
                     return (
-                      <DropdownMenuCheckboxItem
-                        key={column.id}
-                        className="capitalize text-red-400"
-                        checked={showDeletedEmployees}
-                        onCheckedChange={value => {
-                          setShowDeletedEmployees(!!value)
-                          value ? setInactiveEmployees() : setActivesEmployees()
-                        }}
-                      >
-                        {column.columnDef.header}
-                      </DropdownMenuCheckboxItem>
+                      <>
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          className="capitalize  text-red-400"
+                          checked={showInactive}
+                          //onChange={() => setShowInactive(!showInactive)}
+                          onClick={() => setShowInactive(!showInactive)}
+                          onCheckedChange={value =>
+                            column.toggleVisibility(true)
+                          }
+                        >
+                          {column.columnDef.header}
+                        </DropdownMenuCheckboxItem>
+                        {/* <button onClick={() => setShowInactive(!showInactive)}>
+                          Ver equipos dados de baja
+                        </button> */}
+                      </>
                     )
                   }
-
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}
@@ -348,18 +295,18 @@ export function DataTable<TData, TValue>({
                         ? null
                         : flexRender(
                             header.id in selectHeader ? (
-                              header.id === 'allocated_to' ? (
+                              header.id === 'intern_number' ? (
                                 <div className="flex justify-center">
                                   <Input
-                                    placeholder="Buscar por afectación"
+                                    placeholder="Número de interno"
                                     value={
                                       table
-                                        .getColumn('allocated_to')
+                                        .getColumn('intern_number')
                                         ?.getFilterValue() as string
                                     }
                                     onChange={event =>
                                       table
-                                        .getColumn('allocated_to')
+                                        .getColumn('intern_number')
                                         ?.setFilterValue(event.target.value)
                                     }
                                     className="max-w-sm"
@@ -389,7 +336,7 @@ export function DataTable<TData, TValue>({
                                       })
                                     }}
                                   >
-                                    <SelectTrigger className="">
+                                    <SelectTrigger className="w-[180px]">
                                       <SelectValue
                                         placeholder={
                                           header.column.columnDef
@@ -427,53 +374,44 @@ export function DataTable<TData, TValue>({
           </TableHeader>
           <TableBody className="max-w-[50vw] overflow-x-auto">
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map(row => {
-                return (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
-                  >
-                    {row.getVisibleCells().map(cell => {
-                      let is_active = (cell.row.original as any).is_active
-                      return (
-                        <TableCell
-                          key={cell.id}
-                          className={`text-center whitespace-nowrap ${
-                            is_active ? '' : 'text-red-500'
-                          }`}
-                        >
-                          {cell.column.id === 'picture' ? (
+              table.getRowModel().rows.map(row => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && 'selected'}
+                >
+                  {row.getVisibleCells().map(cell => {
+                    let is_active = (cell.row.original as any).is_active
+                    return (showInactive && !is_active) ||
+                      (!showInactive && is_active) ? (
+                      <TableCell
+                        key={cell.id}
+                        className={`text-center whitespace-nowrap ${
+                          is_active ? '' : 'text-red-500'
+                        }`}
+                      >
+                        {cell.column.id === 'document_url' ? (
+                          <Link href={cell.getValue() as any} target="_blank">
                             <img
                               src={cell.getValue() as any}
                               alt="Foto"
-                              className="size-10 rounded-full object-cover"
+                              style={{ width: '68px', height: '68px' }}
                             />
-                          ) : cell.column.id === 'status' ? (
-                            <Badge
-                              variant={
-                                cell.getValue() === 'No avalado'
-                                  ? 'destructive'
-                                  : 'default'
-                              }
-                            >
-                              {cell.getValue() as React.ReactNode}
-                            </Badge>
-                          ) : (
-                            (flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            ) as React.ReactNode)
-                          )}
-                        </TableCell>
-                      )
-                    })}
-                  </TableRow>
-                )
-              })
+                          </Link>
+                        ) : (
+                          flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )
+                        )}
+                      </TableCell>
+                    ) : null
+                  })}
+                </TableRow>
+              ))
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={columEmp.length}
                   className="h-24 text-center"
                 >
                   {loader ? (
@@ -497,10 +435,8 @@ export function DataTable<TData, TValue>({
                         <Skeleton className="h-7 w-[13%]" />
                       </div>
                     </div>
-                  ) : showDeletedEmployees ? (
-                    'No hay empleados inactivos'
                   ) : (
-                    'No hay empleados activos'
+                    'No hay Equipos registrados'
                   )}
                 </TableCell>
               </TableRow>

@@ -1,23 +1,19 @@
 'use client'
-import Link from 'next/link'
-import React, { useEffect, useState } from 'react'
-import { LogOutButton } from './LogOutButton'
-import { useLoggedUserStore } from '@/store/loggedUser'
+import { ModeToggle } from '@/components/ui/ToogleDarkButton'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { ModeToggle } from '@/components/ui/ToogleDarkButton'
+import { useLoggedUserStore } from '@/store/loggedUser'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { LogOutButton } from './LogOutButton'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { MdDomainAdd } from 'react-icons/md'
-import { IoMdAddCircleOutline } from 'react-icons/io'
-import { companyData } from '@/types/types'
-import { company } from '@/types/types'
-import allCompany from '@/app/dashboard/company/page'
 import ModalCompany from '@/components/ModalCompany'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useRouter } from 'next/navigation'
+import { IoMdAddCircleOutline } from 'react-icons/io'
 
 export default function NavBar() {
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
@@ -75,6 +71,7 @@ export default function NavBar() {
                     className=" shadow-md text-white items-center flex gap-1 bg-slate-500 border-0 rounded-full w-40px h-40px"
                     src={actualCompany.company_logo}
                     style={{ width: '40px', height: '40px' }}
+                  alt="Company Logo"
                   />
                 </Link>
               ) : (
@@ -92,6 +89,7 @@ export default function NavBar() {
                         src={companyItem.company_logo}
                         style={{ width: '40px', height: '40px' }}
                         className="hover:cursor-pointer shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px"
+                        alt="Company Logo"
                       />
                     </Link>
                   ))
@@ -122,6 +120,7 @@ export default function NavBar() {
                     className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-md"
                   >
                     <img
+                  alt="Company Logo"
                       src={companyItem.company_logo}
                       alt="Company Logo"
                       style={{ width: '78px', height: '40px' }}

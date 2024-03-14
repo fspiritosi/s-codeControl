@@ -1,6 +1,4 @@
-import { UUID } from 'crypto'
 import React from 'react'
-import { EnumValues } from 'zod'
 
 export type LoggedUser = {
   session: null | string
@@ -205,6 +203,10 @@ export type Employee = {
   allocated_to?: string | undefined | string[] //!si
   date_of_admission: Date | undefined | string
   full_name?: string //!si
+  is_active?: boolean
+  reason_for_termination?: string | undefined
+  termination_date?: Date | undefined | string
+  status?: 'Avalado' | 'No avalado'
 }
 
 export type Documents = {
@@ -216,4 +218,174 @@ export type Documents = {
   state:string
   is_active: boolean
   user_id: string | undefined
+  document_url: string | null
 }
+
+export type TypeOfVehicle ={
+  id: string
+  name: string
+  created_at: string
+}
+export type Brand ={
+  id: string
+  name: string
+  created_at: string
+}
+export type Model ={
+  id: string
+  name: string
+  created_at: string
+}
+
+export type Vechicle = {
+  id: string
+  created_at: string
+  picture: string
+  type_of_vehicle: TypeOfVehicle
+  domain: string
+  chassis: string
+  engine: string
+  serie: string
+  intern_number: string
+  year: string
+  brand: Brand
+  model: Model
+  company_id: string
+  is_active: boolean
+  termination_date: string
+  reason_for_termination: string
+  user_id: string
+  status: 'Avalado' | 'No avalado'
+  type: Model
+}
+
+type Resource = Vechicle | Employee
+
+type DocumentType = {
+  id: string
+  name: string
+  description: string
+  applies: 'Equipos' | 'Persona'
+  multiresource: boolean
+  mandatory: boolean
+  expired: boolean
+  special: boolean
+  is_active: boolean
+  created_at: string
+}
+
+type Document = {
+  id: string
+  created_at: string
+  id_storage: string
+  id_document_types: DocumentType
+  validity: string
+  state: 'presentado' | 'rechazado' | 'aprovbado' | 'vencido'
+  is_active: boolean
+  user_id: string
+  applies: Resource
+  document_url: string
+}
+
+export const AllDocuments: Document[] = [
+  {
+    id: "1",
+    created_at: "2022-01-01",
+    id_storage: "abc123",
+    id_document_types: {
+      id: "1",
+      name: "Passport",
+      description: "Travel document",
+      applies: "Persona",
+      multiresource: false,
+      mandatory: true,
+      expired: true,
+      special: false,
+      is_active: true,
+      created_at: "2022-01-01",
+    },
+    validity: "2023-01-01",
+    state: "presentado",
+    is_active: true,
+    user_id: "123",
+    applies: {
+      id: "1",
+      lastname: "Doe",
+      firstname: "John",
+      nationality: "USA",
+      cuil: "123456789",
+      document_type: "Passport",
+      document_number: "ABC123",
+      birthplace: "New York",
+      gender: "Male",
+      marital_status: "Single",
+      level_of_education: "Bachelor's Degree",
+      picture: "https://example.com/johndoe.jpg",
+      street: "123 Main St",
+      street_number: "123",
+      province: "New York",
+      city: "New York City",
+      postal_code: "12345",
+      phone: "123-456-7890",
+      email: "johndoe@example.com",
+      file: null,
+      hierarchical_position: "Manager",
+      company_position: "Software Engineer",
+      workflow_diagram: "Diagram 1",
+      normal_hours: "40",
+      type_of_contract: "Full-time",
+      allocated_to: ["Project A", "Project B"],
+      date_of_admission: "2022-01-01",
+      is_active: true,
+      reason_for_termination: "Resigned",
+      termination_date: "2023-01-01",
+      status: "Avalado",
+    },
+    document_url: "https://example.com/document.pdf",
+  },
+  {
+    id: "2",
+    created_at: "2022-02-01",
+    id_storage: "def456",
+    id_document_types: {
+      id: "2",
+      name: "Driver's License",
+      description: "Driving document",
+      applies: "Persona",
+      multiresource: false,
+      mandatory: true,
+      expired: true,
+      special: false,
+      is_active: true,
+      created_at: "2022-02-01",
+    },
+    validity: "2023-02-01",
+    state: "rechazado",
+    is_active: true,
+    user_id: "456",
+    applies: {
+      id: '2',
+      created_at: '2022-02-01',
+  picture: 'https://example.com/vehicle.jpg',
+  type_of_vehicle: {name: 'Car', id: '1', created_at: '2022-02-01'},
+  domain: 'ABC123',
+  chassis: '123456789',
+  engine: 'ABC123',
+  serie: 'ABC123',
+  intern_number: '123',
+  year: '2022',
+  brand:  {name: 'Toyota', id: '1', created_at: '2022-02-01'},
+  model: {name: 'Corolla', id: '1', created_at: '2022-02-01'},
+  company_id: '123',
+  is_active: true,
+  termination_date:   '2023-02-01',
+  reason_for_termination:   'Sold',
+  user_id:  '456',
+  status: 'Avalado',
+  type: {name: 'Corolla', id: '1', created_at: '2022-02-01'},
+    },
+    document_url: "https://example.com/document.pdf",
+  },
+  // Add more examples here...
+];
+

@@ -51,7 +51,7 @@ const ModalCompany: React.FC<ModalCompanyProps> = ({
                 />
               </div>
             </div>
-            <Button onClick={toggleFormEnabled}>
+            <Button variant="primary" onClick={toggleFormEnabled}>
               {formEnabled ? 'Deshabilitar Edición' : 'Habilitar Edición'}
             </Button>
             <br />

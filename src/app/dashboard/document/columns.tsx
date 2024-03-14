@@ -3,7 +3,6 @@
  */
 
 'use client'
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,18 +55,19 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions'
 import { cn } from '@/lib/utils'
-import { useLoggedUserStore } from '@/store/loggedUser'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { DotsVerticalIcon } from '@radix-ui/react-icons'
 import { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
-import { ArrowUpDown, CalendarIcon } from 'lucide-react'
+import { es, id } from 'date-fns/locale'
+import { ArrowUpDown, CalendarIcon, MoreHorizontal } from 'lucide-react'
+import { DotsVerticalIcon } from '@radix-ui/react-icons'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../../../supabase/supabase'
+import { useLoggedUserStore } from '@/store/loggedUser'
+import { useDocument } from '@/hooks/useDocuments'
 
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -79,37 +79,15 @@ const formSchema = z.object({
 })
 
 type Colum = {
-  full_name: string
-  email: string
-  cuil: string
-  document_number: string
-  hierarchical_position: string
-  company_position: string
-  normal_hours: string
-  type_of_contract: string
-  allocated_to: string
-  picture: string
-  nationality: string
-  lastname: string
-  firstname: string
-  bitrhplace: string
-  document_type: undefined //Este header debe ser un select a partir de un arreglo de opciones
-  gender: string
-  marital_status: string
-  level_of_education: string
-  street: string
-  street_number: string
-  province: string
-  postal_code: string
-  phone: string
-  file: string
-  date_of_admission: string
-  affiliate_status: string
-  city: string
-  hierrical_position: string
-  workflow_diagram: string
-  birthplace: string
-  status: string
+  id?: string
+  id_storage: string | null
+  id_document_types: string | null
+  applies: string | null
+  validity: Date | null
+  state: string
+  is_active: boolean
+  user_id: string | undefined
+  document_url: string | null
 }
 
 export const columns: ColumnDef<Colum>[] = [
@@ -118,27 +96,24 @@ export const columns: ColumnDef<Colum>[] = [
     cell: ({ row }: { row: any }) => {
       const [showModal, setShowModal] = useState(false)
       const [integerModal, setIntegerModal] = useState(false)
-      const [document, setDocument] = useState('')
-      const user = row.original
+      const [domain, setDomain] = useState('')
+      //const user = row.original
+      const [showInactive, setShowInactive] = useState<boolean>(false)
+      const [showDeletedEquipment, setShowDeletedEquipment] = useState(false)
+      const equipment = row.original
+      const document = row.original
 
       const handleOpenModal = (id: string) => {
-        setDocument(id)
+        setDomain(id)
         setShowModal(!showModal)
       }
+      const { fetchDocumentEquipmentByCompany } = useDocument()
 
-      const setInactiveEmployees = useLoggedUserStore(
-        state => state.setInactiveEmployees,
-      )
-      const setActivesEmployees = useLoggedUserStore(
-        state => state.setActivesEmployees,
-      )
-      const setShowDeletedEmployees = useLoggedUserStore(
-        state => state.setShowDeletedEmployees,
-      )
-      const employees = useLoggedUserStore(state => state.employeesToShow)
-
+      useEffect(() => {
+        fetchDocumentEquipmentByCompany
+      }, [])
       const handleOpenIntegerModal = (id: string) => {
-        setDocument(id)
+        setDomain(id)
         setIntegerModal(!integerModal)
       }
 
@@ -153,31 +128,31 @@ export const columns: ColumnDef<Colum>[] = [
 
       const { toast } = useToast()
 
-      async function reintegerEmployee() {
+      async function reintegerDocumentEquipment() {
         try {
-          await supabase
-            .from('employees')
+          const { data, error } = await supabase
+            .from('documents_equipment')
             .update({
               is_active: true,
-              termination_date: null,
-              reason_for_termination: null,
+              // termination_date: null,
+              // reason_for_termination: null,
             })
-            .eq('document_number', document)
+            .eq('id', document.id)
             .select()
 
           setIntegerModal(!integerModal)
-          setInactiveEmployees()
-          setShowDeletedEmployees(false)
+          //setInactive(data as any)
+          setShowDeletedEquipment(false)
           toast({
             variant: 'default',
-            title: 'Empleado reintegrado',
-            description: `El empleado ${user.full_name} ha sido reintegrado`,
+            title: 'Documento reintegrado',
+            description: `El documento ${document?.id_document_types} ha sido reintegrado`,
           })
         } catch (error: any) {
           const message = await errorTranslate(error?.message)
           toast({
             variant: 'destructive',
-            title: 'Error al reintegrar al empleado',
+            title: 'Error al reintegrar el documento',
             description: message,
           })
         }
@@ -191,30 +166,33 @@ export const columns: ColumnDef<Colum>[] = [
 
         try {
           await supabase
-            .from('employees')
+            .from('documents_equipment')
             .update({
               is_active: false,
-              termination_date: data.termination_date,
-              reason_for_termination: data.reason_for_termination,
+              // termination_date: data.termination_date,
+              // reason_for_termination: data.reason_for_termination,
             })
-            .eq('document_number', document)
+            .eq('id', document.id)
             .select()
 
           setShowModal(!showModal)
 
           toast({
             variant: 'default',
-            title: 'Empleado eliminado',
-            description: `El empleado ${user.full_name} ha sido eliminado`,
+            title: 'Documento eliminado',
+            description: `El documento ${document.id_document_types} ha sido dado de baja`,
           })
         } catch (error: any) {
           const message = await errorTranslate(error?.message)
           toast({
             variant: 'destructive',
-            title: 'Error al dar de baja al empleado',
+            title: 'Error al dar de baja el documento',
             description: message,
           })
         }
+      }
+      const handleToggleInactive = () => {
+        setShowInactive(!showInactive)
       }
 
       return (
@@ -230,12 +208,14 @@ export const columns: ColumnDef<Colum>[] = [
                     ¿Estás completamente seguro?
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    {`Estás a punto de reintegrar al empleado ${user.full_name}, quien fue dado de baja por ${user.reason_for_termination} el día ${user.termination_date}. Al reintegrar al empleado, se borrarán estas razones. Si estás seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
+                    {`Estás a punto de reintegrar el documento ${document.id_document_types}, quien fue dado de baja por ${document.reason_for_termination} el día ${document.termination_date}. Al reintegrar el documento, se borrarán estas razones. Si estás seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => reintegerEmployee()}>
+                  <AlertDialogAction
+                    onClick={() => reintegerDocumentEquipment()}
+                  >
                     Continuar
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -245,10 +225,10 @@ export const columns: ColumnDef<Colum>[] = [
           {showModal && (
             <Dialog defaultOpen onOpenChange={() => setShowModal(!showModal)}>
               <DialogContent>
-                <DialogTitle>Dar de baja</DialogTitle>
+                <DialogTitle>Dar de baja el Documento</DialogTitle>
                 <DialogDescription>
-                  ¿Estás seguro de que deseas eliminar este empleado?
-                  <br /> Completa los campos para continuar.
+                  ¿Estás seguro de que deseas dar de baja este documento?,
+                  completa los campos para continuar.
                 </DialogDescription>
                 <DialogFooter>
                   <div className="w-full">
@@ -262,7 +242,7 @@ export const columns: ColumnDef<Colum>[] = [
                           name="reason_for_termination"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Motivo de baja</FormLabel>
+                              <FormLabel>Motivo de Baja</FormLabel>
                               <Select
                                 onValueChange={field.onChange}
                                 defaultValue={field.value}
@@ -273,26 +253,20 @@ export const columns: ColumnDef<Colum>[] = [
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="Despido sin causa">
-                                    Despido sin causa
+                                  <SelectItem value="Venta del equipo">
+                                    Venta del equipo
                                   </SelectItem>
-                                  <SelectItem value="Renuncia">
-                                    Renuncia
+                                  <SelectItem value="Destrucción del equipo">
+                                    Destrucción del equipo
                                   </SelectItem>
-                                  <SelectItem value="Despido con causa">
-                                    Despido con causa
-                                  </SelectItem>
-                                  <SelectItem value="Acuerdo de partes">
-                                    Acuerdo de partes
-                                  </SelectItem>
-                                  <SelectItem value="Fin de contrato">
-                                    Fin de contrato
+                                  <SelectItem value="Fundido">
+                                    Fundido
                                   </SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormDescription>
-                                Elige la razón por la que deseas eliminar al
-                                empleado
+                                Elige la razón por la que deseas dar de baja el
+                                documento
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
@@ -303,7 +277,7 @@ export const columns: ColumnDef<Colum>[] = [
                           name="termination_date"
                           render={({ field }) => (
                             <FormItem className="flex flex-col">
-                              <FormLabel>Fecha de baja</FormLabel>
+                              <FormLabel>Fecha de Baja</FormLabel>
                               <Popover>
                                 <PopoverTrigger asChild>
                                   <FormControl>
@@ -343,7 +317,7 @@ export const columns: ColumnDef<Colum>[] = [
                                 </PopoverContent>
                               </Popover>
                               <FormDescription>
-                                Fecha en la que se terminó el contrato
+                                Fecha en la que se dio de baja
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
@@ -351,12 +325,15 @@ export const columns: ColumnDef<Colum>[] = [
                         />
                         <div className="flex gap-4 justify-end">
                           <Button variant="destructive" type="submit">
-                            Eliminar
+                            Dar de Baja
                           </Button>
                           <DialogClose>Cancelar</DialogClose>
                         </div>
                       </form>
                     </Form>
+                    {/* <Button variant="destructive" onClick={() => handleDelete()}>
+                    Eliminar
+                  </Button> */}
                   </div>
                 </DialogFooter>
               </DialogContent>
@@ -370,44 +347,42 @@ export const columns: ColumnDef<Colum>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Opciones</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() =>
-                navigator.clipboard.writeText(user.document_number)
-              }
-            >
-              Copiar DNI
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Link
-                href={`/dashboard/employee/action?action=view&document=${user?.document_number}`}
-              >
-                Ver empleado
-              </Link>
+            <DropdownMenuItem
+              onClick={() => navigator.clipboard.writeText(document.applies)}
+            >
+              Copiar número de interno
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Link
-                href={`/dashboard/employee/action?action=edit&document=${user?.document_number}`}
+                href={`/dashboard/document/action?action=view&id=${document?.id}`}
               >
-                Editar empleado
+                Ver documento
               </Link>
             </DropdownMenuItem>
+            {/* <DropdownMenuItem>
+              <Link
+                href={`/dashboard/equipment/action?action=edit&id=${equipment?.id}`}
+              >
+                Editar equipo
+              </Link>
+            </DropdownMenuItem> */}
             <DropdownMenuItem>
-              {user.is_active ? (
+              {document.is_active ? (
                 <Button
                   variant="destructive"
-                  onClick={() => handleOpenModal(user?.document_number)}
+                  onClick={() => handleOpenModal(equipment?.id)}
                   className="text-sm"
                 >
-                  Dar de baja
+                  Dar de baja el documento
                 </Button>
               ) : (
                 <Button
                   variant="primary"
-                  onClick={() => handleOpenIntegerModal(user?.document_number)}
+                  onClick={() => handleOpenIntegerModal(equipment.id)}
                   className="text-sm"
                 >
-                  Reintegrar Empleado
+                  Reintegrar el documento
                 </Button>
               )}
             </DropdownMenuItem>
@@ -417,7 +392,7 @@ export const columns: ColumnDef<Colum>[] = [
     },
   },
   {
-    accessorKey: 'full_name',
+    accessorKey: 'domain',
     header: ({ column }: { column: any }) => {
       return (
         <Button
@@ -425,130 +400,36 @@ export const columns: ColumnDef<Colum>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           className="p-0"
         >
-          Nombre completo
+          Dominio
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       )
     },
   },
   {
-    accessorKey: 'status',
+    accessorKey: 'id_document_types',
+    header: 'Tipo de documento',
+  },
+
+  {
+    accessorKey: 'validity',
+    header: 'Fecha de validez',
+  },
+
+  {
+    accessorKey: 'state',
     header: 'Estado',
   },
   {
-    accessorKey: 'email',
-    header: 'Email',
+    accessorKey: 'applies',
+    header: 'Aplica a',
   },
   {
-    accessorKey: 'cuil',
-    header: 'Cuil',
+    accessorKey: 'document_url',
+    header: 'Archivo',
   },
   {
-    accessorKey: 'document_number',
-    header: 'Numero de documento',
-  },
-  {
-    accessorKey: 'hierarchical_position',
-    header: 'Posición jerárquica',
-  },
-  {
-    accessorKey: 'company_position',
-    header: 'Posición en la empresa',
-  },
-  {
-    accessorKey: 'normal_hours',
-    header: 'Horas normales',
-  },
-  {
-    accessorKey: 'type_of_contract',
-    header: 'Tipo de contrato',
-  },
-  {
-    accessorKey: 'allocated_to',
-    header: 'Afectado a',
-  },
-  {
-    accessorKey: 'picture',
-    header: 'Foto',
-  },
-  {
-    accessorKey: 'nationality',
-    header: 'Nacionalidad',
-  },
-  {
-    accessorKey: 'lastname',
-    header: 'Apellido',
-  },
-  {
-    accessorKey: 'firstname',
-    header: 'Nombre',
-  },
-  {
-    accessorKey: 'birthplace',
-    header: 'Lugar de nacimiento',
-  },
-  {
-    accessorKey: 'document_type',
-    header: 'Tipo de documento',
-  },
-  {
-    accessorKey: 'gender',
-    header: 'Género',
-  },
-  {
-    accessorKey: 'marital_status',
-    header: 'Estado civil',
-  },
-  {
-    accessorKey: 'level_of_education',
-    header: 'Nivel de estudios',
-  },
-  {
-    accessorKey: 'street',
-    header: 'Calle',
-  },
-  {
-    accessorKey: 'street_number',
-    header: 'Numero de calle',
-  },
-  {
-    accessorKey: 'province',
-    header: 'Provincia',
-  },
-  {
-    accessorKey: 'postal_code',
-    header: 'Codigo postal',
-  },
-  {
-    accessorKey: 'phone',
-    header: 'Teléfono',
-  },
-  {
-    accessorKey: 'file',
-    header: 'Legajo',
-  },
-  {
-    accessorKey: 'date_of_admission',
-    header: 'Fecha de ingreso',
-  },
-  {
-    accessorKey: 'affiliate_status',
-    header: 'Estado de afiliado',
-  },
-  {
-    accessorKey: 'city',
-    header: 'Ciudad',
-  },
-  {
-    accessorKey: 'hierrical_position',
-    header: 'Posición jerárquica',
-  },
-  {
-    accessorKey: 'workflow_diagram',
-    header: 'Diagrama de flujo',
-  },
-  {
-    accessorKey: 'showUnavaliableEmployees',
-    header: 'Ver empleados dados de baja',
+    accessorKey: 'is_active',
+    header: 'Activo',
   },
 ]
