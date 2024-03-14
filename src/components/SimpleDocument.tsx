@@ -188,22 +188,19 @@ export default function SimpleDocument({
     }
     const fileUrl = await uploadDocumentFile(files, 'document_files')
 
-    const vehicle_id = vehicles?.find((vehicle: any) => {
-      return (
-        vehicle?.id === values.applies ||
-        vehicle?.document === values.applies ||
-        vehicle?.name === values.applies
-      )
-    })?.id
-
-    const user_id = employees?.find((e: any) => e?.document === values.applies)
-      ?.id
-
+    console.log('matureas')
     if (!hasErrors) {
       setLoading(true)
       let finalValues: any
       if (resource === 'equipo') {
-        //finalValues = { ...values, document: files, applies: vehicle_id }
+        const vehicle_id = vehicles?.find((vehicle: any) => {
+          return (
+            vehicle?.id === values.applies ||
+            vehicle?.document === values.applies ||
+            vehicle?.name === values.applies
+          )
+        })?.id
+
         finalValues = {
           ...values,
           document_url: fileUrl,
@@ -212,11 +209,17 @@ export default function SimpleDocument({
           is_active: true,
           applies: vehicle_id,
           user_id: user,
+          document: files,
         }
 
-        insertDocumentEquipment(finalValues)
+        console.log(finalValues, 'finalValues equipos')
+
+        // insertDocumentEquipment(finalValues)
       } else {
-        //finalValues = { ...values, document: files, applies: user_id }
+        const user_id = employees?.find(
+          (e: any) => e?.document === values.applies,
+        )?.id
+
         finalValues = {
           ...values,
           document_url: fileUrl,
@@ -225,19 +228,20 @@ export default function SimpleDocument({
           is_active: true,
           applies: user_id,
           user_id: user,
+          document: files,
         }
 
-        insertDocumentEmployees(finalValues)
+        console.log(finalValues, 'finalValues empleados')
+
+        // insertDocumentEmployees(finalValues)
       }
 
       handleOpen()
+      toast({
+        title: 'Documento cargado',
+        description: 'El documento fue cargado con éxito',
+      })
     }
-    toast({
-      title: 'Documento cargado',
-      description: 'El documento fue cargado con éxito',
-    })
-
-    //console.log(finalValues, 'values')
   }
 
   const fileInputRef = useRef<HTMLInputElement>(null)

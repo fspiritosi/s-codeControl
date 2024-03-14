@@ -31,8 +31,8 @@ export const useDocument = () => {
 
       if (error) {
         console.error()
-        const message = await errorTranslate(error?.message)
-        throw new Error(String(message).replaceAll('"', ''))
+        // const message = await errorTranslate(error?.message)
+        console.log(error);
       }
       return data
     },

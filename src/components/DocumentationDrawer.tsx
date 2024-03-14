@@ -192,8 +192,9 @@ export const DocumentationDrawer = () => {
                         collapsible
                         className="w-full"
                         defaultValue="item-1"
+
                       >
-                        <AccordionItem value={`item-${index}`}>
+                        <AccordionItem value={`item-${index+1}`} >
                           <AccordionTrigger
                             defaultValue="item-1"
                             className="text-lg flex relative"

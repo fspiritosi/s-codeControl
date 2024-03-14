@@ -1,14 +1,13 @@
 'use client'
 import DocumentNav from '@/components/DocumentNav'
-import { DataDocumentsEquipment } from '../document/data-documentsEquipment'
-import { DataDocumentsEmployees } from '../document/data-documentEmployees'
-import { columns } from './columns'
-import { columEmp } from './columEmp'
-import { useEffect, useState } from 'react'
-import { useDocument } from '@/hooks/useDocuments'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { supabase } from '../../../../supabase/supabase'
+import { useDocument } from '@/hooks/useDocuments'
 import { useLoggedUserStore } from '@/store/loggedUser'
+import { useEffect, useState } from 'react'
+import { DataDocumentsEmployees } from '../document/data-documentEmployees'
+import { DataDocumentsEquipment } from '../document/data-documentsEquipment'
+import { columEmp } from './columEmp'
+import { columns } from './columns'
 
 export default function page() {
   const { actualCompany } = useLoggedUserStore()
@@ -21,6 +20,7 @@ export default function page() {
   >([])
   const { fetchDocumentEquipmentByCompany, fetchDocumentEmployeesByCompany } =
     useDocument()
+    
   const handleToggleInactive = () => {
     setShowInactive(!showInactive)
   }
@@ -57,41 +57,48 @@ export default function page() {
       console.error('Error al obtener documentos:', error)
     }
   }
-  useEffect(() => {
-    fetchDocumentsEmployees()
-  }, [fetchDocumentEmployeesByCompany])
-  useEffect(() => {
-    const channels = supabase
-      .channel('custom-all-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'documents_employees' },
-        payload => {
-          fetchDocumentsEmployees()
-        },
-      )
-      .subscribe()
-  }, [])
+  // useEffect(() => {
+  //   fetchDocumentsEmployees()
+  // }, [fetchDocumentEmployeesByCompany])
 
-  useEffect(() => {
-    const channels = supabase
-      .channel('custom-all-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'documents_equipment' },
-        payload => {
-          fetchDocuments()
-        },
-      )
-      .subscribe()
-  }, [])
+  // useEffect(() => {
+  //   const channels = supabase
+  //     .channel('custom-all-channel')
+  //     .on(
+  //       'postgres_changes',
+  //       { event: '*', schema: 'public', table: 'documents_employees' },
+  //       payload => {
+  //         fetchDocumentsEmployees()
+  //       },
+  //     )
+  //     .subscribe()
+  // }, [])
+
+  // useEffect(() => {
+  //   const channels = supabase
+  //     .channel('custom-all-channel')
+  //     .on(
+  //       'postgres_changes',
+  //       { event: '*', schema: 'public', table: 'documents_equipment' },
+  //       payload => {
+  //         fetchDocuments()
+  //       },
+  //     )
+  //     .subscribe()
+  // }, [])
   return (
     <section>
-      <div className="flex justify-between flex-wrap">
-        <h2>Aqui estaran todos los documentos de la empresa</h2>
-        <div className="flex gap-3 flex-wrap justify-end">
-          <DocumentNav />
-          <div>
+      <div className="flex justify-between flex-wrap flex-col">
+        <div className="flex justify-between mb-3">
+          <h2 className="inline">
+            Aqui estaran todos los documentos de la empresa
+          </h2>
+          <div className="flex gap-4">
+            <DocumentNav />
+          </div>
+        </div>
+        <div className="flex gap-3 flex-wrap ">
+          <div className="w-full">
             <Tabs defaultValue="Empleados" className="p-2">
               <TabsList className="grid w-full grid-cols-2 ">
                 <TabsTrigger value="Empleados">Empleados</TabsTrigger>
