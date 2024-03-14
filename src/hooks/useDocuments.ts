@@ -124,9 +124,11 @@ insertMultiDocumentEquipment: async (documents: any) => {
       
       let { data: documents, error } = await supabase.from('documents_employees').select(`
             *,
-            employees:employees(id, company_id)
+            employees:employees(id,company_id, document_number ),
+            document_types:document_types(id, name)
         `)
         .not('employees', 'is', null)
+        .not('document_types', 'is', null)
         .eq('employees.company_id', actualCompany?.id);
         
  
@@ -143,9 +145,11 @@ insertMultiDocumentEquipment: async (documents: any) => {
       
       let { data: documents, error } = await supabase.from('documents_equipment').select(`
             *,
-            vehicles:vehicles(id, company_id)
+            vehicles:vehicles(id,company_id, intern_number),
+            document_types:document_types(id, name)
         `)
         .not('vehicles', 'is', null)
+        .not('document_types', 'is', null)
         .eq('vehicles.company_id', actualCompany?.id);
         
  
