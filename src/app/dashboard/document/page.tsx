@@ -32,7 +32,7 @@ export default function page() {
         id_document_types: item.document_types.name,
         applies: item.vehicles.intern_number,
       }))
-      console.log('transformed Data: ', transformedData)
+      //console.log('transformed Data: ', transformedData)
       setDocumentsDataEquipment(transformedData || [])
     } catch (error) {
       console.error('Error al obtener documentos:', error)
@@ -40,7 +40,7 @@ export default function page() {
   }
   useEffect(() => {
     fetchDocuments()
-  }, [])
+  }, [fetchDocumentEquipmentByCompany])
 
   const fetchDocumentsEmployees = async () => {
     try {
@@ -50,8 +50,8 @@ export default function page() {
         id_document_types: item.document_types.name,
         applies: item.employees.document_number,
       }))
-      console.log('transformed Data: ', documentsEmployees)
-      console.log('este es employees: ', documentsEmployees)
+      // console.log('transformed Data: ', documentsEmployees)
+      // console.log('este es employees: ', documentsEmployees)
       setDocumentsDataEmployees(transformedData || [])
     } catch (error) {
       console.error('Error al obtener documentos:', error)
@@ -59,7 +59,7 @@ export default function page() {
   }
   useEffect(() => {
     fetchDocumentsEmployees()
-  }, [])
+  }, [fetchDocumentEmployeesByCompany])
   useEffect(() => {
     const channels = supabase
       .channel('custom-all-channel')
