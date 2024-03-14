@@ -218,6 +218,7 @@ export type Documents = {
   state:string
   is_active: boolean
   user_id: string | undefined
+  document_url: string | null
 }
 
 export type TypeOfVehicle ={

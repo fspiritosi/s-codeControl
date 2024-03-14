@@ -571,18 +571,18 @@ export default function VehiclesForm2() {
               </p>
             </>
           )}
-        </div>
-        <div>
-          {readOnly && accion === 'view' && (
-            <Button
-            variant="primary"
-              onClick={() => {
-                setReadOnly(false)
-              }}
-            >
-              Habilitar edición
-            </Button>
-          )}
+          <div className="mt-4">
+            {readOnly && accion === 'view' && (
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setReadOnly(false)
+                }}
+              >
+                Habilitar edición
+              </Button>
+            )}
+          </div>
         </div>
       </header>
       <Form {...form}>

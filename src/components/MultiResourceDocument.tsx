@@ -51,6 +51,7 @@ import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Separator } from './ui/separator'
 import { Switch } from './ui/switch'
+import { useDocument } from '@/hooks/useDocuments'
 
 export default function MultiResourceDocument({
   resource,
@@ -120,12 +121,13 @@ export default function MultiResourceDocument({
       )
       .optional(),
 
-    documenTypes: z.string({
+    id_document_types: z.string({
       required_error: 'Por favor, selecciona un tipo de documento',
     }),
     resources: z
       .array(z.string(), { required_error: 'Los recursos son requeridos' })
-      .min(1, 'Selecciona al menos dos recursos'), //! Cambiar a 1 si se necesita que sea solo uno
+      .min(1, 'Selecciona al menos dos recursos')
+      .optional(), //! Cambiar a 1 si se necesita que sea solo uno
     validity: expiredDate
       ? z.date({ required_error: 'Falta ingresar la fecha de vencimiento' })
       : z.date().optional(),
@@ -141,8 +143,14 @@ export default function MultiResourceDocument({
   const [filteredResources, setFilteredResources] = useState(resources)
   const [selectedResources, setSelectedResources] = useState<string[]>([])
   const [inputValue, setInputValue] = useState<string>('')
+  const user = useLoggedUserStore(state => state.credentialUser?.id)
+  const {
+    insertMultiDocumentEmployees,
+    insertMultiDocumentEquipment,
+    uploadDocumentFile,
+  } = useDocument()
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     const { resources, ...rest } = values
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
@@ -150,6 +158,8 @@ export default function MultiResourceDocument({
       return form.setError('document', {
         message: 'Por favor, selecciona un documento',
       })
+
+    const fileUrl = await uploadDocumentFile(file, 'document_files')
     let finalValues
     const idEmployees = selectedResources.map(resource => {
       const employee = employees.find((element: any) => {
@@ -165,11 +175,33 @@ export default function MultiResourceDocument({
       return vehicle?.id
     })
     if (resource === 'equipo') {
-      finalValues = { ...rest, applies: idVehicles, document: file }
+      //finalValues = { ...rest, applies: idVehicles, document: file }
+      finalValues = {
+        ...values,
+        document_url: fileUrl,
+        id_storage: null,
+        state: 'presentado',
+        is_active: true,
+        applies: idVehicles,
+        user_id: user,
+      }
+      delete finalValues?.resources
+      insertMultiDocumentEquipment(finalValues)
     } else {
-      finalValues = { ...rest, document: file, applies: idEmployees }
+      //finalValues = { ...rest, document: file, applies: idEmployees }
+      finalValues = {
+        ...values,
+        document_url: fileUrl,
+        id_storage: null,
+        state: 'presentado',
+        is_active: true,
+        applies: idEmployees,
+        user_id: user,
+      }
+      delete finalValues?.resources
+      insertMultiDocumentEmployees(finalValues)
     }
-    console.log(finalValues)
+    //console.log(finalValues)
   }
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -189,7 +221,7 @@ export default function MultiResourceDocument({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <FormField
               control={form.control}
-              name="documenTypes"
+              name="id_document_types"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tipo de Documento</FormLabel>

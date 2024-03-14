@@ -29,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useDocument } from '@/hooks/useDocuments'
 import { cn } from '@/lib/utils'
 import { DocumentsValidation } from '@/store/documentValidation'
 import { useLoggedUserStore } from '@/store/loggedUser'
@@ -45,6 +46,8 @@ import { Calendar } from './ui/calendar'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Switch } from './ui/switch'
+import { useToast } from './ui/use-toast'
+
 export default function SimpleDocument({
   resource,
   index,
@@ -61,7 +64,11 @@ export default function SimpleDocument({
   const id = searchParams.get('id')
   const [documenTypes, setDocumentTypes] = useState<any[] | null>([])
   const [expiredDate, setExpiredDate] = useState(false)
-
+  const {
+    insertDocumentEmployees,
+    insertDocumentEquipment,
+    uploadDocumentFile,
+  } = useDocument()
   const formSchema = z.object({
     id_document_types: z
       .string({
@@ -78,6 +85,7 @@ export default function SimpleDocument({
         : z.string().optional(),
   })
 
+  const { toast } = useToast()
   const fetchDocumentTypes = async () => {
     const applies = resource === 'empleado' ? 'Persona' : 'Equipos'
 
@@ -119,6 +127,7 @@ export default function SimpleDocument({
     [],
   )
 
+  const user = useLoggedUserStore(state => state.credentialUser?.id)
   const vehicles = useLoggedUserStore(state => state.vehicles)?.reduce(
     (acc: any, act: { domain: string; serie: string; id: string }) => {
       const data = {
@@ -177,32 +186,58 @@ export default function SimpleDocument({
       form.clearErrors()
       updateDocumentErrors(index, false)
     }
+    const fileUrl = await uploadDocumentFile(files, 'document_files')
 
     const vehicle_id = vehicles?.find((vehicle: any) => {
       return (
-        vehicle.id === values.applies ||
-        vehicle.document === values.applies ||
-        vehicle.name === values.applies
+        vehicle?.id === values.applies ||
+        vehicle?.document === values.applies ||
+        vehicle?.name === values.applies
       )
     })?.id
 
     const user_id = employees?.find((e: any) => e?.document === values.applies)
       ?.id
 
-    let finalValues: any
-    if (resource === 'equipo') {
-      finalValues = { ...values, document: files, applies: vehicle_id }
-    } else {
-      finalValues = { ...values, document: files, applies: user_id }
-    }
-
     if (!hasErrors) {
       setLoading(true)
-      let { data: type, error } = await supabase.from('type').select('*')
+      let finalValues: any
+      if (resource === 'equipo') {
+        //finalValues = { ...values, document: files, applies: vehicle_id }
+        finalValues = {
+          ...values,
+          document_url: fileUrl,
+          id_storage: null,
+          state: 'presentado',
+          is_active: true,
+          applies: vehicle_id,
+          user_id: user,
+        }
 
-      console.log(type, `Esta es la peticion del form ${index}`)
+        insertDocumentEquipment(finalValues)
+      } else {
+        //finalValues = { ...values, document: files, applies: user_id }
+        finalValues = {
+          ...values,
+          document_url: fileUrl,
+          id_storage: null,
+          state: 'presentado',
+          is_active: true,
+          applies: user_id,
+          user_id: user,
+        }
+
+        insertDocumentEmployees(finalValues)
+      }
+
       handleOpen()
     }
+    toast({
+      title: 'Documento cargado',
+      description: 'El documento fue cargado con éxito',
+    })
+
+    //console.log(finalValues, 'values')
   }
 
   const fileInputRef = useRef<HTMLInputElement>(null)
