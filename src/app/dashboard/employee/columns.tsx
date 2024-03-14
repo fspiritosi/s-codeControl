@@ -109,6 +109,7 @@ type Colum = {
   hierrical_position: string
   workflow_diagram: string
   birthplace: string
+  status: string
 }
 
 export const columns: ColumnDef<Colum>[] = [
@@ -429,6 +430,10 @@ export const columns: ColumnDef<Colum>[] = [
         </Button>
       )
     },
+  },
+  {
+    accessorKey: 'status',
+    header: 'Estado',
   },
   {
     accessorKey: 'email',

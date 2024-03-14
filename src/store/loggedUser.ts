@@ -64,6 +64,7 @@ const setEmployeesToShow = (employees: any) => {
       is_active: employees?.is_active,
       reason_for_termination: employees?.reason_for_termination,
       termination_date: employees?.termination_date,
+      status: employees?.status,
     }
   })
 

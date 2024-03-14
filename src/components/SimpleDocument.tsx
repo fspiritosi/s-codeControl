@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { DocumentsValidation } from '@/store/documentValidation'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon, CaretSortIcon, CheckIcon } from '@radix-ui/react-icons'
@@ -43,22 +44,39 @@ import { supabase } from '../../supabase/supabase'
 import { Calendar } from './ui/calendar'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
-import { Separator } from './ui/separator'
 import { Switch } from './ui/switch'
 export default function SimpleDocument({
   resource,
   index,
   refSubmit,
+  handleOpen,
 }: {
   resource: string | undefined
   index: number
   refSubmit: React.RefObject<HTMLButtonElement>
+  handleOpen: () => void
 }) {
   const searchParams = useSearchParams()
   const document = searchParams.get('document')
   const id = searchParams.get('id')
   const [documenTypes, setDocumentTypes] = useState<any[] | null>([])
   const [expiredDate, setExpiredDate] = useState(false)
+
+  const formSchema = z.object({
+    id_document_types: z
+      .string({
+        required_error: 'Falta seleccionar el tipo de documento',
+      })
+      .optional(),
+    validity: expiredDate
+      ? z.date({ required_error: 'Falta ingresar la fecha de vencimiento' })
+      : z.date().optional(),
+    document: z.string().optional(),
+    applies:
+      resource?.toLowerCase() === 'empleado'
+        ? z.string().optional()
+        : z.string().optional(),
+  })
 
   const fetchDocumentTypes = async () => {
     const applies = resource === 'empleado' ? 'Persona' : 'Equipos'
@@ -71,6 +89,10 @@ export default function SimpleDocument({
 
     setDocumentTypes(document_types)
   }
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {},
+  })
 
   useEffect(() => {
     form.reset()
@@ -79,21 +101,8 @@ export default function SimpleDocument({
     document && form.setValue('applies', document)
     id && form.setValue('applies', id)
   }, [resource])
-  const [files, setFiles] = useState<File | undefined>(undefined)
 
-  const formSchema = z.object({
-    id_document_types: z.string({
-      required_error: 'Falta seleccionar el tipo de documento',
-    }),
-    validity: expiredDate
-      ? z.date({ required_error: 'Falta ingresar la fecha de vencimiento' })
-      : z.date().optional(),
-    document: z.string().optional(),
-    applies:
-      resource?.toLowerCase() === 'empleado'
-        ? z.string().optional()
-        : z.string(),
-  })
+  const [files, setFiles] = useState<File | undefined>(undefined)
 
   const employees = useLoggedUserStore(state => state.employees)?.reduce(
     (
@@ -123,17 +132,52 @@ export default function SimpleDocument({
   )
 
   const data = resource === 'empleado' ? employees : vehicles
+  const updateDocumentErrors = DocumentsValidation(
+    state => state.updateDocumentErrors,
+  )
+  const hasErrors = DocumentsValidation(state => state.hasErrors)
+  const documentsErrors = DocumentsValidation(state => state.documentsErrors)
+  const setLoading = DocumentsValidation(state => state.setLoading)
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {},
-  })
+  const handleInvalidForm = () => {
+    if (documentsErrors[index] === undefined) {
+      updateDocumentErrors(index, true)
+    }
+  }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!files?.name) {
-      form.setError('document', { message: 'El documento es requerido' })
-      return
+    if (expiredDate) {
+      if (!values.validity) {
+        form.setError('validity', {
+          message: 'La fecha de vencimiento es requerida',
+        })
+        return handleInvalidForm()
+      }
     }
+    if (!document && !id && !values.applies) {
+      form.setError('applies', { message: 'El recurso es requerido' })
+      return handleInvalidForm()
+    }
+    if (!files?.name && !values.applies) {
+      form.setError('document', { message: 'El documento es requerido' })
+      form.setError('applies', { message: 'El recurso es requerido' })
+      return handleInvalidForm()
+    } else if (!values.applies) {
+      form.setError('applies', { message: 'El documento es requerido' })
+      return handleInvalidForm()
+    } else if (!values.id_document_types) {
+      form.setError('id_document_types', {
+        message: 'El tipo de documento es requerido',
+      })
+      return handleInvalidForm()
+    } else if (!files?.name) {
+      form.setError('document', { message: 'El documento es requerido' })
+      return handleInvalidForm()
+    } else {
+      form.clearErrors()
+      updateDocumentErrors(index, false)
+    }
+
     const vehicle_id = vehicles?.find((vehicle: any) => {
       return (
         vehicle.id === values.applies ||
@@ -151,11 +195,14 @@ export default function SimpleDocument({
     } else {
       finalValues = { ...values, document: files, applies: user_id }
     }
-    console.log(finalValues, 'values')
 
-    let { data: type, error } = await supabase.from('type').select('*')
+    if (!hasErrors) {
+      setLoading(true)
+      let { data: type, error } = await supabase.from('type').select('*')
 
-    console.log(type, 'type')
+      console.log(type, `Esta es la peticion del form ${index}`)
+      handleOpen()
+    }
   }
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -166,6 +213,7 @@ export default function SimpleDocument({
   if (window !== undefined) {
     url = window.location.href
   }
+
   return (
     <>
       <div>
@@ -418,7 +466,6 @@ export default function SimpleDocument({
                 )}
               />
             )}
-            <Separator className=" bg-black mt-5" />
             <div className=" justify-evenly hidden">
               <Button ref={refSubmit} type="submit">
                 Subir documentos

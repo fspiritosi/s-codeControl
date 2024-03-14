@@ -397,7 +397,11 @@ export default function EmployeeAccordion() {
       workflow_diagram: String(
         workDiagramOptions.find(e => e.name === values.workflow_diagram)?.id,
       ),
-      picture: `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/employee_photos/${values.document_number}.${fileExtension}`,
+      picture: fileExtension
+        ? `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/employee_photos/${values.document_number}.${fileExtension}`
+        : values.gender === 'Masculino'
+          ? 'https://ui.shadcn.com/avatars/02.png'
+          : 'https://ui.shadcn.com/avatars/05.png',
     }
 
     try {

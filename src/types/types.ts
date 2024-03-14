@@ -203,10 +203,10 @@ export type Employee = {
   allocated_to?: string | undefined | string[] //!si
   date_of_admission: Date | undefined | string
   full_name?: string //!si
-  is_active: boolean
-  reason_for_termination: string | undefined
-  termination_date: Date | undefined | string
-  status: 'Avalado' | 'No avalado'
+  is_active?: boolean
+  reason_for_termination?: string | undefined
+  termination_date?: Date | undefined | string
+  status?: 'Avalado' | 'No avalado'
 }
 
 export type Documents = {

@@ -1,18 +1,5 @@
 'use client'
 
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table'
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -29,8 +16,21 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table'
 import { useState } from 'react'
 
+import { Badge } from '@/components/ui/badge'
 import {
   Select,
   SelectContent,
@@ -64,7 +64,7 @@ export function DataTable<TData, TValue>({
   const [sorting, setSorting] = useState<SortingState>([])
   const defaultVisibleColumns = [
     'full_name',
-    'email',
+    'status',
     'cuil',
     'document_number',
     'document_type',
@@ -102,6 +102,7 @@ export function DataTable<TData, TValue>({
     city: createOptions('city'),
     hierrical_position: createOptions('hierrical_position'),
     workflow_diagram: createOptions('workflow_diagram'),
+    status: createOptions('status'),
   }
 
   function createOptions(key: string) {
@@ -179,6 +180,11 @@ export function DataTable<TData, TValue>({
       name: 'workflow_diagram',
       option: allOptions.workflow_diagram,
       label: 'Diagrama de flujo',
+    },
+    status: {
+      name: 'status',
+      option: allOptions.status,
+      label: 'Estado',
     },
   }
 
@@ -383,7 +389,7 @@ export function DataTable<TData, TValue>({
                                       })
                                     }}
                                   >
-                                    <SelectTrigger className="w-[180px]">
+                                    <SelectTrigger className="">
                                       <SelectValue
                                         placeholder={
                                           header.column.columnDef
@@ -437,18 +443,26 @@ export function DataTable<TData, TValue>({
                           }`}
                         >
                           {cell.column.id === 'picture' ? (
-                            <Link href={cell.getValue() as any} target="_blank">
-                              <img
-                                src={cell.getValue() as any}
-                                alt="Foto"
-                                style={{ width: '48px', height: '48px' }}
-                              />
-                            </Link>
+                            <img
+                              src={cell.getValue() as any}
+                              alt="Foto"
+                              className="size-10 rounded-full object-cover"
+                            />
+                          ) : cell.column.id === 'status' ? (
+                            <Badge
+                              variant={
+                                cell.getValue() === 'No avalado'
+                                  ? 'destructive'
+                                  : 'default'
+                              }
+                            >
+                              {cell.getValue() as React.ReactNode}
+                            </Badge>
                           ) : (
-                            flexRender(
+                            (flexRender(
                               cell.column.columnDef.cell,
                               cell.getContext(),
-                            )
+                            ) as React.ReactNode)
                           )}
                         </TableCell>
                       )
