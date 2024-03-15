@@ -1,5 +1,4 @@
 'use client'
-import { supabase } from '../../supabase/supabase'
 import {
   Accordion,
   AccordionContent,
@@ -22,11 +21,11 @@ import {
   nacionaliOptionsENUM,
   typeOfContractENUM,
 } from '@/types/enums'
+import { supabase } from '../../supabase/supabase'
 
 import { CheckboxDefaultValues } from '@/components/CheckboxDefValues'
 import { SelectWithData } from '@/components/SelectWithData'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
   Form,
@@ -52,13 +51,14 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon } from '@radix-ui/react-icons'
 import { PostgrestError } from '@supabase/supabase-js'
 import { format } from 'date-fns'
-import { es, id } from 'date-fns/locale'
+import { es } from 'date-fns/locale'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ChangeEvent, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { ImageHander } from './ImageHandler'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import { Button } from './ui/button'
 
 type Province = {
   id: number
@@ -397,7 +397,11 @@ export default function EmployeeAccordion() {
       workflow_diagram: String(
         workDiagramOptions.find(e => e.name === values.workflow_diagram)?.id,
       ),
-      picture: `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/employee_photos/${values.document_number}.${fileExtension}`,
+      picture: fileExtension
+        ? `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/employee_photos/${values.document_number}.${fileExtension}`
+        : values.gender === 'Masculino'
+          ? 'https://ui.shadcn.com/avatars/02.png'
+          : 'https://ui.shadcn.com/avatars/05.png',
     }
 
     try {
@@ -511,7 +515,7 @@ export default function EmployeeAccordion() {
 
   return (
     <section className={`${accion === 'new' ? 'w-full' : 'w-[75%]'} `}>
-      <header className="flex justify-between gap-4 mt-6">
+      <header className="flex justify-between gap-4 mt-6 flex-wrap">
         <div>
           {accion === 'edit' || accion === 'view' ? (
             <div className="flex items-center gap-2">
@@ -538,7 +542,7 @@ export default function EmployeeAccordion() {
               {accion === 'edit' ? 'Editar empleado' : 'Agregar empleado'}
             </h2>
           )}
-          <p className="mt-3">
+          <p className="mt-3 max-w-[700px]">
             {accion === 'edit' || accion === 'view'
               ? `${
                   readOnly
@@ -551,7 +555,7 @@ export default function EmployeeAccordion() {
         <div>
           {readOnly && accion === 'view' && (
             <Button
-              variant="default"
+              variant="primary"
               onClick={() => {
                 setReadOnly(false)
               }}
@@ -830,7 +834,7 @@ export default function EmployeeAccordion() {
                                       <FormControl>
                                         <Button
                                           disabled={readOnly}
-                                          variant={'outline'}
+                                          variant="outline"
                                           className={cn(
                                             'w-[300px] pl-3 text-left font-normal',
                                             !field.value &&

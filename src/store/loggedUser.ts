@@ -19,12 +19,15 @@ interface State {
   setActivesEmployees: () => void
   showDeletedEmployees: boolean
   setShowDeletedEmployees: (showDeletedEmployees: boolean) => void
+  vehicles: any
+
 }
 
 const setEmployeesToShow = (employees: any) => {
   const employee = employees?.map((employees: any) => {
     return {
       full_name: employees?.firstname + ' ' + employees?.lastname,
+      id: employees?.id,
       email: employees?.email,
       cuil: employees?.cuil,
       document_number: employees?.document_number,
@@ -61,6 +64,7 @@ const setEmployeesToShow = (employees: any) => {
       is_active: employees?.is_active,
       reason_for_termination: employees?.reason_for_termination,
       termination_date: employees?.termination_date,
+      status: employees?.status,
     }
   })
 
@@ -76,6 +80,16 @@ export const useLoggedUserStore = create<State>((set, get) => {
   const setInactiveEmployees = async () => {
     const employeesToShow = await getEmployees(false)
     set({ employeesToShow })
+  }
+
+  const vehicles = async () => {
+    const { data, error } = await supabase.from('vehicles').select('*').eq('company_id', get()?.actualCompany?.id).eq('is_active', true)
+    if (error) {
+      console.error('Error al obtener los vehículos:', error)
+    } else {
+      set({ vehicles: data || [] })
+    }
+
   }
 
   // const [showDeletedEmployees, setShowDeletedEmployees] = useState(false)
@@ -121,6 +135,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     set({ actualCompany: company })
     setActivesEmployees()
     set({ isLoading: false })
+    vehicles()
   }
 
   supabase
@@ -252,5 +267,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
     showDeletedEmployees: get()?.showDeletedEmployees,
     setShowDeletedEmployees: (showDeletedEmployees: boolean) =>
       set({ showDeletedEmployees }),
+    vehicles: get()?.vehicles,
   }
 })

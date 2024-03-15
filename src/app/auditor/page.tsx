@@ -33,7 +33,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { supabase } from '../../../supabase/supabase'
 
 
-export default async function  Auditor() {
+export default async function Auditor() {
 
 
 
