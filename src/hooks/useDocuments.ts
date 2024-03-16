@@ -1,8 +1,8 @@
 'use client'
-import { Documents } from "@/types/types"
-import { supabase } from "../../supabase/supabase" 
-import { useEdgeFunctions } from './useEdgeFunctions'
 import { useLoggedUserStore } from '@/store/loggedUser'
+import { Documents } from "@/types/types"
+import { supabase } from "../../supabase/supabase"
+import { useEdgeFunctions } from './useEdgeFunctions'
 export const useDocument = () => {
  const { errorTranslate } = useEdgeFunctions()
  const {actualCompany}= useLoggedUserStore()
@@ -10,6 +10,7 @@ export const useDocument = () => {
  return{
 
     insertDocumentEmployees: async (documents: any) => {
+      console.log(documents,'documents');
       const { data, error } = await supabase
         .from('documents_employees')
         .insert(documents)
@@ -177,8 +178,9 @@ insertMultiDocumentEquipment: async (documents: any) => {
         })
 
       if (error) {
-        const message = await errorTranslate(error?.message)
-        throw new Error(String(message).replaceAll('"', ''))
+        console.log(error,'error');
+        // const message = await errorTranslate(error?.message)
+        // throw new Error(String(message).replaceAll('"', ''))
       }
 
       // Obtener la URL de la imagen cargada
