@@ -111,8 +111,8 @@ export const DocumentationDrawer = () => {
   }
 
   const handleClicks = async () => {
-    // Ciclo que valida los campos de cada input
-    await ValidateForms()
+    // Ciclo que valida los campos de cada form
+    if (hasErrors) await ValidateForms()
 
     // Si todos los inputs son validos, se hace el ciclo de clicks
     if (!hasErrors) await handleSendForms()
@@ -192,9 +192,8 @@ export const DocumentationDrawer = () => {
                         collapsible
                         className="w-full"
                         defaultValue="item-1"
-
                       >
-                        <AccordionItem value={`item-${index+1}`} >
+                        <AccordionItem value={`item-${index + 1}`}>
                           <AccordionTrigger
                             defaultValue="item-1"
                             className="text-lg flex relative"

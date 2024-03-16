@@ -186,10 +186,10 @@ export default function SimpleDocument({
       form.clearErrors()
       updateDocumentErrors(index, false)
     }
-    const fileUrl = await uploadDocumentFile(files, 'document_files')
 
     console.log('matureas')
     if (!hasErrors) {
+      const fileUrl = await uploadDocumentFile(files, 'document_files')
       setLoading(true)
       let finalValues: any
       if (resource === 'equipo') {
@@ -205,16 +205,15 @@ export default function SimpleDocument({
           ...values,
           document_url: fileUrl,
           id_storage: null,
-          state: 'presentado',
           is_active: true,
           applies: vehicle_id,
           user_id: user,
-          document: files,
+          id_document_types: values.id_document_types,
         }
 
         console.log(finalValues, 'finalValues equipos')
 
-        // insertDocumentEquipment(finalValues)
+        insertDocumentEquipment(finalValues)
       } else {
         const user_id = employees?.find(
           (e: any) => e?.document === values.applies,
@@ -224,16 +223,15 @@ export default function SimpleDocument({
           ...values,
           document_url: fileUrl,
           id_storage: null,
-          state: 'presentado',
           is_active: true,
           applies: user_id,
           user_id: user,
-          document: files,
+          id_document_types: values.id_document_types,
         }
 
         console.log(finalValues, 'finalValues empleados')
 
-        // insertDocumentEmployees(finalValues)
+        insertDocumentEmployees(finalValues)
       }
 
       handleOpen()

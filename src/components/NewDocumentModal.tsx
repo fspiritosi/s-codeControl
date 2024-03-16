@@ -82,7 +82,7 @@ export default function NewDocumentModal({
 
   const handleClicks = async () => {
     // Ciclo que valida los campos de cada input
-    await ValidateForms()
+    if (hasErrors) await ValidateForms()
 
     // Si todos los inputs son validos, se hace el ciclo de clicks
     if (!hasErrors) await handleSendForms()
