@@ -10,10 +10,10 @@ export default function Home() {
   const user = useLoggedUserStore()  
   const employees = user.employees
   const equipment = user.vehicles
-  const eNoAvalados = employees.length >  0 ? employees.filter((employee: any) => employee.status === 'No avalado') : []
-  const eAvalados = employees.length > 0 ? employees.filter((employee: any) => employee.status === 'Avalado') : []
-  const equiNoAvalados = equipment.length > 0 ? equipment.filter((vehicle: any) => vehicle.status === 'No avalado') : []
-  const equiAvalados = equipment.length > 0 ? equipment.filter((vehicle: any) => vehicle.status === 'Avalado') : []
+  const eNoAvalados = employees?.length >  0 ? employees.filter((employee: any) => employee.status === 'No avalado') : []
+  const eAvalados = employees?.length > 0 ? employees.filter((employee: any) => employee.status === 'Avalado') : []
+  const equiNoAvalados = equipment?.length > 0 ? equipment.filter((vehicle: any) => vehicle.status === 'No avalado') : []
+  const equiAvalados = equipment?.length > 0 ? equipment.filter((vehicle: any) => vehicle.status === 'Avalado') : []
   
 
   return (
@@ -26,7 +26,7 @@ export default function Home() {
           <CardTitle>Empleados totales</CardTitle>
         </CardHeader>
         <CardContent className="flex justify-around items-center">
-        <Badge variant='default' className="rounded-full text-lg">{employees.length}</Badge>
+        <Badge variant='default' className="rounded-full text-lg">{employees?.length || 0}</Badge>
           <Link href="/dashboard/employee">
           <Button variant='primary'>ver todos</Button>
           </Link>
@@ -58,7 +58,7 @@ export default function Home() {
         </CardHeader>
         <CardContent className="flex justify-around items-center">
         <Badge variant='default' className="rounded-full text-lg">
-          {equipment.length} 
+          {equipment?.length || 0} 
         </Badge>
         <Link href="/dashboard/equipment">
           <Button variant='primary'>ver todos</Button>
