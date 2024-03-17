@@ -91,7 +91,7 @@ export default function page() {
       <div className="flex justify-between flex-wrap flex-col">
         <div className="flex justify-between mb-3">
           <h2 className="inline">
-            Aqui estaran todos los documentos de la empresa
+            Documentos cargados
           </h2>
           <div className="flex gap-4">
             <DocumentNav />
