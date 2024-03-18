@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDocument } from '@/hooks/useDocuments'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { useEffect, useState } from 'react'
+import { supabase } from '../../../../supabase/supabase'
 import { DataDocumentsEmployees } from '../document/data-documentEmployees'
 import { DataDocumentsEquipment } from '../document/data-documentsEquipment'
 import { columEmp } from './columEmp'
@@ -20,7 +21,7 @@ export default function page() {
   >([])
   const { fetchDocumentEquipmentByCompany, fetchDocumentEmployeesByCompany } =
     useDocument()
-    
+
   const handleToggleInactive = () => {
     setShowInactive(!showInactive)
   }
@@ -40,7 +41,7 @@ export default function page() {
   }
   useEffect(() => {
     fetchDocuments()
-  }, [fetchDocumentEquipmentByCompany])
+  }, [])
 
   const fetchDocumentsEmployees = async () => {
     try {
@@ -57,35 +58,31 @@ export default function page() {
       console.error('Error al obtener documentos:', error)
     }
   }
-  // useEffect(() => {
-  //   fetchDocumentsEmployees()
-  // }, [fetchDocumentEmployeesByCompany])
+  useEffect(() => {
+    fetchDocumentsEmployees()
+  }, [fetchDocumentEmployeesByCompany])
 
-  // useEffect(() => {
-  //   const channels = supabase
-  //     .channel('custom-all-channel')
-  //     .on(
-  //       'postgres_changes',
-  //       { event: '*', schema: 'public', table: 'documents_employees' },
-  //       payload => {
-  //         fetchDocumentsEmployees()
-  //       },
-  //     )
-  //     .subscribe()
-  // }, [])
+  // supabase
+  //   .channel('custom-all-channel')
+  //   .on(
+  //     'postgres_changes',
+  //     { event: '*', schema: 'public', table: 'documents_employees' },
+  //     payload => {
+  //       fetchDocumentsEmployees()
+  //     },
+  //   )
+  //   .subscribe()
 
-  // useEffect(() => {
-  //   const channels = supabase
-  //     .channel('custom-all-channel')
-  //     .on(
-  //       'postgres_changes',
-  //       { event: '*', schema: 'public', table: 'documents_equipment' },
-  //       payload => {
-  //         fetchDocuments()
-  //       },
-  //     )
-  //     .subscribe()
-  // }, [])
+  // supabase
+  //   .channel('custom-all-channel')
+  //   .on(
+  //     'postgres_changes',
+  //     { event: '*', schema: 'public', table: 'documents_equipment' },
+  //     payload => {
+  //       fetchDocuments()
+  //     },
+  //   )
+  //   .subscribe()
   return (
     <section>
       <div className="flex justify-between flex-wrap flex-col">

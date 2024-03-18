@@ -10,7 +10,6 @@ export const useDocument = () => {
  return{
 
     insertDocumentEmployees: async (documents: any) => {
-      console.log(documents,'documents');
       const { data, error } = await supabase
         .from('documents_employees')
         .insert(documents)

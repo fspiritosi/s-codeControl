@@ -187,7 +187,6 @@ export default function SimpleDocument({
       updateDocumentErrors(index, false)
     }
 
-    console.log('matureas')
     if (!hasErrors) {
       const fileUrl = await uploadDocumentFile(files, 'document_files')
       setLoading(true)
@@ -211,7 +210,6 @@ export default function SimpleDocument({
           id_document_types: values.id_document_types,
         }
 
-        console.log(finalValues, 'finalValues equipos')
 
         insertDocumentEquipment(finalValues)
       } else {
@@ -228,8 +226,6 @@ export default function SimpleDocument({
           user_id: user,
           id_document_types: values.id_document_types,
         }
-
-        console.log(finalValues, 'finalValues empleados')
 
         insertDocumentEmployees(finalValues)
       }
