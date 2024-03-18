@@ -9,18 +9,11 @@ import { DocumentsValidation } from '@/store/documentValidation'
 import {
   LockClosedIcon,
   LockOpen2Icon,
-  MinusCircledIcon,
   PlusCircledIcon,
 } from '@radix-ui/react-icons'
 import React, { useEffect, useState } from 'react'
 import SimpleDocument from './SimpleDocument'
 import { Loader } from './svg/loader'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from './ui/accordion'
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'
 import { Separator } from './ui/separator'
@@ -187,14 +180,14 @@ export const DocumentationDrawer = () => {
                 <div className="space-y-3">
                   {Array.from({ length: totalForms }).map((_, index) => (
                     <div key={index} className="relative">
-                      <Accordion
+                      {/* <Accordion
                         type="single"
                         collapsible
                         className="w-full"
                         defaultValue="item-1"
                         asChild
                       >
-                        <AccordionItem  value={`item-${index + 1}`}>
+                        <AccordionItem value={`item-${index + 1}`}>
                           <AccordionTrigger
                             defaultValue="item-1"
                             className="text-lg flex relative"
@@ -208,16 +201,16 @@ export const DocumentationDrawer = () => {
                                 }}
                                 className="h-4 w-4 shrink-0 absolute right-3 top-1 text-red-800 cursor-pointer"
                               />
-                            )}
-                            <SimpleDocument
-                              resource={resource}
-                              index={index}
-                              handleOpen={handleOpen}
-                              refSubmit={refs[index]}
-                            />
-                          </AccordionContent>
+                            )} */}
+                      <SimpleDocument
+                        resource={resource}
+                        index={index}
+                        handleOpen={handleOpen}
+                        refSubmit={refs[index]}
+                      />
+                      {/* </AccordionContent>
                         </AccordionItem>
-                      </Accordion>
+                      </Accordion> */}
                     </div>
                   ))}
                 </div>
