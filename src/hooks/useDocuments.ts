@@ -6,6 +6,7 @@ import { useEdgeFunctions } from './useEdgeFunctions'
 export const useDocument = () => {
  const { errorTranslate } = useEdgeFunctions()
  const {actualCompany}= useLoggedUserStore()
+ console.log(actualCompany,'actualCompany');
     
  return{
 
@@ -120,9 +121,11 @@ insertMultiDocumentEquipment: async (documents: any) => {
       }
       return data
     },
+
     fetchDocumentEmployeesByCompany: async () => {
       
-      let { data: documents, error } = await supabase.from('documents_employees').select(`
+    if(actualCompany){
+       let { data: documents, error } = await supabase.from('documents_employees').select(`
             *,
             employees:employees(id,company_id, document_number ),
             document_types:document_types(id, name)
@@ -138,7 +141,9 @@ insertMultiDocumentEquipment: async (documents: any) => {
         throw new Error(String(message).replaceAll('"', ''))
       }
      
+      console.log(documents,'documents');
       return documents
+    }
     },
 
     fetchDocumentEquipmentByCompany: async () => {

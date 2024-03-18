@@ -60,7 +60,7 @@ export default function page() {
   }
   useEffect(() => {
     fetchDocumentsEmployees()
-  }, [fetchDocumentEmployeesByCompany])
+  }, [])
 
   // supabase
   //   .channel('custom-all-channel')
