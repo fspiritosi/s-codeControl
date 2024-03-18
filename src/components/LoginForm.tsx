@@ -27,6 +27,8 @@ import { EyeIcon } from './svg/openEye'
 import { Separator } from './ui/separator'
 import { useToast } from './ui/use-toast'
 
+import { useTheme } from 'next-themes'
+
 export function LoginForm() {
   const { login, googleLogin } = useAuthData()
   const { toast } = useToast()
@@ -41,6 +43,8 @@ export function LoginForm() {
       password: '',
     },
   })
+
+  const {theme} = useTheme()
 
   const onSubmit = async (credentials: z.infer<typeof loginSchema>) => {
     try {
@@ -138,10 +142,11 @@ export function LoginForm() {
               className="w-[100%] sm:w-[80%] lg:w-[60%] self-center"
               type="submit"
               disabled={showLoader}
+              variant='default'
             >
               {showLoader ? <Loader /> : 'Iniciar sesión'}
             </Button>
-            <Link href="/register" className="text-[0.8rem]">
+            <Link href="/register" className="text-[0.8rem] ">
               ¿No tienes una cuenta?{' '}
               <span className="text-blue-400 ml-1">Créate una aquí</span>
             </Link>

@@ -423,7 +423,7 @@ export function DataEquipment<TData, TValue>({
                             <img
                               src={cell.getValue() as any}
                               alt="Foto"
-                              style={{ width: '68px', height: '68px' }}
+                              style={{ width: '50px'}}
                             />
                           </Link>
                         ) : (
