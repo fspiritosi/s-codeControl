@@ -53,7 +53,7 @@ import { PostgrestError } from '@supabase/supabase-js'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ChangeEvent, useEffect, useState } from 'react'
+import { ChangeEvent, cache, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { ImageHander } from './ImageHandler'
@@ -376,6 +376,7 @@ export default function EmployeeAccordion() {
     fetchCityValues(provinceId)
   }
 
+
   async function onCreate(values: z.infer<typeof accordionSchema>) {
     const fileExtension = imageFile?.name.split('.').pop()
     const finalValues = {
@@ -452,8 +453,9 @@ export default function EmployeeAccordion() {
       ),
     }
 
+
     try {
-      await updateEmployee(finalValues)
+      await updateEmployee(finalValues, user?.id)
       await handleUpload()
       toast({
         variant: 'default',

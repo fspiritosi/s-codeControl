@@ -207,8 +207,8 @@ export function DataDocumentsEquipment<TData, TValue>({
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>Filas por página</SelectLabel>
-                {maxRows.map((option: string) => (
-                  <SelectItem key={option} value={option}>
+                {maxRows.map((option: string,index:number) => (
+                  <SelectItem key={index} value={option}>
                     {option}
                   </SelectItem>
                 ))}

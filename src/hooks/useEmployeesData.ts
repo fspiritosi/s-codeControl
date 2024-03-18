@@ -12,6 +12,7 @@ export const useEmployeesData = () => {
       const { data, error } = await supabase
         .from('employees')
         .insert({ ...employee, company_id: company?.id })
+        
 
       if (error) {
         const message = await errorTranslate(error.message)
@@ -19,7 +20,25 @@ export const useEmployeesData = () => {
       }
       return data
     },
-    updateEmployee: async (employee: Employee) => {
+    updateEmployee: async (employee: Employee,id?:string) => {
+
+      if (Array.isArray(employee.allocated_to)) {
+
+        const allocated_to = employee.allocated_to.map((item: any) => {
+          return { contractor_id: item, employee_id:id }
+        })
+
+        await supabase
+          .from('contractor_employee')
+          .delete()
+          .eq('employee_id', id)
+
+        const { data, error } = await supabase
+          .from('contractor_employee')
+          .insert(allocated_to)
+          .select()
+      }
+
       const { data, error } = await supabase
         .from('employees')
         .update(employee)
