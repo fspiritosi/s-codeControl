@@ -7,6 +7,7 @@ import { RiMenu3Line } from 'react-icons/ri'
 import { useState } from 'react'
 import MotionTransition from './Animation/MotionTransition'
 import { useTheme } from 'next-themes'
+import { ModeToggle } from '../ui/ToogleDarkButton'
 
 function Header() {
   //--Estados locales--//
@@ -68,6 +69,7 @@ function Header() {
             ))}
           </div>
         </div>
+        <ModeToggle/>
       </nav>
     </MotionTransition>
   )

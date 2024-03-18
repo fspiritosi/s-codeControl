@@ -534,7 +534,7 @@ export default function EmployeeAccordion() {
                   user?.lastname[0] || 'C'
                 }`}</AvatarFallback>
               </Avatar>
-              <h2 className="text-5xl">
+              <h2 className="text-2xl">
                 {`${user?.firstname || 'cargando...'}
                 ${user?.lastname || ''}`}
               </h2>
@@ -572,7 +572,7 @@ export default function EmployeeAccordion() {
           onSubmit={form.handleSubmit(
             accion === 'edit' || accion === 'view' ? onUpdate : onCreate,
           )}
-          className="w-full"
+          className="w-full pr-2"
         >
           <Accordion
             className="w-full"
@@ -581,7 +581,7 @@ export default function EmployeeAccordion() {
             defaultValue="personal-data"
           >
             <AccordionItem value="personal-data">
-              <AccordionTrigger className="text-2xl hover:no-underline">
+              <AccordionTrigger className="text-lg hover:no-underline">
                 <div className="flex gap-5 items-center flex-wrap">
                   <span className="hover:underline"> Datos personales </span>
                   {accordion1Errors && (
@@ -682,7 +682,7 @@ export default function EmployeeAccordion() {
                                     type={data.type}
                                     id={data.label}
                                     placeholder={data.placeholder}
-                                    className="w-[300px] bg-white"
+                                    className="w-[300px"
                                     {...field}
                                   />
                                 </FormControl>
@@ -698,7 +698,7 @@ export default function EmployeeAccordion() {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="contact-data">
-              <AccordionTrigger className="text-2xl transition-all hover:no-underline">
+              <AccordionTrigger className="text-lg transition-all hover:no-underline">
                 <div className="flex gap-5 items-center flex-wrap">
                   <span className="hover:underline"> Datos de contacto </span>
                   {accordion2Errors && (
@@ -777,7 +777,7 @@ export default function EmployeeAccordion() {
                                     type={data.type}
                                     id={data.label}
                                     placeholder={data.placeholder}
-                                    className="w-[300px] bg-white"
+                                    className="w-[300px]"
                                     {...field}
                                   />
                                 </FormControl>
@@ -793,7 +793,7 @@ export default function EmployeeAccordion() {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="laboral-data">
-              <AccordionTrigger className="text-2xl hover:no-underline">
+              <AccordionTrigger className="text-lg hover:no-underline">
                 <div className="flex gap-5 items-center flex-wrap hover:no-underline">
                   <span className="hover:underline">Datos laborales</span>
                   {accordion3Errors && (
@@ -967,7 +967,7 @@ export default function EmployeeAccordion() {
                                     id={data.label}
                                     placeholder={data.placeholder}
                                     pattern={data.pattern}
-                                    className="w-[300px] bg-white"
+                                    className="w-[300px]"
                                     {...field}
                                   />
                                 </FormControl>
