@@ -93,7 +93,6 @@ export const VehiclesActualCompany = create<State>((set, get) => {
 
   const setActivesVehicles = () => {
     const activesVehicles = get().allVehicles.filter(vehicle => vehicle.is_active)
-    console.log(activesVehicles);
     set({ vehiclesToShow: setVehiclesToShow(activesVehicles) })
   }
   const endorsedVehicles = () => {
