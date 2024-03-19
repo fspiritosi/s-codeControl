@@ -6,9 +6,13 @@ export const useProfileData = () => {
   const { errorTranslate } = useEdgeFunctions()
   return {
     insertProfile: async (credentials: profileUser) => {
+      const {firstname,lastname,...rest} = credentials
       const { data, error } = await supabase
         .from('profile')
-        .insert([credentials])
+        .insert({
+          ...rest,
+          fullname: `${firstname} ${lastname}`,
+        })
         .select()
 
       if (error) {

@@ -6,6 +6,7 @@ import { useEdgeFunctions } from './useEdgeFunctions'
 export const useImageUpload = () => {
   const [loading, setLoading] = useState(false)
   const { errorTranslate } = useEdgeFunctions()
+  const url = 'https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public'
 
   const uploadImage = async (
     file: File,
@@ -31,7 +32,7 @@ export const useImageUpload = () => {
       // Obtener la URL de la imagen cargada
        
 
-      const imageUrl = `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/${imageBucket}/${data?.path}`
+      const imageUrl = `${url}/${imageBucket}/${data?.path}`
 
       return imageUrl
     } finally {

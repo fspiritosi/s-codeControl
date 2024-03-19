@@ -20,7 +20,9 @@ interface State {
   showDeletedEmployees: boolean
   setShowDeletedEmployees: (showDeletedEmployees: boolean) => void
   vehicles: any
-
+  setNewDefectCompany: (company: companyData) => void
+  endorsedEmployees: () => void
+  noEndorsedEmployees: () => void
 }
 
 const setEmployeesToShow = (employees: any) => {
@@ -83,6 +85,80 @@ export const useLoggedUserStore = create<State>((set, get) => {
     set({ employeesToShow })
   }
 
+  const noEndorsedEmployees = async () => {
+    set({ isLoading: true })
+    const { data, error } = await supabase
+      .from('employees')
+      .select(
+        `*, city (
+            name
+          ),
+          province(
+            name
+          ),
+          workflow_diagram(
+            name
+          ),
+          hierarchical_position(
+            name
+          ),
+          birthplace(
+            name
+          ),
+          contractor_employee(
+            contractors(
+              *
+            )
+          )`,
+      )
+      .eq('company_id', get()?.actualCompany?.id)
+      .eq('status', 'No avalado')
+
+    if (error) {
+      console.error('Error al obtener los empleados no avalados:', error)
+    } else {
+      set({employeesToShow: setEmployeesToShow(data) || []})
+      set({ isLoading: false })
+    }
+  }
+
+  const endorsedEmployees = async () => {
+    set({ isLoading: true })
+    const { data, error } = await supabase
+      .from('employees')
+      .select(
+        `*, city (
+            name
+          ),
+          province(
+            name
+          ),
+          workflow_diagram(
+            name
+          ),
+          hierarchical_position(
+            name
+          ),
+          birthplace(
+            name
+          ),
+          contractor_employee(
+            contractors(
+              *
+            )
+          )`,
+      )
+      .eq('company_id', get()?.actualCompany?.id)
+      .eq('status', 'Avalado')
+
+    if (error) {
+      console.error('Error al obtener los empleados avalados:', error)
+    } else {
+      set({employeesToShow: setEmployeesToShow(data) || []})
+      set({ isLoading: false })
+    }
+  }
+
   const vehicles = async () => {
     const { data, error } = await supabase.from('vehicles').select('*').eq('company_id', get()?.actualCompany?.id).eq('is_active', true)
     if (error) {
@@ -93,7 +169,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
   }
 
-  // const [showDeletedEmployees, setShowDeletedEmployees] = useState(false)
   const getEmployees = async (active: boolean) => {
     let { data: employees, error } = await supabase
       .from('employees')
@@ -149,6 +224,29 @@ export const useLoggedUserStore = create<State>((set, get) => {
     setActivesEmployees()
     set({ isLoading: false })
     vehicles()
+  }
+
+  const setNewDefectCompany = async (company: companyData) => {
+
+    const { data, error } = await supabase
+      .from('company')
+      .update({ by_defect: false })
+      .eq('owner_id', get()?.profile?.[0]?.id)
+
+    if (error) {
+      console.error('Error al actualizar la empresa por defecto:', error)
+    } else {
+      const { data, error } = await supabase
+        .from('company')
+        .update({ by_defect: true })
+        .eq('id', company.id)
+
+      if (error) {
+        console.error('Error al actualizar la empresa por defecto:', error)
+      } else {
+        setActualCompany(company)
+      }
+    }
   }
 
   supabase
@@ -209,12 +307,14 @@ export const useLoggedUserStore = create<State>((set, get) => {
       console.error('Error al obtener el perfil:', error)
     } else {
       set({ allCompanies: data || [] })
+
       selectedCompany = get()?.allCompanies?.filter(
         company => company.by_defect,
       )
 
       if (data.length > 1) {
         if (selectedCompany) {
+          // console.log(selectedCompany, 'selectedCompany primer if');
           //
           setActualCompany(selectedCompany[0])
         } else {
@@ -224,6 +324,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       if (data.length === 1) {
         set({ showMultiplesCompaniesAlert: false })
         setActualCompany(data[0])
+        // console.log(data[0], 'actual company segundo if');
       }
       if (data.length === 0) {
         set({ showNoCompanyAlert: true })
@@ -281,5 +382,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
     setShowDeletedEmployees: (showDeletedEmployees: boolean) =>
       set({ showDeletedEmployees }),
     vehicles: get()?.vehicles,
+    setNewDefectCompany,
+    endorsedEmployees,
+    noEndorsedEmployees
   }
 })

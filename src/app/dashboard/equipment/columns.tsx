@@ -56,17 +56,16 @@ import { useToast } from '@/components/ui/use-toast'
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions'
 import { cn } from '@/lib/utils'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { DotsVerticalIcon } from '@radix-ui/react-icons'
 import { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
-import { es, id } from 'date-fns/locale'
-import { ArrowUpDown, CalendarIcon, MoreHorizontal } from 'lucide-react'
-import { DotsVerticalIcon } from '@radix-ui/react-icons'
+import { es } from 'date-fns/locale'
+import { ArrowUpDown, CalendarIcon } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../../../supabase/supabase'
-import { useLoggedUserStore } from '@/store/loggedUser'
 
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -91,6 +90,7 @@ type Colum = {
   model: string
   is_active: boolean
   showInactive: boolean
+  status: string
 }
 
 export const columns: ColumnDef<Colum>[] = [
@@ -423,7 +423,10 @@ export const columns: ColumnDef<Colum>[] = [
     accessorKey: 'chassis',
     header: 'Chassis',
   },
-
+  {
+    accessorKey: 'status',
+    header: 'Estado',
+  },
   {
     accessorKey: 'types_of_vehicles',
     header: 'Tipos de vehículos',
@@ -461,4 +464,5 @@ export const columns: ColumnDef<Colum>[] = [
     accessorKey: 'is_active',
     header: 'Ver equipos dados de baja',
   },
+
 ]

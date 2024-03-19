@@ -7,18 +7,21 @@ import {
 } from '@/components/ui/popover'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { LogOutButton } from './LogOutButton'
 
 import ModalCompany from '@/components/ModalCompany'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { companyData } from '@/types/types'
 import { useRouter } from 'next/navigation'
 import { IoMdAddCircleOutline } from 'react-icons/io'
 
 export default function NavBar() {
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
-  const setActualCompany = useLoggedUserStore(state => state.setActualCompany)
+  const setNewDefectCompany = useLoggedUserStore(
+    state => state.setNewDefectCompany,
+  )
   const actualUser = useLoggedUserStore(state => state.profile)
   const avatarUrl =
     actualUser && actualUser.length > 0 ? actualUser[0].avatar : ''
@@ -28,35 +31,14 @@ export default function NavBar() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const router = useRouter()
 
-  // const selectCompany = (company: companyData) => {
-  //   setActualCompany(company) // Actualiza actualCompany con la empresa seleccionada
-  //   setIsOpen(false) // Cierra el desplegable después de seleccionar la empresa
-  // }
-  // const openModal = (companies: any) => {
-  //   setSelectedCompany(companies)
-  //   setIsModalOpen(true)
-  // }
-  useEffect(() => {
-    if (!actualCompany && allCompanies && allCompanies.length > 0) {
-      const defaultCompany = allCompanies.find(
-        companyItem => companyItem.by_defect === true,
-      )
-      if (defaultCompany) {
-        setActualCompany(defaultCompany)
-      }
-    }
-  }, [actualCompany, allCompanies, setActualCompany])
-  const redirectToCompanyDashboard = () => {
-    if (actualCompany) {
-      const companyId = actualCompany.id // Suponiendo que tienes una propiedad 'id' en tu objeto actualCompany
-      router.push(`/dashboard/company/actualCompany/${companyId}`)
-    }
+  const handleNewCompany = async (company: companyData) => {
+    setNewDefectCompany(company)
+    setIsOpen(false)
+    router.push('/dashboard')
   }
 
-  // console.log(actualCompany?.id)
-
   return (
-    <nav className=" flex flex-shrink items-center justify-between  text-white p-4 mb-2 ">
+    <nav className=" flex flex-shrink items-center justify-between  text-white p-4 mb-2">
       <div className="flex items-center">
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger>
@@ -71,7 +53,7 @@ export default function NavBar() {
                     className=" shadow-md text-white items-center flex gap-1 bg-slate-500 border-0 rounded-full w-40px h-40px"
                     src={actualCompany.company_logo}
                     style={{ width: '40px', height: '40px' }}
-                  alt="Company Logo"
+                    alt="Company Logo"
                   />
                 </Link>
               ) : (
@@ -110,36 +92,6 @@ export default function NavBar() {
                     </Link>
                   </div>
                 )}
-              {/* {allCompanies
-                ?.filter(companyItem => companyItem.by_defect === true)
-                .map(companyItem => (
-                  <Link
-                    key={companyItem.id}
-                    href={`/dashboard/company`}
-                    passHref
-                    className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-md"
-                  >
-                    <img
-                  alt="Company Logo"
-                      src={companyItem.company_logo}
-                      alt="Company Logo"
-                      style={{ width: '78px', height: '40px' }}
-                    />
-                  </Link>
-                ))}
-              {!allCompanies?.find(
-                companyItem => companyItem.by_defect === true,
-              ) && (
-                <div>
-                  <Link
-                    href={`/dashboard/company`}
-                    passHref
-                    className="text-white flex items-center gap-2 p-1 bg-slate-500 border-2 rounded-md"
-                  >
-                    Empresa
-                  </Link>
-                </div>
-              )} */}
             </div>
           </PopoverTrigger>
           <PopoverContent
@@ -158,10 +110,7 @@ export default function NavBar() {
               {allCompanies?.map(companyItems => (
                 <div
                   key={companyItems.id}
-                  onClick={() => {
-                    setActualCompany(companyItems)
-                    redirectToCompanyDashboard()
-                  }}
+                  onClick={() => handleNewCompany(companyItems)}
                   className="text-white gap-1 flex justify-left items-center w-20 h-20"
                   style={{ whiteSpace: 'nowrap' }}
                 >
