@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useLoggedUserStore } from '@/store/loggedUser'
+import { VehiclesActualCompany } from '@/store/vehicles'
 import Link from 'next/link'
 
 export default function Home() {
@@ -25,7 +26,6 @@ export default function Home() {
     equipment?.length > 0
       ? equipment.filter((vehicle: any) => vehicle.status === 'Avalado')
       : []
-
   const setEndorsedEmployees = useLoggedUserStore(
     state => state.endorsedEmployees,
   )
@@ -34,6 +34,15 @@ export default function Home() {
   )
   const noEndorsedEmployees = useLoggedUserStore(
     state => state.noEndorsedEmployees,
+  )
+  const setActivesVehicles = VehiclesActualCompany(
+    state => state.setActivesVehicles,
+  )
+  const endorsedVehicles = VehiclesActualCompany(
+    state => state.endorsedVehicles,
+  )
+  const noEndorsedVehicles = VehiclesActualCompany(
+    state => state.noEndorsedVehicles,
   )
 
   return (
@@ -99,7 +108,9 @@ export default function Home() {
                 {equipment?.length || 0}
               </Badge>
               <Link href="/dashboard/equipment">
-                <Button variant="primary">ver todos</Button>
+                <Button variant="primary" onClick={() => setActivesVehicles()}>
+                  ver todos
+                </Button>
               </Link>
             </CardContent>
           </Card>
@@ -111,7 +122,11 @@ export default function Home() {
               <Badge variant="success" className="rounded-full text-lg">
                 {equiAvalados.length}
               </Badge>
-              <Button variant="success">ver mas</Button>
+              <Link href="/dashboard/equipment">
+                <Button variant="primary" onClick={() => endorsedVehicles()}>
+                  ver mas
+                </Button>
+              </Link>
             </CardContent>
           </Card>
           <Card className="bg-rose-200 dark:bg-rose-800 md:min-w-[250px] text-center">
@@ -122,7 +137,11 @@ export default function Home() {
               <Badge variant="destructive" className="rounded-full text-lg">
                 {equiNoAvalados.length}
               </Badge>
-              <Button variant="destructive">ver todos</Button>
+              <Link href="/dashboard/equipment">
+                <Button variant="primary" onClick={() => noEndorsedVehicles()}>
+                  ver todos
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>

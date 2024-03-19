@@ -226,6 +226,7 @@ export function DataTable<TData, TValue>({
       affiliate_status: 'Todos',
       city: 'Todos',
       hierrical_position: 'Todos',
+      status: 'Todos',
     })
   }
 

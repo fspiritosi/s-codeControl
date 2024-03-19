@@ -1,115 +1,55 @@
 'use client'
 
 import { useLoggedUserStore } from '@/store/loggedUser'
+import { VehiclesActualCompany } from '@/store/vehicles'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { supabase } from '../../../../supabase/supabase'
 import { columns } from './columns'
 import { DataEquipment } from './data-equipment'
-import { supabase } from '../../../../supabase/supabase'
-import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { object } from 'zod'
 export default function Equipment() {
-  const [vehiclesData, setVehiclesData] = useState<unknown[]>([])
+  // const [vehiclesData, setVehiclesData] = useState<unknown[]>([])
   const allCompany = useLoggedUserStore(state => state.allCompanies)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
+  const fetchVehicles = VehiclesActualCompany(state => state.fetchVehicles)
   const useSearch = useSearchParams()
   const type = useSearch.get('type')
   const [showInactive, setShowInactive] = useState(false)
 
+  const vehiclesData = VehiclesActualCompany(state => state.vehiclesToShow)
+
+  const setVehicleTypes = VehiclesActualCompany(state => state.setVehicleTypes)
+
+  const setActivesVehicles = VehiclesActualCompany(
+    state => state.setActivesVehicles,
+  )
+
   const handleToggleInactive = () => {
     setShowInactive(!showInactive)
   }
+  const channels = supabase
+    .channel('custom-all-channel')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'vehicles' },
+      payload => {
+        if (actualCompany) {
+          fetchVehicles(actualCompany)
+        }
+      },
+    )
+    .subscribe()
+
   useEffect(() => {
-    fetchVehicles()
-  }, [type])
-
-  const fetchVehicles = async () => {
-    try {
-      if (!actualCompany?.id) {
-        console.error('No se ha seleccionado una compañía')
-        return
-      }
-      if (type) {
-        const { data: vehicles, error } = await supabase
-          .from('vehicles')
-          .select(
-            `*,
-        types_of_vehicles(name),
-        brand_vehicles(name),
-        model_vehicles(name)`,
-          )
-          //.eq('is_active', true)
-          .eq('company_id', actualCompany?.id)
-          .eq('type_of_vehicle', type)
-
-        if (error) {
-          console.error('Error al obtener los vehículos:', error)
-        } else {
-          const transformedData = vehicles.map(item => ({
-            ...item,
-            types_of_vehicles: item.types_of_vehicles.name,
-            brand: item.brand_vehicles.name,
-            model: item.model_vehicles.name,
-          }))
-          setVehiclesData(transformedData)
-        }
-      } else {
-        const { data: vehicles, error } = await supabase
-          .from('vehicles')
-          .select(
-            `*,
-        types_of_vehicles(name),
-        brand_vehicles(name),
-        model_vehicles(name)`,
-          )
-          //.eq('is_active', true)
-          .eq('company_id', actualCompany?.id)
-
-        if (error) {
-          console.error('Error al obtener los vehículos:', error)
-        } else {
-          const transformedData = vehicles.map(item => ({
-            ...item,
-            types_of_vehicles: item.types_of_vehicles.name,
-            brand: item.brand_vehicles.name,
-            model: item.model_vehicles.name,
-          }))
-          setVehiclesData(transformedData)
-        }
-      }
-    } catch (error) {
-      console.error('Error al obtener los vehículos:', error)
+    if (type === '1') {
+      setVehicleTypes('Vehículos')
+    } else if (type === '2') {
+      setVehicleTypes('Otros')
+    } else {
+      setActivesVehicles()
     }
-  }
-
-  // useEffect(() => {
-  //   fetchVehicles()
-  // }, [])
-  useEffect(() => {
-    const channels = supabase
-      .channel('custom-all-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'vehicles' },
-        payload => {
-          fetchVehicles()
-        },
-      )
-      .subscribe()
-  }, [])
-  useEffect(() => {
-    const channels = supabase
-      .channel('custom-all-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'storage', table: 'objects' },
-
-        payload => {
-          fetchVehicles()
-        },
-      )
-      .subscribe()
-  }, [])
+  }, [type])
 
   let equipo = 'Equipos'
   if (type === '1') {
@@ -120,13 +60,12 @@ export default function Equipment() {
   }
 
   return (
-    <main className="">
+    <main>
       <header className="flex gap-4 mt-6 justify-between items-center">
         <div>
           <h2 className="text-4xl">{equipo}</h2>
-          
         </div>
-        <div className="">
+        <div>
           <Link
             href="/dashboard/equipment/action?action=new"
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
