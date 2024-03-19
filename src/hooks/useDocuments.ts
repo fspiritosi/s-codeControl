@@ -219,5 +219,16 @@ insertMultiDocumentEquipment: async (documents: any) => {
       return imageUrl
     
   },
+    fetchEmployeeByDocument:async (document:string) => {
+      let { data: documents_employees, error } = await supabase
+  .from('documents_employees')
+  .select('*, employees:employees(id, document_number ),  document_types:document_types(name)')
+  .not('employees', 'is', null)    
+  .not('document_types', 'is', null)
+  .eq('employees.document_number', document)
+
+  
+  return documents_employees
+    },
   }
 }
