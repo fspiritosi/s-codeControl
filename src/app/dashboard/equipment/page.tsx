@@ -21,9 +21,7 @@ export default function Equipment() {
 
   const setVehicleTypes = VehiclesActualCompany(state => state.setVehicleTypes)
 
-  const setActivesVehicles = VehiclesActualCompany(
-    state => state.setActivesVehicles,
-  )
+
 
   const handleToggleInactive = () => {
     setShowInactive(!showInactive)
@@ -46,8 +44,8 @@ export default function Equipment() {
       setVehicleTypes('Vehículos')
     } else if (type === '2') {
       setVehicleTypes('Otros')
-    } else {
-      setActivesVehicles()
+    } else if (type === 'Todos') {
+      setVehicleTypes('Todos')
     }
   }, [type])
 

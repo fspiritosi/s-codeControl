@@ -42,6 +42,7 @@ import {
 } from '@/components/ui/table'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { useSidebarOpen } from '@/store/sidebar'
+import { VehiclesActualCompany } from '@/store/vehicles'
 import Link from 'next/link'
 import { useState } from 'react'
 
@@ -92,7 +93,6 @@ export function DataEquipment<TData, TValue>({
     model: createOptions('model_vehicles'),
     status: createOptions('status'),
   }
-
 
   function createOptions(key: string) {
     const values = data?.map((item: any) =>
@@ -153,14 +153,15 @@ export function DataEquipment<TData, TValue>({
   })
   const { expanded } = useSidebarOpen()
   const totalWidth = `calc(100vw - ${expanded ? '296px' : '167px'})`
-
+  const setActivesVehicles = VehiclesActualCompany(
+    state => state.setActivesVehicles,
+  )
   //const router = useRouter()
 
   const handleClearFilters = () => {
     table.getAllColumns().forEach(column => {
       column.setFilterValue('')
     })
-    //router.push('/dashboard/equipment')
 
     setSelectValues({
       types_of_vehicles: 'Todos',
@@ -175,6 +176,7 @@ export function DataEquipment<TData, TValue>({
       model: 'Todos',
       status: 'Todos',
     })
+    setActivesVehicles()
   }
   const maxRows = ['20', '40', '60', '80', '100']
   const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(

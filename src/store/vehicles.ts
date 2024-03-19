@@ -92,8 +92,8 @@ export const VehiclesActualCompany = create<State>((set, get) => {
   }
 
   const setActivesVehicles = () => {
-    const vehicles = get().allVehicles
-    const activesVehicles = vehicles.filter(vehicle => vehicle.is_active)
+    const activesVehicles = get().allVehicles.filter(vehicle => vehicle.is_active)
+    console.log(activesVehicles);
     set({ vehiclesToShow: setVehiclesToShow(activesVehicles) })
   }
   const endorsedVehicles = () => {
@@ -104,17 +104,19 @@ export const VehiclesActualCompany = create<State>((set, get) => {
     set({ vehiclesToShow: setVehiclesToShow(endorsedVehicles) })
   }
   const noEndorsedVehicles = () => {
-    const vehicles = get().allVehicles
-    const noEndorsedVehicles = vehicles.filter(
+    const noEndorsedVehicles = get().allVehicles.filter(
       vehicle => vehicle.status === 'No avalado',
     )
     set({ vehiclesToShow: setVehiclesToShow(noEndorsedVehicles) })
   }
   const setVehicleTypes = (type:string) => {
+    if (type === 'Todos') {
+      set({ vehiclesToShow: setVehiclesToShow(get().allVehicles) })
+      return
+    }
     const vehicles = get().allVehicles
     const vehiclesToShow = vehicles.filter(vehicle => vehicle.types_of_vehicles?.name === type)
 
-    console.log(vehiclesToShow, 'vehiclesToShow');
     set({ vehiclesToShow: setVehiclesToShow(vehiclesToShow) })
 
   }
