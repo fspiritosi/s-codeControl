@@ -1133,13 +1133,18 @@ export default function VehiclesForm2() {
               />
             </div>
           </div>
-          <Button type="submit" className="mt-5" disabled={readOnly}>
+          {
+            !readOnly &&
+            <Button type="submit" className="mt-5">
             {accion === 'edit' || accion === 'view'
               ? 'Guardar cambios'
               : 'Agregar equipo'}
           </Button>
+          }
         </form>
       </Form>
     </section>
   )
 }
+
+// || accion === 'view'

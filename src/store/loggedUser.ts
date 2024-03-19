@@ -68,6 +68,7 @@ const setEmployeesToShow = (employees: any) => {
     }
   })
 
+
   return employee
 }
 
@@ -121,9 +122,21 @@ export const useLoggedUserStore = create<State>((set, get) => {
       .eq('company_id', get()?.actualCompany?.id)
       .eq('is_active', active)
 
+
     const employeesToShow = setEmployeesToShow(employees)
     return employeesToShow
   }
+
+
+  const channels = supabase.channel('custom-update-channel')
+  .on(
+    'postgres_changes',
+    { event: 'UPDATE', schema: 'public', table: 'employees' },
+    (payload) => {
+        setActivesEmployees()
+    }
+  )
+  .subscribe()
 
   const setActivesEmployees = async () => {
     const employeesToShow = await getEmployees(true)

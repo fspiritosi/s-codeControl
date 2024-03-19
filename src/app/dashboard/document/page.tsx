@@ -4,11 +4,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDocument } from '@/hooks/useDocuments'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { useEffect, useState } from 'react'
+import { supabase } from '../../../../supabase/supabase'
 import { DataDocumentsEmployees } from '../document/data-documentEmployees'
 import { DataDocumentsEquipment } from '../document/data-documentsEquipment'
 import { columEmp } from './columEmp'
 import { columns } from './columns'
-import { supabase } from '../../../../supabase/supabase'
+
 export default function page() {
   const { actualCompany } = useLoggedUserStore()
   const [showInactive, setShowInactive] = useState(false)
@@ -40,7 +41,7 @@ export default function page() {
   }
   useEffect(() => {
     fetchDocuments()
-  }, [fetchDocumentEquipmentByCompany])
+  }, [])
 
   const fetchDocumentsEmployees = async () => {
     try {
@@ -90,9 +91,7 @@ export default function page() {
     <section>
       <div className="flex justify-between flex-wrap flex-col">
         <div className="flex justify-between mb-3">
-          <h2 className="inline">
-            Aqui estaran todos los documentos de la empresa
-          </h2>
+          <h2 className="inline">Documentos cargados</h2>
           <div className="flex gap-4">
             <DocumentNav />
           </div>

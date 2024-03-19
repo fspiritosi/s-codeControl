@@ -124,7 +124,7 @@ export default function Equipment() {
       <header className="flex gap-4 mt-6 justify-between items-center">
         <div>
           <h2 className="text-4xl">{equipo}</h2>
-          <p>Aquí se muestran todos los {equipo}:</p>
+          
         </div>
         <div className="">
           <Link
@@ -135,7 +135,7 @@ export default function Equipment() {
           </Link>
         </div>
       </header>
-      <div className="flex flex-col items-center justify-center min-h-screen py-2">
+      <div className="flex flex-col min-h-screen py-3">
         <DataEquipment
           columns={columns}
           data={vehiclesData || []}

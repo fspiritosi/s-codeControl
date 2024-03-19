@@ -34,7 +34,7 @@ import { cn } from '@/lib/utils'
 import { DocumentsValidation } from '@/store/documentValidation'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CalendarIcon, CaretSortIcon, CheckIcon } from '@radix-ui/react-icons'
+import { CalendarIcon, CaretSortIcon, CheckIcon, MinusCircledIcon } from '@radix-ui/react-icons'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useSearchParams } from 'next/navigation'
@@ -47,6 +47,7 @@ import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Switch } from './ui/switch'
 import { useToast } from './ui/use-toast'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion'
 
 export default function SimpleDocument({
   resource,
@@ -111,6 +112,8 @@ export default function SimpleDocument({
   }, [resource])
 
   const [files, setFiles] = useState<File | undefined>(undefined)
+  const setTotalForms = DocumentsValidation(state => state.setTotalForms)
+  const deleteDocument = DocumentsValidation(state => state.deleteDocument)
 
   const employees = useLoggedUserStore(state => state.employees)?.reduce(
     (
@@ -187,7 +190,6 @@ export default function SimpleDocument({
       updateDocumentErrors(index, false)
     }
 
-    console.log('matureas')
     if (!hasErrors) {
       const fileUrl = await uploadDocumentFile(files, 'document_files')
       setLoading(true)
@@ -211,7 +213,6 @@ export default function SimpleDocument({
           id_document_types: values.id_document_types,
         }
 
-        console.log(finalValues, 'finalValues equipos')
 
         insertDocumentEquipment(finalValues)
       } else {
@@ -228,8 +229,6 @@ export default function SimpleDocument({
           user_id: user,
           id_document_types: values.id_document_types,
         }
-
-        console.log(finalValues, 'finalValues empleados')
 
         insertDocumentEmployees(finalValues)
       }
@@ -253,6 +252,28 @@ export default function SimpleDocument({
 
   return (
     <>
+      <Accordion
+                        type="single"
+                        collapsible
+                        className="w-full"
+                        defaultValue="item-1"
+                        asChild
+                      >
+                        <AccordionItem value={`item-${index + 1}`}>
+                          <AccordionTrigger
+                            defaultValue="item-1"
+                            className="text-lg flex relative"
+                          >{`Documento ${index + 1}`}</AccordionTrigger>
+                          <AccordionContent>
+                            {index !== 0 && (
+                              <MinusCircledIcon
+                                onClick={() => {
+                                  setTotalForms(false)
+                                  deleteDocument(index)
+                                }}
+                                className="h-4 w-4 shrink-0 absolute right-3 top-1 text-red-800 cursor-pointer"
+                              />
+                            )}
       <div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -511,6 +532,9 @@ export default function SimpleDocument({
           </form>
         </Form>
       </div>
+      </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
     </>
   )
 }
