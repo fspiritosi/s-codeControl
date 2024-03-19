@@ -9,9 +9,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { company, companyData } from '@/types/types'
+import { companyData } from '@/types/types'
 import Link from 'next/link'
 import { supabase } from '../../supabase/supabase'
+import { useRouter } from 'next/navigation'
 
 export const AlertComponent = () => {
   const showAlert = useLoggedUserStore(state => state.showNoCompanyAlert)
@@ -21,10 +22,16 @@ export const AlertComponent = () => {
   const setActualCompany = useLoggedUserStore(state => state.setActualCompany)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
+  const router = useRouter()
 
-  const handleAlertClose = (company: companyData) => {
+  const handleAlertClose = async (company: companyData) => {
+    await supabase
+      .from('company')
+      .update({ by_defect: true })
+      .eq('id', company.id)
     setActualCompany(company)
-    localStorage.setItem('selectedCompany', company.company_name)
+
+    router.push('/dashboard')
   }
 
   //si actualCompany no es null, no mostrar alerta
@@ -33,7 +40,7 @@ export const AlertComponent = () => {
   //si actualCompany es null y allCompanies tiene 1, no mostrar alerta
 
   return (
-    (showMultipleAlert && actualCompany && (
+    (showMultipleAlert && (
       <AlertDialog defaultOpen>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -51,12 +58,7 @@ export const AlertComponent = () => {
                   key={index}
                   className="w-full"
                 >
-                  <Link
-                    className="my-2 text-center w-full"
-                    href={`/dashboard/company`}
-                  >
-                    {company.company_name}
-                  </Link>
+                  {company.company_name}
                 </AlertDialogAction>
                 {/* <AlertDialogDescription>
                   <span className="flex items-center p-2 gap-2 justify-center">
@@ -96,7 +98,7 @@ export const AlertComponent = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction>
-              <Link href="/dashboard/company">Crear compañía</Link>
+              <Link href="/dashboard/company/new">Crear compañía</Link>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

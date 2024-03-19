@@ -13,6 +13,16 @@ import {
   MdOutlineSpaceDashboard,
 } from 'react-icons/md'
 
+export async function getServerSideProps(context: any) {
+  const { params } = context
+  const { type } = params
+  return {
+    props: {
+      type,
+    },
+  }
+}
+
 const sizeIcons = 24
 
 const links = [
@@ -28,16 +38,17 @@ const links = [
   },
   {
     name: 'Equipos',
-    href: '/dashboard/#',
+    href: '#',
     icon: <MdOutlinePhoneIphone size={sizeIcons} />,
     submenu: [
-      { name: 'Submenu Item 1', href: '/dashboard/submenu1' },
-      { name: 'Submenu Item 2', href: '/dashboard/submenu2' },
+      { name: 'Todos', href: '/dashboard/equipment' },
+      { name: 'Vehículos', href: '/dashboard/equipment?type=1' },
+      { name: 'Otros', href: '/dashboard/equipment?type=2' },
     ],
   },
   {
     name: 'Documentación',
-    href: '/dashboard/#',
+    href: '/dashboard/document',
     icon: <MdListAlt size={sizeIcons} />,
   },
   {
@@ -66,9 +77,9 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
           <Link
             href={link.href}
             className={`flex h-[48px] grow items-center justify-center gap-1 rounded-md p-3 text-black font-medium md:flex-none md:justify-start md:p-2 md:px-3 ${
-              pathname === link.href
+              pathname === link.href || pathname === link.submenu?.[0]?.href
                 ? 'bg-white text-black'
-                : 'bg-slate-800 text-white hover:bg-blue-500 hover:shadow-[0px_0px_05px_05px_rgb(255,255,255,0.40)] hover:text-white'
+                : ' dark:text-neutral-100 text--neutral-950 hover:bg-blue-500 hover:shadow-[0px_0px_05px_05px_rgb(255,255,255,0.40)] hover:text-white'
             }`}
             onClick={() => handleSubMenuClick(index)}
           >
@@ -94,7 +105,7 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
             <div
               className={`${
                 expanded ? '' : 'absolute top-[176px]'
-              } ml-0 mt-1 rounded-md bg-slate-800 p-3 text-white font-medium`}
+              } ml-0 mt-1 rounded-md  p-3 dark:text-neutral-300 text-neutral-950 font-medium`}
               style={{
                 marginLeft: expanded ? 0 : '1.7cm',
                 width: 'fit-content',
@@ -102,7 +113,7 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
             >
               {link.submenu.map((submenuItem, subIndex) => (
                 <Link key={submenuItem.name} href={submenuItem.href} passHref>
-                  <div className="block py-2 cursor-pointer">
+                  <div className="block py-2 cursor-pointer hover:text-blue-800">
                     {submenuItem.name}
                   </div>
                 </Link>

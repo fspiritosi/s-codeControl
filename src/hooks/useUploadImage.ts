@@ -5,16 +5,23 @@ import { useEdgeFunctions } from './useEdgeFunctions'
 
 export const useImageUpload = () => {
   const [loading, setLoading] = useState(false)
-  const {errorTranslate} = useEdgeFunctions()
+  const { errorTranslate } = useEdgeFunctions()
 
-  const uploadImage = async (file: File, imageBucket: string): Promise<string> => {
+  const uploadImage = async (
+    file: File,
+    imageBucket: string,
+  ): Promise<string> => {
     try {
       setLoading(true)
-
+      
       // Subir la imagen a Supabase Storage
       const { data, error } = await supabase.storage
         .from(imageBucket)
-        .upload(`${file.name}`, file)
+        .upload(`${file.name}`, file,{
+        //.upload('public/image.png', file, {
+          cacheControl: '1',
+          upsert: true,
+        })
 
       if (error) {
         const message = await errorTranslate(error?.message)
@@ -22,6 +29,8 @@ export const useImageUpload = () => {
       }
 
       // Obtener la URL de la imagen cargada
+       
+
       const imageUrl = `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/${imageBucket}/${data?.path}`
 
       return imageUrl

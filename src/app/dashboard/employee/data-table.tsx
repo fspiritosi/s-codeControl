@@ -1,18 +1,5 @@
 'use client'
 
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table'
-
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -29,33 +16,55 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { use, useEffect, useReducer, useRef, useState } from 'react'
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table'
+import { useState } from 'react'
 
+import { Badge } from '@/components/ui/badge'
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { useRouter } from 'next/navigation'
+import { useSidebarOpen } from '@/store/sidebar'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
   data: TData[]
+  setInactiveEmployees: () => void
+  setActivesEmployees: () => void
+  showDeletedEmployees: boolean
+  setShowDeletedEmployees: (showDeletedEmployees: boolean) => void
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  setActivesEmployees,
+  setInactiveEmployees,
+  showDeletedEmployees,
+  setShowDeletedEmployees,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const defaultVisibleColumns = [
     'full_name',
-    'email',
+    'status',
     'cuil',
     'document_number',
     'document_type',
@@ -73,6 +82,8 @@ export function DataTable<TData, TValue>({
       return acc
     }, {}),
   )
+  // const [showDeletedEmployees, setShowDeletedEmployees] = useState(false)
+
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const loader = useLoggedUserStore(state => state.isLoading)
 
@@ -91,6 +102,7 @@ export function DataTable<TData, TValue>({
     city: createOptions('city'),
     hierrical_position: createOptions('hierrical_position'),
     workflow_diagram: createOptions('workflow_diagram'),
+    status: createOptions('status'),
   }
 
   function createOptions(key: string) {
@@ -169,7 +181,11 @@ export function DataTable<TData, TValue>({
       option: allOptions.workflow_diagram,
       label: 'Diagrama de flujo',
     },
-    
+    status: {
+      name: 'status',
+      option: allOptions.status,
+      label: 'Estado',
+    },
   }
 
   let table = useReactTable({
@@ -188,17 +204,13 @@ export function DataTable<TData, TValue>({
       columnFilters,
     },
   })
-  const totalWidth = 'calc(100vw - 297px)'
-
-
-
-  const router = useRouter()
+  const { expanded } = useSidebarOpen()
+  const totalWidth = `calc(100vw - ${expanded ? '296px' : '167px'})`
 
   const handleClearFilters = () => {
     table.getAllColumns().forEach(column => {
       column.setFilterValue('')
     })
-    router.push('/dashboard/employee')
 
     setSelectValues({
       hierarchical_position: 'Todos',
@@ -217,14 +229,15 @@ export function DataTable<TData, TValue>({
     })
   }
 
+  const maxRows = ['20', '40', '60', '80', '100']
+
   const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
     {},
   )
 
-
   return (
     <div>
-      <div className="flex items-center py-4">
+      <div className="flex items-center py-4 flex-wrap">
         <Input
           placeholder="Buscar por nombre"
           value={
@@ -243,41 +256,75 @@ export function DataTable<TData, TValue>({
         >
           Limpiar filtros
         </Button>
-      
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columnas
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="max-h-[50dvh] overflow-y-auto"
-          >
-            {table
-              .getAllColumns()
-              .filter(column => column.getCanHide())
-              .map(column => {
-                if (
-                  column.id === 'actions' ||
-                  typeof column.columnDef.header !== 'string'
-                ) {
-                  return null
-                }
 
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={value => column.toggleVisibility(!!value)}
-                  >
-                    {column.columnDef.header}
-                  </DropdownMenuCheckboxItem>
-                )
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className=" flex gap-2 ml-2 flex-wrap">
+          <Select onValueChange={e => table.setPageSize(Number(e))}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Cantidad de filas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Filas por página</SelectLabel>
+                {maxRows.map((option: string) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">Columnas</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="max-h-[50dvh] overflow-y-auto"
+            >
+              {table
+                .getAllColumns()
+                .filter(column => column.getCanHide())
+                .map(column => {
+                  if (
+                    column.id === 'actions' ||
+                    typeof column.columnDef.header !== 'string'
+                  ) {
+                    return null
+                  }
+
+                  if (column.id === 'showUnavaliableEmployees') {
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={column.id}
+                        className="capitalize text-red-400"
+                        checked={showDeletedEmployees}
+                        onCheckedChange={value => {
+                          setShowDeletedEmployees(!!value)
+                          value ? setInactiveEmployees() : setActivesEmployees()
+                        }}
+                      >
+                        {column.columnDef.header}
+                      </DropdownMenuCheckboxItem>
+                    )
+                  }
+
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={value =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {column.columnDef.header}
+                    </DropdownMenuCheckboxItem>
+                  )
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       <div
         className="rounded-md border"
@@ -342,7 +389,7 @@ export function DataTable<TData, TValue>({
                                       })
                                     }}
                                   >
-                                    <SelectTrigger className="w-[180px]">
+                                    <SelectTrigger className="">
                                       <SelectValue
                                         placeholder={
                                           header.column.columnDef
@@ -380,26 +427,49 @@ export function DataTable<TData, TValue>({
           </TableHeader>
           <TableBody className="max-w-[50vw] overflow-x-auto">
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map(row => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                >
-                  {row.getVisibleCells().map(cell => {
-                    return (
-                      <TableCell
-                        key={cell.id}
-                        className="text-center whitespace-nowrap"
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    )
-                  })}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map(row => {
+                return (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                  >
+                    {row.getVisibleCells().map(cell => {
+                      let is_active = (cell.row.original as any).is_active
+                      return (
+                        <TableCell
+                          key={cell.id}
+                          className={`text-center whitespace-nowrap ${
+                            is_active ? '' : 'text-red-500'
+                          }`}
+                        >
+                          {cell.column.id === 'picture' ? (
+                            <img
+                              src={cell.getValue() as any}
+                              alt="Foto"
+                              className="size-10 rounded-full object-cover"
+                            />
+                          ) : cell.column.id === 'status' ? (
+                            <Badge
+                              variant={
+                                cell.getValue() === 'No avalado'
+                                  ? 'destructive'
+                                  : 'default'
+                              }
+                            >
+                              {cell.getValue() as React.ReactNode}
+                            </Badge>
+                          ) : (
+                            (flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            ) as React.ReactNode)
+                          )}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                )
+              })
             ) : (
               <TableRow>
                 <TableCell
@@ -427,8 +497,10 @@ export function DataTable<TData, TValue>({
                         <Skeleton className="h-7 w-[13%]" />
                       </div>
                     </div>
+                  ) : showDeletedEmployees ? (
+                    'No hay empleados inactivos'
                   ) : (
-                    'No hay empleados registrados'
+                    'No hay empleados activos'
                   )}
                 </TableCell>
               </TableRow>
