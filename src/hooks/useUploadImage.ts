@@ -2,11 +2,12 @@
 import { useState } from 'react'
 import { supabase } from '../../supabase/supabase'
 import { useEdgeFunctions } from './useEdgeFunctions'
+require('dotenv').config()
 
 export const useImageUpload = () => {
   const [loading, setLoading] = useState(false)
   const { errorTranslate } = useEdgeFunctions()
-  const url = 'https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public'
+  const url = process.env.NEXT_PUBLIC_PROJECT_URL
 
   const uploadImage = async (
     file: File,
@@ -32,7 +33,7 @@ export const useImageUpload = () => {
       // Obtener la URL de la imagen cargada
        
 
-      const imageUrl = `${url}/${imageBucket}/${data?.path}`
+      const imageUrl = `${url}/${imageBucket}/${data?.path}`.trim().replace(/\s/g, '')
 
       return imageUrl
     } finally {

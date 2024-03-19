@@ -5,8 +5,7 @@ import React, { ChangeEvent, useState } from 'react'
 import { Button } from './ui/button'
 import { FormDescription, FormLabel } from './ui/form'
 import { useToast } from './ui/use-toast'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { supabase } from '../../supabase/supabase'
+require('dotenv').config()
 interface UploadImageProps {
   onImageChange: (imageUrl: string) => void
   // onUploadSuccess?: (imageUrl: string) => void
@@ -40,7 +39,7 @@ export function UploadImage({
   const [base64Image, setBase64Image] = useState<string>('')
   const [disabled, setDisabled] = useState<boolean>(false)
   const { toast } = useToast()
-
+  const url = process.env.NEXT_PUBLIC_PROJECT_URL
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
 
@@ -64,7 +63,7 @@ export function UploadImage({
         const fileExtension = 'jpg'
         const renamedFile = new File(
           [imageFile],
-          `${companyId}.${fileExtension}`,
+          `${companyId.replace(/\s/g, '')}.${fileExtension}`,
           {
             type: `image/${fileExtension}`,
           },
@@ -73,7 +72,7 @@ export function UploadImage({
         // Subir la imagen a Supabase Storage y obtener la URL
         const uploadedImageUrl = await uploadImage(renamedFile, imageBucket)
 
-        const companyImage = `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/logo/${companyId}.${fileExtension}?timestamp=${Date.now()}`
+        const companyImage = `${url}/logo/${companyId.replace(/\s/g, '')}.${fileExtension}?timestamp=${Date.now()}`.replace(/\s/g, '')
         // Llamar a la función de cambio de imagen con la URL
         onImageChange(companyImage)
 
