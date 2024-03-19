@@ -453,7 +453,7 @@ export function DataTable<TData, TValue>({
                               variant={
                                 cell.getValue() === 'No avalado'
                                   ? 'destructive'
-                                  : 'default'
+                                  : 'success'
                               }
                             >
                               {cell.getValue() as React.ReactNode}

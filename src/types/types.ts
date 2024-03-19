@@ -27,7 +27,7 @@ export type profileUser = {
   created_at?: string
   firstname: string
   lastname: string
-  credentialId: string
+  credential_id: string
   email: string
   avatar?: string
 }
