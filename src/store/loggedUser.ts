@@ -21,7 +21,8 @@ interface State {
   setShowDeletedEmployees: (showDeletedEmployees: boolean) => void
   vehicles: any
   setNewDefectCompany: (company: companyData) => void
-
+  endorsedEmployees: () => void
+  noEndorsedEmployees: () => void
 }
 
 const setEmployeesToShow = (employees: any) => {
@@ -82,6 +83,80 @@ export const useLoggedUserStore = create<State>((set, get) => {
   const setInactiveEmployees = async () => {
     const employeesToShow = await getEmployees(false)
     set({ employeesToShow })
+  }
+
+  const noEndorsedEmployees = async () => {
+    set({ isLoading: true })
+    const { data, error } = await supabase
+      .from('employees')
+      .select(
+        `*, city (
+            name
+          ),
+          province(
+            name
+          ),
+          workflow_diagram(
+            name
+          ),
+          hierarchical_position(
+            name
+          ),
+          birthplace(
+            name
+          ),
+          contractor_employee(
+            contractors(
+              *
+            )
+          )`,
+      )
+      .eq('company_id', get()?.actualCompany?.id)
+      .eq('status', 'No avalado')
+
+    if (error) {
+      console.error('Error al obtener los empleados no avalados:', error)
+    } else {
+      set({employeesToShow: setEmployeesToShow(data) || []})
+      set({ isLoading: false })
+    }
+  }
+
+  const endorsedEmployees = async () => {
+    set({ isLoading: true })
+    const { data, error } = await supabase
+      .from('employees')
+      .select(
+        `*, city (
+            name
+          ),
+          province(
+            name
+          ),
+          workflow_diagram(
+            name
+          ),
+          hierarchical_position(
+            name
+          ),
+          birthplace(
+            name
+          ),
+          contractor_employee(
+            contractors(
+              *
+            )
+          )`,
+      )
+      .eq('company_id', get()?.actualCompany?.id)
+      .eq('status', 'Avalado')
+
+    if (error) {
+      console.error('Error al obtener los empleados avalados:', error)
+    } else {
+      set({employeesToShow: setEmployeesToShow(data) || []})
+      set({ isLoading: false })
+    }
   }
 
   const vehicles = async () => {
@@ -307,6 +382,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
     setShowDeletedEmployees: (showDeletedEmployees: boolean) =>
       set({ showDeletedEmployees }),
     vehicles: get()?.vehicles,
-    setNewDefectCompany
+    setNewDefectCompany,
+    endorsedEmployees,
+    noEndorsedEmployees
   }
 })
