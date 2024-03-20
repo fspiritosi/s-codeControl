@@ -22,10 +22,10 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { CloseEyeIcon } from './svg/closeEye'
+import { Loader } from './svg/loader'
 import { EyeIcon } from './svg/openEye'
 import { Toggle } from './ui/toggle'
 import { useToast } from './ui/use-toast'
-import { Loader } from './svg/loader'
 
 export function RegisterForm() {
   const { singUp } = useAuthData()
@@ -56,7 +56,7 @@ export function RegisterForm() {
 
       await insertProfile({
         ...rest,
-        credentialId: userData.user?.id || '',
+        credential_id: userData.user?.id || '',
         email,
       })
       toast({

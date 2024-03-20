@@ -143,40 +143,12 @@ export default function NewDocumentModal({
                 ) : (
                   Array.from({ length: totalForms }).map((_, index) => (
                     <div key={index} className="relative">
-                      <Accordion
-                        type="single"
-                        collapsible
-                        className="w-full"
-                        defaultValue="item-1"
-                      >
-                        <AccordionItem value={`item-${index + 1}`}>
-                          <AccordionTrigger
-                            defaultValue={`item-${index + 1}`}
-                            className="text-lg bold"
-                          >
-                            {' '}
-                            <div className="flex items-center gap-4">
-                              {`Documento ${index + 1}`}
-                              {index !== 0 && (
-                                <>
-                                  <MinusCircledIcon
-                                    onClick={() => setTotalForms(false)}
-                                    className="h-4 w-4 shrink-0   text-red-800 cursor-pointer justify-end"
-                                  />
-                                </>
-                              )}
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            <SimpleDocument
-                              resource="empleado"
-                              handleOpen={handleOpen}
-                              index={index}
-                              refSubmit={refs[index]}
-                            />
-                          </AccordionContent>
-                        </AccordionItem>
-                      </Accordion>
+                      <SimpleDocument
+                        resource="empleado"
+                        handleOpen={handleOpen}
+                        index={index}
+                        refSubmit={refs[index]}
+                      />
                     </div>
                   ))
                 )}

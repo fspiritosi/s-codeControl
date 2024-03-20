@@ -38,6 +38,7 @@
     "cmdk": "^0.2.1",
     "date-fns": "^3.3.1",
     "file-saver": "^2.0.5",
+    "dotenv": "^16.4.5",
     "framer-motion": "^10.18.0",
     "lucide-react": "^0.316.0",
     "next": "14.0.4",
@@ -54,6 +55,8 @@
     "swiper": "^11.0.5",
     "tailwind-merge": "^2.2.0",
     "tailwindcss-animate": "^1.0.7",
+    "tailwindcss-animated": "^1.0.1",
+    "vaul": "^0.9.0",
     "zod": "^3.22.4",
     "zustand": "4.5.0"
   },

@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import {
   Card,
   CardContent,
@@ -7,70 +6,138 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import Link from 'next/link'
+
+const data = [
+  {
+    goal: 400,
+  },
+  {
+    goal: 300,
+  },
+  {
+    goal: 200,
+  },
+  {
+    goal: 300,
+  },
+  {
+    goal: 200,
+  },
+  {
+    goal: 278,
+  },
+  {
+    goal: 189,
+  },
+  {
+    goal: 239,
+  },
+  {
+    goal: 300,
+  },
+  {
+    goal: 200,
+  },
+  {
+    goal: 278,
+  },
+  {
+    goal: 189,
+  },
+  {
+    goal: 349,
+  },
+]
 
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from '@/components/ui/table'
 
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
+} from '@/components/ui/accordion'
 
-import { Separator } from "@/components/ui/separator"
-import { buttonVariants } from "@/components/ui/button"
+import { buttonVariants } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { format } from 'date-fns'
 import { supabase } from '../../../supabase/supabase'
-import { Badge } from '@/components/ui/badge'
+import { AuditorColums } from './columns'
+import { AuditorDataTable } from './data-table'
 
+type AuditorDocument = {
+  date: string
+  companyName: string
+  allocated_to: string
+  documentName: string
+  multiresource: string
+  validity: string
+  id: string
+  resource: string
+  state: string
+}
 
 export default async function Auditor() {
-
-
   let { data: document_types, error } = await supabase
-  .from('document_types')
-  .select('*')
-  
-  let doc_personas = document_types?.filter(doc => doc.applies === "Persona")
-  let doc_equipos = document_types?.filter(doc => doc.applies === "Equipos")
-  
-  
-// let { data: documents_employees } = await supabase
-// .from('documents_employees')
-// .select('*')
+    .from('document_types')
+    .select('*')
 
+  let doc_personas = document_types?.filter(doc => doc.applies === 'Persona')
+  let doc_equipos = document_types?.filter(doc => doc.applies === 'Equipos')
 
-let { data: documents_employees } = await supabase
-  .from('documents_employees')
-  .select(`
+  let { data: documents_employees } = await supabase.from('documents_employees')
+    .select(`
     *,
-    document_types(name)
+    document_types(*),
+    applies(*,
+      contractor_employee(
+        contractors(
+          *
+        )
+      ),
+      company_id(*)
+    )
   `)
 
+  console.log(documents_employees, 'documents_employees')
 
-console.log(documents_employees)
+  const filteredData = documents_employees?.map(doc => {
+    return {
+      date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
+      companyName: doc.applies?.company_id?.company_name,
+      allocated_to: doc.applies?.contractor_employee
+        ?.map((doc: any) => doc.contractors.name)
+        .join(', '),
+      documentName: doc.document_types?.name,
+      state: doc.state,
+      multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+      validity: format(new Date(doc.validity), 'dd/MM/yyyy') || 'No vence',
+      id: doc.id,
+      resource: `${doc.applies?.firstname} ${doc.applies?.lastname}`,
+    }
+  }) as AuditorDocument[]
 
-    return (
-      <section>
-        <Card>
-          <CardHeader>
-            <CardTitle>Tipos de documentos</CardTitle>
-            <CardDescription>Tipos de documentos auditables</CardDescription>
-          </CardHeader>
-          <CardContent>
-  
-            <Accordion type="single" collapsible>
-              <AccordionItem value="item-1">
-                <AccordionTrigger>Personas</AccordionTrigger>
-                <AccordionContent>
-                  <Table>
+  return (
+    <section>
+      <Card>
+        <CardHeader>
+          <CardTitle>Tipos de documentos</CardTitle>
+          <CardDescription>Tipos de documentos auditables</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Accordion type="single" collapsible>
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Personas</AccordionTrigger>
+              <AccordionContent>
+                <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nombre del Documento</TableHead>
@@ -79,87 +146,59 @@ console.log(documents_employees)
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {doc_personas?.map((doc) => (
+                    {doc_personas?.map(doc => (
                       <TableRow key={doc.id}>
-                        <TableCell className="font-medium">{doc.name}</TableCell>
-                        <TableCell>{doc.multiresource ? "Si" : "No"}</TableCell>
-                        <TableCell>{doc.explired ? "Si" : "No"}</TableCell>
+                        <TableCell className="font-medium">
+                          {doc.name}
+                        </TableCell>
+                        <TableCell>{doc.multiresource ? 'Si' : 'No'}</TableCell>
+                        <TableCell>{doc.explired ? 'Si' : 'No'}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
-                  </Table>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-            <Accordion type="single" collapsible>
-              <AccordionItem value="item-1">
-                <AccordionTrigger>Equipos</AccordionTrigger>
-                <AccordionContent>
+                </Table>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+          <Accordion type="single" collapsible>
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Equipos</AccordionTrigger>
+              <AccordionContent>
                 <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre del Documento</TableHead>
-                <TableHead className="w-[100px]">Multirecurso</TableHead>
-                <TableHead className="w-[100px]">Vence</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {doc_equipos?.map((doc) => (
-                <TableRow key={doc.id}>
-                  <TableCell className="font-medium">{doc.name}</TableCell>
-                  <TableCell>{doc.multiresource ? "Si" : "No"}</TableCell>
-                  <TableCell>{doc.explired ? "Si" : "No"}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table> 
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </CardContent>
-          <CardFooter>
-          <Link href="/auditor/new-document-type" className={buttonVariants({ variant: "outline" })}>
-          Crear Nuevo
-        </Link>
-          </CardFooter>
-        </Card>
-        <Separator />
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Fecha</TableHead>
-              <TableHead>Empresa</TableHead>
-              <TableHead>Recurso</TableHead>
-              <TableHead>Nombre del Documento</TableHead>
-              <TableHead className="w-[100px]">Estado</TableHead>
-              <TableHead className="w-[100px]">Multirecurso</TableHead>
-              <TableHead className="w-[100px]">Vence</TableHead>
-              <TableHead className="w-[100px]">Auditar</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {documents_employees?.map((doc) => ( 
-              <TableRow key={doc.id}>
-                <TableCell>{new Date(doc.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "numeric", year: "numeric" }) }</TableCell>
-                <TableCell>{doc.company}</TableCell>
-                <TableCell>{doc.resource}</TableCell>
-                <TableCell>{doc.document_types.name}</TableCell>
-                <TableCell>
-                  <Badge className='w-full justify-center' variant={doc.state === "vencido" ? "destructive": doc.state === "aprobado" ? "success" : doc.state === "presentado" ? "yellow" : "outline"}>
-                  {doc.state}
-                  </Badge>
-                </TableCell>
-                <TableCell>{doc.multiresource ? "Si" : "No"}</TableCell>
-                <TableCell>{doc.validity ? doc.validity : "No"}</TableCell>
-                <TableCell>
-                  <Link href={`/auditor/audit/${doc.id}`} className={buttonVariants({ variant: "outline" })}>
-                    Auditar
-                  </Link>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </section>
-    )
-  }
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nombre del Documento</TableHead>
+                      <TableHead className="w-[100px]">Multirecurso</TableHead>
+                      <TableHead className="w-[100px]">Vence</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {doc_equipos?.map(doc => (
+                      <TableRow key={doc.id}>
+                        <TableCell className="font-medium">
+                          {doc.name}
+                        </TableCell>
+                        <TableCell>{doc.multiresource ? 'Si' : 'No'}</TableCell>
+                        <TableCell>{doc.explired ? 'Si' : 'No'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </CardContent>
+        <CardFooter>
+          <Link
+            href="/auditor/new-document-type"
+            className={buttonVariants({ variant: 'outline' })}
+          >
+            Crear Nuevo
+          </Link>
+        </CardFooter>
+      </Card>
+      <Separator />
+      <AuditorDataTable data={filteredData} columns={AuditorColums} />
+    </section>
+  )
+}

@@ -13,7 +13,6 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -31,7 +30,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -40,37 +38,30 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { useSidebarOpen } from '@/store/sidebar'
-import { VehiclesActualCompany } from '@/store/vehicles'
-import Link from 'next/link'
 import { useState } from 'react'
 
-interface DataEquipmentProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[] | any
+interface DataTableProps<TData, TValue> {
+  columns: ColumnDef<TData, TValue>[]
   data: TData[]
-  allCompany: any[]
-  showInactive: boolean
-  setShowInactive: (showInactive: boolean) => void
 }
 
-export function DataEquipment<TData, TValue>({
+export function AuditorDataTable<TData, TValue>({
   columns,
   data,
-  showInactive,
-  setShowInactive,
-  allCompany,
-}: DataEquipmentProps<TData, TValue>) {
+}: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const defaultVisibleColumns = [
-    'domain',
-    'year',
-    'type_of_vehicle',
-    'brand',
-    'model',
-    'picture',
-    'status',
+    'date',
+    'companyName',
+    'resource',
+    'allocated_to',
+    'documentName',
+    'state',
+    'multiresource',
+    'validity',
+    'id',
   ]
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     columns.reduce((acc: any, column: any) => {
       acc[column.accessorKey] = defaultVisibleColumns.includes(
@@ -79,63 +70,7 @@ export function DataEquipment<TData, TValue>({
       return acc
     }, {}),
   )
-
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const loader = useLoggedUserStore(state => state.isLoading)
-  const filteredData = showInactive
-    ? data.filter((item: any) => item.is_active === false)
-    : data
-  const allOptions = {
-    type_of_vehicle: createOptions('type_of_vehicle'),
-    types_of_vehicles: createOptions('types_of_vehicles'),
-    year: createOptions('year'),
-    brand: createOptions('brand_vehicles'),
-    model: createOptions('model_vehicles'),
-    status: createOptions('status'),
-  }
-
-  function createOptions(key: string) {
-    const values = data?.map((item: any) =>
-      item?.[key]?.name ? item?.[key]?.name : item?.[key],
-    )
-
-    return ['Todos', ...Array.from(new Set(values))]
-  }
-
-  const selectHeader = {
-    type_of_vehicle: {
-      name: 'types_of_vehicles',
-      option: allOptions.type_of_vehicle,
-      label: 'Tipo de equipo',
-    },
-    types_of_vehicles: {
-      name: 'types_of_vehicles.name',
-      option: allOptions.types_of_vehicles,
-      label: 'Tipos de vehículos',
-    },
-    year: {
-      name: 'year',
-      option: allOptions.year,
-      label: 'Año',
-    },
-    brand: {
-      name: 'brand',
-      option: allOptions.brand,
-      label: 'Marca',
-    },
-    model: {
-      name: 'model',
-      option: allOptions.model,
-      label: 'Modelo',
-    },
-    status: {
-      name: 'status',
-      option: allOptions.status,
-      label: 'Estado',
-    },
-  }
-
-  let table = useReactTable({
+  const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
@@ -150,50 +85,91 @@ export function DataEquipment<TData, TValue>({
       columnVisibility,
       columnFilters,
     },
+    sortingFns: {
+      myCustomSortingFn: (rowA, rowB, columnId) => {
+        return rowA.original[columnId] > rowB.original[columnId]
+          ? 1
+          : rowA.original[columnId] < rowB.original[columnId]
+            ? -1
+            : 0
+      },
+    },
   })
-  const { expanded } = useSidebarOpen()
-  const totalWidth = `calc(100vw - ${expanded ? '296px' : '167px'})`
-  const setActivesVehicles = VehiclesActualCompany(
-    state => state.setActivesVehicles,
-  )
-  //const router = useRouter()
 
+  function createOptions(key: string) {
+    const values = data?.flatMap((item: any) => item?.[key])
+    return ['Todos', ...Array.from(new Set(values))]
+  }
+
+  const allOptions = {
+    companyName: createOptions('companyName'),
+    documentName: createOptions('documentName'),
+    resource: createOptions('resource'),
+    state: createOptions('state'),
+    multiresource: createOptions('multiresource'),
+    allocated_to: createOptions('allocated_to'),
+  }
+  const selectHeader = {
+    companyName: {
+      name: 'companyName',
+      option: allOptions.companyName,
+      label: 'Empresa',
+    },
+    resource: {
+      name: 'resource',
+      option: allOptions.resource,
+      label: 'Recurso',
+    },
+    documentName: {
+      name: 'documentName',
+      option: allOptions.documentName,
+      label: 'Documento',
+    },
+    state: {
+      name: 'state',
+      option: allOptions.state,
+      label: 'Estado',
+    },
+    multiresource: {
+      name: 'multiresource',
+      option: allOptions.multiresource,
+      label: 'Multirecurso',
+    },
+    allocated_to: {
+      name: 'allocated_to',
+      option: allOptions.allocated_to,
+      label: 'Afectado a',
+    },
+  }
+
+  const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
+    {},
+  )
+  const maxRows = ['20', '40', '60', '80', '100']
   const handleClearFilters = () => {
     table.getAllColumns().forEach(column => {
       column.setFilterValue('')
     })
 
     setSelectValues({
-      types_of_vehicles: 'Todos',
-      type_of_vehicle: 'todos',
-      domain: 'Todos',
-      chassis: 'Todos',
-      engine: 'Todos',
-      serie: 'Todos',
-      intern_number: 'Todos',
-      year: 'Todos',
-      brand: 'Todos',
-      model: 'Todos',
-      status: 'Todos',
+      companyName: 'Todos',
+      resource: 'Todos',
+      documentName: 'Todos',
+      state: 'Todos',
+      multiresource: 'Todos',
     })
-    setActivesVehicles()
   }
-  const maxRows = ['20', '40', '60', '80', '100']
-  const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
-    {},
-  )
-  // const handleToggleInactive = () => {
-  //   setShowInactive(!showInactive)
-  // }
 
   return (
-    <div>
-      <div className="flex items-center py-4">
+    <div className="mb-10">
+      <div className="flex items-center py-4 flex-wrap">
         <Input
-          placeholder="Buscar por Dominio"
-          value={(table.getColumn('domain')?.getFilterValue() as string) ?? ''}
+          placeholder="Buscar por nombre"
+          value={
+            (table.getColumn('resource')?.getFilterValue() as string) ?? ''
+          }
           onChange={event =>
-            table.getColumn('domain')?.setFilterValue(event.target.value)
+            table.getColumn('resource')?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -206,7 +182,7 @@ export function DataEquipment<TData, TValue>({
           Limpiar filtros
         </Button>
 
-        <div className="w-full flex justify-end gap-2">
+        <div className=" flex gap-2 ml-2 flex-wrap">
           <Select onValueChange={e => table.setPageSize(Number(e))}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Cantidad de filas" />
@@ -222,11 +198,10 @@ export function DataEquipment<TData, TValue>({
               </SelectGroup>
             </SelectContent>
           </Select>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
-                Columnas
-              </Button>
+              <Button variant="outline">Columnas</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
@@ -242,27 +217,7 @@ export function DataEquipment<TData, TValue>({
                   ) {
                     return null
                   }
-                  if (column.id === 'is_active') {
-                    return (
-                      <>
-                        <DropdownMenuCheckboxItem
-                          key={column.id}
-                          className="capitalize  text-red-400"
-                          checked={showInactive}
-                          //onChange={() => setShowInactive(!showInactive)}
-                          onClick={() => setShowInactive(!showInactive)}
-                          onCheckedChange={value =>
-                            column.toggleVisibility(true)
-                          }
-                        >
-                          {column.columnDef.header}
-                        </DropdownMenuCheckboxItem>
-                        {/* <button onClick={() => setShowInactive(!showInactive)}>
-                          Ver equipos dados de baja
-                        </button> */}
-                      </>
-                    )
-                  }
+
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}
@@ -280,40 +235,30 @@ export function DataEquipment<TData, TValue>({
           </DropdownMenu>
         </div>
       </div>
-      <div
-        className="rounded-md border"
-        style={{
-          overflow: 'auto',
-          width: '100%',
-          maxWidth: totalWidth,
-        }}
-      >
+      <div className="rounded-md border mb-6">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => {
                   return (
-                    <TableHead
-                      className="text-center text-balance"
-                      key={header.id}
-                    >
+                    <TableHead key={header.id} className="text-center">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.id in selectHeader ? (
-                              header.id === 'intern_number' ? (
+                              header.id === 'allocated_to' ? (
                                 <div className="flex justify-center">
                                   <Input
-                                    placeholder="Número de interno"
+                                    placeholder="Buscar por afectación"
                                     value={
                                       table
-                                        .getColumn('intern_number')
+                                        .getColumn('allocated_to')
                                         ?.getFilterValue() as string
                                     }
                                     onChange={event =>
                                       table
-                                        .getColumn('intern_number')
+                                        .getColumn('allocated_to')
                                         ?.setFilterValue(event.target.value)
                                     }
                                     className="max-w-sm"
@@ -337,13 +282,14 @@ export function DataEquipment<TData, TValue>({
                                       table
                                         .getColumn(header.id)
                                         ?.setFilterValue(event)
+
                                       setSelectValues({
                                         ...selectValues,
                                         [header.id]: event,
                                       })
                                     }}
                                   >
-                                    <SelectTrigger className="w-[180px]">
+                                    <SelectTrigger className="">
                                       <SelectValue
                                         placeholder={
                                           header.column.columnDef
@@ -379,60 +325,22 @@ export function DataEquipment<TData, TValue>({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody className="max-w-[50vw] overflow-x-auto">
+          <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map(row => (
                 <TableRow
                   key={row.id}
+                  className="text-center"
                   data-state={row.getIsSelected() && 'selected'}
                 >
-                  {row.getVisibleCells().map(cell => {
-                    let is_active = (cell.row.original as any).is_active
-                    return (showInactive && !is_active) ||
-                      (!showInactive && is_active) ? (
-                      <TableCell
-                        key={cell.id}
-                        className={`text-center whitespace-nowrap ${
-                          is_active ? '' : 'text-red-500'
-                        }`}
-                      >
-                        {cell.column.id === 'picture' ? (
-                          cell.getValue() !== '' ? (
-                            <Link href={cell.getValue() as any} target="_blank">
-                              <img
-                                src={cell.getValue() as any}
-                                alt="Foto"
-                                style={{ width: '50px' }}
-                              />
-                            </Link>
-                          ) : (
-                            'No disponible'
-                          )
-                        ) : cell.column.id === 'status' ? (
-                          <Badge
-                            variant={
-                              cell.getValue() === 'No avalado'
-                                ? 'destructive'
-                                : 'success'
-                            }
-                          >
-                            {cell.getValue() as React.ReactNode}
-                          </Badge>
-                        ) : cell.column.id === 'domain' ? (
-                          (cell.getValue() as React.ReactNode) === '' ? (
-                            'No disponible'
-                          ) : (
-                            (cell.getValue() as React.ReactNode)
-                          )
-                        ) : (
-                          flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )
-                        )}
-                      </TableCell>
-                    ) : null
-                  })}
+                  {row.getVisibleCells().map(cell => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
                 </TableRow>
               ))
             ) : (
@@ -441,30 +349,7 @@ export function DataEquipment<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  {loader ? (
-                    <div className="flex flex-col gap-3">
-                      <div className="flex justify-between">
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                      </div>
-                      <div className="flex justify-between">
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                      </div>
-                    </div>
-                  ) : (
-                    'No hay Equipos registrados'
-                  )}
+                  No hay documentos para auditar
                 </TableCell>
               </TableRow>
             )}

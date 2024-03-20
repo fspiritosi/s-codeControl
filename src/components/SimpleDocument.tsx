@@ -241,7 +241,25 @@ export default function SimpleDocument({
     }
 
     if (!hasErrors) {
-      const fileUrl = await uploadDocumentFile(files, 'document_files')
+      const fileExtension = files.name.split('.').pop()
+      const document_type_name = documenTypes
+        ?.find(documentType => documentType.id === values.id_document_types)
+        ?.name.replace(/\s/g, '')
+      const renamedFile = new File(
+        [files],
+        `${id || document || values.applies}-${document_type_name
+          .trim()
+          .replace(/\s/g, '')}.${fileExtension}`
+          .trim()
+          .replace(/\s/g, ''),
+        {
+          type: files.type,
+        },
+      )
+      console.log(renamedFile, 'renamedFile')
+      // setFiles(renamedFile)
+      const fileUrl = await uploadDocumentFile(renamedFile, 'document_files')
+
       setLoading(true)
       let finalValues: any
       if (resource === 'equipo') {

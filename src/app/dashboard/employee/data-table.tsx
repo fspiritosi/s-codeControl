@@ -226,6 +226,7 @@ export function DataTable<TData, TValue>({
       affiliate_status: 'Todos',
       city: 'Todos',
       hierrical_position: 'Todos',
+      status: 'Todos',
     })
   }
 
@@ -453,7 +454,7 @@ export function DataTable<TData, TValue>({
                               variant={
                                 cell.getValue() === 'No avalado'
                                   ? 'destructive'
-                                  : 'default'
+                                  : 'success'
                               }
                             >
                               {cell.getValue() as React.ReactNode}

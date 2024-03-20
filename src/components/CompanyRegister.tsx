@@ -30,10 +30,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
-import { Loader } from './svg/loader'
 import { useRouter } from 'next/navigation'
 import { company, industry_type, companyData } from '@/types/types'
-import { FilePenLine } from 'lucide-react'
 interface CompanyRegisterProps {
   company: company | null
   formEnabled: boolean

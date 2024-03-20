@@ -4,12 +4,12 @@ import { useLoggedUserStore } from '@/store/loggedUser'
 import { Documents } from "@/types/types"
 import { supabase } from "../../supabase/supabase"
 import { useEdgeFunctions } from './useEdgeFunctions'
-
-
+require('dotenv').config()
 export const useDocument = () => {
  const { errorTranslate } = useEdgeFunctions()
  const {actualCompany}= useLoggedUserStore()
- //console.log(actualCompany,'actualCompany');
+//  console.log(actualCompany,'actualCompany');
+ const url = process.env.NEXT_PUBLIC_PROJECT_URL
     
  return{
 
@@ -143,7 +143,7 @@ insertMultiDocumentEquipment: async (documents: any) => {
         throw new Error(String(message).replaceAll('"', ''))
       }
      
-      //console.log(documents,'documents');
+      // console.log(documents,'documents');
       return documents
     }
     },
@@ -192,7 +192,7 @@ insertMultiDocumentEquipment: async (documents: any) => {
       // Obtener la URL de la imagen cargada
        
 
-      const imageUrl = `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/${imageBucket}/${data?.path}`
+      const imageUrl = `${url}/${imageBucket}/${data?.path}`.trim().replace(/\s/g, '')
 
       return imageUrl
     
@@ -220,7 +220,7 @@ insertMultiDocumentEquipment: async (documents: any) => {
       // Obtener la URL de la imagen cargada
        
 
-      const imageUrl = `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/${imageBucket}/${data?.path}`
+      const imageUrl = `${url}/${imageBucket}/${data?.path}`.trim().replace(/\s/g, '')
 
       return imageUrl
     
