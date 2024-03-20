@@ -207,9 +207,11 @@ export default function SimpleDocument({
         ?.name.replace(/\s/g, '')
       const renamedFile = new File(
         [files],
-        `${
-          id || document
-        }-${document_type_name.trim().replace(/\s/g, '')}.${fileExtension}`.trim().replace(/\s/g, ''),
+        `${id || document || values.applies}-${document_type_name
+          .trim()
+          .replace(/\s/g, '')}.${fileExtension}`
+          .trim()
+          .replace(/\s/g, ''),
         {
           type: files.type,
         },

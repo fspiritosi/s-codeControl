@@ -8,6 +8,48 @@ import {
 } from '@/components/ui/card'
 import Link from 'next/link'
 
+const data = [
+  {
+    goal: 400,
+  },
+  {
+    goal: 300,
+  },
+  {
+    goal: 200,
+  },
+  {
+    goal: 300,
+  },
+  {
+    goal: 200,
+  },
+  {
+    goal: 278,
+  },
+  {
+    goal: 189,
+  },
+  {
+    goal: 239,
+  },
+  {
+    goal: 300,
+  },
+  {
+    goal: 200,
+  },
+  {
+    goal: 278,
+  },
+  {
+    goal: 189,
+  },
+  {
+    goal: 349,
+  },
+]
+
 import {
   Table,
   TableBody,
@@ -65,6 +107,8 @@ export default async function Auditor() {
     )
   `)
 
+  console.log(documents_employees, 'documents_employees')
+
   const filteredData = documents_employees?.map(doc => {
     return {
       date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
@@ -80,7 +124,6 @@ export default async function Auditor() {
       resource: `${doc.applies?.firstname} ${doc.applies?.lastname}`,
     }
   }) as AuditorDocument[]
-
 
   return (
     <section>
