@@ -62,27 +62,6 @@ export default function page() {
     fetchDocumentsEmployees()
   }, [])
 
-  // supabase
-  //   .channel('custom-all-channel')
-  //   .on(
-  //     'postgres_changes',
-  //     { event: '*', schema: 'public', table: 'documents_employees' },
-  //     payload => {
-  //       fetchDocumentsEmployees()
-  //     },
-  //   )
-  //   .subscribe()
-
-  // supabase
-  //   .channel('custom-all-channel')
-  //   .on(
-  //     'postgres_changes',
-  //     { event: '*', schema: 'public', table: 'documents_equipment' },
-  //     payload => {
-  //       fetchDocuments()
-  //     },
-  //   )
-  //   .subscribe()
   return (
     <section>
       <div className="flex justify-between flex-wrap flex-col">

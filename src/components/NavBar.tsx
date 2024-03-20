@@ -1,20 +1,20 @@
 'use client'
+import ModalCompany from '@/components/ModalCompany'
 import { ModeToggle } from '@/components/ui/ToogleDarkButton'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import Link from 'next/link'
-import { useState } from 'react'
-import { LogOutButton } from './LogOutButton'
-
-import ModalCompany from '@/components/ModalCompany'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { companyData } from '@/types/types'
+import { BellIcon, DotFilledIcon } from '@radix-ui/react-icons'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { IoMdAddCircleOutline } from 'react-icons/io'
+import { LogOutButton } from './LogOutButton'
 
 export default function NavBar() {
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
@@ -148,6 +148,10 @@ export default function NavBar() {
         )}
       </div>
       <div className="flex gap-8 items-center">
+        <div className="relative">
+          <DotFilledIcon className="text-blue-600 absolute size-7 top-[-8px] right-[-10px] p-0" />
+          <BellIcon className="text-black cursor-pointer size-5" />
+        </div>
         <ModeToggle />
         <div className="flex-shrink">
           <Popover>

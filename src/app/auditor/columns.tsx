@@ -2,9 +2,18 @@
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer'
 import { ColumnDef } from '@tanstack/react-table'
 import { ArrowUpDown } from 'lucide-react'
-import Link from 'next/link'
 
 type Colum = {
   date: string
@@ -90,13 +99,39 @@ export const AuditorColums: ColumnDef<Colum>[] = [
     accessorKey: 'id',
     header: 'Auditar',
     cell: ({ row }) => {
+      console.log(row.original, 'row')
       return (
-        <Link
-          className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 p-2"
-          href={`/auditor/${row.original.id}}`}
-        >
-          Auditar
-        </Link>
+        <Drawer>
+          <DrawerTrigger asChild>
+            <Button variant="default">Auditar</Button>
+          </DrawerTrigger>
+          <DrawerContent className='bg-red-200'>
+            <div className="mx-auto max-w-sm  w-screen flex justify-center">
+              <div className="flex w-screen">
+                <DrawerHeader>
+                  <DrawerTitle>
+                    Este documeto pertenece a {row.original.resource}
+                  </DrawerTitle>
+                  <DrawerDescription>
+                    La empresa {row.original.companyName} ha presentado el
+                    documento
+                  </DrawerDescription>
+                </DrawerHeader>
+
+                <embed
+                  src="https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/document_files/12341234-AltaTempranaAFIP.pdf"
+                  className="w-[70vw] h-[90vh] max-h-[80vh] relative"
+                />
+              </div>
+              {/* <DrawerFooter>
+                <Button>Aprobar </Button>
+                <DrawerClose asChild>
+                  <Button variant="outline">Rechazar</Button>
+                </DrawerClose>
+              </DrawerFooter> */}
+            </div>
+          </DrawerContent>
+        </Drawer>
       )
     },
   },

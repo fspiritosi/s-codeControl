@@ -5,6 +5,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+require('dotenv').config()
+
 import {
   Tooltip,
   TooltipContent,
@@ -53,7 +55,7 @@ import { PostgrestError } from '@supabase/supabase-js'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ChangeEvent, cache, useEffect, useState } from 'react'
+import { ChangeEvent, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { ImageHander } from './ImageHandler'
@@ -87,6 +89,7 @@ export default function EmployeeAccordion() {
   const { updateEmployee, createEmployee } = useEmployeesData()
   const router = useRouter()
   const { toast } = useToast()
+  const url = process.env.NEXT_PUBLIC_PROJECT_URL
 
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
@@ -376,7 +379,6 @@ export default function EmployeeAccordion() {
     fetchCityValues(provinceId)
   }
 
-
   async function onCreate(values: z.infer<typeof accordionSchema>) {
     const fileExtension = imageFile?.name.split('.').pop()
     const finalValues = {
@@ -399,7 +401,7 @@ export default function EmployeeAccordion() {
         workDiagramOptions.find(e => e.name === values.workflow_diagram)?.id,
       ),
       picture: fileExtension
-        ? `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/employee_photos/${values.document_number}.${fileExtension}`
+        ? `${url}/${values.document_number}.${fileExtension}`.trim()
         : values.gender === 'Masculino'
           ? 'https://ui.shadcn.com/avatars/02.png'
           : 'https://ui.shadcn.com/avatars/05.png',
@@ -453,7 +455,6 @@ export default function EmployeeAccordion() {
       ),
     }
 
-
     try {
       await updateEmployee(finalValues, user?.id)
       await handleUpload()
@@ -496,10 +497,11 @@ export default function EmployeeAccordion() {
         const renamedFile = new File(
           [imageFile],
           `${document_number}.${fileExtension}`,
-          { type: `image/${fileExtension}` },
+          { type: `image/${fileExtension?.replace(/\s/g, '')}` },
         )
         await uploadImage(renamedFile, 'employee_photos')
-        const employeeImage = `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/employee_photos/${document_number}.${fileExtension}?timestamp=${Date.now()}`
+        const employeeImage =
+          `${url}/employee_photos/${document_number}.${fileExtension}?timestamp=${Date.now()}`.trim().replace(/\s/g, '')
         const { data, error } = await supabase
           .from('employees')
           .update({ picture: employeeImage })
