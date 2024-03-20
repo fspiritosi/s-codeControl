@@ -105,21 +105,30 @@ export const AuditorColums: ColumnDef<Colum>[] = [
           <DrawerTrigger asChild>
             <Button variant="default">Auditar</Button>
           </DrawerTrigger>
-          <DrawerContent>
-            <div className="mx-auto w-full max-w-sm">
-              <DrawerHeader>
-                <DrawerTitle>Move Goal</DrawerTitle>
-                <DrawerDescription>
-                  Set your daily activity goal.
-                </DrawerDescription>
-              </DrawerHeader>
+          <DrawerContent className='bg-red-200'>
+            <div className="mx-auto max-w-sm  w-screen flex justify-center">
+              <div className="flex w-screen">
+                <DrawerHeader>
+                  <DrawerTitle>
+                    Este documeto pertenece a {row.original.resource}
+                  </DrawerTitle>
+                  <DrawerDescription>
+                    La empresa {row.original.companyName} ha presentado el
+                    documento
+                  </DrawerDescription>
+                </DrawerHeader>
 
-              <DrawerFooter>
-                <Button>Submit</Button>
+                <embed
+                  src="https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/document_files/12341234-AltaTempranaAFIP.pdf"
+                  className="w-[70vw] h-[90vh] max-h-[80vh] relative"
+                />
+              </div>
+              {/* <DrawerFooter>
+                <Button>Aprobar </Button>
                 <DrawerClose asChild>
-                  <Button variant="outline">Cancel</Button>
+                  <Button variant="outline">Rechazar</Button>
                 </DrawerClose>
-              </DrawerFooter>
+              </DrawerFooter> */}
             </div>
           </DrawerContent>
         </Drawer>
