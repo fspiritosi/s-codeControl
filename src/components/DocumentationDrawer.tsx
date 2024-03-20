@@ -23,10 +23,40 @@ import { Badge } from '@/components/ui/badge'
 import { saveAs } from 'file-saver'
 
 export const DocumentationDrawer = () => {
+  // const document = searchParams.get('id')
+  //////////////////////////////////////////////////////////////
+  let url = ''
+
+  if (typeof window !== 'undefined') {
+    url = window.location.href
+  }
+  const resource = url.includes('employee')
+    ? 'empleado'
+    : url.includes('equipment')
+      ? 'equipo'
+      : undefined
+
   const searchParams = useSearchParams()
-  const document = searchParams.get('document')
-  const { fetchEmployeeByDocument } = useDocument()
+  const document =
+    resource === 'empleado'
+      ? searchParams.get('document')
+      : searchParams.get('id')
+  ////////////////////////////////////////////////////////////
+
+  const { fetchEmployeeByDocument, fetchEquipmentByDocument } = useDocument()
   const [employeeData, setEmployeeData] = useState<any>(null)
+  const [equipmentData, setEquipmentData] = useState<any>(null)
+
+  const equipment = async () => {
+    //console.log('Valor de document:', document)
+    const data = await fetchEquipmentByDocument(document as any)
+    //console.log('Datos obtenidos del equipo:', data)
+    setEquipmentData(data)
+  }
+  //console.log('equipmentData: ', equipmentData)
+  useEffect(() => {
+    equipment()
+  }, [document, fetchEquipmentByDocument])
 
   const employee = async () => {
     //console.log('Valor de document:', document)
@@ -54,6 +84,7 @@ export const DocumentationDrawer = () => {
     )
     return document ? document.document_url : ''
   }
+
   const documentation = [
     {
       name: 'Alta Temprana AFIP',
@@ -70,8 +101,8 @@ export const DocumentationDrawer = () => {
     },
     ,
     {
-      name: 'Certificado SVO',
-      url: getUrlForDocument('Certificado SVO') || '',
+      name: 'Póliza / Certificado SVO',
+      url: getUrlForDocument('Póliza / Certificado SVO') || '',
     },
     {
       name: 'Examen medico pre-ocupacional',
@@ -94,18 +125,65 @@ export const DocumentationDrawer = () => {
       url: getUrlForDocument('Carnet de Manejo Defensivo') || '',
     },
   ]
-  //console.log(documentation)
+
+  const getDocumentEquipmentState = (documentName: string) => {
+    const document = equipmentData?.find(
+      (doc: any) => doc.document_types.name === documentName,
+    )
+    return document ? document.state : ''
+  }
+  const getUrlForEquipmentDocument = (documentName: string) => {
+    if (!equipmentData) return ''
+
+    const document = equipmentData.find(
+      (doc: any) => doc.document_types.name === documentName,
+    )
+    return document ? document.document_url : ''
+  }
+  const documentationEquipment = [
+    {
+      name: 'Título de propiedad / Contrato de Alquiler',
+      url:
+        getUrlForEquipmentDocument(
+          'Título de propiedad / Contrato de Alquiler',
+        ) || '',
+    },
+    {
+      name: 'Verificación Tecnica Vehícular',
+      url: getUrlForEquipmentDocument('Verificación Tecnica Vehícular') || '',
+    },
+    {
+      name: 'Habilitación de transporte de Carga (RUTA)',
+      url:
+        getUrlForEquipmentDocument(
+          'Habilitación de transporte de Carga (RUTA)',
+        ) || '',
+    },
+  ]
+  //console.log(documentationEquipment)
 
   const [selectAll, setSelectAll] = useState<boolean>(false)
   const [selectedDocuments, setSelectedDocuments] = useState<any[]>([])
   const handleSelectAll = () => {
-    if (!selectAll) {
-      const validDocuments = documentation.filter(doc => doc?.url !== '')
-      setSelectedDocuments(validDocuments)
+    if (resource === 'empleado') {
+      if (!selectAll) {
+        const validDocuments = documentation.filter(doc => doc?.url !== '')
+        setSelectedDocuments(validDocuments)
+      } else {
+        setSelectedDocuments([])
+      }
+      setSelectAll(!selectAll)
     } else {
-      setSelectedDocuments([])
+      if (!selectAll) {
+        const validDocuments = documentationEquipment.filter(
+          doc => doc?.url !== '',
+        )
+        setSelectedDocuments(validDocuments)
+      } else {
+        setSelectedDocuments([])
+      }
+      setSelectAll(!selectAll)
     }
-    setSelectAll(!selectAll)
   }
 
   const handleDocumentSelect = (document: any) => {
@@ -140,21 +218,24 @@ export const DocumentationDrawer = () => {
         return 'bg-slate-300' // Negro
     }
   }
+
   const setLoading = DocumentsValidation(state => state.setLoading)
   const loading = DocumentsValidation(state => state.loading)
-  let url = ''
+  // let url = ''
 
-  if (typeof window !== 'undefined') {
-    url = window.location.href
-  }
-  const resource = url.includes('employee')
-    ? 'empleado'
-    : url.includes('equipment')
-      ? 'equipo'
-      : undefined
+  // if (typeof window !== 'undefined') {
+  //   url = window.location.href
+  // }
+  // const resource = url.includes('employee')
+  //   ? 'empleado'
+  //   : url.includes('equipment')
+  //     ? 'equipo'
+  //     : undefined
 
   const [open, setOpen] = useState(false)
   const resetAll = DocumentsValidation(state => state.resetAll)
+  const selectedDocumentation =
+    resource === 'empleado' ? documentation : documentationEquipment
 
   const handleOpen = async () => {
     setOpen(!open)
@@ -226,7 +307,11 @@ export const DocumentationDrawer = () => {
 
   return (
     <aside className="bg-slate-800 w-[20%] h-full rounded-2xl  text-white p-4 min-w-[300px]">
-      <h2 className="text-center text-xl mb-5">Documentación del empleado</h2>
+      <h2 className="text-center text-xl mb-5">
+        {resource === 'empleado'
+          ? 'Documentación del empleado'
+          : 'Documentacion del equipo'}
+      </h2>
       <Separator className="mb-4" />
       {/* <Separator className="mb-4" /> */}
       <p className="pl-2">
@@ -240,7 +325,7 @@ export const DocumentationDrawer = () => {
       <Separator className="mb-4" />
       <div className="h-full flex flex-col justify-between p-3">
         <ul className="flex flex-col gap-3">
-          {documentation.map((doc, index) => (
+          {selectedDocumentation.map((doc, index) => (
             <li key={index} className="flex items-center gap-2 ">
               <Checkbox
                 className="bg-white"
@@ -254,12 +339,16 @@ export const DocumentationDrawer = () => {
 
                 <Badge
                   className={getBackgroundColorClass(
-                    getDocumentState(doc?.name || ''),
+                    resource === 'empleado'
+                      ? getDocumentState(doc?.name || '')
+                      : getDocumentEquipmentState(doc?.name || ''),
                   )}
                 >
-                  {getDocumentState(doc?.name || '')
-                    ? getDocumentState(doc?.name || 'No presentado')
-                    : 'No presentado'}
+                  {resource === 'empleado'
+                    ? getDocumentState(doc?.name || '')
+                      ? getDocumentState(doc?.name || 'No presentado')
+                      : 'No presentado'
+                    : getDocumentEquipmentState(doc?.name || '')}
                 </Badge>
               </div>
             </li>
