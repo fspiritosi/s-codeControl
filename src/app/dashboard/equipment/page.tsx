@@ -58,7 +58,7 @@ export default function Equipment() {
   }
 
   return (
-    <main>
+    <section>
       <header className="flex gap-4 mt-6 justify-between items-center">
         <div>
           <h2 className="text-4xl">{equipo}</h2>
@@ -81,6 +81,6 @@ export default function Equipment() {
           setShowInactive={setShowInactive}
         />
       </div>
-    </main>
+    </section>
   )
 }

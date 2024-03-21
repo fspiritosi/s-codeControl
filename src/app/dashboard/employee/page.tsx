@@ -35,7 +35,7 @@ const EmployeePage = () => {
     .subscribe()
 
   return (
-    <main className="flex flex-col ">
+    <section className="flex flex-col ">
       <header className="flex gap-4 mt-6 justify-between items-center flex-wrap">
         <div>
           <h2 className="text-4xl mb-3">Empleados</h2>
@@ -57,7 +57,7 @@ const EmployeePage = () => {
         showDeletedEmployees={showDeletedEmployees}
         setShowDeletedEmployees={setShowDeletedEmployees}
       />
-    </main>
+    </section>
   )
 }
 
