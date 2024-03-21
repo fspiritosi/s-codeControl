@@ -129,7 +129,7 @@ insertMultiDocumentEquipment: async (documents: any) => {
     if(actualCompany){
        let { data: documents, error } = await supabase.from('documents_employees').select(`
             *,
-            employees:employees(id,company_id, document_number ),
+            employees:employees(id,company_id, document_number, lastname, firstname ),
             document_types:document_types(id, name)
         `)
         .not('employees', 'is', null)

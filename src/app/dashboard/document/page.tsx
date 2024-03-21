@@ -79,6 +79,8 @@ export default function page() {
         ...item,
         id_document_types: item.document_types.name,
         applies: item.employees.document_number,
+        lastName: item.employees.lastname,
+        firstName: item.employees.firstname,
       }))
       const filteredAprobados = transformedData?.filter(
         item => item.state === 'aprobado',
@@ -89,7 +91,7 @@ export default function page() {
       const filteredVencidos = transformedData?.filter(
         item => item.state === 'vencido',
       )
-      // console.log('transformed Data: ', documentsEmployees)
+      //console.log('transformed Data: ', transformedData)
       // console.log('este es employees: ', documentsEmployees)
       setDocumentsEmployeesVencidos(filteredVencidos || [])
       setDocumentsEmployeesPresentados(filteredPresentados || [])
