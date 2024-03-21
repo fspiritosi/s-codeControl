@@ -234,7 +234,11 @@ insertMultiDocumentEquipment: async (documents: any) => {
   .not('document_types', 'is', null)
   .eq('employees.document_number', document)
 
-  
+  //console.log("document employees: ", documents_employees)
+  if (error) {
+        const message = await errorTranslate(error?.message)
+        throw new Error(String(message).replaceAll('"', ''))
+      }
   return documents_employees
     },
 

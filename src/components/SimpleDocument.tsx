@@ -134,14 +134,14 @@ export default function SimpleDocument({
     //console.log('Datos obtenidos del empleado:', data)
     setEmployeeData(data)
   }
-
+  //console.log('este employee data: ', employeeData)
   useEffect(() => {
     equipment()
-  }, [document, fetchEquipmentByDocument])
+  }, [])
 
   useEffect(() => {
     employee()
-  }, [document, fetchEmployeeByDocument])
+  }, [])
 
   ////////////////////////////////////////////////////////////////////////
 
@@ -204,10 +204,17 @@ export default function SimpleDocument({
       (doc: any) => doc.id_document_types === values.id_document_types,
     )?.id
 
+    const matchingDocumentState = employeeData?.find(
+      (doc: any) => doc.id_document_types === values.id_document_types,
+    )?.state
+
     const matchingEquipment = equipmentData?.find(
       (doc: any) => doc.id_document_types === values.id_document_types,
     )?.id
-    //console.log('match: ', matchingEquipment)
+    const matchingEquipmentState = equipmentData?.find(
+      (doc: any) => doc.id_document_types === values.id_document_types,
+    )?.state
+    // console.log('match: ', matchingDocumentState)
     if (expiredDate) {
       if (!values.validity) {
         form.setError('validity', {
@@ -256,7 +263,7 @@ export default function SimpleDocument({
           type: files.type,
         },
       )
-      console.log(renamedFile, 'renamedFile')
+      //console.log(renamedFile, 'renamedFile')
       // setFiles(renamedFile)
       const fileUrl = await uploadDocumentFile(renamedFile, 'document_files')
 
@@ -270,71 +277,100 @@ export default function SimpleDocument({
             vehicle?.name === values.applies
           )
         })?.id
-        if (matchingEquipment) {
-          const documentIdToUpdate = matchingEquipment
-          finalValues = {
-            ...values,
-            document_url: fileUrl,
-            id_storage: null,
-            is_active: true,
-            applies: vehicle_id,
-            user_id: user,
-            id_document_types: values.id_document_types,
+        if (matchingEquipmentState !== 'aprobado') {
+          if (matchingEquipment) {
+            const documentIdToUpdate = matchingEquipment
+            finalValues = {
+              ...values,
+              document_url: fileUrl,
+              id_storage: null,
+              is_active: true,
+              applies: vehicle_id,
+              user_id: user,
+              id_document_types: values.id_document_types,
+            }
+            //console.log('equipmentData: ', equipmentData)
+            //console.log('matching Equipment: ', matchingEquipment)
+            //console.log('document Id To Update: ', documentIdToUpdate)
+            updateDocumentEquipment(documentIdToUpdate, finalValues)
+          } else {
+            finalValues = {
+              ...values,
+              document_url: fileUrl,
+              id_storage: null,
+              is_active: true,
+              applies: vehicle_id,
+              user_id: user,
+              id_document_types: values.id_document_types,
+            }
+            insertDocumentEquipment(finalValues)
           }
-          //console.log('equipmentData: ', equipmentData)
-          //console.log('matching Equipment: ', matchingEquipment)
-          //console.log('document Id To Update: ', documentIdToUpdate)
-          updateDocumentEquipment(documentIdToUpdate, finalValues)
+          toast({
+            title: 'Documento cargado',
+            description: 'El documento fue cargado con éxito',
+          })
         } else {
-          finalValues = {
-            ...values,
-            document_url: fileUrl,
-            id_storage: null,
-            is_active: true,
-            applies: vehicle_id,
-            user_id: user,
-            id_document_types: values.id_document_types,
-          }
-          insertDocumentEquipment(finalValues)
+          toast({
+            title: 'Documento No cargado',
+            description: 'El documento no fue cargado por que ya fue aprobado',
+            variant: 'destructive',
+          })
         }
       } else {
         const user_id = employees?.find(
           (e: any) => e?.document === values.applies,
         )?.id
-        if (matchingDocument) {
-          const documentIdToUpdate = matchingDocument
-          finalValues = {
-            ...values,
-            document_url: fileUrl,
-            id_storage: null,
-            is_active: true,
-            applies: user_id,
-            user_id: user,
-            id_document_types: values.id_document_types,
-          }
+        if (matchingDocumentState !== 'aprobado') {
+          if (matchingDocument) {
+            const documentIdToUpdate = matchingDocument
+            finalValues = {
+              ...values,
+              document_url: fileUrl,
+              id_storage: null,
+              is_active: true,
+              applies: user_id,
+              user_id: user,
+              id_document_types: values.id_document_types,
+            }
 
-          //console.log('employeeData: ', employeeData)
-          updateDocumentEmployees(documentIdToUpdate, finalValues)
+            //console.log('employeeData: ', employeeData)
+            updateDocumentEmployees(documentIdToUpdate, finalValues)
+          } else {
+            finalValues = {
+              ...values,
+              document_url: fileUrl,
+              id_storage: null,
+              is_active: true,
+              applies: user_id,
+              user_id: user,
+              id_document_types: values.id_document_types,
+            }
+
+            insertDocumentEmployees(finalValues)
+          }
+          toast({
+            title: 'Documento cargado',
+            description: 'El documento fue cargado con éxito',
+          })
         } else {
-          finalValues = {
-            ...values,
-            document_url: fileUrl,
-            id_storage: null,
-            is_active: true,
-            applies: user_id,
-            user_id: user,
-            id_document_types: values.id_document_types,
-          }
-
-          insertDocumentEmployees(finalValues)
+          toast({
+            title: 'Documento No cargado',
+            description: 'El documento no fue cargado por que ya fue aprobado',
+            variant: 'destructive',
+          })
         }
       }
-
       handleOpen()
-      toast({
-        title: 'Documento cargado',
-        description: 'El documento fue cargado con éxito',
-      })
+      // toast({
+      //   title: 'Documento cargado',
+      //   description: 'El documento fue cargado con éxito',
+      // })
+
+      // toast({
+      //   title: 'Documento No cargado',
+      //   description: 'El documento no fue cargado por que ya fue aprobado',
+      //   variant: 'destructive',
+      // })
     }
   }
 

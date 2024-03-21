@@ -54,10 +54,12 @@ export const DocumentationDrawer = () => {
     setEquipmentData(data)
   }
   //console.log('equipmentData: ', equipmentData)
+  // useEffect(() => {
+  //equipment()
+  //}, [document, fetchEquipmentByDocument])
   useEffect(() => {
     equipment()
-  }, [document, fetchEquipmentByDocument])
-
+  }, [])
   const employee = async () => {
     //console.log('Valor de document:', document)
     const data = await fetchEmployeeByDocument(document as any)
@@ -67,9 +69,9 @@ export const DocumentationDrawer = () => {
 
   useEffect(() => {
     employee()
-  }, [document, fetchEmployeeByDocument])
+  }, [])
 
-  //console.log('este es employeeData: ', employeeData)
+  //console.log('este es employeeData state: ', employeeData)
   const getDocumentState = (documentName: string) => {
     const document = employeeData?.find(
       (doc: any) => doc.document_types.name === documentName,
