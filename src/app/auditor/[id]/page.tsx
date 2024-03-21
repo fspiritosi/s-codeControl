@@ -57,7 +57,7 @@ export default async function page({ params }: { params: { id: string } }) {
                   <Avatar className="size-24">
                     <AvatarImage
                       src={
-                        documents_employees?.[0].applies?.company_id
+                        documents_employees?.[0]?.applies?.company_id
                           ?.company_logo
                       }
                       alt="Logo de la empresa"
@@ -66,49 +66,49 @@ export default async function page({ params }: { params: { id: string } }) {
                     <AvatarFallback>Logo</AvatarFallback>
                   </Avatar>
                   <CardTitle className="font-bold">
-                    {documents_employees?.[0].applies?.company_id?.company_name}
+                    {documents_employees?.[0]?.applies?.company_id?.company_name}
                   </CardTitle>
                 </div>
                 <div className="space-y-3">
                   <CardDescription>
                     <span className="font-bold">CUIT:</span>{' '}
-                    {documents_employees?.[0].applies?.company_id?.company_cuit?.replace(
+                    {documents_employees?.[0]?.applies?.company_id?.company_cuit?.replace(
                       /(\d{2})(\d{8})(\d{1})/,
                       '$1-$2-$3',
                     )}
                   </CardDescription>
                   <CardDescription className="capitalize">
                     <span className="font-bold capitalize">Dirección:</span>{' '}
-                    {documents_employees?.[0].applies?.company_id?.address}
+                    {documents_employees?.[0]?.applies?.company_id?.address}
                   </CardDescription>
                   <CardDescription className="capitalize">
                     <span className="font-bold">País:</span>{' '}
-                    {documents_employees?.[0].applies?.company_id?.country}
+                    {documents_employees?.[0]?.applies?.company_id?.country}
                   </CardDescription>
                   <CardDescription className="capitalize">
                     <span className="font-bold">Provincia:</span>{' '}
                     {
-                      documents_employees?.[0].applies?.company_id?.province_id
+                      documents_employees?.[0]?.applies?.company_id?.province_id
                         .name
                     }
                   </CardDescription>
                   <CardDescription>
                     <span className="font-bold">Teléfono de contacto:</span>{' '}
                     {
-                      documents_employees?.[0].applies?.company_id
+                      documents_employees?.[0]?.applies?.company_id
                         ?.contact_phone
                     }
                   </CardDescription>
                   <CardDescription>
                     <span className="font-bold">Email de contacto:</span>{' '}
                     {
-                      documents_employees?.[0].applies?.company_id
+                      documents_employees?.[0]?.applies?.company_id
                         ?.contact_email
                     }
                   </CardDescription>
                   <CardDescription className="capitalize">
                     <span className="font-bold">Descripción:</span>{' '}
-                    {documents_employees?.[0].applies?.company_id?.description}
+                    {documents_employees?.[0]?.applies?.company_id?.description}
                   </CardDescription>
                 </div>
               </div>
@@ -122,54 +122,54 @@ export default async function page({ params }: { params: { id: string } }) {
                 <div className="flex items-center gap-3">
                   <Avatar className="size-24">
                     <AvatarImage
-                      src={documents_employees?.[0].applies?.picture}
+                      src={documents_employees?.[0]?.applies?.picture}
                       className="rounded-full object-cover"
                       alt="Logo de la empresa"
                     />
                     <AvatarFallback>LOGO</AvatarFallback>
                   </Avatar>
                   <CardTitle className="font-bold">
-                    {documents_employees?.[0].applies.firstname +
+                    {documents_employees?.[0]?.applies.firstname +
                       ' ' +
-                      documents_employees?.[0].applies.lastname}
+                      documents_employees?.[0]?.applies.lastname}
                   </CardTitle>
                 </div>
                 <div className="space-y-3">
                   <CardDescription>
                     <span className="font-bold">CUIT:</span>{' '}
-                    {documents_employees?.[0].applies?.cuil?.replace(
+                    {documents_employees?.[0]?.applies?.cuil?.replace(
                       /(\d{2})(\d{8})(\d{1})/,
                       '$1-$2-$3',
                     )}
                   </CardDescription>
                   <CardDescription className="capitalize">
                     <span className="font-bold">Dirección:</span>{' '}
-                    {documents_employees?.[0].applies?.street +
+                    {documents_employees?.[0]?.applies?.street +
                       ' ' +
-                      documents_employees?.[0].applies?.street_number +
+                      documents_employees?.[0]?.applies?.street_number +
                       ', ' +
-                      documents_employees?.[0].applies?.city.name}
+                      documents_employees?.[0]?.applies?.city.name}
                   </CardDescription>
                   <CardDescription className="capitalize">
                     <span className="font-bold">Provincia:</span>{' '}
-                    {documents_employees?.[0].applies?.province.name}
+                    {documents_employees?.[0]?.applies?.province.name}
                   </CardDescription>
                   <CardDescription className="capitalize">
                     <span className="font-bold">Naciodalidad:</span>{' '}
-                    {documents_employees?.[0].applies?.nationality}
+                    {documents_employees?.[0]?.applies?.nationality}
                   </CardDescription>
                   <CardDescription>
                     <span className="font-bold">Teléfono de contacto:</span>{' '}
-                    {documents_employees?.[0].applies?.phone}
+                    {documents_employees?.[0]?.applies?.phone}
                   </CardDescription>
                   <CardDescription>
                     <span className="font-bold">Email de contacto:</span>{' '}
-                    {documents_employees?.[0].applies?.email}
+                    {documents_employees?.[0]?.applies?.email}
                   </CardDescription>
                   <CardDescription>
                     <span className="font-bold">Afectaciones:</span>{' '}
                     <ul>
-                      {documents_employees?.[0].applies?.contractor_employee.map(
+                      {documents_employees?.[0]?.applies?.contractor_employee.map(
                         (contractor: any) => {
                           console.log(contractor.contractors, 'contractor')
                           return (
@@ -189,41 +189,41 @@ export default async function page({ params }: { params: { id: string } }) {
                 Estos son los datos del documento que se le solicita al empleado
               </CardDescription>
               <CardTitle>
-                {documents_employees?.[0].document_types?.name}
+                {documents_employees?.[0]?.document_types?.name}
               </CardTitle>
               <CardDescription>
-                {documents_employees?.[0].document_types?.mandatory
+                {documents_employees?.[0]?.document_types?.mandatory
                   ? 'Es mandatorio'
                   : 'No es mandatorio'}
               </CardDescription>
               <CardDescription>
-                {documents_employees?.[0].document_types?.multiresource
+                {documents_employees?.[0]?.document_types?.multiresource
                   ? 'Es multirecurso'
                   : 'No es multirecurso'}
               </CardDescription>
               <CardDescription>
-                {documents_employees?.[0].document_types?.expired
+                {documents_employees?.[0]?.document_types?.expired
                   ? 'Tiene vencimiento'
                   : 'No tiene vencimiento'}
               </CardDescription>
               <CardDescription>
                 Documento aplica a{' '}
-                {documents_employees?.[0].document_types?.applies}
+                {documents_employees?.[0]?.document_types?.applies}
               </CardDescription>
               <CardDescription>
                 Subido el{' '}
-                {formatDate(documents_employees?.[0].created_at, 'PPP', {
+                {formatDate(documents_employees?.[0]?.created_at, 'PPP', {
                   locale: es,
                 })}{' '}
                 a las{' '}
-                {formatDate(documents_employees?.[0].created_at, 'p', {
+                {formatDate(documents_employees?.[0]?.created_at, 'p', {
                   locale: es,
                 })}
               </CardDescription>
-              {documents_employees?.[0].document_types?.special && (
+              {documents_employees?.[0]?.document_types?.special && (
                 <CardDescription>
                   Este documento tiene consideraciones especiales a tener en
-                  cuenta {documents_employees?.[0].document_types?.description}
+                  cuenta {documents_employees?.[0]?.document_types?.description}
                 </CardDescription>
               )}
               <h2></h2>
@@ -242,7 +242,7 @@ export default async function page({ params }: { params: { id: string } }) {
         </div>
         <div className="max-w-[70vw]  col-span-2">
           <embed
-            src={`${documents_employees?.[0].document_url}#toolbar=0&navpanes=0&scrollbar=0`}
+            src={`${documents_employees?.[0]?.document_url}#toolbar=0&navpanes=0&scrollbar=0`}
             className="w-full h-screen"
           />
         </div>
