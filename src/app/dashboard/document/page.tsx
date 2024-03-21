@@ -19,6 +19,21 @@ export default function page() {
   const [documentsDataEmployees, setDocumentsDataEmployees] = useState<
     unknown[]
   >([])
+  const [documentsEmployeesAprobados, setDocumentsEmployeesAprobados] =
+    useState<unknown[]>([])
+  const [documentsEmployeesPresentados, setDocumentsEmployeesPresentados] =
+    useState<unknown[]>([])
+  const [documentsEmployeesVencidos, setDocumentsEmployeesVencidos] = useState<
+    unknown[]
+  >([])
+
+  const [documentsEquipmentAprobados, setDocumentsEquipmentAprobados] =
+    useState<unknown[]>([])
+  const [documentsEquipmentPresentados, setDocumentsEquipmentPresentados] =
+    useState<unknown[]>([])
+  const [documentsEquipmentVencidos, setDocumentsEquipmentVencidos] = useState<
+    unknown[]
+  >([])
   const { fetchDocumentEquipmentByCompany, fetchDocumentEmployeesByCompany } =
     useDocument()
 
@@ -34,6 +49,20 @@ export default function page() {
         applies: item.vehicles.intern_number,
       }))
       //console.log('transformed Data: ', transformedData)
+      const filteredAprobados = transformedData?.filter(
+        item => item.state === 'aprobado',
+      )
+      const filteredPresentados = transformedData?.filter(
+        item => item.state === 'presentado',
+      )
+      const filteredVencidos = transformedData?.filter(
+        item => item.state === 'vencido',
+      )
+      // console.log('transformed Data: ', documentsEmployees)
+      // console.log('este es employees: ', documentsEmployees)
+      setDocumentsEquipmentVencidos(filteredVencidos || [])
+      setDocumentsEquipmentPresentados(filteredPresentados || [])
+      setDocumentsEquipmentAprobados(filteredAprobados || [])
       setDocumentsDataEquipment(transformedData || [])
     } catch (error) {
       console.error('Error al obtener documentos:', error)
@@ -41,7 +70,7 @@ export default function page() {
   }
   useEffect(() => {
     fetchDocuments()
-  }, [])
+  }, [fetchDocumentEquipmentByCompany])
 
   const fetchDocumentsEmployees = async () => {
     try {
@@ -51,8 +80,20 @@ export default function page() {
         id_document_types: item.document_types.name,
         applies: item.employees.document_number,
       }))
+      const filteredAprobados = transformedData?.filter(
+        item => item.state === 'aprobado',
+      )
+      const filteredPresentados = transformedData?.filter(
+        item => item.state === 'presentado',
+      )
+      const filteredVencidos = transformedData?.filter(
+        item => item.state === 'vencido',
+      )
       // console.log('transformed Data: ', documentsEmployees)
       // console.log('este es employees: ', documentsEmployees)
+      setDocumentsEmployeesVencidos(filteredVencidos || [])
+      setDocumentsEmployeesPresentados(filteredPresentados || [])
+      setDocumentsEmployeesAprobados(filteredAprobados || [])
       setDocumentsDataEmployees(transformedData || [])
     } catch (error) {
       console.error('Error al obtener documentos:', error)
@@ -87,6 +128,7 @@ export default function page() {
       )
       .subscribe()
   }, [])
+
   return (
     <section>
       <div className="flex justify-between flex-wrap flex-col">
@@ -104,24 +146,116 @@ export default function page() {
                 <TabsTrigger value="Equipos">Equipos</TabsTrigger>
               </TabsList>
               <TabsContent value="Empleados">
-                <DataDocumentsEmployees
-                  columEmp={columEmp}
-                  data={documentsDataEmployees || []}
-                  //allCompany={allCompany}
-                  showInactive={showInactive}
-                  setShowInactive={setShowInactive}
-                />
+                {/* <DataDocumentsEmployees
+                        columEmp={columEmp}
+                        data={documentsDataEmployees || []}
+                        //allCompany={allCompany}
+                        showInactive={showInactive}
+                        setShowInactive={setShowInactive}
+                      /> */}
+                {/* ////////////////////////////////////////////////// */}
+                <Tabs defaultValue="Todos" className="p-2">
+                  <TabsList className="grid w-full grid-cols-4 ">
+                    <TabsTrigger value="Todos">Todos</TabsTrigger>
+                    <TabsTrigger value="Aprobados">Aprobados</TabsTrigger>
+                    <TabsTrigger value="Presentados">Presentados</TabsTrigger>
+                    <TabsTrigger value="Vencidos">Vencidos</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="Todos">
+                    <DataDocumentsEmployees
+                      columEmp={columEmp}
+                      data={documentsDataEmployees || []}
+                      //allCompany={allCompany}
+                      showInactive={showInactive}
+                      setShowInactive={setShowInactive}
+                    />
+                  </TabsContent>
+                  <TabsContent value="Aprobados">
+                    <DataDocumentsEmployees
+                      columEmp={columEmp}
+                      data={documentsEmployeesAprobados || []}
+                      //allCompany={allCompany}
+                      showInactive={showInactive}
+                      setShowInactive={setShowInactive}
+                    />
+                  </TabsContent>
+                  <TabsContent value="Presentados">
+                    <DataDocumentsEmployees
+                      columEmp={columEmp}
+                      data={documentsEmployeesPresentados || []}
+                      //allCompany={allCompany}
+                      showInactive={showInactive}
+                      setShowInactive={setShowInactive}
+                    />
+                  </TabsContent>
+                  <TabsContent value="Vencidos">
+                    <DataDocumentsEmployees
+                      columEmp={columEmp}
+                      data={documentsEmployeesVencidos || []}
+                      //allCompany={allCompany}
+                      showInactive={showInactive}
+                      setShowInactive={setShowInactive}
+                    />
+                  </TabsContent>
+                </Tabs>
+                {/* ////////////////////////////////////////////////// */}
               </TabsContent>
               <TabsContent value="Equipos">
-                <DataDocumentsEquipment
+                {/* <DataDocumentsEquipment
                   columns={columns}
                   data={documentsDataEquipment || []}
                   //allCompany={allCompany}
                   showInactive={showInactive}
                   setShowInactive={setShowInactive}
-                />
+                /> */}
+                <Tabs defaultValue="Todos" className="p-2">
+                  <TabsList className="grid w-full grid-cols-4 ">
+                    <TabsTrigger value="Todos">Todos</TabsTrigger>
+                    <TabsTrigger value="Aprobados">Aprobados</TabsTrigger>
+                    <TabsTrigger value="Presentados">Presentados</TabsTrigger>
+                    <TabsTrigger value="Vencidos">Vencidos</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="Todos">
+                    <DataDocumentsEquipment
+                      columns={columns}
+                      data={documentsDataEquipment || []}
+                      //allCompany={allCompany}
+                      showInactive={showInactive}
+                      setShowInactive={setShowInactive}
+                    />
+                  </TabsContent>
+                  <TabsContent value="Aprobados">
+                    <DataDocumentsEquipment
+                      columns={columns}
+                      data={documentsEquipmentAprobados || []}
+                      //allCompany={allCompany}
+                      showInactive={showInactive}
+                      setShowInactive={setShowInactive}
+                    />
+                  </TabsContent>
+                  <TabsContent value="Presentados">
+                    <DataDocumentsEquipment
+                      columns={columns}
+                      data={documentsEquipmentPresentados || []}
+                      //allCompany={allCompany}
+                      showInactive={showInactive}
+                      setShowInactive={setShowInactive}
+                    />
+                  </TabsContent>
+                  <TabsContent value="Vencidos">
+                    <DataDocumentsEquipment
+                      columns={columns}
+                      data={documentsEquipmentVencidos || []}
+                      //allCompany={allCompany}
+                      showInactive={showInactive}
+                      setShowInactive={setShowInactive}
+                    />
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
             </Tabs>
+
+            {/* </Tabs> */}
           </div>
         </div>
       </div>

@@ -361,16 +361,6 @@ export default function SimpleDocument({
         }
       }
       handleOpen()
-      // toast({
-      //   title: 'Documento cargado',
-      //   description: 'El documento fue cargado con éxito',
-      // })
-
-      // toast({
-      //   title: 'Documento No cargado',
-      //   description: 'El documento no fue cargado por que ya fue aprobado',
-      //   variant: 'destructive',
-      // })
     }
   }
 
