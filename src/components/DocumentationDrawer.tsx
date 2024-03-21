@@ -17,35 +17,14 @@ import { Loader } from './svg/loader'
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'
 import { Separator } from './ui/separator'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useDocument } from '@/hooks/useDocuments'
+import { Badge } from '@/components/ui/badge'
+import { saveAs } from 'file-saver'
 
 export const DocumentationDrawer = () => {
-  const documentation = [
-    'Documento 1.pdf',
-    'Documento 2.pdf',
-    'Documento 3.pdf',
-    'Documento 4.pdf',
-    'Documento 5.pdf',
-  ]
-  const [selectAll, setSelectAll] = useState<boolean>(false)
-  const [selectedDocuments, setSelectedDocuments] = useState<string[]>([])
-  const handleSelectAll = () => {
-    if (!selectAll) {
-      setSelectedDocuments([...documentation])
-    } else {
-      setSelectedDocuments([])
-    }
-    setSelectAll(!selectAll)
-  }
-
-  const handleDocumentSelect = (document: string) => {
-    if (selectedDocuments.includes(document)) {
-      setSelectedDocuments(selectedDocuments.filter(item => item !== document))
-    } else {
-      setSelectedDocuments([...selectedDocuments, document])
-    }
-  }
-  const setLoading = DocumentsValidation(state => state.setLoading)
-  const loading = DocumentsValidation(state => state.loading)
+  // const document = searchParams.get('id')
+  //////////////////////////////////////////////////////////////
   let url = ''
 
   if (typeof window !== 'undefined') {
@@ -57,8 +36,208 @@ export const DocumentationDrawer = () => {
       ? 'equipo'
       : undefined
 
+  const searchParams = useSearchParams()
+  const document =
+    resource === 'empleado'
+      ? searchParams.get('document')
+      : searchParams.get('id')
+  ////////////////////////////////////////////////////////////
+
+  const { fetchEmployeeByDocument, fetchEquipmentByDocument } = useDocument()
+  const [employeeData, setEmployeeData] = useState<any>(null)
+  const [equipmentData, setEquipmentData] = useState<any>(null)
+
+  const equipment = async () => {
+    //console.log('Valor de document:', document)
+    const data = await fetchEquipmentByDocument(document as any)
+    //console.log('Datos obtenidos del equipo:', data)
+    setEquipmentData(data)
+  }
+  //console.log('equipmentData: ', equipmentData)
+  // useEffect(() => {
+  //equipment()
+  //}, [document, fetchEquipmentByDocument])
+  useEffect(() => {
+    equipment()
+  }, [])
+  const employee = async () => {
+    //console.log('Valor de document:', document)
+    const data = await fetchEmployeeByDocument(document as any)
+    //console.log('Datos obtenidos del empleado:', data)
+    setEmployeeData(data)
+  }
+
+  useEffect(() => {
+    employee()
+  }, [])
+
+  //console.log('este es employeeData state: ', employeeData)
+  const getDocumentState = (documentName: string) => {
+    const document = employeeData?.find(
+      (doc: any) => doc.document_types.name === documentName,
+    )
+    return document ? document.state : ''
+  }
+  const getUrlForDocument = (documentName: string) => {
+    if (!employeeData) return ''
+
+    const document = employeeData.find(
+      (doc: any) => doc.document_types.name === documentName,
+    )
+    return document ? document.document_url : ''
+  }
+
+  const documentation = [
+    {
+      name: 'Alta Temprana AFIP',
+      url: getUrlForDocument('Alta Temprana AFIP') || '',
+    },
+    {
+      name: 'RELACIONES LABORALES ACTIVAS',
+      url: getUrlForDocument('RELACIONES LABORALES ACTIVAS') || '',
+    },
+    { name: 'DNI', url: getUrlForDocument('DNI') || '' },
+    {
+      name: 'Póliza / Certificado ART',
+      url: getUrlForDocument('Póliza / Certificado ART') || '',
+    },
+    ,
+    {
+      name: 'Póliza / Certificado SVO',
+      url: getUrlForDocument('Póliza / Certificado SVO') || '',
+    },
+    {
+      name: 'Examen medico pre-ocupacional',
+      url: getUrlForDocument('Examen medico pre-ocupacional') || '',
+    },
+    {
+      name: 'Constancia de entrega de Ropa y Epp',
+      url: getUrlForDocument('Constancia de entrega de Ropa y Epp') || '',
+    },
+    {
+      name: 'Licencia Nacional de Conducir',
+      url: getUrlForDocument('Licencia Nacional de Conducir') || '',
+    },
+    {
+      name: 'Carnet Profesional - LINTI',
+      url: getUrlForDocument('Carnet Profesional - LINTI') || '',
+    },
+    {
+      name: 'Carnet de Manejo Defensivo',
+      url: getUrlForDocument('Carnet de Manejo Defensivo') || '',
+    },
+  ]
+
+  const getDocumentEquipmentState = (documentName: string) => {
+    const document = equipmentData?.find(
+      (doc: any) => doc.document_types.name === documentName,
+    )
+    return document ? document.state : ''
+  }
+  const getUrlForEquipmentDocument = (documentName: string) => {
+    if (!equipmentData) return ''
+
+    const document = equipmentData.find(
+      (doc: any) => doc.document_types.name === documentName,
+    )
+    return document ? document.document_url : ''
+  }
+  const documentationEquipment = [
+    {
+      name: 'Título de propiedad / Contrato de Alquiler',
+      url:
+        getUrlForEquipmentDocument(
+          'Título de propiedad / Contrato de Alquiler',
+        ) || '',
+    },
+    {
+      name: 'Verificación Tecnica Vehícular',
+      url: getUrlForEquipmentDocument('Verificación Tecnica Vehícular') || '',
+    },
+    {
+      name: 'Habilitación de transporte de Carga (RUTA)',
+      url:
+        getUrlForEquipmentDocument(
+          'Habilitación de transporte de Carga (RUTA)',
+        ) || '',
+    },
+  ]
+  //console.log(documentationEquipment)
+
+  const [selectAll, setSelectAll] = useState<boolean>(false)
+  const [selectedDocuments, setSelectedDocuments] = useState<any[]>([])
+  const handleSelectAll = () => {
+    if (resource === 'empleado') {
+      if (!selectAll) {
+        const validDocuments = documentation.filter(doc => doc?.url !== '')
+        setSelectedDocuments(validDocuments)
+      } else {
+        setSelectedDocuments([])
+      }
+      setSelectAll(!selectAll)
+    } else {
+      if (!selectAll) {
+        const validDocuments = documentationEquipment.filter(
+          doc => doc?.url !== '',
+        )
+        setSelectedDocuments(validDocuments)
+      } else {
+        setSelectedDocuments([])
+      }
+      setSelectAll(!selectAll)
+    }
+  }
+
+  const handleDocumentSelect = (document: any) => {
+    const { name, url } = document
+    if (selectedDocuments.some(doc => doc.name === name)) {
+      setSelectedDocuments(selectedDocuments.filter(doc => doc.name !== name))
+    } else {
+      setSelectedDocuments([...selectedDocuments, { name, url }])
+    }
+  }
+
+  const handleDownloadSelected = () => {
+    selectedDocuments.forEach(document => {
+      const { url } = document
+      if (url) {
+        const fileName = url.substring(url.lastIndexOf('/') + 1)
+        // Descargar el archivo utilizando file-saver
+        saveAs(url, fileName)
+      }
+    })
+  }
+  const getBackgroundColorClass = (state: string) => {
+    switch (state) {
+      case 'presentado':
+        return 'bg-yellow-500' // Amarillo
+      case 'aprobado':
+        return 'bg-green-500' // Verde
+      case 'vencido':
+      case 'rechazado':
+        return 'bg-red-500' // Rojo
+      default:
+        return 'bg-slate-300' // Negro
+    }
+  }
+
+  const setLoading = DocumentsValidation(state => state.setLoading)
+  const loading = DocumentsValidation(state => state.loading)
+  // let url = ''
+
+  // if (typeof window !== 'undefined') {
+  //   url = window.location.href
+  // }
+  // const resource = url.includes('employee')
+  //   ? 'empleado'
+  //   : url.includes('equipment')
+  //     ? 'equipo'
+  //     : undefined
+
   const [open, setOpen] = useState(false)
   const resetAll = DocumentsValidation(state => state.resetAll)
+  const selectedDocumentation =
+    resource === 'empleado' ? documentation : documentationEquipment
 
   const handleOpen = async () => {
     setOpen(!open)
@@ -130,7 +309,11 @@ export const DocumentationDrawer = () => {
 
   return (
     <aside className="bg-slate-800 w-[20%] h-full rounded-2xl  text-white p-4 min-w-[300px]">
-      <h2 className="text-center text-xl mb-5">Documentación del empleado</h2>
+      <h2 className="text-center text-xl mb-5">
+        {resource === 'empleado'
+          ? 'Documentación del empleado'
+          : 'Documentacion del equipo'}
+      </h2>
       <Separator className="mb-4" />
       {/* <Separator className="mb-4" /> */}
       <p className="pl-2">
@@ -144,14 +327,32 @@ export const DocumentationDrawer = () => {
       <Separator className="mb-4" />
       <div className="h-full flex flex-col justify-between p-3">
         <ul className="flex flex-col gap-3">
-          {documentation.map((doc, index) => (
+          {selectedDocumentation.map((doc, index) => (
             <li key={index} className="flex items-center gap-2 ">
               <Checkbox
                 className="bg-white"
-                checked={selectedDocuments.includes(doc)}
+                checked={selectedDocuments.some(
+                  selected => selected.name === doc?.name,
+                )}
                 onClick={() => handleDocumentSelect(doc)}
               />
-              <span>{doc}</span>
+              <div className="flex items-center justify-between flex-grow">
+                <span>{doc?.name}</span>
+
+                <Badge
+                  className={getBackgroundColorClass(
+                    resource === 'empleado'
+                      ? getDocumentState(doc?.name || '')
+                      : getDocumentEquipmentState(doc?.name || ''),
+                  )}
+                >
+                  {resource === 'empleado'
+                    ? getDocumentState(doc?.name || '')
+                      ? getDocumentState(doc?.name || 'No presentado')
+                      : 'No presentado'
+                    : getDocumentEquipmentState(doc?.name || '')}
+                </Badge>
+              </div>
             </li>
           ))}
         </ul>
@@ -159,7 +360,9 @@ export const DocumentationDrawer = () => {
       <Separator className="my-4" />
       <footer className="bg-white p-4 text-black rounded-2xl flex flex-col justify-center items-center">
         <h3>{selectedDocuments.length} documentos seleccionados</h3>
-        <Button variant="primary">Descargar seleccionados</Button>
+        <Button variant="primary" onClick={handleDownloadSelected}>
+          Descargar seleccionados
+        </Button>
       </footer>
       <div className="flex w-full justify-center pt-3">
         {/* <SimpleDocument resource={resource}/> */}

@@ -68,6 +68,7 @@ import { z } from 'zod'
 import { supabase } from '../../../../supabase/supabase'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { useDocument } from '@/hooks/useDocuments'
+import { Badge } from '@/components/ui/badge'
 
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -410,19 +411,50 @@ export const columEmp: ColumnDef<Colum>[] = [
     accessorKey: 'id_document_types',
     header: 'Tipo de documento',
   },
-
   {
     accessorKey: 'validity',
     header: 'Fecha de validez',
+  },
+  {
+    accessorKey: 'lastName',
+    header: 'Apellido',
+  },
+  {
+    accessorKey: 'firstName',
+    header: 'Nombre',
   },
 
   {
     accessorKey: 'state',
     header: 'Estado',
+    cell: ({ row }) => {
+      const variants: {
+        [key: string]:
+          | 'destructive'
+          | 'success'
+          | 'default'
+          | 'secondary'
+          | 'outline'
+          | 'yellow'
+          | 'red'
+          | null
+          | undefined
+      } = {
+        vencido: 'red',
+        rechazado: 'destructive',
+        aprobado: 'success',
+        presentado: 'default',
+      }
+      return (
+        <Badge variant={variants[row.original.state]}>
+          {row.original.state}
+        </Badge>
+      )
+    },
   },
   {
     accessorKey: 'applies',
-    header: 'Aplica a',
+    header: 'DNI',
   },
   {
     accessorKey: 'document_url',

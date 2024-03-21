@@ -1,3 +1,4 @@
+import { id } from 'date-fns/locale';
 'use client'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { Documents } from "@/types/types"
@@ -100,7 +101,7 @@ insertMultiDocumentEquipment: async (documents: any) => {
       const { data, error } = await supabase
         .from('documents_equipment')
         .update(documents)
-        .eq('id', documents.id)
+        .eq('id', id)
         .select()
 
       if (error) {
@@ -114,9 +115,8 @@ insertMultiDocumentEquipment: async (documents: any) => {
       const { data, error } = await supabase
         .from('documents_employees')
         .update(documents)
-        .eq('id', documents.id)
-        .select()
-
+        .eq('id', id)
+        //console.log("id: ", id)
       if (error) {
         const message = await errorTranslate(error.message)
         throw new Error(String(message).replaceAll('"', ''))
@@ -129,7 +129,7 @@ insertMultiDocumentEquipment: async (documents: any) => {
     if(actualCompany){
        let { data: documents, error } = await supabase.from('documents_employees').select(`
             *,
-            employees:employees(id,company_id, document_number ),
+            employees:employees(id,company_id, document_number, lastname, firstname ),
             document_types:document_types(id, name)
         `)
         .not('employees', 'is', null)
@@ -225,5 +225,39 @@ insertMultiDocumentEquipment: async (documents: any) => {
       return imageUrl
     
   },
+
+    fetchEmployeeByDocument:async (document:string) => {
+      let { data: documents_employees, error } = await supabase
+  .from('documents_employees')
+  .select('*, employees:employees(id, document_number ),  document_types:document_types(name)')
+  .not('employees', 'is', null)    
+  .not('document_types', 'is', null)
+  .eq('employees.document_number', document)
+
+  //console.log("document employees: ", documents_employees)
+  if (error) {
+        const message = await errorTranslate(error?.message)
+        throw new Error(String(message).replaceAll('"', ''))
+      }
+  return documents_employees
+    },
+
+    fetchEquipmentByDocument:async (document:string) => {
+      let { data: documents_equipment, error } = await supabase
+  .from('documents_equipment')
+  .select('*, vehicles:vehicles(id, intern_number ),  document_types:document_types(name)'
+  )
+  .not('vehicles', 'is', null)    
+  .not('document_types', 'is', null)
+  .eq('vehicles.id', document)
+    
+  //console.log("document equipment: ", documents_equipment)
+  if (error) {
+        const message = await errorTranslate(error?.message)
+        throw new Error(String(message).replaceAll('"', ''))
+      }
+
+  return documents_equipment
+    },
   }
 }

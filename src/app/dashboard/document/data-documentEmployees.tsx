@@ -66,6 +66,8 @@ export function DataDocumentsEmployees<TData, TValue>({
   const defaultVisibleColumns = [
     'id_document_types',
     'validity',
+    'lastName',
+    'firstName',
     'state',
     'applies',
     'document_url',
@@ -87,6 +89,8 @@ export function DataDocumentsEmployees<TData, TValue>({
     : data
   const allOptions = {
     id_document_types: createOptions('id_document_types'),
+    lastName: createOptions('lastName'),
+    firstName: createOptions('firstName'),
     validity: createOptions('validity'),
     state: createOptions('state'),
     applies: createOptions('applies'),
@@ -111,6 +115,16 @@ export function DataDocumentsEmployees<TData, TValue>({
       name: 'validity',
       option: allOptions.validity,
       label: 'Validez',
+    },
+    lastName: {
+      name: 'lastname',
+      option: allOptions.lastName,
+      label: 'Apellido',
+    },
+    firstName: {
+      name: 'firstname',
+      option: allOptions.firstName,
+      label: 'Nombre',
     },
 
     state: {
@@ -159,7 +173,9 @@ export function DataDocumentsEmployees<TData, TValue>({
 
     setSelectValues({
       id_document_types: 'Todos',
-      validity: 'todos',
+      lastName: 'Todos',
+      firstName: 'Todos',
+      validity: 'Todos',
       state: 'Todos',
       applies: 'Todos',
       is_active: 'Todos',

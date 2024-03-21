@@ -45,19 +45,19 @@ import { es } from 'date-fns/locale'
 import { useSearchParams } from 'next/navigation'
 import { ChangeEvent, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { z } from 'zod'
+import { any, z } from 'zod'
 import { supabase } from '../../supabase/supabase'
+import { Calendar } from './ui/calendar'
+import { Input } from './ui/input'
+import { Label } from './ui/label'
+import { Switch } from './ui/switch'
+import { useToast } from './ui/use-toast'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from './ui/accordion'
-import { Calendar } from './ui/calendar'
-import { Input } from './ui/input'
-import { Label } from './ui/label'
-import { Switch } from './ui/switch'
-import { useToast } from './ui/use-toast'
 
 export default function SimpleDocument({
   resource,
@@ -76,8 +76,12 @@ export default function SimpleDocument({
   const [documenTypes, setDocumentTypes] = useState<any[] | null>([])
   const [expiredDate, setExpiredDate] = useState(false)
   const {
+    fetchEquipmentByDocument,
+    fetchEmployeeByDocument,
     insertDocumentEmployees,
     insertDocumentEquipment,
+    updateDocumentEmployees,
+    updateDocumentEquipment,
     uploadDocumentFile,
   } = useDocument()
   const formSchema = z.object({
@@ -112,6 +116,34 @@ export default function SimpleDocument({
     resolver: zodResolver(formSchema),
     defaultValues: {},
   })
+  ////////////////////////////////////////////////////////////////////////
+  const [equipmentData, setEquipmentData] = useState<any>(null)
+  const equipment = async () => {
+    //console.log('Valor de document:', id)
+    const data = await fetchEquipmentByDocument(id as any)
+    //console.log('Datos obtenidos del empleado:', data)
+    setEquipmentData(data)
+  }
+  //console.log('equipmentData: ', equipmentData)
+
+  const [employeeData, setEmployeeData] = useState<any>(null)
+
+  const employee = async () => {
+    //console.log('Valor de document:', document)
+    const data = await fetchEmployeeByDocument(document as any)
+    //console.log('Datos obtenidos del empleado:', data)
+    setEmployeeData(data)
+  }
+  //console.log('este employee data: ', employeeData)
+  useEffect(() => {
+    equipment()
+  }, [])
+
+  useEffect(() => {
+    employee()
+  }, [])
+
+  ////////////////////////////////////////////////////////////////////////
 
   useEffect(() => {
     form.reset()
@@ -168,6 +200,21 @@ export default function SimpleDocument({
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    const matchingDocument = employeeData?.find(
+      (doc: any) => doc.id_document_types === values.id_document_types,
+    )?.id
+
+    const matchingDocumentState = employeeData?.find(
+      (doc: any) => doc.id_document_types === values.id_document_types,
+    )?.state
+
+    const matchingEquipment = equipmentData?.find(
+      (doc: any) => doc.id_document_types === values.id_document_types,
+    )?.id
+    const matchingEquipmentState = equipmentData?.find(
+      (doc: any) => doc.id_document_types === values.id_document_types,
+    )?.state
+    // console.log('match: ', matchingDocumentState)
     if (expiredDate) {
       if (!values.validity) {
         form.setError('validity', {
@@ -216,7 +263,7 @@ export default function SimpleDocument({
           type: files.type,
         },
       )
-      console.log(renamedFile, 'renamedFile')
+      //console.log(renamedFile, 'renamedFile')
       // setFiles(renamedFile)
       const fileUrl = await uploadDocumentFile(renamedFile, 'document_files')
 
@@ -230,41 +277,90 @@ export default function SimpleDocument({
             vehicle?.name === values.applies
           )
         })?.id
-
-        finalValues = {
-          ...values,
-          document_url: fileUrl,
-          id_storage: null,
-          is_active: true,
-          applies: vehicle_id,
-          user_id: user,
-          id_document_types: values.id_document_types,
+        if (matchingEquipmentState !== 'aprobado') {
+          if (matchingEquipment) {
+            const documentIdToUpdate = matchingEquipment
+            finalValues = {
+              ...values,
+              document_url: fileUrl,
+              id_storage: null,
+              is_active: true,
+              applies: vehicle_id,
+              user_id: user,
+              id_document_types: values.id_document_types,
+            }
+            //console.log('equipmentData: ', equipmentData)
+            //console.log('matching Equipment: ', matchingEquipment)
+            //console.log('document Id To Update: ', documentIdToUpdate)
+            updateDocumentEquipment(documentIdToUpdate, finalValues)
+          } else {
+            finalValues = {
+              ...values,
+              document_url: fileUrl,
+              id_storage: null,
+              is_active: true,
+              applies: vehicle_id,
+              user_id: user,
+              id_document_types: values.id_document_types,
+            }
+            insertDocumentEquipment(finalValues)
+          }
+          toast({
+            title: 'Documento cargado',
+            description: 'El documento fue cargado con éxito',
+          })
+        } else {
+          toast({
+            title: 'Documento No cargado',
+            description: 'El documento no fue cargado por que ya fue aprobado',
+            variant: 'destructive',
+          })
         }
-
-        insertDocumentEquipment(finalValues)
       } else {
         const user_id = employees?.find(
           (e: any) => e?.document === values.applies,
         )?.id
+        if (matchingDocumentState !== 'aprobado') {
+          if (matchingDocument) {
+            const documentIdToUpdate = matchingDocument
+            finalValues = {
+              ...values,
+              document_url: fileUrl,
+              id_storage: null,
+              is_active: true,
+              applies: user_id,
+              user_id: user,
+              id_document_types: values.id_document_types,
+            }
 
-        finalValues = {
-          ...values,
-          document_url: fileUrl,
-          id_storage: null,
-          is_active: true,
-          applies: user_id,
-          user_id: user,
-          id_document_types: values.id_document_types,
+            //console.log('employeeData: ', employeeData)
+            updateDocumentEmployees(documentIdToUpdate, finalValues)
+          } else {
+            finalValues = {
+              ...values,
+              document_url: fileUrl,
+              id_storage: null,
+              is_active: true,
+              applies: user_id,
+              user_id: user,
+              id_document_types: values.id_document_types,
+            }
+
+            insertDocumentEmployees(finalValues)
+          }
+          toast({
+            title: 'Documento cargado',
+            description: 'El documento fue cargado con éxito',
+          })
+        } else {
+          toast({
+            title: 'Documento No cargado',
+            description: 'El documento no fue cargado por que ya fue aprobado',
+            variant: 'destructive',
+          })
         }
-
-        insertDocumentEmployees(finalValues)
       }
-
       handleOpen()
-      toast({
-        title: 'Documento cargado',
-        description: 'El documento fue cargado con éxito',
-      })
     }
   }
 
