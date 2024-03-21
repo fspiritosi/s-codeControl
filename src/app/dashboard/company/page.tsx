@@ -78,7 +78,7 @@ export default function allCompany() {
   }
 
   return (
-    <main className="">
+    <section className="">
       <h2 className="text-3xl pb-5 pl-10">Todas las Compañias</h2>
       <p className="pl-10 max-w-1/2">Aquí se verán todas las compañías</p>
       <div className=" rounded-lg shadow-2xl p-4">
@@ -92,6 +92,6 @@ export default function allCompany() {
           selectedCard={selectedCard}
         />
       )}
-    </main>
+    </section>
   )
 }

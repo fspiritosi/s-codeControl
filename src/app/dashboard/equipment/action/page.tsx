@@ -7,9 +7,9 @@ export default function EmployeeFormAction({
   searchParams: any
 }) {
   return (
-    <main className="flex w-full justify-between">
+    <section className="flex w-full justify-between">
       <VehiclesForm />
       {searchParams.action === 'new' ? false : <DocumentationDrawer />}
-    </main>
+    </section>
   )
 }
