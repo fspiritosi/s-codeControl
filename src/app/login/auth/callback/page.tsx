@@ -30,7 +30,7 @@ export default function Callback() {
   const size = `calc(100vh - 442px)`
 
   return (
-    <main
+    <section
       className="flex min-h-screen max-h-[90vh]"
       style={{ maxHeight: '100vh', padding: '10px' }}
     >
@@ -56,6 +56,6 @@ export default function Callback() {
           {/* <Skeleton className=" h-full w-full mt-2 pb-4" /> */}
         </section>
       </div>
-    </main>
+    </section>
   )
 }

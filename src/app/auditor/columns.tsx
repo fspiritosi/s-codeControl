@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/drawer'
 import { ColumnDef } from '@tanstack/react-table'
 import { ArrowUpDown } from 'lucide-react'
+import Link from 'next/link'
 
 type Colum = {
   date: string
@@ -99,39 +100,10 @@ export const AuditorColums: ColumnDef<Colum>[] = [
     accessorKey: 'id',
     header: 'Auditar',
     cell: ({ row }) => {
-      console.log(row.original, 'row')
       return (
-        <Drawer>
-          <DrawerTrigger asChild>
-            <Button variant="default">Auditar</Button>
-          </DrawerTrigger>
-          <DrawerContent className='bg-red-200'>
-            <div className="mx-auto max-w-sm  w-screen flex justify-center">
-              <div className="flex w-screen">
-                <DrawerHeader>
-                  <DrawerTitle>
-                    Este documeto pertenece a {row.original.resource}
-                  </DrawerTitle>
-                  <DrawerDescription>
-                    La empresa {row.original.companyName} ha presentado el
-                    documento
-                  </DrawerDescription>
-                </DrawerHeader>
-
-                <embed
-                  src="https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/document_files/12341234-AltaTempranaAFIP.pdf"
-                  className="w-[70vw] h-[90vh] max-h-[80vh] relative"
-                />
-              </div>
-              {/* <DrawerFooter>
-                <Button>Aprobar </Button>
-                <DrawerClose asChild>
-                  <Button variant="outline">Rechazar</Button>
-                </DrawerClose>
-              </DrawerFooter> */}
-            </div>
-          </DrawerContent>
-        </Drawer>
+       <Link href={`auditor/${row.original.id}`}>
+          <Button>Auditar</Button>
+       </Link>
       )
     },
   },

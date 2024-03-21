@@ -9,9 +9,9 @@ export default function EmployeeFormAction({
 }) {
   revalidatePath('/dashboard/employee/action')
   return (
-    <main className="flex w-full justify-between">
+    <section className="flex w-full justify-between">
       <EmployeeAccordion />
       {searchParams.action === 'new' ? false : <DocumentationDrawer />}
-    </main>
+    </section>
   )
 }

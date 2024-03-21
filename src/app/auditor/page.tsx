@@ -107,8 +107,6 @@ export default async function Auditor() {
     )
   `)
 
-  console.log(documents_employees, 'documents_employees')
-
   const filteredData = documents_employees?.map(doc => {
     return {
       date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
