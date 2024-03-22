@@ -347,10 +347,10 @@ export const DocumentationDrawer = () => {
                   )}
                 >
                   {resource === 'empleado'
-                    ? getDocumentState(doc?.name || '')
-                      ? getDocumentState(doc?.name || 'No presentado')
-                      : 'No presentado'
-                    : getDocumentEquipmentState(doc?.name || '')}
+                    ? getDocumentState(doc?.name || '') || 'No presentado'
+                    : getDocumentEquipmentState(doc?.name || '') ||
+                      'No presentado'}
+                  ;
                 </Badge>
               </div>
             </li>
