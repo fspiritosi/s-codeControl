@@ -30,8 +30,7 @@ export default function NewDocumentModal({
   isOpen: boolean
   multiresource: boolean | undefined
 }) {
-  const setLoading = DocumentsValidation(state => state.setLoading)
-  const loading = DocumentsValidation(state => state.loading)
+  const [loading, setLoading] = useState(false)
 
   const resetAll = DocumentsValidation(state => state.resetAll)
   const handleOpen = () => {
@@ -60,7 +59,6 @@ export default function NewDocumentModal({
   }
 
   const hasErrors = DocumentsValidation(state => state.hasErrors)
-  const deleteDocument = DocumentsValidation(state => state.deleteDocument)
   const setTotalForms = DocumentsValidation(state => state.setTotalForms)
   const totalForms = DocumentsValidation(state => state.totalForms)
 
@@ -82,10 +80,18 @@ export default function NewDocumentModal({
 
   const handleClicks = async () => {
     // Ciclo que valida los campos de cada input
-    if (hasErrors) await ValidateForms()
+    if (hasErrors) {
+      setLoading(true)
+      await ValidateForms()
+      setLoading(false)
+    }
 
     // Si todos los inputs son validos, se hace el ciclo de clicks
-    if (!hasErrors) await handleSendForms()
+    if (!hasErrors) {
+      setLoading(true)
+      await handleSendForms()
+      setLoading(false)
+    }
   }
 
   // const [totalForms] = useState(1)
@@ -166,7 +172,7 @@ export default function NewDocumentModal({
                   </div>
                   <div className="flex justify-evenly">
                     <Button onClick={() => handleOpen()}>Cancel</Button>
-                    <Button onClick={handleClicks}>
+                    <Button disabled={loading} onClick={handleClicks}>
                       {loading ? (
                         <Loader />
                       ) : (
@@ -257,7 +263,7 @@ export default function NewDocumentModal({
                   </div>
                   <div className="flex justify-evenly">
                     <Button onClick={() => handleOpen}>Cancel</Button>
-                    <Button onClick={handleClicks}>
+                    <Button disabled={loading} onClick={handleClicks}>
                       {loading ? (
                         <Loader />
                       ) : (

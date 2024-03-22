@@ -81,7 +81,12 @@ export function AuditorDataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     state: {
-      sorting,
+      sorting: [
+        {
+          id: 'resource',
+          desc: false,
+        },
+      ],
       columnVisibility,
       columnFilters,
     },
@@ -164,7 +169,7 @@ export function AuditorDataTable<TData, TValue>({
     <div className="mb-10">
       <div className="flex items-center py-4 flex-wrap">
         <Input
-          placeholder="Buscar por nombre"
+          placeholder="Buscar por nombre de empleado"
           value={
             (table.getColumn('resource')?.getFilterValue() as string) ?? ''
           }

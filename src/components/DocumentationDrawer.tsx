@@ -221,19 +221,7 @@ export const DocumentationDrawer = () => {
     }
   }
 
-  const setLoading = DocumentsValidation(state => state.setLoading)
-  const loading = DocumentsValidation(state => state.loading)
-  // let url = ''
-
-  // if (typeof window !== 'undefined') {
-  //   url = window.location.href
-  // }
-  // const resource = url.includes('employee')
-  //   ? 'empleado'
-  //   : url.includes('equipment')
-  //     ? 'equipo'
-  //     : undefined
-
+  const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const resetAll = DocumentsValidation(state => state.resetAll)
   const selectedDocumentation =
@@ -268,6 +256,7 @@ export const DocumentationDrawer = () => {
     }
   }
   const handleSendForms = async () => {
+    setLoading(true)
     await Promise.all(
       refs.map(async (ref, i) => {
         if (ref.current) {
@@ -280,14 +269,23 @@ export const DocumentationDrawer = () => {
         }
       }),
     )
+    setLoading(false)
   }
 
   const handleClicks = async () => {
     // Ciclo que valida los campos de cada form
-    if (hasErrors) await ValidateForms()
+    if (hasErrors) {
+      setLoading(true)
+      await ValidateForms()
+      setLoading(false)
+    }
 
     // Si todos los inputs son validos, se hace el ciclo de clicks
-    if (!hasErrors) await handleSendForms()
+    if (!hasErrors) {
+      setLoading(true)
+      await handleSendForms()
+      setLoading(false)
+    }
   }
 
   const fillRef = () => {
@@ -383,37 +381,12 @@ export const DocumentationDrawer = () => {
                 <div className="space-y-3">
                   {Array.from({ length: totalForms }).map((_, index) => (
                     <div key={index} className="relative">
-                      {/* <Accordion
-                        type="single"
-                        collapsible
-                        className="w-full"
-                        defaultValue="item-1"
-                        asChild
-                      >
-                        <AccordionItem value={`item-${index + 1}`}>
-                          <AccordionTrigger
-                            defaultValue="item-1"
-                            className="text-lg flex relative"
-                          >{`Documento ${index + 1}`}</AccordionTrigger>
-                          <AccordionContent>
-                            {index !== 0 && (
-                              <MinusCircledIcon
-                                onClick={() => {
-                                  setTotalForms(false)
-                                  deleteDocument(index)
-                                }}
-                                className="h-4 w-4 shrink-0 absolute right-3 top-1 text-red-800 cursor-pointer"
-                              />
-                            )} */}
                       <SimpleDocument
                         resource={resource}
                         index={index}
                         handleOpen={handleOpen}
                         refSubmit={refs[index]}
                       />
-                      {/* </AccordionContent>
-                        </AccordionItem>
-                      </Accordion> */}
                     </div>
                   ))}
                 </div>
@@ -428,7 +401,7 @@ export const DocumentationDrawer = () => {
                 </div>
                 <div className="flex justify-evenly">
                   <Button onClick={handleOpen}>Cancel</Button>
-                  <Button onClick={handleClicks}>
+                  <Button disabled={loading} onClick={handleClicks}>
                     {loading ? (
                       <Loader />
                     ) : (
