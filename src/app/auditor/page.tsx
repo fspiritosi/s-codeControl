@@ -73,6 +73,7 @@ import { supabase } from '../../../supabase/supabase'
 import { AuditorColums } from './columns'
 import { AuditorDataTable } from './data-table'
 import { revalidatePath } from 'next/cache'
+
 type AuditorDocument = {
   date: string
   companyName: string
@@ -92,6 +93,7 @@ export default async function Auditor() {
 
   let doc_personas = document_types?.filter(doc => doc.applies === 'Persona')
   let doc_equipos = document_types?.filter(doc => doc.applies === 'Equipos')
+  revalidatePath('/auditor')
 
   revalidatePath('/auditor')
   let { data: documents_employees } = await supabase.from('documents_employees')
@@ -125,79 +127,91 @@ export default async function Auditor() {
   }) as AuditorDocument[]
 
   return (
-    <section>
-      <Card>
-        <CardHeader>
-          <CardTitle>Tipos de documentos</CardTitle>
-          <CardDescription>Tipos de documentos auditables</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Accordion type="single" collapsible>
-            <AccordionItem value="item-1">
-              <AccordionTrigger>Personas</AccordionTrigger>
-              <AccordionContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nombre del Documento</TableHead>
-                      <TableHead className="w-[100px]">Multirecurso</TableHead>
-                      <TableHead className="w-[100px]">Vence</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {doc_personas?.map(doc => (
-                      <TableRow key={doc.id}>
-                        <TableCell className="font-medium">
-                          {doc.name}
-                        </TableCell>
-                        <TableCell>{doc.multiresource ? 'Si' : 'No'}</TableCell>
-                        <TableCell>{doc.explired ? 'Si' : 'No'}</TableCell>
+    <div>
+      <section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Tipos de documentos</CardTitle>
+            <CardDescription>Tipos de documentos auditables</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Accordion type="single" collapsible>
+              <AccordionItem value="item-1">
+                <AccordionTrigger>Personas</AccordionTrigger>
+                <AccordionContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nombre del Documento</TableHead>
+                        <TableHead className="w-[100px]">
+                          Multirecurso
+                        </TableHead>
+                        <TableHead className="w-[100px]">Vence</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-          <Accordion type="single" collapsible>
-            <AccordionItem value="item-1">
-              <AccordionTrigger>Equipos</AccordionTrigger>
-              <AccordionContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nombre del Documento</TableHead>
-                      <TableHead className="w-[100px]">Multirecurso</TableHead>
-                      <TableHead className="w-[100px]">Vence</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {doc_equipos?.map(doc => (
-                      <TableRow key={doc.id}>
-                        <TableCell className="font-medium">
-                          {doc.name}
-                        </TableCell>
-                        <TableCell>{doc.multiresource ? 'Si' : 'No'}</TableCell>
-                        <TableCell>{doc.explired ? 'Si' : 'No'}</TableCell>
+                    </TableHeader>
+                    <TableBody>
+                      {doc_personas?.map(doc => (
+                        <TableRow key={doc.id}>
+                          <TableCell className="font-medium">
+                            {doc.name}
+                          </TableCell>
+                          <TableCell>
+                            {doc.multiresource ? 'Si' : 'No'}
+                          </TableCell>
+                          <TableCell>{doc.explired ? 'Si' : 'No'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+            <Accordion type="single" collapsible>
+              <AccordionItem value="item-1">
+                <AccordionTrigger>Equipos</AccordionTrigger>
+                <AccordionContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nombre del Documento</TableHead>
+                        <TableHead className="w-[100px]">
+                          Multirecurso
+                        </TableHead>
+                        <TableHead className="w-[100px]">Vence</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </CardContent>
-        <CardFooter>
-          <Link
-            href="/auditor/new-document-type"
-            className={buttonVariants({ variant: 'outline' })}
-          >
-            Crear Nuevo
-          </Link>
-        </CardFooter>
-      </Card>
-      <Separator />
-      <AuditorDataTable data={filteredData} columns={AuditorColums} />
-    </section>
+                    </TableHeader>
+                    <TableBody>
+                      {doc_equipos?.map(doc => (
+                        <TableRow key={doc.id}>
+                          <TableCell className="font-medium">
+                            {doc.name}
+                          </TableCell>
+                          <TableCell>
+                            {doc.multiresource ? 'Si' : 'No'}
+                          </TableCell>
+                          <TableCell>{doc.explired ? 'Si' : 'No'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </CardContent>
+          <CardFooter>
+            <Link
+              href="/auditor/new-document-type"
+              className={buttonVariants({ variant: 'outline' })}
+            >
+              Crear Nuevo
+            </Link>
+          </CardFooter>
+        </Card>
+        <Separator />
+      </section>
+      <section>
+        <AuditorDataTable data={filteredData} columns={AuditorColums} />
+      </section>
+    </div>
   )
 }
