@@ -60,7 +60,7 @@ export const useAuthData = () => {
       localStorage.removeItem('email')
 
       const { data, error } = await supabase.auth.admin.updateUserById(
-        user[0].credentialId,
+        user[0].credential_id,
         { password },
       )
       if (error) {

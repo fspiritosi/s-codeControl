@@ -22,6 +22,7 @@ import {
   PlusCircledIcon,
 } from '@radix-ui/react-icons'
 import { ChangeEvent, useEffect, useState } from 'react'
+require('dotenv').config()
 
 import { useImageUpload } from '@/hooks/useUploadImage'
 import { useLoggedUserStore } from '@/store/loggedUser'
@@ -29,7 +30,9 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../supabase/supabase'
+import { ImageHander } from './ImageHandler'
 import { Modal } from './Modal'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import {
   FormControl,
   FormDescription,
@@ -40,8 +43,6 @@ import {
 } from './ui/form'
 import { Input } from './ui/input'
 import { useToast } from './ui/use-toast'
-import { ImageHander } from './ImageHandler'
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 
 type VehicleType = {
   year: number
@@ -370,7 +371,7 @@ export default function VehiclesForm2() {
       models: model_vehicles as generic[],
     })
   }
-
+  const url = process.env.NEXT_PUBLIC_PROJECT_URL
   // 2. Define a submit handler.
   async function onCreate(values: z.infer<typeof vehicleSchema>) {
     const { type_of_vehicle, brand, model, domain } = values
@@ -397,13 +398,13 @@ export default function VehiclesForm2() {
       const fileExtension = imageFile?.name.split('.').pop()
       if (imageFile) {
         try {
-          const renamedFile = new File([imageFile], `${id}.${fileExtension}`, {
+          const renamedFile = new File([imageFile], `${id.replace(/\s/g, '')}.${fileExtension}`, {
             type: `image/${fileExtension}`,
           })
           await uploadImage(renamedFile, 'vehicle_photos')
 
           try {
-            const vehicleImage = `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/vehicle_photos/${id}.${fileExtension}`
+            const vehicleImage = `${url}/vehicle_photos/${id}.${fileExtension}`.trim().replace(/\s/g, '')
             const { data, error } = await supabase
               .from('vehicles')
               .update({ picture: vehicleImage })
@@ -496,13 +497,13 @@ export default function VehiclesForm2() {
       const fileExtension = imageFile?.name.split('.').pop()
       if (imageFile) {
         try {
-          const renamedFile = new File([imageFile], `${id}.${fileExtension}`, {
+          const renamedFile = new File([imageFile], `${id?.replace(/\s/g, '')}.${fileExtension}`, {
             type: `image/${fileExtension}`,
           })
           await uploadImage(renamedFile, 'vehicle_photos')
 
           try {
-            const vehicleImage = `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/vehicle_photos/${id}.${fileExtension}?timestamp=${Date.now()}`
+            const vehicleImage = `${url}/vehicle_photos/${id}.${fileExtension}?timestamp=${Date.now()}`.trim().replace(/\s/g, '')
             const { data, error } = await supabase
               .from('vehicles')
               .update({ picture: vehicleImage })
@@ -1133,14 +1134,13 @@ export default function VehiclesForm2() {
               />
             </div>
           </div>
-          {
-            !readOnly &&
+          {!readOnly && (
             <Button type="submit" className="mt-5">
-            {accion === 'edit' || accion === 'view'
-              ? 'Guardar cambios'
-              : 'Agregar equipo'}
-          </Button>
-          }
+              {accion === 'edit' || accion === 'view'
+                ? 'Guardar cambios'
+                : 'Agregar equipo'}
+            </Button>
+          )}
         </form>
       </Form>
     </section>

@@ -1,12 +1,15 @@
+import { id } from 'date-fns/locale';
 'use client'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { Documents } from "@/types/types"
 import { supabase } from "../../supabase/supabase"
 import { useEdgeFunctions } from './useEdgeFunctions'
+require('dotenv').config()
 export const useDocument = () => {
  const { errorTranslate } = useEdgeFunctions()
  const {actualCompany}= useLoggedUserStore()
- console.log(actualCompany,'actualCompany');
+//  console.log(actualCompany,'actualCompany');
+ const url = process.env.NEXT_PUBLIC_PROJECT_URL
     
  return{
 
@@ -98,7 +101,7 @@ insertMultiDocumentEquipment: async (documents: any) => {
       const { data, error } = await supabase
         .from('documents_equipment')
         .update(documents)
-        .eq('id', documents.id)
+        .eq('id', id)
         .select()
 
       if (error) {
@@ -112,9 +115,8 @@ insertMultiDocumentEquipment: async (documents: any) => {
       const { data, error } = await supabase
         .from('documents_employees')
         .update(documents)
-        .eq('id', documents.id)
-        .select()
-
+        .eq('id', id)
+        //console.log("id: ", id)
       if (error) {
         const message = await errorTranslate(error.message)
         throw new Error(String(message).replaceAll('"', ''))
@@ -127,7 +129,7 @@ insertMultiDocumentEquipment: async (documents: any) => {
     if(actualCompany){
        let { data: documents, error } = await supabase.from('documents_employees').select(`
             *,
-            employees:employees(id,company_id, document_number ),
+            employees:employees(id,company_id, document_number, lastname, firstname ),
             document_types:document_types(id, name)
         `)
         .not('employees', 'is', null)
@@ -141,7 +143,7 @@ insertMultiDocumentEquipment: async (documents: any) => {
         throw new Error(String(message).replaceAll('"', ''))
       }
      
-      console.log(documents,'documents');
+      // console.log(documents,'documents');
       return documents
     }
     },
@@ -190,7 +192,7 @@ insertMultiDocumentEquipment: async (documents: any) => {
       // Obtener la URL de la imagen cargada
        
 
-      const imageUrl = `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/${imageBucket}/${data?.path}`
+      const imageUrl = `${url}/${imageBucket}/${data?.path}`.trim().replace(/\s/g, '')
 
       return imageUrl
     
@@ -218,10 +220,44 @@ insertMultiDocumentEquipment: async (documents: any) => {
       // Obtener la URL de la imagen cargada
        
 
-      const imageUrl = `https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/${imageBucket}/${data?.path}`
+      const imageUrl = `${url}/${imageBucket}/${data?.path}`.trim().replace(/\s/g, '')
 
       return imageUrl
     
   },
+
+    fetchEmployeeByDocument:async (document:string) => {
+      let { data: documents_employees, error } = await supabase
+  .from('documents_employees')
+  .select('*, employees:employees(id, document_number ),  document_types:document_types(name)')
+  .not('employees', 'is', null)    
+  .not('document_types', 'is', null)
+  .eq('employees.document_number', document)
+
+  //console.log("document employees: ", documents_employees)
+  if (error) {
+        const message = await errorTranslate(error?.message)
+        throw new Error(String(message).replaceAll('"', ''))
+      }
+  return documents_employees
+    },
+
+    fetchEquipmentByDocument:async (document:string) => {
+      let { data: documents_equipment, error } = await supabase
+  .from('documents_equipment')
+  .select('*, vehicles:vehicles(id, intern_number ),  document_types:document_types(name)'
+  )
+  .not('vehicles', 'is', null)    
+  .not('document_types', 'is', null)
+  .eq('vehicles.id', document)
+    
+  //console.log("document equipment: ", documents_equipment)
+  if (error) {
+        const message = await errorTranslate(error?.message)
+        throw new Error(String(message).replaceAll('"', ''))
+      }
+
+  return documents_equipment
+    },
   }
 }

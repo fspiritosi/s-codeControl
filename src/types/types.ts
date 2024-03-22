@@ -27,7 +27,7 @@ export type profileUser = {
   created_at?: string
   firstname: string
   lastname: string
-  credentialId: string
+  credential_id: string
   email: string
   avatar?: string
 }
@@ -210,7 +210,7 @@ export type Employee = {
 }
 
 export type Documents = {
-  id?:string
+  id:string
   id_storage: string | null
   id_document_types: string | null
   applies:string | null
@@ -280,7 +280,7 @@ type Document = {
   id_storage: string
   id_document_types: DocumentType
   validity: string
-  state: 'presentado' | 'rechazado' | 'aprovbado' | 'vencido'
+  state: 'presentado' | 'rechazado' | 'aprobado' | 'vencido'
   is_active: boolean
   user_id: string
   applies: Resource

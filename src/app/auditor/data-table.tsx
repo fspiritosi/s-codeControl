@@ -22,16 +22,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { useContext, useEffect, useReducer, useRef, useState } from 'react'
-import Link from 'next/link'
-import {
   Select,
   SelectContent,
   SelectGroup,
@@ -40,113 +30,49 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useRouter } from 'next/navigation'
-import { Url } from 'next/dist/shared/lib/router/router'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { DataTable } from '../employee/data-table'
-import { useSidebarOpen } from '@/store/sidebar'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { useState } from 'react'
 
-interface DataDocumentsEmployeesProps<TData, TValue> {
-  columEmp: ColumnDef<TData, TValue>[] | any
+interface DataTableProps<TData, TValue> {
+  columns: ColumnDef<TData, TValue>[]
   data: TData[]
-  //allCompany: any[]
-  showInactive: boolean
-  setShowInactive: (showInactive: boolean) => void
 }
 
-export function DataDocumentsEmployees<TData, TValue>({
-  columEmp,
+export function AuditorDataTable<TData, TValue>({
+  columns,
   data,
-  showInactive,
-  setShowInactive,
-  //allCompany,
-}: DataDocumentsEmployeesProps<TData, TValue>) {
+}: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const defaultVisibleColumns = [
-    'id_document_types',
-    'validity',
-    'lastName',
-    'firstName',
+    'date',
+    'companyName',
+    'resource',
+    'allocated_to',
+    'documentName',
     'state',
-    'applies',
-    'document_url',
-    'is_active',
+    'multiresource',
+    'validity',
+    'id',
   ]
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-    columEmp.reduce((acc: any, column: any) => {
+    columns.reduce((acc: any, column: any) => {
       acc[column.accessorKey] = defaultVisibleColumns.includes(
         column.accessorKey,
       )
       return acc
     }, {}),
   )
-  //const [showInactive, setShowInactive] = useState<boolean>(false)
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const loader = useLoggedUserStore(state => state.isLoading)
-  const filteredData = showInactive
-    ? data.filter((item: any) => item.is_active === false)
-    : data
-  const allOptions = {
-    id_document_types: createOptions('id_document_types'),
-    lastName: createOptions('lastName'),
-    firstName: createOptions('firstName'),
-    validity: createOptions('validity'),
-    state: createOptions('state'),
-    applies: createOptions('applies'),
-    is_active: createOptions('is_active'),
-  }
-
-  function createOptions(key: string) {
-    const values = data?.map((item: any) =>
-      item?.[key]?.name ? item?.[key]?.name : item?.[key],
-    )
-
-    return ['Todos', ...Array.from(new Set(values))]
-  }
-
-  const selectHeader = {
-    id_document_types: {
-      name: 'id_document_types',
-      option: allOptions.id_document_types,
-      label: 'Tipo de documento',
-    },
-    validity: {
-      name: 'validity',
-      option: allOptions.validity,
-      label: 'Validez',
-    },
-    lastName: {
-      name: 'lastname',
-      option: allOptions.lastName,
-      label: 'Apellido',
-    },
-    firstName: {
-      name: 'firstname',
-      option: allOptions.firstName,
-      label: 'Nombre',
-    },
-
-    state: {
-      name: 'state',
-      option: allOptions.state,
-      label: 'Estado',
-    },
-    applies: {
-      name: 'applies',
-      option: allOptions.applies,
-      label: 'Aplica a',
-    },
-    is_active: {
-      name: 'is_active',
-      option: allOptions.is_active,
-      label: 'Activo',
-    },
-  }
-
-  let table = useReactTable({
+  const table = useReactTable({
     data,
-    columns: columEmp,
+    columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
@@ -159,50 +85,91 @@ export function DataDocumentsEmployees<TData, TValue>({
       columnVisibility,
       columnFilters,
     },
+    sortingFns: {
+      myCustomSortingFn: (rowA, rowB, columnId) => {
+        return rowA.original[columnId] > rowB.original[columnId]
+          ? 1
+          : rowA.original[columnId] < rowB.original[columnId]
+            ? -1
+            : 0
+      },
+    },
   })
-  const { expanded } = useSidebarOpen()
-  const totalWidth = `calc(100vw - ${expanded ? '296px' : '167px'})`
 
-  //const router = useRouter()
+  function createOptions(key: string) {
+    const values = data?.flatMap((item: any) => item?.[key])
+    return ['Todos', ...Array.from(new Set(values))]
+  }
 
+  const allOptions = {
+    companyName: createOptions('companyName'),
+    documentName: createOptions('documentName'),
+    resource: createOptions('resource'),
+    state: createOptions('state'),
+    multiresource: createOptions('multiresource'),
+    allocated_to: createOptions('allocated_to'),
+  }
+  const selectHeader = {
+    companyName: {
+      name: 'companyName',
+      option: allOptions.companyName,
+      label: 'Empresa',
+    },
+    resource: {
+      name: 'resource',
+      option: allOptions.resource,
+      label: 'Recurso',
+    },
+    documentName: {
+      name: 'documentName',
+      option: allOptions.documentName,
+      label: 'Documento',
+    },
+    state: {
+      name: 'state',
+      option: allOptions.state,
+      label: 'Estado',
+    },
+    multiresource: {
+      name: 'multiresource',
+      option: allOptions.multiresource,
+      label: 'Multirecurso',
+    },
+    allocated_to: {
+      name: 'allocated_to',
+      option: allOptions.allocated_to,
+      label: 'Afectado a',
+    },
+  }
+
+  const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
+    {},
+  )
+  const maxRows = ['20', '40', '60', '80', '100']
   const handleClearFilters = () => {
     table.getAllColumns().forEach(column => {
       column.setFilterValue('')
     })
-    //router.push('/dashboard/equipment')
 
     setSelectValues({
-      id_document_types: 'Todos',
-      lastName: 'Todos',
-      firstName: 'Todos',
-      validity: 'Todos',
+      companyName: 'Todos',
+      resource: 'Todos',
+      documentName: 'Todos',
       state: 'Todos',
-      applies: 'Todos',
-      is_active: 'Todos',
+      multiresource: 'Todos',
     })
   }
-  const maxRows = ['20', '40', '60', '80', '100']
-  const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
-    {},
-  )
-  // const handleToggleInactive = () => {
-  //   setShowInactive(!showInactive)
-  // }
 
   return (
-    <div>
-      <div className="flex items-center py-4">
+    <div className="mb-10">
+      <div className="flex items-center py-4 flex-wrap">
         <Input
-          placeholder="Buscar por tipo de documento"
+          placeholder="Buscar por nombre"
           value={
-            (table
-              .getColumn('id_document_types')
-              ?.getFilterValue() as string) ?? ''
+            (table.getColumn('resource')?.getFilterValue() as string) ?? ''
           }
           onChange={event =>
-            table
-              .getColumn('id_document_types')
-              ?.setFilterValue(event.target.value)
+            table.getColumn('resource')?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -215,7 +182,7 @@ export function DataDocumentsEmployees<TData, TValue>({
           Limpiar filtros
         </Button>
 
-        <div className="w-full flex justify-end gap-2">
+        <div className=" flex gap-2 ml-2 flex-wrap">
           <Select onValueChange={e => table.setPageSize(Number(e))}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Cantidad de filas" />
@@ -231,11 +198,10 @@ export function DataDocumentsEmployees<TData, TValue>({
               </SelectGroup>
             </SelectContent>
           </Select>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
-                Columnas
-              </Button>
+              <Button variant="outline">Columnas</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
@@ -251,27 +217,7 @@ export function DataDocumentsEmployees<TData, TValue>({
                   ) {
                     return null
                   }
-                  if (column.id === 'is_active') {
-                    return (
-                      <>
-                        <DropdownMenuCheckboxItem
-                          key={column.id}
-                          className="capitalize  text-red-400"
-                          checked={showInactive}
-                          //onChange={() => setShowInactive(!showInactive)}
-                          onClick={() => setShowInactive(!showInactive)}
-                          onCheckedChange={value =>
-                            column.toggleVisibility(true)
-                          }
-                        >
-                          {column.columnDef.header}
-                        </DropdownMenuCheckboxItem>
-                        {/* <button onClick={() => setShowInactive(!showInactive)}>
-                          Ver equipos dados de baja
-                        </button> */}
-                      </>
-                    )
-                  }
+
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}
@@ -289,40 +235,30 @@ export function DataDocumentsEmployees<TData, TValue>({
           </DropdownMenu>
         </div>
       </div>
-      <div
-        className="rounded-md border"
-        style={{
-          overflow: 'auto',
-          width: '100%',
-          maxWidth: totalWidth,
-        }}
-      >
+      <div className="rounded-md border mb-6">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => {
                   return (
-                    <TableHead
-                      className="text-center text-balance"
-                      key={header.id}
-                    >
+                    <TableHead key={header.id} className="text-center">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.id in selectHeader ? (
-                              header.id === 'intern_number' ? (
+                              header.id === 'allocated_to' ? (
                                 <div className="flex justify-center">
                                   <Input
-                                    placeholder="Número de interno"
+                                    placeholder="Buscar por afectación"
                                     value={
                                       table
-                                        .getColumn('intern_number')
+                                        .getColumn('allocated_to')
                                         ?.getFilterValue() as string
                                     }
                                     onChange={event =>
                                       table
-                                        .getColumn('intern_number')
+                                        .getColumn('allocated_to')
                                         ?.setFilterValue(event.target.value)
                                     }
                                     className="max-w-sm"
@@ -346,13 +282,14 @@ export function DataDocumentsEmployees<TData, TValue>({
                                       table
                                         .getColumn(header.id)
                                         ?.setFilterValue(event)
+
                                       setSelectValues({
                                         ...selectValues,
                                         [header.id]: event,
                                       })
                                     }}
                                   >
-                                    <SelectTrigger className="w-[180px]">
+                                    <SelectTrigger className="">
                                       <SelectValue
                                         placeholder={
                                           header.column.columnDef
@@ -388,72 +325,31 @@ export function DataDocumentsEmployees<TData, TValue>({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody className="max-w-[50vw] overflow-x-auto">
+          <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map(row => (
                 <TableRow
                   key={row.id}
+                  className="text-center"
                   data-state={row.getIsSelected() && 'selected'}
                 >
-                  {row.getVisibleCells().map(cell => {
-                    let is_active = (cell.row.original as any).is_active
-                    return (showInactive && !is_active) ||
-                      (!showInactive && is_active) ? (
-                      <TableCell
-                        key={cell.id}
-                        className={`text-center whitespace-nowrap ${
-                          is_active ? '' : 'text-red-500'
-                        }`}
-                      >
-                        {cell.column.id === 'document_url' ? (
-                          <Link href={cell.getValue() as any} target="_blank">
-                            <img
-                              src={cell.getValue() as any}
-                              alt="Foto"
-                              style={{ width: '68px', height: '68px' }}
-                            />
-                          </Link>
-                        ) : (
-                          flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )
-                        )}
-                      </TableCell>
-                    ) : null
-                  })}
+                  {row.getVisibleCells().map(cell => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columEmp.length}
+                  colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  {loader ? (
-                    <div className="flex flex-col gap-3">
-                      <div className="flex justify-between">
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                      </div>
-                      <div className="flex justify-between">
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                      </div>
-                    </div>
-                  ) : (
-                    'No hay Equipos registrados'
-                  )}
+                  No hay documentos para auditar
                 </TableCell>
               </TableRow>
             )}

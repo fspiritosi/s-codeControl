@@ -13,6 +13,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -21,16 +22,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { useContext, useEffect, useReducer, useRef, useState } from 'react'
-import Link from 'next/link'
 import {
   Select,
   SelectContent,
@@ -41,11 +32,19 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useRouter } from 'next/navigation'
-import { Url } from 'next/dist/shared/lib/router/router'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { DataTable } from '../employee/data-table'
 import { useSidebarOpen } from '@/store/sidebar'
+import { VehiclesActualCompany } from '@/store/vehicles'
+import Link from 'next/link'
+import { useState } from 'react'
 
 interface DataEquipmentProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
@@ -70,6 +69,7 @@ export function DataEquipment<TData, TValue>({
     'brand',
     'model',
     'picture',
+    'status',
   ]
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     columns.reduce((acc: any, column: any) => {
@@ -79,7 +79,7 @@ export function DataEquipment<TData, TValue>({
       return acc
     }, {}),
   )
-  //const [showInactive, setShowInactive] = useState<boolean>(false)
+
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const loader = useLoggedUserStore(state => state.isLoading)
   const filteredData = showInactive
@@ -88,15 +88,10 @@ export function DataEquipment<TData, TValue>({
   const allOptions = {
     type_of_vehicle: createOptions('type_of_vehicle'),
     types_of_vehicles: createOptions('types_of_vehicles'),
-    //is_active: createOptions('is_active'),
-    // domain: createOptions('domain'),
-    // chassis: createOptions('chassis'),
-    //engine: createOptions('engine'),
-    //serie: createOptions('serie'),
-    //intern_number: createOptions('intern_number'),
     year: createOptions('year'),
     brand: createOptions('brand_vehicles'),
     model: createOptions('model_vehicles'),
+    status: createOptions('status'),
   }
 
   function createOptions(key: string) {
@@ -118,31 +113,6 @@ export function DataEquipment<TData, TValue>({
       option: allOptions.types_of_vehicles,
       label: 'Tipos de vehículos',
     },
-    // domain: {
-    //   name: 'domain',
-    //   option: allOptions.domain,
-    //   label: 'Dominio',
-    // },
-    // chassis: {
-    //   name: 'chassis',
-    //   option: allOptions.chassis,
-    //   label: 'Chassis',
-    // },
-    // engine: {
-    //   name: 'engine',
-    //   option: allOptions.engine,
-    //   label: 'Motor',
-    // },
-    // serie: {
-    //   name: 'serie',
-    //   option: allOptions.serie,
-    //   label: 'Serie',
-    // },
-    // intern_number: {
-    //   name: 'intern_number',
-    //   option: allOptions.intern_number,
-    //   label: 'Número de Interno',
-    // },
     year: {
       name: 'year',
       option: allOptions.year,
@@ -157,6 +127,11 @@ export function DataEquipment<TData, TValue>({
       name: 'model',
       option: allOptions.model,
       label: 'Modelo',
+    },
+    status: {
+      name: 'status',
+      option: allOptions.status,
+      label: 'Estado',
     },
   }
 
@@ -178,14 +153,15 @@ export function DataEquipment<TData, TValue>({
   })
   const { expanded } = useSidebarOpen()
   const totalWidth = `calc(100vw - ${expanded ? '296px' : '167px'})`
-
+  const setActivesVehicles = VehiclesActualCompany(
+    state => state.setActivesVehicles,
+  )
   //const router = useRouter()
 
   const handleClearFilters = () => {
     table.getAllColumns().forEach(column => {
       column.setFilterValue('')
     })
-    //router.push('/dashboard/equipment')
 
     setSelectValues({
       types_of_vehicles: 'Todos',
@@ -198,7 +174,9 @@ export function DataEquipment<TData, TValue>({
       year: 'Todos',
       brand: 'Todos',
       model: 'Todos',
+      status: 'Todos',
     })
+    setActivesVehicles()
   }
   const maxRows = ['20', '40', '60', '80', '100']
   const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
@@ -419,13 +397,33 @@ export function DataEquipment<TData, TValue>({
                         }`}
                       >
                         {cell.column.id === 'picture' ? (
-                          <Link href={cell.getValue() as any} target="_blank">
-                            <img
-                              src={cell.getValue() as any}
-                              alt="Foto"
-                              style={{ width: '50px'}}
-                            />
-                          </Link>
+                          cell.getValue() !== '' ? (
+                            <Link href={cell.getValue() as any} target="_blank">
+                              <img
+                                src={cell.getValue() as any}
+                                alt="Foto"
+                                style={{ width: '50px' }}
+                              />
+                            </Link>
+                          ) : (
+                            'No disponible'
+                          )
+                        ) : cell.column.id === 'status' ? (
+                          <Badge
+                            variant={
+                              cell.getValue() === 'No avalado'
+                                ? 'destructive'
+                                : 'success'
+                            }
+                          >
+                            {cell.getValue() as React.ReactNode}
+                          </Badge>
+                        ) : cell.column.id === 'domain' ? (
+                          (cell.getValue() as React.ReactNode) === '' ? (
+                            'No disponible'
+                          ) : (
+                            (cell.getValue() as React.ReactNode)
+                          )
                         ) : (
                           flexRender(
                             cell.column.columnDef.cell,
