@@ -6,9 +6,13 @@ import { formatDate } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+
+import { revalidatePath } from 'next/cache'
+
 import DenyDocModal from '@/components/DenyDocModal'
 import ApproveDocModal from '@/components/ApproveDocModal'
 import { revalidatePath } from 'next/cache'
+
 
 export default async function page({ params }: { params: { id: string } }) {
   let { data: documents_employees } = await supabase
@@ -69,10 +73,9 @@ export default async function page({ params }: { params: { id: string } }) {
                     <AvatarFallback>Logo</AvatarFallback>
                   </Avatar>
                   <CardTitle className="font-bold">
-                    {
-                      documents_employees?.[0]?.applies?.company_id
-                        ?.company_name
-                    }
+
+                    {documents_employees?.[0]?.applies?.company_id?.company_name}
+
                   </CardTitle>
                 </div>
                 <div className="space-y-3">
