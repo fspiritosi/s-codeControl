@@ -72,7 +72,7 @@ import { format } from 'date-fns'
 import { supabase } from '../../../supabase/supabase'
 import { AuditorColums } from './columns'
 import { AuditorDataTable } from './data-table'
-
+import { revalidatePath } from 'next/cache'
 type AuditorDocument = {
   date: string
   companyName: string
@@ -93,6 +93,7 @@ export default async function Auditor() {
   let doc_personas = document_types?.filter(doc => doc.applies === 'Persona')
   let doc_equipos = document_types?.filter(doc => doc.applies === 'Equipos')
 
+  revalidatePath('/auditor')
   let { data: documents_employees } = await supabase.from('documents_employees')
     .select(`
     *,

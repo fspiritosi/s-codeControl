@@ -6,7 +6,7 @@ import { formatDate } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-
+import { revalidatePath } from 'next/cache'
 export default async function page({ params }: { params: { id: string } }) {
   let { data: documents_employees } = await supabase
     .from('documents_employees')
@@ -28,7 +28,7 @@ export default async function page({ params }: { params: { id: string } }) {
     )
     .eq('id', params.id)
   console.log(documents_employees?.[0], 'id')
-
+  revalidatePath('/auditor')
   return (
     <section>
       <div className="grid grid-cols-3 gap-col-3 ">
@@ -232,10 +232,9 @@ export default async function page({ params }: { params: { id: string } }) {
               <CardDescription>
                 Aqui podras auditar el documento que se le solicita al empleado
               </CardDescription>
-              <div className='w-full flex justify-evenly'>
-
-              <Button variant="success">Aprobar</Button>
-              <Button variant="destructive">Rechazar</Button>
+              <div className="w-full flex justify-evenly">
+                <Button variant="success">Aprobar</Button>
+                <Button variant="destructive">Rechazar</Button>
               </div>
             </TabsContent>
           </Tabs>
