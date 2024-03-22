@@ -6,7 +6,12 @@ import { formatDate } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+
 import { revalidatePath } from 'next/cache'
+
+import DenyDocModal from '@/components/DenyDocModal'
+import ApproveDocModal from '@/components/ApproveDocModal'
+
 
 export default async function page({ params }: { params: { id: string } }) {
   let { data: documents_employees } = await supabase
@@ -28,8 +33,11 @@ export default async function page({ params }: { params: { id: string } }) {
         `,
     )
     .eq('id', params.id)
+
   //console.log(documents_employees?.[0], 'id')
   revalidatePath('/auditor')
+
+
   return (
     <section>
       <div className="grid grid-cols-3 gap-col-3 ">
@@ -52,7 +60,7 @@ export default async function page({ params }: { params: { id: string } }) {
             <TabsContent value="Empresa">
               <div className="space-y-3">
                 <CardDescription>
-                  Estos son los datos de la empresa que solicita el documento
+                  Datos de la empresa que solicita el documento
                 </CardDescription>
                 <div className="flex items-center gap-3">
                   <Avatar className="size-24">
@@ -67,7 +75,9 @@ export default async function page({ params }: { params: { id: string } }) {
                     <AvatarFallback>Logo</AvatarFallback>
                   </Avatar>
                   <CardTitle className="font-bold">
+
                     {documents_employees?.[0]?.applies?.company_id?.company_name}
+
                   </CardTitle>
                 </div>
                 <div className="space-y-3">
@@ -117,8 +127,7 @@ export default async function page({ params }: { params: { id: string } }) {
             <TabsContent value="Empleado">
               <div className="space-y-3">
                 <CardDescription>
-                  Estos son los datos del empleado al que se le solicita el
-                  documento
+                  Datos del empleado al que se le solicita el documento
                 </CardDescription>
                 <div className="flex items-center gap-3">
                   <Avatar className="size-24">
@@ -172,7 +181,6 @@ export default async function page({ params }: { params: { id: string } }) {
                     <ul>
                       {documents_employees?.[0]?.applies?.contractor_employee.map(
                         (contractor: any) => {
-                          console.log(contractor.contractors, 'contractor')
                           return (
                             <li key={contractor.contractors.name}>
                               {contractor.contractors.name}
@@ -187,7 +195,7 @@ export default async function page({ params }: { params: { id: string } }) {
             </TabsContent>
             <TabsContent value="Documento" className="space-y-3">
               <CardDescription>
-                Estos son los datos del documento que se le solicita al empleado
+                Datos del documento que se le solicita al empleado
               </CardDescription>
               <CardTitle>
                 {documents_employees?.[0]?.document_types?.name}
@@ -233,10 +241,9 @@ export default async function page({ params }: { params: { id: string } }) {
               <CardDescription>
                 Aqui podras auditar el documento que se le solicita al empleado
               </CardDescription>
-              <div className='w-full flex justify-evenly'>
-
-              <Button variant="success">Aprobar</Button>
-              <Button variant="destructive">Rechazar</Button>
+              <div className="w-full flex justify-evenly">
+                <ApproveDocModal id={params.id} />
+                <DenyDocModal id={params.id} />
               </div>
             </TabsContent>
           </Tabs>
