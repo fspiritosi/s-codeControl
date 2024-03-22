@@ -7,8 +7,6 @@ import { es } from 'date-fns/locale'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 
-import { revalidatePath } from 'next/cache'
-
 import DenyDocModal from '@/components/DenyDocModal'
 import ApproveDocModal from '@/components/ApproveDocModal'
 import { revalidatePath } from 'next/cache'
