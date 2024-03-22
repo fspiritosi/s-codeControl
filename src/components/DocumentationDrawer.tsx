@@ -336,22 +336,33 @@ export const DocumentationDrawer = () => {
                 )}
                 onClick={() => handleDocumentSelect(doc)}
               />
-              <div className="flex items-center justify-between flex-grow">
-                <span>{doc?.name}</span>
-
-                <Badge
-                  className={getBackgroundColorClass(
-                    resource === 'empleado'
-                      ? getDocumentState(doc?.name || '')
-                      : getDocumentEquipmentState(doc?.name || ''),
-                  )}
-                >
-                  {resource === 'empleado'
-                    ? getDocumentState(doc?.name || '') || 'No presentado'
-                    : getDocumentEquipmentState(doc?.name || '') ||
-                      'No presentado'}
-                  ;
-                </Badge>
+              <div className="flex-grow flex justify-between items-center">
+                <div style={{ width: '100px' }}>{doc?.name}</div>{' '}
+                {/* Columna del texto */}
+                <div style={{ width: '90px', textAlign: 'right' }}>
+                  {' '}
+                  {/* Columna del badge */}
+                  <Badge
+                    style={{
+                      width: 90,
+                      height: 24,
+                      lineHeight: '24px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                    className={getBackgroundColorClass(
+                      resource === 'empleado'
+                        ? getDocumentState(doc?.name || '')
+                        : getDocumentEquipmentState(doc?.name || ''),
+                    )}
+                  >
+                    {resource === 'empleado'
+                      ? getDocumentState(doc?.name || '') || 'faltante'
+                      : getDocumentEquipmentState(doc?.name || '') ||
+                        'faltante'}
+                  </Badge>
+                </div>
               </div>
             </li>
           ))}
