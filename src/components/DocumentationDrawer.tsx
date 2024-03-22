@@ -308,7 +308,7 @@ export const DocumentationDrawer = () => {
   }
 
   return (
-    <aside className="bg-slate-800 w-[20%] h-full rounded-2xl  text-white p-4 min-w-[300px]">
+    <aside className="bg-slate-800 dark:bg-slate-300 w-[20%] h-full rounded-2xl text-white dark:text-black  p-4 min-w-[300px]">
       <h2 className="text-center text-xl mb-5">
         {resource === 'empleado'
           ? 'Documentación del empleado'
