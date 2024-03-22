@@ -39,6 +39,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useState } from 'react'
+import { Card } from '@/components/ui/card'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -161,7 +162,9 @@ export function AuditorDataTable<TData, TValue>({
   }
 
   return (
-    <div className="mb-10">
+    
+
+    <div className="mb-10 dark:bg-slate-950 px-4 rounded-lg">
       <div className="flex items-center py-4 flex-wrap">
         <Input
           placeholder="Buscar por nombre"
@@ -375,5 +378,6 @@ export function AuditorDataTable<TData, TValue>({
         </Button>
       </div>
     </div>
+
   )
 }
