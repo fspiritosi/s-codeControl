@@ -82,12 +82,7 @@ export function AuditorDataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     state: {
-      sorting: [
-        {
-          id: 'resource',
-          desc: false,
-        },
-      ],
+      sorting,
       columnVisibility,
       columnFilters,
     },
