@@ -40,6 +40,7 @@ import {
 } from '@/components/ui/table'
 import { useState } from 'react'
 import { Card } from '@/components/ui/card'
+import { ArrowUpDown } from 'lucide-react'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -102,14 +103,23 @@ export function AuditorDataTable<TData, TValue>({
     return ['Todos', ...Array.from(new Set(values))]
   }
 
-  const allOptions = {
+  const [allOptions, setAllOptions] = useState({
     companyName: createOptions('companyName'),
     documentName: createOptions('documentName'),
     resource: createOptions('resource'),
     state: createOptions('state'),
     multiresource: createOptions('multiresource'),
     allocated_to: createOptions('allocated_to'),
-  }
+  })
+
+  //const allOptions = {
+  //  companyName: createOptions('companyName'),
+  //documentName: createOptions('documentName'),
+  //resource: createOptions('resource'),
+  //state: createOptions('state'),
+  //multiresource: createOptions('multiresource'),
+  //allocated_to: createOptions('allocated_to'),
+  //}
   const selectHeader = {
     companyName: {
       name: 'companyName',
@@ -146,6 +156,16 @@ export function AuditorDataTable<TData, TValue>({
   const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
     {},
   )
+
+  if (selectValues.companyName && selectValues.companyName !== 'Todos') {
+    const resourceOptions = data
+      .filter((item: any) => item.companyName === selectValues.companyName)
+      .flatMap((item: any) => item?.resource)
+    allOptions.resource = ['Todos', ...Array.from(new Set(resourceOptions))]
+  } else {
+    allOptions.resource = createOptions('resource')
+  }
+
   const maxRows = ['20', '40', '60', '80', '100']
   const handleClearFilters = () => {
     table.getAllColumns().forEach(column => {
@@ -162,8 +182,6 @@ export function AuditorDataTable<TData, TValue>({
   }
 
   return (
-    
-
     <div className="mb-10 dark:bg-slate-950 px-4 rounded-lg">
       <div className="flex items-center py-4 flex-wrap">
         <Input
@@ -244,6 +262,8 @@ export function AuditorDataTable<TData, TValue>({
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => {
+                  const column = table.getColumn(header.id)
+
                   return (
                     <TableHead key={header.id} className="text-center">
                       {header.isPlaceholder
@@ -300,6 +320,18 @@ export function AuditorDataTable<TData, TValue>({
                                         }
                                       />
                                     </SelectTrigger>
+                                    {header.id === 'resource' && (
+                                      <div className=" grid place-content-center ml-0 pl-0">
+                                        <ArrowUpDown
+                                          onClick={() =>
+                                            column?.toggleSorting(
+                                              column?.getIsSorted() === 'asc',
+                                            )
+                                          }
+                                          className="ml-1 h-4 w-4 cursor-pointer"
+                                        />
+                                      </div>
+                                    )}
                                     <SelectContent>
                                       <SelectGroup>
                                         {selectHeader[
@@ -378,6 +410,5 @@ export function AuditorDataTable<TData, TValue>({
         </Button>
       </div>
     </div>
-
   )
 }

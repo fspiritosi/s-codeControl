@@ -11,7 +11,6 @@ import DenyDocModal from '@/components/DenyDocModal'
 import ApproveDocModal from '@/components/ApproveDocModal'
 import { revalidatePath } from 'next/cache'
 
-
 export default async function page({ params }: { params: { id: string } }) {
   let { data: documents_employees } = await supabase
     .from('documents_employees')
@@ -71,9 +70,10 @@ export default async function page({ params }: { params: { id: string } }) {
                     <AvatarFallback>Logo</AvatarFallback>
                   </Avatar>
                   <CardTitle className="font-bold">
-
-                    {documents_employees?.[0]?.applies?.company_id?.company_name}
-
+                    {
+                      documents_employees?.[0]?.applies?.company_id
+                        ?.company_name
+                    }
                   </CardTitle>
                 </div>
                 <div className="space-y-3">
@@ -113,10 +113,26 @@ export default async function page({ params }: { params: { id: string } }) {
                         ?.contact_email
                     }
                   </CardDescription>
-                  <CardDescription className="capitalize">
-                    <span className="font-bold">Descripción:</span>{' '}
-                    {documents_employees?.[0]?.applies?.company_id?.description}
+                  <CardDescription>
+                    <span className="font-bold">Fecha de alta:</span>{' '}
+                    {formatDate(
+                      documents_employees?.[0]?.applies?.date_of_admission,
+                      'PPP',
+                      {
+                        locale: es,
+                      },
+                    )}
                   </CardDescription>
+                  {documents_employees?.[0]?.applies?.company_id
+                    ?.description && (
+                    <CardDescription className="capitalize">
+                      <span className="font-bold">Descripción:</span>{' '}
+                      {
+                        documents_employees?.[0]?.applies?.company_id
+                          ?.description
+                      }
+                    </CardDescription>
+                  )}
                 </div>
               </div>
             </TabsContent>

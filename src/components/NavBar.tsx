@@ -150,7 +150,7 @@ export default function NavBar() {
       <div className="flex gap-8 items-center">
         <div className="relative">
           <DotFilledIcon className="text-blue-600 absolute size-7 top-[-8px] right-[-10px] p-0" />
-          <BellIcon className="text-black cursor-pointer size-5" />
+          <BellIcon className="text-black cursor-pointer size-5 dark:text-white" />
         </div>
         <ModeToggle />
         <div className="flex-shrink">

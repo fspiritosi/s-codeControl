@@ -121,13 +121,13 @@ export default function NewDocumentModal({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleOpen}>
-        <DialogContent className="max-h-[90dvh] overflow-y-scroll">
+        <DialogContent className="max-h-[90dvh] overflow-y-scroll dark:bg-slate-950">
           <Tabs defaultValue="Empleados" className="p-2">
             <TabsList className="grid w-full grid-cols-2 ">
               <TabsTrigger value="Empleados">Empleados</TabsTrigger>
               <TabsTrigger value="Equipos">Equipos</TabsTrigger>
             </TabsList>
-            <TabsContent value="Empleados" className="space-y-2">
+            <TabsContent value="Empleados" className="space-y-2 dark:bg-slate-950">
               {!multiresource && (
                 <>
                   {' '}

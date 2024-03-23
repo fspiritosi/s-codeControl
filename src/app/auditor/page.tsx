@@ -114,7 +114,6 @@ export default async function Auditor() {
     )
     .eq('is_active', true)
 
-
   const filteredData = documents_employees?.map(doc => {
     return {
       date: format(new Date(doc.created_at), 'dd/MM/yyyy'),

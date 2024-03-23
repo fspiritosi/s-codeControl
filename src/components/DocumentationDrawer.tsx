@@ -364,12 +364,12 @@ export const DocumentationDrawer = () => {
       </footer>
       <div className="flex w-full justify-center pt-3">
         {/* <SimpleDocument resource={resource}/> */}
-        <AlertDialog open={open} onOpenChange={handleOpen}>
+        <AlertDialog open={open} onOpenChange={handleOpen} >
           <AlertDialogTrigger asChild>
             <Button variant="primary">Subir documento</Button>
           </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
+          <AlertDialogContent >
+            <AlertDialogHeader >
               <div className="max-h-[90vh] overflow-y-scroll">
                 <h2 className="text-lg font-semibold">
                   Documento No multirecurso

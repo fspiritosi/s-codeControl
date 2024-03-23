@@ -29,7 +29,7 @@ export default function ApproveDocModal({ id }: { id: string }) {
       <DialogTrigger asChild>
         <Button variant="success">Aprobar</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] dark:bg-slate-950">
         <DialogHeader>
           <DialogTitle>Aprobar documento</DialogTitle>
           <DialogDescription>
