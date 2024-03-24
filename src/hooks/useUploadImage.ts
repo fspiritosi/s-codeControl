@@ -19,7 +19,7 @@ export const useImageUpload = () => {
       // Subir la imagen a Supabase Storage
       const { data, error } = await supabase.storage
         .from(imageBucket)
-        .upload(`${file.name}`, file,{
+        .upload(`${file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`, file,{
         //.upload('public/image.png', file, {
           cacheControl: '1',
           upsert: true,

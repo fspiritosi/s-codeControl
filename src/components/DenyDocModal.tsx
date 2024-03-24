@@ -61,7 +61,7 @@ export default function DenyDocModal({ id }: { id: string }) {
       <DialogTrigger asChild>
         <Button variant="destructive">Rechazar</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] dark:bg-slate-950">
         <DialogHeader>
           <DialogTitle>Rechazar documento</DialogTitle>
         </DialogHeader>
