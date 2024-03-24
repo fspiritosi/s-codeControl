@@ -7,10 +7,9 @@ import { es } from 'date-fns/locale'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 
-import { revalidatePath } from 'next/cache'
-
 import DenyDocModal from '@/components/DenyDocModal'
 import ApproveDocModal from '@/components/ApproveDocModal'
+import { revalidatePath } from 'next/cache'
 
 export default async function page({ params }: { params: { id: string } }) {
   let { data: documents_employees } = await supabase
@@ -33,9 +32,7 @@ export default async function page({ params }: { params: { id: string } }) {
     )
     .eq('id', params.id)
 
-  //console.log(documents_employees?.[0], 'id')
   revalidatePath('/auditor')
-
   return (
     <section>
       <div className="grid grid-cols-3 gap-col-3 ">
@@ -116,10 +113,26 @@ export default async function page({ params }: { params: { id: string } }) {
                         ?.contact_email
                     }
                   </CardDescription>
-                  <CardDescription className="capitalize">
-                    <span className="font-bold">Descripción:</span>{' '}
-                    {documents_employees?.[0]?.applies?.company_id?.description}
+                  <CardDescription>
+                    <span className="font-bold">Fecha de alta:</span>{' '}
+                    {formatDate(
+                      documents_employees?.[0]?.applies?.date_of_admission,
+                      'PPP',
+                      {
+                        locale: es,
+                      },
+                    )}
                   </CardDescription>
+                  {documents_employees?.[0]?.applies?.company_id
+                    ?.description && (
+                    <CardDescription className="capitalize">
+                      <span className="font-bold">Descripción:</span>{' '}
+                      {
+                        documents_employees?.[0]?.applies?.company_id
+                          ?.description
+                      }
+                    </CardDescription>
+                  )}
                 </div>
               </div>
             </TabsContent>
@@ -174,6 +187,16 @@ export default async function page({ params }: { params: { id: string } }) {
                   <CardDescription>
                     <span className="font-bold">Email de contacto:</span>{' '}
                     {documents_employees?.[0]?.applies?.email}
+                  </CardDescription>
+                  <CardDescription>
+                    <span className="font-bold">Fecha de alta:</span>{' '}
+                    {formatDate(
+                      documents_employees?.[0]?.applies?.date_of_admission,
+                      'PPP',
+                      {
+                        locale: es,
+                      },
+                    )}
                   </CardDescription>
                   <CardDescription>
                     <span className="font-bold">Afectaciones:</span>{' '}

@@ -69,24 +69,43 @@ export default function NewDocumentType() {
   ]
 
   async function onSubmit(values: z.infer<typeof FormSchema>) {
+    const formattedValues = {
+      ...values,
+      name: formatName(values.name),
+      description: formatDescription(values.description),
+    };
+
     const { data, error } = await supabase
       .from('document_types')
-      .insert(values)
-      .select()
+      .insert(formattedValues)
+      .select();
 
     if (error) {
       toast({
         title: 'Error',
         variant: 'destructive',
         description: handleSupabaseError(error),
-      })
-      return
+      });
+      return;
     }
     toast({
       title: 'Documento creado con exito',
       variant: 'default',
-    })
-    router.push('/auditor')
+    });
+    router.push('/auditor');
+  }
+
+  function formatName(name: string): string {
+    // Capitalize first letter and convert the rest to lowercase
+    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+  }
+
+  function formatDescription(description: string | undefined): string | undefined {
+    if (description) {
+      // Capitalize first letter and convert the rest to lowercase
+      return description.charAt(0).toUpperCase() + description.slice(1).toLowerCase();
+    }
+    return description;
   }
 
   return (

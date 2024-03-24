@@ -225,7 +225,7 @@ export const columEmp: ColumnDef<Colum>[] = [
           )}
           {showModal && (
             <Dialog defaultOpen onOpenChange={() => setShowModal(!showModal)}>
-              <DialogContent>
+              <DialogContent className="dark:bg-slate-950">
                 <DialogTitle>Dar de baja Documento</DialogTitle>
                 <DialogDescription>
                   ¿Estás seguro de que deseas dar de baja este documento?,

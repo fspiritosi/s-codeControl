@@ -178,7 +178,7 @@ insertMultiDocumentEquipment: async (documents: any) => {
       // Subir el documento a Supabase Storage
       const { data, error } = await supabase.storage
         .from(imageBucket)
-        .upload(`${file.name}`, file,{
+        .upload(`${file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`, file,{
           cacheControl: '1',
           upsert: true,
         })
@@ -207,7 +207,7 @@ insertMultiDocumentEquipment: async (documents: any) => {
       // Subir el documento a Supabase Storage
       const { data, error } = await supabase.storage
         .from(imageBucket)
-        .update(`${file.name}`, file,{
+        .update(`${file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`, file,{
           cacheControl: '1',
           upsert: true,
         })
@@ -251,7 +251,6 @@ insertMultiDocumentEquipment: async (documents: any) => {
   .not('document_types', 'is', null)
   .eq('vehicles.id', document)
     
-  //console.log("document equipment: ", documents_equipment)
   if (error) {
         const message = await errorTranslate(error?.message)
         throw new Error(String(message).replaceAll('"', ''))
