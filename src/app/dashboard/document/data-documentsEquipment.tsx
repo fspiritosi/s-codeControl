@@ -46,7 +46,7 @@ import { Url } from 'next/dist/shared/lib/router/router'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { DataTable } from '../employee/data-table'
 import { useSidebarOpen } from '@/store/sidebar'
-
+import { MdOutlineRemoveRedEye } from 'react-icons/md'
 interface DataDocumentsEquipmentProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
   data: TData[]
@@ -64,6 +64,7 @@ export function DataDocumentsEquipment<TData, TValue>({
 }: DataDocumentsEquipmentProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const defaultVisibleColumns = [
+    'domain',
     'id_document_types',
     'validity',
     'state',
@@ -86,6 +87,7 @@ export function DataDocumentsEquipment<TData, TValue>({
     ? data.filter((item: any) => item.is_active === false)
     : data
   const allOptions = {
+    //domain: createOptions('domain'),
     id_document_types: createOptions('id_document_types'),
     validity: createOptions('validity'),
     state: createOptions('state'),
@@ -102,6 +104,11 @@ export function DataDocumentsEquipment<TData, TValue>({
   }
 
   const selectHeader = {
+    // domain: {
+    //   name: 'domain',
+    //   option: allOptions.domain,
+    //   label: 'Dominio',
+    // },
     id_document_types: {
       name: 'id_document_types',
       option: allOptions.id_document_types,
@@ -207,7 +214,7 @@ export function DataDocumentsEquipment<TData, TValue>({
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>Filas por página</SelectLabel>
-                {maxRows.map((option: string,index:number) => (
+                {maxRows.map((option: string, index: number) => (
                   <SelectItem key={index} value={option}>
                     {option}
                   </SelectItem>
@@ -391,11 +398,14 @@ export function DataDocumentsEquipment<TData, TValue>({
                       >
                         {cell.column.id === 'document_url' ? (
                           <Link href={cell.getValue() as any} target="_blank">
-                            <img
+                            <MdOutlineRemoveRedEye
+                              style={{ width: '24px', height: '24px' }}
+                            />
+                            {/* <img
                               src={cell.getValue() as any}
                               alt="Foto"
                               style={{ width: '68px', height: '68px' }}
-                            />
+                            /> */}
                           </Link>
                         ) : (
                           flexRender(

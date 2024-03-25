@@ -45,6 +45,8 @@ import { useSidebarOpen } from '@/store/sidebar'
 import { VehiclesActualCompany } from '@/store/vehicles'
 import Link from 'next/link'
 import { useState } from 'react'
+import { id } from 'date-fns/locale'
+import Equipment from './page'
 
 interface DataEquipmentProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
