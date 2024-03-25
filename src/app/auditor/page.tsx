@@ -82,7 +82,7 @@ export default async function Auditor() {
   return (
     <div>
       <section>
-        <Card >
+        <Card>
           <CardHeader>
             <CardTitle>Tipos de documentos</CardTitle>
             <CardDescription>Tipos de documentos auditables</CardDescription>
@@ -96,7 +96,9 @@ export default async function Auditor() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Nombre del Documento</TableHead>
-                        <TableHead className="w-[100px]">Multirecurso</TableHead>
+                        <TableHead className="w-[100px]">
+                          Multirecurso
+                        </TableHead>
                         <TableHead className="w-[100px]">Vence</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -106,7 +108,9 @@ export default async function Auditor() {
                           <TableCell className="font-medium">
                             {doc.name}
                           </TableCell>
-                          <TableCell>{doc.multiresource ? 'Si' : 'No'}</TableCell>
+                          <TableCell>
+                            {doc.multiresource ? 'Si' : 'No'}
+                          </TableCell>
                           <TableCell>{doc.explired ? 'Si' : 'No'}</TableCell>
                         </TableRow>
                       ))}
@@ -123,7 +127,9 @@ export default async function Auditor() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Nombre del Documento</TableHead>
-                        <TableHead className="w-[100px]">Multirecurso</TableHead>
+                        <TableHead className="w-[100px]">
+                          Multirecurso
+                        </TableHead>
                         <TableHead className="w-[100px]">Vence</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -133,7 +139,9 @@ export default async function Auditor() {
                           <TableCell className="font-medium">
                             {doc.name}
                           </TableCell>
-                          <TableCell>{doc.multiresource ? 'Si' : 'No'}</TableCell>
+                          <TableCell>
+                            {doc.multiresource ? 'Si' : 'No'}
+                          </TableCell>
                           <TableCell>{doc.explired ? 'Si' : 'No'}</TableCell>
                         </TableRow>
                       ))}

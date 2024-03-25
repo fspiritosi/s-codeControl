@@ -58,8 +58,12 @@ export default function Home() {
   )
   const documentsToShow = useLoggedUserStore(state => state.documentsToShow)
 
-  const setShowLastMonthDocuments = useLoggedUserStore(state => state.setShowLastMonthDocuments)
-  const showLastMonthDocuments = useLoggedUserStore(state => state.showLastMonthDocuments)
+  const setShowLastMonthDocuments = useLoggedUserStore(
+    state => state.setShowLastMonthDocuments,
+  )
+  const showLastMonthDocuments = useLoggedUserStore(
+    state => state.showLastMonthDocuments,
+  )
 
   return (
     <div>
@@ -168,14 +172,15 @@ export default function Home() {
         </CardHeader>
         <CardContent>
           <CardDescription>
-            {
-              showLastMonthDocuments ? 'Documentos que vencen en los proximos 30 dias':
-              documentsToShow?.employees?.length === 0 ? 'No hay documentos proximos a vencer' :
-              `Todos los vencimientos (${documentsToShow?.employees?.length}) documentos`
-            }
+            Documentos que vencen en los proximos 30 dias
           </CardDescription>
         </CardContent>
-        <ExpiredDataTable data={documentsToShow?.employees || []} setShowLastMonthDocuments={setShowLastMonthDocuments} columns={ExpiredColums} />
+        <ExpiredDataTable
+          data={documentsToShow?.employees || []}
+          setShowLastMonthDocuments={setShowLastMonthDocuments}
+          columns={ExpiredColums}
+
+        />
       </section>
     </div>
   )

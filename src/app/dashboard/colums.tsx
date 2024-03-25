@@ -16,6 +16,7 @@ type Colum = {
   resource: string
   state: string
   document_number: string
+  mandatory:string
 }
 
 export const ExpiredColums: ColumnDef<Colum>[] = [
@@ -45,6 +46,10 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
   {
     accessorKey: 'documentName',
     header: 'Documento',
+  },
+  {
+    accessorKey:'mandatory',
+    header:'Mandatorio'
   },
   {
     accessorKey: 'state',

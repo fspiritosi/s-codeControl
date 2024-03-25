@@ -47,6 +47,7 @@ export default function page() {
         ...item,
         id_document_types: item.document_types.name,
         applies: item.vehicles.intern_number,
+        domain: item.vehicles.domain || 'No disponible',
       }))
       //console.log('transformed Data: ', transformedData)
       const filteredAprobados = transformedData?.filter(

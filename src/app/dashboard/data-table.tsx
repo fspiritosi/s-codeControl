@@ -63,6 +63,7 @@ export function ExpiredDataTable<TData, TValue>({
     'multiresource',
     'validity',
     'id',
+    "mandatory"
   ]
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
@@ -110,6 +111,7 @@ export function ExpiredDataTable<TData, TValue>({
     state: createOptions('state'),
     multiresource: createOptions('multiresource'),
     allocated_to: createOptions('allocated_to'),
+    mandatory : createOptions("mandatory")
   }
 
   const selectHeader = {
@@ -138,6 +140,11 @@ export function ExpiredDataTable<TData, TValue>({
       option: allOptions.allocated_to,
       label: 'Afectado a',
     },
+    mandatory:{
+      name:"mandatory",
+      option:allOptions.mandatory,
+      label:"Mandatorio"
+    }
   }
 
   const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
@@ -165,6 +172,7 @@ export function ExpiredDataTable<TData, TValue>({
       documentName: 'Todos',
       state: 'Todos',
       multiresource: 'Todos',
+      mandatory:"Todos"
     })
   }
 

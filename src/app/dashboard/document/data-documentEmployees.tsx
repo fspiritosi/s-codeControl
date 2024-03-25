@@ -46,6 +46,7 @@ import { Url } from 'next/dist/shared/lib/router/router'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { DataTable } from '../employee/data-table'
 import { useSidebarOpen } from '@/store/sidebar'
+import { MdOutlineRemoveRedEye } from 'react-icons/md'
 
 interface DataDocumentsEmployeesProps<TData, TValue> {
   columEmp: ColumnDef<TData, TValue>[] | any
@@ -407,11 +408,14 @@ export function DataDocumentsEmployees<TData, TValue>({
                       >
                         {cell.column.id === 'document_url' ? (
                           <Link href={cell.getValue() as any} target="_blank">
-                            <img
+                            <MdOutlineRemoveRedEye
+                              style={{ width: '24px', height: '24px' }}
+                            />
+                            {/* <img
                               src={cell.getValue() as any}
                               alt="Foto"
                               style={{ width: '68px', height: '68px' }}
-                            />
+                            /> */}
                           </Link>
                         ) : (
                           flexRender(

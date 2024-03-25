@@ -56,6 +56,7 @@ interface State {
       documentName: string
       multiresource: string
       validity: string
+      mandatory:string
       id: string
       resource: string
       state: string
@@ -80,6 +81,7 @@ interface State {
       documentName: string
       multiresource: string
       validity: string
+      mandatory:string
       id: string
       resource: string
       state: string
@@ -105,6 +107,7 @@ interface State {
       multiresource: string
       validity: string
       id: string
+      mandatory:string
       resource: string
       state: string
       document_number: string
@@ -315,6 +318,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
             state: doc.state,
             multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
             validity: format(new Date(doc.validity), 'dd/MM/yyyy') || 'No vence',
+            mandatory:doc.document_types?.mandatory ? 'Si' : 'No',
             id: doc.id,
             resource: `${doc.employees?.firstname} ${doc.employees?.lastname}`,
             document_number: doc.employees.document_number,
@@ -334,6 +338,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
             state: doc.state,
             multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
             validity: format(new Date(doc.validity), 'dd/MM/yyyy') || 'No vence',
+            mandatory:doc.document_types?.mandatory ? 'Si' : 'No',
             id: doc.id,
             resource: `${doc.employees?.firstname} ${doc.employees?.lastname}`,
             document_number: doc.employees.document_number,

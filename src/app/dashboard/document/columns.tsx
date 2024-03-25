@@ -407,6 +407,7 @@ export const columns: ColumnDef<Colum>[] = [
       )
     },
   },
+
   {
     accessorKey: 'id_document_types',
     header: 'Tipo de documento',
@@ -447,7 +448,7 @@ export const columns: ColumnDef<Colum>[] = [
   },
   {
     accessorKey: 'applies',
-    header: 'Aplica a',
+    header: 'Equipo',
   },
   {
     accessorKey: 'document_url',
