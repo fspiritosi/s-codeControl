@@ -2,23 +2,12 @@
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@/components/ui/drawer'
 import { ColumnDef } from '@tanstack/react-table'
 import { ArrowUpDown } from 'lucide-react'
 import Link from 'next/link'
 
 type Colum = {
   date: string
-  companyName: string
   allocated_to: string
   documentName: string
   multiresource: string
@@ -26,9 +15,10 @@ type Colum = {
   id: string
   resource: string
   state: string
+  document_number: string
 }
 
-export const AuditorColums: ColumnDef<Colum>[] = [
+export const ExpiredColums: ColumnDef<Colum>[] = [
   {
     accessorKey: 'date',
     sortingFn: 'datetime',
@@ -43,10 +33,6 @@ export const AuditorColums: ColumnDef<Colum>[] = [
         </Button>
       )
     },
-  },
-  {
-    accessorKey: 'companyName',
-    header: 'Empresa',
   },
   {
     accessorKey: 'resource',
@@ -94,16 +80,16 @@ export const AuditorColums: ColumnDef<Colum>[] = [
   },
   {
     accessorKey: 'validity',
-    header: 'Vence',
+    header: 'Vencimiento',
   },
   {
     accessorKey: 'id',
-    header: 'Auditar',
+    header: 'Empleado',
     cell: ({ row }) => {
       return (
-       <Link href={`auditor/${row.original.id}`}>
-          <Button>Auditar</Button>
-       </Link>
+        <Link href={`dashboard/employee/action?action=view&document=${row?.original?.document_number}`}>
+          <Button>Ver empleado</Button>
+        </Link>
       )
     },
   },

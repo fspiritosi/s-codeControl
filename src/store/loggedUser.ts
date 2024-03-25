@@ -1,7 +1,33 @@
-import { companyData, profileUser } from '@/types/types'
+import { AuditorDocument, companyData, profileUser } from '@/types/types'
 import { User } from '@supabase/supabase-js'
 import { create } from 'zustand'
 import { supabase } from '../../supabase/supabase'
+import { format } from 'date-fns'
+
+type documentsData = {
+  employees: {
+    date: string
+    allocated_to: string
+    documentName: string
+    multiresource: string
+    validity: string
+    id: string
+    resource: string
+    state: string
+    document_number: string
+  }[]
+  vehicles: {
+    date: string
+    allocated_to: string
+    documentName: string
+    multiresource: string
+    validity: string
+    id: string
+    resource: string
+    state: string
+  }[]
+
+}
 
 interface State {
   credentialUser: User | null
@@ -23,6 +49,80 @@ interface State {
   setNewDefectCompany: (company: companyData) => void
   endorsedEmployees: () => void
   noEndorsedEmployees: () => void
+  documentsToShow:  {
+    employees: {
+      date: string
+      allocated_to: string
+      documentName: string
+      multiresource: string
+      validity: string
+      id: string
+      resource: string
+      state: string
+      document_number: string
+    }[]
+    vehicles: {
+      date: string
+      allocated_to: string
+      documentName: string
+      multiresource: string
+      validity: string
+      id: string
+      resource: string
+      state: string
+    }[]
+  
+  }
+  Alldocuments: {
+    employees: {
+      date: string
+      allocated_to: string
+      documentName: string
+      multiresource: string
+      validity: string
+      id: string
+      resource: string
+      state: string
+      document_number: string
+    }[]
+    vehicles: {
+      date: string
+      allocated_to: string
+      documentName: string
+      multiresource: string
+      validity: string
+      id: string
+      resource: string
+      state: string
+    }[]
+  
+  }
+  lastMonthDocuments:  {
+    employees: {
+      date: string
+      allocated_to: string
+      documentName: string
+      multiresource: string
+      validity: string
+      id: string
+      resource: string
+      state: string
+      document_number: string
+    }[]
+    vehicles: {
+      date: string
+      allocated_to: string
+      documentName: string
+      multiresource: string
+      validity: string
+      id: string
+      resource: string
+      state: string
+    }[]
+  
+  }
+  showLastMonthDocuments: boolean
+  setShowLastMonthDocuments: () => void
 }
 
 const setEmployeesToShow = (employees: any) => {
@@ -70,7 +170,6 @@ const setEmployeesToShow = (employees: any) => {
     }
   })
 
-
   return employee
 }
 
@@ -117,7 +216,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     if (error) {
       console.error('Error al obtener los empleados no avalados:', error)
     } else {
-      set({employeesToShow: setEmployeesToShow(data) || []})
+      set({ employeesToShow: setEmployeesToShow(data) || [] })
       set({ isLoading: false })
     }
   }
@@ -154,18 +253,106 @@ export const useLoggedUserStore = create<State>((set, get) => {
     if (error) {
       console.error('Error al obtener los empleados avalados:', error)
     } else {
-      set({employeesToShow: setEmployeesToShow(data) || []})
+      set({ employeesToShow: setEmployeesToShow(data) || [] })
       set({ isLoading: false })
     }
   }
 
   const vehicles = async () => {
-    const { data, error } = await supabase.from('vehicles').select('*').eq('company_id', get()?.actualCompany?.id).eq('is_active', true)
+    const { data, error } = await supabase
+      .from('vehicles')
+      .select('*')
+      .eq('company_id', get()?.actualCompany?.id)
+      .eq('is_active', true)
     if (error) {
       console.error('Error al obtener los vehículos:', error)
     } else {
       set({ vehicles: data || [] })
     }
+  }
+
+  const documetsFetch = async () => {
+    let { data, error } = await supabase
+      .from('documents_employees')
+      .select(
+        `
+    *,
+    employees:employees(*,contractor_employee(
+      contractors(
+        *
+      )
+    )),
+    document_types:document_types(*)
+`,
+      )
+      .not('employees', 'is', null)
+      .not('document_types', 'is', null)
+      .not('validity', 'is', null)
+      .eq('employees.company_id', get()?.actualCompany?.id)
+
+
+    if (error) {
+      console.error('Error al obtener los documentos:', error)
+    } else {
+
+      const lastMonth = new Date();
+      lastMonth.setMonth(new Date().getMonth() + 1);
+
+      const filteredData = data?.filter((doc: any) => {
+        const date = new Date(doc.validity);
+        const isExpired = date < lastMonth || doc.state === 'Vencido';
+        return isExpired;
+      });
+
+      const lastMonthValues = {
+        employees: filteredData?.map((doc: any) => {
+          return {
+            date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
+            allocated_to: doc.employees?.contractor_employee
+              ?.map((doc: any) => doc.contractors.name)
+              .join(', '),
+            documentName: doc.document_types?.name,
+            state: doc.state,
+            multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+            validity: format(new Date(doc.validity), 'dd/MM/yyyy') || 'No vence',
+            id: doc.id,
+            resource: `${doc.employees?.firstname} ${doc.employees?.lastname}`,
+            document_number: doc.employees.document_number,
+          };
+        }) || [],
+        vehicles: { ...get()?.Alldocuments?.vehicles } || [],
+      };
+
+      const Allvalues = {
+        employees: data?.map((doc: any) => {
+          return {
+            date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
+            allocated_to: doc.employees?.contractor_employee
+              ?.map((doc: any) => doc.contractors.name)
+              .join(', '),
+            documentName: doc.document_types?.name,
+            state: doc.state,
+            multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+            validity: format(new Date(doc.validity), 'dd/MM/yyyy') || 'No vence',
+            id: doc.id,
+            resource: `${doc.employees?.firstname} ${doc.employees?.lastname}`,
+            document_number: doc.employees.document_number,
+          };
+        }) || [],
+        vehicles: { ...get()?.Alldocuments?.vehicles } || [],
+      };
+
+      set({showLastMonthDocuments: true})
+      set({ Alldocuments: Allvalues });
+      set({ lastMonthDocuments: lastMonthValues });
+      set({ documentsToShow: lastMonthValues });
+    }
+  }
+
+  const setShowLastMonthDocuments = () => {
+    set({ showLastMonthDocuments: !get()?.showLastMonthDocuments });
+    set({ documentsToShow: !get()?.showLastMonthDocuments ? get()?.Alldocuments : get()?.lastMonthDocuments });
+    
 
   }
 
@@ -197,21 +384,20 @@ export const useLoggedUserStore = create<State>((set, get) => {
       .eq('company_id', get()?.actualCompany?.id)
       .eq('is_active', active)
 
-
     const employeesToShow = setEmployeesToShow(employees)
     return employeesToShow
   }
 
-
-  const channels = supabase.channel('custom-update-channel')
-  .on(
-    'postgres_changes',
-    { event: 'UPDATE', schema: 'public', table: 'employees' },
-    (payload) => {
+  const channels = supabase
+    .channel('custom-update-channel')
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'employees' },
+      payload => {
         setActivesEmployees()
-    }
-  )
-  .subscribe()
+      },
+    )
+    .subscribe()
 
   const setActivesEmployees = async () => {
     const employeesToShow = await getEmployees(true)
@@ -224,10 +410,10 @@ export const useLoggedUserStore = create<State>((set, get) => {
     setActivesEmployees()
     set({ isLoading: false })
     vehicles()
+    documetsFetch()
   }
 
   const setNewDefectCompany = async (company: companyData) => {
-
     const { data, error } = await supabase
       .from('company')
       .update({ by_defect: false })
@@ -384,6 +570,12 @@ export const useLoggedUserStore = create<State>((set, get) => {
     vehicles: get()?.vehicles,
     setNewDefectCompany,
     endorsedEmployees,
-    noEndorsedEmployees
+    noEndorsedEmployees,
+    Alldocuments: get()?.Alldocuments,
+    documentsToShow: get()?.documentsToShow,
+    showLastMonthDocuments: get()?.showLastMonthDocuments,
+    setShowLastMonthDocuments,
+    lastMonthDocuments: get()?.lastMonthDocuments,
+    
   }
 })

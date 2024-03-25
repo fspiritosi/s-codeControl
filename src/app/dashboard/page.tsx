@@ -1,10 +1,22 @@
 'use client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { VehiclesActualCompany } from '@/store/vehicles'
+import { AuditorDocument } from '@/types/types'
+import { format, set } from 'date-fns'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { supabase } from '../../../supabase/supabase'
+import { ExpiredDataTable } from './data-table'
+import { ExpiredColums } from './colums'
 
 export default function Home() {
   const user = useLoggedUserStore()
@@ -44,6 +56,10 @@ export default function Home() {
   const noEndorsedVehicles = VehiclesActualCompany(
     state => state.noEndorsedVehicles,
   )
+  const documentsToShow = useLoggedUserStore(state => state.documentsToShow)
+
+  const setShowLastMonthDocuments = useLoggedUserStore(state => state.setShowLastMonthDocuments)
+  const showLastMonthDocuments = useLoggedUserStore(state => state.showLastMonthDocuments)
 
   return (
     <div>
@@ -145,6 +161,21 @@ export default function Home() {
             </CardContent>
           </Card>
         </div>
+      </section>
+      <section>
+        <CardHeader>
+          <CardTitle>Proximos vencimientos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CardDescription>
+            {
+              showLastMonthDocuments ? 'Documentos que vencen en los proximos 30 dias':
+              documentsToShow?.employees?.length === 0 ? 'No hay documentos proximos a vencer' :
+              `Todos los vencimientos (${documentsToShow?.employees?.length}) documentos`
+            }
+          </CardDescription>
+        </CardContent>
+        <ExpiredDataTable data={documentsToShow?.employees || []} setShowLastMonthDocuments={setShowLastMonthDocuments} columns={ExpiredColums} />
       </section>
     </div>
   )
