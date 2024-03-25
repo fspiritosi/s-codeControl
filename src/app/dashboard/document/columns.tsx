@@ -393,7 +393,7 @@ export const columns: ColumnDef<Colum>[] = [
     },
   },
   {
-    accessorKey: 'id_document_types',
+    accessorKey: 'domain',
     header: ({ column }: { column: any }) => {
       return (
         <Button
@@ -401,7 +401,7 @@ export const columns: ColumnDef<Colum>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           className="p-0"
         >
-          Tipo de documento
+          Dominio
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       )
@@ -409,8 +409,8 @@ export const columns: ColumnDef<Colum>[] = [
   },
 
   {
-    accessorKey: 'domain',
-    header: 'Dominio',
+    accessorKey: 'id_document_types',
+    header: 'Tipo de documento',
   },
 
   {
