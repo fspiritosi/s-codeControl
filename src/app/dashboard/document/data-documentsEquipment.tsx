@@ -64,6 +64,7 @@ export function DataDocumentsEquipment<TData, TValue>({
 }: DataDocumentsEquipmentProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const defaultVisibleColumns = [
+    'domain',
     'id_document_types',
     'validity',
     'state',
@@ -86,6 +87,7 @@ export function DataDocumentsEquipment<TData, TValue>({
     ? data.filter((item: any) => item.is_active === false)
     : data
   const allOptions = {
+    domain: createOptions('domain'),
     id_document_types: createOptions('id_document_types'),
     validity: createOptions('validity'),
     state: createOptions('state'),
@@ -102,6 +104,11 @@ export function DataDocumentsEquipment<TData, TValue>({
   }
 
   const selectHeader = {
+    domain: {
+      name: 'domain',
+      option: allOptions.domain,
+      label: 'Dominio',
+    },
     id_document_types: {
       name: 'id_document_types',
       option: allOptions.id_document_types,

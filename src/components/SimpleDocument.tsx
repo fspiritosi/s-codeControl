@@ -73,6 +73,7 @@ export default function SimpleDocument({
   const searchParams = useSearchParams()
   const document = searchParams.get('document')
   const id = searchParams.get('id')
+  const [employeeData, setEmployeeData] = useState<any>(null)
   const [documenTypes, setDocumentTypes] = useState<any[] | null>([])
   const [expiredDate, setExpiredDate] = useState(false)
   const {
@@ -118,30 +119,29 @@ export default function SimpleDocument({
   })
   ////////////////////////////////////////////////////////////////////////
   const [equipmentData, setEquipmentData] = useState<any>(null)
-  const equipment = async () => {
-    //console.log('Valor de document:', id)
-    const data = await fetchEquipmentByDocument(id as any)
-    //console.log('Datos obtenidos del empleado:', data)
-    setEquipmentData(data)
-  }
-  //console.log('equipmentData: ', equipmentData)
-
-  const [employeeData, setEmployeeData] = useState<any>(null)
-
-  const employee = async () => {
-    //console.log('Valor de document:', document)
-    const data = await fetchEmployeeByDocument(document as any)
-    //console.log('Datos obtenidos del empleado:', data)
-    setEmployeeData(data)
+  if (id) {
+    const equipment = async () => {
+      //console.log('Valor de document:', id)
+      const data = await fetchEquipmentByDocument(id as any)
+      //console.log('Datos obtenidos del empleado:', data)
+      setEquipmentData(data)
+    }
+    //console.log('equipmentData: ', equipmentData)
+    useEffect(() => {
+      equipment()
+    }, [])
+  } else {
+    const employee = async () => {
+      //console.log('Valor de document:', document)
+      const data = await fetchEmployeeByDocument(document as any)
+      //console.log('Datos obtenidos del empleado:', data)
+      setEmployeeData(data)
+    }
+    useEffect(() => {
+      employee()
+    }, [])
   }
   //console.log('este employee data: ', employeeData)
-  useEffect(() => {
-    equipment()
-  }, [])
-
-  useEffect(() => {
-    employee()
-  }, [])
 
   ////////////////////////////////////////////////////////////////////////
 
