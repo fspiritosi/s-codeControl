@@ -16,7 +16,7 @@ type Colum = {
   resource: string
   state: string
   document_number: string
-  mandatory:string
+  mandatory: string
 }
 
 export const ExpiredColums: ColumnDef<Colum>[] = [
@@ -48,8 +48,8 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
     header: 'Documento',
   },
   {
-    accessorKey:'mandatory',
-    header:'Mandatorio'
+    accessorKey: 'mandatory',
+    header: 'Mandatorio',
   },
   {
     accessorKey: 'state',
@@ -85,14 +85,26 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
   },
   {
     accessorKey: 'validity',
-    header: 'Vencimiento',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Vencimiento
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
   },
   {
     accessorKey: 'id',
     header: 'Empleado',
     cell: ({ row }) => {
       return (
-        <Link href={`dashboard/employee/action?action=view&document=${row?.original?.document_number}`}>
+        <Link
+          href={`dashboard/employee/action?action=view&document=${row?.original?.document_number}`}
+        >
           <Button>Ver empleado</Button>
         </Link>
       )
