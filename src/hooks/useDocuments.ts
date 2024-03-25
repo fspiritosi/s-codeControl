@@ -124,6 +124,21 @@ insertMultiDocumentEquipment: async (documents: any) => {
       return data
     },
 
+    fetchDocumentTypes : async () => {
+      try {
+        // Consulta los tipos de documento
+        const { data: documentTypesData, error: typesError } = await supabase
+          .from('document_types')
+          .select('*');
+        if (typesError) {
+          throw typesError;
+        }
+        return documentTypesData
+      } catch (error) {
+        console.error('Error al obtener datos:', error);
+      }
+      
+    },
     fetchDocumentEmployeesByCompany: async () => {
       
     if(actualCompany){

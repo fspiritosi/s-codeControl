@@ -264,6 +264,12 @@ import { useDocument } from '@/hooks/useDocuments'
 import { Badge } from '@/components/ui/badge'
 import { saveAs } from 'file-saver'
 
+interface DocumentTypes {
+  id: number
+  name: string
+  applies: string
+}
+
 export const DocumentationDrawer = () => {
   const searchParams = useSearchParams()
   const id = searchParams.get('id')
@@ -280,9 +286,14 @@ export const DocumentationDrawer = () => {
 
   const document = searchParams.get('document')
 
-  const { fetchEmployeeByDocument, fetchEquipmentByDocument } = useDocument()
+  const {
+    fetchEmployeeByDocument,
+    fetchEquipmentByDocument,
+    fetchDocumentTypes,
+  } = useDocument()
   const [employeeData, setEmployeeData] = useState<any>(null)
   const [equipmentData, setEquipmentData] = useState<any>(null)
+  const [documentTypes, setDocumentTypes] = useState([])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -300,6 +311,13 @@ export const DocumentationDrawer = () => {
     }
     fetchData()
   }, [id, document, fetchEmployeeByDocument, fetchEquipmentByDocument])
+  useEffect(() => {
+    const fetchDocument = async () => {
+      const documentTypes: any = await fetchDocumentTypes()
+      setDocumentTypes(documentTypes)
+    }
+    fetchDocument()
+  }, [])
 
   const getDocumentState = (documentName: string) => {
     const document = employeeData?.find(
@@ -333,66 +351,19 @@ export const DocumentationDrawer = () => {
     return document ? document.document_url : ''
   }
 
-  const documentation = [
-    {
-      name: 'Alta Temprana AFIP',
-      url: getUrlForDocument('Alta Temprana AFIP') || '',
-    },
-    {
-      name: 'RELACIONES LABORALES ACTIVAS',
-      url: getUrlForDocument('RELACIONES LABORALES ACTIVAS') || '',
-    },
-    { name: 'DNI', url: getUrlForDocument('DNI') || '' },
-    {
-      name: 'Póliza / Certificado ART',
-      url: getUrlForDocument('Póliza / Certificado ART') || '',
-    },
-    {
-      name: 'Póliza / Certificado SVO',
-      url: getUrlForDocument('Póliza / Certificado SVO') || '',
-    },
-    {
-      name: 'Examen medico pre-ocupacional',
-      url: getUrlForDocument('Examen medico pre-ocupacional') || '',
-    },
-    {
-      name: 'Constancia de entrega de Ropa y Epp',
-      url: getUrlForDocument('Constancia de entrega de Ropa y Epp') || '',
-    },
-    {
-      name: 'Licencia Nacional de Conducir',
-      url: getUrlForDocument('Licencia Nacional de Conducir') || '',
-    },
-    {
-      name: 'Carnet Profesional - LINTI',
-      url: getUrlForDocument('Carnet Profesional - LINTI') || '',
-    },
-    {
-      name: 'Carnet de Manejo Defensivo',
-      url: getUrlForDocument('Carnet de Manejo Defensivo') || '',
-    },
-  ]
+  const documentation = documentTypes
+    .filter((docType: DocumentTypes) => docType.applies === 'Persona')
+    .map((docType: DocumentTypes) => ({
+      name: docType.name,
+      url: getUrlForDocument(docType.name) || '',
+    }))
 
-  const documentationEquipment = [
-    {
-      name: 'Título de propiedad / Contrato de Alquiler',
-      url:
-        getUrlForEquipmentDocument(
-          'Título de propiedad / Contrato de Alquiler',
-        ) || '',
-    },
-    {
-      name: 'Verificación Tecnica Vehícular',
-      url: getUrlForEquipmentDocument('Verificación Tecnica Vehícular') || '',
-    },
-    {
-      name: 'Habilitación de transporte de Carga (RUTA)',
-      url:
-        getUrlForEquipmentDocument(
-          'Habilitación de transporte de Carga (RUTA)',
-        ) || '',
-    },
-  ]
+  const documentationEquipment = documentTypes
+    .filter((docType: DocumentTypes) => docType.applies === 'Equipos')
+    .map((docType: DocumentTypes) => ({
+      name: docType.name,
+      url: getUrlForEquipmentDocument(docType.name) || '',
+    }))
 
   const [selectAll, setSelectAll] = useState<boolean>(false)
   const [selectedDocuments, setSelectedDocuments] = useState<any[]>([])
