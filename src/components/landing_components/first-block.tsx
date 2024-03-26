@@ -16,18 +16,15 @@ function FirstBlock() {
       <div className="grid max-w-5xl mx-auto md:grid-cols-2">
         <div>
           <Reveal>
-            <h1 className="text-5xl font-semibold">
+            <h1 className="text-2xl md:text-5xl font-semibold">
               Gestioná
               <span className="block text-blue-400">eficientemente</span>
               todos tus procesos
             </h1>
           </Reveal>
           <Reveal>
-            <p className="max-w-md mt-10">
-              Lorem, ipsum dolor sit amet consectetur adipisicing elit. Animi
-              obcaecati praesentium, modi quis blanditiis iste odit fugiat
-              corporis natus doloribus asperiores provident at possimus
-              veritatis, laudantium explicabo repellendus nam dolorem.
+            <p className="text-xs md:text-xl mt-10 ">
+              En CodeControl, nos apasiona ayudar a las empresas a alcanzar sus objetivos. Combinamos <strong>control de procesos, desarrollo de software y consultoría organizacional  </strong> para ofrecerte soluciones integrales que generan resultados reales.
             </p>
           </Reveal>
           <Reveal>
