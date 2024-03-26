@@ -127,7 +127,10 @@ export default function NewDocumentModal({
               <TabsTrigger value="Empleados">Empleados</TabsTrigger>
               <TabsTrigger value="Equipos">Equipos</TabsTrigger>
             </TabsList>
-            <TabsContent value="Empleados" className="space-y-2 dark:bg-slate-950">
+            <TabsContent
+              value="Empleados"
+              className="space-y-2 dark:bg-slate-950"
+            >
               {!multiresource && (
                 <>
                   {' '}
@@ -214,38 +217,13 @@ export default function NewDocumentModal({
                 ) : (
                   Array.from({ length: totalForms }).map((_, index) => (
                     <div key={index} className="relative">
-                      <Accordion
-                        type="single"
-                        className="w-full"
-                        defaultValue="item-1"
-                      >
-                        <AccordionItem value={`item-${index + 1}`}>
-                          <AccordionTrigger
-                            defaultValue={`item-${index + 1}`}
-                            className="text-lg flex relative"
-                          >
-                            <div className="flex items-center gap-4">
-                              {`Documento ${index + 1}`}
-                              {index !== 0 && (
-                                <>
-                                  <MinusCircledIcon
-                                    onClick={() => setTotalForms(false)}
-                                    className="h-4 w-4 shrink-0   text-red-800 cursor-pointer justify-end"
-                                  />
-                                </>
-                              )}
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            <SimpleDocument
-                              resource="equipo"
-                              index={index}
-                              handleOpen={handleOpen}
-                              refSubmit={refs[index]}
-                            />
-                          </AccordionContent>
-                        </AccordionItem>
-                      </Accordion>
+                     
+                      <SimpleDocument
+                        resource="equipo"
+                        index={index}
+                        handleOpen={handleOpen}
+                        refSubmit={refs[index]}
+                      />
                     </div>
                   ))
                 )}
