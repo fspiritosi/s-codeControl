@@ -389,3 +389,14 @@ export const AllDocuments: Document[] = [
   // Add more examples here...
 ];
 
+export type AuditorDocument = {
+  date: string
+  companyName: string
+  allocated_to: string
+  documentName: string
+  multiresource: string
+  validity: string
+  id: string
+  resource: string
+  state: string
+}

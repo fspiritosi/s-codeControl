@@ -7,49 +7,6 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import Link from 'next/link'
-
-const data = [
-  {
-    goal: 400,
-  },
-  {
-    goal: 300,
-  },
-  {
-    goal: 200,
-  },
-  {
-    goal: 300,
-  },
-  {
-    goal: 200,
-  },
-  {
-    goal: 278,
-  },
-  {
-    goal: 189,
-  },
-  {
-    goal: 239,
-  },
-  {
-    goal: 300,
-  },
-  {
-    goal: 200,
-  },
-  {
-    goal: 278,
-  },
-  {
-    goal: 189,
-  },
-  {
-    goal: 349,
-  },
-]
-
 import {
   Table,
   TableBody,
@@ -73,18 +30,8 @@ import { supabase } from '../../../supabase/supabase'
 import { AuditorColums } from './columns'
 import { AuditorDataTable } from './data-table'
 import { revalidatePath } from 'next/cache'
+import { AuditorDocument } from '@/types/types'
 
-type AuditorDocument = {
-  date: string
-  companyName: string
-  allocated_to: string
-  documentName: string
-  multiresource: string
-  validity: string
-  id: string
-  resource: string
-  state: string
-}
 
 export default async function Auditor() {
   let { data: document_types, error } = await supabase
@@ -124,7 +71,9 @@ export default async function Auditor() {
       documentName: doc.document_types?.name,
       state: doc.state,
       multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
-      validity: format(new Date(doc.validity), 'dd/MM/yyyy') || 'No vence',
+      validity: doc.validity
+      ? format(new Date(doc.validity), 'dd/MM/yyyy')
+      : 'No vence',
       id: doc.id,
       resource: `${doc.applies?.firstname} ${doc.applies?.lastname}`,
     }

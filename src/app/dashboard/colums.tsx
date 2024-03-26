@@ -2,23 +2,12 @@
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@/components/ui/drawer'
 import { ColumnDef } from '@tanstack/react-table'
 import { ArrowUpDown } from 'lucide-react'
 import Link from 'next/link'
 
 type Colum = {
   date: string
-  companyName: string
   allocated_to: string
   documentName: string
   multiresource: string
@@ -26,9 +15,11 @@ type Colum = {
   id: string
   resource: string
   state: string
+  document_number: string
+  mandatory: string
 }
 
-export const AuditorColums: ColumnDef<Colum>[] = [
+export const ExpiredColums: ColumnDef<Colum>[] = [
   {
     accessorKey: 'date',
     sortingFn: 'datetime',
@@ -45,10 +36,6 @@ export const AuditorColums: ColumnDef<Colum>[] = [
     },
   },
   {
-    accessorKey: 'companyName',
-    header: 'Empresa',
-  },
-  {
     accessorKey: 'resource',
     header: 'Recurso',
   },
@@ -59,6 +46,10 @@ export const AuditorColums: ColumnDef<Colum>[] = [
   {
     accessorKey: 'documentName',
     header: 'Documento',
+  },
+  {
+    accessorKey: 'mandatory',
+    header: 'Mandatorio',
   },
   {
     accessorKey: 'state',
@@ -94,16 +85,28 @@ export const AuditorColums: ColumnDef<Colum>[] = [
   },
   {
     accessorKey: 'validity',
-    header: 'Vence',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Vencimiento
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
   },
   {
     accessorKey: 'id',
-    header: 'Auditar',
+    header: 'Empleado',
     cell: ({ row }) => {
       return (
-       <Link href={`auditor/${row.original.id}`}>
-          <Button>Auditar</Button>
-       </Link>
+        <Link
+          href={`dashboard/employee/action?action=view&document=${row?.original?.document_number}`}
+        >
+          <Button>Ver empleado</Button>
+        </Link>
       )
     },
   },
