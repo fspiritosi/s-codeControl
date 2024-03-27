@@ -61,9 +61,10 @@ export default function Home() {
   const setShowLastMonthDocuments = useLoggedUserStore(
     state => state.setShowLastMonthDocuments,
   )
-  const showLastMonthDocuments = useLoggedUserStore(
-    state => state.showLastMonthDocuments,
-  )
+
+  const pendingDocuments = useLoggedUserStore(state => state.pendingDocuments)
+
+  console.log(pendingDocuments, 'pendientes')
 
   return (
     <div>
@@ -179,7 +180,22 @@ export default function Home() {
           data={documentsToShow?.employees || []}
           setShowLastMonthDocuments={setShowLastMonthDocuments}
           columns={ExpiredColums}
+        />
+      </section>
+      <section>
+        <CardHeader>
+          <CardTitle>Documentos pendientes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CardDescription>
+            Documentos que aun no han sido aprobados
+          </CardDescription>
+        </CardContent>
 
+        <ExpiredDataTable
+          data={pendingDocuments?.employees || []}
+          columns={ExpiredColums}
+          pending={true}
         />
       </section>
     </div>

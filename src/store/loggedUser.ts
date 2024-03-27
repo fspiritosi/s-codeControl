@@ -126,6 +126,30 @@ interface State {
   }
   showLastMonthDocuments: boolean
   setShowLastMonthDocuments: () => void
+  pendingDocuments:  {
+    employees: {
+      date: string
+      allocated_to: string
+      documentName: string
+      multiresource: string
+      validity: string
+      id: string
+      mandatory:string
+      resource: string
+      state: string
+      document_number: string
+    }[]
+    vehicles: {
+      date: string
+      allocated_to: string
+      documentName: string
+      multiresource: string
+      validity: string
+      id: string
+      resource: string
+      state: string
+    }[]
+  }
 }
 
 const setEmployeesToShow = (employees: any) => {
@@ -308,7 +332,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       });
 
       const lastMonthValues = {
-        employees: filteredData?.map((doc: any) => {
+        employees: filteredData?.filter((doc: any) => doc.state !== 'presentado')?.map((doc: any) => {
           return {
             date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
             allocated_to: doc.employees?.contractor_employee
@@ -327,8 +351,28 @@ export const useLoggedUserStore = create<State>((set, get) => {
         vehicles: { ...get()?.Alldocuments?.vehicles } || [],
       };
 
+      const pendingDocuments = {
+        employees: data?.filter((doc: any) => doc.state === 'presentado')?.map((doc: any) => {
+          return {
+            date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
+            allocated_to: doc.employees?.contractor_employee
+              ?.map((doc: any) => doc.contractors.name)
+              .join(', '),
+            documentName: doc.document_types?.name,
+            state: doc.state,
+            multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+            validity: format(new Date(doc.validity), 'dd/MM/yyyy') || 'No vence',
+            mandatory:doc.document_types?.mandatory ? 'Si' : 'No',
+            id: doc.id,
+            resource: `${doc.employees?.firstname} ${doc.employees?.lastname}`,
+            document_number: doc.employees.document_number,
+          };
+        } ) || [],
+        vehicles: { ...get()?.Alldocuments?.vehicles } || [],
+      }
+
       const Allvalues = {
-        employees: data?.map((doc: any) => {
+        employees: data?.filter((doc: any) => doc.state !== 'presentado')?.map((doc: any) => {
           return {
             date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
             allocated_to: doc.employees?.contractor_employee
@@ -351,14 +395,13 @@ export const useLoggedUserStore = create<State>((set, get) => {
       set({ Alldocuments: Allvalues });
       set({ lastMonthDocuments: lastMonthValues });
       set({ documentsToShow: lastMonthValues });
+      set({ pendingDocuments });
     }
   }
 
   const setShowLastMonthDocuments = () => {
     set({ showLastMonthDocuments: !get()?.showLastMonthDocuments });
     set({ documentsToShow: !get()?.showLastMonthDocuments ? get()?.Alldocuments : get()?.lastMonthDocuments });
-    
-
   }
 
   const getEmployees = async (active: boolean) => {
@@ -581,6 +624,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     showLastMonthDocuments: get()?.showLastMonthDocuments,
     setShowLastMonthDocuments,
     lastMonthDocuments: get()?.lastMonthDocuments,
+    pendingDocuments: get()?.pendingDocuments,
     
   }
 })
