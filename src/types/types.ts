@@ -154,12 +154,7 @@ export type MotionTransitionProps = {
   className?: string
 }
 
-export type BestBussinesData = {
-  id: number
-  icon: React.ReactNode
-  title: string
-  description: string
-}[]
+
 
 export type names =
   | 'lastname'
