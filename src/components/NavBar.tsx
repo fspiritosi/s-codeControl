@@ -3,6 +3,15 @@ import ModalCompany from '@/components/ModalCompany'
 import { ModeToggle } from '@/components/ui/ToogleDarkButton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -15,6 +24,18 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { IoMdAddCircleOutline } from 'react-icons/io'
 import { LogOutButton } from './LogOutButton'
+import { BellRing, Check } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Switch } from '@/components/ui/switch'
 
 export default function NavBar() {
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
@@ -36,6 +57,21 @@ export default function NavBar() {
     setIsOpen(false)
     router.push('/dashboard')
   }
+
+  const notifications = [
+    {
+      title: 'Tu llamada ha sido confirmada.',
+      description: 'Hace 1 hora',
+    },
+    {
+      title: '¡Tienes un nuevo mensaje!',
+      description: 'Hace 1 hora',
+    },
+    {
+      title: '¡Tu suscripción está por vencer!',
+      description: 'Hace 2 horas',
+    },
+  ]
 
   return (
     <nav className=" flex flex-shrink items-center justify-between  text-white p-4 mb-2">
@@ -148,10 +184,50 @@ export default function NavBar() {
         )}
       </div>
       <div className="flex gap-8 items-center">
-        <div className="relative">
-          <DotFilledIcon className="text-blue-600 absolute size-7 top-[-8px] right-[-10px] p-0" />
-          <BellIcon className="text-black cursor-pointer size-5 dark:text-white" />
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger>
+            <div className="relative">
+              <DotFilledIcon className="text-blue-600 absolute size-7 top-[-8px] right-[-10px] p-0" />
+              <BellIcon className="text-black cursor-pointer size-5 dark:text-white" />
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="min-w-[300px] bg-transparent border-none shadow-none">
+            <Card className="w-[380px]">
+              <CardHeader>
+                <CardTitle>Notificaciones</CardTitle>
+                <CardDescription>
+                  Tienes 3 notificaciones pendientes
+                </CardDescription>
+                <DropdownMenuSeparator className="mb-3" />
+              </CardHeader>
+              <CardContent className="grid gap-4">
+                <div>
+                  {notifications.map((notification, index) => (
+                    <div
+                      key={index}
+                      className="mb-4 grid grid-cols-[25px_1fr] items-start pb-4 last:mb-0 last:pb-0"
+                    >
+                      <span className="flex h-2 w-2 translate-y-1 rounded-full bg-sky-500" />
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {notification.title}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {notification.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button className="w-full">
+                  <Check className="mr-2 h-4 w-4" /> Mark all as read
+                </Button>
+              </CardFooter>
+            </Card>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <ModeToggle />
         <div className="flex-shrink">
           <Popover>
