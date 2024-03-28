@@ -400,3 +400,58 @@ export type AuditorDocument = {
   resource: string
   state: string
 }
+
+export type VehiclesAPI = {
+  created_at:        Date;
+  id_storage:        null;
+  id_document_types: string;
+  applies:           Applies;
+  validity:          null;
+  state:             string;
+  is_active:         boolean;
+  id:                string;
+  user_id:           string;
+  document_url:      string;
+  document_types:    DocumentTypes;
+}
+
+export type Applies = {
+  id:                     string;
+  type:                   Type;
+  year:                   string;
+  brand:                  Brand;
+  model:                  Brand;
+  serie:                  string;
+  domain:                 string;
+  engine:                 string;
+  status:                 string;
+  chassis:                string;
+  picture:                string;
+  user_id:                string;
+  is_active:              boolean;
+  company_id:             string;
+  created_at:             Date;
+  intern_number:          string;
+  type_of_vehicle:        Brand;
+  termination_date:       null;
+  reason_for_termination: null;
+}
+
+export type Type = {
+  id:         string;
+  name:       string;
+  created_at: Date;
+}
+
+export type DocumentTypes = {
+  id:            string;
+  name:          string;
+  applies:       string;
+  special:       boolean;
+  explired:      boolean;
+  is_active:     boolean;
+  mandatory:     boolean;
+  created_at:    Date;
+  description:   null;
+  multiresource: boolean;
+}

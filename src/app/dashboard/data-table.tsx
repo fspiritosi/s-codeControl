@@ -47,6 +47,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
   setShowLastMonthDocuments?: () => void
   pending?: boolean
+  vehicles?: boolean
 }
 
 export function ExpiredDataTable<TData, TValue>({
@@ -54,6 +55,7 @@ export function ExpiredDataTable<TData, TValue>({
   data,
   setShowLastMonthDocuments,
   pending,
+  vehicles
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const defaultVisibleColumns = [
@@ -188,7 +190,9 @@ export function ExpiredDataTable<TData, TValue>({
     <div className="mb-10 dark:bg-slate-950 px-4 rounded-lg">
       <div className="flex items-center py-4 flex-wrap">
         <Input
-          placeholder="Buscar por nombre de empleado"
+          placeholder={
+            vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'
+          }
           value={
             (table.getColumn('resource')?.getFilterValue() as string) ?? ''
           }
@@ -329,6 +333,7 @@ export function ExpiredDataTable<TData, TValue>({
                                       <SelectValue
                                         placeholder={
                                           header.column.columnDef
+                                            .header === "Empleado" && vehicles?"Vehículo":  header.column.columnDef
                                             .header as string
                                         }
                                       />

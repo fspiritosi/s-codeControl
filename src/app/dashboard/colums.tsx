@@ -6,6 +6,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import { ArrowUpDown } from 'lucide-react'
 import Link from 'next/link'
 
+
 type Colum = {
   date: string
   allocated_to: string
@@ -15,8 +16,8 @@ type Colum = {
   id: string
   resource: string
   state: string
-  document_number: string
-  mandatory: string
+  document_number?: string
+  mandatory?: string
 }
 
 export const ExpiredColums: ColumnDef<Colum>[] = [
@@ -37,7 +38,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
   },
   {
     accessorKey: 'resource',
-    header: 'Recurso',
+    header: 'Empleado',
   },
   {
     accessorKey: 'allocated_to',
@@ -99,13 +100,13 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
   },
   {
     accessorKey: 'id',
-    header: 'Empleado',
+    header: 'Revisar documento',
     cell: ({ row }) => {
       return (
         <Link
           href={`dashboard/employee/action?action=view&document=${row?.original?.document_number}`}
         >
-          <Button>Ver empleado</Button>
+          <Button>Ver documento</Button>
         </Link>
       )
     },
