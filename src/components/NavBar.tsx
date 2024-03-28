@@ -71,13 +71,13 @@ export default function NavBar() {
         .from('profile')
         .update({ avatar: imageUrl })
         .eq('id', actualUser[0].id)
-      console.log('user: ', actualUser[0].id)
+      //console.log('user: ', actualUser[0].id)
 
       if (error) {
         throw error
       }
 
-      console.log('URL de la imagen actualizada en la tabla profile:', imageUrl)
+      //console.log('URL de la imagen actualizada en la tabla profile:', imageUrl)
     } catch (error) {
       console.error('Error al actualizar la URL de la imagen:', error)
     }
