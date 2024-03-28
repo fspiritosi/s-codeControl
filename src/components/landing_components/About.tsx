@@ -8,7 +8,8 @@ import { RiCustomerService2Line } from "react-icons/ri";
 import MotionTransition from './Animation/MotionTransition'
 import { Reveal } from './Animation/Reveal'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-
+import { MapIcon, MedalIcon, LightBulbIcon} from '@/components/Icons'
+ 
 
 function AboutAs() {
   return (
@@ -67,7 +68,8 @@ function AboutAs() {
               
               <CardHeader className='p-2 items-center'>
                 <div className="w-[50px] h-[50px] mb-2">
-                      <FaBookOpen className="w-full h-full" />
+                      <MedalIcon />
+                      {/* <FaBookOpen className="w-full h-full" /> */}
                 </div>
                 <CardTitle className='text-blue-400'>Experiencia</CardTitle>
               </CardHeader>
@@ -79,7 +81,8 @@ function AboutAs() {
             <Card className='p-4 hover:scale-110 cursor-pointer'>
               <CardHeader className='p-2 items-center'>
                 <div className="w-[50px] h-[50px] mb-2">
-                <TbWorldCode className="w-full h-full"  />
+                  <LightBulbIcon/>
+                {/* <TbWorldCode className="w-full h-full"  /> */}
                     
                 </div>
                 <CardTitle className='text-blue-400'>Tecnología innovadora</CardTitle>
@@ -92,7 +95,9 @@ function AboutAs() {
             <Card className='p-4 hover:scale-110 cursor-pointer'>
               <CardHeader className='p-2 items-center'>
                 <div className="w-[50px] h-[50px] mb-2">
-                <RiCustomerService2Line className="w-full h-full" />
+                  <MapIcon/>
+                  
+                {/* <RiCustomerService2Line className="w-full h-full" /> */}
                 </div>
                 <CardTitle className='text-blue-400'>Atención al cliente</CardTitle>
               </CardHeader>
@@ -104,7 +109,8 @@ function AboutAs() {
             <Card className='p-4 hover:scale-110 cursor-pointer'>
               <CardHeader className='p-2 items-center'>
                 <div className="w-[50px] h-[50px] mb-2">
-                      <FaHandsHelping className="w-full h-full" />
+                  <LightBulbIcon/>
+                      {/* <FaHandsHelping className="w-full h-full" /> */}
                 </div>
                 <CardTitle className='text-blue-400'>Compromiso</CardTitle>
               </CardHeader>

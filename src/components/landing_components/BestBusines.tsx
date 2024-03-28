@@ -3,6 +3,7 @@ import { Reveal } from './Animation/Reveal'
 import { Button } from '../ui/button'
 import Link from 'next/link'
 import { MdLockOutline, MdOutlineWhatsapp, MdOutlinePolicy } from 'react-icons/md'
+import { DactilarIcon, ChatIcon, SearchIcon } from '@/components/Icons'
 
 
 function Services() {
@@ -43,7 +44,7 @@ function Services() {
                 <div className="">
                   <div className="flex items-center gap-4 mb-2">
                     <div className="w-[50px] h-[50px]">
-                      <MdLockOutline className="w-full h-full" />
+                      <DactilarIcon/>
                     </div>
                     <h4 className="text-xl font-bold">
                       100% Seguro
@@ -60,7 +61,9 @@ function Services() {
                 <div className="">
                   <div className="flex items-center gap-4 mb-2">
                     <div className="w-[50px] h-[50px]">
-                      <MdOutlineWhatsapp className="w-full h-full" />
+                      <ChatIcon />
+                    
+                      {/* <MdOutlineWhatsapp className="w-full h-full" /> */}
                     </div>
                     <h4 className="text-xl font-bold">
                       Notificaciones
@@ -77,7 +80,8 @@ function Services() {
                 <div className="">
                   <div className="flex items-center gap-4 mb-2">
                     <div className="w-[50px] h-[50px]">
-                      <MdOutlinePolicy className="w-full h-full" />
+                      <SearchIcon/>
+                      {/* <MdOutlinePolicy className="w-full h-full" /> */}
                     </div>
                     <h4 className="text-xl font-bold">
                       Auditoría
