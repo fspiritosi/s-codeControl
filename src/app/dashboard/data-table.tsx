@@ -45,13 +45,17 @@ import { ArrowUpDown } from 'lucide-react'
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
-  setShowLastMonthDocuments: () => void
+  setShowLastMonthDocuments?: () => void
+  pending?: boolean
+  vehicles?: boolean
 }
 
 export function ExpiredDataTable<TData, TValue>({
   columns,
   data,
   setShowLastMonthDocuments,
+  pending,
+  vehicles
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const defaultVisibleColumns = [
@@ -63,7 +67,7 @@ export function ExpiredDataTable<TData, TValue>({
     'multiresource',
     'validity',
     'id',
-    "mandatory"
+    'mandatory',
   ]
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
@@ -111,7 +115,7 @@ export function ExpiredDataTable<TData, TValue>({
     state: createOptions('state'),
     multiresource: createOptions('multiresource'),
     allocated_to: createOptions('allocated_to'),
-    mandatory : createOptions("mandatory")
+    mandatory: createOptions('mandatory'),
   }
 
   const selectHeader = {
@@ -140,11 +144,11 @@ export function ExpiredDataTable<TData, TValue>({
       option: allOptions.allocated_to,
       label: 'Afectado a',
     },
-    mandatory:{
-      name:"mandatory",
-      option:allOptions.mandatory,
-      label:"Mandatorio"
-    }
+    mandatory: {
+      name: 'mandatory',
+      option: allOptions.mandatory,
+      label: 'Mandatorio',
+    },
   }
 
   const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
@@ -172,20 +176,23 @@ export function ExpiredDataTable<TData, TValue>({
       documentName: 'Todos',
       state: 'Todos',
       multiresource: 'Todos',
-      mandatory:"Todos"
+      mandatory: 'Todos',
     })
   }
 
   const showLastMonth = () => {
-    
-    setShowLastMonthDocuments()
+    if (setShowLastMonthDocuments) {
+      setShowLastMonthDocuments()
+    }
   }
 
   return (
     <div className="mb-10 dark:bg-slate-950 px-4 rounded-lg">
       <div className="flex items-center py-4 flex-wrap">
         <Input
-          placeholder="Buscar por nombre de empleado"
+          placeholder={
+            vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'
+          }
           value={
             (table.getColumn('resource')?.getFilterValue() as string) ?? ''
           }
@@ -255,15 +262,16 @@ export function ExpiredDataTable<TData, TValue>({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        
-        <Button
-          variant="outline"
-          size="default"
-          className="ml-2"
-          onClick={showLastMonth}
-        >
-          Ver todos los vencimientos
-        </Button>
+        {!pending && (
+          <Button
+            variant="outline"
+            size="default"
+            className="ml-2"
+            onClick={showLastMonth}
+          >
+            Ver todos los vencimientos
+          </Button>
+        )}
       </div>
       <div className="rounded-md border mb-6">
         <Table>
@@ -325,11 +333,12 @@ export function ExpiredDataTable<TData, TValue>({
                                       <SelectValue
                                         placeholder={
                                           header.column.columnDef
+                                            .header === "Empleado" && vehicles?"Vehículo":  header.column.columnDef
                                             .header as string
                                         }
                                       />
                                     </SelectTrigger>
-                                    {header.id === 'resource'&& (
+                                    {header.id === 'resource' && (
                                       <div className=" grid place-content-center ml-0 pl-0">
                                         <ArrowUpDown
                                           onClick={() =>
@@ -341,7 +350,7 @@ export function ExpiredDataTable<TData, TValue>({
                                         />
                                       </div>
                                     )}
-                                     {header.id === 'Vencimiento' && (
+                                    {header.id === 'Vencimiento' && (
                                       <div className=" grid place-content-center ml-0 pl-0">
                                         <ArrowUpDown
                                           onClick={() =>
@@ -390,14 +399,15 @@ export function ExpiredDataTable<TData, TValue>({
                   data-state={row.getIsSelected() && 'selected'}
                 >
                   {row.getVisibleCells().map(cell => {
-                    return(
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  )})}
+                    return (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    )
+                  })}
                 </TableRow>
               ))
             ) : (
@@ -406,7 +416,9 @@ export function ExpiredDataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No hay documentos a vencer
+                  {pending
+                    ? 'No hay documentos pendientes'
+                    : 'No hay documentos a vencer'}
                 </TableCell>
               </TableRow>
             )}

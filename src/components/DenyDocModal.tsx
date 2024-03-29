@@ -14,7 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { toast } from '@/components/ui/use-toast'
+import { toast, useToast } from '@/components/ui/use-toast'
 import {
   Dialog,
   DialogClose,
@@ -27,6 +27,8 @@ import {
 } from '@/components/ui/dialog'
 import { Textarea } from './ui/textarea'
 import { useState } from 'react'
+import { supabase } from '../../supabase/supabase'
+import { useRouter } from 'next/navigation'
 
 export default function DenyDocModal({ id }: { id: string }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -44,16 +46,32 @@ export default function DenyDocModal({ id }: { id: string }) {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
   })
+  const router = useRouter()
+  const { toast } = useToast()
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
+  async function onSubmit(menssaje: z.infer<typeof FormSchema>) {
+    const { data, error } = await supabase
+      .from('documents_employees')
+      .update({ state: 'rechazado', deny_reason: menssaje.reason })
+      .eq('id', id)
+      .select()
+
+    if (error) {
+      setIsOpen(false)
+      return toast({
+        title: 'Error',
+        description: 'Ocurrio un error al rechazar el documento',
+        variant: 'destructive',
+      })
+    }
+
     toast({
-      title: 'You submitted the following values:',
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(id, null, 2)}</code>
-        </pre>
-      ),
+      title: 'Documento rechazado',
+      description: 'El documento ha sido rechazado correctamente',
+      variant: 'default',
     })
+
+    router.push('/auditor')
     setIsOpen(false)
   }
   return (

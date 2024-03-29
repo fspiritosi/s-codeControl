@@ -60,6 +60,7 @@ export default async function Auditor() {
   `,
     )
     .eq('is_active', true)
+    .eq('state', 'presentado')
 
   const filteredData = documents_employees?.map(doc => {
     return {

@@ -560,7 +560,12 @@ export default function SimpleDocument({
                           Seleccione el tipo de documento que desea subir
                         </FormLabel>
                         <Select
-                          onValueChange={field.onChange}
+                          onValueChange={e => {
+                            field.onChange(e)
+                            setExpiredDate(
+                              documenTypes?.find(doc => doc.id === e)?.explired,
+                            )
+                          }}
                           defaultValue={field.value}
                         >
                           <FormControl>
@@ -635,15 +640,7 @@ export default function SimpleDocument({
                       </FormItem>
                     )}
                   />
-                  <div className="flex items-center space-x-2">
-                    <Label htmlFor="expired">
-                      ¿Tiene fecha de vencimiento?
-                    </Label>
-                    <Switch
-                      id="expired"
-                      onCheckedChange={() => setExpiredDate(!expiredDate)}
-                    />
-                  </div>
+
                   {expiredDate && (
                     <FormField
                       control={form.control}
