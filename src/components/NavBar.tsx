@@ -1,4 +1,30 @@
 'use client'
+
+import { supabase } from '../../supabase/supabase'
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { useForm, FormProvider } from 'react-hook-form'
+import { UpdateUserPasswordForm } from './UpdateUserPasswordForm'
+import { UploadImage } from './UploadImage'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+
 import ModalCompany from '@/components/ModalCompany'
 import { ModeToggle } from '@/components/ui/ToogleDarkButton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -37,6 +63,7 @@ import {
 } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 
+import { Separator } from '@radix-ui/react-select'
 export default function NavBar() {
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
@@ -48,16 +75,6 @@ export default function NavBar() {
     actualUser && actualUser.length > 0 ? actualUser[0].avatar : ''
 
   const [isOpen, setIsOpen] = useState(false)
-  const [selectedCompany, setSelectedCompany] = useState(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const router = useRouter()
-
-  const handleNewCompany = async (company: companyData) => {
-    setNewDefectCompany(company)
-    setIsOpen(false)
-    router.push('/dashboard')
-  }
-
   const notifications = [
     {
       title: 'Tu llamada ha sido confirmada.',
@@ -72,7 +89,36 @@ export default function NavBar() {
       description: 'Hace 2 horas',
     },
   ]
+  const [selectedCompany, setSelectedCompany] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const router = useRouter()
 
+  const handleNewCompany = async (company: companyData) => {
+    setNewDefectCompany(company)
+    setIsOpen(false)
+    router.push('/dashboard')
+  }
+  const { control, formState, setValue } = useForm()
+  const updateProfileAvatar = async (imageUrl: string) => {
+    try {
+      // Realiza la actualización en la tabla profile usando Supabase
+      const { data, error } = await supabase
+        .from('profile')
+        .update({ avatar: imageUrl })
+        .eq('id', actualUser[0].id)
+      //console.log('user: ', actualUser[0].id)
+
+ 
+
+      if (error) {
+        throw error
+      }
+
+      //console.log('URL de la imagen actualizada en la tabla profile:', imageUrl)
+    } catch (error) {
+      console.error('Error al actualizar la URL de la imagen:', error)
+    }
+  }
   return (
     <nav className=" flex flex-shrink items-center justify-between  text-white p-4 mb-2">
       <div className="flex items-center">
@@ -238,6 +284,61 @@ export default function NavBar() {
               </Avatar>
             </PopoverTrigger>
             <PopoverContent className="bg-slate-600 border-0">
+              {/* <Button className="mb-2 block">Editar Perfil</Button> */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="mb-2 block">
+                    Edit Profile
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px]">
+                  <DialogHeader>
+                    <DialogTitle>Editar perfil</DialogTitle>
+                    <DialogDescription>
+                      Aqui se haran cambios en tu perfil
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="w-[300px] flex  gap-2">
+                      <FormProvider {...useForm()}>
+                        <FormField
+                          control={control}
+                          name="company_logo"
+                          render={({ field }) => (
+                            <FormItem className=" max-w-[600px] flex flex-col justify-center">
+                              <FormControl>
+                                <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
+                                  <UploadImage
+                                    companyId={actualCompany?.id as string}
+                                    labelInput="Avatar"
+                                    imageBucket="avatar"
+                                    desciption="Sube tu avatar"
+                                    style={{ width: '300px' }}
+                                    // onImageChange={(imageUrl: string) =>
+                                    //   setValue('profile', imageUrl)
+                                    // }
+                                    onImageChange={async imageUrl => {
+                                      setValue('profile', imageUrl)
+                                      await updateProfileAvatar(imageUrl) // Llama a la función para actualizar la URL
+                                    }}
+                                    // onUploadSuccess={onUploadSuccess}
+                                    inputStyle={{ width: '150px' }}
+                                  />
+                                </div>
+                              </FormControl>
+
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </FormProvider>
+                    </div>
+                    <Separator className="my-4" />
+                    <UpdateUserPasswordForm />
+                  </div>
+                  <DialogFooter></DialogFooter>
+                </DialogContent>
+              </Dialog>
               <LogOutButton />
             </PopoverContent>
           </Popover>

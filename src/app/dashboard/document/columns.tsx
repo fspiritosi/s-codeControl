@@ -4,6 +4,14 @@
 
 'use client'
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -78,6 +86,11 @@ const formSchema = z.object({
     required_error: 'La fecha de baja es requerida.',
   }),
 })
+type DocumentHistory = {
+  documents_employees_id: string
+  modified_by: string
+  updated_at: string
+}
 
 type Colum = {
   id?: string
@@ -97,7 +110,11 @@ export const columns: ColumnDef<Colum>[] = [
     cell: ({ row }: { row: any }) => {
       const [showModal, setShowModal] = useState(false)
       const [integerModal, setIntegerModal] = useState(false)
+      const [viewModal, setViewModal] = useState(false)
       const [domain, setDomain] = useState('')
+      const [documentHistory, setDocumentHistory] = useState<DocumentHistory[]>(
+        [],
+      )
       //const user = row.original
       const [showInactive, setShowInactive] = useState<boolean>(false)
       const [showDeletedEquipment, setShowDeletedEquipment] = useState(false)
@@ -108,14 +125,20 @@ export const columns: ColumnDef<Colum>[] = [
         setDomain(id)
         setShowModal(!showModal)
       }
-      const { fetchDocumentEquipmentByCompany } = useDocument()
+      // const { fetchDocumentEquipmentByCompany } = useDocument()
 
-      useEffect(() => {
-        fetchDocumentEquipmentByCompany
-      }, [])
+      // useEffect(() => {
+      //   fetchDocumentEquipmentByCompany
+      // }, [])
       const handleOpenIntegerModal = (id: string) => {
         setDomain(id)
         setIntegerModal(!integerModal)
+      }
+
+      const handleOpenViewModal = (id: string) => {
+        setDomain(id)
+
+        setViewModal(!viewModal)
       }
 
       const { errorTranslate } = useEdgeFunctions()
@@ -195,6 +218,32 @@ export const columns: ColumnDef<Colum>[] = [
       const handleToggleInactive = () => {
         setShowInactive(!showInactive)
       }
+
+      async function viewDocumentEquipment() {
+        try {
+          const { data, error } = await supabase
+            .from('documents_equipment_logs')
+            .select('*, documents_equipment(id,user_id(email))')
+            .eq('documents_equipment_id', document.id)
+
+          if (data) {
+            setDocumentHistory(data)
+          }
+          //console.log('Datos del documento:', data)
+          //console.log('document: ', document.id)
+          //setViewModal(!viewModal)
+        } catch (error: any) {
+          const message = await errorTranslate(error?.message)
+          toast({
+            variant: 'destructive',
+            title: 'Error al reintegrar el equipo',
+            description: message,
+          })
+        }
+      }
+      useEffect(() => {
+        viewDocumentEquipment()
+      }, [])
 
       return (
         <DropdownMenu>
@@ -340,6 +389,37 @@ export const columns: ColumnDef<Colum>[] = [
               </DialogContent>
             </Dialog>
           )}
+          {viewModal && (
+            <Dialog defaultOpen onOpenChange={() => setViewModal(!viewModal)}>
+              <DialogContent>
+                <DialogTitle>Historial de Modificaciones</DialogTitle>
+                <DialogDescription>
+                  Aquí se muestra quién modificó el documento y cuándo
+                </DialogDescription>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableCell>Usuario</TableCell>
+                      <TableCell>Fecha de modificación</TableCell>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {documentHistory.map((entry: any) => (
+                      <TableRow key={entry.documents_employees_id}>
+                        <TableCell>
+                          {entry.documents_equipment.user_id.email}
+                        </TableCell>
+                        <TableCell>{entry.updated_at}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <DialogFooter>
+                  <Button onClick={() => setViewModal(false)}>Cerrar</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
               <span className="sr-only">Open menu</span>
@@ -354,12 +434,8 @@ export const columns: ColumnDef<Colum>[] = [
             >
               Copiar número de interno
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Link
-                href={`/dashboard/document/action?action=view&id=${document?.id}`}
-              >
-                Ver documento
-              </Link>
+            <DropdownMenuItem onClick={() => handleOpenViewModal(domain)}>
+              Ver documento
             </DropdownMenuItem>
             {/* <DropdownMenuItem>
               <Link
