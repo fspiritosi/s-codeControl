@@ -1,3 +1,4 @@
+'use client'
 import {
   Card,
   CardContent,
@@ -6,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import Link from 'next/link'
 import {
   Table,
   TableBody,
@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import Link from 'next/link'
 
 import {
   Accordion,
@@ -25,42 +26,79 @@ import {
 
 import { buttonVariants } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { AuditorDocument } from '@/types/types'
 import { format } from 'date-fns'
+import { useEffect, useState } from 'react'
 import { supabase } from '../../../supabase/supabase'
 import { AuditorColums } from './columns'
 import { AuditorDataTable } from './data-table'
-import { revalidatePath } from 'next/cache'
-import { AuditorDocument } from '@/types/types'
 
+export default function Auditor() {
+  const [document_types, setDocumentTypes] = useState<any[] | null>([])
+  const [documents_employees, setDocumentsEmployees] = useState<any[] | null>(
+    [],
+  )
 
-export default async function Auditor() {
-  let { data: document_types, error } = await supabase
-    .from('document_types')
-    .select('*')
-    .eq('is_active', true)
+  const fetchDocumentTypes = async () => {
+    let { data: document_types, error } = await supabase
+      .from('document_types')
+      .select('*')
+      .eq('is_active', true)
+
+    if (error) {
+      console.error('Error fetching document types:', error.message)
+      return
+    }
+
+    setDocumentTypes(document_types)
+  }
+
+  const fetchDocumentsEmployees = async () => {
+    let { data: documents_employees, error } = await supabase
+      .from('documents_employees')
+      .select(
+        `
+      *,
+      document_types(*),
+      applies(*,
+        contractor_employee(
+          contractors(
+            *
+          )
+        ),
+        company_id(*)
+      )
+    `,
+      )
+      .eq('is_active', true)
+      .eq('state', 'presentado')
+
+    if (error) {
+      console.error('Error fetching document types:', error.message)
+      return
+    }
+
+    setDocumentsEmployees(documents_employees)
+  }
 
   let doc_personas = document_types?.filter(doc => doc.applies === 'Persona')
   let doc_equipos = document_types?.filter(doc => doc.applies === 'Equipos')
-  revalidatePath('/auditor')
 
-  let { data: documents_employees } = await supabase
-    .from('documents_employees')
-    .select(
-      `
-    *,
-    document_types(*),
-    applies(*,
-      contractor_employee(
-        contractors(
-          *
-        )
-      ),
-      company_id(*)
+  const channels = supabase
+    .channel('custom-update-channel')
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'documents_employees' },
+      payload => {
+        fetchDocumentsEmployees()
+      },
     )
-  `,
-    )
-    .eq('is_active', true)
-    .eq('state', 'presentado')
+    .subscribe()
+
+  useEffect(() => {
+    fetchDocumentTypes()
+    fetchDocumentsEmployees()
+  }, [])
 
   const filteredData = documents_employees?.map(doc => {
     return {
@@ -73,8 +111,8 @@ export default async function Auditor() {
       state: doc.state,
       multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
       validity: doc.validity
-      ? format(new Date(doc.validity), 'dd/MM/yyyy')
-      : 'No vence',
+        ? format(new Date(doc.validity), 'dd/MM/yyyy')
+        : 'No vence',
       id: doc.id,
       resource: `${doc.applies?.firstname} ${doc.applies?.lastname}`,
     }
@@ -164,7 +202,7 @@ export default async function Auditor() {
         <Separator />
       </section>
       <section>
-        <AuditorDataTable data={filteredData} columns={AuditorColums} />
+        <AuditorDataTable data={filteredData || []} columns={AuditorColums} />
       </section>
     </div>
   )

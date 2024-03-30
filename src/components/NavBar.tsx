@@ -268,7 +268,7 @@ export default function NavBar() {
               </CardContent>
               <CardFooter>
                 <Button className="w-full">
-                  <Check className="mr-2 h-4 w-4" /> Mark all as read
+                  <Check className="mr-2 h-4 w-4" /> Marcar todos como leido
                 </Button>
               </CardFooter>
             </Card>
