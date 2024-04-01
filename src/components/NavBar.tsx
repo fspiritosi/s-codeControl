@@ -1,18 +1,5 @@
 'use client'
 
-import { supabase } from '../../supabase/supabase'
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { useForm, FormProvider } from 'react-hook-form'
-import { UpdateUserPasswordForm } from './UpdateUserPasswordForm'
-import { UploadImage } from './UploadImage'
 import {
   Dialog,
   DialogContent,
@@ -22,8 +9,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from '@/components/ui/form'
+import { FormProvider, useForm } from 'react-hook-form'
+import { supabase } from '../../supabase/supabase'
+import { UpdateUserPasswordForm } from './UpdateUserPasswordForm'
+import { UploadImage } from './UploadImage'
 
 import ModalCompany from '@/components/ModalCompany'
 import { ModeToggle } from '@/components/ui/ToogleDarkButton'
@@ -31,27 +26,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { companyData } from '@/types/types'
-import { BellIcon, DotFilledIcon } from '@radix-ui/react-icons'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { IoMdAddCircleOutline } from 'react-icons/io'
-import { LogOutButton } from './LogOutButton'
-import { BellRing, Check } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -61,9 +39,23 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Switch } from '@/components/ui/switch'
-
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { useLoggedUserStore } from '@/store/loggedUser'
+import { companyData } from '@/types/types'
+import { BellIcon, DotFilledIcon } from '@radix-ui/react-icons'
 import { Separator } from '@radix-ui/react-select'
+import { formatRelative } from 'date-fns'
+import { es } from 'date-fns/locale'
+import { Check } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { IoMdAddCircleOutline } from 'react-icons/io'
+import { LogOutButton } from './LogOutButton'
 export default function NavBar() {
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
@@ -71,24 +63,11 @@ export default function NavBar() {
     state => state.setNewDefectCompany,
   )
   const actualUser = useLoggedUserStore(state => state.profile)
+  const notifications = useLoggedUserStore(state => state.notifications)
   const avatarUrl =
     actualUser && actualUser.length > 0 ? actualUser[0].avatar : ''
 
   const [isOpen, setIsOpen] = useState(false)
-  const notifications = [
-    {
-      title: 'Tu llamada ha sido confirmada.',
-      description: 'Hace 1 hora',
-    },
-    {
-      title: '¡Tienes un nuevo mensaje!',
-      description: 'Hace 1 hora',
-    },
-    {
-      title: '¡Tu suscripción está por vencer!',
-      description: 'Hace 2 horas',
-    },
-  ]
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const router = useRouter()
@@ -108,8 +87,6 @@ export default function NavBar() {
         .eq('id', actualUser[0].id)
       //console.log('user: ', actualUser[0].id)
 
- 
-
       if (error) {
         throw error
       }
@@ -119,6 +96,8 @@ export default function NavBar() {
       console.error('Error al actualizar la URL de la imagen:', error)
     }
   }
+
+  const markAllAsRead = useLoggedUserStore(state => state.markAllAsRead)
   return (
     <nav className=" flex flex-shrink items-center justify-between  text-white p-4 mb-2">
       <div className="flex items-center">
@@ -233,7 +212,11 @@ export default function NavBar() {
         <DropdownMenu>
           <DropdownMenuTrigger>
             <div className="relative">
-              <DotFilledIcon className="text-blue-600 absolute size-7 top-[-8px] right-[-10px] p-0" />
+              {notifications?.length ? (
+                <DotFilledIcon className="text-blue-600 absolute size-7 top-[-8px] right-[-10px] p-0" />
+              ) : (
+                false
+              )}
               <BellIcon className="text-black cursor-pointer size-5 dark:text-white" />
             </div>
           </DropdownMenuTrigger>
@@ -241,34 +224,63 @@ export default function NavBar() {
             <Card className="w-[380px]">
               <CardHeader>
                 <CardTitle>Notificaciones</CardTitle>
-                <CardDescription>
-                  Tienes 3 notificaciones pendientes
-                </CardDescription>
+                {notifications?.length ? (
+                  <CardDescription>
+                    Tienes {notifications?.length} notificaciones pendientes
+                  </CardDescription>
+                ) : (
+                  false
+                )}
                 <DropdownMenuSeparator className="mb-3" />
               </CardHeader>
-              <CardContent className="grid gap-4">
-                <div>
-                  {notifications.map((notification, index) => (
-                    <div
-                      key={index}
-                      className="mb-4 grid grid-cols-[25px_1fr] items-start pb-4 last:mb-0 last:pb-0"
-                    >
-                      <span className="flex h-2 w-2 translate-y-1 rounded-full bg-sky-500" />
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {notification.title}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {notification.description}
-                        </p>
+              <CardContent className="grid gap-4 max-h-[30vh] overflow-auto">
+                {notifications?.length > 0 ? (
+                  <div>
+                    {notifications?.map((notification, index) => (
+                      <div
+                        key={index}
+                        className="mb-4 grid grid-cols-[25px_1fr] pb-4 last:mb-0 last:pb-0 items-center"
+                      >
+                        <span className="flex h-2 w-2 translate-y-1 rounded-full bg-sky-500" />
+                        <div className="space-y-1 flex justify-between items-center">
+                          <div>
+                            <p className="text-sm font-medium leading-none first-letter:uppercase">
+                              {notification.title}
+                            </p>
+                            <CardDescription>
+                              {notification.description.length > 50
+                                ? notification.description.substring(0, 50) +
+                                  '...'
+                                : notification.description}
+                            </CardDescription>
+                            <p className="text-sm text-muted-foreground/70 first-letter:">
+                              {formatRelative(
+                                new Date(notification.created_at),
+                                new Date(),
+                                { locale: es },
+                              )}
+                            </p>
+                          </div>
+                          <Button variant="outline" className="w-20">
+                            Ver
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <CardDescription>
+                    No tienes notificaciones pendientes
+                  </CardDescription>
+                )}
               </CardContent>
               <CardFooter>
-                <Button className="w-full">
-                  <Check className="mr-2 h-4 w-4" /> Marcar todos como leido
+                <Button onClick={() => markAllAsRead()} className="w-full">
+                  <Check
+                    className="mr-2 h-4 w-4"
+                    onClick={() => markAllAsRead()}
+                  />{' '}
+                  Marcar todos como leido
                 </Button>
               </CardFooter>
             </Card>
