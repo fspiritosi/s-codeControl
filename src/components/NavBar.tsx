@@ -3,20 +3,10 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from '@/components/ui/form'
 import { FormProvider, useForm } from 'react-hook-form'
 import { supabase } from '../../supabase/supabase'
-import { UpdateUserPasswordForm } from './UpdateUserPasswordForm'
-import { UploadImage } from './UploadImage'
 
 import { ModeToggle } from '@/components/ui/ToogleDarkButton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -32,6 +22,8 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
@@ -53,14 +45,16 @@ import {
   LapTimerIcon,
   PlusCircledIcon,
 } from '@radix-ui/react-icons'
-import { Separator } from '@radix-ui/react-select'
 import { formatRelative } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Check, CheckIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { LogOutButton } from './LogOutButton'
+import ModalCompany from './ModalCompany'
+import { UpdateUserPasswordForm } from './UpdateUserPasswordForm'
+import { UploadImage } from './UploadImage'
+import { AlertDialogHeader } from './ui/alert-dialog'
 import {
   Command,
   CommandEmpty,
@@ -70,6 +64,9 @@ import {
   CommandList,
   CommandSeparator,
 } from './ui/command'
+import { FormControl, FormField, FormItem, FormMessage } from './ui/form'
+import { Separator } from './ui/separator'
+import { useToast } from './ui/use-toast'
 
 export default function NavBar() {
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
@@ -79,9 +76,16 @@ export default function NavBar() {
   )
   const actualUser = useLoggedUserStore(state => state.profile)
   const notifications = useLoggedUserStore(state => state.notifications)
-  console.log(notifications, 'notificaciones')
-  const avatarUrl =
-    actualUser && actualUser.length > 0 ? actualUser[0].avatar : ''
+  const avatarUrl = actualUser && actualUser.length > 0 ? actualUser[0] : ''
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut()
+      router.push('/login')
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+    }
+  }
 
   const [isOpen, setIsOpen] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState(null)
@@ -113,6 +117,7 @@ export default function NavBar() {
   // const [selectedTeam, setSelectedTeam] = useState(groups[0].teams[0])
 
   const markAllAsRead = useLoggedUserStore(state => state.markAllAsRead)
+  const { toast } = useToast()
 
   const groups = [
     {
@@ -136,6 +141,9 @@ export default function NavBar() {
         })),
     },
   ]
+  console.log(actualUser, 'actualUser')
+  const [ISopen, setISOpen] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   return (
     <nav className=" flex flex-shrink items-center justify-between  text-white p-4 mb-2">
       <div className="flex items-center">
@@ -206,7 +214,7 @@ export default function NavBar() {
                   ))}
                 </CommandList>
                 <CommandSeparator />
-                <div className='p-2 w-full'>
+                <div className="p-2 w-full">
                   <Link
                     href="/dashboard/company/new"
                     className={`${buttonVariants({
@@ -221,113 +229,13 @@ export default function NavBar() {
             </PopoverContent>
           </Popover>
         </Dialog>
-        {/* <TeamSwitcher /> ssssssssssssssssssssssssssssssssssssssssssssss*/}
-        {/* <Popover open={isOpen} onOpenChange={setIsOpen}>
-          <PopoverTrigger>
-            <div onMouseEnter={() => setIsOpen(true)}>
-              {actualCompany ? (
-                <Link
-                  href={`/dashboard/company`}
-                  passHref
-                  className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px"
-                >
-                  <img
-                    className=" shadow-md text-white items-center flex gap-1 bg-slate-500 border-0 rounded-full w-40px h-40px"
-                    src={actualCompany.company_logo}
-                    style={{ width: '40px', height: '40px' }}
-                    alt="Company Logo"
-                  />
-                </Link>
-              ) : (
-                allCompanies
-                  ?.filter(companyItem => companyItem.by_defect === true)
-                  .map(companyItem => (
-                    <Link
-                      key={companyItem.id}
-                      href={`/dashboard/company`}
-                      passHref
-                      className=" shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px "
-                      //className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px"
-                    >
-                      <img
-                        src={companyItem.company_logo}
-                        style={{ width: '40px', height: '40px' }}
-                        className="hover:cursor-pointer shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px"
-                        alt="Company Logo"
-                      />
-                    </Link>
-                  ))
-              )}
-
-              {!actualCompany &&
-                !allCompanies?.find(
-                  companyItem => companyItem.by_defect === true,
-                ) && (
-                  <div>
-                    <Link
-                      href={`/dashboard/company/`}
-                      passHref
-                      className="shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px "
-                      //className="text-white flex items-center gap-2 p-1 bg-slate-500 border-2 rounded-md"
-                    >
-                      Empresa
-                    </Link>
-                  </div>
-                )}
-            </div>
-          </PopoverTrigger>
-          <PopoverContent
-            onMouseLeave={() => setIsOpen(false)}
-            className="bg-slate-600 border-0"
-          >
-            <Link
-              href="/dashboard/company/new"
-              passHref
-              className="text-white hover:text-sky-600 flex justify-center items-center gap-1 px-4 py-2 text-sm"
-            >
-              <IoMdAddCircleOutline size={30} />
-              <span>Registrar Empresa</span>
-            </Link>
-            <div className=" justify-center items-center">
-              {allCompanies?.map(companyItems => (
-                <div
-                  key={companyItems.id}
-                  onClick={() => handleNewCompany(companyItems)}
-                  className="text-white gap-1 flex justify-left items-center w-20 h-20"
-                  style={{ whiteSpace: 'nowrap' }}
-                >
-                  <img
-                    className="hover:cursor-pointer shadow-md text-white ml-auto items-center flex gap-0 bg-slate-500 border-2 rounded-full w-40 h-40"
-                    src={companyItems.company_logo}
-                    alt="Logo de la empresa"
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                    }}
-                  />
-
-                  <span
-                    className="hover:cursor-pointer  hover:text-sky-600 text-inline ml-auto"
-                    style={{
-                      marginLeft: '5px',
-                      marginRight: '5px',
-                      float: 'right',
-                    }}
-                  >
-                    {companyItems.company_name.toUpperCase()}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover> */}
-        {/* {isModalOpen && (
+        {isModalOpen && (
           <ModalCompany
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             selectedCard={selectedCompany}
           />
-        )} */}
+        )}
       </div>
       <div className="flex gap-8 items-center">
         <DropdownMenu>
@@ -429,72 +337,86 @@ export default function NavBar() {
           </DropdownMenuContent>
         </DropdownMenu>
         <ModeToggle />
-        <div className="flex-shrink">
-          <Popover>
-            <PopoverTrigger>
-              <Avatar>
-                <AvatarImage src={avatarUrl} />
+        <div className="flex-shrink justify-center items-center flex">
+          <DropdownMenu>
+            <DropdownMenuTrigger className="cursor-pointer" asChild>
+              <Avatar className="size-9">
+                <AvatarImage
+                  src={typeof avatarUrl === 'object' ? avatarUrl.avatar : ''}
+                />
                 <AvatarFallback>CN</AvatarFallback>
               </Avatar>
-            </PopoverTrigger>
-            <PopoverContent className="bg-slate-600 border-0">
-              {/* <Button className="mb-2 block">Editar Perfil</Button> */}
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="mb-2 block">
-                    Edit Profile
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px]">
-                  <DialogHeader>
-                    <DialogTitle>Editar perfil</DialogTitle>
-                    <DialogDescription>
-                      Aqui se haran cambios en tu perfil
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="w-[300px] flex  gap-2">
-                      <FormProvider {...useForm()}>
-                        <FormField
-                          control={control}
-                          name="company_logo"
-                          render={({ field }) => (
-                            <FormItem className=" max-w-[600px] flex flex-col justify-center">
-                              <FormControl>
-                                <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
-                                  <UploadImage
-                                    companyId={actualCompany?.id as string}
-                                    labelInput="Avatar"
-                                    imageBucket="avatar"
-                                    desciption="Sube tu avatar"
-                                    style={{ width: '300px' }}
-                                    // onImageChange={(imageUrl: string) =>
-                                    //   setValue('profile', imageUrl)
-                                    // }
-                                    onImageChange={async imageUrl => {
-                                      setValue('profile', imageUrl)
-                                      await updateProfileAvatar(imageUrl) // Llama a la función para actualizar la URL
-                                    }}
-                                    // onUploadSuccess={onUploadSuccess}
-                                    inputStyle={{ width: '150px' }}
-                                  />
-                                </div>
-                              </FormControl>
-
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </FormProvider>
-                    </div>
-                    <Separator className="my-4" />
-                    <UpdateUserPasswordForm />
-                  </div>
-                </DialogContent>
-              </Dialog>
-              <LogOutButton />
-            </PopoverContent>
-          </Popover>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {typeof avatarUrl === 'object' ? avatarUrl.fullname : ''}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {typeof avatarUrl === 'object' ? avatarUrl.email : ''}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => setShowDeleteDialog(true)}>
+                Editar perfil
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <Button variant={'destructive'} className="w-full">
+                  Cerrar Sesión
+                </Button>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <DialogContent className="sm:max-w-[500px] ">
+              <AlertDialogHeader>
+                <DialogTitle>Editar perfil</DialogTitle>
+                <DialogDescription>
+                  Aqui se haran cambios en tu perfil
+                </DialogDescription>
+              </AlertDialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="w-[300px] flex  gap-2">
+                  <FormProvider {...useForm()}>
+                    <FormField
+                      control={control}
+                      name="company_logo"
+                      render={({ field }) => (
+                        <FormItem className=" max-w-[600px] flex flex-col justify-center">
+                          <FormControl>
+                            <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
+                              <UploadImage
+                                companyId={actualCompany?.id as string}
+                                labelInput="Avatar"
+                                imageBucket="avatar"
+                                desciption="Sube tu avatar"
+                                style={{ width: '300px' }}
+                                // onImageChange={(imageUrl: string) =>
+                                //   setValue('profile', imageUrl)
+                                // }
+                                onImageChange={async imageUrl => {
+                                  setValue('profile', imageUrl)
+                                  await updateProfileAvatar(imageUrl) // Llama a la función para actualizar la URL
+                                }}
+                                // onUploadSuccess={onUploadSuccess}
+                                inputStyle={{ width: '150px' }}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </FormProvider>
+                </div>
+                <Separator className="my-4" />
+                <UpdateUserPasswordForm />
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </nav>
