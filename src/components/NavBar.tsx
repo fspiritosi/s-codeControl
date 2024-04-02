@@ -1,5 +1,4 @@
 'use client'
-
 import {
   Dialog,
   DialogContent,
@@ -19,7 +18,6 @@ import { supabase } from '../../supabase/supabase'
 import { UpdateUserPasswordForm } from './UpdateUserPasswordForm'
 import { UploadImage } from './UploadImage'
 
-import ModalCompany from '@/components/ModalCompany'
 import { ModeToggle } from '@/components/ui/ToogleDarkButton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -42,25 +40,37 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { companyData } from '@/types/types'
 import {
   BellIcon,
+  CaretSortIcon,
   CheckCircledIcon,
   DotFilledIcon,
   EnvelopeOpenIcon,
   ExclamationTriangleIcon,
   LapTimerIcon,
+  PlusCircledIcon,
 } from '@radix-ui/react-icons'
 import { Separator } from '@radix-ui/react-select'
 import { formatRelative } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Check } from 'lucide-react'
+import { Check, CheckIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { IoMdAddCircleOutline } from 'react-icons/io'
 import { LogOutButton } from './LogOutButton'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from './ui/command'
+
 export default function NavBar() {
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
@@ -77,7 +87,6 @@ export default function NavBar() {
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const router = useRouter()
-
   const handleNewCompany = async (company: companyData) => {
     setNewDefectCompany(company)
     setIsOpen(false)
@@ -99,12 +108,121 @@ export default function NavBar() {
       console.error('Error al actualizar la URL de la imagen:', error)
     }
   }
+  const [open, setOpen] = useState(false)
+  const [showNewTeamDialog, setShowNewTeamDialog] = useState(false)
+  // const [selectedTeam, setSelectedTeam] = useState(groups[0].teams[0])
 
   const markAllAsRead = useLoggedUserStore(state => state.markAllAsRead)
+
+  const groups = [
+    {
+      label: 'Compañia actual',
+      teams: allCompanies
+        ?.filter(companyItem => companyItem.by_defect === true)
+        ?.map(companyItem => ({
+          label: companyItem.company_name,
+          value: companyItem.id,
+          logo: companyItem.company_logo,
+        })),
+    },
+    {
+      label: 'Otras compañias',
+      teams: allCompanies
+        ?.filter(companyItem => companyItem.by_defect === false)
+        ?.map(companyItem => ({
+          label: companyItem.company_name,
+          value: companyItem.id,
+          logo: companyItem.company_logo,
+        })),
+    },
+  ]
   return (
     <nav className=" flex flex-shrink items-center justify-between  text-white p-4 mb-2">
       <div className="flex items-center">
-        <Popover open={isOpen} onOpenChange={setIsOpen}>
+        {/* <TeamSwitcher /> asdasd*/}
+        <Dialog open={showNewTeamDialog} onOpenChange={setShowNewTeamDialog}>
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild className="text-black dark:text-white">
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={open}
+                aria-label="Selecciona una compañía"
+                className={'w-[200px] justify-between'}
+              >
+                <Avatar className="mr-2 size-5 rounded-full">
+                  <AvatarImage
+                    src={actualCompany?.company_logo}
+                    alt={actualCompany?.company_name}
+                    className="size-5 grayscale"
+                  />
+                  <AvatarFallback>compañia</AvatarFallback>
+                </Avatar>
+                {actualCompany?.company_name}
+                <CaretSortIcon className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-0">
+              <Command>
+                <CommandList>
+                  <CommandInput placeholder="Buscar compañia" />
+                  <CommandEmpty>Compañia no encontrada</CommandEmpty>
+                  {groups?.map(group => (
+                    <CommandGroup key={group.label} heading={group.label}>
+                      {group?.teams?.map(team => (
+                        <CommandItem
+                          key={team?.value}
+                          onSelect={() => {
+                            const company = allCompanies.find(
+                              companyItem => companyItem.id === team.value,
+                            )
+                            if (company) {
+                              handleNewCompany(company)
+                            }
+                            setOpen(false)
+                          }}
+                          className="text-sm"
+                        >
+                          <Avatar className="mr-2 h-5 w-5">
+                            <AvatarImage
+                              src={team.logo}
+                              alt={team.label}
+                              className="size-5 rounded-full"
+                            />
+                            <AvatarFallback>compañia</AvatarFallback>
+                          </Avatar>
+                          {team.label}
+                          <CheckIcon
+                            className={cn(
+                              'ml-auto h-4 w-4',
+                              actualCompany?.id === team.value
+                                ? 'opacity-100'
+                                : 'opacity-0',
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  ))}
+                </CommandList>
+                <CommandSeparator />
+                <div className='p-2 w-full'>
+                  <Link
+                    href="/dashboard/company/new"
+                    className={`${buttonVariants({
+                      variant: 'outline',
+                    })} flex justify-center p-4`}
+                  >
+                    <PlusCircledIcon className="mr-2 h-5 w-5" />
+                    Agregar compañía
+                  </Link>
+                </div>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </Dialog>
+        {/* <TeamSwitcher /> ssssssssssssssssssssssssssssssssssssssssssssss*/}
+        {/* <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger>
             <div onMouseEnter={() => setIsOpen(true)}>
               {actualCompany ? (
@@ -202,14 +320,14 @@ export default function NavBar() {
               ))}
             </div>
           </PopoverContent>
-        </Popover>
-        {isModalOpen && (
+        </Popover> */}
+        {/* {isModalOpen && (
           <ModalCompany
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             selectedCard={selectedCompany}
           />
-        )}
+        )} */}
       </div>
       <div className="flex gap-8 items-center">
         <DropdownMenu>
