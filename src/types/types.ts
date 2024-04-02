@@ -28,6 +28,7 @@ export type Notifications = {
   category: string
   company_id: string
   created_at: string
+  document_id: string
 }
 
 export type profileUser = {
