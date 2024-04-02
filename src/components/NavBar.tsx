@@ -4,7 +4,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -23,14 +22,7 @@ import { UploadImage } from './UploadImage'
 import ModalCompany from '@/components/ModalCompany'
 import { ModeToggle } from '@/components/ui/ToogleDarkButton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -40,13 +32,26 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { companyData } from '@/types/types'
-import { BellIcon, DotFilledIcon } from '@radix-ui/react-icons'
+import {
+  BellIcon,
+  CheckCircledIcon,
+  DotFilledIcon,
+  EnvelopeOpenIcon,
+  ExclamationTriangleIcon,
+  LapTimerIcon,
+} from '@radix-ui/react-icons'
 import { Separator } from '@radix-ui/react-select'
 import { formatRelative } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -64,6 +69,7 @@ export default function NavBar() {
   )
   const actualUser = useLoggedUserStore(state => state.profile)
   const notifications = useLoggedUserStore(state => state.notifications)
+  console.log(notifications, 'notificaciones')
   const avatarUrl =
     actualUser && actualUser.length > 0 ? actualUser[0].avatar : ''
 
@@ -85,13 +91,10 @@ export default function NavBar() {
         .from('profile')
         .update({ avatar: imageUrl })
         .eq('id', actualUser[0].id)
-      //console.log('user: ', actualUser[0].id)
 
       if (error) {
         throw error
       }
-
-      //console.log('URL de la imagen actualizada en la tabla profile:', imageUrl)
     } catch (error) {
       console.error('Error al actualizar la URL de la imagen:', error)
     }
@@ -233,16 +236,31 @@ export default function NavBar() {
                 )}
                 <DropdownMenuSeparator className="mb-3" />
               </CardHeader>
-              <CardContent className="grid gap-4 max-h-[30vh] overflow-auto">
+              <CardContent className="grid gap-6 max-h-[40vh] overflow-auto">
                 {notifications?.length > 0 ? (
                   <div>
                     {notifications?.map((notification, index) => (
                       <div
                         key={index}
-                        className="mb-4 grid grid-cols-[25px_1fr] pb-4 last:mb-0 last:pb-0 items-center"
+                        className="mb-4 grid grid-cols-[25px_1fr] pb-4 last:mb-0 last:pb-0 items-center  gap-2"
                       >
-                        <span className="flex h-2 w-2 translate-y-1 rounded-full bg-sky-500" />
-                        <div className="space-y-1 flex justify-between items-center">
+                        {notification.category === 'rechazado' && (
+                          <ExclamationTriangleIcon className="text-yellow-400" />
+                        )}
+                        {notification.category === 'aprobado' && (
+                          <CheckCircledIcon className="text-green-400" />
+                        )}
+                        {notification.category === 'vencimiento' && (
+                          <LapTimerIcon className="text-red-400" />
+                        )}
+                        {notification.category === 'noticia' && (
+                          <EnvelopeOpenIcon className="text-blue-400" />
+                        )}
+                        {notification.category === 'advertencia' && (
+                          <ExclamationTriangleIcon className="text-yellow-400" />
+                        )}
+
+                        <div className="space-y-1 flex justify-between items-center gap-2">
                           <div>
                             <p className="text-sm font-medium leading-none first-letter:uppercase">
                               {notification.title}
@@ -261,9 +279,15 @@ export default function NavBar() {
                               )}
                             </p>
                           </div>
-                          <Button variant="outline" className="w-20">
+                          <Link
+                            className={[
+                              buttonVariants({ variant: 'outline' }),
+                              'w-20',
+                            ].join(' ')}
+                            href={`#`}
+                          >
                             Ver
-                          </Button>
+                          </Link>
                         </div>
                       </div>
                     ))}
@@ -348,7 +372,6 @@ export default function NavBar() {
                     <Separator className="my-4" />
                     <UpdateUserPasswordForm />
                   </div>
-                  <DialogFooter></DialogFooter>
                 </DialogContent>
               </Dialog>
               <LogOutButton />
