@@ -247,22 +247,22 @@ import {
   AlertDialogHeader,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { Badge } from '@/components/ui/badge'
+import { useDocument } from '@/hooks/useDocuments'
 import { DocumentsValidation } from '@/store/documentValidation'
 import {
   LockClosedIcon,
   LockOpen2Icon,
   PlusCircledIcon,
 } from '@radix-ui/react-icons'
-import React, { useEffect, useState, useRef } from 'react'
+import { saveAs } from 'file-saver'
+import { useSearchParams } from 'next/navigation'
+import React, { useEffect, useState } from 'react'
 import SimpleDocument from './SimpleDocument'
 import { Loader } from './svg/loader'
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'
 import { Separator } from './ui/separator'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useDocument } from '@/hooks/useDocuments'
-import { Badge } from '@/components/ui/badge'
-import { saveAs } from 'file-saver'
 
 interface DocumentTypes {
   id: number
@@ -428,7 +428,6 @@ export const DocumentationDrawer = () => {
 
   const [refs, setRefs] = useState<React.RefObject<HTMLButtonElement>[]>([])
   const hasErrors = DocumentsValidation(state => state.hasErrors)
-  const deleteDocument = DocumentsValidation(state => state.deleteDocument)
   const setTotalForms = DocumentsValidation(state => state.setTotalForms)
   const totalForms = DocumentsValidation(state => state.totalForms)
   const addDocumentsErrors = DocumentsValidation(
@@ -528,10 +527,8 @@ export const DocumentationDrawer = () => {
               />
               <div className="flex-grow flex justify-between items-center">
                 <div style={{ width: '100px' }}>{doc?.name}</div>{' '}
-                {/* Columna del texto */}
                 <div style={{ width: '90px', textAlign: 'right' }}>
                   {' '}
-                  {/* Columna del badge */}
                   <Badge
                     style={{
                       width: 90,
@@ -566,7 +563,6 @@ export const DocumentationDrawer = () => {
         </Button>
       </footer>
       <div className="flex w-full justify-center pt-3">
-        {/* <SimpleDocument resource={resource}/> */}
         <AlertDialog open={open} onOpenChange={handleOpen}>
           <AlertDialogTrigger asChild>
             <Button variant="primary">Subir documento</Button>
