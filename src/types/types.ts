@@ -39,6 +39,7 @@ export type profileUser = {
   credential_id: string
   email: string
   avatar?: string
+  fullname?: string
 }
 
 export type company = {
