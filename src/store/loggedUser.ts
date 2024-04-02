@@ -236,12 +236,15 @@ export const useLoggedUserStore = create<State>((set, get) => {
     if (error) {
       console.error('Error al obtener las notificaciones:', error)
     }
+
     const tipedData = notifications?.sort(
       (a, b) =>
         new Date(b.description).getTime() - new Date(a.description).getTime(),
     ) as Notifications[]
+
     set({ notifications: tipedData })
   }
+
   const markAllAsRead = async () => {
     const { error } = await supabase
       .from('notifications')
@@ -341,7 +344,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
       .eq('applies.company_id', get()?.actualCompany?.id)
 
     const typedData: VehiclesAPI[] | null = equipmentData as VehiclesAPI[]
-    console.log(typedData, 'filteredData')
 
     if (error) {
       console.error('Error al obtener los documentos:', error)
