@@ -613,6 +613,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     .subscribe()
 
   const howManyCompanies = async (id: string) => {
+    if (!id) return
     const { data, error } = await supabase
       .from('company')
       .select(
@@ -685,6 +686,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
   }
 
   const profileUser = async (id: string) => {
+    if(!id) return
     const { data, error } = await supabase
       .from('profile')
       .select('*')
