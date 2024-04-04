@@ -1,37 +1,13 @@
 import {
-  AuditorDocument,
+  Notifications,
   VehiclesAPI,
   companyData,
   profileUser,
 } from '@/types/types'
 import { User } from '@supabase/supabase-js'
+import { format } from 'date-fns'
 import { create } from 'zustand'
 import { supabase } from '../../supabase/supabase'
-import { format } from 'date-fns'
-
-type documentsData = {
-  employees: {
-    date: string
-    allocated_to: string
-    documentName: string
-    multiresource: string
-    validity: string
-    id: string
-    resource: string
-    state: string
-    document_number: string
-  }[]
-  vehicles: {
-    date: string
-    allocated_to: string
-    documentName: string
-    multiresource: string
-    validity: string
-    id: string
-    resource: string
-    state: string
-  }[]
-}
 
 interface State {
   credentialUser: User | null
@@ -151,6 +127,8 @@ interface State {
       state: string
     }[]
   }
+  notifications: Notifications[]
+  markAllAsRead: () => void
 }
 
 const setEmployeesToShow = (employees: any) => {
@@ -249,6 +227,40 @@ export const useLoggedUserStore = create<State>((set, get) => {
     }
   }
 
+  const allNotifications = async () => {
+    let { data: notifications, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('company_id', get()?.actualCompany?.id)
+
+    if (error) {
+      console.error('Error al obtener las notificaciones:', error)
+    }
+
+    const tipedData = notifications?.sort(
+      (a, b) =>
+        new Date(b.description).getTime() - new Date(a.description).getTime(),
+    ) as Notifications[]
+
+    set({ notifications: tipedData })
+  }
+
+  const markAllAsRead = async () => {
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('company_id', get()?.actualCompany?.id)
+
+    if (error) {
+      console.error(
+        'Error al marcar todas las notificaciones como leídas:',
+        error,
+      )
+    } else {
+      allNotifications()
+    }
+  }
+
   const endorsedEmployees = async () => {
     set({ isLoading: true })
     const { data, error } = await supabase
@@ -332,7 +344,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
       .eq('applies.company_id', get()?.actualCompany?.id)
 
     const typedData: VehiclesAPI[] | null = equipmentData as VehiclesAPI[]
-    console.log(typedData, 'filteredData')
 
     if (error) {
       console.error('Error al obtener los documentos:', error)
@@ -530,6 +541,18 @@ export const useLoggedUserStore = create<State>((set, get) => {
     return employeesToShow
   }
 
+  const channels3 = supabase
+    .channel('custom-all-channel')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'notifications' },
+      payload => {
+        console.log('cambio en notificaciones')
+        allNotifications()
+      },
+    )
+    .subscribe()
+
   const channels = supabase
     .channel('custom-update-channel')
     .on(
@@ -553,6 +576,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     set({ isLoading: false })
     vehicles()
     documetsFetch()
+    allNotifications()
   }
 
   const setNewDefectCompany = async (company: companyData) => {
@@ -589,6 +613,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     .subscribe()
 
   const howManyCompanies = async (id: string) => {
+    if (!id) return
     const { data, error } = await supabase
       .from('company')
       .select(
@@ -661,6 +686,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
   }
 
   const profileUser = async (id: string) => {
+    if(!id) return
     const { data, error } = await supabase
       .from('profile')
       .select('*')
@@ -719,5 +745,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     setShowLastMonthDocuments,
     lastMonthDocuments: get()?.lastMonthDocuments,
     pendingDocuments: get()?.pendingDocuments,
+    notifications: get()?.notifications,
+    markAllAsRead,
   }
 })

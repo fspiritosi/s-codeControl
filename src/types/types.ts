@@ -20,7 +20,16 @@ export type LoggedUser = {
   } | null
 }
 
-export type Userprofile = {}
+
+export type Notifications = {
+  id: string
+  title: string
+  description: string // Cambiado a string (marca de tiempo)
+  category: string
+  company_id: string
+  created_at: string
+  document_id: string
+}
 
 export type profileUser = {
   id?: string
@@ -30,6 +39,7 @@ export type profileUser = {
   credential_id: string
   email: string
   avatar?: string
+  fullname?: string
 }
 
 export type company = {
@@ -154,8 +164,6 @@ export type MotionTransitionProps = {
   className?: string
 }
 
-
-
 export type names =
   | 'lastname'
   | 'firstname'
@@ -205,28 +213,28 @@ export type Employee = {
 }
 
 export type Documents = {
-  id:string
+  id: string
   id_storage: string | null
   id_document_types: string | null
-  applies:string | null
-  validity:Date | null
-  state:string
+  applies: string | null
+  validity: Date | null
+  state: string
   is_active: boolean
   user_id: string | undefined
   document_url: string | null
 }
 
-export type TypeOfVehicle ={
+export type TypeOfVehicle = {
   id: string
   name: string
   created_at: string
 }
-export type Brand ={
+export type Brand = {
   id: string
   name: string
   created_at: string
 }
-export type Model ={
+export type Model = {
   id: string
   name: string
   created_at: string
@@ -284,105 +292,105 @@ type Document = {
 
 export const AllDocuments: Document[] = [
   {
-    id: "1",
-    created_at: "2022-01-01",
-    id_storage: "abc123",
+    id: '1',
+    created_at: '2022-01-01',
+    id_storage: 'abc123',
     id_document_types: {
-      id: "1",
-      name: "Passport",
-      description: "Travel document",
-      applies: "Persona",
+      id: '1',
+      name: 'Passport',
+      description: 'Travel document',
+      applies: 'Persona',
       multiresource: false,
       mandatory: true,
       expired: true,
       special: false,
       is_active: true,
-      created_at: "2022-01-01",
+      created_at: '2022-01-01',
     },
-    validity: "2023-01-01",
-    state: "presentado",
+    validity: '2023-01-01',
+    state: 'presentado',
     is_active: true,
-    user_id: "123",
+    user_id: '123',
     applies: {
-      id: "1",
-      lastname: "Doe",
-      firstname: "John",
-      nationality: "USA",
-      cuil: "123456789",
-      document_type: "Passport",
-      document_number: "ABC123",
-      birthplace: "New York",
-      gender: "Male",
-      marital_status: "Single",
+      id: '1',
+      lastname: 'Doe',
+      firstname: 'John',
+      nationality: 'USA',
+      cuil: '123456789',
+      document_type: 'Passport',
+      document_number: 'ABC123',
+      birthplace: 'New York',
+      gender: 'Male',
+      marital_status: 'Single',
       level_of_education: "Bachelor's Degree",
-      picture: "https://example.com/johndoe.jpg",
-      street: "123 Main St",
-      street_number: "123",
-      province: "New York",
-      city: "New York City",
-      postal_code: "12345",
-      phone: "123-456-7890",
-      email: "johndoe@example.com",
+      picture: 'https://example.com/johndoe.jpg',
+      street: '123 Main St',
+      street_number: '123',
+      province: 'New York',
+      city: 'New York City',
+      postal_code: '12345',
+      phone: '123-456-7890',
+      email: 'johndoe@example.com',
       file: null,
-      hierarchical_position: "Manager",
-      company_position: "Software Engineer",
-      workflow_diagram: "Diagram 1",
-      normal_hours: "40",
-      type_of_contract: "Full-time",
-      allocated_to: ["Project A", "Project B"],
-      date_of_admission: "2022-01-01",
+      hierarchical_position: 'Manager',
+      company_position: 'Software Engineer',
+      workflow_diagram: 'Diagram 1',
+      normal_hours: '40',
+      type_of_contract: 'Full-time',
+      allocated_to: ['Project A', 'Project B'],
+      date_of_admission: '2022-01-01',
       is_active: true,
-      reason_for_termination: "Resigned",
-      termination_date: "2023-01-01",
-      status: "Avalado",
+      reason_for_termination: 'Resigned',
+      termination_date: '2023-01-01',
+      status: 'Avalado',
     },
-    document_url: "https://example.com/document.pdf",
+    document_url: 'https://example.com/document.pdf',
   },
   {
-    id: "2",
-    created_at: "2022-02-01",
-    id_storage: "def456",
+    id: '2',
+    created_at: '2022-02-01',
+    id_storage: 'def456',
     id_document_types: {
-      id: "2",
+      id: '2',
       name: "Driver's License",
-      description: "Driving document",
-      applies: "Persona",
+      description: 'Driving document',
+      applies: 'Persona',
       multiresource: false,
       mandatory: true,
       expired: true,
       special: false,
       is_active: true,
-      created_at: "2022-02-01",
+      created_at: '2022-02-01',
     },
-    validity: "2023-02-01",
-    state: "rechazado",
+    validity: '2023-02-01',
+    state: 'rechazado',
     is_active: true,
-    user_id: "456",
+    user_id: '456',
     applies: {
       id: '2',
       created_at: '2022-02-01',
-  picture: 'https://example.com/vehicle.jpg',
-  type_of_vehicle: {name: 'Car', id: '1', created_at: '2022-02-01'},
-  domain: 'ABC123',
-  chassis: '123456789',
-  engine: 'ABC123',
-  serie: 'ABC123',
-  intern_number: '123',
-  year: '2022',
-  brand:  {name: 'Toyota', id: '1', created_at: '2022-02-01'},
-  model: {name: 'Corolla', id: '1', created_at: '2022-02-01'},
-  company_id: '123',
-  is_active: true,
-  termination_date:   '2023-02-01',
-  reason_for_termination:   'Sold',
-  user_id:  '456',
-  status: 'Avalado',
-  type: {name: 'Corolla', id: '1', created_at: '2022-02-01'},
+      picture: 'https://example.com/vehicle.jpg',
+      type_of_vehicle: { name: 'Car', id: '1', created_at: '2022-02-01' },
+      domain: 'ABC123',
+      chassis: '123456789',
+      engine: 'ABC123',
+      serie: 'ABC123',
+      intern_number: '123',
+      year: '2022',
+      brand: { name: 'Toyota', id: '1', created_at: '2022-02-01' },
+      model: { name: 'Corolla', id: '1', created_at: '2022-02-01' },
+      company_id: '123',
+      is_active: true,
+      termination_date: '2023-02-01',
+      reason_for_termination: 'Sold',
+      user_id: '456',
+      status: 'Avalado',
+      type: { name: 'Corolla', id: '1', created_at: '2022-02-01' },
     },
-    document_url: "https://example.com/document.pdf",
+    document_url: 'https://example.com/document.pdf',
   },
   // Add more examples here...
-];
+]
 
 export type AuditorDocument = {
   date: string
@@ -397,56 +405,56 @@ export type AuditorDocument = {
 }
 
 export type VehiclesAPI = {
-  created_at:        Date;
-  id_storage:        null;
-  id_document_types: string;
-  applies:           Applies;
-  validity:          null;
-  state:             string;
-  is_active:         boolean;
-  id:                string;
-  user_id:           string;
-  document_url:      string;
-  document_types:    DocumentTypes;
+  created_at: Date
+  id_storage: null
+  id_document_types: string
+  applies: Applies
+  validity: null
+  state: string
+  is_active: boolean
+  id: string
+  user_id: string
+  document_url: string
+  document_types: DocumentTypes
 }
 
 export type Applies = {
-  id:                     string;
-  type:                   Type;
-  year:                   string;
-  brand:                  Brand;
-  model:                  Brand;
-  serie:                  string;
-  domain:                 string;
-  engine:                 string;
-  status:                 string;
-  chassis:                string;
-  picture:                string;
-  user_id:                string;
-  is_active:              boolean;
-  company_id:             string;
-  created_at:             Date;
-  intern_number:          string;
-  type_of_vehicle:        Brand;
-  termination_date:       null;
-  reason_for_termination: null;
+  id: string
+  type: Type
+  year: string
+  brand: Brand
+  model: Brand
+  serie: string
+  domain: string
+  engine: string
+  status: string
+  chassis: string
+  picture: string
+  user_id: string
+  is_active: boolean
+  company_id: string
+  created_at: Date
+  intern_number: string
+  type_of_vehicle: Brand
+  termination_date: null
+  reason_for_termination: null
 }
 
 export type Type = {
-  id:         string;
-  name:       string;
-  created_at: Date;
+  id: string
+  name: string
+  created_at: Date
 }
 
 export type DocumentTypes = {
-  id:            string;
-  name:          string;
-  applies:       string;
-  special:       boolean;
-  explired:      boolean;
-  is_active:     boolean;
-  mandatory:     boolean;
-  created_at:    Date;
-  description:   null;
-  multiresource: boolean;
+  id: string
+  name: string
+  applies: string
+  special: boolean
+  explired: boolean
+  is_active: boolean
+  mandatory: boolean
+  created_at: Date
+  description: null
+  multiresource: boolean
 }

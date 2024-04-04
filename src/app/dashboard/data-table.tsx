@@ -61,13 +61,9 @@ export function ExpiredDataTable<TData, TValue>({
   const defaultVisibleColumns = [
     'date',
     'resource',
-    'allocated_to',
     'documentName',
-    'state',
-    'multiresource',
     'validity',
     'id',
-    'mandatory',
   ]
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
@@ -187,8 +183,8 @@ export function ExpiredDataTable<TData, TValue>({
   }
 
   return (
-    <div className="mb-10 dark:bg-slate-950 px-4 rounded-lg">
-      <div className="flex items-center py-4 flex-wrap">
+    <div className="mb-10 dark:bg-slate-950 px-4 rounded-lg max-w-[100vw] overflow-x-auto xl:min-w-[42vw]">
+
         <Input
           placeholder={
             vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'
@@ -199,8 +195,9 @@ export function ExpiredDataTable<TData, TValue>({
           onChange={event =>
             table.getColumn('resource')?.setFilterValue(event.target.value)
           }
-          className="max-w-sm"
+          className="max-w-sm ml-2"
         />
+      <div className="flex items-center py-4 flex-wrap">
         <Button
           variant="outline"
           size="default"
