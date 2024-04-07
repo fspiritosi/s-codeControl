@@ -233,11 +233,27 @@ export const useLoggedUserStore = create<State>((set, get) => {
       .select('*')
       .eq('company_id', get()?.actualCompany?.id)
 
+    await documetsFetch()
+
+    const document = notifications?.map((doc: any) => {
+      const findDocument =
+        get()?.Alldocuments?.employees?.find(
+          document => document.id === doc.document_id,
+        ) ||
+        get()?.Alldocuments?.vehicles?.find(
+          document => document.id === doc.document_id,
+        )
+      if (findDocument) {
+        return { ...doc, document: findDocument }
+      }
+    })
+
+
     if (error) {
       console.error('Error al obtener las notificaciones:', error)
     }
 
-    const tipedData = notifications?.sort(
+    const tipedData = document?.sort(
       (a, b) =>
         new Date(b.description).getTime() - new Date(a.description).getTime(),
     ) as Notifications[]
@@ -686,7 +702,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
   }
 
   const profileUser = async (id: string) => {
-    if(!id) return
+    if (!id) return
     const { data, error } = await supabase
       .from('profile')
       .select('*')

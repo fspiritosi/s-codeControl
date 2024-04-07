@@ -1,17 +1,10 @@
 'use client'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DocumentsValidation } from '@/store/documentValidation'
 import {
   LockClosedIcon,
   LockOpen2Icon,
-  MinusCircledIcon,
   PlusCircledIcon,
 } from '@radix-ui/react-icons'
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
@@ -30,14 +23,13 @@ export default function NewDocumentModal({
   isOpen: boolean
   multiresource: boolean | undefined
 }) {
-  const [loading, setLoading] = useState(false)
+  const [sendingLoading, setSendingLoading] = useState(false)
 
   const resetAll = DocumentsValidation(state => state.resetAll)
   const handleOpen = () => {
     setIsOpen(!isOpen)
     resetAll()
-    setLoading(false)
-
+    setSendingLoading(!sendingLoading)
     return
   }
 
@@ -49,13 +41,10 @@ export default function NewDocumentModal({
     for (let i = 0; i < refs.length; i++) {
       const ref = refs[i]
       if (ref.current) {
-        if (i === 0) {
-          ref.current.click()
-        } else {
-          ref.current.click()
-        }
+        ref.current.click()
       }
     }
+    setSendingLoading(false)
   }
 
   const hasErrors = DocumentsValidation(state => state.hasErrors)
@@ -67,30 +56,29 @@ export default function NewDocumentModal({
       refs.map(async (ref, i) => {
         if (ref.current) {
           if (i === 0) {
-            ref.current.click()
+            // ref.current.click()
           } else {
             await new Promise(resolve => setTimeout(resolve, 500)) // 0.5 segundos antes de cada clic.
-            ref.current?.click()
+            // ref.current?.click()
           }
         }
       }),
     )
+    setSendingLoading(false)
   }
   // const router = useRouter()
 
   const handleClicks = async () => {
     // Ciclo que valida los campos de cada input
+    setSendingLoading(true)
+
     if (hasErrors) {
-      setLoading(true)
       await ValidateForms()
-      setLoading(false)
     }
 
     // Si todos los inputs son validos, se hace el ciclo de clicks
     if (!hasErrors) {
-      setLoading(true)
       await handleSendForms()
-      setLoading(false)
     }
   }
 
@@ -175,8 +163,8 @@ export default function NewDocumentModal({
                   </div>
                   <div className="flex justify-evenly">
                     <Button onClick={() => handleOpen()}>Cancel</Button>
-                    <Button disabled={loading} onClick={handleClicks}>
-                      {loading ? (
+                    <Button disabled={sendingLoading} onClick={handleClicks}>
+                      {sendingLoading ? (
                         <Loader />
                       ) : (
                         <>
@@ -217,7 +205,6 @@ export default function NewDocumentModal({
                 ) : (
                   Array.from({ length: totalForms }).map((_, index) => (
                     <div key={index} className="relative">
-                     
                       <SimpleDocument
                         resource="equipo"
                         index={index}
@@ -240,9 +227,9 @@ export default function NewDocumentModal({
                     </Button>
                   </div>
                   <div className="flex justify-evenly">
-                    <Button onClick={() => handleOpen}>Cancel</Button>
-                    <Button disabled={loading} onClick={handleClicks}>
-                      {loading ? (
+                    <Button onClick={() => handleOpen()}>Cancel</Button>
+                    <Button disabled={sendingLoading} onClick={handleClicks}>
+                      {sendingLoading ? (
                         <Loader />
                       ) : (
                         <>

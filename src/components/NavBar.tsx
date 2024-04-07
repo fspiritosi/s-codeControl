@@ -141,7 +141,6 @@ export default function NavBar() {
         })),
     },
   ]
-  console.log(actualUser, 'actualUser')
   const [ISopen, setISOpen] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   return (
@@ -289,8 +288,41 @@ export default function NavBar() {
                         <div className="space-y-1 flex justify-between items-center gap-2">
                           <div>
                             <p className="text-sm font-medium leading-none first-letter:uppercase">
-                              {notification.title}
+                              {notification.category === 'aprobado' &&
+                                `El documento ${
+                                  notification.document.documentName
+                                }, del empleado ${notification.document.resource
+                                  .split(' ')
+                                  .map(
+                                    word =>
+                                      word.charAt(0).toUpperCase() +
+                                      word.slice(1).toLowerCase(),
+                                  )
+                                  .join(' ')} ha sido aprobado`}
+                              {notification.category === 'rechazado' &&
+                                `El documento ${
+                                  notification.document.documentName
+                                }, del empleado ${notification.document.resource
+                                  .split(' ')
+                                  .map(
+                                    word =>
+                                      word.charAt(0).toUpperCase() +
+                                      word.slice(1).toLowerCase(),
+                                  )
+                                  .join(' ')} ha sido rechazado`}
+                              {notification.category === 'vencimiento' &&
+                                `El documento ${
+                                  notification.document.documentName
+                                }, del empleado ${notification.document.resource
+                                  .split(' ')
+                                  .map(
+                                    word =>
+                                      word.charAt(0).toUpperCase() +
+                                      word.slice(1).toLowerCase(),
+                                  )
+                                  .join(' ')} ha vencido`}
                             </p>
+
                             <CardDescription>
                               {notification.description.length > 50
                                 ? notification.description.substring(0, 50) +

@@ -22,14 +22,30 @@ export type LoggedUser = {
 
 
 export type Notifications = {
-  id: string
-  title: string
-  description: string // Cambiado a string (marca de tiempo)
-  category: string
-  company_id: string
-  created_at: string
-  document_id: string
+  id:          string;
+  title:       string;
+  description: string;
+  category:    string;
+  company_id:  string;
+  created_at:  Date;
+  document_id: string;
+  reference:   string;
+  document:    DocumentInsert;
 }
+
+export type DocumentInsert = {
+  date:            string;
+  allocated_to:    string;
+  documentName:    string;
+  state:           string;
+  multiresource:   string;
+  validity:        string;
+  mandatory:       string;
+  id:              string;
+  resource:        string;
+  document_number: string;
+}
+
 
 export type profileUser = {
   id?: string
