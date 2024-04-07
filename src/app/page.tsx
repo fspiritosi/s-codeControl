@@ -1,15 +1,19 @@
-import BestBusines from '@/components/landing_components/BestBusines'
-import CounterData from '@/components/landing_components/CounterData'
+import Services from '@/components/landing_components/BestBusines'
+import AboutAs from '@/components/landing_components/About'
 import FirstBlock from '@/components/landing_components/first-block'
 import Header from '@/components/landing_components/header'
 
 export default function Home() {
   return (
-    <>
+    <div className='flex flex-col justify-center'>
       <Header />
       <FirstBlock />
-      <CounterData />
-      <BestBusines />
-    </>
+      <div id='about'>
+        <AboutAs/>
+      </div>
+      <div id='services'>
+      <Services/>
+      </div>
+    </div>
   )
 }

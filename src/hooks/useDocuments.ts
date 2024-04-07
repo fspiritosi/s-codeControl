@@ -1,5 +1,5 @@
-import { id } from 'date-fns/locale';
 'use client'
+import { id } from 'date-fns/locale';
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { Documents } from "@/types/types"
 import { supabase } from "../../supabase/supabase"
@@ -8,7 +8,7 @@ require('dotenv').config()
 export const useDocument = () => {
  const { errorTranslate } = useEdgeFunctions()
  const {actualCompany}= useLoggedUserStore()
-//  console.log(actualCompany,'actualCompany');
+  //console.log(actualCompany,'actualCompany');
  const url = process.env.NEXT_PUBLIC_PROJECT_URL
     
  return{
@@ -36,7 +36,7 @@ export const useDocument = () => {
       if (error) {
         console.error()
         // const message = await errorTranslate(error?.message)
-        console.log(error);
+        //console.log(error);
       }
       return data
     },
@@ -124,9 +124,25 @@ insertMultiDocumentEquipment: async (documents: any) => {
       return data
     },
 
+    fetchDocumentTypes : async () => {
+      try {
+        // Consulta los tipos de documento
+        const { data: documentTypesData, error: typesError } = await supabase
+          .from('document_types')
+          .select('*');
+        if (typesError) {
+          throw typesError;
+        }
+        return documentTypesData
+      } catch (error) {
+        console.error('Error al obtener datos:', error);
+      }
+      
+    },
     fetchDocumentEmployeesByCompany: async () => {
       
     if(actualCompany){
+      
        let { data: documents, error } = await supabase.from('documents_employees').select(`
             *,
             employees:employees(id,company_id, document_number, lastname, firstname ),
@@ -146,19 +162,22 @@ insertMultiDocumentEquipment: async (documents: any) => {
       // console.log(documents,'documents');
       return documents
     }
+    
     },
 
     fetchDocumentEquipmentByCompany: async () => {
-      
+      try{
+        if(actualCompany){
       let { data: documents, error } = await supabase.from('documents_equipment').select(`
             *,
-            vehicles:vehicles(id,company_id, intern_number),
+            vehicles:vehicles(id,company_id, intern_number, domain),
             document_types:document_types(id, name)
         `)
         .not('vehicles', 'is', null)
         .not('document_types', 'is', null)
         .eq('vehicles.company_id', actualCompany?.id);
-        
+
+        //console.log("ver el error: ", documents)        
  
 
       if (error) {
@@ -167,6 +186,10 @@ insertMultiDocumentEquipment: async (documents: any) => {
       }
       
       return documents
+    }
+      } catch (error) {
+    console.error('Error al obtener documentos de equipo:', error);
+    }
     },
 
     uploadDocumentFile: async (
@@ -178,7 +201,7 @@ insertMultiDocumentEquipment: async (documents: any) => {
       // Subir el documento a Supabase Storage
       const { data, error } = await supabase.storage
         .from(imageBucket)
-        .upload(`${file.name}`, file,{
+        .upload(`${file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`, file,{
           cacheControl: '1',
           upsert: true,
         })
@@ -207,7 +230,7 @@ insertMultiDocumentEquipment: async (documents: any) => {
       // Subir el documento a Supabase Storage
       const { data, error } = await supabase.storage
         .from(imageBucket)
-        .update(`${file.name}`, file,{
+        .update(`${file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`, file,{
           cacheControl: '1',
           upsert: true,
         })
@@ -227,6 +250,7 @@ insertMultiDocumentEquipment: async (documents: any) => {
   },
 
     fetchEmployeeByDocument:async (document:string) => {
+      try{
       let { data: documents_employees, error } = await supabase
   .from('documents_employees')
   .select('*, employees:employees(id, document_number ),  document_types:document_types(name)')
@@ -240,24 +264,30 @@ insertMultiDocumentEquipment: async (documents: any) => {
         throw new Error(String(message).replaceAll('"', ''))
       }
   return documents_employees
+  } catch (error) {
+    console.error('Error al obtener documentos de empleado:', error);
+  }
     },
 
-    fetchEquipmentByDocument:async (document:string) => {
+    fetchEquipmentByDocument:async (id:string) => {
+      try{
       let { data: documents_equipment, error } = await supabase
   .from('documents_equipment')
   .select('*, vehicles:vehicles(id, intern_number ),  document_types:document_types(name)'
   )
   .not('vehicles', 'is', null)    
   .not('document_types', 'is', null)
-  .eq('vehicles.id', document)
-    
-  //console.log("document equipment: ", documents_equipment)
+  .eq('vehicles.id', id)
+    //console.log("este es el error ????: ", id)
   if (error) {
         const message = await errorTranslate(error?.message)
         throw new Error(String(message).replaceAll('"', ''))
       }
 
   return documents_equipment
+  } catch (error) {
+    console.error('Error al obtener documentos de equipo:', error);
+  }
     },
   }
 }

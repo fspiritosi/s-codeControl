@@ -13,6 +13,7 @@ export default function DocumentNav() {
     setMultiresource(boolean)
     setIsOpen(true)
   }
+  console.log('Esto viene del document vav')
   return (
     <>
       <Button onClick={() => handleMultiResource(true)}>

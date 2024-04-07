@@ -1,17 +1,10 @@
 'use client'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DocumentsValidation } from '@/store/documentValidation'
 import {
   LockClosedIcon,
   LockOpen2Icon,
-  MinusCircledIcon,
   PlusCircledIcon,
 } from '@radix-ui/react-icons'
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
@@ -30,15 +23,13 @@ export default function NewDocumentModal({
   isOpen: boolean
   multiresource: boolean | undefined
 }) {
-  const setLoading = DocumentsValidation(state => state.setLoading)
-  const loading = DocumentsValidation(state => state.loading)
+  const [sendingLoading, setSendingLoading] = useState(false)
 
   const resetAll = DocumentsValidation(state => state.resetAll)
   const handleOpen = () => {
     setIsOpen(!isOpen)
     resetAll()
-    setLoading(false)
-
+    setSendingLoading(!sendingLoading)
     return
   }
 
@@ -50,17 +41,13 @@ export default function NewDocumentModal({
     for (let i = 0; i < refs.length; i++) {
       const ref = refs[i]
       if (ref.current) {
-        if (i === 0) {
-          ref.current.click()
-        } else {
-          ref.current.click()
-        }
+        ref.current.click()
       }
     }
+    setSendingLoading(false)
   }
 
   const hasErrors = DocumentsValidation(state => state.hasErrors)
-  const deleteDocument = DocumentsValidation(state => state.deleteDocument)
   const setTotalForms = DocumentsValidation(state => state.setTotalForms)
   const totalForms = DocumentsValidation(state => state.totalForms)
 
@@ -69,23 +56,30 @@ export default function NewDocumentModal({
       refs.map(async (ref, i) => {
         if (ref.current) {
           if (i === 0) {
-            ref.current.click()
+            // ref.current.click()
           } else {
             await new Promise(resolve => setTimeout(resolve, 500)) // 0.5 segundos antes de cada clic.
-            ref.current?.click()
+            // ref.current?.click()
           }
         }
       }),
     )
+    setSendingLoading(false)
   }
   // const router = useRouter()
 
   const handleClicks = async () => {
     // Ciclo que valida los campos de cada input
-    if (hasErrors) await ValidateForms()
+    setSendingLoading(true)
+
+    if (hasErrors) {
+      await ValidateForms()
+    }
 
     // Si todos los inputs son validos, se hace el ciclo de clicks
-    if (!hasErrors) await handleSendForms()
+    if (!hasErrors) {
+      await handleSendForms()
+    }
   }
 
   // const [totalForms] = useState(1)
@@ -115,13 +109,16 @@ export default function NewDocumentModal({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleOpen}>
-        <DialogContent className="max-h-[90dvh] overflow-y-scroll">
+        <DialogContent className="max-h-[90dvh] overflow-y-scroll dark:bg-slate-950">
           <Tabs defaultValue="Empleados" className="p-2">
             <TabsList className="grid w-full grid-cols-2 ">
               <TabsTrigger value="Empleados">Empleados</TabsTrigger>
               <TabsTrigger value="Equipos">Equipos</TabsTrigger>
             </TabsList>
-            <TabsContent value="Empleados" className="space-y-2">
+            <TabsContent
+              value="Empleados"
+              className="space-y-2 dark:bg-slate-950"
+            >
               {!multiresource && (
                 <>
                   {' '}
@@ -166,8 +163,8 @@ export default function NewDocumentModal({
                   </div>
                   <div className="flex justify-evenly">
                     <Button onClick={() => handleOpen()}>Cancel</Button>
-                    <Button onClick={handleClicks}>
-                      {loading ? (
+                    <Button disabled={sendingLoading} onClick={handleClicks}>
+                      {sendingLoading ? (
                         <Loader />
                       ) : (
                         <>
@@ -208,38 +205,12 @@ export default function NewDocumentModal({
                 ) : (
                   Array.from({ length: totalForms }).map((_, index) => (
                     <div key={index} className="relative">
-                      <Accordion
-                        type="single"
-                        className="w-full"
-                        defaultValue="item-1"
-                      >
-                        <AccordionItem value={`item-${index + 1}`}>
-                          <AccordionTrigger
-                            defaultValue={`item-${index + 1}`}
-                            className="text-lg flex relative"
-                          >
-                            <div className="flex items-center gap-4">
-                              {`Documento ${index + 1}`}
-                              {index !== 0 && (
-                                <>
-                                  <MinusCircledIcon
-                                    onClick={() => setTotalForms(false)}
-                                    className="h-4 w-4 shrink-0   text-red-800 cursor-pointer justify-end"
-                                  />
-                                </>
-                              )}
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            <SimpleDocument
-                              resource="equipo"
-                              index={index}
-                              handleOpen={handleOpen}
-                              refSubmit={refs[index]}
-                            />
-                          </AccordionContent>
-                        </AccordionItem>
-                      </Accordion>
+                      <SimpleDocument
+                        resource="equipo"
+                        index={index}
+                        handleOpen={handleOpen}
+                        refSubmit={refs[index]}
+                      />
                     </div>
                   ))
                 )}
@@ -256,9 +227,9 @@ export default function NewDocumentModal({
                     </Button>
                   </div>
                   <div className="flex justify-evenly">
-                    <Button onClick={() => handleOpen}>Cancel</Button>
-                    <Button onClick={handleClicks}>
-                      {loading ? (
+                    <Button onClick={() => handleOpen()}>Cancel</Button>
+                    <Button disabled={sendingLoading} onClick={handleClicks}>
+                      {sendingLoading ? (
                         <Loader />
                       ) : (
                         <>

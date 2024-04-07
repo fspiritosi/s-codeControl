@@ -1,30 +1,278 @@
 'use client'
+// import {
+//   AlertDialog,
+//   AlertDialogContent,
+//   AlertDialogHeader,
+//   AlertDialogTrigger,
+// } from '@/components/ui/alert-dialog'
+// import { DocumentsValidation } from '@/store/documentValidation'
+// import {
+//   LockClosedIcon,
+//   LockOpen2Icon,
+//   PlusCircledIcon,
+// } from '@radix-ui/react-icons'
+// import React, { useEffect, useState } from 'react'
+// import SimpleDocument from './SimpleDocument'
+// import { Loader } from './svg/loader'
+// import { Button } from './ui/button'
+// import { Checkbox } from './ui/checkbox'
+// import { Separator } from './ui/separator'
+// import { useRouter, useSearchParams } from 'next/navigation'
+// import { useDocument } from '@/hooks/useDocuments'
+// import { Badge } from '@/components/ui/badge'
+// import { saveAs } from 'file-saver'
+
+// export const DocumentationDrawer = () => {
+//   const searchParams = useSearchParams()
+//   const id = searchParams.get('id')
+//   //////////////////////////////////////////////////////////////
+//   let url = ''
+
+//   if (typeof window !== 'undefined') {
+//     url = window.location.href
+//   }
+//   const resource = url.includes('employee')
+//     ? 'empleado'
+//     : url.includes('equipment')
+//       ? 'equipo'
+//       : undefined
+
+//   //const searchParams = useSearchParams()
+//   const document = searchParams.get('document')
+
+//   ////////////////////////////////////////////////////////////
+
+//   const { fetchEmployeeByDocument, fetchEquipmentByDocument } = useDocument()
+//   const [employeeData, setEmployeeData] = useState<any>(null)
+//   const [equipmentData, setEquipmentData] = useState<any>(null)
+
+//   const equipment = async () => {
+//     try {
+//       //console.log('Valor de document:', document)
+//       const data = await fetchEquipmentByDocument(id as any)
+//       //console.log('Datos obtenidos del equipo:', data)
+//       setEquipmentData(data)
+//     } catch (error) {
+//       console.error('Error al obtener datos del equipo:', error)
+//     }
+//   }
+//   //console.log('equipmentData: ', equipmentData)
+//   // useEffect(() => {
+//   //equipment()
+//   //}, [document, fetchEquipmentByDocument])
+//   useEffect(() => {
+//     equipment()
+//   }, [])
+
+//   const employee = async () => {
+//     try {
+//       //console.log('Valor de document:', document)
+//       const data = await fetchEmployeeByDocument(document as any)
+//       //console.log('Datos obtenidos del empleado:', data)
+//       setEmployeeData(data)
+//     } catch (error) {
+//       console.error('Error al obtener datos del empleado:', error)
+//     }
+//   }
+
+//   useEffect(() => {
+//     employee()
+//   }, [])
+
+//   //console.log('este es employeeData state: ', employeeData)
+//   const getDocumentState = (documentName: string) => {
+//     const document = employeeData?.find(
+//       (doc: any) => doc.document_types.name === documentName,
+//     )
+//     return document ? document.state : ''
+//   }
+//   const getUrlForDocument = (documentName: string) => {
+//     if (!employeeData) return ''
+
+//     const document = employeeData.find(
+//       (doc: any) => doc.document_types.name === documentName,
+//     )
+//     return document ? document.document_url : ''
+//   }
+
+//   const getDocumentEquipmentState = (documentName: string) => {
+//     const document = equipmentData?.find(
+//       (doc: any) => doc.document_types.name === documentName,
+//     )
+//     return document ? document.state : ''
+//   }
+//   const getUrlForEquipmentDocument = (documentName: string) => {
+//     if (!equipmentData) return ''
+
+//     const document = equipmentData.find(
+//       (doc: any) => doc.document_types.name === documentName,
+//     )
+//     return document ? document.document_url : ''
+//   }
+
+//   const documentation = [
+//     {
+//       name: 'Alta Temprana AFIP',
+//       url: getUrlForDocument('Alta Temprana AFIP') || '',
+//     },
+//     {
+//       name: 'RELACIONES LABORALES ACTIVAS',
+//       url: getUrlForDocument('RELACIONES LABORALES ACTIVAS') || '',
+//     },
+//     { name: 'DNI', url: getUrlForDocument('DNI') || '' },
+//     {
+//       name: 'Póliza / Certificado ART',
+//       url: getUrlForDocument('Póliza / Certificado ART') || '',
+//     },
+//     ,
+//     {
+//       name: 'Póliza / Certificado SVO',
+//       url: getUrlForDocument('Póliza / Certificado SVO') || '',
+//     },
+//     {
+//       name: 'Examen medico pre-ocupacional',
+//       url: getUrlForDocument('Examen medico pre-ocupacional') || '',
+//     },
+//     {
+//       name: 'Constancia de entrega de Ropa y Epp',
+//       url: getUrlForDocument('Constancia de entrega de Ropa y Epp') || '',
+//     },
+//     {
+//       name: 'Licencia Nacional de Conducir',
+//       url: getUrlForDocument('Licencia Nacional de Conducir') || '',
+//     },
+//     {
+//       name: 'Carnet Profesional - LINTI',
+//       url: getUrlForDocument('Carnet Profesional - LINTI') || '',
+//     },
+//     {
+//       name: 'Carnet de Manejo Defensivo',
+//       url: getUrlForDocument('Carnet de Manejo Defensivo') || '',
+//     },
+//   ]
+
+//   const documentationEquipment = [
+//     {
+//       name: 'Título de propiedad / Contrato de Alquiler',
+//       url:
+//         getUrlForEquipmentDocument(
+//           'Título de propiedad / Contrato de Alquiler',
+//         ) || '',
+//     },
+//     {
+//       name: 'Verificación Tecnica Vehícular',
+//       url: getUrlForEquipmentDocument('Verificación Tecnica Vehícular') || '',
+//     },
+//     {
+//       name: 'Habilitación de transporte de Carga (RUTA)',
+//       url:
+//         getUrlForEquipmentDocument(
+//           'Habilitación de transporte de Carga (RUTA)',
+//         ) || '',
+//     },
+//   ]
+//   //console.log(documentationEquipment)
+
+//   const [selectAll, setSelectAll] = useState<boolean>(false)
+//   const [selectedDocuments, setSelectedDocuments] = useState<any[]>([])
+//   const handleSelectAll = () => {
+//     if (resource === 'empleado') {
+//       if (!selectAll) {
+//         const validDocuments = documentation.filter(doc => doc?.url !== '')
+//         setSelectedDocuments(validDocuments)
+//       } else {
+//         setSelectedDocuments([])
+//       }
+//       setSelectAll(!selectAll)
+//     } else {
+//       if (!selectAll) {
+//         const validDocuments = documentationEquipment.filter(
+//           doc => doc?.url !== '',
+//         )
+//         setSelectedDocuments(validDocuments)
+//       } else {
+//         setSelectedDocuments([])
+//       }
+//       setSelectAll(!selectAll)
+//     }
+//   }
+
+//   const handleDocumentSelect = (document: any) => {
+//     const { name, url } = document
+//     if (selectedDocuments.some(doc => doc.name === name)) {
+//       setSelectedDocuments(selectedDocuments.filter(doc => doc.name !== name))
+//     } else {
+//       setSelectedDocuments([...selectedDocuments, { name, url }])
+//     }
+//   }
+
+//   const handleDownloadSelected = () => {
+//     selectedDocuments.forEach(document => {
+//       const { url } = document
+//       if (url) {
+//         const fileName = url.substring(url.lastIndexOf('/') + 1)
+//         // Descargar el archivo utilizando file-saver
+//         saveAs(url, fileName)
+//       }
+//     })
+//   }
+//   const getBackgroundColorClass = (state: string) => {
+//     switch (state) {
+//       case 'presentado':
+//         return 'bg-yellow-500' // Amarillo
+//       case 'aprobado':
+//         return 'bg-green-500' // Verde
+//       case 'vencido':
+//       case 'rechazado':
+//         return 'bg-red-500' // Rojo
+//       default:
+//         return 'bg-slate-300' // Negro
+//     }
+//   }
+
+//   const [loading, setLoading] = useState(false)
+//   const [open, setOpen] = useState(false)
+//   const resetAll = DocumentsValidation(state => state.resetAll)
+//   const selectedDocumentation =
+//     resource === 'empleado' ? documentation : documentationEquipment
+
+//   const handleOpen = async () => {
+//     setOpen(!open)
+//     resetAll()
+//     setLoading(false)
+//     return
 import {
   AlertDialog,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { Badge } from '@/components/ui/badge'
+import { useDocument } from '@/hooks/useDocuments'
 import { DocumentsValidation } from '@/store/documentValidation'
 import {
   LockClosedIcon,
   LockOpen2Icon,
   PlusCircledIcon,
 } from '@radix-ui/react-icons'
+import { saveAs } from 'file-saver'
+import { useSearchParams } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import SimpleDocument from './SimpleDocument'
 import { Loader } from './svg/loader'
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'
 import { Separator } from './ui/separator'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useDocument } from '@/hooks/useDocuments'
-import { Badge } from '@/components/ui/badge'
-import { saveAs } from 'file-saver'
+
+interface DocumentTypes {
+  id: number
+  name: string
+  applies: string
+}
 
 export const DocumentationDrawer = () => {
-  // const document = searchParams.get('id')
-  //////////////////////////////////////////////////////////////
+  const searchParams = useSearchParams()
+  const id = searchParams.get('id')
   let url = ''
 
   if (typeof window !== 'undefined') {
@@ -36,48 +284,48 @@ export const DocumentationDrawer = () => {
       ? 'equipo'
       : undefined
 
-  const searchParams = useSearchParams()
-  const document =
-    resource === 'empleado'
-      ? searchParams.get('document')
-      : searchParams.get('id')
-  ////////////////////////////////////////////////////////////
+  const document = searchParams.get('document')
 
-  const { fetchEmployeeByDocument, fetchEquipmentByDocument } = useDocument()
+  const {
+    fetchEmployeeByDocument,
+    fetchEquipmentByDocument,
+    fetchDocumentTypes,
+  } = useDocument()
   const [employeeData, setEmployeeData] = useState<any>(null)
   const [equipmentData, setEquipmentData] = useState<any>(null)
-
-  const equipment = async () => {
-    //console.log('Valor de document:', document)
-    const data = await fetchEquipmentByDocument(document as any)
-    //console.log('Datos obtenidos del equipo:', data)
-    setEquipmentData(data)
-  }
-  //console.log('equipmentData: ', equipmentData)
-  // useEffect(() => {
-  //equipment()
-  //}, [document, fetchEquipmentByDocument])
-  useEffect(() => {
-    equipment()
-  }, [])
-  const employee = async () => {
-    //console.log('Valor de document:', document)
-    const data = await fetchEmployeeByDocument(document as any)
-    //console.log('Datos obtenidos del empleado:', data)
-    setEmployeeData(data)
-  }
+  const [documentTypes, setDocumentTypes] = useState([])
 
   useEffect(() => {
-    employee()
+    const fetchData = async () => {
+      try {
+        if (id) {
+          const data = await fetchEquipmentByDocument(id)
+          setEquipmentData(data)
+        } else if (document) {
+          const data = await fetchEmployeeByDocument(document)
+          setEmployeeData(data)
+        }
+      } catch (error) {
+        console.error('Error al obtener datos:', error)
+      }
+    }
+    fetchData()
+  }, [id, document, fetchEmployeeByDocument, fetchEquipmentByDocument])
+  useEffect(() => {
+    const fetchDocument = async () => {
+      const documentTypes: any = await fetchDocumentTypes()
+      setDocumentTypes(documentTypes)
+    }
+    fetchDocument()
   }, [])
 
-  //console.log('este es employeeData state: ', employeeData)
   const getDocumentState = (documentName: string) => {
     const document = employeeData?.find(
       (doc: any) => doc.document_types.name === documentName,
     )
     return document ? document.state : ''
   }
+
   const getUrlForDocument = (documentName: string) => {
     if (!employeeData) return ''
 
@@ -87,53 +335,13 @@ export const DocumentationDrawer = () => {
     return document ? document.document_url : ''
   }
 
-  const documentation = [
-    {
-      name: 'Alta Temprana AFIP',
-      url: getUrlForDocument('Alta Temprana AFIP') || '',
-    },
-    {
-      name: 'RELACIONES LABORALES ACTIVAS',
-      url: getUrlForDocument('RELACIONES LABORALES ACTIVAS') || '',
-    },
-    { name: 'DNI', url: getUrlForDocument('DNI') || '' },
-    {
-      name: 'Póliza / Certificado ART',
-      url: getUrlForDocument('Póliza / Certificado ART') || '',
-    },
-    ,
-    {
-      name: 'Póliza / Certificado SVO',
-      url: getUrlForDocument('Póliza / Certificado SVO') || '',
-    },
-    {
-      name: 'Examen medico pre-ocupacional',
-      url: getUrlForDocument('Examen medico pre-ocupacional') || '',
-    },
-    {
-      name: 'Constancia de entrega de Ropa y Epp',
-      url: getUrlForDocument('Constancia de entrega de Ropa y Epp') || '',
-    },
-    {
-      name: 'Licencia Nacional de Conducir',
-      url: getUrlForDocument('Licencia Nacional de Conducir') || '',
-    },
-    {
-      name: 'Carnet Profesional - LINTI',
-      url: getUrlForDocument('Carnet Profesional - LINTI') || '',
-    },
-    {
-      name: 'Carnet de Manejo Defensivo',
-      url: getUrlForDocument('Carnet de Manejo Defensivo') || '',
-    },
-  ]
-
   const getDocumentEquipmentState = (documentName: string) => {
     const document = equipmentData?.find(
       (doc: any) => doc.document_types.name === documentName,
     )
     return document ? document.state : ''
   }
+
   const getUrlForEquipmentDocument = (documentName: string) => {
     if (!equipmentData) return ''
 
@@ -142,49 +350,33 @@ export const DocumentationDrawer = () => {
     )
     return document ? document.document_url : ''
   }
-  const documentationEquipment = [
-    {
-      name: 'Título de propiedad / Contrato de Alquiler',
-      url:
-        getUrlForEquipmentDocument(
-          'Título de propiedad / Contrato de Alquiler',
-        ) || '',
-    },
-    {
-      name: 'Verificación Tecnica Vehícular',
-      url: getUrlForEquipmentDocument('Verificación Tecnica Vehícular') || '',
-    },
-    {
-      name: 'Habilitación de transporte de Carga (RUTA)',
-      url:
-        getUrlForEquipmentDocument(
-          'Habilitación de transporte de Carga (RUTA)',
-        ) || '',
-    },
-  ]
-  //console.log(documentationEquipment)
+
+  const documentation = documentTypes
+    .filter((docType: DocumentTypes) => docType.applies === 'Persona')
+    .map((docType: DocumentTypes) => ({
+      name: docType.name,
+      url: getUrlForDocument(docType.name) || '',
+    }))
+
+  const documentationEquipment = documentTypes
+    .filter((docType: DocumentTypes) => docType.applies === 'Equipos')
+    .map((docType: DocumentTypes) => ({
+      name: docType.name,
+      url: getUrlForEquipmentDocument(docType.name) || '',
+    }))
 
   const [selectAll, setSelectAll] = useState<boolean>(false)
   const [selectedDocuments, setSelectedDocuments] = useState<any[]>([])
+
   const handleSelectAll = () => {
-    if (resource === 'empleado') {
-      if (!selectAll) {
-        const validDocuments = documentation.filter(doc => doc?.url !== '')
-        setSelectedDocuments(validDocuments)
-      } else {
-        setSelectedDocuments([])
-      }
-      setSelectAll(!selectAll)
+    const selectedDocs =
+      resource === 'empleado' ? documentation : documentationEquipment
+    setSelectAll(!selectAll)
+    if (!selectAll) {
+      const validDocuments = selectedDocs.filter(doc => doc?.url !== '')
+      setSelectedDocuments(validDocuments)
     } else {
-      if (!selectAll) {
-        const validDocuments = documentationEquipment.filter(
-          doc => doc?.url !== '',
-        )
-        setSelectedDocuments(validDocuments)
-      } else {
-        setSelectedDocuments([])
-      }
-      setSelectAll(!selectAll)
+      setSelectedDocuments([])
     }
   }
 
@@ -202,38 +394,26 @@ export const DocumentationDrawer = () => {
       const { url } = document
       if (url) {
         const fileName = url.substring(url.lastIndexOf('/') + 1)
-        // Descargar el archivo utilizando file-saver
         saveAs(url, fileName)
       }
     })
   }
+
   const getBackgroundColorClass = (state: string) => {
     switch (state) {
       case 'presentado':
-        return 'bg-yellow-500' // Amarillo
+        return 'bg-yellow-500'
       case 'aprobado':
-        return 'bg-green-500' // Verde
+        return 'bg-green-500'
       case 'vencido':
       case 'rechazado':
-        return 'bg-red-500' // Rojo
+        return 'bg-red-500'
       default:
-        return 'bg-slate-300' // Negro
+        return 'bg-slate-300'
     }
   }
 
-  const setLoading = DocumentsValidation(state => state.setLoading)
-  const loading = DocumentsValidation(state => state.loading)
-  // let url = ''
-
-  // if (typeof window !== 'undefined') {
-  //   url = window.location.href
-  // }
-  // const resource = url.includes('employee')
-  //   ? 'empleado'
-  //   : url.includes('equipment')
-  //     ? 'equipo'
-  //     : undefined
-
+  const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const resetAll = DocumentsValidation(state => state.resetAll)
   const selectedDocumentation =
@@ -248,7 +428,6 @@ export const DocumentationDrawer = () => {
 
   const [refs, setRefs] = useState<React.RefObject<HTMLButtonElement>[]>([])
   const hasErrors = DocumentsValidation(state => state.hasErrors)
-  const deleteDocument = DocumentsValidation(state => state.deleteDocument)
   const setTotalForms = DocumentsValidation(state => state.setTotalForms)
   const totalForms = DocumentsValidation(state => state.totalForms)
   const addDocumentsErrors = DocumentsValidation(
@@ -268,6 +447,7 @@ export const DocumentationDrawer = () => {
     }
   }
   const handleSendForms = async () => {
+    setLoading(true)
     await Promise.all(
       refs.map(async (ref, i) => {
         if (ref.current) {
@@ -280,14 +460,23 @@ export const DocumentationDrawer = () => {
         }
       }),
     )
+    setLoading(false)
   }
 
   const handleClicks = async () => {
     // Ciclo que valida los campos de cada form
-    if (hasErrors) await ValidateForms()
+    if (hasErrors) {
+      setLoading(true)
+      await ValidateForms()
+      setLoading(false)
+    }
 
     // Si todos los inputs son validos, se hace el ciclo de clicks
-    if (!hasErrors) await handleSendForms()
+    if (!hasErrors) {
+      setLoading(true)
+      await handleSendForms()
+      setLoading(false)
+    }
   }
 
   const fillRef = () => {
@@ -336,22 +525,31 @@ export const DocumentationDrawer = () => {
                 )}
                 onClick={() => handleDocumentSelect(doc)}
               />
-              <div className="flex items-center justify-between flex-grow">
-                <span>{doc?.name}</span>
-
-                <Badge
-                  className={getBackgroundColorClass(
-                    resource === 'empleado'
-                      ? getDocumentState(doc?.name || '')
-                      : getDocumentEquipmentState(doc?.name || ''),
-                  )}
-                >
-                  {resource === 'empleado'
-                    ? getDocumentState(doc?.name || '') || 'No presentado'
-                    : getDocumentEquipmentState(doc?.name || '') ||
-                      'No presentado'}
-                  ;
-                </Badge>
+              <div className="flex-grow flex justify-between items-center">
+                <div style={{ width: '100px' }}>{doc?.name}</div>{' '}
+                <div style={{ width: '90px', textAlign: 'right' }}>
+                  {' '}
+                  <Badge
+                    style={{
+                      width: 90,
+                      height: 24,
+                      lineHeight: '24px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                    className={getBackgroundColorClass(
+                      resource === 'empleado'
+                        ? getDocumentState(doc?.name || '')
+                        : getDocumentEquipmentState(doc?.name || ''),
+                    )}
+                  >
+                    {resource === 'empleado'
+                      ? getDocumentState(doc?.name || '') || 'faltante'
+                      : getDocumentEquipmentState(doc?.name || '') ||
+                        'faltante'}
+                  </Badge>
+                </div>
               </div>
             </li>
           ))}
@@ -365,7 +563,6 @@ export const DocumentationDrawer = () => {
         </Button>
       </footer>
       <div className="flex w-full justify-center pt-3">
-        {/* <SimpleDocument resource={resource}/> */}
         <AlertDialog open={open} onOpenChange={handleOpen}>
           <AlertDialogTrigger asChild>
             <Button variant="primary">Subir documento</Button>
@@ -383,37 +580,12 @@ export const DocumentationDrawer = () => {
                 <div className="space-y-3">
                   {Array.from({ length: totalForms }).map((_, index) => (
                     <div key={index} className="relative">
-                      {/* <Accordion
-                        type="single"
-                        collapsible
-                        className="w-full"
-                        defaultValue="item-1"
-                        asChild
-                      >
-                        <AccordionItem value={`item-${index + 1}`}>
-                          <AccordionTrigger
-                            defaultValue="item-1"
-                            className="text-lg flex relative"
-                          >{`Documento ${index + 1}`}</AccordionTrigger>
-                          <AccordionContent>
-                            {index !== 0 && (
-                              <MinusCircledIcon
-                                onClick={() => {
-                                  setTotalForms(false)
-                                  deleteDocument(index)
-                                }}
-                                className="h-4 w-4 shrink-0 absolute right-3 top-1 text-red-800 cursor-pointer"
-                              />
-                            )} */}
                       <SimpleDocument
                         resource={resource}
                         index={index}
                         handleOpen={handleOpen}
                         refSubmit={refs[index]}
                       />
-                      {/* </AccordionContent>
-                        </AccordionItem>
-                      </Accordion> */}
                     </div>
                   ))}
                 </div>
@@ -428,7 +600,7 @@ export const DocumentationDrawer = () => {
                 </div>
                 <div className="flex justify-evenly">
                   <Button onClick={handleOpen}>Cancel</Button>
-                  <Button onClick={handleClicks}>
+                  <Button disabled={loading} onClick={handleClicks}>
                     {loading ? (
                       <Loader />
                     ) : (

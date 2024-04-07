@@ -244,7 +244,7 @@ export const columns: ColumnDef<Colum>[] = [
           )}
           {showModal && (
             <Dialog defaultOpen onOpenChange={() => setShowModal(!showModal)}>
-              <DialogContent>
+              <DialogContent className="dark:bg-slate-950">
                 <DialogTitle>Dar de baja</DialogTitle>
                 <DialogDescription>
                   ¿Estás seguro de que deseas eliminar este empleado?

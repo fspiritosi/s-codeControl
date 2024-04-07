@@ -72,7 +72,10 @@ export function UploadImage({
         // Subir la imagen a Supabase Storage y obtener la URL
         const uploadedImageUrl = await uploadImage(renamedFile, imageBucket)
 
-        const companyImage = `${url}/logo/${companyId.replace(/\s/g, '')}.${fileExtension}?timestamp=${Date.now()}`.replace(/\s/g, '')
+        const companyImage = `${url}/${imageBucket}/${companyId.replace(
+          /\s/g,
+          '',
+        )}.${fileExtension}?timestamp=${Date.now()}`.replace(/\s/g, '')
         // Llamar a la función de cambio de imagen con la URL
         onImageChange(companyImage)
 

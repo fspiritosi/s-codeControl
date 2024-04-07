@@ -12,7 +12,7 @@ import {
   MdOutlinePhoneIphone,
   MdOutlineSpaceDashboard,
 } from 'react-icons/md'
-
+import { FiTruck } from 'react-icons/fi'
 export async function getServerSideProps(context: any) {
   const { params } = context
   const { type } = params
@@ -39,7 +39,7 @@ const links = [
   {
     name: 'Equipos',
     href: '#',
-    icon: <MdOutlinePhoneIphone size={sizeIcons} />,
+    icon: <FiTruck size={sizeIcons} />,
     submenu: [
       { name: 'Todos', href: '/dashboard/equipment?type=Todos' },
       { name: 'Vehículos', href: '/dashboard/equipment?type=1' },

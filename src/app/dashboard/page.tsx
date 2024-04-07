@@ -1,10 +1,20 @@
 'use client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { VehiclesActualCompany } from '@/store/vehicles'
 import Link from 'next/link'
+import { ExpiredColums } from './colums'
+import { ExpiredDataTable } from './data-table'
 
 export default function Home() {
   const user = useLoggedUserStore()
@@ -44,6 +54,13 @@ export default function Home() {
   const noEndorsedVehicles = VehiclesActualCompany(
     state => state.noEndorsedVehicles,
   )
+  const documentsToShow = useLoggedUserStore(state => state.documentsToShow)
+
+  const setShowLastMonthDocuments = useLoggedUserStore(
+    state => state.setShowLastMonthDocuments,
+  )
+
+  const pendingDocuments = useLoggedUserStore(state => state.pendingDocuments)
 
   return (
     <div>
@@ -146,6 +163,76 @@ export default function Home() {
           </Card>
         </div>
       </section>
+      <Card className="flex justify-center xl:justify-between mt-6 xl:flex-nowrap flex-wrap dark:bg-slate-950">
+        <section>
+          <CardHeader>
+            <CardTitle>Proximos vencimientos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              Documentos que vencen en los proximos 30 dias
+            </CardDescription>
+          </CardContent>
+          <Tabs defaultValue="Empleados">
+            <CardContent>
+              <TabsList>
+                <TabsTrigger value="Empleados">Empleados</TabsTrigger>
+                <TabsTrigger value="Vehiculos">Vehiculos</TabsTrigger>
+              </TabsList>
+            </CardContent>
+            <TabsContent value="Empleados">
+              
+              <ExpiredDataTable
+                data={documentsToShow?.employees || []}
+                setShowLastMonthDocuments={setShowLastMonthDocuments}
+                columns={ExpiredColums}
+              />
+            </TabsContent>
+            <TabsContent value="Vehiculos">
+              <ExpiredDataTable
+                data={documentsToShow?.vehicles || []}
+                setShowLastMonthDocuments={setShowLastMonthDocuments}
+                columns={ExpiredColums}
+                vehicles={true}
+              />
+            </TabsContent>
+          </Tabs>
+        </section>
+        <section>
+          <CardHeader>
+            <CardTitle>Documentos pendientes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              Documentos que aun no han sido aprobados
+            </CardDescription>
+          </CardContent>
+
+          <Tabs defaultValue="Empleados">
+            <CardContent>
+              <TabsList>
+                <TabsTrigger value="Empleados">Empleados</TabsTrigger>
+                <TabsTrigger value="Vehiculos">Vehiculos</TabsTrigger>
+              </TabsList>
+            </CardContent>
+            <TabsContent value="Empleados">
+              <ExpiredDataTable
+                data={pendingDocuments?.employees || []}
+                columns={ExpiredColums}
+                pending={true}
+              />
+            </TabsContent>
+            <TabsContent value="Vehiculos">
+              <ExpiredDataTable
+                data={pendingDocuments?.vehicles || []}
+                columns={ExpiredColums}
+                pending={true}
+                vehicles={true}
+              />
+            </TabsContent>
+          </Tabs>
+        </section>
+      </Card>
     </div>
   )
 }

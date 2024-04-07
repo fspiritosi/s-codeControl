@@ -1,5 +1,11 @@
-import { companyData, profileUser } from '@/types/types'
+import {
+  Notifications,
+  VehiclesAPI,
+  companyData,
+  profileUser,
+} from '@/types/types'
 import { User } from '@supabase/supabase-js'
+import { format } from 'date-fns'
 import { create } from 'zustand'
 import { supabase } from '../../supabase/supabase'
 
@@ -23,6 +29,106 @@ interface State {
   setNewDefectCompany: (company: companyData) => void
   endorsedEmployees: () => void
   noEndorsedEmployees: () => void
+  documentsToShow: {
+    employees: {
+      date: string
+      allocated_to: string
+      documentName: string
+      multiresource: string
+      validity: string
+      mandatory: string
+      id: string
+      resource: string
+      state: string
+      document_number: string
+    }[]
+    vehicles: {
+      date: string
+      allocated_to: string
+      documentName: string
+      multiresource: string
+      validity: string
+      id: string
+      resource: string
+      state: string
+    }[]
+  }
+  Alldocuments: {
+    employees: {
+      date: string
+      allocated_to: string
+      documentName: string
+      multiresource: string
+      validity: string
+      mandatory: string
+      id: string
+      resource: string
+      state: string
+      document_number: string
+    }[]
+    vehicles: {
+      date: string
+      allocated_to: string
+      documentName: string
+      multiresource: string
+      validity: string
+      id: string
+      resource: string
+      state: string
+    }[]
+  }
+  lastMonthDocuments: {
+    employees: {
+      date: string
+      allocated_to: string
+      documentName: string
+      multiresource: string
+      validity: string
+      id: string
+      mandatory: string
+      resource: string
+      state: string
+      document_number: string
+    }[]
+    vehicles: {
+      date: string
+      allocated_to: string
+      documentName: string
+      multiresource: string
+      validity: string
+      id: string
+      resource: string
+      state: string
+    }[]
+  }
+  showLastMonthDocuments: boolean
+  setShowLastMonthDocuments: () => void
+  pendingDocuments: {
+    employees: {
+      date: string
+      allocated_to: string
+      documentName: string
+      multiresource: string
+      validity: string
+      id: string
+      mandatory: string
+      resource: string
+      state: string
+      document_number: string
+    }[]
+    vehicles: {
+      date: string
+      allocated_to: string
+      documentName: string
+      multiresource: string
+      validity: string
+      id: string
+      resource: string
+      state: string
+    }[]
+  }
+  notifications: Notifications[]
+  markAllAsRead: () => void
 }
 
 const setEmployeesToShow = (employees: any) => {
@@ -70,7 +176,6 @@ const setEmployeesToShow = (employees: any) => {
     }
   })
 
-
   return employee
 }
 
@@ -117,8 +222,58 @@ export const useLoggedUserStore = create<State>((set, get) => {
     if (error) {
       console.error('Error al obtener los empleados no avalados:', error)
     } else {
-      set({employeesToShow: setEmployeesToShow(data) || []})
+      set({ employeesToShow: setEmployeesToShow(data) || [] })
       set({ isLoading: false })
+    }
+  }
+
+  const allNotifications = async () => {
+    let { data: notifications, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('company_id', get()?.actualCompany?.id)
+
+    await documetsFetch()
+
+    const document = notifications?.map((doc: any) => {
+      const findDocument =
+        get()?.Alldocuments?.employees?.find(
+          document => document.id === doc.document_id,
+        ) ||
+        get()?.Alldocuments?.vehicles?.find(
+          document => document.id === doc.document_id,
+        )
+      if (findDocument) {
+        return { ...doc, document: findDocument }
+      }
+    })
+
+
+    if (error) {
+      console.error('Error al obtener las notificaciones:', error)
+    }
+
+    const tipedData = document?.sort(
+      (a, b) =>
+        new Date(b.description).getTime() - new Date(a.description).getTime(),
+    ) as Notifications[]
+
+    set({ notifications: tipedData })
+  }
+
+  const markAllAsRead = async () => {
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('company_id', get()?.actualCompany?.id)
+
+    if (error) {
+      console.error(
+        'Error al marcar todas las notificaciones como leídas:',
+        error,
+      )
+    } else {
+      allNotifications()
     }
   }
 
@@ -154,19 +309,220 @@ export const useLoggedUserStore = create<State>((set, get) => {
     if (error) {
       console.error('Error al obtener los empleados avalados:', error)
     } else {
-      set({employeesToShow: setEmployeesToShow(data) || []})
+      set({ employeesToShow: setEmployeesToShow(data) || [] })
       set({ isLoading: false })
     }
   }
 
   const vehicles = async () => {
-    const { data, error } = await supabase.from('vehicles').select('*').eq('company_id', get()?.actualCompany?.id).eq('is_active', true)
+    const { data, error } = await supabase
+      .from('vehicles')
+      .select('*')
+      .eq('company_id', get()?.actualCompany?.id)
+      .eq('is_active', true)
     if (error) {
       console.error('Error al obtener los vehículos:', error)
     } else {
       set({ vehicles: data || [] })
     }
+  }
 
+  const documetsFetch = async () => {
+    let { data, error } = await supabase
+      .from('documents_employees')
+      .select(
+        `
+    *,
+    employees:employees(*,contractor_employee(
+      contractors(
+        *
+      )
+    )),
+    document_types:document_types(*)
+`,
+      )
+      .not('employees', 'is', null)
+      .not('document_types', 'is', null)
+      .not('validity', 'is', null)
+      .eq('employees.company_id', get()?.actualCompany?.id)
+
+    let { data: equipmentData, error: equipmentError } = await supabase
+      .from('documents_equipment')
+      .select(
+        `
+      *,
+      document_types:document_types(*),
+      applies(*,type(*),type_of_vehicle(*),model(*),brand(*))
+      `,
+      )
+      .not('document_types', 'is', null)
+      .not('validity', 'is', null)
+      .eq('applies.company_id', get()?.actualCompany?.id)
+
+    const typedData: VehiclesAPI[] | null = equipmentData as VehiclesAPI[]
+
+    if (error) {
+      console.error('Error al obtener los documentos:', error)
+    } else {
+      const lastMonth = new Date()
+      lastMonth.setMonth(new Date().getMonth() + 1)
+
+      const filteredData = data?.filter((doc: any) => {
+        const date = new Date(doc.validity)
+        const isExpired = date < lastMonth || doc.state === 'Vencido'
+        return isExpired
+      })
+
+      const filteredVehiclesData = typedData?.filter((doc: any) => {
+        const date = new Date(doc.validity)
+        const isExpired = date < lastMonth || doc.state === 'Vencido'
+        return isExpired
+      })
+
+      const lastMonthValues = {
+        employees:
+          filteredData
+            ?.filter((doc: any) => doc.state !== 'presentado')
+            ?.map((doc: any) => {
+              return {
+                date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
+                allocated_to: doc.employees?.contractor_employee
+                  ?.map((doc: any) => doc.contractors.name)
+                  .join(', '),
+                documentName: doc.document_types?.name,
+                state: doc.state,
+                multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+                validity:
+                  format(new Date(doc.validity), 'dd/MM/yyyy') || 'No vence',
+                mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
+                id: doc.id,
+                resource: `${doc.employees?.firstname} ${doc.employees?.lastname}`,
+                document_number: doc.employees.document_number,
+              }
+            }) || [],
+        vehicles:
+          filteredVehiclesData
+            .filter(doc => doc.state !== 'presentado')
+            .map(doc => {
+              return {
+                date: doc.created_at
+                  ? format(new Date(doc.created_at), 'dd/MM/yyyy')
+                  : 'No vence',
+                allocated_to: doc.applies?.type_of_vehicle?.name,
+                documentName: doc.document_types?.name,
+                state: doc.state,
+                multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+                validity: doc.validity
+                  ? format(new Date(doc.validity), 'dd/MM/yyyy')
+                  : 'No vence',
+                mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
+                id: doc.id,
+                resource: doc.applies?.domain || doc.applies?.serie,
+              }
+            }) || [],
+      }
+
+      const pendingDocuments = {
+        employees:
+          data
+            ?.filter((doc: any) => doc.state === 'presentado')
+            ?.map((doc: any) => {
+              return {
+                date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
+                allocated_to: doc.employees?.contractor_employee
+                  ?.map((doc: any) => doc.contractors.name)
+                  .join(', '),
+                documentName: doc.document_types?.name,
+                state: doc.state,
+                multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+                validity:
+                  format(new Date(doc.validity), 'dd/MM/yyyy') || 'No vence',
+                mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
+                id: doc.id,
+                resource: `${doc.employees?.firstname} ${doc.employees?.lastname}`,
+                document_number: doc.employees.document_number,
+              }
+            }) || [],
+        vehicles:
+          filteredVehiclesData
+            .filter(doc => doc.state === 'presentado')
+            .map(doc => {
+              return {
+                date: doc.created_at
+                  ? format(new Date(doc.created_at), 'dd/MM/yyyy')
+                  : 'No vence',
+                allocated_to: doc.applies?.type_of_vehicle?.name,
+                documentName: doc.document_types?.name,
+                state: doc.state,
+                multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+                validity: doc.validity
+                  ? format(new Date(doc.validity), 'dd/MM/yyyy')
+                  : 'No vence',
+                mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
+                id: doc.id,
+                resource: doc.applies?.domain || doc.applies?.intern_number,
+              }
+            }) || [],
+      }
+
+      const Allvalues = {
+        employees:
+          data
+            ?.filter((doc: any) => doc.state !== 'presentado')
+            ?.map((doc: any) => {
+              return {
+                date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
+                allocated_to: doc.employees?.contractor_employee
+                  ?.map((doc: any) => doc.contractors.name)
+                  .join(', '),
+                documentName: doc.document_types?.name,
+                state: doc.state,
+                multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+                validity:
+                  format(new Date(doc.validity), 'dd/MM/yyyy') || 'No vence',
+                mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
+                id: doc.id,
+                resource: `${doc.employees?.firstname} ${doc.employees?.lastname}`,
+                document_number: doc.employees.document_number,
+              }
+            }) || [],
+        vehicles:
+          filteredVehiclesData
+            .filter(doc => doc.state !== 'presentado')
+            .map(doc => {
+              return {
+                date: doc.created_at
+                  ? format(new Date(doc.created_at), 'dd/MM/yyyy')
+                  : 'No vence',
+                allocated_to: doc.applies?.type_of_vehicle?.name,
+                documentName: doc.document_types?.name,
+                state: doc.state,
+                multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+                validity: doc.validity
+                  ? format(new Date(doc.validity), 'dd/MM/yyyy')
+                  : 'No vence',
+                mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
+                id: doc.id,
+                resource: doc.applies?.domain || doc.applies?.intern_number,
+              }
+            }) || [],
+      }
+
+      set({ showLastMonthDocuments: true })
+      set({ Alldocuments: Allvalues })
+      set({ lastMonthDocuments: lastMonthValues })
+      set({ documentsToShow: lastMonthValues })
+      set({ pendingDocuments })
+    }
+  }
+
+  const setShowLastMonthDocuments = () => {
+    set({ showLastMonthDocuments: !get()?.showLastMonthDocuments })
+    set({
+      documentsToShow: !get()?.showLastMonthDocuments
+        ? get()?.Alldocuments
+        : get()?.lastMonthDocuments,
+    })
   }
 
   const getEmployees = async (active: boolean) => {
@@ -197,21 +553,32 @@ export const useLoggedUserStore = create<State>((set, get) => {
       .eq('company_id', get()?.actualCompany?.id)
       .eq('is_active', active)
 
-
     const employeesToShow = setEmployeesToShow(employees)
     return employeesToShow
   }
 
+  const channels3 = supabase
+    .channel('custom-all-channel')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'notifications' },
+      payload => {
+        console.log('cambio en notificaciones')
+        allNotifications()
+      },
+    )
+    .subscribe()
 
-  const channels = supabase.channel('custom-update-channel')
-  .on(
-    'postgres_changes',
-    { event: 'UPDATE', schema: 'public', table: 'employees' },
-    (payload) => {
+  const channels = supabase
+    .channel('custom-update-channel')
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'employees' },
+      payload => {
         setActivesEmployees()
-    }
-  )
-  .subscribe()
+      },
+    )
+    .subscribe()
 
   const setActivesEmployees = async () => {
     const employeesToShow = await getEmployees(true)
@@ -224,10 +591,11 @@ export const useLoggedUserStore = create<State>((set, get) => {
     setActivesEmployees()
     set({ isLoading: false })
     vehicles()
+    documetsFetch()
+    allNotifications()
   }
 
   const setNewDefectCompany = async (company: companyData) => {
-
     const { data, error } = await supabase
       .from('company')
       .update({ by_defect: false })
@@ -261,6 +629,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     .subscribe()
 
   const howManyCompanies = async (id: string) => {
+    if (!id) return
     const { data, error } = await supabase
       .from('company')
       .select(
@@ -333,6 +702,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
   }
 
   const profileUser = async (id: string) => {
+    if (!id) return
     const { data, error } = await supabase
       .from('profile')
       .select('*')
@@ -384,6 +754,14 @@ export const useLoggedUserStore = create<State>((set, get) => {
     vehicles: get()?.vehicles,
     setNewDefectCompany,
     endorsedEmployees,
-    noEndorsedEmployees
+    noEndorsedEmployees,
+    Alldocuments: get()?.Alldocuments,
+    documentsToShow: get()?.documentsToShow,
+    showLastMonthDocuments: get()?.showLastMonthDocuments,
+    setShowLastMonthDocuments,
+    lastMonthDocuments: get()?.lastMonthDocuments,
+    pendingDocuments: get()?.pendingDocuments,
+    notifications: get()?.notifications,
+    markAllAsRead,
   }
 })

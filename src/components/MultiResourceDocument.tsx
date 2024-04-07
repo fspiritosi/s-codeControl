@@ -73,6 +73,8 @@ export default function MultiResourceDocument({
     },
     [],
   )
+  console.log("Este console viene del multirecurso")
+
   const employees = useLoggedUserStore(state => state.employees)?.reduce(
     (
       acc: any,
@@ -226,7 +228,12 @@ export default function MultiResourceDocument({
                 <FormItem>
                   <FormLabel>Tipo de Documento</FormLabel>
                   <Select
-                    onValueChange={field.onChange}
+                       onValueChange={e => {
+                        field.onChange(e)
+                        setExpiredDate(
+                          documenTypes?.find(doc => doc.id === e)?.explired,
+                        )
+                      }}
                     defaultValue={field.value}
                   >
                     <FormControl>
@@ -411,13 +418,6 @@ export default function MultiResourceDocument({
                 </FormItem>
               )}
             />
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="expired">¿Tiene fecha de vencimiento?</Label>
-              <Switch
-                id="expired"
-                onCheckedChange={() => setExpiredDate(!expiredDate)}
-              />
-            </div>
             {expiredDate && (
               <FormField
                 control={form.control}

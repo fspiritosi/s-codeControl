@@ -11,9 +11,6 @@ export const useEdgeFunctions = () => {
         },
       )
 
-      if (error) {
-        throw new Error(error.message)
-      }
       return data
     },
   }
