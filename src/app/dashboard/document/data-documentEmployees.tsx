@@ -210,7 +210,7 @@ export function DataDocumentsEmployees<TData, TValue>({
         <Button
           variant="outline"
           size="default"
-          className="ml-2"
+          className="mx-3"
           onClick={handleClearFilters}
         >
           Limpiar filtros

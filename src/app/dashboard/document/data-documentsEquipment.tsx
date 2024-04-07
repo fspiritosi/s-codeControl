@@ -22,16 +22,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { useContext, useEffect, useReducer, useRef, useState } from 'react'
-import Link from 'next/link'
-import {
   Select,
   SelectContent,
   SelectGroup,
@@ -41,11 +31,18 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useRouter } from 'next/navigation'
-import { Url } from 'next/dist/shared/lib/router/router'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { DataTable } from '../employee/data-table'
 import { useSidebarOpen } from '@/store/sidebar'
+import Link from 'next/link'
+import { useState } from 'react'
 import { MdOutlineRemoveRedEye } from 'react-icons/md'
 interface DataDocumentsEquipmentProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
@@ -294,80 +291,55 @@ export function DataDocumentsEquipment<TData, TValue>({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => {
                   return (
-                    <TableHead
-                      className="text-center text-balance"
-                      key={header.id}
-                    >
+                    <TableHead className="text-center " key={header.id}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.id in selectHeader ? (
-                              header.id === 'intern_number' ? (
-                                <div className="flex justify-center">
-                                  <Input
-                                    placeholder="Número de interno"
-                                    value={
-                                      table
-                                        .getColumn('intern_number')
-                                        ?.getFilterValue() as string
-                                    }
-                                    onChange={event =>
-                                      table
-                                        .getColumn('intern_number')
-                                        ?.setFilterValue(event.target.value)
-                                    }
-                                    className="max-w-sm"
-                                  />
-                                </div>
-                              ) : (
-                                <div className="flex justify-center">
-                                  <Select
-                                    value={selectValues[header.id]}
-                                    onValueChange={event => {
-                                      if (event === 'Todos') {
-                                        table
-                                          .getColumn(header.id)
-                                          ?.setFilterValue('')
-                                        setSelectValues({
-                                          ...selectValues,
-                                          [header.id]: event,
-                                        })
-                                        return
-                                      }
+                              <div className="flex justify-center text-center">
+                                <Select
+                                  value={selectValues[header.id]}
+                                  onValueChange={event => {
+                                    if (event === 'Todos') {
                                       table
                                         .getColumn(header.id)
-                                        ?.setFilterValue(event)
+                                        ?.setFilterValue('')
                                       setSelectValues({
                                         ...selectValues,
                                         [header.id]: event,
                                       })
-                                    }}
-                                  >
-                                    <SelectTrigger className="w-[180px]">
-                                      <SelectValue
-                                        placeholder={
-                                          header.column.columnDef
-                                            .header as string
-                                        }
-                                      />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectGroup>
-                                        {selectHeader[
-                                          header.id as keyof typeof selectHeader
-                                        ]?.option?.map((option: string) => (
-                                          <SelectItem
-                                            key={option}
-                                            value={option}
-                                          >
-                                            {option}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectGroup>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              )
+                                      return
+                                    }
+                                    table
+                                      .getColumn(header.id)
+                                      ?.setFilterValue(event)
+                                    setSelectValues({
+                                      ...selectValues,
+                                      [header.id]: event,
+                                    })
+                                  }}
+                                >
+                                  <SelectTrigger className="w-[180px] text-center flex justify-around">
+                                    <SelectValue
+                                      className="text-center"
+                                      placeholder={
+                                        header.column.columnDef.header as string
+                                      }
+                                    />
+                                  </SelectTrigger>
+                                  <SelectContent className=''>
+                                    <SelectGroup>
+                                      {selectHeader[
+                                        header.id as keyof typeof selectHeader
+                                      ]?.option?.map((option: string) => (
+                                        <SelectItem key={option} value={option}>
+                                          {option}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             ) : (
                               header.column.columnDef.header
                             ),
@@ -397,7 +369,7 @@ export function DataDocumentsEquipment<TData, TValue>({
                         }`}
                       >
                         {cell.column.id === 'document_url' ? (
-                          <Link href={cell.getValue() as any} target="_blank">
+                          <Link className='flex justify-center' href={cell.getValue() as any} target="_blank">
                             <MdOutlineRemoveRedEye
                               style={{ width: '24px', height: '24px' }}
                             />

@@ -181,7 +181,6 @@ export default function Home() {
               </TabsList>
             </CardContent>
             <TabsContent value="Empleados">
-              
               <ExpiredDataTable
                 data={documentsToShow?.employees || []}
                 setShowLastMonthDocuments={setShowLastMonthDocuments}

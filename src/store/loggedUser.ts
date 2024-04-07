@@ -29,6 +29,30 @@ interface State {
   setNewDefectCompany: (company: companyData) => void
   endorsedEmployees: () => void
   noEndorsedEmployees: () => void
+  allDocumentsToShow: {
+    employees: {
+      date: string
+      allocated_to: string
+      documentName: string
+      multiresource: string
+      validity: string
+      mandatory: string
+      id: string
+      resource: string
+      state: string
+      document_number: string
+    }[]
+    vehicles: {
+      date: string
+      allocated_to: string
+      documentName: string
+      multiresource: string
+      validity: string
+      id: string
+      resource: string
+      state: string
+    }[]
+  }
   documentsToShow: {
     employees: {
       date: string
@@ -247,7 +271,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
         return { ...doc, document: findDocument }
       }
     })
-
 
     if (error) {
       console.error('Error al obtener las notificaciones:', error)
@@ -507,7 +530,46 @@ export const useLoggedUserStore = create<State>((set, get) => {
               }
             }) || [],
       }
+      const AllvaluesToShow = {
+        employees:
+          data?.map((doc: any) => {
+            return {
+              date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
+              allocated_to: doc.employees?.contractor_employee
+                ?.map((doc: any) => doc.contractors.name)
+                .join(', '),
+              documentName: doc.document_types?.name,
+              state: doc.state,
+              multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+              validity:
+                format(new Date(doc.validity), 'dd/MM/yyyy') || 'No vence',
+              mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
+              id: doc.id,
+              resource: `${doc.employees?.firstname} ${doc.employees?.lastname}`,
+              document_number: doc.employees.document_number,
+            }
+          }) || [],
+        vehicles:
+          filteredVehiclesData.map(doc => {
+            return {
+              date: doc.created_at
+                ? format(new Date(doc.created_at), 'dd/MM/yyyy')
+                : 'No vence',
+              allocated_to: doc.applies?.type_of_vehicle?.name,
+              documentName: doc.document_types?.name,
+              state: doc.state,
+              multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+              validity: doc.validity
+                ? format(new Date(doc.validity), 'dd/MM/yyyy')
+                : 'No vence',
+              mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
+              id: doc.id,
+              resource: doc.applies?.domain || doc.applies?.intern_number,
+            }
+          }) || [],
+      }
 
+      set({ allDocumentsToShow: AllvaluesToShow })
       set({ showLastMonthDocuments: true })
       set({ Alldocuments: Allvalues })
       set({ lastMonthDocuments: lastMonthValues })
@@ -763,5 +825,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
     pendingDocuments: get()?.pendingDocuments,
     notifications: get()?.notifications,
     markAllAsRead,
+    allDocumentsToShow: get()?.allDocumentsToShow,
   }
 })
