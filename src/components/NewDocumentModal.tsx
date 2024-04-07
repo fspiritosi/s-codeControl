@@ -10,7 +10,6 @@ import {
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import MultiResourceDocument from './MultiResourceDocument'
 import SimpleDocument from './SimpleDocument'
-import { Loader } from './svg/loader'
 import { Button } from './ui/button'
 import { Separator } from './ui/separator'
 
@@ -29,13 +28,17 @@ export default function NewDocumentModal({
   const handleOpen = () => {
     setIsOpen(!isOpen)
     resetAll()
-    setSendingLoading(!sendingLoading)
+    setSendingLoading(false)
     return
   }
 
   const [refs, setRefs] = useState<React.RefObject<HTMLButtonElement>[]>([])
   // const [allInputValids, setAllInputValids] = useState([])
   // const refErrors = useRef<boolean[]>([])
+
+  const hasErrors = DocumentsValidation(state => state.hasErrors)
+  const setTotalForms = DocumentsValidation(state => state.setTotalForms)
+  const totalForms = DocumentsValidation(state => state.totalForms)
 
   const ValidateForms = async () => {
     for (let i = 0; i < refs.length; i++) {
@@ -44,27 +47,20 @@ export default function NewDocumentModal({
         ref.current.click()
       }
     }
-    setSendingLoading(false)
   }
-
-  const hasErrors = DocumentsValidation(state => state.hasErrors)
-  const setTotalForms = DocumentsValidation(state => state.setTotalForms)
-  const totalForms = DocumentsValidation(state => state.totalForms)
-
   const handleSendForms = async () => {
     await Promise.all(
       refs.map(async (ref, i) => {
         if (ref.current) {
           if (i === 0) {
-            // ref.current.click()
+            ref.current.click()
           } else {
             await new Promise(resolve => setTimeout(resolve, 500)) // 0.5 segundos antes de cada clic.
-            // ref.current?.click()
+            ref.current?.click()
           }
         }
       }),
     )
-    setSendingLoading(false)
   }
   // const router = useRouter()
 
@@ -80,6 +76,7 @@ export default function NewDocumentModal({
     if (!hasErrors) {
       await handleSendForms()
     }
+    setSendingLoading(false)
   }
 
   // const [totalForms] = useState(1)
@@ -165,7 +162,11 @@ export default function NewDocumentModal({
                     <Button onClick={() => handleOpen()}>Cancel</Button>
                     <Button disabled={sendingLoading} onClick={handleClicks}>
                       {sendingLoading ? (
-                        <Loader />
+                        hasErrors ? (
+                          'Validando...'
+                        ) : (
+                          'Subiendo...'
+                        )
                       ) : (
                         <>
                           {hasErrors ? (
@@ -230,7 +231,7 @@ export default function NewDocumentModal({
                     <Button onClick={() => handleOpen()}>Cancel</Button>
                     <Button disabled={sendingLoading} onClick={handleClicks}>
                       {sendingLoading ? (
-                        <Loader />
+                        <>Validando...</>
                       ) : (
                         <>
                           {hasErrors ? (

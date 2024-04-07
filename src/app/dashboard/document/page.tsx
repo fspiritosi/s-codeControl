@@ -69,7 +69,7 @@ export default function page() {
       console.error('Error al obtener documentos:', error)
     }
   }
-  
+
   // useEffect(() => {
   //   fetchDocuments()
   // }, [fetchDocumentEquipmentByCompany])
@@ -136,7 +136,13 @@ export default function page() {
     <section>
       <div className="flex justify-between flex-wrap flex-col">
         <div className="flex justify-between mb-3">
-          <h2 className="inline">Documentos cargados</h2>
+          <div>
+            <h2 className="text-4xl mb-3">Documentos cargados</h2>
+            <p>
+              Aquí se muestra una tabla con los documentos cargados de los
+              empleados y equipos
+            </p>
+          </div>
           <div className="flex gap-4">
             <DocumentNav />
           </div>

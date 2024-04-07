@@ -39,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useDocument } from '@/hooks/useDocuments'
 import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { format } from 'date-fns'
@@ -48,10 +49,7 @@ import { supabase } from '../../supabase/supabase'
 import { Badge } from './ui/badge'
 import { Calendar } from './ui/calendar'
 import { Input } from './ui/input'
-import { Label } from './ui/label'
 import { Separator } from './ui/separator'
-import { Switch } from './ui/switch'
-import { useDocument } from '@/hooks/useDocuments'
 
 export default function MultiResourceDocument({
   resource,
@@ -62,6 +60,7 @@ export default function MultiResourceDocument({
 }) {
   const [documenTypes, setDocumentTypes] = useState<any[] | null>([])
   const [expiredDate, setExpiredDate] = useState(false)
+  const [disabled, setDisabled] = useState(false)
   const vehicles = useLoggedUserStore(state => state.vehicles)?.reduce(
     (acc: any, act: { year: string; intern_number: string; id: string }) => {
       const data = {
@@ -73,7 +72,7 @@ export default function MultiResourceDocument({
     },
     [],
   )
-  console.log("Este console viene del multirecurso")
+  console.log('Este console viene del multirecurso')
 
   const employees = useLoggedUserStore(state => state.employees)?.reduce(
     (
@@ -153,6 +152,7 @@ export default function MultiResourceDocument({
   } = useDocument()
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setDisabled(true)
     const { resources, ...rest } = values
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
@@ -203,7 +203,8 @@ export default function MultiResourceDocument({
       delete finalValues?.resources
       insertMultiDocumentEmployees(finalValues)
     }
-    //console.log(finalValues)
+    handleOpen()
+    setDisabled(false)
   }
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -228,12 +229,12 @@ export default function MultiResourceDocument({
                 <FormItem>
                   <FormLabel>Tipo de Documento</FormLabel>
                   <Select
-                       onValueChange={e => {
-                        field.onChange(e)
-                        setExpiredDate(
-                          documenTypes?.find(doc => doc.id === e)?.explired,
-                        )
-                      }}
+                    onValueChange={e => {
+                      field.onChange(e)
+                      setExpiredDate(
+                        documenTypes?.find(doc => doc.id === e)?.explired,
+                      )
+                    }}
                     defaultValue={field.value}
                   >
                     <FormControl>
@@ -490,7 +491,9 @@ export default function MultiResourceDocument({
             <Separator className="m-0 p-0" />
             <div className="flex justify-evenly">
               <Button onClick={handleOpen}>Cancel</Button>
-              <Button type="submit">Subir documentos</Button>
+              <Button disabled={disabled} type="submit">
+                Subir documentos
+              </Button>
             </div>
           </form>
         </Form>

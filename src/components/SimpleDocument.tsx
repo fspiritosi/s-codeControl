@@ -85,7 +85,6 @@ export default function SimpleDocument({
     updateDocumentEquipment,
     uploadDocumentFile,
   } = useDocument()
-  console.log("Este console viene del no--multirecurso")
   const formSchema = z.object({
     id_document_types: z
       .string({
