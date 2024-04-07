@@ -269,29 +269,29 @@ export default function NavBar() {
                         key={index}
                         className="mb-4 grid grid-cols-[25px_1fr] pb-4 last:mb-0 last:pb-0 items-center  gap-2"
                       >
-                        {notification.category === 'rechazado' && (
+                        {notification?.category === 'rechazado' && (
                           <ExclamationTriangleIcon className="text-yellow-400" />
                         )}
-                        {notification.category === 'aprobado' && (
+                        {notification?.category === 'aprobado' && (
                           <CheckCircledIcon className="text-green-400" />
                         )}
-                        {notification.category === 'vencimiento' && (
+                        {notification?.category === 'vencimiento' && (
                           <LapTimerIcon className="text-red-400" />
                         )}
-                        {notification.category === 'noticia' && (
+                        {notification?.category === 'noticia' && (
                           <EnvelopeOpenIcon className="text-blue-400" />
                         )}
-                        {notification.category === 'advertencia' && (
+                        {notification?.category === 'advertencia' && (
                           <ExclamationTriangleIcon className="text-yellow-400" />
                         )}
 
                         <div className="space-y-1 flex justify-between items-center gap-2">
                           <div>
                             <p className="text-sm font-medium leading-none first-letter:uppercase">
-                              {notification.category === 'aprobado' &&
+                              {notification?.category === 'aprobado' &&
                                 `El documento ${
-                                  notification.document.documentName
-                                }, del empleado ${notification.document.resource
+                                  notification?.document.documentName
+                                }, del empleado ${notification?.document.resource
                                   .split(' ')
                                   .map(
                                     word =>
@@ -299,10 +299,10 @@ export default function NavBar() {
                                       word.slice(1).toLowerCase(),
                                   )
                                   .join(' ')} ha sido aprobado`}
-                              {notification.category === 'rechazado' &&
+                              {notification?.category === 'rechazado' &&
                                 `El documento ${
-                                  notification.document.documentName
-                                }, del empleado ${notification.document.resource
+                                  notification?.document.documentName
+                                }, del empleado ${notification?.document.resource
                                   .split(' ')
                                   .map(
                                     word =>
@@ -310,10 +310,10 @@ export default function NavBar() {
                                       word.slice(1).toLowerCase(),
                                   )
                                   .join(' ')} ha sido rechazado`}
-                              {notification.category === 'vencimiento' &&
+                              {notification?.category === 'vencimiento' &&
                                 `El documento ${
-                                  notification.document.documentName
-                                }, del empleado ${notification.document.resource
+                                  notification?.document.documentName
+                                }, del empleado ${notification?.document.resource
                                   .split(' ')
                                   .map(
                                     word =>
@@ -324,14 +324,15 @@ export default function NavBar() {
                             </p>
 
                             <CardDescription>
-                              {notification.description.length > 50
-                                ? notification.description.substring(0, 50) +
+                              {notification?.description.length > 50
+                                ? notification?.description.substring(0, 50) +
                                   '...'
-                                : notification.description}
+                                : notification?.description}
                             </CardDescription>
                             <p className="text-sm text-muted-foreground/70 first-letter:">
                               {formatRelative(
-                                new Date(notification.created_at),
+                                // new Date(notification.created_at),
+                                new Date('01/01/2024'),
                                 new Date(),
                                 { locale: es },
                               )}

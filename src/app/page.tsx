@@ -2,6 +2,7 @@ import Services from '@/components/landing_components/BestBusines'
 import AboutAs from '@/components/landing_components/About'
 import FirstBlock from '@/components/landing_components/first-block'
 import Header from '@/components/landing_components/header'
+import Contact from '@/components/landing_components/Contact'
 
 export default function Home() {
   return (
@@ -13,6 +14,9 @@ export default function Home() {
       </div>
       <div id='services'>
       <Services/>
+      </div>
+      <div id='contact'>
+        <Contact/>
       </div>
     </div>
   )

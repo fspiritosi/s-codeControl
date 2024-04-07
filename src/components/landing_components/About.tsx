@@ -63,7 +63,7 @@ function AboutAs() {
             Porque Elegirnos?
             </h2>
         </Reveal>
-        <div className='grid grid-cols-4 gap-4'>    
+        <div className='grid  md:grid-cols-4 gap-4'>    
             <Card className='p-4 hover:scale-110 cursor-pointer'>
               
               <CardHeader className='p-2 items-center'>

@@ -61,7 +61,7 @@ function Services() {
                 <div className="">
                   <div className="flex items-center gap-4 mb-2">
                     <div className="w-[50px] h-[50px]">
-                      <ChatIcon />
+                      <ChatIcon  />
                     
                       {/* <MdOutlineWhatsapp className="w-full h-full" /> */}
                     </div>
