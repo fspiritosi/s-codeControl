@@ -43,10 +43,11 @@ function Header() {
 
   return (
     <MotionTransition>
-      <nav className="flex flex-wrap items-center justify-between max-w-5xl p-4 mx-auto md:py-4">
+      <nav className="flex flex-wrap items-center justify-around md:justify-between max-w-5xl my-4 mx-4 md:py-4 md:m-auto">
         <Link href="/" className="flex items-center">
-          <Image src={theme == "light" ? Logo : Logo_Blanco} width={120} height={60} alt="codeControl Logo" />
+          <Image src={theme == "dark" ? Logo_Blanco : Logo  } width={120} height={60} alt="codeControl Logo" />
         </Link>
+        <ModeToggle/>
         <RiMenu3Line
           className="block text-3xl md:hidden cursor-pointer"
           onClick={() => setOpenMobileMenu(!openMobileMenu)}
@@ -69,7 +70,7 @@ function Header() {
             ))}
           </div>
         </div>
-        <ModeToggle/>
+      
       </nav>
     </MotionTransition>
   )

@@ -47,6 +47,7 @@ export default function page() {
         ...item,
         id_document_types: item.document_types.name,
         applies: item.vehicles.intern_number,
+        domain: item.vehicles.domain || 'No disponible',
       }))
       //console.log('transformed Data: ', transformedData)
       const filteredAprobados = transformedData?.filter(
@@ -68,9 +69,10 @@ export default function page() {
       console.error('Error al obtener documentos:', error)
     }
   }
-  useEffect(() => {
-    fetchDocuments()
-  }, [fetchDocumentEquipmentByCompany])
+  
+  // useEffect(() => {
+  //   fetchDocuments()
+  // }, [fetchDocumentEquipmentByCompany])
 
   const fetchDocumentsEmployees = async () => {
     try {
@@ -101,9 +103,6 @@ export default function page() {
       console.error('Error al obtener documentos:', error)
     }
   }
-  useEffect(() => {
-    fetchDocumentsEmployees()
-  }, [fetchDocumentEmployeesByCompany])
 
   useEffect(() => {
     const channels = supabase
@@ -131,6 +130,8 @@ export default function page() {
       .subscribe()
   }, [])
 
+  console.log('esto viene del page')
+
   return (
     <section>
       <div className="flex justify-between flex-wrap flex-col">
@@ -148,14 +149,6 @@ export default function page() {
                 <TabsTrigger value="Equipos">Equipos</TabsTrigger>
               </TabsList>
               <TabsContent value="Empleados">
-                {/* <DataDocumentsEmployees
-                        columEmp={columEmp}
-                        data={documentsDataEmployees || []}
-                        //allCompany={allCompany}
-                        showInactive={showInactive}
-                        setShowInactive={setShowInactive}
-                      /> */}
-                {/* ////////////////////////////////////////////////// */}
                 <Tabs defaultValue="Todos" className="p-2">
                   <TabsList className="grid w-full grid-cols-4 ">
                     <TabsTrigger value="Todos">Todos</TabsTrigger>

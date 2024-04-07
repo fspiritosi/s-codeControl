@@ -73,6 +73,7 @@ export default function SimpleDocument({
   const searchParams = useSearchParams()
   const document = searchParams.get('document')
   const id = searchParams.get('id')
+  const [employeeData, setEmployeeData] = useState<any>(null)
   const [documenTypes, setDocumentTypes] = useState<any[] | null>([])
   const [expiredDate, setExpiredDate] = useState(false)
   const {
@@ -84,6 +85,7 @@ export default function SimpleDocument({
     updateDocumentEquipment,
     uploadDocumentFile,
   } = useDocument()
+  console.log("Este console viene del no--multirecurso")
   const formSchema = z.object({
     id_document_types: z
       .string({
@@ -118,30 +120,29 @@ export default function SimpleDocument({
   })
   ////////////////////////////////////////////////////////////////////////
   const [equipmentData, setEquipmentData] = useState<any>(null)
-  const equipment = async () => {
-    //console.log('Valor de document:', id)
-    const data = await fetchEquipmentByDocument(id as any)
-    //console.log('Datos obtenidos del empleado:', data)
-    setEquipmentData(data)
-  }
-  //console.log('equipmentData: ', equipmentData)
-
-  const [employeeData, setEmployeeData] = useState<any>(null)
-
-  const employee = async () => {
-    //console.log('Valor de document:', document)
-    const data = await fetchEmployeeByDocument(document as any)
-    //console.log('Datos obtenidos del empleado:', data)
-    setEmployeeData(data)
+  if (id) {
+    const equipment = async () => {
+      //console.log('Valor de document:', id)
+      const data = await fetchEquipmentByDocument(id as any)
+      //console.log('Datos obtenidos del empleado:', data)
+      setEquipmentData(data)
+    }
+    //console.log('equipmentData: ', equipmentData)
+    useEffect(() => {
+      equipment()
+    }, [])
+  } else {
+    const employee = async () => {
+      //console.log('Valor de document:', document)
+      const data = await fetchEmployeeByDocument(document as any)
+      //console.log('Datos obtenidos del empleado:', data)
+      setEmployeeData(data)
+    }
+    useEffect(() => {
+      employee()
+    }, [])
   }
   //console.log('este employee data: ', employeeData)
-  useEffect(() => {
-    equipment()
-  }, [])
-
-  useEffect(() => {
-    employee()
-  }, [])
 
   ////////////////////////////////////////////////////////////////////////
 
@@ -199,7 +200,9 @@ export default function SimpleDocument({
     }
   }
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true)
     const matchingDocument = employeeData?.find(
       (doc: any) => doc.id_document_types === values.id_document_types,
     )?.id
@@ -248,10 +251,28 @@ export default function SimpleDocument({
     }
 
     if (!hasErrors) {
+      // const fileExtension = files.name.split('.').pop()
+      // const document_type_name = documenTypes
+      //   ?.find(documentType => documentType.id === values.id_document_types)
+      //   ?.name.replace(/\s/g, '')
+      // const renamedFile = new File(
+      //   [files],
+      //   `${id || document || values.applies}-${document_type_name
+      //     .trim()
+      //     .replace(/\s/g, '')}.${fileExtension}`
+      //     .trim()
+      //     .replace(/\s/g, ''),
+      //   {
+      //     type: files.type,
+      //   },
+      // )
       const fileExtension = files.name.split('.').pop()
       const document_type_name = documenTypes
         ?.find(documentType => documentType.id === values.id_document_types)
-        ?.name.replace(/\s/g, '')
+        ?.name.normalize('NFD') // Normaliza los caracteres a su forma de descomposición canónica
+        .replace(/[\u0300-\u036f]/g, '') // Elimina los diacríticos (acentos)
+        .replace(/\s/g, '')
+
       const renamedFile = new File(
         [files],
         `${id || document || values.applies}-${document_type_name
@@ -264,7 +285,7 @@ export default function SimpleDocument({
         },
       )
       //console.log(renamedFile, 'renamedFile')
-      // setFiles(renamedFile)
+      setFiles(renamedFile)
       const fileUrl = await uploadDocumentFile(renamedFile, 'document_files')
 
       setLoading(true)
@@ -287,6 +308,7 @@ export default function SimpleDocument({
               is_active: true,
               applies: vehicle_id,
               user_id: user,
+              state: 'presentado',
               id_document_types: values.id_document_types,
             }
             //console.log('equipmentData: ', equipmentData)
@@ -362,6 +384,7 @@ export default function SimpleDocument({
       }
       handleOpen()
     }
+    setIsSubmitting(false)
   }
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -538,7 +561,12 @@ export default function SimpleDocument({
                           Seleccione el tipo de documento que desea subir
                         </FormLabel>
                         <Select
-                          onValueChange={field.onChange}
+                          onValueChange={e => {
+                            field.onChange(e)
+                            setExpiredDate(
+                              documenTypes?.find(doc => doc.id === e)?.explired,
+                            )
+                          }}
                           defaultValue={field.value}
                         >
                           <FormControl>
@@ -613,15 +641,7 @@ export default function SimpleDocument({
                       </FormItem>
                     )}
                   />
-                  <div className="flex items-center space-x-2">
-                    <Label htmlFor="expired">
-                      ¿Tiene fecha de vencimiento?
-                    </Label>
-                    <Switch
-                      id="expired"
-                      onCheckedChange={() => setExpiredDate(!expiredDate)}
-                    />
-                  </div>
+
                   {expiredDate && (
                     <FormField
                       control={form.control}
@@ -673,7 +693,12 @@ export default function SimpleDocument({
                     />
                   )}
                   <div className=" justify-evenly hidden">
-                    <Button ref={refSubmit} type="submit">
+                    <Button
+                      ref={refSubmit}
+                      type="submit"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'Enviando...' : 'Subir documentos'}
                       Subir documentos
                     </Button>
                   </div>

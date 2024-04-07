@@ -1,20 +1,72 @@
 'use client'
-import ModalCompany from '@/components/ModalCompany'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { FormProvider, useForm } from 'react-hook-form'
+import { supabase } from '../../supabase/supabase'
+
 import { ModeToggle } from '@/components/ui/ToogleDarkButton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button, buttonVariants } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { companyData } from '@/types/types'
-import { BellIcon, DotFilledIcon } from '@radix-ui/react-icons'
+import {
+  BellIcon,
+  CaretSortIcon,
+  CheckCircledIcon,
+  DotFilledIcon,
+  EnvelopeOpenIcon,
+  ExclamationTriangleIcon,
+  LapTimerIcon,
+  PlusCircledIcon,
+} from '@radix-ui/react-icons'
+import { formatRelative } from 'date-fns'
+import { es } from 'date-fns/locale'
+import { Check, CheckIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { IoMdAddCircleOutline } from 'react-icons/io'
-import { LogOutButton } from './LogOutButton'
+import ModalCompany from './ModalCompany'
+import { UpdateUserPasswordForm } from './UpdateUserPasswordForm'
+import { UploadImage } from './UploadImage'
+import { AlertDialogHeader } from './ui/alert-dialog'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from './ui/command'
+import { FormControl, FormField, FormItem, FormMessage } from './ui/form'
+import { Separator } from './ui/separator'
+import { useToast } from './ui/use-toast'
 
 export default function NavBar() {
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
@@ -23,122 +75,159 @@ export default function NavBar() {
     state => state.setNewDefectCompany,
   )
   const actualUser = useLoggedUserStore(state => state.profile)
-  const avatarUrl =
-    actualUser && actualUser.length > 0 ? actualUser[0].avatar : ''
+  const notifications = useLoggedUserStore(state => state.notifications)
+  const avatarUrl = actualUser && actualUser.length > 0 ? actualUser[0] : ''
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut()
+      router.push('/login')
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+    }
+  }
 
   const [isOpen, setIsOpen] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const router = useRouter()
-
   const handleNewCompany = async (company: companyData) => {
     setNewDefectCompany(company)
     setIsOpen(false)
     router.push('/dashboard')
   }
+  const { control, formState, setValue } = useForm()
+  const updateProfileAvatar = async (imageUrl: string) => {
+    try {
+      // Realiza la actualización en la tabla profile usando Supabase
+      const { data, error } = await supabase
+        .from('profile')
+        .update({ avatar: imageUrl })
+        .eq('id', actualUser[0].id)
 
+      if (error) {
+        throw error
+      }
+    } catch (error) {
+      console.error('Error al actualizar la URL de la imagen:', error)
+    }
+  }
+  const [open, setOpen] = useState(false)
+  const [showNewTeamDialog, setShowNewTeamDialog] = useState(false)
+  // const [selectedTeam, setSelectedTeam] = useState(groups[0].teams[0])
+
+  const markAllAsRead = useLoggedUserStore(state => state.markAllAsRead)
+  const { toast } = useToast()
+
+  const groups = [
+    {
+      label: 'Compañia actual',
+      teams: allCompanies
+        ?.filter(companyItem => companyItem.by_defect === true)
+        ?.map(companyItem => ({
+          label: companyItem.company_name,
+          value: companyItem.id,
+          logo: companyItem.company_logo,
+        })),
+    },
+    {
+      label: 'Otras compañias',
+      teams: allCompanies
+        ?.filter(companyItem => companyItem.by_defect === false)
+        ?.map(companyItem => ({
+          label: companyItem.company_name,
+          value: companyItem.id,
+          logo: companyItem.company_logo,
+        })),
+    },
+  ]
+  const [ISopen, setISOpen] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   return (
     <nav className=" flex flex-shrink items-center justify-between  text-white p-4 mb-2">
       <div className="flex items-center">
-        <Popover open={isOpen} onOpenChange={setIsOpen}>
-          <PopoverTrigger>
-            <div onMouseEnter={() => setIsOpen(true)}>
-              {actualCompany ? (
-                <Link
-                  href={`/dashboard/company`}
-                  passHref
-                  className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px"
-                >
-                  <img
-                    className=" shadow-md text-white items-center flex gap-1 bg-slate-500 border-0 rounded-full w-40px h-40px"
-                    src={actualCompany.company_logo}
-                    style={{ width: '40px', height: '40px' }}
-                    alt="Company Logo"
+        {/* <TeamSwitcher /> asdasd*/}
+        <Dialog open={showNewTeamDialog} onOpenChange={setShowNewTeamDialog}>
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild className="text-black dark:text-white">
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={open}
+                aria-label="Selecciona una compañía"
+                className={'w-[200px] justify-between'}
+              >
+                <Avatar className="mr-2 size-5 rounded-full">
+                  <AvatarImage
+                    src={actualCompany?.company_logo}
+                    alt={actualCompany?.company_name}
+                    className="size-5 grayscale"
                   />
-                </Link>
-              ) : (
-                allCompanies
-                  ?.filter(companyItem => companyItem.by_defect === true)
-                  .map(companyItem => (
-                    <Link
-                      key={companyItem.id}
-                      href={`/dashboard/company`}
-                      passHref
-                      className=" shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px "
-                      //className="text-white flex items-center gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px"
-                    >
-                      <img
-                        src={companyItem.company_logo}
-                        style={{ width: '40px', height: '40px' }}
-                        className="hover:cursor-pointer shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px"
-                        alt="Company Logo"
-                      />
-                    </Link>
-                  ))
-              )}
-
-              {!actualCompany &&
-                !allCompanies?.find(
-                  companyItem => companyItem.by_defect === true,
-                ) && (
-                  <div>
-                    <Link
-                      href={`/dashboard/company/`}
-                      passHref
-                      className="shadow-md text-white items-center flex gap-1 bg-slate-500 border-2 rounded-full w-40px h-40px "
-                      //className="text-white flex items-center gap-2 p-1 bg-slate-500 border-2 rounded-md"
-                    >
-                      Empresa
-                    </Link>
-                  </div>
-                )}
-            </div>
-          </PopoverTrigger>
-          <PopoverContent
-            onMouseLeave={() => setIsOpen(false)}
-            className="bg-slate-600 border-0"
-          >
-            <Link
-              href="/dashboard/company/new"
-              passHref
-              className="text-white hover:text-sky-600 flex justify-center items-center gap-1 px-4 py-2 text-sm"
-            >
-              <IoMdAddCircleOutline size={30} />
-              <span>Registrar Empresa</span>
-            </Link>
-            <div className=" justify-center items-center">
-              {allCompanies?.map(companyItems => (
-                <div
-                  key={companyItems.id}
-                  onClick={() => handleNewCompany(companyItems)}
-                  className="text-white gap-1 flex justify-left items-center w-20 h-20"
-                  style={{ whiteSpace: 'nowrap' }}
-                >
-                  <img
-                    className="hover:cursor-pointer shadow-md text-white ml-auto items-center flex gap-0 bg-slate-500 border-2 rounded-full w-40 h-40"
-                    src={companyItems.company_logo}
-                    alt="Logo de la empresa"
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                    }}
-                  />
-
-                  <span
-                    className="hover:cursor-pointer  hover:text-sky-600 text-inline ml-auto"
-                    style={{
-                      marginLeft: '5px',
-                      marginRight: '5px',
-                      float: 'right',
-                    }}
+                  <AvatarFallback>compañia</AvatarFallback>
+                </Avatar>
+                {actualCompany?.company_name}
+                <CaretSortIcon className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-0">
+              <Command>
+                <CommandList>
+                  <CommandInput placeholder="Buscar compañia" />
+                  <CommandEmpty>Compañia no encontrada</CommandEmpty>
+                  {groups?.map(group => (
+                    <CommandGroup key={group.label} heading={group.label}>
+                      {group?.teams?.map(team => (
+                        <CommandItem
+                          key={team?.value}
+                          onSelect={() => {
+                            const company = allCompanies.find(
+                              companyItem => companyItem.id === team.value,
+                            )
+                            if (company) {
+                              handleNewCompany(company)
+                            }
+                            setOpen(false)
+                          }}
+                          className="text-sm"
+                        >
+                          <Avatar className="mr-2 h-5 w-5">
+                            <AvatarImage
+                              src={team.logo}
+                              alt={team.label}
+                              className="size-5 rounded-full"
+                            />
+                            <AvatarFallback>compañia</AvatarFallback>
+                          </Avatar>
+                          {team.label}
+                          <CheckIcon
+                            className={cn(
+                              'ml-auto h-4 w-4',
+                              actualCompany?.id === team.value
+                                ? 'opacity-100'
+                                : 'opacity-0',
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  ))}
+                </CommandList>
+                <CommandSeparator />
+                <div className="p-2 w-full">
+                  <Link
+                    href="/dashboard/company/new"
+                    className={`${buttonVariants({
+                      variant: 'outline',
+                    })} flex justify-center p-4`}
                   >
-                    {companyItems.company_name.toUpperCase()}
-                  </span>
+                    <PlusCircledIcon className="mr-2 h-5 w-5" />
+                    Agregar compañía
+                  </Link>
                 </div>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </Dialog>
         {isModalOpen && (
           <ModalCompany
             isOpen={isModalOpen}
@@ -148,23 +237,218 @@ export default function NavBar() {
         )}
       </div>
       <div className="flex gap-8 items-center">
-        <div className="relative">
-          <DotFilledIcon className="text-blue-600 absolute size-7 top-[-8px] right-[-10px] p-0" />
-          <BellIcon className="text-black cursor-pointer size-5" />
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger>
+            <div className="relative">
+              {notifications?.length ? (
+                <DotFilledIcon className="text-blue-600 absolute size-7 top-[-8px] right-[-10px] p-0" />
+              ) : (
+                false
+              )}
+              <BellIcon className="text-black cursor-pointer size-5 dark:text-white" />
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="min-w-[300px] bg-transparent border-none shadow-none">
+            <Card className="w-[380px]">
+              <CardHeader>
+                <CardTitle>Notificaciones</CardTitle>
+                {notifications?.length ? (
+                  <CardDescription>
+                    Tienes {notifications?.length} notificaciones pendientes
+                  </CardDescription>
+                ) : (
+                  false
+                )}
+                <DropdownMenuSeparator className="mb-3" />
+              </CardHeader>
+              <CardContent className="grid gap-6 max-h-[40vh] overflow-auto">
+                {notifications?.length > 0 ? (
+                  <div>
+                    {notifications?.map((notification, index) => (
+                      <div
+                        key={index}
+                        className="mb-4 grid grid-cols-[25px_1fr] pb-4 last:mb-0 last:pb-0 items-center  gap-2"
+                      >
+                        {notification.category === 'rechazado' && (
+                          <ExclamationTriangleIcon className="text-yellow-400" />
+                        )}
+                        {notification.category === 'aprobado' && (
+                          <CheckCircledIcon className="text-green-400" />
+                        )}
+                        {notification.category === 'vencimiento' && (
+                          <LapTimerIcon className="text-red-400" />
+                        )}
+                        {notification.category === 'noticia' && (
+                          <EnvelopeOpenIcon className="text-blue-400" />
+                        )}
+                        {notification.category === 'advertencia' && (
+                          <ExclamationTriangleIcon className="text-yellow-400" />
+                        )}
+
+                        <div className="space-y-1 flex justify-between items-center gap-2">
+                          <div>
+                            <p className="text-sm font-medium leading-none first-letter:uppercase">
+                              {notification.category === 'aprobado' &&
+                                `El documento ${
+                                  notification.document.documentName
+                                }, del empleado ${notification.document.resource
+                                  .split(' ')
+                                  .map(
+                                    word =>
+                                      word.charAt(0).toUpperCase() +
+                                      word.slice(1).toLowerCase(),
+                                  )
+                                  .join(' ')} ha sido aprobado`}
+                              {notification.category === 'rechazado' &&
+                                `El documento ${
+                                  notification.document.documentName
+                                }, del empleado ${notification.document.resource
+                                  .split(' ')
+                                  .map(
+                                    word =>
+                                      word.charAt(0).toUpperCase() +
+                                      word.slice(1).toLowerCase(),
+                                  )
+                                  .join(' ')} ha sido rechazado`}
+                              {notification.category === 'vencimiento' &&
+                                `El documento ${
+                                  notification.document.documentName
+                                }, del empleado ${notification.document.resource
+                                  .split(' ')
+                                  .map(
+                                    word =>
+                                      word.charAt(0).toUpperCase() +
+                                      word.slice(1).toLowerCase(),
+                                  )
+                                  .join(' ')} ha vencido`}
+                            </p>
+
+                            <CardDescription>
+                              {notification.description.length > 50
+                                ? notification.description.substring(0, 50) +
+                                  '...'
+                                : notification.description}
+                            </CardDescription>
+                            <p className="text-sm text-muted-foreground/70 first-letter:">
+                              {formatRelative(
+                                new Date(notification.created_at),
+                                new Date(),
+                                { locale: es },
+                              )}
+                            </p>
+                          </div>
+                          <Link
+                            className={[
+                              buttonVariants({ variant: 'outline' }),
+                              'w-20',
+                            ].join(' ')}
+                            href={`#`}
+                          >
+                            Ver
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <CardDescription>
+                    No tienes notificaciones pendientes
+                  </CardDescription>
+                )}
+              </CardContent>
+              <CardFooter>
+                <Button onClick={() => markAllAsRead()} className="w-full">
+                  <Check
+                    className="mr-2 h-4 w-4"
+                    onClick={() => markAllAsRead()}
+                  />{' '}
+                  Marcar todos como leido
+                </Button>
+              </CardFooter>
+            </Card>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <ModeToggle />
-        <div className="flex-shrink">
-          <Popover>
-            <PopoverTrigger>
-              <Avatar>
-                <AvatarImage src={avatarUrl} />
+        <div className="flex-shrink justify-center items-center flex">
+          <DropdownMenu>
+            <DropdownMenuTrigger className="cursor-pointer" asChild>
+              <Avatar className="size-9">
+                <AvatarImage
+                  src={typeof avatarUrl === 'object' ? avatarUrl.avatar : ''}
+                />
                 <AvatarFallback>CN</AvatarFallback>
               </Avatar>
-            </PopoverTrigger>
-            <PopoverContent className="bg-slate-600 border-0">
-              <LogOutButton />
-            </PopoverContent>
-          </Popover>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {typeof avatarUrl === 'object' ? avatarUrl.fullname : ''}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {typeof avatarUrl === 'object' ? avatarUrl.email : ''}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => setShowDeleteDialog(true)}>
+                Editar perfil
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <Button variant={'destructive'} className="w-full">
+                  Cerrar Sesión
+                </Button>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <DialogContent className="sm:max-w-[500px] ">
+              <AlertDialogHeader>
+                <DialogTitle>Editar perfil</DialogTitle>
+                <DialogDescription>
+                  Aqui se haran cambios en tu perfil
+                </DialogDescription>
+              </AlertDialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="w-[300px] flex  gap-2">
+                  <FormProvider {...useForm()}>
+                    <FormField
+                      control={control}
+                      name="company_logo"
+                      render={({ field }) => (
+                        <FormItem className=" max-w-[600px] flex flex-col justify-center">
+                          <FormControl>
+                            <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
+                              <UploadImage
+                                companyId={actualCompany?.id as string}
+                                labelInput="Avatar"
+                                imageBucket="avatar"
+                                desciption="Sube tu avatar"
+                                style={{ width: '300px' }}
+                                // onImageChange={(imageUrl: string) =>
+                                //   setValue('profile', imageUrl)
+                                // }
+                                onImageChange={async imageUrl => {
+                                  setValue('profile', imageUrl)
+                                  await updateProfileAvatar(imageUrl) // Llama a la función para actualizar la URL
+                                }}
+                                // onUploadSuccess={onUploadSuccess}
+                                inputStyle={{ width: '150px' }}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </FormProvider>
+                </div>
+                <Separator className="my-4" />
+                <UpdateUserPasswordForm />
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </nav>
