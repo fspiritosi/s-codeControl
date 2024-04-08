@@ -499,3 +499,14 @@ export type VehiclesTable = {
   company_id: string
   intern_number: string
 }
+
+export type AllDocumentsValues = {
+  id_document_types: string;
+  validity:          Date;
+  document:          string;
+  applies:           string;
+  document_url:      string;
+  id_storage:        null;
+  is_active:         boolean;
+  user_id:           string;
+}
