@@ -269,6 +269,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
         )
       if (findDocument) {
         return { ...doc, document: findDocument }
+      } else {
+        return doc
       }
     })
 
@@ -625,7 +627,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
       'postgres_changes',
       { event: '*', schema: 'public', table: 'notifications' },
       payload => {
-        console.log('cambio en notificaciones')
         allNotifications()
       },
     )
