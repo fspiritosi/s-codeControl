@@ -6,6 +6,13 @@ import { z } from 'zod'
 
 import { Button } from '@/components/ui/button'
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
   Form,
   FormControl,
   FormDescription,
@@ -14,23 +21,19 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { toast, useToast } from '@/components/ui/use-toast'
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import { Textarea } from './ui/textarea'
+import { useToast } from '@/components/ui/use-toast'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { supabase } from '../../supabase/supabase'
-import { useRouter } from 'next/navigation'
+import { Textarea } from './ui/textarea'
 
-export default function DenyDocModal({ id }: { id: string }) {
+export default function DenyDocModal({
+  id,
+  resource,
+}: {
+  id: string
+  resource: string | null
+}) {
   const [isOpen, setIsOpen] = useState(false)
   const FormSchema = z.object({
     reason: z
@@ -50,26 +53,49 @@ export default function DenyDocModal({ id }: { id: string }) {
   const { toast } = useToast()
 
   async function onSubmit(menssaje: z.infer<typeof FormSchema>) {
-    const { data, error } = await supabase
-      .from('documents_employees')
-      .update({ state: 'rechazado', deny_reason: menssaje.reason,id })
-      .eq('id', id)
-      .select()
+    if (resource === 'employees') {
+      const { data, error } = await supabase
+        .from('documents_employees')
+        .update({ state: 'rechazado', deny_reason: menssaje.reason, id })
+        .eq('id', id)
+        .select()
 
-    if (error) {
-      setIsOpen(false)
-      return toast({
-        title: 'Error',
-        description: 'Ocurrio un error al rechazar el documento',
-        variant: 'destructive',
+      if (error) {
+        setIsOpen(false)
+        return toast({
+          title: 'Error',
+          description: 'Ocurrio un error al rechazar el documento',
+          variant: 'destructive',
+        })
+      }
+
+      toast({
+        title: 'Documento rechazado',
+        description: 'El documento ha sido rechazado correctamente',
+        variant: 'default',
+      })
+    } else {
+      const { data, error } = await supabase
+        .from('documents_equipment')
+        .update({ state: 'rechazado', deny_reason: menssaje.reason, id })
+        .eq('id', id)
+        .select()
+
+      if (error) {
+        setIsOpen(false)
+        return toast({
+          title: 'Error',
+          description: 'Ocurrio un error al rechazar el documento',
+          variant: 'destructive',
+        })
+      }
+
+      toast({
+        title: 'Documento rechazado',
+        description: 'El documento ha sido rechazado correctamente',
+        variant: 'default',
       })
     }
-
-    toast({
-      title: 'Documento rechazado',
-      description: 'El documento ha sido rechazado correctamente',
-      variant: 'default',
-    })
 
     router.push('/auditor')
     setIsOpen(false)
