@@ -427,7 +427,7 @@ export const columns: ColumnDef<Colum>[] = [
               Copiar número de interno
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleOpenViewModal(domain)}>
-              Ver documento
+              Ver historial de modificaciones
             </DropdownMenuItem>
             {/* <DropdownMenuItem>
               <Link
