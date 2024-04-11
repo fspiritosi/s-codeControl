@@ -143,7 +143,7 @@ export default function NavBar() {
   ]
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-  console.log(notifications, 'notificaciones')
+  // console.log(notifications, 'notificaciones')
   return (
     <nav className=" flex flex-shrink items-center justify-between  text-white p-4 mb-2">
       <div className="flex items-center">

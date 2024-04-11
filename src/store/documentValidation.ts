@@ -77,7 +77,7 @@ export const DocumentsValidation = create<State>((set, get) => {
   }
 
   const sendAllForms = async () => {
-    console.log(get?.().AllDocumentsValues,'AllDocumentsValues')
+    // console.log(get?.().AllDocumentsValues,'AllDocumentsValues')
   }
 
   const resetAll = () => {
