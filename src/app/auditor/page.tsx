@@ -70,8 +70,11 @@ export default function Auditor() {
       )
     `,
       )
-      .eq('is_active', true)
       .eq('state', 'presentado')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+
+      // console.log(documents_employees)
 
     if (error) {
       console.error('Error fetching document types:', error.message)
@@ -101,6 +104,9 @@ export default function Auditor() {
   }, [])
 
   const filteredData = documents_employees?.map(doc => {
+    const dateString = doc.validity
+    const [day, month, year] = dateString ? dateString.split('/') : ['', '', '']
+    const formattedDate = `${day}/${month}/${year}`
     return {
       date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
       companyName: doc.applies?.company_id?.company_name,
@@ -110,9 +116,7 @@ export default function Auditor() {
       documentName: doc.document_types?.name,
       state: doc.state,
       multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
-      validity: doc.validity
-        ? format(new Date(doc.validity), 'dd/MM/yyyy')
-        : 'No vence',
+      validity: formattedDate|| 'No vence',
       id: doc.id,
       resource: `${doc.applies?.firstname} ${doc.applies?.lastname}`,
     }
