@@ -423,7 +423,7 @@ export type VehiclesAPI = {
   id_storage: null
   id_document_types: string
   applies: Applies
-  validity: null
+  validity: null | string
   state: string
   is_active: boolean
   id: string
