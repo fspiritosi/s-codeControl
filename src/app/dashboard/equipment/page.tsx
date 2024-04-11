@@ -1,5 +1,6 @@
 'use client'
 
+import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { VehiclesActualCompany } from '@/store/vehicles'
 import Link from 'next/link'
@@ -20,8 +21,6 @@ export default function Equipment() {
   const vehiclesData = VehiclesActualCompany(state => state.vehiclesToShow)
 
   const setVehicleTypes = VehiclesActualCompany(state => state.setVehicleTypes)
-
-
 
   const handleToggleInactive = () => {
     setShowInactive(!showInactive)
@@ -59,28 +58,34 @@ export default function Equipment() {
 
   return (
     <section>
-      <header className="flex gap-4 mt-6 justify-between items-center">
-        <div>
-          <h2 className="text-4xl">{equipo}</h2>
+      <Card className="mt-6 px-8">
+        <header className="flex gap-4 mt-6 justify-between items-center">
+          <div>
+            <CardTitle className="text-4xl mb-3">{equipo}</CardTitle>
+            <CardDescription>
+              Aquí podrás ver todos los {equipo} que tienes registrados en tu
+              empresa
+            </CardDescription>
+          </div>
+          <div>
+            <Link
+              href="/dashboard/equipment/action?action=new"
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Agregar nuevo equipo
+            </Link>
+          </div>
+        </header>
+        <div className="flex flex-col py-3">
+          <DataEquipment
+            columns={columns}
+            data={vehiclesData || []}
+            allCompany={allCompany}
+            showInactive={showInactive}
+            setShowInactive={setShowInactive}
+          />
         </div>
-        <div>
-          <Link
-            href="/dashboard/equipment/action?action=new"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Agregar nuevo equipo
-          </Link>
-        </div>
-      </header>
-      <div className="flex flex-col min-h-screen py-3">
-        <DataEquipment
-          columns={columns}
-          data={vehiclesData || []}
-          allCompany={allCompany}
-          showInactive={showInactive}
-          setShowInactive={setShowInactive}
-        />
-      </div>
+      </Card>
     </section>
   )
 }
