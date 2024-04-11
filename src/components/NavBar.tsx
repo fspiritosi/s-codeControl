@@ -248,8 +248,8 @@ export default function NavBar() {
               <BellIcon className="text-black cursor-pointer size-5 dark:text-white" />
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="min-w-[300px] bg-transparent border-none shadow-none">
-            <Card className="w-[380px]">
+          <DropdownMenuContent align='center' className="min-w-[400px] bg-transparent border-none shadow-none">
+            <Card className="w-[600px]">
               <CardHeader>
                 <CardTitle>Notificaciones</CardTitle>
                 {notifications?.length ? (
