@@ -141,7 +141,6 @@ export default function NavBar() {
         })),
     },
   ]
-  const [ISopen, setISOpen] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   return (
     <nav className=" flex flex-shrink items-center justify-between  text-white p-4 mb-2">
@@ -352,7 +351,7 @@ export default function NavBar() {
                               buttonVariants({ variant: 'outline' }),
                               'w-20',
                             ].join(' ')}
-                            href={`#`}
+                            href={`/dashboard/document/${notification?.document?.id}`}
                           >
                             Ver
                           </Link>
