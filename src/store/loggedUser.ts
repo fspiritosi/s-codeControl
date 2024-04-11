@@ -451,7 +451,10 @@ export const useLoggedUserStore = create<State>((set, get) => {
         employees:
           data
             ?.filter((doc: any) => doc.state === 'presentado')
-            ?.map((doc: any) => {
+            ?.map((doc) => {
+              const dateString = doc.validity
+              const [day, month, year] = dateString ? dateString.split('/') : ['', '', '']
+              const formattedDate = `${day}/${month}/${year}`
               return {
                 date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
                 allocated_to: doc.employees?.contractor_employee
@@ -460,8 +463,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
                 documentName: doc.document_types?.name,
                 state: doc.state,
                 multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
-                validity:
-                  format(new Date(doc.validity), 'dd/MM/yyyy') || 'No vence',
+                validity: formattedDate || 'No vence',
                 mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
                 id: doc.id,
                 resource: `${doc.employees?.firstname} ${doc.employees?.lastname}`,
@@ -471,7 +473,10 @@ export const useLoggedUserStore = create<State>((set, get) => {
         vehicles:
           filteredVehiclesData
             .filter(doc => doc.state === 'presentado')
-            .map(doc => {
+            .map((doc) => {
+              const dateString = doc.validity
+              const [day, month, year] = dateString ? dateString.split('/') : ['', '', '']
+              const formattedDate = `${day}/${month}/${year}`
               return {
                 date: doc.created_at
                   ? format(new Date(doc.created_at), 'dd/MM/yyyy')
@@ -480,9 +485,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
                 documentName: doc.document_types?.name,
                 state: doc.state,
                 multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
-                validity: doc.validity
-                  ? format(new Date(doc.validity), 'dd/MM/yyyy')
-                  : 'No vence',
+                validity: formattedDate || 'No vence',
                 mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
                 id: doc.id,
                 resource: doc.applies?.domain || doc.applies?.intern_number,
@@ -495,6 +498,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
           data
             ?.filter((doc: any) => doc.state !== 'presentado')
             ?.map((doc: any) => {
+              const dateString = doc.validity
+              const [day, month, year] = dateString.split('/')
+              const formattedDate = `${day}/${month}/${year}`
               return {
                 date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
                 allocated_to: doc.employees?.contractor_employee
@@ -503,8 +509,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
                 documentName: doc.document_types?.name,
                 state: doc.state,
                 multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
-                validity:
-                  format(new Date(doc.validity), 'dd/MM/yyyy') || 'No vence',
+                validity: formattedDate || 'No vence',
                 mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
                 id: doc.id,
                 resource: `${doc.employees?.firstname} ${doc.employees?.lastname}`,
@@ -514,7 +519,10 @@ export const useLoggedUserStore = create<State>((set, get) => {
         vehicles:
           filteredVehiclesData
             .filter(doc => doc.state !== 'presentado')
-            .map(doc => {
+            .map((doc:any) => {
+              const dateString = doc.validity
+              const [day, month, year] = dateString.split('/')
+              const formattedDate = `${day}/${month}/${year}`
               return {
                 date: doc.created_at
                   ? format(new Date(doc.created_at), 'dd/MM/yyyy')
@@ -523,9 +531,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
                 documentName: doc.document_types?.name,
                 state: doc.state,
                 multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
-                validity: doc.validity
-                  ? format(new Date(doc.validity), 'dd/MM/yyyy')
-                  : 'No vence',
+                validity: formattedDate||'No vence',
                 mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
                 id: doc.id,
                 resource: doc.applies?.domain || doc.applies?.intern_number,
@@ -535,6 +541,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
       const AllvaluesToShow = {
         employees:
           data?.map((doc: any) => {
+            const dateString = doc.validity
+            const [day, month, year] = dateString.split('/')
+            const formattedDate = `${day}/${month}/${year}`
             return {
               date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
               allocated_to: doc.employees?.contractor_employee
@@ -544,7 +553,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
               state: doc.state,
               multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
               validity:
-                format(new Date(doc.validity), 'dd/MM/yyyy') || 'No vence',
+              formattedDate|| 'No vence',
               mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
               id: doc.id,
               resource: `${doc.employees?.firstname} ${doc.employees?.lastname}`,
@@ -552,7 +561,10 @@ export const useLoggedUserStore = create<State>((set, get) => {
             }
           }) || [],
         vehicles:
-          filteredVehiclesData.map(doc => {
+          filteredVehiclesData.map((doc) => {
+            const dateString = doc.validity
+            const [day, month, year] = dateString?.split('/') || ''
+            const formattedDate = `${day}/${month}/${year}`
             return {
               date: doc.created_at
                 ? format(new Date(doc.created_at), 'dd/MM/yyyy')
@@ -561,9 +573,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
               documentName: doc.document_types?.name,
               state: doc.state,
               multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
-              validity: doc.validity
-                ? format(new Date(doc.validity), 'dd/MM/yyyy')
-                : 'No vence',
+              validity: formattedDate|| 'No vence',
               mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
               id: doc.id,
               resource: doc.applies?.domain || doc.applies?.intern_number,
