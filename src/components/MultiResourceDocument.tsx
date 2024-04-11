@@ -72,7 +72,7 @@ export default function MultiResourceDocument({
     },
     [],
   )
-  console.log('Este console viene del multirecurso')
+  // console.log('Este console viene del multirecurso')
 
   const employees = useLoggedUserStore(state => state.employees)?.reduce(
     (
