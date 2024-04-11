@@ -291,9 +291,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
       .eq('applies.company_id', get()?.actualCompany?.id)
 
-    console.log(equipmentData, 'equipmentData')
-    console.log(data, 'data')
-
     const typedData: VehiclesAPI[] | null = equipmentData as VehiclesAPI[]
 
     if (error) {
