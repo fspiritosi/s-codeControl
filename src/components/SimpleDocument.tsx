@@ -38,17 +38,14 @@ import { useToast } from './ui/use-toast'
 
 export default function SimpleDocument({
   resource,
-  index,
-  refSubmit,
   handleOpen,
 }: {
-  resource?: string | undefined
-  index?: number
-  refSubmit?: React.RefObject<HTMLButtonElement>
+  resource: string | undefined
   handleOpen: () => void
 }) {
   const searchParams = useSearchParams()
-  const document = searchParams.get('document')
+  const documentResource = searchParams.get('document')
+  const [defaultResource, setDefaultResource] = useState<string | null>('')
   const id = searchParams.get('id')
   const user = useLoggedUserStore(state => state.credentialUser?.id)
   const {
@@ -83,6 +80,21 @@ export default function SimpleDocument({
     setLoading(true)
     let hasError = false
     try {
+      const idApplies =
+        id ||
+        employees.find(
+          (employee: any) => employee.document === documentResource,
+        )?.id
+      const tableEntries = documents.map((entry: any) => {
+        return {
+          applies: entry.applies || idApplies,
+          id_document_types: entry.id_document_types,
+          validity: entry.validity
+            ? format(entry.validity, 'dd/MM/yyyy')
+            : null,
+          user_id: user,
+        }
+      })
       for (let index = 0; index < documents.length; index++) {
         const document = documents[index]
         const document_type_name = documenTypes
@@ -91,10 +103,18 @@ export default function SimpleDocument({
           .replace(/[\u0300-\u036f]/g, '')
           .replace(/\s/g, '')
           .toLowerCase()
+          .replace('/', '-')
 
-        const { data } = await supabase.storage.from('document_files').list('', {
-          search: `document-${document_type_name}-${document.applies}`,
-        })
+        const storagePath =
+          resource === 'empleado'
+            ? 'documentos-empleados'
+            : 'documentos-equipos'
+
+        const { data } = await supabase.storage
+          .from('document_files')
+          .list(storagePath, {
+            search: `document-${document_type_name}-${tableEntries[index].applies}`,
+          })
 
         if (data?.length && data?.length > 0) {
           setError(`documents.${index}.id_document_types`, {
@@ -109,11 +129,38 @@ export default function SimpleDocument({
           return
         }
 
+        if (hasError) {
+          return setLoading(false)
+        }
+        const fileExtension = document.file.split('.').pop()
+
+        const tableName =
+          resource === 'empleado'
+            ? 'documents_employees'
+            : 'documents_equipment'
+
+        const { error } = await supabase
+          .from(tableName)
+          .insert(tableEntries[index])
+          .select()
+
+        if (error) {
+          console.error(error)
+          toast({
+            title: 'Error',
+            description: 'Hubo un error al subir los documentos (storage)',
+            variant: 'destructive',
+          })
+          setLoading(false)
+          hasError = true
+          return
+        }
+
         const { error: storageError } = await supabase.storage
           .from('document_files')
           .upload(
-            `document-${document_type_name}-${document.applies}`,
-            document.file[index],
+            `/${storagePath}/document-${document_type_name}-${tableEntries[index].applies}.${fileExtension}`,
+            files?.[index] || document.file,
             {
               cacheControl: '3600',
               upsert: false,
@@ -123,7 +170,7 @@ export default function SimpleDocument({
         if (storageError) {
           toast({
             title: 'Error',
-            description: 'Hubo un error al subir los documentos',
+            description: 'Hubo un error al subir los documentos (storage)',
             variant: 'destructive',
           })
           setLoading(false)
@@ -134,31 +181,6 @@ export default function SimpleDocument({
 
       if (hasError) {
         return setLoading(false)
-      }
-
-      const tableEntries = documents.map((entry: any) => {
-        return {
-          applies: entry.applies,
-          id_document_types: entry.id_document_types,
-          validity: entry.validity,
-          user_id: user,
-        }
-      })
-
-      const { data, error } = await supabase
-        .from('documents_employees')
-        .insert(tableEntries)
-        .select()
-
-      if (error) {
-        toast({
-          title: 'Error',
-          description: 'Hubo un error al subir los documentos',
-          variant: 'destructive',
-        })
-        setLoading(false)
-        hasError = true
-        return
       }
 
       toast({
@@ -190,8 +212,12 @@ export default function SimpleDocument({
 
     setDocumentTypes(document_types)
   }
+  
   useEffect(() => {
     fetchDocumentTypes()
+    if (documentResource || id) {
+      setDefaultResource(documentResource || id)
+    }
   }, [resource])
 
   const today = new Date()
@@ -235,6 +261,8 @@ export default function SimpleDocument({
   const [duplicatedDocument, setDuplicatedDocument] = useState(false)
   const [files, setFiles] = useState<File[] | undefined>([])
 
+  // console.log(documentResource, 'documentResource')
+
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <ul className="flex flex-col gap-2">
@@ -255,162 +283,173 @@ export default function SimpleDocument({
                     Documento {index + 1}
                   </summary>
                   <li className="space-y-4 ">
-                    <div className="space-y-2 py-3 ">
-                      <Label className="block">Empleados</Label>
-                      <Controller
-                        render={({ field }) => {
-                          const selectedResourceName = data.find(
-                            (resource: any) => resource.id === field.value,
-                          )?.name
+                    {(!id && !documentResource) && (
+                      <div className="space-y-2 py-3 ">
+                        <Label className="block">Empleados</Label>
+                        <Controller
+                          render={({ field }) => {
+                            const selectedResourceName = data.find(
+                              (resource: any) => resource.id === field.value,
+                            )?.name
 
-                          return (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  role="combobox"
-                                  className={cn(
-                                    ' justify-between w-full',
-                                    !field.value && 'text-muted-foreground',
-                                  )}
-                                >
-                                  {field.value && selectedResourceName
-                                    ? data?.find(
-                                        (employee: any) =>
-                                          employee.id === field.value ||
-                                          employee.name === field.value,
-                                      )?.name
-                                    : `Seleccionar ${
+                            return (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn(
+                                      ' justify-between w-full',
+                                      !field.value && 'text-muted-foreground',
+                                    )}
+                                  >
+                                    {field.value && selectedResourceName
+                                      ? data?.find(
+                                          (employee: any) =>
+                                            employee.id === field.value ||
+                                            employee.name === field.value,
+                                        )?.name
+                                      : `Seleccionar ${
+                                          resource === 'equipo'
+                                            ? 'equipo'
+                                            : 'empleado'
+                                        }`}
+                                    <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className=" p-0">
+                                  <Command>
+                                    <CommandInput
+                                      placeholder={`Buscar ${
                                         resource === 'equipo'
                                           ? 'equipo'
                                           : 'empleado'
                                       }`}
-                                  <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className=" p-0">
-                                <Command>
-                                  <CommandInput
-                                    placeholder={`Buscar ${
-                                      resource === 'equipo'
-                                        ? 'equipo'
-                                        : 'empleado'
-                                    }`}
-                                    className="h-9"
-                                    onFocus={() => {
-                                      setFilteredResources(data)
-                                    }}
-                                    onInput={e => {
-                                      const inputValue = (
-                                        e.target as HTMLInputElement
-                                      ).value.toLowerCase()
-                                      setInputValue(inputValue)
-                                      const isNumberInput = /^\d+$/.test(
-                                        inputValue,
-                                      )
-                                      const filteredresources = data.filter(
-                                        (person: any) => {
-                                          if (isNumberInput) {
-                                            return person.document.includes(
-                                              inputValue,
-                                            )
-                                          } else {
-                                            return (
-                                              person.name
-                                                .toLowerCase()
-                                                .includes(inputValue) ||
-                                              person.document.includes(
+                                      className="h-9"
+                                      onFocus={() => {
+                                        setFilteredResources(data)
+                                      }}
+                                      onInput={e => {
+                                        const inputValue = (
+                                          e.target as HTMLInputElement
+                                        ).value.toLowerCase()
+                                        setInputValue(inputValue)
+                                        const isNumberInput = /^\d+$/.test(
+                                          inputValue,
+                                        )
+                                        const filteredresources = data.filter(
+                                          (person: any) => {
+                                            if (isNumberInput) {
+                                              return person.document.includes(
                                                 inputValue,
                                               )
-                                            )
-                                          }
-                                        },
-                                      )
-                                      setFilteredResources(filteredresources)
-                                    }}
-                                  />
-                                  <CommandEmpty>
-                                    {filteredResources?.length === 0 &&
-                                      inputValue.length > 0 &&
-                                      'No se encontraron resultados'}
-                                  </CommandEmpty>
-                                  <CommandGroup>
-                                    {filteredResources?.map((employee: any) => {
-                                      const key = /^\d+$/.test(inputValue)
-                                        ? employee.document
-                                        : employee.name
-                                      const value = /^\d+$/.test(inputValue)
-                                        ? employee.document
-                                        : employee.name
-                                      return (
-                                        <CommandItem
-                                          value={value}
-                                          key={key}
-                                          onSelect={() => {
-                                            const id = data.find(
-                                              (resource: any) =>
-                                                resource.name === value ||
-                                                resource.document === value,
-                                            ).id
+                                            } else {
+                                              return (
+                                                person.name
+                                                  .toLowerCase()
+                                                  .includes(inputValue) ||
+                                                person.document.includes(
+                                                  inputValue,
+                                                )
+                                              )
+                                            }
+                                          },
+                                        )
+                                        setFilteredResources(filteredresources)
+                                      }}
+                                    />
+                                    <CommandEmpty>
+                                      {filteredResources?.length === 0 &&
+                                        inputValue.length > 0 &&
+                                        'No se encontraron resultados'}
+                                    </CommandEmpty>
+                                    <CommandGroup>
+                                      {filteredResources?.map(
+                                        (employee: any) => {
+                                          const key = /^\d+$/.test(inputValue)
+                                            ? employee.document
+                                            : employee.name
+                                          const value = /^\d+$/.test(inputValue)
+                                            ? employee.document
+                                            : employee.name
+                                          return (
+                                            <CommandItem
+                                              value={value}
+                                              key={key}
+                                              onSelect={() => {
+                                                const id = data.find(
+                                                  (resource: any) =>
+                                                    resource.name === value ||
+                                                    resource.document === value,
+                                                ).id
 
-                                            const resource =
-                                              getValues('documents')[index]
-                                                .id_document_types
-                                            setDuplicatedDocument(
-                                              getValues('documents').some(
-                                                (
-                                                  document: any,
-                                                  document_index,
-                                                ) => {
-                                                  return (
-                                                    index !== document_index &&
-                                                    document.id_document_types ===
-                                                      resource &&
-                                                    document.applies === id
-                                                  )
-                                                },
-                                              ),
-                                            )
-                                            id
-                                            field.onChange(id)
-                                          }}
-                                        >
-                                          {employee.name}
-                                          <CheckIcon
-                                            className={cn(
-                                              'ml-auto h-4 w-4',
-                                              employee.name === field.value ||
-                                                employee.document ===
-                                                  field.value
-                                                ? 'opacity-100'
-                                                : 'opacity-0',
-                                            )}
-                                          />
-                                        </CommandItem>
-                                      )
-                                    })}
-                                  </CommandGroup>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
-                          )
-                        }}
-                        name={`documents.${index}.applies`}
-                        control={control}
-                        rules={{ required: 'Este campo es requerido' }}
-                      />
-                      <CardDescription>
-                        Selecciona el empleado al que deseas vincular el
-                        documento
-                      </CardDescription>
-                      {errors.documents &&
-                        errors.documents[index] &&
-                        errors?.documents?.[index]?.applies && (
-                          <CardDescription className="text-red-700 mt-0 m-0">
-                            {errors?.documents?.[index]?.applies?.message}
-                          </CardDescription>
-                        )}
-                    </div>
+                                                const resource =
+                                                  getValues('documents')[index]
+                                                    .id_document_types
+                                                setDuplicatedDocument(
+                                                  getValues('documents').some(
+                                                    (
+                                                      document: any,
+                                                      document_index,
+                                                    ) => {
+                                                      return (
+                                                        index !==
+                                                          document_index &&
+                                                        document.id_document_types ===
+                                                          resource &&
+                                                        document.applies === id
+                                                      )
+                                                    },
+                                                  ),
+                                                )
+                                                id
+                                                field.onChange(id)
+                                              }}
+                                            >
+                                              {employee.name}
+                                              <CheckIcon
+                                                className={cn(
+                                                  'ml-auto h-4 w-4',
+                                                  employee.name ===
+                                                    field.value ||
+                                                    employee.document ===
+                                                      field.value
+                                                    ? 'opacity-100'
+                                                    : 'opacity-0',
+                                                )}
+                                              />
+                                            </CommandItem>
+                                          )
+                                        },
+                                      )}
+                                    </CommandGroup>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
+                            )
+                          }}
+                          name={`documents.${index}.applies`}
+                          control={control}
+                          rules={
+                            !id || !documentResource
+                              ? { required: 'Este campo es requerido' }
+                              : {}
+                          }
+                        />
+                        <CardDescription>
+                          Selecciona el empleado al que deseas vincular el
+                          documento
+                        </CardDescription>
+                        {errors.documents &&
+                          errors.documents[index] &&
+                          errors?.documents?.[index]?.applies && (
+                            <CardDescription className="text-red-700 mt-0 m-0">
+                              {errors?.documents?.[index]?.applies?.message}
+                            </CardDescription>
+                          )}
+                      </div>
+                    )}
+
                     <div className="space-y-2">
                       <Label>
                         Seleccione el tipo de documento a vincular al recurso
@@ -506,11 +545,10 @@ export default function SimpleDocument({
                             {...field}
                             onChange={e => {
                               field.onChange(e)
-                              console.log(e, 'e')
+
                               if (e?.target?.files?.[0] && files) {
                                 files[index] = e.target.files[0]
                               }
-                              console.log(files, 'files')
                             }}
                             className={cn(
                               field.value
@@ -670,7 +708,7 @@ export default function SimpleDocument({
       <div className="flex justify-evenly mt-2">
         <Button onClick={() => handleOpen()}>Cancelar</Button>
         <Button disabled={loading} type="submit">
-          Enviar documentos
+          {loading ? 'Enviando' : 'Enviar documentos'}
         </Button>
       </div>
     </form>
