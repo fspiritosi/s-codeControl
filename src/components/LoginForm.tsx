@@ -9,6 +9,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { EyeClosedIcon,EyeOpenIcon } from '@radix-ui/react-icons'
 import { Input } from '@/components/ui/input'
 import { Toggle } from '@/components/ui/toggle'
 import { useAuthData } from '@/hooks/useAuthData'
@@ -44,7 +45,7 @@ export function LoginForm() {
     },
   })
 
-  const {theme} = useTheme()
+  const { theme } = useTheme()
 
   const onSubmit = async (credentials: z.infer<typeof loginSchema>) => {
     try {
@@ -119,7 +120,7 @@ export function LoginForm() {
                     onClick={() => setShowPassword(!showPassword)}
                     variant={'outline'}
                   >
-                    {showPassword ? <CloseEyeIcon /> : <EyeIcon />}
+                    {showPassword ? <EyeClosedIcon /> : <EyeOpenIcon />}
                   </Toggle>
                 </div>
                 <div className="flex justify-between">
@@ -142,7 +143,7 @@ export function LoginForm() {
               className="w-[100%] sm:w-[80%] lg:w-[60%] self-center"
               type="submit"
               disabled={showLoader}
-              variant='default'
+              variant="default"
             >
               {showLoader ? <Loader /> : 'Iniciar sesión'}
             </Button>
