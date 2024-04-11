@@ -225,9 +225,6 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
           if (data) {
             setDocumentHistory(data)
           }
-          //console.log('Datos del documento:', data)
-          // console.log('document: ', document.id)
-          //setViewModal(!viewModal)
         } catch (error: any) {
           const message = await errorTranslate(error?.message)
           toast({
@@ -241,7 +238,6 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
         viewDocumentEmployees()
       }, [])
 
-      //console.log('data: ', data)
       return (
         <DropdownMenu>
           {integerModal && (
@@ -378,9 +374,6 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
                         </div>
                       </form>
                     </Form>
-                    {/* <Button variant="destructive" onClick={() => handleDelete()}>
-                    Eliminar
-                  </Button> */}
                   </div>
                 </DialogFooter>
               </DialogContent>
@@ -437,34 +430,18 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() =>
-                navigator.clipboard.writeText(row.original.document_number)
+                navigator.clipboard.writeText(
+                  row.original.allocated_to === 'Vehículos'
+                    ? row.original.resource
+                    : row.original.document_number,
+                )
               }
             >
-              Copiar DNI del empleado
+            {row.original.allocated_to === 'Vehículos' ? 'Copiar Patente' : 'Copiar Documento'}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleOpenViewModal(domain)}>
               Historial de Modificaciones
             </DropdownMenuItem>
-
-            {/* <DropdownMenuItem>
-              {document.is_active ? (
-                <Button
-                  variant="destructive"
-                  onClick={() => handleOpenModal(equipment?.id)}
-                  className="text-sm"
-                >
-                  Dar de baja documento
-                </Button>
-              ) : (
-                <Button
-                  variant="primary"
-                  onClick={() => handleOpenIntegerModal(equipment.id)}
-                  className="text-sm"
-                >
-                  Reintegrar Equipo
-                </Button>
-              )}
-            </DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
       )
