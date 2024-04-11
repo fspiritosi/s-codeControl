@@ -142,6 +142,8 @@ export default function NavBar() {
     },
   ]
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+
+  console.log(notifications, 'notificaciones')
   return (
     <nav className=" flex flex-shrink items-center justify-between  text-white p-4 mb-2">
       <div className="flex items-center">
@@ -247,7 +249,10 @@ export default function NavBar() {
               <BellIcon className="text-black cursor-pointer size-5 dark:text-white" />
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align='center' className="min-w-[400px] bg-transparent border-none shadow-none">
+          <DropdownMenuContent
+            align="center"
+            className="min-w-[400px] bg-transparent border-none shadow-none"
+          >
             <Card className="w-[600px]">
               <CardHeader>
                 <CardTitle>Notificaciones</CardTitle>
@@ -269,19 +274,19 @@ export default function NavBar() {
                         className="mb-4 grid grid-cols-[25px_1fr] pb-4 last:mb-0 last:pb-0 items-center  gap-2"
                       >
                         {notification?.category === 'rechazado' && (
-                          <ExclamationTriangleIcon className="text-yellow-400" />
+                          <ExclamationTriangleIcon className="text-yellow-800" />
                         )}
                         {notification?.category === 'aprobado' && (
-                          <CheckCircledIcon className="text-green-400" />
+                          <CheckCircledIcon className="text-green-800" />
                         )}
                         {notification?.category === 'vencimiento' && (
-                          <LapTimerIcon className="text-red-400" />
+                          <LapTimerIcon className="text-red-800" />
                         )}
                         {notification?.category === 'noticia' && (
-                          <EnvelopeOpenIcon className="text-blue-400" />
+                          <EnvelopeOpenIcon className="text-blue-800" />
                         )}
                         {notification?.category === 'advertencia' && (
-                          <ExclamationTriangleIcon className="text-yellow-400" />
+                          <ExclamationTriangleIcon className="text-yellow-800" />
                         )}
 
                         <div className="space-y-1 flex justify-between items-center gap-2">
@@ -305,15 +310,28 @@ export default function NavBar() {
                                 `El documento ${
                                   notification?.document?.documentName ||
                                   '(no disponible)'
-                                }, del empleado ${
-                                  notification?.document?.resource
-                                    .split(' ')
-                                    .map(
-                                      word =>
-                                        word.charAt(0).toUpperCase() +
-                                        word.slice(1).toLowerCase(),
-                                    )
-                                    .join(' ') || '(no disponible)'
+                                }, del ${
+                                  notification.reference === 'employee'
+                                    ? 'empleado'
+                                    : 'vehiculo con patente'
+                                } ${
+                                  notification.reference === 'employee'
+                                    ? notification?.document?.resource
+                                        .split(' ')
+                                        .map(
+                                          word =>
+                                            word.charAt(0).toUpperCase() +
+                                            word.slice(1).toLowerCase(),
+                                        )
+                                        .join(' ') || '(no disponible)'
+                                    : notification?.document?.resource
+                                        .split(' ')
+                                        .map(
+                                          word =>
+                                            word.charAt(0).toUpperCase() +
+                                            word.slice(1).toUpperCase(),
+                                        )
+                                        .join(' ') || '(no disponible)'
                                 } ha sido rechazado`}
                               {notification?.category === 'vencimiento' &&
                                 `El documento ${
