@@ -20,32 +20,30 @@ export type LoggedUser = {
   } | null
 }
 
-
 export type Notifications = {
-  id:          string;
-  title:       string;
-  description: string;
-  category:    string;
-  company_id:  string;
-  created_at:  Date;
-  document_id: string;
-  reference:   string;
-  document:    DocumentInsert;
+  id: string
+  title: string
+  description: string
+  category: string
+  company_id: string
+  created_at: Date
+  document_id: string
+  reference: string
+  document: DocumentInsert
 }
 
 export type DocumentInsert = {
-  date:            string;
-  allocated_to:    string;
-  documentName:    string;
-  state:           string;
-  multiresource:   string;
-  validity:        string;
-  mandatory:       string;
-  id:              string;
-  resource:        string;
-  document_number: string;
+  date: string
+  allocated_to: string
+  documentName: string
+  state: string
+  multiresource: string
+  validity: string
+  mandatory: string
+  id: string
+  resource: string
+  document_number: string
 }
-
 
 export type profileUser = {
   id?: string
@@ -425,7 +423,7 @@ export type VehiclesAPI = {
   id_storage: null
   id_document_types: string
   applies: Applies
-  validity: null
+  validity: null | string
   state: string
   is_active: boolean
   id: string
@@ -473,4 +471,42 @@ export type DocumentTypes = {
   created_at: Date
   description: null
   multiresource: boolean
+}
+export type DocumentsTable = {
+  created_at: Date
+  id_storage: null
+  id_document_types: string
+  applies: string
+  validity: string
+  state: string
+  is_active: boolean
+  id: string
+  user_id: string
+  document_url: string
+  vehicles: VehiclesTable
+  document_types: DocumentTypes
+  domain: string
+}
+
+export type DocumentTypesTable = {
+  id: string
+  name: string
+}
+
+export type VehiclesTable = {
+  id: string
+  domain: string
+  company_id: string
+  intern_number: string
+}
+
+export type AllDocumentsValues = {
+  id_document_types: string;
+  validity:          Date;
+  document:          string;
+  applies:           string;
+  document_url:      string;
+  id_storage:        null;
+  is_active:         boolean;
+  user_id:           string;
 }

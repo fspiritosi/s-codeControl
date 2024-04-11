@@ -4,14 +4,6 @@
 
 'use client'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -21,6 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
@@ -60,23 +53,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { useToast } from '@/components/ui/use-toast'
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions'
 import { cn } from '@/lib/utils'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { DotsVerticalIcon } from '@radix-ui/react-icons'
 import { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
-import { es, id } from 'date-fns/locale'
-import { ArrowUpDown, CalendarIcon, MoreHorizontal } from 'lucide-react'
-import { DotsVerticalIcon } from '@radix-ui/react-icons'
-import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { es } from 'date-fns/locale'
+import { ArrowUpDown, CalendarIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../../../supabase/supabase'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { useDocument } from '@/hooks/useDocuments'
-import { Badge } from '@/components/ui/badge'
 
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -93,15 +89,17 @@ type DocumentHistory = {
 }
 
 type Colum = {
-  id?: string
-  id_storage: string | null
-  id_document_types: string | null
-  applies: string | null
-  validity: Date | null
+  date: string
+  allocated_to: string
+  documentName: string
+  multiresource: string
+  validity: string
+  id: string
+  resource: string
   state: string
-  is_active: boolean
-  user_id: string | undefined
-  document_url: string | null
+  document_number?: string
+  mandatory?: string
+  document_url?:string //! TODO
 }
 
 export const columns: ColumnDef<Colum>[] = [
@@ -115,7 +113,6 @@ export const columns: ColumnDef<Colum>[] = [
       const [documentHistory, setDocumentHistory] = useState<DocumentHistory[]>(
         [],
       )
-      //const user = row.original
       const [showInactive, setShowInactive] = useState<boolean>(false)
       const [showDeletedEquipment, setShowDeletedEquipment] = useState(false)
       const equipment = row.original
@@ -125,11 +122,6 @@ export const columns: ColumnDef<Colum>[] = [
         setDomain(id)
         setShowModal(!showModal)
       }
-      // const { fetchDocumentEquipmentByCompany } = useDocument()
-
-      // useEffect(() => {
-      //   fetchDocumentEquipmentByCompany
-      // }, [])
       const handleOpenIntegerModal = (id: string) => {
         setDomain(id)
         setIntegerModal(!integerModal)
@@ -435,7 +427,7 @@ export const columns: ColumnDef<Colum>[] = [
               Copiar número de interno
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleOpenViewModal(domain)}>
-              Ver documento
+              Ver historial de modificaciones
             </DropdownMenuItem>
             {/* <DropdownMenuItem>
               <Link
@@ -529,9 +521,5 @@ export const columns: ColumnDef<Colum>[] = [
   {
     accessorKey: 'document_url',
     header: 'Archivo',
-  },
-  {
-    accessorKey: 'is_active',
-    header: 'Activo',
   },
 ]

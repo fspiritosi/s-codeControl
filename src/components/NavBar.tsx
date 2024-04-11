@@ -141,8 +141,9 @@ export default function NavBar() {
         })),
     },
   ]
-  const [ISopen, setISOpen] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+
+  // console.log(notifications, 'notificaciones')
   return (
     <nav className=" flex flex-shrink items-center justify-between  text-white p-4 mb-2">
       <div className="flex items-center">
@@ -248,8 +249,11 @@ export default function NavBar() {
               <BellIcon className="text-black cursor-pointer size-5 dark:text-white" />
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="min-w-[300px] bg-transparent border-none shadow-none">
-            <Card className="w-[380px]">
+          <DropdownMenuContent
+            align="center"
+            className="min-w-[400px] bg-transparent border-none shadow-none"
+          >
+            <Card className="w-[600px]">
               <CardHeader>
                 <CardTitle>Notificaciones</CardTitle>
                 {notifications?.length ? (
@@ -269,72 +273,95 @@ export default function NavBar() {
                         key={index}
                         className="mb-4 grid grid-cols-[25px_1fr] pb-4 last:mb-0 last:pb-0 items-center  gap-2"
                       >
-                        {notification.category === 'rechazado' && (
-                          <ExclamationTriangleIcon className="text-yellow-400" />
+                        {notification?.category === 'rechazado' && (
+                          <ExclamationTriangleIcon className="text-yellow-800" />
                         )}
-                        {notification.category === 'aprobado' && (
-                          <CheckCircledIcon className="text-green-400" />
+                        {notification?.category === 'aprobado' && (
+                          <CheckCircledIcon className="text-green-800" />
                         )}
-                        {notification.category === 'vencimiento' && (
-                          <LapTimerIcon className="text-red-400" />
+                        {notification?.category === 'vencimiento' && (
+                          <LapTimerIcon className="text-red-800" />
                         )}
-                        {notification.category === 'noticia' && (
-                          <EnvelopeOpenIcon className="text-blue-400" />
+                        {notification?.category === 'noticia' && (
+                          <EnvelopeOpenIcon className="text-blue-800" />
                         )}
-                        {notification.category === 'advertencia' && (
-                          <ExclamationTriangleIcon className="text-yellow-400" />
+                        {notification?.category === 'advertencia' && (
+                          <ExclamationTriangleIcon className="text-yellow-800" />
                         )}
 
                         <div className="space-y-1 flex justify-between items-center gap-2">
                           <div>
                             <p className="text-sm font-medium leading-none first-letter:uppercase">
-                              {notification.category === 'aprobado' &&
+                              {notification?.category === 'aprobado' &&
                                 `El documento ${
-                                  notification.document.documentName
-                                }, del empleado ${notification.document.resource
-                                  .split(' ')
-                                  .map(
-                                    word =>
-                                      word.charAt(0).toUpperCase() +
-                                      word.slice(1).toLowerCase(),
-                                  )
-                                  .join(' ')} ha sido aprobado`}
-                              {notification.category === 'rechazado' &&
+                                  notification?.document?.documentName ||
+                                  '(no disponible)'
+                                }, del empleado ${
+                                  notification?.document?.resource
+                                    ?.split(' ')
+                                    .map(
+                                      word =>
+                                        word.charAt(0).toUpperCase() +
+                                        word.slice(1).toLowerCase(),
+                                    )
+                                    .join(' ') || '(no disponible)'
+                                } ha sido aprobado`}
+                              {notification?.category === 'rechazado' &&
                                 `El documento ${
-                                  notification.document.documentName
-                                }, del empleado ${notification.document.resource
-                                  .split(' ')
-                                  .map(
-                                    word =>
-                                      word.charAt(0).toUpperCase() +
-                                      word.slice(1).toLowerCase(),
-                                  )
-                                  .join(' ')} ha sido rechazado`}
-                              {notification.category === 'vencimiento' &&
+                                  notification?.document?.documentName ||
+                                  '(no disponible)'
+                                }, del ${
+                                  notification.reference === 'employee'
+                                    ? 'empleado'
+                                    : 'vehiculo con patente'
+                                } ${
+                                  notification.reference === 'employee'
+                                    ? notification?.document?.resource
+                                        .split(' ')
+                                        .map(
+                                          word =>
+                                            word.charAt(0).toUpperCase() +
+                                            word.slice(1).toLowerCase(),
+                                        )
+                                        .join(' ') || '(no disponible)'
+                                    : notification?.document?.resource
+                                        .split(' ')
+                                        .map(
+                                          word =>
+                                            word.charAt(0).toUpperCase() +
+                                            word.slice(1).toUpperCase(),
+                                        )
+                                        .join(' ') || '(no disponible)'
+                                } ha sido rechazado`}
+                              {notification?.category === 'vencimiento' &&
                                 `El documento ${
-                                  notification.document.documentName
-                                }, del empleado ${notification.document.resource
-                                  .split(' ')
-                                  .map(
-                                    word =>
-                                      word.charAt(0).toUpperCase() +
-                                      word.slice(1).toLowerCase(),
-                                  )
-                                  .join(' ')} ha vencido`}
+                                  notification.document.documentName ||
+                                  '(no disponible)'
+                                }, del empleado ${
+                                  notification.document.resource
+                                    .split(' ')
+                                    .map(
+                                      word =>
+                                        word.charAt(0).toUpperCase() +
+                                        word.slice(1).toLowerCase(),
+                                    )
+                                    .join(' ') || '(no disponible)'
+                                } ha vencido`}
                             </p>
 
                             <CardDescription>
-                              {notification.description.length > 50
-                                ? notification.description.substring(0, 50) +
+                              {notification?.description.length > 50
+                                ? notification?.description.substring(0, 50) +
                                   '...'
-                                : notification.description}
+                                : notification?.description}
                             </CardDescription>
                             <p className="text-sm text-muted-foreground/70 first-letter:">
-                              {formatRelative(
-                                new Date(notification.created_at),
-                                new Date(),
-                                { locale: es },
-                              )}
+                              {notification?.created_at &&
+                                formatRelative(
+                                  new Date(notification?.created_at),
+                                  new Date(),
+                                  { locale: es },
+                                )}
                             </p>
                           </div>
                           <Link
@@ -342,7 +369,7 @@ export default function NavBar() {
                               buttonVariants({ variant: 'outline' }),
                               'w-20',
                             ].join(' ')}
-                            href={`#`}
+                            href={`/dashboard/document/${notification?.document?.id}`}
                           >
                             Ver
                           </Link>
