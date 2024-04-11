@@ -226,9 +226,7 @@ export const columEmp: ColumnDef<Colum>[] = [
           if (data) {
             setDocumentHistory(data)
           }
-          //console.log('Datos del documento:', data)
-          // console.log('document: ', document.id)
-          //setViewModal(!viewModal)
+       
         } catch (error: any) {
           const message = await errorTranslate(error?.message)
           toast({
@@ -242,7 +240,6 @@ export const columEmp: ColumnDef<Colum>[] = [
         viewDocumentEmployees()
       }, [])
 
-      //console.log('data: ', data)
       return (
         <DropdownMenu>
           {integerModal && (
@@ -379,9 +376,6 @@ export const columEmp: ColumnDef<Colum>[] = [
                         </div>
                       </form>
                     </Form>
-                    {/* <Button variant="destructive" onClick={() => handleDelete()}>
-                    Eliminar
-                  </Button> */}
                   </div>
                 </DialogFooter>
               </DialogContent>
@@ -433,15 +427,9 @@ export const columEmp: ColumnDef<Colum>[] = [
               Copiar DNI
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleOpenViewModal(domain)}>
-              Ver documento
+              Historial de modificaciones
             </DropdownMenuItem>
-            {/* <DropdownMenuItem>
-              <Link
-                href={`/dashboard/equipment/action?action=edit&id=${equipment?.id}`}
-              >
-                Editar equipo
-              </Link>
-            </DropdownMenuItem> */}
+
             <DropdownMenuItem>
               {document.is_active ? (
                 <Button
