@@ -45,7 +45,6 @@ export default function SimpleDocument({
 }) {
   const searchParams = useSearchParams()
   const documentResource = searchParams.get('document')
-  const [defaultResource, setDefaultResource] = useState<string | null>('')
   const id = searchParams.get('id')
   const user = useLoggedUserStore(state => state.credentialUser?.id)
   const {
@@ -55,7 +54,6 @@ export default function SimpleDocument({
     setError,
     clearErrors,
     getValues,
-    setValue,
   } = useForm({
     defaultValues: {
       documents: [
@@ -189,6 +187,7 @@ export default function SimpleDocument({
         variant: 'default',
       })
       setLoading(false)
+      handleOpen()
     } catch (error) {
       console.error(error)
       toast({
@@ -212,12 +211,9 @@ export default function SimpleDocument({
 
     setDocumentTypes(document_types)
   }
-  
+
   useEffect(() => {
     fetchDocumentTypes()
-    if (documentResource || id) {
-      setDefaultResource(documentResource || id)
-    }
   }, [resource])
 
   const today = new Date()
@@ -283,7 +279,7 @@ export default function SimpleDocument({
                     Documento {index + 1}
                   </summary>
                   <li className="space-y-4 ">
-                    {(!id && !documentResource) && (
+                    {!id && !documentResource && (
                       <div className="space-y-2 py-3 ">
                         <Label className="block">Empleados</Label>
                         <Controller
