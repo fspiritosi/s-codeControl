@@ -279,6 +279,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
       .not('employees', 'is', null)
       .eq('employees.company_id', get()?.actualCompany?.id)
+    console.log(data, 'empleados')
 
     let { data: equipmentData, error: equipmentError } = await supabase
       .from('documents_equipment')
@@ -290,6 +291,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
       `,
       )
       .eq('applies.company_id', get()?.actualCompany?.id)
+      .not('applies', 'is', null)
+      
+    console.log(equipmentData, 'equipmentData')
 
     const typedData: VehiclesAPI[] | null = equipmentData as VehiclesAPI[]
 
