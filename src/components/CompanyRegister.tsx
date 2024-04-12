@@ -1,8 +1,6 @@
 'use client'
 import { UploadImage } from '@/components/UploadImage'
 import { Button } from '@/components/ui/button'
-import { useToast } from './ui/use-toast'
-import { Checkbox } from './ui/checkbox'
 import {
   Form,
   FormControl,
@@ -25,13 +23,15 @@ import { useCompanyData } from '@/hooks/useCompanyData'
 import { useImageUpload } from '@/hooks/useUploadImage'
 import { useCountriesStore } from '@/store/countries'
 import { useLoggedUserStore } from '@/store/loggedUser'
+import { company, industry_type } from '@/types/types'
 import { companySchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
-import { useRouter } from 'next/navigation'
-import { company, industry_type, companyData } from '@/types/types'
+import { Checkbox } from './ui/checkbox'
+import { useToast } from './ui/use-toast'
 interface CompanyRegisterProps {
   company: company | null
   formEnabled: boolean
@@ -342,7 +342,7 @@ export function CompanyRegister({
                 <FormLabel>Seleccione un país</FormLabel>
                 <Select disabled={!formEnabledProp}>
                   <SelectTrigger className="max-w-[350px]  w-[300px]">
-                    <SelectValue placeholder={company?.country} />
+                    <SelectValue placeholder="Seleccionar país" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="argentina">Argentina</SelectItem>
@@ -363,14 +363,9 @@ export function CompanyRegister({
                 <Select
                   disabled={!formEnabledProp}
                   onValueChange={handleProvinceChange}
-                  //defaultValue={company?.province_id?.name}
                 >
                   <SelectTrigger className="max-w-[350px]  w-[300px]">
-                    <SelectValue
-                      placeholder={
-                        field.value.name ? field.value.name : field.value
-                      }
-                    />
+                    <SelectValue placeholder="Seleccionar Provincia" />
                   </SelectTrigger>
                   <SelectContent>
                     {provincesValues?.map(province => (
@@ -395,15 +390,9 @@ export function CompanyRegister({
                 <Select
                   disabled={!formEnabledProp}
                   onValueChange={handleCityChange}
-                  //defaultValue={company?.city.name}
-                  //defaultValue={field.value}
                 >
                   <SelectTrigger className="max-w-[350px] w-[300px]">
-                    <SelectValue
-                      placeholder={
-                        field.value.name ? field.value.name : field.value
-                      }
-                    />
+                    <SelectValue placeholder="Seleccionar Ciudad" />
                   </SelectTrigger>
                   <SelectContent>
                     {citiesValues?.map(city => (
@@ -431,7 +420,7 @@ export function CompanyRegister({
                   onValueChange={handleIndustryChange}
                 >
                   <SelectTrigger className="max-w-[350px] w-[300px]">
-                    <SelectValue placeholder={company?.industry} />
+                    <SelectValue placeholder="Seleccionar Industria" />
                   </SelectTrigger>
                   <SelectContent>
                     {industry?.map(ind => (
@@ -500,19 +489,18 @@ export function CompanyRegister({
             name="by_defect"
             render={({ field }) => (
               <FormItem className="flex flex-col justify-center">
-                <FormLabel>
-                  Marcar para seleccionar Compañia por defecto
-                </FormLabel>
-                <FormControl>
-                  <Checkbox
-                    disabled={!formEnabledProp}
-                    defaultChecked={company ? company.by_defect : false}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <FormDescription className="max-w-[300px]">
-                  Compañia por defecto
-                </FormDescription>
+                <div className="flex flex-row-reverse gap-2 justify-center items-center">
+                  <FormLabel>
+                    Marcar para seleccionar Compañia por defecto
+                  </FormLabel>
+                  <FormControl>
+                    <Checkbox
+                      disabled={!formEnabledProp}
+                      defaultChecked={company ? company.by_defect : false}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
