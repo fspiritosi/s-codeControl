@@ -154,8 +154,6 @@ export default function MultiResourceDocument({
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setDisabled(true)
     const { resources, ...rest } = values
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
     if (!file)
       return form.setError('document', {
         message: 'Por favor, selecciona un documento',
