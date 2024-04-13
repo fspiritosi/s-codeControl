@@ -45,7 +45,7 @@ import { Input } from './ui/input'
 import { useToast } from './ui/use-toast'
 
 type VehicleType = {
-  year: number
+  year: string
   engine: string
   chassis: string
   serie: string
@@ -102,7 +102,7 @@ export default function VehiclesForm2() {
     form.setValue('type_of_vehicle', vehicleData.type_of_vehicle.toString())
     form.setValue('brand', vehicle?.brand)
     form.setValue('model', vehicle?.model)
-    form.setValue('year', Number(vehicleData.year))
+    form.setValue('year', vehicleData.year)
     form.setValue('engine', vehicleData.engine)
     form.setValue('chassis', vehicleData.chassis)
     form.setValue('serie', vehicleData.serie)
@@ -170,15 +170,29 @@ export default function VehiclesForm2() {
         required_error: 'El modelo es requerido',
       })
       .optional(),
-    year: z
-      .number({ required_error: 'El año es requerido' })
-      .min(1900, {
-        message: 'El año debe ser mayor a 1900',
-      })
-      .max(2023, {
-        message: 'El año debe ser menor a 2023',
-      })
-      .optional(),
+    year: z.string({ required_error: 'El año es requerido' }).refine(
+      e => {
+        //new regex para validar dominio AA000AA
+        const year = Number(e)
+
+        const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/
+        const actualYear = new Date().getFullYear()
+
+        if (year !== undefined) {
+          // Aquí puedes usar year de manera segura
+          if (year < 1900 || year > actualYear) {
+            return false
+          } else {
+            return true
+          }
+        } else {
+          return 0
+        }
+      },
+      {
+        message: 'El año debe ser mayor a 1900 y menor al año actual.',
+      },
+    ),
     engine: z
       .string({
         required_error: 'El motor es requerido',
@@ -211,7 +225,7 @@ export default function VehiclesForm2() {
           .refine(
             e => {
               //old regex para validar dominio AAA000 (3 letras y 3 numeros)
-              const year = form.getValues('year')
+              const year = Number(form.getValues('year'))
 
               const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/
               if (year !== undefined) {
@@ -230,12 +244,10 @@ export default function VehiclesForm2() {
           )
           .refine(
             e => {
-              //new regex para validar dominio AA000AA
-              const year = form.getValues('year')
+              const year = Number(form.getValues('year'))
 
               const newRegex = /^[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$/
               if (year !== undefined) {
-                // Aquí puedes usar year de manera segura
                 if (year >= 2016) {
                   return newRegex.test(e)
                 } else {
@@ -398,13 +410,19 @@ export default function VehiclesForm2() {
       const fileExtension = imageFile?.name.split('.').pop()
       if (imageFile) {
         try {
-          const renamedFile = new File([imageFile], `${id.replace(/\s/g, '')}.${fileExtension}`, {
-            type: `image/${fileExtension}`,
-          })
+          const renamedFile = new File(
+            [imageFile],
+            `${id.replace(/\s/g, '')}.${fileExtension}`,
+            {
+              type: `image/${fileExtension}`,
+            },
+          )
           await uploadImage(renamedFile, 'vehicle_photos')
 
           try {
-            const vehicleImage = `${url}/vehicle_photos/${id}.${fileExtension}`.trim().replace(/\s/g, '')
+            const vehicleImage = `${url}/vehicle_photos/${id}.${fileExtension}`
+              .trim()
+              .replace(/\s/g, '')
             const { data, error } = await supabase
               .from('vehicles')
               .update({ picture: vehicleImage })
@@ -497,13 +515,20 @@ export default function VehiclesForm2() {
       const fileExtension = imageFile?.name.split('.').pop()
       if (imageFile) {
         try {
-          const renamedFile = new File([imageFile], `${id?.replace(/\s/g, '')}.${fileExtension}`, {
-            type: `image/${fileExtension}`,
-          })
+          const renamedFile = new File(
+            [imageFile],
+            `${id?.replace(/\s/g, '')}.${fileExtension}`,
+            {
+              type: `image/${fileExtension}`,
+            },
+          )
           await uploadImage(renamedFile, 'vehicle_photos')
 
           try {
-            const vehicleImage = `${url}/vehicle_photos/${id}.${fileExtension}?timestamp=${Date.now()}`.trim().replace(/\s/g, '')
+            const vehicleImage =
+              `${url}/vehicle_photos/${id}.${fileExtension}?timestamp=${Date.now()}`
+                .trim()
+                .replace(/\s/g, '')
             const { data, error } = await supabase
               .from('vehicles')
               .update({ picture: vehicleImage })
@@ -529,6 +554,8 @@ export default function VehiclesForm2() {
       })
     }
   }
+
+  console.log('render')
 
   return (
     <section className={`${accion === 'new' ? 'w-full' : 'w-[75%]'} `}>
@@ -692,11 +719,6 @@ export default function VehiclesForm2() {
                             !field.value && 'text-muted-foreground',
                           )}
                         >
-                          {/* {vehicle?.brand
-                            ? vehicleBrands.find(
-                                option => option.label === field.value,
-                              )?.label
-                            : 'Seleccionar marca'} */}
                           {field.value || 'Seleccionar marca'}
                           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
@@ -781,13 +803,7 @@ export default function VehiclesForm2() {
                             !field.value && 'text-muted-foreground',
                           )}
                         >
-                          {/* {vehicle?.model
-                            ? vehicleModels?.find(
-                                option => option.id === vehicle.model,
-                              )?.name || vehicle?.model
-                            : 'Seleccionar modelo'} */}
                           {field.value || 'Seleccionar marca'}
-
                           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -862,7 +878,6 @@ export default function VehiclesForm2() {
                   <Input
                     {...field}
                     disabled={readOnly}
-                    type="number"
                     className="input w-[250px]"
                     placeholder="Año"
                     value={
@@ -871,11 +886,11 @@ export default function VehiclesForm2() {
                         : vehicle?.year || ''
                     }
                     onChange={e => {
-                      form.setValue('year', Number(e.target.value))
+                      form.setValue('year', e.target.value)
                     }}
                   />
                   <FormDescription>Ingrese el año del vehículo</FormDescription>
-                  <FormMessage />
+                  <FormMessage className="max-w-[250px]" />
                 </FormItem>
               )}
             />
@@ -920,19 +935,11 @@ export default function VehiclesForm2() {
                           role="combobox"
                           disabled={readOnly}
                           value={field.value}
-                          // value={
-                          //   vehicle?.type.name
-                          //     ? vehicle?.type.name
-                          //     : field.value
-                          // }
                           className={cn(
                             'w-[250px] justify-between',
                             !field.value && 'text-muted-foreground',
                           )}
                         >
-                          {/* {vehicle?.type.name
-                            ? vehicle?.type.name
-                            : field.value} */}
                           {field.value ? field.value : 'Seleccione tipo'}
                           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
@@ -1146,5 +1153,3 @@ export default function VehiclesForm2() {
     </section>
   )
 }
-
-// || accion === 'view'
