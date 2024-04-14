@@ -53,7 +53,7 @@ const links = [
   },
   {
     name: 'Ayuda',
-    href: '/dashboard/#',
+    href: '/dashboard/help',
     icon: <MdHelpOutline size={sizeIcons} />,
   },
 ]
