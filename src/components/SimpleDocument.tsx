@@ -75,6 +75,7 @@ export default function SimpleDocument({
   const [loading, setLoading] = useState(false)
 
   const onSubmit = async ({ documents }: any) => {
+    // Notificar los errores y consejos con un toast
     setLoading(true)
     let hasError = false
     try {
@@ -93,6 +94,8 @@ export default function SimpleDocument({
           user_id: user,
         }
       })
+      const storagePath =
+        resource === 'empleado' ? 'documentos-empleados' : 'documentos-equipos'
       for (let index = 0; index < documents.length; index++) {
         const document = documents[index]
         const document_type_name = documenTypes
@@ -102,11 +105,6 @@ export default function SimpleDocument({
           .replace(/\s/g, '')
           .toLowerCase()
           .replace('/', '-')
-
-        const storagePath =
-          resource === 'empleado'
-            ? 'documentos-empleados'
-            : 'documentos-equipos'
 
         const { data } = await supabase.storage
           .from('document_files')
@@ -124,6 +122,12 @@ export default function SimpleDocument({
           })
           setLoading(false)
           hasError = true
+          toast({
+            title: 'El documento ya ha sido subido anteriormente',
+            description:
+              'Por favor, sube un documento diferente o elimina la entrada duplicada',
+            variant: 'destructive',
+          })
           return
         }
 
@@ -146,7 +150,7 @@ export default function SimpleDocument({
           console.error(error)
           toast({
             title: 'Error',
-            description: 'Hubo un error al subir los documentos (storage)',
+            description: 'Hubo un error al guardar el documento',
             variant: 'destructive',
           })
           setLoading(false)
@@ -168,7 +172,7 @@ export default function SimpleDocument({
         if (storageError) {
           toast({
             title: 'Error',
-            description: 'Hubo un error al subir los documentos (storage)',
+            description: 'Hubo un error al subir los documentos al storage',
             variant: 'destructive',
           })
           setLoading(false)
@@ -256,6 +260,7 @@ export default function SimpleDocument({
   const [hasExpired, setHasExpired] = useState(false)
   const [duplicatedDocument, setDuplicatedDocument] = useState(false)
   const [files, setFiles] = useState<File[] | undefined>([])
+  const [openResourceSelector, setOpenResourceSelector] = useState(false)
 
   // console.log(documentResource, 'documentResource')
 
@@ -289,7 +294,12 @@ export default function SimpleDocument({
                             )?.name
 
                             return (
-                              <Popover>
+                              <Popover
+                                open={openResourceSelector}
+                                onOpenChange={() => {
+                                  setOpenResourceSelector(!openResourceSelector)
+                                }}
+                              >
                                 <PopoverTrigger asChild>
                                   <Button
                                     variant="outline"
@@ -400,6 +410,9 @@ export default function SimpleDocument({
                                                 )
                                                 id
                                                 field.onChange(id)
+                                                setOpenResourceSelector(
+                                                  !openResourceSelector,
+                                                )
                                               }}
                                             >
                                               {employee.name}

@@ -40,7 +40,7 @@ export default function NewDocumentModal({
                   </h2>
                   <Separator className="my-1" />
                   <p className="text-sm text-muted-foreground mb-3">
-                    Sube los documentos que necesitas
+                    Verifica que los documentos sean correctos y no hayan entradas duplicadas, en tal caso se subira la primera entrada encontrada y se marcaran las demas como duplicadas
                   </p>
                 </>
               )}
@@ -65,7 +65,7 @@ export default function NewDocumentModal({
                     </h2>
                     <Separator className="my-1" />
                     <p className="text-sm text-muted-foreground mb-3">
-                      Sube los documentos que necesitas
+                    Verifica que los documentos sean correctos y no hayan entradas duplicadas, en tal caso se subira la primera entrada encontrada y se marcaran las demas como duplicadas
                     </p>
                   </>
                 )}
