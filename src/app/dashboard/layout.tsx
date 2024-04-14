@@ -12,15 +12,14 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  // 'md:w-[200px]' : 'w-[68px] '
-  const maxW = 'max-w-[calc(100vw - 700px)]'
+
   return (
     <div className="flex">
       <AlertComponent />
       <SideBar />
       <div className="flex flex-col w-full mt-1 md:mt-0">
         <NavBar />
-        <div className={cn('md:px-12 md:max-w-[calc(100vw-190px)]')}>
+        <div>
           {children}
         </div>
       </div>
