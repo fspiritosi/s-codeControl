@@ -54,7 +54,7 @@ export default function page() {
         <TabsTrigger value="users">Usuarios</TabsTrigger>
         <TabsTrigger value="modules">Modulos</TabsTrigger>
       </TabsList>
-      <TabsContent value="general" >
+      <TabsContent value="general" className='space-y-4' >
         <Card className='py-4 px-4 md:w-[85vw]'>
         <CardHeader className='items-center'>Datos generales de la empresa</CardHeader>
         <CardContent>
@@ -73,32 +73,7 @@ export default function page() {
 
         </CardContent>
         </Card>
-        
-      </TabsContent>
-      <TabsContent value="users">
-        {/* <Table>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Email</th>
-              <th>Rol</th>
-            </tr>
-          </thead>
-          <tbody>
-            {actualCompany?.users.map(user => (
-              <tr key={user.id}>
-                <td>{user.name}</td>
-                <td>{user.email}</td>
-                <td>{user.role}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table> */}
-      </TabsContent>
-      <TabsContent value="modules">Change your password here.</TabsContent>
-    </Tabs>
-
-    <Card className='md:w-[85vw] bg-red-300 border-red-800 border-spacing-2 border-2' >
+        <Card className='md:w-[85vw] bg-red-300 border-red-800 border-spacing-2 border-2' >
         <CardHeader>ZONA PELIGROSA</CardHeader>
         <CardContent>
           <p>Al eliminiar esta empresa se eliminarán todos los registros asociado a ella.</p>
@@ -145,6 +120,32 @@ export default function page() {
        
         </CardFooter>
     </Card>    
+        
+      </TabsContent>
+      <TabsContent value="users">
+        {/* <Table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Rol</th>
+            </tr>
+          </thead>
+          <tbody>
+            {actualCompany?.users.map(user => (
+              <tr key={user.id}>
+                <td>{user.name}</td>
+                <td>{user.email}</td>
+                <td>{user.role}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table> */}
+      </TabsContent>
+      <TabsContent value="modules">Change your password here.</TabsContent>
+    </Tabs>
+
+
 
     </div>
   )
