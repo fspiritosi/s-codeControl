@@ -172,12 +172,8 @@ export default function VehiclesForm2() {
       .optional(),
     year: z.string({ required_error: 'El año es requerido' }).refine(
       e => {
-        //new regex para validar dominio AA000AA
         const year = Number(e)
-
-        const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/
         const actualYear = new Date().getFullYear()
-
         if (year !== undefined) {
           // Aquí puedes usar year de manera segura
           if (year < 1900 || year > actualYear) {
@@ -200,7 +196,7 @@ export default function VehiclesForm2() {
       .min(2, {
         message: 'El motor debe tener al menos 2 caracteres.',
       })
-      .max(15, { message: 'El motor debe tener menos de 15 caracteres.' }),
+      .max(30, { message: 'El motor debe tener menos de 30 caracteres.' }),
 
     type_of_vehicle: z.string({ required_error: 'El tipo es requerido' }),
     chassis: hideInput
@@ -211,7 +207,7 @@ export default function VehiclesForm2() {
           .min(2, {
             message: 'El chasis debe tener al menos 2 caracteres.',
           })
-          .max(15, { message: 'El chasis debe tener menos de 15 caracteres.' })
+          .max(30, { message: 'El chasis debe tener menos de 30 caracteres.' })
       : z.string().optional(),
     domain: hideInput
       ? z
@@ -286,10 +282,10 @@ export default function VehiclesForm2() {
           .string({
             required_error: 'La serie es requerida',
           })
-          .min(3, {
-            message: 'La serie debe tener al menos 3 caracteres.',
+          .min(2, {
+            message: 'La serie debe tener al menos 2 caracteres.',
           })
-          .max(15, { message: 'La serie debe tener menos de 15 caracteres.' }),
+          .max(30, { message: 'La serie debe tener menos de 3- caracteres.' }),
     intern_number: z
       .string({
         required_error: 'El número interno es requerido',
@@ -297,8 +293,8 @@ export default function VehiclesForm2() {
       .min(2, {
         message: 'El número interno debe tener al menos 2 caracteres.',
       })
-      .max(15, {
-        message: 'El número interno debe tener menos de 15 caracteres.',
+      .max(30, {
+        message: 'El número interno debe tener menos de 30 caracteres.',
       }),
     picture: z.string().optional(),
     type: hideInput
