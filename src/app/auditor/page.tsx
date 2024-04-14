@@ -67,7 +67,7 @@ export default function Auditor() {
         `
     *,
     document_types:document_types(*),
-    applies(*,type(*),type_of_vehicle(*),model(*),brand(*))
+    applies(*,type(*),type_of_vehicle(*),model(*),brand(*),company_id(*))
     `,
       )
       .eq('state', 'presentado')
@@ -86,6 +86,7 @@ export default function Auditor() {
         validity: formattedDate,
         id: doc.id,
         resource: doc.applies?.domain || doc.applies?.intern_number,
+        companyName: doc.applies?.company_id?.company_name,
       }
     }
     const mappedVehicles = equipmentData?.map(mapVehicle)
