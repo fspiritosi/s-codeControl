@@ -181,9 +181,14 @@ export const useLoggedUserStore = create<State>((set, get) => {
       if (findDocument) {
         return { ...doc, document: findDocument }
       } else {
+        console.log(doc,'doc')
         return doc
       }
     })
+
+    console.log( get()?.Alldocuments,'Alldocuments')
+
+    console.log(document,'notifications')
 
     if (error) {
       console.error('Error al obtener las notificaciones:', error)
@@ -191,7 +196,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
     const tipedData = document?.sort(
       (a, b) =>
-        new Date(b.description).getTime() - new Date(a.description).getTime(),
+       new Date(a.created_at).getTime() -  new Date(b.created_at).getTime() ,
     ) as Notifications[]
 
     set({ notifications: tipedData })
@@ -279,7 +284,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
       .not('employees', 'is', null)
       .eq('employees.company_id', get()?.actualCompany?.id)
-    // console.log(data, 'empleados')
 
     let { data: equipmentData, error: equipmentError } = await supabase
       .from('documents_equipment')
@@ -292,8 +296,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
       .eq('applies.company_id', get()?.actualCompany?.id)
       .not('applies', 'is', null)
-
-    // console.log(equipmentData, 'equipmentData')
 
     const typedData: VehiclesAPI[] | null = equipmentData as VehiclesAPI[]
 
@@ -311,17 +313,12 @@ export const useLoggedUserStore = create<State>((set, get) => {
             doc.validity.split('/')[2]
           }`,
         )
-        console.log(date, 'date')
-        console.log(lastMonth, 'lastMonth')
-        console.log(date < lastMonth, 'date < lastMonth')
         const isExpired = date < lastMonth || doc.state === 'Vencido'
         return isExpired
       })
-      console.log(filteredData, 'filteredData')
 
       const filteredVehiclesData = typedData?.filter((doc: any) => {
         if (!doc.validity) return false
-         console.log(doc.validity, 'doc.validity')
         const date = new Date(
           `${doc.validity.split('/')[1]}/${doc.validity.split('/')[0]}/${
             doc.validity.split('/')[2]
@@ -330,7 +327,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
         const isExpired = date < lastMonth || doc.state === 'Vencido'
         return isExpired
       })
-      // console.log(typedData, 'filteredVehiclesData')++
 
       const formatDate = (dateString: string) => {
         if (!dateString) return 'No vence'
@@ -384,7 +380,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
         vehicles:
           filteredVehiclesData
             .filter((doc: any) => {
-              // console.log(doc, 'doc')
               if (!doc.validity) return false
               return (
                 doc.state !== 'presentado' &&
@@ -408,11 +403,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
       const Allvalues = {
         employees:
           data
-            ?.filter((doc: any) => doc.state !== 'presentado')
             ?.map(mapDocument) || [],
         vehicles:
           typedData
-            .filter((doc: any) => doc.state !== 'presentado')
             .map(mapVehicle) || [],
       }
 
@@ -631,6 +624,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     const {
       data: { user },
     } = await supabase.auth.getUser()
+    
 
     if (user) {
       set({ credentialUser: user })
