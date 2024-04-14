@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/table'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../../../supabase/supabase'
+import { useSidebarOpen } from '@/store/sidebar'
+import { cn } from '@/lib/utils'
 
 export default function page({ params }: { params: { id: string } }) {
   const [documents_employees, setDocumentsEmployees] = useState<any[] | null>(
@@ -102,9 +104,14 @@ export default function page({ params }: { params: { id: string } }) {
   useEffect(() => {
     fetchDocument()
   }, [])
-
+  const { expanded } = useSidebarOpen()
   return (
-    <section>
+    <section
+    className={cn(
+      'md:mx-7',
+      expanded ? 'md:max-w-[calc(100vw-198px)]' : 'md:max-w-[calc(100vw)]',
+    )}
+  >
       <Card className="p-4">
         <CardTitle className=" text-2xl">
           Detalle del Documento {documents_employees?.[0]?.document_types?.name}
@@ -140,8 +147,8 @@ export default function page({ params }: { params: { id: string } }) {
             </Badge>
           )}
         </div>
-        <div className="grid grid-cols-3 gap-col-3 ">
-          <div className="max-w-[30vw] col-span-1">
+        <div className="grid lg:grid-cols-3 grid-cols-1 gap-col-3 ">
+          <div className="lg:max-w-[30vw] col-span-1">
             <Tabs defaultValue="Documento" className="w-full px-2">
               <TabsList className="w-full justify-evenly">
                 <TabsTrigger className="hover:bg-white/30" value="Empresa">
@@ -717,7 +724,7 @@ export default function page({ params }: { params: { id: string } }) {
               </TabsContent>
             </Tabs>
           </div>
-          <div className="max-w-[70vw]  col-span-2 p-7">
+          <div className="max-w-[70vw] col-span-2 p-7">
             {documentUrl ? (
               <Card className="mt-4">
                 <CardDescription className="p-3 flex justify-center">
