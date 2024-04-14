@@ -56,6 +56,7 @@ export default function Home() {
   )
   const documentsToShow = useLoggedUserStore(state => state.documentsToShow)
 
+
   const setShowLastMonthDocuments = useLoggedUserStore(
     state => state.setShowLastMonthDocuments,
   )

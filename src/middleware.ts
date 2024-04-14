@@ -23,7 +23,7 @@ export async function middleware(req: NextRequest) {
   //   return NextResponse.redirect(new URL('/auditor', req.url))
   // }
   // if (!isAuditor && req.url.includes('/auditor')) {
-  //   return NextResponse.redirect(new URL('/login', req.url))
+  //   return NextResponse.redirect(new URL('/dashboard', req.url))
   // }
   return res
 }

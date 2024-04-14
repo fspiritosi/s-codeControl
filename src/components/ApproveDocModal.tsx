@@ -19,13 +19,13 @@ export default function ApproveDocModal({
   resource,
 }: {
   id: string
-  resource: string |null
+  resource: string | null
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
   const handleApprove = async () => {
-    if (resource === 'employees') {
+    if (resource === 'employee') {
       const { data, error } = await supabase
         .from('documents_employees')
         .update({ state: 'aprobado' })

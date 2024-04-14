@@ -296,7 +296,11 @@ export default function NavBar() {
                                 `El documento ${
                                   notification?.document?.documentName ||
                                   '(no disponible)'
-                                }, del empleado ${
+                                }, del ${
+                                  notification.reference === 'employee'
+                                    ? 'empleado'
+                                    : 'vehiculo con patente'
+                                } ${
                                   notification?.document?.resource
                                     ?.split(' ')
                                     .map(
@@ -337,7 +341,11 @@ export default function NavBar() {
                                 `El documento ${
                                   notification.document.documentName ||
                                   '(no disponible)'
-                                }, del empleado ${
+                                }, del ${
+                                  notification.reference === 'employee'
+                                    ? 'empleado'
+                                    : 'vehiculo con patente'
+                                }} ${
                                   notification.document.resource
                                     .split(' ')
                                     .map(

@@ -5,8 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatDate } from 'date-fns'
 import { es } from 'date-fns/locale'
 
-import ApproveDocModal from '@/components/ApproveDocModal'
-import DenyDocModal from '@/components/DenyDocModal'
+import UpdateDocuments from '@/components/UpdateDocuments'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -24,6 +23,7 @@ export default function page({ params }: { params: { id: string } }) {
     [],
   )
   const [resource, setResource] = useState<string | null>(null)
+  const [documentName, setDocumentName] = useState<string | null>('')
   const [documentUrl, setDocumentUrl] = useState<string | null>(null)
   const fetchDocument = async () => {
     let document: any[] | null = []
@@ -92,6 +92,9 @@ export default function page({ params }: { params: { id: string } }) {
         `${resourceType}/document-${documentType}-${resorceId}.${fileExtension}`,
       )
 
+    setDocumentName(
+      `${resourceType}/document-${documentType}-${resorceId}.${fileExtension}`,
+    )
     setDocumentUrl(url.publicUrl)
     setDocumentsEmployees(document)
   }
@@ -99,7 +102,6 @@ export default function page({ params }: { params: { id: string } }) {
   useEffect(() => {
     fetchDocument()
   }, [])
-  console.log(documents_employees)
 
   return (
     <section>
@@ -114,7 +116,9 @@ export default function page({ params }: { params: { id: string } }) {
                 ? 'destructive'
                 : documents_employees?.[0]?.state === 'aprobado'
                   ? 'success'
-                  : 'default'
+                  : documents_employees?.[0]?.state === 'vencido'
+                    ? 'yellow'
+                    : 'default'
             }
             className={'mb-3 capitalize w-fit'}
           >
@@ -698,11 +702,15 @@ export default function page({ params }: { params: { id: string } }) {
                   <div className="p-3 text-center space-y-3">
                     <CardDescription>
                       Si el documento es rechazado, vencido o necesita ser
-                      actualizado puedes hacerlo desde aquí
+                      actualizado puedes hacerlo desde aquí, una vez aprobado el
+                      documento no podrá ser modificado
                     </CardDescription>
                     <div className="w-full flex justify-evenly">
-                      <ApproveDocModal id={params.id} resource={resource} />
-                      <DenyDocModal id={params.id} resource={resource} />
+                      <UpdateDocuments
+                        id={params.id}
+                        resource={resource}
+                        documentName={documentName}
+                      />
                     </div>
                   </div>
                 </Card>
@@ -711,16 +719,16 @@ export default function page({ params }: { params: { id: string } }) {
           </div>
           <div className="max-w-[70vw]  col-span-2 p-7">
             {documentUrl ? (
-              <Card>
+              <Card className="mt-4">
                 <CardDescription className="p-3 flex justify-center">
                   <embed
                     src={`${documentUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-                    className="max-w-full max-h-screen rounded-xl"
+                    className="max-w-full max-h-screen rounded-xl aspect-auto"
                   />
                 </CardDescription>
               </Card>
             ) : (
-              <Skeleton className="bg-black w-full h-screen" />
+              <Skeleton className="bg-black w-full h-screen mt-5" />
             )}
           </div>
         </div>
