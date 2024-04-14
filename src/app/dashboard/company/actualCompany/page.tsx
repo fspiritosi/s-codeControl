@@ -22,21 +22,10 @@ import { Copy } from 'lucide-react'
 import { useState } from 'react'
 import { set } from 'date-fns'
 import { cn } from '@/lib/utils'
-
-export type data = {
-  name: string,
-  info: string
-}
+import  {ItemCompany}  from '@/app/dashboard/company/companyComponents/itemCompany'
 
 
-export const ItemCompany = (itemData: data) => {
-  return (
-    <div>
-      <p><span className='text-gray-600 font-bold'>{itemData.name}: </span> {itemData.info}</p>
-              <Separator/>
-    </div>
-  )
-}
+
 
 
 
