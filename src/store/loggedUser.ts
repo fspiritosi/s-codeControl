@@ -279,7 +279,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
       .not('employees', 'is', null)
       .eq('employees.company_id', get()?.actualCompany?.id)
-    console.log(data, 'empleados')
+    // console.log(data, 'empleados')
 
     let { data: equipmentData, error: equipmentError } = await supabase
       .from('documents_equipment')
@@ -292,8 +292,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
       .eq('applies.company_id', get()?.actualCompany?.id)
       .not('applies', 'is', null)
-      
-    console.log(equipmentData, 'equipmentData')
+
+    // console.log(equipmentData, 'equipmentData')
 
     const typedData: VehiclesAPI[] | null = equipmentData as VehiclesAPI[]
 
@@ -304,16 +304,33 @@ export const useLoggedUserStore = create<State>((set, get) => {
       lastMonth.setMonth(new Date().getMonth() + 1)
 
       const filteredData = data?.filter((doc: any) => {
-        const date = new Date(doc.validity)
+        if (!doc.validity) return false
+
+        const date = new Date(
+          `${doc.validity.split('/')[1]}/${doc.validity.split('/')[0]}/${
+            doc.validity.split('/')[2]
+          }`,
+        )
+        console.log(date, 'date')
+        console.log(lastMonth, 'lastMonth')
+        console.log(date < lastMonth, 'date < lastMonth')
         const isExpired = date < lastMonth || doc.state === 'Vencido'
         return isExpired
       })
+      console.log(filteredData, 'filteredData')
 
       const filteredVehiclesData = typedData?.filter((doc: any) => {
-        const date = new Date(doc.validity)
+        if (!doc.validity) return false
+         console.log(doc.validity, 'doc.validity')
+        const date = new Date(
+          `${doc.validity.split('/')[1]}/${doc.validity.split('/')[0]}/${
+            doc.validity.split('/')[2]
+          }`,
+        )
         const isExpired = date < lastMonth || doc.state === 'Vencido'
         return isExpired
       })
+      // console.log(typedData, 'filteredVehiclesData')++
 
       const formatDate = (dateString: string) => {
         if (!dateString) return 'No vence'
@@ -360,11 +377,20 @@ export const useLoggedUserStore = create<State>((set, get) => {
       const lastMonthValues = {
         employees:
           filteredData
-            ?.filter((doc: any) => doc.state !== 'presentado')
+            ?.filter(
+              doc => doc.state !== 'presentado' && doc.validity !== 'No vence',
+            )
             ?.map(mapDocument) || [],
         vehicles:
           filteredVehiclesData
-            .filter((doc: any) => doc.state !== 'presentado')
+            .filter((doc: any) => {
+              // console.log(doc, 'doc')
+              if (!doc.validity) return false
+              return (
+                doc.state !== 'presentado' &&
+                (doc.validity !== 'No vence' || doc.validity !== null)
+              )
+            })
             .map(mapVehicle) || [],
       }
 
@@ -374,7 +400,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
             ?.filter((doc: any) => doc.state === 'presentado')
             ?.map(mapDocument) || [],
         vehicles:
-          filteredVehiclesData
+          typedData
             .filter((doc: any) => doc.state === 'presentado')
             .map(mapVehicle) || [],
       }
@@ -385,14 +411,14 @@ export const useLoggedUserStore = create<State>((set, get) => {
             ?.filter((doc: any) => doc.state !== 'presentado')
             ?.map(mapDocument) || [],
         vehicles:
-          filteredVehiclesData
+          typedData
             .filter((doc: any) => doc.state !== 'presentado')
             .map(mapVehicle) || [],
       }
 
       const AllvaluesToShow = {
         employees: data?.map(mapDocument) || [],
-        vehicles: filteredVehiclesData.map(mapVehicle) || [],
+        vehicles: typedData.map(mapVehicle) || [],
       }
 
       set({ allDocumentsToShow: AllvaluesToShow })
@@ -570,7 +596,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
       if (data.length > 1) {
         if (selectedCompany) {
-          // console.log(selectedCompany, 'selectedCompany primer if');
           //
           setActualCompany(selectedCompany[0])
         } else {
@@ -580,7 +605,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
       if (data.length === 1) {
         set({ showMultiplesCompaniesAlert: false })
         setActualCompany(data[0])
-        // console.log(data[0], 'actual company segundo if');
       }
       if (data.length === 0) {
         set({ showNoCompanyAlert: true })
