@@ -27,8 +27,8 @@ export default function SideBar() {
   return (
     <div
       className={cn(
-        'flex flex-col  px-3 py-0 md:px-2 bg-neutral-300 dark:bg-neutral-800 h-screen w-[68px] sticky left-0 top-0',
-        expanded ? 'md:w-[200px]' : 'w-[68px] ',
+        'flex-col  px-3 py-0 md:px-2 bg-neutral-300 dark:bg-neutral-800 h-screen w-[68px] sticky left-0 top-0 hidden md:flex',
+        expanded ? 'w-[200px]' : 'w-[68px] ',
       )}
     >
       <Link
