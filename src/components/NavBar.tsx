@@ -145,8 +145,8 @@ export default function NavBar() {
 
   // console.log(notifications, 'notificaciones')
   return (
-    <nav className=" flex flex-shrink items-center justify-between  text-white p-4 mb-2">
-      <div className="flex items-center">
+    <nav className=" flex flex-shrink items-center justify-end sm:justify-between  text-white p-4 mb-2">
+      <div className=" items-center hidden sm:flex">
         {/* <TeamSwitcher /> asdasd*/}
         <Dialog open={showNewTeamDialog} onOpenChange={setShowNewTeamDialog}>
           <Popover open={open} onOpenChange={setOpen}>
