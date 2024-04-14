@@ -181,14 +181,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
       if (findDocument) {
         return { ...doc, document: findDocument }
       } else {
-        console.log(doc,'doc')
         return doc
       }
     })
-
-    console.log( get()?.Alldocuments,'Alldocuments')
-
-    console.log(document,'notifications')
 
     if (error) {
       console.error('Error al obtener las notificaciones:', error)
