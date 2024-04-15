@@ -554,7 +554,7 @@ export default function VehiclesForm2() {
   console.log('render')
 
   return (
-    <section className={`${accion === 'new' ? 'w-full' : 'w-[75%]'} `}>
+    <section >
       <header className="flex justify-between gap-4 mt-6">
         <div className="mb-8">
           {accion === 'edit' || accion === 'view' ? (

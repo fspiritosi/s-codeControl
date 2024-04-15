@@ -188,7 +188,7 @@ export function DataEquipment<TData, TValue>({
 
   return (
     <div>
-      <div className="flex items-center py-4">
+      <div className="flex items-center py-4 flex-wrap gap-y-2">
         <Input
           placeholder="Buscar por Dominio"
           value={(table.getColumn('domain')?.getFilterValue() as string) ?? ''}
@@ -206,7 +206,7 @@ export function DataEquipment<TData, TValue>({
           Limpiar filtros
         </Button>
 
-        <div className="w-full flex justify-end gap-2">
+        <div className=" flex gap-2 ml-2 flex-wrap">
           <Select onValueChange={e => table.setPageSize(Number(e))}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Cantidad de filas" />
@@ -279,11 +279,6 @@ export function DataEquipment<TData, TValue>({
       </div>
       <div
         className="rounded-md border"
-        style={{
-          overflow: 'auto',
-          width: '100%',
-          maxWidth: totalWidth,
-        }}
       >
         <Table>
           <TableHeader>

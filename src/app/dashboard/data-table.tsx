@@ -195,7 +195,7 @@ export function ExpiredDataTable<TData, TValue>({
         }
         className="max-w-sm ml-2"
       />
-      <div className="flex items-center py-4 flex-wrap">
+      <div className="flex items-center py-4 flex-wrap gap-y-2">
         <Button
           variant="outline"
           size="default"
@@ -268,7 +268,7 @@ export function ExpiredDataTable<TData, TValue>({
           </Button>
         )}
       </div>
-      <div className="rounded-md border mb-6">
+      <div className="rounded-md border mb-6 overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (
