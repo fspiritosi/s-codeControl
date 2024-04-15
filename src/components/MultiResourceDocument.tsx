@@ -39,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useDocument } from '@/hooks/useDocuments'
 import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { format } from 'date-fns'
@@ -48,10 +49,8 @@ import { supabase } from '../../supabase/supabase'
 import { Badge } from './ui/badge'
 import { Calendar } from './ui/calendar'
 import { Input } from './ui/input'
-import { Label } from './ui/label'
 import { Separator } from './ui/separator'
-import { Switch } from './ui/switch'
-import { useDocument } from '@/hooks/useDocuments'
+import { useToast } from './ui/use-toast'
 
 export default function MultiResourceDocument({
   resource,
@@ -62,6 +61,7 @@ export default function MultiResourceDocument({
 }) {
   const [documenTypes, setDocumentTypes] = useState<any[] | null>([])
   const [expiredDate, setExpiredDate] = useState(false)
+  const [disabled, setDisabled] = useState(false)
   const vehicles = useLoggedUserStore(state => state.vehicles)?.reduce(
     (acc: any, act: { year: string; intern_number: string; id: string }) => {
       const data = {
@@ -73,7 +73,7 @@ export default function MultiResourceDocument({
     },
     [],
   )
-  console.log("Este console viene del multirecurso")
+  // console.log('Este console viene del multirecurso')
 
   const employees = useLoggedUserStore(state => state.employees)?.reduce(
     (
@@ -146,6 +146,7 @@ export default function MultiResourceDocument({
   const [selectedResources, setSelectedResources] = useState<string[]>([])
   const [inputValue, setInputValue] = useState<string>('')
   const user = useLoggedUserStore(state => state.credentialUser?.id)
+  const { toast } = useToast()
   const {
     insertMultiDocumentEmployees,
     insertMultiDocumentEquipment,
@@ -153,57 +154,137 @@ export default function MultiResourceDocument({
   } = useDocument()
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const { resources, ...rest } = values
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
+    setDisabled(true)
     if (!file)
       return form.setError('document', {
         message: 'Por favor, selecciona un documento',
       })
 
-    const fileUrl = await uploadDocumentFile(file, 'document_files')
-    let finalValues
-    const idEmployees = selectedResources.map(resource => {
-      const employee = employees.find((element: any) => {
-        return element.document === resource
-      })
-      return employee?.id
-    })
+    const storagePath =
+      resource === 'equipo' ? 'documentos-equipos' : 'documentos-empleados'
 
-    const idVehicles = selectedResources.map(resource => {
-      const vehicle = vehicles.find((element: any) => {
-        return element.document === resource
+    const resourceId =
+      resource === 'equipo'
+        ? selectedResources.map(resource => {
+            const vehicle = vehicles.find((element: any) => {
+              return element.document === resource
+            })
+            return vehicle?.id
+          })
+        : selectedResources.map(resource => {
+            const employee = employees.find((element: any) => {
+              return element.document === resource
+            })
+            return employee?.id
+          })
+
+    const document_type_name = documenTypes
+      ?.find(documentType => documentType.id === values.id_document_types)
+      ?.name.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s/g, '')
+      .toLowerCase()
+      .replace('/', '-')
+
+    const fileExtension = file?.name.split('.').pop()
+
+    const tableName =
+      resource === 'equipo' ? 'documents_equipment' : 'documents_employees'
+
+    for (let index = 0; index < resourceId.length; index++) {
+      const { data } = await supabase.storage
+        .from('document_files')
+        .list(storagePath, {
+          search: `document-${document_type_name}-${resourceId[index]}`,
+        })
+
+      if (data?.length && data?.length > 0) {
+        const resourceName =
+          resource === 'equipo'
+            ? selectedResources.map(resource => {
+                const vehicle = vehicles.find((element: any) => {
+                  return element.document === resource
+                })
+                return vehicle.name
+              })
+            : selectedResources.map(resource => {
+                const employee = employees.find((element: any) => {
+                  return element.document === resource
+                })
+                return employee.name
+              })
+
+        form.setError('document', {
+          message: 'Este documento ya ha sido subido anteriormente',
+        })
+        toast({
+          title: `El recurso ${resourceName[index]} ya tiene un documento de este tipo`,
+          description:
+            'Por favor, sube un documento diferente o elige otro recurso',
+          variant: 'destructive',
+        })
+        setDisabled(false)
+        return
+      }
+
+      const tableEntries = resourceId.map(resourceId => {
+        return {
+          id_document_types: values.id_document_types,
+          applies: resourceId,
+          validity: values.validity
+            ? format(values.validity, 'dd/MM/yyyy')
+            : null,
+          user_id: user,
+        }
       })
-      return vehicle?.id
-    })
-    if (resource === 'equipo') {
-      //finalValues = { ...rest, applies: idVehicles, document: file }
-      finalValues = {
-        ...values,
-        document_url: fileUrl,
-        id_storage: null,
-        state: 'presentado',
-        is_active: true,
-        applies: idVehicles,
-        user_id: user,
+
+      console.log('tableEntries', tableEntries)
+
+      const { error } = await supabase
+        .from(tableName)
+        .insert(tableEntries[index])
+        .select()
+
+      if (error) {
+        console.error(error)
+        toast({
+          title: 'Error',
+          description: 'Hubo un error al guardar el documento',
+          variant: 'destructive',
+        })
+        setDisabled(false)
+        return
       }
-      delete finalValues?.resources
-      insertMultiDocumentEquipment(finalValues)
-    } else {
-      //finalValues = { ...rest, document: file, applies: idEmployees }
-      finalValues = {
-        ...values,
-        document_url: fileUrl,
-        id_storage: null,
-        state: 'presentado',
-        is_active: true,
-        applies: idEmployees,
-        user_id: user,
+
+      const { error: storageError } = await supabase.storage
+        .from('document_files')
+        .upload(
+          `/${storagePath}/document-${document_type_name}-${resourceId[index]}.${fileExtension}`,
+          file,
+          {
+            cacheControl: '3600',
+            upsert: false,
+          },
+        )
+
+      if (storageError) {
+        toast({
+          title: 'Error',
+          description: 'Hubo un error al subir los documentos al storage',
+          variant: 'destructive',
+        })
+        setDisabled(false)
+        return
       }
-      delete finalValues?.resources
-      insertMultiDocumentEmployees(finalValues)
     }
-    //console.log(finalValues)
+
+    toast({
+      title: 'Éxito',
+      description: 'Documentos subidos correctamente',
+      variant: 'default',
+    })
+    // handleOpen()
+    setDisabled(false)
   }
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -228,12 +309,12 @@ export default function MultiResourceDocument({
                 <FormItem>
                   <FormLabel>Tipo de Documento</FormLabel>
                   <Select
-                       onValueChange={e => {
-                        field.onChange(e)
-                        setExpiredDate(
-                          documenTypes?.find(doc => doc.id === e)?.explired,
-                        )
-                      }}
+                    onValueChange={e => {
+                      field.onChange(e)
+                      setExpiredDate(
+                        documenTypes?.find(doc => doc.id === e)?.explired,
+                      )
+                    }}
                     defaultValue={field.value}
                   >
                     <FormControl>
@@ -490,7 +571,9 @@ export default function MultiResourceDocument({
             <Separator className="m-0 p-0" />
             <div className="flex justify-evenly">
               <Button onClick={handleOpen}>Cancel</Button>
-              <Button type="submit">Subir documentos</Button>
+              <Button disabled={disabled} type="submit">
+                Subir documentos
+              </Button>
             </div>
           </form>
         </Form>

@@ -39,6 +39,13 @@ export default function Auditor() {
     [],
   )
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'No vence'
+    const [day, month, year] = dateString.split('/')
+    const formattedDate = `${day}/${month}/${year}`
+    return formattedDate || 'No vence'
+  }
+
   const fetchDocumentTypes = async () => {
     let { data: document_types, error } = await supabase
       .from('document_types')
@@ -54,6 +61,36 @@ export default function Auditor() {
   }
 
   const fetchDocumentsEmployees = async () => {
+    let { data: equipmentData, error: equipmentError } = await supabase
+      .from('documents_equipment')
+      .select(
+        `
+    *,
+    document_types:document_types(*),
+    applies(*,type(*),type_of_vehicle(*),model(*),brand(*),company_id(*))
+    `,
+      )
+      .eq('state', 'presentado')
+      .order('created_at', { ascending: false })
+
+    const mapVehicle = (doc: any) => {
+      const formattedDate = formatDate(doc.validity)
+      return {
+        date: doc.created_at
+          ? format(new Date(doc.created_at), 'dd/MM/yyyy')
+          : 'No vence',
+        allocated_to: doc.applies?.type_of_vehicle?.name,
+        documentName: doc.document_types?.name,
+        state: doc.state,
+        multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+        validity: formattedDate,
+        id: doc.id,
+        resource: doc.applies?.domain || doc.applies?.intern_number,
+        companyName: doc.applies?.company_id?.company_name,
+      }
+    }
+    const mappedVehicles = equipmentData?.map(mapVehicle)
+
     let { data: documents_employees, error } = await supabase
       .from('documents_employees')
       .select(
@@ -70,15 +107,39 @@ export default function Auditor() {
       )
     `,
       )
-      .eq('is_active', true)
       .eq('state', 'presentado')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+
+    const mapEmployee = (doc: any) => {
+      const formattedDate = formatDate(doc.validity)
+      return {
+        date: doc.created_at
+          ? format(new Date(doc.created_at), 'dd/MM/yyyy')
+          : 'No vence',
+        companyName: doc.applies?.company_id?.company_name,
+        allocated_to: doc.applies?.contractor_employee
+          ?.map((doc: any) => doc.contractors.name)
+          .join(', '),
+        documentName: doc.document_types?.name,
+        state: doc.state,
+        multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+        validity: formattedDate || 'No vence',
+        id: doc.id,
+        resource: `${doc.applies?.firstname} ${doc.applies?.lastname}`,
+      }
+    }
+    const mappedEmployees = documents_employees?.map(mapEmployee)
 
     if (error) {
       console.error('Error fetching document types:', error.message)
       return
     }
 
-    setDocumentsEmployees(documents_employees)
+    setDocumentsEmployees([
+      ...(mappedVehicles || []),
+      ...(mappedEmployees || []),
+    ])
   }
 
   let doc_personas = document_types?.filter(doc => doc.applies === 'Persona')
@@ -100,23 +161,7 @@ export default function Auditor() {
     fetchDocumentsEmployees()
   }, [])
 
-  const filteredData = documents_employees?.map(doc => {
-    return {
-      date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
-      companyName: doc.applies?.company_id?.company_name,
-      allocated_to: doc.applies?.contractor_employee
-        ?.map((doc: any) => doc.contractors.name)
-        .join(', '),
-      documentName: doc.document_types?.name,
-      state: doc.state,
-      multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
-      validity: doc.validity
-        ? format(new Date(doc.validity), 'dd/MM/yyyy')
-        : 'No vence',
-      id: doc.id,
-      resource: `${doc.applies?.firstname} ${doc.applies?.lastname}`,
-    }
-  }) as AuditorDocument[]
+  const filteredData = documents_employees as AuditorDocument[]
 
   return (
     <div>

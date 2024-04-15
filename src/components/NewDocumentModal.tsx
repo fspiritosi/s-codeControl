@@ -1,17 +1,9 @@
 'use client'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { DocumentsValidation } from '@/store/documentValidation'
-import {
-  LockClosedIcon,
-  LockOpen2Icon,
-  PlusCircledIcon,
-} from '@radix-ui/react-icons'
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import { Dispatch, SetStateAction } from 'react'
 import MultiResourceDocument from './MultiResourceDocument'
 import SimpleDocument from './SimpleDocument'
-import { Loader } from './svg/loader'
-import { Button } from './ui/button'
+import { AlertDialog, AlertDialogContent } from './ui/alert-dialog'
 import { Separator } from './ui/separator'
 
 export default function NewDocumentModal({
@@ -23,93 +15,14 @@ export default function NewDocumentModal({
   isOpen: boolean
   multiresource: boolean | undefined
 }) {
-  const [sendingLoading, setSendingLoading] = useState(false)
-
-  const resetAll = DocumentsValidation(state => state.resetAll)
   const handleOpen = () => {
     setIsOpen(!isOpen)
-    resetAll()
-    setSendingLoading(!sendingLoading)
     return
   }
-
-  const [refs, setRefs] = useState<React.RefObject<HTMLButtonElement>[]>([])
-  // const [allInputValids, setAllInputValids] = useState([])
-  // const refErrors = useRef<boolean[]>([])
-
-  const ValidateForms = async () => {
-    for (let i = 0; i < refs.length; i++) {
-      const ref = refs[i]
-      if (ref.current) {
-        ref.current.click()
-      }
-    }
-    setSendingLoading(false)
-  }
-
-  const hasErrors = DocumentsValidation(state => state.hasErrors)
-  const setTotalForms = DocumentsValidation(state => state.setTotalForms)
-  const totalForms = DocumentsValidation(state => state.totalForms)
-
-  const handleSendForms = async () => {
-    await Promise.all(
-      refs.map(async (ref, i) => {
-        if (ref.current) {
-          if (i === 0) {
-            // ref.current.click()
-          } else {
-            await new Promise(resolve => setTimeout(resolve, 500)) // 0.5 segundos antes de cada clic.
-            // ref.current?.click()
-          }
-        }
-      }),
-    )
-    setSendingLoading(false)
-  }
-  // const router = useRouter()
-
-  const handleClicks = async () => {
-    // Ciclo que valida los campos de cada input
-    setSendingLoading(true)
-
-    if (hasErrors) {
-      await ValidateForms()
-    }
-
-    // Si todos los inputs son validos, se hace el ciclo de clicks
-    if (!hasErrors) {
-      await handleSendForms()
-    }
-  }
-
-  // const [totalForms] = useState(1)
-
-  const fillRef = () => {
-    setRefs(
-      Array(totalForms)
-        .fill(null)
-        .map(() => React.createRef()),
-    )
-  }
-
-  const addDocumentsErrors = DocumentsValidation(
-    state => state.addDocumentsErrors,
-  )
-
-  useEffect(() => {
-    // Crea una ref para cada formulario y añádela al estado.
-    fillRef()
-  }, [totalForms])
-
-  const handleNewForm = () => {
-    setTotalForms(true)
-    addDocumentsErrors(totalForms + 1)
-  }
-
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={handleOpen}>
-        <DialogContent className="max-h-[90dvh] overflow-y-scroll dark:bg-slate-950">
+      <AlertDialog open={isOpen} onOpenChange={handleOpen}>
+        <AlertDialogContent className="max-h-[90dvh] overflow-y-auto dark:bg-slate-950">
           <Tabs defaultValue="Empleados" className="p-2">
             <TabsList className="grid w-full grid-cols-2 ">
               <TabsTrigger value="Empleados">Empleados</TabsTrigger>
@@ -127,7 +40,7 @@ export default function NewDocumentModal({
                   </h2>
                   <Separator className="my-1" />
                   <p className="text-sm text-muted-foreground mb-3">
-                    Sube los documentos que necesitas
+                    Verifica que los documentos sean correctos y no hayan entradas duplicadas, en tal caso se subira la primera entrada encontrada y se marcaran las demas como duplicadas
                   </p>
                 </>
               )}
@@ -138,50 +51,9 @@ export default function NewDocumentModal({
                     handleOpen={handleOpen} //funcion para abrir/cerrar
                   />
                 ) : (
-                  Array.from({ length: totalForms }).map((_, index) => (
-                    <div key={index} className="relative">
-                      <SimpleDocument
-                        resource="empleado"
-                        handleOpen={handleOpen}
-                        index={index}
-                        refSubmit={refs[index]}
-                      />
-                    </div>
-                  ))
+                  <SimpleDocument resource="empleado" handleOpen={handleOpen} />
                 )}
               </div>
-              {!multiresource && (
-                <>
-                  <div className="h-14 flex justify-end items-center">
-                    <Button
-                      variant="primary"
-                      onClick={handleNewForm}
-                      className="rounded-full "
-                    >
-                      <PlusCircledIcon className=" h-4 w-4 shrink-0" />
-                    </Button>
-                  </div>
-                  <div className="flex justify-evenly">
-                    <Button onClick={() => handleOpen()}>Cancel</Button>
-                    <Button disabled={sendingLoading} onClick={handleClicks}>
-                      {sendingLoading ? (
-                        <Loader />
-                      ) : (
-                        <>
-                          {hasErrors ? (
-                            <LockClosedIcon className="mr-2" />
-                          ) : (
-                            <LockOpen2Icon className="mr-2" />
-                          )}
-                          {hasErrors
-                            ? 'Validar documentos'
-                            : 'Subir documentos'}
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </>
-              )}
             </TabsContent>
             <TabsContent value="Equipos">
               <div className="space-y-2">
@@ -193,7 +65,7 @@ export default function NewDocumentModal({
                     </h2>
                     <Separator className="my-1" />
                     <p className="text-sm text-muted-foreground mb-3">
-                      Sube los documentos que necesitas
+                    Verifica que los documentos sean correctos y no hayan entradas duplicadas, en tal caso se subira la primera entrada encontrada y se marcaran las demas como duplicadas
                     </p>
                   </>
                 )}
@@ -203,54 +75,13 @@ export default function NewDocumentModal({
                     handleOpen={handleOpen} //funcion para abrir/cerrar
                   />
                 ) : (
-                  Array.from({ length: totalForms }).map((_, index) => (
-                    <div key={index} className="relative">
-                      <SimpleDocument
-                        resource="equipo"
-                        index={index}
-                        handleOpen={handleOpen}
-                        refSubmit={refs[index]}
-                      />
-                    </div>
-                  ))
+                  <SimpleDocument resource="equipo" handleOpen={handleOpen} />
                 )}
               </div>
-              {!multiresource && (
-                <>
-                  <div className="h-14 flex justify-end items-center">
-                    <Button
-                      variant="primary"
-                      onClick={handleNewForm}
-                      className="rounded-full "
-                    >
-                      <PlusCircledIcon className=" h-4 w-4 shrink-0" />
-                    </Button>
-                  </div>
-                  <div className="flex justify-evenly">
-                    <Button onClick={() => handleOpen()}>Cancel</Button>
-                    <Button disabled={sendingLoading} onClick={handleClicks}>
-                      {sendingLoading ? (
-                        <Loader />
-                      ) : (
-                        <>
-                          {hasErrors ? (
-                            <LockClosedIcon className="mr-2" />
-                          ) : (
-                            <LockOpen2Icon className="mr-2" />
-                          )}
-                          {hasErrors
-                            ? 'Validar documentos'
-                            : 'Subir documentos'}
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </>
-              )}
             </TabsContent>
           </Tabs>
-        </DialogContent>
-      </Dialog>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

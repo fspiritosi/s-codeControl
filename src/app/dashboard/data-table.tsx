@@ -38,9 +38,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useState } from 'react'
-import { Card } from '@/components/ui/card'
 import { ArrowUpDown } from 'lucide-react'
+import { useState } from 'react'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -48,6 +47,7 @@ interface DataTableProps<TData, TValue> {
   setShowLastMonthDocuments?: () => void
   pending?: boolean
   vehicles?: boolean
+  defaultVisibleColumnsCustom?: string[]
 }
 
 export function ExpiredDataTable<TData, TValue>({
@@ -55,10 +55,11 @@ export function ExpiredDataTable<TData, TValue>({
   data,
   setShowLastMonthDocuments,
   pending,
-  vehicles
+  vehicles,
+  defaultVisibleColumnsCustom,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
-  const defaultVisibleColumns = [
+  const defaultVisibleColumns = defaultVisibleColumnsCustom || [
     'date',
     'resource',
     'documentName',
@@ -184,20 +185,17 @@ export function ExpiredDataTable<TData, TValue>({
 
   return (
     <div className="mb-10 dark:bg-slate-950 px-4 rounded-lg max-w-[100vw] overflow-x-auto xl:min-w-[42vw]">
-
-        <Input
-          placeholder={
-            vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'
-          }
-          value={
-            (table.getColumn('resource')?.getFilterValue() as string) ?? ''
-          }
-          onChange={event =>
-            table.getColumn('resource')?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm ml-2"
-        />
-      <div className="flex items-center py-4 flex-wrap">
+      <Input
+        placeholder={
+          vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'
+        }
+        value={(table.getColumn('resource')?.getFilterValue() as string) ?? ''}
+        onChange={event =>
+          table.getColumn('resource')?.setFilterValue(event.target.value)
+        }
+        className="max-w-sm ml-2"
+      />
+      <div className="flex items-center py-4 flex-wrap gap-y-2">
         <Button
           variant="outline"
           size="default"
@@ -270,7 +268,7 @@ export function ExpiredDataTable<TData, TValue>({
           </Button>
         )}
       </div>
-      <div className="rounded-md border mb-6">
+      <div className="rounded-md border mb-6 overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (
@@ -329,9 +327,11 @@ export function ExpiredDataTable<TData, TValue>({
                                     <SelectTrigger className="">
                                       <SelectValue
                                         placeholder={
-                                          header.column.columnDef
-                                            .header === "Empleado" && vehicles?"Vehículo":  header.column.columnDef
-                                            .header as string
+                                          header.column.columnDef.header ===
+                                            'Empleado' && vehicles
+                                            ? 'Vehículo'
+                                            : (header.column.columnDef
+                                                .header as string)
                                         }
                                       />
                                     </SelectTrigger>

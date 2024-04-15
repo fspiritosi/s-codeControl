@@ -10,7 +10,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
+import { useSidebarOpen } from '@/store/sidebar'
 import { VehiclesActualCompany } from '@/store/vehicles'
 import Link from 'next/link'
 import { ExpiredColums } from './colums'
@@ -59,14 +61,18 @@ export default function Home() {
   const setShowLastMonthDocuments = useLoggedUserStore(
     state => state.setShowLastMonthDocuments,
   )
+  const { expanded } = useSidebarOpen()
 
   const pendingDocuments = useLoggedUserStore(state => state.pendingDocuments)
+  // <Card className="flex justify-center xl:justify-between mt-6 xl:flex-nowrap flex-wrap dark:bg-slate-950">
+  // <section className="flex justify-between gap-5 md:mx-7 flex-wrap">
 
+  // 'md:w-[200px]' : 'w-[68px] '
   return (
     <div>
-      <section className="flex justify-center gap-5 flex-wrap">
-        <div className="flex gap-3 flex-wrap">
-          <Card className="md:min-w-[250px] text-center">
+      <section className="grid sm:grid-cols-2 grid-cols-1 gap-6 mx-7">
+        <div className="flex gap-3 flex-wrap justify-center cardMedia:justify-between">
+          <Card className="min-w-[250px]">
             <CardHeader>
               <CardTitle>Empleados totales</CardTitle>
             </CardHeader>
@@ -81,7 +87,7 @@ export default function Home() {
               </Link>
             </CardContent>
           </Card>
-          <Card className="bg-lime-200 dark:bg-lime-800 md:min-w-[250px] text-center">
+          <Card className="bg-lime-200 dark:bg-lime-800 min-w-[250px] text-center">
             <CardHeader>
               <CardTitle>Empleados Avalados</CardTitle>
             </CardHeader>
@@ -99,7 +105,7 @@ export default function Home() {
               </Link>
             </CardContent>
           </Card>
-          <Card className="bg-rose-200 dark:bg-rose-800 md:min-w-[250px] text-center">
+          <Card className="bg-rose-200 dark:bg-rose-800 min-w-[250px] text-center">
             <CardHeader>
               <CardTitle>Empleados No Avalados</CardTitle>
             </CardHeader>
@@ -115,8 +121,8 @@ export default function Home() {
             </CardContent>
           </Card>
         </div>
-        <div className="flex gap-4 flex-wrap">
-          <Card className="md:min-w-[250px] text-center">
+        <div className="flex gap-3 flex-wrap justify-center cardMedia:justify-between">
+          <Card className="min-w-[250px] text-center">
             <CardHeader>
               <CardTitle>Equipos Totales</CardTitle>
             </CardHeader>
@@ -131,7 +137,7 @@ export default function Home() {
               </Link>
             </CardContent>
           </Card>
-          <Card className="bg-lime-200 dark:bg-lime-800 md:min-w-[250px] text-center">
+          <Card className="bg-lime-200 dark:bg-lime-800 min-w-[250px] text-center">
             <CardHeader>
               <CardTitle>Equipos Avalados</CardTitle>
             </CardHeader>
@@ -146,7 +152,7 @@ export default function Home() {
               </Link>
             </CardContent>
           </Card>
-          <Card className="bg-rose-200 dark:bg-rose-800 md:min-w-[250px] text-center">
+          <Card className="bg-rose-200 dark:bg-rose-800 min-w-[250px] text-center">
             <CardHeader>
               <CardTitle>Equipos No Avalados</CardTitle>
             </CardHeader>
@@ -163,7 +169,14 @@ export default function Home() {
           </Card>
         </div>
       </section>
-      <Card className="flex justify-center xl:justify-between mt-6 xl:flex-nowrap flex-wrap dark:bg-slate-950">
+      <Card
+        className={cn(
+          'md:mx-7  grid grid-cols-1 mt-6 xl:grid-cols-2 dark:bg-slate-950',
+          expanded
+            ? 'md:max-w-[calc(100vw-190px)]'
+            : 'md:max-w-[calc(100vw)]',
+        )}
+      >
         <section>
           <CardHeader>
             <CardTitle>Proximos vencimientos</CardTitle>
@@ -181,7 +194,6 @@ export default function Home() {
               </TabsList>
             </CardContent>
             <TabsContent value="Empleados">
-              
               <ExpiredDataTable
                 data={documentsToShow?.employees || []}
                 setShowLastMonthDocuments={setShowLastMonthDocuments}
@@ -198,7 +210,7 @@ export default function Home() {
             </TabsContent>
           </Tabs>
         </section>
-        <section>
+        <section className="">
           <CardHeader>
             <CardTitle>Documentos pendientes</CardTitle>
           </CardHeader>

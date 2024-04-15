@@ -15,9 +15,13 @@ const config = {
       padding: '2rem',
       screens: {
         '2xl': '1400px',
+        cardMedia: '1694px',
       },
     },
     extend: {
+      screens: {
+        cardMedia: '1692px',
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

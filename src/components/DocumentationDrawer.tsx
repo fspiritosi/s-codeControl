@@ -249,17 +249,10 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { useDocument } from '@/hooks/useDocuments'
-import { DocumentsValidation } from '@/store/documentValidation'
-import {
-  LockClosedIcon,
-  LockOpen2Icon,
-  PlusCircledIcon,
-} from '@radix-ui/react-icons'
 import { saveAs } from 'file-saver'
 import { useSearchParams } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import SimpleDocument from './SimpleDocument'
-import { Loader } from './svg/loader'
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'
 import { Separator } from './ui/separator'
@@ -295,27 +288,26 @@ export const DocumentationDrawer = () => {
   const [equipmentData, setEquipmentData] = useState<any>(null)
   const [documentTypes, setDocumentTypes] = useState([])
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (id) {
-          const data = await fetchEquipmentByDocument(id)
-          setEquipmentData(data)
-        } else if (document) {
-          const data = await fetchEmployeeByDocument(document)
-          setEmployeeData(data)
-        }
-      } catch (error) {
-        console.error('Error al obtener datos:', error)
+  const fetchData = async () => {
+    try {
+      if (id) {
+        setEquipmentData(await fetchEquipmentByDocument(id))
+      } else if (document) {
+        setEmployeeData(await fetchEmployeeByDocument(document))
       }
+    } catch (error) {
+      console.error('Error al obtener datos:', error)
     }
-    fetchData()
-  }, [id, document, fetchEmployeeByDocument, fetchEquipmentByDocument])
+  }
   useEffect(() => {
-    const fetchDocument = async () => {
-      const documentTypes: any = await fetchDocumentTypes()
-      setDocumentTypes(documentTypes)
-    }
+    fetchData()
+  }, [id, document])
+
+  const fetchDocument = async () => {
+    const documentTypes: any = await fetchDocumentTypes()
+    setDocumentTypes(documentTypes)
+  }
+  useEffect(() => {
     fetchDocument()
   }, [])
 
@@ -402,120 +394,74 @@ export const DocumentationDrawer = () => {
   const getBackgroundColorClass = (state: string) => {
     switch (state) {
       case 'presentado':
-        return 'bg-yellow-500'
+        return 'bg-gray-700'
       case 'aprobado':
         return 'bg-green-500'
       case 'vencido':
       case 'rechazado':
-        return 'bg-red-500'
+        return 'bg-red-700'
       default:
-        return 'bg-slate-300'
+        return 'bg-red-300'
     }
   }
 
-  const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
-  const resetAll = DocumentsValidation(state => state.resetAll)
   const selectedDocumentation =
     resource === 'empleado' ? documentation : documentationEquipment
 
   const handleOpen = async () => {
     setOpen(!open)
-    resetAll()
-    setLoading(false)
     return
   }
 
-  const [refs, setRefs] = useState<React.RefObject<HTMLButtonElement>[]>([])
-  const hasErrors = DocumentsValidation(state => state.hasErrors)
-  const setTotalForms = DocumentsValidation(state => state.setTotalForms)
-  const totalForms = DocumentsValidation(state => state.totalForms)
-  const addDocumentsErrors = DocumentsValidation(
-    state => state.addDocumentsErrors,
-  )
-
-  const ValidateForms = async () => {
-    for (let i = 0; i < refs.length; i++) {
-      const ref = refs[i]
-      if (ref.current) {
-        if (i === 0) {
-          ref.current.click()
-        } else {
-          ref.current.click()
-        }
-      }
-    }
-  }
-  const handleSendForms = async () => {
-    setLoading(true)
-    await Promise.all(
-      refs.map(async (ref, i) => {
-        if (ref.current) {
-          if (i === 0) {
-            ref.current.click()
-          } else {
-            await new Promise(resolve => setTimeout(resolve, 500)) // 0.5 segundos antes de cada clic.
-            ref.current?.click()
-          }
-        }
-      }),
-    )
-    setLoading(false)
-  }
-
-  const handleClicks = async () => {
-    // Ciclo que valida los campos de cada form
-    if (hasErrors) {
-      setLoading(true)
-      await ValidateForms()
-      setLoading(false)
-    }
-
-    // Si todos los inputs son validos, se hace el ciclo de clicks
-    if (!hasErrors) {
-      setLoading(true)
-      await handleSendForms()
-      setLoading(false)
-    }
-  }
-
-  const fillRef = () => {
-    setRefs(
-      Array(totalForms)
-        .fill(null)
-        .map(() => React.createRef()),
-    )
-  }
-
-  useEffect(() => {
-    // Crea una ref para cada formulario y añádela al estado.
-    fillRef()
-  }, [totalForms])
-  const handleNewForm = () => {
-    setTotalForms(true)
-    addDocumentsErrors(totalForms + 1)
-  }
-
   return (
-    <aside className="bg-slate-800 dark:bg-slate-300 w-[20%] h-full rounded-2xl text-white dark:text-black  p-4 min-w-[300px]">
-      <h2 className="text-center text-xl mb-5">
-        {resource === 'empleado'
-          ? 'Documentación del empleado'
-          : 'Documentacion del equipo'}
-      </h2>
+    <aside className="bg-slate-800 dark:bg-slate-300 rounded-2xl text-white mb-8 dark:text-black  p-4 ">
+      <h2 className="text-center text-xl mb-5">Documentos del recurso</h2>
       <Separator className="mb-4" />
-      {/* <Separator className="mb-4" /> */}
-      <p className="pl-2">
-        <Checkbox
-          className="bg-white"
-          checked={selectAll}
-          onClick={handleSelectAll}
-        />{' '}
-        seleccionar todos
-      </p>
+      <div className="flex flex-wrap justify-center">
+        <p className="pl-2 text-center flex flex-col justify-center items-center">
+          <Checkbox
+            className="bg-white"
+            checked={selectAll}
+            onClick={handleSelectAll}
+          />{' '}
+          marcar todos
+        </p>
+        <div className="flex w-full justify-center pt-3">
+          <AlertDialog open={open} onOpenChange={handleOpen}>
+            <AlertDialogTrigger asChild>
+              <Button variant="primary">Subir documento</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <div className="max-h-[90vh] overflow-y-scroll">
+                  <h2 className="text-lg font-semibold">
+                    Documento No multirecurso
+                  </h2>
+                  <Separator className="my-1" />
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Verifica que los documentos sean correctos y no hayan
+                    entradas duplicadas, en tal caso se subira la primera
+                    entrada encontrada y se marcaran las demas como duplicadas
+                  </p>
+                  <div className="space-y-3">
+                    <div>
+                      <SimpleDocument
+                        resource={resource}
+                        handleOpen={handleOpen}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </AlertDialogHeader>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </div>
+
       <Separator className="mb-4" />
-      <div className="h-full flex flex-col justify-between p-3">
-        <ul className="flex flex-col gap-3">
+      <div className=" flex flex-col justify-between p-3">
+        <ul className="flex flex-col gap-10">
           {selectedDocumentation.map((doc, index) => (
             <li key={index} className="flex items-center gap-2 ">
               <Checkbox
@@ -525,31 +471,24 @@ export const DocumentationDrawer = () => {
                 )}
                 onClick={() => handleDocumentSelect(doc)}
               />
-              <div className="flex-grow flex justify-between items-center">
-                <div style={{ width: '100px' }}>{doc?.name}</div>{' '}
-                <div style={{ width: '90px', textAlign: 'right' }}>
+              <div className="flex-grow flex justify-center items-center flex-wrap text-center">
+                <h4>{doc?.name}</h4>{' '}
+                <div className="w-24 text-right">
                   {' '}
                   <Badge
-                    style={{
-                      width: 90,
-                      height: 24,
-                      lineHeight: '24px',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                    className={getBackgroundColorClass(
+                    className={`${'whitespace-nowrap overflow-hidden text-ellipsis h-6 w-20 justify-center'} ${getBackgroundColorClass(
                       resource === 'empleado'
                         ? getDocumentState(doc?.name || '')
                         : getDocumentEquipmentState(doc?.name || ''),
-                    )}
+                    )}`}
                   >
                     {resource === 'empleado'
-                      ? getDocumentState(doc?.name || '') || 'faltante'
+                      ? getDocumentState(doc?.name || '') || 'Pendiente'
                       : getDocumentEquipmentState(doc?.name || '') ||
-                        'faltante'}
+                        'Pendiente'}
                   </Badge>
                 </div>
+              {/* <Separator /> */}
               </div>
             </li>
           ))}
@@ -558,68 +497,10 @@ export const DocumentationDrawer = () => {
       <Separator className="my-4" />
       <footer className="bg-white p-4 text-black rounded-2xl flex flex-col justify-center items-center">
         <h3>{selectedDocuments.length} documentos seleccionados</h3>
-        <Button variant="primary" onClick={handleDownloadSelected}>
-          Descargar seleccionados
+        <Button variant="primary" className='w-full text-wrap' onClick={handleDownloadSelected}>
+          Descargar
         </Button>
       </footer>
-      <div className="flex w-full justify-center pt-3">
-        <AlertDialog open={open} onOpenChange={handleOpen}>
-          <AlertDialogTrigger asChild>
-            <Button variant="primary">Subir documento</Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <div className="max-h-[90vh] overflow-y-scroll">
-                <h2 className="text-lg font-semibold">
-                  Documento No multirecurso
-                </h2>
-                <Separator className="my-1" />
-                <p className="text-sm text-muted-foreground mb-3">
-                  Sube los documentos que necesitas
-                </p>
-                <div className="space-y-3">
-                  {Array.from({ length: totalForms }).map((_, index) => (
-                    <div key={index} className="relative">
-                      <SimpleDocument
-                        resource={resource}
-                        index={index}
-                        handleOpen={handleOpen}
-                        refSubmit={refs[index]}
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="h-14 flex justify-end items-center">
-                  <Button
-                    variant="primary"
-                    onClick={handleNewForm}
-                    className="rounded-full "
-                  >
-                    <PlusCircledIcon className=" h-4 w-4 shrink-0" />
-                  </Button>
-                </div>
-                <div className="flex justify-evenly">
-                  <Button onClick={handleOpen}>Cancel</Button>
-                  <Button disabled={loading} onClick={handleClicks}>
-                    {loading ? (
-                      <Loader />
-                    ) : (
-                      <>
-                        {hasErrors ? (
-                          <LockClosedIcon className="mr-2" />
-                        ) : (
-                          <LockOpen2Icon className="mr-2" />
-                        )}
-                        {hasErrors ? 'Validar documentos' : 'Subir documentos'}
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </AlertDialogHeader>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
     </aside>
   )
 }

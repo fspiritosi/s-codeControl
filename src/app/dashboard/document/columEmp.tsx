@@ -4,14 +4,6 @@
 
 'use client'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -21,6 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
@@ -60,23 +53,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { useToast } from '@/components/ui/use-toast'
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions'
 import { cn } from '@/lib/utils'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { DotsVerticalIcon } from '@radix-ui/react-icons'
 import { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
-import { es, id } from 'date-fns/locale'
-import { ArrowUpDown, CalendarIcon, MoreHorizontal } from 'lucide-react'
-import { DotsVerticalIcon } from '@radix-ui/react-icons'
-import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { es } from 'date-fns/locale'
+import { ArrowUpDown, CalendarIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../../../supabase/supabase'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { useDocument } from '@/hooks/useDocuments'
-import { Badge } from '@/components/ui/badge'
 
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -230,9 +226,7 @@ export const columEmp: ColumnDef<Colum>[] = [
           if (data) {
             setDocumentHistory(data)
           }
-          //console.log('Datos del documento:', data)
-          // console.log('document: ', document.id)
-          //setViewModal(!viewModal)
+       
         } catch (error: any) {
           const message = await errorTranslate(error?.message)
           toast({
@@ -246,7 +240,6 @@ export const columEmp: ColumnDef<Colum>[] = [
         viewDocumentEmployees()
       }, [])
 
-      //console.log('data: ', data)
       return (
         <DropdownMenu>
           {integerModal && (
@@ -383,9 +376,6 @@ export const columEmp: ColumnDef<Colum>[] = [
                         </div>
                       </form>
                     </Form>
-                    {/* <Button variant="destructive" onClick={() => handleDelete()}>
-                    Eliminar
-                  </Button> */}
                   </div>
                 </DialogFooter>
               </DialogContent>
@@ -437,15 +427,9 @@ export const columEmp: ColumnDef<Colum>[] = [
               Copiar DNI
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleOpenViewModal(domain)}>
-              Ver documento
+              Historial de modificaciones
             </DropdownMenuItem>
-            {/* <DropdownMenuItem>
-              <Link
-                href={`/dashboard/equipment/action?action=edit&id=${equipment?.id}`}
-              >
-                Editar equipo
-              </Link>
-            </DropdownMenuItem> */}
+
             <DropdownMenuItem>
               {document.is_active ? (
                 <Button
@@ -535,11 +519,11 @@ export const columEmp: ColumnDef<Colum>[] = [
     header: 'DNI',
   },
   {
-    accessorKey: 'document_url',
-    header: 'Archivo',
-  },
-  {
     accessorKey: 'is_active',
     header: 'Activo',
+  },
+  {
+    accessorKey: 'document_url',
+    header: 'Archivo',
   },
 ]

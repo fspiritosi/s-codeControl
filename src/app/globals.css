@@ -79,3 +79,36 @@
 html {
   scroll-behavior: smooth;
 }
+
+
+details[open] summary ~ *{
+  animation: sweep .5s ease-in-out;
+}
+
+@keyframes sweep {
+ from {
+  opacity: 0;
+  transform: translateY(-10px);
+ }
+ to {
+    opacity: 1;
+    transform: translateY(0);
+ }
+} 
+
+summary::after {
+  content: '';
+  width: 18px;
+  height: 10px;
+  background: url('https://uploads.sitepoint.com/wp-content/uploads/2023/10/1697699669arrow.svg') no-repeat;
+  background-size: cover;
+  transition: 0.2s;
+}
+
+details[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}

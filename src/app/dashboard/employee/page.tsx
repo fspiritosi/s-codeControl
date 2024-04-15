@@ -1,5 +1,9 @@
 'use client'
+import { buttonVariants } from '@/components/ui/button'
+import { Card, CardDescription, CardTitle } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
+import { useSidebarOpen } from '@/store/sidebar'
 import Link from 'next/link'
 import { supabase } from '../../../../supabase/supabase'
 import { columns } from './columns'
@@ -33,30 +37,43 @@ const EmployeePage = () => {
       },
     )
     .subscribe()
-
+    const { expanded } = useSidebarOpen()
   return (
-    <section className="flex flex-col ">
-      <header className="flex gap-4 mt-6 justify-between items-center flex-wrap">
-        <div>
-          <h2 className="text-4xl mb-3">Empleados</h2>
-          <p>Aquí se muestra una tabla con los empleados registrados:</p>
-        </div>
-        <Link
-          href="/dashboard/employee/action?action=new"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Agregar nuevo empleado
-        </Link>
-      </header>
+    <section
+      className={cn(
+        'flex flex-col',
+        expanded ? 'md:max-w-[calc(100vw-198px)]' : 'md:max-w-[calc(100vw)]',
+      )}
+    >
+      <Card className="mt-6 px-8 md:mx-7">
+        <header className="flex gap-4 mt-6 justify-between items-center flex-wrap">
+          <div>
+            <CardTitle className="text-4xl mb-3">Empleados</CardTitle>
+            <CardDescription>
+              Aquí puedes ver los empleados de tu empresa
+             
+            </CardDescription>
+          </div>
+          <Link
+            href="/dashboard/employee/action?action=new"
+            className={[
+              'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
+              buttonVariants({ variant: 'outline' }),
+          ].join(' ')}
+          >
+            Agregar nuevo empleado
+          </Link>
+        </header>
 
-      <DataTable
-        columns={columns}
-        data={employees || []}
-        setActivesEmployees={setActivesEmployees}
-        setInactiveEmployees={setInactiveEmployees}
-        showDeletedEmployees={showDeletedEmployees}
-        setShowDeletedEmployees={setShowDeletedEmployees}
-      />
+        <DataTable
+          columns={columns}
+          data={employees || []}
+          setActivesEmployees={setActivesEmployees}
+          setInactiveEmployees={setInactiveEmployees}
+          showDeletedEmployees={showDeletedEmployees}
+          setShowDeletedEmployees={setShowDeletedEmployees}
+        />
+      </Card>
     </section>
   )
 }

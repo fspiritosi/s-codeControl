@@ -518,7 +518,7 @@ export default function EmployeeAccordion() {
   }
 
   return (
-    <section className={`${accion === 'new' ? 'w-full' : 'w-[75%]'} `}>
+    <section >
       <header className="flex justify-between gap-4 mt-6 flex-wrap">
         <div>
           {accion === 'edit' || accion === 'view' ? (
