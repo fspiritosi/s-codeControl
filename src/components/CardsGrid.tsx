@@ -1,17 +1,17 @@
-import React from 'react'
-import { company, companyData } from '@/types/types'
 import { formatCompanyName } from '@/lib/utils'
+import { Company } from '@/zodSchemas/schemas'
+import React from 'react'
 
 interface CardsGridProps {
-  allCompanies: companyData[]
-  onCardClick: (card: companyData) => void
+  allCompanies: Company
+  onCardClick: (card: Company[0]) => void
 }
 
 export const CardsGrid: React.FC<CardsGridProps> = ({
   allCompanies,
   onCardClick,
 }) => {
-  const handleCardClick = (card: companyData) => {
+  const handleCardClick = (card: Company[0]) => {
     onCardClick(card)
   }
   const activeCompanies = allCompanies.filter(company => company.is_active)

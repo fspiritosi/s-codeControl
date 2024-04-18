@@ -85,83 +85,6 @@ export type industry_type = {
   name: string
 }[]
 
-export type companyData = {
-  id: string
-  company_name: string
-  description: string
-  website: string
-  contact_email: string
-  contact_phone: string
-  address: string
-  by_defect: boolean
-  city: {
-    name: string
-    id: number
-  }
-  country: string
-  industry: string
-  company_logo: string
-  is_active?: boolean
-  company_cuit: string
-  province_id: {
-    name: string
-    id: number
-  }
-  owner_id: string
-  companies_employees: {
-    employees: {
-      id: string
-      city: {
-        name: string
-      }
-      cuil: string
-      file: string
-      email: string
-      phone: string
-      gender: string
-      street: string
-      picture: string
-      lastname: string
-      province: {
-        name: string
-      }
-      firstname: string
-      birthplace: {
-        name: string
-      }
-      company_id: string
-      created_at: string
-      nationality: string
-      postal_code: string
-      allocated_to: string[]
-      normal_hours: number
-      document_type: string
-      street_number: string
-      marital_status: string
-      document_number: string
-      affiliate_status: null | string // asumí que puede ser null o string
-      company_position: string
-      type_of_contract: string
-      workflow_diagram: {
-        name: string
-      }
-      is_active: boolean
-      date_of_admission: string
-      level_of_education: string
-      reason_for_termination: string
-      termination_date: string
-      contractor_employee: {
-        contractors: {
-          name: string
-          id: string
-        }
-      }[]
-      hierarchical_position: {
-        name: string
-      }
-    }
-  }[]
-}
 
 export type singUp = {
   email: string
@@ -237,6 +160,17 @@ export type Documents = {
   user_id: string | undefined
   document_url: string | null
 }
+
+export type SharedUser = {
+  id:            string;
+  role:          string;
+  email:         string;
+  avatar:        string;
+  fullname:      string;
+  created_at:    Date;
+  credential_id: string;
+}
+
 
 export type TypeOfVehicle = {
   id: string

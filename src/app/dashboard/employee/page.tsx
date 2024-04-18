@@ -37,12 +37,12 @@ const EmployeePage = () => {
       },
     )
     .subscribe()
-    const { expanded } = useSidebarOpen()
+  const { expanded } = useSidebarOpen()
   return (
     <section
       className={cn(
-        'flex flex-col',
-        expanded ? 'md:max-w-[calc(100vw-198px)]' : 'md:max-w-[calc(100vw)]',
+        '',
+        expanded ? 'md:max-w-[calc(100vw-198px)]' : 'md:max-w-[calc(100vw-70px)]',
       )}
     >
       <Card className="mt-6 px-8 md:mx-7">
@@ -51,7 +51,6 @@ const EmployeePage = () => {
             <CardTitle className="text-4xl mb-3">Empleados</CardTitle>
             <CardDescription>
               Aquí puedes ver los empleados de tu empresa
-             
             </CardDescription>
           </div>
           <Link
@@ -59,7 +58,7 @@ const EmployeePage = () => {
             className={[
               'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
               buttonVariants({ variant: 'outline' }),
-          ].join(' ')}
+            ].join(' ')}
           >
             Agregar nuevo empleado
           </Link>
