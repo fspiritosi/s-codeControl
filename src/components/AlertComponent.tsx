@@ -9,10 +9,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { companyData } from '@/types/types'
+import { Company } from '@/zodSchemas/schemas'
 import Link from 'next/link'
-import { supabase } from '../../supabase/supabase'
 import { useRouter } from 'next/navigation'
+import { supabase } from '../../supabase/supabase'
 
 export const AlertComponent = () => {
   const showAlert = useLoggedUserStore(state => state.showNoCompanyAlert)
@@ -24,7 +24,7 @@ export const AlertComponent = () => {
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
   const router = useRouter()
 
-  const handleAlertClose = async (company: companyData) => {
+  const handleAlertClose = async (company: Company[0]) => {
     await supabase
       .from('company')
       .update({ by_defect: true })

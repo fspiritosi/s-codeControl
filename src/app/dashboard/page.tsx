@@ -71,7 +71,7 @@ export default function Home() {
   return (
     <div>
       <section className="grid sm:grid-cols-2 grid-cols-1 gap-6 mx-7">
-        <div className="flex gap-3 flex-wrap justify-center cardMedia:justify-between">
+        <div className="flex gap-3 flex-wrap justify-center ">
           <Card className="min-w-[250px]">
             <CardHeader>
               <CardTitle>Empleados totales</CardTitle>
@@ -121,7 +121,7 @@ export default function Home() {
             </CardContent>
           </Card>
         </div>
-        <div className="flex gap-3 flex-wrap justify-center cardMedia:justify-between">
+        <div className="flex gap-3 flex-wrap justify-center">
           <Card className="min-w-[250px] text-center">
             <CardHeader>
               <CardTitle>Equipos Totales</CardTitle>

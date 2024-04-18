@@ -1,16 +1,16 @@
-import { companyData } from '@/types/types'
+import { Company } from '@/zodSchemas/schemas'
 import { create } from 'zustand'
 import { supabase } from '../../supabase/supabase'
 
 interface State {
   allVehicles: any[]
-  fetchVehicles: (actualCompany: companyData) => Promise<void>
+  fetchVehicles: (actualCompany: Company[0]) => Promise<void>
   setActivesVehicles: () => void
   vehiclesToShow: any[]
   endorsedVehicles: () => void
   noEndorsedVehicles: () => void
-  actualCompanyVehicles: companyData | null
-  setVehicleTypes: (type:string) => void
+  actualCompanyVehicles: Company[0] | null
+  setVehicleTypes: (type: string) => void
 }
 
 const setVehiclesToShow = (vehicles: any[]) => {
@@ -24,11 +24,10 @@ const setVehiclesToShow = (vehicles: any[]) => {
 
 export const VehiclesActualCompany = create<State>((set, get) => {
   const setActualCompany = async () => {
-
     const { data, error } = await supabase
-    .from('company')
-    .select(
-      `
+      .from('company')
+      .select(
+        `
       *,
       city (
         name,
@@ -64,9 +63,9 @@ export const VehiclesActualCompany = create<State>((set, get) => {
         )
       )
     `,
-    )
-    .eq('by_defect', true)
-    set({actualCompanyVehicles: data?.[0]})
+      )
+      .eq('by_defect', true)
+    set({ actualCompanyVehicles: data?.[0] })
     fetchVehicles()
   }
   setActualCompany()
@@ -92,14 +91,16 @@ export const VehiclesActualCompany = create<State>((set, get) => {
   }
 
   const setActivesVehicles = () => {
-    const activesVehicles = get().allVehicles.filter(vehicle => vehicle.is_active)
+    const activesVehicles = get().allVehicles.filter(
+      vehicle => vehicle.is_active,
+    )
     set({ vehiclesToShow: setVehiclesToShow(activesVehicles) })
   }
   const endorsedVehicles = () => {
-    const endorsedVehicles = get().allVehicles.filter(vehicle => 
-    vehicle.status === 'Avalado'
-   )
-  
+    const endorsedVehicles = get().allVehicles.filter(
+      vehicle => vehicle.status === 'Avalado',
+    )
+
     set({ vehiclesToShow: setVehiclesToShow(endorsedVehicles) })
   }
   const noEndorsedVehicles = () => {
@@ -108,16 +109,17 @@ export const VehiclesActualCompany = create<State>((set, get) => {
     )
     set({ vehiclesToShow: setVehiclesToShow(noEndorsedVehicles) })
   }
-  const setVehicleTypes = (type:string) => {
+  const setVehicleTypes = (type: string) => {
     if (type === 'Todos') {
       set({ vehiclesToShow: setVehiclesToShow(get().allVehicles) })
       return
     }
     const vehicles = get().allVehicles
-    const vehiclesToShow = vehicles.filter(vehicle => vehicle.types_of_vehicles?.name === type)
+    const vehiclesToShow = vehicles.filter(
+      vehicle => vehicle.types_of_vehicles?.name === type,
+    )
 
     set({ vehiclesToShow: setVehiclesToShow(vehiclesToShow) })
-
   }
 
   return {
@@ -128,6 +130,6 @@ export const VehiclesActualCompany = create<State>((set, get) => {
     endorsedVehicles,
     noEndorsedVehicles,
     actualCompanyVehicles: get()?.actualCompanyVehicles,
-    setVehicleTypes
+    setVehicleTypes,
   }
 })
