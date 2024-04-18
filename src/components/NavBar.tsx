@@ -68,6 +68,7 @@ import { FormControl, FormField, FormItem, FormMessage } from './ui/form'
 import { Separator } from './ui/separator'
 import { useToast } from './ui/use-toast'
 
+
 export default function NavBar() {
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
@@ -260,6 +261,7 @@ export default function NavBar() {
           <DropdownMenuTrigger>
             <div className="relative">
               {notifications?.length ? (
+
                 <DotFilledIcon className="text-blue-600 absolute size-7 top-[-8px] right-[-10px] p-0" />
               ) : (
                 false

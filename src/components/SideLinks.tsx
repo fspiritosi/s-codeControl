@@ -11,6 +11,7 @@ import {
   MdOutlinePersonAddAlt,
   MdOutlinePhoneIphone,
   MdOutlineSpaceDashboard,
+  MdOutlineCorporateFare
 } from 'react-icons/md'
 import { FiTruck } from 'react-icons/fi'
 export async function getServerSideProps(context: any) {
@@ -30,6 +31,11 @@ const links = [
     name: 'Dashboard',
     href: '/dashboard',
     icon: <MdOutlineSpaceDashboard size={sizeIcons} />,
+  },
+  {
+    name: 'Empresa',
+    href: '/dashboard/company/actualCompany',
+    icon: <MdOutlineCorporateFare size={sizeIcons} />,
   },
   {
     name: 'Empleados',
