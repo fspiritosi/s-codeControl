@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { companyData } from '@/types/types'
+import { Company } from '@/zodSchemas/schemas'
 import {
   BellIcon,
   CaretSortIcon,
@@ -91,7 +91,8 @@ export default function NavBar() {
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const router = useRouter()
-  const handleNewCompany = async (company: companyData) => {
+  const setActualCompany = useLoggedUserStore(state => state.setActualCompany)
+  const handleNewCompany = async (company: Company[0]) => {
     setNewDefectCompany(company)
     setIsOpen(false)
     router.push('/dashboard')
@@ -121,9 +122,13 @@ export default function NavBar() {
 
   const groups = [
     {
-      label: 'Compañia actual',
+      label: 'Compañia actual propia',
       teams: allCompanies
-        ?.filter(companyItem => companyItem.by_defect === true)
+        ?.filter(
+          companyItem =>
+            companyItem.by_defect === true &&
+            companyItem.owner_id === actualUser[0].id,
+        )
         ?.map(companyItem => ({
           label: companyItem.company_name,
           value: companyItem.id,
@@ -131,9 +136,23 @@ export default function NavBar() {
         })),
     },
     {
-      label: 'Otras compañias',
+      label: 'Otras compañias propias',
       teams: allCompanies
-        ?.filter(companyItem => companyItem.by_defect === false)
+        ?.filter(
+          companyItem =>
+            companyItem.by_defect === false &&
+            companyItem.owner_id === actualUser[0].id,
+        )
+        ?.map(companyItem => ({
+          label: companyItem.company_name,
+          value: companyItem.id,
+          logo: companyItem.company_logo,
+        })),
+    },
+    {
+      label: 'Compañias compartidas',
+      teams: allCompanies
+        ?.filter(companyItem => companyItem.owner_id !== actualUser[0].id)
         ?.map(companyItem => ({
           label: companyItem.company_name,
           value: companyItem.id,
@@ -147,7 +166,6 @@ export default function NavBar() {
   return (
     <nav className=" flex flex-shrink items-center justify-end sm:justify-between  text-white p-4 mb-2">
       <div className=" items-center hidden sm:flex">
-        {/* <TeamSwitcher /> asdasd*/}
         <Dialog open={showNewTeamDialog} onOpenChange={setShowNewTeamDialog}>
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild className="text-black dark:text-white">
@@ -219,9 +237,9 @@ export default function NavBar() {
                     href="/dashboard/company/new"
                     className={`${buttonVariants({
                       variant: 'outline',
-                    })} flex justify-center p-4`}
+                    })} flex justify-center p-4 w-full`}
                   >
-                    <PlusCircledIcon className="mr-2 h-5 w-5" />
+                    <PlusCircledIcon className="mr-2 scale-[3]" />
                     Agregar compañía
                   </Link>
                 </div>
@@ -246,6 +264,7 @@ export default function NavBar() {
               ) : (
                 false
               )}
+
               <BellIcon className="text-black cursor-pointer size-5 dark:text-white" />
             </div>
           </DropdownMenuTrigger>
