@@ -68,7 +68,7 @@ export default function page() {
         />
       </div>
 
-      <Tabs defaultValue="users">
+      <Tabs defaultValue="general">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>
