@@ -23,7 +23,7 @@ import { useState } from 'react'
 import { set } from 'date-fns'
 import { cn } from '@/lib/utils'
 import  {ItemCompany}  from '@/app/dashboard/company/companyComponents/itemCompany'
-
+import { useCompanyData } from '../../../../hooks/useCompanyData'
 
 
 
@@ -33,7 +33,12 @@ export default function page() {
   const company = useLoggedUserStore(state => state.actualCompany)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const [verify, setVerify] = useState(false)
-  
+  const { fetchCompanyUser } = useCompanyData() 
+
+  const companyUsers = fetchCompanyUser(company?.id!)
+  console.log(company?.id)
+  console.log(companyUsers)
+
   function compare(text: string){
     if(text === company?.company_name){
       setVerify(true)

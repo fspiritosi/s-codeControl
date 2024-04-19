@@ -108,5 +108,22 @@ export const useCompanyData = () => {
         useLoggedUserStore.setState({ allCompanies: data || [] })
       }
     },
+
+    fetchCompanyUser: async (companyId: String) => {
+      try {
+        const data = await supabase
+        .from('share_company_users')
+        .select('*')
+        .eq('company_id', companyId)
+        const users = await data
+        return users
+      } catch (error) {
+        console.error('Error al obtener los usuarios de la compañía:', error)
+        
+      }
+      
+
+      
+    }
   }
 }
