@@ -27,7 +27,7 @@ import { useState } from 'react'
 import { columns } from './components/columns'
 import { DataTable } from './components/data-table'
 import { ItemCompany } from './components/itemCompany'
-import { useCompanyData } from '../../../../hooks/useCompanyData'
+
 
 
 
@@ -37,14 +37,20 @@ export default function page() {
   const company = useLoggedUserStore(state => state.actualCompany)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const [verify, setVerify] = useState(false)
-  const { fetchCompanyUser } = useCompanyData() 
 
-  const companyUsers = fetchCompanyUser(company?.id!)
-  console.log(company?.id)
-  console.log(companyUsers)
+  const data = actualCompany?.share_company_users.map(( user ) => {
+    return {
+      email: user.profile.email,
+      fullname: user.profile.fullname,
+      role: user.role,
+      alta: user.created_at,
+      id:user.id,
+      img: user.profile.avatar,
+    }
+  }) || []
 
-  function compare(text: string){
-    if(text === company?.company_name){
+  function compare(text: string) {
+    if (text === company?.company_name) {
       setVerify(true)
     } else {
       setVerify(false)
@@ -52,7 +58,7 @@ export default function page() {
   }
 
   return (
-    <div className="flex flex-col gap-6 py-4">
+    <div className="flex flex-col gap-6 py-4 px-6">
       <div className="w-full flex mb-6">
         <Image
           src={company?.company_logo || ''}
