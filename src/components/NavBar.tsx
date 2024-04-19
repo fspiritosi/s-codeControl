@@ -88,6 +88,7 @@ export default function NavBar() {
     }
   }
 
+
   const [isOpen, setIsOpen] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -95,6 +96,7 @@ export default function NavBar() {
   const setActualCompany = useLoggedUserStore(state => state.setActualCompany)
   const handleNewCompany = async (company: Company[0]) => {
     setNewDefectCompany(company)
+    setActualCompany(company)
     setIsOpen(false)
     router.push('/dashboard')
   }
