@@ -287,3 +287,128 @@ export const accordionSchema = z.object({
     })
     .or(z.string()),
 })
+
+export const ProfileSchema = z.object({
+  id: z.string(),
+  role: z.string(),
+  email: z.string(),
+  avatar: z.string(),
+  fullname: z.string(),
+  created_at: z.coerce.date(),
+  credential_id: z.string(),
+})
+export type Profile = z.infer<typeof ProfileSchema>
+
+export const ShareCompanyUserSchema = z.object({
+  "id": z.number(),
+  "role": z.string(),
+  "profile": ProfileSchema,
+  "company_id": z.string(),
+  "created_at": z.coerce.date(),
+  "profile_id": z.string(),
+  
+})
+
+export type ShareCompanyUser = z.infer<typeof ShareCompanyUserSchema>
+
+export const ContractorsSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  created_at: z.coerce.date(),
+})
+export type Contractors = z.infer<typeof ContractorsSchema>
+
+export const ContractorEmployeeSchema = z.object({
+  contractors: ContractorsSchema,
+})
+export type ContractorEmployee = z.infer<typeof ContractorEmployeeSchema>
+
+export const BirthplaceSchema = z.object({
+  name: z.string(),
+})
+export type Birthplace = z.infer<typeof BirthplaceSchema>
+
+export const EmployeesSchema = z.object({
+  id: z.string(),
+  city: BirthplaceSchema,
+  cuil: z.string(),
+  file: z.string(),
+  email: z.string(),
+  phone: z.string(),
+  gender: z.string(),
+  status: z.string(),
+  street: z.string(),
+  picture: z.string(),
+  lastname: z.string(),
+  province: BirthplaceSchema,
+  firstname: z.string(),
+  is_active: z.boolean(),
+  birthplace: BirthplaceSchema,
+  company_id: z.string(),
+  created_at: z.coerce.date(),
+  nationality: z.string(),
+  postal_code: z.string(),
+  allocated_to: z.array(z.string()),
+  normal_hours: z.string(),
+  document_type: z.string(),
+  street_number: z.string(),
+  marital_status: z.string(),
+  document_number: z.string(),
+  affiliate_status: z.null(),
+  company_position: z.string(),
+  termination_date: z.null(),
+  type_of_contract: z.string(),
+  workflow_diagram: BirthplaceSchema,
+  date_of_admission: z.string(),
+  level_of_education: z.string(),
+  contractor_employee: z.array(ContractorEmployeeSchema),
+  hierarchical_position: BirthplaceSchema,
+  reason_for_termination: z.null(),
+})
+export type Employees = z.infer<typeof EmployeesSchema>
+
+export const CompaniesEmployeeSchema = z.object({
+  employees: EmployeesSchema,
+})
+export type CompaniesEmployee = z.infer<typeof CompaniesEmployeeSchema>
+
+export const CitySchema = z.object({
+  id: z.number(),
+  name: z.string(),
+})
+export type City = z.infer<typeof CitySchema>
+
+export const CompanySchema = z.array(
+  z.object({
+    id: z.string(),
+    company_name: z.string(),
+    description: z.string(),
+    website: z.string(),
+    contact_email: z.string(),
+    contact_phone: z.string(),
+    address: z.string(),
+    city: CitySchema,
+    country: z.string(),
+    industry: z.string(),
+    company_logo: z.string(),
+    is_active: z.boolean(),
+    company_cuit: z.string(),
+    province_id: CitySchema,
+    owner_id: z.string(),
+    by_defect: z.boolean(),
+    share_company_users: z.array(ShareCompanyUserSchema),
+    companies_employees: z.array(CompaniesEmployeeSchema),
+  }),
+)
+export type Company = z.infer<typeof CompanySchema>
+
+export const SharedUser = z.object({
+  email: z.string(),
+  fullname: z.string(),
+  role: z.string(),
+  alta: z.date(),
+  id: z.number(),
+  img: z.string(),
+})
+
+export type SharedUser = z.infer<typeof SharedUser>

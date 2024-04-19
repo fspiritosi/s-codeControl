@@ -415,10 +415,10 @@ export const DocumentationDrawer = () => {
   }
 
   return (
-    <aside className="bg-slate-800 dark:bg-slate-300 w-[20%] h-full rounded-2xl text-white mb-8 dark:text-black  p-4 min-w-[300px]">
+    <aside className="bg-slate-800 dark:bg-slate-300 rounded-2xl text-white mb-8 dark:text-black  p-4 ">
       <h2 className="text-center text-xl mb-5">Documentos del recurso</h2>
       <Separator className="mb-4" />
-      <div className="flex">
+      <div className="flex flex-wrap justify-center">
         <p className="pl-2 text-center flex flex-col justify-center items-center">
           <Checkbox
             className="bg-white"
@@ -460,8 +460,8 @@ export const DocumentationDrawer = () => {
       </div>
 
       <Separator className="mb-4" />
-      <div className="h-full flex flex-col justify-between p-3">
-        <ul className="flex flex-col gap-3">
+      <div className=" flex flex-col justify-between p-3">
+        <ul className="flex flex-col gap-10">
           {selectedDocumentation.map((doc, index) => (
             <li key={index} className="flex items-center gap-2 ">
               <Checkbox
@@ -471,8 +471,8 @@ export const DocumentationDrawer = () => {
                 )}
                 onClick={() => handleDocumentSelect(doc)}
               />
-              <div className="flex-grow flex justify-between items-center">
-                <div className="w-28">{doc?.name}</div>{' '}
+              <div className="flex-grow flex justify-center items-center flex-wrap text-center">
+                <h4>{doc?.name}</h4>{' '}
                 <div className="w-24 text-right">
                   {' '}
                   <Badge
@@ -488,6 +488,7 @@ export const DocumentationDrawer = () => {
                         'Pendiente'}
                   </Badge>
                 </div>
+              {/* <Separator /> */}
               </div>
             </li>
           ))}
@@ -496,8 +497,8 @@ export const DocumentationDrawer = () => {
       <Separator className="my-4" />
       <footer className="bg-white p-4 text-black rounded-2xl flex flex-col justify-center items-center">
         <h3>{selectedDocuments.length} documentos seleccionados</h3>
-        <Button variant="primary" onClick={handleDownloadSelected}>
-          Descargar seleccionados
+        <Button variant="primary" className='w-full text-wrap' onClick={handleDownloadSelected}>
+          Descargar
         </Button>
       </footer>
     </aside>

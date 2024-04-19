@@ -1,11 +1,8 @@
 'use client'
-import { company, industry_type } from './../types/types'
-import { toast } from '@/components/ui/use-toast'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { UUID } from 'crypto'
 import { supabase } from '../../supabase/supabase'
+import { company } from './../types/types'
 import { useEdgeFunctions } from './useEdgeFunctions'
-import { useState } from 'react'
 //import { industry } from './../types/types';
 
 export const useCompanyData = () => {

@@ -1,9 +1,17 @@
+'use client'
 import { CompanyRegister } from '@/components/CompanyRegister'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
+import { useSidebarOpen } from '@/store/sidebar'
 export default function companyRegister() {
+
+  const { expanded } = useSidebarOpen()
   return (
-    <section className="">
-      <Card className="mt-6 p-8 ">
+    <section  className={cn(
+      'md:mx-7',
+      expanded ? 'md:max-w-[calc(100vw-198px)]' : 'md:max-w-[calc(100vw-70px)]',
+    )}>
+      <Card className="mt-6 p-8">
         <CardTitle className="text-4xl mb-3">Registrar Compañía</CardTitle>
         <CardDescription>
           Completa este formulario con los datos de tu nueva compañia

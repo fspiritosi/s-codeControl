@@ -204,8 +204,6 @@ export function DataTable<TData, TValue>({
       columnFilters,
     },
   })
-  const { expanded } = useSidebarOpen()
-  const totalWidth = `calc(100vw - ${expanded ? '296px' : '167px'})`
 
   const handleClearFilters = () => {
     table.getAllColumns().forEach(column => {
@@ -238,7 +236,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div>
-      <div className="flex items-center py-4 flex-wrap">
+      <div className="flex items-center py-4 flex-wrap gap-y-2 overflow-auto">
         <Input
           placeholder="Buscar por nombre"
           value={
@@ -329,11 +327,6 @@ export function DataTable<TData, TValue>({
       </div>
       <div
         className="rounded-md border"
-        style={{
-          overflow: 'auto',
-          width: '100%',
-          maxWidth: totalWidth,
-        }}
       >
         <Table>
           <TableHeader>

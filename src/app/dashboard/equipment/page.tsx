@@ -1,7 +1,10 @@
 'use client'
 
+import { buttonVariants } from '@/components/ui/button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
+import { useSidebarOpen } from '@/store/sidebar'
 import { VehiclesActualCompany } from '@/store/vehicles'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -10,7 +13,6 @@ import { supabase } from '../../../../supabase/supabase'
 import { columns } from './columns'
 import { DataEquipment } from './data-equipment'
 export default function Equipment() {
-  // const [vehiclesData, setVehiclesData] = useState<unknown[]>([])
   const allCompany = useLoggedUserStore(state => state.allCompanies)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const fetchVehicles = VehiclesActualCompany(state => state.fetchVehicles)
@@ -56,10 +58,17 @@ export default function Equipment() {
     equipo = 'Otros'
   }
 
+  const { expanded } = useSidebarOpen()
+
   return (
-    <section>
-      <Card className="mt-6 px-8">
-        <header className="flex gap-4 mt-6 justify-between items-center">
+    <section
+      className={cn(
+        'flex flex-col',
+        expanded ? 'md:max-w-[calc(100vw-190px)]' : 'md:max-w-[calc(100vw)]',
+      )}
+    >
+      <Card className="mt-6 px-8  md:mx-7">
+        <header className="flex gap-4 mt-6 justify-between items-center flex-wrap">
           <div>
             <CardTitle className="text-4xl mb-3">{equipo}</CardTitle>
             <CardDescription>
@@ -70,7 +79,10 @@ export default function Equipment() {
           <div>
             <Link
               href="/dashboard/equipment/action?action=new"
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              className={[
+                'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
+                buttonVariants({ variant: 'outline', size: 'lg' }),
+              ].join(' ')}
             >
               Agregar nuevo equipo
             </Link>
