@@ -20,34 +20,45 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import Image from 'next/image'
 import { useState } from 'react'
 import { columns } from './components/columns'
 import { DataTable } from './components/data-table'
 import { ItemCompany } from './components/itemCompany'
-
-
-
-
-
-
 export default function page() {
   const company = useLoggedUserStore(state => state.actualCompany)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const [verify, setVerify] = useState(false)
+  const ownerUser = useLoggedUserStore(state => state.profile)
 
-  const data = actualCompany?.share_company_users.map(( user ) => {
+  const owner = ownerUser?.map(user => {
     return {
-      email: user.profile.email,
-      fullname: user.profile.fullname,
-      role: user.role,
-      alta: user.created_at,
-      id:user.id,
-      img: user.profile.avatar,
+      email: user.email,
+      fullname: user.fullname as string,
+      role: 'Propietario',
+      alta: user.created_at ? new Date(user.created_at) : new Date(),
+      id: user.id || '',
+      img: user.avatar || '',
     }
-  }) || []
+  })
+
+  const sharedUsers =
+    actualCompany?.share_company_users.map(user => {
+      return {
+        email: user.profile.email,
+        fullname: user.profile.fullname,
+        role: user.role,
+        alta: user.created_at,
+        id: user.id,
+        img: user.profile.avatar,
+      }
+    }) || []
+
+    console.log(sharedUsers.concat(owner || []), 'concat')
+
+  const data =owner?.concat(sharedUsers || [])
 
   function compare(text: string) {
     if (text === company?.company_name) {
@@ -68,7 +79,7 @@ export default function page() {
         />
       </div>
 
-      <Tabs defaultValue="general">
+      <Tabs defaultValue="users">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>
@@ -179,7 +190,7 @@ export default function page() {
                   </CardDescription>
                 </div>
               </div>
-              <DataTable data={data} columns={columns} />
+              <DataTable data={data || []} columns={columns} />
             </div>
           </Card>
         </TabsContent>
