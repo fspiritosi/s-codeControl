@@ -10,9 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { useSidebarOpen } from '@/store/sidebar'
 import { VehiclesActualCompany } from '@/store/vehicles'
 import Link from 'next/link'
 import { ExpiredColums } from './colums'
@@ -61,13 +59,7 @@ export default function Home() {
   const setShowLastMonthDocuments = useLoggedUserStore(
     state => state.setShowLastMonthDocuments,
   )
-  const { expanded } = useSidebarOpen()
-
   const pendingDocuments = useLoggedUserStore(state => state.pendingDocuments)
-  // <Card className="flex justify-center xl:justify-between mt-6 xl:flex-nowrap flex-wrap dark:bg-slate-950">
-  // <section className="flex justify-between gap-5 md:mx-7 flex-wrap">
-
-  // 'md:w-[200px]' : 'w-[68px] '
   return (
     <div>
       <section className="grid sm:grid-cols-2 grid-cols-1 gap-6 mx-7">
@@ -169,14 +161,7 @@ export default function Home() {
           </Card>
         </div>
       </section>
-      <Card
-        className={cn(
-          'md:mx-7  grid grid-cols-1 mt-6 xl:grid-cols-2 dark:bg-slate-950',
-          expanded
-            ? 'md:max-w-[calc(100vw-190px)]'
-            : 'md:max-w-[calc(100vw)]',
-        )}
-      >
+      <Card className="md:mx-7  grid grid-cols-1 mt-6 xl:grid-cols-2 dark:bg-slate-950">
         <section>
           <CardHeader>
             <CardTitle>Proximos vencimientos</CardTitle>

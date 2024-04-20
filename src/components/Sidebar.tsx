@@ -13,6 +13,7 @@ import Logo1 from '../../public/logo-azul.png'
 import LogoBlanco from '../../public/logoLetrasBlancas.png'
 import LogoNegro from '../../public/logoLetrasNegras.png'
 import SideLinks from './SideLinks'
+import { useEffect } from 'react'
 interface SideBarProps {
   expanded: boolean
 }
@@ -21,7 +22,8 @@ export default function SideBar() {
   const { expanded, setExpanded } = useSidebarOpen()
   const { theme } = useTheme()
   const toggleSidebar = () => {
-    setExpanded(!expanded)
+    setExpanded(!expanded);
+
   }
 
   return (

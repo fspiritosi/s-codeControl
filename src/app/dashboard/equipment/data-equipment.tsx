@@ -41,7 +41,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { useSidebarOpen } from '@/store/sidebar'
 import { VehiclesActualCompany } from '@/store/vehicles'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -151,8 +150,6 @@ export function DataEquipment<TData, TValue>({
       columnFilters,
     },
   })
-  const { expanded } = useSidebarOpen()
-  const totalWidth = `calc(100vw - ${expanded ? '296px' : '167px'})`
   const setActivesVehicles = VehiclesActualCompany(
     state => state.setActivesVehicles,
   )
@@ -188,7 +185,7 @@ export function DataEquipment<TData, TValue>({
 
   return (
     <div>
-      <div className="flex items-center py-4 flex-wrap gap-y-2">
+      <div className="flex items-center py-4 flex-wrap gap-y-2 overflow-auto">
         <Input
           placeholder="Buscar por Dominio"
           value={(table.getColumn('domain')?.getFilterValue() as string) ?? ''}
@@ -277,9 +274,7 @@ export function DataEquipment<TData, TValue>({
           </DropdownMenu>
         </div>
       </div>
-      <div
-        className="rounded-md border"
-      >
+      <div className="rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (

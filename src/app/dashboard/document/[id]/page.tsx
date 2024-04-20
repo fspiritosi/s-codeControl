@@ -15,10 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { cn } from '@/lib/utils'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../../../supabase/supabase'
-import { useSidebarOpen } from '@/store/sidebar'
-import { cn } from '@/lib/utils'
 
 export default function page({ params }: { params: { id: string } }) {
   const [documents_employees, setDocumentsEmployees] = useState<any[] | null>(
@@ -104,14 +103,8 @@ export default function page({ params }: { params: { id: string } }) {
   useEffect(() => {
     fetchDocument()
   }, [])
-  const { expanded } = useSidebarOpen()
   return (
-    <section
-    className={cn(
-      'md:mx-7',
-      expanded ? 'md:max-w-[calc(100vw-198px)]' : 'md:max-w-[calc(100vw)]',
-    )}
-  >
+    <section className='md:mx-7'>
       <Card className="p-4">
         <CardTitle className=" text-2xl">
           Detalle del Documento {documents_employees?.[0]?.document_types?.name}
