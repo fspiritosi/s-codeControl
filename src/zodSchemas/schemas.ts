@@ -300,7 +300,7 @@ export const ProfileSchema = z.object({
 export type Profile = z.infer<typeof ProfileSchema>
 
 export const ShareCompanyUserSchema = z.object({
-  "id": z.number(),
+  "id": z.string(),
   "role": z.string(),
   "profile": ProfileSchema,
   "company_id": z.string(),
@@ -394,9 +394,9 @@ export const CompanySchema = z.array(
     is_active: z.boolean(),
     company_cuit: z.string(),
     province_id: CitySchema,
-    owner_id: z.string(),
+    owner_id: ProfileSchema,
     by_defect: z.boolean(),
-    share_company_users: z.array(ShareCompanyUserSchema),
+    share_company_users: z.array(ShareCompanyUserSchema) || null,
     companies_employees: z.array(CompaniesEmployeeSchema),
   }),
 )
@@ -407,7 +407,7 @@ export const SharedUser = z.object({
   fullname: z.string(),
   role: z.string(),
   alta: z.date(),
-  id: z.number(),
+  id: z.string(),
   img: z.string(),
 })
 

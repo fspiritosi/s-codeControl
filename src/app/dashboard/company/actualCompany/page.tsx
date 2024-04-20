@@ -56,8 +56,6 @@ export default function page() {
       }
     }) || []
 
-    console.log(sharedUsers.concat(owner || []), 'concat')
-
   const data =owner?.concat(sharedUsers || [])
 
   function compare(text: string) {

@@ -1,6 +1,5 @@
-"use client"
+'use client'
 
-import * as React from "react"
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -14,7 +13,8 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table"
+} from '@tanstack/react-table'
+import * as React from 'react'
 
 import {
   Table,
@@ -23,10 +23,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from '@/components/ui/table'
 
-import { DataTablePagination } from "./data-table-pagination"
-import { DataTableToolbar } from "./data-table-toolbar"
+import { DataTablePagination } from './data-table-pagination'
+import { DataTableToolbar } from './data-table-toolbar'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -41,7 +41,7 @@ export function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+    [],
   )
   const [sorting, setSorting] = React.useState<SortingState>([])
 
@@ -73,16 +73,16 @@ export function DataTable<TData, TValue>({
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
+            {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
+                {headerGroup.headers.map(header => {
                   return (
                     <TableHead key={header.id} colSpan={header.colSpan}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   )
@@ -92,16 +92,16 @@ export function DataTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
+              table.getRowModel().rows.map(row => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
+                  data-state={row.getIsSelected() && 'selected'}
                 >
-                  {row.getVisibleCells().map((cell) => (
+                  {row.getVisibleCells().map(cell => (
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

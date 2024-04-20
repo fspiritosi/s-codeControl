@@ -485,7 +485,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
       'postgres_changes',
       { event: '*', schema: 'public', table: 'notifications' },
       payload => {
-        console.log('payload', payload)
         allNotifications()
       },
     )
@@ -501,8 +500,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
       },
     )
     .subscribe()
-
-  
 
   const setActivesEmployees = async () => {
     const employeesToShow = await getEmployees(true)
@@ -533,7 +530,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
   }
 
   const setNewDefectCompany = async (company: Company[0]) => {
-    if (company.owner_id !== get()?.profile?.[0]?.id) {
+    if (company.owner_id.id !== get()?.profile?.[0]?.id) {
       resetDefectCompanies(company)
       return
     }
@@ -555,7 +552,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       } else {
         const validatedData = CompanySchema.safeParse(data)
         if (!validatedData.success) {
-          return console.error('Error al obtener el perfil: Validacion')
+          return console.error('Error al obtener el perfil: Validacion',validatedData.error)
         }
 
         setActualCompany(validatedData.data[0])
@@ -581,8 +578,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
       .select(
         `
         *,
-        share_company_users(
-*,
+        owner_id(*),
+        share_company_users(*,
           profile(*)
         ),
         city (
@@ -622,11 +619,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
       .eq('owner_id', id)
 
-    console.log(data, 'data')
-
     const validatedData = CompanySchema.safeParse(data)
     if (!validatedData.success) {
-      return console.error('Error al obtener el perfil: Validacion')
+      return console.error('Error al obtener el perfil: Validacion',validatedData.error)
     }
 
     if (error) {
@@ -653,16 +648,16 @@ export const useLoggedUserStore = create<State>((set, get) => {
     }
   }
 
-  
-const channels4 = supabase.channel('custom-all-channel')
-.on(
-  'postgres_changes',
-  { event: '*', schema: 'public', table: 'share_company_users' },
-  (payload) => {
-    howManyCompanies(get()?.profile?.[0]?.id || '')
-  }
-)
-.subscribe()
+  const channels4 = supabase
+    .channel('custom-all-channel')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'share_company_users' },
+      payload => {
+        howManyCompanies(get()?.profile?.[0]?.id || '')
+      },
+    )
+    .subscribe()
 
   const profileUser = async (id: string) => {
     if (!id) return
