@@ -1,9 +1,10 @@
 'use client'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Card, CardDescription, CardTitle } from '@/components/ui/card'
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatDate } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { useRouter } from 'next/navigation'
 
 import UpdateDocuments from '@/components/UpdateDocuments'
 import { Badge } from '@/components/ui/badge'
@@ -19,8 +20,10 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../../../supabase/supabase'
 import { useSidebarOpen } from '@/store/sidebar'
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 
 export default function page({ params }: { params: { id: string } }) {
+  const router = useRouter()
   const [documents_employees, setDocumentsEmployees] = useState<any[] | null>(
     [],
   )
@@ -113,39 +116,44 @@ export default function page({ params }: { params: { id: string } }) {
     )}
   >
       <Card className="p-4">
-        <CardTitle className=" text-2xl">
-          Detalle del Documento {documents_employees?.[0]?.document_types?.name}
-        </CardTitle>
-        <div className="flex flex-col">
-          <Badge
-            variant={
-              documents_employees?.[0]?.state === 'rechazado'
-                ? 'destructive'
-                : documents_employees?.[0]?.state === 'aprobado'
-                  ? 'success'
-                  : documents_employees?.[0]?.state === 'vencido'
-                    ? 'yellow'
-                    : 'default'
-            }
-            className={'mb-3 capitalize w-fit'}
-          >
-            {documents_employees?.[0]?.state}
-          </Badge>
-          {documents_employees?.[0]?.deny_reason && (
-            <Badge
-              variant={
-                documents_employees?.[0]?.state === 'rechazado' ||
-                documents_employees?.[0]?.state === 'vencido'
-                  ? 'destructive'
-                  : documents_employees?.[0]?.state === 'aprobado'
-                    ? 'success'
-                    : 'default'
-              }
-              className="mb-3 capitalize w-fit"
-            >
-              {documents_employees?.[0]?.deny_reason}
-            </Badge>
-          )}
+        <div className='flex justify-between'>
+          <div>
+            <CardTitle className=" text-2xl">
+              Detalle del Documento {documents_employees?.[0]?.document_types?.name}
+            </CardTitle>
+            <div className="flex flex-col">
+              <Badge
+                variant={
+                  documents_employees?.[0]?.state === 'rechazado'
+                    ? 'destructive'
+                    : documents_employees?.[0]?.state === 'aprobado'
+                      ? 'success'
+                      : documents_employees?.[0]?.state === 'vencido'
+                        ? 'yellow'
+                        : 'default'
+                }
+                className={'mb-3 capitalize w-fit'}
+              >
+                {documents_employees?.[0]?.state}
+              </Badge>
+              {documents_employees?.[0]?.deny_reason && (
+                <Badge
+                  variant={
+                    documents_employees?.[0]?.state === 'rechazado' ||
+                    documents_employees?.[0]?.state === 'vencido'
+                      ? 'destructive'
+                      : documents_employees?.[0]?.state === 'aprobado'
+                        ? 'success'
+                        : 'default'
+                  }
+                  className="mb-3 capitalize w-fit"
+                >
+                  {documents_employees?.[0]?.deny_reason}
+                </Badge>
+              )}
+            </div>
+          </div>
+         <Button onClick={router.back}>volver</Button>
         </div>
         <div className="grid lg:grid-cols-3 grid-cols-1 gap-col-3 ">
           <div className="lg:max-w-[30vw] col-span-1">
