@@ -49,6 +49,7 @@ import { formatRelative } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Check, CheckIcon } from 'lucide-react'
 import Link from 'next/link'
+import cookie from 'js-cookie'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import ModalCompany from './ModalCompany'
@@ -94,11 +95,15 @@ export default function NavBar() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const router = useRouter()
   const setActualCompany = useLoggedUserStore(state => state.setActualCompany)
+
   const handleNewCompany = async (company: Company[0]) => {
+    const actualCompany = cookie.get('actualCompanyId')
+    // cookie.set('actualCompanyId', company.id)
     setNewDefectCompany(company)
     setActualCompany(company)
     setIsOpen(false)
     router.push('/dashboard')
+    router.refresh()
   }
   const { control, formState, setValue } = useForm()
   const updateProfileAvatar = async (imageUrl: string) => {
@@ -130,7 +135,7 @@ export default function NavBar() {
         ?.filter(
           companyItem =>
             companyItem.by_defect === true &&
-            companyItem.owner_id === actualUser[0].id,
+            companyItem.owner_id.id === actualUser[0].id,
         )
         ?.map(companyItem => ({
           label: companyItem.company_name,
@@ -144,7 +149,7 @@ export default function NavBar() {
         ?.filter(
           companyItem =>
             companyItem.by_defect === false &&
-            companyItem.owner_id === actualUser[0].id,
+            companyItem.owner_id.id === actualUser[0].id,
         )
         ?.map(companyItem => ({
           label: companyItem.company_name,
@@ -155,7 +160,7 @@ export default function NavBar() {
     {
       label: 'Compañias compartidas',
       teams: allCompanies
-        ?.filter(companyItem => companyItem.owner_id !== actualUser[0].id)
+        ?.filter(companyItem => companyItem.owner_id.id !== actualUser[0].id)
         ?.map(companyItem => ({
           label: companyItem.company_name,
           value: companyItem.id,
