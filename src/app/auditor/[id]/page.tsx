@@ -226,9 +226,9 @@ export default function page({ params }: { params: { id: string } }) {
                       </Avatar>
                       <CardTitle className="font-bold">
                         {resource === 'employee'
-                          ? documents_employees?.[0]?.applies.firstname +
+                          ? documents_employees?.[0]?.applies.lastname +
                             ' ' +
-                            documents_employees?.[0]?.applies.lastname
+                            documents_employees?.[0]?.applies.firstname
                           : documents_employees?.[0]?.applies.domain ||
                             documents_employees?.[0]?.applies.intern_number}
                       </CardTitle>
