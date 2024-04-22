@@ -1,15 +1,15 @@
 import { Company } from '@/zodSchemas/schemas'
 import { create } from 'zustand'
 import { supabase } from '../../supabase/supabase'
+import cookie from 'js-cookie'
 
 interface State {
   allVehicles: any[]
-  fetchVehicles: (actualCompany: Company[0]) => Promise<void>
+  fetchVehicles: () => Promise<void>
   setActivesVehicles: () => void
   vehiclesToShow: any[]
   endorsedVehicles: () => void
   noEndorsedVehicles: () => void
-  actualCompanyVehicles: Company[0] | null
   setVehicleTypes: (type: string) => void
 }
 
@@ -23,54 +23,12 @@ const setVehiclesToShow = (vehicles: any[]) => {
 }
 
 export const VehiclesActualCompany = create<State>((set, get) => {
-  const setActualCompany = async () => {
-    const { data, error } = await supabase
-      .from('company')
-      .select(
-        `
-      *,
-      city (
-        name,
-        id
-      ),
-      province_id (
-        name,
-        id
-      ),
-      companies_employees (
-        employees(
-          *,
-          city (
-            name
-          ),
-          province(
-            name
-          ),
-          workflow_diagram(
-            name
-          ),
-          hierarchical_position(
-            name
-          ),
-          birthplace(
-            name
-          ),
-          contractor_employee(
-            contractors(
-              *
-            )
-          )
-        )
-      )
-    `,
-      )
-      .eq('by_defect', true)
-    set({ actualCompanyVehicles: data?.[0] })
-    fetchVehicles()
-  }
-  setActualCompany()
+
 
   const fetchVehicles = async () => {
+
+    const actualCompany = cookie.get('actualCompanyId')
+    
     const { data: vehicles, error } = await supabase
       .from('vehicles')
       .select(
@@ -80,7 +38,7 @@ export const VehiclesActualCompany = create<State>((set, get) => {
       model_vehicles(name)`,
       )
       //.eq('is_active', true)
-      .eq('company_id', get()?.actualCompanyVehicles?.id)
+      .eq('company_id', actualCompany)
 
     if (error) {
       console.error('Error al obtener los vehículos:', error)
@@ -100,6 +58,7 @@ export const VehiclesActualCompany = create<State>((set, get) => {
     const endorsedVehicles = get().allVehicles.filter(
       vehicle => vehicle.status === 'Avalado',
     )
+
 
     set({ vehiclesToShow: setVehiclesToShow(endorsedVehicles) })
   }
@@ -121,6 +80,7 @@ export const VehiclesActualCompany = create<State>((set, get) => {
 
     set({ vehiclesToShow: setVehiclesToShow(vehiclesToShow) })
   }
+  
 
   return {
     allVehicles: [],
@@ -129,7 +89,7 @@ export const VehiclesActualCompany = create<State>((set, get) => {
     vehiclesToShow: [],
     endorsedVehicles,
     noEndorsedVehicles,
-    actualCompanyVehicles: get()?.actualCompanyVehicles,
+    // actualCompanyVehicles: get()?.actualCompanyVehicles,
     setVehicleTypes,
   }
 })
