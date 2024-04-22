@@ -72,7 +72,7 @@ interface State {
 const setEmployeesToShow = (employees: any) => {
   const employee = employees?.map((employees: any) => {
     return {
-      full_name: employees?.firstname + ' ' + employees?.lastname,
+      full_name: employees?.lastname + ' ' + employees?.firstname,
       id: employees?.id,
       email: employees?.email,
       cuil: employees?.cuil,
@@ -346,7 +346,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
           validity: formattedDate,
           mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
           id: doc.id,
-          resource: `${doc.employees?.firstname} ${doc.employees?.lastname}`,
+          resource: `${doc.employees?.lastname} ${doc.employees?.firstname}`,
           document_number: doc.employees.document_number,
         }
       }
