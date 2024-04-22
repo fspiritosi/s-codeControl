@@ -11,8 +11,10 @@ const popinsFont = Poppins({
 })
 
 export const metadata: Metadata = {
+
   title: 'CodeControl',
   description: 'Gestión para las empresas',
+  
 }
 
 export default function RootLayout({
@@ -25,7 +27,7 @@ export default function RootLayout({
       <body className={popinsFont.className}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="ligth"
           enableSystem
           disableTransitionOnChange
         >

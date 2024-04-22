@@ -58,7 +58,7 @@ export default function page() {
   }
 
   return (
-    <div className="flex flex-col gap-6 py-4">
+    <div className="flex flex-col gap-6 py-4 px-6">
       <div className="w-full flex mb-6">
         <Image
           src={company?.company_logo || ''}
