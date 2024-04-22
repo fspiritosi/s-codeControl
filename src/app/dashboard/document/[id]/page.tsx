@@ -339,9 +339,9 @@ export default function page({ params }: { params: { id: string } }) {
                                 <CardTitle className="font-bold text-lg">
                                   {resource === 'employee'
                                     ? documents_employees?.[0]?.applies
-                                        .firstname +
+                                        .lastname +
                                       ' ' +
-                                      documents_employees?.[0]?.applies.lastname
+                                      documents_employees?.[0]?.applies.firstname
                                     : documents_employees?.[0]?.applies
                                         .domain ||
                                       documents_employees?.[0]?.applies
