@@ -532,13 +532,13 @@ export default function EmployeeAccordion() {
                   }
                   alt="Imagen del empleado"
                 />
-                <AvatarFallback>{`${user?.firstname[0] || 'C'}${
-                  user?.lastname[0] || 'C'
+                <AvatarFallback>{`${user?.lastname[0] || 'C'}${
+                  user?.firstname[0] || 'C'
                 }`}</AvatarFallback>
               </Avatar>
               <h2 className="text-2xl">
-                {`${user?.firstname || 'cargando...'}
-                ${user?.lastname || ''}`}
+                {`${user?.lastname || 'cargando...'}
+                ${user?.firstname || ''}`}
               </h2>
             </div>
           ) : (
