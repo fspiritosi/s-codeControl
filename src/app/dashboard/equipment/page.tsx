@@ -1,5 +1,4 @@
 'use client'
-
 import { buttonVariants } from '@/components/ui/button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { useLoggedUserStore } from '@/store/loggedUser'
@@ -17,7 +16,7 @@ export default function Equipment() {
   const useSearch = useSearchParams()
   const type = useSearch.get('type')
   const [showInactive, setShowInactive] = useState(false)
-
+  
   const vehiclesData = VehiclesActualCompany(state => state.vehiclesToShow)
 
   const setVehicleTypes = VehiclesActualCompany(state => state.setVehicleTypes)
@@ -32,11 +31,15 @@ export default function Equipment() {
       { event: '*', schema: 'public', table: 'vehicles' },
       payload => {
         if (actualCompany) {
-          fetchVehicles(actualCompany)
+          fetchVehicles()
         }
       },
     )
     .subscribe()
+
+    useEffect(() => {
+    fetchVehicles()
+    }, [])
 
   useEffect(() => {
     if (type === '1') {
@@ -79,7 +82,7 @@ export default function Equipment() {
             </Link>
           </div>
         </header>
-        <div className='w-full grid grid-cols-1'>
+        <div className="w-full grid grid-cols-1">
           <DataEquipment
             columns={columns}
             data={vehiclesData || []}
