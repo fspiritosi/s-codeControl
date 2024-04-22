@@ -11,7 +11,7 @@ export const useProfileData = () => {
         .from('profile')
         .insert({
           ...rest,
-          fullname: `${firstname} ${lastname}`,
+          fullname: `${lastname} ${firstname}`,
         })
         .select()
 
