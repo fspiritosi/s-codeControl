@@ -126,7 +126,7 @@ export default function Auditor() {
         multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
         validity: formattedDate || 'No vence',
         id: doc.id,
-        resource: `${doc.applies?.firstname} ${doc.applies?.lastname}`,
+        resource: `${doc.applies?.lastname} ${doc.applies?.firstname}`,
       }
     }
     const mappedEmployees = documents_employees?.map(mapEmployee)
