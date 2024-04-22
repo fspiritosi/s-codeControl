@@ -18,3 +18,14 @@ export async function POST(emailInfo:any) {
     return Response.json({ error });
   }
 }
+
+const emailInfo = {
+  to: 'diegodac77@gmail.com', 
+  subject: '¡Este es un correo de prueba!',
+  templateData: {
+    // Datos del template de correo electrónico
+  }
+};
+
+const response = await POST(emailInfo);
+console.log(response);

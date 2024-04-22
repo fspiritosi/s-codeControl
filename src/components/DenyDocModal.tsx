@@ -1,5 +1,5 @@
 'use client'
-
+import {POST} from "../app/api/send/route"
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -64,6 +64,18 @@ export default function DenyDocModal({ id }: { id: string }) {
         variant: 'destructive',
       })
     }
+
+    const emailInfo = {
+      to: 'diegodac77@gmail.com', // Cambia esto por la dirección de correo del usuario
+      subject: 'Documento rechazado',
+      templateData: {
+        // Datos del template de correo electrónico
+        reason: menssaje.reason, // Pasar el motivo del rechazo al template de correo
+      },
+    };
+  
+    await POST(emailInfo);
+  
 
     toast({
       title: 'Documento rechazado',
