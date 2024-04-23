@@ -75,7 +75,6 @@ export default function EmployeeAccordion() {
   const [user, setUser] = useState(
     employees?.find((user: any) => user.document_number === document),
   )
-
   const { uploadImage } = useImageUpload()
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [base64Image, setBase64Image] = useState<string>('')
