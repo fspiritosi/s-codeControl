@@ -55,6 +55,7 @@ export default function allCompany() {
   const [selectedCard, setSelectedCard] = useState<company | null>(null)
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
 
+  
   const handleCardClick = (card: any) => {
     setSelectedCard(card)
     setModalIsOpen(true)
@@ -84,7 +85,6 @@ export default function allCompany() {
       <div className=" rounded-lg shadow-2xl p-4">
         <CardsGrid allCompanies={allCompanies} onCardClick={handleCardClick} />
       </div>
-
       {modalIsOpen && (
         <ModalCompany
           isOpen={modalIsOpen}
