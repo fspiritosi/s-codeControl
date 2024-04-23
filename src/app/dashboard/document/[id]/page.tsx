@@ -16,7 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { cn } from '@/lib/utils'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../../../supabase/supabase'
 import { useSidebarOpen } from '@/store/sidebar'
