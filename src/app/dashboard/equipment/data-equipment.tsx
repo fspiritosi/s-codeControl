@@ -41,7 +41,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { VehiclesActualCompany } from '@/store/vehicles'
 import Link from 'next/link'
 import { useState } from 'react'
 
@@ -150,7 +149,7 @@ export function DataEquipment<TData, TValue>({
       columnFilters,
     },
   })
-  const setActivesVehicles = VehiclesActualCompany(
+  const setActivesVehicles = useLoggedUserStore(
     state => state.setActivesVehicles,
   )
   //const router = useRouter()
