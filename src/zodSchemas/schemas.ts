@@ -1,3 +1,4 @@
+import { validarCUIL } from '@/lib/utils'
 import * as z from 'zod'
 import { supabase } from '../../supabase/supabase'
 
@@ -113,9 +114,17 @@ export const companySchema = z.object({
       message: 'El nombre debe tener al menos 2 caracteres.',
     })
     .max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),
-  company_cuit: z.string().refine(value => /^\d{11}$/.test(value), {
-    message: 'El CUIT debe contener 11 números.',
-  }),
+  company_cuit: z
+    .string()
+    .refine(value => /^\d{11}$/.test(value), {
+      message: 'El CUIT debe contener 11 números.',
+    })
+    .refine(
+      cuil => {
+        return validarCUIL(cuil)
+      },
+      { message: 'El CUIT es inválido' },
+    ),
 
   description: z.string().max(200),
   website: z.string().refine(
@@ -176,6 +185,12 @@ export const accordionSchema = z.object({
       {
         message: 'El CUIT se debe ingresar con el formato xx-xxxxxxxx-x',
       },
+    )
+    .refine(
+      cuil => {
+        return validarCUIL(cuil)
+      },
+      { message: 'El CUIT es inválido' },
     ),
   document_type: z.string({
     required_error: 'El tipo de documento es requerido',
@@ -300,13 +315,12 @@ export const ProfileSchema = z.object({
 export type Profile = z.infer<typeof ProfileSchema>
 
 export const ShareCompanyUserSchema = z.object({
-  "id": z.string(),
-  "role": z.string(),
-  "profile": ProfileSchema,
-  "company_id": z.string(),
-  "created_at": z.coerce.date(),
-  "profile_id": z.string(),
-  
+  id: z.string(),
+  role: z.string(),
+  profile: ProfileSchema,
+  company_id: z.string(),
+  created_at: z.coerce.date(),
+  profile_id: z.string(),
 })
 
 export type ShareCompanyUser = z.infer<typeof ShareCompanyUserSchema>
@@ -412,3 +426,71 @@ export const SharedUser = z.object({
 })
 
 export type SharedUser = z.infer<typeof SharedUser>
+
+export const BrandVehiclesClassSchema = z.object({
+  name: z.string(),
+})
+export type BrandVehiclesClass = z.infer<typeof BrandVehiclesClassSchema>
+
+export const VehicleSchema = z.array(
+  z.object({
+    created_at: z.coerce.date(),
+    picture: z.string(),
+    type_of_vehicle: z.number(),
+    domain: z.string(),
+    chassis: z.string(),
+    engine: z.string(),
+    serie: z.string(),
+    intern_number: z.string(),
+    year: z.string(),
+    brand: z.number(),
+    model: z.number(),
+    is_active: z.boolean(),
+    termination_date: z.null(),
+    reason_for_termination: z.null(),
+    user_id: z.string(),
+    company_id: z.string(),
+    id: z.string(),
+    type: z.string(),
+    status: z.string(),
+    types_of_vehicles: BrandVehiclesClassSchema,
+    brand_vehicles: BrandVehiclesClassSchema,
+    model_vehicles: BrandVehiclesClassSchema,
+  }) ,
+)|| []
+
+export type Vehicle = z.infer<typeof VehicleSchema>
+
+export const VehiclesSchema = z.object({
+  name: z.string(),
+})
+export type Vehicles = z.infer<typeof VehiclesSchema>
+export const VehiclesFormattedElementSchema = z.array(
+  z.object({
+    created_at: z.coerce.date(),
+    picture: z.string(),
+    type_of_vehicle: z.number(),
+    domain: z.string(),
+    chassis: z.string(),
+    engine: z.string(),
+    serie: z.string(),
+    intern_number: z.string(),
+    year: z.string(),
+    brand: z.string(),
+    model: z.string(),
+    is_active: z.boolean(),
+    termination_date: z.null(),
+    reason_for_termination: z.null(),
+    user_id: z.string(),
+    company_id: z.string(),
+    id: z.string(),
+    type: z.string(),
+    status: z.string(),
+    types_of_vehicles: z.string(),
+    brand_vehicles: VehiclesSchema,
+    model_vehicles: VehiclesSchema,
+  }),
+)
+export type VehiclesFormattedElement = z.infer<
+  typeof VehiclesFormattedElementSchema
+>
