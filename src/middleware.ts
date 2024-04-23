@@ -24,7 +24,7 @@ export async function middleware(req: NextRequest) {
   const actualCompanyId = cookie.get('actualCompanyId')
 
   if (!theme) {
-    res.cookies.set('theme', 'dark')
+    res.cookies.set('theme', 'light')
   }
 
   if (!actualCompanyId) {
