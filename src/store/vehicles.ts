@@ -24,62 +24,62 @@ const setVehiclesToShow = (vehicles: any[]) => {
 
 export const VehiclesActualCompany = create<State>((set, get) => {
 
-  const fetchVehicles = async () => {
+  // const fetchVehicles = async () => {
 
-    const actualCompany = cookie.get('actualCompanyId')
+  //   const actualCompany = cookie.get('actualCompanyId')
     
-    const { data: vehicles, error } = await supabase
-      .from('vehicles')
-      .select(
-        `*,
-      types_of_vehicles(name),
-      brand_vehicles(name),
-      model_vehicles(name)`,
-      )
-      //.eq('is_active', true)
-      .eq('company_id', actualCompany)
+  //   const { data: vehicles, error } = await supabase
+  //     .from('vehicles')
+  //     .select(
+  //       `*,
+  //     types_of_vehicles(name),
+  //     brand_vehicles(name),
+  //     model_vehicles(name)`,
+  //     )
+  //     //.eq('is_active', true)
+  //     .eq('company_id', actualCompany)
 
-    if (error) {
-      console.error('Error al obtener los vehículos:', error)
-    } else {
-      set({ allVehicles: vehicles })
-      setActivesVehicles()
-    }
-  }
+  //   if (error) {
+  //     console.error('Error al obtener los vehículos:', error)
+  //   } else {
+  //     set({ allVehicles: vehicles })
+  //     setActivesVehicles()
+  //   }
+  // }
 
-  const setActivesVehicles = () => {
-    const activesVehicles = get().allVehicles.filter(
-      vehicle => vehicle.is_active,
-    )
-    set({ vehiclesToShow: setVehiclesToShow(activesVehicles) })
-  }
+  // const setActivesVehicles = () => {
+  //   const activesVehicles = get().allVehicles.filter(
+  //     vehicle => vehicle.is_active,
+  //   )
+  //   set({ vehiclesToShow: setVehiclesToShow(activesVehicles) })
+  // }
 
-  const endorsedVehicles = () => {
-    const endorsedVehicles = get().allVehicles.filter(
-      vehicle => vehicle.status === 'Avalado',
-    )
+  // const endorsedVehicles = () => {
+  //   const endorsedVehicles = get().allVehicles.filter(
+  //     vehicle => vehicle.status === 'Avalado',
+  //   )
 
-    set({ vehiclesToShow: setVehiclesToShow(endorsedVehicles) })
-  }
+  //   set({ vehiclesToShow: setVehiclesToShow(endorsedVehicles) })
+  // }
 
-  const noEndorsedVehicles = () => {
-    const noEndorsedVehicles = get().allVehicles.filter(
-      vehicle => vehicle.status === 'No avalado',
-    )
-    set({ vehiclesToShow: setVehiclesToShow(noEndorsedVehicles) })
-  }
-  const setVehicleTypes = (type: string) => {
-    if (type === 'Todos') {
-      set({ vehiclesToShow: setVehiclesToShow(get().allVehicles) })
-      return
-    }
-    const vehicles = get().allVehicles
-    const vehiclesToShow = vehicles.filter(
-      vehicle => vehicle.types_of_vehicles?.name === type,
-    )
+  // const noEndorsedVehicles = () => {
+  //   const noEndorsedVehicles = get().allVehicles.filter(
+  //     vehicle => vehicle.status === 'No avalado',
+  //   )
+  //   set({ vehiclesToShow: setVehiclesToShow(noEndorsedVehicles) })
+  // }
+  // const setVehicleTypes = (type: string) => {
+  //   if (type === 'Todos') {
+  //     set({ vehiclesToShow: setVehiclesToShow(get().allVehicles) })
+  //     return
+  //   }
+  //   const vehicles = get().allVehicles
+  //   const vehiclesToShow = vehicles.filter(
+  //     vehicle => vehicle.types_of_vehicles?.name === type,
+  //   )
 
-    set({ vehiclesToShow: setVehiclesToShow(vehiclesToShow) })
-  }
+  //   set({ vehiclesToShow: setVehiclesToShow(vehiclesToShow) })
+  // }
   
 
   return {
