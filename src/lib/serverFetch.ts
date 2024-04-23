@@ -1,10 +1,10 @@
-'use server'
+
 import { cookies } from 'next/headers'
 import { supabase } from '../../supabase/supabase'
 
-const actualCompany = cookies().get('actualCompanyId')?.value
 
 export async function getDocumentsEmployees() {
+  const actualCompany = cookies().get('actualCompanyId')?.value
   let { data, error } = await supabase
     .from('documents_employees')
     .select(
@@ -24,6 +24,7 @@ export async function getDocumentsEmployees() {
 }
 
 export async function getDocumentsEquipment() {
+  const actualCompany = cookies().get('actualCompanyId')?.value
   let { data, error } = await supabase
     .from('documents_equipment')
     .select(
@@ -40,6 +41,7 @@ export async function getDocumentsEquipment() {
 }
 
 export async function getEmployees() {
+  const actualCompany = cookies().get('actualCompanyId')?.value
   let { data, error } = await supabase
     .from('employees')
     .select(
@@ -71,6 +73,7 @@ export async function getEmployees() {
 }
 
 export async function getEquipment() {
+  const actualCompany = cookies().get('actualCompanyId')?.value
   const { data, error: error2 } = await supabase
   .from('vehicles')
   .select('*')
