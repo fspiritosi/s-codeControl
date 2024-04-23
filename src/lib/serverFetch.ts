@@ -46,7 +46,7 @@ export async function getEmployees() {
     .from('employees')
     .select(
       `*, city (
-        nam
+        name
       ),
       province(
         name
