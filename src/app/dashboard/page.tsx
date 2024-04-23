@@ -1,8 +1,4 @@
-'use client'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-
 import {
   Card,
   CardContent,
@@ -10,56 +6,30 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { VehiclesActualCompany } from '@/store/vehicles'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { getEmployees, getEquipment } from '@/lib/serverFetch'
 import Link from 'next/link'
-import { ExpiredColums } from './colums'
-import { ExpiredDataTable } from './data-table'
+import CardButton from './componentDashboard/CardButton'
+import DocumentsTable from './componentDashboard/DocumentsTable'
+import EPendingDocumentTable from './componentDashboard/EPendingDocumentTable'
+import EmployeesTable from './componentDashboard/EmployeesTable'
+import VPendingDocumentTable from './componentDashboard/VPendingDocumentTable'
 
-export default function Home() {
-  const user = useLoggedUserStore()
-  const employees = user.employees
-  const equipment = user.vehicles
+export default async function Home() {
+  const employees = await getEmployees()
+  const equipment = await getEquipment()
+
   const eNoAvalados =
-    employees?.length > 0
-      ? employees.filter((employee: any) => employee.status === 'No avalado')
-      : []
-  const eAvalados =
-    employees?.length > 0
-      ? employees.filter((employee: any) => employee.status === 'Avalado')
-      : []
-  const equiNoAvalados =
-    equipment?.length > 0
-      ? equipment.filter((vehicle: any) => vehicle.status === 'No avalado')
-      : []
-  const equiAvalados =
-    equipment?.length > 0
-      ? equipment.filter((vehicle: any) => vehicle.status === 'Avalado')
-      : []
-  const setEndorsedEmployees = useLoggedUserStore(
-    state => state.endorsedEmployees,
-  )
-  const setActivesEmployees = useLoggedUserStore(
-    state => state.setActivesEmployees,
-  )
-  const noEndorsedEmployees = useLoggedUserStore(
-    state => state.noEndorsedEmployees,
-  )
-  const setActivesVehicles = VehiclesActualCompany(
-    state => state.setActivesVehicles,
-  )
-  const endorsedVehicles = VehiclesActualCompany(
-    state => state.endorsedVehicles,
-  )
-  const noEndorsedVehicles = VehiclesActualCompany(
-    state => state.noEndorsedVehicles,
-  )
-  const documentsToShow = useLoggedUserStore(state => state.documentsToShow)
+    employees?.filter((employee: any) => employee.status === 'No avalado') || []
 
-  const setShowLastMonthDocuments = useLoggedUserStore(
-    state => state.setShowLastMonthDocuments,
-  )
-  const pendingDocuments = useLoggedUserStore(state => state.pendingDocuments)
+  const eAvalados =
+    employees?.filter((employee: any) => employee.status === 'Avalado') || []
+
+  const equiNoAvalados =
+    equipment?.filter((vehicle: any) => vehicle.status === 'No avalado') || []
+  const equiAvalados =
+    equipment?.filter((vehicle: any) => vehicle.status === 'Avalado') || []
+
   return (
     <div>
       <section className="grid sm:grid-cols-2 grid-cols-1 gap-6 mx-7">
@@ -73,9 +43,7 @@ export default function Home() {
                 {employees?.length || 0}
               </Badge>
               <Link href="/dashboard/employee">
-                <Button variant="primary" onClick={() => setActivesEmployees()}>
-                  ver todos
-                </Button>
+                <CardButton functionName="setActivesEmployees" />
               </Link>
             </CardContent>
           </Card>
@@ -88,12 +56,7 @@ export default function Home() {
                 {eAvalados.length}
               </Badge>
               <Link href="/dashboard/employee">
-                <Button
-                  variant="primary"
-                  onClick={() => setEndorsedEmployees()}
-                >
-                  ver mas
-                </Button>
+                <CardButton functionName="setEndorsedEmployees" />
               </Link>
             </CardContent>
           </Card>
@@ -106,9 +69,7 @@ export default function Home() {
                 {eNoAvalados.length}
               </Badge>
               <Link href="/dashboard/employee">
-                <Button variant="primary" onClick={() => noEndorsedEmployees()}>
-                  ver mas
-                </Button>
+                <CardButton functionName="noEndorsedEmployees" />
               </Link>
             </CardContent>
           </Card>
@@ -123,9 +84,7 @@ export default function Home() {
                 {equipment?.length || 0}
               </Badge>
               <Link href="/dashboard/equipment">
-                <Button variant="primary" onClick={() => setActivesVehicles()}>
-                  ver todos
-                </Button>
+                <CardButton functionName="setActivesVehicles" />
               </Link>
             </CardContent>
           </Card>
@@ -138,9 +97,7 @@ export default function Home() {
                 {equiAvalados.length}
               </Badge>
               <Link href="/dashboard/equipment">
-                <Button variant="primary" onClick={() => endorsedVehicles()}>
-                  ver mas
-                </Button>
+                <CardButton functionName="endorsedVehicles" />
               </Link>
             </CardContent>
           </Card>
@@ -153,9 +110,7 @@ export default function Home() {
                 {equiNoAvalados.length}
               </Badge>
               <Link href="/dashboard/equipment">
-                <Button variant="primary" onClick={() => noEndorsedVehicles()}>
-                  ver todos
-                </Button>
+                <CardButton functionName="noEndorsedVehicles" />
               </Link>
             </CardContent>
           </Card>
@@ -179,19 +134,10 @@ export default function Home() {
               </TabsList>
             </CardContent>
             <TabsContent value="Empleados">
-              <ExpiredDataTable
-                data={documentsToShow?.employees || []}
-                setShowLastMonthDocuments={setShowLastMonthDocuments}
-                columns={ExpiredColums}
-              />
+              <EmployeesTable />
             </TabsContent>
             <TabsContent value="Vehiculos">
-              <ExpiredDataTable
-                data={documentsToShow?.vehicles || []}
-                setShowLastMonthDocuments={setShowLastMonthDocuments}
-                columns={ExpiredColums}
-                vehicles={true}
-              />
+              <DocumentsTable />
             </TabsContent>
           </Tabs>
         </section>
@@ -213,19 +159,10 @@ export default function Home() {
               </TabsList>
             </CardContent>
             <TabsContent value="Empleados">
-              <ExpiredDataTable
-                data={pendingDocuments?.employees || []}
-                columns={ExpiredColums}
-                pending={true}
-              />
+              <EPendingDocumentTable />
             </TabsContent>
             <TabsContent value="Vehiculos">
-              <ExpiredDataTable
-                data={pendingDocuments?.vehicles || []}
-                columns={ExpiredColums}
-                pending={true}
-                vehicles={true}
-              />
+              <VPendingDocumentTable />
             </TabsContent>
           </Tabs>
         </section>
