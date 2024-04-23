@@ -1,19 +1,19 @@
 'use client'
 
+import { useLoggedUserStore } from '@/store/loggedUser'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import { FiTruck } from 'react-icons/fi'
 import {
   MdHelpOutline,
   MdListAlt,
+  MdOutlineCorporateFare,
   MdOutlineKeyboardArrowDown,
   MdOutlineKeyboardArrowUp,
   MdOutlinePersonAddAlt,
-  MdOutlinePhoneIphone,
   MdOutlineSpaceDashboard,
-  MdOutlineCorporateFare
 } from 'react-icons/md'
-import { FiTruck } from 'react-icons/fi'
 export async function getServerSideProps(context: any) {
   const { params } = context
   const { type } = params
@@ -23,10 +23,9 @@ export async function getServerSideProps(context: any) {
     },
   }
 }
-
 const sizeIcons = 24
 
-const links = [
+const Allinks = [
   {
     name: 'Dashboard',
     href: '/dashboard',
@@ -67,6 +66,14 @@ const links = [
 export default function SideLinks({ expanded }: { expanded: boolean }) {
   const pathname = usePathname()
   const [openSubMenu, setOpenSubMenu] = useState(null)
+  const profile = useLoggedUserStore(state => state.profile)?.[0].id
+  const actualCompany = useLoggedUserStore(state => state.actualCompany)
+    ?.owner_id.id
+
+  const links =
+    profile !== actualCompany
+      ? Allinks.filter(link => link.name !== 'Empresa')
+      : Allinks
 
   const handleSubMenuClick = (index: any) => {
     if (openSubMenu === index) {
