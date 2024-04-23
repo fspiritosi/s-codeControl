@@ -1,10 +1,10 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { useSidebarOpen } from '@/store/sidebar'
 import { useTheme } from 'next-themes'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useState } from 'react'
 import {
   TbLayoutSidebarLeftExpand,
   TbLayoutSidebarRightExpand,
@@ -13,17 +13,12 @@ import Logo1 from '../../public/logo-azul.png'
 import LogoBlanco from '../../public/logoLetrasBlancas.png'
 import LogoNegro from '../../public/logoLetrasNegras.png'
 import SideLinks from './SideLinks'
-import { useEffect } from 'react'
-interface SideBarProps {
-  expanded: boolean
-}
 
 export default function SideBar() {
-  const { expanded, setExpanded } = useSidebarOpen()
+  const [expanded, setExpanded] = useState(true)
   const { theme } = useTheme()
   const toggleSidebar = () => {
-    setExpanded(!expanded);
-
+    setExpanded(!expanded)
   }
 
   return (
