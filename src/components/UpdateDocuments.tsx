@@ -77,7 +77,7 @@ export default function UpdateDocuments({
 
     const { error: updateError } = await supabase
       .from(tableName)
-      .update({ state: 'presentado' })
+      .update({ state: 'presentado', deny_reason: null })
       .match({ id })
 
     if (storageError) {

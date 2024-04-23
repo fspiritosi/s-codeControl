@@ -1,28 +1,25 @@
 'use client'
-
 import { buttonVariants } from '@/components/ui/button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { useSidebarOpen } from '@/store/sidebar'
 import { VehiclesActualCompany } from '@/store/vehicles'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../../supabase/supabase'
 import { columns } from './columns'
+import cookie from 'js-cookie'
 import { DataEquipment } from './data-equipment'
 export default function Equipment() {
   const allCompany = useLoggedUserStore(state => state.allCompanies)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
-  const fetchVehicles = VehiclesActualCompany(state => state.fetchVehicles)
+  const fetchVehicles = useLoggedUserStore(state => state.fetchVehicles)
   const useSearch = useSearchParams()
   const type = useSearch.get('type')
   const [showInactive, setShowInactive] = useState(false)
-
-  const vehiclesData = VehiclesActualCompany(state => state.vehiclesToShow)
-
-  const setVehicleTypes = VehiclesActualCompany(state => state.setVehicleTypes)
+  const vehiclesData = useLoggedUserStore(state => state.vehiclesToShow)
+  const setVehicleTypes = useLoggedUserStore(state => state.setVehicleTypes)
+  const actualCompanyID = cookie.get('actualCompanyId')
 
   const handleToggleInactive = () => {
     setShowInactive(!showInactive)
@@ -34,11 +31,17 @@ export default function Equipment() {
       { event: '*', schema: 'public', table: 'vehicles' },
       payload => {
         if (actualCompany) {
-          fetchVehicles(actualCompany)
+          fetchVehicles()
         }
       },
     )
     .subscribe()
+
+  useEffect(() => {
+    // if (vehiclesData.length === 0) {
+      fetchVehicles()
+    // }
+  }, [actualCompanyID])
 
   useEffect(() => {
     if (type === '1') {
@@ -58,15 +61,8 @@ export default function Equipment() {
     equipo = 'Otros'
   }
 
-  const { expanded } = useSidebarOpen()
-
   return (
-    <section
-      className={cn(
-        'flex flex-col',
-        expanded ? 'md:max-w-[calc(100vw-190px)]' : 'md:max-w-[calc(100vw)]',
-      )}
-    >
+    <section>
       <Card className="mt-6 px-8  md:mx-7">
         <header className="flex gap-4 mt-6 justify-between items-center flex-wrap">
           <div>
@@ -88,7 +84,7 @@ export default function Equipment() {
             </Link>
           </div>
         </header>
-        <div className="flex flex-col py-3">
+        <div className="w-full grid grid-cols-1">
           <DataEquipment
             columns={columns}
             data={vehiclesData || []}

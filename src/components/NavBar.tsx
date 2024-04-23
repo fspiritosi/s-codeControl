@@ -47,6 +47,7 @@ import {
 } from '@radix-ui/react-icons'
 import { formatRelative } from 'date-fns'
 import { es } from 'date-fns/locale'
+import cookie from 'js-cookie'
 import { Check, CheckIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -67,7 +68,6 @@ import {
 import { FormControl, FormField, FormItem, FormMessage } from './ui/form'
 import { Separator } from './ui/separator'
 import { useToast } from './ui/use-toast'
-
 
 export default function NavBar() {
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
@@ -93,8 +93,10 @@ export default function NavBar() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const router = useRouter()
   const setActualCompany = useLoggedUserStore(state => state.setActualCompany)
+
   const handleNewCompany = async (company: Company[0]) => {
     setNewDefectCompany(company)
+    setActualCompany(company)
     setIsOpen(false)
     router.push('/dashboard')
   }
@@ -116,7 +118,7 @@ export default function NavBar() {
   }
   const [open, setOpen] = useState(false)
   const [showNewTeamDialog, setShowNewTeamDialog] = useState(false)
-  // const [selectedTeam, setSelectedTeam] = useState(groups[0].teams[0])
+  const actualCompanyId = cookie.get('actualCompanyId')
 
   const markAllAsRead = useLoggedUserStore(state => state.markAllAsRead)
   const { toast } = useToast()
@@ -125,11 +127,7 @@ export default function NavBar() {
     {
       label: 'Compañia actual propia',
       teams: allCompanies
-        ?.filter(
-          companyItem =>
-            companyItem.by_defect === true &&
-            companyItem.owner_id === actualUser[0].id,
-        )
+        ?.filter(companyItem => companyItem.id === actualCompanyId)
         ?.map(companyItem => ({
           label: companyItem.company_name,
           value: companyItem.id,
@@ -139,21 +137,7 @@ export default function NavBar() {
     {
       label: 'Otras compañias propias',
       teams: allCompanies
-        ?.filter(
-          companyItem =>
-            companyItem.by_defect === false &&
-            companyItem.owner_id === actualUser[0].id,
-        )
-        ?.map(companyItem => ({
-          label: companyItem.company_name,
-          value: companyItem.id,
-          logo: companyItem.company_logo,
-        })),
-    },
-    {
-      label: 'Compañias compartidas',
-      teams: allCompanies
-        ?.filter(companyItem => companyItem.owner_id !== actualUser[0].id)
+        ?.filter(companyItem => companyItem.id !== actualCompanyId)
         ?.map(companyItem => ({
           label: companyItem.company_name,
           value: companyItem.id,
@@ -261,7 +245,6 @@ export default function NavBar() {
           <DropdownMenuTrigger>
             <div className="relative">
               {notifications?.length ? (
-
                 <DotFilledIcon className="text-blue-600 absolute size-7 top-[-8px] right-[-10px] p-0" />
               ) : (
                 false

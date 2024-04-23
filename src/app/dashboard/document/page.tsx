@@ -8,22 +8,14 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { useSidebarOpen } from '@/store/sidebar'
 import { ExpiredColums } from '../colums'
 import { ExpiredDataTable } from '../data-table'
 
 export default function page() {
   const { allDocumentsToShow } = useLoggedUserStore()
-  const { expanded } = useSidebarOpen()
   return (
-    <section
-      className={cn(
-        'flex flex-col md:mx-7',
-        expanded ? 'md:max-w-[calc(100vw-198px)]' : 'md:max-w-[calc(100vw)]',
-      )}
-    >
+    <section className={'flex flex-col md:mx-7'}>
       <div className="flex justify-between flex-wrap flex-col">
         <div className="">
           <Card className=" dark:bg-slate-950 w-full grid grid-cols-1">
@@ -52,7 +44,7 @@ export default function page() {
                     <TabsTrigger value="Vehiculos">Vehiculos</TabsTrigger>
                   </TabsList>
                 </CardContent>
-                <TabsContent value="Empleados" className=''>
+                <TabsContent value="Empleados" className="">
                   <ExpiredDataTable
                     data={allDocumentsToShow?.employees || []}
                     // setShowLastMonthDocuments={setShowLastMonthDocuments}

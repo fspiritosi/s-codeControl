@@ -107,14 +107,8 @@ export default function page({ params }: { params: { id: string } }) {
   useEffect(() => {
     fetchDocument()
   }, [])
-  const { expanded } = useSidebarOpen()
   return (
-    <section
-    className={cn(
-      'md:mx-7',
-      expanded ? 'md:max-w-[calc(100vw-198px)]' : 'md:max-w-[calc(100vw)]',
-    )}
-  >
+    <section className='md:mx-7'>
       <Card className="p-4">
         <div className='flex justify-between'>
           <div>
@@ -354,9 +348,9 @@ export default function page({ params }: { params: { id: string } }) {
                                 <CardTitle className="font-bold text-lg">
                                   {resource === 'employee'
                                     ? documents_employees?.[0]?.applies
-                                        .firstname +
+                                        .lastname +
                                       ' ' +
-                                      documents_employees?.[0]?.applies.lastname
+                                      documents_employees?.[0]?.applies.firstname
                                     : documents_employees?.[0]?.applies
                                         .domain ||
                                       documents_employees?.[0]?.applies

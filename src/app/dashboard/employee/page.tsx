@@ -1,9 +1,7 @@
 'use client'
 import { buttonVariants } from '@/components/ui/button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { useSidebarOpen } from '@/store/sidebar'
 import Link from 'next/link'
 import { supabase } from '../../../../supabase/supabase'
 import { columns } from './columns'
@@ -37,14 +35,8 @@ const EmployeePage = () => {
       },
     )
     .subscribe()
-  const { expanded } = useSidebarOpen()
   return (
-    <section
-      className={cn(
-        '',
-        expanded ? 'md:max-w-[calc(100vw-198px)]' : 'md:max-w-[calc(100vw-70px)]',
-      )}
-    >
+    <section className='max-w-full'>
       <Card className="mt-6 px-8 md:mx-7">
         <header className="flex gap-4 mt-6 justify-between items-center flex-wrap">
           <div>

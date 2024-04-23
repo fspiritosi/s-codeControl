@@ -78,7 +78,7 @@ export const columns: ColumnDef<SharedUser>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Rol" />
     ),
-    cell: ({ row }) => {
+    cell: ({ row, }) => {
       const changeRole = async (role: string) => {
         toast.promise(
           async () => {
@@ -101,16 +101,16 @@ export const columns: ColumnDef<SharedUser>[] = [
         <div className="flex w-[100px] items-center">
           <Select
             onValueChange={e => changeRole(e)}
-            defaultValue={row.getValue('role')}
+            defaultValue={row.original.role}
+            disabled={row.original.role === 'Propietario'}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Rol" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Rol 1">Rol 1</SelectItem>
-              <SelectItem value="Rol 2">Rol 2</SelectItem>
-              <SelectItem value="Rol 3">Rol 3</SelectItem>
-              <SelectItem value="colaborador">Colaborador</SelectItem>
+              <SelectItem value="Propietario">Propietario</SelectItem>
+              <SelectItem value="Administrador">Administrador</SelectItem>
+              <SelectItem value="Usuario">Usuario</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -164,7 +164,7 @@ export const columns: ColumnDef<SharedUser>[] = [
       return (
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant={'destructive'}>Eliminar</Button>
+            <Button disabled={row.getValue('role') === 'Propietario'} variant={'destructive'}>Eliminar</Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -178,7 +178,7 @@ export const columns: ColumnDef<SharedUser>[] = [
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction asChild>
-                <Button onClick={handleDelete} variant={'destructive'}>
+                <Button disabled={row.getValue('role') === 'Propietario'} onClick={handleDelete} variant={'destructive'}>
                   Eliminar
                 </Button>
               </AlertDialogAction>
