@@ -8,18 +8,18 @@ import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../../supabase/supabase'
 import { columns } from './columns'
+import cookie from 'js-cookie'
 import { DataEquipment } from './data-equipment'
 export default function Equipment() {
   const allCompany = useLoggedUserStore(state => state.allCompanies)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
-  const fetchVehicles = VehiclesActualCompany(state => state.fetchVehicles)
+  const fetchVehicles = useLoggedUserStore(state => state.fetchVehicles)
   const useSearch = useSearchParams()
   const type = useSearch.get('type')
   const [showInactive, setShowInactive] = useState(false)
-  
-  const vehiclesData = VehiclesActualCompany(state => state.vehiclesToShow)
-
-  const setVehicleTypes = VehiclesActualCompany(state => state.setVehicleTypes)
+  const vehiclesData = useLoggedUserStore(state => state.vehiclesToShow)
+  const setVehicleTypes = useLoggedUserStore(state => state.setVehicleTypes)
+  const actualCompanyID = cookie.get('actualCompanyId')
 
   const handleToggleInactive = () => {
     setShowInactive(!showInactive)
@@ -37,9 +37,11 @@ export default function Equipment() {
     )
     .subscribe()
 
-    useEffect(() => {
-    fetchVehicles()
-    }, [])
+  useEffect(() => {
+    // if (vehiclesData.length === 0) {
+      fetchVehicles()
+    // }
+  }, [actualCompanyID])
 
   useEffect(() => {
     if (type === '1') {
