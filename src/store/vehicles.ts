@@ -4,13 +4,13 @@ import { supabase } from '../../supabase/supabase'
 import cookie from 'js-cookie'
 
 interface State {
-  allVehicles: any[]
-  fetchVehicles: () => Promise<void>
-  setActivesVehicles: () => void
-  vehiclesToShow: any[]
-  endorsedVehicles: () => void
-  noEndorsedVehicles: () => void
-  setVehicleTypes: (type: string) => void
+  // allVehicles: any[]
+  // fetchVehicles: () => Promise<void>
+  // setActivesVehicles: () => void
+  // vehiclesToShow: any[]
+  // endorsedVehicles: () => void
+  // noEndorsedVehicles: () => void
+  // setVehicleTypes: (type: string) => void
 }
 
 const setVehiclesToShow = (vehicles: any[]) => {
@@ -23,7 +23,6 @@ const setVehiclesToShow = (vehicles: any[]) => {
 }
 
 export const VehiclesActualCompany = create<State>((set, get) => {
-
 
   const fetchVehicles = async () => {
 
@@ -54,14 +53,15 @@ export const VehiclesActualCompany = create<State>((set, get) => {
     )
     set({ vehiclesToShow: setVehiclesToShow(activesVehicles) })
   }
+
   const endorsedVehicles = () => {
     const endorsedVehicles = get().allVehicles.filter(
       vehicle => vehicle.status === 'Avalado',
     )
 
-
     set({ vehiclesToShow: setVehiclesToShow(endorsedVehicles) })
   }
+
   const noEndorsedVehicles = () => {
     const noEndorsedVehicles = get().allVehicles.filter(
       vehicle => vehicle.status === 'No avalado',
@@ -83,13 +83,12 @@ export const VehiclesActualCompany = create<State>((set, get) => {
   
 
   return {
-    allVehicles: [],
-    fetchVehicles,
-    setActivesVehicles,
-    vehiclesToShow: [],
-    endorsedVehicles,
-    noEndorsedVehicles,
-    // actualCompanyVehicles: get()?.actualCompanyVehicles,
-    setVehicleTypes,
+    // allVehicles: [],
+    // fetchVehicles,
+    // setActivesVehicles,
+    // vehiclesToShow: [],
+    // endorsedVehicles,
+    // noEndorsedVehicles,
+    // setVehicleTypes,
   }
 })
