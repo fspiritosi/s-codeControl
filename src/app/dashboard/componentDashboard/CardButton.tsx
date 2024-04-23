@@ -8,7 +8,6 @@ type FunctionName =
   | 'noEndorsedVehicles'
 import { Button } from '@/components/ui/button'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { VehiclesActualCompany } from '@/store/vehicles'
 
 function CardButton({ functionName }: { functionName: FunctionName }) {
   const { setEndorsedEmployees, setActivesEmployees, noEndorsedEmployees } =
@@ -19,7 +18,7 @@ function CardButton({ functionName }: { functionName: FunctionName }) {
     }))
 
   const { setActivesVehicles, endorsedVehicles, noEndorsedVehicles } =
-    VehiclesActualCompany(state => ({
+    useLoggedUserStore(state => ({
       setActivesVehicles: state.setActivesVehicles,
       endorsedVehicles: state.endorsedVehicles,
       noEndorsedVehicles: state.noEndorsedVehicles,
