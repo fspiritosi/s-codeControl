@@ -7,17 +7,25 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { getEmployees, getEquipment } from '@/lib/serverFetch'
+import { getCompany, getEmployees, getEquipment } from '@/lib/serverFetch'
 import Link from 'next/link'
 import CardButton from './componentDashboard/CardButton'
 import DocumentsTable from './componentDashboard/DocumentsTable'
 import EPendingDocumentTable from './componentDashboard/EPendingDocumentTable'
 import EmployeesTable from './componentDashboard/EmployeesTable'
 import VPendingDocumentTable from './componentDashboard/VPendingDocumentTable'
+import { cookies } from 'next/headers'
+
 
 export default async function Home() {
+  // const actualCompany = cookies().get('actualCompanyId')?.value
+
+  console.log('render',cookies())
+
   const employees = await getEmployees()
   const equipment = await getEquipment()
+  // console.log('employees',employees)
+  // console.log('actualCompany',actualCompany)
 
   const eNoAvalados =
     employees?.filter((employee: any) => employee.status === 'No avalado') || []
