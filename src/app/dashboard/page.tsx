@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge'
 import {
   Card,
   CardContent,
@@ -7,37 +6,15 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { getCompany, getEmployees, getEquipment } from '@/lib/serverFetch'
 import Link from 'next/link'
 import CardButton from './componentDashboard/CardButton'
+import CardNumber from './componentDashboard/CardNumber'
 import DocumentsTable from './componentDashboard/DocumentsTable'
 import EPendingDocumentTable from './componentDashboard/EPendingDocumentTable'
 import EmployeesTable from './componentDashboard/EmployeesTable'
 import VPendingDocumentTable from './componentDashboard/VPendingDocumentTable'
-import { cookies } from 'next/headers'
 
-
-export default async function Home() {
-  // const actualCompany = cookies().get('actualCompanyId')?.value
-
-  console.log('render',cookies())
-
-  const employees = await getEmployees()
-  const equipment = await getEquipment()
-  // console.log('employees',employees)
-  // console.log('actualCompany',actualCompany)
-
-  const eNoAvalados =
-    employees?.filter((employee: any) => employee.status === 'No avalado') || []
-
-  const eAvalados =
-    employees?.filter((employee: any) => employee.status === 'Avalado') || []
-
-  const equiNoAvalados =
-    equipment?.filter((vehicle: any) => vehicle.status === 'No avalado') || []
-  const equiAvalados =
-    equipment?.filter((vehicle: any) => vehicle.status === 'Avalado') || []
-
+export default function Home() {
   return (
     <div>
       <section className="grid sm:grid-cols-2 grid-cols-1 gap-6 mx-7">
@@ -47,9 +24,7 @@ export default async function Home() {
               <CardTitle>Empleados totales</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-around items-center">
-              <Badge variant="default" className="rounded-full text-lg">
-                {employees?.length || 0}
-              </Badge>
+              <CardNumber nameData="Empleados totales" variant="default" />
               <Link href="/dashboard/employee">
                 <CardButton functionName="setActivesEmployees" />
               </Link>
@@ -60,9 +35,7 @@ export default async function Home() {
               <CardTitle>Empleados Avalados</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-around items-center">
-              <Badge variant="success" className="rounded-full text-lg ">
-                {eAvalados.length}
-              </Badge>
+              <CardNumber nameData="Empleados Avalados" variant="success" />
               <Link href="/dashboard/employee">
                 <CardButton functionName="setEndorsedEmployees" />
               </Link>
@@ -73,9 +46,10 @@ export default async function Home() {
               <CardTitle>Empleados No Avalados</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-around items-center">
-              <Badge variant="destructive" className="rounded-full text-lg">
-                {eNoAvalados.length}
-              </Badge>
+              <CardNumber
+                nameData="Empleados No Avalados"
+                variant="destructive"
+              />
               <Link href="/dashboard/employee">
                 <CardButton functionName="noEndorsedEmployees" />
               </Link>
@@ -88,9 +62,7 @@ export default async function Home() {
               <CardTitle>Equipos Totales</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-around items-center">
-              <Badge variant="default" className="rounded-full text-lg">
-                {equipment?.length || 0}
-              </Badge>
+              <CardNumber nameData="Vehículos totales" variant="default" />
               <Link href="/dashboard/equipment">
                 <CardButton functionName="setActivesVehicles" />
               </Link>
@@ -101,9 +73,7 @@ export default async function Home() {
               <CardTitle>Equipos Avalados</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-around items-center">
-              <Badge variant="success" className="rounded-full text-lg">
-                {equiAvalados.length}
-              </Badge>
+              <CardNumber nameData="Vehículos Avalados" variant="success" />
               <Link href="/dashboard/equipment">
                 <CardButton functionName="endorsedVehicles" />
               </Link>
@@ -114,9 +84,10 @@ export default async function Home() {
               <CardTitle>Equipos No Avalados</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-around items-center">
-              <Badge variant="destructive" className="rounded-full text-lg">
-                {equiNoAvalados.length}
-              </Badge>
+              <CardNumber
+                nameData="Vehículos No Avalados"
+                variant="destructive"
+              />
               <Link href="/dashboard/equipment">
                 <CardButton functionName="noEndorsedVehicles" />
               </Link>
@@ -158,7 +129,6 @@ export default async function Home() {
               Documentos que aun no han sido aprobados
             </CardDescription>
           </CardContent>
-
           <Tabs defaultValue="Empleados">
             <CardContent>
               <TabsList>

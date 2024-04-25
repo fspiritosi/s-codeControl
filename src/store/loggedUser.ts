@@ -139,7 +139,7 @@ const setVehiclesToShow = (vehicles: Vehicle) => {
 }
 
 export const useLoggedUserStore = create<State>((set, get) => {
-  set({ isLoading: true })
+  // set({ isLoading: true })
   set({ showDeletedEmployees: false })
 
   const howManyCompanies = async (id: string) => {
@@ -454,7 +454,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
   }
 
   const documetsFetch = async () => {
-    set({ isLoading: true })
+    // set({ isLoading: true })
     let { data, error } = await supabase
       .from('documents_employees')
       .select(
@@ -623,7 +623,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       set({ lastMonthDocuments: lastMonthValues })
       set({ documentsToShow: lastMonthValues })
       set({ pendingDocuments })
-      set({ isLoading: false })
+      // set({ isLoading: false })
     }
   }
 
