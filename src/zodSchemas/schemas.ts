@@ -368,16 +368,16 @@ export const EmployeesSchema = z.object({
   street_number: z.string(),
   marital_status: z.string(),
   document_number: z.string(),
-  affiliate_status: z.null(),
+  affiliate_status: z.null() || z.string(),
   company_position: z.string(),
-  termination_date: z.null(),
+  termination_date: z.null() || z.string(),
   type_of_contract: z.string(),
   workflow_diagram: BirthplaceSchema,
   date_of_admission: z.string(),
   level_of_education: z.string(),
   contractor_employee: z.array(ContractorEmployeeSchema),
   hierarchical_position: BirthplaceSchema,
-  reason_for_termination: z.null(),
+  reason_for_termination: z.null() || z.string(),
 })
 export type Employees = z.infer<typeof EmployeesSchema>
 
@@ -432,32 +432,33 @@ export const BrandVehiclesClassSchema = z.object({
 })
 export type BrandVehiclesClass = z.infer<typeof BrandVehiclesClassSchema>
 
-export const VehicleSchema = z.array(
-  z.object({
-    created_at: z.coerce.date(),
-    picture: z.string(),
-    type_of_vehicle: z.number(),
-    domain: z.string(),
-    chassis: z.string(),
-    engine: z.string(),
-    serie: z.string(),
-    intern_number: z.string(),
-    year: z.string(),
-    brand: z.number(),
-    model: z.number(),
-    is_active: z.boolean(),
-    termination_date: z.null(),
-    reason_for_termination: z.null(),
-    user_id: z.string(),
-    company_id: z.string(),
-    id: z.string(),
-    type: z.string(),
-    status: z.string(),
-    types_of_vehicles: BrandVehiclesClassSchema,
-    brand_vehicles: BrandVehiclesClassSchema,
-    model_vehicles: BrandVehiclesClassSchema,
-  }) ,
-)|| []
+export const VehicleSchema =
+  z.array(
+    z.object({
+      created_at: z.coerce.date(),
+      picture: z.string(),
+      type_of_vehicle: z.number(),
+      domain: z.string(),
+      chassis: z.string(),
+      engine: z.string(),
+      serie: z.string(),
+      intern_number: z.string(),
+      year: z.string(),
+      brand: z.number(),
+      model: z.number(),
+      is_active: z.boolean(),
+      termination_date: z.null() || z.string(),
+      reason_for_termination: z.null() || z.string(),
+      user_id: z.string(),
+      company_id: z.string(),
+      id: z.string(),
+      type: z.string(),
+      status: z.string(),
+      types_of_vehicles: BrandVehiclesClassSchema,
+      brand_vehicles: BrandVehiclesClassSchema,
+      model_vehicles: BrandVehiclesClassSchema,
+    }),
+  ) || []
 
 export type Vehicle = z.infer<typeof VehicleSchema>
 
@@ -479,8 +480,8 @@ export const VehiclesFormattedElementSchema = z.array(
     brand: z.string(),
     model: z.string(),
     is_active: z.boolean(),
-    termination_date: z.null(),
-    reason_for_termination: z.null(),
+    termination_date: z.null() || z.string(),
+    reason_for_termination: z.null() || z.string(),
     user_id: z.string(),
     company_id: z.string(),
     id: z.string(),

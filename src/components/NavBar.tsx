@@ -1,13 +1,4 @@
 'use client'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { FormProvider, useForm } from 'react-hook-form'
-import { supabase } from '../../supabase/supabase'
-
 import { ModeToggle } from '@/components/ui/ToogleDarkButton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -19,6 +10,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +49,8 @@ import { Check, CheckIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { FormProvider, useForm } from 'react-hook-form'
+import { supabase } from '../../supabase/supabase'
 import ModalCompany from './ModalCompany'
 import { UpdateUserPasswordForm } from './UpdateUserPasswordForm'
 import { UploadImage } from './UploadImage'
@@ -68,6 +67,7 @@ import {
 import { FormControl, FormField, FormItem, FormMessage } from './ui/form'
 import { Separator } from './ui/separator'
 import { useToast } from './ui/use-toast'
+import { revalidate } from '@/lib/useServer'
 
 export default function NavBar() {
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
@@ -98,6 +98,7 @@ export default function NavBar() {
     setNewDefectCompany(company)
     setActualCompany(company)
     setIsOpen(false)
+    revalidate()
     router.push('/dashboard')
   }
   const { control, formState, setValue } = useForm()

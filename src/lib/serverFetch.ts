@@ -1,7 +1,27 @@
-
 import { cookies } from 'next/headers'
 import { supabase } from '../../supabase/supabase'
 
+export async function getCompany() {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  const { data } = await supabase
+    .from('profile')
+    .select('*')
+    .eq('email', session?.user.email)
+
+  const { data: Companies, error } = await supabase
+    .from('company')
+    .select(`*`)
+    .eq('owner_id', data?.[0]?.id)
+
+  const companiesId = Companies?.filter(
+    company => company.by_defect === true,
+  )[0]?.id
+
+  return companiesId
+}
 
 export async function getDocumentsEmployees() {
   const actualCompany = cookies().get('actualCompanyId')?.value
@@ -28,8 +48,7 @@ export async function getDocumentsEquipment() {
   let { data, error } = await supabase
     .from('documents_equipment')
     .select(
-      `
-    *,
+      `*,
     document_types:document_types(*),
     applies(*,type(*),type_of_vehicle(*),model(*),brand(*))
     `,
@@ -41,12 +60,18 @@ export async function getDocumentsEquipment() {
 }
 
 export async function getEmployees() {
+  const fisrtId = cookies().get('actualCompanyId')?.value
+  const secobndId = await getCompany()
+
+  console.log('fisrtId', fisrtId)
+  console.log('secobndId', secobndId)
+
   const actualCompany = cookies().get('actualCompanyId')?.value
   let { data, error } = await supabase
     .from('employees')
     .select(
       `*, city (
-        nam
+        name
       ),
       province(
         name
@@ -75,10 +100,10 @@ export async function getEmployees() {
 export async function getEquipment() {
   const actualCompany = cookies().get('actualCompanyId')?.value
   const { data, error: error2 } = await supabase
-  .from('vehicles')
-  .select('*')
-  .eq('company_id', actualCompany)
-  .eq('is_active', true)
+    .from('vehicles')
+    .select('*')
+    .eq('company_id', actualCompany)
+    .eq('is_active', true)
 
   return data
 }

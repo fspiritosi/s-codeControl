@@ -1,5 +1,6 @@
 'use strict'
 import { clsx, type ClassValue } from 'clsx'
+import { revalidatePath } from 'next/cache'
 import { twMerge } from 'tailwind-merge'
 // eslint-disable-next-line react-hooks/rules-of-hooks
 export function cn(...inputs: ClassValue[]) {
@@ -32,3 +33,4 @@ export function validarCUIL(cuil:string) {
   // Compara con el último dígito
   return parseInt(cuil[10]) === digitoVerificador;
 }
+

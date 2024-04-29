@@ -43,10 +43,38 @@ export default function SimpleDocument({
   resource: string | undefined
   handleOpen: () => void
 }) {
+  const employees = useLoggedUserStore(state => state.employees)?.reduce(
+    (
+      acc: any,
+      act: { full_name: string; document_number: string; id: string },
+    ) => {
+      const data = {
+        name: act.full_name,
+        document: act.document_number,
+        id: act.id,
+      }
+      return [...acc, data]
+    },
+    [],
+  )
+  const vehicles = useLoggedUserStore(state => state.vehicles)?.reduce(
+    (acc: any, act: { domain: string; serie: string; id: string }) => {
+      const data = {
+        name: act.domain || act.serie,
+        document: act.serie || act.domain,
+        id: act.id,
+      }
+      return [...acc, data]
+    },
+    [],
+  )
   const searchParams = useSearchParams()
   const documentResource = searchParams.get('document')
   const id = searchParams.get('id')
   const user = useLoggedUserStore(state => state.credentialUser?.id)
+  const idApplies = employees.find(
+    (employee: any) => employee.document === documentResource,
+  )?.id as string
   const {
     control,
     handleSubmit,
@@ -58,7 +86,7 @@ export default function SimpleDocument({
     defaultValues: {
       documents: [
         {
-          applies: '',
+          applies: idApplies || '',
           id_document_types: '',
           file: '',
           validity: '',
@@ -76,6 +104,12 @@ export default function SimpleDocument({
 
   const onSubmit = async ({ documents }: any) => {
     // Notificar los errores y consejos con un toast
+
+    /*
+     Id del recurso
+     recursoid - tipo de documentoid (fecha de vencimiento || v0)
+    */
+
     setLoading(true)
     let hasError = false
     try {
@@ -84,6 +118,7 @@ export default function SimpleDocument({
         employees.find(
           (employee: any) => employee.document === documentResource,
         )?.id
+
       const tableEntries = documents.map((entry: any) => {
         return {
           applies: entry.applies || idApplies,
@@ -96,8 +131,10 @@ export default function SimpleDocument({
       })
       const storagePath =
         resource === 'empleado' ? 'documentos-empleados' : 'documentos-equipos'
+
       for (let index = 0; index < documents.length; index++) {
         const document = documents[index]
+
         const document_type_name = documenTypes
           ?.find(documentType => documentType.id === document.id_document_types)
           ?.name.normalize('NFD')
@@ -158,16 +195,19 @@ export default function SimpleDocument({
           return
         }
 
-        const { error: storageError } = await supabase.storage
-          .from('document_files')
-          .upload(
-            `/${storagePath}/document-${document_type_name}-${tableEntries[index].applies}.${fileExtension}`,
-            files?.[index] || document.file,
-            {
-              cacheControl: '3600',
-              upsert: false,
-            },
-          )
+        const { error: storageError, data: DocumentData } =
+          await supabase.storage
+            .from('document_files')
+            .upload(
+              `/${storagePath}/document-${document_type_name}-${tableEntries[index].applies}.${fileExtension}`,
+              files?.[index] || document.file,
+              {
+                cacheControl: '3600',
+                upsert: false,
+              },
+            )
+
+        console.log(DocumentData, 'DocumentData')
 
         if (storageError) {
           toast({
@@ -229,31 +269,6 @@ export default function SimpleDocument({
     return year
   })
 
-  const employees = useLoggedUserStore(state => state.employees)?.reduce(
-    (
-      acc: any,
-      act: { full_name: string; document_number: string; id: string },
-    ) => {
-      const data = {
-        name: act.full_name,
-        document: act.document_number,
-        id: act.id,
-      }
-      return [...acc, data]
-    },
-    [],
-  )
-  const vehicles = useLoggedUserStore(state => state.vehicles)?.reduce(
-    (acc: any, act: { domain: string; serie: string; id: string }) => {
-      const data = {
-        name: act.domain || act.serie,
-        document: act.serie || act.domain,
-        id: act.id,
-      }
-      return [...acc, data]
-    },
-    [],
-  )
   const data = resource === 'empleado' ? employees : vehicles
   const [filteredResources, setFilteredResources] = useState(data)
   const [inputValue, setInputValue] = useState<string>('')
@@ -378,6 +393,7 @@ export default function SimpleDocument({
                                           const value = /^\d+$/.test(inputValue)
                                             ? employee.document
                                             : employee.name
+
                                           return (
                                             <CommandItem
                                               value={value}
@@ -388,6 +404,10 @@ export default function SimpleDocument({
                                                     resource.name === value ||
                                                     resource.document === value,
                                                 ).id
+
+                                                console.log(id)
+
+                                                field.onChange(id)
 
                                                 const resource =
                                                   getValues('documents')[index]

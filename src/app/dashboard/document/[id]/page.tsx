@@ -1,6 +1,11 @@
 'use client'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatDate } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -55,6 +60,8 @@ export default function page({ params }: { params: { id: string } }) {
       )
       .eq('id', params.id)
 
+    console.log(documents_employee, 'documents_employee')
+
     if (documents_employee?.length === 0) {
       let { data: documents_vehicle } = await supabase
         .from('documents_equipment')
@@ -107,13 +114,30 @@ export default function page({ params }: { params: { id: string } }) {
   useEffect(() => {
     fetchDocument()
   }, [])
+
+  const expireInLastMonth = () => {
+    console.log(
+      documents_employees?.[0]?.document_types?.explired,
+      'expireInLastMonth',
+    )
+    if (!documents_employees?.[0]?.document_types?.explired) return false
+    const date = documents_employees?.[0]?.document_types?.explired
+    const today = new Date()
+    const expireDate = new Date(date)
+    const lastMonth = new Date(today.setMonth(today.getMonth() - 1))
+
+    return expireDate < lastMonth
+  }
+
+  console.log(documentUrl, 'documentUrl')
   return (
-    <section className='md:mx-7'>
+    <section className="md:mx-7">
       <Card className="p-4">
-        <div className='flex justify-between'>
+        <div className="flex justify-between">
           <div>
             <CardTitle className=" text-2xl">
-              Detalle del Documento {documents_employees?.[0]?.document_types?.name}
+              Detalle del Documento{' '}
+              {documents_employees?.[0]?.document_types?.name}
             </CardTitle>
             <div className="flex flex-col">
               <Badge
@@ -147,7 +171,7 @@ export default function page({ params }: { params: { id: string } }) {
               )}
             </div>
           </div>
-         <Button onClick={router.back}>volver</Button>
+          <Button onClick={router.back}>volver</Button>
         </div>
         <div className="grid lg:grid-cols-3 grid-cols-1 gap-col-3 ">
           <div className="lg:max-w-[30vw] col-span-1">
@@ -164,7 +188,10 @@ export default function page({ params }: { params: { id: string } }) {
                 </TabsTrigger>
                 <TabsTrigger
                   className="hover:bg-white/30"
-                  disabled={documents_employees?.[0]?.state === 'aprobado'}
+                  disabled={
+                    documents_employees?.[0]?.state === 'aprobado' ||
+                    !expireInLastMonth()
+                  }
                   value="Auditar"
                 >
                   Actualizar
@@ -350,7 +377,8 @@ export default function page({ params }: { params: { id: string } }) {
                                     ? documents_employees?.[0]?.applies
                                         .lastname +
                                       ' ' +
-                                      documents_employees?.[0]?.applies.firstname
+                                      documents_employees?.[0]?.applies
+                                        .firstname
                                     : documents_employees?.[0]?.applies
                                         .domain ||
                                       documents_employees?.[0]?.applies
@@ -644,7 +672,8 @@ export default function page({ params }: { params: { id: string } }) {
                         <TableRow>
                           <TableCell>
                             <CardDescription>
-                              {documents_employees?.[0]?.document_types?.expired
+                              {documents_employees?.[0]?.document_types
+                                ?.explired
                                 ? 'Tiene vencimiento'
                                 : 'No tiene vencimiento'}
                             </CardDescription>
@@ -731,8 +760,13 @@ export default function page({ params }: { params: { id: string } }) {
               <Card className="mt-4">
                 <CardDescription className="p-3 flex justify-center">
                   <embed
-                    src={`${documentUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-                    className="max-w-full max-h-screen rounded-xl aspect-auto"
+                    src={`${documentUrl}#toolbar=1&navpanes=0&scrollbar=0`}
+                    className={cn(
+                      'max-w-full max-h-screen rounded-xl aspect-auto',
+                      documentUrl.split('.').pop() === 'pdf'
+                        ? 'w-full h-screen'
+                        : 'w-full h-screen',
+                    )}
                   />
                 </CardDescription>
               </Card>
