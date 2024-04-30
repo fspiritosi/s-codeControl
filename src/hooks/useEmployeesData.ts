@@ -12,6 +12,7 @@ export const useEmployeesData = () => {
       const { data, error } = await supabase
         .from('employees')
         .insert({ ...employee, company_id: company?.id })
+        .select()
         
 
       if (error) {

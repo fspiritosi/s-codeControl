@@ -43,6 +43,7 @@ import {
 } from './ui/form'
 import { Input } from './ui/input'
 import { useToast } from './ui/use-toast'
+import { useCountriesStore } from '@/store/countries'
 
 type VehicleType = {
   year: string
@@ -87,6 +88,7 @@ export default function VehiclesForm2() {
   const id = searchParams.get('id')
   const [accion, setAccion] = useState(searchParams.get('action'))
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
+
   const [vehicle, setVehicle] = useState<VehicleType | null>(null)
   const { toast } = useToast()
   const pathname = usePathname()
@@ -111,13 +113,11 @@ export default function VehiclesForm2() {
     form.setValue('picture', vehicleData.picture)
     form.setValue('type', vehicleData.type.name)
   }
+
   useEffect(() => {
     if (vehicle) {
       preloadFormData(vehicle)
     }
-  }, [vehicle])
-
-  useEffect(() => {
     if (vehicle && vehicle.type_of_vehicle === 'Vehículos') {
       setHideInput(true)
     }
@@ -128,6 +128,7 @@ export default function VehiclesForm2() {
 
   useEffect(() => {
     const fetchVehicleData = async () => {
+      if (!id) return
       try {
         const { data: vehicleData, error } = await supabase
           .from('vehicles')
@@ -380,7 +381,10 @@ export default function VehiclesForm2() {
     })
   }
   const url = process.env.NEXT_PUBLIC_PROJECT_URL
-  // 2. Define a submit handler.
+  const mandatoryDocuments = useCountriesStore(
+    state => state.mandatoryDocuments,
+  )
+  const loggedUser = useLoggedUserStore(state => state.credentialUser?.id)
   async function onCreate(values: z.infer<typeof vehicleSchema>) {
     const { type_of_vehicle, brand, model, domain } = values
     //const companyId = actualCompany?.id
@@ -401,6 +405,33 @@ export default function VehiclesForm2() {
           },
         ])
         .select()
+
+
+        const documentsMissing: {
+          applies: number
+          id_document_types: string
+          validity: string | null
+          user_id: string | undefined
+        }[] = []
+
+        mandatoryDocuments.Equipos.forEach(async document => {
+          documentsMissing.push({
+            applies: vehicle?.[0]?.id,
+            id_document_types: document.id,
+            validity: null,
+            user_id: loggedUser,
+          })
+        })
+
+        const { data:documentData, error:documentError } = await supabase
+        .from('documents_equipment')
+        .insert(documentsMissing)
+        .select()
+
+      if (error) {
+        console.log(error)
+        return
+      }
 
       const id = vehicle?.[0].id
       const fileExtension = imageFile?.name.split('.').pop()
@@ -554,7 +585,7 @@ export default function VehiclesForm2() {
   console.log('render')
 
   return (
-    <section >
+    <section>
       <header className="flex justify-between gap-4 mt-6">
         <div className="mb-8">
           {accion === 'edit' || accion === 'view' ? (

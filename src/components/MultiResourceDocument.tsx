@@ -178,14 +178,6 @@ export default function MultiResourceDocument({
             return employee?.id
           })
 
-    const document_type_name = documenTypes
-      ?.find(documentType => documentType.id === values.id_document_types)
-      ?.name.normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/\s/g, '')
-      .toLowerCase()
-      .replace('/', '-')
-
     const fileExtension = file?.name.split('.').pop()
 
     const tableName =
@@ -195,7 +187,7 @@ export default function MultiResourceDocument({
       const { data } = await supabase.storage
         .from('document_files')
         .list(storagePath, {
-          search: `document-${document_type_name}-${resourceId[index]}`,
+          search: `document-${values.id_document_types}-${resourceId[index]}`,
         })
 
       if (data?.length && data?.length > 0) {
@@ -235,6 +227,7 @@ export default function MultiResourceDocument({
             ? format(values.validity, 'dd/MM/yyyy')
             : null,
           user_id: user,
+          created_at: new Date(),
         }
       })
 
@@ -256,10 +249,14 @@ export default function MultiResourceDocument({
         return
       }
 
+      const hasExpiredDate = tableEntries[index].validity
+        ? tableEntries?.[index]?.validity?.replace(/\//g, '-')
+        : 'v0'
+
       const { error: storageError } = await supabase.storage
         .from('document_files')
         .upload(
-          `/${storagePath}/document-${document_type_name}-${resourceId[index]}.${fileExtension}`,
+          `/${storagePath}/document-${values.id_document_types}-${resourceId[index]}-${hasExpiredDate}.${fileExtension}`,
           file,
           {
             cacheControl: '3600',
@@ -283,7 +280,7 @@ export default function MultiResourceDocument({
       description: 'Documentos subidos correctamente',
       variant: 'default',
     })
-    // handleOpen()
+    handleOpen()
     setDisabled(false)
   }
 
