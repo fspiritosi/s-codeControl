@@ -368,6 +368,7 @@ export const columns: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Link
+              className='w-full'
                 href={`/dashboard/equipment/action?action=view&id=${equipment?.id}`}
               >
                 Ver equipo

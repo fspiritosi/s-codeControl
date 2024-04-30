@@ -75,6 +75,7 @@ export default function EmployeeAccordion() {
   const [user, setUser] = useState(
     employees?.find((user: any) => user.document_number === document),
   )
+  const loggedUser = useLoggedUserStore(state => state.credentialUser?.id)
   const { uploadImage } = useImageUpload()
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [base64Image, setBase64Image] = useState<string>('')
@@ -89,6 +90,9 @@ export default function EmployeeAccordion() {
   const router = useRouter()
   const { toast } = useToast()
   const url = process.env.NEXT_PUBLIC_PROJECT_URL
+  const mandatoryDocuments = useCountriesStore(
+    state => state.mandatoryDocuments,
+  )
 
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
@@ -407,7 +411,28 @@ export default function EmployeeAccordion() {
     }
 
     try {
-      await createEmployee(finalValues)
+      const applies = await createEmployee(finalValues)
+      const documentsMissing: {
+        applies: number
+        id_document_types: string
+        validity: string | null
+        user_id: string | undefined
+      }[] = []
+
+      mandatoryDocuments.Persona.forEach(async document => {
+        documentsMissing.push({
+          applies: applies[0].id,
+          id_document_types: document.id,
+          validity: null,
+          user_id: loggedUser,
+        })
+      })
+
+      const { data, error } = await supabase
+        .from('documents_employees')
+        .insert(documentsMissing)
+        .select()
+
       toast({
         variant: 'default',
         title: 'Empleado agregado correctamente',
@@ -500,7 +525,9 @@ export default function EmployeeAccordion() {
         )
         await uploadImage(renamedFile, 'employee_photos')
         const employeeImage =
-          `${url}/employee_photos/${document_number}.${fileExtension}?timestamp=${Date.now()}`.trim().replace(/\s/g, '')
+          `${url}/employee_photos/${document_number}.${fileExtension}?timestamp=${Date.now()}`
+            .trim()
+            .replace(/\s/g, '')
         const { data, error } = await supabase
           .from('employees')
           .update({ picture: employeeImage })
@@ -517,7 +544,7 @@ export default function EmployeeAccordion() {
   }
 
   return (
-    <section >
+    <section>
       <header className="flex justify-between gap-4 mt-6 flex-wrap">
         <div>
           {accion === 'edit' || accion === 'view' ? (

@@ -119,7 +119,7 @@ export default function SimpleDocument({
           (employee: any) => employee.document === documentResource,
         )?.id
 
-      const tableEntries = documents.map((entry: any) => {
+      const updateEntries = documents.map((entry: any) => {
         return {
           applies: entry.applies || idApplies,
           id_document_types: entry.id_document_types,
@@ -127,6 +127,7 @@ export default function SimpleDocument({
             ? format(entry.validity, 'dd/MM/yyyy')
             : null,
           user_id: user,
+          created_at: new Date(),
         }
       })
       const storagePath =
@@ -134,19 +135,10 @@ export default function SimpleDocument({
 
       for (let index = 0; index < documents.length; index++) {
         const document = documents[index]
-
-        const document_type_name = documenTypes
-          ?.find(documentType => documentType.id === document.id_document_types)
-          ?.name.normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/\s/g, '')
-          .toLowerCase()
-          .replace('/', '-')
-
         const { data } = await supabase.storage
           .from('document_files')
           .list(storagePath, {
-            search: `document-${document_type_name}-${tableEntries[index].applies}`,
+            search: `document-${document.id_document_types}-${updateEntries[index].applies}`,
           })
 
         if (data?.length && data?.length > 0) {
@@ -178,47 +170,55 @@ export default function SimpleDocument({
             ? 'documents_employees'
             : 'documents_equipment'
 
-        const { error } = await supabase
-          .from(tableName)
-          .insert(tableEntries[index])
-          .select()
+        const hasExpiredDate =
+          updateEntries?.[index]?.validity?.replace(/\//g, '-') ?? 'v0'
 
-        if (error) {
-          console.error(error)
-          toast({
-            title: 'Error',
-            description: 'Hubo un error al guardar el documento',
-            variant: 'destructive',
+        await supabase.storage
+          .from('document_files')
+          .upload(
+            `/${storagePath}/document-${document.id_document_types}-${updateEntries[index].applies}-${hasExpiredDate}.${fileExtension}`,
+            files?.[index] || document.file,
+            {
+              cacheControl: '3600',
+              upsert: false,
+            },
+          )
+          .then(async (response) => {
+            const data = {
+              validity: updateEntries[index].validity,
+              document_path: response.data?.path,
+              created_at: new Date(),
+              state: 'presentado',
+            }
+            const {error} = await supabase
+              .from(tableName)
+              .update(data)
+              .eq('applies', idApplies || updateEntries[index].applies)
+              .eq('id_document_types', updateEntries[index].id_document_types)
+
+            if (error) {
+              toast({
+                title: 'Error',
+                description: 'Hubo un error al subir los documentos a la base de datos',
+                variant: 'destructive',
+              })
+              setLoading(false)
+              hasError = true
+              console.error(error)
+              return
+            }
+
           })
-          setLoading(false)
-          hasError = true
-          return
-        }
-
-        const { error: storageError, data: DocumentData } =
-          await supabase.storage
-            .from('document_files')
-            .upload(
-              `/${storagePath}/document-${document_type_name}-${tableEntries[index].applies}.${fileExtension}`,
-              files?.[index] || document.file,
-              {
-                cacheControl: '3600',
-                upsert: false,
-              },
-            )
-
-        console.log(DocumentData, 'DocumentData')
-
-        if (storageError) {
-          toast({
-            title: 'Error',
-            description: 'Hubo un error al subir los documentos al storage',
-            variant: 'destructive',
+          .catch(error => {
+            toast({
+              title: 'Error',
+              description: 'Hubo un error al subir los documentos al storage',
+              variant: 'destructive',
+            })
+            setLoading(false)
+            hasError = true
+            return
           })
-          setLoading(false)
-          hasError = true
-          return
-        }
       }
 
       if (hasError) {

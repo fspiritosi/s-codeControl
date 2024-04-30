@@ -437,7 +437,9 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
                 )
               }
             >
-            {row.original.allocated_to === 'Vehículos' ? 'Copiar Patente' : 'Copiar Documento'}
+              {row.original.allocated_to === 'Vehículos'
+                ? 'Copiar Patente'
+                : 'Copiar Documento'}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleOpenViewModal(domain)}>
               Historial de Modificaciones
@@ -460,6 +462,17 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       )
+    },
+    cell: ({ row }) => {
+      const isNoPresented = row.getValue('state') === 'pendiente'
+
+      if (isNoPresented) {
+        return 'No disponible'
+      } else {
+        const [day, month, year] = row.original.date.split('/')
+        const date = new Date(Number(year), Number(month) - 1, Number(day))
+        return format(date, 'P', { locale: es })
+      }
     },
   },
   {
@@ -495,6 +508,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
       } = {
         vencido: 'yellow',
         rechazado: 'destructive',
+        pendiente: 'destructive',
         aprobado: 'success',
         presentado: 'default',
       }
@@ -523,11 +537,31 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
         </Button>
       )
     },
+    cell: ({ row }) => {
+      const isNoPresented = row.getValue('state') === 'pendiente'
+
+      if (isNoPresented) {
+        return 'No disponible'
+      } else {
+        return  row.original.validity
+      }
+    },
   },
   {
     accessorKey: 'id',
     header: 'Revisar documento',
     cell: ({ row }) => {
+      console.log()
+      const isNoPresented = row.getValue('state') === 'pendiente'
+
+      if (isNoPresented) {
+        return (
+          <Button disabled variant="destructive">
+            Falta subir documento
+          </Button>
+        )
+      }
+
       return (
         <Link href={`/dashboard/document/${row.original.id}`}>
           <Button>Ver documento</Button>

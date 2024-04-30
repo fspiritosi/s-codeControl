@@ -1,5 +1,7 @@
+import { EquipoSchema } from '@/zodSchemas/schemas'
 import { create } from 'zustand'
 import { supabase } from '../../supabase/supabase'
+import { MandatoryDocuments } from './../zodSchemas/schemas'
 
 type Province = {
   id: number
@@ -18,6 +20,7 @@ interface State {
   hierarchy: generic[]
   workDiagram: generic[]
   contractors: generic[]
+  mandatoryDocuments: MandatoryDocuments
 }
 export const useCountriesStore = create<State>((set, get) => {
   const fetchCountrys = async () => {
@@ -86,6 +89,34 @@ export const useCountriesStore = create<State>((set, get) => {
       set({ contractors: contractors || [] })
     }
   }
+
+  const documentTypes = async () => {
+    const applies = 'empleado' ? 'Persona' : 'Equipos'
+    let { data: document_types, error } = await supabase
+      .from('document_types')
+      .select('*')
+      .eq('mandatory', true)
+      .eq('multiresource', false)
+
+    const validatedData = EquipoSchema.safeParse(document_types)
+
+    if (!validatedData.success) {
+      console.log(validatedData.error.errors)
+      return
+    }
+
+    const groupedData = validatedData.data.reduce(
+      (acc: Record<string, any[]>, item) => {
+        ;(acc[item['applies']] = acc[item['applies']] || []).push(item)
+        return acc
+      },
+      {},
+    ) as MandatoryDocuments
+
+    set({ mandatoryDocuments: groupedData })
+  }
+
+  documentTypes()
   fetchContractors()
   fetchworkDiagram()
   fetchHierarchy()
@@ -99,5 +130,6 @@ export const useCountriesStore = create<State>((set, get) => {
     hierarchy: get()?.hierarchy,
     workDiagram: get()?.workDiagram,
     contractors: get()?.contractors,
+    mandatoryDocuments: get()?.mandatoryDocuments,
   }
 })

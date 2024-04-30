@@ -60,7 +60,7 @@ export default function page({ params }: { params: { id: string } }) {
       )
       .eq('id', params.id)
 
-    console.log(documents_employee, 'documents_employee')
+    console.log(documents_employee, 'documents_employee') 
 
     if (documents_employee?.length === 0) {
       let { data: documents_vehicle } = await supabase
@@ -82,12 +82,7 @@ export default function page({ params }: { params: { id: string } }) {
       setResource('employee')
     }
 
-    documentType = document?.[0]?.document_types?.name
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/\s/g, '')
-      .toLowerCase()
-      .replace('/', '-')
+    documentType = document?.[0]?.document_types?.id
 
     const resorceId = document?.[0]?.applies?.id
     const { data } = await supabase.storage
@@ -98,14 +93,16 @@ export default function page({ params }: { params: { id: string } }) {
 
     const fileExtension = data?.[0]?.name.split('.').pop()
 
+    console.log(document?.[0]?.document_path,'documentdocument')
+
     const { data: url } = supabase.storage
       .from('document_files')
       .getPublicUrl(
-        `${resourceType}/document-${documentType}-${resorceId}.${fileExtension}`,
+        document?.[0]?.document_path,
       )
 
     setDocumentName(
-      `${resourceType}/document-${documentType}-${resorceId}.${fileExtension}`,
+     document?.[0]?.document_path,
     )
     setDocumentUrl(url.publicUrl)
     setDocumentsEmployees(document)
@@ -189,7 +186,7 @@ export default function page({ params }: { params: { id: string } }) {
                 <TabsTrigger
                   className="hover:bg-white/30"
                   disabled={
-                    documents_employees?.[0]?.state === 'aprobado' ||
+                    documents_employees?.[0]?.state === 'aprobado' &&
                     !expireInLastMonth()
                   }
                   value="Auditar"
@@ -765,7 +762,7 @@ export default function page({ params }: { params: { id: string } }) {
                       'max-w-full max-h-screen rounded-xl aspect-auto',
                       documentUrl.split('.').pop() === 'pdf'
                         ? 'w-full h-screen'
-                        : 'w-full h-screen',
+                        : '',
                     )}
                   />
                 </CardDescription>

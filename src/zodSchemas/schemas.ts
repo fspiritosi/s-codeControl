@@ -180,12 +180,9 @@ export const accordionSchema = z.object({
   }),
   cuil: z
     .string({ required_error: 'El cuil es requerido' })
-    .refine(
-      value => value.length === 13 && value[2] === '-' && value[11] === '-',
-      {
-        message: 'El CUIT se debe ingresar con el formato xx-xxxxxxxx-x',
-      },
-    )
+    .refine(value => /^\d{11}$/.test(value), {
+      message: 'El CUIT debe contener 11 números.',
+    })
     .refine(
       cuil => {
         return validarCUIL(cuil)
@@ -495,3 +492,25 @@ export const VehiclesFormattedElementSchema = z.array(
 export type VehiclesFormattedElement = z.infer<
   typeof VehiclesFormattedElementSchema
 >
+
+export const EquipoSchema = z.array(
+  z.object({
+    id: z.string(),
+    created_at: z.coerce.date(),
+    name: z.string(),
+    applies: z.string(),
+    multiresource: z.boolean(),
+    mandatory: z.boolean(),
+    explired: z.boolean(),
+    special: z.boolean(),
+    is_active: z.boolean(),
+    description: z.union([z.null(), z.string()]),
+  })
+)
+export type Equipo = z.infer<typeof EquipoSchema>
+
+export const MandatoryDocumentsSchema = z.object({
+  Persona: EquipoSchema,
+  Equipos: EquipoSchema,
+})
+export type MandatoryDocuments = z.infer<typeof MandatoryDocumentsSchema>
