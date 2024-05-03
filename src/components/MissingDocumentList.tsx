@@ -63,8 +63,6 @@ export const MissingDocumentList = () => {
     },
   )
 
-  console.log(allValuesToShow)
-
   //   const channels = supabase
   //     .channel('custom-update-channel')
   //     .on(
