@@ -505,7 +505,7 @@ export const EquipoSchema = z.array(
     special: z.boolean(),
     is_active: z.boolean(),
     description: z.union([z.null(), z.string()]),
-  })
+  }),
 )
 export type Equipo = z.infer<typeof EquipoSchema>
 
@@ -514,3 +514,36 @@ export const MandatoryDocumentsSchema = z.object({
   Equipos: EquipoSchema,
 })
 export type MandatoryDocuments = z.infer<typeof MandatoryDocumentsSchema>
+
+export const CompanyIdSchema = z.object({
+  id: z.string(),
+  city: CitySchema,
+  address: z.string(),
+  country: z.string(),
+  website: z.string(),
+  industry: z.string(),
+  owner_id: ProfileSchema,
+  by_defect: z.boolean(),
+  is_active: z.boolean(),
+  description: z.string(),
+  province_id: CitySchema,
+  company_cuit: z.string(),
+  company_logo: z.string(),
+  company_name: z.string(),
+  contact_email: z.string(),
+  contact_phone: z.string(),
+  companies_employees: z.array(CompaniesEmployeeSchema) || null,
+  share_company_users: z.array(ShareCompanyUserSchema) || null,
+}) || undefined
+export type CompanyId = z.infer<typeof CompanyIdSchema>
+
+export const SharedCompaniesSchema = z.array(
+  z.object({
+    created_at: z.coerce.date(),
+    profile_id: z.string(),
+    company_id: CompanyIdSchema,
+    role: z.string(),
+    id: z.string(),
+  }),
+)
+export type SharedCompanies = z.infer<typeof SharedCompaniesSchema>

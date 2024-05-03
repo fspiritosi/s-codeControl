@@ -7,6 +7,8 @@ import {
 import {
   Company,
   CompanySchema,
+  SharedCompanies,
+  SharedCompaniesSchema,
   Vehicle,
   VehicleSchema,
 } from '@/zodSchemas/schemas'
@@ -25,7 +27,7 @@ interface Document {
   id: string
   resource: string
   state: string
-  document_path?:string
+  document_path?: string
 }
 
 interface State {
@@ -46,6 +48,7 @@ interface State {
   setShowDeletedEmployees: (showDeletedEmployees: boolean) => void
   vehicles: Vehicle
   setNewDefectCompany: (company: Company[0]) => void
+  sharedCompanies: SharedCompanies
   endorsedEmployees: () => void
   noEndorsedEmployees: () => void
   allDocumentsToShow: {
@@ -199,11 +202,79 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
     }
 
+    let { data: share_company_users, error: sharedError } = await supabase
+      .from('share_company_users')
+      .select(
+        `*,company_id(*,
+          owner_id(*),
+        share_company_users(*,
+          profile(*)
+        ),
+        city (
+          name,
+          id
+        ),
+        province_id (
+          name,
+          id
+        ),
+        companies_employees (
+          employees(
+            *,
+            city (
+              name
+            ),
+            province(
+              name
+            ),
+            workflow_diagram(
+              name
+            ),
+            hierarchical_position(
+              name
+            ),
+            birthplace(
+              name
+            ),
+            contractor_employee(
+              contractors(
+                *
+              )
+            )
+          )
+        )
+      )`,
+      )
+      .eq('profile_id', id)
+
+    const validatedSharedCompanies =
+      SharedCompaniesSchema.safeParse(share_company_users)
+
+    if (!validatedSharedCompanies.success) {
+      return console.error(
+        'Error al obtener el perfil: Validacion',
+        validatedSharedCompanies.error,
+      )
+    }
+
+    set({ sharedCompanies: validatedSharedCompanies.data })
+
     if (error) {
       console.error('Error al obtener el perfil:', error)
     } else {
       set({ allCompanies: validatedData.data })
       selectedCompany = get()?.allCompanies.filter(company => company.by_defect)
+      const savedCompany = localStorage.getItem('company_id') || ''
+      if (savedCompany) {
+        const company = validatedSharedCompanies.data.find(
+          company => company.company_id.id === JSON.parse(savedCompany),
+        )?.company_id
+
+        if (company) {
+          setActualCompany(company)
+          return
+        }
+      }
 
       if (data.length > 1) {
         if (selectedCompany) {
@@ -222,8 +293,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
       }
     }
   }
-
-
 
   const profileUser = async (id: string) => {
     if (!id) return
@@ -262,6 +331,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
   const setActualCompany = (company: Company[0]) => {
     set({ actualCompany: company })
+    console.log('company', company)
     setActivesEmployees()
     fetchVehicles()
     documetsFetch()
@@ -566,6 +636,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
               if (!doc.validity || doc.validity === 'No vence') return false
               return (
                 doc.state !== 'presentado' &&
+                doc.state !== 'pendiente' &&
                 (doc.validity !== 'No vence' || doc.validity !== null)
               )
             })
@@ -672,15 +743,15 @@ export const useLoggedUserStore = create<State>((set, get) => {
   }
 
   const realTimeSharedUsers = supabase
-  .channel('custom-all-channel')
-  .on(
-    'postgres_changes',
-    { event: '*', schema: 'public', table: 'share_company_users' },
-    payload => {
-      howManyCompanies(get()?.profile?.[0]?.id || '')
-    },
-  )
-  .subscribe()
+    .channel('custom-all-channel')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'share_company_users' },
+      payload => {
+        howManyCompanies(get()?.profile?.[0]?.id || '')
+      },
+    )
+    .subscribe()
 
   const realTimeNotification = supabase
     .channel('custom-all-channel')
@@ -736,8 +807,11 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
   const setNewDefectCompany = async (company: Company[0]) => {
     if (company.owner_id.id !== get()?.profile?.[0]?.id) {
+      console.log('no es el dueño')
+      localStorage.setItem('company_id', JSON.stringify(company.id))
       return
     }
+    localStorage.removeItem('company_id')
     const { data, error } = await supabase
       .from('company')
       .update({ by_defect: false })
@@ -797,5 +871,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
     noEndorsedVehicles,
     setVehicleTypes,
     fetchVehicles,
+    sharedCompanies: get()?.sharedCompanies,
   }
 })
