@@ -136,6 +136,8 @@ export default function VehiclesForm2() {
             '*, brand_vehicles(name), model_vehicles(name),types_of_vehicles(name),type(name)',
           )
           .eq('id', id)
+          .eq('company_id', actualCompany?.id)
+          
         //.single()
 
         if (error) {
@@ -264,6 +266,7 @@ export default function VehiclesForm2() {
                 .from('vehicles')
                 .select('*')
                 .eq('domain', domain.toUpperCase())
+                .eq('company_id', actualCompany?.id)
 
               if (
                 vehicles?.[0] &&
@@ -450,10 +453,13 @@ export default function VehiclesForm2() {
             const vehicleImage = `${url}/vehicle_photos/${id}.${fileExtension}`
               .trim()
               .replace(/\s/g, '')
+
             const { data, error } = await supabase
               .from('vehicles')
               .update({ picture: vehicleImage })
               .eq('id', id)
+              .eq('company_id', actualCompany?.id)
+
           } catch (error) {}
         } catch (error: any) {
           toast({
@@ -536,6 +542,7 @@ export default function VehiclesForm2() {
           picture: picture,
         })
         .eq('id', vehicle?.id)
+        .eq('company_id', actualCompany?.id)
         .select()
 
       const id = vehicle?.id
@@ -560,6 +567,7 @@ export default function VehiclesForm2() {
               .from('vehicles')
               .update({ picture: vehicleImage })
               .eq('id', id)
+              .eq('company_id', actualCompany?.id)
           } catch (error) {}
         } catch (error: any) {
           toast({

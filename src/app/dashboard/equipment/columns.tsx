@@ -66,6 +66,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../../../supabase/supabase'
+import { useLoggedUserStore } from '@/store/loggedUser'
 
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -109,6 +110,7 @@ export const columns: ColumnDef<Colum>[] = [
         setDomain(id)
         setShowModal(!showModal)
       }
+      const actualCompany = useLoggedUserStore(state => state.actualCompany)
 
       const fetchInactiveEquipment = async () => {
         try {
@@ -116,6 +118,7 @@ export const columns: ColumnDef<Colum>[] = [
             .from('vehicles')
             .select('*')
             .eq('is_active', false)
+            .eq('company_id', actualCompany?.id)
 
           if (error) {
             console.error(error)
@@ -153,6 +156,7 @@ export const columns: ColumnDef<Colum>[] = [
               reason_for_termination: null,
             })
             .eq('id', equipment.id)
+            .eq('company_id', actualCompany?.id)
             .select()
 
           setIntegerModal(!integerModal)
@@ -188,6 +192,7 @@ export const columns: ColumnDef<Colum>[] = [
               reason_for_termination: data.reason_for_termination,
             })
             .eq('id', equipment.id)
+            .eq('company_id', actualCompany?.id)
             .select()
 
           setShowModal(!showModal)

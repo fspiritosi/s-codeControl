@@ -25,6 +25,7 @@ interface Document {
   id: string
   resource: string
   state: string
+  document_path?:string
 }
 
 interface State {
@@ -536,6 +537,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
           id: doc.id,
           resource: `${doc.employees?.lastname} ${doc.employees?.firstname}`,
           document_number: doc.employees.document_number,
+          document_url: doc.document_path,
         }
       }
 
@@ -553,6 +555,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
           mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
           id: doc.id,
           resource: doc.applies?.domain || doc.applies?.intern_number,
+          vehicle_id: doc.applies?.id,
         }
       }
 
