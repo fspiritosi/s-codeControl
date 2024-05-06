@@ -29,9 +29,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { revalidate } from '@/lib/useServer'
 import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { Company } from '@/zodSchemas/schemas'
+import { Company, CompanySchema } from '@/zodSchemas/schemas'
 import {
   BellIcon,
   CaretSortIcon,
@@ -67,9 +68,9 @@ import {
 import { FormControl, FormField, FormItem, FormMessage } from './ui/form'
 import { Separator } from './ui/separator'
 import { useToast } from './ui/use-toast'
-import { revalidate } from '@/lib/useServer'
 
 export default function NavBar() {
+  const sharedCompanies = useLoggedUserStore(state => state.sharedCompanies)
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const setNewDefectCompany = useLoggedUserStore(
@@ -88,6 +89,11 @@ export default function NavBar() {
     }
   }
 
+  const totalCompanies = [
+    sharedCompanies?.map(company => company.company_id),
+    allCompanies,
+  ].flat()
+
   const [isOpen, setIsOpen] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -95,6 +101,7 @@ export default function NavBar() {
   const setActualCompany = useLoggedUserStore(state => state.setActualCompany)
 
   const handleNewCompany = async (company: Company[0]) => {
+    console.log(company, 'company keloke')
     setNewDefectCompany(company)
     setActualCompany(company)
     setIsOpen(false)
@@ -102,6 +109,8 @@ export default function NavBar() {
     router.push('/dashboard')
   }
   const { control, formState, setValue } = useForm()
+  // console.log(actualCompany,'actualCompany');
+
   const updateProfileAvatar = async (imageUrl: string) => {
     try {
       // Realiza la actualización en la tabla profile usando Supabase
@@ -127,28 +136,27 @@ export default function NavBar() {
   const groups = [
     {
       label: 'Compañia actual propia',
-      teams: allCompanies
-        ?.filter(companyItem => companyItem.id === actualCompanyId)
+      teams: totalCompanies
+        ?.filter(companyItem => companyItem?.id === actualCompanyId)
         ?.map(companyItem => ({
-          label: companyItem.company_name,
-          value: companyItem.id,
-          logo: companyItem.company_logo,
+          label: companyItem?.company_name,
+          value: companyItem?.id,
+          logo: companyItem?.company_logo,
         })),
     },
     {
       label: 'Otras compañias propias',
-      teams: allCompanies
-        ?.filter(companyItem => companyItem.id !== actualCompanyId)
+      teams: totalCompanies
+        ?.filter(companyItem => companyItem?.id !== actualCompanyId)
         ?.map(companyItem => ({
-          label: companyItem.company_name,
-          value: companyItem.id,
-          logo: companyItem.company_logo,
+          label: companyItem?.company_name,
+          value: companyItem?.id,
+          logo: companyItem?.company_logo,
         })),
     },
   ]
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-  // console.log(notifications, 'notificaciones')
   return (
     <nav className=" flex flex-shrink items-center justify-end sm:justify-between  text-white p-4 mb-2">
       <div className=" items-center hidden sm:flex">
@@ -185,7 +193,7 @@ export default function NavBar() {
                         <CommandItem
                           key={team?.value}
                           onSelect={() => {
-                            const company = allCompanies.find(
+                            const company = totalCompanies.find(
                               companyItem => companyItem.id === team.value,
                             )
                             if (company) {

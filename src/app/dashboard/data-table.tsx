@@ -187,7 +187,7 @@ export function ExpiredDataTable<TData, TValue>({
   }
 
   return (
-    <div className="mb-10 dark:bg-slate-950 px-4 rounded-lg max-w-[100vw] overflow-x-auto">
+    <div className="mb-10  px-4 rounded-lg max-w-[100vw] overflow-x-auto">
       <Input
         placeholder={
           vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'

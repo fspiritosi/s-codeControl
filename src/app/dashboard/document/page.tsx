@@ -19,24 +19,20 @@ export default function page() {
       <div className="flex justify-between flex-wrap flex-col">
         <div className="">
           <Card className=" dark:bg-slate-950 w-full grid grid-cols-1">
-            <section className="px-4">
-              <div className="flex justify-between mb-3 items-center w-full flex-wrap">
+            <section>
+              <CardHeader className=" mb-4 flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
                 <div>
-                  <CardHeader>
-                    <CardTitle className="text-2xl">
-                      Documentos cargados
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription>
-                      Aquí encontrarás todos los documentos cargados
-                    </CardDescription>
-                  </CardContent>
+                  <CardTitle className="text-2xl font-bold tracking-tight">
+                    Documentos cargados
+                  </CardTitle>
+                  <CardDescription className="text-muted-foreground">
+                    Aquí encontrarás todos los documentos cargados
+                  </CardDescription>
                 </div>
                 <div className="flex gap-4 flex-wrap pl-6">
                   <DocumentNav />
                 </div>
-              </div>
+              </CardHeader>
               <Tabs defaultValue="Empleados">
                 <CardContent>
                   <TabsList>

@@ -32,7 +32,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Toaster />
-          <Sonner />
+          <Sonner richColors   />
           <main>{children}</main>
         </ThemeProvider>
       </body>

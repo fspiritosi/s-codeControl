@@ -96,14 +96,3 @@ export async function getEmployees() {
 
   return data
 }
-
-export async function getEquipment() {
-  const actualCompany = cookies().get('actualCompanyId')?.value
-  const { data, error: error2 } = await supabase
-    .from('vehicles')
-    .select('*')
-    .eq('company_id', actualCompany)
-    .eq('is_active', true)
-
-  return data
-}

@@ -35,6 +35,7 @@ import {
   CommandItem,
 } from './ui/command'
 import { useToast } from './ui/use-toast'
+import { revalidatePath } from 'next/cache'
 
 export default function SimpleDocument({
   resource,
@@ -72,7 +73,7 @@ export default function SimpleDocument({
   const documentResource = searchParams.get('document')
   const id = searchParams.get('id')
   const user = useLoggedUserStore(state => state.credentialUser?.id)
-  const idApplies = employees.find(
+  const idApplies = employees?.find(
     (employee: any) => employee.document === documentResource,
   )?.id as string
   const {

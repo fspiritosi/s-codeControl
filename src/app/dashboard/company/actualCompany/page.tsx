@@ -1,4 +1,5 @@
 'use client'
+import { RegisterWithRole } from '@/components/RegisterWithRole'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -8,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-
 import {
   Dialog,
   DialogClose,
@@ -32,6 +32,8 @@ export default function page() {
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const [verify, setVerify] = useState(false)
   const ownerUser = useLoggedUserStore(state => state.profile)
+  const [showPasswords, setShowPasswords] = useState(false)
+  const [open, setOpen] = useState(false)
 
   const owner = ownerUser?.map(user => {
     return {
@@ -52,11 +54,11 @@ export default function page() {
         role: user.role,
         alta: user.created_at,
         id: user.id,
-        img: user.profile.avatar,
+        img: user.profile.avatar || '',
       }
     }) || []
 
-  const data =owner?.concat(sharedUsers || [])
+  const data = owner?.concat(sharedUsers || [])
 
   function compare(text: string) {
     if (text === company?.company_name) {
@@ -77,18 +79,21 @@ export default function page() {
         />
       </div>
 
-      <Tabs defaultValue="users">
+      <Tabs defaultValue="general">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>
           <TabsTrigger value="modules">Modulos</TabsTrigger>
         </TabsList>
         <TabsContent value="general" className="space-y-4">
-          <Card className="py-4 px-4 ">
-            <CardHeader>
-              <CardTitle>Datos generales de la empresa</CardTitle>
+          <Card className='overflow-hidden'>
+            <CardHeader className="w-full bg-muted dark:bg-muted/50 border-b-2">
+              <CardTitle className="text-2xl font-bold tracking-tight">Datos generales de la empresa</CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Información de la empresa
+              </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="py-4 px-4 ">
               {company && (
                 <div>
                   <ItemCompany
@@ -111,6 +116,7 @@ export default function page() {
                 </div>
               )}
             </CardContent>
+            <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
           </Card>
           <Card className=" bg-red-300 border-red-800 border-spacing-2 border-2">
             <CardHeader>ZONA PELIGROSA</CardHeader>
@@ -176,20 +182,14 @@ export default function page() {
           </Card>
         </TabsContent>
         <TabsContent value="users">
-          <Card>
-            <div className=" h-full flex-1 flex-col space-y-8 p-8 md:flex">
-              <div className="flex items-center justify-between space-y-2">
-                <div>
-                  <CardTitle className="text-2xl font-bold tracking-tight">
-                    Compartir acceso
-                  </CardTitle>
-                  <CardDescription className="text-muted-foreground">
-                    Comparte el acceso a tu empresa con otros usuarios.
-                  </CardDescription>
-                </div>
+          <Card className='overflow-hidden'>
+            <div className=" h-full flex-1 flex-col space-y-8  md:flex">
+              <RegisterWithRole />
+              <div className="p-8">
+                <DataTable data={data || []} columns={columns} />
               </div>
-              <DataTable data={data || []} columns={columns} />
             </div>
+            <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
           </Card>
         </TabsContent>
         <TabsContent value="modules">Change your password here.</TabsContent>
@@ -197,5 +197,3 @@ export default function page() {
     </div>
   )
 }
-
-//export default page

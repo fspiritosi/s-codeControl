@@ -1,11 +1,6 @@
 'use client'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatDate } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -13,6 +8,7 @@ import { useRouter } from 'next/navigation'
 
 import UpdateDocuments from '@/components/UpdateDocuments'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -21,11 +17,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { cn } from '@/lib/utils'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../../../supabase/supabase'
-import { useSidebarOpen } from '@/store/sidebar'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
 
 export default function page({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -60,7 +54,7 @@ export default function page({ params }: { params: { id: string } }) {
       )
       .eq('id', params.id)
 
-    console.log(documents_employee, 'documents_employee') 
+    console.log(documents_employee, 'documents_employee')
 
     if (documents_employee?.length === 0) {
       let { data: documents_vehicle } = await supabase
@@ -91,19 +85,11 @@ export default function page({ params }: { params: { id: string } }) {
         search: `document-${documentType}-${resorceId}`,
       })
 
-    const fileExtension = data?.[0]?.name.split('.').pop()
-
-    console.log(document?.[0]?.document_path,'documentdocument')
-
     const { data: url } = supabase.storage
       .from('document_files')
-      .getPublicUrl(
-        document?.[0]?.document_path,
-      )
+      .getPublicUrl(document?.[0]?.document_path)
 
-    setDocumentName(
-     document?.[0]?.document_path,
-    )
+    setDocumentName(document?.[0]?.document_path)
     setDocumentUrl(url.publicUrl)
     setDocumentsEmployees(document)
   }
@@ -126,7 +112,6 @@ export default function page({ params }: { params: { id: string } }) {
     return expireDate < lastMonth
   }
 
-  console.log(documentUrl, 'documentUrl')
   return (
     <section className="md:mx-7">
       <Card className="p-4">

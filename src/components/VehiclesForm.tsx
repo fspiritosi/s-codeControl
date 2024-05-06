@@ -25,6 +25,7 @@ import { ChangeEvent, useEffect, useState } from 'react'
 require('dotenv').config()
 
 import { useImageUpload } from '@/hooks/useUploadImage'
+import { useCountriesStore } from '@/store/countries'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -33,6 +34,7 @@ import { supabase } from '../../supabase/supabase'
 import { ImageHander } from './ImageHandler'
 import { Modal } from './Modal'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import { CardDescription, CardHeader, CardTitle } from './ui/card'
 import {
   FormControl,
   FormDescription,
@@ -43,7 +45,6 @@ import {
 } from './ui/form'
 import { Input } from './ui/input'
 import { useToast } from './ui/use-toast'
-import { useCountriesStore } from '@/store/countries'
 
 type VehicleType = {
   year: string
@@ -83,9 +84,11 @@ type dataType = {
   }[]
 }
 
-export default function VehiclesForm2() {
+export default function VehiclesForm2({id}:{id:string}) {
+
+
   const searchParams = useSearchParams()
-  const id = searchParams.get('id')
+  // const id = params
   const [accion, setAccion] = useState(searchParams.get('action'))
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
 
@@ -98,7 +101,7 @@ export default function VehiclesForm2() {
     models: [],
     types: [],
   })
-  const [isRequired, setIsRequired] = useState(false)
+  const documetsFetch = useLoggedUserStore(state => state.documetsFetch)
 
   const preloadFormData = (vehicleData: VehicleType) => {
     form.setValue('type_of_vehicle', vehicleData.type_of_vehicle.toString())
@@ -126,38 +129,39 @@ export default function VehiclesForm2() {
     }
   }, [vehicle])
 
-  useEffect(() => {
-    const fetchVehicleData = async () => {
-      if (!id) return
-      try {
-        const { data: vehicleData, error } = await supabase
-          .from('vehicles')
-          .select(
-            '*, brand_vehicles(name), model_vehicles(name),types_of_vehicles(name),type(name)',
-          )
-          .eq('id', id)
-        //.single()
+  const fetchVehicleData = async () => {
+    if (!id || !actualCompany?.id) return
+    try {
+      const { data: vehicleData, error } = await supabase
+        .from('vehicles')
+        .select(
+          '*, brand_vehicles(name), model_vehicles(name),types_of_vehicles(name),type(name)',
+        )
+        .eq('id', id)
+        .eq('company_id', actualCompany?.id)
 
-        if (error) {
-          console.error('Error al obtener los datos del vehículo:', error)
-        } else {
-          const transformedData = vehicleData.map((item: VehicleType) => ({
-            ...item,
-            type_of_vehicle: item.types_of_vehicles.name,
-            brand: item.brand_vehicles.name,
-            model: item.model_vehicles.name,
-            type: item.type,
-          }))
+      //.single()
 
-          setVehicle(transformedData[0])
-        }
-      } catch (error) {
+      if (error) {
         console.error('Error al obtener los datos del vehículo:', error)
-      }
-    }
+      } else {
+        const transformedData = vehicleData.map((item: VehicleType) => ({
+          ...item,
+          type_of_vehicle: item.types_of_vehicles.name,
+          brand: item.brand_vehicles.name,
+          model: item.model_vehicles.name,
+          type: item.type,
+        }))
 
+        setVehicle(transformedData[0])
+      }
+    } catch (error) {
+      console.error('Error al obtener los datos del vehículo:', error)
+    }
+  }
+  useEffect(() => {
     fetchVehicleData()
-  }, [id])
+  }, [id,actualCompany])
   const router = useRouter()
   const [hideInput, setHideInput] = useState(false)
   const vehicleSchema = z.object({
@@ -264,6 +268,7 @@ export default function VehiclesForm2() {
                 .from('vehicles')
                 .select('*')
                 .eq('domain', domain.toUpperCase())
+                .eq('company_id', actualCompany?.id)
 
               if (
                 vehicles?.[0] &&
@@ -406,24 +411,23 @@ export default function VehiclesForm2() {
         ])
         .select()
 
+      const documentsMissing: {
+        applies: number
+        id_document_types: string
+        validity: string | null
+        user_id: string | undefined
+      }[] = []
 
-        const documentsMissing: {
-          applies: number
-          id_document_types: string
-          validity: string | null
-          user_id: string | undefined
-        }[] = []
-
-        mandatoryDocuments.Equipos.forEach(async document => {
-          documentsMissing.push({
-            applies: vehicle?.[0]?.id,
-            id_document_types: document.id,
-            validity: null,
-            user_id: loggedUser,
-          })
+      mandatoryDocuments.Equipos.forEach(async document => {
+        documentsMissing.push({
+          applies: vehicle?.[0]?.id,
+          id_document_types: document.id,
+          validity: null,
+          user_id: loggedUser,
         })
+      })
 
-        const { data:documentData, error:documentError } = await supabase
+      const { data: documentData, error: documentError } = await supabase
         .from('documents_equipment')
         .insert(documentsMissing)
         .select()
@@ -450,11 +454,14 @@ export default function VehiclesForm2() {
             const vehicleImage = `${url}/vehicle_photos/${id}.${fileExtension}`
               .trim()
               .replace(/\s/g, '')
+
             const { data, error } = await supabase
               .from('vehicles')
               .update({ picture: vehicleImage })
               .eq('id', id)
+              .eq('company_id', actualCompany?.id)
           } catch (error) {}
+          documetsFetch()
         } catch (error: any) {
           toast({
             variant: 'destructive',
@@ -536,6 +543,7 @@ export default function VehiclesForm2() {
           picture: picture,
         })
         .eq('id', vehicle?.id)
+        .eq('company_id', actualCompany?.id)
         .select()
 
       const id = vehicle?.id
@@ -560,6 +568,7 @@ export default function VehiclesForm2() {
               .from('vehicles')
               .update({ picture: vehicleImage })
               .eq('id', id)
+              .eq('company_id', actualCompany?.id)
           } catch (error) {}
         } catch (error: any) {
           toast({
@@ -586,58 +595,63 @@ export default function VehiclesForm2() {
 
   return (
     <section>
-      <header className="flex justify-between gap-4 mt-6">
-        <div className="mb-8">
-          {accion === 'edit' || accion === 'view' ? (
-            <div className="flex items-center gap-2">
-              <Avatar className="h-[13vh] w-[13vh]">
-                <AvatarImage
-                  className="object-cover border-2 border-black/30 rounded-full"
-                  src={
-                    vehicle?.picture ||
-                    'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80'
-                  }
-                  alt="Imagen del empleado"
-                />
-                <AvatarFallback>CC</AvatarFallback>
-              </Avatar>
-              <p className="text-2xl">
-                Tipo de equipo: {vehicle?.type.name} <br />
-                Numero interno: {vehicle?.intern_number}
-              </p>
-            </div>
-          ) : (
-            <>
-              <h2 className="text-4xl">
-                {accion === 'edit'
-                  ? 'Editar equipo'
-                  : accion === 'view'
-                    ? `Equipo ${vehicle?.type_of_vehicle} ${vehicle?.intern_number}`
-                    : 'Agregar equipo'}
-              </h2>
-              <p>
-                {accion === 'edit' || accion === 'view'
-                  ? `${
-                      readOnly
-                        ? 'Vista previa de equipo'
-                        : ' En esta vista puedes editar los datos del equipo'
-                    }`
-                  : 'Agrega un nuevo equipo'}
-              </p>
-            </>
-          )}
-          <div className="mt-4">
-            {readOnly && accion === 'view' && (
-              <Button
-                variant="primary"
-                onClick={() => {
-                  setReadOnly(false)
-                }}
-              >
-                Habilitar edición
-              </Button>
+      <header className="flex justify-between gap-4">
+        <div className="mb-8 flex justify-between w-full">
+          <CardHeader className="h-[152px] flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
+            {accion === 'edit' || accion === 'view' ? (
+              <div className="flex gap-3 items-center">
+                <CardTitle className=" font-bold tracking-tight">
+                  <Avatar className="size-[100px]">
+                    <AvatarImage
+                      className="object-cover border-2 border-black/30 rounded-full"
+                      src={
+                        vehicle?.picture ||
+                        'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80'
+                      }
+                      alt="Imagen del empleado"
+                    />
+                    <AvatarFallback>CC</AvatarFallback>
+                  </Avatar>
+                </CardTitle>
+                <CardDescription className="text-muted-foreground text-2xl">
+                  Tipo de equipo: {vehicle?.type.name} <br />
+                  Numero interno: {vehicle?.intern_number}
+                </CardDescription>
+              </div>
+            ) : (
+              <div>
+                <CardTitle className="font-bold tracking-tight text-3xl">
+                  {accion === 'edit'
+                    ? 'Editar equipo'
+                    : accion === 'view'
+                      ? `Equipo ${vehicle?.type_of_vehicle} ${vehicle?.intern_number}`
+                      : 'Agregar equipo'}
+                </CardTitle>
+                <CardDescription className="text-muted-foreground text-xl">
+                  {accion === 'edit' || accion === 'view'
+                    ? `${
+                        readOnly
+                          ? 'Vista previa de equipo'
+                          : ' En esta vista puedes editar los datos del equipo'
+                      }`
+                    : 'En esta vista puedes agregar un nuevo equipo'}
+                </CardDescription>
+              </div>
             )}
-          </div>
+
+            <div className="mt-4">
+              {readOnly && accion === 'view' && (
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    setReadOnly(false)
+                  }}
+                >
+                  Habilitar edición
+                </Button>
+              )}
+            </div>
+          </CardHeader>
         </div>
       </header>
       <Form {...form}>
@@ -645,7 +659,7 @@ export default function VehiclesForm2() {
           onSubmit={form.handleSubmit(
             accion === 'edit' || accion === 'view' ? onUpdate : onCreate,
           )}
-          className="space-y-8 w-full"
+          className="space-y-8 w-full px-6 pb-3"
         >
           <div className=" flex gap-[2vw] flex-wrap items-center">
             <FormField
