@@ -92,6 +92,43 @@ export const registerSchema = z
     message: 'Las contraseñas no coinciden.',
     path: ['confirmPassword'],
   })
+export const registerSchemaWithRole = z
+  .object({
+    firstname: z
+      .string()
+      .min(2, {
+        message: 'El nombre debe tener al menos 2 caracteres.',
+      })
+      .max(20, {
+        message: 'El nombre debe tener menos de 20 caracteres.',
+      })
+      .regex(/^[a-zA-Z ]+$/, {
+        message: 'El nombre solo puede contener letras.',
+      })
+      .trim(),
+    lastname: z
+      .string()
+      .min(2, {
+        message: 'El apellido debe tener al menos 2 caracteres.',
+      })
+      .max(20, {
+        message: 'El apellido debe tener menos de 20 caracteres.',
+      })
+      .regex(/^[a-zA-Z ]+$/, {
+        message: 'El apellido solo puede contener letras.',
+      })
+      .trim(),
+    email: z.string().email({ message: 'Email inválido' }),
+    role: z.string({ required_error: 'El rol es requerido' }).min(1, {
+      message: 'El rol debe tener al menos 1 caracteres.',
+    }),
+    password: passwordSchema,
+    confirmPassword: passwordSchema,
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    message: 'Las contraseñas no coinciden.',
+    path: ['confirmPassword'],
+  })
 
 export const recoveryPassSchema = z.object({
   email: z.string().email({ message: 'Email inválido' }),
@@ -304,7 +341,7 @@ export const ProfileSchema = z.object({
   id: z.string(),
   role: z.string(),
   email: z.string(),
-  avatar: z.string(),
+  avatar: z.string().nullable() ,
   fullname: z.string(),
   created_at: z.coerce.date(),
   credential_id: z.string(),
@@ -312,12 +349,12 @@ export const ProfileSchema = z.object({
 export type Profile = z.infer<typeof ProfileSchema>
 
 export const ShareCompanyUserSchema = z.object({
-  id: z.string(),
-  role: z.string(),
-  profile: ProfileSchema,
-  company_id: z.string(),
-  created_at: z.coerce.date(),
-  profile_id: z.string(),
+  id: z.string() ,
+  role: z.string() ,
+  profile: ProfileSchema ,
+  company_id: z.string() ,
+  created_at: z.coerce.date() ,
+  profile_id: z.string() ,
 })
 
 export type ShareCompanyUser = z.infer<typeof ShareCompanyUserSchema>
@@ -408,7 +445,7 @@ export const CompanySchema = z.array(
     owner_id: ProfileSchema,
     by_defect: z.boolean(),
     share_company_users: z.array(ShareCompanyUserSchema) || null,
-    companies_employees: z.array(CompaniesEmployeeSchema),
+    companies_employees: z.array(CompaniesEmployeeSchema) || null,
   }),
 )
 export type Company = z.infer<typeof CompanySchema>
