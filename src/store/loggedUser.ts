@@ -194,6 +194,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
       .eq('owner_id', id)
 
+    console.log(data)
     const validatedData = CompanySchema.safeParse(data)
     if (!validatedData.success) {
       return console.error(
