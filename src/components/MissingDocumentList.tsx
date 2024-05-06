@@ -96,9 +96,9 @@ export const MissingDocumentList = () => {
         <Card className="flex flex-col overflow-hidden text-muted-foreground">
           <Accordion type="single" collapsible>
             <AccordionItem value="item-1">
-              <AccordionTrigger className="px-2 text-white border-b-2 bg-muted dark:bg-muted/50">
+              <AccordionTrigger className="px-2  border-b-2 bg-muted dark:bg-muted/50">
                 <div className="flex items-center justify-between w-full pr-5">
-                  <div className="flex">
+                  <div className="flex dark:text-white text-black">
                     Empleados <PersonIcon className="stroke-1  ml-2" />
                   </div>
                   {allValuesToShow?.employees?.length > 0 && (
@@ -115,11 +115,11 @@ export const MissingDocumentList = () => {
                       <Accordion
                         key={index}
                         type="single"
-                        className="bg-slate-950"
+                        className=""
                         collapsible
                       >
                         <AccordionItem value="item-1">
-                          <AccordionTrigger className="px-2 text-white">
+                          <AccordionTrigger className="px-2">
                             {item[0].resource}
                           </AccordionTrigger>
                           <AccordionContent>
@@ -153,7 +153,7 @@ export const MissingDocumentList = () => {
             <AccordionItem value="item-1">
               <AccordionTrigger className="px-2 text-white border-b-2 bg-muted dark:bg-muted/50">
                 <div className="flex items-center justify-between w-full pr-5">
-                  <div className="flex">
+                  <div className="flex dark:text-white text-black">
                     Vehículos <CarIcon className="stroke-1  ml-2" />
                   </div>
                   {allValuesToShow?.vehicles?.length > 0 && (
@@ -170,11 +170,10 @@ export const MissingDocumentList = () => {
                       <Accordion
                         key={index}
                         type="single"
-                        className="bg-slate-950"
                         collapsible
                       >
                         <AccordionItem value="item-1">
-                          <AccordionTrigger className="px-2 text-white">
+                          <AccordionTrigger className="px-2">
                             {item[0].resource}
                           </AccordionTrigger>
                           <AccordionContent>
