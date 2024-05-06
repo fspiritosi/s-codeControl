@@ -31,9 +31,9 @@ import { Button, buttonVariants } from './ui/button'
 import { CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Separator } from './ui/separator'
 
-type Props = { props?: any[] | null }
+type Props = { props?: any[] | null,resource: string}
 
-export const DocumentationDrawer = ({ props }: Props) => {
+export const DocumentationDrawer = ({ props,resource }: Props) => {
   const [open, setOpen] = useState(false)
   const handleOpen = () => setOpen(!open)
 
@@ -204,7 +204,7 @@ export const DocumentationDrawer = ({ props }: Props) => {
                       <div className="space-y-3">
                         <div>
                           <SimpleDocument
-                            resource="equipo"
+                            resource={resource}
                             handleOpen={() => handleOpen()}
                           />
                         </div>

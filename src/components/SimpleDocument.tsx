@@ -232,7 +232,6 @@ export default function SimpleDocument({
         variant: 'default',
       })
       setLoading(false)
-      revalidatePath('/dashboard/equipment/action')
       handleOpen()
     } catch (error) {
       console.error(error)
@@ -241,7 +240,6 @@ export default function SimpleDocument({
         description: 'Hubo un error al subir los documentos',
         variant: 'destructive',
       })
-      revalidatePath('/dashboard/equipment/action')
       setLoading(false)
     }
   }

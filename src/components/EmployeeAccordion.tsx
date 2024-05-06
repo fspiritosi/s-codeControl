@@ -61,6 +61,7 @@ import { z } from 'zod'
 import { ImageHander } from './ImageHandler'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
+import { CardDescription, CardHeader, CardTitle } from './ui/card'
 
 type Province = {
   id: number
@@ -547,44 +548,33 @@ export default function EmployeeAccordion() {
 
   return (
     <section>
-      <header className="flex justify-between gap-4 mt-6 flex-wrap">
-        <div>
+      <header className="flex justify-between gap-4 flex-wrap">
+        <CardHeader className="h-[152px] flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
           {accion === 'edit' || accion === 'view' ? (
-            <div className="flex items-center gap-2">
-              <Avatar className="h-[13vh] w-[13vh]">
-                <AvatarImage
-                  className="object-cover border-2 border-black/30 rounded-full"
-                  src={
-                    user?.picture ||
-                    'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80'
-                  }
-                  alt="Imagen del empleado"
-                />
-                <AvatarFallback>{`${user?.lastname[0] || 'C'}${
-                  user?.firstname[0] || 'C'
-                }`}</AvatarFallback>
-              </Avatar>
-              <h2 className="text-2xl">
+            <div className="flex gap-3 items-center">
+              <CardTitle className=" font-bold tracking-tight">
+                <Avatar className="size-[100px]">
+                  <AvatarImage
+                    className="object-cover border-2 border-black/30 rounded-full"
+                    src={
+                      user?.picture ||
+                      'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80'
+                    }
+                    alt="Imagen del empleado"
+                  />
+                  <AvatarFallback>CC</AvatarFallback>
+                </Avatar>
+              </CardTitle>
+              <CardDescription className="text-muted-foreground text-3xl">
                 {`${user?.lastname || 'cargando...'}
                 ${user?.firstname || ''}`}
-              </h2>
+              </CardDescription>
             </div>
           ) : (
             <h2 className="text-4xl">
               {accion === 'edit' ? 'Editar empleado' : 'Agregar empleado'}
             </h2>
           )}
-          <p className="mt-3 max-w-[700px]">
-            {accion === 'edit' || accion === 'view'
-              ? `${
-                  readOnly
-                    ? 'Esta es una vista previa de los datos del empleado. Puedes ver y editar la información del empleado en esta sección. Si deseas realizar cambios, habilita la edición haciendo clic en el botón "Habilitar edición".'
-                    : 'Aquí puedes editar la información del empleado'
-                }`
-              : 'Completa los datos del nuevo empleado'}
-          </p>
-        </div>
-        <div>
           {readOnly && accion === 'view' && (
             <Button
               variant="primary"
@@ -595,14 +585,14 @@ export default function EmployeeAccordion() {
               Habiliar edición
             </Button>
           )}
-        </div>
+        </CardHeader>
       </header>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(
             accion === 'edit' || accion === 'view' ? onUpdate : onCreate,
           )}
-          className="w-full pr-2"
+          className="w-full pr-2 px-6 pb-3"
         >
           <Accordion
             className="w-full"
