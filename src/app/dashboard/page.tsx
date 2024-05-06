@@ -19,7 +19,7 @@ export default async function Home() {
     <div>
       <section className="grid sm:grid-cols-2 grid-cols-1 gap-6 mx-7">
         <div className="flex gap-3 flex-wrap justify-center ">
-          <Card className="min-w-[250px]">
+          <Card className="min-w-[250px] bg-muted dark:bg-muted/50">
             <CardHeader>
               <CardTitle>Empleados totales</CardTitle>
             </CardHeader>
@@ -30,7 +30,7 @@ export default async function Home() {
               </Link>
             </CardContent>
           </Card>
-          <Card className="bg-lime-200 dark:bg-lime-800 min-w-[250px] text-center">
+          <Card className="bg-lime-200 dark:bg-green-300/40 min-w-[250px] text-center">
             <CardHeader>
               <CardTitle>Empleados Avalados</CardTitle>
             </CardHeader>
@@ -57,7 +57,7 @@ export default async function Home() {
           </Card>
         </div>
         <div className="flex gap-3 flex-wrap justify-center">
-          <Card className="min-w-[250px] text-center">
+          <Card className="min-w-[250px] text-center bg-muted dark:bg-muted/50">
             <CardHeader>
               <CardTitle>Equipos Totales</CardTitle>
             </CardHeader>
@@ -68,7 +68,7 @@ export default async function Home() {
               </Link>
             </CardContent>
           </Card>
-          <Card className="bg-lime-200 dark:bg-lime-800 min-w-[250px] text-center">
+          <Card className="bg-lime-200 dark:bg-green-300/40 min-w-[250px] text-center">
             <CardHeader>
               <CardTitle>Equipos Avalados</CardTitle>
             </CardHeader>
