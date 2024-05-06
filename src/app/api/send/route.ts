@@ -11,8 +11,8 @@ export async function POST(request: Request) {
     console.log(requestData, "data")
 
     const data = await resend.emails.send({
-      from: 'Codecontrol <onboarding@resend.dev>',
-      //from: 'Codecontrol <onboarding@codecontrol.com.ar>',
+      //from: 'Codecontrol <onboarding@resend.dev>',
+      from: 'Codecontrol <team@codecontrol.com.ar>',
       to: [userEmail],
       subject: requestData.subject,
       react: EmailTemplate({ userEmail: userEmail, reason: requestData.react}), 

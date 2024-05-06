@@ -54,6 +54,7 @@ export type profileUser = {
   email: string
   avatar?: string
   fullname?: string
+  role: string
 }
 
 export type company = {
