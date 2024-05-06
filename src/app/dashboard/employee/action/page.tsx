@@ -16,6 +16,7 @@ export default function EmployeeFormAction({
         </div>
         <div className="xl:max-w-[40vw] col-span-1 flex justify-center w-full">
           {searchParams.action === 'new' ? false : <DocumentationDrawer />}
+          
         </div>
       </section>
     </Card>

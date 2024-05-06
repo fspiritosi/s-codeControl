@@ -87,6 +87,7 @@ export default function EmployeeAccordion() {
   const workDiagramOptions = useCountriesStore(state => state.workDiagram)
   const contractorCompanies = useCountriesStore(state => state.contractors)
   const { updateEmployee, createEmployee } = useEmployeesData()
+  const getEmployees = useLoggedUserStore(state => state.getEmployees)
   const router = useRouter()
   const { toast } = useToast()
   const url = process.env.NEXT_PUBLIC_PROJECT_URL
@@ -445,6 +446,7 @@ export default function EmployeeAccordion() {
           title: error.message,
         })
       }
+      getEmployees(true)
       router.push('/dashboard/employee')
     } catch (error: PostgrestError | any) {
       // Manejar el error de la primera petición

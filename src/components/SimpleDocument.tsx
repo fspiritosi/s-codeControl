@@ -35,6 +35,7 @@ import {
   CommandItem,
 } from './ui/command'
 import { useToast } from './ui/use-toast'
+import { revalidatePath } from 'next/cache'
 
 export default function SimpleDocument({
   resource,
@@ -72,7 +73,7 @@ export default function SimpleDocument({
   const documentResource = searchParams.get('document')
   const id = searchParams.get('id')
   const user = useLoggedUserStore(state => state.credentialUser?.id)
-  const idApplies = employees.find(
+  const idApplies = employees?.find(
     (employee: any) => employee.document === documentResource,
   )?.id as string
   const {
@@ -231,6 +232,7 @@ export default function SimpleDocument({
         variant: 'default',
       })
       setLoading(false)
+      revalidatePath('/dashboard/equipment/action')
       handleOpen()
     } catch (error) {
       console.error(error)
@@ -239,6 +241,7 @@ export default function SimpleDocument({
         description: 'Hubo un error al subir los documentos',
         variant: 'destructive',
       })
+      revalidatePath('/dashboard/equipment/action')
       setLoading(false)
     }
   }

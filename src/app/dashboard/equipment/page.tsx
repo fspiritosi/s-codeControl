@@ -1,14 +1,19 @@
 'use client'
 import { buttonVariants } from '@/components/ui/button'
-import { Card, CardDescription, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { VehiclesActualCompany } from '@/store/vehicles'
+import cookie from 'js-cookie'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../../supabase/supabase'
 import { columns } from './columns'
-import cookie from 'js-cookie'
 import { DataEquipment } from './data-equipment'
 export default function Equipment() {
   const allCompany = useLoggedUserStore(state => state.allCompanies)
@@ -39,7 +44,7 @@ export default function Equipment() {
 
   useEffect(() => {
     // if (vehiclesData.length === 0) {
-      fetchVehicles()
+    fetchVehicles()
     // }
   }, [actualCompanyID])
 
@@ -63,28 +68,28 @@ export default function Equipment() {
 
   return (
     <section>
-      <Card className="mt-6 px-8  md:mx-7">
-        <header className="flex gap-4 mt-6 justify-between items-center flex-wrap">
+      <Card className="mt-6 md:mx-7 overflow-hidden">
+        <CardHeader className=" flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
           <div>
-            <CardTitle className="text-4xl mb-3">{equipo}</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl font-bold tracking-tight">
+              {equipo}
+            </CardTitle>
+            <CardDescription className="text-muted-foreground">
               Aquí podrás ver todos los {equipo} que tienes registrados en tu
               empresa
             </CardDescription>
           </div>
-          <div>
-            <Link
-              href="/dashboard/equipment/action?action=new"
-              className={[
-                'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
-                buttonVariants({ variant: 'outline', size: 'lg' }),
-              ].join(' ')}
-            >
-              Agregar nuevo equipo
-            </Link>
-          </div>
-        </header>
-        <div className="w-full grid grid-cols-1">
+          <Link
+            href="/dashboard/equipment/action?action=new"
+            className={[
+              'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
+              buttonVariants({ variant: 'outline', size: 'lg' }),
+            ].join(' ')}
+          >
+            Agregar nuevo equipo
+          </Link>
+        </CardHeader>
+        <div className="w-full grid grid-cols-1 px-8">
           <DataEquipment
             columns={columns}
             data={vehiclesData || []}
@@ -93,6 +98,7 @@ export default function Equipment() {
             setShowInactive={setShowInactive}
           />
         </div>
+        <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
       </Card>
     </section>
   )

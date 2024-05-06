@@ -83,6 +83,8 @@ interface State {
   noEndorsedVehicles: () => void
   setVehicleTypes: (type: string) => void
   fetchVehicles: () => void
+  documetsFetch: () => void
+  getEmployees: (active: boolean) => void
 }
 
 const setEmployeesToShow = (employees: any) => {
@@ -872,5 +874,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     setVehicleTypes,
     fetchVehicles,
     sharedCompanies: get()?.sharedCompanies,
+    documetsFetch: () => documetsFetch(),
+    getEmployees: (active: boolean) => getEmployees(active),
   }
 })
