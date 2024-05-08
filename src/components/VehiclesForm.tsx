@@ -317,6 +317,7 @@ export default function VehiclesForm2({id}:{id:string}) {
     let { data: brand_vehicles } = await supabase
       .from('brand_vehicles')
       .select('*')
+
     let { data: type, error } = await supabase.from('type').select('*')
     setData({
       ...data,
@@ -591,7 +592,6 @@ export default function VehiclesForm2({id}:{id:string}) {
     }
   }
 
-  console.log('render')
 
   return (
     <section>

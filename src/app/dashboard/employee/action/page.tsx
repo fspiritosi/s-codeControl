@@ -11,9 +11,11 @@ export default async function EmployeeFormAction({
   searchParams: any
 }) {
   const { data } = await supabase
+
     .from('documents_employees')
     .select('*,applies(*),id_document_types(*)')
     .eq('applies.document_number', searchParams.document)
+    .not('applies', 'is', null)
 
   revalidatePath('/dashboard/employee/action')
 

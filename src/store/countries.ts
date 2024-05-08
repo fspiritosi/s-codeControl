@@ -96,7 +96,6 @@ export const useCountriesStore = create<State>((set, get) => {
       .from('document_types')
       .select('*')
       .eq('mandatory', true)
-      .eq('multiresource', false)
 
     const validatedData = EquipoSchema.safeParse(document_types)
 

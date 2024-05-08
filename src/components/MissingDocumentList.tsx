@@ -22,6 +22,7 @@ import Link from 'next/link'
 import { Badge } from './ui/badge'
 import { buttonVariants } from './ui/button'
 export const MissingDocumentList = () => {
+
   const allValuesToShow = [
     useLoggedUserStore(state => state.allDocumentsToShow),
   ].reduce(

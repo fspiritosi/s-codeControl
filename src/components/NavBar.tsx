@@ -352,14 +352,14 @@ export default function NavBar() {
                                 } ha sido rechazado`}
                               {notification?.category === 'vencimiento' &&
                                 `El documento ${
-                                  notification.document.documentName ||
+                                  notification?.document?.documentName ||
                                   '(no disponible)'
                                 }, del ${
                                   notification.reference === 'employee'
                                     ? 'empleado'
                                     : 'vehiculo con patente'
-                                }} ${
-                                  notification.document.resource
+                                } ${
+                                  notification?.document?.resource
                                     .split(' ')
                                     .map(
                                       word =>

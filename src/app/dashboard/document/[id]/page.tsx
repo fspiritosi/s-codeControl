@@ -54,8 +54,6 @@ export default function page({ params }: { params: { id: string } }) {
       )
       .eq('id', params.id)
 
-    console.log(documents_employee, 'documents_employee')
-
     if (documents_employee?.length === 0) {
       let { data: documents_vehicle } = await supabase
         .from('documents_equipment')
@@ -99,10 +97,6 @@ export default function page({ params }: { params: { id: string } }) {
   }, [])
 
   const expireInLastMonth = () => {
-    console.log(
-      documents_employees?.[0]?.document_types?.explired,
-      'expireInLastMonth',
-    )
     if (!documents_employees?.[0]?.document_types?.explired) return false
     const date = documents_employees?.[0]?.document_types?.explired
     const today = new Date()
@@ -118,7 +112,6 @@ export default function page({ params }: { params: { id: string } }) {
         <div className="flex justify-between">
           <div>
             <CardTitle className=" text-2xl">
-              Detalle del Documento{' '}
               {documents_employees?.[0]?.document_types?.name}
             </CardTitle>
             <div className="flex flex-col">
