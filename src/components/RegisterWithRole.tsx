@@ -21,7 +21,7 @@ import { useLoggedUserStore } from '@/store/loggedUser'
 import { registerSchemaWithRole } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { EyeClosedIcon, EyeOpenIcon } from '@radix-ui/react-icons'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -29,6 +29,13 @@ import { supabase } from '../../supabase/supabase'
 import { Button } from './ui/button'
 import { CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Input } from './ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select'
 import { Toggle } from './ui/toggle'
 export const RegisterWithRole = () => {
   const [showPasswords, setShowPasswords] = useState(false)
@@ -46,6 +53,20 @@ export const RegisterWithRole = () => {
       role: '',
     },
   })
+
+  const [roles, setRoles] = useState<any[] | null>([])
+
+  const getRoles = async () => {
+    let { data: roles, error } = await supabase
+      .from('roles')
+      .select('*')
+      .eq('intern', false)
+    setRoles(roles)
+  }
+
+  useEffect(() => {
+    getRoles()
+  }, [])
 
   function onSubmit(values: z.infer<typeof registerSchemaWithRole>) {
     if (
@@ -308,13 +329,24 @@ export const RegisterWithRole = () => {
                         name="role"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Rol</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Rol" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                              Por favor ingresa el rol del usuario.
-                            </FormDescription>
+                            <FormLabel>Role</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Seleccionar rol" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {roles?.map(role => (
+                                  <SelectItem key={role.id} value={role.name}>
+                                    {role.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
