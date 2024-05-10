@@ -105,6 +105,5 @@ export const useCompanyData = () => {
         useLoggedUserStore.setState({ allCompanies: data || [] })
       }
     },
-
   }
 }

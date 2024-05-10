@@ -543,7 +543,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
       if (isNoPresented) {
         return 'No disponible'
       } else {
-        return  row.original.validity
+        return row.original.validity
       }
     },
   },
@@ -551,7 +551,6 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
     accessorKey: 'id',
     header: 'Revisar documento',
     cell: ({ row }) => {
-      console.log()
       const isNoPresented = row.getValue('state') === 'pendiente'
 
       if (isNoPresented) {

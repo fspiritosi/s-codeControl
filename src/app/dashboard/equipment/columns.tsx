@@ -55,6 +55,7 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions'
 import { cn } from '@/lib/utils'
+import { useLoggedUserStore } from '@/store/loggedUser'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { DotsVerticalIcon } from '@radix-ui/react-icons'
 import { ColumnDef } from '@tanstack/react-table'
@@ -66,7 +67,6 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../../../supabase/supabase'
-import { useLoggedUserStore } from '@/store/loggedUser'
 
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -373,7 +373,7 @@ export const columns: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Link
-              className='w-full'
+                className="w-full"
                 href={`/dashboard/equipment/action?action=view&id=${equipment?.id}`}
               >
                 Ver equipo
@@ -470,5 +470,4 @@ export const columns: ColumnDef<Colum>[] = [
     accessorKey: 'is_active',
     header: 'Ver equipos dados de baja',
   },
-
 ]

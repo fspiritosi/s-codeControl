@@ -31,15 +31,13 @@ import { Button, buttonVariants } from './ui/button'
 import { CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Separator } from './ui/separator'
 
-type Props = { props?: any[] | null,resource: string}
+type Props = { props?: any[] | null; resource: string }
 
-export const DocumentationDrawer = ({ props,resource }: Props) => {
+export const DocumentationDrawer = ({ props, resource }: Props) => {
   const [open, setOpen] = useState(false)
   const handleOpen = () => setOpen(!open)
 
   const handleDownload = async (path: string, fileName: string) => {
-    console.log(path, 'path')
-
     toast.promise(
       async () => {
         const { data, error } = await supabase.storage

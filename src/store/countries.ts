@@ -21,6 +21,7 @@ interface State {
   workDiagram: generic[]
   contractors: generic[]
   mandatoryDocuments: MandatoryDocuments
+  documentTypes: (company_id: string) => void
 }
 export const useCountriesStore = create<State>((set, get) => {
   const fetchCountrys = async () => {
@@ -90,18 +91,20 @@ export const useCountriesStore = create<State>((set, get) => {
     }
   }
 
-  const documentTypes = async () => {
-    const applies = 'empleado' ? 'Persona' : 'Equipos'
-    let { data: document_types, error } = await supabase
+  const documentTypes = async (company_id: string) => {
+    if (!company_id) return
+    // const applies = 'empleado' ? 'Persona' : 'Equipos'
+
+    let { data: document_types } = await supabase
       .from('document_types')
       .select('*')
-      .eq('mandatory', true)
-      .eq('multiresource', false)
+      .filter('mandatory', 'eq', true)
+      .or(`company_id.eq.${company_id},company_id.is.null`)
 
     const validatedData = EquipoSchema.safeParse(document_types)
 
     if (!validatedData.success) {
-      console.log(validatedData.error.errors)
+      console.error(validatedData.error.errors)
       return
     }
 
@@ -116,7 +119,6 @@ export const useCountriesStore = create<State>((set, get) => {
     set({ mandatoryDocuments: groupedData })
   }
 
-  documentTypes()
   fetchContractors()
   fetchworkDiagram()
   fetchHierarchy()
@@ -131,5 +133,6 @@ export const useCountriesStore = create<State>((set, get) => {
     workDiagram: get()?.workDiagram,
     contractors: get()?.contractors,
     mandatoryDocuments: get()?.mandatoryDocuments,
+    documentTypes,
   }
 })

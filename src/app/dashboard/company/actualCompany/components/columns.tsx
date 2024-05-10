@@ -24,6 +24,7 @@ import { SharedUser } from '@/zodSchemas/schemas'
 import { ColumnDef } from '@tanstack/react-table'
 import { formatRelative } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '../../../../../../supabase/supabase'
 import { DataTableColumnHeader } from './data-table-column-header'
@@ -78,7 +79,21 @@ export const columns: ColumnDef<SharedUser>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Rol" />
     ),
-    cell: ({ row, }) => {
+    cell: ({ row }) => {
+      const [roles, setRoles] = useState<any[] | null>([])
+
+      const getRoles = async () => {
+        let { data: roles, error } = await supabase
+          .from('roles')
+          .select('*')
+          .eq('intern', false)
+        setRoles(roles)
+      }
+
+      useEffect(() => {
+        getRoles()
+      }, [])
+
       const changeRole = async (role: string) => {
         toast.promise(
           async () => {
@@ -108,9 +123,20 @@ export const columns: ColumnDef<SharedUser>[] = [
               <SelectValue placeholder="Rol" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Propietario">Propietario</SelectItem>
-              <SelectItem value="Administrador">Administrador</SelectItem>
-              <SelectItem value="Usuario">Usuario</SelectItem>
+              {roles?.map(role => (
+                <SelectItem key={role.id} value={role.name}>
+                  {role.name}
+                </SelectItem>
+              ))}
+              {row.original.role === 'Propietario' ? (
+                <SelectItem
+                  defaultValue={'Propietario'}
+                  disabled
+                  value="Propietario"
+                >
+                  Propietario
+                </SelectItem>
+              ) : null}
             </SelectContent>
           </Select>
         </div>
@@ -164,7 +190,12 @@ export const columns: ColumnDef<SharedUser>[] = [
       return (
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button disabled={row.getValue('role') === 'Propietario'} variant={'destructive'}>Eliminar</Button>
+            <Button
+              disabled={row.getValue('role') === 'Propietario'}
+              variant={'destructive'}
+            >
+              Eliminar
+            </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -178,7 +209,11 @@ export const columns: ColumnDef<SharedUser>[] = [
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction asChild>
-                <Button disabled={row.getValue('role') === 'Propietario'} onClick={handleDelete} variant={'destructive'}>
+                <Button
+                  disabled={row.getValue('role') === 'Propietario'}
+                  onClick={handleDelete}
+                  variant={'destructive'}
+                >
                   Eliminar
                 </Button>
               </AlertDialogAction>

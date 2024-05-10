@@ -31,6 +31,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../supabase/supabase'
+import { CheckboxDefaultValues } from './CheckboxDefValues'
 import { ImageHander } from './ImageHandler'
 import { Modal } from './Modal'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
@@ -62,6 +63,7 @@ type VehicleType = {
   model: string
   type: { name: string }
   id: string
+  allocated_to: string[]
 }
 type generic = {
   name: string
@@ -84,9 +86,7 @@ type dataType = {
   }[]
 }
 
-export default function VehiclesForm2({id}:{id:string}) {
-
-
+export default function VehiclesForm2({ id }: { id: string }) {
   const searchParams = useSearchParams()
   // const id = params
   const [accion, setAccion] = useState(searchParams.get('action'))
@@ -115,6 +115,7 @@ export default function VehiclesForm2({id}:{id:string}) {
     form.setValue('intern_number', vehicleData.intern_number)
     form.setValue('picture', vehicleData.picture)
     form.setValue('type', vehicleData.type.name)
+    form.setValue('allocated_to', vehicleData.allocated_to)
   }
 
   useEffect(() => {
@@ -161,7 +162,7 @@ export default function VehiclesForm2({id}:{id:string}) {
   }
   useEffect(() => {
     fetchVehicleData()
-  }, [id,actualCompany])
+  }, [id, actualCompany])
   const router = useRouter()
   const [hideInput, setHideInput] = useState(false)
   const vehicleSchema = z.object({
@@ -306,6 +307,7 @@ export default function VehiclesForm2({id}:{id:string}) {
     type: hideInput
       ? z.string().optional()
       : z.string({ required_error: 'El tipo es requerido' }),
+    allocated_to: z.array(z.string()).optional(),
   })
   const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false)
 
@@ -317,6 +319,7 @@ export default function VehiclesForm2({id}:{id:string}) {
     let { data: brand_vehicles } = await supabase
       .from('brand_vehicles')
       .select('*')
+
     let { data: type, error } = await supabase.from('type').select('*')
     setData({
       ...data,
@@ -355,7 +358,7 @@ export default function VehiclesForm2({id}:{id:string}) {
   useEffect(() => {
     fetchData()
   }, [])
-
+  const contractorCompanies = useCountriesStore(state => state.contractors)
   const vehicleBrands = data.brand
   const types = data.tipe_of_vehicles?.map(e => e.name)
   const vehicleModels = data.models
@@ -371,6 +374,7 @@ export default function VehiclesForm2({id}:{id:string}) {
       domain: vehicle?.domain || '',
       intern_number: vehicle?.intern_number || '',
       picture: vehicle?.picture || '',
+      allocated_to: [],
     },
   })
 
@@ -389,10 +393,13 @@ export default function VehiclesForm2({id}:{id:string}) {
   const mandatoryDocuments = useCountriesStore(
     state => state.mandatoryDocuments,
   )
+  console.log(form.formState.errors, 'formState.errors')
   const loggedUser = useLoggedUserStore(state => state.credentialUser?.id)
   async function onCreate(values: z.infer<typeof vehicleSchema>) {
     const { type_of_vehicle, brand, model, domain } = values
     //const companyId = actualCompany?.id
+
+    console.log(values, 'values')
     try {
       const { data: vehicle, error } = await supabase
         .from('vehicles')
@@ -511,6 +518,7 @@ export default function VehiclesForm2({id}:{id:string}) {
   }
 
   async function onUpdate(values: z.infer<typeof vehicleSchema>) {
+    console.log(values, 'values')
     const {
       type_of_vehicle,
       brand,
@@ -541,6 +549,7 @@ export default function VehiclesForm2({id}:{id:string}) {
           domain: domain?.toUpperCase(),
           intern_number: intern_number,
           picture: picture,
+          allocated_to: values.allocated_to,
         })
         .eq('id', vehicle?.id)
         .eq('company_id', actualCompany?.id)
@@ -584,14 +593,13 @@ export default function VehiclesForm2({id}:{id:string}) {
         title: 'Vehículo editado',
         description: 'El vehículo fue editado con éxito',
       })
+      setReadOnly(true)
     } catch (error) {
       toast({
         title: 'Error al editar el vehículo',
       })
     }
   }
-
-  console.log('render')
 
   return (
     <section>
@@ -1154,6 +1162,26 @@ export default function VehiclesForm2({id}:{id:string}) {
                 </FormItem>
               )}
             />
+            <div className=" min-w-[250px]">
+              <FormField
+                control={form.control}
+                name="allocated_to"
+                render={({ field }) => (
+                  <>
+                    <CheckboxDefaultValues
+                      disabled={readOnly}
+                      options={contractorCompanies}
+                      required={true}
+                      field={field}
+                      placeholder="Afectado a"
+                    />
+                    <FormDescription>
+                      Selecciona a quien se le asignará el equipo
+                    </FormDescription>
+                  </>
+                )}
+              />
+            </div>
             <div className="w-[300px] flex  gap-2">
               <FormField
                 control={form.control}
@@ -1175,7 +1203,6 @@ export default function VehiclesForm2({id}:{id:string}) {
                         />
                       </div>
                     </FormControl>
-
                     <FormMessage />
                   </FormItem>
                 )}

@@ -1,7 +1,4 @@
-import { Company } from '@/zodSchemas/schemas'
 import { create } from 'zustand'
-import { supabase } from '../../supabase/supabase'
-import cookie from 'js-cookie'
 
 interface State {
   // allVehicles: any[]
@@ -23,11 +20,10 @@ const setVehiclesToShow = (vehicles: any[]) => {
 }
 
 export const VehiclesActualCompany = create<State>((set, get) => {
-
   // const fetchVehicles = async () => {
 
   //   const actualCompany = cookie.get('actualCompanyId')
-    
+
   //   const { data: vehicles, error } = await supabase
   //     .from('vehicles')
   //     .select(
@@ -80,7 +76,6 @@ export const VehiclesActualCompany = create<State>((set, get) => {
 
   //   set({ vehiclesToShow: setVehiclesToShow(vehiclesToShow) })
   // }
-  
 
   return {
     // allVehicles: [],

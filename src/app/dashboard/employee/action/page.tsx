@@ -11,13 +11,13 @@ export default async function EmployeeFormAction({
   searchParams: any
 }) {
   const { data } = await supabase
+
     .from('documents_employees')
     .select('*,applies(*),id_document_types(*)')
     .eq('applies.document_number', searchParams.document)
+    .not('applies', 'is', null)
 
   revalidatePath('/dashboard/employee/action')
-
-  console.log(data,'data')
 
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">

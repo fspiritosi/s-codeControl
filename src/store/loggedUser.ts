@@ -17,6 +17,7 @@ import { format } from 'date-fns'
 import { create } from 'zustand'
 import { supabase } from '../../supabase/supabase'
 import { VehiclesFormattedElement } from './../zodSchemas/schemas'
+import { useCountriesStore } from './countries'
 
 interface Document {
   date: string
@@ -85,6 +86,7 @@ interface State {
   fetchVehicles: () => void
   documetsFetch: () => void
   getEmployees: (active: boolean) => void
+  loggedUser: () => void
 }
 
 const setEmployeesToShow = (employees: any) => {
@@ -307,7 +309,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       console.error('Error al obtener el perfil:', error)
     } else {
       set({ profile: data || [] })
-      howManyCompanies(data[0].id)
+      howManyCompanies(data[0]?.id)
     }
   }
 
@@ -333,7 +335,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
   const setActualCompany = (company: Company[0]) => {
     set({ actualCompany: company })
-    console.log('company', company)
+    useCountriesStore.getState().documentTypes(company.id)
     setActivesEmployees()
     fetchVehicles()
     documetsFetch()
@@ -809,7 +811,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
   const setNewDefectCompany = async (company: Company[0]) => {
     if (company.owner_id.id !== get()?.profile?.[0]?.id) {
-      console.log('no es el dueño')
       localStorage.setItem('company_id', JSON.stringify(company.id))
       return
     }
@@ -876,5 +877,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
     sharedCompanies: get()?.sharedCompanies,
     documetsFetch: () => documetsFetch(),
     getEmployees: (active: boolean) => getEmployees(active),
+    loggedUser,
   }
 })

@@ -32,7 +32,7 @@ import {
 import { revalidate } from '@/lib/useServer'
 import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { Company, CompanySchema } from '@/zodSchemas/schemas'
+import { Company } from '@/zodSchemas/schemas'
 import {
   BellIcon,
   CaretSortIcon,
@@ -101,7 +101,6 @@ export default function NavBar() {
   const setActualCompany = useLoggedUserStore(state => state.setActualCompany)
 
   const handleNewCompany = async (company: Company[0]) => {
-    console.log(company, 'company keloke')
     setNewDefectCompany(company)
     setActualCompany(company)
     setIsOpen(false)
@@ -109,7 +108,6 @@ export default function NavBar() {
     router.push('/dashboard')
   }
   const { control, formState, setValue } = useForm()
-  // console.log(actualCompany,'actualCompany');
 
   const updateProfileAvatar = async (imageUrl: string) => {
     try {
@@ -352,14 +350,14 @@ export default function NavBar() {
                                 } ha sido rechazado`}
                               {notification?.category === 'vencimiento' &&
                                 `El documento ${
-                                  notification.document.documentName ||
+                                  notification?.document?.documentName ||
                                   '(no disponible)'
                                 }, del ${
                                   notification.reference === 'employee'
                                     ? 'empleado'
                                     : 'vehiculo con patente'
-                                }} ${
-                                  notification.document.resource
+                                } ${
+                                  notification?.document?.resource
                                     .split(' ')
                                     .map(
                                       word =>

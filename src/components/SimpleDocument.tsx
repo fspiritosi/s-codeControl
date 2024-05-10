@@ -35,7 +35,6 @@ import {
   CommandItem,
 } from './ui/command'
 import { useToast } from './ui/use-toast'
-import { revalidatePath } from 'next/cache'
 
 export default function SimpleDocument({
   resource,
@@ -184,14 +183,14 @@ export default function SimpleDocument({
               upsert: false,
             },
           )
-          .then(async (response) => {
+          .then(async response => {
             const data = {
               validity: updateEntries[index].validity,
               document_path: response.data?.path,
               created_at: new Date(),
               state: 'presentado',
             }
-            const {error} = await supabase
+            const { error } = await supabase
               .from(tableName)
               .update(data)
               .eq('applies', idApplies || updateEntries[index].applies)
@@ -200,7 +199,8 @@ export default function SimpleDocument({
             if (error) {
               toast({
                 title: 'Error',
-                description: 'Hubo un error al subir los documentos a la base de datos',
+                description:
+                  'Hubo un error al subir los documentos a la base de datos',
                 variant: 'destructive',
               })
               setLoading(false)
@@ -208,7 +208,6 @@ export default function SimpleDocument({
               console.error(error)
               return
             }
-
           })
           .catch(error => {
             toast({
@@ -253,6 +252,10 @@ export default function SimpleDocument({
       .select('*')
       .eq('applies', applies)
       .eq('multiresource', false)
+      .or(
+        `company_id.eq.${useLoggedUserStore?.getState?.()?.actualCompany
+          ?.id},company_id.is.null`,
+      )
 
     setDocumentTypes(document_types)
   }
@@ -405,8 +408,6 @@ export default function SimpleDocument({
                                                     resource.name === value ||
                                                     resource.document === value,
                                                 ).id
-
-                                                console.log(id)
 
                                                 field.onChange(id)
 

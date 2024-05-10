@@ -73,7 +73,6 @@ export default function MultiResourceDocument({
     },
     [],
   )
-  // console.log('Este console viene del multirecurso')
 
   const employees = useLoggedUserStore(state => state.employees)?.reduce(
     (
@@ -100,6 +99,10 @@ export default function MultiResourceDocument({
       .select('*')
       .eq('applies', applies)
       .eq('multiresource', true)
+      .or(
+        `company_id.eq.${useLoggedUserStore?.getState?.()?.actualCompany
+          ?.id},company_id.is.null`,
+      )
 
     setDocumentTypes(document_types)
   }
@@ -230,8 +233,6 @@ export default function MultiResourceDocument({
           created_at: new Date(),
         }
       })
-
-      console.log('tableEntries', tableEntries)
 
       const { error } = await supabase
         .from(tableName)

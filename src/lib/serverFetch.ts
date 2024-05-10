@@ -63,9 +63,6 @@ export async function getEmployees() {
   const fisrtId = cookies().get('actualCompanyId')?.value
   const secobndId = await getCompany()
 
-  console.log('fisrtId', fisrtId)
-  console.log('secobndId', secobndId)
-
   const actualCompany = cookies().get('actualCompanyId')?.value
   let { data, error } = await supabase
     .from('employees')

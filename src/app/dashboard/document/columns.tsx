@@ -99,7 +99,7 @@ type Colum = {
   state: string
   document_number?: string
   mandatory?: string
-  document_url?:string //! TODO
+  document_url?: string //! TODO
 }
 
 export const columns: ColumnDef<Colum>[] = [
@@ -221,9 +221,6 @@ export const columns: ColumnDef<Colum>[] = [
           if (data) {
             setDocumentHistory(data)
           }
-          //console.log('Datos del documento:', data)
-          //console.log('document: ', document.id)
-          //setViewModal(!viewModal)
         } catch (error: any) {
           const message = await errorTranslate(error?.message)
           toast({

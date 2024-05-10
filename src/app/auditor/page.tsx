@@ -50,7 +50,9 @@ export default function Auditor() {
     let { data: document_types, error } = await supabase
       .from('document_types')
       .select('*')
-      .eq('is_active', true)
+      .filter('is_active', 'eq', true)
+      .filter('company_id', 'is', null)
+    // .or(`company_id.eq.${actualCompany?.id},company_id.is.null`)
 
     if (error) {
       console.error('Error fetching document types:', error.message)
