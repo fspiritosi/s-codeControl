@@ -32,7 +32,7 @@ import {
 import { revalidate } from '@/lib/useServer'
 import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { Company, CompanySchema } from '@/zodSchemas/schemas'
+import { Company } from '@/zodSchemas/schemas'
 import {
   BellIcon,
   CaretSortIcon,

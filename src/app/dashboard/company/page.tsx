@@ -55,7 +55,6 @@ export default function allCompany() {
   const [selectedCard, setSelectedCard] = useState<company | null>(null)
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
 
-  
   const handleCardClick = (card: any) => {
     setSelectedCard(card)
     setModalIsOpen(true)

@@ -309,7 +309,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       console.error('Error al obtener el perfil:', error)
     } else {
       set({ profile: data || [] })
-      howManyCompanies(data[0].id)
+      howManyCompanies(data[0]?.id)
     }
   }
 

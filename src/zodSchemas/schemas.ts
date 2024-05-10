@@ -341,7 +341,7 @@ export const ProfileSchema = z.object({
   id: z.string(),
   role: z.string(),
   email: z.string(),
-  avatar: z.string().nullable() ,
+  avatar: z.string().nullable(),
   fullname: z.string(),
   created_at: z.coerce.date(),
   credential_id: z.string(),
@@ -349,12 +349,12 @@ export const ProfileSchema = z.object({
 export type Profile = z.infer<typeof ProfileSchema>
 
 export const ShareCompanyUserSchema = z.object({
-  id: z.string() ,
-  role: z.string() ,
-  profile: ProfileSchema ,
-  company_id: z.string() ,
-  created_at: z.coerce.date() ,
-  profile_id: z.string() ,
+  id: z.string(),
+  role: z.string(),
+  profile: ProfileSchema,
+  company_id: z.string(),
+  created_at: z.coerce.date(),
+  profile_id: z.string(),
 })
 
 export type ShareCompanyUser = z.infer<typeof ShareCompanyUserSchema>
@@ -552,26 +552,27 @@ export const MandatoryDocumentsSchema = z.object({
 })
 export type MandatoryDocuments = z.infer<typeof MandatoryDocumentsSchema>
 
-export const CompanyIdSchema = z.object({
-  id: z.string(),
-  city: CitySchema,
-  address: z.string(),
-  country: z.string(),
-  website: z.string(),
-  industry: z.string(),
-  owner_id: ProfileSchema,
-  by_defect: z.boolean(),
-  is_active: z.boolean(),
-  description: z.string(),
-  province_id: CitySchema,
-  company_cuit: z.string(),
-  company_logo: z.string(),
-  company_name: z.string(),
-  contact_email: z.string(),
-  contact_phone: z.string(),
-  companies_employees: z.array(CompaniesEmployeeSchema) || null,
-  share_company_users: z.array(ShareCompanyUserSchema) || null,
-}) || undefined
+export const CompanyIdSchema =
+  z.object({
+    id: z.string(),
+    city: CitySchema,
+    address: z.string(),
+    country: z.string(),
+    website: z.string(),
+    industry: z.string(),
+    owner_id: ProfileSchema,
+    by_defect: z.boolean(),
+    is_active: z.boolean(),
+    description: z.string(),
+    province_id: CitySchema,
+    company_cuit: z.string(),
+    company_logo: z.string(),
+    company_name: z.string(),
+    contact_email: z.string(),
+    contact_phone: z.string(),
+    companies_employees: z.array(CompaniesEmployeeSchema) || null,
+    share_company_users: z.array(ShareCompanyUserSchema) || null,
+  }) || undefined
 export type CompanyId = z.infer<typeof CompanyIdSchema>
 
 export const SharedCompaniesSchema = z.array(

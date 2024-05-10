@@ -99,7 +99,7 @@ type Colum = {
   state: string
   document_number?: string
   mandatory?: string
-  document_url?:string //! TODO
+  document_url?: string //! TODO
 }
 
 export const columns: ColumnDef<Colum>[] = [

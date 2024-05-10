@@ -543,7 +543,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
       if (isNoPresented) {
         return 'No disponible'
       } else {
-        return  row.original.validity
+        return row.original.validity
       }
     },
   },
