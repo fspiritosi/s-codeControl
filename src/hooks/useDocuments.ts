@@ -126,6 +126,10 @@ export const useDocument = () => {
         const { data: documentTypesData, error: typesError } = await supabase
           .from('document_types')
           .select('*')
+          .or(
+            `company_id.eq.${useLoggedUserStore?.getState?.()?.actualCompany
+              ?.id},company_id.is.null`,
+          )
         if (typesError) {
           throw typesError
         }

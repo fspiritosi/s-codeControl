@@ -63,7 +63,6 @@ export default function UpdateDocuments({
 
     if (fileExtension1 !== fileExtension2) {
       // const pathDelete = resource === 'vehicle' ? `documentos-equipos/${documentName}.${fileExtension2}` : `documentos-empleados/${documentName}.${fileExtension2}`
-      console.log(documentName,'documentName')
       if (!documentName) return
       const { error: storageError } = await supabase.storage
         .from('document_files')

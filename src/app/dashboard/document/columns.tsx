@@ -221,9 +221,6 @@ export const columns: ColumnDef<Colum>[] = [
           if (data) {
             setDocumentHistory(data)
           }
-          //console.log('Datos del documento:', data)
-          //console.log('document: ', document.id)
-          //setViewModal(!viewModal)
         } catch (error: any) {
           const message = await errorTranslate(error?.message)
           toast({

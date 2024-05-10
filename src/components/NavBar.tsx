@@ -101,7 +101,6 @@ export default function NavBar() {
   const setActualCompany = useLoggedUserStore(state => state.setActualCompany)
 
   const handleNewCompany = async (company: Company[0]) => {
-    console.log(company, 'company keloke')
     setNewDefectCompany(company)
     setActualCompany(company)
     setIsOpen(false)
@@ -109,7 +108,6 @@ export default function NavBar() {
     router.push('/dashboard')
   }
   const { control, formState, setValue } = useForm()
-  // console.log(actualCompany,'actualCompany');
 
   const updateProfileAvatar = async (imageUrl: string) => {
     try {

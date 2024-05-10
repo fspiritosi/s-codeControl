@@ -153,7 +153,6 @@ export const RegisterWithRole = () => {
         error: err => err.message,
       },
     )
-    console.log(values)
   }
 
   return (

@@ -22,13 +22,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { toast } from '@/components/ui/use-toast'
-import { handleSupabaseError } from '@/lib/errorHandler'
+import { cn } from '@/lib/utils'
+import { useLoggedUserStore } from '@/store/loggedUser'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { supabase } from '../../supabase/supabase'
 
-export default function NewDocumentType() {
+export default function NewDocumentType({
+  codeControlClient,
+}: {
+  codeControlClient?: boolean
+}) {
   const [special, setSpecial] = useState(false)
   const router = useRouter()
 
@@ -73,39 +78,49 @@ export default function NewDocumentType() {
       ...values,
       name: formatName(values.name),
       description: formatDescription(values.description),
-    };
-
-    const { data, error } = await supabase
-      .from('document_types')
-      .insert(formattedValues)
-      .select();
-
-    if (error) {
-      toast({
-        title: 'Error',
-        variant: 'destructive',
-        description: handleSupabaseError(error),
-      });
-      return;
+      company_id: codeControlClient
+        ? useLoggedUserStore.getState().actualCompany?.id
+        : null,
     }
-    toast({
-      title: 'Documento creado con exito',
-      variant: 'default',
-    });
-    router.push('/auditor');
+
+    toast.promise(
+      async () => {
+        const { data, error } = await supabase
+          .from('document_types')
+          .insert(formattedValues)
+          .select()
+      },
+      {
+        loading: 'Creando documento...',
+        success: data => {
+          if (codeControlClient) {
+            document.getElementById('close_document_modal')?.click()
+            return 'El documento se ha creado correctamente'
+          } else {
+            router.push('/auditor')
+            return 'El documento se ha creado correctamente'
+          }
+        },
+        error: 'Error al crear el documento',
+      },
+    )
   }
 
   function formatName(name: string): string {
     // Capitalize first letter and convert the rest to lowercase
-    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
   }
 
-  function formatDescription(description: string | undefined): string | undefined {
+  function formatDescription(
+    description: string | undefined,
+  ): string | undefined {
     if (description) {
       // Capitalize first letter and convert the rest to lowercase
-      return description.charAt(0).toUpperCase() + description.slice(1).toLowerCase();
+      return (
+        description.charAt(0).toUpperCase() + description.slice(1).toLowerCase()
+      )
     }
-    return description;
+    return description
   }
 
   return (
@@ -240,8 +255,13 @@ export default function NewDocumentType() {
             )}
           />
         )}
-
-        <Button type="submit">Crear tipo de documento</Button>
+        <Button
+          type="submit"
+          id="create_new_document"
+          className={cn(codeControlClient ? 'hidden' : '')}
+        >
+          Crear tipo de documento
+        </Button>
       </form>
     </Form>
   )

@@ -54,9 +54,6 @@ export default function DenyDocModal({
 
   async function onSubmit(menssaje: z.infer<typeof FormSchema>) {
 
-    console.log(id, 'id')
-    console.log(resource, 'resource')
-
     if (resource === 'employee') {
       const { data, error } = await supabase
         .from('documents_employees')

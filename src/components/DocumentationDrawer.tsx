@@ -38,8 +38,6 @@ export const DocumentationDrawer = ({ props,resource }: Props) => {
   const handleOpen = () => setOpen(!open)
 
   const handleDownload = async (path: string, fileName: string) => {
-    console.log(path, 'path')
-
     toast.promise(
       async () => {
         const { data, error } = await supabase.storage
