@@ -64,6 +64,7 @@ const Allinks = [
 ]
 
 export default function SideLinks({ expanded }: { expanded: boolean }) {
+  //cambio
   const pathname = usePathname()
   const [openSubMenu, setOpenSubMenu] = useState(null)
   const profile = useLoggedUserStore(state => state.profile)?.[0]?.id
