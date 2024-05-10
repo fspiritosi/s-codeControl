@@ -1,6 +1,6 @@
 'use client'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { supabase } from '../../supabase/supabase'
+import { supabase } from '../supabase'
 import { company } from './../types/types'
 import { useEdgeFunctions } from './useEdgeFunctions'
 //import { industry } from './../types/types';

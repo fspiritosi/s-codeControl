@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select'
 import { useState } from 'react'
 import { ZodError, z } from 'zod'
-import { supabase } from '../../supabase/supabase'
+import { supabase } from '../supabase'
 import { useToast } from './ui/use-toast'
 
 const schema = z

@@ -3,7 +3,7 @@ import EmployeeAccordion from '@/components/EmployeeAccordion'
 import { Card, CardFooter } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { revalidatePath } from 'next/cache'
-import { supabase } from '../../../../../supabase/supabase'
+import { supabase } from '../../../../supabase'
 
 export default async function EmployeeFormAction({
   searchParams,

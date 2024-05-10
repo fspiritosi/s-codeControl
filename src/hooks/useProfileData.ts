@@ -1,5 +1,5 @@
 import { profileUser } from '@/types/types'
-import { supabase } from '../../supabase/supabase'
+import { supabase } from '../supabase'
 import { useEdgeFunctions } from './useEdgeFunctions'
 
 export const useProfileData = () => {

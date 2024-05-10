@@ -70,7 +70,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { supabase } from '../../../supabase/supabase'
+import { supabase } from '../../supabase'
 
 type Colum = {
   date: string

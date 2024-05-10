@@ -1,5 +1,5 @@
 import { login, profileUser, singUp } from '@/types/types'
-import { supabase } from '../../supabase/supabase'
+import { supabase } from '../supabase'
 import { useEdgeFunctions } from './useEdgeFunctions'
 import { useProfileData } from './useProfileData'
 

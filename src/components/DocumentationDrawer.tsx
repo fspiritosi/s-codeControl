@@ -19,7 +19,7 @@ import JSZip from 'jszip'
 import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { supabase } from '../../supabase/supabase'
+import { supabase } from '../supabase'
 import SimpleDocument from './SimpleDocument'
 import {
   AlertDialog,

@@ -72,7 +72,7 @@ import { ArrowUpDown, CalendarIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { supabase } from '../../../../supabase/supabase'
+import { supabase } from '../../../supabase'
 
 const formSchema = z.object({
   reason_for_termination: z.string({

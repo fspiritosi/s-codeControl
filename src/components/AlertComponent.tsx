@@ -12,7 +12,7 @@ import { useLoggedUserStore } from '@/store/loggedUser'
 import { Company } from '@/zodSchemas/schemas'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { supabase } from '../../supabase/supabase'
+import { supabase } from '../supabase'
 
 export const AlertComponent = () => {
   const showAlert = useLoggedUserStore(state => state.showNoCompanyAlert)

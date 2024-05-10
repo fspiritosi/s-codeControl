@@ -27,7 +27,7 @@ import { useLoggedUserStore } from '@/store/loggedUser'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { supabase } from '../../supabase/supabase'
+import { supabase } from '../supabase'
 
 export default function NewDocumentType({
   codeControlClient,

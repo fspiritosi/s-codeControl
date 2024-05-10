@@ -26,7 +26,7 @@ import { formatRelative } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { supabase } from '../../../../../../supabase/supabase'
+import { supabase } from '../../../../../supabase'
 import { DataTableColumnHeader } from './data-table-column-header'
 
 export const columns: ColumnDef<SharedUser>[] = [

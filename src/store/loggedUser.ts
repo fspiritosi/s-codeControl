@@ -15,7 +15,7 @@ import {
 import { User } from '@supabase/supabase-js'
 import { format } from 'date-fns'
 import { create } from 'zustand'
-import { supabase } from '../../supabase/supabase'
+import { supabase } from '../supabase'
 import { VehiclesFormattedElement } from './../zodSchemas/schemas'
 import { useCountriesStore } from './countries'
 

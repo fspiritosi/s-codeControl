@@ -1,6 +1,6 @@
 import { validarCUIL } from '@/lib/utils'
 import * as z from 'zod'
-import { supabase } from '../../supabase/supabase'
+import { supabase } from '../supabase'
 
 const getAllFiles = async (legajo: string) => {
   const {

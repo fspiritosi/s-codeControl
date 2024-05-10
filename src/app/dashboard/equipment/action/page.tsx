@@ -2,8 +2,8 @@ import { DocumentationDrawer } from '@/components/DocumentationDrawer'
 import { Card, CardFooter } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { revalidatePath } from 'next/cache'
-import { supabase } from '../../../../../supabase/supabase'
 import VehiclesForm from '../../../../components/VehiclesForm'
+import { supabase } from '../../../../supabase'
 
 export default async function EquipmentFormAction({
   searchParams,

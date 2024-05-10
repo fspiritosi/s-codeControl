@@ -12,7 +12,7 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { supabase } from '../../supabase/supabase'
+import { supabase } from '../supabase'
 
 export default function ApproveDocModal({
   id,

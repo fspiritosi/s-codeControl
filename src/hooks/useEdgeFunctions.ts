@@ -1,5 +1,5 @@
 'use client'
-import { supabase } from '../../supabase/supabase'
+import { supabase } from '../supabase'
 
 export const useEdgeFunctions = () => {
   return {

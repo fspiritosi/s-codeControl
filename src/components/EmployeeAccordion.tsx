@@ -23,7 +23,7 @@ import {
   nacionaliOptionsENUM,
   typeOfContractENUM,
 } from '@/types/enums'
-import { supabase } from '../../supabase/supabase'
+import { supabase } from '../supabase'
 
 import { CheckboxDefaultValues } from '@/components/CheckboxDefValues'
 import { SelectWithData } from '@/components/SelectWithData'

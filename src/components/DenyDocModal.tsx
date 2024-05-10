@@ -24,7 +24,7 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { supabase } from '../../supabase/supabase'
+import { supabase } from '../supabase'
 import { Textarea } from './ui/textarea'
 
 export default function DenyDocModal({

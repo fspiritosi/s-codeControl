@@ -4,7 +4,7 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatDate } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { supabase } from '../../../../supabase/supabase'
+import { supabase } from '../../../supabase'
 
 import ApproveDocModal from '@/components/ApproveDocModal'
 import DenyDocModal from '@/components/DenyDocModal'

@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/popover'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { es } from 'date-fns/locale'
-import { supabase } from '../../supabase/supabase'
+import { supabase } from '../supabase'
 import {
   Command,
   CommandEmpty,

@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 import { useEffect, useState } from 'react'
-import { supabase } from '../../../../../supabase/supabase'
+import { supabase } from '../../../../supabase'
 
 export default function page({ params }: { params: { id: string } }) {
   const router = useRouter()
