@@ -1,13 +1,23 @@
 import {
   Notifications,
+  SharedUser,
   VehiclesAPI,
-  companyData,
   profileUser,
 } from '@/types/types'
+import {
+  Company,
+  CompanySchema,
+  SharedCompanies,
+  SharedCompaniesSchema,
+  Vehicle,
+  VehicleSchema,
+} from '@/zodSchemas/schemas'
 import { User } from '@supabase/supabase-js'
 import { format } from 'date-fns'
 import { create } from 'zustand'
 import { supabase } from '../../supabase/supabase'
+import { VehiclesFormattedElement } from './../zodSchemas/schemas'
+import { useCountriesStore } from './countries'
 
 interface Document {
   date: string
@@ -18,6 +28,7 @@ interface Document {
   id: string
   resource: string
   state: string
+  document_path?: string
 }
 
 interface State {
@@ -25,9 +36,9 @@ interface State {
   profile: profileUser[]
   showNoCompanyAlert: boolean
   showMultiplesCompaniesAlert: boolean
-  allCompanies: companyData[]
-  actualCompany: companyData | null
-  setActualCompany: (company: companyData) => void
+  allCompanies: Company
+  actualCompany: Company[0] | null
+  setActualCompany: (company: Company[0]) => void
   employees: any
   setEmployees: (employees: any) => void
   isLoading: boolean
@@ -36,8 +47,9 @@ interface State {
   setActivesEmployees: () => void
   showDeletedEmployees: boolean
   setShowDeletedEmployees: (showDeletedEmployees: boolean) => void
-  vehicles: any
-  setNewDefectCompany: (company: companyData) => void
+  vehicles: Vehicle
+  setNewDefectCompany: (company: Company[0]) => void
+  sharedCompanies: SharedCompanies
   endorsedEmployees: () => void
   noEndorsedEmployees: () => void
   allDocumentsToShow: {
@@ -64,12 +76,23 @@ interface State {
   }
   notifications: Notifications[]
   markAllAsRead: () => void
+  resetDefectCompanies: (company: Company[0]) => void
+  sharedUsers: SharedUser[]
+  vehiclesToShow: VehiclesFormattedElement
+  setActivesVehicles: () => void
+  endorsedVehicles: () => void
+  noEndorsedVehicles: () => void
+  setVehicleTypes: (type: string) => void
+  fetchVehicles: () => void
+  documetsFetch: () => void
+  getEmployees: (active: boolean) => void
+  loggedUser: () => void
 }
 
 const setEmployeesToShow = (employees: any) => {
   const employee = employees?.map((employees: any) => {
     return {
-      full_name: employees?.firstname + ' ' + employees?.lastname,
+      full_name: employees?.lastname + ' ' + employees?.firstname,
       id: employees?.id,
       email: employees?.email,
       cuil: employees?.cuil,
@@ -114,11 +137,210 @@ const setEmployeesToShow = (employees: any) => {
   return employee
 }
 
+const setVehiclesToShow = (vehicles: Vehicle) => {
+  return vehicles?.map(item => ({
+    ...item,
+    types_of_vehicles: item.types_of_vehicles.name,
+    brand: item.brand_vehicles.name,
+    model: item.model_vehicles.name,
+  }))
+}
+
 export const useLoggedUserStore = create<State>((set, get) => {
-  set({ isLoading: true })
+  // set({ isLoading: true })
   set({ showDeletedEmployees: false })
 
-  let selectedCompany: companyData[]
+  const howManyCompanies = async (id: string) => {
+    if (!id) return
+    const { data, error } = await supabase
+      .from('company')
+      .select(
+        `
+        *,
+        owner_id(*),
+        share_company_users(*,
+          profile(*)
+        ),
+        city (
+          name,
+          id
+        ),
+        province_id (
+          name,
+          id
+        ),
+        companies_employees (
+          employees(
+            *,
+            city (
+              name
+            ),
+            province(
+              name
+            ),
+            workflow_diagram(
+              name
+            ),
+            hierarchical_position(
+              name
+            ),
+            birthplace(
+              name
+            ),
+            contractor_employee(
+              contractors(
+                *
+              )
+            )
+          )
+        )
+      `,
+      )
+      .eq('owner_id', id)
+
+    const validatedData = CompanySchema.safeParse(data)
+    if (!validatedData.success) {
+      return console.error(
+        'Error al obtener el perfil: Validacion',
+        validatedData.error,
+      )
+    }
+
+    let { data: share_company_users, error: sharedError } = await supabase
+      .from('share_company_users')
+      .select(
+        `*,company_id(*,
+          owner_id(*),
+        share_company_users(*,
+          profile(*)
+        ),
+        city (
+          name,
+          id
+        ),
+        province_id (
+          name,
+          id
+        ),
+        companies_employees (
+          employees(
+            *,
+            city (
+              name
+            ),
+            province(
+              name
+            ),
+            workflow_diagram(
+              name
+            ),
+            hierarchical_position(
+              name
+            ),
+            birthplace(
+              name
+            ),
+            contractor_employee(
+              contractors(
+                *
+              )
+            )
+          )
+        )
+      )`,
+      )
+      .eq('profile_id', id)
+
+    const validatedSharedCompanies =
+      SharedCompaniesSchema.safeParse(share_company_users)
+
+    if (!validatedSharedCompanies.success) {
+      return console.error(
+        'Error al obtener el perfil: Validacion',
+        validatedSharedCompanies.error,
+      )
+    }
+
+    set({ sharedCompanies: validatedSharedCompanies.data })
+
+    if (error) {
+      console.error('Error al obtener el perfil:', error)
+    } else {
+      set({ allCompanies: validatedData.data })
+      selectedCompany = get()?.allCompanies.filter(company => company.by_defect)
+      const savedCompany = localStorage.getItem('company_id') || ''
+      if (savedCompany) {
+        const company = validatedSharedCompanies.data.find(
+          company => company.company_id.id === JSON.parse(savedCompany),
+        )?.company_id
+
+        if (company) {
+          setActualCompany(company)
+          return
+        }
+      }
+
+      if (data.length > 1) {
+        if (selectedCompany) {
+          //
+          setActualCompany(selectedCompany[0])
+        } else {
+          set({ showMultiplesCompaniesAlert: true })
+        }
+      }
+      if (data.length === 1) {
+        set({ showMultiplesCompaniesAlert: false })
+        setActualCompany(data[0])
+      }
+      if (data.length === 0) {
+        set({ showNoCompanyAlert: true })
+      }
+    }
+  }
+
+  const profileUser = async (id: string) => {
+    if (!id) return
+    const { data, error } = await supabase
+      .from('profile')
+      .select('*')
+      .eq('credential_id', id)
+
+    if (error) {
+      console.error('Error al obtener el perfil:', error)
+    } else {
+      set({ profile: data || [] })
+      howManyCompanies(data[0]?.id)
+    }
+  }
+
+  const loggedUser = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (user) {
+      set({ credentialUser: user })
+    }
+
+    if (typeof window !== 'undefined') {
+      profileUser(user?.id || '')
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    loggedUser()
+  }
+
+  let selectedCompany: Company
+
+  const setActualCompany = (company: Company[0]) => {
+    set({ actualCompany: company })
+    useCountriesStore.getState().documentTypes(company.id)
+    setActivesEmployees()
+    fetchVehicles()
+    documetsFetch()
+    allNotifications()
+  }
 
   const setInactiveEmployees = async () => {
     const employeesToShow = await getEmployees(false)
@@ -126,7 +348,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
   }
 
   const noEndorsedEmployees = async () => {
-    set({ isLoading: true })
     const { data, error } = await supabase
       .from('employees')
       .select(
@@ -158,7 +379,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
       console.error('Error al obtener los empleados no avalados:', error)
     } else {
       set({ employeesToShow: setEmployeesToShow(data) || [] })
-      set({ isLoading: false })
     }
   }
 
@@ -172,10 +392,10 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
     const document = notifications?.map((doc: any) => {
       const findDocument =
-        get()?.Alldocuments?.employees?.find(
+        get()?.allDocumentsToShow?.employees?.find(
           document => document.id === doc.document_id,
         ) ||
-        get()?.Alldocuments?.vehicles?.find(
+        get()?.allDocumentsToShow?.vehicles?.find(
           document => document.id === doc.document_id,
         )
       if (findDocument) {
@@ -191,7 +411,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
     const tipedData = document?.sort(
       (a, b) =>
-       new Date(a.created_at).getTime() -  new Date(b.created_at).getTime() ,
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
     ) as Notifications[]
 
     set({ notifications: tipedData })
@@ -214,7 +434,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
   }
 
   const endorsedEmployees = async () => {
-    set({ isLoading: true })
     const { data, error } = await supabase
       .from('employees')
       .select(
@@ -246,24 +465,71 @@ export const useLoggedUserStore = create<State>((set, get) => {
       console.error('Error al obtener los empleados avalados:', error)
     } else {
       set({ employeesToShow: setEmployeesToShow(data) || [] })
-      set({ isLoading: false })
     }
   }
 
-  const vehicles = async () => {
+  const fetchVehicles = async () => {
+    if (!get()?.actualCompany?.id) return
     const { data, error } = await supabase
       .from('vehicles')
-      .select('*')
+      .select(
+        `*,
+      types_of_vehicles(name),
+      brand_vehicles(name),
+      model_vehicles(name)`,
+      )
       .eq('company_id', get()?.actualCompany?.id)
       .eq('is_active', true)
+
+    const validatedData = VehicleSchema.safeParse(data ?? [])
+    if (!validatedData.success) {
+      return console.error(
+        'Error al obtener los vehículos:',
+        validatedData.error,
+      )
+    }
+
     if (error) {
       console.error('Error al obtener los vehículos:', error)
     } else {
-      set({ vehicles: data || [] })
+      set({ vehicles: validatedData.data || [] })
+      setActivesVehicles()
     }
   }
 
+  const setActivesVehicles = () => {
+    const activesVehicles = get()?.vehicles.filter(vehicle => vehicle.is_active)
+    set({ vehiclesToShow: setVehiclesToShow(activesVehicles) })
+  }
+  const endorsedVehicles = () => {
+    const endorsedVehicles = get()?.vehicles.filter(
+      vehicle => vehicle.status === 'Avalado',
+    )
+
+    set({ vehiclesToShow: setVehiclesToShow(endorsedVehicles) })
+  }
+  const noEndorsedVehicles = () => {
+    const noEndorsedVehicles = get()?.vehicles.filter(
+      vehicle => vehicle.status === 'No avalado',
+    )
+    set({ vehiclesToShow: setVehiclesToShow(noEndorsedVehicles) })
+  }
+
+  const setVehicleTypes = (type: string) => {
+    if (type === 'Todos') {
+      set({ vehiclesToShow: setVehiclesToShow(get()?.vehicles) })
+      return
+    }
+    const vehicles = get()?.vehicles
+    const vehiclesToShow = vehicles.filter(
+      vehicle => vehicle.types_of_vehicles?.name === type,
+    )
+
+    set({ vehiclesToShow: setVehiclesToShow(vehiclesToShow) })
+  }
+
   const documetsFetch = async () => {
+    // set({ isLoading: true })
     let { data, error } = await supabase
       .from('documents_employees')
       .select(
@@ -343,8 +609,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
           validity: formattedDate,
           mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
           id: doc.id,
-          resource: `${doc.employees?.firstname} ${doc.employees?.lastname}`,
+          resource: `${doc.employees?.lastname} ${doc.employees?.firstname}`,
           document_number: doc.employees.document_number,
+          document_url: doc.document_path,
         }
       }
 
@@ -362,20 +629,26 @@ export const useLoggedUserStore = create<State>((set, get) => {
           mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
           id: doc.id,
           resource: doc.applies?.domain || doc.applies?.intern_number,
+          vehicle_id: doc.applies?.id,
         }
       }
 
       const lastMonthValues = {
         employees:
           filteredData
-            ?.filter(
-              doc => doc.state !== 'presentado' && doc.validity !== 'No vence',
-            )
+            ?.filter((doc: any) => {
+              if (!doc.validity || doc.validity === 'No vence') return false
+              return (
+                doc.state !== 'presentado' &&
+                doc.state !== 'pendiente' &&
+                (doc.validity !== 'No vence' || doc.validity !== null)
+              )
+            })
             ?.map(mapDocument) || [],
         vehicles:
           filteredVehiclesData
             .filter((doc: any) => {
-              if (!doc.validity) return false
+              if (!doc.validity || doc.validity === 'No vence') return false
               return (
                 doc.state !== 'presentado' &&
                 (doc.validity !== 'No vence' || doc.validity !== null)
@@ -398,23 +671,37 @@ export const useLoggedUserStore = create<State>((set, get) => {
       const Allvalues = {
         employees:
           data
+            ?.filter((doc: any) => {
+              if (!doc.validity || doc.validity === 'No vence') return false
+              return (
+                doc.state !== 'presentado' &&
+                (doc.validity !== 'No vence' || doc.validity !== null)
+              )
+            })
             ?.map(mapDocument) || [],
         vehicles:
           typedData
-            .map(mapVehicle) || [],
+            ?.filter((doc: any) => {
+              if (!doc.validity || doc.validity === 'No vence') return false
+              return (
+                doc.state !== 'presentado' &&
+                (doc.validity !== 'No vence' || doc.validity !== null)
+              )
+            })
+            ?.map(mapVehicle) || [],
       }
 
       const AllvaluesToShow = {
         employees: data?.map(mapDocument) || [],
         vehicles: typedData.map(mapVehicle) || [],
       }
-
       set({ allDocumentsToShow: AllvaluesToShow })
       set({ showLastMonthDocuments: true })
       set({ Alldocuments: Allvalues })
       set({ lastMonthDocuments: lastMonthValues })
       set({ documentsToShow: lastMonthValues })
       set({ pendingDocuments })
+      // set({ isLoading: false })
     }
   }
 
@@ -459,7 +746,18 @@ export const useLoggedUserStore = create<State>((set, get) => {
     return employeesToShow
   }
 
-  const channels3 = supabase
+  const realTimeSharedUsers = supabase
+    .channel('custom-all-channel')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'share_company_users' },
+      payload => {
+        howManyCompanies(get()?.profile?.[0]?.id || '')
+      },
+    )
+    .subscribe()
+
+  const realTimeNotification = supabase
     .channel('custom-all-channel')
     .on(
       'postgres_changes',
@@ -470,7 +768,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     )
     .subscribe()
 
-  const channels = supabase
+  const realTimeEmployees = supabase
     .channel('custom-update-channel')
     .on(
       'postgres_changes',
@@ -481,22 +779,42 @@ export const useLoggedUserStore = create<State>((set, get) => {
     )
     .subscribe()
 
+  const realTimeCompany = supabase
+    .channel('custom-all-channel')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'company' },
+      () => {
+        howManyCompanies(get()?.profile?.[0]?.id || '')
+      },
+    )
+    .subscribe()
+
   const setActivesEmployees = async () => {
     const employeesToShow = await getEmployees(true)
     set({ employeesToShow })
     set({ employees: employeesToShow })
   }
 
-  const setActualCompany = (company: companyData) => {
-    set({ actualCompany: company })
-    setActivesEmployees()
-    set({ isLoading: false })
-    vehicles()
-    documetsFetch()
-    allNotifications()
+  const resetDefectCompanies = async (company: Company[0]) => {
+    const { data, error } = await supabase
+      .from('company')
+      .update({ by_defect: false })
+      .eq('owner_id', get()?.profile?.[0]?.id)
+
+    if (error) {
+      console.error('Error al actualizar la empresa por defecto:', error)
+    }
+
+    setActualCompany(company)
   }
 
-  const setNewDefectCompany = async (company: companyData) => {
+  const setNewDefectCompany = async (company: Company[0]) => {
+    if (company.owner_id.id !== get()?.profile?.[0]?.id) {
+      localStorage.setItem('company_id', JSON.stringify(company.id))
+      return
+    }
+    localStorage.removeItem('company_id')
     const { data, error } = await supabase
       .from('company')
       .update({ by_defect: false })
@@ -518,122 +836,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
     }
   }
 
-  supabase
-    .channel('custom-all-channel')
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'company' },
-      () => {
-        howManyCompanies(get()?.profile?.[0]?.id || '')
-      },
-    )
-    .subscribe()
-
-  const howManyCompanies = async (id: string) => {
-    if (!id) return
-    const { data, error } = await supabase
-      .from('company')
-      .select(
-        `
-        *,
-        city (
-          name,
-          id
-        ),
-        province_id (
-          name,
-          id
-        ),
-        companies_employees (
-          employees(
-            *,
-            city (
-              name
-            ),
-            province(
-              name
-            ),
-            workflow_diagram(
-              name
-            ),
-            hierarchical_position(
-              name
-            ),
-            birthplace(
-              name
-            ),
-            contractor_employee(
-              contractors(
-                *
-              )
-            )
-          )
-        )
-      `,
-      )
-      .eq('owner_id', id)
-
-    if (error) {
-      console.error('Error al obtener el perfil:', error)
-    } else {
-      set({ allCompanies: data || [] })
-
-      selectedCompany = get()?.allCompanies?.filter(
-        company => company.by_defect,
-      )
-
-      if (data.length > 1) {
-        if (selectedCompany) {
-          //
-          setActualCompany(selectedCompany[0])
-        } else {
-          set({ showMultiplesCompaniesAlert: true })
-        }
-      }
-      if (data.length === 1) {
-        set({ showMultiplesCompaniesAlert: false })
-        setActualCompany(data[0])
-      }
-      if (data.length === 0) {
-        set({ showNoCompanyAlert: true })
-      }
-    }
-  }
-
-  const profileUser = async (id: string) => {
-    if (!id) return
-    const { data, error } = await supabase
-      .from('profile')
-      .select('*')
-      .eq('credential_id', id)
-
-    if (error) {
-      console.error('Error al obtener el perfil:', error)
-    } else {
-      set({ profile: data || [] })
-      howManyCompanies(data[0].id)
-    }
-  }
-
-  const loggedUser = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    
-
-    if (user) {
-      set({ credentialUser: user })
-    }
-
-    if (typeof window !== 'undefined') {
-      profileUser(user?.id || '')
-    }
-  }
-
-  if (typeof window !== 'undefined') {
-    loggedUser()
-  }
-
   return {
     credentialUser: get()?.credentialUser,
     profile: get()?.profile,
@@ -641,7 +843,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     showMultiplesCompaniesAlert: get()?.showMultiplesCompaniesAlert,
     allCompanies: get()?.allCompanies,
     actualCompany: get()?.actualCompany,
-    setActualCompany: (company: companyData) => setActualCompany(company),
+    setActualCompany: (company: Company[0]) => setActualCompany(company),
     employees: get()?.employees,
     setEmployees: (employees: any) => set({ employees }),
     isLoading: get()?.isLoading,
@@ -664,5 +866,17 @@ export const useLoggedUserStore = create<State>((set, get) => {
     notifications: get()?.notifications,
     markAllAsRead,
     allDocumentsToShow: get()?.allDocumentsToShow,
+    resetDefectCompanies,
+    sharedUsers: get()?.sharedUsers,
+    vehiclesToShow: get()?.vehiclesToShow,
+    setActivesVehicles,
+    endorsedVehicles,
+    noEndorsedVehicles,
+    setVehicleTypes,
+    fetchVehicles,
+    sharedCompanies: get()?.sharedCompanies,
+    documetsFetch: () => documetsFetch(),
+    getEmployees: (active: boolean) => getEmployees(active),
+    loggedUser,
   }
 })

@@ -61,6 +61,7 @@ import { z } from 'zod'
 import { ImageHander } from './ImageHandler'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
+import { CardDescription, CardHeader, CardTitle } from './ui/card'
 
 type Province = {
   id: number
@@ -75,7 +76,7 @@ export default function EmployeeAccordion() {
   const [user, setUser] = useState(
     employees?.find((user: any) => user.document_number === document),
   )
-
+  const loggedUser = useLoggedUserStore(state => state.credentialUser?.id)
   const { uploadImage } = useImageUpload()
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [base64Image, setBase64Image] = useState<string>('')
@@ -87,9 +88,13 @@ export default function EmployeeAccordion() {
   const workDiagramOptions = useCountriesStore(state => state.workDiagram)
   const contractorCompanies = useCountriesStore(state => state.contractors)
   const { updateEmployee, createEmployee } = useEmployeesData()
+  const getEmployees = useLoggedUserStore(state => state.getEmployees)
   const router = useRouter()
   const { toast } = useToast()
   const url = process.env.NEXT_PUBLIC_PROJECT_URL
+  const mandatoryDocuments = useCountriesStore(
+    state => state.mandatoryDocuments,
+  )
 
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
@@ -408,7 +413,28 @@ export default function EmployeeAccordion() {
     }
 
     try {
-      await createEmployee(finalValues)
+      const applies = await createEmployee(finalValues)
+      const documentsMissing: {
+        applies: number
+        id_document_types: string
+        validity: string | null
+        user_id: string | undefined
+      }[] = []
+
+      mandatoryDocuments.Persona.forEach(async document => {
+        documentsMissing.push({
+          applies: applies[0].id,
+          id_document_types: document.id,
+          validity: null,
+          user_id: loggedUser,
+        })
+      })
+
+      const { data, error } = await supabase
+        .from('documents_employees')
+        .insert(documentsMissing)
+        .select()
+
       toast({
         variant: 'default',
         title: 'Empleado agregado correctamente',
@@ -421,6 +447,7 @@ export default function EmployeeAccordion() {
           title: error.message,
         })
       }
+      getEmployees(true)
       router.push('/dashboard/employee')
     } catch (error: PostgrestError | any) {
       // Manejar el error de la primera petición
@@ -501,7 +528,9 @@ export default function EmployeeAccordion() {
         )
         await uploadImage(renamedFile, 'employee_photos')
         const employeeImage =
-          `${url}/employee_photos/${document_number}.${fileExtension}?timestamp=${Date.now()}`.trim().replace(/\s/g, '')
+          `${url}/employee_photos/${document_number}.${fileExtension}?timestamp=${Date.now()}`
+            .trim()
+            .replace(/\s/g, '')
         const { data, error } = await supabase
           .from('employees')
           .update({ picture: employeeImage })
@@ -518,45 +547,34 @@ export default function EmployeeAccordion() {
   }
 
   return (
-    <section >
-      <header className="flex justify-between gap-4 mt-6 flex-wrap">
-        <div>
+    <section>
+      <header className="flex justify-between gap-4 flex-wrap">
+        <CardHeader className="h-[152px] flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
           {accion === 'edit' || accion === 'view' ? (
-            <div className="flex items-center gap-2">
-              <Avatar className="h-[13vh] w-[13vh]">
-                <AvatarImage
-                  className="object-cover border-2 border-black/30 rounded-full"
-                  src={
-                    user?.picture ||
-                    'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80'
-                  }
-                  alt="Imagen del empleado"
-                />
-                <AvatarFallback>{`${user?.firstname[0] || 'C'}${
-                  user?.lastname[0] || 'C'
-                }`}</AvatarFallback>
-              </Avatar>
-              <h2 className="text-2xl">
-                {`${user?.firstname || 'cargando...'}
-                ${user?.lastname || ''}`}
-              </h2>
+            <div className="flex gap-3 items-center">
+              <CardTitle className=" font-bold tracking-tight">
+                <Avatar className="size-[100px]">
+                  <AvatarImage
+                    className="object-cover border-2 border-black/30 rounded-full"
+                    src={
+                      user?.picture ||
+                      'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80'
+                    }
+                    alt="Imagen del empleado"
+                  />
+                  <AvatarFallback>CC</AvatarFallback>
+                </Avatar>
+              </CardTitle>
+              <CardDescription className="text-muted-foreground text-3xl">
+                {`${user?.lastname || 'cargando...'}
+                ${user?.firstname || ''}`}
+              </CardDescription>
             </div>
           ) : (
             <h2 className="text-4xl">
               {accion === 'edit' ? 'Editar empleado' : 'Agregar empleado'}
             </h2>
           )}
-          <p className="mt-3 max-w-[700px]">
-            {accion === 'edit' || accion === 'view'
-              ? `${
-                  readOnly
-                    ? 'Esta es una vista previa de los datos del empleado. Puedes ver y editar la información del empleado en esta sección. Si deseas realizar cambios, habilita la edición haciendo clic en el botón "Habilitar edición".'
-                    : 'Aquí puedes editar la información del empleado'
-                }`
-              : 'Completa los datos del nuevo empleado'}
-          </p>
-        </div>
-        <div>
           {readOnly && accion === 'view' && (
             <Button
               variant="primary"
@@ -567,14 +585,14 @@ export default function EmployeeAccordion() {
               Habiliar edición
             </Button>
           )}
-        </div>
+        </CardHeader>
       </header>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(
             accion === 'edit' || accion === 'view' ? onUpdate : onCreate,
           )}
-          className="w-full pr-2"
+          className="w-full pr-2 px-6 pb-3"
         >
           <Accordion
             className="w-full"

@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -38,6 +39,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useLoggedUserStore } from '@/store/loggedUser'
 import { ArrowUpDown } from 'lucide-react'
 import { useState } from 'react'
 
@@ -59,6 +61,7 @@ export function ExpiredDataTable<TData, TValue>({
   defaultVisibleColumnsCustom,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
+  const loader = useLoggedUserStore(state => state.isLoading)
   const defaultVisibleColumns = defaultVisibleColumnsCustom || [
     'date',
     'resource',
@@ -184,7 +187,7 @@ export function ExpiredDataTable<TData, TValue>({
   }
 
   return (
-    <div className="mb-10 dark:bg-slate-950 px-4 rounded-lg max-w-[100vw] overflow-x-auto xl:min-w-[42vw]">
+    <div className="mb-10  px-4 rounded-lg max-w-[100vw] overflow-x-auto">
       <Input
         placeholder={
           vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'
@@ -413,9 +416,32 @@ export function ExpiredDataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  {pending
-                    ? 'No hay documentos pendientes'
-                    : 'No hay documentos a vencer'}
+                  {loader ? (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex justify-between">
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                      </div>
+                      <div className="flex justify-between">
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                        <Skeleton className="h-7 w-[13%]" />
+                      </div>
+                    </div>
+                  ) : pending ? (
+                    'No hay documentos pendientes'
+                  ) : (
+                    'No hay documentos a vencer'
+                  )}
                 </TableCell>
               </TableRow>
             )}
@@ -443,3 +469,7 @@ export function ExpiredDataTable<TData, TValue>({
     </div>
   )
 }
+
+// {pending
+//   ? 'No hay documentos pendientes'
+//   : 'No hay documentos a vencer'}

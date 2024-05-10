@@ -1,107 +1,43 @@
-'use client'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-
+import { MissingDocumentList } from '@/components/MissingDocumentList'
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { useSidebarOpen } from '@/store/sidebar'
-import { VehiclesActualCompany } from '@/store/vehicles'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Link from 'next/link'
-import { ExpiredColums } from './colums'
-import { ExpiredDataTable } from './data-table'
+import CardButton from './componentDashboard/CardButton'
+import CardNumber from './componentDashboard/CardNumber'
+import DocumentsTable from './componentDashboard/DocumentsTable'
+import EmployeesTable from './componentDashboard/EmployeesTable'
 
-export default function Home() {
-  const user = useLoggedUserStore()
-  const employees = user.employees
-  const equipment = user.vehicles
-  const eNoAvalados =
-    employees?.length > 0
-      ? employees.filter((employee: any) => employee.status === 'No avalado')
-      : []
-  const eAvalados =
-    employees?.length > 0
-      ? employees.filter((employee: any) => employee.status === 'Avalado')
-      : []
-  const equiNoAvalados =
-    equipment?.length > 0
-      ? equipment.filter((vehicle: any) => vehicle.status === 'No avalado')
-      : []
-  const equiAvalados =
-    equipment?.length > 0
-      ? equipment.filter((vehicle: any) => vehicle.status === 'Avalado')
-      : []
-  const setEndorsedEmployees = useLoggedUserStore(
-    state => state.endorsedEmployees,
-  )
-  const setActivesEmployees = useLoggedUserStore(
-    state => state.setActivesEmployees,
-  )
-  const noEndorsedEmployees = useLoggedUserStore(
-    state => state.noEndorsedEmployees,
-  )
-  const setActivesVehicles = VehiclesActualCompany(
-    state => state.setActivesVehicles,
-  )
-  const endorsedVehicles = VehiclesActualCompany(
-    state => state.endorsedVehicles,
-  )
-  const noEndorsedVehicles = VehiclesActualCompany(
-    state => state.noEndorsedVehicles,
-  )
-  const documentsToShow = useLoggedUserStore(state => state.documentsToShow)
-
-  const setShowLastMonthDocuments = useLoggedUserStore(
-    state => state.setShowLastMonthDocuments,
-  )
-  const { expanded } = useSidebarOpen()
-
-  const pendingDocuments = useLoggedUserStore(state => state.pendingDocuments)
-  // <Card className="flex justify-center xl:justify-between mt-6 xl:flex-nowrap flex-wrap dark:bg-slate-950">
-  // <section className="flex justify-between gap-5 md:mx-7 flex-wrap">
-
-  // 'md:w-[200px]' : 'w-[68px] '
+export default async function Home() {
   return (
     <div>
       <section className="grid sm:grid-cols-2 grid-cols-1 gap-6 mx-7">
-        <div className="flex gap-3 flex-wrap justify-center cardMedia:justify-between">
-          <Card className="min-w-[250px]">
+        <div className="flex gap-3 flex-wrap justify-center ">
+          <Card className="min-w-[250px] bg-muted dark:bg-muted/50">
             <CardHeader>
               <CardTitle>Empleados totales</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-around items-center">
-              <Badge variant="default" className="rounded-full text-lg">
-                {employees?.length || 0}
-              </Badge>
+              <CardNumber nameData="Empleados totales" variant="default" />
               <Link href="/dashboard/employee">
-                <Button variant="primary" onClick={() => setActivesEmployees()}>
-                  ver todos
-                </Button>
+                <CardButton functionName="setActivesEmployees" />
               </Link>
             </CardContent>
           </Card>
-          <Card className="bg-lime-200 dark:bg-lime-800 min-w-[250px] text-center">
+          <Card className="bg-lime-200 dark:bg-green-300/40 min-w-[250px] text-center">
             <CardHeader>
               <CardTitle>Empleados Avalados</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-around items-center">
-              <Badge variant="success" className="rounded-full text-lg ">
-                {eAvalados.length}
-              </Badge>
+              <CardNumber nameData="Empleados Avalados" variant="success" />
               <Link href="/dashboard/employee">
-                <Button
-                  variant="primary"
-                  onClick={() => setEndorsedEmployees()}
-                >
-                  ver mas
-                </Button>
+                <CardButton functionName="setEndorsedEmployees" />
               </Link>
             </CardContent>
           </Card>
@@ -110,45 +46,36 @@ export default function Home() {
               <CardTitle>Empleados No Avalados</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-around items-center">
-              <Badge variant="destructive" className="rounded-full text-lg">
-                {eNoAvalados.length}
-              </Badge>
+              <CardNumber
+                nameData="Empleados No Avalados"
+                variant="destructive"
+              />
               <Link href="/dashboard/employee">
-                <Button variant="primary" onClick={() => noEndorsedEmployees()}>
-                  ver mas
-                </Button>
+                <CardButton functionName="noEndorsedEmployees" />
               </Link>
             </CardContent>
           </Card>
         </div>
-        <div className="flex gap-3 flex-wrap justify-center cardMedia:justify-between">
-          <Card className="min-w-[250px] text-center">
+        <div className="flex gap-3 flex-wrap justify-center">
+          <Card className="min-w-[250px] text-center bg-muted dark:bg-muted/50">
             <CardHeader>
               <CardTitle>Equipos Totales</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-around items-center">
-              <Badge variant="default" className="rounded-full text-lg">
-                {equipment?.length || 0}
-              </Badge>
+              <CardNumber nameData="Vehículos totales" variant="default" />
               <Link href="/dashboard/equipment">
-                <Button variant="primary" onClick={() => setActivesVehicles()}>
-                  ver todos
-                </Button>
+                <CardButton functionName="setActivesVehicles" />
               </Link>
             </CardContent>
           </Card>
-          <Card className="bg-lime-200 dark:bg-lime-800 min-w-[250px] text-center">
+          <Card className="bg-lime-200 dark:bg-green-300/40 min-w-[250px] text-center">
             <CardHeader>
               <CardTitle>Equipos Avalados</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-around items-center">
-              <Badge variant="success" className="rounded-full text-lg">
-                {equiAvalados.length}
-              </Badge>
+              <CardNumber nameData="Vehículos Avalados" variant="success" />
               <Link href="/dashboard/equipment">
-                <Button variant="primary" onClick={() => endorsedVehicles()}>
-                  ver mas
-                </Button>
+                <CardButton functionName="endorsedVehicles" />
               </Link>
             </CardContent>
           </Card>
@@ -157,94 +84,55 @@ export default function Home() {
               <CardTitle>Equipos No Avalados</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-around items-center">
-              <Badge variant="destructive" className="rounded-full text-lg">
-                {equiNoAvalados.length}
-              </Badge>
+              <CardNumber
+                nameData="Vehículos No Avalados"
+                variant="destructive"
+              />
               <Link href="/dashboard/equipment">
-                <Button variant="primary" onClick={() => noEndorsedVehicles()}>
-                  ver todos
-                </Button>
+                <CardButton functionName="noEndorsedVehicles" />
               </Link>
             </CardContent>
           </Card>
         </div>
       </section>
-      <Card
-        className={cn(
-          'md:mx-7  grid grid-cols-1 mt-6 xl:grid-cols-2 dark:bg-slate-950',
-          expanded
-            ? 'md:max-w-[calc(100vw-190px)]'
-            : 'md:max-w-[calc(100vw)]',
-        )}
-      >
-        <section>
-          <CardHeader>
-            <CardTitle>Proximos vencimientos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CardDescription>
-              Documentos que vencen en los proximos 30 dias
-            </CardDescription>
-          </CardContent>
-          <Tabs defaultValue="Empleados">
-            <CardContent>
-              <TabsList>
-                <TabsTrigger value="Empleados">Empleados</TabsTrigger>
-                <TabsTrigger value="Vehiculos">Vehiculos</TabsTrigger>
-              </TabsList>
-            </CardContent>
-            <TabsContent value="Empleados">
-              <ExpiredDataTable
-                data={documentsToShow?.employees || []}
-                setShowLastMonthDocuments={setShowLastMonthDocuments}
-                columns={ExpiredColums}
-              />
-            </TabsContent>
-            <TabsContent value="Vehiculos">
-              <ExpiredDataTable
-                data={documentsToShow?.vehicles || []}
-                setShowLastMonthDocuments={setShowLastMonthDocuments}
-                columns={ExpiredColums}
-                vehicles={true}
-              />
-            </TabsContent>
-          </Tabs>
-        </section>
-        <section className="">
-          <CardHeader>
-            <CardTitle>Documentos pendientes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CardDescription>
-              Documentos que aun no han sido aprobados
-            </CardDescription>
-          </CardContent>
+      <section className="md:mx-7 grid grid-cols-1 mt-6 xl:grid-cols-3 gap-3 mb-4">
+        <Card className="col-span-2 flex flex-col justify-between overflow-hidden">
+          <div>
+            <CardHeader className="flex flex-row items-start bg-muted dark:bg-muted/50 border-b-2">
+              <div className="grid gap-1">
+                <CardTitle className="flex items-center text-lg ">
+                  Proximos vencimientos
+                </CardTitle>
+                <CardDescription className="capitalize">
+                  Documentos que vencen en los proximos 30 dias
+                </CardDescription>
+              </div>
+            </CardHeader>
 
-          <Tabs defaultValue="Empleados">
-            <CardContent>
-              <TabsList>
-                <TabsTrigger value="Empleados">Empleados</TabsTrigger>
-                <TabsTrigger value="Vehiculos">Vehiculos</TabsTrigger>
-              </TabsList>
-            </CardContent>
-            <TabsContent value="Empleados">
-              <ExpiredDataTable
-                data={pendingDocuments?.employees || []}
-                columns={ExpiredColums}
-                pending={true}
-              />
-            </TabsContent>
-            <TabsContent value="Vehiculos">
-              <ExpiredDataTable
-                data={pendingDocuments?.vehicles || []}
-                columns={ExpiredColums}
-                pending={true}
-                vehicles={true}
-              />
-            </TabsContent>
-          </Tabs>
+            <CardContent></CardContent>
+            <div>
+              <Tabs defaultValue="Empleados">
+                <CardContent>
+                  <TabsList>
+                    <TabsTrigger value="Empleados">Empleados</TabsTrigger>
+                    <TabsTrigger value="Vehiculos">Vehiculos</TabsTrigger>
+                  </TabsList>
+                </CardContent>
+                <TabsContent value="Empleados">
+                  <EmployeesTable />
+                </TabsContent>
+                <TabsContent value="Vehiculos">
+                  <DocumentsTable />
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
+          <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
+        </Card>
+        <section>
+          <MissingDocumentList />
         </section>
-      </Card>
+      </section>
     </div>
   )
 }

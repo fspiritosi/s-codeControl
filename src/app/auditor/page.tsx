@@ -50,7 +50,9 @@ export default function Auditor() {
     let { data: document_types, error } = await supabase
       .from('document_types')
       .select('*')
-      .eq('is_active', true)
+      .filter('is_active', 'eq', true)
+      .filter('company_id', 'is', null)
+    // .or(`company_id.eq.${actualCompany?.id},company_id.is.null`)
 
     if (error) {
       console.error('Error fetching document types:', error.message)
@@ -126,7 +128,7 @@ export default function Auditor() {
         multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
         validity: formattedDate || 'No vence',
         id: doc.id,
-        resource: `${doc.applies?.firstname} ${doc.applies?.lastname}`,
+        resource: `${doc.applies?.lastname} ${doc.applies?.firstname}`,
       }
     }
     const mappedEmployees = documents_employees?.map(mapEmployee)

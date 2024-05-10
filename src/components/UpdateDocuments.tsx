@@ -62,9 +62,11 @@ export default function UpdateDocuments({
       resource === 'vehicle' ? 'documents_equipment' : 'documents_employees'
 
     if (fileExtension1 !== fileExtension2) {
+      // const pathDelete = resource === 'vehicle' ? `documentos-equipos/${documentName}.${fileExtension2}` : `documentos-empleados/${documentName}.${fileExtension2}`
+      if (!documentName) return
       const { error: storageError } = await supabase.storage
         .from('document_files')
-        .remove([`/${documentName}`])
+        .remove([documentName])
     }
     const documentNameWithOutExtension = documentName?.split('.').shift()
 
@@ -77,7 +79,7 @@ export default function UpdateDocuments({
 
     const { error: updateError } = await supabase
       .from(tableName)
-      .update({ state: 'presentado' })
+      .update({ state: 'presentado', deny_reason: null })
       .match({ id })
 
     if (storageError) {
@@ -129,8 +131,7 @@ export default function UpdateDocuments({
                       </FormControl>
                       <FormDescription>
                         Este nuevo documento reemplazara el anterior, asegurate
-                        de que sea el correcto. Una vez actualizado el documento
-                        veras los cambios en 1hr aproximadamente.
+                        de que sea el correcto.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

@@ -1,10 +1,10 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { useSidebarOpen } from '@/store/sidebar'
 import { useTheme } from 'next-themes'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useState } from 'react'
 import {
   TbLayoutSidebarLeftExpand,
   TbLayoutSidebarRightExpand,
@@ -13,12 +13,9 @@ import Logo1 from '../../public/logo-azul.png'
 import LogoBlanco from '../../public/logoLetrasBlancas.png'
 import LogoNegro from '../../public/logoLetrasNegras.png'
 import SideLinks from './SideLinks'
-interface SideBarProps {
-  expanded: boolean
-}
 
 export default function SideBar() {
-  const { expanded, setExpanded } = useSidebarOpen()
+  const [expanded, setExpanded] = useState(true)
   const { theme } = useTheme()
   const toggleSidebar = () => {
     setExpanded(!expanded)
@@ -27,7 +24,7 @@ export default function SideBar() {
   return (
     <div
       className={cn(
-        'flex-col  px-3 py-0 md:px-2 bg-neutral-300 dark:bg-neutral-800 h-screen w-[68px] sticky left-0 top-0 hidden md:flex',
+        'flex-col  px-3 py-0 md:px-2 bg-muted dark:bg-muted/50 border-r-2 h-screen w-[68px] sticky left-0 top-0 hidden md:flex',
         expanded ? 'w-[200px]' : 'w-[68px] ',
       )}
     >

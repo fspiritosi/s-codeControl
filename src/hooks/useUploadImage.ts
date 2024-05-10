@@ -15,15 +15,19 @@ export const useImageUpload = () => {
   ): Promise<string> => {
     try {
       setLoading(true)
-      
+
       // Subir la imagen a Supabase Storage
       const { data, error } = await supabase.storage
         .from(imageBucket)
-        .upload(`${file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`, file,{
-        //.upload('public/image.png', file, {
-          cacheControl: '1',
-          upsert: true,
-        })
+        .upload(
+          `${file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`,
+          file,
+          {
+            //.upload('public/image.png', file, {
+            cacheControl: '1',
+            upsert: true,
+          },
+        )
 
       if (error) {
         const message = await errorTranslate(error?.message)
@@ -31,9 +35,10 @@ export const useImageUpload = () => {
       }
 
       // Obtener la URL de la imagen cargada
-       
 
-      const imageUrl = `${url}/${imageBucket}/${data?.path}`.trim().replace(/\s/g, '')
+      const imageUrl = `${url}/${imageBucket}/${data?.path}`
+        .trim()
+        .replace(/\s/g, '')
 
       return imageUrl
     } finally {

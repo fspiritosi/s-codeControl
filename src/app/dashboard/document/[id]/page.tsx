@@ -4,9 +4,11 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatDate } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { useRouter } from 'next/navigation'
 
 import UpdateDocuments from '@/components/UpdateDocuments'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -15,12 +17,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { cn } from '@/lib/utils'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../../../supabase/supabase'
-import { useSidebarOpen } from '@/store/sidebar'
-import { cn } from '@/lib/utils'
 
 export default function page({ params }: { params: { id: string } }) {
+  const router = useRouter()
   const [documents_employees, setDocumentsEmployees] = useState<any[] | null>(
     [],
   )
@@ -72,12 +74,7 @@ export default function page({ params }: { params: { id: string } }) {
       setResource('employee')
     }
 
-    documentType = document?.[0]?.document_types?.name
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/\s/g, '')
-      .toLowerCase()
-      .replace('/', '-')
+    documentType = document?.[0]?.document_types?.id
 
     const resorceId = document?.[0]?.applies?.id
     const { data } = await supabase.storage
@@ -86,17 +83,11 @@ export default function page({ params }: { params: { id: string } }) {
         search: `document-${documentType}-${resorceId}`,
       })
 
-    const fileExtension = data?.[0]?.name.split('.').pop()
-
     const { data: url } = supabase.storage
       .from('document_files')
-      .getPublicUrl(
-        `${resourceType}/document-${documentType}-${resorceId}.${fileExtension}`,
-      )
+      .getPublicUrl(document?.[0]?.document_path)
 
-    setDocumentName(
-      `${resourceType}/document-${documentType}-${resorceId}.${fileExtension}`,
-    )
+    setDocumentName(document?.[0]?.document_path)
     setDocumentUrl(url.publicUrl)
     setDocumentsEmployees(document)
   }
@@ -104,48 +95,58 @@ export default function page({ params }: { params: { id: string } }) {
   useEffect(() => {
     fetchDocument()
   }, [])
-  const { expanded } = useSidebarOpen()
+
+  const expireInLastMonth = () => {
+    if (!documents_employees?.[0]?.document_types?.explired) return false
+    const date = documents_employees?.[0]?.document_types?.explired
+    const today = new Date()
+    const expireDate = new Date(date)
+    const lastMonth = new Date(today.setMonth(today.getMonth() - 1))
+
+    return expireDate < lastMonth
+  }
+
   return (
-    <section
-    className={cn(
-      'md:mx-7',
-      expanded ? 'md:max-w-[calc(100vw-198px)]' : 'md:max-w-[calc(100vw)]',
-    )}
-  >
+    <section className="md:mx-7">
       <Card className="p-4">
-        <CardTitle className=" text-2xl">
-          Detalle del Documento {documents_employees?.[0]?.document_types?.name}
-        </CardTitle>
-        <div className="flex flex-col">
-          <Badge
-            variant={
-              documents_employees?.[0]?.state === 'rechazado'
-                ? 'destructive'
-                : documents_employees?.[0]?.state === 'aprobado'
-                  ? 'success'
-                  : documents_employees?.[0]?.state === 'vencido'
-                    ? 'yellow'
-                    : 'default'
-            }
-            className={'mb-3 capitalize w-fit'}
-          >
-            {documents_employees?.[0]?.state}
-          </Badge>
-          {documents_employees?.[0]?.deny_reason && (
-            <Badge
-              variant={
-                documents_employees?.[0]?.state === 'rechazado' ||
-                documents_employees?.[0]?.state === 'vencido'
-                  ? 'destructive'
-                  : documents_employees?.[0]?.state === 'aprobado'
-                    ? 'success'
-                    : 'default'
-              }
-              className="mb-3 capitalize w-fit"
-            >
-              {documents_employees?.[0]?.deny_reason}
-            </Badge>
-          )}
+        <div className="flex justify-between">
+          <div>
+            <CardTitle className=" text-2xl">
+              {documents_employees?.[0]?.document_types?.name}
+            </CardTitle>
+            <div className="flex flex-col">
+              <Badge
+                variant={
+                  documents_employees?.[0]?.state === 'rechazado'
+                    ? 'destructive'
+                    : documents_employees?.[0]?.state === 'aprobado'
+                      ? 'success'
+                      : documents_employees?.[0]?.state === 'vencido'
+                        ? 'yellow'
+                        : 'default'
+                }
+                className={'mb-3 capitalize w-fit'}
+              >
+                {documents_employees?.[0]?.state}
+              </Badge>
+              {documents_employees?.[0]?.deny_reason && (
+                <Badge
+                  variant={
+                    documents_employees?.[0]?.state === 'rechazado' ||
+                    documents_employees?.[0]?.state === 'vencido'
+                      ? 'destructive'
+                      : documents_employees?.[0]?.state === 'aprobado'
+                        ? 'success'
+                        : 'default'
+                  }
+                  className="mb-3 capitalize w-fit"
+                >
+                  {documents_employees?.[0]?.deny_reason}
+                </Badge>
+              )}
+            </div>
+          </div>
+          <Button onClick={router.back}>volver</Button>
         </div>
         <div className="grid lg:grid-cols-3 grid-cols-1 gap-col-3 ">
           <div className="lg:max-w-[30vw] col-span-1">
@@ -162,7 +163,10 @@ export default function page({ params }: { params: { id: string } }) {
                 </TabsTrigger>
                 <TabsTrigger
                   className="hover:bg-white/30"
-                  disabled={documents_employees?.[0]?.state === 'aprobado'}
+                  disabled={
+                    documents_employees?.[0]?.state === 'aprobado' &&
+                    !expireInLastMonth()
+                  }
                   value="Auditar"
                 >
                   Actualizar
@@ -346,9 +350,10 @@ export default function page({ params }: { params: { id: string } }) {
                                 <CardTitle className="font-bold text-lg">
                                   {resource === 'employee'
                                     ? documents_employees?.[0]?.applies
-                                        .firstname +
+                                        .lastname +
                                       ' ' +
-                                      documents_employees?.[0]?.applies.lastname
+                                      documents_employees?.[0]?.applies
+                                        .firstname
                                     : documents_employees?.[0]?.applies
                                         .domain ||
                                       documents_employees?.[0]?.applies
@@ -642,7 +647,8 @@ export default function page({ params }: { params: { id: string } }) {
                         <TableRow>
                           <TableCell>
                             <CardDescription>
-                              {documents_employees?.[0]?.document_types?.expired
+                              {documents_employees?.[0]?.document_types
+                                ?.explired
                                 ? 'Tiene vencimiento'
                                 : 'No tiene vencimiento'}
                             </CardDescription>
@@ -729,8 +735,13 @@ export default function page({ params }: { params: { id: string } }) {
               <Card className="mt-4">
                 <CardDescription className="p-3 flex justify-center">
                   <embed
-                    src={`${documentUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-                    className="max-w-full max-h-screen rounded-xl aspect-auto"
+                    src={`${documentUrl}#toolbar=1&navpanes=0&scrollbar=0`}
+                    className={cn(
+                      'max-w-full max-h-screen rounded-xl aspect-auto',
+                      documentUrl.split('.').pop() === 'pdf'
+                        ? 'w-full h-screen'
+                        : '',
+                    )}
                   />
                 </CardDescription>
               </Card>

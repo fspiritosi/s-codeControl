@@ -42,7 +42,6 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { useSidebarOpen } from '@/store/sidebar'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
@@ -235,8 +234,8 @@ export function DataTable<TData, TValue>({
   )
 
   return (
-    <div>
-      <div className="flex items-center py-4 flex-wrap gap-y-2">
+    <div className="w-full grid grid-cols-1">
+      <div className="flex items-center py-4 flex-wrap gap-y-2 overflow-auto">
         <Input
           placeholder="Buscar por nombre"
           value={
@@ -277,10 +276,7 @@ export function DataTable<TData, TValue>({
             <DropdownMenuTrigger asChild>
               <Button variant="outline">Columnas</Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="max-h-[50dvh] overflow-y-auto"
-            >
+            <DropdownMenuContent align="end" className="max-h-[50dvh] ">
               {table
                 .getAllColumns()
                 .filter(column => column.getCanHide())
@@ -325,9 +321,7 @@ export function DataTable<TData, TValue>({
           </DropdownMenu>
         </div>
       </div>
-      <div
-        className="rounded-md border"
-      >
+      <div className="rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (

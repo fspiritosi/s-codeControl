@@ -1,3 +1,4 @@
+import { validarCUIL } from '@/lib/utils'
 import * as z from 'zod'
 import { supabase } from '../../supabase/supabase'
 
@@ -91,6 +92,43 @@ export const registerSchema = z
     message: 'Las contraseñas no coinciden.',
     path: ['confirmPassword'],
   })
+export const registerSchemaWithRole = z
+  .object({
+    firstname: z
+      .string()
+      .min(2, {
+        message: 'El nombre debe tener al menos 2 caracteres.',
+      })
+      .max(20, {
+        message: 'El nombre debe tener menos de 20 caracteres.',
+      })
+      .regex(/^[a-zA-Z ]+$/, {
+        message: 'El nombre solo puede contener letras.',
+      })
+      .trim(),
+    lastname: z
+      .string()
+      .min(2, {
+        message: 'El apellido debe tener al menos 2 caracteres.',
+      })
+      .max(20, {
+        message: 'El apellido debe tener menos de 20 caracteres.',
+      })
+      .regex(/^[a-zA-Z ]+$/, {
+        message: 'El apellido solo puede contener letras.',
+      })
+      .trim(),
+    email: z.string().email({ message: 'Email inválido' }),
+    role: z.string({ required_error: 'El rol es requerido' }).min(1, {
+      message: 'El rol debe tener al menos 1 caracteres.',
+    }),
+    password: passwordSchema,
+    confirmPassword: passwordSchema,
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    message: 'Las contraseñas no coinciden.',
+    path: ['confirmPassword'],
+  })
 
 export const recoveryPassSchema = z.object({
   email: z.string().email({ message: 'Email inválido' }),
@@ -113,9 +151,17 @@ export const companySchema = z.object({
       message: 'El nombre debe tener al menos 2 caracteres.',
     })
     .max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),
-  company_cuit: z.string().refine(value => /^\d{11}$/.test(value), {
-    message: 'El CUIT debe contener 11 números.',
-  }),
+  company_cuit: z
+    .string()
+    .refine(value => /^\d{11}$/.test(value), {
+      message: 'El CUIT debe contener 11 números.',
+    })
+    .refine(
+      cuil => {
+        return validarCUIL(cuil)
+      },
+      { message: 'El CUIT es inválido' },
+    ),
 
   description: z.string().max(200),
   website: z.string().refine(
@@ -171,11 +217,14 @@ export const accordionSchema = z.object({
   }),
   cuil: z
     .string({ required_error: 'El cuil es requerido' })
+    .refine(value => /^\d{11}$/.test(value), {
+      message: 'El CUIT debe contener 11 números.',
+    })
     .refine(
-      value => value.length === 13 && value[2] === '-' && value[11] === '-',
-      {
-        message: 'El CUIT se debe ingresar con el formato xx-xxxxxxxx-x',
+      cuil => {
+        return validarCUIL(cuil)
       },
+      { message: 'El CUIT es inválido' },
     ),
   document_type: z.string({
     required_error: 'El tipo de documento es requerido',
@@ -287,3 +336,252 @@ export const accordionSchema = z.object({
     })
     .or(z.string()),
 })
+
+export const ProfileSchema = z.object({
+  id: z.string(),
+  role: z.string(),
+  email: z.string(),
+  avatar: z.string().nullable(),
+  fullname: z.string(),
+  created_at: z.coerce.date(),
+  credential_id: z.string(),
+})
+export type Profile = z.infer<typeof ProfileSchema>
+
+export const ShareCompanyUserSchema = z.object({
+  id: z.string(),
+  role: z.string(),
+  profile: ProfileSchema,
+  company_id: z.string(),
+  created_at: z.coerce.date(),
+  profile_id: z.string(),
+})
+
+export type ShareCompanyUser = z.infer<typeof ShareCompanyUserSchema>
+
+export const ContractorsSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  created_at: z.coerce.date(),
+})
+export type Contractors = z.infer<typeof ContractorsSchema>
+
+export const ContractorEmployeeSchema = z.object({
+  contractors: ContractorsSchema,
+})
+export type ContractorEmployee = z.infer<typeof ContractorEmployeeSchema>
+
+export const BirthplaceSchema = z.object({
+  name: z.string(),
+})
+export type Birthplace = z.infer<typeof BirthplaceSchema>
+
+export const EmployeesSchema = z.object({
+  id: z.string(),
+  city: BirthplaceSchema,
+  cuil: z.string(),
+  file: z.string(),
+  email: z.string(),
+  phone: z.string(),
+  gender: z.string(),
+  status: z.string(),
+  street: z.string(),
+  picture: z.string(),
+  lastname: z.string(),
+  province: BirthplaceSchema,
+  firstname: z.string(),
+  is_active: z.boolean(),
+  birthplace: BirthplaceSchema,
+  company_id: z.string(),
+  created_at: z.coerce.date(),
+  nationality: z.string(),
+  postal_code: z.string(),
+  allocated_to: z.array(z.string()),
+  normal_hours: z.string(),
+  document_type: z.string(),
+  street_number: z.string(),
+  marital_status: z.string(),
+  document_number: z.string(),
+  affiliate_status: z.null() || z.string(),
+  company_position: z.string(),
+  termination_date: z.null() || z.string(),
+  type_of_contract: z.string(),
+  workflow_diagram: BirthplaceSchema,
+  date_of_admission: z.string(),
+  level_of_education: z.string(),
+  contractor_employee: z.array(ContractorEmployeeSchema),
+  hierarchical_position: BirthplaceSchema,
+  reason_for_termination: z.null() || z.string(),
+})
+export type Employees = z.infer<typeof EmployeesSchema>
+
+export const CompaniesEmployeeSchema = z.object({
+  employees: EmployeesSchema,
+})
+export type CompaniesEmployee = z.infer<typeof CompaniesEmployeeSchema>
+
+export const CitySchema = z.object({
+  id: z.number(),
+  name: z.string(),
+})
+export type City = z.infer<typeof CitySchema>
+
+export const CompanySchema = z.array(
+  z.object({
+    id: z.string(),
+    company_name: z.string(),
+    description: z.string(),
+    website: z.string(),
+    contact_email: z.string(),
+    contact_phone: z.string(),
+    address: z.string(),
+    city: CitySchema,
+    country: z.string(),
+    industry: z.string(),
+    company_logo: z.string(),
+    is_active: z.boolean(),
+    company_cuit: z.string(),
+    province_id: CitySchema,
+    owner_id: ProfileSchema,
+    by_defect: z.boolean(),
+    share_company_users: z.array(ShareCompanyUserSchema) || null,
+    companies_employees: z.array(CompaniesEmployeeSchema) || null,
+  }),
+)
+export type Company = z.infer<typeof CompanySchema>
+
+export const SharedUser = z.object({
+  email: z.string(),
+  fullname: z.string(),
+  role: z.string(),
+  alta: z.date(),
+  id: z.string(),
+  img: z.string(),
+})
+
+export type SharedUser = z.infer<typeof SharedUser>
+
+export const BrandVehiclesClassSchema = z.object({
+  name: z.string(),
+})
+export type BrandVehiclesClass = z.infer<typeof BrandVehiclesClassSchema>
+
+export const VehicleSchema =
+  z.array(
+    z.object({
+      created_at: z.coerce.date(),
+      picture: z.string(),
+      type_of_vehicle: z.number(),
+      domain: z.string(),
+      chassis: z.string(),
+      engine: z.string(),
+      serie: z.string(),
+      intern_number: z.string(),
+      year: z.string(),
+      brand: z.number(),
+      model: z.number(),
+      is_active: z.boolean(),
+      termination_date: z.null() || z.string(),
+      reason_for_termination: z.null() || z.string(),
+      user_id: z.string(),
+      company_id: z.string(),
+      id: z.string(),
+      type: z.string(),
+      status: z.string(),
+      types_of_vehicles: BrandVehiclesClassSchema,
+      brand_vehicles: BrandVehiclesClassSchema,
+      model_vehicles: BrandVehiclesClassSchema,
+    }),
+  ) || []
+
+export type Vehicle = z.infer<typeof VehicleSchema>
+
+export const VehiclesSchema = z.object({
+  name: z.string(),
+})
+export type Vehicles = z.infer<typeof VehiclesSchema>
+export const VehiclesFormattedElementSchema = z.array(
+  z.object({
+    created_at: z.coerce.date(),
+    picture: z.string(),
+    type_of_vehicle: z.number(),
+    domain: z.string(),
+    chassis: z.string(),
+    engine: z.string(),
+    serie: z.string(),
+    intern_number: z.string(),
+    year: z.string(),
+    brand: z.string(),
+    model: z.string(),
+    is_active: z.boolean(),
+    termination_date: z.null() || z.string(),
+    reason_for_termination: z.null() || z.string(),
+    user_id: z.string(),
+    company_id: z.string(),
+    id: z.string(),
+    type: z.string(),
+    status: z.string(),
+    types_of_vehicles: z.string(),
+    brand_vehicles: VehiclesSchema,
+    model_vehicles: VehiclesSchema,
+  }),
+)
+export type VehiclesFormattedElement = z.infer<
+  typeof VehiclesFormattedElementSchema
+>
+
+export const EquipoSchema = z.array(
+  z.object({
+    id: z.string(),
+    created_at: z.coerce.date(),
+    name: z.string(),
+    applies: z.string(),
+    multiresource: z.boolean(),
+    mandatory: z.boolean(),
+    explired: z.boolean(),
+    special: z.boolean(),
+    is_active: z.boolean(),
+    description: z.union([z.null(), z.string()]),
+  }),
+)
+export type Equipo = z.infer<typeof EquipoSchema>
+
+export const MandatoryDocumentsSchema = z.object({
+  Persona: EquipoSchema,
+  Equipos: EquipoSchema,
+})
+export type MandatoryDocuments = z.infer<typeof MandatoryDocumentsSchema>
+
+export const CompanyIdSchema =
+  z.object({
+    id: z.string(),
+    city: CitySchema,
+    address: z.string(),
+    country: z.string(),
+    website: z.string(),
+    industry: z.string(),
+    owner_id: ProfileSchema,
+    by_defect: z.boolean(),
+    is_active: z.boolean(),
+    description: z.string(),
+    province_id: CitySchema,
+    company_cuit: z.string(),
+    company_logo: z.string(),
+    company_name: z.string(),
+    contact_email: z.string(),
+    contact_phone: z.string(),
+    companies_employees: z.array(CompaniesEmployeeSchema) || null,
+    share_company_users: z.array(ShareCompanyUserSchema) || null,
+  }) || undefined
+export type CompanyId = z.infer<typeof CompanyIdSchema>
+
+export const SharedCompaniesSchema = z.array(
+  z.object({
+    created_at: z.coerce.date(),
+    profile_id: z.string(),
+    company_id: CompanyIdSchema,
+    role: z.string(),
+    id: z.string(),
+  }),
+)
+export type SharedCompanies = z.infer<typeof SharedCompaniesSchema>

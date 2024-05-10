@@ -84,7 +84,6 @@ export default function allCompany() {
       <div className=" rounded-lg shadow-2xl p-4">
         <CardsGrid allCompanies={allCompanies} onCardClick={handleCardClick} />
       </div>
-
       {modalIsOpen && (
         <ModalCompany
           isOpen={modalIsOpen}

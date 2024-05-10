@@ -55,6 +55,7 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions'
 import { cn } from '@/lib/utils'
+import { useLoggedUserStore } from '@/store/loggedUser'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { DotsVerticalIcon } from '@radix-ui/react-icons'
 import { ColumnDef } from '@tanstack/react-table'
@@ -109,6 +110,7 @@ export const columns: ColumnDef<Colum>[] = [
         setDomain(id)
         setShowModal(!showModal)
       }
+      const actualCompany = useLoggedUserStore(state => state.actualCompany)
 
       const fetchInactiveEquipment = async () => {
         try {
@@ -116,6 +118,7 @@ export const columns: ColumnDef<Colum>[] = [
             .from('vehicles')
             .select('*')
             .eq('is_active', false)
+            .eq('company_id', actualCompany?.id)
 
           if (error) {
             console.error(error)
@@ -153,6 +156,7 @@ export const columns: ColumnDef<Colum>[] = [
               reason_for_termination: null,
             })
             .eq('id', equipment.id)
+            .eq('company_id', actualCompany?.id)
             .select()
 
           setIntegerModal(!integerModal)
@@ -188,6 +192,7 @@ export const columns: ColumnDef<Colum>[] = [
               reason_for_termination: data.reason_for_termination,
             })
             .eq('id', equipment.id)
+            .eq('company_id', actualCompany?.id)
             .select()
 
           setShowModal(!showModal)
@@ -368,6 +373,7 @@ export const columns: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Link
+                className="w-full"
                 href={`/dashboard/equipment/action?action=view&id=${equipment?.id}`}
               >
                 Ver equipo
@@ -464,5 +470,4 @@ export const columns: ColumnDef<Colum>[] = [
     accessorKey: 'is_active',
     header: 'Ver equipos dados de baja',
   },
-
 ]

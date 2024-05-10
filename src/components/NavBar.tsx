@@ -1,13 +1,4 @@
 'use client'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { FormProvider, useForm } from 'react-hook-form'
-import { supabase } from '../../supabase/supabase'
-
 import { ModeToggle } from '@/components/ui/ToogleDarkButton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -19,6 +10,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,9 +29,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { revalidate } from '@/lib/useServer'
 import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { companyData } from '@/types/types'
+import { Company } from '@/zodSchemas/schemas'
 import {
   BellIcon,
   CaretSortIcon,
@@ -47,10 +45,13 @@ import {
 } from '@radix-ui/react-icons'
 import { formatRelative } from 'date-fns'
 import { es } from 'date-fns/locale'
+import cookie from 'js-cookie'
 import { Check, CheckIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { FormProvider, useForm } from 'react-hook-form'
+import { supabase } from '../../supabase/supabase'
 import ModalCompany from './ModalCompany'
 import { UpdateUserPasswordForm } from './UpdateUserPasswordForm'
 import { UploadImage } from './UploadImage'
@@ -68,8 +69,8 @@ import { FormControl, FormField, FormItem, FormMessage } from './ui/form'
 import { Separator } from './ui/separator'
 import { useToast } from './ui/use-toast'
 
-
 export default function NavBar() {
+  const sharedCompanies = useLoggedUserStore(state => state.sharedCompanies)
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const setNewDefectCompany = useLoggedUserStore(
@@ -88,16 +89,26 @@ export default function NavBar() {
     }
   }
 
+  const totalCompanies = [
+    sharedCompanies?.map(company => company.company_id),
+    allCompanies,
+  ].flat()
+
   const [isOpen, setIsOpen] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const router = useRouter()
-  const handleNewCompany = async (company: companyData) => {
+  const setActualCompany = useLoggedUserStore(state => state.setActualCompany)
+
+  const handleNewCompany = async (company: Company[0]) => {
     setNewDefectCompany(company)
+    setActualCompany(company)
     setIsOpen(false)
+    revalidate()
     router.push('/dashboard')
   }
   const { control, formState, setValue } = useForm()
+
   const updateProfileAvatar = async (imageUrl: string) => {
     try {
       // Realiza la actualización en la tabla profile usando Supabase
@@ -115,40 +126,38 @@ export default function NavBar() {
   }
   const [open, setOpen] = useState(false)
   const [showNewTeamDialog, setShowNewTeamDialog] = useState(false)
-  // const [selectedTeam, setSelectedTeam] = useState(groups[0].teams[0])
+  const actualCompanyId = cookie.get('actualCompanyId')
 
   const markAllAsRead = useLoggedUserStore(state => state.markAllAsRead)
   const { toast } = useToast()
 
   const groups = [
     {
-      label: 'Compañia actual',
-      teams: allCompanies
-        ?.filter(companyItem => companyItem.by_defect === true)
+      label: 'Compañia actual propia',
+      teams: totalCompanies
+        ?.filter(companyItem => companyItem?.id === actualCompanyId)
         ?.map(companyItem => ({
-          label: companyItem.company_name,
-          value: companyItem.id,
-          logo: companyItem.company_logo,
+          label: companyItem?.company_name,
+          value: companyItem?.id,
+          logo: companyItem?.company_logo,
         })),
     },
     {
-      label: 'Otras compañias',
-      teams: allCompanies
-        ?.filter(companyItem => companyItem.by_defect === false)
+      label: 'Otras compañias propias',
+      teams: totalCompanies
+        ?.filter(companyItem => companyItem?.id !== actualCompanyId)
         ?.map(companyItem => ({
-          label: companyItem.company_name,
-          value: companyItem.id,
-          logo: companyItem.company_logo,
+          label: companyItem?.company_name,
+          value: companyItem?.id,
+          logo: companyItem?.company_logo,
         })),
     },
   ]
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-  // console.log(notifications, 'notificaciones')
   return (
     <nav className=" flex flex-shrink items-center justify-end sm:justify-between  text-white p-4 mb-2">
       <div className=" items-center hidden sm:flex">
-        {/* <TeamSwitcher /> asdasd*/}
         <Dialog open={showNewTeamDialog} onOpenChange={setShowNewTeamDialog}>
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild className="text-black dark:text-white">
@@ -182,7 +191,7 @@ export default function NavBar() {
                         <CommandItem
                           key={team?.value}
                           onSelect={() => {
-                            const company = allCompanies.find(
+                            const company = totalCompanies.find(
                               companyItem => companyItem.id === team.value,
                             )
                             if (company) {
@@ -220,9 +229,9 @@ export default function NavBar() {
                     href="/dashboard/company/new"
                     className={`${buttonVariants({
                       variant: 'outline',
-                    })} flex justify-center p-4`}
+                    })} flex justify-center p-4 w-full`}
                   >
-                    <PlusCircledIcon className="mr-2 h-5 w-5" />
+                    <PlusCircledIcon className="mr-2 scale-[3]" />
                     Agregar compañía
                   </Link>
                 </div>
@@ -243,7 +252,6 @@ export default function NavBar() {
           <DropdownMenuTrigger>
             <div className="relative">
               {notifications?.length ? (
-
                 <DotFilledIcon className="text-blue-600 absolute size-7 top-[-8px] right-[-10px] p-0" />
               ) : (
                 false
@@ -342,14 +350,14 @@ export default function NavBar() {
                                 } ha sido rechazado`}
                               {notification?.category === 'vencimiento' &&
                                 `El documento ${
-                                  notification.document.documentName ||
+                                  notification?.document?.documentName ||
                                   '(no disponible)'
                                 }, del ${
                                   notification.reference === 'employee'
                                     ? 'empleado'
                                     : 'vehiculo con patente'
-                                }} ${
-                                  notification.document.resource
+                                } ${
+                                  notification?.document?.resource
                                     .split(' ')
                                     .map(
                                       word =>

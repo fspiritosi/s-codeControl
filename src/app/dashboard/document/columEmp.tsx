@@ -226,7 +226,6 @@ export const columEmp: ColumnDef<Colum>[] = [
           if (data) {
             setDocumentHistory(data)
           }
-       
         } catch (error: any) {
           const message = await errorTranslate(error?.message)
           toast({

@@ -62,12 +62,7 @@ export default function page({ params }: { params: { id: string } }) {
       setResource('employee')
     }
 
-    documentType = document?.[0]?.document_types?.name
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/\s/g, '')
-      .toLowerCase()
-      .replace('/', '-')
+    documentType = document?.[0]?.document_types?.id
 
     const resorceId = document?.[0]?.applies?.id
     const { data } = await supabase.storage
@@ -226,9 +221,9 @@ export default function page({ params }: { params: { id: string } }) {
                       </Avatar>
                       <CardTitle className="font-bold">
                         {resource === 'employee'
-                          ? documents_employees?.[0]?.applies.firstname +
+                          ? documents_employees?.[0]?.applies.lastname +
                             ' ' +
-                            documents_employees?.[0]?.applies.lastname
+                            documents_employees?.[0]?.applies.firstname
                           : documents_employees?.[0]?.applies.domain ||
                             documents_employees?.[0]?.applies.intern_number}
                       </CardTitle>

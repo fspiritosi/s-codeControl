@@ -1,9 +1,13 @@
 'use client'
 import { buttonVariants } from '@/components/ui/button'
-import { Card, CardDescription, CardTitle } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { useSidebarOpen } from '@/store/sidebar'
 import Link from 'next/link'
 import { supabase } from '../../../../supabase/supabase'
 import { columns } from './columns'
@@ -37,21 +41,16 @@ const EmployeePage = () => {
       },
     )
     .subscribe()
-    const { expanded } = useSidebarOpen()
   return (
-    <section
-      className={cn(
-        'flex flex-col',
-        expanded ? 'md:max-w-[calc(100vw-198px)]' : 'md:max-w-[calc(100vw)]',
-      )}
-    >
-      <Card className="mt-6 px-8 md:mx-7">
-        <header className="flex gap-4 mt-6 justify-between items-center flex-wrap">
+    <section className="max-w-full">
+      <Card className="mt-6 md:mx-7 overflow-hidden">
+        <CardHeader className=" flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
           <div>
-            <CardTitle className="text-4xl mb-3">Empleados</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl font-bold tracking-tight">
+              Empleados
+            </CardTitle>
+            <CardDescription className="text-muted-foreground">
               Aquí puedes ver los empleados de tu empresa
-             
             </CardDescription>
           </div>
           <Link
@@ -59,20 +58,23 @@ const EmployeePage = () => {
             className={[
               'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
               buttonVariants({ variant: 'outline' }),
-          ].join(' ')}
+            ].join(' ')}
           >
             Agregar nuevo empleado
           </Link>
-        </header>
+        </CardHeader>
 
-        <DataTable
-          columns={columns}
-          data={employees || []}
-          setActivesEmployees={setActivesEmployees}
-          setInactiveEmployees={setInactiveEmployees}
-          showDeletedEmployees={showDeletedEmployees}
-          setShowDeletedEmployees={setShowDeletedEmployees}
-        />
+        <div className=" px-8 ">
+          <DataTable
+            columns={columns}
+            data={employees || []}
+            setActivesEmployees={setActivesEmployees}
+            setInactiveEmployees={setInactiveEmployees}
+            showDeletedEmployees={showDeletedEmployees}
+            setShowDeletedEmployees={setShowDeletedEmployees}
+          />
+        </div>
+        <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
       </Card>
     </section>
   )

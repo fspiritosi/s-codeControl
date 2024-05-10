@@ -53,10 +53,10 @@ export default function DenyDocModal({
   const { toast } = useToast()
 
   async function onSubmit(menssaje: z.infer<typeof FormSchema>) {
-    if (resource === 'employees') {
+    if (resource === 'employee') {
       const { data, error } = await supabase
         .from('documents_employees')
-        .update({ state: 'rechazado', deny_reason: menssaje.reason, id })
+        .update({ state: 'rechazado', deny_reason: menssaje.reason })
         .eq('id', id)
         .select()
 

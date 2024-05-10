@@ -1,9 +1,11 @@
+'use client'
 import { CompanyRegister } from '@/components/CompanyRegister'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 export default function companyRegister() {
   return (
-    <section className="">
-      <Card className="mt-6 p-8 ">
+    <section className={cn('md:mx-7')}>
+      <Card className="mt-6 p-8">
         <CardTitle className="text-4xl mb-3">Registrar Compañía</CardTitle>
         <CardDescription>
           Completa este formulario con los datos de tu nueva compañia

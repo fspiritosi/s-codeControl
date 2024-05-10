@@ -15,12 +15,12 @@ const config = {
       padding: '2rem',
       screens: {
         '2xl': '1400px',
-        cardMedia: '1694px',
+        cardMedia: '1227px',
       },
     },
     extend: {
       screens: {
-        cardMedia: '1692px',
+        cardMedia: '1227px',
       },
       colors: {
         border: 'hsl(var(--border))',
