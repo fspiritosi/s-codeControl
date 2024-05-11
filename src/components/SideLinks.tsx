@@ -67,12 +67,12 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
   //cambio
   const pathname = usePathname()
   const [openSubMenu, setOpenSubMenu] = useState(null)
-  const profile = useLoggedUserStore(state => state.profile)?.[0]?.id
+  const owner_id = useLoggedUserStore(state => state.profile)?.[0]?.id
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
     ?.owner_id.id
 
   const links =
-    profile !== actualCompany
+    owner_id !== actualCompany
       ? Allinks.filter(link => link.name !== 'Empresa')
       : Allinks
 

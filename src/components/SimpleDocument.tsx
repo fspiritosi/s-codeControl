@@ -280,6 +280,9 @@ export default function SimpleDocument({
   const [duplicatedDocument, setDuplicatedDocument] = useState(false)
   const [files, setFiles] = useState<File[] | undefined>([])
   const [openResourceSelector, setOpenResourceSelector] = useState(false)
+  const [years, setYear] = useState(today.getFullYear().toString())
+
+  console.log(years, 'yearss')
 
   // console.log(documentResource, 'documentResource')
 
@@ -308,7 +311,7 @@ export default function SimpleDocument({
                         <Label className="block">Empleados</Label>
                         <Controller
                           render={({ field }) => {
-                            const selectedResourceName = data.find(
+                            const selectedResourceName = data?.find(
                               (resource: any) => resource.id === field.value,
                             )?.name
 
@@ -480,7 +483,6 @@ export default function SimpleDocument({
                           )}
                       </div>
                     )}
-
                     <div className="space-y-2">
                       <Label>
                         Seleccione el tipo de documento a vincular al recurso
@@ -630,24 +632,18 @@ export default function SimpleDocument({
                                 <PopoverContent className="flex w-full flex-col space-y-2 p-2 ">
                                   <Select
                                     onValueChange={e => {
-                                      const actualSelectedDate = format(
-                                        field.value || today,
-                                        'dd/MM/yyyy',
-                                        { locale: es },
-                                      )
-                                      const finalDate = new Date(
-                                        `${actualSelectedDate.split('/')[1]}/${
-                                          actualSelectedDate.split('/')[0]
-                                        }/${e}`,
-                                      )
-                                      field.onChange(finalDate)
                                       setMonth(new Date(e))
+                                      setYear(e)
+                                      const newYear = parseInt(e, 10)
+                                      const dateWithNewYear = new Date(
+                                        field.value,
+                                      )
+                                      dateWithNewYear.setFullYear(newYear)
+                                      field.onChange(dateWithNewYear)
                                     }}
-                                    defaultValue={format(
-                                      field.value || new Date(),
-                                      'yyyy',
-                                      { locale: es },
-                                    )}
+                                    value={
+                                      years || today.getFullYear().toString()
+                                    }
                                   >
                                     <SelectTrigger>
                                       <SelectValue placeholder="Elegir año" />
@@ -661,6 +657,15 @@ export default function SimpleDocument({
                                           {year}
                                         </SelectItem>
                                       ))}
+                                      <SelectItem
+                                        value={today.getFullYear().toString()}
+                                        disabled={
+                                          years ===
+                                          today.getFullYear().toString()
+                                        }
+                                      >
+                                        {today.getFullYear().toString()}
+                                      </SelectItem>
                                     </SelectContent>
                                   </Select>
                                   <div className="rounded-md border w-full">
