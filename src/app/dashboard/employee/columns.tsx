@@ -55,7 +55,7 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/components/ui/use-toast'
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { DotsVerticalIcon } from '@radix-ui/react-icons'
@@ -67,12 +67,16 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { supabase } from '../../../supabase'
+import { supabase } from '../../../../supabase/supabase'
 
 const formSchema = z.object({
-  reason_for_termination: z.string({
-    required_error: 'La razón de la baja es requerida.',
-  }),
+  reason_for_termination: z.enum([
+    'Despido sin causa',
+    'Renuncia',
+    'Despido con causa',
+    'Acuerdo de partes',
+    'Fin de contrato',
+  ]),
   termination_date: z.date({
     required_error: 'La fecha de baja es requerida.',
   }),

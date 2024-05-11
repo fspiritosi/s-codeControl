@@ -1,6 +1,6 @@
 import { EquipoSchema } from '@/zodSchemas/schemas'
 import { create } from 'zustand'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 import { MandatoryDocuments } from './../zodSchemas/schemas'
 
 type Province = {

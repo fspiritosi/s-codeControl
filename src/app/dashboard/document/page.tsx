@@ -41,7 +41,7 @@ import { useLoggedUserStore } from '@/store/loggedUser'
 import { AuditorDocument } from '@/types/types'
 import { format } from 'date-fns'
 import { useEffect, useState } from 'react'
-import { supabase } from '../../../supabase'
+import { supabase } from '../../../../supabase/supabase'
 import { ExpiredColums } from '../colums'
 import { ExpiredDataTable } from '../data-table'
 

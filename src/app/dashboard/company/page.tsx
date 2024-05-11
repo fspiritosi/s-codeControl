@@ -6,8 +6,8 @@ import { company } from '@/types/types'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Modal from 'react-modal'
+import { supabase } from '../../../../supabase/supabase'
 import { CardsGrid } from '../../../components/CardsGrid'
-import { supabase } from '../../../supabase'
 
 function setupModalAppElement() {
   if (window.document) {

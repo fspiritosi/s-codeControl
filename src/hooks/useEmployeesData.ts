@@ -1,6 +1,6 @@
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { Employee } from '@/types/types'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 import { useEdgeFunctions } from './useEdgeFunctions'
 
 export const useEmployeesData = () => {

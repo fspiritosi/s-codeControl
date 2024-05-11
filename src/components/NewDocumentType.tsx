@@ -22,12 +22,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 
 export default function NewDocumentType({
   codeControlClient,

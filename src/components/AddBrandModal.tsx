@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { useState } from 'react'
 import { ZodError, z } from 'zod'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 import { useToast } from './ui/use-toast'
 
 const schema = z

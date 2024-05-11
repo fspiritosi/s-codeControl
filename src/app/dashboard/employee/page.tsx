@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/card'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import Link from 'next/link'
-import { supabase } from '../../../supabase'
+import { supabase } from '../../../../supabase/supabase'
 import { columns } from './columns'
 import { DataTable } from './data-table'
 

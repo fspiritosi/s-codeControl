@@ -1,6 +1,6 @@
 'use client'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 import { company } from './../types/types'
 import { useEdgeFunctions } from './useEdgeFunctions'
 //import { industry } from './../types/types';
@@ -61,7 +61,7 @@ export const useCompanyData = () => {
     LogicDeleteCompany: async (companyId: string) => {
       const { data, error } = await supabase
         .from('company')
-        .update({ is_Active: false }) // Establece is_Active en false para el borrado lógico
+        .update({ is_active: false })
         .eq('id', companyId)
         .select()
       if (error) {

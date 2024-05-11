@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 import {
   CheckIcon,
   ClockIcon,
@@ -19,7 +19,7 @@ import JSZip from 'jszip'
 import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 import SimpleDocument from './SimpleDocument'
 import {
   AlertDialog,

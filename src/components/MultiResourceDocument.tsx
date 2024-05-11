@@ -40,12 +40,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useDocument } from '@/hooks/useDocuments'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { ChangeEvent, useEffect, useRef, useState } from 'react'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 import { Badge } from './ui/badge'
 import { Calendar } from './ui/calendar'
 import { Input } from './ui/input'
@@ -230,7 +230,7 @@ export default function MultiResourceDocument({
             ? format(values.validity, 'dd/MM/yyyy')
             : null,
           user_id: user,
-          created_at: new Date(),
+          created_at: new Date().toString(),
         }
       })
 

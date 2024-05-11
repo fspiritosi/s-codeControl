@@ -1,7 +1,7 @@
 'use client'
 import { CompanyRegister } from '@/components/CompanyRegister'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 export default function companyRegister() {
   return (
     <section className={cn('md:mx-7')}>

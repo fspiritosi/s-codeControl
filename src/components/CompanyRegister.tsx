@@ -118,7 +118,7 @@ export function CompanyRegister({
       try {
         const fetchedIndustry = await fetchIndustryType()
         if (fetchedIndustry) {
-          setIndustry(fetchedIndustry)
+          setIndustry(fetchedIndustry as Industry[])
         } else {
           console.error('La función fetchIndustryType() devolvió null.')
         }

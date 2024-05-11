@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 
 export async function getCompany() {
   const {

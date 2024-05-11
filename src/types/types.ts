@@ -65,17 +65,11 @@ export type company = {
   contact_email: string
   contact_phone: string
   address: string
-  city: {
-    id: number
-    name: string
-  }
+  city:number
   country: string
   industry: string
   company_logo: string
-  province_id: {
-    id: number
-    name: string
-  }
+  province_id:number
   by_defect: boolean
   owner_id: string | undefined
 }

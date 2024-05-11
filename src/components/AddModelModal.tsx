@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select'
 import { useState } from 'react'
 import { ZodError, z } from 'zod'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 import { useToast } from './ui/use-toast'
 
 const schema = z
@@ -66,8 +66,8 @@ export default function AddModelModal({
       .from('model_vehicles')
       .insert([
         {
-          name: name.slice(0, 1).toUpperCase() + name.slice(1),
-          brand: brand_id,
+          name: `${name.slice(0, 1).toUpperCase()} ${name.slice(1)}`,
+          brand: parseInt(brand_id || ''),
         },
       ])
       .select()

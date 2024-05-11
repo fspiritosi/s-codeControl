@@ -1,9 +1,9 @@
 import { DocumentationDrawer } from '@/components/DocumentationDrawer'
 import EmployeeAccordion from '@/components/EmployeeAccordion'
 import { Card, CardFooter } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 import { revalidatePath } from 'next/cache'
-import { supabase } from '../../../../supabase'
+import { supabase } from '../../../../../supabase/supabase'
 
 export default async function EmployeeFormAction({
   searchParams,

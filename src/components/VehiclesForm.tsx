@@ -14,7 +14,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   CaretSortIcon,
@@ -30,7 +30,7 @@ import { useLoggedUserStore } from '@/store/loggedUser'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 import { CheckboxDefaultValues } from './CheckboxDefValues'
 import { ImageHander } from './ImageHandler'
 import { Modal } from './Modal'
@@ -50,13 +50,13 @@ import { useToast } from './ui/use-toast'
 type VehicleType = {
   year: string
   engine: string
-  chassis: string
-  serie: string
-  domain: string
+  chassis: string | null
+  serie: string | null
+  domain: string | null
   intern_number: string
   picture: string
   type_of_vehicle: string
-  types_of_vehicles: { name: string }
+  types_of_vehicles: { name: string } | string
   brand_vehicles: { name: string }
   brand: string
   model_vehicles: { name: string }
@@ -92,7 +92,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
   const [accion, setAccion] = useState(searchParams.get('action'))
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
 
-  const [vehicle, setVehicle] = useState<VehicleType | null>(null)
+  const [vehicle, setVehicle] = useState<any>(null)
   const { toast } = useToast()
   const pathname = usePathname()
   const [data, setData] = useState<dataType>({
@@ -105,8 +105,8 @@ export default function VehiclesForm2({ id }: { id: string }) {
 
   const preloadFormData = (vehicleData: VehicleType) => {
     form.setValue('type_of_vehicle', vehicleData.type_of_vehicle.toString())
-    form.setValue('brand', vehicle?.brand)
-    form.setValue('model', vehicle?.model)
+    form.setValue('brand', vehicle?.brand || '')
+    form.setValue('model', vehicle?.model || '')
     form.setValue('year', vehicleData.year)
     form.setValue('engine', vehicleData.engine)
     form.setValue('chassis', vehicleData.chassis)
@@ -146,12 +146,13 @@ export default function VehiclesForm2({ id }: { id: string }) {
       if (error) {
         console.error('Error al obtener los datos del vehículo:', error)
       } else {
-        const transformedData = vehicleData.map((item: VehicleType) => ({
+        const transformedData = vehicleData.map(item => ({
           ...item,
-          type_of_vehicle: item.types_of_vehicles.name,
-          brand: item.brand_vehicles.name,
-          model: item.model_vehicles.name,
+          type_of_vehicle: item.types_of_vehicles?.name,
+          brand: item.brand_vehicles?.name,
+          model: item.model_vehicles?.name,
           type: item.type,
+          chassis: item.chassis ?? '', // Handle null value for chassis property
         }))
 
         setVehicle(transformedData[0])
@@ -166,16 +167,12 @@ export default function VehiclesForm2({ id }: { id: string }) {
   const router = useRouter()
   const [hideInput, setHideInput] = useState(false)
   const vehicleSchema = z.object({
-    brand: z
-      .string({
-        required_error: 'La marca es requerida',
-      })
-      .optional(),
-    model: z
-      .string({
-        required_error: 'El modelo es requerido',
-      })
-      .optional(),
+    brand: z.string({
+      required_error: 'La marca es requerida',
+    }),
+    model: z.string({
+      required_error: 'El modelo es requerido',
+    }),
     year: z.string({ required_error: 'El año es requerido' }).refine(
       e => {
         const year = Number(e)
@@ -214,7 +211,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
             message: 'El chasis debe tener al menos 2 caracteres.',
           })
           .max(30, { message: 'El chasis debe tener menos de 30 caracteres.' })
-      : z.string().optional(),
+      : z.string().nullable(),
     domain: hideInput
       ? z
           .string({
@@ -269,7 +266,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                 .from('vehicles')
                 .select('*')
                 .eq('domain', domain.toUpperCase())
-                .eq('company_id', actualCompany?.id)
+                .eq('company_id', actualCompany?.id || '')
 
               if (
                 vehicles?.[0] &&
@@ -282,9 +279,9 @@ export default function VehiclesForm2({ id }: { id: string }) {
             },
             { message: 'El dominio ya existe' },
           )
-      : z.string().optional(),
+      : z.string().nullable(),
     serie: hideInput
-      ? z.string().optional()
+      ? z.string().nullable()
       : z
           .string({
             required_error: 'La serie es requerida',
@@ -323,9 +320,12 @@ export default function VehiclesForm2({ id }: { id: string }) {
     let { data: type, error } = await supabase.from('type').select('*')
     setData({
       ...data,
-      tipe_of_vehicles: types_of_vehicles as generic[],
+      tipe_of_vehicles: types_of_vehicles as unknown as generic[],
       brand: (brand_vehicles || []).map(e => {
-        return { label: e.name as string, id: e.id as string }
+        return {
+          label: e.name as unknown as string,
+          id: e.id as unknown as string,
+        }
       }),
       types: type as generic[],
     })
@@ -386,7 +386,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
 
     setData({
       ...data,
-      models: model_vehicles as generic[],
+      models: model_vehicles as unknown as generic[],
     })
   }
   const url = process.env.NEXT_PUBLIC_PROJECT_URL
@@ -395,31 +395,53 @@ export default function VehiclesForm2({ id }: { id: string }) {
   )
   console.log(form.formState.errors, 'formState.errors')
   const loggedUser = useLoggedUserStore(state => state.credentialUser?.id)
+  const loggedUser2 = useLoggedUserStore(state => state.profile?.[0]?.id)
   async function onCreate(values: z.infer<typeof vehicleSchema>) {
     const { type_of_vehicle, brand, model, domain } = values
     //const companyId = actualCompany?.id
 
     console.log(values, 'values')
+    const example = {
+      engine: values.engine,
+      model: parseInt(model),
+      year: values.year,
+      type_of_vehicle: parseInt(type_of_vehicle),
+      company_id: actualCompany?.id || '',
+      user_id: loggedUser2?.toString(),
+      intern_number: values.intern_number.toString(),
+      domain: domain?.toUpperCase() || '',
+      type: data.types.find(e => e.name === values.type)?.id || '',
+      picture: values.picture,
+      allocated_to: values.allocated_to,
+      brand,
+      chassis: values.chassis,
+      serie: values.serie,
+    }
     try {
       const { data: vehicle, error } = await supabase
         .from('vehicles')
         .insert([
           {
-            ...values,
-            domain: domain?.toUpperCase(),
-            type_of_vehicle: data.tipe_of_vehicles.find(
-              e => e.name === type_of_vehicle,
-            )?.id,
-            brand: data.brand.find(e => e.label === brand)?.id,
-            model: data.models.find(e => e.name === model)?.id,
-            type: data.types.find(e => e.name === values.type)?.id,
-            company_id: actualCompany?.id,
+            engine: values.engine,
+            model: parseInt(model),
+            year: values.year,
+            type_of_vehicle: parseInt(type_of_vehicle),
+            company_id: actualCompany?.id || '',
+            user_id: loggedUser2?.toString(),
+            intern_number: values.intern_number.toString(),
+            domain: domain?.toUpperCase() || '',
+            type: data.types.find(e => e.name === values.type)?.id || '',
+            picture: values.picture,
+            allocated_to: values.allocated_to,
+            brand: parseInt(brand), // Convert brand to number
+            chassis: values.chassis,
+            serie: values.serie,
           },
         ])
         .select()
 
       const documentsMissing: {
-        applies: number
+        applies: string | undefined
         id_document_types: string
         validity: string | null
         user_id: string | undefined
@@ -466,7 +488,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
               .from('vehicles')
               .update({ picture: vehicleImage })
               .eq('id', id)
-              .eq('company_id', actualCompany?.id)
+              .eq('company_id', actualCompany?.id || '')
           } catch (error) {}
           documetsFetch()
         } catch (error: any) {
@@ -537,22 +559,23 @@ export default function VehiclesForm2({ id }: { id: string }) {
       await supabase
         .from('vehicles')
         .update({
-          type_of_vehicle: data.tipe_of_vehicles.find(
-            e => e.name === type_of_vehicle,
-          )?.id,
-          brand: data.brand.find(e => e.label === brand)?.id,
-          model: data.models.find(e => e.name === model)?.id,
-          year: year,
-          engine: engine,
-          chassis: chassis,
-          serie: serie,
-          domain: domain?.toUpperCase(),
-          intern_number: intern_number,
-          picture: picture,
+          engine: values.engine,
+          model: parseInt(model),
+          year: values.year,
+          type_of_vehicle: parseInt(type_of_vehicle),
+          company_id: actualCompany?.id || '',
+          user_id: loggedUser2?.toString(),
+          intern_number: values.intern_number.toString(),
+          domain: domain?.toUpperCase() || '',
+          type: data.types.find(e => e.name === values.type)?.id || '',
+          picture: values.picture,
           allocated_to: values.allocated_to,
+          brand: parseInt(brand), // Convert brand to number
+          chassis: values.chassis,
+          serie: values.serie,
         })
-        .eq('id', vehicle?.id)
-        .eq('company_id', actualCompany?.id)
+        .eq('id', vehicle?.id || '')
+        .eq('company_id', actualCompany?.id || '')
         .select()
 
       const id = vehicle?.id
@@ -576,8 +599,8 @@ export default function VehiclesForm2({ id }: { id: string }) {
             const { data, error } = await supabase
               .from('vehicles')
               .update({ picture: vehicleImage })
-              .eq('id', id)
-              .eq('company_id', actualCompany?.id)
+              .eq('id', id || '')
+              .eq('company_id', actualCompany?.id || '')
           } catch (error) {}
         } catch (error: any) {
           toast({
@@ -1051,9 +1074,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                     type="text"
                     className="input w-[250px]"
                     placeholder="Ingrese el chasis"
-                    value={
-                      field.value !== '' ? field.value : vehicle?.chassis || ''
-                    }
+                    value={(field.value ?? vehicle?.chassis) || ''}
                     onChange={e => {
                       form.setValue('chassis', e.target.value)
                     }}
@@ -1087,7 +1108,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                     onChange={e => {
                       form.setValue('serie', e.target.value)
                     }}
-                    defaultValue={vehicle?.serie}
+                    value={vehicle?.serie || ''}
                   />
 
                   <FormDescription>
@@ -1116,10 +1137,8 @@ export default function VehiclesForm2({ id }: { id: string }) {
                     type="text"
                     className="input w-[250px]"
                     placeholder="Ingrese el dominio"
-                    value={
-                      field.value !== '' ? field.value : vehicle?.domain || ''
-                    }
-                    defaultValue={vehicle?.domain}
+                    value={field.value ?? vehicle?.domain ?? ''}
+                    defaultValue={vehicle?.domain || ''}
                     onChange={e => {
                       form.setValue('domain', e.target.value)
                     }}

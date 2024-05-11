@@ -30,7 +30,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { revalidate } from '@/lib/useServer'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { Company } from '@/zodSchemas/schemas'
 import {
@@ -51,7 +51,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 import ModalCompany from './ModalCompany'
 import { UpdateUserPasswordForm } from './UpdateUserPasswordForm'
 import { UploadImage } from './UploadImage'
@@ -115,7 +115,7 @@ export default function NavBar() {
       const { data, error } = await supabase
         .from('profile')
         .update({ avatar: imageUrl })
-        .eq('id', actualUser[0].id)
+        .eq('id', actualUser[0].id || '')
 
       if (error) {
         throw error

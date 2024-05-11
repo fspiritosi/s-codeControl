@@ -1,6 +1,6 @@
 'use client'
 import { useRouter } from 'next/navigation'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 import { Button } from './ui/button'
 
 export const LogOutButton = () => {

@@ -29,7 +29,7 @@ import { Separator } from '@/components/ui/separator'
 import { AuditorDocument } from '@/types/types'
 import { format } from 'date-fns'
 import { useEffect, useState } from 'react'
-import { supabase } from '../../supabase'
+import { supabase } from '../../../supabase/supabase'
 import { AuditorColums } from './columns'
 import { AuditorDataTable } from './data-table'
 

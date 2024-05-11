@@ -62,7 +62,7 @@ import {
 } from '@/components/ui/table'
 import { useToast } from '@/components/ui/use-toast'
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { DotsVerticalIcon } from '@radix-ui/react-icons'
 import { ColumnDef } from '@tanstack/react-table'
@@ -72,7 +72,7 @@ import { ArrowUpDown, CalendarIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { supabase } from '../../../supabase'
+import { supabase } from '../../../../supabase/supabase'
 
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -110,9 +110,19 @@ export const columns: ColumnDef<Colum>[] = [
       const [integerModal, setIntegerModal] = useState(false)
       const [viewModal, setViewModal] = useState(false)
       const [domain, setDomain] = useState('')
-      const [documentHistory, setDocumentHistory] = useState<DocumentHistory[]>(
-        [],
-      )
+      const [documentHistory, setDocumentHistory] = useState<
+        | {
+            documents_equipment_id: string
+            id: number
+            modified_by: string
+            updated_at: string
+            documents_equipment: {
+              id: string
+              user_id: any
+            } | null
+          }[]
+        | null
+      >([])
       const [showInactive, setShowInactive] = useState<boolean>(false)
       const [showDeletedEquipment, setShowDeletedEquipment] = useState(false)
       const equipment = row.original
@@ -393,7 +403,7 @@ export const columns: ColumnDef<Colum>[] = [
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {documentHistory.map((entry: any) => (
+                    {documentHistory?.map((entry: any) => (
                       <TableRow key={entry.documents_employees_id}>
                         <TableCell>
                           {entry.documents_equipment.user_id.email}

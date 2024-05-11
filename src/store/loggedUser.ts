@@ -1,44 +1,52 @@
-import {
-  Notifications,
-  SharedUser,
-  VehiclesAPI,
-  profileUser,
-} from '@/types/types'
-import {
-  Company,
-  CompanySchema,
-  SharedCompanies,
-  SharedCompaniesSchema,
-  Vehicle,
-  VehicleSchema,
-} from '@/zodSchemas/schemas'
+import { Database } from '@/types/supabaseTypes'
+import { Notifications, SharedUser } from '@/types/types'
+import { Vehicle, VehicleSchema } from '@/zodSchemas/schemas'
 import { User } from '@supabase/supabase-js'
 import { format } from 'date-fns'
 import { create } from 'zustand'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 import { VehiclesFormattedElement } from './../zodSchemas/schemas'
 import { useCountriesStore } from './countries'
-
-interface Document {
+interface EmployeeDocument {
   date: string
   allocated_to: string
-  documentName: string
+  documentName: Database['public']['Tables']['document_types']['Row']['name']
+  state: Database['public']['Tables']['documents_employees']['Row']['state']
   multiresource: string
   validity: string
-  id: string
+  mandatory: string
+  id: Database['public']['Tables']['documents_employees']['Row']['id']
   resource: string
-  state: string
-  document_path?: string
+  document_number: Database['public']['Tables']['employees']['Row']['document_number']
+  document_url: Database['public']['Tables']['documents_employees']['Row']['document_path']
+}
+interface VehiclesDocument {
+  date: string
+  allocated_to: Database['public']['Tables']['types_of_vehicles']['Row']['name']
+  documentName: Database['public']['Tables']['document_types']['Row']['name']
+  state: Database['public']['Tables']['documents_equipment']['Row']['state']
+  multiresource: string
+  validity: string
+  mandatory: string
+  id: Database['public']['Tables']['documents_equipment']['Row']['id']
+  resource: string
+  vehicle_id: Database['public']['Tables']['vehicles']['Row']['id']
 }
 
 interface State {
   credentialUser: User | null
-  profile: profileUser[]
+  profile: Database['public']['Tables']['profile']['Row'][] | null
   showNoCompanyAlert: boolean
   showMultiplesCompaniesAlert: boolean
-  allCompanies: Company
-  actualCompany: Company[0] | null
-  setActualCompany: (company: Company[0]) => void
+  allCompanies: Database['public']['Tables']['company']['Row'][]
+  actualCompany: Database['public']['Tables']['company']['Row'] | null
+  setActualCompany: (
+    company:
+      | Database['public']['Tables']['company']['Row']
+      | (null & {
+          share_company_users: Database['public']['Tables']['share_company_users']['Row'][]
+        }),
+  ) => void
   employees: any
   setEmployees: (employees: any) => void
   isLoading: boolean
@@ -48,35 +56,46 @@ interface State {
   showDeletedEmployees: boolean
   setShowDeletedEmployees: (showDeletedEmployees: boolean) => void
   vehicles: Vehicle
-  setNewDefectCompany: (company: Company[0]) => void
-  sharedCompanies: SharedCompanies
+  setNewDefectCompany: (
+    company: Database['public']['Tables']['company']['Row'] & {
+      owner_id: Database['public']['Tables']['profile']['Row']
+    },
+  ) => Promise<void>
+  sharedCompanies:
+    | Database['public']['Tables']['share_company_users']['Row'][]
+    | null
   endorsedEmployees: () => void
   noEndorsedEmployees: () => void
   allDocumentsToShow: {
-    employees: Document[]
-    vehicles: Document[]
+    employees: EmployeeDocument[]
+    vehicles: VehiclesDocument[]
   }
+
   documentsToShow: {
-    employees: Document[]
-    vehicles: Document[]
+    employees: EmployeeDocument[]
+    vehicles: VehiclesDocument[]
   }
   Alldocuments: {
-    employees: Document[]
-    vehicles: Document[]
+    employees: EmployeeDocument[]
+    vehicles: VehiclesDocument[]
   }
   lastMonthDocuments: {
-    employees: Document[]
-    vehicles: Document[]
+    employees: EmployeeDocument[]
+    vehicles: VehiclesDocument[]
   }
   showLastMonthDocuments: boolean
   setShowLastMonthDocuments: () => void
   pendingDocuments: {
-    employees: Document[]
-    vehicles: Document[]
+    employees: EmployeeDocument[]
+    vehicles: VehiclesDocument[]
   }
   notifications: Notifications[]
   markAllAsRead: () => void
-  resetDefectCompanies: (company: Company[0]) => void
+  resetDefectCompanies: (
+    company: Database['public']['Tables']['company']['Row'] & {
+      owner_id: Database['public']['Tables']['profile']['Row']
+    },
+  ) => Promise<void>
   sharedUsers: SharedUser[]
   vehiclesToShow: VehiclesFormattedElement
   setActivesVehicles: () => void
@@ -198,19 +217,12 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
       .eq('owner_id', id)
 
-    const validatedData = CompanySchema.safeParse(data)
-    if (!validatedData.success) {
-      return console.error(
-        'Error al obtener el perfil: Validacion',
-        validatedData.error,
-      )
-    }
-
     let { data: share_company_users, error: sharedError } = await supabase
       .from('share_company_users')
       .select(
-        `*,company_id(*,
-          owner_id(*),
+        `*,
+        company(
+          *,owner_id(*),
         share_company_users(*,
           profile(*)
         ),
@@ -251,28 +263,18 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
       .eq('profile_id', id)
 
-    const validatedSharedCompanies =
-      SharedCompaniesSchema.safeParse(share_company_users)
-
-    if (!validatedSharedCompanies.success) {
-      return console.error(
-        'Error al obtener el perfil: Validacion',
-        validatedSharedCompanies.error,
-      )
-    }
-
-    set({ sharedCompanies: validatedSharedCompanies.data })
-
+    set({ sharedCompanies: share_company_users })
     if (error) {
       console.error('Error al obtener el perfil:', error)
     } else {
-      set({ allCompanies: validatedData.data })
+      set({ allCompanies: data })
+
       selectedCompany = get()?.allCompanies.filter(company => company.by_defect)
       const savedCompany = localStorage.getItem('company_id') || ''
       if (savedCompany) {
-        const company = validatedSharedCompanies.data.find(
-          company => company.company_id.id === JSON.parse(savedCompany),
-        )?.company_id
+        const company = share_company_users?.find(
+          company => company?.company?.id === JSON.parse(savedCompany),
+        )?.company
 
         if (company) {
           setActualCompany(company)
@@ -290,6 +292,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       }
       if (data.length === 1) {
         set({ showMultiplesCompaniesAlert: false })
+
         setActualCompany(data[0])
       }
       if (data.length === 0) {
@@ -331,11 +334,13 @@ export const useLoggedUserStore = create<State>((set, get) => {
     loggedUser()
   }
 
-  let selectedCompany: Company
+  let selectedCompany: Database['public']['Tables']['company']['Row'][] | null
 
-  const setActualCompany = (company: Company[0]) => {
+  const setActualCompany = (
+    company: Database['public']['Tables']['company']['Row'] | null,
+  ) => {
     set({ actualCompany: company })
-    useCountriesStore.getState().documentTypes(company.id)
+    useCountriesStore.getState().documentTypes(company?.id || '')
     setActivesEmployees()
     fetchVehicles()
     documetsFetch()
@@ -372,7 +377,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
             )
           )`,
       )
-      .eq('company_id', get()?.actualCompany?.id)
+      .eq('company_id', get()?.actualCompany?.id || '')
       .eq('status', 'No avalado')
 
     if (error) {
@@ -386,7 +391,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     let { data: notifications, error } = await supabase
       .from('notifications')
       .select('*')
-      .eq('company_id', get()?.actualCompany?.id)
+      .eq('company_id', get()?.actualCompany?.id || '')
 
     await documetsFetch()
 
@@ -421,7 +426,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     const { error } = await supabase
       .from('notifications')
       .delete()
-      .eq('company_id', get()?.actualCompany?.id)
+      .eq('company_id', get()?.actualCompany?.id || '')
 
     if (error) {
       console.error(
@@ -458,7 +463,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
             )
           )`,
       )
-      .eq('company_id', get()?.actualCompany?.id)
+      .eq('company_id', get()?.actualCompany?.id || '')
       .eq('status', 'Avalado')
 
     if (error) {
@@ -478,7 +483,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       brand_vehicles(name),
       model_vehicles(name)`,
       )
-      .eq('company_id', get()?.actualCompany?.id)
+      .eq('company_id', get()?.actualCompany?.id || '')
       .eq('is_active', true)
 
     const validatedData = VehicleSchema.safeParse(data ?? [])
@@ -544,7 +549,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
 `,
       )
       .not('employees', 'is', null)
-      .eq('employees.company_id', get()?.actualCompany?.id)
+      .eq('employees.company_id', get()?.actualCompany?.id || '')
 
     let { data: equipmentData, error: equipmentError } = await supabase
       .from('documents_equipment')
@@ -552,13 +557,11 @@ export const useLoggedUserStore = create<State>((set, get) => {
         `
       *,
       document_types:document_types(*),
-      applies(*,type(*),type_of_vehicle(*),model(*),brand(*))
+      applies:vehicles(*,type(*),type_of_vehicle:types_of_vehicles(*),model(*),brand(*))
       `,
       )
-      .eq('applies.company_id', get()?.actualCompany?.id)
+      .eq('applies.company_id', get()?.actualCompany?.id || '')
       .not('applies', 'is', null)
-
-    const typedData: VehiclesAPI[] | null = equipmentData as VehiclesAPI[]
 
     if (error) {
       console.error('Error al obtener los documentos:', error)
@@ -566,7 +569,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       const lastMonth = new Date()
       lastMonth.setMonth(new Date().getMonth() + 1)
 
-      const filteredData = data?.filter((doc: any) => {
+      const filteredData = data?.filter(doc => {
         if (!doc.validity) return false
 
         const date = new Date(
@@ -574,18 +577,18 @@ export const useLoggedUserStore = create<State>((set, get) => {
             doc.validity.split('/')[2]
           }`,
         )
-        const isExpired = date < lastMonth || doc.state === 'Vencido'
+        const isExpired = date < lastMonth || doc.state === 'vencido'
         return isExpired
       })
 
-      const filteredVehiclesData = typedData?.filter((doc: any) => {
+      const filteredVehiclesData = equipmentData?.filter(doc => {
         if (!doc.validity) return false
         const date = new Date(
           `${doc.validity.split('/')[1]}/${doc.validity.split('/')[0]}/${
             doc.validity.split('/')[2]
           }`,
         )
-        const isExpired = date < lastMonth || doc.state === 'Vencido'
+        const isExpired = date < lastMonth || doc.state === 'vencido'
         return isExpired
       })
 
@@ -594,43 +597,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
         const [day, month, year] = dateString.split('/')
         const formattedDate = `${day}/${month}/${year}`
         return formattedDate || 'No vence'
-      }
-
-      const mapDocument = (doc: any) => {
-        const formattedDate = formatDate(doc.validity)
-        return {
-          date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
-          allocated_to: doc.employees?.contractor_employee
-            ?.map((doc: any) => doc.contractors.name)
-            .join(', '),
-          documentName: doc.document_types?.name,
-          state: doc.state,
-          multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
-          validity: formattedDate,
-          mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
-          id: doc.id,
-          resource: `${doc.employees?.lastname} ${doc.employees?.firstname}`,
-          document_number: doc.employees.document_number,
-          document_url: doc.document_path,
-        }
-      }
-
-      const mapVehicle = (doc: any) => {
-        const formattedDate = formatDate(doc.validity)
-        return {
-          date: doc.created_at
-            ? format(new Date(doc.created_at), 'dd/MM/yyyy')
-            : 'No vence',
-          allocated_to: doc.applies?.type_of_vehicle?.name,
-          documentName: doc.document_types?.name,
-          state: doc.state,
-          multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
-          validity: formattedDate,
-          mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
-          id: doc.id,
-          resource: doc.applies?.domain || doc.applies?.intern_number,
-          vehicle_id: doc.applies?.id,
-        }
       }
 
       const lastMonthValues = {
@@ -644,28 +610,98 @@ export const useLoggedUserStore = create<State>((set, get) => {
                 (doc.validity !== 'No vence' || doc.validity !== null)
               )
             })
-            ?.map(mapDocument) || [],
+            ?.map(doc => {
+              const formattedDate = formatDate(doc.validity || '')
+              return {
+                date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
+                allocated_to:
+                  doc.employees?.contractor_employee
+                    ?.map((doc: any) => doc.contractors.name)
+                    .join(', ') || '',
+                documentName: doc.document_types?.name || '',
+                state: doc.state,
+                multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+                validity: formattedDate,
+                mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
+                id: doc.id,
+                resource: `${doc.employees?.lastname} ${doc.employees?.firstname}`,
+                document_number: doc.employees?.document_number || '',
+                document_url: doc.document_path,
+              }
+            }) || [],
         vehicles:
           filteredVehiclesData
-            .filter((doc: any) => {
+            ?.filter(doc => {
               if (!doc.validity || doc.validity === 'No vence') return false
               return (
                 doc.state !== 'presentado' &&
                 (doc.validity !== 'No vence' || doc.validity !== null)
               )
             })
-            .map(mapVehicle) || [],
+            .map(doc => {
+              const formattedDate = formatDate(doc.validity || '')
+              return {
+                date: doc.created_at
+                  ? format(new Date(doc.created_at), 'dd/MM/yyyy')
+                  : 'No vence',
+                allocated_to: doc.applies?.type_of_vehicle?.name || '',
+                documentName: doc.document_types?.name || '',
+                state: doc.state,
+                multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+                validity: formattedDate,
+                mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
+                id: doc.id,
+                resource:
+                  doc.applies?.domain || doc.applies?.intern_number || '',
+                vehicle_id: doc.applies?.id || '',
+              }
+            }) || [],
       }
 
       const pendingDocuments = {
         employees:
           data
             ?.filter((doc: any) => doc.state === 'presentado')
-            ?.map(mapDocument) || [],
+            ?.map(doc => {
+              const formattedDate = formatDate(doc.validity || '')
+              return {
+                date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
+                allocated_to:
+                  doc.employees?.contractor_employee
+                    ?.map((doc: any) => doc.contractors.name)
+                    .join(', ') || '',
+                documentName: doc.document_types?.name || '',
+                state: doc.state,
+                multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+                validity: formattedDate,
+                mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
+                id: doc.id,
+                resource: `${doc.employees?.lastname} ${doc.employees?.firstname}`,
+                document_number: doc.employees?.document_number || '',
+                document_url: doc.document_path,
+              }
+            }) || [],
         vehicles:
-          typedData
-            .filter((doc: any) => doc.state === 'presentado')
-            .map(mapVehicle) || [],
+          equipmentData
+            ?.filter(doc => doc.state === 'presentado')
+            .map(doc => {
+              const formattedDate = formatDate(doc.validity || '')
+              return {
+                date: doc.created_at
+                  ? format(new Date(doc.created_at), 'dd/MM/yyyy')
+                  : 'No vence',
+                allocated_to: doc.applies?.type_of_vehicle?.name || '',
+                documentName: doc.document_types?.name || '',
+                state: doc.state,
+                multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+                validity: formattedDate,
+                mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
+                id: doc.id,
+                resource:
+                  doc.applies?.domain || doc.applies?.intern_number || '',
+                vehicle_id: doc.applies?.id || '',
+              }
+            }) || [],
       }
 
       const Allvalues = {
@@ -678,22 +714,93 @@ export const useLoggedUserStore = create<State>((set, get) => {
                 (doc.validity !== 'No vence' || doc.validity !== null)
               )
             })
-            ?.map(mapDocument) || [],
+            ?.map(doc => {
+              const formattedDate = formatDate(doc.validity || '')
+              return {
+                date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
+                allocated_to:
+                  doc.employees?.contractor_employee
+                    ?.map((doc: any) => doc.contractors.name)
+                    .join(', ') || '',
+                documentName: doc.document_types?.name || '',
+                state: doc.state,
+                multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+                validity: formattedDate,
+                mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
+                id: doc.id,
+                resource: `${doc.employees?.lastname} ${doc.employees?.firstname}`,
+                document_number: doc.employees?.document_number || '',
+                document_url: doc.document_path,
+              }
+            }) || [],
         vehicles:
-          typedData
-            ?.filter((doc: any) => {
+          equipmentData
+            ?.filter(doc => {
               if (!doc.validity || doc.validity === 'No vence') return false
               return (
                 doc.state !== 'presentado' &&
                 (doc.validity !== 'No vence' || doc.validity !== null)
               )
             })
-            ?.map(mapVehicle) || [],
+            ?.map(doc => {
+              const formattedDate = formatDate(doc.validity || '')
+              return {
+                date: doc.created_at
+                  ? format(new Date(doc.created_at), 'dd/MM/yyyy')
+                  : 'No vence',
+                allocated_to: doc.applies?.type_of_vehicle?.name || '',
+                documentName: doc.document_types?.name || '',
+                state: doc.state,
+                multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+                validity: formattedDate,
+                mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
+                id: doc.id,
+                resource:
+                  doc.applies?.domain || doc.applies?.intern_number || '',
+                vehicle_id: doc.applies?.id || '',
+              }
+            }) || [],
       }
 
       const AllvaluesToShow = {
-        employees: data?.map(mapDocument) || [],
-        vehicles: typedData.map(mapVehicle) || [],
+        employees:
+          data?.map(doc => {
+            const formattedDate = formatDate(doc.validity || '')
+            return {
+              date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
+              allocated_to:
+                doc.employees?.contractor_employee
+                  ?.map((doc: any) => doc.contractors.name)
+                  .join(', ') || '',
+              documentName: doc.document_types?.name || '',
+              state: doc.state,
+              multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+              validity: formattedDate,
+              mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
+              id: doc.id,
+              resource: `${doc.employees?.lastname} ${doc.employees?.firstname}`,
+              document_number: doc.employees?.document_number || '',
+              document_url: doc.document_path,
+            }
+          }) || [],
+        vehicles:
+          equipmentData?.map(doc => {
+            const formattedDate = formatDate(doc.validity || '')
+            return {
+              date: doc.created_at
+                ? format(new Date(doc.created_at), 'dd/MM/yyyy')
+                : 'No vence',
+              allocated_to: doc.applies?.type_of_vehicle?.name || '',
+              documentName: doc.document_types?.name || '',
+              state: doc.state,
+              multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+              validity: formattedDate,
+              mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
+              id: doc.id,
+              resource: doc.applies?.domain || doc.applies?.intern_number || '',
+              vehicle_id: doc.applies?.id || '',
+            }
+          }) || [],
       }
       set({ allDocumentsToShow: AllvaluesToShow })
       set({ showLastMonthDocuments: true })
@@ -701,7 +808,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
       set({ lastMonthDocuments: lastMonthValues })
       set({ documentsToShow: lastMonthValues })
       set({ pendingDocuments })
-      // set({ isLoading: false })
     }
   }
 
@@ -739,7 +845,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
             )
           )`,
       )
-      .eq('company_id', get()?.actualCompany?.id)
+      .eq('company_id', get()?.actualCompany?.id || '')
       .eq('is_active', active)
 
     const employeesToShow = setEmployeesToShow(employees)
@@ -796,11 +902,13 @@ export const useLoggedUserStore = create<State>((set, get) => {
     set({ employees: employeesToShow })
   }
 
-  const resetDefectCompanies = async (company: Company[0]) => {
+  const resetDefectCompanies = async (
+    company: Database['public']['Tables']['company']['Row'],
+  ) => {
     const { data, error } = await supabase
       .from('company')
       .update({ by_defect: false })
-      .eq('owner_id', get()?.profile?.[0]?.id)
+      .eq('owner_id', get()?.profile?.[0]?.id || '')
 
     if (error) {
       console.error('Error al actualizar la empresa por defecto:', error)
@@ -809,16 +917,21 @@ export const useLoggedUserStore = create<State>((set, get) => {
     setActualCompany(company)
   }
 
-  const setNewDefectCompany = async (company: Company[0]) => {
-    if (company.owner_id.id !== get()?.profile?.[0]?.id) {
+  const setNewDefectCompany = async (
+    company: Database['public']['Tables']['company']['Row'] & {
+      owner_id: Database['public']['Tables']['profile']['Row']
+    },
+  ) => {
+    if (company.owner_id?.id !== get()?.profile?.[0]?.id) {
       localStorage.setItem('company_id', JSON.stringify(company.id))
       return
     }
     localStorage.removeItem('company_id')
+
     const { data, error } = await supabase
       .from('company')
       .update({ by_defect: false })
-      .eq('owner_id', get()?.profile?.[0]?.id)
+      .eq('owner_id', get()?.profile?.[0]?.id || '')
 
     if (error) {
       console.error('Error al actualizar la empresa por defecto:', error)
@@ -843,7 +956,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
     showMultiplesCompaniesAlert: get()?.showMultiplesCompaniesAlert,
     allCompanies: get()?.allCompanies,
     actualCompany: get()?.actualCompany,
-    setActualCompany: (company: Company[0]) => setActualCompany(company),
+    setActualCompany: (
+      company: Database['public']['Tables']['company']['Row'] | null,
+    ) => setActualCompany(company),
     employees: get()?.employees,
     setEmployees: (employees: any) => set({ employees }),
     isLoading: get()?.isLoading,

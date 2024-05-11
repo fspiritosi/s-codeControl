@@ -24,7 +24,7 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 import { Input } from './ui/input'
 
 export default function UpdateDocuments({

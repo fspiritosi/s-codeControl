@@ -5,7 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 import { CaretSortIcon, PlusCircledIcon } from '@radix-ui/react-icons'
 import { addMonths, format } from 'date-fns'
 import { Calendar as CalendarIcon, CheckIcon } from 'lucide-react'
@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/popover'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { es } from 'date-fns/locale'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 import {
   Command,
   CommandEmpty,
@@ -184,11 +184,28 @@ export default function SimpleDocument({
             },
           )
           .then(async response => {
-            const data = {
+            type Document = {
+              id_document_types: string
+              applies: string
+              validity: string
+              document_path: string | undefined
+              created_at: string
+              state:
+                | 'presentado'
+                | 'rechazado'
+                | 'aprobado'
+                | 'vencido'
+                | 'pendiente'
+                | null
+                | undefined
+            }
+            const data: Document = {
               validity: updateEntries[index].validity,
               document_path: response.data?.path,
-              created_at: new Date(),
+              created_at: new Date().toString(),
               state: 'presentado',
+              id_document_types: '',
+              applies: '',
             }
             const { error } = await supabase
               .from(tableName)

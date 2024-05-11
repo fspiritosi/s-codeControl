@@ -17,9 +17,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 import { useEffect, useState } from 'react'
-import { supabase } from '../../../../supabase'
+import { supabase } from '../../../../../supabase/supabase'
 
 export default function page({ params }: { params: { id: string } }) {
   const router = useRouter()

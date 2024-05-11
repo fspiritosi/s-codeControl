@@ -25,7 +25,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 import { Button } from './ui/button'
 import { CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Input } from './ui/input'
@@ -71,7 +71,7 @@ export const RegisterWithRole = () => {
   function onSubmit(values: z.infer<typeof registerSchemaWithRole>) {
     if (
       values.email.trim().toLocaleLowerCase() ===
-      ownerUser?.[0].email.toLocaleLowerCase()
+      ownerUser?.[0]?.email?.toLocaleLowerCase()
     ) {
       toast.error('No puedes compartir la empresa contigo mismo')
       return
@@ -94,7 +94,7 @@ export const RegisterWithRole = () => {
             .from('share_company_users')
             .select('*')
             .eq('profile_id', profile[0].id)
-            .eq('company_id', company?.id)
+            .eq('company_id', company?.id || '')
 
           if (duplicatedError) {
             throw new Error('El usuario ya tiene acceso a la empresa')

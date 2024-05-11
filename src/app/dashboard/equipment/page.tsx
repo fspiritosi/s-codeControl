@@ -12,7 +12,7 @@ import cookie from 'js-cookie'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { supabase } from '../../../supabase'
+import { supabase } from '../../../../supabase/supabase'
 import { columns } from './columns'
 import { DataEquipment } from './data-equipment'
 export default function Equipment() {

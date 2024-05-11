@@ -1,10 +1,9 @@
-import React from 'react'
+import { formatCompanyName } from '@/lib/utils/utils'
+import { useLoggedUserStore } from '@/store/loggedUser'
+import { company } from '@/types/types'
+import React, { useState } from 'react'
 import Modal from 'react-modal'
 import { CompanyRegister } from './CompanyRegister' // Importa tu formulario de registro de compañía
-import { company } from '@/types/types'
-import { formatCompanyName } from '@/lib/utils'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { useState } from 'react'
 import { Button } from './ui/button'
 type ModalCompanyProps = {
   isOpen: boolean

@@ -1,7 +1,7 @@
 'use client'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { Documents, DocumentsTable } from '@/types/types'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 import { useEdgeFunctions } from './useEdgeFunctions'
 require('dotenv').config()
 export const useDocument = () => {

@@ -23,7 +23,7 @@ import {
   nacionaliOptionsENUM,
   typeOfContractENUM,
 } from '@/types/enums'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 
 import { CheckboxDefaultValues } from '@/components/CheckboxDefValues'
 import { SelectWithData } from '@/components/SelectWithData'
@@ -45,7 +45,7 @@ import {
 } from '@/components/ui/popover'
 import { useToast } from '@/components/ui/use-toast'
 import { useImageUpload } from '@/hooks/useUploadImage'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { names } from '@/types/types'
 import { accordionSchema } from '@/zodSchemas/schemas'
@@ -415,7 +415,7 @@ export default function EmployeeAccordion() {
     try {
       const applies = await createEmployee(finalValues)
       const documentsMissing: {
-        applies: number
+        applies: string
         id_document_types: string
         validity: string | null
         user_id: string | undefined

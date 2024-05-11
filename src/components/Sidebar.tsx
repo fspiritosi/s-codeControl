@@ -1,6 +1,6 @@
 'use client'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 import { useTheme } from 'next-themes'
 import Image from 'next/image'
 import Link from 'next/link'

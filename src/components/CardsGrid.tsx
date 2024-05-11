@@ -1,4 +1,4 @@
-import { formatCompanyName } from '@/lib/utils'
+import { formatCompanyName } from '@/lib/utils/utils'
 import { Company } from '@/zodSchemas/schemas'
 import React from 'react'
 

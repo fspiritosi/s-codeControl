@@ -1,7 +1,8 @@
 import { login, profileUser, singUp } from '@/types/types'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase/supabase'
 import { useEdgeFunctions } from './useEdgeFunctions'
 import { useProfileData } from './useProfileData'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 
 /**
  * Custom hook for handling authentication data.
@@ -54,7 +55,7 @@ export const useAuthData = () => {
     },
     updateUser: async ({ password }: { password: string }) => {
       const email = localStorage.getItem('email')
-      const user = (await filterByEmail(email)) as profileUser[]
+      const user = (await filterByEmail(email)) as unknown as profileUser[]
 
       if (user.length === 0) throw new Error('Usuario no encontrado')
       localStorage.removeItem('email')
@@ -70,10 +71,11 @@ export const useAuthData = () => {
       return data
     },
     googleLogin: async () => {
+      const supabase = supabaseBrowser()
       let { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.href}/auth/callback`,
+          redirectTo: window.location.origin + '/login/auth/callback',
         },
       })
       if (error) {
