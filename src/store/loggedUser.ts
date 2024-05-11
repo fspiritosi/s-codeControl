@@ -58,7 +58,7 @@ interface State {
   vehicles: Vehicle
   setNewDefectCompany: (
     company: Database['public']['Tables']['company']['Row'] & {
-      owner_id: Database['public']['Tables']['profile']['Row']
+      owner_id?: Database['public']['Tables']['profile']['Row']
     },
   ) => Promise<void>
   sharedCompanies:
@@ -93,7 +93,7 @@ interface State {
   markAllAsRead: () => void
   resetDefectCompanies: (
     company: Database['public']['Tables']['company']['Row'] & {
-      owner_id: Database['public']['Tables']['profile']['Row']
+      owner_id?: Database['public']['Tables']['profile']['Row']
     },
   ) => Promise<void>
   sharedUsers: SharedUser[]
@@ -919,7 +919,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
   const setNewDefectCompany = async (
     company: Database['public']['Tables']['company']['Row'] & {
-      owner_id: Database['public']['Tables']['profile']['Row']
+      owner_id?: Database['public']['Tables']['profile']['Row']
     },
   ) => {
     if (company.owner_id?.id !== get()?.profile?.[0]?.id) {
