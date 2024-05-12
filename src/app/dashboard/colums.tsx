@@ -63,7 +63,7 @@ import { cn } from '@/lib/utils'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon, DotsVerticalIcon } from '@radix-ui/react-icons'
 import { ColumnDef } from '@tanstack/react-table'
-import { format, formatRelative } from 'date-fns'
+import { addMonths, format, formatRelative } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { ArrowUpDown } from 'lucide-react'
 import Link from 'next/link'
@@ -238,6 +238,16 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
         viewDocumentEmployees()
       }, [])
 
+      const today = new Date()
+      const nextMonth = addMonths(new Date(), 1)
+      const [month, setMonth] = useState<Date>(nextMonth)
+
+      const yearsAhead = Array.from({ length: 20 }, (_, index) => {
+        const year = today.getFullYear() - index - 1
+        return year
+      })
+      const [years, setYear] = useState(today.getFullYear().toString())
+
       return (
         <DropdownMenu>
           {integerModal && (
@@ -332,7 +342,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
                                       )}
                                     >
                                       {field.value ? (
-                                        format(field.value, 'P', {
+                                        format(field.value, 'PPP', {
                                           locale: es,
                                         })
                                       ) : (
@@ -346,7 +356,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
                                   className="w-auto p-0"
                                   align="start"
                                 >
-                                  <Calendar
+                                  {/* <Calendar
                                     mode="single"
                                     selected={field.value}
                                     onSelect={field.onChange}
@@ -356,6 +366,60 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
                                     }
                                     initialFocus
                                     locale={es}
+                                  /> */}
+                                  <Select
+                                    onValueChange={e => {
+                                      setMonth(new Date(e))
+                                      setYear(e)
+                                      const newYear = parseInt(e, 10)
+                                      const dateWithNewYear = new Date(
+                                        field.value,
+                                      )
+                                      dateWithNewYear.setFullYear(newYear)
+                                      field.onChange(dateWithNewYear)
+                                      setMonth(dateWithNewYear)
+                                    }}
+                                    value={
+                                      years || today.getFullYear().toString()
+                                    }
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Elegir año" />
+                                    </SelectTrigger>
+                                    <SelectContent position="popper">
+                                      <SelectItem
+                                        value={today.getFullYear().toString()}
+                                        disabled={
+                                          years ===
+                                          today.getFullYear().toString()
+                                        }
+                                      >
+                                        {today.getFullYear().toString()}
+                                      </SelectItem>
+                                      {yearsAhead.map(year => (
+                                        <SelectItem
+                                          key={year}
+                                          value={`${year}`}
+                                        >
+                                          {year}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <Calendar
+                                    month={month}
+                                    onMonthChange={setMonth}
+                                    toDate={today}
+                                    locale={es}
+                                    mode="single"
+                                    disabled={date =>
+                                      date > new Date() ||
+                                      date < new Date('1900-01-01')
+                                    }
+                                    selected={new Date(field.value) || today}
+                                    onSelect={e => {
+                                      field.onChange(e)
+                                    }}
                                   />
                                 </PopoverContent>
                               </Popover>

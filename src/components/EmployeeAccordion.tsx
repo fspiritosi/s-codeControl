@@ -52,7 +52,7 @@ import { accordionSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon } from '@radix-ui/react-icons'
 import { PostgrestError } from '@supabase/supabase-js'
-import { format } from 'date-fns'
+import { addMonths, format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ChangeEvent, useEffect, useState } from 'react'
@@ -62,6 +62,13 @@ import { ImageHander } from './ImageHandler'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
 import { CardDescription, CardHeader, CardTitle } from './ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select'
 
 type Province = {
   id: number
@@ -545,6 +552,15 @@ export default function EmployeeAccordion() {
       }
     }
   }
+  const today = new Date()
+  const nextMonth = addMonths(new Date(), 1)
+  const [month, setMonth] = useState<Date>(nextMonth)
+
+  const yearsAhead = Array.from({ length: 20 }, (_, index) => {
+    const year = today.getFullYear() - index - 1
+    return year
+  })
+  const [years, setYear] = useState(today.getFullYear().toString())
 
   return (
     <section>
@@ -879,20 +895,63 @@ export default function EmployeeAccordion() {
                                       </FormControl>
                                     </PopoverTrigger>
                                     <PopoverContent
-                                      className="w-auto p-0"
+                                      className="flex w-full flex-col space-y-2 p-2"
                                       align="start"
                                     >
-                                      <Calendar
-                                        captionLayout="dropdown-buttons"
-                                        mode="single"
-                                        selected={new Date()}
-                                        onSelect={field.onChange}
-                                        disabled={date =>
-                                          date > new Date() ||
-                                          date < new Date('1900-01-01')
+                                      <Select
+                                        onValueChange={e => {
+                                          setMonth(new Date(e))
+                                          setYear(e)
+                                          const newYear = parseInt(e, 10)
+                                          const dateWithNewYear = new Date(
+                                            field.value,
+                                          )
+                                          dateWithNewYear.setFullYear(newYear)
+                                          field.onChange(dateWithNewYear)
+                                          setMonth(dateWithNewYear)
+                                        }}
+                                        value={
+                                          years ||
+                                          today.getFullYear().toString()
                                         }
-                                        initialFocus
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Elegir año" />
+                                        </SelectTrigger>
+                                        <SelectContent position="popper">
+                                          <SelectItem
+                                            value={today
+                                              .getFullYear()
+                                              .toString()}
+                                            disabled={
+                                              years ===
+                                              today.getFullYear().toString()
+                                            }
+                                          >
+                                            {today.getFullYear().toString()}
+                                          </SelectItem>
+                                          {yearsAhead.map(year => (
+                                            <SelectItem
+                                              key={year}
+                                              value={`${year}`}
+                                            >
+                                              {year}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <Calendar
+                                        month={month}
+                                        onMonthChange={setMonth}
+                                        toDate={today}
                                         locale={es}
+                                        mode="single"
+                                        selected={
+                                          new Date(field.value) || today
+                                        }
+                                        onSelect={e => {
+                                          field.onChange(e)
+                                        }}
                                       />
                                     </PopoverContent>
                                   </Popover>

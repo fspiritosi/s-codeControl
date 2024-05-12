@@ -1162,7 +1162,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                 </FormItem>
               )}
             />
-            <div className=" min-w-[250px]">
+            <div className=" min-w-[250px] flex flex-col gap-2">
               <FormField
                 control={form.control}
                 name="allocated_to"

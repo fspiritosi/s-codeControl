@@ -269,7 +269,7 @@ export default function SimpleDocument({
   const [month, setMonth] = useState<Date>(nextMonth)
 
   const yearsAhead = Array.from({ length: 20 }, (_, index) => {
-    const year = today.getFullYear() + index + 1
+    const year = today.getFullYear() + index
     return year
   })
 
@@ -629,7 +629,7 @@ export default function SimpleDocument({
                                     )}
                                   </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="flex w-full flex-col space-y-2 p-2 ">
+                                <PopoverContent className="flex w-full flex-col space-y-2 p-2">
                                   <Select
                                     onValueChange={e => {
                                       setMonth(new Date(e))
@@ -640,6 +640,7 @@ export default function SimpleDocument({
                                       )
                                       dateWithNewYear.setFullYear(newYear)
                                       field.onChange(dateWithNewYear)
+                                      setMonth(dateWithNewYear)
                                     }}
                                     value={
                                       years || today.getFullYear().toString()
@@ -657,15 +658,6 @@ export default function SimpleDocument({
                                           {year}
                                         </SelectItem>
                                       ))}
-                                      <SelectItem
-                                        value={today.getFullYear().toString()}
-                                        disabled={
-                                          years ===
-                                          today.getFullYear().toString()
-                                        }
-                                      >
-                                        {today.getFullYear().toString()}
-                                      </SelectItem>
                                     </SelectContent>
                                   </Select>
                                   <div className="rounded-md border w-full">
