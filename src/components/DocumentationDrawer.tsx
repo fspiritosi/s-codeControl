@@ -30,13 +30,21 @@ import {
 import { Button, buttonVariants } from './ui/button'
 import { CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Separator } from './ui/separator'
+import { useLoggedUserStore } from '@/store/loggedUser'
+
 
 type Props = { props?: any[] | null; resource: string }
 
 export const DocumentationDrawer = ({ props, resource }: Props) => {
   const [open, setOpen] = useState(false)
   const handleOpen = () => setOpen(!open)
-
+  const profile = useLoggedUserStore(state => state)
+  let role = ""
+  if(profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id){
+     role = profile?.actualCompany?.owner_id?.role as string
+  }else{
+     role = profile?.actualCompany?.share_company_users?.[0].role as string
+  }
   const handleDownload = async (path: string, fileName: string) => {
     toast.promise(
       async () => {
@@ -184,7 +192,9 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
             {doc.state === 'pendiente' && (
               <AlertDialog open={open} onOpenChange={handleOpen}>
                 <AlertDialogTrigger asChild>
+                {(role !== "Invitado") && (
                   <Button>Subir</Button>
+                )}
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>

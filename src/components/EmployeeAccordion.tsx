@@ -62,6 +62,7 @@ import { ImageHander } from './ImageHandler'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
 import { CardDescription, CardHeader, CardTitle } from './ui/card'
+import cookie from 'js-cookie';
 
 type Province = {
   id: number
@@ -69,6 +70,14 @@ type Province = {
 }
 
 export default function EmployeeAccordion() {
+  const profile = useLoggedUserStore(state => state)
+  let role = ""
+  if(profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id){
+     role = profile?.actualCompany?.owner_id?.role as string
+  }else{
+     role = profile?.actualCompany?.share_company_users?.[0].role as string
+  }
+  
   const searchParams = useSearchParams()
   const document = searchParams.get('document')
   const [accion, setAccion] = useState(searchParams.get('action'))
@@ -139,6 +148,7 @@ export default function EmployeeAccordion() {
   )?.id
 
   useEffect(() => {
+    
     if (provinceId) {
       fetchCityValues(provinceId)
     }
@@ -575,7 +585,8 @@ export default function EmployeeAccordion() {
               {accion === 'edit' ? 'Editar empleado' : 'Agregar empleado'}
             </h2>
           )}
-          {readOnly && accion === 'view' && (
+           
+          {(role !== "Invitado") && readOnly && accion === 'view' && (
             <Button
               variant="primary"
               onClick={() => {
@@ -585,6 +596,7 @@ export default function EmployeeAccordion() {
               Habiliar edición
             </Button>
           )}
+      
         </CardHeader>
       </header>
       <Form {...form}>

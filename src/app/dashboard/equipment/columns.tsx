@@ -67,7 +67,8 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../../../supabase/supabase'
-
+import { useLoggedUserStore } from '@/store/loggedUser'
+import React, { Fragment } from 'react';
 const formSchema = z.object({
   reason_for_termination: z.string({
     required_error: 'La razón de la baja es requerida.',
@@ -98,6 +99,14 @@ export const columns: ColumnDef<Colum>[] = [
   {
     id: 'actions',
     cell: ({ row }: { row: any }) => {
+      const profile = useLoggedUserStore(state => state)
+  let role = ""
+  if(profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id){
+     role = profile?.actualCompany?.owner_id?.role as string
+  }else{
+     role = profile?.actualCompany?.share_company_users?.[0].role as string
+  }
+  
       const [showModal, setShowModal] = useState(false)
       const [integerModal, setIntegerModal] = useState(false)
       const [domain, setDomain] = useState('')
@@ -380,13 +389,17 @@ export const columns: ColumnDef<Colum>[] = [
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
+            {(role !== "Invitado") && (
               <Link
                 href={`/dashboard/equipment/action?action=edit&id=${equipment?.id}`}
               >
                 Editar equipo
               </Link>
+            )}
             </DropdownMenuItem>
             <DropdownMenuItem>
+            {role !== "Invitado" && (
+              <Fragment>
               {equipment.is_active ? (
                 <Button
                   variant="destructive"
@@ -404,6 +417,8 @@ export const columns: ColumnDef<Colum>[] = [
                   Reintegrar Equipo
                 </Button>
               )}
+              </Fragment>
+            )}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

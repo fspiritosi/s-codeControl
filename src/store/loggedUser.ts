@@ -52,6 +52,7 @@ interface State {
   sharedCompanies: SharedCompanies
   endorsedEmployees: () => void
   noEndorsedEmployees: () => void
+  
   allDocumentsToShow: {
     employees: Document[]
     vehicles: Document[]

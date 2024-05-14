@@ -25,7 +25,15 @@ export default function Equipment() {
   const vehiclesData = useLoggedUserStore(state => state.vehiclesToShow)
   const setVehicleTypes = useLoggedUserStore(state => state.setVehicleTypes)
   const actualCompanyID = cookie.get('actualCompanyId')
-
+  
+  const profile = useLoggedUserStore(state => state)
+  let role = ""
+  if(profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id){
+     role = profile?.actualCompany?.owner_id?.role as string
+  }else{
+     role = profile?.actualCompany?.share_company_users?.[0].role as string
+  }
+  
   const handleToggleInactive = () => {
     setShowInactive(!showInactive)
   }
@@ -79,6 +87,7 @@ export default function Equipment() {
               empresa
             </CardDescription>
           </div>
+          {(role !== "Invitado") && (
           <Link
             href="/dashboard/equipment/action?action=new"
             className={[
@@ -88,6 +97,7 @@ export default function Equipment() {
           >
             Agregar nuevo equipo
           </Link>
+          )}
         </CardHeader>
         <div className="w-full grid grid-cols-1 px-8">
           <DataEquipment
