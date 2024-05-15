@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   try {
     const requestData = await request.json();
     const userEmail = requestData.userEmail;
-    console.log(requestData, "data")
+    //console.log(requestData, "data")
 
     const data = await resend.emails.send({
       //from: 'Codecontrol <onboarding@resend.dev>',
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       to: [userEmail],
       subject: requestData.subject,
       react: EmailTemplate({ userEmail: userEmail, reason: requestData.react}), 
-      text:'Aqui va el texto'
+      text:''
     });
 
     return Response.json(data);

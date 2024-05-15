@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Head from 'next/head'
 //import Logo1 from '../../public/logo-azul.png'
 interface EmailTemplateProps {
   userEmail: string;
@@ -15,9 +16,9 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
     
     <html lang="es">
 
-      <head>
+      <Head>
         <meta content="text/html; charset=UTF-8" />
-      </head>
+      </Head>
 
 
       <body style={{ backgroundColor: '#f3f3f5', fontFamily: 'HelveticaNeue, Helvetica, Arial, sans-serif' }}>

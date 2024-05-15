@@ -15,6 +15,7 @@ import { useEffect, useState, Suspense } from 'react'
 import { supabase } from '../../../../supabase/supabase'
 import { columns } from './columns'
 import { DataEquipment } from './data-equipment'
+import Cookies from 'js-cookie';
 
 export default function Equipment() {
   const allCompany = useLoggedUserStore(state => state.allCompanies)
@@ -28,19 +29,23 @@ export default function Equipment() {
   const actualCompanyID = cookie.get('actualCompanyId')
   
   const profile = useLoggedUserStore(state => state)
-  let role: string = "";
+  if (typeof window !== "undefined") {
+    
+    const company_id = localStorage.getItem('company_id');
+    //console.log("comapany_id: ",company_id)
+    let actualComp = Cookies.set('actualComp', company_id as string);
+    //console.log("esta es la cooki: ",Cookies.get())
+ }
+  let role: string = ""
   
-  role = profile?.actualCompany?.owner_id?.role ? profile?.actualCompany?.owner_id?.role : "";
 
-  // if(profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id){
-  //    role = profile?.actualCompany?.owner_id?.role as string
-  // }else{
-  //    role = profile?.actualCompany?.share_company_users?.[0].role as string
-  // }
+  if(profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id){
+     role = profile?.actualCompany?.owner_id?.role as string || ""
+  }else{
+     role = profile?.actualCompany?.share_company_users?.[0].role as string || ""
+  }
   
-  // if (role === undefined) {
-  //   role = ""
-  // }
+ 
   const handleToggleInactive = () => {
     setShowInactive(!showInactive)
   }
@@ -95,7 +100,7 @@ export default function Equipment() {
               empresa
             </CardDescription>
           </div>
-          {(role !== undefined && role !== "Invitado") && (
+          {(role !== "Invitado") && (
           <Link
             href="/dashboard/equipment/action?action=new"
             className={[

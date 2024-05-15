@@ -336,7 +336,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
   const setActualCompany = (company: Company[0]) => {
     set({ actualCompany: company })
-    useCountriesStore.getState().documentTypes(company.id)
+    useCountriesStore.getState().documentTypes(company?.id)
     setActivesEmployees()
     fetchVehicles()
     documetsFetch()
