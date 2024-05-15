@@ -67,7 +67,6 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../../../supabase/supabase'
-import { useLoggedUserStore } from '@/store/loggedUser'
 import React, { Fragment } from 'react';
 const formSchema = z.object({
   reason_for_termination: z.string({
