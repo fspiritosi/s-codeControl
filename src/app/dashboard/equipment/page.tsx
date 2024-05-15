@@ -30,14 +30,17 @@ export default function Equipment() {
   const profile = useLoggedUserStore(state => state)
   let role: string = "";
   
+  role = profile?.actualCompany?.owner_id?.role ? profile?.actualCompany?.owner_id?.role : "";
 
-
-  if(profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id){
-     role = profile?.actualCompany?.owner_id?.role as string
-  }else{
-     role = profile?.actualCompany?.share_company_users?.[0].role as string
-  }
+  // if(profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id){
+  //    role = profile?.actualCompany?.owner_id?.role as string
+  // }else{
+  //    role = profile?.actualCompany?.share_company_users?.[0].role as string
+  // }
   
+  // if (role === undefined) {
+  //   role = ""
+  // }
   const handleToggleInactive = () => {
     setShowInactive(!showInactive)
   }
@@ -79,8 +82,8 @@ export default function Equipment() {
   }
 
   return (
+  <Suspense fallback={<div>Loading...</div>}>
     <section>
-      <Suspense fallback={<div>Loading...</div>}>
       <Card className="mt-6 md:mx-7 overflow-hidden">
         <CardHeader className=" flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
           <div>
@@ -92,7 +95,7 @@ export default function Equipment() {
               empresa
             </CardDescription>
           </div>
-          {(role !== "Invitado") && (
+          {(role !== undefined && role !== "Invitado") && (
           <Link
             href="/dashboard/equipment/action?action=new"
             className={[
@@ -116,7 +119,7 @@ export default function Equipment() {
         
         <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
       </Card>
-      </Suspense>
     </section>
+  </Suspense>
   )
 }
