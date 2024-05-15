@@ -17,6 +17,8 @@ import { columns } from './columns'
 import { DataEquipment } from './data-equipment'
 import Cookies from 'js-cookie';
 
+
+
 export default function Equipment() {
   const allCompany = useLoggedUserStore(state => state.allCompanies)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)

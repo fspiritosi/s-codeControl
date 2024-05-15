@@ -63,6 +63,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
 import { CardDescription, CardHeader, CardTitle } from './ui/card'
 import cookie from 'js-cookie';
+import { Suspense } from 'react'
 
 type Province = {
   id: number
@@ -557,6 +558,7 @@ export default function EmployeeAccordion() {
   }
 
   return (
+    <Suspense fallback={<div>Loading...</div>}>
     <section>
       <header className="flex justify-between gap-4 flex-wrap">
         <CardHeader className="h-[152px] flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
@@ -1038,5 +1040,6 @@ export default function EmployeeAccordion() {
         </form>
       </Form>
     </section>
+    </Suspense>
   )
 }

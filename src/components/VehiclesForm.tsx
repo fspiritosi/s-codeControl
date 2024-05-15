@@ -47,6 +47,7 @@ import {
 import { Input } from './ui/input'
 import { useToast } from './ui/use-toast'
 import cookie from 'js-cookie';
+import { Suspense } from 'react'
 
 type VehicleType = {
   year: string
@@ -609,6 +610,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
   }
 
   return (
+    <Suspense fallback={<div>Loading...</div>}>
     <section>
       <header className="flex justify-between gap-4">
         <div className="mb-8 flex justify-between w-full">
@@ -1226,5 +1228,6 @@ export default function VehiclesForm2({ id }: { id: string }) {
         </form>
       </Form>
     </section>
+    </Suspense>
   )
 }
