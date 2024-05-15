@@ -11,10 +11,11 @@ import { useLoggedUserStore } from '@/store/loggedUser'
 import cookie from 'js-cookie'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { supabase } from '../../../../supabase/supabase'
 import { columns } from './columns'
 import { DataEquipment } from './data-equipment'
+
 export default function Equipment() {
   const allCompany = useLoggedUserStore(state => state.allCompanies)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
@@ -27,7 +28,10 @@ export default function Equipment() {
   const actualCompanyID = cookie.get('actualCompanyId')
   
   const profile = useLoggedUserStore(state => state)
-  let role = ""
+  let role: string = "";
+  
+
+
   if(profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id){
      role = profile?.actualCompany?.owner_id?.role as string
   }else{
@@ -76,6 +80,7 @@ export default function Equipment() {
 
   return (
     <section>
+      <Suspense fallback={<div>Loading...</div>}>
       <Card className="mt-6 md:mx-7 overflow-hidden">
         <CardHeader className=" flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
           <div>
@@ -108,8 +113,10 @@ export default function Equipment() {
             setShowInactive={setShowInactive}
           />
         </div>
+        
         <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
       </Card>
+      </Suspense>
     </section>
   )
 }

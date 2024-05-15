@@ -13,14 +13,15 @@ import { supabase } from '../../../../supabase/supabase'
 import { columns } from './columns'
 import { DataTable } from './data-table'
 import Cookies from 'js-cookie';
-import { useEffect } from 'react'
-import { id } from 'date-fns/locale'
-const EmployeePage = () => {
 
-  const company_id = localStorage.getItem('company_id');
-  console.log("comapany_id: ",company_id)
-  let actualComp = Cookies.set('actualComp', company_id as string);
-  console.log("esta es la cooki: ",Cookies.get())
+const EmployeePage = () => {
+  if (typeof window !== "undefined") {
+    
+    const company_id = localStorage.getItem('company_id');
+    //console.log("comapany_id: ",company_id)
+    let actualComp = Cookies.set('actualComp', company_id as string);
+    //console.log("esta es la cooki: ",Cookies.get())
+  }
  //const profile = useLoggedUserStore(state => state.actualCompany?.share_company_users?.[0].role)
  
   
