@@ -44,6 +44,7 @@ export function RegisterForm() {
       email: '',
       password: '',
       confirmPassword: '',
+      
     },
   })
 
@@ -58,6 +59,7 @@ export function RegisterForm() {
         ...rest,
         credential_id: userData.user?.id || '',
         email,
+        role:"CodeControlCLient",
       })
       toast({
         title: 'Registro exitoso',

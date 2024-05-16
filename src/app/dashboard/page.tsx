@@ -15,6 +15,7 @@ import DocumentsTable from './componentDashboard/DocumentsTable'
 import EmployeesTable from './componentDashboard/EmployeesTable'
 
 export default async function Home() {
+ 
   return (
     <div>
       <section className="grid sm:grid-cols-2 grid-cols-1 gap-6 mx-7">

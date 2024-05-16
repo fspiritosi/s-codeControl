@@ -381,13 +381,13 @@ export const columEmp: ColumnDef<Colum>[] = [
             </Dialog>
           )}
           {viewModal && (
-            <Dialog defaultOpen onOpenChange={() => setViewModal(!viewModal)}>
-              <DialogContent>
+            <Dialog  defaultOpen onOpenChange={() => setViewModal(!viewModal)} >
+              <DialogContent >
                 <DialogTitle>Historial de Modificaciones</DialogTitle>
                 <DialogDescription>
                   Aquí se muestra quién modificó el documento y cuándo
                 </DialogDescription>
-                <Table>
+                <Table >
                   <TableHeader>
                     <TableRow>
                       <TableCell>Usuario</TableCell>

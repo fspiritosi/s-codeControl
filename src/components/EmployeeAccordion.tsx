@@ -62,6 +62,8 @@ import { ImageHander } from './ImageHandler'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
 import { CardDescription, CardHeader, CardTitle } from './ui/card'
+import cookie from 'js-cookie';
+import { Suspense } from 'react'
 
 type Province = {
   id: number
@@ -69,6 +71,14 @@ type Province = {
 }
 
 export default function EmployeeAccordion() {
+  const profile = useLoggedUserStore(state => state)
+  let role = ""
+  if(profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id){
+     role = profile?.actualCompany?.owner_id?.role as string
+  }else{
+     role = profile?.actualCompany?.share_company_users?.[0].role as string
+  }
+  
   const searchParams = useSearchParams()
   const document = searchParams.get('document')
   const [accion, setAccion] = useState(searchParams.get('action'))
@@ -139,6 +149,7 @@ export default function EmployeeAccordion() {
   )?.id
 
   useEffect(() => {
+    
     if (provinceId) {
       fetchCityValues(provinceId)
     }
@@ -547,6 +558,7 @@ export default function EmployeeAccordion() {
   }
 
   return (
+    <Suspense fallback={<div>Loading...</div>}>
     <section>
       <header className="flex justify-between gap-4 flex-wrap">
         <CardHeader className="h-[152px] flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
@@ -575,7 +587,8 @@ export default function EmployeeAccordion() {
               {accion === 'edit' ? 'Editar empleado' : 'Agregar empleado'}
             </h2>
           )}
-          {readOnly && accion === 'view' && (
+           
+          {(role !== "Invitado") && readOnly && accion === 'view' && (
             <Button
               variant="primary"
               onClick={() => {
@@ -585,6 +598,7 @@ export default function EmployeeAccordion() {
               Habiliar edición
             </Button>
           )}
+      
         </CardHeader>
       </header>
       <Form {...form}>
@@ -1026,5 +1040,6 @@ export default function EmployeeAccordion() {
         </form>
       </Form>
     </section>
+    </Suspense>
   )
 }

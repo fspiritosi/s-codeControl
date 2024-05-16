@@ -15,6 +15,7 @@ export default function page({ params }: { params: { id: string } }) {
   const [documents_employees, setDocumentsEmployees] = useState<any[] | null>(
     [],
   )
+  const [userEmail, setUserEmail] = useState<string | ''>('')
   const [resource, setResource] = useState<string | null>(null)
   const [documentUrl, setDocumentUrl] = useState<string | null>(null)
   const fetchDocument = async () => {
@@ -28,6 +29,7 @@ export default function page({ params }: { params: { id: string } }) {
         `
     *,
     document_types(*),
+    profile(email),
     applies(*,
       city(name),
       province(name),
@@ -41,7 +43,9 @@ export default function page({ params }: { params: { id: string } }) {
           `,
       )
       .eq('id', params.id)
-
+      const userEmail = documents_employee?.[0]?.profile?.email;
+      setUserEmail(userEmail);
+      console.log(userEmail,'email')
     if (documents_employee?.length === 0) {
       let { data: documents_vehicle } = await supabase
         .from('documents_equipment')
@@ -447,7 +451,7 @@ export default function page({ params }: { params: { id: string } }) {
                   </CardDescription>
                   <div className="w-full flex justify-evenly">
                     <ApproveDocModal id={params.id} resource={resource} />
-                    <DenyDocModal id={params.id} resource={resource} />
+                    <DenyDocModal id={params.id} resource={resource} userEmail={userEmail}/>
                   </div>
                 </div>
               </Card>
