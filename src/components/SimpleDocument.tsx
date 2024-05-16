@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/popover'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { es } from 'date-fns/locale'
+import { revalidatePath } from 'next/cache'
 import { supabase } from '../../supabase/supabase'
 import {
   Command,
@@ -39,9 +40,11 @@ import { useToast } from './ui/use-toast'
 export default function SimpleDocument({
   resource,
   handleOpen,
+  defaultDocumentId,
 }: {
   resource: string | undefined
   handleOpen: () => void
+  defaultDocumentId?: string
 }) {
   const employees = useLoggedUserStore(state => state.employees)?.reduce(
     (
@@ -68,6 +71,8 @@ export default function SimpleDocument({
     },
     [],
   )
+  const [documenTypes, setDocumentTypes] = useState<any[] | null>([])
+
   const searchParams = useSearchParams()
   const documentResource = searchParams.get('document')
   const id = searchParams.get('id')
@@ -87,7 +92,7 @@ export default function SimpleDocument({
       documents: [
         {
           applies: idApplies || '',
-          id_document_types: '',
+          id_document_types: defaultDocumentId ?? '',
           file: '',
           validity: '',
           user_id: user,
@@ -95,6 +100,9 @@ export default function SimpleDocument({
       ],
     },
   })
+
+  console.log(defaultDocumentId, 'defaultDocumentId')
+  console.log(documenTypes, 'defaultDocumentId')
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'documents',
@@ -241,8 +249,8 @@ export default function SimpleDocument({
       })
       setLoading(false)
     }
+    revalidatePath('/dashboard/employee/action')
   }
-  const [documenTypes, setDocumentTypes] = useState<any[] | null>([])
 
   const fetchDocumentTypes = async () => {
     const applies = resource === 'empleado' ? 'Persona' : 'Equipos'
@@ -281,10 +289,6 @@ export default function SimpleDocument({
   const [files, setFiles] = useState<File[] | undefined>([])
   const [openResourceSelector, setOpenResourceSelector] = useState(false)
   const [years, setYear] = useState(today.getFullYear().toString())
-
-  console.log(years, 'yearss')
-
-  // console.log(documentResource, 'documentResource')
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
