@@ -46,6 +46,8 @@ import {
 } from './ui/form'
 import { Input } from './ui/input'
 import { useToast } from './ui/use-toast'
+import cookie from 'js-cookie';
+import { Suspense } from 'react'
 
 type VehicleType = {
   year: string
@@ -91,7 +93,13 @@ export default function VehiclesForm2({ id }: { id: string }) {
   // const id = params
   const [accion, setAccion] = useState(searchParams.get('action'))
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
-
+  const profile = useLoggedUserStore(state => state)
+  let role = ""
+  if(profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id){
+     role = profile?.actualCompany?.owner_id?.role as string
+  }else{
+     role = profile?.actualCompany?.share_company_users?.[0].role as string
+  }
   const [vehicle, setVehicle] = useState<VehicleType | null>(null)
   const { toast } = useToast()
   const pathname = usePathname()
@@ -602,6 +610,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
   }
 
   return (
+    <Suspense fallback={<div>Loading...</div>}>
     <section>
       <header className="flex justify-between gap-4">
         <div className="mb-8 flex justify-between w-full">
@@ -648,7 +657,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
             )}
 
             <div className="mt-4">
-              {readOnly && accion === 'view' && (
+            {(role !== "Invitado") && readOnly && accion === 'view' && (
                 <Button
                   variant="primary"
                   onClick={() => {
@@ -1219,5 +1228,6 @@ export default function VehiclesForm2({ id }: { id: string }) {
         </form>
       </Form>
     </section>
+    </Suspense>
   )
 }

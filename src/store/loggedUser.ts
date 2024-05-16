@@ -52,6 +52,7 @@ interface State {
   sharedCompanies: SharedCompanies
   endorsedEmployees: () => void
   noEndorsedEmployees: () => void
+  
   allDocumentsToShow: {
     employees: Document[]
     vehicles: Document[]
@@ -335,7 +336,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
   const setActualCompany = (company: Company[0]) => {
     set({ actualCompany: company })
-    useCountriesStore.getState().documentTypes(company.id)
+    useCountriesStore.getState().documentTypes(company?.id)
     setActivesEmployees()
     fetchVehicles()
     documetsFetch()
