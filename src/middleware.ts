@@ -3,8 +3,6 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from './lib/utils/middleware'
 
 export async function middleware(req: NextRequest) {
-  await updateSession(req)
-
   const res = NextResponse.next()
   const supabase = createMiddlewareClient({ req, res })
 
@@ -44,7 +42,7 @@ export async function middleware(req: NextRequest) {
   console.log('guestRoles: ', guestRole?.[0]?.role)
 
   const userRole = data?.[0]?.role
-  console.log('user id: ', data?.[0].id)
+  console.log('user id: ', data?.[0]?.id)
   console.log('userRole: ', userRole)
 
   const guestUser = [
@@ -95,12 +93,14 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
   }
+  await updateSession(req)
+
   return res
 }
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     '/dashboard/:path*',
     '/auditor/:path*',
   ],
