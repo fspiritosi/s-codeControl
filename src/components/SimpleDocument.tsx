@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/popover'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { es } from 'date-fns/locale'
+import { revalidatePath } from 'next/cache'
 import { supabase } from '../../supabase/supabase'
 import {
   Command,
@@ -39,9 +40,11 @@ import { useToast } from './ui/use-toast'
 export default function SimpleDocument({
   resource,
   handleOpen,
+  defaultDocumentId,
 }: {
   resource: string | undefined
   handleOpen: () => void
+  defaultDocumentId?: string
 }) {
   const employees = useLoggedUserStore(state => state.employees)?.reduce(
     (
@@ -68,6 +71,8 @@ export default function SimpleDocument({
     },
     [],
   )
+  const [documenTypes, setDocumentTypes] = useState<any[] | null>([])
+
   const searchParams = useSearchParams()
   const documentResource = searchParams.get('document')
   const id = searchParams.get('id')
@@ -87,7 +92,7 @@ export default function SimpleDocument({
       documents: [
         {
           applies: idApplies || '',
-          id_document_types: '',
+          id_document_types: defaultDocumentId ?? '',
           file: '',
           validity: '',
           user_id: user,
@@ -95,6 +100,9 @@ export default function SimpleDocument({
       ],
     },
   })
+
+  console.log(defaultDocumentId, 'defaultDocumentId')
+  console.log(documenTypes, 'defaultDocumentId')
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'documents',
@@ -241,8 +249,8 @@ export default function SimpleDocument({
       })
       setLoading(false)
     }
+    revalidatePath('/dashboard/employee/action')
   }
-  const [documenTypes, setDocumentTypes] = useState<any[] | null>([])
 
   const fetchDocumentTypes = async () => {
     const applies = resource === 'empleado' ? 'Persona' : 'Equipos'
@@ -269,7 +277,7 @@ export default function SimpleDocument({
   const [month, setMonth] = useState<Date>(nextMonth)
 
   const yearsAhead = Array.from({ length: 20 }, (_, index) => {
-    const year = today.getFullYear() + index + 1
+    const year = today.getFullYear() + index
     return year
   })
 
@@ -280,8 +288,7 @@ export default function SimpleDocument({
   const [duplicatedDocument, setDuplicatedDocument] = useState(false)
   const [files, setFiles] = useState<File[] | undefined>([])
   const [openResourceSelector, setOpenResourceSelector] = useState(false)
-
-  // console.log(documentResource, 'documentResource')
+  const [years, setYear] = useState(today.getFullYear().toString())
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -308,7 +315,7 @@ export default function SimpleDocument({
                         <Label className="block">Empleados</Label>
                         <Controller
                           render={({ field }) => {
-                            const selectedResourceName = data.find(
+                            const selectedResourceName = data?.find(
                               (resource: any) => resource.id === field.value,
                             )?.name
 
@@ -480,7 +487,6 @@ export default function SimpleDocument({
                           )}
                       </div>
                     )}
-
                     <div className="space-y-2">
                       <Label>
                         Seleccione el tipo de documento a vincular al recurso
@@ -627,27 +633,22 @@ export default function SimpleDocument({
                                     )}
                                   </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="flex w-full flex-col space-y-2 p-2 ">
+                                <PopoverContent className="flex w-full flex-col space-y-2 p-2">
                                   <Select
                                     onValueChange={e => {
-                                      const actualSelectedDate = format(
-                                        field.value || today,
-                                        'dd/MM/yyyy',
-                                        { locale: es },
-                                      )
-                                      const finalDate = new Date(
-                                        `${actualSelectedDate.split('/')[1]}/${
-                                          actualSelectedDate.split('/')[0]
-                                        }/${e}`,
-                                      )
-                                      field.onChange(finalDate)
                                       setMonth(new Date(e))
+                                      setYear(e)
+                                      const newYear = parseInt(e, 10)
+                                      const dateWithNewYear = new Date(
+                                        field.value,
+                                      )
+                                      dateWithNewYear.setFullYear(newYear)
+                                      field.onChange(dateWithNewYear)
+                                      setMonth(dateWithNewYear)
                                     }}
-                                    defaultValue={format(
-                                      field.value || new Date(),
-                                      'yyyy',
-                                      { locale: es },
-                                    )}
+                                    value={
+                                      years || today.getFullYear().toString()
+                                    }
                                   >
                                     <SelectTrigger>
                                       <SelectValue placeholder="Elegir año" />

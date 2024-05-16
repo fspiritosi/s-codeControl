@@ -67,20 +67,20 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
   //cambio
   const pathname = usePathname()
   const [openSubMenu, setOpenSubMenu] = useState(null)
+  const owner_id = useLoggedUserStore(state => state.profile)?.[0]?.id
   const profile = useLoggedUserStore(state => state.profile)
-  const isAuditor = profile?.[0].role === 'Auditor';
-  
+  const isAuditor = profile?.[0].role === 'Auditor'
+
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
     ?.owner_id.id
 
   const links =
-    profile?.[0].id !== actualCompany
+    owner_id !== actualCompany
       ? Allinks.filter(link => link.name !== 'Empresa')
       : Allinks
 
-
-if (isAuditor) {
-    return null;
+  if (isAuditor) {
+    return null
   }
   const handleSubMenuClick = (index: any) => {
     if (openSubMenu === index) {

@@ -42,7 +42,7 @@ import {
 import { useDocument } from '@/hooks/useDocuments'
 import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { format } from 'date-fns'
+import { addMonths, format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { ChangeEvent, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../supabase/supabase'
@@ -290,6 +290,16 @@ export default function MultiResourceDocument({
   if (typeof window !== 'undefined') {
     url = window.location.href
   }
+
+  const today = new Date()
+  const nextMonth = addMonths(new Date(), 1)
+  const [month, setMonth] = useState<Date>(nextMonth)
+
+  const yearsAhead = Array.from({ length: 20 }, (_, index) => {
+    const year = today.getFullYear() + index + 1
+    return year
+  })
+  const [years, setYear] = useState(today.getFullYear().toString())
   return (
     <div>
       <h2 className="text-lg font-semibold">Documento Multirecurso</h2>
@@ -524,13 +534,47 @@ export default function MultiResourceDocument({
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="center">
+                        <Select
+                          onValueChange={e => {
+                            setMonth(new Date(e))
+                            setYear(e)
+                            const newYear = parseInt(e, 10)
+                            const dateWithNewYear = new Date(field.value || '')
+                            dateWithNewYear.setFullYear(newYear)
+                            field.onChange(dateWithNewYear)
+                            setMonth(dateWithNewYear)
+                          }}
+                          value={years || today.getFullYear().toString()}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Elegir año" />
+                          </SelectTrigger>
+                          <SelectContent position="popper">
+                            <SelectItem
+                              value={today.getFullYear().toString()}
+                              disabled={
+                                years === today.getFullYear().toString()
+                              }
+                            >
+                              {today.getFullYear().toString()}
+                            </SelectItem>
+                            {yearsAhead.map(year => (
+                              <SelectItem key={year} value={`${year}`}>
+                                {year}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={date => date < new Date()}
-                          initialFocus
+                          month={month}
+                          onMonthChange={setMonth}
+                          fromDate={today}
                           locale={es}
+                          mode="single"
+                          selected={new Date(field.value || '') || today}
+                          onSelect={e => {
+                            field.onChange(e)
+                          }}
                         />
                       </PopoverContent>
                     </Popover>

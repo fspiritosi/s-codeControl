@@ -73,7 +73,7 @@ export const useAuthData = () => {
       let { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.href}/auth/callback`,
+          redirectTo: window.location.origin + '/login/auth/callback',
         },
       })
       if (error) {
@@ -86,7 +86,7 @@ export const useAuthData = () => {
       let { data, error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.href}/auth/callback`,
+          emailRedirectTo: window.location.origin + '/auth/callback',
         },
       })
 

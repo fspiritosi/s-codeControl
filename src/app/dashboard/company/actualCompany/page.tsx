@@ -68,6 +68,8 @@ export default function page() {
     }
   }
 
+  console.log(data, 'data')
+
   return (
     <div className="flex flex-col gap-6 py-4 px-6">
       <div className="w-full flex mb-6">
@@ -86,9 +88,11 @@ export default function page() {
           <TabsTrigger value="modules">Modulos</TabsTrigger>
         </TabsList>
         <TabsContent value="general" className="space-y-4">
-          <Card className='overflow-hidden'>
+          <Card className="overflow-hidden">
             <CardHeader className="w-full bg-muted dark:bg-muted/50 border-b-2">
-              <CardTitle className="text-2xl font-bold tracking-tight">Datos generales de la empresa</CardTitle>
+              <CardTitle className="text-2xl font-bold tracking-tight">
+                Datos generales de la empresa
+              </CardTitle>
               <CardDescription className="text-muted-foreground">
                 Información de la empresa
               </CardDescription>
@@ -182,7 +186,7 @@ export default function page() {
           </Card>
         </TabsContent>
         <TabsContent value="users">
-          <Card className='overflow-hidden'>
+          <Card className="overflow-hidden">
             <div className=" h-full flex-1 flex-col space-y-8  md:flex">
               <RegisterWithRole />
               <div className="p-8">

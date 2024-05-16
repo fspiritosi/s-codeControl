@@ -99,8 +99,8 @@ export const registerSchemaWithRole = z
       .min(2, {
         message: 'El nombre debe tener al menos 2 caracteres.',
       })
-      .max(20, {
-        message: 'El nombre debe tener menos de 20 caracteres.',
+      .max(30, {
+        message: 'El nombre debe tener menos de 30 caracteres.',
       })
       .regex(/^[a-zA-Z ]+$/, {
         message: 'El nombre solo puede contener letras.',
@@ -111,8 +111,8 @@ export const registerSchemaWithRole = z
       .min(2, {
         message: 'El apellido debe tener al menos 2 caracteres.',
       })
-      .max(20, {
-        message: 'El apellido debe tener menos de 20 caracteres.',
+      .max(30, {
+        message: 'El apellido debe tener menos de 30 caracteres.',
       })
       .regex(/^[a-zA-Z ]+$/, {
         message: 'El apellido solo puede contener letras.',
@@ -211,7 +211,7 @@ export const accordionSchema = z.object({
     .min(2, {
       message: 'El nombre debe tener al menos 2 caracteres.',
     })
-    .max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),
+    .max(40, { message: 'La nombre debe tener menos de 40 caracteres.' }),
   nationality: z.string({
     required_error: 'La nacionalidad es requerida',
   }),
