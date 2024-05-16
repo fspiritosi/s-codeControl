@@ -46,7 +46,7 @@ import {
 import { formatRelative } from 'date-fns'
 import { es } from 'date-fns/locale'
 import cookie from 'js-cookie'
-import { Check, CheckIcon } from 'lucide-react'
+import { Check, CheckIcon, Loader } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -174,7 +174,9 @@ export default function NavBar() {
                     alt={actualCompany?.company_name}
                     className="size-5 grayscale"
                   />
-                  <AvatarFallback>compañia</AvatarFallback>
+                  <AvatarFallback>
+                    <Loader className="animate-spin" />{' '}
+                  </AvatarFallback>
                 </Avatar>
                 {actualCompany?.company_name}
                 <CaretSortIcon className="ml-auto h-4 w-4 shrink-0 opacity-50" />

@@ -52,18 +52,23 @@ import { accordionSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon } from '@radix-ui/react-icons'
 import { PostgrestError } from '@supabase/supabase-js'
-import { format } from 'date-fns'
+import { addMonths, format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ChangeEvent, useEffect, useState } from 'react'
+import { ChangeEvent, Suspense, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { ImageHander } from './ImageHandler'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
 import { CardDescription, CardHeader, CardTitle } from './ui/card'
-import cookie from 'js-cookie';
-import { Suspense } from 'react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select'
 
 type Province = {
   id: number
@@ -72,13 +77,13 @@ type Province = {
 
 export default function EmployeeAccordion() {
   const profile = useLoggedUserStore(state => state)
-  let role = ""
-  if(profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id){
-     role = profile?.actualCompany?.owner_id?.role as string
-  }else{
-     role = profile?.actualCompany?.share_company_users?.[0].role as string
+  let role = ''
+  if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
+    role = profile?.actualCompany?.owner_id?.role as string
+  } else {
+    role = profile?.actualCompany?.share_company_users?.[0].role as string
   }
-  
+
   const searchParams = useSearchParams()
   const document = searchParams.get('document')
   const [accion, setAccion] = useState(searchParams.get('action'))
@@ -149,7 +154,6 @@ export default function EmployeeAccordion() {
   )?.id
 
   useEffect(() => {
-    
     if (provinceId) {
       fetchCityValues(provinceId)
     }
@@ -556,490 +560,541 @@ export default function EmployeeAccordion() {
       }
     }
   }
+  const today = new Date()
+  const nextMonth = addMonths(new Date(), 1)
+  const [month, setMonth] = useState<Date>(nextMonth)
+
+  const yearsAhead = Array.from({ length: 20 }, (_, index) => {
+    const year = today.getFullYear() - index - 1
+    return year
+  })
+  const [years, setYear] = useState(today.getFullYear().toString())
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-    <section>
-      <header className="flex justify-between gap-4 flex-wrap">
-        <CardHeader className="h-[152px] flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
-          {accion === 'edit' || accion === 'view' ? (
-            <div className="flex gap-3 items-center">
-              <CardTitle className=" font-bold tracking-tight">
-                <Avatar className="size-[100px]">
-                  <AvatarImage
-                    className="object-cover border-2 border-black/30 rounded-full"
-                    src={
-                      user?.picture ||
-                      'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80'
-                    }
-                    alt="Imagen del empleado"
-                  />
-                  <AvatarFallback>CC</AvatarFallback>
-                </Avatar>
-              </CardTitle>
-              <CardDescription className="text-muted-foreground text-3xl">
-                {`${user?.lastname || 'cargando...'}
+      <section>
+        <header className="flex justify-between gap-4 flex-wrap">
+          <CardHeader className="h-[152px] flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
+            {accion === 'edit' || accion === 'view' ? (
+              <div className="flex gap-3 items-center">
+                <CardTitle className=" font-bold tracking-tight">
+                  <Avatar className="size-[100px]">
+                    <AvatarImage
+                      className="object-cover border-2 border-black/30 rounded-full"
+                      src={
+                        user?.picture ||
+                        'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80'
+                      }
+                      alt="Imagen del empleado"
+                    />
+                    <AvatarFallback>CC</AvatarFallback>
+                  </Avatar>
+                </CardTitle>
+                <CardDescription className="text-muted-foreground text-3xl">
+                  {`${user?.lastname || 'cargando...'}
                 ${user?.firstname || ''}`}
-              </CardDescription>
-            </div>
-          ) : (
-            <h2 className="text-4xl">
-              {accion === 'edit' ? 'Editar empleado' : 'Agregar empleado'}
-            </h2>
-          )}
-           
-          {(role !== "Invitado") && readOnly && accion === 'view' && (
-            <Button
-              variant="primary"
-              onClick={() => {
-                setReadOnly(false)
-              }}
-            >
-              Habiliar edición
-            </Button>
-          )}
-      
-        </CardHeader>
-      </header>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(
-            accion === 'edit' || accion === 'view' ? onUpdate : onCreate,
-          )}
-          className="w-full pr-2 px-6 pb-3"
-        >
-          <Accordion
-            className="w-full"
-            type="single"
-            collapsible
-            defaultValue="personal-data"
+                </CardDescription>
+              </div>
+            ) : (
+              <h2 className="text-4xl">
+                {accion === 'edit' ? 'Editar empleado' : 'Agregar empleado'}
+              </h2>
+            )}
+
+            {role !== 'Invitado' && readOnly && accion === 'view' && (
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setReadOnly(false)
+                }}
+              >
+                Habiliar edición
+              </Button>
+            )}
+          </CardHeader>
+        </header>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(
+              accion === 'edit' || accion === 'view' ? onUpdate : onCreate,
+            )}
+            className="w-full pr-2 px-6 pb-3"
           >
-            <AccordionItem value="personal-data">
-              <AccordionTrigger className="text-lg hover:no-underline">
-                <div className="flex gap-5 items-center flex-wrap">
-                  <span className="hover:underline"> Datos personales </span>
-                  {accordion1Errors && (
-                    <Badge
-                      className="h-6 hover:no-underline"
-                      variant="destructive"
-                    >
-                      Falta corregir algunos campos
-                    </Badge>
-                  )}
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="w-full ">
-                <div className="min-w-full max-w-sm flex flex-wrap gap-8 items-center">
-                  {PERSONALDATA.map((data, index) => {
-                    if (data.type === 'file') {
-                      return (
-                        <div key={index} className="w-[300px] flex  gap-2">
-                          <FormField
-                            control={form.control}
-                            name={data.name as names}
-                            render={({ field }) => (
-                              <FormItem className="">
-                                <FormControl>
-                                  <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
-                                    <ImageHander
-                                      labelInput="Subir foto"
-                                      handleImageChange={handleImageChange}
-                                      base64Image={base64Image} //nueva
-                                      disabled={readOnly}
-                                      inputStyle={{
-                                        width: '400px',
-                                        maxWidth: '300px',
-                                      }}
-                                    />
-                                  </div>
-                                </FormControl>
-
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      )
-                    }
-                    if (data.type === 'select') {
-                      return (
-                        <div
-                          key={index}
-                          className="w-[300px] flex flex-col gap-2"
-                        >
-                          <FormField
-                            control={form.control}
-                            name={data.name as names}
-                            render={({ field }) => {
-                              return (
-                                <FormItem>
-                                  <FormLabel>
-                                    {data.label}
-                                    <span style={{ color: 'red' }}> *</span>
-                                  </FormLabel>
-
-                                  <SelectWithData
-                                    disabled={readOnly}
-                                    placeholder={data.placeholder}
-                                    options={data.options}
-                                    onChange={field.onChange}
-                                    editing={true}
-                                    value={field.value || ''}
-                                    field={{ ...field }}
-                                  />
-
-                                  <FormMessage />
-                                </FormItem>
-                              )
-                            }}
-                          />
-                        </div>
-                      )
-                    } else {
-                      return (
-                        <div
-                          key={index}
-                          className="w-[300px] flex flex-col gap-2 "
-                        >
-                          <FormField
-                            control={form.control}
-                            name={data.name as names}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  {data.label}
-                                  <span style={{ color: 'red' }}> *</span>
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    disabled={readOnly}
-                                    type={data.type}
-                                    id={data.label}
-                                    placeholder={data.placeholder}
-                                    className="w-[300px"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      )
-                    }
-                  })}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="contact-data">
-              <AccordionTrigger className="text-lg transition-all hover:no-underline">
-                <div className="flex gap-5 items-center flex-wrap">
-                  <span className="hover:underline"> Datos de contacto </span>
-                  {accordion2Errors && (
-                    <Badge className="h-6" variant="destructive">
-                      Falta corregir algunos campos
-                    </Badge>
-                  )}
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="min-w-full max-w-sm flex flex-wrap gap-8">
-                  {CONTACTDATA.map((data, index) => {
-                    if (data.type === 'select') {
-                      return (
-                        <div
-                          key={index}
-                          className="w-[300px] flex flex-col gap-2"
-                        >
-                          <FormField
-                            control={form.control}
-                            name={data.name as names}
-                            render={({ field }) => {
-                              return (
-                                <FormItem>
-                                  <FormLabel>
-                                    {data.label}
-                                    <span style={{ color: 'red' }}> *</span>
-                                  </FormLabel>
-                                  <FormControl>
-                                    <SelectWithData
-                                      disabled={readOnly}
-                                      placeholder={data.placeholder}
-                                      field={{ ...field }}
-                                      options={data.options}
-                                      editing={true}
-                                      value={field.value || ''}
-                                      handleProvinceChange={
-                                        data.label === 'Provincia'
-                                          ? handleProvinceChange
-                                          : undefined
-                                      }
-                                      onChange={event => {
-                                        if (data.name === 'province') {
-                                          handleProvinceChange(event)
-                                        }
-
-                                        field.onChange(event)
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )
-                            }}
-                          />
-                        </div>
-                      )
-                    } else {
-                      return (
-                        <div
-                          key={index}
-                          className="w-[300px] flex flex-col gap-2"
-                        >
-                          <FormField
-                            control={form.control}
-                            name={data.name as names}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  {data.label}
-                                  <span style={{ color: 'red' }}> *</span>
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    disabled={readOnly}
-                                    type={data.type}
-                                    id={data.label}
-                                    placeholder={data.placeholder}
-                                    className="w-[300px]"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      )
-                    }
-                  })}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="laboral-data">
-              <AccordionTrigger className="text-lg hover:no-underline">
-                <div className="flex gap-5 items-center flex-wrap hover:no-underline">
-                  <span className="hover:underline">Datos laborales</span>
-                  {accordion3Errors && (
-                    <Badge className="h-6" variant="destructive">
-                      Faltan corregir algunos campos
-                    </Badge>
-                  )}
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="min-w-full max-w-sm flex flex-wrap gap-8">
-                  {LABORALDATA.map((data, index) => {
-                    if (data.name === 'date_of_admission') {
-                      return (
-                        <div
-                          key={index}
-                          className="w-[300px] flex flex-col gap-2"
-                        >
-                          <FormField
-                            control={form.control}
-                            name="date_of_admission"
-                            render={({ field }) => {
-                              const value = field.value
-
-                              if (
-                                value === 'undefined/undefined/undefined' ||
-                                value === 'Invalid Date'
-                              ) {
-                                field.value = ''
-                              }
-
-                              return (
-                                <FormItem className="flex flex-col">
-                                  <FormLabel>
-                                    Fecha de ingreso{' '}
-                                    <span style={{ color: 'red' }}> *</span>
-                                  </FormLabel>
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <FormControl>
-                                        <Button
-                                          disabled={readOnly}
-                                          variant="outline"
-                                          className={cn(
-                                            'w-[300px] pl-3 text-left font-normal',
-                                            !field.value &&
-                                              'text-muted-foreground',
-                                          )}
-                                        >
-                                          {field.value ? (
-                                            format(
-                                              field?.value,
-                                              'PPP',
-                                              {
-                                                locale: es,
-                                              } || undefined,
-                                            )
-                                          ) : (
-                                            <span>Elegir fecha</span>
-                                          )}
-                                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                        </Button>
-                                      </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent
-                                      className="w-auto p-0"
-                                      align="start"
-                                    >
-                                      <Calendar
-                                        captionLayout="dropdown-buttons"
-                                        mode="single"
-                                        selected={new Date()}
-                                        onSelect={field.onChange}
-                                        disabled={date =>
-                                          date > new Date() ||
-                                          date < new Date('1900-01-01')
-                                        }
-                                        initialFocus
-                                        locale={es}
-                                      />
-                                    </PopoverContent>
-                                  </Popover>
-                                  <FormMessage />
-                                </FormItem>
-                              )
-                            }}
-                          />
-                        </div>
-                      )
-                    }
-                    if (data.type === 'select') {
-                      const isMultiple =
-                        data.name === 'allocated_to' ? true : false
-
-                      if (isMultiple) {
+            <Accordion
+              className="w-full"
+              type="single"
+              collapsible
+              defaultValue="personal-data"
+            >
+              <AccordionItem value="personal-data">
+                <AccordionTrigger className="text-lg hover:no-underline">
+                  <div className="flex gap-5 items-center flex-wrap">
+                    <span className="hover:underline"> Datos personales </span>
+                    {accordion1Errors && (
+                      <Badge
+                        className="h-6 hover:no-underline"
+                        variant="destructive"
+                      >
+                        Falta corregir algunos campos
+                      </Badge>
+                    )}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="w-full ">
+                  <div className="min-w-full max-w-sm flex flex-wrap gap-8 items-center">
+                    {PERSONALDATA.map((data, index) => {
+                      if (data.type === 'file') {
                         return (
-                          <div
-                            key={index}
-                            className="w-[300px] flex flex-col gap-2 justify-center"
-                          >
+                          <div key={index} className="w-[300px] flex  gap-2">
                             <FormField
                               control={form.control}
                               name={data.name as names}
                               render={({ field }) => (
-                                <CheckboxDefaultValues
-                                  disabled={readOnly}
-                                  options={data.options}
-                                  required={true}
-                                  field={field}
-                                  placeholder="Afectado a"
-                                />
+                                <FormItem className="">
+                                  <FormControl>
+                                    <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
+                                      <ImageHander
+                                        labelInput="Subir foto"
+                                        handleImageChange={handleImageChange}
+                                        base64Image={base64Image} //nueva
+                                        disabled={readOnly}
+                                        inputStyle={{
+                                          width: '400px',
+                                          maxWidth: '300px',
+                                        }}
+                                      />
+                                    </div>
+                                  </FormControl>
+
+                                  <FormMessage />
+                                </FormItem>
                               )}
                             />
                           </div>
                         )
                       }
-                      return (
-                        <div
-                          key={index}
-                          className="w-[300px] flex flex-col gap-2"
-                        >
-                          <FormField
-                            control={form.control}
-                            name={data.name as names}
-                            render={({ field }) => {
-                              return (
+                      if (data.type === 'select') {
+                        return (
+                          <div
+                            key={index}
+                            className="w-[300px] flex flex-col gap-2"
+                          >
+                            <FormField
+                              control={form.control}
+                              name={data.name as names}
+                              render={({ field }) => {
+                                return (
+                                  <FormItem>
+                                    <FormLabel>
+                                      {data.label}
+                                      <span style={{ color: 'red' }}> *</span>
+                                    </FormLabel>
+
+                                    <SelectWithData
+                                      disabled={readOnly}
+                                      placeholder={data.placeholder}
+                                      options={data.options}
+                                      onChange={field.onChange}
+                                      editing={true}
+                                      value={field.value || ''}
+                                      field={{ ...field }}
+                                    />
+
+                                    <FormMessage />
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          </div>
+                        )
+                      } else {
+                        return (
+                          <div
+                            key={index}
+                            className="w-[300px] flex flex-col gap-2 "
+                          >
+                            <FormField
+                              control={form.control}
+                              name={data.name as names}
+                              render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>
                                     {data.label}
                                     <span style={{ color: 'red' }}> *</span>
                                   </FormLabel>
                                   <FormControl>
-                                    <SelectWithData
+                                    <Input
                                       disabled={readOnly}
+                                      type={data.type}
+                                      id={data.label}
                                       placeholder={data.placeholder}
-                                      isMultiple={isMultiple}
-                                      options={data.options}
-                                      field={{ ...field }}
-                                      onChange={event => {
-                                        field.onChange(event)
-                                      }}
-                                      value={field.value || ''}
+                                      className="w-[300px"
+                                      {...field}
                                     />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
-                              )
-                            }}
-                          />
-                        </div>
-                      )
-                    } else {
-                      return (
-                        <div
-                          key={index}
-                          className="w-[300px] flex flex-col gap-2"
-                        >
-                          <FormField
-                            control={form.control}
-                            name={data.name as names}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  {data.label}
-                                  <span style={{ color: 'red' }}> *</span>
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
+                              )}
+                            />
+                          </div>
+                        )
+                      }
+                    })}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="contact-data">
+                <AccordionTrigger className="text-lg transition-all hover:no-underline">
+                  <div className="flex gap-5 items-center flex-wrap">
+                    <span className="hover:underline"> Datos de contacto </span>
+                    {accordion2Errors && (
+                      <Badge className="h-6" variant="destructive">
+                        Falta corregir algunos campos
+                      </Badge>
+                    )}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="min-w-full max-w-sm flex flex-wrap gap-8">
+                    {CONTACTDATA.map((data, index) => {
+                      if (data.type === 'select') {
+                        return (
+                          <div
+                            key={index}
+                            className="w-[300px] flex flex-col gap-2"
+                          >
+                            <FormField
+                              control={form.control}
+                              name={data.name as names}
+                              render={({ field }) => {
+                                return (
+                                  <FormItem>
+                                    <FormLabel>
+                                      {data.label}
+                                      <span style={{ color: 'red' }}> *</span>
+                                    </FormLabel>
+                                    <FormControl>
+                                      <SelectWithData
+                                        disabled={readOnly}
+                                        placeholder={data.placeholder}
+                                        field={{ ...field }}
+                                        options={data.options}
+                                        editing={true}
+                                        value={field.value || ''}
+                                        handleProvinceChange={
+                                          data.label === 'Provincia'
+                                            ? handleProvinceChange
+                                            : undefined
+                                        }
+                                        onChange={event => {
+                                          if (data.name === 'province') {
+                                            handleProvinceChange(event)
+                                          }
+
+                                          field.onChange(event)
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          </div>
+                        )
+                      } else {
+                        return (
+                          <div
+                            key={index}
+                            className="w-[300px] flex flex-col gap-2"
+                          >
+                            <FormField
+                              control={form.control}
+                              name={data.name as names}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>
+                                    {data.label}
+                                    <span style={{ color: 'red' }}> *</span>
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      disabled={readOnly}
+                                      type={data.type}
+                                      id={data.label}
+                                      placeholder={data.placeholder}
+                                      className="w-[300px]"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        )
+                      }
+                    })}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="laboral-data">
+                <AccordionTrigger className="text-lg hover:no-underline">
+                  <div className="flex gap-5 items-center flex-wrap hover:no-underline">
+                    <span className="hover:underline">Datos laborales</span>
+                    {accordion3Errors && (
+                      <Badge className="h-6" variant="destructive">
+                        Faltan corregir algunos campos
+                      </Badge>
+                    )}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="min-w-full max-w-sm flex flex-wrap gap-8">
+                    {LABORALDATA.map((data, index) => {
+                      if (data.name === 'date_of_admission') {
+                        return (
+                          <div
+                            key={index}
+                            className="w-[300px] flex flex-col gap-2"
+                          >
+                            <FormField
+                              control={form.control}
+                              name="date_of_admission"
+                              render={({ field }) => {
+                                const value = field.value
+
+                                if (
+                                  value === 'undefined/undefined/undefined' ||
+                                  value === 'Invalid Date'
+                                ) {
+                                  field.value = ''
+                                }
+
+                                return (
+                                  <FormItem className="flex flex-col">
+                                    <FormLabel>
+                                      Fecha de ingreso{' '}
+                                      <span style={{ color: 'red' }}> *</span>
+                                    </FormLabel>
+                                    <Popover>
+                                      <PopoverTrigger asChild>
+                                        <FormControl>
+                                          <Button
+                                            disabled={readOnly}
+                                            variant="outline"
+                                            className={cn(
+                                              'w-[300px] pl-3 text-left font-normal',
+                                              !field.value &&
+                                                'text-muted-foreground',
+                                            )}
+                                          >
+                                            {field.value ? (
+                                              format(
+                                                field?.value,
+                                                'PPP',
+                                                {
+                                                  locale: es,
+                                                } || undefined,
+                                              )
+                                            ) : (
+                                              <span>Elegir fecha</span>
+                                            )}
+                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                          </Button>
+                                        </FormControl>
+                                      </PopoverTrigger>
+                                      <PopoverContent
+                                        className="flex w-full flex-col space-y-2 p-2"
+                                        align="start"
+                                      >
+                                        <Select
+                                          onValueChange={e => {
+                                            setMonth(new Date(e))
+                                            setYear(e)
+                                            const newYear = parseInt(e, 10)
+                                            const dateWithNewYear = new Date(
+                                              field.value,
+                                            )
+                                            dateWithNewYear.setFullYear(newYear)
+                                            field.onChange(dateWithNewYear)
+                                            setMonth(dateWithNewYear)
+                                          }}
+                                          value={
+                                            years ||
+                                            today.getFullYear().toString()
+                                          }
+                                        >
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Elegir año" />
+                                          </SelectTrigger>
+                                          <SelectContent position="popper">
+                                            <SelectItem
+                                              value={today
+                                                .getFullYear()
+                                                .toString()}
+                                              disabled={
+                                                years ===
+                                                today.getFullYear().toString()
+                                              }
+                                            >
+                                              {today.getFullYear().toString()}
+                                            </SelectItem>
+                                            {yearsAhead.map(year => (
+                                              <SelectItem
+                                                key={year}
+                                                value={`${year}`}
+                                              >
+                                                {year}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                        <Calendar
+                                          month={month}
+                                          onMonthChange={setMonth}
+                                          toDate={today}
+                                          locale={es}
+                                          mode="single"
+                                          selected={
+                                            new Date(field.value) || today
+                                          }
+                                          onSelect={e => {
+                                            field.onChange(e)
+                                          }}
+                                        />
+                                      </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          </div>
+                        )
+                      }
+                      if (data.type === 'select') {
+                        const isMultiple =
+                          data.name === 'allocated_to' ? true : false
+
+                        if (isMultiple) {
+                          return (
+                            <div
+                              key={index}
+                              className="w-[300px] flex flex-col gap-2 justify-center"
+                            >
+                              <FormField
+                                control={form.control}
+                                name={data.name as names}
+                                render={({ field }) => (
+                                  <CheckboxDefaultValues
                                     disabled={readOnly}
-                                    type={data.type}
-                                    id={data.label}
-                                    placeholder={data.placeholder}
-                                    pattern={data.pattern}
-                                    className="w-[300px]"
-                                    {...field}
+                                    options={data.options}
+                                    required={true}
+                                    field={field}
+                                    placeholder="Afectado a"
                                   />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      )
-                    }
-                  })}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-            <TooltipProvider delayDuration={100}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <p className="w-fit">
-                    {accion !== 'view' || !readOnly ? (
-                      <Button type="submit" className="mt-5">
-                        {accion === 'edit' || accion === 'view'
-                          ? 'Guardar cambios'
-                          : 'Agregar empleado'}
-                      </Button>
-                    ) : null}
-                  </p>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-[250px]">
-                  {!accordion1Errors && !accordion2Errors && !accordion3Errors
-                    ? '¡Todo listo para agregar el empleado!'
-                    : '¡Completa todos los campos para agregar el empleado'}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </Accordion>
-        </form>
-      </Form>
-    </section>
+                                )}
+                              />
+                            </div>
+                          )
+                        }
+                        return (
+                          <div
+                            key={index}
+                            className="w-[300px] flex flex-col gap-2"
+                          >
+                            <FormField
+                              control={form.control}
+                              name={data.name as names}
+                              render={({ field }) => {
+                                return (
+                                  <FormItem>
+                                    <FormLabel>
+                                      {data.label}
+                                      <span style={{ color: 'red' }}> *</span>
+                                    </FormLabel>
+                                    <FormControl>
+                                      <SelectWithData
+                                        disabled={readOnly}
+                                        placeholder={data.placeholder}
+                                        isMultiple={isMultiple}
+                                        options={data.options}
+                                        field={{ ...field }}
+                                        onChange={event => {
+                                          field.onChange(event)
+                                        }}
+                                        value={field.value || ''}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          </div>
+                        )
+                      } else {
+                        return (
+                          <div
+                            key={index}
+                            className="w-[300px] flex flex-col gap-2"
+                          >
+                            <FormField
+                              control={form.control}
+                              name={data.name as names}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>
+                                    {data.label}
+                                    <span style={{ color: 'red' }}> *</span>
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      disabled={readOnly}
+                                      type={data.type}
+                                      id={data.label}
+                                      placeholder={data.placeholder}
+                                      pattern={data.pattern}
+                                      className="w-[300px]"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        )
+                      }
+                    })}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <p className="w-fit">
+                      {accion !== 'view' || !readOnly ? (
+                        <Button type="submit" className="mt-5">
+                          {accion === 'edit' || accion === 'view'
+                            ? 'Guardar cambios'
+                            : 'Agregar empleado'}
+                        </Button>
+                      ) : null}
+                    </p>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[250px]">
+                    {!accordion1Errors && !accordion2Errors && !accordion3Errors
+                      ? '¡Todo listo para agregar el empleado!'
+                      : '¡Completa todos los campos para agregar el empleado'}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </Accordion>
+          </form>
+        </Form>
+      </section>
     </Suspense>
   )
 }

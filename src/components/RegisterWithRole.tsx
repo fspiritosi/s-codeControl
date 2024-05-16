@@ -329,7 +329,7 @@ export const RegisterWithRole = () => {
                         name="role"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Role</FormLabel>
+                            <FormLabel>Rol</FormLabel>
                             <Select
                               onValueChange={field.onChange}
                               defaultValue={field.value}

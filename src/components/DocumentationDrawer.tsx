@@ -8,6 +8,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
+import { useLoggedUserStore } from '@/store/loggedUser'
 import {
   CheckIcon,
   ClockIcon,
@@ -30,8 +31,6 @@ import {
 import { Button, buttonVariants } from './ui/button'
 import { CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Separator } from './ui/separator'
-import { useLoggedUserStore } from '@/store/loggedUser'
-
 
 type Props = { props?: any[] | null; resource: string }
 
@@ -39,11 +38,11 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
   const [open, setOpen] = useState(false)
   const handleOpen = () => setOpen(!open)
   const profile = useLoggedUserStore(state => state)
-  let role = ""
-  if(profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id){
-     role = profile?.actualCompany?.owner_id?.role as string
-  }else{
-     role = profile?.actualCompany?.share_company_users?.[0].role as string
+  let role = ''
+  if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
+    role = profile?.actualCompany?.owner_id?.role as string
+  } else {
+    role = profile?.actualCompany?.share_company_users?.[0].role as string
   }
   const handleDownload = async (path: string, fileName: string) => {
     toast.promise(
@@ -116,6 +115,10 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
       },
     )
   }
+
+  const [defaultDocumentId, setDefaultDocumentId] = useState('')
+
+  console.log(props, 'props')
   return (
     <aside className="mb-8 flex flex-col  h-full">
       <CardHeader className="h-[152px] flex flex-row  justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
@@ -192,9 +195,15 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
             {doc.state === 'pendiente' && (
               <AlertDialog open={open} onOpenChange={handleOpen}>
                 <AlertDialogTrigger asChild>
-                {(role !== "Invitado") && (
-                  <Button>Subir</Button>
-                )}
+                  {role !== 'Invitado' && (
+                    <Button
+                      onClick={() => {
+                        setDefaultDocumentId(doc?.id_document_types?.id)
+                      }}
+                    >
+                      Subir
+                    </Button>
+                  )}
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
@@ -214,6 +223,7 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
                           <SimpleDocument
                             resource={resource}
                             handleOpen={() => handleOpen()}
+                            defaultDocumentId={defaultDocumentId}
                           />
                         </div>
                       </div>
@@ -222,7 +232,7 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
                 </AlertDialogContent>
               </AlertDialog>
             )}
-            {doc.state === 'aprobado' && (
+            {(doc.state === 'aprobado' || doc.state === 'presentado') && (
               <Button
                 onClick={() =>
                   handleDownload(
@@ -234,14 +244,16 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
                 Descargar
               </Button>
             )}
-            {doc.state !== 'aprobado' && doc.state !== 'pendiente' && (
-              <Link
-                className={buttonVariants({ variant: 'default' })}
-                href={`/dashboard/document/${doc.id}`}
-              >
-                Ver documento
-              </Link>
-            )}
+            {doc.state !== 'aprobado' &&
+              doc.state !== 'pendiente' &&
+              doc.state !== 'presentado' && (
+                <Link
+                  className={buttonVariants({ variant: 'default' })}
+                  href={`/dashboard/document/${doc.id}`}
+                >
+                  Ver documento
+                </Link>
+              )}
           </div>
         ))}
       </div>
