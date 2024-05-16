@@ -12,8 +12,32 @@ import Link from 'next/link'
 import { supabase } from '../../../../supabase/supabase'
 import { columns } from './columns'
 import { DataTable } from './data-table'
+import Cookies from 'js-cookie';
 
 const EmployeePage = () => {
+  if (typeof window !== "undefined") {
+    
+    const company_id = localStorage.getItem('company_id');
+    //console.log("comapany_id: ",company_id)
+    let actualComp = Cookies.set('actualComp', company_id as string);
+    //console.log("esta es la cooki: ",Cookies.get())
+ }
+ //const profile = useLoggedUserStore(state => state.actualCompany?.share_company_users?.[0].role)
+ 
+  
+
+const profile = useLoggedUserStore(state => state)
+ 
+ 
+ 
+ 
+  let role : string = ""
+  if(profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id){
+    role = profile?.actualCompany?.owner_id?.role as string
+ }else{
+    role = profile?.actualCompany?.share_company_users?.[0].role as string
+ }
+  
   const employees = useLoggedUserStore(state => state.employeesToShow)
   const setActivesEmployees = useLoggedUserStore(
     state => state.setActivesEmployees,
@@ -53,6 +77,7 @@ const EmployeePage = () => {
               Aquí puedes ver los empleados de tu empresa
             </CardDescription>
           </div>
+          {(role && role !== "Invitado") && (
           <Link
             href="/dashboard/employee/action?action=new"
             className={[
@@ -62,6 +87,7 @@ const EmployeePage = () => {
           >
             Agregar nuevo empleado
           </Link>
+          )}
         </CardHeader>
 
         <div className=" px-8 ">

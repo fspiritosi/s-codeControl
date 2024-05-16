@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-
+import { EmailTemplate } from './EmailTemplate'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -30,9 +30,11 @@ import { Textarea } from './ui/textarea'
 export default function DenyDocModal({
   id,
   resource,
+  userEmail,
 }: {
   id: string
   resource: string | null
+  userEmail:string
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const FormSchema = z.object({
@@ -53,6 +55,11 @@ export default function DenyDocModal({
   const { toast } = useToast()
 
   async function onSubmit(menssaje: z.infer<typeof FormSchema>) {
+
+    console.log(id, 'id')
+    console.log(resource, 'resource')
+    console.log(userEmail, 'email')
+
     if (resource === 'employee') {
       const { data, error } = await supabase
         .from('documents_employees')
@@ -69,6 +76,26 @@ export default function DenyDocModal({
         })
       }
 
+      const response = await fetch('/api/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: userEmail,
+          subject: 'Documento rechazado',
+          react:menssaje.reason ,
+          userEmail: userEmail,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Ocurrió un error al enviar el correo electrónico');
+      }
+
+      
+      
+
       toast({
         title: 'Documento rechazado',
         description: 'El documento ha sido rechazado correctamente',
@@ -81,6 +108,8 @@ export default function DenyDocModal({
         .eq('id', id)
         .select()
 
+        
+
       if (error) {
         setIsOpen(false)
         return toast({
@@ -89,13 +118,16 @@ export default function DenyDocModal({
           variant: 'destructive',
         })
       }
-
+      
       toast({
         title: 'Documento rechazado',
         description: 'El documento ha sido rechazado correctamente',
         variant: 'default',
       })
+
+      
     }
+    
 
     router.push('/auditor')
     setIsOpen(false)

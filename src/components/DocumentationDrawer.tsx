@@ -8,6 +8,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
+import { useLoggedUserStore } from '@/store/loggedUser'
 import {
   CheckIcon,
   ClockIcon,
@@ -36,7 +37,13 @@ type Props = { props?: any[] | null; resource: string }
 export const DocumentationDrawer = ({ props, resource }: Props) => {
   const [open, setOpen] = useState(false)
   const handleOpen = () => setOpen(!open)
-
+  const profile = useLoggedUserStore(state => state)
+  let role = ''
+  if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
+    role = profile?.actualCompany?.owner_id?.role as string
+  } else {
+    role = profile?.actualCompany?.share_company_users?.[0].role as string
+  }
   const handleDownload = async (path: string, fileName: string) => {
     toast.promise(
       async () => {
@@ -188,13 +195,15 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
             {doc.state === 'pendiente' && (
               <AlertDialog open={open} onOpenChange={handleOpen}>
                 <AlertDialogTrigger asChild>
-                  <Button
-                    onClick={() => {
-                      setDefaultDocumentId(doc?.id_document_types?.id)
-                    }}
-                  >
-                    Subir
-                  </Button>
+                  {role !== 'Invitado' && (
+                    <Button
+                      onClick={() => {
+                        setDefaultDocumentId(doc?.id_document_types?.id)
+                      }}
+                    >
+                      Subir
+                    </Button>
+                  )}
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
