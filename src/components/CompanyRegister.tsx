@@ -1,5 +1,4 @@
 'use client'
-import { UploadImage } from '@/components/UploadImage'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -21,17 +20,19 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { useCompanyData } from '@/hooks/useCompanyData'
 import { useImageUpload } from '@/hooks/useUploadImage'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 import { useCountriesStore } from '@/store/countries'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { company, industry_type } from '@/types/types'
 import { companySchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { ChangeEvent, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import * as z from 'zod'
+import { ImageHander } from './ImageHandler'
 import { Checkbox } from './ui/checkbox'
-import { useToast } from './ui/use-toast'
 interface CompanyRegisterProps {
   company: company | null
   formEnabled: boolean
@@ -54,7 +55,7 @@ export function CompanyRegister({
   const citiesValues = useCountriesStore(state => state.cities)
   const fetchCityValues = useCountriesStore(state => state.fetchCities)
   const { uploadImage, loading } = useImageUpload()
-  const { toast } = useToast()
+  // const { toast } = useToast()
 
   const form = useForm<z.infer<typeof companySchema>>({
     resolver: zodResolver(companySchema),
@@ -131,7 +132,6 @@ export function CompanyRegister({
   }, [])
 
   const onSubmit = async (companyData: z.infer<typeof companySchema>) => {
-    
     try {
       //Procesa los valores antes de enviarlos a la base de datos
       const processedCompanyData = {
@@ -154,40 +154,48 @@ export function CompanyRegister({
       let updatedCompany
 
       if (company && company.id) {
-        updatedCompany = await updateCompany(company.id, {
-          ...processedCompanyData,
-          company_logo: processedCompanyData.company_logo || '',
-          owner_id: profile?.[0].id,
-          //by_defect: false,
-        })
-        toast({
-          variant: 'default',
-          title: 'Compañía actualizada',
-          description: `La compañía ha sido actualizada`,
-        })
+        toast.promise(
+          async () => {
+            updatedCompany = await updateCompany(company.id || '', {
+              ...processedCompanyData,
+              company_logo: processedCompanyData.company_logo || '',
+              owner_id: profile?.[0].id,
+              //by_defect: false,
+            })
+            await handleUpload()
+          },
+          {
+            loading: 'Actualizando compañía...',
+            success: 'Compañía actualizada correctamente',
+            error: 'Ocurrió un error al actualizar la compañía',
+          },
+        )
       } else {
-        updatedCompany = await insertCompany({
-          ...processedCompanyData,
-          company_logo: processedCompanyData.company_logo || '',
-          owner_id: profile?.[0].id,
-          //by_defect: false,
-        })
-        toast({
-          variant: 'default',
-          title: 'Compañía Creada exitosamente',
-          description: `La compañía ha sido creada`,
-        })
+        toast.promise(
+          async () => {
+            updatedCompany = await insertCompany({
+              ...processedCompanyData,
+              company_logo: processedCompanyData.company_logo || '',
+              owner_id: profile?.[0].id,
+              //by_defect: false,
+            })
+            await handleUpload()
+          },
+          {
+            loading: 'Registrando compañía...',
+            success: 'Compañía registrada correctamente',
+            error: 'Ocurrió un error al registrar la compañía',
+          },
+        )
       }
-      if (updatedCompany) {
-        router.push('/dashboard/company')
-        router.refresh
-      }
+      router.push('/dashboard')
     } catch (err) {
       console.error('Ocurrió un error:', err)
     } finally {
       setShowLoader(false)
     }
   }
+  const url = process.env.NEXT_PUBLIC_PROJECT_URL
   const processText = (text: string): string | any => {
     if (text === undefined) {
       // Puedes decidir qué hacer aquí si text es undefined.
@@ -199,6 +207,55 @@ export function CompanyRegister({
       .replace(/[\u0300-\u036f'"]/g, '')
       .trim()
       .toLowerCase()
+  }
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [base64Image, setBase64Image] = useState<string>('')
+  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+
+    if (file) {
+      setImageFile(file)
+      // Convertir la imagen a base64
+      const reader = new FileReader()
+      reader.onload = e => {
+        if (e.target && typeof e.target.result === 'string') {
+          setBase64Image(e.target.result)
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleUpload = async () => {
+    const company_cuit = form.getValues('company_cuit')
+
+    const fileExtension = imageFile?.name.split('.').pop()
+    if (imageFile) {
+      try {
+        const supabase = supabaseBrowser()
+        const renamedFile = new File(
+          [imageFile],
+          `${company_cuit}.${fileExtension}`,
+          { type: `image/${fileExtension?.replace(/\s/g, '')}` },
+        )
+        await uploadImage(renamedFile, 'logo')
+        const employeeImage =
+          `${url}/logo/${company_cuit}.${fileExtension}?timestamp=${Date.now()}`
+            .trim()
+            .replace(/\s/g, '')
+        const { data, error } = await supabase
+          .from('company')
+          .update({ company_logo: employeeImage })
+          .eq('company_cuit', company_cuit)
+      } catch (error: any) {
+        // toast({
+        //   variant: 'destructive',
+        //   title: 'Error al subir la imagen',
+        //   description:
+        //     'No pudimos registrar la imagen, pero el ususario fue registrado correctamente',
+        // })
+      }
+    }
   }
 
   return (
@@ -438,7 +495,7 @@ export function CompanyRegister({
             )}
           />
 
-          <FormField
+          {/* <FormField
             control={form.control}
             name="company_logo"
             render={({ field }) => (
@@ -463,7 +520,33 @@ export function CompanyRegister({
                 <FormMessage />
               </FormItem>
             )}
+          /> */}
+
+          <FormField
+            control={form.control}
+            name="company_logo"
+            render={({ field }) => (
+              <FormItem className="">
+                <FormControl>
+                  <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
+                    <ImageHander
+                      labelInput="Subir foto"
+                      handleImageChange={handleImageChange}
+                      base64Image={base64Image} //nueva
+                      disabled={!formEnabledProp}
+                      inputStyle={{
+                        width: '400px',
+                        maxWidth: '300px',
+                      }}
+                    />
+                  </div>
+                </FormControl>
+
+                <FormMessage />
+              </FormItem>
+            )}
           />
+
           <FormField
             control={form.control}
             name="description"

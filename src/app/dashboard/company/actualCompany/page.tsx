@@ -84,7 +84,9 @@ export default function page() {
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>
-          <TabsTrigger value="modules">Modulos</TabsTrigger>
+          <TabsTrigger value="modules" disabled>
+            Modulos
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="general" className="space-y-4">
           <Card className="overflow-hidden">

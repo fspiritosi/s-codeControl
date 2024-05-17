@@ -43,7 +43,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { useToast } from '@/components/ui/use-toast'
 import { useImageUpload } from '@/hooks/useUploadImage'
 import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
@@ -58,6 +57,7 @@ import { Loader } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ChangeEvent, Suspense, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { z } from 'zod'
 import { ImageHander } from './ImageHandler'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
@@ -106,7 +106,7 @@ export default function EmployeeAccordion() {
   const { updateEmployee, createEmployee } = useEmployeesData()
   const getEmployees = useLoggedUserStore(state => state.getEmployees)
   const router = useRouter()
-  const { toast } = useToast()
+  // const { toast } = useToast()
   const url = process.env.NEXT_PUBLIC_PROJECT_URL
   const mandatoryDocuments = useCountriesStore(
     state => state.mandatoryDocuments,
@@ -401,118 +401,129 @@ export default function EmployeeAccordion() {
   }
 
   async function onCreate(values: z.infer<typeof accordionSchema>) {
-    const fileExtension = imageFile?.name.split('.').pop()
-    const finalValues = {
-      ...values,
-      date_of_admission:
-        values.date_of_admission instanceof Date
-          ? values.date_of_admission.toISOString()
-          : values.date_of_admission,
-      province: String(
-        provincesOptions.find(e => e.name.trim() === values.province)?.id,
-      ),
-      birthplace: String(
-        countryOptions.find(e => e.name === values.birthplace)?.id,
-      ),
-      city: String(citysOptions.find(e => e.name.trim() === values.city)?.id),
-      hierarchical_position: String(
-        hierarchyOptions.find(e => e.name === values.hierarchical_position)?.id,
-      ),
-      workflow_diagram: String(
-        workDiagramOptions.find(e => e.name === values.workflow_diagram)?.id,
-      ),
-      picture: fileExtension
-        ? `${url}/${values.document_number}.${fileExtension}`.trim()
-        : values.gender === 'Masculino'
-          ? 'https://ui.shadcn.com/avatars/02.png'
-          : 'https://ui.shadcn.com/avatars/05.png',
-    }
+    toast.promise(
+      async () => {
+        const fileExtension = imageFile?.name.split('.').pop()
+        const finalValues = {
+          ...values,
+          date_of_admission:
+            values.date_of_admission instanceof Date
+              ? values.date_of_admission.toISOString()
+              : values.date_of_admission,
+          province: String(
+            provincesOptions.find(e => e.name.trim() === values.province)?.id,
+          ),
+          birthplace: String(
+            countryOptions.find(e => e.name === values.birthplace)?.id,
+          ),
+          city: String(
+            citysOptions.find(e => e.name.trim() === values.city)?.id,
+          ),
+          hierarchical_position: String(
+            hierarchyOptions.find(e => e.name === values.hierarchical_position)
+              ?.id,
+          ),
+          workflow_diagram: String(
+            workDiagramOptions.find(e => e.name === values.workflow_diagram)
+              ?.id,
+          ),
+          picture: fileExtension
+            ? `${url}/${values.document_number}.${fileExtension}`.trim()
+            : values.gender === 'Masculino'
+              ? 'https://ui.shadcn.com/avatars/02.png'
+              : 'https://ui.shadcn.com/avatars/05.png',
+        }
 
-    try {
-      const applies = await createEmployee(finalValues)
-      const documentsMissing: {
-        applies: number
-        id_document_types: string
-        validity: string | null
-        user_id: string | undefined
-      }[] = []
+        try {
+          const applies = await createEmployee(finalValues)
+          const documentsMissing: {
+            applies: number
+            id_document_types: string
+            validity: string | null
+            user_id: string | undefined
+          }[] = []
 
-      mandatoryDocuments.Persona.forEach(async document => {
-        documentsMissing.push({
-          applies: applies[0].id,
-          id_document_types: document.id,
-          validity: null,
-          user_id: loggedUser,
-        })
-      })
+          mandatoryDocuments.Persona.forEach(async document => {
+            documentsMissing.push({
+              applies: applies[0].id,
+              id_document_types: document.id,
+              validity: null,
+              user_id: loggedUser,
+            })
+          })
 
-      const { data, error } = await supabase
-        .from('documents_employees')
-        .insert(documentsMissing)
-        .select()
+          const { data, error } = await supabase
+            .from('documents_employees')
+            .insert(documentsMissing)
+            .select()
 
-      toast({
-        variant: 'default',
-        title: 'Empleado agregado correctamente',
-      })
-      try {
-        await handleUpload()
-      } catch (error: PostgrestError | any) {
-        toast({
-          variant: 'destructive',
-          title: error.message,
-        })
-      }
-      getEmployees(true)
-      router.push('/dashboard/employee')
-    } catch (error: PostgrestError | any) {
-      // Manejar el error de la primera petición
-      toast({
-        variant: 'destructive',
-        title: error.message,
-      })
-    }
+          if (error) {
+            throw new Error('error')
+          }
+
+          try {
+            await handleUpload()
+          } catch (error: PostgrestError | any) {
+            throw new Error(error)
+          }
+          getEmployees(true)
+          router.push('/dashboard/employee')
+        } catch (error: PostgrestError | any) {
+          throw new Error(error)
+        }
+      },
+      {
+        loading: 'Agregando empleado...',
+        success: 'Empleado agregado correctamente',
+        error: 'Error al agregar empleado',
+      },
+    )
   }
 
   // 2. Define a submit handler.
   async function onUpdate(values: z.infer<typeof accordionSchema>) {
-    const { full_name, ...rest } = values
-    const finalValues = {
-      ...rest,
-      date_of_admission:
-        values.date_of_admission instanceof Date
-          ? values.date_of_admission.toISOString()
-          : values.date_of_admission,
-      province: String(
-        provincesOptions.find(e => e.name.trim() === values.province)?.id,
-      ),
-      birthplace: String(
-        countryOptions.find(e => e.name === values.birthplace)?.id,
-      ),
-      city: String(citysOptions.find(e => e.name.trim() === values.city)?.id),
-      hierarchical_position: String(
-        hierarchyOptions.find(e => e.name === values.hierarchical_position)?.id,
-      ),
-      workflow_diagram: String(
-        workDiagramOptions.find(e => e.name === values.workflow_diagram)?.id,
-      ),
-    }
+    toast.promise(
+      async () => {
+        const { full_name, ...rest } = values
+        const finalValues = {
+          ...rest,
+          date_of_admission:
+            values.date_of_admission instanceof Date
+              ? values.date_of_admission.toISOString()
+              : values.date_of_admission,
+          province: String(
+            provincesOptions.find(e => e.name.trim() === values.province)?.id,
+          ),
+          birthplace: String(
+            countryOptions.find(e => e.name === values.birthplace)?.id,
+          ),
+          city: String(
+            citysOptions.find(e => e.name.trim() === values.city)?.id,
+          ),
+          hierarchical_position: String(
+            hierarchyOptions.find(e => e.name === values.hierarchical_position)
+              ?.id,
+          ),
+          workflow_diagram: String(
+            workDiagramOptions.find(e => e.name === values.workflow_diagram)
+              ?.id,
+          ),
+        }
 
-    try {
-      await updateEmployee(finalValues, user?.id)
-      await handleUpload()
-      toast({
-        variant: 'default',
-        title: 'Empleado actualizado',
-      })
-
-      router.push('/dashboard/employee')
-    } catch (error: PostgrestError | any) {
-      toast({
-        variant: 'destructive',
-        title: error.message,
-      })
-    }
+        try {
+          await updateEmployee(finalValues, user?.id)
+          await handleUpload()
+          router.push('/dashboard/employee')
+        } catch (error: PostgrestError | any) {
+          throw new Error(error)
+        }
+      },
+      {
+        loading: 'Actualizando empleado...',
+        success: 'Empleado actualizado correctamente',
+        error: 'Error al actualizar empleado',
+      },
+    )
   }
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -552,12 +563,12 @@ export default function EmployeeAccordion() {
           .update({ picture: employeeImage })
           .eq('document_number', document_number)
       } catch (error: any) {
-        toast({
-          variant: 'destructive',
-          title: 'Error al subir la imagen',
-          description:
-            'No pudimos registrar la imagen, pero el ususario fue registrado correctamente',
-        })
+        // toast({
+        //   variant: 'destructive',
+        //   title: 'Error al subir la imagen',
+        //   description:
+        //     'No pudimos registrar la imagen, pero el ususario fue registrado correctamente',
+        // })
       }
     }
   }

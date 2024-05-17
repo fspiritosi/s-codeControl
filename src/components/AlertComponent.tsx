@@ -10,8 +10,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { Company } from '@/zodSchemas/schemas'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { supabase } from '../../supabase/supabase'
 
 export const AlertComponent = () => {
@@ -23,6 +23,7 @@ export const AlertComponent = () => {
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
   const router = useRouter()
+  router.prefetch('/dashboard/company/new')
 
   const handleAlertClose = async (company: Company[0]) => {
     await supabase
@@ -34,10 +35,25 @@ export const AlertComponent = () => {
     router.push('/dashboard')
   }
 
+  const handleCompanyCreation = () => {
+    toast.promise(
+      async () => {
+        router.push('/dashboard/company/new')
+        useLoggedUserStore.setState({ showNoCompanyAlert: false })
+      },
+      {
+        loading: 'Creando empresa',
+        success: 'Empresa creada',
+        error: 'Error al crear empresa',
+      },
+    )
+  }
   //si actualCompany no es null, no mostrar alerta
   //si actualCompany es null, mostrar alerta
   //si actualCompany es null y allCompanies tiene mas de 1, mostrar alerta
   //si actualCompany es null y allCompanies tiene 1, no mostrar alerta
+
+  console.log(showAlert, 'showAlert')
 
   return (
     (showMultipleAlert && (
@@ -80,8 +96,8 @@ export const AlertComponent = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction>
-              <Link href="/dashboard/company/new">Crear compañía</Link>
+            <AlertDialogAction onClick={handleCompanyCreation}>
+              Crear compañía
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

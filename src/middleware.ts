@@ -20,7 +20,20 @@ export async function middleware(req: NextRequest) {
     .select(`*`)
     .eq('owner_id', data?.[0]?.id)
 
-  const ownerComp = Companies?.[0].owner_id
+  let { data: share_company_users, error: sharedError } = await supabase
+    .from('share_company_users')
+    .select(`*`)
+    .eq('profile_id', data?.[0]?.id)
+
+  if (
+    !Companies?.[0] &&
+    !share_company_users?.[0] &&
+    !req.url.includes('/dashboard/company/new')
+  ) {
+    return NextResponse.redirect(new URL('/dashboard/company/new', req.url))
+  }
+
+  const ownerComp = Companies?.[0]?.owner_id
   const theme = res.cookies.get('theme')
   const actualCompanyId = req.cookies.get('actialCompanyId')
   //const actualNoOwner :string | null = req.cookies.get('actualComp')?.value
