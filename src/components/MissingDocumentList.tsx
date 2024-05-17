@@ -67,17 +67,6 @@ export const MissingDocumentList = () => {
     },
   )
 
-  //   const channels = supabase
-  //     .channel('custom-update-channel')
-  //     .on(
-  //       'postgres_changes',
-  //       { event: 'UPDATE', schema: 'public', table: 'documents_employees' },
-  //       payload => {
-  //         console.log('Change received!', payload)
-  //       },
-  //     )
-  //     .subscribe()
-
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-start bg-muted dark:bg-muted/50 border-b-2">

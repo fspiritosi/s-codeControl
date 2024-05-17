@@ -75,7 +75,6 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
   const isAuditor = profile?.[0].role === 'Auditor'
   const administrador =userShared === "Administrador" || null
 
-  console.log("userShared: ", userShared)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
     ?.owner_id.id
 

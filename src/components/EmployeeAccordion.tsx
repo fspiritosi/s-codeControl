@@ -150,8 +150,6 @@ export default function EmployeeAccordion() {
   const [accordion3Errors, setAccordion3Errors] = useState(false)
   const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false)
 
-  console.log(user, 'user')
-
   const provinceId = provincesOptions?.find(
     (province: Province) => province.name.trim() === user?.province,
   )?.id

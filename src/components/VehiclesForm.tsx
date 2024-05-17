@@ -401,13 +401,10 @@ export default function VehiclesForm2({ id }: { id: string }) {
   const mandatoryDocuments = useCountriesStore(
     state => state.mandatoryDocuments,
   )
-  console.log(form.formState.errors, 'formState.errors')
   const loggedUser = useLoggedUserStore(state => state.credentialUser?.id)
   async function onCreate(values: z.infer<typeof vehicleSchema>) {
     const { type_of_vehicle, brand, model, domain } = values
-    //const companyId = actualCompany?.id
 
-    console.log(values, 'values')
     try {
       const { data: vehicle, error } = await supabase
         .from('vehicles')
@@ -448,7 +445,6 @@ export default function VehiclesForm2({ id }: { id: string }) {
         .select()
 
       if (error) {
-        console.log(error)
         return
       }
 
@@ -526,7 +522,6 @@ export default function VehiclesForm2({ id }: { id: string }) {
   }
 
   async function onUpdate(values: z.infer<typeof vehicleSchema>) {
-    console.log(values, 'values')
     const {
       type_of_vehicle,
       brand,
