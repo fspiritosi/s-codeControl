@@ -121,58 +121,38 @@ export function ReportAnIssue() {
     //   </Card>
     // </section>
 <section className="md:mx-7 w-1/2">
-      <Card>
-        <CardHeader>
-          <CardTitle>Reportar un problema (Todavía no tiene funcionalidad)</CardTitle>
-          <CardDescription>¿En qué área tienes problemas?</CardDescription>
-        </CardHeader>
-        <form onSubmit={submit}>
-          <CardContent className="grid gap-6">
-            <div className="flex gap-2 flex-wrap">
-              <div className=" gap-2">
-                <Label htmlFor="area">Área</Label>
-                <select
-                  value={area}
-                  onChange={event => setArea(event.target.value)}
-                >
-                  {/* Opciones del select */}
-                </select>
-              </div>
-              <div className=" gap-2">
-                <Label htmlFor="security-level">Nivel de seguridad</Label>
-                <select
-                  value={nivelSeguridad}
-                  onChange={event => setNivelSeguridad(event.target.value)}
-                >
-                  {/* Opciones del select */}
-                </select>
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="subject">Asunto</Label>
-              <Input
-                id="subject"
-                value={asunto}
-                onChange={event => setAsunto(event.target.value)}
-                placeholder="Necesito ayuda con..."
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="description">Descripción</Label>
-              <Textarea
-                id="description"
-                value={descripcion}
-                onChange={event => setDescripcion(event.target.value)}
-                placeholder="Por favor, incluye toda la información relevante sobre tu problema."
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="justify-between space-x-2">
-            <Button variant="ghost">Cancelar</Button>
-            <Button type="submit">Enviar</Button>
-          </CardFooter>
-        </form>
-      </Card>
-    </section>
+  <Card>
+    <CardHeader>
+      <CardTitle>Reportar un problema</CardTitle>
+      <CardDescription>Por favor, describe el problema que estás experimentando</CardDescription>
+    </CardHeader>
+    <form onSubmit={submit}>
+      <CardContent className="grid gap-6">
+        <div className="grid gap-2">
+          <Label htmlFor="subject">Asunto</Label>
+          <Input
+            id="subject"
+            value={asunto}
+            onChange={event => setAsunto(event.target.value)}
+            placeholder="Necesito ayuda con..."
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="description">Descripción</Label>
+          <Textarea
+            id="description"
+            value={descripcion}
+            onChange={event => setDescripcion(event.target.value)}
+            placeholder="Por favor, incluye toda la información relevante sobre tu problema."
+          />
+        </div>
+      </CardContent>
+      <CardFooter className="justify-between space-x-2">
+        <Button variant="ghost">Cancelar</Button>
+        <Button type="submit">Enviar</Button>
+      </CardFooter>
+    </form>
+  </Card>
+</section>
   )
 }
