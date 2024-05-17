@@ -14,7 +14,11 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { DotFilledIcon, PersonIcon } from '@radix-ui/react-icons'
+import {
+  DotFilledIcon,
+  ExclamationTriangleIcon,
+  PersonIcon,
+} from '@radix-ui/react-icons'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { CarIcon } from 'lucide-react'
@@ -22,7 +26,6 @@ import Link from 'next/link'
 import { Badge } from './ui/badge'
 import { buttonVariants } from './ui/button'
 export const MissingDocumentList = () => {
-
   const allValuesToShow = [
     useLoggedUserStore(state => state.allDocumentsToShow),
   ].reduce(
@@ -64,17 +67,6 @@ export const MissingDocumentList = () => {
     },
   )
 
-  //   const channels = supabase
-  //     .channel('custom-update-channel')
-  //     .on(
-  //       'postgres_changes',
-  //       { event: 'UPDATE', schema: 'public', table: 'documents_employees' },
-  //       payload => {
-  //         console.log('Change received!', payload)
-  //       },
-  //     )
-  //     .subscribe()
-
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-start bg-muted dark:bg-muted/50 border-b-2">
@@ -109,7 +101,7 @@ export const MissingDocumentList = () => {
                   )}
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="h-fit bg-muted dark:bg-muted/50">
+              <AccordionContent className="h-fit bg-muted dark:bg-muted/50 max-h-[60vh] overflow-y-auto">
                 {allValuesToShow?.employees?.length > 0 &&
                   allValuesToShow.employees.map((item: any, index) => {
                     return (
@@ -121,24 +113,30 @@ export const MissingDocumentList = () => {
                       >
                         <AccordionItem value="item-1">
                           <AccordionTrigger className="px-2">
-                            {item[0].resource}
+                            <div
+                              key={index}
+                              className="flex justify-between items-center h-14 px-2 w-full dark:text-white font-semibold"
+                            >
+                              {item[0].resource}
+                              <Link
+                                href={`/dashboard/employee/action?action=view&document=${item?.[0].document_number}`}
+                                className={buttonVariants({
+                                  variant: 'default',
+                                })}
+                              >
+                                Ver
+                              </Link>
+                            </div>
                           </AccordionTrigger>
                           <AccordionContent>
                             {item.map((document: any, index: number) => (
-                              <div
+                              <p
                                 key={index}
-                                className="flex justify-between items-center h-14 px-2"
+                                className="h-14 px-2 text-red-500/70"
                               >
-                                <p>{document.documentName}</p>
-                                <Link
-                                  href={`/dashboard/employee/action?action=view&document=${document.document_number}`}
-                                  className={buttonVariants({
-                                    variant: 'default',
-                                  })}
-                                >
-                                  Subir
-                                </Link>
-                              </div>
+                                <ExclamationTriangleIcon className="inline mr-2 text-red-500/70 size-5" />
+                                {document.documentName}
+                              </p>
                             ))}
                           </AccordionContent>
                         </AccordionItem>
@@ -152,7 +150,7 @@ export const MissingDocumentList = () => {
         <Card className="flex flex-col overflow-hidden text-muted-foreground">
           <Accordion type="single" collapsible>
             <AccordionItem value="item-1">
-              <AccordionTrigger className="px-2 text-white border-b-2 bg-muted dark:bg-muted/50">
+              <AccordionTrigger className="px-2 dark:text-white border-b-2 bg-muted dark:bg-muted/50">
                 <div className="flex items-center justify-between w-full pr-5">
                   <div className="flex dark:text-white text-black">
                     Vehículos <CarIcon className="stroke-1  ml-2" />
@@ -164,35 +162,37 @@ export const MissingDocumentList = () => {
                   )}
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="h-fit bg-muted dark:bg-muted/50">
+              <AccordionContent className="h-fit bg-muted dark:bg-muted/50 max-h-[60vh] overflow-y-auto">
                 {allValuesToShow?.vehicles?.length > 0 &&
                   allValuesToShow.vehicles.map((item: any, index) => {
                     return (
-                      <Accordion
-                        key={index}
-                        type="single"
-                        collapsible
-                      >
+                      <Accordion key={index} type="single" collapsible>
                         <AccordionItem value="item-1">
                           <AccordionTrigger className="px-2">
-                            {item[0].resource}
+                            <div
+                              key={index}
+                              className="flex justify-between items-center h-14 px-2 w-full dark:text-white font-semibold"
+                            >
+                              {item[0].resource}
+                              <Link
+                                href={`/dashboard/equipment/action?action=view&id=${item?.[0].vehicle_id}`}
+                                className={buttonVariants({
+                                  variant: 'default',
+                                })}
+                              >
+                                Ver
+                              </Link>
+                            </div>
                           </AccordionTrigger>
                           <AccordionContent>
                             {item.map((document: any, index: number) => (
-                              <div
+                              <p
                                 key={index}
-                                className="flex justify-between items-center h-14 px-2"
+                                className="h-14 px-2 text-red-500/70"
                               >
-                                <p>{document.documentName}</p>
-                                <Link
-                                  href={`/dashboard/equipment/action?action=view&id=${document.vehicle_id}`}
-                                  className={buttonVariants({
-                                    variant: 'default',
-                                  })}
-                                >
-                                  Subir
-                                </Link>
-                              </div>
+                                <ExclamationTriangleIcon className="inline mr-2 text-red-500/70 size-5" />
+                                {document.documentName}
+                              </p>
                             ))}
                           </AccordionContent>
                         </AccordionItem>

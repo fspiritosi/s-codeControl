@@ -34,9 +34,7 @@ export default function Equipment() {
   if (typeof window !== "undefined") {
     
     const company_id = localStorage.getItem('company_id');
-    //console.log("comapany_id: ",company_id)
     let actualComp = Cookies.set('actualComp', company_id as string);
-    //console.log("esta es la cooki: ",Cookies.get())
  }
   let role: string = ""
   

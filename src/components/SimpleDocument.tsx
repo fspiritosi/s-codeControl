@@ -101,8 +101,6 @@ export default function SimpleDocument({
     },
   })
 
-  console.log(defaultDocumentId, 'defaultDocumentId')
-  console.log(documenTypes, 'defaultDocumentId')
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'documents',

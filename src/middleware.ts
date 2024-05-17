@@ -20,6 +20,20 @@ export async function middleware(req: NextRequest) {
     .select(`*`)
     .eq('owner_id', data?.[0]?.id)
 
+  let { data: share_company_users, error: sharedError } = await supabase
+    .from('share_company_users')
+    .select(`*`)
+    .eq('profile_id', data?.[0]?.id)
+
+  if (
+    !Companies?.[0] &&
+    !share_company_users?.[0] &&
+    !req.url.includes('/dashboard/company/new')
+  ) {
+    return NextResponse.redirect(new URL('/dashboard/company/new', req.url))
+  }
+
+  const ownerComp = Companies?.[0]?.owner_id
   const theme = res.cookies.get('theme')
   const actualCompanyId = req.cookies.get('actialCompanyId')
   //const actualNoOwner :string | null = req.cookies.get('actualComp')?.value
@@ -28,22 +42,16 @@ export async function middleware(req: NextRequest) {
   const actualNoOwner = actualNoOwnerValue
     ? actualNoOwnerValue.replace(/^"|"$/g, '')
     : null
-  console.log('actualcompanyId: ', actualCompanyId)
-  console.log('actualNoOwner: ', actualNoOwner)
 
   const actualNow = actualNoOwner //!== null ? parseInt(actualNoOwner as string, 10) : null
-  console.log('actualNow: ', actualNoOwner)
   const { data: guestRole } = await supabase
     .from('share_company_users')
     .select('role')
     .eq('profile_id ', data?.[0]?.id)
     .eq('company_id', actualNow)
 
-  console.log('guestRoles: ', guestRole?.[0]?.role)
-
+  res.cookies.set('guestRole', guestRole?.[0]?.role)
   const userRole = data?.[0]?.role
-  console.log('user id: ', data?.[0]?.id)
-  console.log('userRole: ', userRole)
 
   const guestUser = [
     '/dashboard/employee/action?action=edit&',
@@ -51,7 +59,17 @@ export async function middleware(req: NextRequest) {
     '/dashboard/equipment/action?action=edit&',
     '/dashboard/equipment/action?action=new',
     '/dashboard/company/new',
+    '/dashboard/company/actualCompany',
   ]
+
+  const usuarioUser = [
+    '/dashboard/company/new',
+    '/dashboard/company/actualCompany',
+    '/auditor',
+  ]
+  const administradorUser = ['/auditor']
+
+  const codeControlClientUser = ['/auditor']
 
   if (!theme) {
     res.cookies.set('theme', 'light')
@@ -79,16 +97,28 @@ export async function middleware(req: NextRequest) {
     }
 
     if (
+      userRole === 'CodeControlClient' &&
+      codeControlClientUser.some(url => req.url.includes(url))
+    ) {
+      return NextResponse.redirect(new URL('/dashboard', req.url))
+    }
+
+    if (
       guestRole?.[0]?.role === 'Invitado' &&
       guestUser.some(url => req.url.includes(url))
     ) {
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
+
     if (
-      (guestRole?.[0]?.role === 'CodeControlCLient' ||
-        guestRole?.[0]?.role === 'User' ||
-        userRole === 'CodeControlCLient') &&
-      guestUser.some(url => req.url.includes(url))
+      guestRole?.[0]?.role === 'Administrador' &&
+      administradorUser.some(url => req.url.includes(url))
+    ) {
+      return NextResponse.redirect(new URL('/dashboard', req.url))
+    }
+    if (
+      guestRole?.[0]?.role === 'Usuario' &&
+      usuarioUser.some(url => req.url.includes(url))
     ) {
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }

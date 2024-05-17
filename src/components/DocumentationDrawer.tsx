@@ -44,33 +44,6 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
   } else {
     role = profile?.actualCompany?.share_company_users?.[0].role as string
   }
-  const handleDownload = async (path: string, fileName: string) => {
-    toast.promise(
-      async () => {
-        const { data, error } = await supabase.storage
-          .from('document_files')
-          .download(path)
-
-        if (error) {
-          throw new Error('Error al descargar el documento')
-        }
-
-        // Extrae la extensión del archivo del path
-        const extension = path.split('.').pop()
-
-        const blob = new Blob([data], { type: 'application/octet-stream' })
-        // Usa la extensión del archivo al guardar el archivo
-        saveAs(blob, `${fileName}CodeControl.${extension}`)
-      },
-      {
-        loading: 'Descargando documento...',
-        success: 'Documento descargado',
-        error: error => {
-          return 'Error al descargar el documento'
-        },
-      },
-    )
-  }
 
   const documentToDownload = props?.filter(e => e.state === 'aprobado')
 
@@ -118,7 +91,6 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
 
   const [defaultDocumentId, setDefaultDocumentId] = useState('')
 
-  console.log(props, 'props')
   return (
     <aside className="mb-8 flex flex-col  h-full">
       <CardHeader className="h-[152px] flex flex-row  justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
@@ -132,7 +104,7 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
         </div>
 
         <Dialog>
-          <DialogTrigger asChild>
+          <DialogTrigger asChild disabled={documentToDownload?.length === 0}>
             <Button variant="primary" className="text-wrap">
               Descargar todos
             </Button>
@@ -159,6 +131,7 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
                     <Button
                       className="mt-5"
                       onClick={() => handleDownloadAll()}
+                      disabled={documentToDownload?.length === 0}
                     >
                       Descargar
                     </Button>
@@ -173,25 +146,29 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
         {props?.map((doc, index) => (
           <div
             key={index}
-            className="flex justify-between items-center h-14 px-2"
+            className="flex justify-between items-center h-14 px-2 text-nowrap"
           >
-            <p
-              className={cn(
-                'max-w-[70%]',
-                doc.state === 'pendiente' && 'text-muted-foreground/60',
-              )}
-            >
-              {doc.state === 'pendiente' && (
-                <ExclamationTriangleIcon className="inline mr-2 text-red-400 size-5" />
-              )}{' '}
-              {doc.state !== 'aprobado' && doc.state !== 'pendiente' && (
-                <ClockIcon className="inline mr-2 text-orange-400 size-5" />
-              )}
-              {doc.state === 'aprobado' && (
-                <CheckIcon className="inline mr-2 text-green-400 size-5" />
-              )}
-              {doc?.id_document_types?.name}
-            </p>
+            <div className="flex  w-[75%]">
+              <div className="">
+                {doc.state === 'pendiente' && (
+                  <ExclamationTriangleIcon className="inline mr-2 text-red-400 size-5" />
+                )}{' '}
+                {doc.state !== 'aprobado' && doc.state !== 'pendiente' && (
+                  <ClockIcon className="inline mr-2 text-orange-400 size-5" />
+                )}
+                {doc.state === 'aprobado' && (
+                  <CheckIcon className="inline mr-2 text-green-400 size-5" />
+                )}
+              </div>
+              <p
+                className={cn(
+                  'text-nowrap overflow-hidden overflow-ellipsis',
+                  doc.state === 'pendiente' && 'text-muted-foreground/60',
+                )}
+              >
+                {doc?.id_document_types?.name}
+              </p>
+            </div>
             {doc.state === 'pendiente' && (
               <AlertDialog open={open} onOpenChange={handleOpen}>
                 <AlertDialogTrigger asChild>
@@ -232,7 +209,7 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
                 </AlertDialogContent>
               </AlertDialog>
             )}
-            {(doc.state === 'aprobado' || doc.state === 'presentado') && (
+            {/* {(doc.state === 'aprobado' || doc.state === 'presentado') && (
               <Button
                 onClick={() =>
                   handleDownload(
@@ -243,17 +220,15 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
               >
                 Descargar
               </Button>
+            )} */}
+            {doc.state !== 'pendiente' && (
+              <Link
+                className={buttonVariants({ variant: 'default' })}
+                href={`/dashboard/document/${doc.id}`}
+              >
+                Ver
+              </Link>
             )}
-            {doc.state !== 'aprobado' &&
-              doc.state !== 'pendiente' &&
-              doc.state !== 'presentado' && (
-                <Link
-                  className={buttonVariants({ variant: 'default' })}
-                  href={`/dashboard/document/${doc.id}`}
-                >
-                  Ver documento
-                </Link>
-              )}
           </div>
         ))}
       </div>

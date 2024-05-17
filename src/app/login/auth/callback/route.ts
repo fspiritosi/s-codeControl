@@ -93,6 +93,7 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}${next}`)
     }
   }
+
   // return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/login/auth/auth-code-error`)
+  return NextResponse.redirect(`${origin}/login`)
 }
