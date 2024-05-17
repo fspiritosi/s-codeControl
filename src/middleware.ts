@@ -21,8 +21,8 @@ export async function middleware(req: NextRequest) {
     .eq('owner_id', data?.[0]?.id)
   
 
-  console.log("companies: ", Companies?.[0].owner_id)
-  const ownerComp = Companies?.[0].owner_id
+  console.log("companies: ", Companies?.[0]?.owner_id)
+  const ownerComp = Companies?.[0]?.owner_id
   const theme = res.cookies.get('theme')
   const actualCompanyId = req.cookies.get('actialCompanyId')
   //const actualNoOwner :string | null = req.cookies.get('actualComp')?.value
