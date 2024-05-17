@@ -1,0 +1,46 @@
+'use client'
+import { Button } from '@/components/ui/button'
+import { saveAs } from 'file-saver'
+import { toast } from 'sonner'
+import { supabase } from '../../../../../supabase/supabase'
+function DownloadButton({
+  path,
+  fileName,
+}: {
+  path: string
+  fileName: string
+}) {
+  const handleDownload = async (path: string, fileName: string) => {
+    toast.promise(
+      async () => {
+        const { data, error } = await supabase.storage
+          .from('document_files')
+          .download(path)
+
+        if (error) {
+          throw new Error('Error al descargar el documento')
+        }
+
+        // Extrae la extensión del archivo del path
+        const extension = path.split('.').pop()
+
+        const blob = new Blob([data], { type: 'application/octet-stream' })
+        // Usa la extensión del archivo al guardar el archivo
+        saveAs(blob, `${fileName}CodeControl.${extension}`)
+      },
+      {
+        loading: 'Descargando documento...',
+        success: 'Documento descargado',
+        error: error => {
+          return 'Error al descargar el documento'
+        },
+      },
+    )
+  }
+
+  return (
+    <Button onClick={() => handleDownload(path, fileName)}>Descargar</Button>
+  )
+}
+
+export default DownloadButton

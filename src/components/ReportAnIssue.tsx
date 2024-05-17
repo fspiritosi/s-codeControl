@@ -9,28 +9,17 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { EmailTemplate } from './EmailTemplate'
-import { useState } from 'react';
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { EmailTemplateHelp } from './EmailTemplateHelp'
+import { useState } from 'react'
 
 export function ReportAnIssue() {
-
-  const [area, setArea] = useState('billing'); // Valor por defecto para el área
-  const [nivelSeguridad, setNivelSeguridad] = useState('2'); // Valor por defecto para el nivel de seguridad
-  const [asunto, setAsunto] = useState(''); // Valor inicial para el asunto
-  const [descripcion, setDescripcion] = useState(''); // Valor inicial para la descripción
+  const [area, setArea] = useState('billing') // Valor por defecto para el área
+  const [nivelSeguridad, setNivelSeguridad] = useState('2') // Valor por defecto para el nivel de seguridad
+  const [asunto, setAsunto] = useState('') // Valor inicial para el asunto
+  const [descripcion, setDescripcion] = useState('') // Valor inicial para la descripción
   const emailUser = useLoggedUserStore(state => state.credentialUser?.email)
   async function submit() {
-
     try {
       //EmailTemplateHelp({ userEmail: emailUser as string, reason: descripcion });
       const response = await fetch('/api/send', {
@@ -39,23 +28,18 @@ export function ReportAnIssue() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          to: "info@codecontrol.com.ar",
+          to: 'info@codecontrol.com.ar',
           subject: asunto,
           react: descripcion,
           userEmail: emailUser,
         }),
-      });
-  
+      })
+
       if (response.ok) {
-        
-        console.log('Email enviado exitosamente');
       } else {
-        
-        console.error('Error al enviar el email');
       }
     } catch (error) {
-      
-      console.error('Error inesperado:', error);
+      console.error('Error inesperado:', error)
     }
   }
   return (
@@ -120,39 +104,41 @@ export function ReportAnIssue() {
     //     </CardFooter>
     //   </Card>
     // </section>
-<section className="md:mx-7 w-1/2">
-  <Card>
-    <CardHeader>
-      <CardTitle>Reportar un problema</CardTitle>
-      <CardDescription>Por favor, describe el problema que estás experimentando</CardDescription>
-    </CardHeader>
-    <form onSubmit={submit}>
-      <CardContent className="grid gap-6">
-        <div className="grid gap-2">
-          <Label htmlFor="subject">Asunto</Label>
-          <Input
-            id="subject"
-            value={asunto}
-            onChange={event => setAsunto(event.target.value)}
-            placeholder="Necesito ayuda con..."
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="description">Descripción</Label>
-          <Textarea
-            id="description"
-            value={descripcion}
-            onChange={event => setDescripcion(event.target.value)}
-            placeholder="Por favor, incluye toda la información relevante sobre tu problema."
-          />
-        </div>
-      </CardContent>
-      <CardFooter className="justify-between space-x-2">
-        <Button variant="ghost">Cancelar</Button>
-        <Button type="submit">Enviar</Button>
-      </CardFooter>
-    </form>
-  </Card>
-</section>
+    <section className="md:mx-7 w-1/2">
+      <Card>
+        <CardHeader>
+          <CardTitle>Reportar un problema</CardTitle>
+          <CardDescription>
+            Por favor, describe el problema que estás experimentando
+          </CardDescription>
+        </CardHeader>
+        <form onSubmit={submit}>
+          <CardContent className="grid gap-6">
+            <div className="grid gap-2">
+              <Label htmlFor="subject">Asunto</Label>
+              <Input
+                id="subject"
+                value={asunto}
+                onChange={event => setAsunto(event.target.value)}
+                placeholder="Necesito ayuda con..."
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="description">Descripción</Label>
+              <Textarea
+                id="description"
+                value={descripcion}
+                onChange={event => setDescripcion(event.target.value)}
+                placeholder="Por favor, incluye toda la información relevante sobre tu problema."
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="justify-between space-x-2">
+            <Button variant="ghost">Cancelar</Button>
+            <Button type="submit">Enviar</Button>
+          </CardFooter>
+        </form>
+      </Card>
+    </section>
   )
 }

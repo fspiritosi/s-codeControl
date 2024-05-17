@@ -9,33 +9,39 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { EyeClosedIcon,EyeOpenIcon } from '@radix-ui/react-icons'
 import { Input } from '@/components/ui/input'
 import { Toggle } from '@/components/ui/toggle'
 import { useAuthData } from '@/hooks/useAuthData'
 import { loginSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { EyeClosedIcon, EyeOpenIcon } from '@radix-ui/react-icons'
 import { AuthError } from '@supabase/supabase-js'
+import { useTheme } from 'next-themes'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import * as z from 'zod'
-import { CloseEyeIcon } from './svg/closeEye'
 import { GoogleIcon } from './svg/google'
 import { Loader } from './svg/loader'
-import { EyeIcon } from './svg/openEye'
 import { Separator } from './ui/separator'
-import { useToast } from './ui/use-toast'
-
-import { useTheme } from 'next-themes'
 
 export function LoginForm() {
   const { login, googleLogin } = useAuthData()
-  const { toast } = useToast()
   const [showPassword, setShowPassword] = useState(false)
   const [showLoader, setShowLoader] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const error = hashParams.get('error')
+      if (error) {
+        toast.error('Error al iniciar sesión con Google')
+      }
+    }
+  }, [])
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -53,10 +59,7 @@ export function LoginForm() {
       await login(credentials)
       router.push('/dashboard')
     } catch (error: AuthError | any) {
-      toast({
-        variant: 'destructive',
-        title: error.message,
-      })
+      toast.error(error.message)
     } finally {
       setShowLoader(false)
     }
@@ -67,11 +70,7 @@ export function LoginForm() {
       const user = await googleLogin()
       return user
     } catch (error: AuthError | any) {
-      toast({
-        title: 'Error',
-        description: `${error?.message}`,
-        variant: 'destructive',
-      })
+      toast.error(error.message)
     }
   }
 

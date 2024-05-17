@@ -7,7 +7,6 @@ require('dotenv').config()
 export const useDocument = () => {
   const { errorTranslate } = useEdgeFunctions()
   const { actualCompany } = useLoggedUserStore()
-  //console.log(actualCompany,'actualCompany');
   const url = process.env.NEXT_PUBLIC_PROJECT_URL
 
   return {
@@ -33,8 +32,6 @@ export const useDocument = () => {
 
       if (error) {
         console.error()
-        // const message = await errorTranslate(error?.message)
-        //console.log(error);
       }
       return data
     },
@@ -112,7 +109,6 @@ export const useDocument = () => {
         .from('documents_employees')
         .update(documents)
         .eq('id', id)
-      //console.log("id: ", id)
       if (error) {
         const message = await errorTranslate(error.message)
         throw new Error(String(message).replaceAll('"', ''))
@@ -158,7 +154,6 @@ export const useDocument = () => {
           throw new Error(String(message).replaceAll('"', ''))
         }
 
-        // console.log(documents,'documents');
         return documents
       }
     },
@@ -186,8 +181,6 @@ export const useDocument = () => {
             domain: item.vehicles.domain || 'No disponible',
             validity: item.validity || 'No vence',
           })) as DocumentsTable[]
-
-          //console.log("ver el error: ", documents)
 
           if (error) {
             const message = await errorTranslate(error?.message)
@@ -218,9 +211,6 @@ export const useDocument = () => {
         )
 
       if (error) {
-        console.log(error, 'error')
-        // const message = await errorTranslate(error?.message)
-        // throw new Error(String(message).replaceAll('"', ''))
       }
 
       // Obtener la URL de la imagen cargada
@@ -273,7 +263,6 @@ export const useDocument = () => {
           .not('document_types', 'is', null)
           .eq('employees.document_number', document)
 
-        //console.log("document employees: ", documents_employees)
         if (error) {
           const message = await errorTranslate(error?.message)
           throw new Error(String(message).replaceAll('"', ''))
@@ -294,7 +283,6 @@ export const useDocument = () => {
           .not('vehicles', 'is', null)
           .not('document_types', 'is', null)
           .eq('vehicles.id', id)
-        //console.log("este es el error ????: ", id)
         if (error) {
           const message = await errorTranslate(error?.message)
           throw new Error(String(message).replaceAll('"', ''))

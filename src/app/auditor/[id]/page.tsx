@@ -43,9 +43,8 @@ export default function page({ params }: { params: { id: string } }) {
           `,
       )
       .eq('id', params.id)
-      const userEmail = documents_employee?.[0]?.profile?.email;
-      setUserEmail(userEmail);
-      console.log(userEmail,'email')
+    const userEmail = documents_employee?.[0]?.profile?.email
+    setUserEmail(userEmail)
     if (documents_employee?.length === 0) {
       let { data: documents_vehicle } = await supabase
         .from('documents_equipment')
@@ -451,7 +450,11 @@ export default function page({ params }: { params: { id: string } }) {
                   </CardDescription>
                   <div className="w-full flex justify-evenly">
                     <ApproveDocModal id={params.id} resource={resource} />
-                    <DenyDocModal id={params.id} resource={resource} userEmail={userEmail}/>
+                    <DenyDocModal
+                      id={params.id}
+                      resource={resource}
+                      userEmail={userEmail}
+                    />
                   </div>
                 </div>
               </Card>

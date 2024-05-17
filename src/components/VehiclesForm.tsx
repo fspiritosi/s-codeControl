@@ -28,7 +28,9 @@ import { useImageUpload } from '@/hooks/useUploadImage'
 import { useCountriesStore } from '@/store/countries'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { z } from 'zod'
 import { supabase } from '../../supabase/supabase'
 import { CheckboxDefaultValues } from './CheckboxDefValues'
@@ -45,9 +47,7 @@ import {
   FormMessage,
 } from './ui/form'
 import { Input } from './ui/input'
-import { useToast } from './ui/use-toast'
-import cookie from 'js-cookie';
-import { Suspense } from 'react'
+// import { useToast } from './ui/use-toast'
 
 type VehicleType = {
   year: string
@@ -94,14 +94,14 @@ export default function VehiclesForm2({ id }: { id: string }) {
   const [accion, setAccion] = useState(searchParams.get('action'))
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const profile = useLoggedUserStore(state => state)
-  let role = ""
-  if(profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id){
-     role = profile?.actualCompany?.owner_id?.role as string
-  }else{
-     role = profile?.actualCompany?.share_company_users?.[0].role as string
+  let role = ''
+  if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
+    role = profile?.actualCompany?.owner_id?.role as string
+  } else {
+    role = profile?.actualCompany?.share_company_users?.[0].role as string
   }
   const [vehicle, setVehicle] = useState<VehicleType | null>(null)
-  const { toast } = useToast()
+  // const { toast } = useToast()
   const pathname = usePathname()
   const [data, setData] = useState<dataType>({
     tipe_of_vehicles: [],
@@ -401,109 +401,102 @@ export default function VehiclesForm2({ id }: { id: string }) {
   const mandatoryDocuments = useCountriesStore(
     state => state.mandatoryDocuments,
   )
-  console.log(form.formState.errors, 'formState.errors')
   const loggedUser = useLoggedUserStore(state => state.credentialUser?.id)
+
   async function onCreate(values: z.infer<typeof vehicleSchema>) {
-    const { type_of_vehicle, brand, model, domain } = values
-    //const companyId = actualCompany?.id
+    toast.promise(
+      async () => {
+        const { type_of_vehicle, brand, model, domain } = values
 
-    console.log(values, 'values')
-    try {
-      const { data: vehicle, error } = await supabase
-        .from('vehicles')
-        .insert([
-          {
-            ...values,
-            domain: domain?.toUpperCase(),
-            type_of_vehicle: data.tipe_of_vehicles.find(
-              e => e.name === type_of_vehicle,
-            )?.id,
-            brand: data.brand.find(e => e.label === brand)?.id,
-            model: data.models.find(e => e.name === model)?.id,
-            type: data.types.find(e => e.name === values.type)?.id,
-            company_id: actualCompany?.id,
-          },
-        ])
-        .select()
-
-      const documentsMissing: {
-        applies: number
-        id_document_types: string
-        validity: string | null
-        user_id: string | undefined
-      }[] = []
-
-      mandatoryDocuments.Equipos.forEach(async document => {
-        documentsMissing.push({
-          applies: vehicle?.[0]?.id,
-          id_document_types: document.id,
-          validity: null,
-          user_id: loggedUser,
-        })
-      })
-
-      const { data: documentData, error: documentError } = await supabase
-        .from('documents_equipment')
-        .insert(documentsMissing)
-        .select()
-
-      if (error) {
-        console.log(error)
-        return
-      }
-
-      const id = vehicle?.[0].id
-      const fileExtension = imageFile?.name.split('.').pop()
-      if (imageFile) {
         try {
-          const renamedFile = new File(
-            [imageFile],
-            `${id.replace(/\s/g, '')}.${fileExtension}`,
-            {
-              type: `image/${fileExtension}`,
-            },
-          )
-          await uploadImage(renamedFile, 'vehicle_photos')
+          const { data: vehicle, error } = await supabase
+            .from('vehicles')
+            .insert([
+              {
+                ...values,
+                domain: domain?.toUpperCase(),
+                type_of_vehicle: data.tipe_of_vehicles.find(
+                  e => e.name === type_of_vehicle,
+                )?.id,
+                brand: data.brand.find(e => e.label === brand)?.id,
+                model: data.models.find(e => e.name === model)?.id,
+                type: data.types.find(e => e.name === values.type)?.id,
+                company_id: actualCompany?.id,
+              },
+            ])
+            .select()
 
-          try {
-            const vehicleImage = `${url}/vehicle_photos/${id}.${fileExtension}`
-              .trim()
-              .replace(/\s/g, '')
+          const documentsMissing: {
+            applies: number
+            id_document_types: string
+            validity: string | null
+            user_id: string | undefined
+          }[] = []
 
-            const { data, error } = await supabase
-              .from('vehicles')
-              .update({ picture: vehicleImage })
-              .eq('id', id)
-              .eq('company_id', actualCompany?.id)
-          } catch (error) {}
-          documetsFetch()
-        } catch (error: any) {
-          toast({
-            variant: 'destructive',
-            title: 'Error al subir la imagen',
-            description:
-              'No pudimos registrar la imagen, pero el ususario fue registrado correctamente',
+          mandatoryDocuments.Equipos.forEach(async document => {
+            documentsMissing.push({
+              applies: vehicle?.[0]?.id,
+              id_document_types: document.id,
+              validity: null,
+              user_id: loggedUser,
+            })
           })
-        }
-      }
 
-      if (!error) {
-        toast({
-          title: 'Vehículo registrado',
-          description: 'El vehículo fue registrado con éxito',
-        })
-        router.push('/dashboard/equipment')
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Error al registrar el vehículo',
-        })
-      }
-    } catch (error) {
-      toast({
-        title: 'Error al registrar el vehículo',
-      })
-    }
+          const { data: documentData, error: documentError } = await supabase
+            .from('documents_equipment')
+            .insert(documentsMissing)
+            .select()
+
+          if (error) {
+            throw new Error('Error al registrar el vehículo')
+            return
+          }
+
+          const id = vehicle?.[0].id
+          const fileExtension = imageFile?.name.split('.').pop()
+          if (imageFile) {
+            try {
+              const renamedFile = new File(
+                [imageFile],
+                `${id.replace(/\s/g, '')}.${fileExtension}`,
+                {
+                  type: `image/${fileExtension}`,
+                },
+              )
+              await uploadImage(renamedFile, 'vehicle_photos')
+
+              try {
+                const vehicleImage =
+                  `${url}/vehicle_photos/${id}.${fileExtension}`
+                    .trim()
+                    .replace(/\s/g, '')
+
+                const { data, error } = await supabase
+                  .from('vehicles')
+                  .update({ picture: vehicleImage })
+                  .eq('id', id)
+                  .eq('company_id', actualCompany?.id)
+              } catch (error) {}
+              documetsFetch()
+            } catch (error: any) {
+              throw new Error('Error al subir la imagen')
+            }
+          }
+
+          if (error) {
+            throw new Error('Error al registrar el vehículo')
+          }
+          router.push('/dashboard/equipment')
+        } catch (error) {
+          throw new Error('Error al registrar el vehículo')
+        }
+      },
+      {
+        loading: 'Guardando...',
+        success: 'Vehículo registrado',
+        error: 'Error al registrar el vehículo',
+      },
+    )
   }
   const { uploadImage } = useImageUpload()
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -526,708 +519,734 @@ export default function VehiclesForm2({ id }: { id: string }) {
   }
 
   async function onUpdate(values: z.infer<typeof vehicleSchema>) {
-    console.log(values, 'values')
-    const {
-      type_of_vehicle,
-      brand,
-      model,
-      year,
-      engine,
-      chassis,
-      serie,
-      domain,
-      intern_number,
-      picture,
-      type,
-    } = values
+    toast.promise(
+      async () => {
+        const {
+          type_of_vehicle,
+          brand,
+          model,
+          year,
+          engine,
+          chassis,
+          serie,
+          domain,
+          intern_number,
+          picture,
+          type,
+        } = values
 
-    try {
-      await supabase
-        .from('vehicles')
-        .update({
-          type_of_vehicle: data.tipe_of_vehicles.find(
-            e => e.name === type_of_vehicle,
-          )?.id,
-          brand: data.brand.find(e => e.label === brand)?.id,
-          model: data.models.find(e => e.name === model)?.id,
-          year: year,
-          engine: engine,
-          chassis: chassis,
-          serie: serie,
-          domain: domain?.toUpperCase(),
-          intern_number: intern_number,
-          picture: picture,
-          allocated_to: values.allocated_to,
-        })
-        .eq('id', vehicle?.id)
-        .eq('company_id', actualCompany?.id)
-        .select()
-
-      const id = vehicle?.id
-      const fileExtension = imageFile?.name.split('.').pop()
-      if (imageFile) {
         try {
-          const renamedFile = new File(
-            [imageFile],
-            `${id?.replace(/\s/g, '')}.${fileExtension}`,
-            {
-              type: `image/${fileExtension}`,
-            },
-          )
-          await uploadImage(renamedFile, 'vehicle_photos')
+          await supabase
+            .from('vehicles')
+            .update({
+              type_of_vehicle: data.tipe_of_vehicles.find(
+                e => e.name === type_of_vehicle,
+              )?.id,
+              brand: data.brand.find(e => e.label === brand)?.id,
+              model: data.models.find(e => e.name === model)?.id,
+              year: year,
+              engine: engine,
+              chassis: chassis,
+              serie: serie,
+              domain: domain?.toUpperCase(),
+              intern_number: intern_number,
+              picture: picture,
+              allocated_to: values.allocated_to,
+            })
+            .eq('id', vehicle?.id)
+            .eq('company_id', actualCompany?.id)
+            .select()
 
-          try {
-            const vehicleImage =
-              `${url}/vehicle_photos/${id}.${fileExtension}?timestamp=${Date.now()}`
-                .trim()
-                .replace(/\s/g, '')
-            const { data, error } = await supabase
-              .from('vehicles')
-              .update({ picture: vehicleImage })
-              .eq('id', id)
-              .eq('company_id', actualCompany?.id)
-          } catch (error) {}
-        } catch (error: any) {
-          toast({
-            variant: 'destructive',
-            title: 'Error al subir la imagen',
-            description:
-              'No pudimos registrar la imagen, pero el ususario fue registrado correctamente',
-          })
+          const id = vehicle?.id
+          const fileExtension = imageFile?.name.split('.').pop()
+          if (imageFile) {
+            try {
+              const renamedFile = new File(
+                [imageFile],
+                `${id?.replace(/\s/g, '')}.${fileExtension}`,
+                {
+                  type: `image/${fileExtension}`,
+                },
+              )
+              await uploadImage(renamedFile, 'vehicle_photos')
+
+              try {
+                const vehicleImage =
+                  `${url}/vehicle_photos/${id}.${fileExtension}?timestamp=${Date.now()}`
+                    .trim()
+                    .replace(/\s/g, '')
+                const { data, error } = await supabase
+                  .from('vehicles')
+                  .update({ picture: vehicleImage })
+                  .eq('id', id)
+                  .eq('company_id', actualCompany?.id)
+              } catch (error) {}
+            } catch (error: any) {
+              throw new Error('Error al subir la imagen')
+            }
+          }
+
+          setReadOnly(true)
+        } catch (error) {
+          throw new Error('Error al editar el vehículo')
         }
-      }
-
-      toast({
-        title: 'Vehículo editado',
-        description: 'El vehículo fue editado con éxito',
-      })
-      setReadOnly(true)
-    } catch (error) {
-      toast({
-        title: 'Error al editar el vehículo',
-      })
-    }
+      },
+      {
+        loading: 'Guardando...',
+        success: 'Vehículo editado',
+        error: 'Error al editar el vehículo',
+      },
+    )
   }
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-    <section>
-      <header className="flex justify-between gap-4">
-        <div className="mb-8 flex justify-between w-full">
-          <CardHeader className="h-[152px] flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
-            {accion === 'edit' || accion === 'view' ? (
-              <div className="flex gap-3 items-center">
-                <CardTitle className=" font-bold tracking-tight">
-                  <Avatar className="size-[100px]">
-                    <AvatarImage
-                      className="object-cover border-2 border-black/30 rounded-full"
-                      src={
-                        vehicle?.picture ||
-                        'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80'
-                      }
-                      alt="Imagen del empleado"
-                    />
-                    <AvatarFallback>CC</AvatarFallback>
-                  </Avatar>
-                </CardTitle>
-                <CardDescription className="text-muted-foreground text-2xl">
-                  Tipo de equipo: {vehicle?.type.name} <br />
-                  Numero interno: {vehicle?.intern_number}
-                </CardDescription>
-              </div>
-            ) : (
-              <div>
-                <CardTitle className="font-bold tracking-tight text-3xl">
-                  {accion === 'edit'
-                    ? 'Editar equipo'
-                    : accion === 'view'
-                      ? `Equipo ${vehicle?.type_of_vehicle} ${vehicle?.intern_number}`
-                      : 'Agregar equipo'}
-                </CardTitle>
-                <CardDescription className="text-muted-foreground text-xl">
-                  {accion === 'edit' || accion === 'view'
-                    ? `${
-                        readOnly
-                          ? 'Vista previa de equipo'
-                          : ' En esta vista puedes editar los datos del equipo'
-                      }`
-                    : 'En esta vista puedes agregar un nuevo equipo'}
-                </CardDescription>
-              </div>
-            )}
+      <section>
+        <header className="flex justify-between gap-4">
+          <div className="mb-8 flex justify-between w-full">
+            <CardHeader className="h-[152px] flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
+              {accion === 'edit' || accion === 'view' ? (
+                <div className="flex gap-3 items-center">
+                  <CardTitle className=" font-bold tracking-tight">
+                    <Avatar className="size-[100px]">
+                      <AvatarImage
+                        className="object-cover border-2 border-black/30 rounded-full"
+                        src={
+                          vehicle?.picture ||
+                          'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80'
+                        }
+                        alt="Imagen del empleado"
+                      />
+                      <AvatarFallback>CC</AvatarFallback>
+                    </Avatar>
+                  </CardTitle>
+                  <CardDescription className="text-muted-foreground text-2xl">
+                    Tipo de equipo: {vehicle?.type.name} <br />
+                    Numero interno: {vehicle?.intern_number}
+                  </CardDescription>
+                </div>
+              ) : (
+                <div>
+                  <CardTitle className="font-bold tracking-tight text-3xl">
+                    {accion === 'edit'
+                      ? 'Editar equipo'
+                      : accion === 'view'
+                        ? `Equipo ${vehicle?.type_of_vehicle} ${vehicle?.intern_number}`
+                        : 'Agregar equipo'}
+                  </CardTitle>
+                  <CardDescription className="text-muted-foreground text-xl">
+                    {accion === 'edit' || accion === 'view'
+                      ? `${
+                          readOnly
+                            ? 'Vista previa de equipo'
+                            : ' En esta vista puedes editar los datos del equipo'
+                        }`
+                      : 'En esta vista puedes agregar un nuevo equipo'}
+                  </CardDescription>
+                </div>
+              )}
 
-            <div className="mt-4">
-            {(role !== "Invitado") && readOnly && accion === 'view' && (
-                <Button
-                  variant="primary"
-                  onClick={() => {
-                    setReadOnly(false)
-                  }}
-                >
-                  Habilitar edición
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-        </div>
-      </header>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(
-            accion === 'edit' || accion === 'view' ? onUpdate : onCreate,
-          )}
-          className="space-y-8 w-full px-6 pb-3"
-        >
-          <div className=" flex gap-[2vw] flex-wrap items-center">
-            <FormField
-              control={form.control}
-              name="type_of_vehicle"
-              render={({ field }) => (
-                <FormItem className="flex flex-col min-w-[250px]">
-                  <FormLabel>
-                    Tipo de equipo <span style={{ color: 'red' }}>*</span>{' '}
-                  </FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          disabled={readOnly}
-                          variant="outline"
-                          role="combobox"
-                          value={vehicle?.type_of_vehicle}
-                          className={cn(
-                            'w-[250px] justify-between',
-                            !field.value && 'text-muted-foreground',
-                          )}
-                        >
-                          {field.value
-                            ? field.value
-                            : 'Seleccionar tipo de equipo'}
-                          <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[250px] p-0">
-                      <Command>
-                        <CommandInput
-                          disabled={readOnly}
-                          placeholder="Buscar tipo de vehículo..."
-                          className="h-9"
-                          //value={field.value}
-                        />
-                        <CommandEmpty>
-                          No se encontro ningun resultado
-                        </CommandEmpty>
-                        <CommandGroup>
-                          {types?.map(option => (
-                            <CommandItem
-                              value={option}
-                              key={option}
-                              onSelect={() => {
-                                form.setValue('type_of_vehicle', option)
-
-                                if (option === 'Vehículos') {
-                                  setHideInput(true)
-                                }
-                                if (option === 'Otros') {
-                                  setHideInput(false)
-                                }
-                              }}
-                            >
-                              {option}
-                              <CheckIcon
-                                className={cn(
-                                  'ml-auto h-4 w-4',
-                                  option === field.value
-                                    ? 'opacity-100'
-                                    : 'opacity-0',
-                                )}
-                              />
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormDescription>
-                    Selecciona el tipo de vehículo
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="brand"
-              render={({ field }) => (
-                <FormItem className="flex flex-col min-w-[250px]">
-                  <FormLabel>
-                    Marca <span style={{ color: 'red' }}>*</span>
-                  </FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          disabled={readOnly}
-                          variant="outline"
-                          role="combobox"
-                          value={field.value}
-                          className={cn(
-                            'w-[250px] justify-between',
-                            !field.value && 'text-muted-foreground',
-                          )}
-                        >
-                          {field.value || 'Seleccionar marca'}
-                          <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[250px] p-0 max-h-[200px] overflow-y-auto">
-                      <Command>
-                        <CommandInput
-                          disabled={readOnly}
-                          placeholder="Buscar marca..."
-                          className="h-9"
-                        />
-                        <CommandEmpty className="py-2 px-2">
-                          <Modal modal="addBrand" fetchData={fetchData}>
-                            <Button
-                              disabled={readOnly}
-                              variant="outline"
-                              role="combobox"
-                              className={cn(
-                                'w-full justify-between',
-                                !field.value && 'text-muted-foreground',
-                              )}
-                            >
-                              Agregar marca
-                              <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </Modal>
-                        </CommandEmpty>
-                        <CommandGroup>
-                          {vehicleBrands.map(option => (
-                            <CommandItem
-                              value={option.label}
-                              key={option.label}
-                              onSelect={() => {
-                                form.setValue('brand', option.label)
-                                const brand_id = data.brand.find(
-                                  e => e.label === option.label,
-                                )?.id
-                                fetchModels(brand_id as string)
-                              }}
-                            >
-                              {option.label}
-                              <CheckIcon
-                                className={cn(
-                                  'ml-auto h-4 w-4',
-                                  option.label === field.value
-                                    ? 'opacity-100'
-                                    : 'opacity-0',
-                                )}
-                              />
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormDescription>
-                    Selecciona la marca del vehículo
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="model"
-              render={({ field }) => (
-                <FormItem className="flex flex-col min-w-[250px]">
-                  <FormLabel>
-                    {' '}
-                    Modelo <span style={{ color: 'red' }}>*</span>
-                  </FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          disabled={readOnly}
-                          variant="outline"
-                          role="combobox"
-                          className={cn(
-                            'w-[250px] justify-between',
-                            !field.value && 'text-muted-foreground',
-                          )}
-                        >
-                          {field.value || 'Seleccionar marca'}
-                          <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[250px] p-0">
-                      <Command>
-                        <CommandInput
-                          disabled={readOnly}
-                          placeholder="Buscar modelo..."
-                          className="h-9"
-                        />
-                        <CommandEmpty className="py-2 px-2">
-                          <Modal
-                            modal="addModel"
-                            fetchModels={fetchModels}
-                            brandOptions={data.brand}
-                          >
-                            <Button
-                              disabled={readOnly}
-                              variant="outline"
-                              role="combobox"
-                              className={cn(
-                                'w-full justify-between',
-                                !field.value && 'text-muted-foreground',
-                              )}
-                            >
-                              Agregar modelo
-                              <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </Modal>
-                        </CommandEmpty>
-                        <CommandGroup>
-                          {vehicleModels.map(option => (
-                            <CommandItem
-                              value={option.name}
-                              key={option.name}
-                              onSelect={() => {
-                                form.setValue('model', option.name)
-                              }}
-                            >
-                              {option.name}
-                              <CheckIcon
-                                className={cn(
-                                  'ml-auto h-4 w-4',
-                                  option.name === field.value
-                                    ? 'opacity-100'
-                                    : 'opacity-0',
-                                )}
-                              />
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormDescription>
-                    Selecciona el modelo del vehículo
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="year"
-              render={({ field }) => (
-                <FormItem className="flex flex-col min-w-[250px]">
-                  <FormLabel>
-                    {' '}
-                    Año <span style={{ color: 'red' }}>*</span>
-                  </FormLabel>
-                  <Input
-                    {...field}
-                    disabled={readOnly}
-                    className="input w-[250px]"
-                    placeholder="Año"
-                    value={
-                      field.value !== undefined
-                        ? field.value
-                        : vehicle?.year || ''
-                    }
-                    onChange={e => {
-                      form.setValue('year', e.target.value)
+              <div className="mt-4">
+                {role !== 'Invitado' && readOnly && accion === 'view' && (
+                  <Button
+                    variant="primary"
+                    onClick={() => {
+                      setReadOnly(false)
                     }}
-                  />
-                  <FormDescription>Ingrese el año del vehículo</FormDescription>
-                  <FormMessage className="max-w-[250px]" />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="engine"
-              render={({ field }) => (
-                <FormItem className="flex flex-col min-w-[250px]">
-                  <FormLabel>Motor del vehículo</FormLabel>
-                  <Input
-                    {...field}
-                    disabled={readOnly}
-                    className="input w-[250px]"
-                    placeholder="Ingrese el tipo de motor"
-                    value={field.value}
-                  />
-                  <FormDescription>
-                    Ingrese el tipo de motor del vehículo
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem
-                  className={cn(
-                    'flex flex-col min-w-[250px]',
-                    form.getValues('type_of_vehicle'),
-                  )}
-                >
-                  <FormLabel>
-                    Tipo <span style={{ color: 'red' }}>*</span>{' '}
-                  </FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          disabled={readOnly}
-                          value={field.value}
-                          className={cn(
-                            'w-[250px] justify-between',
-                            !field.value && 'text-muted-foreground',
-                          )}
-                        >
-                          {field.value ? field.value : 'Seleccione tipo'}
-                          <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[250px] p-0">
-                      <Command>
-                        <CommandInput
-                          placeholder="Buscar tipo..."
-                          className="h-9"
-                        />
-                        <CommandEmpty>
-                          No se encontro ningun resultado
-                        </CommandEmpty>
-                        <CommandGroup>
-                          {types_vehicles?.map(option => (
-                            <CommandItem
-                              value={option}
-                              key={option}
-                              onSelect={() => {
-                                form.setValue('type', option)
-                              }}
-                            >
-                              {option}
-                              <CheckIcon
-                                className={cn(
-                                  'ml-auto h-4 w-4',
-                                  option === field.value
-                                    ? 'opacity-100'
-                                    : 'opacity-0',
-                                )}
-                              />
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormDescription>Selecciona el tipo</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="chassis"
-              render={({ field }) => (
-                <FormItem
-                  className={cn(
-                    'flex flex-col min-w-[250px]',
-                    !hideInput && 'hidden',
-                  )}
-                >
-                  <FormLabel>
-                    Chasis del vehículo<span style={{ color: 'red' }}>*</span>
-                  </FormLabel>
-                  <Input
-                    {...field}
-                    disabled={readOnly}
-                    type="text"
-                    className="input w-[250px]"
-                    placeholder="Ingrese el chasis"
-                    value={
-                      field.value !== '' ? field.value : vehicle?.chassis || ''
-                    }
-                    onChange={e => {
-                      form.setValue('chassis', e.target.value)
-                    }}
-                  />
-                  <FormDescription>
-                    Ingrese el chasis del vehículo
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="serie"
-              render={({ field }) => (
-                <FormItem
-                  className={cn(
-                    'flex flex-col min-w-[250px]',
-                    form.getValues('type_of_vehicle') && hideInput && 'hidden',
-                  )}
-                >
-                  <FormLabel>
-                    Serie del vehículo<span style={{ color: 'red' }}>*</span>
-                  </FormLabel>
-                  <Input
-                    {...field}
-                    type="text"
-                    disabled={readOnly}
-                    className="input w-[250px]"
-                    placeholder="Ingrese la serie"
-                    onChange={e => {
-                      form.setValue('serie', e.target.value)
-                    }}
-                    defaultValue={vehicle?.serie}
-                  />
-
-                  <FormDescription>
-                    Ingrese la serie del vehículo
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="domain"
-              render={({ field }) => (
-                <FormItem
-                  className={cn(
-                    'flex flex-col min-w-[250px]',
-                    !hideInput && 'hidden',
-                  )}
-                >
-                  <FormLabel>
-                    Dominio del vehículo<span style={{ color: 'red' }}>*</span>
-                  </FormLabel>
-                  <Input
-                    {...field}
-                    disabled={readOnly}
-                    type="text"
-                    className="input w-[250px]"
-                    placeholder="Ingrese el dominio"
-                    value={
-                      field.value !== '' ? field.value : vehicle?.domain || ''
-                    }
-                    defaultValue={vehicle?.domain}
-                    onChange={e => {
-                      form.setValue('domain', e.target.value)
-                    }}
-                  />
-                  <FormDescription>
-                    Ingrese el dominio del vehículo
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="intern_number"
-              render={({ field }) => (
-                <FormItem className="flex flex-col min-w-[250px]">
-                  <FormLabel>
-                    Número interno del vehículo
-                    <span style={{ color: 'red' }}>*</span>
-                  </FormLabel>
-                  <Input
-                    {...field}
-                    disabled={readOnly}
-                    type="text"
-                    className="input w-[250px]"
-                    placeholder="Ingrese el número interno"
-                    value={
-                      field.value !== ''
-                        ? field.value
-                        : vehicle?.intern_number || ''
-                    }
-                    onChange={e => {
-                      form.setValue('intern_number', e.target.value)
-                    }}
-                  />
-                  <FormDescription>
-                    Ingrese el número interno del vehículo
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className=" min-w-[250px] flex flex-col gap-2">
-              <FormField
-                control={form.control}
-                name="allocated_to"
-                render={({ field }) => (
-                  <>
-                    <CheckboxDefaultValues
-                      disabled={readOnly}
-                      options={contractorCompanies}
-                      required={true}
-                      field={field}
-                      placeholder="Afectado a"
-                    />
-                    <FormDescription>
-                      Selecciona a quien se le asignará el equipo
-                    </FormDescription>
-                  </>
+                  >
+                    Habilitar edición
+                  </Button>
                 )}
-              />
-            </div>
-            <div className="w-[300px] flex  gap-2">
+              </div>
+            </CardHeader>
+          </div>
+        </header>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(
+              accion === 'edit' || accion === 'view' ? onUpdate : onCreate,
+            )}
+            className="space-y-8 w-full px-6 pb-3"
+          >
+            <div className=" flex gap-[2vw] flex-wrap items-center">
               <FormField
                 control={form.control}
-                name="picture"
+                name="type_of_vehicle"
                 render={({ field }) => (
-                  <FormItem className="">
-                    <FormControl>
-                      <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
-                        <ImageHander
-                          labelInput="Subir foto"
-                          desciption="Subir foto del vehículo"
-                          handleImageChange={handleImageChange}
-                          base64Image={base64Image} //nueva
-                          disabled={readOnly}
-                          inputStyle={{
-                            width: '400px',
-                            maxWidth: '300px',
-                          }}
-                        />
-                      </div>
-                    </FormControl>
+                  <FormItem className="flex flex-col min-w-[250px]">
+                    <FormLabel>
+                      Tipo de equipo <span style={{ color: 'red' }}>*</span>{' '}
+                    </FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            disabled={readOnly}
+                            variant="outline"
+                            role="combobox"
+                            value={vehicle?.type_of_vehicle}
+                            className={cn(
+                              'w-[250px] justify-between',
+                              !field.value && 'text-muted-foreground',
+                            )}
+                          >
+                            {field.value
+                              ? field.value
+                              : 'Seleccionar tipo de equipo'}
+                            <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[250px] p-0">
+                        <Command>
+                          <CommandInput
+                            disabled={readOnly}
+                            placeholder="Buscar tipo de vehículo..."
+                            className="h-9"
+                            //value={field.value}
+                          />
+                          <CommandEmpty>
+                            No se encontro ningun resultado
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {types?.map(option => (
+                              <CommandItem
+                                value={option}
+                                key={option}
+                                onSelect={() => {
+                                  form.setValue('type_of_vehicle', option)
+
+                                  if (option === 'Vehículos') {
+                                    setHideInput(true)
+                                  }
+                                  if (option === 'Otros') {
+                                    setHideInput(false)
+                                  }
+                                }}
+                              >
+                                {option}
+                                <CheckIcon
+                                  className={cn(
+                                    'ml-auto h-4 w-4',
+                                    option === field.value
+                                      ? 'opacity-100'
+                                      : 'opacity-0',
+                                  )}
+                                />
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormDescription>
+                      Selecciona el tipo de vehículo
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="brand"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col min-w-[250px]">
+                    <FormLabel>
+                      Marca <span style={{ color: 'red' }}>*</span>
+                    </FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            disabled={readOnly}
+                            variant="outline"
+                            role="combobox"
+                            value={field.value}
+                            className={cn(
+                              'w-[250px] justify-between',
+                              !field.value && 'text-muted-foreground',
+                            )}
+                          >
+                            {field.value || 'Seleccionar marca'}
+                            <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[250px] p-0 max-h-[200px] overflow-y-auto">
+                        <Command>
+                          <CommandInput
+                            disabled={readOnly}
+                            placeholder="Buscar marca..."
+                            className="h-9"
+                          />
+                          <CommandEmpty className="py-2 px-2">
+                            <Modal modal="addBrand" fetchData={fetchData}>
+                              <Button
+                                disabled={readOnly}
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  'w-full justify-between',
+                                  !field.value && 'text-muted-foreground',
+                                )}
+                              >
+                                Agregar marca
+                                <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </Modal>
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {vehicleBrands.map(option => (
+                              <CommandItem
+                                value={option.label}
+                                key={option.label}
+                                onSelect={() => {
+                                  form.setValue('brand', option.label)
+                                  const brand_id = data.brand.find(
+                                    e => e.label === option.label,
+                                  )?.id
+                                  fetchModels(brand_id as string)
+                                }}
+                              >
+                                {option.label}
+                                <CheckIcon
+                                  className={cn(
+                                    'ml-auto h-4 w-4',
+                                    option.label === field.value
+                                      ? 'opacity-100'
+                                      : 'opacity-0',
+                                  )}
+                                />
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormDescription>
+                      Selecciona la marca del vehículo
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="model"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col min-w-[250px]">
+                    <FormLabel>
+                      {' '}
+                      Modelo <span style={{ color: 'red' }}>*</span>
+                    </FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            disabled={readOnly}
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                              'w-[250px] justify-between',
+                              !field.value && 'text-muted-foreground',
+                            )}
+                          >
+                            {field.value || 'Seleccionar marca'}
+                            <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[250px] p-0">
+                        <Command>
+                          <CommandInput
+                            disabled={readOnly}
+                            placeholder="Buscar modelo..."
+                            className="h-9"
+                          />
+                          <CommandEmpty className="py-2 px-2">
+                            <Modal
+                              modal="addModel"
+                              fetchModels={fetchModels}
+                              brandOptions={data.brand}
+                            >
+                              <Button
+                                disabled={readOnly}
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  'w-full justify-between',
+                                  !field.value && 'text-muted-foreground',
+                                )}
+                              >
+                                Agregar modelo
+                                <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </Modal>
+                          </CommandEmpty>
+                          <CommandGroup>
+                            <>
+                              {vehicleModels.map(option => (
+                                <CommandItem
+                                  value={option.name}
+                                  key={option.name}
+                                  onSelect={() => {
+                                    form.setValue('model', option.name)
+                                  }}
+                                >
+                                  {option.name}
+                                  <CheckIcon
+                                    className={cn(
+                                      'ml-auto h-4 w-4',
+                                      option.name === field.value
+                                        ? 'opacity-100'
+                                        : 'opacity-0',
+                                    )}
+                                  />
+                                </CommandItem>
+                              ))}
+                            </>
+                            <>
+                              <Modal
+                                modal="addModel"
+                                fetchModels={fetchModels}
+                                brandOptions={data.brand}
+                              >
+                                <Button
+                                  disabled={readOnly}
+                                  variant="outline"
+                                  role="combobox"
+                                  className={cn(
+                                    'w-full justify-between',
+                                    !field.value && 'text-muted-foreground',
+                                  )}
+                                >
+                                  Agregar modelo
+                                  <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </Modal>
+                            </>
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormDescription>
+                      Selecciona el modelo del vehículo
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="year"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col min-w-[250px]">
+                    <FormLabel>
+                      {' '}
+                      Año <span style={{ color: 'red' }}>*</span>
+                    </FormLabel>
+                    <Input
+                      {...field}
+                      disabled={readOnly}
+                      className="input w-[250px]"
+                      placeholder="Año"
+                      value={
+                        field.value !== undefined
+                          ? field.value
+                          : vehicle?.year || ''
+                      }
+                      onChange={e => {
+                        form.setValue('year', e.target.value)
+                      }}
+                    />
+                    <FormDescription>
+                      Ingrese el año del vehículo
+                    </FormDescription>
+                    <FormMessage className="max-w-[250px]" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="engine"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col min-w-[250px]">
+                    <FormLabel>Motor del vehículo</FormLabel>
+                    <Input
+                      {...field}
+                      disabled={readOnly}
+                      className="input w-[250px]"
+                      placeholder="Ingrese el tipo de motor"
+                      value={field.value}
+                    />
+                    <FormDescription>
+                      Ingrese el tipo de motor del vehículo
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem
+                    className={cn(
+                      'flex flex-col min-w-[250px]',
+                      form.getValues('type_of_vehicle'),
+                    )}
+                  >
+                    <FormLabel>
+                      Tipo <span style={{ color: 'red' }}>*</span>{' '}
+                    </FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            disabled={readOnly}
+                            value={field.value}
+                            className={cn(
+                              'w-[250px] justify-between',
+                              !field.value && 'text-muted-foreground',
+                            )}
+                          >
+                            {field.value ? field.value : 'Seleccione tipo'}
+                            <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[250px] p-0">
+                        <Command>
+                          <CommandInput
+                            placeholder="Buscar tipo..."
+                            className="h-9"
+                          />
+                          <CommandEmpty>
+                            No se encontro ningun resultado
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {types_vehicles?.map(option => (
+                              <CommandItem
+                                value={option}
+                                key={option}
+                                onSelect={() => {
+                                  form.setValue('type', option)
+                                }}
+                              >
+                                {option}
+                                <CheckIcon
+                                  className={cn(
+                                    'ml-auto h-4 w-4',
+                                    option === field.value
+                                      ? 'opacity-100'
+                                      : 'opacity-0',
+                                  )}
+                                />
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormDescription>Selecciona el tipo</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="chassis"
+                render={({ field }) => (
+                  <FormItem
+                    className={cn(
+                      'flex flex-col min-w-[250px]',
+                      !hideInput && 'hidden',
+                    )}
+                  >
+                    <FormLabel>
+                      Chasis del vehículo<span style={{ color: 'red' }}>*</span>
+                    </FormLabel>
+                    <Input
+                      {...field}
+                      disabled={readOnly}
+                      type="text"
+                      className="input w-[250px]"
+                      placeholder="Ingrese el chasis"
+                      value={
+                        field.value !== ''
+                          ? field.value
+                          : vehicle?.chassis || ''
+                      }
+                      onChange={e => {
+                        form.setValue('chassis', e.target.value)
+                      }}
+                    />
+                    <FormDescription>
+                      Ingrese el chasis del vehículo
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="serie"
+                render={({ field }) => (
+                  <FormItem
+                    className={cn(
+                      'flex flex-col min-w-[250px]',
+                      form.getValues('type_of_vehicle') &&
+                        hideInput &&
+                        'hidden',
+                    )}
+                  >
+                    <FormLabel>
+                      Serie del vehículo<span style={{ color: 'red' }}>*</span>
+                    </FormLabel>
+                    <Input
+                      {...field}
+                      type="text"
+                      disabled={readOnly}
+                      className="input w-[250px]"
+                      placeholder="Ingrese la serie"
+                      onChange={e => {
+                        form.setValue('serie', e.target.value)
+                      }}
+                      defaultValue={vehicle?.serie}
+                    />
+
+                    <FormDescription>
+                      Ingrese la serie del vehículo
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="domain"
+                render={({ field }) => (
+                  <FormItem
+                    className={cn(
+                      'flex flex-col min-w-[250px]',
+                      !hideInput && 'hidden',
+                    )}
+                  >
+                    <FormLabel>
+                      Dominio del vehículo
+                      <span style={{ color: 'red' }}>*</span>
+                    </FormLabel>
+                    <Input
+                      {...field}
+                      disabled={readOnly}
+                      type="text"
+                      className="input w-[250px]"
+                      placeholder="Ingrese el dominio"
+                      value={
+                        field.value !== '' ? field.value : vehicle?.domain || ''
+                      }
+                      defaultValue={vehicle?.domain}
+                      onChange={e => {
+                        form.setValue('domain', e.target.value)
+                      }}
+                    />
+                    <FormDescription>
+                      Ingrese el dominio del vehículo
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="intern_number"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col min-w-[250px]">
+                    <FormLabel>
+                      Número interno del vehículo
+                      <span style={{ color: 'red' }}>*</span>
+                    </FormLabel>
+                    <Input
+                      {...field}
+                      disabled={readOnly}
+                      type="text"
+                      className="input w-[250px]"
+                      placeholder="Ingrese el número interno"
+                      value={
+                        field.value !== ''
+                          ? field.value
+                          : vehicle?.intern_number || ''
+                      }
+                      onChange={e => {
+                        form.setValue('intern_number', e.target.value)
+                      }}
+                    />
+                    <FormDescription>
+                      Ingrese el número interno del vehículo
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className=" min-w-[250px] flex flex-col gap-2">
+                <FormField
+                  control={form.control}
+                  name="allocated_to"
+                  render={({ field }) => (
+                    <>
+                      <CheckboxDefaultValues
+                        disabled={readOnly}
+                        options={contractorCompanies}
+                        required={true}
+                        field={field}
+                        placeholder="Afectado a"
+                      />
+                      <FormDescription>
+                        Selecciona a quien se le asignará el equipo
+                      </FormDescription>
+                    </>
+                  )}
+                />
+              </div>
+              <div className="w-[300px] flex  gap-2">
+                <FormField
+                  control={form.control}
+                  name="picture"
+                  render={({ field }) => (
+                    <FormItem className="">
+                      <FormControl>
+                        <div className="flex lg:items-center flex-wrap  flex-col lg:flex-row gap-8">
+                          <ImageHander
+                            labelInput="Subir foto"
+                            desciption="Subir foto del vehículo"
+                            handleImageChange={handleImageChange}
+                            base64Image={base64Image} //nueva
+                            disabled={readOnly}
+                            inputStyle={{
+                              width: '400px',
+                              maxWidth: '300px',
+                            }}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
-          </div>
-          {!readOnly && (
-            <Button type="submit" className="mt-5">
-              {accion === 'edit' || accion === 'view'
-                ? 'Guardar cambios'
-                : 'Agregar equipo'}
-            </Button>
-          )}
-        </form>
-      </Form>
-    </section>
+            {!readOnly && (
+              <Button type="submit" className="mt-5">
+                {accion === 'edit' || accion === 'view'
+                  ? 'Guardar cambios'
+                  : 'Agregar equipo'}
+              </Button>
+            )}
+          </form>
+        </Form>
+      </section>
     </Suspense>
   )
 }
