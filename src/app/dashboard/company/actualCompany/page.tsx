@@ -27,6 +27,7 @@ import { useState } from 'react'
 import { columns } from './components/columns'
 import { DataTable } from './components/data-table'
 import { ItemCompany } from './components/itemCompany'
+import cookies from 'js-cookie'
 export default function page() {
   const company = useLoggedUserStore(state => state.actualCompany)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
@@ -34,7 +35,8 @@ export default function page() {
   const ownerUser = useLoggedUserStore(state => state.profile)
   const [showPasswords, setShowPasswords] = useState(false)
   const [open, setOpen] = useState(false)
-
+  const userShared = cookies.get('guestRole')
+  console.log("empresa: ", userShared)
   const owner = ownerUser?.map(user => {
     return {
       email: user.email,
@@ -45,7 +47,7 @@ export default function page() {
       img: user.avatar || '',
     }
   })
-
+ 
   const sharedUsers =
     actualCompany?.share_company_users.map(user => {
       return {
@@ -122,6 +124,7 @@ export default function page() {
             </CardContent>
             <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
           </Card>
+          {(userShared !== "Administrador") && (
           <Card className=" bg-red-300 border-red-800 border-spacing-2 border-2">
             <CardHeader>ZONA PELIGROSA</CardHeader>
             <CardContent>
@@ -184,6 +187,7 @@ export default function page() {
               </Dialog>
             </CardFooter>
           </Card>
+          )}
         </TabsContent>
         <TabsContent value="users">
           <Card className="overflow-hidden">
