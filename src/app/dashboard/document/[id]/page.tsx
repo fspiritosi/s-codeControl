@@ -1,14 +1,17 @@
-'use client'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Card, CardDescription, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatDate } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { useRouter } from 'next/navigation'
 
 import UpdateDocuments from '@/components/UpdateDocuments'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -18,26 +21,33 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
-import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { Suspense } from 'react'
 import { supabase } from '../../../../../supabase/supabase'
+import DownloadButton from '../documentComponents/DownloadButton'
+export default async function page({ params }: { params: { id: string } }) {
+  // const router = useRouter()
+  // redirect('/dashboard/document')
 
-export default function page({ params }: { params: { id: string } }) {
-  const router = useRouter()
-  const [documents_employees, setDocumentsEmployees] = useState<any[] | null>(
-    [],
-  )
-  const [resource, setResource] = useState<string | null>(null)
-  const [documentName, setDocumentName] = useState<string | null>('')
-  const [documentUrl, setDocumentUrl] = useState<string | null>(null)
-  const fetchDocument = async () => {
-    let document: any[] | null = []
-    let documentType: string | null = null
-    let resourceType: string | null = null
+  let documents_employees: any[] | null = []
+  // const [documents_employees, setDocumentsEmployees] = useState<any[] | null>(
+  //   [],
+  // )
+  // const [resource, setResource] = useState<string | null>(null)
+  // const [documentName, setDocumentName] = useState<string | null>('')
+  // const [documentUrl, setDocumentUrl] = useState<string | null>(null)
+  let resource = ''
+  let documentName = ''
+  let documentUrl = ''
+  // const fetchDocument = async () => {
+  let document: any[] | null = []
+  let documentType: string | null = null
+  let resourceType: string | null = null
 
-    let { data: documents_employee } = await supabase
-      .from('documents_employees')
-      .select(
-        `
+  let { data: documents_employee } = await supabase
+    .from('documents_employees')
+    .select(
+      `
     *,
     document_types(*),
     applies(*,
@@ -51,50 +61,45 @@ export default function page({ params }: { params: { id: string } }) {
           company_id(*,province_id(name))
           )
           `,
-      )
-      .eq('id', params.id)
+    )
+    .eq('id', params.id)
 
-    if (documents_employee?.length === 0) {
-      let { data: documents_vehicle } = await supabase
-        .from('documents_equipment')
-        .select(
-          `
+  if (documents_employee?.length === 0) {
+    let { data: documents_vehicle } = await supabase
+      .from('documents_equipment')
+      .select(
+        `
       *,
       document_types(*),
       applies(*,brand(name),model(name),type_of_vehicle(name), company_id(*,province_id(name)))`,
-        )
-        .eq('id', params.id)
+      )
+      .eq('id', params.id)
 
-      document = documents_vehicle
-      resourceType = 'documentos-equipos'
-      setResource('vehicle')
-    } else {
-      document = documents_employee
-      resourceType = 'documentos-empleados'
-      setResource('employee')
-    }
-
-    documentType = document?.[0]?.document_types?.id
-
-    const resorceId = document?.[0]?.applies?.id
-    const { data } = await supabase.storage
-      .from('document_files')
-      .list(resourceType, {
-        search: `document-${documentType}-${resorceId}`,
-      })
-
-    const { data: url } = supabase.storage
-      .from('document_files')
-      .getPublicUrl(document?.[0]?.document_path)
-
-    setDocumentName(document?.[0]?.document_path)
-    setDocumentUrl(url.publicUrl)
-    setDocumentsEmployees(document)
+    document = documents_vehicle
+    resourceType = 'documentos-equipos'
+    resource = 'vehicle'
+  } else {
+    document = documents_employee
+    resourceType = 'documentos-empleados'
+    resource = 'employee'
   }
 
-  useEffect(() => {
-    fetchDocument()
-  }, [])
+  documentType = document?.[0]?.document_types?.id
+
+  const resorceId = document?.[0]?.applies?.id
+  const { data } = await supabase.storage
+    .from('document_files')
+    .list(resourceType, {
+      search: `document-${documentType}-${resorceId}`,
+    })
+
+  const { data: url } = supabase.storage
+    .from('document_files')
+    .getPublicUrl(document?.[0]?.document_path)
+
+  documentName = document?.[0]?.document_path
+  documentUrl = url.publicUrl
+  documents_employees = document
 
   const expireInLastMonth = () => {
     if (!documents_employees?.[0]?.document_types?.explired) return false
@@ -106,47 +111,65 @@ export default function page({ params }: { params: { id: string } }) {
     return expireDate < lastMonth
   }
 
+  console.log(documents_employees, 'documents_employees')
+
   return (
     <section className="md:mx-7">
       <Card className="p-4">
         <div className="flex justify-between">
           <div>
-            <CardTitle className=" text-2xl">
-              {documents_employees?.[0]?.document_types?.name}
-            </CardTitle>
-            <div className="flex flex-col">
-              <Badge
-                variant={
-                  documents_employees?.[0]?.state === 'rechazado'
-                    ? 'destructive'
-                    : documents_employees?.[0]?.state === 'aprobado'
-                      ? 'success'
-                      : documents_employees?.[0]?.state === 'vencido'
-                        ? 'yellow'
-                        : 'default'
-                }
-                className={'mb-3 capitalize w-fit'}
-              >
-                {documents_employees?.[0]?.state}
-              </Badge>
-              {documents_employees?.[0]?.deny_reason && (
-                <Badge
-                  variant={
-                    documents_employees?.[0]?.state === 'rechazado' ||
-                    documents_employees?.[0]?.state === 'vencido'
-                      ? 'destructive'
-                      : documents_employees?.[0]?.state === 'aprobado'
-                        ? 'success'
-                        : 'default'
-                  }
-                  className="mb-3 capitalize w-fit"
-                >
-                  {documents_employees?.[0]?.deny_reason}
-                </Badge>
+            <CardHeader>
+              <CardTitle className=" text-2xl">
+                {documents_employees?.[0]?.document_types?.name}
+              </CardTitle>
+
+              {documents_employees?.[0]?.state && (
+                <div className="flex flex-col">
+                  <Badge
+                    variant={
+                      documents_employees?.[0]?.state === 'rechazado'
+                        ? 'destructive'
+                        : documents_employees?.[0]?.state === 'aprobado'
+                          ? 'success'
+                          : documents_employees?.[0]?.state === 'vencido'
+                            ? 'yellow'
+                            : 'default'
+                    }
+                    className={'mb-3 capitalize w-fit'}
+                  >
+                    {documents_employees?.[0]?.state}
+                  </Badge>
+                  {documents_employees?.[0]?.deny_reason && (
+                    <Badge
+                      variant={
+                        documents_employees?.[0]?.state === 'rechazado' ||
+                        documents_employees?.[0]?.state === 'vencido'
+                          ? 'destructive'
+                          : documents_employees?.[0]?.state === 'aprobado'
+                            ? 'success'
+                            : 'default'
+                      }
+                      className="mb-3 capitalize w-fit"
+                    >
+                      {documents_employees?.[0]?.deny_reason}
+                    </Badge>
+                  )}
+                </div>
               )}
-            </div>
+            </CardHeader>
           </div>
-          <Button onClick={router.back}>volver</Button>
+          <div className="flex gap-10">
+            <DownloadButton
+              fileName={documents_employees?.[0]?.document_types?.name}
+              path={documents_employees?.[0]?.document_path}
+            />
+            <Link
+              href={`/dashboard/employee/action?action=view&document=${documents_employees?.[0]?.applies?.document_number}`}
+              className={buttonVariants({ variant: 'default' })}
+            >
+              volver
+            </Link>
+          </div>
         </div>
         <div className="grid lg:grid-cols-3 grid-cols-1 gap-col-3 ">
           <div className="lg:max-w-[30vw] col-span-1">
@@ -730,8 +753,8 @@ export default function page({ params }: { params: { id: string } }) {
               </TabsContent>
             </Tabs>
           </div>
-          <div className="max-w-[70vw] col-span-2 p-7">
-            {documentUrl ? (
+          <Suspense fallback={<Skeleton className=" w-full h-full mt-5" />}>
+            <div className="max-w-[70vw] col-span-2 p-7">
               <Card className="mt-4">
                 <CardDescription className="p-3 flex justify-center">
                   <embed
@@ -745,10 +768,8 @@ export default function page({ params }: { params: { id: string } }) {
                   />
                 </CardDescription>
               </Card>
-            ) : (
-              <Skeleton className="bg-black w-full h-screen mt-5" />
-            )}
-          </div>
+            </div>
+          </Suspense>
         </div>
       </Card>
     </section>

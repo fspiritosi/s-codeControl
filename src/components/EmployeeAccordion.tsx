@@ -54,6 +54,7 @@ import { CalendarIcon } from '@radix-ui/react-icons'
 import { PostgrestError } from '@supabase/supabase-js'
 import { addMonths, format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { Loader } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ChangeEvent, Suspense, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -148,6 +149,8 @@ export default function EmployeeAccordion() {
   const [accordion2Errors, setAccordion2Errors] = useState(false)
   const [accordion3Errors, setAccordion3Errors] = useState(false)
   const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false)
+
+  console.log(user, 'user')
 
   const provinceId = provincesOptions?.find(
     (province: Province) => province.name.trim() === user?.province,
@@ -578,16 +581,18 @@ export default function EmployeeAccordion() {
             {accion === 'edit' || accion === 'view' ? (
               <div className="flex gap-3 items-center">
                 <CardTitle className=" font-bold tracking-tight">
-                  <Avatar className="size-[100px]">
+                  <Avatar className="size-[100px] rounded-full border-2 border-black/30">
                     <AvatarImage
-                      className="object-cover border-2 border-black/30 rounded-full"
+                      className="object-cover rounded-full"
                       src={
                         user?.picture ||
                         'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80'
                       }
                       alt="Imagen del empleado"
                     />
-                    <AvatarFallback>CC</AvatarFallback>
+                    <AvatarFallback>
+                      <Loader className="animate-spin" />
+                    </AvatarFallback>
                   </Avatar>
                 </CardTitle>
                 <CardDescription className="text-muted-foreground text-3xl">

@@ -126,7 +126,7 @@ export const MissingDocumentList = () => {
                           <AccordionTrigger className="px-2">
                             <div
                               key={index}
-                              className="flex justify-between items-center h-14 px-2 w-full text-white font-semibold"
+                              className="flex justify-between items-center h-14 px-2 w-full dark:text-white font-semibold"
                             >
                               {item[0].resource}
                               <Link
@@ -161,7 +161,7 @@ export const MissingDocumentList = () => {
         <Card className="flex flex-col overflow-hidden text-muted-foreground">
           <Accordion type="single" collapsible>
             <AccordionItem value="item-1">
-              <AccordionTrigger className="px-2 text-white border-b-2 bg-muted dark:bg-muted/50">
+              <AccordionTrigger className="px-2 dark:text-white border-b-2 bg-muted dark:bg-muted/50">
                 <div className="flex items-center justify-between w-full pr-5">
                   <div className="flex dark:text-white text-black">
                     Vehículos <CarIcon className="stroke-1  ml-2" />
@@ -182,7 +182,7 @@ export const MissingDocumentList = () => {
                           <AccordionTrigger className="px-2">
                             <div
                               key={index}
-                              className="flex justify-between items-center h-14 px-2 w-full text-white font-semibold"
+                              className="flex justify-between items-center h-14 px-2 w-full dark:text-white font-semibold"
                             >
                               {item[0].resource}
                               <Link

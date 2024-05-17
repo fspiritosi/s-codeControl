@@ -28,22 +28,15 @@ export async function middleware(req: NextRequest) {
   const actualNoOwner = actualNoOwnerValue
     ? actualNoOwnerValue.replace(/^"|"$/g, '')
     : null
-  console.log('actualcompanyId: ', actualCompanyId)
-  console.log('actualNoOwner: ', actualNoOwner)
 
   const actualNow = actualNoOwner //!== null ? parseInt(actualNoOwner as string, 10) : null
-  console.log('actualNow: ', actualNoOwner)
   const { data: guestRole } = await supabase
     .from('share_company_users')
     .select('role')
     .eq('profile_id ', data?.[0]?.id)
     .eq('company_id', actualNow)
 
-  console.log('guestRoles: ', guestRole?.[0]?.role)
-
   const userRole = data?.[0]?.role
-  console.log('user id: ', data?.[0]?.id)
-  console.log('userRole: ', userRole)
 
   const guestUser = [
     '/dashboard/employee/action?action=edit&',

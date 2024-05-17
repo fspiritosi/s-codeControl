@@ -60,23 +60,6 @@ export const AlertComponent = () => {
                 >
                   {company.company_name}
                 </AlertDialogAction>
-                {/* <AlertDialogDescription>
-                  <span className="flex items-center p-2 gap-2 justify-center">
-                    <input
-                      type="checkbox"
-                      id={`company-${index}`}
-                      value={company.company_name}
-                      checked={selectedCompany === company.company_name}
-                      onChange={handleCheckboxChange}
-                    />
-                    <label
-                      htmlFor={`company-${index}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 p-0"
-                    >
-                      Usar como compañía principal
-                    </label>
-                  </span>
-                </AlertDialogDescription> */}
               </div>
             ))}
           </AlertDialogHeader>
