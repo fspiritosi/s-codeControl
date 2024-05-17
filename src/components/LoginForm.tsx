@@ -38,7 +38,7 @@ export function LoginForm() {
       const hashParams = new URLSearchParams(window.location.hash.substring(1))
       const error = hashParams.get('error')
       if (error) {
-        toast.error('Error al iniciar sesión con Google')
+        toast.error('Error al iniciar sesión')
       }
     }
   }, [])
