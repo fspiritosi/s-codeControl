@@ -1,13 +1,13 @@
 import * as React from 'react';
 import Head from 'next/head'
 
-interface EmailTemplateProps {
+interface EmailTemplateHelpProps {
   userEmail: string;
   reason: string;
 
 }
 
-export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
+export const EmailTemplateHelp: React.FC<Readonly<EmailTemplateHelpProps>> = ({
   userEmail,
   reason,
 }) => (
@@ -51,7 +51,7 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
                                   Codecontrol.com.ar
                                 </h1>
                                 <p style={{ fontSize: '17px', lineHeight: '24px', margin: '16px 0', color: '#fff' }}>
-                                  Documento Rechazado
+                                  Centro de Ayuda
                                 </p>
                               </td>
                               <td style={{ padding: '30px 10px' }}>
@@ -73,8 +73,7 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
                     <tr>
                       <td>
                         <h2 style={{ margin: '0 0 15px', fontWeight: 'bold', fontSize: '21px', lineHeight: '21px', color: '#0c0d0e' }}>
-                          Hola, {userEmail}!, nos comunicamos de Codecontrol para avisarte que tienes un documento rechazado, en la bandeja de
-                          notificaciones podras verlo y hacer una actualización del mismo
+                          Usuario: {userEmail}!
                         </h2>
 
                         <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #eaeaea', margin: '30px 0' }} />
@@ -87,14 +86,12 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
                         </ul>
 
                         <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #eaeaea', margin: '30px 0' }} />
-                        <h2 style={{ margin: '0 0 15px', fontWeight: 'bold', fontSize: '21px', lineHeight: '21px', color: '#0c0d0e' }}>Para ver los documentos diríjase a la app</h2>
+                        
                         <table align="center" width="100%" border={0} cellPadding="0" cellSpacing="0"  style={{ marginTop: '24px', display: 'block' }}>
                           <tbody>
                             <tr>
                               <td>
-                                <a href="https://codecontrol.com.ar" style={{ color: '#fff', textDecoration: 'none', backgroundColor: '#0095ff', border: '1px solid #0077cc', fontSize: '17px', lineHeight: '17px', padding: '13px 17px', borderRadius: '4px', maxWidth: '120px' }} target="_blank">
-                                  ir a codecontrol.com.ar
-                                </a>
+                                
                               </td>
                             </tr>
                           </tbody>

@@ -68,7 +68,7 @@ import {
 import { FormControl, FormField, FormItem, FormMessage } from './ui/form'
 import { Separator } from './ui/separator'
 import { useToast } from './ui/use-toast'
-
+import Cookies from 'js-cookie';
 export default function NavBar() {
   const sharedCompanies = useLoggedUserStore(state => state.sharedCompanies)
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
@@ -104,6 +104,7 @@ export default function NavBar() {
     setNewDefectCompany(company)
     setActualCompany(company)
     setIsOpen(false)
+    Cookies.set('actualComp',company.id)
     revalidate()
     router.push('/dashboard')
   }
