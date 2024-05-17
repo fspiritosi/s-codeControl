@@ -1,6 +1,7 @@
 'use client'
 
 import { useLoggedUserStore } from '@/store/loggedUser'
+import cookies from 'js-cookie'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
@@ -14,7 +15,6 @@ import {
   MdOutlinePersonAddAlt,
   MdOutlineSpaceDashboard,
 } from 'react-icons/md'
-import cookies from 'js-cookie'
 export async function getServerSideProps(context: any) {
   const { params } = context
   const { type } = params
@@ -73,13 +73,13 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
   //const userShared = useLoggedUserStore(state => state.sharedUsers?.[0]?.role)
   const userShared = cookies.get('guestRole')
   const isAuditor = profile?.[0].role === 'Auditor'
-  const administrador =userShared === "Administrador" || null
+  const administrador = userShared === 'Administrador' || null
 
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
     ?.owner_id.id
 
   const links =
-     !administrador && owner_id !== actualCompany
+    !administrador && owner_id !== actualCompany
       ? Allinks.filter(link => link.name !== 'Empresa')
       : Allinks
 
@@ -95,8 +95,8 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
   }
 
   const handleSubMenuItemClick = () => {
-    setOpenSubMenu(null);
-  };
+    setOpenSubMenu(null)
+  }
 
   return (
     <>
@@ -115,7 +115,7 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
             {expanded ? (
               <>
                 {link.icon}
-                
+
                 <p className="hidden md:block">{link.name}</p>
                 {link.submenu && (
                   <div className="ml-2">
@@ -135,7 +135,7 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
             <div
               className={`${
                 expanded ? '' : 'absolute top-[210px]'
-              } ml-0 mt-1 rounded-md  p-3 dark:text-neutral-300 text-neutral-950 font-medium bg-muted dark:bg-muted/50 p-2 rounded-md`}
+              } ml-0 mt-1 dark:text-neutral-300 text-neutral-950 font-medium bg-muted dark:bg-muted/50 p-2 rounded-md`}
               style={{
                 marginLeft: expanded ? 0 : '1.6cm',
                 width: 'fit-content',
@@ -143,8 +143,10 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
             >
               {link.submenu.map((submenuItem, subIndex) => (
                 <Link key={submenuItem.name} href={submenuItem.href} passHref>
-                  <div onClick={handleSubMenuItemClick} className="block py-2 cursor-pointer hover:text-blue-800 ">
-                    
+                  <div
+                    onClick={handleSubMenuItemClick}
+                    className="block py-2 cursor-pointer hover:text-blue-800 "
+                  >
                     {submenuItem.name}
                   </div>
                 </Link>
