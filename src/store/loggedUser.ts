@@ -52,7 +52,7 @@ interface State {
   sharedCompanies: SharedCompanies
   endorsedEmployees: () => void
   noEndorsedEmployees: () => void
-  
+
   allDocumentsToShow: {
     employees: Document[]
     vehicles: Document[]
@@ -293,7 +293,14 @@ export const useLoggedUserStore = create<State>((set, get) => {
         set({ showMultiplesCompaniesAlert: false })
         setActualCompany(data[0])
       }
-      if (data.length === 0) {
+      if (data.length === 0 && share_company_users?.length === 0) {
+        const actualPath = window.location.pathname
+
+        if (actualPath === '/dashboard/company/new') {
+          set({ showNoCompanyAlert: false })
+          return
+        }
+
         set({ showNoCompanyAlert: true })
       }
     }

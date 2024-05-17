@@ -1,6 +1,5 @@
 export function handleSupabaseError(error: any): string {
   let errorMessage = error.message
-  console.log(error, 'error')
   switch (error.code) {
     case '22001':
       errorMessage = 'El valor ingresado está fuera del rango permitido'

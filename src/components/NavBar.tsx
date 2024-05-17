@@ -45,7 +45,7 @@ import {
 } from '@radix-ui/react-icons'
 import { formatRelative } from 'date-fns'
 import { es } from 'date-fns/locale'
-import cookie from 'js-cookie'
+import { default as Cookies, default as cookie } from 'js-cookie'
 import { Check, CheckIcon, Loader } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -68,7 +68,6 @@ import {
 import { FormControl, FormField, FormItem, FormMessage } from './ui/form'
 import { Separator } from './ui/separator'
 import { useToast } from './ui/use-toast'
-import Cookies from 'js-cookie';
 export default function NavBar() {
   const sharedCompanies = useLoggedUserStore(state => state.sharedCompanies)
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
@@ -104,7 +103,7 @@ export default function NavBar() {
     setNewDefectCompany(company)
     setActualCompany(company)
     setIsOpen(false)
-    Cookies.set('actualComp',company.id)
+    Cookies.set('actualComp', company.id)
     revalidate()
     router.push('/dashboard')
   }
@@ -135,23 +134,35 @@ export default function NavBar() {
   const groups = [
     {
       label: 'Compañia actual propia',
-      teams: totalCompanies
-        ?.filter(companyItem => companyItem?.id === actualCompanyId)
-        ?.map(companyItem => ({
-          label: companyItem?.company_name,
-          value: companyItem?.id,
-          logo: companyItem?.company_logo,
-        })),
+      teams:
+        totalCompanies.length === 1
+          ? totalCompanies
+              // ?.filter(companyItem => companyItem?.id === actualCompanyId)
+              ?.map(companyItem => ({
+                label: companyItem?.company_name,
+                value: companyItem?.id,
+                logo: companyItem?.company_logo,
+              }))
+          : totalCompanies
+              ?.filter(companyItem => companyItem?.id === actualCompanyId)
+              ?.map(companyItem => ({
+                label: companyItem?.company_name,
+                value: companyItem?.id,
+                logo: companyItem?.company_logo,
+              })),
     },
     {
       label: 'Otras compañias propias',
-      teams: totalCompanies
-        ?.filter(companyItem => companyItem?.id !== actualCompanyId)
-        ?.map(companyItem => ({
-          label: companyItem?.company_name,
-          value: companyItem?.id,
-          logo: companyItem?.company_logo,
-        })),
+      teams:
+        totalCompanies.length === 1
+          ? []
+          : totalCompanies
+              ?.filter(companyItem => companyItem?.id !== actualCompanyId)
+              ?.map(companyItem => ({
+                label: companyItem?.company_name,
+                value: companyItem?.id,
+                logo: companyItem?.company_logo,
+              })),
     },
   ]
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)

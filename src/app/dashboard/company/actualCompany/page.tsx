@@ -22,12 +22,12 @@ import {
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useLoggedUserStore } from '@/store/loggedUser'
+import cookies from 'js-cookie'
 import Image from 'next/image'
 import { useState } from 'react'
 import { columns } from './components/columns'
 import { DataTable } from './components/data-table'
 import { ItemCompany } from './components/itemCompany'
-import cookies from 'js-cookie'
 export default function page() {
   const company = useLoggedUserStore(state => state.actualCompany)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
@@ -36,7 +36,6 @@ export default function page() {
   const [showPasswords, setShowPasswords] = useState(false)
   const [open, setOpen] = useState(false)
   const userShared = cookies.get('guestRole')
-  console.log("empresa: ", userShared)
   const owner = ownerUser?.map(user => {
     return {
       email: user.email,
@@ -47,7 +46,7 @@ export default function page() {
       img: user.avatar || '',
     }
   })
- 
+
   const sharedUsers =
     actualCompany?.share_company_users.map(user => {
       return {
@@ -70,8 +69,6 @@ export default function page() {
     }
   }
 
-  console.log(data, 'data')
-
   return (
     <div className="flex flex-col gap-6 py-4 px-6">
       <div className="w-full flex mb-6">
@@ -87,7 +84,9 @@ export default function page() {
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>
-          <TabsTrigger value="modules">Modulos</TabsTrigger>
+          <TabsTrigger value="modules" disabled>
+            Modulos
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="general" className="space-y-4">
           <Card className="overflow-hidden">
@@ -124,69 +123,69 @@ export default function page() {
             </CardContent>
             <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
           </Card>
-          {(userShared !== "Administrador") && (
-          <Card className=" bg-red-300 border-red-800 border-spacing-2 border-2">
-            <CardHeader>ZONA PELIGROSA</CardHeader>
-            <CardContent>
-              <p>
-                Al eliminiar esta empresa se eliminarán todos los registros
-                asociado a ella.
-              </p>
-              <p>Esta acción no se puede deshacer.</p>
-            </CardContent>
-            <CardFooter>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="bg-red-500 bg-opacity-80 border-red-700 border-2 text-red-700 hover:bg-red-700 hover:text-red-500"
-                  >
-                    Eliminar Empresa
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>
-                      Confirmar eliminación de la empresa
-                    </DialogTitle>
-                    <DialogDescription>
-                      Esta acción no se puede deshacer.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="flex flex-col">
-                    <p>
-                      Por favor escribe <strong>{company?.company_name}</strong>{' '}
-                      para confirmar.
-                    </p>
-                    <div className="grid flex-1 gap-2">
-                      <Input
-                        id="user_input"
-                        type="text"
-                        onChange={e => compare(e.target.value)}
-                        className={
-                          verify
-                            ? 'border-green-400 bg-green-300 text-green-700'
-                            : 'focus:border-red-400 focus:bg-red-300 text-red-700'
-                        }
-                      />
+          {userShared !== 'Administrador' && (
+            <Card className=" bg-red-300 border-red-800 border-spacing-2 border-2">
+              <CardHeader>ZONA PELIGROSA</CardHeader>
+              <CardContent>
+                <p>
+                  Al eliminiar esta empresa se eliminarán todos los registros
+                  asociado a ella.
+                </p>
+                <p>Esta acción no se puede deshacer.</p>
+              </CardContent>
+              <CardFooter>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="bg-red-500 bg-opacity-80 border-red-700 border-2 text-red-700 hover:bg-red-700 hover:text-red-500"
+                    >
+                      Eliminar Empresa
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>
+                        Confirmar eliminación de la empresa
+                      </DialogTitle>
+                      <DialogDescription>
+                        Esta acción no se puede deshacer.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex flex-col">
+                      <p>
+                        Por favor escribe{' '}
+                        <strong>{company?.company_name}</strong> para confirmar.
+                      </p>
+                      <div className="grid flex-1 gap-2">
+                        <Input
+                          id="user_input"
+                          type="text"
+                          onChange={e => compare(e.target.value)}
+                          className={
+                            verify
+                              ? 'border-green-400 bg-green-300 text-green-700'
+                              : 'focus:border-red-400 focus:bg-red-300 text-red-700'
+                          }
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <DialogFooter className="sm:justify-between">
-                    <DialogClose asChild>
-                      <Button type="button" variant="outline">
-                        Cerrar
-                      </Button>
-                    </DialogClose>
-                    <DialogClose asChild>
-                      <Button type="button" variant="destructive">
-                        Eliminar
-                      </Button>
-                    </DialogClose>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </CardFooter>
-          </Card>
+                    <DialogFooter className="sm:justify-between">
+                      <DialogClose asChild>
+                        <Button type="button" variant="outline">
+                          Cerrar
+                        </Button>
+                      </DialogClose>
+                      <DialogClose asChild>
+                        <Button type="button" variant="destructive">
+                          Eliminar
+                        </Button>
+                      </DialogClose>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </CardFooter>
+            </Card>
           )}
         </TabsContent>
         <TabsContent value="users">
