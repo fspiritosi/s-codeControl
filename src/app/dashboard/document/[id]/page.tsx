@@ -111,8 +111,6 @@ export default async function page({ params }: { params: { id: string } }) {
     return expireDate < lastMonth
   }
 
-  console.log(documents_employees, 'documents_employees')
-
   return (
     <section className="md:mx-7">
       <Card className="p-4">
