@@ -53,8 +53,6 @@ export const AlertComponent = () => {
   //si actualCompany es null y allCompanies tiene mas de 1, mostrar alerta
   //si actualCompany es null y allCompanies tiene 1, no mostrar alerta
 
-  console.log(showAlert, 'showAlert')
-
   return (
     (showMultipleAlert && (
       <AlertDialog defaultOpen>

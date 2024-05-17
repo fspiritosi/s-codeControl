@@ -18,8 +18,6 @@ export default async function EquipmentFormAction({
     .eq('applies', searchParams.id)
   revalidatePath('/dashboard/equipment/action')
 
-  console.log(data, 'data')
-
   // const { data: vehicleData, error } = await supabase
   //       .from('vehicles')
   //       .select(
