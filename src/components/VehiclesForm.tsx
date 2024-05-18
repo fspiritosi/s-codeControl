@@ -99,6 +99,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
     role = profile?.actualCompany?.owner_id?.role as string
   } else {
     role = profile?.actualCompany?.share_company_users?.[0]?.role as string
+    
   }
   const [vehicle, setVehicle] = useState<VehicleType | null>(null)
   // const { toast } = useToast()
