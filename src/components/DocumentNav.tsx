@@ -10,7 +10,7 @@ export default function DocumentNav() {
      role = profile?.actualCompany?.owner_id?.role as string
      
   }else{
-     role = profile?.actualCompany?.share_company_users?.[0].role as string
+     role = profile?.actualCompany?.share_company_users?.[0]?.role as string
   }
   const [multiresource, setMultiresource] = useState<boolean | undefined>(
     undefined,

@@ -72,7 +72,7 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
   const profile = useLoggedUserStore(state => state.profile)
   //const userShared = useLoggedUserStore(state => state.sharedUsers?.[0]?.role)
   const userShared = cookies.get('guestRole')
-  const isAuditor = profile?.[0].role === 'Auditor'
+  const isAuditor = profile?.[0]?.role === 'Auditor'
   const administrador = userShared === 'Administrador' || null
 
   const actualCompany = useLoggedUserStore(state => state.actualCompany)

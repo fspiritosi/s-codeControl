@@ -52,7 +52,7 @@ export default function page() {
       return {
         email: user.profile.email,
         fullname: user.profile.fullname,
-        role: user.role,
+        role: user?.role,
         alta: user.created_at,
         id: user.id,
         img: user.profile.avatar || '',

@@ -42,7 +42,7 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
   if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
     role = profile?.actualCompany?.owner_id?.role as string
   } else {
-    role = profile?.actualCompany?.share_company_users?.[0].role as string
+    role = profile?.actualCompany?.share_company_users?.[0]?.role as string
   }
 
   const documentToDownload = props?.filter(e => e.state === 'aprobado')
