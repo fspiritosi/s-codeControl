@@ -1,6 +1,5 @@
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse, type NextRequest } from 'next/server'
-import { updateSession } from './lib/utils/middleware'
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
@@ -123,7 +122,7 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
   }
-  await updateSession(req)
+  // await updateSession(req)
 
   return res
 }
