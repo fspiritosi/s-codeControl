@@ -107,7 +107,7 @@ export const RegisterWithRole = () => {
               {
                 company_id: company?.id,
                 profile_id: profile[0].id,
-                role: values.role,
+                role: values?.role,
               },
             ])
 
@@ -153,7 +153,7 @@ export const RegisterWithRole = () => {
                   {
                     company_id: company?.id,
                     profile_id: user?.[0].id,
-                    role: values.role,
+                    role: values?.role,
                   },
                 ])
               if (error) {

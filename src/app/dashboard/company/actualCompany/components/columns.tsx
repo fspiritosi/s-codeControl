@@ -116,8 +116,8 @@ export const columns: ColumnDef<SharedUser>[] = [
         <div className="flex w-[100px] items-center">
           <Select
             onValueChange={e => changeRole(e)}
-            defaultValue={row.original.role}
-            disabled={row.original.role === 'Propietario'}
+            defaultValue={row.original?.role}
+            disabled={row.original?.role === 'Propietario'}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Rol" />
@@ -128,7 +128,7 @@ export const columns: ColumnDef<SharedUser>[] = [
                   {role.name}
                 </SelectItem>
               ))}
-              {row.original.role === 'Propietario' ? (
+              {row.original?.role === 'Propietario' ? (
                 <SelectItem
                   defaultValue={'Propietario'}
                   disabled
