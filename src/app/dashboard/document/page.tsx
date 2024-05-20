@@ -47,6 +47,7 @@ import { ExpiredDataTable } from '../data-table'
 
 export default function page() {
   const { allDocumentsToShow, actualCompany } = useLoggedUserStore()
+  // const role = useLoggedUserStore(state => state.role)
   const [document_types, setDocumentTypes] = useState<any[] | null>([])
   const [documents_employees, setDocumentsEmployees] = useState<any[] | null>(
     [],
@@ -166,6 +167,18 @@ export default function page() {
   }, [actualCompany])
 
   const filteredData = documents_employees as AuditorDocument[]
+
+  const profile = useLoggedUserStore(state => state)
+
+  let role: string = ''
+  if (
+    profile?.actualCompany?.owner_id?.credential_id ===
+    profile?.credentialUser?.id
+  ) {
+    role = profile?.actualCompany?.owner_id?.role as string
+  } else {
+    role = profile?.actualCompany?.share_company_users?.[0]?.role as string
+  }
   return (
     <section className={'flex flex-col md:mx-7'}>
       <Card>
@@ -236,7 +249,7 @@ export default function page() {
         <CardFooter>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button>Crear nuevo</Button>
+              {role && role !== 'Invitado' && <Button>Crear nuevo</Button>}
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>

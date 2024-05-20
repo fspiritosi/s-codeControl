@@ -99,7 +99,6 @@ export default function VehiclesForm2({ id }: { id: string }) {
     role = profile?.actualCompany?.owner_id?.role as string
   } else {
     role = profile?.actualCompany?.share_company_users?.[0]?.role as string
-    
   }
   const [vehicle, setVehicle] = useState<VehicleType | null>(null)
   // const { toast } = useToast()
@@ -415,7 +414,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
             .insert([
               {
                 ...values,
-                domain: domain?.toUpperCase(),
+                domain: domain?.toUpperCase() || null,
                 type_of_vehicle: data.tipe_of_vehicles.find(
                   e => e.name === type_of_vehicle,
                 )?.id,
@@ -434,7 +433,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
             user_id: string | undefined
           }[] = []
 
-          mandatoryDocuments.Equipos.forEach(async document => {
+          mandatoryDocuments?.Equipos.forEach(async document => {
             documentsMissing.push({
               applies: vehicle?.[0]?.id,
               id_document_types: document.id,
@@ -448,14 +447,22 @@ export default function VehiclesForm2({ id }: { id: string }) {
             .insert(documentsMissing)
             .select()
 
+          if (documentError) {
+            throw new Error(JSON.stringify(documentError))
+          }
+
           if (error) {
-            throw new Error('Error al registrar el vehículo')
-            return
+            throw new Error(JSON.stringify(error))
           }
 
           const id = vehicle?.[0].id
+
+          console.log(id, 'id')
           const fileExtension = imageFile?.name.split('.').pop()
+          console.log(fileExtension, 'fileExtension')
+
           if (imageFile) {
+            console.log(imageFile, 'imageFile')
             try {
               const renamedFile = new File(
                 [imageFile],
@@ -464,7 +471,9 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   type: `image/${fileExtension}`,
                 },
               )
-              await uploadImage(renamedFile, 'vehicle_photos')
+              const imggg = await uploadImage(renamedFile, 'vehicle_photos')
+
+              console.log(imggg, 'imggg')
 
               try {
                 const vehicleImage =
@@ -477,25 +486,31 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   .update({ picture: vehicleImage })
                   .eq('id', id)
                   .eq('company_id', actualCompany?.id)
+
+                console.log(data, 'data')
+                console.log(error, 'error')
               } catch (error) {}
               documetsFetch()
             } catch (error: any) {
-              throw new Error('Error al subir la imagen')
+              throw new Error(JSON.stringify(error))
             }
           }
 
           if (error) {
-            throw new Error('Error al registrar el vehículo')
+            throw new Error(error)
           }
           router.push('/dashboard/equipment')
         } catch (error) {
-          throw new Error('Error al registrar el vehículo')
+          console.error(error)
         }
       },
       {
         loading: 'Guardando...',
         success: 'Vehículo registrado',
-        error: 'Error al registrar el vehículo',
+        error: error => {
+          console.log(error)
+          return error
+        },
       },
     )
   }
@@ -588,6 +603,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
           }
 
           setReadOnly(true)
+          router
         } catch (error) {
           throw new Error('Error al editar el vehículo')
         }

@@ -1,6 +1,7 @@
 'use client'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import { useEffect, useRef } from 'react'
+import { useCountriesStore } from './countries'
 import { useLoggedUserStore } from './loggedUser'
 
 const formattedEmployees = (employees: any) => {
@@ -86,14 +87,14 @@ export default function InitEmployees({ active }: { active: boolean }) {
 
     const employees = formattedEmployees(data)
     useLoggedUserStore.setState({ employeesToShow: employees })
-
-    console.log(employees, 'employees')
+    useLoggedUserStore.setState({ employees: employees })
   }
-
+  const documentTypes = useCountriesStore(state => state.documentTypes)
   useEffect(() => {
     if (actualCompany?.id) {
       fetchEmployees()
     }
+    documentTypes(actualCompany?.id || '')
   }, [actualCompany])
   return <></>
 }

@@ -22,8 +22,6 @@ const EmployeePage = () => {
 
   const profile = useLoggedUserStore(state => state)
 
-  console.log(profile, 'profile')
-
   let role: string = ''
   if (
     profile?.actualCompany?.owner_id?.credential_id ===

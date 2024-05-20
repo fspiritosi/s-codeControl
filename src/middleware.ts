@@ -10,125 +10,112 @@ export async function middleware(req: NextRequest) {
     },
   })
 
-  // const {
-  //   data: { session },
-  // } = await supabase.auth.getSession()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
 
-  // // // console.log(await supabase.auth.getUser(),'await supabase.auth.getSession()');
+  // // console.log(await supabase.auth.getUser(),'await supabase.auth.getSession()');
 
-  // const { data } = await supabase
-  //   .from('profile')
-  //   .select('*')
-  //   .eq('email', session?.user.email)
+  const { data } = await supabase
+    .from('profile')
+    .select('*')
+    .eq('email', session?.user.email)
 
-  // const { data: Companies, error } = await supabase
-  //   .from('company')
-  //   .select(`*`)
-  //   .eq('owner_id', data?.[0]?.id)
+  const { data: Companies, error } = await supabase
+    .from('company')
+    .select(`*`)
+    .eq('owner_id', data?.[0]?.id)
 
-  // let { data: share_company_users, error: sharedError } = await supabase
-  //   .from('share_company_users')
-  //   .select(`*`)
-  //   .eq('profile_id', data?.[0]?.id)
+  let { data: share_company_users, error: sharedError } = await supabase
+    .from('share_company_users')
+    .select(`*`)
+    .eq('profile_id', data?.[0]?.id)
 
-  // if (
-  //   !Companies?.[0] &&
-  //   !share_company_users?.[0] &&
-  //   !req.url.includes('/dashboard/company/new')
-  // ) {
-  //   return NextResponse.redirect('http://localhost:3000/dashboard/company/new')
-  // }
+  const theme = response.cookies.get('theme')
+  const actualCompanyId = req.cookies.get('actialCompanyId')
+  // const actualNoOwner :string | null = req.cookies.get('actualComp')?.value
+  const actualNoOwnerValue: string | null =
+    req.cookies.get('actualComp')?.value ?? null
 
-  // const theme = response.cookies.get('theme')
-  // const actualCompanyId = req.cookies.get('actialCompanyId')
-  // //const actualNoOwner :string | null = req.cookies.get('actualComp')?.value
-  // const actualNoOwnerValue: string | null =
-  //   req.cookies.get('actualComp')?.value ?? null
-  // const actualNoOwner = actualNoOwnerValue
-  //   ? actualNoOwnerValue.replace(/^"|"$/g, '')
-  //   : null
+  const actualNoOwner = actualNoOwnerValue
+    ? actualNoOwnerValue.replace(/^"|"$/g, '')
+    : null
 
-  // const actualNow = actualNoOwner //!== null ? parseInt(actualNoOwner as string, 10) : null
-  // const { data: guestRole } = await supabase
-  //   .from('share_company_users')
-  //   .select('role')
-  //   .eq('profile_id ', data?.[0]?.id)
-  //   .eq('company_id', actualNow)
+  const actualNow = actualNoOwner //!== null ? parseInt(actualNoOwner as string, 10) : null
+  const { data: guestRole } = await supabase
+    .from('share_company_users')
+    .select('role')
+    .eq('profile_id ', data?.[0]?.id)
+    .eq('company_id', actualNow)
 
   // response.cookies.set('guestRole', guestRole?.[0]?.role)
-  // const userRole = data?.[0]?.role
+  const userRole = data?.[0]?.role
 
-  // const guestUser = [
-  //   '/dashboard/employee/action?action=edit&',
-  //   '/dashboard/employee/action?action=new',
-  //   '/dashboard/equipment/action?action=edit&',
-  //   '/dashboard/equipment/action?action=new',
-  //   '/dashboard/company/new',
-  //   '/dashboard/company/actualCompany',
-  // ]
+  const guestUser = [
+    '/dashboard/employee/action?action=edit&',
+    '/dashboard/employee/action?action=new',
+    '/dashboard/equipment/action?action=edit&',
+    '/dashboard/equipment/action?action=new',
+    '/dashboard/company/new',
+    '/dashboard/company/actualCompany',
+  ] // -> Rol tabla profile
 
-  // const usuarioUser = [
-  //   '/dashboard/company/new',
-  //   '/dashboard/company/actualCompany',
-  //   '/auditor',
-  // ]
-  // const administradorUser = ['/auditor']
+  const usuarioUser = ['/dashboard/company/actualCompany', '/auditor']
 
-  // const codeControlClientUser = ['/auditor']
+  const administradorUser = ['/auditor']
+  const codeControlClientUser = ['/auditor']
 
-  // if (!theme) {
-  //   response.cookies.set('theme', 'light')
-  // }
+  const isAuditor = data?.[0]?.role === 'Auditor'
+  if (!session) {
+    return NextResponse.redirect(new URL('/login', req.url))
+  }
+  if (userRole === 'Admin') {
+    return response // Permitir acceso sin restricciones para los usuarios con rol 'Admin'
+  } else {
+    const baseUrl = req.url.includes('?') ? req.url.split('?')[0] : req.url
+    const redirectUrl = new URL(baseUrl)
+    redirectUrl.searchParams.set('access_denied', 'true')
 
-  // if (!actualCompanyId) {
-  //   const companiesId = Companies?.filter(
-  //     company => company.by_defect === true,
-  //   )[0]?.id
-  //   response.cookies.set('actualCompanyId', companiesId)
-  // }
+    if (isAuditor && !req.url.includes('/auditor')) {
+      redirectUrl.pathname = '/auditor'
+      return NextResponse.redirect(redirectUrl.toString())
+    }
+    if (!isAuditor && req.url.includes('/auditor')) {
+      redirectUrl.pathname = '/dashboard'
+      return NextResponse.redirect(redirectUrl.toString())
+    }
 
-  // const isAuditor = data?.[0]?.role === 'Auditor'
-  // if (!session) {
-  //   console.log('Redirecting to /login')
-  //   return NextResponse.redirect(new URL('/login', req.url))
-  // }
-  // if (userRole === 'Admin') {
-  //   return response // Permitir acceso sin restricciones para los usuarios con rol 'Admin'
-  // } else {
-  //   if (isAuditor && !req.url.includes('/auditor')) {
-  //     return NextResponse.redirect(new URL('/auditor', req.url))
-  //   }
-  //   if (!isAuditor && req.url.includes('/auditor')) {
-  //     return NextResponse.redirect(new URL('/dashboard', req.url))
-  //   }
+    if (
+      userRole === 'CodeControlClient' &&
+      codeControlClientUser.some(url => req.url.includes(url))
+    ) {
+      redirectUrl.pathname = '/dashboard'
+      return NextResponse.redirect(redirectUrl.toString())
+    }
 
-  //   if (
-  //     userRole === 'CodeControlClient' &&
-  //     codeControlClientUser.some(url => req.url.includes(url))
-  //   ) {
-  //     return NextResponse.redirect(new URL('/dashboard', req.url))
-  //   }
+    if (
+      guestRole?.[0]?.role === 'Invitado' &&
+      guestUser.some(url => req.url.includes(url))
+    ) {
+      redirectUrl.pathname = '/dashboard'
+      return NextResponse.redirect(redirectUrl.toString())
+    }
 
-  //   if (
-  //     guestRole?.[0]?.role === 'Invitado' &&
-  //     guestUser.some(url => req.url.includes(url))
-  //   ) {
-  //     return NextResponse.redirect(new URL('/dashboard', req.url))
-  //   }
-
-  //   if (
-  //     guestRole?.[0]?.role === 'Administrador' &&
-  //     administradorUser.some(url => req.url.includes(url))
-  //   ) {
-  //     return NextResponse.redirect(new URL('/dashboard', req.url))
-  //   }
-  //   if (
-  //     guestRole?.[0]?.role === 'Usuario' &&
-  //     usuarioUser.some(url => req.url.includes(url))
-  //   ) {
-  //     return NextResponse.redirect(new URL('/dashboard', req.url))
-  //   }
-  // }
+    if (
+      guestRole?.[0]?.role === 'Administrador' &&
+      administradorUser.some(url => req.url.includes(url))
+    ) {
+      redirectUrl.pathname = '/dashboard'
+      return NextResponse.redirect(redirectUrl.toString())
+    }
+    if (
+      guestRole?.[0]?.role === 'Usuario' &&
+      usuarioUser.some(url => req.url.includes(url))
+    ) {
+      redirectUrl.pathname = '/dashboard'
+      return NextResponse.redirect(redirectUrl.toString())
+    }
+  }
   return response
 }
 

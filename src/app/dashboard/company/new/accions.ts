@@ -27,12 +27,16 @@ export async function AddCompany(formData: FormData) {
     country: formData.get('country') as string,
     industry: formData.get('industry') as string,
     description: formData.get('description') as string,
+    by_defect: true,
   }
 
-  const { error: companyError } = await supabase
+  const { data, error: companyError } = await supabase
     .from('company')
     .insert([formattedData])
+    .select()
   console.log(companyError, 'companyError')
-  revalidatePath('/', 'layout')
+  revalidatePath('/dashboard', 'layout')
   revalidatePath('/dashboard')
+  return { error: companyError, data }
+  //redirijir al dashboard
 }

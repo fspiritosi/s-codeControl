@@ -145,6 +145,12 @@ export default function EmployeeAccordion() {
         },
   })
 
+  useEffect(() => {
+    console.log(
+      employees?.find((user: any) => user.document_number === document),
+      'user',
+    )
+  }, [])
   const [accordion1Errors, setAccordion1Errors] = useState(false)
   const [accordion2Errors, setAccordion2Errors] = useState(false)
   const [accordion3Errors, setAccordion3Errors] = useState(false)
@@ -443,7 +449,7 @@ export default function EmployeeAccordion() {
             user_id: string | undefined
           }[] = []
 
-          mandatoryDocuments.Persona.forEach(async document => {
+          mandatoryDocuments?.Persona.forEach(async document => {
             documentsMissing.push({
               applies: applies[0].id,
               id_document_types: document.id,

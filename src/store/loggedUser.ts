@@ -896,12 +896,7 @@ import {
   VehiclesAPI,
   profileUser,
 } from '@/types/types'
-import {
-  Company,
-  SharedCompanies,
-  Vehicle,
-  VehicleSchema,
-} from '@/zodSchemas/schemas'
+import { Company, SharedCompanies, Vehicle } from '@/zodSchemas/schemas'
 import { User } from '@supabase/supabase-js'
 import { format } from 'date-fns'
 import { create } from 'zustand'
@@ -1386,18 +1381,18 @@ export const useLoggedUserStore = create<State>((set, get) => {
       .eq('company_id', get()?.actualCompany?.id)
       .eq('is_active', true)
 
-    const validatedData = VehicleSchema.safeParse(data ?? [])
-    if (!validatedData.success) {
-      return console.error(
-        'Error al obtener los vehículos:',
-        validatedData.error,
-      )
-    }
+    // const validatedData = VehicleSchema.safeParse(data ?? [])
+    // if (!validatedData.success) {
+    //   return console.error(
+    //     'Error al obtener los vehículos:',
+    //     validatedData.error,
+    //   )
+    // }
 
     if (error) {
       console.error('Error al obtener los vehículos:', error)
     } else {
-      set({ vehicles: validatedData.data || [] })
+      set({ vehicles: data || [] })
       setActivesVehicles()
     }
   }

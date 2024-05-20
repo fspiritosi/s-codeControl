@@ -1,5 +1,4 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -17,8 +16,8 @@ import { supabaseServer } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
 import { revalidatePath } from 'next/cache'
-import { AddCompany } from './accions'
 import CityInput from './components/CityInput'
+import CreateCompanyButton from './components/CreateCompanyButton'
 export default async function companyRegister() {
   const supabase = supabaseServer()
   const {
@@ -75,7 +74,6 @@ export default async function companyRegister() {
           Completa este formulario con los datos de tu nueva compañia
         </CardDescription>
         <div className="mt-6 rounded-xl flex w-full">
-          {/* <CompanyRegister company={null} formEnabled={true} /> */}
           <form>
             <div className=" flex flex-wrap gap-8 items-center w-full">
               <div>
@@ -86,9 +84,11 @@ export default async function companyRegister() {
                   className="max-w-[350px] w-[300px]"
                   placeholder="nombre de la compañía"
                 />
-                <CardDescription>
-                  Por favor ingresa el nombre de la compañía.
-                </CardDescription>
+
+                <CardDescription
+                  id="company_name_error"
+                  className="max-w-[300px]"
+                />
               </div>
               <div>
                 <Label htmlFor="company_cuit">CUIT de la compañía</Label>
@@ -97,37 +97,37 @@ export default async function companyRegister() {
                   id="company_cuit"
                   className="max-w-[350px] w-[300px]"
                   placeholder="nombre de la compañía"
-                  // {...field}
                 />
-                <CardDescription>Por favor ingresa el CUIT .</CardDescription>
+                <CardDescription
+                  id="company_cuit_error"
+                  className="max-w-[300px]"
+                />
               </div>
 
               <div>
                 <Label htmlFor="website">Sitio Web</Label>
                 <Input
-                  // disabled={!formEnabledProp}
                   id="website"
                   name="website"
                   className="max-w-[350px] w-[300px]"
                   placeholder="nombre de la compañía"
-                  // {...field}
                 />
-                <CardDescription>
-                  Por favor ingresa el sitio web de la compañía.
-                </CardDescription>
+
+                <CardDescription id="website_error" className="max-w-[300px]" />
               </div>
 
               <div>
                 <Label htmlFor="contact_email">Email</Label>
                 <Input
-                  // disabled={!formEnabledProp}
                   id="contact_email"
                   name="contact_email"
                   className="max-w-[350px] w-[300px]"
                   placeholder="nombre de la compañía"
-                  // {...field}
                 />
-                <CardDescription>Por favor ingresa tu email.</CardDescription>
+                <CardDescription
+                  id="contact_email_error"
+                  className="max-w-[300px]"
+                />
               </div>
               <div>
                 <Label htmlFor="contact_phone">Número de teléfono</Label>
@@ -138,23 +138,20 @@ export default async function companyRegister() {
                   placeholder="nombre de la compañía"
                 />
 
-                <CardDescription className="max-w-[300px]">
-                  Por favor ingresa el número de teléfono de la compañía.
-                </CardDescription>
+                <CardDescription
+                  id="contact_phone_error"
+                  className="max-w-[300px]"
+                />
               </div>
               <div>
                 <Label htmlFor="address">Dirección</Label>
                 <Input
                   id="address"
                   name="address"
-                  // disabled={!formEnabledProp}
                   className="max-w-[350px] w-[300px]"
                   placeholder="nombre de la compañía"
-                  // {...field}
                 />
-                <CardDescription className="max-w-[300px]">
-                  Por favor ingresa tu dirección
-                </CardDescription>
+                <CardDescription id="address_error" className="max-w-[300px]" />
               </div>
               <div>
                 <Label htmlFor="country">Seleccione un país</Label>
@@ -170,9 +167,8 @@ export default async function companyRegister() {
                     <SelectItem value="argentina">Argentina</SelectItem>
                   </SelectContent>
                 </Select>
-                <CardDescription className="max-w-[300px]">
-                  Por favor ingresa tu país
-                </CardDescription>
+
+                <CardDescription id="country_error" className="max-w-[300px]" />
               </div>
               <CityInput cities={cities} provinces={provinces} />
               <div>
@@ -200,9 +196,11 @@ export default async function companyRegister() {
                     ))}
                   </SelectContent>
                 </Select>
-                <CardDescription className="max-w-[300px]">
-                  Por favor selecciona tu Industria
-                </CardDescription>
+
+                <CardDescription
+                  id="industry_error"
+                  className="max-w-[300px]"
+                />
               </div>
               <div>
                 <Label htmlFor="description">Descripción</Label>
@@ -213,27 +211,20 @@ export default async function companyRegister() {
                   className="max-w-[350px] w-[300px]"
                   placeholder="Descripción de la compañía"
                 />
-                <CardDescription className="max-w-[300px]">
-                  Por favor ingresa la descripción de la compañía.
-                </CardDescription>
-              </div>
-              <div className="flex flex-row-reverse gap-2 justify-center items-center">
-                <Label htmlFor="by_defect">
-                  Marcar para seleccionar Compañia por defecto
-                </Label>
-                <Checkbox
-                  id="by_defect"
-                  name="by_defect"
-                  // disabled={!formEnabledProp}
-                  // defaultChecked={company ? company.by_defect : false}
-                  // onCheckedChange={field.onChange}
+
+                <CardDescription
+                  id="description_error"
+                  className="max-w-[300px]"
                 />
               </div>
+              <div className="flex flex-row-reverse gap-2 justify-center items-center max-w-[300px] w-[300px]">
+                <Label htmlFor="by_defect max-w-[300px] w-[300px]">
+                  Marcar para seleccionar Compañia por defecto
+                </Label>
+                <Checkbox id="by_defect" name="by_defect" />
+              </div>
             </div>
-
-            <Button type="submit" formAction={AddCompany} className="mt-5">
-              Registrar Compañía
-            </Button>
+            <CreateCompanyButton />
           </form>
         </div>
       </Card>

@@ -276,7 +276,10 @@ export function DataTable<TData, TValue>({
             <DropdownMenuTrigger asChild>
               <Button variant="outline">Columnas</Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="max-h-[50dvh] ">
+            <DropdownMenuContent
+              align="end"
+              className="max-h-[50dvh] overflow-y-auto "
+            >
               {table
                 .getAllColumns()
                 .filter(column => column.getCanHide())

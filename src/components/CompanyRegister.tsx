@@ -20,6 +20,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { useCompanyData } from '@/hooks/useCompanyData'
 import { useImageUpload } from '@/hooks/useUploadImage'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 import { useCountriesStore } from '@/store/countries'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { company, industry_type } from '@/types/types'
@@ -32,7 +33,6 @@ import { toast } from 'sonner'
 import * as z from 'zod'
 import { ImageHander } from './ImageHandler'
 import { Checkbox } from './ui/checkbox'
-import { supabaseBrowser } from '@/lib/supabase/browser'
 interface CompanyRegisterProps {
   company: company | null
   formEnabled: boolean
@@ -94,7 +94,7 @@ export function CompanyRegister({
     )
     if (selectedProvince) {
       fetchCityValues(selectedProvince?.id)
-      form.setValue('province_id', selectedProvince?.id)
+      form.setValue('province_id', selectedProvince?.id.toString())
     }
   }
 
@@ -102,7 +102,7 @@ export function CompanyRegister({
     // Buscar el objeto City correspondiente al selectedCityName
     const selectedCity = citiesValues.find(c => c.name === selectedCityName)
     if (selectedCity) {
-      form.setValue('city', selectedCity?.id)
+      form.setValue('city', selectedCity?.id.toString())
     }
   }
 
@@ -164,7 +164,7 @@ export function CompanyRegister({
               //by_defect: false,
             })
             await handleUpload()
-            console.log('redireccionando 5');
+            console.log('redireccionando 5')
             router.push('/dashboard')
           },
           {
@@ -193,13 +193,13 @@ export function CompanyRegister({
               //by_defect: false,
             })
             await handleUpload()
-            console.log('redireccionando 1');
+            console.log('redireccionando 1')
             router.push('/dashboard')
           },
           {
             loading: 'Registrando compañía...',
             success: success => {
-              console.log('redireccionando 2');
+              console.log('redireccionando 2')
               router.push('/dashboard')
               // redirect('/dashboard')
               return 'Compañía registrada correctamente'
@@ -210,7 +210,7 @@ export function CompanyRegister({
           },
         )
       }
-      console.log('redireccionando 3');
+      console.log('redireccionando 3')
       router.push('/dashboard')
     } catch (err) {
       console.error('Ocurrió un error:', err)

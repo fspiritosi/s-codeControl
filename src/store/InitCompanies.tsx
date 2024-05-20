@@ -15,20 +15,15 @@ export default function InitCompanies({
   const router = useRouter()
   let actualCompany
 
+  const documetsFetch = useLoggedUserStore(state => state.documetsFetch)
   useEffect(() => {
+    console.log(company, 'company afuera')
     if (!initState.current) {
-      console.log('keloke')
+      console.log(company, 'company adentro')
       useLoggedUserStore.setState({
         sharedCompanies: share_company_users as SharedCompanies,
       })
 
-      // const validatedData = CompanySchema.safeParse(company)
-      // if (!validatedData.success) {
-      //   return console.error(
-      //     'Error al obtener el perfil: Validacion',
-      //     validatedData.error,
-      //   )
-      // }
       useLoggedUserStore.setState({ allCompanies: company as Company })
 
       const savedCompany = localStorage.getItem('company_id') || ''
@@ -38,8 +33,6 @@ export default function InitCompanies({
         )?.company_id
 
         if (company) {
-          // setActualCompany(company)
-          console.log('company', company)
           useLoggedUserStore.setState({ actualCompany: company })
           actualCompany = company.id
           return
@@ -56,7 +49,6 @@ export default function InitCompanies({
       }
       if (company?.length === 1) {
         // setActualCompany(data[0])
-        console.log('data[0]', company?.[0])
         useLoggedUserStore.setState({ actualCompany: company?.[0] })
         actualCompany = company?.[0].id
       }
@@ -67,13 +59,11 @@ export default function InitCompanies({
           router.push('/dashboard/company/new')
         }
       }
+      documetsFetch()
     }
-    console.log('keloke222')
 
     initState.current = true
   }, [])
-
-  console.log(actualCompany, 'actualCompany')
 
   return <></>
 }

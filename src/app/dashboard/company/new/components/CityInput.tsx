@@ -17,9 +17,7 @@ interface Props {
 
 export default function CityInput({ provinces, cities }: Props) {
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null)
-  const [cityFiltered, setCityFiltered] = useState<any[] | null>(
-    cities?.filter(city => city?.province_id === 1) || [],
-  )
+  const [cityFiltered, setCityFiltered] = useState<any[] | null>(cities || [])
   const [selectedCity, setSelectedCity] = useState<string | null>(null)
 
   const handleProvinceChange = (value: string) => {
@@ -37,7 +35,7 @@ export default function CityInput({ provinces, cities }: Props) {
       <div>
         <Label htmlFor="province_id">Seleccione una provincia</Label>
         <Select
-          value={selectedProvince || ''}
+          value={selectedProvince || undefined}
           onValueChange={e => handleProvinceChange(e)}
           name="province_id"
         >
@@ -56,9 +54,8 @@ export default function CityInput({ provinces, cities }: Props) {
             ))}
           </SelectContent>
         </Select>
-        <CardDescription className="max-w-[300px]">
-          Por favor selecciona tu provincia
-        </CardDescription>
+
+        <CardDescription id="province_id_error" className="max-w-[300px]" />
       </div>
       <div>
         <Label htmlFor="city">Seleccione una ciudad</Label>
@@ -82,10 +79,7 @@ export default function CityInput({ provinces, cities }: Props) {
             ))}
           </SelectContent>
         </Select>
-
-        <CardDescription className="max-w-[300px]">
-          Por favor selecciona tu ciudad
-        </CardDescription>
+        <CardDescription id="city_error" className="max-w-[300px]" />
       </div>
     </>
   )
