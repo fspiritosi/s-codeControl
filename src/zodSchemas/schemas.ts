@@ -36,16 +36,16 @@ const passwordSchema = z
   .string()
   .min(8, { message: 'La contraseña debe tener al menos 8 caracteres.' })
   .max(50, { message: 'La contraseña debe tener menos de 50 caracteres.' })
-  .regex(/[A-Z]/, {
-    message: 'La contraseña debe tener al menos una mayúscula.',
-  })
+  // .regex(/[A-Z]/, {
+  //   message: 'La contraseña debe tener al menos una mayúscula.',
+  // })
   .regex(/[a-z]/, {
     message: 'La contraseña debe tener al menos una minúscula.',
   })
   .regex(/[0-9]/, { message: 'La contraseña debe tener al menos un número.' })
-  .regex(/[^A-Za-z0-9]/, {
-    message: 'La contraseña debe tener al menos un carácter especial.',
-  })
+// .regex(/[^A-Za-z0-9]/, {
+//   message: 'La contraseña debe tener al menos un carácter especial.',
+// })
 
 export const loginSchema = z.object({
   email: z.string().email({ message: 'Email inválido' }),

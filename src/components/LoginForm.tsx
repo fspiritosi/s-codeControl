@@ -56,6 +56,7 @@ export function LoginForm() {
   const onSubmit = async (credentials: z.infer<typeof loginSchema>) => {
     try {
       setShowLoader(true)
+      console.log(credentials, 'credentials')
       await login(credentials)
       router.push('/dashboard')
     } catch (error: AuthError | any) {

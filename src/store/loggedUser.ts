@@ -4,14 +4,7 @@ import {
   VehiclesAPI,
   profileUser,
 } from '@/types/types'
-import {
-  Company,
-  CompanySchema,
-  SharedCompanies,
-  SharedCompaniesSchema,
-  Vehicle,
-  VehicleSchema,
-} from '@/zodSchemas/schemas'
+import { Company, SharedCompanies, Vehicle } from '@/zodSchemas/schemas'
 import { User } from '@supabase/supabase-js'
 import { format } from 'date-fns'
 import { create } from 'zustand'
@@ -199,13 +192,13 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
       .eq('owner_id', id)
 
-    const validatedData = CompanySchema.safeParse(data)
-    if (!validatedData.success) {
-      return console.error(
-        'Error al obtener el perfil: Validacion',
-        validatedData.error,
-      )
-    }
+    // const validatedData = CompanySchema.safeParse(data)
+    // if (!validatedData.success) {
+    //   return console.error(
+    //     'Error al obtener el perfil: Validacion',
+    //     validatedData.error,
+    //   )
+    // }
 
     let { data: share_company_users, error: sharedError } = await supabase
       .from('share_company_users')
@@ -252,26 +245,26 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
       .eq('profile_id', id)
 
-    const validatedSharedCompanies =
-      SharedCompaniesSchema.safeParse(share_company_users)
+    // const validatedSharedCompanies =
+    //   SharedCompaniesSchema.safeParse(share_company_users)
 
-    if (!validatedSharedCompanies.success) {
-      return console.error(
-        'Error al obtener el perfil: Validacion',
-        validatedSharedCompanies.error,
-      )
-    }
+    // if (!validatedSharedCompanies.success) {
+    //   return console.error(
+    //     'Error al obtener el perfil: Validacion',
+    //     validatedSharedCompanies.error,
+    //   )
+    // }
 
-    set({ sharedCompanies: validatedSharedCompanies.data })
+    set({ sharedCompanies: share_company_users as SharedCompanies })
 
     if (error) {
       console.error('Error al obtener el perfil:', error)
     } else {
-      set({ allCompanies: validatedData.data })
+      set({ allCompanies: data as Company })
       selectedCompany = get()?.allCompanies.filter(company => company.by_defect)
       const savedCompany = localStorage.getItem('company_id') || ''
       if (savedCompany) {
-        const company = validatedSharedCompanies.data.find(
+        const company = share_company_users?.find(
           company => company.company_id.id === JSON.parse(savedCompany),
         )?.company_id
 
@@ -489,18 +482,18 @@ export const useLoggedUserStore = create<State>((set, get) => {
       .eq('company_id', get()?.actualCompany?.id)
       .eq('is_active', true)
 
-    const validatedData = VehicleSchema.safeParse(data ?? [])
-    if (!validatedData.success) {
-      return console.error(
-        'Error al obtener los vehículos:',
-        validatedData.error,
-      )
-    }
+    // const validatedData = VehicleSchema.safeParse(data ?? [])
+    // if (!validatedData.success) {
+    //   return console.error(
+    //     'Error al obtener los vehículos:',
+    //     validatedData.error,
+    //   )
+    // }
 
     if (error) {
       console.error('Error al obtener los vehículos:', error)
     } else {
-      set({ vehicles: validatedData.data || [] })
+      set({ vehicles: data || [] })
       setActivesVehicles()
     }
   }
