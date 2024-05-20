@@ -8,6 +8,7 @@ import { googleLogin } from '../actions'
 function GoogleButton() {
   const { pending } = useFormStatus()
   const url = window.location.origin
+
   return (
     <Button
       variant="outline"
