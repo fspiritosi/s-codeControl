@@ -19,6 +19,7 @@ function GoogleButton() {
       className="w-[100%] sm:w-[80%] lg:w-[60%] self-center mb-7"
       disabled={pending}
       formAction={async () => {
+        console.log(url, 'url')
         const error = await googleLogin(url)
         if (error) {
           toast.error('Error al iniciar sesión. Por favor, intenta de nuevo.')
