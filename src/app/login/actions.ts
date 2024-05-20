@@ -44,13 +44,13 @@ export async function logout() {
 }
 
 export async function googleLogin(url: string) {
-  console.log(url, 'url')
+  console.log(`${url}/login/auth/callback`, '`${url}/login/auth/callback`')
   const supabase = supabaseServer()
 
   let { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${url}/login/auth/callback`,
+      redirectTo: url + '/login/auth/callback',
       queryParams: {
         access_type: 'offline',
         prompt: 'consent',
