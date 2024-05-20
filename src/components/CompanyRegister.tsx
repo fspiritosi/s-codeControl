@@ -20,7 +20,6 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { useCompanyData } from '@/hooks/useCompanyData'
 import { useImageUpload } from '@/hooks/useUploadImage'
-import { supabaseBrowser } from '@/lib/supabase/browser'
 import { useCountriesStore } from '@/store/countries'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { company, industry_type } from '@/types/types'
@@ -33,6 +32,7 @@ import { toast } from 'sonner'
 import * as z from 'zod'
 import { ImageHander } from './ImageHandler'
 import { Checkbox } from './ui/checkbox'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 interface CompanyRegisterProps {
   company: company | null
   formEnabled: boolean
@@ -42,6 +42,7 @@ export function CompanyRegister({
   formEnabled = true,
 }: CompanyRegisterProps) {
   const formEnabledProp = company ? formEnabled : true
+  const supabase = supabaseBrowser()
 
   const router = useRouter()
   const profile = useLoggedUserStore(state => state.profile)
@@ -92,8 +93,8 @@ export function CompanyRegister({
       p => p.name === selectedProvinceName,
     )
     if (selectedProvince) {
-      fetchCityValues(selectedProvince.id)
-      form.setValue('province_id', selectedProvince.id)
+      fetchCityValues(selectedProvince?.id)
+      form.setValue('province_id', selectedProvince?.id)
     }
   }
 
@@ -101,7 +102,7 @@ export function CompanyRegister({
     // Buscar el objeto City correspondiente al selectedCityName
     const selectedCity = citiesValues.find(c => c.name === selectedCityName)
     if (selectedCity) {
-      form.setValue('city', selectedCity.id)
+      form.setValue('city', selectedCity?.id)
     }
   }
 
@@ -140,10 +141,10 @@ export function CompanyRegister({
         company_cuit: processText(companyData.company_cuit),
         website: processText(companyData.website),
         country: processText(companyData.country),
-        province_id: companyData.province_id.id
-          ? companyData.province_id.id
+        province_id: companyData.province_id?.id
+          ? companyData.province_id?.id
           : companyData.province_id,
-        city: companyData.city.id ? companyData.city.id : companyData.city,
+        city: companyData.city?.id ? companyData.city?.id : companyData.city,
         contact_email: processText(companyData.contact_email),
         contact_phone: processText(companyData.contact_phone),
         address: processText(companyData.address),
@@ -153,16 +154,18 @@ export function CompanyRegister({
       //Insertar la compañía con los datos procesados
       let updatedCompany
 
-      if (company && company.id) {
+      if (company && company?.id) {
         toast.promise(
           async () => {
-            updatedCompany = await updateCompany(company.id || '', {
+            updatedCompany = await updateCompany(company?.id || '', {
               ...processedCompanyData,
               company_logo: processedCompanyData.company_logo || '',
-              owner_id: profile?.[0].id,
+              owner_id: profile?.[0]?.id,
               //by_defect: false,
             })
             await handleUpload()
+            console.log('redireccionando 5');
+            router.push('/dashboard')
           },
           {
             loading: 'Actualizando compañía...',
@@ -173,21 +176,41 @@ export function CompanyRegister({
       } else {
         toast.promise(
           async () => {
+            //Verificar si existe una compañía con el mismo CUIT
+            const { data: existingCompany } = await supabase
+              .from('company')
+              .select('*')
+              .eq('company_cuit', processedCompanyData.company_cuit)
+
+            if (existingCompany?.length) {
+              throw new Error('Ya existe una compañía con ese CUIT')
+            }
+
             updatedCompany = await insertCompany({
               ...processedCompanyData,
               company_logo: processedCompanyData.company_logo || '',
-              owner_id: profile?.[0].id,
+              owner_id: profile?.[0]?.id,
               //by_defect: false,
             })
             await handleUpload()
+            console.log('redireccionando 1');
+            router.push('/dashboard')
           },
           {
             loading: 'Registrando compañía...',
-            success: 'Compañía registrada correctamente',
-            error: 'Ocurrió un error al registrar la compañía',
+            success: success => {
+              console.log('redireccionando 2');
+              router.push('/dashboard')
+              // redirect('/dashboard')
+              return 'Compañía registrada correctamente'
+            },
+            error: error => {
+              return error
+            },
           },
         )
       }
+      console.log('redireccionando 3');
       router.push('/dashboard')
     } catch (err) {
       console.error('Ocurrió un error:', err)
@@ -232,7 +255,6 @@ export function CompanyRegister({
     const fileExtension = imageFile?.name.split('.').pop()
     if (imageFile) {
       try {
-        const supabase = supabaseBrowser()
         const renamedFile = new File(
           [imageFile],
           `${company_cuit}.${fileExtension}`,
@@ -427,7 +449,7 @@ export function CompanyRegister({
                   </SelectTrigger>
                   <SelectContent>
                     {provincesValues?.map(province => (
-                      <SelectItem key={province.id} value={province.name}>
+                      <SelectItem key={province?.id} value={province?.name}>
                         {province.name}
                       </SelectItem>
                     ))}
@@ -454,7 +476,7 @@ export function CompanyRegister({
                   </SelectTrigger>
                   <SelectContent>
                     {citiesValues?.map(city => (
-                      <SelectItem key={city.id} value={city.name}>
+                      <SelectItem key={city?.id} value={city?.name}>
                         {city.name}
                       </SelectItem>
                     ))}
@@ -482,8 +504,8 @@ export function CompanyRegister({
                   </SelectTrigger>
                   <SelectContent>
                     {industry?.map(ind => (
-                      <SelectItem key={ind.id} value={ind.name}>
-                        {ind.name}
+                      <SelectItem key={ind?.id} value={ind?.name}>
+                        {ind?.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

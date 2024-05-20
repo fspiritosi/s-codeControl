@@ -1,130 +1,136 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse, type NextRequest } from 'next/server'
+import { supabaseServer } from './lib/supabase/server'
+import { updateSession } from './lib/utils/middleware'
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
+  await updateSession(req)
+  const supabase = supabaseServer()
+  const response = NextResponse.next({
+    request: {
+      headers: req.headers,
+    },
+  })
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  // const {
+  //   data: { session },
+  // } = await supabase.auth.getSession()
 
-  const { data } = await supabase
-    .from('profile')
-    .select('*')
-    .eq('email', session?.user.email)
+  // // // console.log(await supabase.auth.getUser(),'await supabase.auth.getSession()');
 
-  const { data: Companies, error } = await supabase
-    .from('company')
-    .select(`*`)
-    .eq('owner_id', data?.[0]?.id)
+  // const { data } = await supabase
+  //   .from('profile')
+  //   .select('*')
+  //   .eq('email', session?.user.email)
 
-  let { data: share_company_users, error: sharedError } = await supabase
-    .from('share_company_users')
-    .select(`*`)
-    .eq('profile_id', data?.[0]?.id)
+  // const { data: Companies, error } = await supabase
+  //   .from('company')
+  //   .select(`*`)
+  //   .eq('owner_id', data?.[0]?.id)
 
-  if (
-    !Companies?.[0] &&
-    !share_company_users?.[0] &&
-    !req.url.includes('/dashboard/company/new')
-  ) {
-    return NextResponse.redirect(new URL('/dashboard/company/new', req.url))
-  }
+  // let { data: share_company_users, error: sharedError } = await supabase
+  //   .from('share_company_users')
+  //   .select(`*`)
+  //   .eq('profile_id', data?.[0]?.id)
 
-  const ownerComp = Companies?.[0]?.owner_id
-  const theme = res.cookies.get('theme')
-  const actualCompanyId = req.cookies.get('actialCompanyId')
-  //const actualNoOwner :string | null = req.cookies.get('actualComp')?.value
-  const actualNoOwnerValue: string | null =
-    req.cookies.get('actualComp')?.value ?? null
-  const actualNoOwner = actualNoOwnerValue
-    ? actualNoOwnerValue.replace(/^"|"$/g, '')
-    : null
+  // if (
+  //   !Companies?.[0] &&
+  //   !share_company_users?.[0] &&
+  //   !req.url.includes('/dashboard/company/new')
+  // ) {
+  //   return NextResponse.redirect('http://localhost:3000/dashboard/company/new')
+  // }
 
-  const actualNow = actualNoOwner //!== null ? parseInt(actualNoOwner as string, 10) : null
-  const { data: guestRole } = await supabase
-    .from('share_company_users')
-    .select('role')
-    .eq('profile_id ', data?.[0]?.id)
-    .eq('company_id', actualNow)
+  // const theme = response.cookies.get('theme')
+  // const actualCompanyId = req.cookies.get('actialCompanyId')
+  // //const actualNoOwner :string | null = req.cookies.get('actualComp')?.value
+  // const actualNoOwnerValue: string | null =
+  //   req.cookies.get('actualComp')?.value ?? null
+  // const actualNoOwner = actualNoOwnerValue
+  //   ? actualNoOwnerValue.replace(/^"|"$/g, '')
+  //   : null
 
-  res.cookies.set('guestRole', guestRole?.[0]?.role)
-  const userRole = data?.[0]?.role
+  // const actualNow = actualNoOwner //!== null ? parseInt(actualNoOwner as string, 10) : null
+  // const { data: guestRole } = await supabase
+  //   .from('share_company_users')
+  //   .select('role')
+  //   .eq('profile_id ', data?.[0]?.id)
+  //   .eq('company_id', actualNow)
 
-  const guestUser = [
-    '/dashboard/employee/action?action=edit&',
-    '/dashboard/employee/action?action=new',
-    '/dashboard/equipment/action?action=edit&',
-    '/dashboard/equipment/action?action=new',
-    '/dashboard/company/new',
-    '/dashboard/company/actualCompany',
-  ]
+  // response.cookies.set('guestRole', guestRole?.[0]?.role)
+  // const userRole = data?.[0]?.role
 
-  const usuarioUser = [
-    '/dashboard/company/new',
-    '/dashboard/company/actualCompany',
-    '/auditor',
-  ]
-  const administradorUser = ['/auditor']
+  // const guestUser = [
+  //   '/dashboard/employee/action?action=edit&',
+  //   '/dashboard/employee/action?action=new',
+  //   '/dashboard/equipment/action?action=edit&',
+  //   '/dashboard/equipment/action?action=new',
+  //   '/dashboard/company/new',
+  //   '/dashboard/company/actualCompany',
+  // ]
 
-  const codeControlClientUser = ['/auditor']
+  // const usuarioUser = [
+  //   '/dashboard/company/new',
+  //   '/dashboard/company/actualCompany',
+  //   '/auditor',
+  // ]
+  // const administradorUser = ['/auditor']
 
-  if (!theme) {
-    res.cookies.set('theme', 'light')
-  }
+  // const codeControlClientUser = ['/auditor']
 
-  if (!actualCompanyId) {
-    const companiesId = Companies?.filter(
-      company => company.by_defect === true,
-    )[0]?.id
-    res.cookies.set('actualCompanyId', companiesId)
-  }
+  // if (!theme) {
+  //   response.cookies.set('theme', 'light')
+  // }
 
-  const isAuditor = data?.[0]?.role === 'Auditor'
-  if (!session) {
-    return NextResponse.redirect(new URL('/login', req.url))
-  }
-  if (userRole === 'Admin') {
-    return res // Permitir acceso sin restricciones para los usuarios con rol 'Admin'
-  } else {
-    if (isAuditor && !req.url.includes('/auditor')) {
-      return NextResponse.redirect(new URL('/auditor', req.url))
-    }
-    if (!isAuditor && req.url.includes('/auditor')) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
-    }
+  // if (!actualCompanyId) {
+  //   const companiesId = Companies?.filter(
+  //     company => company.by_defect === true,
+  //   )[0]?.id
+  //   response.cookies.set('actualCompanyId', companiesId)
+  // }
 
-    if (
-      userRole === 'CodeControlClient' &&
-      codeControlClientUser.some(url => req.url.includes(url))
-    ) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
-    }
+  // const isAuditor = data?.[0]?.role === 'Auditor'
+  // if (!session) {
+  //   console.log('Redirecting to /login')
+  //   return NextResponse.redirect(new URL('/login', req.url))
+  // }
+  // if (userRole === 'Admin') {
+  //   return response // Permitir acceso sin restricciones para los usuarios con rol 'Admin'
+  // } else {
+  //   if (isAuditor && !req.url.includes('/auditor')) {
+  //     return NextResponse.redirect(new URL('/auditor', req.url))
+  //   }
+  //   if (!isAuditor && req.url.includes('/auditor')) {
+  //     return NextResponse.redirect(new URL('/dashboard', req.url))
+  //   }
 
-    if (
-      guestRole?.[0]?.role === 'Invitado' &&
-      guestUser.some(url => req.url.includes(url))
-    ) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
-    }
+  //   if (
+  //     userRole === 'CodeControlClient' &&
+  //     codeControlClientUser.some(url => req.url.includes(url))
+  //   ) {
+  //     return NextResponse.redirect(new URL('/dashboard', req.url))
+  //   }
 
-    if (
-      guestRole?.[0]?.role === 'Administrador' &&
-      administradorUser.some(url => req.url.includes(url))
-    ) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
-    }
-    if (
-      guestRole?.[0]?.role === 'Usuario' &&
-      usuarioUser.some(url => req.url.includes(url))
-    ) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
-    }
-  }
-  // await updateSession(req)
+  //   if (
+  //     guestRole?.[0]?.role === 'Invitado' &&
+  //     guestUser.some(url => req.url.includes(url))
+  //   ) {
+  //     return NextResponse.redirect(new URL('/dashboard', req.url))
+  //   }
 
-  return res
+  //   if (
+  //     guestRole?.[0]?.role === 'Administrador' &&
+  //     administradorUser.some(url => req.url.includes(url))
+  //   ) {
+  //     return NextResponse.redirect(new URL('/dashboard', req.url))
+  //   }
+  //   if (
+  //     guestRole?.[0]?.role === 'Usuario' &&
+  //     usuarioUser.some(url => req.url.includes(url))
+  //   ) {
+  //     return NextResponse.redirect(new URL('/dashboard', req.url))
+  //   }
+  // }
+  return response
 }
 
 export const config = {

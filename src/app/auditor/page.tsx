@@ -29,11 +29,12 @@ import { Separator } from '@/components/ui/separator'
 import { AuditorDocument } from '@/types/types'
 import { format } from 'date-fns'
 import { useEffect, useState } from 'react'
-import { supabase } from '../../../supabase/supabase'
 import { AuditorColums } from './columns'
 import { AuditorDataTable } from './data-table'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 
 export default function Auditor() {
+  const supabase = supabaseBrowser()
   const [document_types, setDocumentTypes] = useState<any[] | null>([])
   const [documents_employees, setDocumentsEmployees] = useState<any[] | null>(
     [],

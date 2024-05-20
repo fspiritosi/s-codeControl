@@ -29,6 +29,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 import { revalidate } from '@/lib/useServer'
 import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
@@ -51,7 +52,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
-import { supabase } from '../../supabase/supabase'
 import ModalCompany from './ModalCompany'
 import { UpdateUserPasswordForm } from './UpdateUserPasswordForm'
 import { UploadImage } from './UploadImage'
@@ -75,6 +75,7 @@ export default function NavBar() {
   const setNewDefectCompany = useLoggedUserStore(
     state => state.setNewDefectCompany,
   )
+  const supabase = supabaseBrowser()
   const actualUser = useLoggedUserStore(state => state.profile)
   const notifications = useLoggedUserStore(state => state.notifications)
   const avatarUrl = actualUser && actualUser.length > 0 ? actualUser[0] : ''
@@ -88,11 +89,14 @@ export default function NavBar() {
     }
   }
 
+  console.log(allCompanies,'allCompanies');
+
   const totalCompanies = [
     sharedCompanies?.map(company => company.company_id),
     allCompanies,
   ].flat()
 
+  console.log(totalCompanies,'totalCompanies');
   const [isOpen, setIsOpen] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
