@@ -188,7 +188,7 @@ export function CompanyRegister({
           },
         )
       }
-      router.push('/dashboard')
+      //router.push('/dashboard/company/actualCompany')
     } catch (err) {
       console.error('Ocurrió un error:', err)
     } finally {

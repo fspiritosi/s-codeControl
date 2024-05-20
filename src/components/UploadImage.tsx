@@ -83,6 +83,10 @@ export function UploadImage({
         // onUploadSuccess(uploadedImageUrl)
         if (setAvailableToSubmit) setAvailableToSubmit(true)
         setDisabled(true)
+        toast({
+          variant:'default',
+          title: 'Imagen subida correctamente',
+        });
       } catch (error: any) {
         toast({
           variant: 'destructive',

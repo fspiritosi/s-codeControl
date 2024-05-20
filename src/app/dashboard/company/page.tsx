@@ -27,7 +27,7 @@ export default function allCompany() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'company' },
         payload => {
-          fetchCompanies()
+          // fetchCompanies()
         },
       )
       .subscribe()
@@ -45,7 +45,7 @@ export default function allCompany() {
         { event: '*', schema: 'storage', table: 'objects' },
 
         payload => {
-          fetchCompanies()
+          // fetchCompanies()
         },
       )
       .subscribe()
