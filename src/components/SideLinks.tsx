@@ -80,7 +80,7 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
 
   const links =
     !administrador && owner_id !== actualCompany
-      ? Allinks.filter(link => link.name !== 'Empresa')
+      ? Allinks?.filter(link => link.name !== 'Empresa')
       : Allinks
 
   if (isAuditor) {

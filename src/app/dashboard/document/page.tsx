@@ -65,7 +65,7 @@ export default function page() {
     let { data: document_types, error } = await supabase
       .from('document_types')
       .select('*')
-      .filter('is_active', 'eq', true)
+      ?.filter('is_active', 'eq', true)
       .or(`company_id.eq.${actualCompany?.id},company_id.is.null`)
 
     if (error) {

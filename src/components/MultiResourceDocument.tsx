@@ -434,7 +434,7 @@ export default function MultiResourceDocument({
                             setInputValue(inputValue)
                             const isNumberInput = /^\d+$/.test(inputValue)
 
-                            const filteredresources = resources.filter(
+                            const filteredresources = resources?.filter(
                               (person: any) => {
                                 if (isNumberInput) {
                                   return person.document.includes(inputValue)
@@ -470,7 +470,7 @@ export default function MultiResourceDocument({
                                 onSelect={() => {
                                   const updatedResources =
                                     selectedResources.includes(person.document)
-                                      ? selectedResources.filter(
+                                      ? selectedResources?.filter(
                                           resource =>
                                             resource !== person.document,
                                         )
@@ -596,7 +596,7 @@ export default function MultiResourceDocument({
                     key={index}
                     variant="outline"
                     onClick={() => {
-                      const updatedResources = selectedResources.filter(
+                      const updatedResources = selectedResources?.filter(
                         res => res !== resource,
                       )
                       setSelectedResources(updatedResources)

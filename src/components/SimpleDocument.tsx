@@ -367,7 +367,7 @@ export default function SimpleDocument({
                                         const isNumberInput = /^\d+$/.test(
                                           inputValue,
                                         )
-                                        const filteredresources = data.filter(
+                                        const filteredresources = data?.filter(
                                           (person: any) => {
                                             if (isNumberInput) {
                                               return person.document.includes(

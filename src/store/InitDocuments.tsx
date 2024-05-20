@@ -101,7 +101,7 @@ export default function InitDocuments({
             ?.map(mapDocument) || [],
         vehicles:
           filteredVehiclesData
-            .filter((doc: any) => {
+            ?.filter((doc: any) => {
               if (!doc.validity || doc.validity === 'No vence') return false
               return (
                 doc.state !== 'presentado' &&
@@ -118,7 +118,7 @@ export default function InitDocuments({
             ?.map(mapDocument) || [],
         vehicles:
           typedData
-            .filter((doc: any) => doc.state === 'presentado')
+            ?.filter((doc: any) => doc.state === 'presentado')
             .map(mapVehicle) || [],
       }
 

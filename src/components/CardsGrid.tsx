@@ -14,7 +14,7 @@ export const CardsGrid: React.FC<CardsGridProps> = ({
   const handleCardClick = (card: Company[0]) => {
     onCardClick(card)
   }
-  const activeCompanies = allCompanies.filter(company => company.is_active)
+  const activeCompanies = allCompanies?.filter(company => company.is_active)
   return (
     <div className="grid grid-cols-6 gap-4">
       {activeCompanies.map(companyItems => (

@@ -282,7 +282,7 @@ export function DataTable<TData, TValue>({
             >
               {table
                 .getAllColumns()
-                .filter(column => column.getCanHide())
+                ?.filter(column => column.getCanHide())
                 .map(column => {
                   if (
                     column.id === 'actions' ||

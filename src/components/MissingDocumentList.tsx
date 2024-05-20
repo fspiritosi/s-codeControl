@@ -30,12 +30,12 @@ export const MissingDocumentList = () => {
     useLoggedUserStore(state => state.allDocumentsToShow),
   ].reduce(
     (acc: { employees: Document[][]; vehicles: Document[][] }, current) => {
-      const employeesDocuments = current?.employees.filter(
+      const employeesDocuments = current?.employees?.filter(
         item =>
           item.document_path !== null &&
           item.state.toLocaleLowerCase() === 'pendiente',
       )
-      const companyDocuments = current?.vehicles.filter(
+      const companyDocuments = current?.vehicles?.filter(
         item =>
           item.document_path !== null &&
           item.state.toLocaleLowerCase() === 'pendiente',

@@ -82,7 +82,7 @@ export function CheckboxReactHookFormMultiple({ options, field }: Props) {
                       return checked
                         ? field.onChange([...updatedValue, item.id])
                         : field.onChange(
-                            updatedValue.filter(
+                            updatedValue?.filter(
                               (value: any) => value !== String(item.id),
                             ),
                           )

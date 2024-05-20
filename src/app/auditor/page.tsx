@@ -51,8 +51,8 @@ export default function Auditor() {
     let { data: document_types, error } = await supabase
       .from('document_types')
       .select('*')
-      .filter('is_active', 'eq', true)
-      .filter('company_id', 'is', null)
+      ?.filter('is_active', 'eq', true)
+      ?.filter('company_id', 'is', null)
     // .or(`company_id.eq.${actualCompany?.id},company_id.is.null`)
 
     if (error) {

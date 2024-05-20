@@ -157,8 +157,8 @@ export function ExpiredDataTable<TData, TValue>({
 
   if (selectValues.companyName && selectValues.companyName !== 'Todos') {
     const resourceOptions = data
-      .filter((item: any) => item.companyName === selectValues.companyName)
-      .flatMap((item: any) => item?.resource)
+      ?.filter((item: any) => item.companyName === selectValues.companyName)
+      ?.flatMap((item: any) => item?.resource)
     allOptions.resource = ['Todos', ...Array.from(new Set(resourceOptions))]
   } else {
     allOptions.resource = createOptions('resource')
@@ -235,7 +235,7 @@ export function ExpiredDataTable<TData, TValue>({
             >
               {table
                 .getAllColumns()
-                .filter(column => column.getCanHide())
+                ?.filter(column => column.getCanHide())
                 .map(column => {
                   if (
                     column.id === 'actions' ||

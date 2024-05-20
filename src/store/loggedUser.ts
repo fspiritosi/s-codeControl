@@ -1398,18 +1398,18 @@ export const useLoggedUserStore = create<State>((set, get) => {
   }
 
   const setActivesVehicles = () => {
-    const activesVehicles = get()?.vehicles.filter(vehicle => vehicle.is_active)
+    const activesVehicles = get()?.vehicles?.filter(vehicle => vehicle.is_active)
     set({ vehiclesToShow: setVehiclesToShow(activesVehicles) })
   }
   const endorsedVehicles = () => {
-    const endorsedVehicles = get()?.vehicles.filter(
+    const endorsedVehicles = get()?.vehicles?.filter(
       vehicle => vehicle.status === 'Avalado',
     )
 
     set({ vehiclesToShow: setVehiclesToShow(endorsedVehicles) })
   }
   const noEndorsedVehicles = () => {
-    const noEndorsedVehicles = get()?.vehicles.filter(
+    const noEndorsedVehicles = get()?.vehicles?.filter(
       vehicle => vehicle.status === 'No avalado',
     )
     set({ vehiclesToShow: setVehiclesToShow(noEndorsedVehicles) })
@@ -1421,7 +1421,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       return
     }
     const vehicles = get()?.vehicles
-    const vehiclesToShow = vehicles.filter(
+    const vehiclesToShow = vehicles?.filter(
       vehicle => vehicle.types_of_vehicles?.name === type,
     )
 
@@ -1547,7 +1547,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
             ?.map(mapDocument) || [],
         vehicles:
           filteredVehiclesData
-            .filter((doc: any) => {
+            ?.filter((doc: any) => {
               if (!doc.validity || doc.validity === 'No vence') return false
               return (
                 doc.state !== 'presentado' &&
@@ -1564,7 +1564,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
             ?.map(mapDocument) || [],
         vehicles:
           typedData
-            .filter((doc: any) => doc.state === 'presentado')
+            ?.filter((doc: any) => doc.state === 'presentado')
             .map(mapVehicle) || [],
       }
 
