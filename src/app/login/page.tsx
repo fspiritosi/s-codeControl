@@ -32,7 +32,6 @@ export default function Login() {
                   id="email"
                   name="email"
                   type="email"
-                  required
                 />
                 <CardDescription>Por favor ingresa tu correo.</CardDescription>
               </div>
@@ -42,7 +41,6 @@ export default function Login() {
                   id="password"
                   name="password"
                   type="password"
-                  required
                   placeholder="mi contraseña segura"
                   autoComplete="current-password"
                 />
