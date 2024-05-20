@@ -15,10 +15,11 @@ function setupModalAppElement() {
   }
 }
 
-export default function allCompany() {
+export default function  allCompany() {
   const router = useRouter()
   const { fetchCompanies } = useCompanyData()
-
+  const userId: string | undefined = useLoggedUserStore(state => state.credentialUser?.id) 
+  
   useEffect(() => {
     setupModalAppElement()
     supabase
@@ -27,7 +28,9 @@ export default function allCompany() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'company' },
         payload => {
-          // fetchCompanies()
+          
+          fetchCompanies()
+          
         },
       )
       .subscribe()
@@ -36,7 +39,7 @@ export default function allCompany() {
     //   subscription.unsubscribe()
     // }
   }, [])
-
+ 
   useEffect(() => {
     const channels = supabase
       .channel('custom-all-channel')
@@ -45,7 +48,9 @@ export default function allCompany() {
         { event: '*', schema: 'storage', table: 'objects' },
 
         payload => {
-          // fetchCompanies()
+         
+          fetchCompanies()
+          
         },
       )
       .subscribe()

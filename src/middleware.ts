@@ -1,5 +1,6 @@
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse, type NextRequest } from 'next/server'
+import { updateSession } from './lib/utils/middleware'
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
@@ -42,7 +43,7 @@ export async function middleware(req: NextRequest) {
     ? actualNoOwnerValue.replace(/^"|"$/g, '')
     : null
 
-  const actualNow = actualNoOwner //!== null ? parseInt(actualNoOwner as string, 10) : null
+  const actualNow = actualNoOwner 
   const { data: guestRole } = await supabase
     .from('share_company_users')
     .select('role')
@@ -57,12 +58,12 @@ export async function middleware(req: NextRequest) {
     '/dashboard/employee/action?action=new',
     '/dashboard/equipment/action?action=edit&',
     '/dashboard/equipment/action?action=new',
-    '/dashboard/company/new',
+    //'/dashboard/company/new',
     '/dashboard/company/actualCompany',
   ]
 
   const usuarioUser = [
-    '/dashboard/company/new',
+    //'/dashboard/company/new',
     '/dashboard/company/actualCompany',
     '/auditor',
   ]
@@ -122,7 +123,7 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
   }
-  // await updateSession(req)
+   await updateSession(req)
 
   return res
 }

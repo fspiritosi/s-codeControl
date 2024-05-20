@@ -98,6 +98,7 @@ export const useCompanyData = () => {
       const { data, error } = await supabase
         .from('company')
         .select('*, province_id(id, name), city(id, name)')
+        .eq('owner_id', useLoggedUserStore?.getState?.()?.profile[0]?.id)
       if (error) {
         console.error('Error al obtener las compañías:', error)
       } else {
