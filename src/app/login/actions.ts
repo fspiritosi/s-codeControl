@@ -21,11 +21,15 @@ export async function login(formData: FormData) {
   // })
 
   if (error) {
+    console.log(error, 'error')
     return error.message
   }
 
+  console.log('user', user)
+
   if (user.session) {
     // redirect(`/login/auth/callback?verified=true`) // ->Redirijen los usuarios logueados con google o otros..
+    console.log('user', user)
     redirect(`/dashboard`)
   } else {
     redirect('/login')

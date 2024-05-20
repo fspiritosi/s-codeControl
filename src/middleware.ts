@@ -1,9 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { supabaseServer } from './lib/supabase/server'
-import { updateSession } from './lib/utils/middleware'
 
 export async function middleware(req: NextRequest) {
-  await updateSession(req)
+  // await updateSession(req)
   const supabase = supabaseServer()
   const response = NextResponse.next({
     request: {

@@ -34,4 +34,5 @@ export async function AddCompany(formData: FormData) {
     .insert([formattedData])
   console.log(companyError, 'companyError')
   revalidatePath('/', 'layout')
+  revalidatePath('/dashboard')
 }
