@@ -43,7 +43,7 @@ export const useAuthData = () => {
       localStorage.setItem('email', email)
 
       let { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.href}/update-user`,
+        redirectTo: `${window.location.origin}/update-user`,
       })
 
       if (error) {
