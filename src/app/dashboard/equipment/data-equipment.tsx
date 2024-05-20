@@ -81,7 +81,7 @@ export function DataEquipment<TData, TValue>({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const loader = useLoggedUserStore(state => state.isLoading)
   const filteredData = showInactive
-    ? data.filter((item: any) => item.is_active === false)
+    ? data?.filter((item: any) => item.is_active === false)
     : data
   const allOptions = {
     type_of_vehicle: createOptions('type_of_vehicle'),
@@ -210,7 +210,7 @@ export function DataEquipment<TData, TValue>({
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>Filas por página</SelectLabel>
-                {maxRows.map((option: string) => (
+                {maxRows?.map((option: string) => (
                   <SelectItem key={option} value={option}>
                     {option}
                   </SelectItem>
@@ -231,7 +231,7 @@ export function DataEquipment<TData, TValue>({
               {table
                 .getAllColumns()
                 ?.filter(column => column.getCanHide())
-                .map(column => {
+                ?.map(column => {
                   if (
                     column.id === 'actions' ||
                     typeof column.columnDef.header !== 'string'
@@ -276,9 +276,9 @@ export function DataEquipment<TData, TValue>({
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map(headerGroup => (
+            {table.getHeaderGroups()?.map(headerGroup => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map(header => {
+                {headerGroup.headers?.map(header => {
                   return (
                     <TableHead
                       className="text-center text-balance"
@@ -367,12 +367,12 @@ export function DataEquipment<TData, TValue>({
           </TableHeader>
           <TableBody className="max-w-[50vw] overflow-x-auto">
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map(row => (
+              table.getRowModel().rows?.map(row => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
                 >
-                  {row.getVisibleCells().map(cell => {
+                  {row.getVisibleCells()?.map(cell => {
                     let is_active = (cell.row.original as any).is_active
                     return (showInactive && !is_active) ||
                       (!showInactive && is_active) ? (

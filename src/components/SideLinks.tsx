@@ -100,7 +100,7 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
 
   return (
     <>
-      {links.map((link, index) => (
+      {links?.map((link, index) => (
         <div key={link.name}>
           <Link
             href={link.href}
@@ -141,7 +141,7 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
                 width: 'fit-content',
               }}
             >
-              {link.submenu.map((submenuItem, subIndex) => (
+              {link.submenu?.map((submenuItem, subIndex) => (
                 <Link key={submenuItem.name} href={submenuItem.href} passHref>
                   <div
                     onClick={handleSubMenuItemClick}

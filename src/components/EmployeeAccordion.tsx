@@ -662,7 +662,7 @@ export default function EmployeeAccordion() {
                 </AccordionTrigger>
                 <AccordionContent className="w-full ">
                   <div className="min-w-full max-w-sm flex flex-wrap gap-8 items-center">
-                    {PERSONALDATA.map((data, index) => {
+                    {PERSONALDATA?.map((data, index) => {
                       if (data.type === 'file') {
                         return (
                           <div key={index} className="w-[300px] flex  gap-2">
@@ -776,7 +776,7 @@ export default function EmployeeAccordion() {
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="min-w-full max-w-sm flex flex-wrap gap-8">
-                    {CONTACTDATA.map((data, index) => {
+                    {CONTACTDATA?.map((data, index) => {
                       if (data.type === 'select') {
                         return (
                           <div
@@ -871,7 +871,7 @@ export default function EmployeeAccordion() {
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="min-w-full max-w-sm flex flex-wrap gap-8">
-                    {LABORALDATA.map((data, index) => {
+                    {LABORALDATA?.map((data, index) => {
                       if (data.name === 'date_of_admission') {
                         return (
                           <div
@@ -960,7 +960,7 @@ export default function EmployeeAccordion() {
                                             >
                                               {today.getFullYear().toString()}
                                             </SelectItem>
-                                            {yearsAhead.map(year => (
+                                            {yearsAhead?.map(year => (
                                               <SelectItem
                                                 key={year}
                                                 value={`${year}`}

@@ -48,7 +48,7 @@ export default function page() {
   })
 
   const sharedUsers =
-    actualCompany?.share_company_users.map(user => {
+    actualCompany?.share_company_users?.map(user => {
       return {
         email: user.profile.email,
         fullname: user.profile.fullname,

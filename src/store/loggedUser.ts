@@ -662,7 +662,7 @@
 //                 (doc.validity !== 'No vence' || doc.validity !== null)
 //               )
 //             })
-//             .map(mapVehicle) || [],
+//             ?.map(mapVehicle) || [],
 //       }
 
 //       const pendingDocuments = {
@@ -673,7 +673,7 @@
 //         vehicles:
 //           typedData
 //             .filter((doc: any) => doc.state === 'presentado')
-//             .map(mapVehicle) || [],
+//             ?.map(mapVehicle) || [],
 //       }
 
 //       const Allvalues = {
@@ -701,7 +701,7 @@
 
 //       const AllvaluesToShow = {
 //         employees: data?.map(mapDocument) || [],
-//         vehicles: typedData.map(mapVehicle) || [],
+//         vehicles: typedData?.map(mapVehicle) || [],
 //       }
 //       set({ allDocumentsToShow: AllvaluesToShow })
 //       set({ showLastMonthDocuments: true })
@@ -1554,7 +1554,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
                 (doc.validity !== 'No vence' || doc.validity !== null)
               )
             })
-            .map(mapVehicle) || [],
+            ?.map(mapVehicle) || [],
       }
 
       const pendingDocuments = {
@@ -1565,7 +1565,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
         vehicles:
           typedData
             ?.filter((doc: any) => doc.state === 'presentado')
-            .map(mapVehicle) || [],
+            ?.map(mapVehicle) || [],
       }
 
       const Allvalues = {
@@ -1593,7 +1593,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
       const AllvaluesToShow = {
         employees: data?.map(mapDocument) || [],
-        vehicles: typedData.map(mapVehicle) || [],
+        vehicles: typedData?.map(mapVehicle) || [],
       }
       set({ allDocumentsToShow: AllvaluesToShow })
       set({ showLastMonthDocuments: true })

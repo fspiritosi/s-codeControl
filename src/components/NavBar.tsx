@@ -332,7 +332,7 @@ export default function NavBar() {
                                 } ${
                                   notification?.document?.resource
                                     ?.split(' ')
-                                    .map(
+                                    ?.map(
                                       word =>
                                         word.charAt(0).toUpperCase() +
                                         word.slice(1).toLowerCase(),
@@ -351,7 +351,7 @@ export default function NavBar() {
                                   notification.reference === 'employee'
                                     ? notification?.document?.resource
                                         .split(' ')
-                                        .map(
+                                        ?.map(
                                           word =>
                                             word.charAt(0).toUpperCase() +
                                             word.slice(1).toLowerCase(),
@@ -359,7 +359,7 @@ export default function NavBar() {
                                         .join(' ') || '(no disponible)'
                                     : notification?.document?.resource
                                         .split(' ')
-                                        .map(
+                                        ?.map(
                                           word =>
                                             word.charAt(0).toUpperCase() +
                                             word.slice(1).toUpperCase(),
@@ -377,7 +377,7 @@ export default function NavBar() {
                                 } ${
                                   notification?.document?.resource
                                     .split(' ')
-                                    .map(
+                                    ?.map(
                                       word =>
                                         word.charAt(0).toUpperCase() +
                                         word.slice(1).toLowerCase(),

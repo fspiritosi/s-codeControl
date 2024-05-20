@@ -108,7 +108,7 @@ export default function InitDocuments({
                 (doc.validity !== 'No vence' || doc.validity !== null)
               )
             })
-            .map(mapVehicle) || [],
+            ?.map(mapVehicle) || [],
       }
 
       const pendingDocuments = {
@@ -119,7 +119,7 @@ export default function InitDocuments({
         vehicles:
           typedData
             ?.filter((doc: any) => doc.state === 'presentado')
-            .map(mapVehicle) || [],
+            ?.map(mapVehicle) || [],
       }
 
       const Allvalues = {
@@ -147,7 +147,7 @@ export default function InitDocuments({
 
       const AllvaluesToShow = {
         employees: data?.map(mapDocument) || [],
-        vehicles: typedData.map(mapVehicle) || [],
+        vehicles: typedData?.map(mapVehicle) || [],
       }
 
       console.log(AllvaluesToShow, 'AllvaluesToShow')

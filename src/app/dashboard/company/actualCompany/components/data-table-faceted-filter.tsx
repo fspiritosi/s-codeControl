@@ -65,7 +65,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                 ) : (
                   options
                     ?.filter((option) => selectedValues.has(option.value))
-                    .map((option) => (
+                    ?.map((option) => (
                       <Badge
                         variant="secondary"
                         key={option.value}
@@ -86,7 +86,7 @@ export function DataTableFacetedFilter<TData, TValue>({
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup>
-              {options.map((option) => {
+              {options?.map((option) => {
                 const isSelected = selectedValues.has(option.value)
                 return (
                   <CommandItem

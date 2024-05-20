@@ -125,7 +125,7 @@ export default function SimpleDocument({
           (employee: any) => employee.document === documentResource,
         )?.id
 
-      const updateEntries = documents.map((entry: any) => {
+      const updateEntries = documents?.map((entry: any) => {
         return {
           applies: entry.applies || idApplies,
           id_document_types: entry.id_document_types,
@@ -292,7 +292,7 @@ export default function SimpleDocument({
     <form onSubmit={handleSubmit(onSubmit)}>
       <ul className="flex flex-col gap-2">
         <div className="space-y-3">
-          {fields.map((item, index) => {
+          {fields?.map((item, index) => {
             return (
               <React.Fragment key={item.id}>
                 <details open={index === 0}>
@@ -652,7 +652,7 @@ export default function SimpleDocument({
                                       <SelectValue placeholder="Elegir año" />
                                     </SelectTrigger>
                                     <SelectContent position="popper">
-                                      {yearsAhead.map(year => (
+                                      {yearsAhead?.map(year => (
                                         <SelectItem
                                           key={year}
                                           value={`${year}`}

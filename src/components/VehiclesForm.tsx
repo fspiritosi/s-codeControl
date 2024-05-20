@@ -154,7 +154,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
       if (error) {
         console.error('Error al obtener los datos del vehículo:', error)
       } else {
-        const transformedData = vehicleData.map((item: VehicleType) => ({
+        const transformedData = vehicleData?.map((item: VehicleType) => ({
           ...item,
           type_of_vehicle: item.types_of_vehicles.name,
           brand: item.brand_vehicles.name,
@@ -332,7 +332,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
     setData({
       ...data,
       tipe_of_vehicles: types_of_vehicles as generic[],
-      brand: (brand_vehicles || []).map(e => {
+      brand: (brand_vehicles || [])?.map(e => {
         return { label: e.name as string, id: e.id as string }
       }),
       types: type as generic[],
@@ -813,7 +813,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                             </Modal>
                           </CommandEmpty>
                           <CommandGroup>
-                            {vehicleBrands.map(option => (
+                            {vehicleBrands?.map(option => (
                               <CommandItem
                                 value={option.label}
                                 key={option.label}
@@ -902,7 +902,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                           </CommandEmpty>
                           <CommandGroup>
                             <>
-                              {vehicleModels.map(option => (
+                              {vehicleModels?.map(option => (
                                 <CommandItem
                                   value={option.name}
                                   key={option.name}

@@ -398,7 +398,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
                                       >
                                         {today.getFullYear().toString()}
                                       </SelectItem>
-                                      {yearsAhead.map(year => (
+                                      {yearsAhead?.map(year => (
                                         <SelectItem
                                           key={year}
                                           value={`${year}`}
@@ -462,7 +462,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {documentHistory.map((entry: any, index: number) => (
+                    {documentHistory?.map((entry: any, index: number) => (
                       <TableRow key={index}>
                         <TableCell className="text-center">
                           {entry.documents_employees.user_id.email}

@@ -263,7 +263,7 @@ export function DataTable<TData, TValue>({
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>Filas por página</SelectLabel>
-                {maxRows.map((option: string) => (
+                {maxRows?.map((option: string) => (
                   <SelectItem key={option} value={option}>
                     {option}
                   </SelectItem>
@@ -283,7 +283,7 @@ export function DataTable<TData, TValue>({
               {table
                 .getAllColumns()
                 ?.filter(column => column.getCanHide())
-                .map(column => {
+                ?.map(column => {
                   if (
                     column.id === 'actions' ||
                     typeof column.columnDef.header !== 'string'
@@ -327,9 +327,9 @@ export function DataTable<TData, TValue>({
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map(headerGroup => (
+            {table.getHeaderGroups()?.map(headerGroup => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map(header => {
+                {headerGroup.headers?.map(header => {
                   return (
                     <TableHead
                       className="text-center text-balance"
@@ -418,13 +418,13 @@ export function DataTable<TData, TValue>({
           </TableHeader>
           <TableBody className="max-w-[50vw] overflow-x-auto">
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map(row => {
+              table.getRowModel().rows?.map(row => {
                 return (
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && 'selected'}
                   >
-                    {row.getVisibleCells().map(cell => {
+                    {row.getVisibleCells()?.map(cell => {
                       let is_active = (cell.row.original as any).is_active
                       return (
                         <TableCell

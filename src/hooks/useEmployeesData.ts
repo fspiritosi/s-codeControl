@@ -22,7 +22,7 @@ export const useEmployeesData = () => {
     },
     updateEmployee: async (employee: Employee, id?: string) => {
       if (Array.isArray(employee.allocated_to)) {
-        const allocated_to = employee.allocated_to.map((item: any) => {
+        const allocated_to = employee.allocated_to?.map((item: any) => {
           return { contractor_id: item, employee_id: id }
         })
 

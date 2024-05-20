@@ -11,7 +11,7 @@ interface State {
 }
 
 const setVehiclesToShow = (vehicles: any[]) => {
-  return vehicles.map(item => ({
+  return vehicles?.map(item => ({
     ...item,
     types_of_vehicles: item.types_of_vehicles.name,
     brand: item.brand_vehicles.name,
