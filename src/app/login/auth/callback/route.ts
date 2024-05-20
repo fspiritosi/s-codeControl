@@ -104,8 +104,6 @@ export async function GET(request: Request) {
       refresh_token: session?.refresh_token!,
     })
 
-    console.log(data, 'data')
-    console.log(error, 'error')
     return NextResponse.redirect(`${origin}${next}`)
   }
 

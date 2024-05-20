@@ -7,20 +7,15 @@ import { googleLogin } from '../actions'
 
 function GoogleButton() {
   const { pending } = useFormStatus()
-  let url = ''
-
-  if (typeof window !== 'undefined') {
-    url = window.location.origin
-  }
 
   return (
     <Button
       variant="outline"
+      type="submit"
       className="w-[100%] sm:w-[80%] lg:w-[60%] self-center  mb-7"
       disabled={pending}
       formAction={async () => {
-        console.log(url, 'url')
-        const error = await googleLogin(url)
+        const error = await googleLogin()
         if (error) {
           toast.error('Error al iniciar sesión. Por favor, intenta de nuevo.')
         }
