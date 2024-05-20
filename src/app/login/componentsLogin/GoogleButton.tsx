@@ -7,7 +7,11 @@ import { googleLogin } from '../actions'
 
 function GoogleButton() {
   const { pending } = useFormStatus()
-  const url = window.location.origin
+  let url = ''
+
+  if (typeof window !== 'undefined') {
+    url = window.location.origin
+  }
 
   return (
     <Button
