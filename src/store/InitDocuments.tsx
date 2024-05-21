@@ -3,7 +3,7 @@ import { supabaseBrowser } from '@/lib/supabase/browser'
 import { VehiclesAPI } from '@/types/types'
 import { MandatoryDocuments } from '@/zodSchemas/schemas'
 import { format } from 'date-fns'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useCountriesStore } from './countries'
 import { useLoggedUserStore } from './loggedUser'
 
@@ -16,8 +16,8 @@ export default function InitDocuments({
   data: any
   company_id: string
 }) {
-  // const initState = useRef(false)
-  const initState = useLoggedUserStore(state => state.initDocumentState)
+  const initState = useRef(false)
+  // const initState = useLoggedUserStore(state => state.initDocumentState)
 
   useEffect(() => {
     // if (!initState) {

@@ -473,7 +473,7 @@ export default function EmployeeAccordion() {
             throw new Error(error)
           }
           getEmployees(true)
-          useLoggedUserStore.setState({ initDocumentState: false })
+          // useLoggedUserStore.setState({ initDocumentState: false })
           router.push('/dashboard/employee')
         } catch (error: PostgrestError | any) {
           throw new Error(error)
