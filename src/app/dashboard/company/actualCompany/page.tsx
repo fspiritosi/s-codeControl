@@ -29,6 +29,9 @@ import { useState } from 'react'
 import { columns } from './components/columns'
 import { DataTable } from './components/data-table'
 import { ItemCompany } from './components/itemCompany'
+import Link from 'next/link';
+import { CloudCog } from 'lucide-react'
+
 export default function page() {
   const router = useRouter()
   const companyId = cookies.get('actualComp')
@@ -40,6 +43,7 @@ export default function page() {
   const [showPasswords, setShowPasswords] = useState(false)
   const [open, setOpen] = useState(false)
   const userShared = cookies.get('guestRole')
+  console.log(companyId, "companyId")
   const owner = ownerUser?.map(user => {
     return {
       email: user.email,
@@ -50,9 +54,7 @@ export default function page() {
       img: user.avatar || '',
     }
   })
-  const handleEditCompany = () => {
-    router.push(`/dashboard/company/${companyId}`)
-  }
+  
 
   const sharedUsers =
     sharedUsersAll?.map(user => {
@@ -81,6 +83,10 @@ export default function page() {
     }
   }
 
+  const handleEditCompany = () => {
+    router.push(`/dashboard/company/${actualCompany!.id}`);
+  };
+
   return (
     <div className="flex flex-col gap-6 py-4 px-6">
       <div className="w-full flex mb-6">
@@ -91,7 +97,7 @@ export default function page() {
           height={200}
         />
       </div>
-
+      
       <Tabs defaultValue="general">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
