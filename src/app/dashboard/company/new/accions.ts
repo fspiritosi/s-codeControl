@@ -2,8 +2,9 @@
 import { supabaseServer } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export async function AddCompany(formData: FormData) {
+export async function AddCompany(formData: FormData, url: string) {
   const supabase = supabaseServer()
+  console.log(url, 'url')
 
   const {
     data: { user },
@@ -28,6 +29,7 @@ export async function AddCompany(formData: FormData) {
     industry: formData.get('industry') as string,
     description: formData.get('description') as string,
     by_defect: true,
+    company_logo: url ?? '',
   }
 
   const { data, error: companyError } = await supabase

@@ -152,7 +152,9 @@ export default async function DashboardLayout({
     .eq('applies.company_id', actualCompany?.value.replace(/^"|"$/g, ''))
     .not('applies', 'is', null)
 
-  revalidatePath('/dashboard', 'layout')
+  revalidatePath('/dashboard/document')
+
+  console.log('document', document)
 
   return (
     <div className="flex">
@@ -163,7 +165,11 @@ export default async function DashboardLayout({
         share_company_users={share_company_users}
       />
       <InitEmployees active={true} />
-      <InitDocuments data={document} equipmentData={equipmentData} />
+      <InitDocuments
+        data={document}
+        equipmentData={equipmentData}
+        company_id={actualCompany?.value || ''}
+      />
       <SideBar />
       <div className="flex flex-col w-full mt-1 md:mt-0">
         <NavBar />

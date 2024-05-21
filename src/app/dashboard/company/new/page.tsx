@@ -46,10 +46,6 @@ export default async function companyRegister() {
     .from('provinces')
     .select('*')
 
-  let { data: cities, error: citiesError } = await supabase
-    .from('cities')
-    .select('*')
-
   let { data: industry_type, error: industryError } = await supabase
     .from('industry_type')
     .select('*')
@@ -170,7 +166,7 @@ export default async function companyRegister() {
 
                 <CardDescription id="country_error" className="max-w-[300px]" />
               </div>
-              <CityInput cities={cities} provinces={provinces} />
+              <CityInput provinces={provinces} />
               <div>
                 <Label htmlFor="industry">Seleccione una Industria</Label>
                 <Select
@@ -202,6 +198,7 @@ export default async function companyRegister() {
                   className="max-w-[300px]"
                 />
               </div>
+
               <div>
                 <Label htmlFor="description">Descripción</Label>
                 <Textarea

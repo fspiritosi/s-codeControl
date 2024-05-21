@@ -89,14 +89,14 @@ export default function NavBar() {
     }
   }
 
-  console.log(allCompanies,'allCompanies');
+  console.log(allCompanies, 'allCompanies')
 
   const totalCompanies = [
     sharedCompanies?.map(company => company.company_id),
     allCompanies,
   ].flat()
 
-  console.log(totalCompanies,'totalCompanies');
+  console.log(totalCompanies, 'totalCompanies')
   const [isOpen, setIsOpen] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -182,19 +182,24 @@ export default function NavBar() {
                 role="combobox"
                 aria-expanded={open}
                 aria-label="Selecciona una compañía"
-                className={'w-[200px] justify-between'}
+                className={'min-w-[200px] justify-between'}
               >
                 <Avatar className="mr-2 size-5 rounded-full">
                   <AvatarImage
                     src={actualCompany?.company_logo}
                     alt={actualCompany?.company_name}
-                    className="size-5 grayscale"
+                    className="size-5"
                   />
-                  <AvatarFallback>
-                    <Loader className="animate-spin" />{' '}
+                  <AvatarFallback className="uppercase">
+                    {!actualCompany && <Loader className="animate-spin" />}
+                    {actualCompany &&
+                      !actualCompany?.company_logo &&
+                      `${actualCompany?.company_name.charAt(
+                        0,
+                      )}${actualCompany?.company_name.charAt(1)}`}
                   </AvatarFallback>
                 </Avatar>
-                {actualCompany?.company_name}
+                <span className="uppercase">{actualCompany?.company_name}</span>
                 <CaretSortIcon className="ml-auto h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>

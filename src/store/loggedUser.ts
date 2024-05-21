@@ -972,6 +972,7 @@ interface State {
   documetsFetch: () => void
   getEmployees: (active: boolean) => void
   // howManyCompanies: (id: string) => void
+  initDocumentState: boolean
 }
 
 const setEmployeesToShow = (employees: any) => {
@@ -1036,201 +1037,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
   // set({ isLoading: true })
   set({ showDeletedEmployees: false })
-
-  // const howManyCompanies = async (id: string) => {
-  //   if (!id) return
-  //   const { data, error } = await supabase
-  //     .from('company')
-  //     .select(
-  //       `
-  //       *,
-  //       owner_id(*),
-  //       share_company_users(*,
-  //         profile(*)
-  //       ),
-  //       city (
-  //         name,
-  //         id
-  //       ),
-  //       province_id (
-  //         name,
-  //         id
-  //       ),
-  //       companies_employees (
-  //         employees(
-  //           *,
-  //           city (
-  //             name
-  //           ),
-  //           province(
-  //             name
-  //           ),
-  //           workflow_diagram(
-  //             name
-  //           ),
-  //           hierarchical_position(
-  //             name
-  //           ),
-  //           birthplace(
-  //             name
-  //           ),
-  //           contractor_employee(
-  //             contractors(
-  //               *
-  //             )
-  //           )
-  //         )
-  //       )
-  //     `,
-  //     )
-  //     .eq('owner_id', id)
-
-  //   const validatedData = CompanySchema.safeParse(data)
-  //   if (!validatedData.success) {
-  //     return console.error(
-  //       'Error al obtener el perfil: Validacion',
-  //       validatedData.error,
-  //     )
-  //   }
-
-  //   let { data: share_company_users, error: sharedError } = await supabase
-  //     .from('share_company_users')
-  //     .select(
-  //       `*,company_id(*,
-  //         owner_id(*),
-  //       share_company_users(*,
-  //         profile(*)
-  //       ),
-  //       city (
-  //         name,
-  //         id
-  //       ),
-  //       province_id (
-  //         name,
-  //         id
-  //       ),
-  //       companies_employees (
-  //         employees(
-  //           *,
-  //           city (
-  //             name
-  //           ),
-  //           province(
-  //             name
-  //           ),
-  //           workflow_diagram(
-  //             name
-  //           ),
-  //           hierarchical_position(
-  //             name
-  //           ),
-  //           birthplace(
-  //             name
-  //           ),
-  //           contractor_employee(
-  //             contractors(
-  //               *
-  //             )
-  //           )
-  //         )
-  //       )
-  //     )`,
-  //     )
-  //     .eq('profile_id', id)
-
-  //   const validatedSharedCompanies =
-  //     SharedCompaniesSchema.safeParse(share_company_users)
-
-  //   if (!validatedSharedCompanies.success) {
-  //     return console.error(
-  //       'Error al obtener el perfil: Validacion',
-  //       validatedSharedCompanies.error,
-  //     )
-  //   }
-
-  //   set({ sharedCompanies: validatedSharedCompanies.data })
-
-  //   if (error) {
-  //     console.error('Error al obtener el perfil:', error)
-  //   } else {
-  //     set({ allCompanies: validatedData.data })
-  //     selectedCompany = get()?.allCompanies.filter(company => company.by_defect)
-  //     const savedCompany = localStorage.getItem('company_id') || ''
-  //     if (savedCompany) {
-  //       const company = validatedSharedCompanies.data.find(
-  //         company => company.company_id.id === JSON.parse(savedCompany),
-  //       )?.company_id
-
-  //       if (company) {
-  //         setActualCompany(company)
-  //         return
-  //       }
-  //     }
-
-  //     if (data.length > 1) {
-  //       if (selectedCompany) {
-  //         //
-  //         setActualCompany(selectedCompany[0])
-  //       } else {
-  //         set({ showMultiplesCompaniesAlert: true })
-  //       }
-  //     }
-  //     if (data.length === 1) {
-  //       set({ showMultiplesCompaniesAlert: false })
-  //       setActualCompany(data[0])
-  //     }
-  //     if (data.length === 0 && share_company_users?.length === 0) {
-  //       const actualPath = window.location.pathname
-
-  //       if (actualPath === '/dashboard/company/new') {
-  //         set({ showNoCompanyAlert: false })
-  //         return
-  //       }
-
-  //       set({ showNoCompanyAlert: true })
-  //     }
-  //   }
-  // }
-
-  // const profileUser = async (id: string) => {
-  //   if (!id) return
-  //   const { data, error } = await supabase
-  //     .from('profile')
-  //     .select('*')
-  //     .eq('credential_id', id)
-  //     console.log(data,'data profile');
-
-  //   if (error) {
-  //     console.error('Error al obtener el perfil:', error)
-  //   } else {
-  //     console.log(data, 'dataaaa')
-  //     set({ profile: data || [] })
-  //     howManyCompanies(data[0]?.id)
-  //   }
-  // }
-
-  // const loggedUser = async () => {
-  //   const {
-  //     data: { user },
-  //   } = await supabase.auth.getUser()
-
-  //   console.log('userasda', user);
-
-  //   if (user) {
-  //     set({ credentialUser: user })
-
-  //     console.log('user', user);
-  //   }
-
-  //   if (typeof window !== 'undefined') {
-  //     profileUser(user?.id || '')
-  //   }
-  // }
-
-  // if (typeof window !== 'undefined') {
-  //   loggedUser()
-  // }
-
   let selectedCompany: Company
 
   const setActualCompany = (company: Company[0]) => {
@@ -1281,6 +1087,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
       set({ employeesToShow: setEmployeesToShow(data) || [] })
     }
   }
+
+  const initDocumentState = false
 
   const allNotifications = async () => {
     let { data: notifications, error } = await supabase
@@ -1398,7 +1206,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
   }
 
   const setActivesVehicles = () => {
-    const activesVehicles = get()?.vehicles?.filter(vehicle => vehicle.is_active)
+    const activesVehicles = get()?.vehicles?.filter(
+      vehicle => vehicle.is_active,
+    )
     set({ vehiclesToShow: setVehiclesToShow(activesVehicles) })
   }
   const endorsedVehicles = () => {
@@ -1777,6 +1587,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
     sharedCompanies: get()?.sharedCompanies,
     documetsFetch: () => documetsFetch(),
     getEmployees: (active: boolean) => getEmployees(active),
-    // howManyCompanies: (id: string) => howManyCompanies(id),
+    initDocumentState: get()?.initDocumentState,
   }
 })

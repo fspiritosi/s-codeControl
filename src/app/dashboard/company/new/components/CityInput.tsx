@@ -8,21 +8,43 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 import { useState } from 'react'
 
 interface Props {
   provinces: any[] | null
-  cities: any[] | null
 }
 
-export default function CityInput({ provinces, cities }: Props) {
+export default function CityInput({ provinces }: Props) {
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null)
+  const [cities, setCities] = useState<any[] | null>([])
   const [cityFiltered, setCityFiltered] = useState<any[] | null>(cities || [])
   const [selectedCity, setSelectedCity] = useState<string | null>(null)
 
-  const handleProvinceChange = (value: string) => {
+  const handleFetchCities = async (id: string) => {
+    const supabase = supabaseBrowser()
+
+    let { data: cities, error: citiesError } = await supabase
+      .from('cities')
+      .select('*')
+      .eq('province_id', parseInt(id))
+
+    console.log(cities, 'cities')
+
+    if (citiesError) {
+      console.log(citiesError, 'citiesError')
+    }
+    const filteredCities = cities?.filter(city => city?.province_id == id)
+    setCities(cities)
+    return filteredCities
+  }
+
+  const handleProvinceChange = async (value: string) => {
     setSelectedProvince(value)
-    const filteredCities = cities?.filter(city => city?.province_id == value)
+    // const filteredCities = cities?.filter(city => city?.province_id == value)
+    const filteredCities = await handleFetchCities(value)
+
+    console.log(filteredCities, 'filteredCities')
     setCityFiltered(filteredCities || [])
   }
 

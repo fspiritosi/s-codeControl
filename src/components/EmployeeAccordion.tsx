@@ -464,7 +464,7 @@ export default function EmployeeAccordion() {
             .select()
 
           if (error) {
-            throw new Error('error')
+            throw new Error(JSON.stringify(error))
           }
 
           try {
@@ -473,6 +473,7 @@ export default function EmployeeAccordion() {
             throw new Error(error)
           }
           getEmployees(true)
+          useLoggedUserStore.setState({ initDocumentState: false })
           router.push('/dashboard/employee')
         } catch (error: PostgrestError | any) {
           throw new Error(error)
@@ -481,7 +482,10 @@ export default function EmployeeAccordion() {
       {
         loading: 'Agregando empleado...',
         success: 'Empleado agregado correctamente',
-        error: 'Error al agregar empleado',
+        error: error => {
+          console.log(error, 'errror')
+          return error
+        },
       },
     )
   }

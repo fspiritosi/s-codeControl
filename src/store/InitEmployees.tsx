@@ -91,10 +91,13 @@ export default function InitEmployees({ active }: { active: boolean }) {
   }
   const documentTypes = useCountriesStore(state => state.documentTypes)
   useEffect(() => {
-    if (actualCompany?.id) {
-      fetchEmployees()
+    if (!initState.current) {
+      if (actualCompany?.id) {
+        fetchEmployees()
+      }
+      documentTypes(actualCompany?.id || '')
     }
-    documentTypes(actualCompany?.id || '')
+    initState.current = true
   }, [actualCompany])
   return <></>
 }

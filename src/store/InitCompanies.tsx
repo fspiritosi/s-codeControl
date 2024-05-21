@@ -34,17 +34,17 @@ export default function InitCompanies({
 
         if (company) {
           useLoggedUserStore.setState({ actualCompany: company })
-          actualCompany = company.id
+          actualCompany = company?.id
           return
         }
       }
-      const defaultCompany = company?.filter(company => company.by_defect)
+      const defaultCompany = company?.filter(company => company?.by_defect)
 
       if (company && company?.length > 1) {
         if (defaultCompany) {
           console.log('defaultCompany', defaultCompany[0])
           useLoggedUserStore.setState({ actualCompany: defaultCompany[0] })
-          actualCompany = defaultCompany[0].id
+          actualCompany = defaultCompany?.[0]?.id
         }
       }
       if (company?.length === 1) {

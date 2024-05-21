@@ -18,16 +18,18 @@ export default function InitProfile({
       : null
 
   useEffect(() => {
-    const denied = useSearch?.get('access_denied')
-    if (denied) {
-      toast.warning('Acceso denegado')
+    if (initState.current) {
+      const denied = useSearch?.get('access_denied')
+      if (denied) {
+        toast.warning('Acceso denegado')
 
-      useSearch?.delete('access_denied')
-      router.push('/dashboard') // Convert router.pathname to string
-    }
-    if (!initState.current) {
-      useLoggedUserStore.setState({ profile: profile })
-      console.log(profile, 'profile segundo suceso')
+        useSearch?.delete('access_denied')
+        router.push('/dashboard') // Convert router.pathname to string
+      }
+      if (!initState.current) {
+        useLoggedUserStore.setState({ profile: profile })
+        console.log(profile, 'profile segundo suceso')
+      }
     }
     initState.current = true
   }, [])
