@@ -28,7 +28,13 @@ import { useState } from 'react'
 import { columns } from './components/columns'
 import { DataTable } from './components/data-table'
 import { ItemCompany } from './components/itemCompany'
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { CloudCog } from 'lucide-react'
+
 export default function page() {
+  const router = useRouter();
+  const companyId = cookies.get('actualComp')
   const company = useLoggedUserStore(state => state.actualCompany)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const [verify, setVerify] = useState(false)
@@ -36,6 +42,7 @@ export default function page() {
   const [showPasswords, setShowPasswords] = useState(false)
   const [open, setOpen] = useState(false)
   const userShared = cookies.get('guestRole')
+  console.log(companyId, "companyId")
   const owner = ownerUser?.map(user => {
     return {
       email: user.email,
@@ -69,6 +76,10 @@ export default function page() {
     }
   }
 
+  const handleEditCompany = () => {
+    router.push(`/dashboard/company/${companyId}`);
+  };
+
   return (
     <div className="flex flex-col gap-6 py-4 px-6">
       <div className="w-full flex mb-6">
@@ -79,7 +90,7 @@ export default function page() {
           height={200}
         />
       </div>
-
+      
       <Tabs defaultValue="general">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
@@ -91,8 +102,10 @@ export default function page() {
         <TabsContent value="general" className="space-y-4">
           <Card className="overflow-hidden">
             <CardHeader className="w-full bg-muted dark:bg-muted/50 border-b-2">
-              <CardTitle className="text-2xl font-bold tracking-tight">
-                Datos generales de la empresa
+              <CardTitle className="text-2xl font-bold tracking-tight flex justify-between">
+                Datos generales de la empresa 
+                <Button className='ml-auto flex justify-between mb-2' onClick={handleEditCompany}>Editar Compañía</Button>
+                
               </CardTitle>
               <CardDescription className="text-muted-foreground">
                 Información de la empresa
