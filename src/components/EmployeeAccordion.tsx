@@ -93,7 +93,6 @@ export default function EmployeeAccordion() {
     employees?.find((user: any) => user.document_number === document),
   )
   const loggedUser = useLoggedUserStore(state => state.credentialUser?.id)
-  const state = useLoggedUserStore()
   const { uploadImage } = useImageUpload()
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [base64Image, setBase64Image] = useState<string>('')
@@ -145,7 +144,7 @@ export default function EmployeeAccordion() {
           date_of_admission: undefined,
         },
   })
-  console.log('estado',state)
+  
   const [accordion1Errors, setAccordion1Errors] = useState(false)
   const [accordion2Errors, setAccordion2Errors] = useState(false)
   const [accordion3Errors, setAccordion3Errors] = useState(false)
