@@ -115,9 +115,14 @@ export const MissingDocumentList = () => {
                           <AccordionTrigger className="px-2">
                             <div
                               key={index}
-                              className="flex justify-between items-center h-14 px-2 w-full dark:text-white font-semibold"
+                              className="flex justify-between items-center h-14 px-2 w-full dark:text-white font-semibold "
                             >
-                              {item[0].resource}
+                              {item[0].resource
+                                .split(' ')
+                                .map((word: string) => {
+                                  return word[0].toUpperCase() + word.slice(1)
+                                })
+                                .join(' ')}
                               <Link
                                 href={`/dashboard/employee/action?action=view&document=${item?.[0].document_number}`}
                                 className={buttonVariants({
@@ -171,7 +176,7 @@ export const MissingDocumentList = () => {
                           <AccordionTrigger className="px-2">
                             <div
                               key={index}
-                              className="flex justify-between items-center h-14 px-2 w-full dark:text-white font-semibold"
+                              className="flex justify-between items-center h-14 px-2 w-full dark:text-white font-semibold capitalize"
                             >
                               {item[0].resource}
                               <Link

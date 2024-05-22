@@ -7,7 +7,6 @@ import {
 import { Company, SharedCompanies, Vehicle } from '@/zodSchemas/schemas'
 import { User } from '@supabase/supabase-js'
 import { format } from 'date-fns'
-import { redirect } from 'next/navigation'
 import { create } from 'zustand'
 import { supabase } from '../../supabase/supabase'
 import { VehiclesFormattedElement } from './../zodSchemas/schemas'
@@ -92,7 +91,11 @@ interface State {
 const setEmployeesToShow = (employees: any) => {
   const employee = employees?.map((employees: any) => {
     return {
-      full_name: employees?.lastname + ' ' + employees?.firstname,
+      full_name: `${employees?.lastname
+        ?.charAt(0)
+        .toUpperCase()}${employees?.lastname?.slice(1)} ${employees?.firstname
+        ?.charAt(0)
+        .toUpperCase()}${employees?.firstname?.slice(1)}`,
       id: employees?.id,
       email: employees?.email,
       cuil: employees?.cuil,
@@ -106,8 +109,12 @@ const setEmployeesToShow = (employees: any) => {
         ?.join(', '),
       picture: employees?.picture,
       nationality: employees?.nationality,
-      lastname: employees?.lastname,
-      firstname: employees?.firstname,
+      lastname: `${employees?.lastname
+        ?.charAt(0)
+        ?.toUpperCase()}${employees?.lastname.slice(1)}`,
+      firstname: `${employees?.firstname
+        ?.charAt(0)
+        ?.toUpperCase()}${employees?.firstname.slice(1)}`,
       document_type: employees?.document_type,
       birthplace: employees?.birthplace?.name?.trim(),
       gender: employees?.gender,
@@ -122,7 +129,7 @@ const setEmployeesToShow = (employees: any) => {
       date_of_admission: employees?.date_of_admission,
       affiliate_status: employees?.affiliate_status,
       city: employees?.city?.name?.trim(),
-      hierrical_position: employees?.hierarchical_position?.name,
+      hierrl_position: employees?.hierarchical_position?.name,
       workflow_diagram: employees?.workflow_diagram?.name,
       contractor_employee: employees?.contractor_employee?.map(
         ({ contractors }: any) => contractors?.id,
@@ -625,7 +632,13 @@ export const useLoggedUserStore = create<State>((set, get) => {
           validity: formattedDate,
           mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
           id: doc.id,
-          resource: `${doc.employees?.lastname} ${doc.employees?.firstname}`,
+          resource: `${doc.employees?.lastname
+            ?.charAt(0)
+            ?.toUpperCase()}${doc?.employees.lastname.slice(
+            1,
+          )} ${doc.employees?.firstname
+            ?.charAt(0)
+            ?.toUpperCase()}${doc?.employees.firstname.slice(1)}`,
           document_number: doc.employees.document_number,
           document_url: doc.document_path,
         }
