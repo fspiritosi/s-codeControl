@@ -13,8 +13,8 @@ import { useEffect, useState } from 'react'
 
 interface Props {
   provinces: any[] | null
-  defaultProvince: any
-  defaultCity: any
+  defaultProvince?: any
+  defaultCity?: any
 }
 
 export default function CityInput({
