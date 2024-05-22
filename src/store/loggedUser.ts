@@ -518,15 +518,15 @@ export const useLoggedUserStore = create<State>((set, get) => {
   }
   const documentDrawerVehicles = async (id: string) => {
     let { data: equipmentData, error: equipmentError } = await supabase
-    .from('documents_equipment')
-    .select(
-      `*,
+      .from('documents_equipment')
+      .select(
+        `*,
     document_types:document_types(*),
     applies(*,type(*),type_of_vehicle(*),model(*),brand(*))
     `,
-    )
-    .eq('applies.id', id)
-    .not('applies', 'is', null)
+      )
+      .eq('applies.id', id)
+      .not('applies', 'is', null)
 
     set({ DrawerVehicles: equipmentData })
   }
@@ -537,8 +537,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
       return
     }
     const vehicles = get()?.vehicles
-    const vehiclesToShow = vehicles.filter(
-      vehicle => vehicle.types_of_vehicles?.name === type,
+    const vehiclesToShow = vehicles?.filter(
+      vehicle => vehicle?.types_of_vehicles?.name === type,
     )
 
     set({ vehiclesToShow: setVehiclesToShow(vehiclesToShow) })
