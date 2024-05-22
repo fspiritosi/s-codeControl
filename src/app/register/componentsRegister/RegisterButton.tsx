@@ -7,7 +7,7 @@ import { signup } from '../actions'
 
 export const RegisterButton = () => {
   const { pending } = useFormStatus()
-  
+
   let url = ''
 
   if (typeof window !== 'undefined') {
@@ -20,6 +20,7 @@ export const RegisterButton = () => {
       formAction={formData => {
         toast.promise(
           async () => {
+            console.log(url, 'url')
             signup(formData, url)
           },
           {

@@ -72,7 +72,8 @@ export default function CreateCompanyButton() {
     toast.promise(
       async () => {
         const cuit = formData.get('company_cuit') as string
-        const logoUrl = `${url}/logo/${cuit}.jpg`
+        const fileExtension = imageFile?.name.split('.').pop()
+        const logoUrl = `${url}/logo/${cuit}.${fileExtension}`
 
         const { data, error } = await AddCompany(formData, logoUrl)
 
