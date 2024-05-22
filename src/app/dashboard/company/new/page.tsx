@@ -192,7 +192,6 @@ export default async function companyRegister() {
                     ))}
                   </SelectContent>
                 </Select>
-
                 <CardDescription
                   id="industry_error"
                   className="max-w-[300px]"

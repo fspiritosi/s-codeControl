@@ -12,6 +12,7 @@ export const RegisterButton = () => {
 
   if (typeof window !== 'undefined') {
     url = window.location.origin
+    console.log(url, 'url email');
   }
 
   return (

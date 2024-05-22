@@ -25,10 +25,14 @@ export function CompanyRegister({
   // const { uploadImage, loading } = useImageUpload()
   // // const { toast } = useToast()
 
-  // const form = useForm<z.infer<typeof companySchema>>({
-  //   resolver: zodResolver(companySchema),
+  // const form = useForm<z.infer<typeof editCompanySchema>>({
+  //   resolver: zodResolver(editCompanySchema),
   //   defaultValues: company
-  //     ? company
+  //     ? {
+  //         ...company,
+  //         province_id: company.province_id.id,
+  //         city: company.city.id?.toString(),
+  //       }
   //     : {
   //         company_name: '',
   //         company_cuit: '',
@@ -99,7 +103,7 @@ export function CompanyRegister({
   //   fetchData()
   // }, [])
 
-  // const onSubmit = async (companyData: z.infer<typeof companySchema>) => {
+  // const onSubmit = async (companyData: z.infer<typeof editCompanySchema>) => {
   //   try {
   //     //Procesa los valores antes de enviarlos a la base de datos
   //     const processedCompanyData = {
@@ -128,7 +132,7 @@ export function CompanyRegister({
   //             ...processedCompanyData,
   //             company_logo: processedCompanyData.company_logo || '',
   //             owner_id: profile?.[0]?.id,
-  //             //by_defect: false,
+  //             by_defect: false,
   //           })
   //           await handleUpload()
   //           console.log('redireccionando 5')
@@ -157,7 +161,7 @@ export function CompanyRegister({
   //             ...processedCompanyData,
   //             company_logo: processedCompanyData.company_logo || '',
   //             owner_id: profile?.[0]?.id,
-  //             //by_defect: false,
+  //             by_defect: false,
   //           })
   //           await handleUpload()
   //           console.log('redireccionando 1')

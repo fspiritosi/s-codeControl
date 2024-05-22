@@ -38,6 +38,7 @@ export default function CreateCompanyButton() {
       reader.readAsDataURL(file)
     }
   }
+  
   const clientAccion = async (formData: FormData) => {
     const values = Object.fromEntries(formData.entries())
     const result = await companySchema.safeParseAsync(values)
