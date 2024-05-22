@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
 import { revalidatePath } from 'next/cache'
 import CityInput from '../new/components/CityInput'
-import CreateCompanyButton from '../new/components/CreateCompanyButton'
+import EditCompanyButton from './components/EditCompanyButton'
 export default async function companyRegister({
   params,
 }: {
@@ -44,8 +44,6 @@ export default async function companyRegister({
     .eq('owner_id', data?.[0]?.id)
     .eq('id', params.id)
     .single()
-
-  console.log(companyData, 'companyData')
 
   let { data: share_company_users, error: sharedError } = await supabase
     .from('share_company_users')
@@ -88,6 +86,7 @@ export default async function companyRegister({
                 <Label htmlFor="company_name">Nombre de la compañía</Label>
                 <Input
                   defaultValue={companyData?.company_name}
+                  value={companyData?.company_name}
                   id="company_name"
                   name="company_name"
                   className="max-w-[350px] w-[300px]"
@@ -183,16 +182,12 @@ export default async function companyRegister({
               </div>
               <CityInput
                 provinces={provinces}
-                // defaultProvince={companyData.province_id}
+                defaultProvince={companyData.province_id}
+                defaultCity={companyData.city}
               />
               <div>
                 <Label htmlFor="industry">Seleccione una Industria</Label>
-                <Select
-                  // disabled={!formEnabledProp}
-                  // onValueChange={handleIndustryChange}
-                  defaultValue={companyData?.industry}
-                  name="industry"
-                >
+                <Select defaultValue={companyData?.industry} name="industry">
                   <SelectTrigger
                     id="industry"
                     name="industry"
@@ -240,7 +235,7 @@ export default async function companyRegister({
                 <Checkbox id="by_defect" name="by_defect" />
               </div>
             </div>
-            <CreateCompanyButton />
+            <EditCompanyButton />
           </form>
         </div>
       </Card>
