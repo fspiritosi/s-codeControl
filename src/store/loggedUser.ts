@@ -279,7 +279,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
         if (actualPath !== '/dashboard/company/new') {
           // router.push('/dashboard/company/new')
-          redirect('/dashboard/company/new')
+          // redirect('/dashboard/company/new')
           return
         }
 

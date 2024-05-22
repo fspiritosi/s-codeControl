@@ -31,6 +31,14 @@ export async function middleware(req: NextRequest) {
     .select(`*`)
     .eq('profile_id', data?.[0]?.id)
 
+  if (
+    !Companies?.length &&
+    !share_company_users?.length &&
+    !req.url.includes('/dashboard/company/new')
+  ) {
+    return NextResponse.redirect(new URL('/dashboard/company/new', req.url))
+  }
+
   const theme = response.cookies.get('theme')
   const actualCompanyId = req.cookies.get('actialCompanyId')
   // const actualNoOwner :string | null = req.cookies.get('actualComp')?.value
