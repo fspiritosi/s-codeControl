@@ -29,11 +29,8 @@ export default function CityInput({ provinces }: Props) {
       .select('*')
       .eq('province_id', parseInt(id))
 
-    console.log(cities, 'cities')
 
-    if (citiesError) {
-      console.log(citiesError, 'citiesError')
-    }
+  
     const filteredCities = cities?.filter(city => city?.province_id == id)
     setCities(cities)
     return filteredCities
@@ -44,7 +41,6 @@ export default function CityInput({ provinces }: Props) {
     // const filteredCities = cities?.filter(city => city?.province_id == value)
     const filteredCities = await handleFetchCities(value)
 
-    console.log(filteredCities, 'filteredCities')
     setCityFiltered(filteredCities || [])
   }
 

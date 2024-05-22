@@ -457,12 +457,9 @@ export default function VehiclesForm2({ id }: { id: string }) {
 
           const id = vehicle?.[0].id
 
-          console.log(id, 'id')
           const fileExtension = imageFile?.name.split('.').pop()
-          console.log(fileExtension, 'fileExtension')
 
           if (imageFile) {
-            console.log(imageFile, 'imageFile')
             try {
               const renamedFile = new File(
                 [imageFile],
@@ -472,8 +469,6 @@ export default function VehiclesForm2({ id }: { id: string }) {
                 },
               )
               const imggg = await uploadImage(renamedFile, 'vehicle_photos')
-
-              console.log(imggg, 'imggg')
 
               try {
                 const vehicleImage =
@@ -487,8 +482,6 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   .eq('id', id)
                   .eq('company_id', actualCompany?.id)
 
-                console.log(data, 'data')
-                console.log(error, 'error')
               } catch (error) {}
               documetsFetch()
             } catch (error: any) {
@@ -508,7 +501,6 @@ export default function VehiclesForm2({ id }: { id: string }) {
         loading: 'Guardando...',
         success: 'Vehículo registrado',
         error: error => {
-          console.log(error)
           return error
         },
       },

@@ -85,6 +85,8 @@ interface State {
   documentDrawerEmployees: (document: string) => void
   DrawerEmployees: any[] | null
   FetchSharedUsers: () => void
+  DrawerVehicles: any[] | null
+  documentDrawerVehicles: (id: string) => void
 }
 
 const setEmployeesToShow = (employees: any) => {
@@ -272,11 +274,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
         set({ showMultiplesCompaniesAlert: false })
         setActualCompany(data[0])
       }
-      console.log('data.length', data.length)
-      console.log('share_company_users?.length', share_company_users?.length)
       if (data.length === 0 && share_company_users?.length === 0) {
         const actualPath = window.location.pathname
-        console.log('actualPath', actualPath)
 
         if (actualPath !== '/dashboard/company/new') {
           // router.push('/dashboard/company/new')
@@ -516,6 +515,20 @@ export const useLoggedUserStore = create<State>((set, get) => {
       .not('applies', 'is', null)
 
     set({ DrawerEmployees: data })
+  }
+  const documentDrawerVehicles = async (id: string) => {
+    let { data: equipmentData, error: equipmentError } = await supabase
+    .from('documents_equipment')
+    .select(
+      `*,
+    document_types:document_types(*),
+    applies(*,type(*),type_of_vehicle(*),model(*),brand(*))
+    `,
+    )
+    .eq('applies.id', id)
+    .not('applies', 'is', null)
+
+    set({ DrawerVehicles: equipmentData })
   }
 
   const setVehicleTypes = (type: string) => {
@@ -764,8 +777,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
       .eq('company_id', companyId)
 
-    console.log('data', data)
-
     set({ sharedUsers: data as SharedUser[] })
   }
 
@@ -936,6 +947,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
     loggedUser,
     documentDrawerEmployees,
     DrawerEmployees: get()?.DrawerEmployees,
+    documentDrawerVehicles,
+    DrawerVehicles: get()?.DrawerVehicles,
   }
 })
 //!---------------------------

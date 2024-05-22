@@ -21,15 +21,11 @@ export async function login(formData: FormData) {
   // })
 
   if (error) {
-    console.log(error, 'error')
     return error.message
   }
 
-  console.log('user', user)
 
   if (user.session) {
-    // redirect(`/login/auth/callback?verified=true`) // ->Redirijen los usuarios logueados con google o otros..
-    console.log('user', user)
     redirect(`/dashboard`)
   } else {
     redirect('/login')
@@ -44,7 +40,6 @@ export async function logout() {
 }
 
 export async function googleLogin(url: string) {
-  console.log(`${url}/login/auth/callback`, '`${url}/login/auth/callback`')
   const supabase = supabaseServer()
 
   let { data, error } = await supabase.auth.signInWithOAuth({

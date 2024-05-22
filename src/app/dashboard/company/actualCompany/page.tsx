@@ -48,7 +48,6 @@ export default function page() {
     }
   })
 
-  console.log(sharedUsersAll, 'sharedUsersAll')
   const sharedUsers =
     sharedUsersAll?.map(user => {
       return {

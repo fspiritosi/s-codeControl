@@ -1,4 +1,5 @@
 'use client'
+import { logout } from '@/app/login/actions'
 import { ModeToggle } from '@/components/ui/ToogleDarkButton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -68,7 +69,6 @@ import {
 import { FormControl, FormField, FormItem, FormMessage } from './ui/form'
 import { Separator } from './ui/separator'
 import { useToast } from './ui/use-toast'
-import { logout } from '@/app/login/actions'
 export default function NavBar() {
   const sharedCompanies = useLoggedUserStore(state => state.sharedCompanies)
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
@@ -89,14 +89,11 @@ export default function NavBar() {
     }
   }
 
-  console.log(allCompanies, 'allCompanies')
-
   const totalCompanies = [
     sharedCompanies?.map(company => company.company_id),
     allCompanies,
   ].flat()
 
-  console.log(totalCompanies, 'totalCompanies')
   const [isOpen, setIsOpen] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)

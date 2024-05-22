@@ -50,6 +50,9 @@ export default function SimpleDocument({
   const documentDrawerEmployees = useLoggedUserStore(
     state => state.documentDrawerEmployees,
   )
+  const documentDrawerVehicles = useLoggedUserStore(
+    state => state.documentDrawerVehicles,
+  )
   const employees = useLoggedUserStore(state => state.employees)?.reduce(
     (
       acc: any,
@@ -84,6 +87,7 @@ export default function SimpleDocument({
   const idApplies = employees?.find(
     (employee: any) => employee.document === documentResource,
   )?.id as string
+
   const {
     control,
     handleSubmit,
@@ -243,6 +247,9 @@ export default function SimpleDocument({
       setLoading(false)
       if (document) {
         documentDrawerEmployees(document)
+      }
+      if (id) {
+        documentDrawerVehicles(id)
       }
       handleOpen()
     } catch (error) {

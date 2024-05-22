@@ -9,7 +9,6 @@ export default function InitUser({ user }: { user: User | null }) {
   useEffect(() => {
     if (!initState.current) {
       useLoggedUserStore.setState({ credentialUser: user })
-      console.log(user, 'user primer suceso')
     }
     initState.current = true
   }, [])

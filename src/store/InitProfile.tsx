@@ -28,7 +28,6 @@ export default function InitProfile({
       }
       if (!initState.current) {
         useLoggedUserStore.setState({ profile: profile })
-        console.log(profile, 'profile segundo suceso')
       }
     }
     initState.current = true

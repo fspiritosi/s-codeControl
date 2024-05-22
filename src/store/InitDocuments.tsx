@@ -156,8 +156,6 @@ export default function InitDocuments({
       vehicles: typedData?.map(mapVehicle) || [],
     }
 
-    console.log(AllvaluesToShow, 'AllvaluesToShow')
-
     useLoggedUserStore.setState({
       allDocumentsToShow: AllvaluesToShow,
       showLastMonthDocuments: true,

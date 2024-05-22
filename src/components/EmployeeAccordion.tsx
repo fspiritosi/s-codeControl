@@ -145,12 +145,6 @@ export default function EmployeeAccordion() {
         },
   })
 
-  useEffect(() => {
-    console.log(
-      employees?.find((user: any) => user.document_number === document),
-      'user',
-    )
-  }, [])
   const [accordion1Errors, setAccordion1Errors] = useState(false)
   const [accordion2Errors, setAccordion2Errors] = useState(false)
   const [accordion3Errors, setAccordion3Errors] = useState(false)
@@ -485,7 +479,6 @@ export default function EmployeeAccordion() {
         loading: 'Agregando empleado...',
         success: 'Empleado agregado correctamente',
         error: error => {
-          console.log(error, 'errror')
           return error
         },
       },

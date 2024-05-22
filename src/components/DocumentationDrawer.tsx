@@ -33,28 +33,67 @@ import { CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Separator } from './ui/separator'
 import { Skeleton } from './ui/skeleton'
 
-type Props = { resource: string; document: string }
+type Props = { resource: string; document?: string; id?: string }
 
-export const DocumentationDrawer = ({ resource, document }: Props) => {
+export const DocumentationDrawer = ({ resource, document, id }: Props) => {
   const [open, setOpen] = useState(false)
-  const props = useLoggedUserStore(state => state.DrawerEmployees)?.sort(
-    (a, b) => {
+  const employeesData = useLoggedUserStore(
+    state => state.DrawerEmployees,
+  )?.sort((a, b) => {
+    if (a.state === 'pendiente' && b.state !== 'pendiente') {
+      return 1
+    } else if (a.state !== 'pendiente' && b.state === 'pendiente') {
+      return -1
+    } else {
+      return a.id_document_types.name.localeCompare(b.id_document_types.name)
+    }
+  })
+  const vehiclesData = useLoggedUserStore(state => state.DrawerVehicles)
+    ?.sort((a, b) => {
       if (a.state === 'pendiente' && b.state !== 'pendiente') {
         return 1
       } else if (a.state !== 'pendiente' && b.state === 'pendiente') {
         return -1
       } else {
-        return a.id_document_types.name.localeCompare(b.id_document_types.name)
+        return a?.id_document_types.name?.localeCompare(
+          b.id_document_types.name,
+        )
       }
-    },
-  )
+    })
+    .map(e => {
+      return {
+        ...e,
+        id_document_types: {
+          name: e.document_types.name,
+          id: e.document_types.id,
+          applies: e.document_types.applies,
+          created_at: e.document_types.created_at,
+          explired: e.document_types.explired,
+          is_active: e.document_types.is_active,
+          mandatory: e.document_types.mandatory,
+          multiresource: e.document_types.multiresource,
+          special: e.document_types.special,
+          description: e.document_types.description,
+          company_id: e.document_types.company_id,
+        },
+      }
+    })
+  const props = resource === 'empleado' ? employeesData : vehiclesData
   const documentDrawerEmployees = useLoggedUserStore(
     state => state.documentDrawerEmployees,
   )
+  const documentDrawerVehicles = useLoggedUserStore(
+    state => state.documentDrawerVehicles,
+  )
 
   useEffect(() => {
-    documentDrawerEmployees(document)
-  }, [document])
+    if (document) {
+      documentDrawerEmployees(document)
+    }
+    if (id) {
+      documentDrawerVehicles(id)
+    }
+  }, [document, id])
 
   const handleOpen = () => setOpen(!open)
   const profile = useLoggedUserStore(state => state)
@@ -64,8 +103,6 @@ export const DocumentationDrawer = ({ resource, document }: Props) => {
   } else {
     role = profile?.actualCompany?.share_company_users?.[0]?.role as string
   }
-
-  console.log('props', props)
 
   const documentToDownload = props?.filter(e => e.state !== 'pendiente')
 

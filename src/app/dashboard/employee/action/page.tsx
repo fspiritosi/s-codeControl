@@ -20,7 +20,6 @@ export default async function EmployeeFormAction({
 
   revalidatePath('/dashboard/employee/action')
 
-  console.log('render',searchParams)
 
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">

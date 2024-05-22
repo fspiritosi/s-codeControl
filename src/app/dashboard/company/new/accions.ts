@@ -4,8 +4,6 @@ import { revalidatePath } from 'next/cache'
 
 export async function AddCompany(formData: FormData, url: string) {
   const supabase = supabaseServer()
-  console.log(url, 'url')
-
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -36,7 +34,6 @@ export async function AddCompany(formData: FormData, url: string) {
     .from('company')
     .insert([formattedData])
     .select()
-  console.log(companyError, 'companyError')
   revalidatePath('/dashboard', 'layout')
   revalidatePath('/dashboard')
   return { error: companyError, data }

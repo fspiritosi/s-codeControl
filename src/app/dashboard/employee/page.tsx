@@ -32,8 +32,6 @@ const EmployeePage = () => {
     role = profile?.actualCompany?.share_company_users?.[0]?.role as string
   }
 
-  console.log(role, 'role')
-
   const employees = useLoggedUserStore(state => state.employeesToShow)
   const setActivesEmployees = useLoggedUserStore(
     state => state.setActivesEmployees,

@@ -250,7 +250,6 @@ export const RegisterWithRole = () => {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value)
-    console.log(activeTab)
   }
 
   return (

@@ -29,11 +29,7 @@ export const useImageUpload = () => {
           },
         )
 
-      console.log(data, 'data')
-      console.log(file, 'file')
-      console.log(error, 'error')
       if (error) {
-        console.log('Error uploading image:', error)
         const message = await errorTranslate(error?.message)
         throw new Error(String(message).replaceAll('"', ''))
       }

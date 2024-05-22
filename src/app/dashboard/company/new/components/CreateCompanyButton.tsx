@@ -51,7 +51,6 @@ export default function CreateCompanyButton() {
 
     if (!result.success) {
       result.error.issues.forEach(issue => {
-        console.log(issue, 'issue')
         const element = document.getElementById(`${issue.path}_error`)
         if (element) {
           element.innerText = issue.message //->mensaje de error
