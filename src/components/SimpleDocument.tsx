@@ -198,29 +198,77 @@ export default function SimpleDocument({
             },
           )
           .then(async response => {
-            const data = {
-              validity: updateEntries[index].validity,
-              document_path: response.data?.path,
-              created_at: new Date(),
-              state: 'presentado',
-            }
-            const { error } = await supabase
-              .from(tableName)
-              .update(data)
-              .eq('applies', idApplies || updateEntries[index].applies)
-              .eq('id_document_types', updateEntries[index].id_document_types)
+            const isMandatory = documenTypes?.find(
+              doc => doc.id === updateEntries[index].id_document_types,
+            )?.mandatory
 
-            if (error) {
-              toast({
-                title: 'Error',
-                description:
-                  'Hubo un error al subir los documentos a la base de datos',
-                variant: 'destructive',
+            console.log('isMandatory', isMandatory)
+
+            if (isMandatory) {
+              const data = {
+                validity: updateEntries[index].validity,
+                document_path: response.data?.path,
+                created_at: new Date(),
+                state: 'presentado',
+              }
+              const { error } = await supabase
+                .from(tableName)
+                .update(data)
+                .eq('applies', idApplies || updateEntries[index].applies)
+                .eq('id_document_types', updateEntries[index].id_document_types)
+
+              console.log(error, 'error')
+
+              if (error) {
+                toast({
+                  title: 'Error',
+                  description:
+                    'Hubo un error al subir los documentos a la base de datos',
+                  variant: 'destructive',
+                })
+                setLoading(false)
+                hasError = true
+                console.error(error)
+                return
+              }
+            } else {
+              // const data = {
+              //   validity: updateEntries[index].validity,
+              //   document_path: response.data?.path,
+              //   created_at: new Date(),
+              //   state: 'presentado',
+              // }
+              // const { error } = await supabase
+              //   .from(tableName)
+              //   .upsert(data)
+              //   .eq('applies', idApplies || updateEntries[index].applies)
+              //   .eq('id_document_types', updateEntries[index].id_document_types)
+
+              console.log('insert')
+
+              const { error } = await supabase.from(tableName).insert({
+                validity: updateEntries[index].validity,
+                document_path: response.data?.path,
+                created_at: new Date(),
+                state: 'presentado',
+                applies: idApplies || updateEntries[index].applies,
+                id_document_types: updateEntries[index].id_document_types,
+                user_id: user,
               })
-              setLoading(false)
-              hasError = true
-              console.error(error)
-              return
+
+              if (error) {
+                console.log(error, 'error')
+                toast({
+                  title: 'Error',
+                  description:
+                    'Hubo un error al subir los documentos a la base de datos',
+                  variant: 'destructive',
+                })
+                setLoading(false)
+                hasError = true
+                console.error(error)
+                return
+              }
             }
           })
           .catch(error => {

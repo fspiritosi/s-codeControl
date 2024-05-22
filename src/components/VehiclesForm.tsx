@@ -133,6 +133,10 @@ export default function VehiclesForm2({ id }: { id: string }) {
     if (vehicle && vehicle.type_of_vehicle === 'Vehículos') {
       setHideInput(true)
     }
+    if (vehicle && vehicle.type_of_vehicle === 'Otros') {
+      console.log('otro')
+      setHideInput(false)
+    }
     if (!vehicle) {
       setHideInput(false)
     }
@@ -168,9 +172,11 @@ export default function VehiclesForm2({ id }: { id: string }) {
       console.error('Error al obtener los datos del vehículo:', error)
     }
   }
+
   useEffect(() => {
     fetchVehicleData()
   }, [id, actualCompany])
+
   const router = useRouter()
   const [hideInput, setHideInput] = useState(false)
   const vehicleSchema = z.object({
@@ -290,7 +296,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
             },
             { message: 'El dominio ya existe' },
           )
-      : z.string().optional(),
+      : z.string().optional().nullable(),
     serie: hideInput
       ? z.string().optional()
       : z
@@ -481,7 +487,6 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   .update({ picture: vehicleImage })
                   .eq('id', id)
                   .eq('company_id', actualCompany?.id)
-
               } catch (error) {}
               documetsFetch()
             } catch (error: any) {
@@ -526,6 +531,8 @@ export default function VehiclesForm2({ id }: { id: string }) {
     }
   }
 
+  console.log(form.formState.errors, 'formState.errors')
+
   async function onUpdate(values: z.infer<typeof vehicleSchema>) {
     toast.promise(
       async () => {
@@ -544,7 +551,8 @@ export default function VehiclesForm2({ id }: { id: string }) {
         } = values
 
         try {
-          await supabase
+          console.log('update', values)
+          const { data: updated, error: updatedERROR } = await supabase
             .from('vehicles')
             .update({
               type_of_vehicle: data.tipe_of_vehicles.find(
@@ -564,6 +572,9 @@ export default function VehiclesForm2({ id }: { id: string }) {
             .eq('id', vehicle?.id)
             .eq('company_id', actualCompany?.id)
             .select()
+
+          console.log('updated', updated)
+          console.log('updatedERROR', updatedERROR)
 
           const id = vehicle?.id
           const fileExtension = imageFile?.name.split('.').pop()
@@ -1154,7 +1165,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                       className="input w-[250px]"
                       placeholder="Ingrese el dominio"
                       value={
-                        field.value !== '' ? field.value : vehicle?.domain || ''
+                        field.value !== '' ? field.value??'' : vehicle?.domain ?? ''
                       }
                       defaultValue={vehicle?.domain}
                       onChange={e => {

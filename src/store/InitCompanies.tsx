@@ -9,7 +9,6 @@ export default function InitCompanies({
   share_company_users: any[] | null
 }) {
   const router = useRouter()
-  console.log('InitCompanies', company, share_company_users)
 
   if (company?.length === 0 && share_company_users?.length === 0) {
     if(typeof window === 'undefined') return
