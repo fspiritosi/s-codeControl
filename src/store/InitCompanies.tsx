@@ -12,6 +12,7 @@ export default function InitCompanies({
   console.log('InitCompanies', company, share_company_users)
 
   if (company?.length === 0 && share_company_users?.length === 0) {
+    if(typeof window === 'undefined') return
     const actualPath = window.location.pathname
     console.log('actualPath', actualPath)
     if (actualPath !== '/dashboard/company/new') {
