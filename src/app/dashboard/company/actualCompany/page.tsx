@@ -43,7 +43,7 @@ export default function page() {
   const [showPasswords, setShowPasswords] = useState(false)
   const [open, setOpen] = useState(false)
   const userShared = cookies.get('guestRole')
-  console.log(companyId, "companyId")
+  console.log(actualCompany?.id, "actual company")
   const owner = ownerUser?.map(user => {
     return {
       email: user.email,
