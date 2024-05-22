@@ -405,8 +405,8 @@ export function DataEquipment<TData, TValue>({
                             {cell.getValue() as React.ReactNode}
                           </Badge>
                         ) : cell.column.id === 'domain' ? (
-                          (cell.getValue() as React.ReactNode) === '' ? (
-                            'No disponible'
+                          !cell.getValue() ? (
+                            'No posee'
                           ) : (
                             (cell.getValue() as React.ReactNode)
                           )
