@@ -406,6 +406,8 @@ export default function EmployeeAccordion() {
     fetchCityValues(provinceId)
   }
 
+  const documetsFetch = useLoggedUserStore(state => state.documetsFetch)
+
   async function onCreate(values: z.infer<typeof accordionSchema>) {
     toast.promise(
       async () => {
@@ -473,7 +475,7 @@ export default function EmployeeAccordion() {
             throw new Error(error)
           }
           getEmployees(true)
-          // useLoggedUserStore.setState({ initDocumentState: false })
+          documetsFetch()
           router.push('/dashboard/employee')
         } catch (error: PostgrestError | any) {
           throw new Error(error)
@@ -632,7 +634,7 @@ export default function EmployeeAccordion() {
                   setReadOnly(false)
                 }}
               >
-                Habiliar edición
+                Habilitar edición
               </Button>
             )}
           </CardHeader>

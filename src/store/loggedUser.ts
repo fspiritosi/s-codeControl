@@ -7,6 +7,7 @@ import {
 import { Company, SharedCompanies, Vehicle } from '@/zodSchemas/schemas'
 import { User } from '@supabase/supabase-js'
 import { format } from 'date-fns'
+import { redirect } from 'next/navigation'
 import { create } from 'zustand'
 import { supabase } from '../../supabase/supabase'
 import { VehiclesFormattedElement } from './../zodSchemas/schemas'
@@ -81,6 +82,9 @@ interface State {
   documetsFetch: () => void
   getEmployees: (active: boolean) => void
   loggedUser: () => void
+  documentDrawerEmployees: (document: string) => void
+  DrawerEmployees: any[] | null
+  FetchSharedUsers: () => void
 }
 
 const setEmployeesToShow = (employees: any) => {
@@ -192,14 +196,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
       .eq('owner_id', id)
 
-    // const validatedData = CompanySchema.safeParse(data)
-    // if (!validatedData.success) {
-    //   return console.error(
-    //     'Error al obtener el perfil: Validacion',
-    //     validatedData.error,
-    //   )
-    // }
-
     let { data: share_company_users, error: sharedError } = await supabase
       .from('share_company_users')
       .select(
@@ -245,18 +241,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
       .eq('profile_id', id)
 
-    // const validatedSharedCompanies =
-    //   SharedCompaniesSchema.safeParse(share_company_users)
-
-    // if (!validatedSharedCompanies.success) {
-    //   return console.error(
-    //     'Error al obtener el perfil: Validacion',
-    //     validatedSharedCompanies.error,
-    //   )
-    // }
-
     set({ sharedCompanies: share_company_users as SharedCompanies })
-
+    // const router = useRouter()
     if (error) {
       console.error('Error al obtener el perfil:', error)
     } else {
@@ -286,11 +272,15 @@ export const useLoggedUserStore = create<State>((set, get) => {
         set({ showMultiplesCompaniesAlert: false })
         setActualCompany(data[0])
       }
+      console.log('data.length', data.length)
+      console.log('share_company_users?.length', share_company_users?.length)
       if (data.length === 0 && share_company_users?.length === 0) {
         const actualPath = window.location.pathname
+        console.log('actualPath', actualPath)
 
-        if (actualPath === '/dashboard/company/new') {
-          set({ showNoCompanyAlert: false })
+        if (actualPath !== '/dashboard/company/new') {
+          // router.push('/dashboard/company/new')
+          redirect('/dashboard/company/new')
           return
         }
 
@@ -341,6 +331,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     fetchVehicles()
     documetsFetch()
     allNotifications()
+    FetchSharedUsers()
   }
 
   const setInactiveEmployees = async () => {
@@ -514,6 +505,17 @@ export const useLoggedUserStore = create<State>((set, get) => {
       vehicle => vehicle.status === 'No avalado',
     )
     set({ vehiclesToShow: setVehiclesToShow(noEndorsedVehicles) })
+  }
+
+  const documentDrawerEmployees = async (document: string) => {
+    const { data } = await supabase
+
+      .from('documents_employees')
+      .select('*,applies(*),id_document_types(*)')
+      .eq('applies.document_number', document)
+      .not('applies', 'is', null)
+
+    set({ DrawerEmployees: data })
   }
 
   const setVehicleTypes = (type: string) => {
@@ -715,6 +717,58 @@ export const useLoggedUserStore = create<State>((set, get) => {
     })
   }
 
+  const FetchSharedUsers = async () => {
+    const companyId = get()?.actualCompany?.id
+    const { data, error } = await supabase
+      .from('share_company_users')
+      .select(
+        `*,profile_id(*),company_id(*,
+          owner_id(*),
+        share_company_users(*,
+          profile(*)
+        ),
+        city (
+          name,
+          id
+        ),
+        province_id (
+          name,
+          id
+        ),
+        companies_employees (
+          employees(
+            *,
+            city (
+              name
+            ),
+            province(
+              name
+            ),
+            workflow_diagram(
+              name
+            ),
+            hierarchical_position(
+              name
+            ),
+            birthplace(
+              name
+            ),
+            contractor_employee(
+              contractors(
+                *
+              )
+            )
+          )
+        )
+      )`,
+      )
+      .eq('company_id', companyId)
+
+    console.log('data', data)
+
+    set({ sharedUsers: data as SharedUser[] })
+  }
+
   const getEmployees = async (active: boolean) => {
     let { data: employees, error } = await supabase
       .from('employees')
@@ -840,6 +894,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
   return {
     credentialUser: get()?.credentialUser,
     profile: get()?.profile,
+    FetchSharedUsers,
     showNoCompanyAlert: get()?.showNoCompanyAlert,
     showMultiplesCompaniesAlert: get()?.showMultiplesCompaniesAlert,
     allCompanies: get()?.allCompanies,
@@ -879,6 +934,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
     documetsFetch: () => documetsFetch(),
     getEmployees: (active: boolean) => getEmployees(active),
     loggedUser,
+    documentDrawerEmployees,
+    DrawerEmployees: get()?.DrawerEmployees,
   }
 })
 //!---------------------------

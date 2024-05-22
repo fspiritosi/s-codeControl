@@ -68,6 +68,7 @@ import {
 import { FormControl, FormField, FormItem, FormMessage } from './ui/form'
 import { Separator } from './ui/separator'
 import { useToast } from './ui/use-toast'
+import { logout } from '@/app/login/actions'
 export default function NavBar() {
   const sharedCompanies = useLoggedUserStore(state => state.sharedCompanies)
   const allCompanies = useLoggedUserStore(state => state.allCompanies)
@@ -82,8 +83,7 @@ export default function NavBar() {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut()
-      router.push('/login')
+      await logout()
     } catch (error) {
       console.error('Error al cerrar sesión:', error)
     }

@@ -105,43 +105,6 @@ export const registerSchema = z
     message: 'Las contraseñas no coinciden.',
     path: ['confirmPassword'],
   })
-export const registerSchemaWithRole = z
-  .object({
-    firstname: z
-      .string()
-      .min(2, {
-        message: 'El nombre debe tener al menos 2 caracteres.',
-      })
-      .max(30, {
-        message: 'El nombre debe tener menos de 30 caracteres.',
-      })
-      .regex(/^[a-zA-Z ]+$/, {
-        message: 'El nombre solo puede contener letras.',
-      })
-      .trim(),
-    lastname: z
-      .string()
-      .min(2, {
-        message: 'El apellido debe tener al menos 2 caracteres.',
-      })
-      .max(30, {
-        message: 'El apellido debe tener menos de 30 caracteres.',
-      })
-      .regex(/^[a-zA-Z ]+$/, {
-        message: 'El apellido solo puede contener letras.',
-      })
-      .trim(),
-    email: z.string().email({ message: 'Email inválido' }),
-    role: z.string({ required_error: 'El rol es requerido' }).min(1, {
-      message: 'El rol debe tener al menos 1 caracteres.',
-    }),
-    password: passwordSchema,
-    confirmPassword: passwordSchema,
-  })
-  .refine(data => data.password === data.confirmPassword, {
-    message: 'Las contraseñas no coinciden.',
-    path: ['confirmPassword'],
-  })
 
 export const recoveryPassSchema = z.object({
   email: z.string().email({ message: 'Email inválido' }),

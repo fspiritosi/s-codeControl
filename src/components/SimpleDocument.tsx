@@ -26,7 +26,6 @@ import {
 } from '@/components/ui/popover'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { es } from 'date-fns/locale'
-import { revalidatePath } from 'next/cache'
 import { supabase } from '../../supabase/supabase'
 import {
   Command,
@@ -41,11 +40,16 @@ export default function SimpleDocument({
   resource,
   handleOpen,
   defaultDocumentId,
+  document,
 }: {
   resource: string | undefined
   handleOpen: () => void
   defaultDocumentId?: string
+  document?: string
 }) {
+  const documentDrawerEmployees = useLoggedUserStore(
+    state => state.documentDrawerEmployees,
+  )
   const employees = useLoggedUserStore(state => state.employees)?.reduce(
     (
       acc: any,
@@ -237,6 +241,9 @@ export default function SimpleDocument({
         variant: 'default',
       })
       setLoading(false)
+      if (document) {
+        documentDrawerEmployees(document)
+      }
       handleOpen()
     } catch (error) {
       console.error(error)
@@ -247,7 +254,6 @@ export default function SimpleDocument({
       })
       setLoading(false)
     }
-    revalidatePath('/dashboard/employee/action')
   }
 
   const fetchDocumentTypes = async () => {
@@ -257,7 +263,6 @@ export default function SimpleDocument({
       .from('document_types')
       .select('*')
       .eq('applies', applies)
-      .eq('multiresource', false)
       .or(
         `company_id.eq.${useLoggedUserStore?.getState?.()?.actualCompany
           ?.id},company_id.is.null`,
@@ -288,6 +293,12 @@ export default function SimpleDocument({
   const [openResourceSelector, setOpenResourceSelector] = useState(false)
   const [years, setYear] = useState(today.getFullYear().toString())
 
+  useEffect(() => {
+    const documentInfo = documenTypes?.find(
+      documentType => documentType.id === defaultDocumentId,
+    )
+    setHasExpired(documentInfo?.explired)
+  }, [defaultDocumentId, documenTypes])
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <ul className="flex flex-col gap-2">

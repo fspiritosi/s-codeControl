@@ -86,7 +86,6 @@ export type industry_type = {
   name: string
 }[]
 
-
 export type singUp = {
   email: string
   password: string
@@ -163,15 +162,15 @@ export type Documents = {
 }
 
 export type SharedUser = {
-  id:            string;
-  role:          string;
-  email:         string;
-  avatar:        string;
-  fullname:      string;
-  created_at:    Date;
-  credential_id: string;
+  id: string
+  role: string
+  email: string
+  avatar: string
+  fullname: string
+  created_at: Date
+  credential_id: string
+  profile_id: profileUser
 }
-
 
 export type TypeOfVehicle = {
   id: string
@@ -436,12 +435,12 @@ export type VehiclesTable = {
 }
 
 export type AllDocumentsValues = {
-  id_document_types: string;
-  validity:          Date;
-  document:          string;
-  applies:           string;
-  document_url:      string;
-  id_storage:        null;
-  is_active:         boolean;
-  user_id:           string;
+  id_document_types: string
+  validity: Date
+  document: string
+  applies: string
+  document_url: string
+  id_storage: null
+  is_active: boolean
+  user_id: string
 }

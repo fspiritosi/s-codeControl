@@ -7,13 +7,20 @@ import { signup } from '../actions'
 
 export const RegisterButton = () => {
   const { pending } = useFormStatus()
+  
+  let url = ''
+
+  if (typeof window !== 'undefined') {
+    url = window.location.origin
+  }
+
   return (
     <Button
       className="w-[100%] sm:w-[80%] lg:w-[60%] self-center"
       formAction={formData => {
         toast.promise(
           async () => {
-            signup(formData)
+            signup(formData, url)
           },
           {
             loading: 'Registrando...',

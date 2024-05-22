@@ -31,6 +31,7 @@ import { ItemCompany } from './components/itemCompany'
 export default function page() {
   const company = useLoggedUserStore(state => state.actualCompany)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
+  const sharedUsersAll = useLoggedUserStore(state => state.sharedUsers)
   const [verify, setVerify] = useState(false)
   const ownerUser = useLoggedUserStore(state => state.profile)
   const [showPasswords, setShowPasswords] = useState(false)
@@ -47,19 +48,25 @@ export default function page() {
     }
   })
 
+  console.log(sharedUsersAll, 'sharedUsersAll')
   const sharedUsers =
-    actualCompany?.share_company_users?.map(user => {
+    sharedUsersAll?.map(user => {
       return {
-        email: user.profile.email,
-        fullname: user.profile.fullname,
+        email: user.profile_id.email,
+        fullname: user.profile_id.fullname,
         role: user?.role,
         alta: user.created_at,
         id: user.id,
-        img: user.profile.avatar || '',
+        img: user.profile_id.avatar || '',
       }
     }) || []
 
-  const data = owner?.concat(sharedUsers || [])
+  const data = owner?.concat(
+    sharedUsers?.map(user => ({
+      ...user,
+      fullname: user.fullname || '',
+    })) || [],
+  )
 
   function compare(text: string) {
     if (text === company?.company_name) {

@@ -3,7 +3,7 @@ import { supabaseServer } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-export async function signup(formData: FormData) {
+export async function signup(formData: FormData, url: string) {
   const supabase = supabaseServer()
 
   // type-casting here for convenience
@@ -13,7 +13,13 @@ export async function signup(formData: FormData) {
     password: formData.get('password') as string,
   }
 
-  const { error, data: user } = await supabase.auth.signUp(data)
+  const { error, data: user } = await supabase.auth.signUp({
+    email: data.email,
+    password: data.password,
+    options: {
+      emailRedirectTo: `${url}`,
+    }
+  })
 
   const firstname = formData.get('firstname') as string
   const lastname = formData.get('lastname') as string

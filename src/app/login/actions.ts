@@ -40,7 +40,7 @@ export async function logout() {
   const supabase = supabaseServer()
   await supabase.auth.signOut()
   revalidatePath('/', 'layout')
-  redirect('/')
+  redirect('/login')
 }
 
 export async function googleLogin(url: string) {
