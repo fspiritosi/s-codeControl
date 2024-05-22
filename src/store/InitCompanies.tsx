@@ -9,11 +9,13 @@ export default function InitCompanies({
   share_company_users: any[] | null
 }) {
   const router = useRouter()
+  console.log('InitCompanies', company, share_company_users)
 
   if (company?.length === 0 && share_company_users?.length === 0) {
     const actualPath = window.location.pathname
-
+    console.log('actualPath', actualPath)
     if (actualPath !== '/dashboard/company/new') {
+      console.log('redirecting')
       router.push('/dashboard/company/new')
     }
   }
