@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useLoggedUserStore } from '@/store/loggedUser'
 import { SharedUser } from '@/zodSchemas/schemas'
 import { ColumnDef } from '@tanstack/react-table'
 import { formatRelative } from 'date-fns'
@@ -50,7 +51,7 @@ export const columns: ColumnDef<SharedUser>[] = [
           {
             <Avatar className="">
               <AvatarImage
-                src={row.getValue('img') || '/images/avatar-placeholder.svg'}
+                src={row.getValue('img')}
                 alt="Logo de la empresa"
                 className="rounded-full object-cover"
               />
@@ -179,8 +180,9 @@ export const columns: ColumnDef<SharedUser>[] = [
               .select()
           },
           {
-            loading: 'Cargando...',
+            loading: 'Eliminando...',
             success: data => {
+              useLoggedUserStore?.getState()?.FetchSharedUsers()
               return 'Usuario eliminado'
             },
             error: 'Error',

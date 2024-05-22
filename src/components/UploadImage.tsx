@@ -23,7 +23,6 @@ interface UploadImageProps {
 
 export function UploadImage({
   onImageChange,
-  // onUploadSuccess,
   disabledInput,
   style,
   inputStyle,
@@ -68,8 +67,6 @@ export function UploadImage({
             type: `image/${fileExtension}`,
           },
         )
-
-        // Subir la imagen a Supabase Storage y obtener la URL
         const uploadedImageUrl = await uploadImage(renamedFile, imageBucket)
 
         const companyImage = `${url}/${imageBucket}/${companyId.replace(

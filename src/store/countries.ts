@@ -98,7 +98,7 @@ export const useCountriesStore = create<State>((set, get) => {
     let { data: document_types } = await supabase
       .from('document_types')
       .select('*')
-      .filter('mandatory', 'eq', true)
+      ?.filter('mandatory', 'eq', true)
       .or(`company_id.eq.${company_id},company_id.is.null`)
 
     const validatedData = EquipoSchema.safeParse(document_types)

@@ -26,7 +26,7 @@ export default async function EquipmentFormAction({
   //       .eq('id', id)
   //       .eq('company_id', actualCompany?.id)
 
-  //       const transformedData = vehicleData.map((item: VehicleType) => ({
+  //       const transformedData = vehicleData?.map((item: VehicleType) => ({
   //         ...item,
   //         type_of_vehicle: item.types_of_vehicles.name,
   //         brand: item.brand_vehicles.name,
@@ -51,7 +51,10 @@ export default async function EquipmentFormAction({
         false
       ) : (
         <Card className="xl:max-w-[40vw]  col-span-2 flex flex-col justify-center w-full overflow-hidden">
-          <DocumentationDrawer props={data} resource="equipo" />
+          <DocumentationDrawer
+            id={searchParams.id as string}
+            resource="equipo"
+          />
           <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
         </Card>
       )}

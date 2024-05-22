@@ -378,7 +378,7 @@ export const columns: ColumnDef<Colum>[] = [
                                       >
                                         {today.getFullYear().toString()}
                                       </SelectItem>
-                                      {yearsAhead.map(year => (
+                                      {yearsAhead?.map(year => (
                                         <SelectItem
                                           key={year}
                                           value={`${year}`}

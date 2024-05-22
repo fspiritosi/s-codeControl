@@ -58,7 +58,7 @@ function Header() {
           } w-full md:block md:w-auto`}
         >
           <div className="flex flex-col p-4 mt-4 md:p-0 md:flex-row md:space-x-8 md:mt-0 md:border-0">
-            {dataHeader.map(({ id, name, idLink }) => (
+            {dataHeader?.map(({ id, name, idLink }) => (
               <div
                 key={id}
                 className="px-4 transition-all duration-500 ease-in-out"

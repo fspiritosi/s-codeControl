@@ -14,10 +14,10 @@ export const CardsGrid: React.FC<CardsGridProps> = ({
   const handleCardClick = (card: Company[0]) => {
     onCardClick(card)
   }
-  const activeCompanies = allCompanies.filter(company => company.is_active)
+  const activeCompanies = allCompanies?.filter(company => company.is_active)
   return (
     <div className="grid grid-cols-6 gap-4">
-      {activeCompanies.map(companyItems => (
+      {activeCompanies?.map(companyItems => (
         <div
           key={companyItems.id}
           className="card hover:cursor-pointer bg-white text-black rounded-lg shadow-md p-4"

@@ -4,14 +4,15 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatDate } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { supabase } from '../../../../supabase/supabase'
 
 import ApproveDocModal from '@/components/ApproveDocModal'
 import DenyDocModal from '@/components/DenyDocModal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useEffect, useState } from 'react'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 
 export default function page({ params }: { params: { id: string } }) {
+  const supabase = supabaseBrowser()
   const [documents_employees, setDocumentsEmployees] = useState<any[] | null>(
     [],
   )

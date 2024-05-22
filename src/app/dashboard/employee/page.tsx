@@ -8,28 +8,30 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { useLoggedUserStore } from '@/store/loggedUser'
+import Cookies from 'js-cookie'
 import Link from 'next/link'
 import { supabase } from '../../../../supabase/supabase'
 import { columns } from './columns'
 import { DataTable } from './data-table'
-import Cookies from 'js-cookie';
 
 const EmployeePage = () => {
-  if (typeof window !== "undefined") {
-    
-    const company_id = localStorage.getItem('company_id');
-    let actualComp = Cookies.set('actualComp', company_id as string);
- }
+  if (typeof window !== 'undefined') {
+    const company_id = localStorage.getItem('company_id')
+    let actualComp = Cookies.set('actualComp', company_id as string)
+  }
 
-const profile = useLoggedUserStore(state => state)
- 
-  let role : string = ""
-  if(profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id){
+  const profile = useLoggedUserStore(state => state)
+
+  let role: string = ''
+  if (
+    profile?.actualCompany?.owner_id?.credential_id ===
+    profile?.credentialUser?.id
+  ) {
     role = profile?.actualCompany?.owner_id?.role as string
- }else{
+  } else {
     role = profile?.actualCompany?.share_company_users?.[0]?.role as string
- }
-  
+  }
+
   const employees = useLoggedUserStore(state => state.employeesToShow)
   const setActivesEmployees = useLoggedUserStore(
     state => state.setActivesEmployees,
@@ -69,16 +71,16 @@ const profile = useLoggedUserStore(state => state)
               Aquí puedes ver los empleados de tu empresa
             </CardDescription>
           </div>
-          {(role && role !== "Invitado") && (
-          <Link
-            href="/dashboard/employee/action?action=new"
-            className={[
-              'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
-              buttonVariants({ variant: 'outline' }),
-            ].join(' ')}
-          >
-            Agregar nuevo empleado
-          </Link>
+          {role && role !== 'Invitado' && (
+            <Link
+              href="/dashboard/employee/action?action=new"
+              className={[
+                'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
+                buttonVariants({ variant: 'outline' }),
+              ].join(' ')}
+            >
+              Agregar nuevo empleado
+            </Link>
           )}
         </CardHeader>
 

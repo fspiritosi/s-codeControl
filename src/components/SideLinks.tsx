@@ -80,7 +80,7 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
 
   const links =
     !administrador && owner_id !== actualCompany
-      ? Allinks.filter(link => link.name !== 'Empresa')
+      ? Allinks?.filter(link => link.name !== 'Empresa')
       : Allinks
 
   if (isAuditor) {
@@ -100,7 +100,7 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
 
   return (
     <>
-      {links.map((link, index) => (
+      {links?.map((link, index) => (
         <div key={link.name}>
           <Link
             href={link.href}
@@ -135,13 +135,13 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
             <div
               className={`${
                 expanded ? '' : 'absolute top-[210px]'
-              } ml-0 mt-1 dark:text-neutral-300 text-neutral-950 font-medium bg-muted dark:bg-muted/50 p-2 rounded-md`}
+              }ml-0 mt-1 dark:text-neutral-300 text-neutral-950 font-medium bg-muted dark:bg-muted p-2 rounded-md`}
               style={{
                 marginLeft: expanded ? 0 : '1.6cm',
                 width: 'fit-content',
               }}
             >
-              {link.submenu.map((submenuItem, subIndex) => (
+              {link.submenu?.map((submenuItem, subIndex) => (
                 <Link key={submenuItem.name} href={submenuItem.href} passHref>
                   <div
                     onClick={handleSubMenuItemClick}

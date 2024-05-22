@@ -162,10 +162,10 @@ export default async function page({ params }: { params: { id: string } }) {
               path={documents_employees?.[0]?.document_path}
             />
             <Link
-              href={`/dashboard/employee/action?action=view&document=${documents_employees?.[0]?.applies?.document_number}`}
+              href={`/dashboard/document`}
               className={buttonVariants({ variant: 'default' })}
             >
-              volver
+              Volver
             </Link>
           </div>
         </div>

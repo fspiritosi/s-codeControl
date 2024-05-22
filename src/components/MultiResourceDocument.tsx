@@ -168,13 +168,13 @@ export default function MultiResourceDocument({
 
     const resourceId =
       resource === 'equipo'
-        ? selectedResources.map(resource => {
+        ? selectedResources?.map(resource => {
             const vehicle = vehicles.find((element: any) => {
               return element.document === resource
             })
             return vehicle?.id
           })
-        : selectedResources.map(resource => {
+        : selectedResources?.map(resource => {
             const employee = employees.find((element: any) => {
               return element.document === resource
             })
@@ -196,13 +196,13 @@ export default function MultiResourceDocument({
       if (data?.length && data?.length > 0) {
         const resourceName =
           resource === 'equipo'
-            ? selectedResources.map(resource => {
+            ? selectedResources?.map(resource => {
                 const vehicle = vehicles.find((element: any) => {
                   return element.document === resource
                 })
                 return vehicle.name
               })
-            : selectedResources.map(resource => {
+            : selectedResources?.map(resource => {
                 const employee = employees.find((element: any) => {
                   return element.document === resource
                 })
@@ -222,7 +222,7 @@ export default function MultiResourceDocument({
         return
       }
 
-      const tableEntries = resourceId.map(resourceId => {
+      const tableEntries = resourceId?.map(resourceId => {
         return {
           id_document_types: values.id_document_types,
           applies: resourceId,
@@ -434,7 +434,7 @@ export default function MultiResourceDocument({
                             setInputValue(inputValue)
                             const isNumberInput = /^\d+$/.test(inputValue)
 
-                            const filteredresources = resources.filter(
+                            const filteredresources = resources?.filter(
                               (person: any) => {
                                 if (isNumberInput) {
                                   return person.document.includes(inputValue)
@@ -470,7 +470,7 @@ export default function MultiResourceDocument({
                                 onSelect={() => {
                                   const updatedResources =
                                     selectedResources.includes(person.document)
-                                      ? selectedResources.filter(
+                                      ? selectedResources?.filter(
                                           resource =>
                                             resource !== person.document,
                                         )
@@ -558,7 +558,7 @@ export default function MultiResourceDocument({
                             >
                               {today.getFullYear().toString()}
                             </SelectItem>
-                            {yearsAhead.map(year => (
+                            {yearsAhead?.map(year => (
                               <SelectItem key={year} value={`${year}`}>
                                 {year}
                               </SelectItem>
@@ -587,7 +587,7 @@ export default function MultiResourceDocument({
               />
             )}
             <div className="container overflow-y-scroll max-h-[200px] space-x-1 flex w-full flex-wrap text-sm items-center gap-y-2">
-              {selectedResources.map((resource, index) => {
+              {selectedResources?.map((resource, index) => {
                 const resourceData = resources.find((element: any) => {
                   return element.document === resource
                 })
@@ -596,7 +596,7 @@ export default function MultiResourceDocument({
                     key={index}
                     variant="outline"
                     onClick={() => {
-                      const updatedResources = selectedResources.filter(
+                      const updatedResources = selectedResources?.filter(
                         res => res !== resource,
                       )
                       setSelectedResources(updatedResources)

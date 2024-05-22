@@ -1,9 +1,9 @@
+import { ThemeProvider } from '@/components/theme-provider'
+import { Toaster as Sonner } from '@/components/ui/sonner'
 import { Toaster } from '@/components/ui/toaster'
 import type { Metadata } from 'next'
 import { Inter, Poppins } from 'next/font/google'
 import './globals.css'
-import { ThemeProvider } from '@/components/theme-provider'
-import { Toaster as Sonner } from "@/components/ui/sonner"
 const inter = Inter({ subsets: ['latin'] })
 const popinsFont = Poppins({
   subsets: ['latin'],
@@ -11,10 +11,8 @@ const popinsFont = Poppins({
 })
 
 export const metadata: Metadata = {
-
   title: 'CodeControl',
   description: 'Gestión para las empresas',
-  
 }
 
 export default function RootLayout({
@@ -32,7 +30,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Toaster />
-          <Sonner richColors   />
+          <Sonner richColors={true} />
           <main>{children}</main>
         </ThemeProvider>
       </body>
