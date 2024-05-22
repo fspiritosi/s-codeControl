@@ -30,12 +30,12 @@ export const MissingDocumentList = () => {
     useLoggedUserStore(state => state.allDocumentsToShow),
   ].reduce(
     (acc: { employees: Document[][]; vehicles: Document[][] }, current) => {
-      const employeesDocuments = current?.employees.filter(
+      const employeesDocuments = current?.employees?.filter(
         item =>
           item.document_path !== null &&
           item.state.toLocaleLowerCase() === 'pendiente',
       )
-      const companyDocuments = current?.vehicles.filter(
+      const companyDocuments = current?.vehicles?.filter(
         item =>
           item.document_path !== null &&
           item.state.toLocaleLowerCase() === 'pendiente',
@@ -103,7 +103,7 @@ export const MissingDocumentList = () => {
               </AccordionTrigger>
               <AccordionContent className="h-fit bg-muted dark:bg-muted/50 max-h-[60vh] overflow-y-auto">
                 {allValuesToShow?.employees?.length > 0 &&
-                  allValuesToShow.employees.map((item: any, index) => {
+                  allValuesToShow.employees?.map((item: any, index) => {
                     return (
                       <Accordion
                         key={index}
@@ -129,7 +129,7 @@ export const MissingDocumentList = () => {
                             </div>
                           </AccordionTrigger>
                           <AccordionContent>
-                            {item.map((document: any, index: number) => (
+                            {item?.map((document: any, index: number) => (
                               <p
                                 key={index}
                                 className="h-14 px-2 text-red-500/70"
@@ -164,7 +164,7 @@ export const MissingDocumentList = () => {
               </AccordionTrigger>
               <AccordionContent className="h-fit bg-muted dark:bg-muted/50 max-h-[60vh] overflow-y-auto">
                 {allValuesToShow?.vehicles?.length > 0 &&
-                  allValuesToShow.vehicles.map((item: any, index) => {
+                  allValuesToShow.vehicles?.map((item: any, index) => {
                     return (
                       <Accordion key={index} type="single" collapsible>
                         <AccordionItem value="item-1">
@@ -185,7 +185,7 @@ export const MissingDocumentList = () => {
                             </div>
                           </AccordionTrigger>
                           <AccordionContent>
-                            {item.map((document: any, index: number) => (
+                            {item?.map((document: any, index: number) => (
                               <p
                                 key={index}
                                 className="h-14 px-2 text-red-500/70"

@@ -30,6 +30,19 @@ const getAllFiles = async (legajo: string) => {
   }
 }
 
+const validateDuplicatedCuil = async (cuil: string) => {
+  const { data: employees } = await supabase
+    .from('company')
+    .select('*')
+    .eq('company_cuit', cuil)
+
+  if (employees && employees.length > 0) {
+    return false
+  } else {
+    return true
+  }
+}
+
 // const AllFiles =
 
 const passwordSchema = z
@@ -92,43 +105,6 @@ export const registerSchema = z
     message: 'Las contraseñas no coinciden.',
     path: ['confirmPassword'],
   })
-export const registerSchemaWithRole = z
-  .object({
-    firstname: z
-      .string()
-      .min(2, {
-        message: 'El nombre debe tener al menos 2 caracteres.',
-      })
-      .max(30, {
-        message: 'El nombre debe tener menos de 30 caracteres.',
-      })
-      .regex(/^[a-zA-Z ]+$/, {
-        message: 'El nombre solo puede contener letras.',
-      })
-      .trim(),
-    lastname: z
-      .string()
-      .min(2, {
-        message: 'El apellido debe tener al menos 2 caracteres.',
-      })
-      .max(30, {
-        message: 'El apellido debe tener menos de 30 caracteres.',
-      })
-      .regex(/^[a-zA-Z ]+$/, {
-        message: 'El apellido solo puede contener letras.',
-      })
-      .trim(),
-    email: z.string().email({ message: 'Email inválido' }),
-    role: z.string({ required_error: 'El rol es requerido' }).min(1, {
-      message: 'El rol debe tener al menos 1 caracteres.',
-    }),
-    password: passwordSchema,
-    confirmPassword: passwordSchema,
-  })
-  .refine(data => data.password === data.confirmPassword, {
-    message: 'Las contraseñas no coinciden.',
-    path: ['confirmPassword'],
-  })
 
 export const recoveryPassSchema = z.object({
   email: z.string().email({ message: 'Email inválido' }),
@@ -146,11 +122,11 @@ export const changePassSchema = z
 
 export const companySchema = z.object({
   company_name: z
-    .string()
+    .string({ required_error: 'El nombre de la compañía es requerido' })
     .min(2, {
       message: 'El nombre debe tener al menos 2 caracteres.',
     })
-    .max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),
+    .max(30, { message: 'La compañia debe tener menos de 30 caracteres.' }),
   company_cuit: z
     .string()
     .refine(value => /^\d{11}$/.test(value), {
@@ -161,40 +137,78 @@ export const companySchema = z.object({
         return validarCUIL(cuil)
       },
       { message: 'El CUIT es inválido' },
+    )
+    .refine(
+      async value => {
+        return await validateDuplicatedCuil(value)
+      },
+      {
+        message: 'Ya existe una compañía con este CUIT.',
+      },
     ),
+  description: z
+    .string()
+    .min(3, {
+      message: 'La descripción debe tener al menos 3 caracteres.',
+    })
+    .max(200, {
+      message: 'La descripción debe tener menos de 200 caracteres.',
+    }),
+  website: z
+    .string()
+    .refine(
+      value => {
+        if (value === '') return true
 
-  description: z.string().max(200),
-  website: z.string().refine(
-    value => {
-      if (value === '') return true
+        const urlRegex =
+          /^(?:(?:https?|ftp):\/\/)?(?:www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+([/?].*)?$/i
 
-      const urlRegex =
-        /^(?:(?:https?|ftp):\/\/)?(?:www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+([/?].*)?$/i
-
-      return urlRegex.test(value)
-    },
-    {
-      message: 'La URL proporcionada no es válida.',
-    },
-  ),
-  contact_email: z.string().email(),
-  contact_phone: z.string().refine(value => /^\+?[0-9]{1,25}$/.test(value), {
-    message: 'El número de teléfono debe contener solo números',
-  }),
+        return urlRegex.test(value)
+      },
+      {
+        message: 'La URL proporcionada no es válida.',
+      },
+    )
+    .optional(),
+  contact_email: z.string().email({ message: 'Email inválido' }),
+  contact_phone: z
+    .string()
+    .min(5, {
+      message: 'El número de teléfono debe tener al menos 5 caracteres.',
+    })
+    .max(25, {
+      message: 'El número de teléfono debe tener menos de 25 caracteres.',
+    })
+    .regex(/^\+?[0-9]{1,25}$/, {
+      message: 'El número de teléfono debe contener solo números',
+    })
+    .refine(value => /^\+?[0-9]{1,25}$/.test(value), {
+      message: 'El número de teléfono debe contener solo números',
+    }),
   address: z
     .string()
-    .max(50)
+    .min(4, { message: 'Address debe tener al menos 4 caracteres.' })
+    .max(50, {
+      message: 'Address debe tener menos de 50 caracteres.',
+    })
     .regex(/^[a-zA-Z0-9\s]*$/, {
       message:
         'Address debe contener solo letras y números y tener hasta 50 caracteres',
     }),
-  country: z.string(),
-  province_id: z.any(),
-  industry: z.string(),
-
-  city: z.any(),
+  country: z
+    .string()
+    .min(2, { message: 'Country debe tener al menos 2 caracteres.' }),
+  province_id: z
+    .string()
+    .min(1, { message: 'Province debe tener al menos 1 caracteres.' }),
+  industry: z
+    .string()
+    .min(2, { message: 'Industry debe tener al menos 2 caracteres.' }),
+  city: z
+    .string()
+    .min(1, { message: 'City debe tener al menos 1 caracteres.' }),
   company_logo: z.string().optional(),
-  by_defect: z.boolean(),
+  by_defect: z.boolean().optional(),
   //employees_id: z.string().nullable(),
 })
 

@@ -157,8 +157,8 @@ export function ExpiredDataTable<TData, TValue>({
 
   if (selectValues.companyName && selectValues.companyName !== 'Todos') {
     const resourceOptions = data
-      .filter((item: any) => item.companyName === selectValues.companyName)
-      .flatMap((item: any) => item?.resource)
+      ?.filter((item: any) => item.companyName === selectValues.companyName)
+      ?.flatMap((item: any) => item?.resource)
     allOptions.resource = ['Todos', ...Array.from(new Set(resourceOptions))]
   } else {
     allOptions.resource = createOptions('resource')
@@ -216,7 +216,7 @@ export function ExpiredDataTable<TData, TValue>({
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>Filas por página</SelectLabel>
-                {maxRows.map((option: string) => (
+                {maxRows?.map((option: string) => (
                   <SelectItem key={option} value={option}>
                     {option}
                   </SelectItem>
@@ -235,8 +235,8 @@ export function ExpiredDataTable<TData, TValue>({
             >
               {table
                 .getAllColumns()
-                .filter(column => column.getCanHide())
-                .map(column => {
+                ?.filter(column => column.getCanHide())
+                ?.map(column => {
                   if (
                     column.id === 'actions' ||
                     typeof column.columnDef.header !== 'string'
@@ -274,9 +274,9 @@ export function ExpiredDataTable<TData, TValue>({
       <div className="rounded-md border mb-6 overflow-x-auto">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map(headerGroup => (
+            {table.getHeaderGroups()?.map(headerGroup => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map(header => {
+                {headerGroup.headers?.map(header => {
                   const column = table.getColumn(header.id)
 
                   return (
@@ -392,13 +392,13 @@ export function ExpiredDataTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map(row => (
+              table.getRowModel().rows?.map(row => (
                 <TableRow
                   key={row.id}
                   className="text-center"
                   data-state={row.getIsSelected() && 'selected'}
                 >
-                  {row.getVisibleCells().map(cell => {
+                  {row.getVisibleCells()?.map(cell => {
                     return (
                       <TableCell key={cell.id}>
                         {flexRender(

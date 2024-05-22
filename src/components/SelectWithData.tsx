@@ -48,7 +48,7 @@ export const SelectWithData = ({
   let dataToRender = options
 
   if ((options?.[0] as Province)?.name) {
-    dataToRender = (options as Province[]).map((option: Province) =>
+    dataToRender = (options as Province[])?.map((option: Province) =>
       option.name.trim(),
     )
   }

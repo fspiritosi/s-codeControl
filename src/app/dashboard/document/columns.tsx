@@ -393,7 +393,7 @@ export const columns: ColumnDef<Colum>[] = [
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {documentHistory.map((entry: any) => (
+                    {documentHistory?.map((entry: any) => (
                       <TableRow key={entry.documents_employees_id}>
                         <TableCell>
                           {entry.documents_equipment.user_id.email}

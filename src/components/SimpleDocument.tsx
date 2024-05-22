@@ -26,7 +26,6 @@ import {
 } from '@/components/ui/popover'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { es } from 'date-fns/locale'
-import { revalidatePath } from 'next/cache'
 import { supabase } from '../../supabase/supabase'
 import {
   Command,
@@ -41,11 +40,19 @@ export default function SimpleDocument({
   resource,
   handleOpen,
   defaultDocumentId,
+  document,
 }: {
   resource: string | undefined
   handleOpen: () => void
   defaultDocumentId?: string
+  document?: string
 }) {
+  const documentDrawerEmployees = useLoggedUserStore(
+    state => state.documentDrawerEmployees,
+  )
+  const documentDrawerVehicles = useLoggedUserStore(
+    state => state.documentDrawerVehicles,
+  )
   const employees = useLoggedUserStore(state => state.employees)?.reduce(
     (
       acc: any,
@@ -80,6 +87,7 @@ export default function SimpleDocument({
   const idApplies = employees?.find(
     (employee: any) => employee.document === documentResource,
   )?.id as string
+
   const {
     control,
     handleSubmit,
@@ -125,7 +133,7 @@ export default function SimpleDocument({
           (employee: any) => employee.document === documentResource,
         )?.id
 
-      const updateEntries = documents.map((entry: any) => {
+      const updateEntries = documents?.map((entry: any) => {
         return {
           applies: entry.applies || idApplies,
           id_document_types: entry.id_document_types,
@@ -237,6 +245,12 @@ export default function SimpleDocument({
         variant: 'default',
       })
       setLoading(false)
+      if (document) {
+        documentDrawerEmployees(document)
+      }
+      if (id) {
+        documentDrawerVehicles(id)
+      }
       handleOpen()
     } catch (error) {
       console.error(error)
@@ -247,7 +261,6 @@ export default function SimpleDocument({
       })
       setLoading(false)
     }
-    revalidatePath('/dashboard/employee/action')
   }
 
   const fetchDocumentTypes = async () => {
@@ -257,7 +270,6 @@ export default function SimpleDocument({
       .from('document_types')
       .select('*')
       .eq('applies', applies)
-      .eq('multiresource', false)
       .or(
         `company_id.eq.${useLoggedUserStore?.getState?.()?.actualCompany
           ?.id},company_id.is.null`,
@@ -288,11 +300,17 @@ export default function SimpleDocument({
   const [openResourceSelector, setOpenResourceSelector] = useState(false)
   const [years, setYear] = useState(today.getFullYear().toString())
 
+  useEffect(() => {
+    const documentInfo = documenTypes?.find(
+      documentType => documentType.id === defaultDocumentId,
+    )
+    setHasExpired(documentInfo?.explired)
+  }, [defaultDocumentId, documenTypes])
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <ul className="flex flex-col gap-2">
         <div className="space-y-3">
-          {fields.map((item, index) => {
+          {fields?.map((item, index) => {
             return (
               <React.Fragment key={item.id}>
                 <details open={index === 0}>
@@ -367,7 +385,7 @@ export default function SimpleDocument({
                                         const isNumberInput = /^\d+$/.test(
                                           inputValue,
                                         )
-                                        const filteredresources = data.filter(
+                                        const filteredresources = data?.filter(
                                           (person: any) => {
                                             if (isNumberInput) {
                                               return person.document.includes(
@@ -652,7 +670,7 @@ export default function SimpleDocument({
                                       <SelectValue placeholder="Elegir año" />
                                     </SelectTrigger>
                                     <SelectContent position="popper">
-                                      {yearsAhead.map(year => (
+                                      {yearsAhead?.map(year => (
                                         <SelectItem
                                           key={year}
                                           value={`${year}`}

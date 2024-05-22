@@ -1,13 +1,20 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse, type NextRequest } from 'next/server'
+import { supabaseServer } from './lib/supabase/server'
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
+  // await updateSession(req)
+  const supabase = supabaseServer()
+  const response = NextResponse.next({
+    request: {
+      headers: req.headers,
+    },
+  })
 
   const {
     data: { session },
   } = await supabase.auth.getSession()
+
+  // // console.log(await supabase.auth.getUser(),'await supabase.auth.getSession()');
 
   const { data } = await supabase
     .from('profile')
@@ -24,20 +31,12 @@ export async function middleware(req: NextRequest) {
     .select(`*`)
     .eq('profile_id', data?.[0]?.id)
 
-  if (
-    !Companies?.[0] &&
-    !share_company_users?.[0] &&
-    !req.url.includes('/dashboard/company/new')
-  ) {
-    return NextResponse.redirect(new URL('/dashboard/company/new', req.url))
-  }
-
-  const ownerComp = Companies?.[0]?.owner_id
-  const theme = res.cookies.get('theme')
+  const theme = response.cookies.get('theme')
   const actualCompanyId = req.cookies.get('actialCompanyId')
-  //const actualNoOwner :string | null = req.cookies.get('actualComp')?.value
+  // const actualNoOwner :string | null = req.cookies.get('actualComp')?.value
   const actualNoOwnerValue: string | null =
     req.cookies.get('actualComp')?.value ?? null
+
   const actualNoOwner = actualNoOwnerValue
     ? actualNoOwnerValue.replace(/^"|"$/g, '')
     : null
@@ -49,7 +48,7 @@ export async function middleware(req: NextRequest) {
     .eq('profile_id ', data?.[0]?.id)
     .eq('company_id', actualNow)
 
-  res.cookies.set('guestRole', guestRole?.[0]?.role)
+  // response.cookies.set('guestRole', guestRole?.[0]?.role)
   const userRole = data?.[0]?.role
 
   const guestUser = [
@@ -59,72 +58,65 @@ export async function middleware(req: NextRequest) {
     '/dashboard/equipment/action?action=new',
     '/dashboard/company/new',
     '/dashboard/company/actualCompany',
-  ]
+  ] // -> Rol tabla profile
 
-  const usuarioUser = [
-    '/dashboard/company/new',
-    '/dashboard/company/actualCompany',
-    '/auditor',
-  ]
+  const usuarioUser = ['/dashboard/company/actualCompany', '/auditor']
+
   const administradorUser = ['/auditor']
-
   const codeControlClientUser = ['/auditor']
-
-  if (!theme) {
-    res.cookies.set('theme', 'light')
-  }
-
-  if (!actualCompanyId) {
-    const companiesId = Companies?.filter(
-      company => company.by_defect === true,
-    )[0]?.id
-    res.cookies.set('actualCompanyId', companiesId)
-  }
 
   const isAuditor = data?.[0]?.role === 'Auditor'
   if (!session) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
   if (userRole === 'Admin') {
-    return res // Permitir acceso sin restricciones para los usuarios con rol 'Admin'
+    return response // Permitir acceso sin restricciones para los usuarios con rol 'Admin'
   } else {
+    const baseUrl = req.url.includes('?') ? req.url.split('?')[0] : req.url
+    const redirectUrl = new URL(baseUrl)
+    redirectUrl.searchParams.set('access_denied', 'true')
+
     if (isAuditor && !req.url.includes('/auditor')) {
-      return NextResponse.redirect(new URL('/auditor', req.url))
+      redirectUrl.pathname = '/auditor'
+      return NextResponse.redirect(redirectUrl.toString())
     }
     if (!isAuditor && req.url.includes('/auditor')) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
+      redirectUrl.pathname = '/dashboard'
+      return NextResponse.redirect(redirectUrl.toString())
     }
 
     if (
       userRole === 'CodeControlClient' &&
       codeControlClientUser.some(url => req.url.includes(url))
     ) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
+      redirectUrl.pathname = '/dashboard'
+      return NextResponse.redirect(redirectUrl.toString())
     }
 
     if (
       guestRole?.[0]?.role === 'Invitado' &&
       guestUser.some(url => req.url.includes(url))
     ) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
+      redirectUrl.pathname = '/dashboard'
+      return NextResponse.redirect(redirectUrl.toString())
     }
 
     if (
       guestRole?.[0]?.role === 'Administrador' &&
       administradorUser.some(url => req.url.includes(url))
     ) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
+      redirectUrl.pathname = '/dashboard'
+      return NextResponse.redirect(redirectUrl.toString())
     }
     if (
       guestRole?.[0]?.role === 'Usuario' &&
       usuarioUser.some(url => req.url.includes(url))
     ) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
+      redirectUrl.pathname = '/dashboard'
+      return NextResponse.redirect(redirectUrl.toString())
     }
   }
-  // await updateSession(req)
-
-  return res
+  return response
 }
 
 export const config = {

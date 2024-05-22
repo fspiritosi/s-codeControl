@@ -1,4 +1,5 @@
 'use client'
+import { logout } from '@/app/login/actions'
 import { ModeToggle } from '@/components/ui/ToogleDarkButton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -29,6 +30,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 import { revalidate } from '@/lib/useServer'
 import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
@@ -51,7 +53,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
-import { supabase } from '../../supabase/supabase'
 import ModalCompany from './ModalCompany'
 import { UpdateUserPasswordForm } from './UpdateUserPasswordForm'
 import { UploadImage } from './UploadImage'
@@ -75,14 +76,14 @@ export default function NavBar() {
   const setNewDefectCompany = useLoggedUserStore(
     state => state.setNewDefectCompany,
   )
+  const supabase = supabaseBrowser()
   const actualUser = useLoggedUserStore(state => state.profile)
   const notifications = useLoggedUserStore(state => state.notifications)
   const avatarUrl = actualUser && actualUser.length > 0 ? actualUser[0] : ''
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut()
-      router.push('/login')
+      await logout()
     } catch (error) {
       console.error('Error al cerrar sesión:', error)
     }
@@ -178,19 +179,24 @@ export default function NavBar() {
                 role="combobox"
                 aria-expanded={open}
                 aria-label="Selecciona una compañía"
-                className={'w-[200px] justify-between'}
+                className={'min-w-[200px] justify-between'}
               >
                 <Avatar className="mr-2 size-5 rounded-full">
                   <AvatarImage
                     src={actualCompany?.company_logo}
                     alt={actualCompany?.company_name}
-                    className="size-5 grayscale"
+                    className="size-5"
                   />
-                  <AvatarFallback>
-                    <Loader className="animate-spin" />{' '}
+                  <AvatarFallback className="uppercase">
+                    {!actualCompany && <Loader className="animate-spin" />}
+                    {actualCompany &&
+                      !actualCompany?.company_logo &&
+                      `${actualCompany?.company_name.charAt(
+                        0,
+                      )}${actualCompany?.company_name.charAt(1)}`}
                   </AvatarFallback>
                 </Avatar>
-                {actualCompany?.company_name}
+                <span className="uppercase">{actualCompany?.company_name}</span>
                 <CaretSortIcon className="ml-auto h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
@@ -328,7 +334,7 @@ export default function NavBar() {
                                 } ${
                                   notification?.document?.resource
                                     ?.split(' ')
-                                    .map(
+                                    ?.map(
                                       word =>
                                         word.charAt(0).toUpperCase() +
                                         word.slice(1).toLowerCase(),
@@ -347,7 +353,7 @@ export default function NavBar() {
                                   notification.reference === 'employee'
                                     ? notification?.document?.resource
                                         .split(' ')
-                                        .map(
+                                        ?.map(
                                           word =>
                                             word.charAt(0).toUpperCase() +
                                             word.slice(1).toLowerCase(),
@@ -355,7 +361,7 @@ export default function NavBar() {
                                         .join(' ') || '(no disponible)'
                                     : notification?.document?.resource
                                         .split(' ')
-                                        .map(
+                                        ?.map(
                                           word =>
                                             word.charAt(0).toUpperCase() +
                                             word.slice(1).toUpperCase(),
@@ -373,7 +379,7 @@ export default function NavBar() {
                                 } ${
                                   notification?.document?.resource
                                     .split(' ')
-                                    .map(
+                                    ?.map(
                                       word =>
                                         word.charAt(0).toUpperCase() +
                                         word.slice(1).toLowerCase(),

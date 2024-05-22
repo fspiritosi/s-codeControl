@@ -170,7 +170,7 @@ export default function NewDocumentType({
           )}
         />
         <div className="grid md:grid-cols-2 grid-cols-1 gap-6 items-stretch justify-between">
-          {items.map(item => (
+          {items?.map(item => (
             <FormField
               key={item.id}
               control={form.control}

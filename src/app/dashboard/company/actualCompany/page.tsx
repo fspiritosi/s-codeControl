@@ -24,13 +24,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import cookies from 'js-cookie'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { columns } from './components/columns'
 import { DataTable } from './components/data-table'
 import { ItemCompany } from './components/itemCompany'
 export default function page() {
+  const router = useRouter()
+  const companyId = cookies.get('actualComp')
   const company = useLoggedUserStore(state => state.actualCompany)
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
+  const sharedUsersAll = useLoggedUserStore(state => state.sharedUsers)
   const [verify, setVerify] = useState(false)
   const ownerUser = useLoggedUserStore(state => state.profile)
   const [showPasswords, setShowPasswords] = useState(false)
@@ -46,20 +50,28 @@ export default function page() {
       img: user.avatar || '',
     }
   })
+  const handleEditCompany = () => {
+    router.push(`/dashboard/company/${companyId}`)
+  }
 
   const sharedUsers =
-    actualCompany?.share_company_users.map(user => {
+    sharedUsersAll?.map(user => {
       return {
-        email: user.profile.email,
-        fullname: user.profile.fullname,
+        email: user.profile_id.email,
+        fullname: user.profile_id.fullname,
         role: user?.role,
         alta: user.created_at,
         id: user.id,
-        img: user.profile.avatar || '',
+        img: user.profile_id.avatar || '',
       }
     }) || []
 
-  const data = owner?.concat(sharedUsers || [])
+  const data = owner?.concat(
+    sharedUsers?.map(user => ({
+      ...user,
+      fullname: user.fullname || '',
+    })) || [],
+  )
 
   function compare(text: string) {
     if (text === company?.company_name) {
@@ -91,8 +103,14 @@ export default function page() {
         <TabsContent value="general" className="space-y-4">
           <Card className="overflow-hidden">
             <CardHeader className="w-full bg-muted dark:bg-muted/50 border-b-2">
-              <CardTitle className="text-2xl font-bold tracking-tight">
+              <CardTitle className="text-2xl font-bold tracking-tight flex justify-between">
                 Datos generales de la empresa
+                <Button
+                  className="ml-auto flex justify-between mb-2"
+                  onClick={handleEditCompany}
+                >
+                  Editar Compañía
+                </Button>
               </CardTitle>
               <CardDescription className="text-muted-foreground">
                 Información de la empresa

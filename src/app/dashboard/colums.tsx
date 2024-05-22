@@ -59,6 +59,7 @@ import {
 } from '@/components/ui/table'
 import { useToast } from '@/components/ui/use-toast'
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 import { cn } from '@/lib/utils'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon, DotsVerticalIcon } from '@radix-ui/react-icons'
@@ -70,7 +71,6 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { supabase } from '../../../supabase/supabase'
 
 type Colum = {
   date: string
@@ -149,6 +149,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
       const { toast } = useToast()
 
       async function reintegerDocumentEmployees() {
+        const supabase = supabaseBrowser()
         try {
           const { data, error } = await supabase
             .from('documents_employees')
@@ -183,7 +184,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
           ...values,
           termination_date: format(values.termination_date, 'yyyy-MM-dd'),
         }
-
+        const supabase = supabaseBrowser()
         try {
           await supabase
             .from('documents_employees')
@@ -216,6 +217,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
       }
 
       async function viewDocumentEmployees() {
+        const supabase = supabaseBrowser()
         try {
           const { data, error } = await supabase
             .from('documents_employees_logs')
@@ -396,7 +398,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
                                       >
                                         {today.getFullYear().toString()}
                                       </SelectItem>
-                                      {yearsAhead.map(year => (
+                                      {yearsAhead?.map(year => (
                                         <SelectItem
                                           key={year}
                                           value={`${year}`}
@@ -460,7 +462,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {documentHistory.map((entry: any, index: number) => (
+                    {documentHistory?.map((entry: any, index: number) => (
                       <TableRow key={index}>
                         <TableCell className="text-center">
                           {entry.documents_employees.user_id.email}

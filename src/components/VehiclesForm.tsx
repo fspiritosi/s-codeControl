@@ -99,7 +99,6 @@ export default function VehiclesForm2({ id }: { id: string }) {
     role = profile?.actualCompany?.owner_id?.role as string
   } else {
     role = profile?.actualCompany?.share_company_users?.[0]?.role as string
-    
   }
   const [vehicle, setVehicle] = useState<VehicleType | null>(null)
   // const { toast } = useToast()
@@ -155,7 +154,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
       if (error) {
         console.error('Error al obtener los datos del vehículo:', error)
       } else {
-        const transformedData = vehicleData.map((item: VehicleType) => ({
+        const transformedData = vehicleData?.map((item: VehicleType) => ({
           ...item,
           type_of_vehicle: item.types_of_vehicles.name,
           brand: item.brand_vehicles.name,
@@ -333,7 +332,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
     setData({
       ...data,
       tipe_of_vehicles: types_of_vehicles as generic[],
-      brand: (brand_vehicles || []).map(e => {
+      brand: (brand_vehicles || [])?.map(e => {
         return { label: e.name as string, id: e.id as string }
       }),
       types: type as generic[],
@@ -415,7 +414,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
             .insert([
               {
                 ...values,
-                domain: domain?.toUpperCase(),
+                domain: domain?.toUpperCase() || null,
                 type_of_vehicle: data.tipe_of_vehicles.find(
                   e => e.name === type_of_vehicle,
                 )?.id,
@@ -434,7 +433,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
             user_id: string | undefined
           }[] = []
 
-          mandatoryDocuments.Equipos.forEach(async document => {
+          mandatoryDocuments?.Equipos.forEach(async document => {
             documentsMissing.push({
               applies: vehicle?.[0]?.id,
               id_document_types: document.id,
@@ -448,13 +447,18 @@ export default function VehiclesForm2({ id }: { id: string }) {
             .insert(documentsMissing)
             .select()
 
+          if (documentError) {
+            throw new Error(JSON.stringify(documentError))
+          }
+
           if (error) {
-            throw new Error('Error al registrar el vehículo')
-            return
+            throw new Error(JSON.stringify(error))
           }
 
           const id = vehicle?.[0].id
+
           const fileExtension = imageFile?.name.split('.').pop()
+
           if (imageFile) {
             try {
               const renamedFile = new File(
@@ -464,7 +468,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   type: `image/${fileExtension}`,
                 },
               )
-              await uploadImage(renamedFile, 'vehicle_photos')
+              const imggg = await uploadImage(renamedFile, 'vehicle_photos')
 
               try {
                 const vehicleImage =
@@ -477,25 +481,28 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   .update({ picture: vehicleImage })
                   .eq('id', id)
                   .eq('company_id', actualCompany?.id)
+
               } catch (error) {}
               documetsFetch()
             } catch (error: any) {
-              throw new Error('Error al subir la imagen')
+              throw new Error(JSON.stringify(error))
             }
           }
 
           if (error) {
-            throw new Error('Error al registrar el vehículo')
+            throw new Error(error)
           }
           router.push('/dashboard/equipment')
         } catch (error) {
-          throw new Error('Error al registrar el vehículo')
+          console.error(error)
         }
       },
       {
         loading: 'Guardando...',
         success: 'Vehículo registrado',
-        error: 'Error al registrar el vehículo',
+        error: error => {
+          return error
+        },
       },
     )
   }
@@ -588,6 +595,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
           }
 
           setReadOnly(true)
+          router
         } catch (error) {
           throw new Error('Error al editar el vehículo')
         }
@@ -797,7 +805,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                             </Modal>
                           </CommandEmpty>
                           <CommandGroup>
-                            {vehicleBrands.map(option => (
+                            {vehicleBrands?.map(option => (
                               <CommandItem
                                 value={option.label}
                                 key={option.label}
@@ -886,7 +894,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                           </CommandEmpty>
                           <CommandGroup>
                             <>
-                              {vehicleModels.map(option => (
+                              {vehicleModels?.map(option => (
                                 <CommandItem
                                   value={option.name}
                                   key={option.name}

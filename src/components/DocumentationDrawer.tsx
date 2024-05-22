@@ -18,7 +18,7 @@ import {
 import { saveAs } from 'file-saver'
 import JSZip from 'jszip'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '../../supabase/supabase'
 import SimpleDocument from './SimpleDocument'
@@ -31,11 +31,70 @@ import {
 import { Button, buttonVariants } from './ui/button'
 import { CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Separator } from './ui/separator'
+import { Skeleton } from './ui/skeleton'
 
-type Props = { props?: any[] | null; resource: string }
+type Props = { resource: string; document?: string; id?: string }
 
-export const DocumentationDrawer = ({ props, resource }: Props) => {
+export const DocumentationDrawer = ({ resource, document, id }: Props) => {
   const [open, setOpen] = useState(false)
+  const employeesData = useLoggedUserStore(
+    state => state.DrawerEmployees,
+  )?.sort((a, b) => {
+    if (a.state === 'pendiente' && b.state !== 'pendiente') {
+      return 1
+    } else if (a.state !== 'pendiente' && b.state === 'pendiente') {
+      return -1
+    } else {
+      return a.id_document_types.name.localeCompare(b.id_document_types.name)
+    }
+  })
+  const vehiclesData = useLoggedUserStore(state => state.DrawerVehicles)
+    ?.sort((a, b) => {
+      if (a.state === 'pendiente' && b.state !== 'pendiente') {
+        return 1
+      } else if (a.state !== 'pendiente' && b.state === 'pendiente') {
+        return -1
+      } else {
+        return a?.id_document_types.name?.localeCompare(
+          b.id_document_types.name,
+        )
+      }
+    })
+    .map(e => {
+      return {
+        ...e,
+        id_document_types: {
+          name: e.document_types.name,
+          id: e.document_types.id,
+          applies: e.document_types.applies,
+          created_at: e.document_types.created_at,
+          explired: e.document_types.explired,
+          is_active: e.document_types.is_active,
+          mandatory: e.document_types.mandatory,
+          multiresource: e.document_types.multiresource,
+          special: e.document_types.special,
+          description: e.document_types.description,
+          company_id: e.document_types.company_id,
+        },
+      }
+    })
+  const props = resource === 'empleado' ? employeesData : vehiclesData
+  const documentDrawerEmployees = useLoggedUserStore(
+    state => state.documentDrawerEmployees,
+  )
+  const documentDrawerVehicles = useLoggedUserStore(
+    state => state.documentDrawerVehicles,
+  )
+
+  useEffect(() => {
+    if (document) {
+      documentDrawerEmployees(document)
+    }
+    if (id) {
+      documentDrawerVehicles(id)
+    }
+  }, [document, id])
+
   const handleOpen = () => setOpen(!open)
   const profile = useLoggedUserStore(state => state)
   let role = ''
@@ -45,7 +104,7 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
     role = profile?.actualCompany?.share_company_users?.[0]?.role as string
   }
 
-  const documentToDownload = props?.filter(e => e.state === 'aprobado')
+  const documentToDownload = props?.filter(e => e.state !== 'pendiente')
 
   const handleDownloadAll = async () => {
     toast.promise(
@@ -142,74 +201,78 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
           </DialogContent>
         </Dialog>
       </CardHeader>
-      <div className=" flex flex-col gap-5 p-4">
-        {props?.map((doc, index) => (
-          <div
-            key={index}
-            className="flex justify-between items-center h-14 px-2 text-nowrap"
-          >
-            <div className="flex  w-[75%]">
-              <div className="">
-                {doc.state === 'pendiente' && (
-                  <ExclamationTriangleIcon className="inline mr-2 text-red-400 size-5" />
-                )}{' '}
-                {doc.state !== 'aprobado' && doc.state !== 'pendiente' && (
-                  <ClockIcon className="inline mr-2 text-orange-400 size-5" />
-                )}
-                {doc.state === 'aprobado' && (
-                  <CheckIcon className="inline mr-2 text-green-400 size-5" />
-                )}
-              </div>
-              <p
-                className={cn(
-                  'text-nowrap overflow-hidden overflow-ellipsis',
-                  doc.state === 'pendiente' && 'text-muted-foreground/60',
-                )}
+      {props?.length && (
+        <>
+          {' '}
+          <div className=" flex flex-col gap-5 p-4">
+            {props?.map((doc, index) => (
+              <div
+                key={index}
+                className="flex justify-between items-center h-14 px-2 text-nowrap"
               >
-                {doc?.id_document_types?.name}
-              </p>
-            </div>
-            {doc.state === 'pendiente' && (
-              <AlertDialog open={open} onOpenChange={handleOpen}>
-                <AlertDialogTrigger asChild>
-                  {role !== 'Invitado' && (
-                    <Button
-                      onClick={() => {
-                        setDefaultDocumentId(doc?.id_document_types?.id)
-                      }}
-                    >
-                      Subir
-                    </Button>
-                  )}
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <div className="max-h-[90vh] overflow-y-auto">
-                      <h2 className="text-lg font-semibold">
-                        Documento No multirecurso
-                      </h2>
-                      <Separator className="my-1" />
-                      <p className="text-sm text-muted-foreground mb-3">
-                        Verifica que los documentos sean correctos y no hayan
-                        entradas duplicadas, en tal caso se subira la primera
-                        entrada encontrada y se marcaran las demas como
-                        duplicadas
-                      </p>
-                      <div className="space-y-3">
-                        <div>
-                          <SimpleDocument
-                            resource={resource}
-                            handleOpen={() => handleOpen()}
-                            defaultDocumentId={defaultDocumentId}
-                          />
+                <div className="flex  w-[75%]">
+                  <div className="">
+                    {doc.state === 'pendiente' && (
+                      <ExclamationTriangleIcon className="inline mr-2 text-red-400 size-5" />
+                    )}{' '}
+                    {doc.state !== 'aprobado' && doc.state !== 'pendiente' && (
+                      <ClockIcon className="inline mr-2 text-orange-400 size-5" />
+                    )}
+                    {doc.state === 'aprobado' && (
+                      <CheckIcon className="inline mr-2 text-green-400 size-5" />
+                    )}
+                  </div>
+                  <p
+                    className={cn(
+                      'text-nowrap overflow-hidden overflow-ellipsis',
+                      doc.state === 'pendiente' && 'text-muted-foreground/60',
+                    )}
+                  >
+                    {doc?.id_document_types?.name}
+                  </p>
+                </div>
+                {doc.state === 'pendiente' && (
+                  <AlertDialog open={open} onOpenChange={handleOpen}>
+                    <AlertDialogTrigger asChild>
+                      {role !== 'Invitado' && (
+                        <Button
+                          onClick={() => {
+                            setDefaultDocumentId(doc?.id_document_types?.id)
+                          }}
+                        >
+                          Subir
+                        </Button>
+                      )}
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <div className="max-h-[90vh] overflow-y-auto">
+                          <h2 className="text-lg font-semibold">
+                            Documento No multirecurso
+                          </h2>
+                          <Separator className="my-1" />
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Verifica que los documentos sean correctos y no
+                            hayan entradas duplicadas, en tal caso se subira la
+                            primera entrada encontrada y se marcaran las demas
+                            como duplicadas
+                          </p>
+                          <div className="space-y-3">
+                            <div>
+                              <SimpleDocument
+                                resource={resource}
+                                handleOpen={() => handleOpen()}
+                                defaultDocumentId={defaultDocumentId}
+                                document={document}
+                              />
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </AlertDialogHeader>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-            {/* {(doc.state === 'aprobado' || doc.state === 'presentado') && (
+                      </AlertDialogHeader>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+                {/* {(doc.state === 'aprobado' || doc.state === 'presentado') && (
               <Button
                 onClick={() =>
                   handleDownload(
@@ -221,17 +284,32 @@ export const DocumentationDrawer = ({ props, resource }: Props) => {
                 Descargar
               </Button>
             )} */}
-            {doc.state !== 'pendiente' && (
-              <Link
-                className={buttonVariants({ variant: 'default' })}
-                href={`/dashboard/document/${doc.id}`}
-              >
-                Ver
-              </Link>
-            )}
+                {doc.state !== 'pendiente' && (
+                  <Link
+                    className={buttonVariants({ variant: 'default' })}
+                    href={`/dashboard/document/${doc.id}`}
+                  >
+                    Ver
+                  </Link>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
+      {!props?.length && (
+        <div className=" flex flex-col gap-5 p-4 justify-evenly min-h-full overflow-hidden">
+          {Array.from({ length: 8 }).map((_, index) => {
+            return (
+              <Skeleton
+                key={index}
+                className="w-full h-8"
+                style={{ borderRadius: '8px' }}
+              />
+            )
+          })}
+        </div>
+      )}
     </aside>
   )
 }

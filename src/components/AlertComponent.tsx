@@ -65,7 +65,7 @@ export const AlertComponent = () => {
               Para poder administrar tu empresa debes seleccionar una compañía.
               ¿Deseas seleccionar una?
             </AlertDialogDescription>
-            {allCompanies.map((company, index) => (
+            {allCompanies?.map((company, index) => (
               <div key={index}>
                 <AlertDialogAction
                   onClick={() => handleAlertClose(company)}

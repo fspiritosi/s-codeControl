@@ -43,9 +43,9 @@ export const useAuthData = () => {
       localStorage.setItem('email', email)
 
       let { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.href}/update-user`,
+        redirectTo: `${process.env
+          .NEXT_PUBLIC_BASE_URL!}/reset_password/update-user`,
       })
-
       if (error) {
         const message = await errorTranslate(error.message)
         throw new Error(String(message).replaceAll('"', ''))
