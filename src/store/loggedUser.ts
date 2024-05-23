@@ -601,6 +601,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
         return isExpired
       })
 
+      console.log(filteredData, 'filteredData')
+
       const filteredVehiclesData = typedData?.filter((doc: any) => {
         if (!doc.validity) return false
         const date = new Date(
@@ -611,6 +613,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
         const isExpired = date < lastMonth || doc.state === 'Vencido'
         return isExpired
       })
+
+      console.log(filteredVehiclesData, 'filteredVehiclesData')
 
       const formatDate = (dateString: string) => {
         if (!dateString) return 'No vence'
@@ -668,7 +672,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
             ?.filter((doc: any) => {
               if (!doc.validity || doc.validity === 'No vence') return false
               return (
-                doc.state !== 'presentado' &&
                 doc.state !== 'pendiente' &&
                 (doc.validity !== 'No vence' || doc.validity !== null)
               )
@@ -679,7 +682,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
             .filter((doc: any) => {
               if (!doc.validity || doc.validity === 'No vence') return false
               return (
-                doc.state !== 'presentado' &&
+                doc.state !== 'pendiente' &&
                 (doc.validity !== 'No vence' || doc.validity !== null)
               )
             })
@@ -719,7 +722,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
             })
             ?.map(mapVehicle) || [],
       }
-
+      console.log(lastMonthValues, 'lastMonthValues')
       const AllvaluesToShow = {
         employees: data?.map(mapDocument) || [],
         vehicles: typedData?.map(mapVehicle) || [],

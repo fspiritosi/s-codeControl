@@ -435,7 +435,7 @@ export const accordionSchema = z
     type_of_contract: z.string({
       required_error: 'El tipo de contrato es requerido',
     }),
-    allocated_to: z.array(z.string()).optional(),
+    // allocated_to: z.array(z.string()).optional(),
     date_of_admission: z
       .date({
         required_error: 'La fecha de ingreso es requerida',
@@ -645,20 +645,23 @@ export type VehiclesFormattedElement = z.infer<
   typeof VehiclesFormattedElementSchema
 >
 
-export const EquipoSchema = z.array(
-  z.object({
-    id: z.string(),
-    created_at: z.coerce.date(),
-    name: z.string(),
-    applies: z.string(),
-    multiresource: z.boolean(),
-    mandatory: z.boolean(),
-    explired: z.boolean(),
-    special: z.boolean(),
-    is_active: z.boolean(),
-    description: z.union([z.null(), z.string()]),
-  }),
-)
+export const EquipoSchema = z
+  .array(
+    z.object({
+      id: z.string(),
+      created_at: z.coerce.date(),
+      name: z.string(),
+      applies: z.string(),
+      multiresource: z.boolean(),
+      mandatory: z.boolean(),
+      explired: z.boolean(),
+      special: z.boolean(),
+      is_active: z.boolean(),
+      description: z.union([z.null(), z.string()]),
+    }),
+  )
+  .default([])
+
 export type Equipo = z.infer<typeof EquipoSchema>
 
 export const MandatoryDocumentsSchema = z.object({

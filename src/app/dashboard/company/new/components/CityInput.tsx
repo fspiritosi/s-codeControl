@@ -43,7 +43,7 @@ export default function CityInput({
   }
 
   useEffect(() => {
-    if (defaultProvince.id) {
+    if (defaultProvince?.id) {
       handleProvinceChange(defaultProvince.id)
     }
   }, [defaultProvince])
@@ -62,7 +62,7 @@ export default function CityInput({
       <div>
         <Label htmlFor="province_id">Seleccione una provincia</Label>
         <Select
-          defaultValue={defaultProvince.id.toString()}
+          defaultValue={defaultProvince?.id.toString()}
           value={selectedProvince || undefined}
           onValueChange={e => handleProvinceChange(e)}
           name="province_id"

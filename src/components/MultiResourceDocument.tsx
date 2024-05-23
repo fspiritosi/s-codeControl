@@ -59,6 +59,7 @@ export default function MultiResourceDocument({
   resource: string | undefined
   handleOpen: () => void
 }) {
+  const documetsFetch = useLoggedUserStore(state => state.documetsFetch)
   const [documenTypes, setDocumentTypes] = useState<any[] | null>([])
   const [expiredDate, setExpiredDate] = useState(false)
   const [disabled, setDisabled] = useState(false)
@@ -264,16 +265,11 @@ export default function MultiResourceDocument({
               created_at: new Date(),
               state: 'presentado',
             }
-            const { error: errorInsert } = await supabase
+            const { error } = await supabase
               .from(tableName)
               .update(data)
               .eq('applies', resourceId[index])
               .eq('id_document_types', values.id_document_types)
-
-            const { error } = await supabase
-              .from(tableName)
-              .insert(tableEntries[index])
-              .select()
 
             if (error) {
               console.error(error)
@@ -315,6 +311,7 @@ export default function MultiResourceDocument({
       variant: 'default',
     })
     handleOpen()
+    documetsFetch()
     setDisabled(false)
   }
 

@@ -207,9 +207,9 @@ export default function NavBar() {
                   <CommandEmpty>Compañia no encontrada</CommandEmpty>
                   {groups?.map(group => (
                     <CommandGroup key={group.label} heading={group.label}>
-                      {group?.teams?.map(team => (
+                      {group?.teams?.map((team, index) => (
                         <CommandItem
-                          key={team?.value}
+                          key={index}
                           onSelect={() => {
                             const company = totalCompanies.find(
                               companyItem => companyItem.id === team.value,

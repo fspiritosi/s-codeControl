@@ -1,5 +1,11 @@
 'use client'
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -23,7 +29,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { useCountriesStore } from '@/store/countries'
 import { useLoggedUserStore } from '@/store/loggedUser'
+import { InfoCircledIcon } from '@radix-ui/react-icons'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -36,6 +44,7 @@ export default function NewDocumentType({
 }) {
   const [special, setSpecial] = useState(false)
   const router = useRouter()
+  const fetchDocumentTypes = useCountriesStore(state => state.documentTypes)
 
   const FormSchema = z.object({
     name: z
@@ -67,10 +76,23 @@ export default function NewDocumentType({
   })
 
   const items = [
-    { id: 'multiresource', label: 'Es multirecurso?' },
-    { id: 'mandatory', label: 'Es mandatorio?' },
-    { id: 'explired', label: 'Expira?' },
-    { id: 'special', label: 'Es especial?' },
+    {
+      id: 'multiresource',
+      label: 'Es multirecurso?',
+      tooltip: 'Si el documento aplica a mas de una persona o equipo',
+    },
+    {
+      id: 'mandatory',
+      label: 'Es mandatorio?',
+      tooltip:
+        'Si el documento es obligatorio, se crearan alertas para su cumplimiento',
+    },
+    { id: 'explired', label: 'Expira?', tooltip: 'Si el documento expira' },
+    {
+      id: 'special',
+      label: 'Es especial?',
+      tooltip: 'Si el documento requiere documentacion especial',
+    },
   ]
 
   async function onSubmit(values: z.infer<typeof FormSchema>) {
@@ -104,6 +126,7 @@ export default function NewDocumentType({
         error: 'Error al crear el documento',
       },
     )
+    fetchDocumentTypes(useLoggedUserStore.getState().actualCompany?.id || '')
   }
 
   function formatName(name: string): string {
@@ -170,60 +193,75 @@ export default function NewDocumentType({
           )}
         />
         <div className="grid md:grid-cols-2 grid-cols-1 gap-6 items-stretch justify-between">
-          {items?.map(item => (
-            <FormField
-              key={item.id}
-              control={form.control}
-              name={
-                item.id as
-                  | 'name'
-                  | 'applies'
-                  | 'multiresource'
-                  | 'mandatory'
-                  | 'explired'
-                  | 'special'
-              }
-              render={({ field }) => (
-                <FormItem>
-                  <div className="">
-                    <FormLabel>{item.label}</FormLabel>
-                    <FormControl>
-                      <div className="flex flex-col space-x-2">
-                        <div className="flex gap-3">
-                          <div className="flex items-center gap-2">
-                            <Checkbox
-                              checked={field.value === true}
-                              onCheckedChange={value => {
-                                field.onChange(value ? true : false)
-                                if (item.id === 'special') {
-                                  setSpecial(true)
-                                }
-                              }}
-                            />
-                            <span>Sí</span>
+          <TooltipProvider delayDuration={150}>
+            {items?.map(item => (
+              <FormField
+                key={item.id}
+                control={form.control}
+                name={
+                  item.id as
+                    | 'name'
+                    | 'applies'
+                    | 'multiresource'
+                    | 'mandatory'
+                    | 'explired'
+                    | 'special'
+                }
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="">
+                      <FormLabel className="flex gap-1 items-center mb-2">
+                        {item.label}
+                        <Tooltip>
+                          <TooltipTrigger
+                            className="hover:cursor-help"
+                            type="button"
+                          >
+                            <InfoCircledIcon className="text-blue-500 size-5" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{item.tooltip}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </FormLabel>
+                      <FormControl>
+                        <div className="flex flex-col space-x-2">
+                          <div className="flex gap-3">
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                checked={field.value === true}
+                                onCheckedChange={value => {
+                                  field.onChange(value ? true : false)
+                                  if (item.id === 'special') {
+                                    setSpecial(true)
+                                  }
+                                }}
+                              />
+                              <span>Sí</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                checked={field.value === false}
+                                onCheckedChange={value => {
+                                  field.onChange(value ? false : true)
+                                  if (item.id === 'special') {
+                                    setSpecial(false)
+                                  }
+                                }}
+                              />
+                              <span>No</span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Checkbox
-                              checked={field.value === false}
-                              onCheckedChange={value => {
-                                field.onChange(value ? false : true)
-                                if (item.id === 'special') {
-                                  setSpecial(false)
-                                }
-                              }}
-                            />
-                            <span>No</span>
-                          </div>
+                          <FormMessage />
                         </div>
-                        <FormMessage />
-                      </div>
-                    </FormControl>
-                    <div className="space-y-1 leading-none"></div>
-                  </div>
-                </FormItem>
-              )}
-            />
-          ))}
+                      </FormControl>
+                      <div className="space-y-1 leading-none"></div>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            ))}
+          </TooltipProvider>
         </div>
         {special && (
           <FormField

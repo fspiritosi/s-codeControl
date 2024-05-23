@@ -1,4 +1,5 @@
 import { CompanyLogoBackground } from '@/components/CompanyLogoBackground'
+import { CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
@@ -26,6 +27,7 @@ export default function Register() {
               type="text"
               required
             />
+            <CardDescription id="firstname_error" className="max-w-full" />
           </div>
           <div>
             <Label className="ml-2" htmlFor="lastname">
@@ -38,6 +40,7 @@ export default function Register() {
               type="text"
               required
             />
+            <CardDescription id="lastname_error" className="max-w-full" />
           </div>
           <div>
             <Label className="ml-2" htmlFor="email">
@@ -50,6 +53,7 @@ export default function Register() {
               type="email"
               required
             />
+            <CardDescription id="email_error" className="max-w-full" />
           </div>
           <div>
             <Label className="ml-2" htmlFor="password">
@@ -62,6 +66,7 @@ export default function Register() {
               type="password"
               required
             />
+            <CardDescription id="password_error" className="max-w-full" />
           </div>
           <div>
             <Label className="ml-2" htmlFor="confirmPassword">
@@ -73,6 +78,10 @@ export default function Register() {
               name="confirmPassword"
               type="password"
               required
+            />
+            <CardDescription
+              id="confirmPassword_error"
+              className="max-w-full"
             />
           </div>
           <div className="flex w-full justify-center flex-col items-center gap-5">

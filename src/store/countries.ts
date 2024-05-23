@@ -1,7 +1,8 @@
-import { EquipoSchema } from '@/zodSchemas/schemas'
+import { Equipo } from '@/zodSchemas/schemas'
 import { create } from 'zustand'
 import { supabase } from '../../supabase/supabase'
 import { MandatoryDocuments } from './../zodSchemas/schemas'
+import { useLoggedUserStore } from './loggedUser'
 
 type Province = {
   id: number
@@ -21,7 +22,8 @@ interface State {
   workDiagram: generic[]
   contractors: generic[]
   mandatoryDocuments: MandatoryDocuments
-  documentTypes: (company_id: string) => void
+  documentTypes: (company_id?: string) => void
+  companyDocumentTypes: Equipo
 }
 export const useCountriesStore = create<State>((set, get) => {
   const fetchCountrys = async () => {
@@ -91,31 +93,23 @@ export const useCountriesStore = create<State>((set, get) => {
     }
   }
 
-  const documentTypes = async (company_id: string) => {
-    if (!company_id) return
-    // const applies = 'empleado' ? 'Persona' : 'Equipos'
+  const documentTypes = async (id: string | undefined) => {
+    const company_id = id ?? useLoggedUserStore?.getState?.()?.actualCompany?.id
 
     let { data: document_types } = await supabase
       .from('document_types')
       .select('*')
-      ?.filter('mandatory', 'eq', true)
+      // ?.filter('mandatory', 'eq', true)
       .or(`company_id.eq.${company_id},company_id.is.null`)
 
-    const validatedData = EquipoSchema.safeParse(document_types)
-
-    if (!validatedData.success) {
-      console.error(validatedData.error.errors)
-      return
-    }
-
-    const groupedData = validatedData.data.reduce(
-      (acc: Record<string, any[]>, item) => {
+    const groupedData = document_types
+      ?.filter(item => item['mandatory'] === true)
+      .reduce((acc: Record<string, any[]>, item) => {
         ;(acc[item['applies']] = acc[item['applies']] || []).push(item)
         return acc
-      },
-      {},
-    ) as MandatoryDocuments
+      }, {}) as MandatoryDocuments
 
+    set({ companyDocumentTypes: document_types as Equipo })
     set({ mandatoryDocuments: groupedData })
   }
 
@@ -133,6 +127,8 @@ export const useCountriesStore = create<State>((set, get) => {
     workDiagram: get()?.workDiagram,
     contractors: get()?.contractors,
     mandatoryDocuments: get()?.mandatoryDocuments,
-    documentTypes,
+    documentTypes: (company_id?: string | undefined) =>
+      documentTypes(company_id || ''),
+    companyDocumentTypes: get()?.companyDocumentTypes,
   }
 })
