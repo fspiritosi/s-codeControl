@@ -33,7 +33,9 @@ export default function Login() {
                   name="email"
                   type="email"
                 />
-                <CardDescription>Por favor ingresa tu correo.</CardDescription>
+                <CardDescription id="email_error">
+                  Por favor ingresa tu correo.
+                </CardDescription>
               </div>
               <div>
                 <Label htmlFor="password">Contraseña</Label>
@@ -44,7 +46,7 @@ export default function Login() {
                   placeholder="mi contraseña segura"
                   autoComplete="current-password"
                 />
-                <CardDescription>
+                <CardDescription id="password_error">
                   Por favor ingresa tu contraseña.
                 </CardDescription>
               </div>
