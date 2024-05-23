@@ -12,7 +12,7 @@ export default function AuditorLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex md:px-8 w-full">
+    <div className="flex w-full">
       {children}
     </div>
   )
