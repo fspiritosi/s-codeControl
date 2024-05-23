@@ -33,7 +33,6 @@ import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { supabase } from '../../supabase/supabase'
-import { CheckboxDefaultValues } from './CheckboxDefValues'
 import { ImageHander } from './ImageHandler'
 import { Modal } from './Modal'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
@@ -123,7 +122,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
     form.setValue('intern_number', vehicleData.intern_number)
     form.setValue('picture', vehicleData.picture)
     form.setValue('type', vehicleData.type.name)
-    form.setValue('allocated_to', vehicleData.allocated_to)
+    // form.setValue('allocated_to', vehicleData.allocated_to)
   }
 
   useEffect(() => {
@@ -321,7 +320,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
     type: hideInput
       ? z.string().optional()
       : z.string({ required_error: 'El tipo es requerido' }),
-    allocated_to: z.array(z.string()).optional(),
+    // allocated_to: z.array(z.string()).optional(),
   })
   const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false)
 
@@ -388,7 +387,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
       domain: vehicle?.domain || '',
       intern_number: vehicle?.intern_number || '',
       picture: vehicle?.picture || '',
-      allocated_to: [],
+      // allocated_to: [],
     },
   })
 
@@ -567,7 +566,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
               domain: domain?.toUpperCase(),
               intern_number: intern_number,
               picture: picture,
-              allocated_to: values.allocated_to,
+              // allocated_to: values.allocated_to,
             })
             .eq('id', vehicle?.id)
             .eq('company_id', actualCompany?.id)
@@ -1165,7 +1164,9 @@ export default function VehiclesForm2({ id }: { id: string }) {
                       className="input w-[250px]"
                       placeholder="Ingrese el dominio"
                       value={
-                        field.value !== '' ? field.value??'' : vehicle?.domain ?? ''
+                        field.value !== ''
+                          ? field.value ?? ''
+                          : vehicle?.domain ?? ''
                       }
                       defaultValue={vehicle?.domain}
                       onChange={e => {
@@ -1210,7 +1211,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   </FormItem>
                 )}
               />
-              <div className=" min-w-[250px] flex flex-col gap-2">
+              {/* <div className=" min-w-[250px] flex flex-col gap-2">
                 <FormField
                   control={form.control}
                   name="allocated_to"
@@ -1229,7 +1230,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                     </>
                   )}
                 />
-              </div>
+              </div> */}
               <div className="w-[300px] flex  gap-2">
                 <FormField
                   control={form.control}
