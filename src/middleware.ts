@@ -68,10 +68,10 @@ export async function middleware(req: NextRequest) {
     '/dashboard/company/actualCompany',
   ] // -> Rol tabla profile
 
-  const usuarioUser = ['/dashboard/company/actualCompany', '/auditor']
+  const usuarioUser = ['/dashboard/company/actualCompany', 'admin/auditor']
 
-  const administradorUser = ['/auditor']
-  const codeControlClientUser = ['/auditor']
+  const administradorUser = ['admin/auditor']
+  const codeControlClientUser = ['admin/auditor']
 
   const isAuditor = data?.[0]?.role === 'Auditor'
   if (!session) {
@@ -84,11 +84,11 @@ export async function middleware(req: NextRequest) {
     const redirectUrl = new URL(baseUrl)
     redirectUrl.searchParams.set('access_denied', 'true')
 
-    if (isAuditor && !req.url.includes('/auditor')) {
+    if (isAuditor && !req.url.includes('admin/auditor')) {
       redirectUrl.pathname = '/auditor'
       return NextResponse.redirect(redirectUrl.toString())
     }
-    if (!isAuditor && req.url.includes('/auditor')) {
+    if (!isAuditor && req.url.includes('admin/auditor')) {
       redirectUrl.pathname = '/dashboard'
       return NextResponse.redirect(redirectUrl.toString())
     }
@@ -131,6 +131,7 @@ export const config = {
   matcher: [
     // '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     '/dashboard/:path*',
-    '/auditor/:path*',
+    '/admin/auditor/:path*',
+
   ],
 }

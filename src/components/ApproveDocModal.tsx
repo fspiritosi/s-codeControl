@@ -67,7 +67,7 @@ export default function ApproveDocModal({
       })
     }
 
-    router.push('/auditor')
+    router.push('/admin/auditor')
   }
   return (
     <Dialog open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>

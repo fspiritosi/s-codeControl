@@ -167,7 +167,8 @@ export default function Auditor() {
   const filteredData = documents_employees as AuditorDocument[]
 
   return (
-    <div>
+    <div className="min-h-screen w-full bg-muted/40">
+      <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
       <section>
         <Card>
           <CardHeader>
@@ -252,6 +253,9 @@ export default function Auditor() {
       <section>
         <AuditorDataTable data={filteredData || []} columns={AuditorColums} />
       </section>
+
+      </div>
     </div>
   )
 }
+
