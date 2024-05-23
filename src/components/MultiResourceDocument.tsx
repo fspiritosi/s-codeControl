@@ -264,16 +264,11 @@ export default function MultiResourceDocument({
               created_at: new Date(),
               state: 'presentado',
             }
-            const { error: errorInsert } = await supabase
+            const { error } = await supabase
               .from(tableName)
               .update(data)
               .eq('applies', resourceId[index])
               .eq('id_document_types', values.id_document_types)
-
-            const { error } = await supabase
-              .from(tableName)
-              .insert(tableEntries[index])
-              .select()
 
             if (error) {
               console.error(error)
