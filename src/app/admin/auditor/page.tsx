@@ -241,7 +241,7 @@ export default function Auditor() {
           </CardContent>
           <CardFooter>
             <Link
-              href="/auditor/new-document-type"
+              href="/admin/auditor/new-document-type"
               className={buttonVariants({ variant: 'outline' })}
             >
               Crear Nuevo

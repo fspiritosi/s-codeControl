@@ -41,6 +41,7 @@ import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import AdminAvatar from "./adminAvatar"
 import { ModeToggle } from '@/components/ui/ToogleDarkButton'
+import AdminBreadcrumb from "./adminBreadcrumb"
 
 //import { useLoggedUserStore } from "@/store/loggedUser"
 
@@ -52,12 +53,9 @@ export default function AdminNavbar() {
 
 
   return (
-
     <div className="w-full bg-muted/40">
-
       <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-          
           <Sheet>
             <SheetTrigger asChild>
               <Button size="icon" variant="outline" className="sm:hidden">
@@ -112,7 +110,8 @@ export default function AdminNavbar() {
               </nav>
             </SheetContent>
           </Sheet>
-          <Breadcrumb className="hidden md:flex">
+          <AdminBreadcrumb/>
+          {/* <Breadcrumb className="hidden md:flex">
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
@@ -130,24 +129,21 @@ export default function AdminNavbar() {
                 <BreadcrumbPage>Recent Orders</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
-          </Breadcrumb>
-         <div className="flex relative gap-2 ml-auto">
-         <ModeToggle/>
-         <div className="relative ml-auto flex-1 md:grow-0">
-          
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Buscar..."
-            className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
-          />
-        </div>
-         </div>
+          </Breadcrumb> */}
 
-          {/* User avatar */}
-          <AdminAvatar/>
+          <div className="flex relative gap-2 ml-auto">
+            <ModeToggle />
+            <div className="relative ml-auto flex-1 md:grow-0">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Buscar..."
+                className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
+              />
+            </div>
+          </div>
+          <AdminAvatar />
         </header>
- 
       </div>
     </div>
   )
