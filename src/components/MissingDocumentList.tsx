@@ -17,6 +17,7 @@ import { useLoggedUserStore } from '@/store/loggedUser'
 import {
   DotFilledIcon,
   ExclamationTriangleIcon,
+  FileTextIcon,
   PersonIcon,
 } from '@radix-ui/react-icons'
 import { format } from 'date-fns'
@@ -117,12 +118,14 @@ export const MissingDocumentList = () => {
                               key={index}
                               className="flex justify-between items-center h-14 px-2 w-full dark:text-white font-semibold "
                             >
-                              {item[0].resource
-                                .split(' ')
-                                .map((word: string) => {
-                                  return word[0].toUpperCase() + word.slice(1)
-                                })
-                                .join(' ')}
+                              <Badge variant={'outline'} className="text-md">
+                                {item[0].resource
+                                  .split(' ')
+                                  .map((word: string) => {
+                                    return word[0].toUpperCase() + word.slice(1)
+                                  })
+                                  .join(' ')}
+                              </Badge>
                               <Link
                                 href={`/dashboard/employee/action?action=view&document=${item?.[0].document_number}`}
                                 className={buttonVariants({
@@ -133,15 +136,16 @@ export const MissingDocumentList = () => {
                               </Link>
                             </div>
                           </AccordionTrigger>
-                          <AccordionContent>
+                          <AccordionContent className="flex flex-col gap-4 ">
                             {item?.map((document: any, index: number) => (
-                              <p
+                              <Badge
                                 key={index}
-                                className="h-14 px-2 text-red-500/70"
+                                className="text-white h-8 mx-2 w-fit"
+                                variant={'destructive'}
                               >
-                                <ExclamationTriangleIcon className="inline mr-2 text-red-500/70 size-5" />
+                                <FileTextIcon className="inline mr-2 text-white size-5" />
                                 {document.documentName}
-                              </p>
+                              </Badge>
                             ))}
                           </AccordionContent>
                         </AccordionItem>
@@ -178,7 +182,9 @@ export const MissingDocumentList = () => {
                               key={index}
                               className="flex justify-between items-center h-14 px-2 w-full dark:text-white font-semibold capitalize"
                             >
-                              {item[0].resource}
+                              <Badge variant={'outline'} className="text-md">
+                                {item[0].resource}
+                              </Badge>
                               <Link
                                 href={`/dashboard/equipment/action?action=view&id=${item?.[0].vehicle_id}`}
                                 className={buttonVariants({
@@ -189,15 +195,16 @@ export const MissingDocumentList = () => {
                               </Link>
                             </div>
                           </AccordionTrigger>
-                          <AccordionContent>
+                          <AccordionContent className="flex flex-col gap-4 ">
                             {item?.map((document: any, index: number) => (
-                              <p
+                              <Badge
                                 key={index}
-                                className="h-14 px-2 text-red-500/70"
+                                className="text-white h-8 mx-2 w-fit"
+                                variant={'destructive'}
                               >
-                                <ExclamationTriangleIcon className="inline mr-2 text-red-500/70 size-5" />
+                                <ExclamationTriangleIcon className="inline mr-2 text-white-500/70 size-5" />
                                 {document.documentName}
-                              </p>
+                              </Badge>
                             ))}
                           </AccordionContent>
                         </AccordionItem>

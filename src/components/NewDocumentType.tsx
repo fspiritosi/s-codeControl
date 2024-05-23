@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { useCountriesStore } from '@/store/countries'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -36,6 +37,7 @@ export default function NewDocumentType({
 }) {
   const [special, setSpecial] = useState(false)
   const router = useRouter()
+  const fetchDocumentTypes = useCountriesStore(state => state.documentTypes)
 
   const FormSchema = z.object({
     name: z
@@ -104,6 +106,7 @@ export default function NewDocumentType({
         error: 'Error al crear el documento',
       },
     )
+    fetchDocumentTypes(useLoggedUserStore.getState().actualCompany?.id || '')
   }
 
   function formatName(name: string): string {

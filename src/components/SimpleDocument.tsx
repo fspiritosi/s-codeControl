@@ -27,6 +27,7 @@ import {
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { es } from 'date-fns/locale'
 import { supabase } from '../../supabase/supabase'
+import { AlertDialogCancel } from './ui/alert-dialog'
 import {
   Command,
   CommandEmpty,
@@ -47,6 +48,7 @@ export default function SimpleDocument({
   defaultDocumentId?: string
   document?: string
 }) {
+  const documetsFetch = useLoggedUserStore(state => state.documetsFetch)
   const documentDrawerEmployees = useLoggedUserStore(
     state => state.documentDrawerEmployees,
   )
@@ -299,6 +301,7 @@ export default function SimpleDocument({
       if (id) {
         documentDrawerVehicles(id)
       }
+      documetsFetch()
       handleOpen()
     } catch (error) {
       console.error(error)
@@ -802,7 +805,10 @@ export default function SimpleDocument({
         </div>
       </ul>
       <div className="flex justify-evenly mt-2">
-        <Button onClick={() => handleOpen()}>Cancelar</Button>
+        <AlertDialogCancel className="text-black dark:bg-white" asChild>
+          <Button onClick={() => handleOpen()}>Cancelar</Button>
+        </AlertDialogCancel>
+
         <Button disabled={loading} type="submit">
           {loading ? 'Enviando' : 'Enviar documentos'}
         </Button>

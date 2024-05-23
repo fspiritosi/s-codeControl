@@ -378,13 +378,13 @@ export default function EmployeeAccordion() {
       options: typeOfContractENUM,
       name: 'type_of_contract',
     },
-    {
-      label: 'Afectado A',
-      type: 'select',
-      placeholder: 'Afectado A',
-      options: contractorCompanies,
-      name: 'allocated_to',
-    },
+    // {
+    //   label: 'Afectado A',
+    //   type: 'select',
+    //   placeholder: 'Afectado A',
+    //   options: contractorCompanies,
+    //   name: 'allocated_to',
+    // },
     {
       label: 'Fecha de ingreso',
 
@@ -445,7 +445,7 @@ export default function EmployeeAccordion() {
             user_id: string | undefined
           }[] = []
 
-          mandatoryDocuments?.Persona.forEach(async document => {
+          mandatoryDocuments?.Persona?.forEach(async document => {
             documentsMissing.push({
               applies: applies[0].id,
               id_document_types: document.id,
