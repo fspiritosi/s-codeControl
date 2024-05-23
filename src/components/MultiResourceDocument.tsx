@@ -59,6 +59,7 @@ export default function MultiResourceDocument({
   resource: string | undefined
   handleOpen: () => void
 }) {
+  const documetsFetch = useLoggedUserStore(state => state.documetsFetch)
   const [documenTypes, setDocumentTypes] = useState<any[] | null>([])
   const [expiredDate, setExpiredDate] = useState(false)
   const [disabled, setDisabled] = useState(false)
@@ -310,6 +311,7 @@ export default function MultiResourceDocument({
       variant: 'default',
     })
     handleOpen()
+    documetsFetch()
     setDisabled(false)
   }
 

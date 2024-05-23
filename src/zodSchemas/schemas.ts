@@ -645,20 +645,23 @@ export type VehiclesFormattedElement = z.infer<
   typeof VehiclesFormattedElementSchema
 >
 
-export const EquipoSchema = z.array(
-  z.object({
-    id: z.string(),
-    created_at: z.coerce.date(),
-    name: z.string(),
-    applies: z.string(),
-    multiresource: z.boolean(),
-    mandatory: z.boolean(),
-    explired: z.boolean(),
-    special: z.boolean(),
-    is_active: z.boolean(),
-    description: z.union([z.null(), z.string()]),
-  }),
-)
+export const EquipoSchema = z
+  .array(
+    z.object({
+      id: z.string(),
+      created_at: z.coerce.date(),
+      name: z.string(),
+      applies: z.string(),
+      multiresource: z.boolean(),
+      mandatory: z.boolean(),
+      explired: z.boolean(),
+      special: z.boolean(),
+      is_active: z.boolean(),
+      description: z.union([z.null(), z.string()]),
+    }),
+  )
+  .default([])
+
 export type Equipo = z.infer<typeof EquipoSchema>
 
 export const MandatoryDocumentsSchema = z.object({
