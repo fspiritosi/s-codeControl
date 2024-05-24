@@ -74,7 +74,7 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
   const userShared = cookies.get('guestRole')
   const isAuditor = profile?.[0]?.role === 'Auditor'
   const administrador = userShared === 'Administrador' || null
-
+  
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
     ?.owner_id.id
 
@@ -134,7 +134,7 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
           {openSubMenu === index && link.submenu && (
             <div
               className={`${
-                expanded ? '' : 'absolute top-[210px]'
+                expanded ? '' : 'absolute top-[190px]'
               }ml-0 mt-1 dark:text-neutral-300 text-neutral-950 font-medium bg-muted dark:bg-muted p-2 rounded-md`}
               style={{
                 marginLeft: expanded ? 0 : '1.6cm',
