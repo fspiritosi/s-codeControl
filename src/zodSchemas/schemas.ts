@@ -146,6 +146,7 @@ export const companySchema = z.object({
         message: 'Ya existe una compañía con este CUIT.',
       },
     ),
+  
   description: z
     .string()
     .min(3, {
@@ -211,6 +212,103 @@ export const companySchema = z.object({
   by_defect: z.boolean().optional(),
   //employees_id: z.string().nullable(),
 })
+export const editCompanySchema = z.object({
+  company_name: z
+    .string({ required_error: 'El nombre de la compañía es requerido' })
+    .min(2, {
+      message: 'El nombre debe tener al menos 2 caracteres.',
+    })
+    .max(30, { message: 'La compañia debe tener menos de 30 caracteres.' }),
+  company_cuit: z
+    .string()
+    .refine(value => /^\d{11}$/.test(value), {
+      message: 'El CUIT debe contener 11 números.',
+    })
+    .refine(
+      cuil => {
+        return validarCUIL(cuil)
+      },
+      { message: 'El CUIT es inválido' },
+    )
+    .refine((value) => {
+      return new Promise(async (resolve, reject) => {
+        try {
+          const isDuplicated = await validateDuplicatedCuil(value);
+          if (!isDuplicated) {
+            resolve(true);
+          } else {
+            reject(new Error('Ya existe una compañía con este CUIT.'));
+          }
+        } catch (error) {
+          reject(error);
+        }
+      });
+    }),
+    
+  description: z
+    .string()
+    .min(3, {
+      message: 'La descripción debe tener al menos 3 caracteres.',
+    })
+    .max(200, {
+      message: 'La descripción debe tener menos de 200 caracteres.',
+    }),
+  website: z
+    .string()
+    .refine(
+      value => {
+        if (value === '') return true
+
+        const urlRegex =
+          /^(?:(?:https?|ftp):\/\/)?(?:www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+([/?].*)?$/i
+
+        return urlRegex.test(value)
+      },
+      {
+        message: 'La URL proporcionada no es válida.',
+      },
+    )
+    .optional(),
+  contact_email: z.string().email({ message: 'Email inválido' }),
+  contact_phone: z
+    .string()
+    .min(5, {
+      message: 'El número de teléfono debe tener al menos 5 caracteres.',
+    })
+    .max(25, {
+      message: 'El número de teléfono debe tener menos de 25 caracteres.',
+    })
+    .regex(/^\+?[0-9]{1,25}$/, {
+      message: 'El número de teléfono debe contener solo números',
+    })
+    .refine(value => /^\+?[0-9]{1,25}$/.test(value), {
+      message: 'El número de teléfono debe contener solo números',
+    }),
+  address: z
+    .string()
+    .min(4, { message: 'Address debe tener al menos 4 caracteres.' })
+    .max(50, {
+      message: 'Address debe tener menos de 50 caracteres.',
+    })
+    .regex(/^[a-zA-Z0-9\s]*$/, {
+      message:
+        'Address debe contener solo letras y números y tener hasta 50 caracteres',
+    }),
+  country: z
+    .string()
+    .min(2, { message: 'Country debe tener al menos 2 caracteres.' }),
+  province_id: z
+    .string()
+    .min(1, { message: 'Province debe tener al menos 1 caracteres.' }),
+  industry: z
+    .string()
+    .min(2, { message: 'Industry debe tener al menos 2 caracteres.' }),
+  city: z
+    .string()
+    .min(1, { message: 'City debe tener al menos 1 caracteres.' }),
+  company_logo: z.string().optional(),
+  by_defect: z.boolean().optional(),
+});
 
 export const accordionSchema = z
   .object({
@@ -344,7 +442,7 @@ export const accordionSchema = z
     type_of_contract: z.string({
       required_error: 'El tipo de contrato es requerido',
     }),
-    allocated_to: z.array(z.string()).optional(),
+    // allocated_to: z.array(z.string()).optional(),
     date_of_admission: z
       .date({
         required_error: 'La fecha de ingreso es requerida',
@@ -554,20 +652,23 @@ export type VehiclesFormattedElement = z.infer<
   typeof VehiclesFormattedElementSchema
 >
 
-export const EquipoSchema = z.array(
-  z.object({
-    id: z.string(),
-    created_at: z.coerce.date(),
-    name: z.string(),
-    applies: z.string(),
-    multiresource: z.boolean(),
-    mandatory: z.boolean(),
-    explired: z.boolean(),
-    special: z.boolean(),
-    is_active: z.boolean(),
-    description: z.union([z.null(), z.string()]),
-  }),
-)
+export const EquipoSchema = z
+  .array(
+    z.object({
+      id: z.string(),
+      created_at: z.coerce.date(),
+      name: z.string(),
+      applies: z.string(),
+      multiresource: z.boolean(),
+      mandatory: z.boolean(),
+      explired: z.boolean(),
+      special: z.boolean(),
+      is_active: z.boolean(),
+      description: z.union([z.null(), z.string()]),
+    }),
+  )
+  .default([])
+
 export type Equipo = z.infer<typeof EquipoSchema>
 
 export const MandatoryDocumentsSchema = z.object({

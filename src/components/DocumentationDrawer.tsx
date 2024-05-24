@@ -30,7 +30,6 @@ import {
 } from './ui/alert-dialog'
 import { Button, buttonVariants } from './ui/button'
 import { CardDescription, CardHeader, CardTitle } from './ui/card'
-import { Separator } from './ui/separator'
 import { Skeleton } from './ui/skeleton'
 
 type Props = { resource: string; document?: string; id?: string }
@@ -232,7 +231,7 @@ export const DocumentationDrawer = ({ resource, document, id }: Props) => {
                   </p>
                 </div>
                 {doc.state === 'pendiente' && (
-                  <AlertDialog open={open} onOpenChange={handleOpen}>
+                  <AlertDialog>
                     <AlertDialogTrigger asChild>
                       {role !== 'Invitado' && (
                         <Button
@@ -244,19 +243,9 @@ export const DocumentationDrawer = ({ resource, document, id }: Props) => {
                         </Button>
                       )}
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent asChild>
                       <AlertDialogHeader>
                         <div className="max-h-[90vh] overflow-y-auto">
-                          <h2 className="text-lg font-semibold">
-                            Documento No multirecurso
-                          </h2>
-                          <Separator className="my-1" />
-                          <p className="text-sm text-muted-foreground mb-3">
-                            Verifica que los documentos sean correctos y no
-                            hayan entradas duplicadas, en tal caso se subira la
-                            primera entrada encontrada y se marcaran las demas
-                            como duplicadas
-                          </p>
                           <div className="space-y-3">
                             <div>
                               <SimpleDocument
@@ -272,18 +261,6 @@ export const DocumentationDrawer = ({ resource, document, id }: Props) => {
                     </AlertDialogContent>
                   </AlertDialog>
                 )}
-                {/* {(doc.state === 'aprobado' || doc.state === 'presentado') && (
-              <Button
-                onClick={() =>
-                  handleDownload(
-                    doc.document_path,
-                    doc?.id_document_types?.name,
-                  )
-                }
-              >
-                Descargar
-              </Button>
-            )} */}
                 {doc.state !== 'pendiente' && (
                   <Link
                     className={buttonVariants({ variant: 'default' })}

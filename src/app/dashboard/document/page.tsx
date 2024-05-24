@@ -37,136 +37,18 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useCountriesStore } from '@/store/countries'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { AuditorDocument } from '@/types/types'
-import { format } from 'date-fns'
-import { useEffect, useState } from 'react'
-import { supabase } from '../../../../supabase/supabase'
+import { useRouter } from 'next/navigation'
 import { ExpiredColums } from '../colums'
 import { ExpiredDataTable } from '../data-table'
 
 export default function page() {
   const { allDocumentsToShow, actualCompany } = useLoggedUserStore()
-  // const role = useLoggedUserStore(state => state.role)
-  const [document_types, setDocumentTypes] = useState<any[] | null>([])
-  const [documents_employees, setDocumentsEmployees] = useState<any[] | null>(
-    [],
-  )
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'No vence'
-    const [day, month, year] = dateString.split('/')
-    const formattedDate = `${day}/${month}/${year}`
-    return formattedDate || 'No vence'
-  }
-
-  const fetchDocumentTypes = async () => {
-    if (!actualCompany) return
-    let { data: document_types, error } = await supabase
-      .from('document_types')
-      .select('*')
-      ?.filter('is_active', 'eq', true)
-      .or(`company_id.eq.${actualCompany?.id},company_id.is.null`)
-
-    if (error) {
-      console.error('Error fetching document types:', error.message)
-      return
-    }
-
-    setDocumentTypes(document_types)
-  }
-
-  const fetchDocumentsEmployees = async () => {
-    let { data: equipmentData, error: equipmentError } = await supabase
-      .from('documents_equipment')
-      .select(
-        `
-    *,
-    document_types:document_types(*),
-    applies(*,type(*),type_of_vehicle(*),model(*),brand(*),company_id(*))
-    `,
-      )
-      .eq('state', 'presentado')
-      .order('created_at', { ascending: false })
-
-    const mapVehicle = (doc: any) => {
-      const formattedDate = formatDate(doc.validity)
-      return {
-        date: doc.created_at
-          ? format(new Date(doc.created_at), 'dd/MM/yyyy')
-          : 'No vence',
-        allocated_to: doc.applies?.type_of_vehicle?.name,
-        documentName: doc.document_types?.name,
-        state: doc.state,
-        multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
-        validity: formattedDate,
-        id: doc.id,
-        resource: doc.applies?.domain || doc.applies?.intern_number,
-        companyName: doc.applies?.company_id?.company_name,
-      }
-    }
-    const mappedVehicles = equipmentData?.map(mapVehicle)
-
-    let { data: documents_employees, error } = await supabase
-      .from('documents_employees')
-      .select(
-        `
-      *,
-      document_types(*),
-      applies(*,
-        contractor_employee(
-          contractors(
-            *
-          )
-        ),
-        company_id(*)
-      )
-    `,
-      )
-      .eq('state', 'presentado')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-
-    const mapEmployee = (doc: any) => {
-      const formattedDate = formatDate(doc.validity)
-      return {
-        date: doc.created_at
-          ? format(new Date(doc.created_at), 'dd/MM/yyyy')
-          : 'No vence',
-        companyName: doc.applies?.company_id?.company_name,
-        allocated_to: doc.applies?.contractor_employee
-          ?.map((doc: any) => doc.contractors.name)
-          .join(', '),
-        documentName: doc.document_types?.name,
-        state: doc.state,
-        multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
-        validity: formattedDate || 'No vence',
-        id: doc.id,
-        resource: `${doc.applies?.lastname} ${doc.applies?.firstname}`,
-      }
-    }
-    const mappedEmployees = documents_employees?.map(mapEmployee)
-
-    if (error) {
-      console.error('Error fetching document types:', error.message)
-      return
-    }
-
-    setDocumentsEmployees([
-      ...(mappedVehicles || []),
-      ...(mappedEmployees || []),
-    ])
-  }
-
+  const document_types = useCountriesStore(state => state.companyDocumentTypes)
+  const fetchDocumentTypes = useCountriesStore(state => state.documentTypes)
   let doc_personas = document_types?.filter(doc => doc.applies === 'Persona')
   let doc_equipos = document_types?.filter(doc => doc.applies === 'Equipos')
-
-  useEffect(() => {
-    fetchDocumentTypes()
-    fetchDocumentsEmployees()
-  }, [actualCompany])
-
-  const filteredData = documents_employees as AuditorDocument[]
 
   const profile = useLoggedUserStore(state => state)
 
@@ -179,6 +61,7 @@ export default function page() {
   } else {
     role = profile?.actualCompany?.share_company_users?.[0]?.role as string
   }
+  const router = useRouter()
   return (
     <section className={'flex flex-col md:mx-7'}>
       <Card>
@@ -262,7 +145,7 @@ export default function page() {
                 <Button
                   onClick={() => {
                     document.getElementById('create_new_document')?.click()
-                    //cerrar el modal
+                    fetchDocumentTypes(actualCompany?.id)
                   }}
                 >
                   Crear documento

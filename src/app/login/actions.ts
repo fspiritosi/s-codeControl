@@ -1,5 +1,6 @@
 'use server'
 
+import { handleSupabaseError } from '@/lib/errorHandler'
 import { supabaseServer } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -21,10 +22,8 @@ export async function login(formData: FormData) {
   // })
 
   if (error) {
-    return error.message
+    throw new Error(handleSupabaseError(error.message))
   }
-
-
   if (user.session) {
     redirect(`/dashboard`)
   } else {

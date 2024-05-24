@@ -81,6 +81,8 @@ export default function NavBar() {
   const notifications = useLoggedUserStore(state => state.notifications)
   const avatarUrl = actualUser && actualUser.length > 0 ? actualUser[0] : ''
 
+  console.log(actualUser)
+
   const handleLogout = async () => {
     try {
       await logout()
@@ -207,9 +209,9 @@ export default function NavBar() {
                   <CommandEmpty>Compañia no encontrada</CommandEmpty>
                   {groups?.map(group => (
                     <CommandGroup key={group.label} heading={group.label}>
-                      {group?.teams?.map(team => (
+                      {group?.teams?.map((team, index) => (
                         <CommandItem
-                          key={team?.value}
+                          key={index}
                           onSelect={() => {
                             const company = totalCompanies.find(
                               companyItem => companyItem.id === team.value,
@@ -268,6 +270,7 @@ export default function NavBar() {
         )}
       </div>
       <div className="flex gap-8 items-center">
+      {actualUser?.[0]?.role === 'Admin' || actualUser?.[0]?.role === 'Super Admin' || actualUser?.[0]?.role === 'Developer' ? <Link href='/admin/panel'><Button variant='default'>Panel</Button></Link> : null}
         <DropdownMenu>
           <DropdownMenuTrigger>
             <div className="relative">

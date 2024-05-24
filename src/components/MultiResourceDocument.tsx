@@ -59,6 +59,7 @@ export default function MultiResourceDocument({
   resource: string | undefined
   handleOpen: () => void
 }) {
+  const documetsFetch = useLoggedUserStore(state => state.documetsFetch)
   const [documenTypes, setDocumentTypes] = useState<any[] | null>([])
   const [expiredDate, setExpiredDate] = useState(false)
   const [disabled, setDisabled] = useState(false)
@@ -234,27 +235,11 @@ export default function MultiResourceDocument({
         }
       })
 
-      const { error } = await supabase
-        .from(tableName)
-        .insert(tableEntries[index])
-        .select()
-
-      if (error) {
-        console.error(error)
-        toast({
-          title: 'Error',
-          description: 'Hubo un error al guardar el documento',
-          variant: 'destructive',
-        })
-        setDisabled(false)
-        return
-      }
-
       const hasExpiredDate = tableEntries[index].validity
         ? tableEntries?.[index]?.validity?.replace(/\//g, '-')
         : 'v0'
 
-      const { error: storageError } = await supabase.storage
+      await supabase.storage
         .from('document_files')
         .upload(
           `/${storagePath}/document-${values.id_document_types}-${resourceId[index]}-${hasExpiredDate}.${fileExtension}`,
@@ -264,16 +249,60 @@ export default function MultiResourceDocument({
             upsert: false,
           },
         )
+        .then(async response => {
+          const isMandatory = documenTypes?.find(
+            doc => doc.id === values.id_document_types,
+          )?.mandatory
 
-      if (storageError) {
-        toast({
-          title: 'Error',
-          description: 'Hubo un error al subir los documentos al storage',
-          variant: 'destructive',
+          console.log('isMandatory', isMandatory)
+          console.log('documenTypes', documenTypes)
+          console.log('values', values)
+
+          if (isMandatory) {
+            const data = {
+              validity: tableEntries[index].validity,
+              document_path: response.data?.path,
+              created_at: new Date(),
+              state: 'presentado',
+            }
+            const { error } = await supabase
+              .from(tableName)
+              .update(data)
+              .eq('applies', resourceId[index])
+              .eq('id_document_types', values.id_document_types)
+
+            if (error) {
+              console.error(error)
+              toast({
+                title: 'Error',
+                description: 'Hubo un error al guardar el documento',
+                variant: 'destructive',
+              })
+            }
+          } else {
+            console.log('creando')
+            const { error } = await supabase
+              .from(tableName)
+              .insert({
+                ...tableEntries[index],
+                state: 'presentado',
+                document_path: response.data?.path,
+                validity: tableEntries[index].validity ?? null,
+              })
+              .select()
+
+            if (error) {
+              console.error(error)
+              toast({
+                title: 'Error',
+                description: 'Hubo un error al guardar el documento',
+                variant: 'destructive',
+              })
+            }
+          }
+          setDisabled(false)
+          return
         })
-        setDisabled(false)
-        return
-      }
     }
 
     toast({
@@ -282,6 +311,7 @@ export default function MultiResourceDocument({
       variant: 'default',
     })
     handleOpen()
+    documetsFetch()
     setDisabled(false)
   }
 

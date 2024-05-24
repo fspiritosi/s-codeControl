@@ -125,7 +125,7 @@ export default function DenyDocModal({
     }
     
 
-    router.push('/auditor')
+    router.push('/auditor/auditor')
     setIsOpen(false)
   }
   return (

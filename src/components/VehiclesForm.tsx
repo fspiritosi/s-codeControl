@@ -33,7 +33,6 @@ import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { supabase } from '../../supabase/supabase'
-import { CheckboxDefaultValues } from './CheckboxDefValues'
 import { ImageHander } from './ImageHandler'
 import { Modal } from './Modal'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
@@ -123,7 +122,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
     form.setValue('intern_number', vehicleData.intern_number)
     form.setValue('picture', vehicleData.picture)
     form.setValue('type', vehicleData.type.name)
-    form.setValue('allocated_to', vehicleData.allocated_to)
+    // form.setValue('allocated_to', vehicleData.allocated_to)
   }
 
   useEffect(() => {
@@ -132,6 +131,10 @@ export default function VehiclesForm2({ id }: { id: string }) {
     }
     if (vehicle && vehicle.type_of_vehicle === 'Vehículos') {
       setHideInput(true)
+    }
+    if (vehicle && vehicle.type_of_vehicle === 'Otros') {
+      console.log('otro')
+      setHideInput(false)
     }
     if (!vehicle) {
       setHideInput(false)
@@ -168,9 +171,11 @@ export default function VehiclesForm2({ id }: { id: string }) {
       console.error('Error al obtener los datos del vehículo:', error)
     }
   }
+
   useEffect(() => {
     fetchVehicleData()
   }, [id, actualCompany])
+
   const router = useRouter()
   const [hideInput, setHideInput] = useState(false)
   const vehicleSchema = z.object({
@@ -290,7 +295,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
             },
             { message: 'El dominio ya existe' },
           )
-      : z.string().optional(),
+      : z.string().optional().nullable(),
     serie: hideInput
       ? z.string().optional()
       : z
@@ -315,7 +320,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
     type: hideInput
       ? z.string().optional()
       : z.string({ required_error: 'El tipo es requerido' }),
-    allocated_to: z.array(z.string()).optional(),
+    // allocated_to: z.array(z.string()).optional(),
   })
   const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false)
 
@@ -382,7 +387,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
       domain: vehicle?.domain || '',
       intern_number: vehicle?.intern_number || '',
       picture: vehicle?.picture || '',
-      allocated_to: [],
+      // allocated_to: [],
     },
   })
 
@@ -481,7 +486,6 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   .update({ picture: vehicleImage })
                   .eq('id', id)
                   .eq('company_id', actualCompany?.id)
-
               } catch (error) {}
               documetsFetch()
             } catch (error: any) {
@@ -526,6 +530,8 @@ export default function VehiclesForm2({ id }: { id: string }) {
     }
   }
 
+  console.log(form.formState.errors, 'formState.errors')
+
   async function onUpdate(values: z.infer<typeof vehicleSchema>) {
     toast.promise(
       async () => {
@@ -544,7 +550,8 @@ export default function VehiclesForm2({ id }: { id: string }) {
         } = values
 
         try {
-          await supabase
+          console.log('update', values)
+          const { data: updated, error: updatedERROR } = await supabase
             .from('vehicles')
             .update({
               type_of_vehicle: data.tipe_of_vehicles.find(
@@ -559,11 +566,14 @@ export default function VehiclesForm2({ id }: { id: string }) {
               domain: domain?.toUpperCase(),
               intern_number: intern_number,
               picture: picture,
-              allocated_to: values.allocated_to,
+              // allocated_to: values.allocated_to,
             })
             .eq('id', vehicle?.id)
             .eq('company_id', actualCompany?.id)
             .select()
+
+          console.log('updated', updated)
+          console.log('updatedERROR', updatedERROR)
 
           const id = vehicle?.id
           const fileExtension = imageFile?.name.split('.').pop()
@@ -1154,7 +1164,9 @@ export default function VehiclesForm2({ id }: { id: string }) {
                       className="input w-[250px]"
                       placeholder="Ingrese el dominio"
                       value={
-                        field.value !== '' ? field.value : vehicle?.domain || ''
+                        field.value !== ''
+                          ? field.value ?? ''
+                          : vehicle?.domain ?? ''
                       }
                       defaultValue={vehicle?.domain}
                       onChange={e => {
@@ -1199,7 +1211,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   </FormItem>
                 )}
               />
-              <div className=" min-w-[250px] flex flex-col gap-2">
+              {/* <div className=" min-w-[250px] flex flex-col gap-2">
                 <FormField
                   control={form.control}
                   name="allocated_to"
@@ -1218,7 +1230,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                     </>
                   )}
                 />
-              </div>
+              </div> */}
               <div className="w-[300px] flex  gap-2">
                 <FormField
                   control={form.control}
