@@ -73,8 +73,7 @@ export async function EditCompany(formData: FormData, url: string) {
     .from('company')
     .select('id')
     .eq('company_cuit', formattedData.company_cuit)
-    console.log(companyId)
-  console.log(formattedData, "formateddata")
+    
   const { data, error: companyError } = await supabase
     .from('company')
     .update(formattedData)
@@ -83,11 +82,11 @@ export async function EditCompany(formData: FormData, url: string) {
     .eq('id', companyId?.[0].id)
     .select('*');
     
-    console.log(data)
+   
   revalidatePath('/dashboard', 'layout')
   
   // revalidatePath('/dashboard')
-  console.log({ error: companyError, data })
+ 
   return { error: companyError, data }
   //return data
   //redirijir al dashboard

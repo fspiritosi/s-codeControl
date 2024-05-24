@@ -22,7 +22,7 @@ export default function CityInput({
   defaultProvince,
   defaultCity,
 }: Props) {
-  console.log(defaultCity, 'defaultCity')
+  
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null)
   const [cities, setCities] = useState<any[] | null>([])
   const [cityFiltered, setCityFiltered] = useState<any[] | null>(cities || [])

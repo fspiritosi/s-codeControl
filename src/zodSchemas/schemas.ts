@@ -127,25 +127,25 @@ export const companySchema = z.object({
       message: 'El nombre debe tener al menos 2 caracteres.',
     })
     .max(30, { message: 'La compañia debe tener menos de 30 caracteres.' }),
-  // company_cuit: z
-  //   .string()
-  //   .refine(value => /^\d{11}$/.test(value), {
-  //     message: 'El CUIT debe contener 11 números.',
-  //   })
-  //   .refine(
-  //     cuil => {
-  //       return validarCUIL(cuil)
-  //     },
-  //     { message: 'El CUIT es inválido' },
-  //   )
-  //   .refine(
-  //     async value => {
-  //       return await validateDuplicatedCuil(value)
-  //     },
-  //     {
-  //       message: 'Ya existe una compañía con este CUIT.',
-  //     },
-  //   ),
+  company_cuit: z
+    .string()
+    .refine(value => /^\d{11}$/.test(value), {
+      message: 'El CUIT debe contener 11 números.',
+    })
+    .refine(
+      cuil => {
+        return validarCUIL(cuil)
+      },
+      { message: 'El CUIT es inválido' },
+    )
+    .refine(
+      async value => {
+        return await validateDuplicatedCuil(value)
+      },
+      {
+        message: 'Ya existe una compañía con este CUIT.',
+      },
+    ),
   
   description: z
     .string()
@@ -230,21 +230,21 @@ export const editCompanySchema = z.object({
       },
       { message: 'El CUIT es inválido' },
     )
-    // .refine((value) => {
-    //   return new Promise(async (resolve, reject) => {
-    //     try {
-    //       const isDuplicated = await validateDuplicatedCuil(value);
-    //       if (!isDuplicated) {
-    //         resolve(true);
-    //       } else {
-    //         reject(new Error('Ya existe una compañía con este CUIT.'));
-    //       }
-    //     } catch (error) {
-    //       reject(error);
-    //     }
-    //   });
-    // }),
-    ,
+    .refine((value) => {
+      return new Promise(async (resolve, reject) => {
+        try {
+          const isDuplicated = await validateDuplicatedCuil(value);
+          if (!isDuplicated) {
+            resolve(true);
+          } else {
+            reject(new Error('Ya existe una compañía con este CUIT.'));
+          }
+        } catch (error) {
+          reject(error);
+        }
+      });
+    }),
+    
   description: z
     .string()
     .min(3, {

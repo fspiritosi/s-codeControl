@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { supabaseServer } from './lib/supabase/server'
+import { cookies } from 'next/headers'
 
 export async function middleware(req: NextRequest) {
   // await updateSession(req)
@@ -31,20 +32,9 @@ export async function middleware(req: NextRequest) {
     .select(`*`)
     .eq('profile_id', data?.[0]?.id)
 
-  if (
-    !Companies?.length &&
-    !share_company_users?.length &&
-    !req.url.includes('/dashboard/company/new')
-  ) {
-    return NextResponse.redirect(new URL('/dashboard/company/new', req.url))
-  }
-
-  const theme = response.cookies.get('theme')
-  const actualCompanyId = req.cookies.get('actialCompanyId')
-  // const actualNoOwner :string | null = req.cookies.get('actualComp')?.value
-  const actualNoOwnerValue: string | null =
+    const actualNoOwnerValue: string | null =
     req.cookies.get('actualComp')?.value ?? null
-
+    
   const actualNoOwner = actualNoOwnerValue
     ? actualNoOwnerValue.replace(/^"|"$/g, '')
     : null
@@ -55,8 +45,22 @@ export async function middleware(req: NextRequest) {
     .select('role')
     .eq('profile_id ', data?.[0]?.id)
     .eq('company_id', actualNow)
+  
+    response.cookies.set('guestRole', guestRole?.[0]?.role)
 
-  response.cookies.set('guestRole', guestRole?.[0]?.role)
+  if (
+    !Companies?.length &&
+    !share_company_users?.length &&
+    !req.url.includes('/dashboard/company/new')
+  ) {
+    return NextResponse.redirect(new URL('/dashboard/company/new', req.url))
+  }
+
+  //const theme = response.cookies.get('theme')
+  const actualCompanyId = req.cookies.get('actialCompanyId')
+  // const actualNoOwner :string | null = req.cookies.get('actualComp')?.value
+  
+ 
   const userRole = data?.[0]?.role
 
   const guestUser = [
@@ -92,7 +96,7 @@ export async function middleware(req: NextRequest) {
       redirectUrl.pathname = '/dashboard'
       return NextResponse.redirect(redirectUrl.toString())
     }
-
+    response.cookies.set('guestRole', guestRole?.[0]?.role)
     if (
       userRole === 'CodeControlClient' &&
       codeControlClientUser.some(url => req.url.includes(url))
