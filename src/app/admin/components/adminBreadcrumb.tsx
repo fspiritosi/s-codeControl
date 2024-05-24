@@ -15,7 +15,7 @@ export default function AdminBreadcrumb(){
 
     const path = usePathname()
     const cortePath = path.split('/')
-    const pasos = cortePath.slice(2)
+    const pasos = cortePath.slice(2) 
  
     return(
         <Breadcrumb className="hidden md:flex">

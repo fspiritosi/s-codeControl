@@ -1,5 +1,5 @@
+'use client'
 import * as React from "react"
-import Image from "next/image"
 import Link from "next/link"
 import {
 
@@ -14,21 +14,26 @@ import {
 
   Users2,
 } from "lucide-react"
-
-
-
+import Image from "next/image"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import Logo from '../../../../public/logo-azul.png'
+import { usePathname } from "next/navigation"
+
 
 export default function AdminSideBar() {
 
-
+   
 
     //TODO hacer un condicional de bg-acent para que el resaltado este en el que corresponde según el path
+
+    const path = usePathname()
+    const active = "flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+    const noActive = "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
 
 
 
@@ -42,7 +47,7 @@ export default function AdminSideBar() {
               href="#"
               className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
             >
-              <Package2 className="h-4 w-4 transition-all group-hover:scale-110" />
+              <Image src={Logo} alt="Logo Code Control" height={16} width={16}></Image>
               <span className="sr-only">Code Control</span>
             </Link>
             
@@ -50,7 +55,7 @@ export default function AdminSideBar() {
               <TooltipTrigger asChild>
                 <Link
                   href="/admin/panel"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                  className={path.includes("/panel") ? active : noActive}
                 >
                   <Home className="h-5 w-5" />
                   <span className="sr-only">Panel</span>
@@ -62,7 +67,7 @@ export default function AdminSideBar() {
               <TooltipTrigger asChild>
                 <Link
                   href="#"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                  className={path.includes("/clients") ? active : noActive}
                 >
                   <ShoppingCart className="h-5 w-5" />
                   <span className="sr-only">Clientes</span>
@@ -74,7 +79,7 @@ export default function AdminSideBar() {
               <TooltipTrigger asChild>
                 <Link
                   href="#"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                  className={path.includes("/modulos") ? active : noActive}
                 >
                   <Package className="h-5 w-5" />
                   <span className="sr-only">Modulos</span>
@@ -86,7 +91,7 @@ export default function AdminSideBar() {
               <TooltipTrigger asChild>
                 <Link
                   href="#"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                  className={path.includes("/usuarios") ? active : noActive}
                 >
                   <Users2 className="h-5 w-5" />
                   <span className="sr-only">Usuarios</span>
@@ -98,7 +103,7 @@ export default function AdminSideBar() {
               <TooltipTrigger asChild>
                 <Link
                   href="#"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                  className={path.includes("/estadisticas") ? active : noActive}
                 >
                   <LineChart className="h-5 w-5" />
                   <span className="sr-only">Estadisticas</span>
@@ -110,7 +115,7 @@ export default function AdminSideBar() {
               <TooltipTrigger asChild>
                 <Link
                   href="/admin/auditor"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-accent-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                  className={path.includes( "/auditor") ? active : noActive}
                 >
                   <SearchCode className="h-5 w-5" />
                   <span className="sr-only">Auditor</span>
