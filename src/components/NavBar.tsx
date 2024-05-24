@@ -81,6 +81,8 @@ export default function NavBar() {
   const notifications = useLoggedUserStore(state => state.notifications)
   const avatarUrl = actualUser && actualUser.length > 0 ? actualUser[0] : ''
 
+  console.log(actualUser)
+
   const handleLogout = async () => {
     try {
       await logout()
@@ -268,6 +270,7 @@ export default function NavBar() {
         )}
       </div>
       <div className="flex gap-8 items-center">
+      {actualUser[0].role === 'Admin' || actualUser[0].role === 'Super Admin' || actualUser[0].role === 'Developer' ? <Link href='/admin/panel'><Button variant='default'>Panel</Button></Link> : null}
         <DropdownMenu>
           <DropdownMenuTrigger>
             <div className="relative">
