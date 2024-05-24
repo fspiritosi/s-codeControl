@@ -101,7 +101,7 @@ export const AuditorColums: ColumnDef<Colum>[] = [
     header: 'Auditar',
     cell: ({ row }) => {
       return (
-       <Link href={`auditor/${row.original.id}`}>
+       <Link href={`/admin/auditor/${row.original.id}`}>
           <Button>Auditar</Button>
        </Link>
       )
