@@ -15,7 +15,7 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // // console.log(await supabase.auth.getUser(),'await supabase.auth.getSession()');
+  
 
   const { data } = await supabase
     .from('profile')
@@ -46,7 +46,7 @@ export async function middleware(req: NextRequest) {
     .eq('profile_id ', data?.[0]?.id)
     .eq('company_id', actualNow)
   
-    response.cookies.set('guestRole', guestRole?.[0]?.role)
+    //response.cookies.set('guestRole', guestRole?.[0]?.role)
 
   if (
     !Companies?.length &&
