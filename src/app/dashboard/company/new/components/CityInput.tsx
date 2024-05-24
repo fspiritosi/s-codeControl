@@ -26,7 +26,7 @@ export default function CityInput({
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null)
   const [cities, setCities] = useState<any[] | null>([])
   const [cityFiltered, setCityFiltered] = useState<any[] | null>(cities || [])
-  const [selectedCity, setSelectedCity] = useState<string | null>(null)
+  const [selectedCity, setSelectedCity] = useState<string | null>(defaultCity?.id?.toString() || null)
 
   const handleFetchCities = async (id: string) => {
     const supabase = supabaseBrowser()
@@ -90,7 +90,7 @@ export default function CityInput({
         <Select
           value={selectedCity || undefined}
           onValueChange={handleCityChange}
-          defaultValue={defaultCity?.id.toString()}
+          defaultValue={defaultCity?.id?.toString()}
           name="city"
         >
           <SelectTrigger

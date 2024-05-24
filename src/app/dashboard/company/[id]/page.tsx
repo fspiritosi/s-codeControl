@@ -17,7 +17,8 @@ import { cn } from '@/lib/utils'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
 import { revalidatePath } from 'next/cache'
 import CityInput from '../new/components/CityInput'
-import EditCompanyButton from './components/EditCompanyButton'
+import CreateCompanyButton from '../new/components/CreateCompanyButton'
+import EditCompanyButton from '../new/components/EditCompanyButton'
 export default async function companyRegister({
   params,
 }: {
@@ -182,7 +183,7 @@ export default async function companyRegister({
               </div>
               <CityInput
                 provinces={provinces}
-                defaultProvince={companyData.province_id}
+                defaultProvince={companyData?.province_id}
                 defaultCity={companyData.city}
               />
               <div>
@@ -235,7 +236,7 @@ export default async function companyRegister({
                 <Checkbox id="by_defect" name="by_defect" />
               </div>
             </div>
-            <EditCompanyButton />
+            <EditCompanyButton defaultImage={companyData?.company_logo} />
           </form>
         </div>
       </Card>

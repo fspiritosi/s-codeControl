@@ -56,7 +56,7 @@ export async function middleware(req: NextRequest) {
     .eq('profile_id ', data?.[0]?.id)
     .eq('company_id', actualNow)
 
-  // response.cookies.set('guestRole', guestRole?.[0]?.role)
+  response.cookies.set('guestRole', guestRole?.[0]?.role)
   const userRole = data?.[0]?.role
 
   const guestUser = [

@@ -127,25 +127,26 @@ export const companySchema = z.object({
       message: 'El nombre debe tener al menos 2 caracteres.',
     })
     .max(30, { message: 'La compañia debe tener menos de 30 caracteres.' }),
-  company_cuit: z
-    .string()
-    .refine(value => /^\d{11}$/.test(value), {
-      message: 'El CUIT debe contener 11 números.',
-    })
-    .refine(
-      cuil => {
-        return validarCUIL(cuil)
-      },
-      { message: 'El CUIT es inválido' },
-    )
-    .refine(
-      async value => {
-        return await validateDuplicatedCuil(value)
-      },
-      {
-        message: 'Ya existe una compañía con este CUIT.',
-      },
-    ),
+  // company_cuit: z
+  //   .string()
+  //   .refine(value => /^\d{11}$/.test(value), {
+  //     message: 'El CUIT debe contener 11 números.',
+  //   })
+  //   .refine(
+  //     cuil => {
+  //       return validarCUIL(cuil)
+  //     },
+  //     { message: 'El CUIT es inválido' },
+  //   )
+  //   .refine(
+  //     async value => {
+  //       return await validateDuplicatedCuil(value)
+  //     },
+  //     {
+  //       message: 'Ya existe una compañía con este CUIT.',
+  //     },
+  //   ),
+  
   description: z
     .string()
     .min(3, {
@@ -229,14 +230,21 @@ export const editCompanySchema = z.object({
       },
       { message: 'El CUIT es inválido' },
     )
-    .refine(
-      async value => {
-        return await validateDuplicatedCuil(value)
-      },
-      {
-        message: 'Ya existe una compañía con este CUIT.',
-      },
-    ),
+    // .refine((value) => {
+    //   return new Promise(async (resolve, reject) => {
+    //     try {
+    //       const isDuplicated = await validateDuplicatedCuil(value);
+    //       if (!isDuplicated) {
+    //         resolve(true);
+    //       } else {
+    //         reject(new Error('Ya existe una compañía con este CUIT.'));
+    //       }
+    //     } catch (error) {
+    //       reject(error);
+    //     }
+    //   });
+    // }),
+    ,
   description: z
     .string()
     .min(3, {
@@ -290,18 +298,17 @@ export const editCompanySchema = z.object({
     .string()
     .min(2, { message: 'Country debe tener al menos 2 caracteres.' }),
   province_id: z
-    .number()
+    .string()
     .min(1, { message: 'Province debe tener al menos 1 caracteres.' }),
   industry: z
-    .number()
+    .string()
     .min(2, { message: 'Industry debe tener al menos 2 caracteres.' }),
   city: z
     .string()
     .min(1, { message: 'City debe tener al menos 1 caracteres.' }),
   company_logo: z.string().optional(),
   by_defect: z.boolean().optional(),
-  //employees_id: z.string().nullable(),
-})
+});
 
 export const accordionSchema = z
   .object({

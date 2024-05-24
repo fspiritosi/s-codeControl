@@ -42,7 +42,7 @@ export default function CreateCompanyButton() {
   const clientAccion = async (formData: FormData) => {
     const values = Object.fromEntries(formData.entries())
     const result = await companySchema.safeParseAsync(values)
-
+    
     Object.keys(values).forEach(key => {
       const element = document.getElementById(`${key}_error`)
       if (element) {

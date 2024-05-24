@@ -67,6 +67,7 @@ export function UploadImage({
             type: `image/${fileExtension}`,
           },
         )
+        
         const uploadedImageUrl = await uploadImage(renamedFile, imageBucket)
 
         const companyImage = `${url}/${imageBucket}/${companyId.replace(
@@ -88,6 +89,7 @@ export function UploadImage({
       }
     }
   }
+  
 
   return (
     <>
