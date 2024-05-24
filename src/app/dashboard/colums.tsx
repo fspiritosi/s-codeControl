@@ -621,7 +621,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
 
       if (isNoPresented) {
         return (
-          <Button disabled variant="destructive">
+          <Button disabled variant="link">
             Falta subir documento
           </Button>
         )
