@@ -96,7 +96,7 @@ export async function middleware(req: NextRequest) {
       redirectUrl.pathname = '/dashboard'
       return NextResponse.redirect(redirectUrl.toString())
     }
-    response.cookies.set('guestRole', guestRole?.[0]?.role)
+    //response.cookies.set('guestRole', guestRole?.[0]?.role)
     if (
       userRole === 'CodeControlClient' &&
       codeControlClientUser.some(url => req.url.includes(url))
