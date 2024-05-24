@@ -57,7 +57,7 @@ export async function middleware(req: NextRequest) {
   }
 
   //const theme = response.cookies.get('theme')
-  const actualCompanyId = req.cookies.get('actialCompanyId')
+  //const actualCompanyId = req.cookies.get('actialCompanyId')
   // const actualNoOwner :string | null = req.cookies.get('actualComp')?.value
   
  
