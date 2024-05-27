@@ -8,7 +8,7 @@ import {
   SearchCode,
   Package,
   Package2,
-
+  DatabaseIcon,
   Settings,
   ShoppingCart,
 
@@ -122,6 +122,18 @@ export default function AdminSideBar() {
                 </Link>
               </TooltipTrigger>
               <TooltipContent side="right">Auditor</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href="/admin/tablas"
+                  className={path.includes( "/tablas") ? active : noActive}
+                >
+                  <DatabaseIcon className="h-5 w-5" />
+                  <span className="sr-only">Tablas</span>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">Tablas</TooltipContent>
             </Tooltip>
           </nav>
           <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-4">
