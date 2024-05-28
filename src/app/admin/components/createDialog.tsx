@@ -12,10 +12,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { PlusCircle } from "lucide-react"
 import { supabase } from "../../../../supabase/supabase"
+import { redirect } from 'next/navigation'
+ 
+export function CreateDialog({title, dbName}:any, ) {
 
-export function CreateDialog() {
-
-
+  console.log(dbName)
+ 
     async function createDiagram(formData:FormData) {
         'use server'
 
@@ -26,12 +28,13 @@ export function CreateDialog() {
         console.log(diagramFormData.name)
         
         const { data, error } = await supabase
-        .from('work-diagram')
+        .from(dbName)
         .insert([
         { name: diagramFormData.name },
         ])
         .select()
         //TODO falta la notificación y que cierre el dialogo de manera automática
+
     }
 
 
@@ -43,15 +46,15 @@ export function CreateDialog() {
       <Button size="sm" className="h-7 gap-1">
           <PlusCircle className="h-3.5 w-3.5" />
           <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-            Nuevo Diagrama
+            Añadir nuevo
           </span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Nuevo Diagrama de Trabajo</DialogTitle>
+          <DialogTitle>Nuevo {title}</DialogTitle>
           <DialogDescription>
-            Crea un nuevo diagrama de trabajo
+            Crea un nuevo {title}
           </DialogDescription>
         </DialogHeader>
         <form action={createDiagram}>
@@ -64,7 +67,7 @@ export function CreateDialog() {
                 <Input
                 id="name"
                 name="name"
-                defaultValue="Lunes a Viernes"
+                placeholder="Ingresa un nuevo tipo"
                 className="col-span-3"
                 />
             </div>
