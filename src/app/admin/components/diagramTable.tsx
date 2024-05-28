@@ -77,7 +77,6 @@ export default async function DiagramTable(){
                   </TableCell>
                   <TableCell>
                     {diagramType.isActive ? <Badge variant="outline">Activo</Badge> : <Badge variant="default">Inactivo</Badge>}
-                    
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {format(diagramType.created_at, 'yyyy')}
