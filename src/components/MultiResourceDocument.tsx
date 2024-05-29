@@ -389,7 +389,6 @@ export default function MultiResourceDocument({
                       <Input
                         readOnly
                         type="text"
-                        accept=".jpg, .jpeg, .png, .gif, .bmp, .tif, .tiff"
                         onClick={() => fileInputRef?.current?.click()} // Abre el diálogo de selección de archivos
                         className="self-center cursor-pointer"
                         placeholder={
