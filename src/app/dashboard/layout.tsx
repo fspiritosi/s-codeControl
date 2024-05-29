@@ -158,7 +158,7 @@ export default async function DashboardLayout({
         share_company_users={share_company_users}
       />
       <SideBar />
-      <div className="flex flex-col w-full mt-1 md:mt-0">
+      <div className="flex flex-col w-full mt-1 md:mt-0 bg-muted/40">
         <NavBar />
         <div>{children}</div>
       </div>

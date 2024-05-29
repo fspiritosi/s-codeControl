@@ -1,7 +1,5 @@
 'use client'
-
 import * as React from 'react'
-
 import { CardDescription, CardHeader } from '@/components/ui/card'
 import {
   ResizableHandle,
@@ -11,33 +9,34 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { type Mail } from '../data'
 import { FormDisplay, FormularioPersonalizado } from './mail-list'
-// import { MailList } from './mail-list'
 interface MailProps {
-  accounts: {
-    label: string
-    email: string
-    icon: React.ReactNode
-  }[]
-  mails: Mail[]
   defaultLayout?: number[] | undefined
   defaultCollapsed?: boolean
   navCollapsedSize: number
 }
 
-interface Campo {
-  tipo: string
-  placeholder?: string
-  opciones?: string[]
+enum types {
+  Texto = 'Texto',
+  AreaTexto = 'Área de texto',
+  Etiqueta = 'Etiqueta',
+  NombreFormulario = 'Nombre del formulario'
 }
 
+interface Campo {
+  tipo: types
+  placeholder?: string
+  opciones?: string[]
+  value?: string
+  id: string
+}
 export function Mail({ defaultLayout = [265, 440, 655] }: MailProps) {
   const [campos, setCampos] = React.useState<Campo[]>([
     {
-      tipo: 'Nombre del formulario',
+      tipo: types.NombreFormulario,
       placeholder: 'Ingresa el nombre del formulario',
-    }, // Campo por defecto
+      id: '1'
+    },
   ])
 
   return (

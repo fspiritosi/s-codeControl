@@ -13,13 +13,22 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { TrashIcon } from '@radix-ui/react-icons'
+import { Reorder } from 'framer-motion'
 import { useState } from 'react'
 
+enum types {
+  Texto = 'Texto',
+  AreaTexto = 'Área de texto',
+  Etiqueta = 'Etiqueta',
+  NombreFormulario = 'Nombre del formulario'
+}
+
 interface Campo {
-  tipo: string
+  tipo: types
   placeholder?: string
   opciones?: string[]
   value?: string
+  id: string
 }
 export function FormularioPersonalizado({
   campos,
@@ -31,8 +40,6 @@ export function FormularioPersonalizado({
   const [tipoSeleccionado, setTipoSeleccionado] = useState('')
 
   const [selectKey, setSelectKey] = useState(0)
-
-  console.log(campos)
 
   // Actualiza la clave del Select cada vez que se agrega un campo
   const agregarCampo = (campo: Campo) => {
@@ -49,7 +56,7 @@ export function FormularioPersonalizado({
     switch (campo.tipo) {
       case 'Texto':
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full cursor-grabbing" key={campo.id}>
             <div className="flex items-center gap-2 mb-3">
               <Label>{campo.tipo}</Label>
               <TrashIcon
@@ -66,7 +73,7 @@ export function FormularioPersonalizado({
         )
       case 'Área de texto':
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full cursor-grabbing" key={campo.id}>
             <div className="flex items-center gap-2 mb-3">
               <Label>{campo.tipo}</Label>
               <TrashIcon
@@ -83,7 +90,7 @@ export function FormularioPersonalizado({
         )
       case 'Etiqueta':
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full cursor-grabbing" key={campo.id}>
             <div className="flex items-center gap-2 mb-3">
               <Label>{campo.tipo}</Label>
               <TrashIcon
@@ -100,7 +107,7 @@ export function FormularioPersonalizado({
         )
       case 'Nombre del formulario':
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full cursor-grabbing" key={campo.id}>
             <Label>{campo.tipo}</Label>
             <Input
               placeholder={campo.placeholder}
@@ -118,23 +125,32 @@ export function FormularioPersonalizado({
   const manejarSeleccion = (tipo: string) => {
     switch (tipo) {
       case 'Texto':
-        agregarCampo({ tipo: 'Texto', placeholder: 'Ingresa texto' })
+        agregarCampo({
+          tipo: types.Texto,
+          placeholder: 'Ingresa texto',
+          id: new Date().getTime().toString(),
+        })
         break
       case 'Área de texto':
         agregarCampo({
-          tipo: 'Área de texto',
+          tipo:  types.AreaTexto,
           placeholder: 'Ingresa descripción',
+          id: new Date().getTime().toString(),
         })
         break
       case 'Etiqueta':
-        agregarCampo({ tipo: 'Etiqueta', placeholder: 'Ingresa etiqueta' })
+        agregarCampo({
+          tipo:  types.Etiqueta,
+          placeholder: 'Ingresa etiqueta',
+          id: new Date().getTime().toString(),
+        })
         break
-      // Agrega aquí más casos para otros tipos de campos
       default:
         break
     }
     setTipoSeleccionado('') // Restablecer el tipo seleccionado después de agregar un campo
   }
+
   const handleInputChange =
     (index: number) =>
     (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -145,12 +161,19 @@ export function FormularioPersonalizado({
   return (
     <ScrollArea className="flex flex-col gap-2 p-4 pt-0 space-y-2 mb-4 max-h-[68vh]">
       <p>Edita los campos del formulario</p>
-      <form className="space-y-2 mb-4">
-        {campos.map((campo, index) => (
-          <Card key={index} className="flex p-2">
-            {renderizarCampo(campo, index)}
-          </Card>
-        ))}
+      <form>
+        <Reorder.Group
+          axis="y"
+          className="space-y-2 mb-4"
+          values={campos}
+          onReorder={setCampos}
+        >
+          {campos.map((campo, index) => (
+            <Reorder.Item key={campo.id} value={campo}>
+              <Card className="flex p-2">{renderizarCampo(campo, index)}</Card>
+            </Reorder.Item>
+          ))}
+        </Reorder.Group>
       </form>
       <Select key={selectKey} onValueChange={e => manejarSeleccion(e)}>
         <SelectTrigger>
@@ -166,20 +189,24 @@ export function FormularioPersonalizado({
   )
 }
 
-interface Campo {
-  tipo: string
-  placeholder?: string
-  opciones?: string[]
-}
-
 interface MailDisplayProps {
   campos: Campo[]
 }
 
 export function FormDisplay({ campos }: MailDisplayProps) {
-  console.log(campos, 'campos')
   const renderizarCampo = (campo: Campo, index: number) => {
     switch (campo.tipo) {
+      case 'Nombre del formulario':
+        return (
+          <div className="w-full my-5" key={index}>
+            <Label>
+              <Badge className="text-xl">
+                {' '}
+                {campo.value ?? 'Nombre del formulario'}
+              </Badge>
+            </Label>
+          </div>
+        )
       case 'Texto':
         return (
           <div className="w-full" key={index}>
@@ -196,6 +223,7 @@ export function FormDisplay({ campos }: MailDisplayProps) {
           <div className="w-full" key={index}>
             <Textarea
               readOnly
+              disabled
               value={campo.value}
               placeholder={campo.placeholder}
             />
@@ -205,17 +233,6 @@ export function FormDisplay({ campos }: MailDisplayProps) {
         return (
           <div className="w-full my-2" key={index}>
             <CardDescription>{campo.value}</CardDescription>
-          </div>
-        )
-      case 'Nombre del formulario':
-        return (
-          <div className="w-full my-5" key={index}>
-            <Label>
-              <Badge className="text-xl">
-                {' '}
-                {campo.value ?? 'Nombre del formulario'}
-              </Badge>
-            </Label>
           </div>
         )
       default:
