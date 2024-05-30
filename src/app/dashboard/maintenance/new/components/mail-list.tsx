@@ -1,9 +1,12 @@
 'use client'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { ScrollArea } from '@/components/ui/scroll-area'
+
 import {
   Select,
   SelectContent,
@@ -11,16 +14,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
-import { TrashIcon } from '@radix-ui/react-icons'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { PlusCircledIcon, TrashIcon } from '@radix-ui/react-icons'
 import { Reorder } from 'framer-motion'
 import { useState } from 'react'
 
 enum types {
   Texto = 'Texto',
   AreaTexto = 'Área de texto',
-  Etiqueta = 'Etiqueta',
-  NombreFormulario = 'Nombre del formulario'
+  Separador = 'Separador',
+  NombreFormulario = 'Nombre del formulario',
+  Radio = 'Radio',
+  SeleccionMultiple = 'Seleccion multiple',
+  Date = 'Fecha',
+  Seleccion = 'Seleccion',
 }
 
 interface Campo {
@@ -29,6 +38,7 @@ interface Campo {
   opciones?: string[]
   value?: string
   id: string
+  title?: string
 }
 export function FormularioPersonalizado({
   campos,
@@ -52,6 +62,40 @@ export function FormularioPersonalizado({
       setCampos(campos.filter((_, i) => i !== index))
     }
   }
+  const handleNewOption = (index: number) => {
+    const newCampos = [...campos]
+
+    // Verificar si el campo tiene ya la propiedad opciones, si no, inicializarla
+    if (!newCampos[index].opciones) {
+      newCampos[index].opciones = []
+    }
+
+    // Agregar una nueva opción al campo
+    newCampos?.[index]?.opciones?.push('')
+
+    setCampos(newCampos)
+  }
+
+  const handleOptionsChange = (
+    value: string,
+    index: number,
+    optionIndex: number,
+  ) => {
+    const newCampos = [...campos]
+    if (index === 0) {
+      newCampos[index].opciones
+    }
+    console.log(value, 'value')
+    newCampos[optionIndex].opciones?.splice(index, 1, value)
+    setCampos(newCampos)
+  }
+
+  const handleTitleChange = (value: string, index: number) => {
+    const newCampos = [...campos]
+    newCampos[index].title = value
+    setCampos(newCampos)
+  }
+
   const renderizarCampo = (campo: Campo, index: number) => {
     switch (campo.tipo) {
       case 'Texto':
@@ -64,16 +108,22 @@ export function FormularioPersonalizado({
                 className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
               />
             </div>
-            <Input
-              placeholder={campo.placeholder}
-              value={campo.value}
-              onChange={handleInputChange(index)}
-            />
+            <div className="flex gap-2 flex-col">
+              <Input
+                placeholder="Titulo del campo"
+                onChange={e => handleTitleChange(e.target.value, index)}
+              />
+              <Input
+                placeholder={campo.placeholder}
+                value={campo.value}
+                onChange={handleInputChange(index)}
+              />
+            </div>
           </div>
         )
       case 'Área de texto':
         return (
-          <div className="w-full cursor-grabbing" key={campo.id}>
+          <div className="w-full cursor-grabbing " key={campo.id}>
             <div className="flex items-center gap-2 mb-3">
               <Label>{campo.tipo}</Label>
               <TrashIcon
@@ -81,28 +131,29 @@ export function FormularioPersonalizado({
                 className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
               />
             </div>
-            <Textarea
-              placeholder={campo.placeholder}
-              value={campo.value}
-              onChange={handleInputChange(index)}
-            />
+            <div className="flex gap-2 flex-col">
+              <Input
+                placeholder="Titulo del campo"
+                onChange={e => handleTitleChange(e.target.value, index)}
+              />
+              <Textarea
+                placeholder={campo.placeholder}
+                value={campo.value}
+                onChange={handleInputChange(index)}
+              />
+            </div>
           </div>
         )
-      case 'Etiqueta':
+      case 'Separador':
         return (
           <div className="w-full cursor-grabbing" key={campo.id}>
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2">
               <Label>{campo.tipo}</Label>
               <TrashIcon
                 onClick={() => borrarCampo(index)}
                 className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
               />
             </div>
-            <Input
-              placeholder={campo.placeholder}
-              value={campo.value}
-              onChange={handleInputChange(index)}
-            />
           </div>
         )
       case 'Nombre del formulario':
@@ -116,7 +167,179 @@ export function FormularioPersonalizado({
             />
           </div>
         )
-      // Agrega aquí más casos para otros tipos de campos
+      case 'Radio':
+        return (
+          <div className="w-full cursor-grabbing" key={campo.id}>
+            <div className="flex items-center gap-2 mb-3">
+              <Label>{campo.tipo}</Label>
+              <TrashIcon
+                onClick={() => borrarCampo(index)}
+                className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
+              />
+            </div>
+            <Input
+              placeholder="Titulo del campo"
+              onChange={e => handleTitleChange(e.target.value, index)}
+            />
+            <div className="flex py-3 items-center gap-2">
+              <Label>Opciones</Label>
+              <PlusCircledIcon
+                onClick={() => handleNewOption(index)}
+                className="size-5 cursor-pointer text-blue-700"
+              />
+            </div>
+            <div className="flex gap-2 flex-col">
+              {campo.opciones?.map((opcion, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between gap-4"
+                >
+                  <Input
+                    key={i}
+                    name={`campo_${index}`}
+                    placeholder={`Opcion ${i + 1}`}
+                    onChange={e =>
+                      handleOptionsChange(e.target.value, i, index)
+                    }
+                  />
+
+                  <TrashIcon
+                    onClick={() => {
+                      const newCampos = [...campos]
+                      newCampos[index].opciones?.splice(i, 1)
+                      setCampos(newCampos)
+                    }}
+                    className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      case 'Seleccion multiple':
+        return (
+          <div className="w-full cursor-grabbing" key={campo.id}>
+            <div className="flex items-center gap-2 mb-3">
+              <Label>{campo.tipo}</Label>
+              <TrashIcon
+                onClick={() => borrarCampo(index)}
+                className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
+              />
+            </div>
+            <Input
+              placeholder={campo.placeholder}
+              onChange={handleInputChange(index)}
+            />
+            <div className="flex py-3 items-center gap-2">
+              <Label>Opciones</Label>
+              <PlusCircledIcon
+                onClick={() => handleNewOption(index)}
+                className="size-5 cursor-pointer text-blue-700"
+              />
+            </div>
+            <div className="flex gap-2 flex-col">
+              {campo.opciones?.map((opcion, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between gap-4"
+                >
+                  <Input
+                    key={i}
+                    name={`option_${index}`}
+                    placeholder={`Opcion ${i + 1}`}
+                    onChange={e =>
+                      handleOptionsChange(e.target.value, i, index)
+                    }
+                  />
+
+                  <TrashIcon
+                    onClick={() => {
+                      const newCampos = [...campos]
+                      newCampos[index].opciones?.splice(i, 1)
+                      setCampos(newCampos)
+                    }}
+                    className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      case 'Fecha':
+        return (
+          <div className="w-full cursor-grabbing" key={campo.id}>
+            <div className="flex items-center gap-2 mb-3">
+              <Label>{campo.tipo}</Label>
+              <TrashIcon
+                onClick={() => borrarCampo(index)}
+                className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
+              />
+            </div>
+            <div className="flex gap-2 flex-col">
+              <Input
+                placeholder="Titulo del campo"
+                onChange={e => handleTitleChange(e.target.value, index)}
+              />
+              <Input
+                disabled
+                readOnly
+                className="w-full"
+                type="date"
+                placeholder={campo.placeholder}
+                onChange={handleInputChange(index)}
+              />
+            </div>
+          </div>
+        )
+      case 'Seleccion':
+        return (
+          <div className="w-full cursor-grabbing" key={campo.id}>
+            <div className="flex items-center gap-2 mb-3">
+              <Label>{campo.tipo}</Label>
+              <TrashIcon
+                onClick={() => borrarCampo(index)}
+                className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
+              />
+            </div>
+            <Input
+              placeholder={campo.placeholder}
+              onChange={handleInputChange(index)}
+            />
+            <div className="flex py-3 items-center gap-2">
+              <Label>Opciones</Label>
+              <PlusCircledIcon
+                onClick={() => handleNewOption(index)}
+                className="size-5 cursor-pointer text-blue-700"
+              />
+            </div>
+            <div className="flex gap-2 flex-col">
+              {campo.opciones?.map((opcion, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between gap-4"
+                >
+                  <Input
+                    key={i}
+                    name={`select_${index}`}
+                    placeholder={`Opcion ${i + 1}`}
+                    onChange={e =>
+                      handleOptionsChange(e.target.value, i, index)
+                    }
+                  />
+
+                  <TrashIcon
+                    onClick={() => {
+                      const newCampos = [...campos]
+                      newCampos[index].opciones?.splice(i, 1)
+                      setCampos(newCampos)
+                    }}
+                    className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )
       default:
         return null
     }
@@ -127,22 +350,53 @@ export function FormularioPersonalizado({
       case 'Texto':
         agregarCampo({
           tipo: types.Texto,
-          placeholder: 'Ingresa texto',
+          placeholder: 'Ingresa mensaje de ejemplo',
           id: new Date().getTime().toString(),
         })
         break
       case 'Área de texto':
         agregarCampo({
-          tipo:  types.AreaTexto,
+          tipo: types.AreaTexto,
           placeholder: 'Ingresa descripción',
           id: new Date().getTime().toString(),
         })
         break
-      case 'Etiqueta':
+      case 'Separador':
         agregarCampo({
-          tipo:  types.Etiqueta,
-          placeholder: 'Ingresa etiqueta',
+          tipo: types.Separador,
+          placeholder: 'Ingresa Separador',
           id: new Date().getTime().toString(),
+        })
+        break
+      case 'Radio':
+        agregarCampo({
+          tipo: types.Radio,
+          placeholder: 'Label del grupo de radio',
+          id: new Date().getTime().toString(),
+          opciones: [],
+        })
+        break
+      case 'Seleccion multiple':
+        agregarCampo({
+          tipo: types.SeleccionMultiple,
+          placeholder: 'Label del grupo de seleccion multiple',
+          id: new Date().getTime().toString(),
+          opciones: [],
+        })
+        break
+      case 'Fecha':
+        agregarCampo({
+          tipo: types.Date,
+          placeholder: 'Ingresa una fecha',
+          id: new Date().getTime().toString(),
+        })
+        break
+      case 'Seleccion':
+        agregarCampo({
+          tipo: types.Seleccion,
+          placeholder: 'Ingresa una opción',
+          id: new Date().getTime().toString(),
+          opciones: [],
         })
         break
       default:
@@ -164,7 +418,7 @@ export function FormularioPersonalizado({
       <form>
         <Reorder.Group
           axis="y"
-          className="space-y-2 mb-4"
+          className="space-y-2 mb-4 "
           values={campos}
           onReorder={setCampos}
         >
@@ -182,7 +436,11 @@ export function FormularioPersonalizado({
         <SelectContent>
           <SelectItem value="Texto">Texto</SelectItem>
           <SelectItem value="Área de texto">Área de texto</SelectItem>
-          <SelectItem value="Etiqueta">Etiqueta</SelectItem>
+          <SelectItem value="Separador">Separador</SelectItem>
+          <SelectItem value="Radio">Radio</SelectItem>
+          <SelectItem value="Seleccion multiple">Seleccion multiple</SelectItem>
+          <SelectItem value="Fecha">Fecha</SelectItem>
+          <SelectItem value="Seleccion">Seleccion</SelectItem>
         </SelectContent>
       </Select>
     </ScrollArea>
@@ -210,29 +468,106 @@ export function FormDisplay({ campos }: MailDisplayProps) {
       case 'Texto':
         return (
           <div className="w-full" key={index}>
-            <Input
-              readOnly
-              disabled
-              value={campo.value}
-              placeholder={campo.placeholder}
-            />
+            <CardDescription className="mb-2">
+              {campo.title ? campo.title : 'Titulo del campo'}
+            </CardDescription>
+            <Input value={campo.value} placeholder={campo.placeholder} />
           </div>
         )
       case 'Área de texto':
         return (
           <div className="w-full" key={index}>
-            <Textarea
-              readOnly
-              disabled
+            <CardDescription className="mb-2">
+              {campo.title ? campo.title : 'Titulo del campo'}
+            </CardDescription>
+            <Textarea value={campo.value} placeholder={campo.placeholder} />
+          </div>
+        )
+      case 'Separador':
+        return (
+          <div className="w-full my-2" key={index}>
+            <Separator>{campo.value}</Separator>
+          </div>
+        )
+      case 'Radio':
+        return (
+          <div className="w-full" key={index}>
+            <CardDescription className="mb-2">
+              {' '}
+              {campo.title ? campo.title : 'Titulo del campo'}
+            </CardDescription>
+            <RadioGroup className="flex gap-2 flex-col mt-2">
+              {campo.opciones?.map((opcion, i) => (
+                <div key={i} className="flex items-center space-x-2 ">
+                  <RadioGroupItem value={String(i)} id={String(i)} />
+                  <Label htmlFor={String(i)}>
+                    {opcion ? opcion : `Opcion ${i + 1}`}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
+        )
+      case 'Seleccion multiple':
+        return (
+          <div className="w-full" key={index}>
+            <CardDescription className="mb-2">
+              {' '}
+              {campo.title ? campo.title : 'Titulo del campo'}
+            </CardDescription>
+            <ToggleGroup
+              type="multiple"
+              className="flex w-full justify-start flex-wrap"
+            >
+              {campo.opciones?.map((opcion, i) => {
+                let icon = false
+                return (
+                  <ToggleGroupItem
+                    className="flex self-start border-muted-foreground border"
+                    key={i}
+                    value={opcion}
+                  >
+                    {opcion}
+                  </ToggleGroupItem>
+                )
+              })}
+            </ToggleGroup>
+          </div>
+        )
+      case 'Fecha':
+        return (
+          <div className="w-full" key={index}>
+            <CardDescription className="mb-2">
+              {campo.title ? campo.title : 'Titulo del campo'}
+            </CardDescription>
+            <Input
+              type="date"
               value={campo.value}
               placeholder={campo.placeholder}
             />
           </div>
         )
-      case 'Etiqueta':
+      case 'Seleccion':
         return (
-          <div className="w-full my-2" key={index}>
-            <CardDescription>{campo.value}</CardDescription>
+          <div className="w-full" key={index}>
+            <CardDescription className="mb-2">
+              {' '}
+              {campo.title ? campo.title : 'Titulo del campo'}
+            </CardDescription>
+            <Select>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona una opción" />
+              </SelectTrigger>
+              <SelectContent>
+                {campo.opciones?.map((opcion, i) => {
+                  return (
+                    <SelectItem key={i} value={opcion || `Opcion ${i + 1}`}>
+                      {opcion || `Opcion ${i + 1}`}
+                    </SelectItem>
+                  )
+                })}
+              </SelectContent>
+            </Select>
           </div>
         )
       default:
@@ -241,17 +576,15 @@ export function FormDisplay({ campos }: MailDisplayProps) {
   }
 
   return (
-    <ScrollArea className="h-screen px-8 my-5 overflow-auto">
+    <ScrollArea className="h-screen px-8 py-5 overflow-auto  rounded-e-xl rounded ">
       <CardTitle className="text-xl font-bold">
-        Preview del formulario
+        Vista previa del formulario
       </CardTitle>
-      {/* <CardDescription>
-        Crear un nuevo CheckList para el mantenimiento de los equipos.
-      </CardDescription> */}
-      <div>
+      <div className="space-y-3">
         {campos.map((campo, index) => (
           <div key={index}>{renderizarCampo(campo, index)}</div>
         ))}
+        <Button disabled={campos.length < 2}>Crear checkList</Button>
       </div>
     </ScrollArea>
   )

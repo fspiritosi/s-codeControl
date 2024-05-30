@@ -1,5 +1,4 @@
 'use client'
-import * as React from 'react'
 import { CardDescription, CardHeader } from '@/components/ui/card'
 import {
   ResizableHandle,
@@ -9,6 +8,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import * as React from 'react'
 import { FormDisplay, FormularioPersonalizado } from './mail-list'
 interface MailProps {
   defaultLayout?: number[] | undefined
@@ -19,8 +19,12 @@ interface MailProps {
 enum types {
   Texto = 'Texto',
   AreaTexto = 'Área de texto',
-  Etiqueta = 'Etiqueta',
-  NombreFormulario = 'Nombre del formulario'
+  Separador = 'Separador',
+  NombreFormulario = 'Nombre del formulario',
+  Radio = 'Radio',
+  SeleccionMultiple = 'Seleccion multiple',
+  Date = 'Fecha',
+  Seleccion = 'Seleccion',
 }
 
 interface Campo {
@@ -29,13 +33,14 @@ interface Campo {
   opciones?: string[]
   value?: string
   id: string
+  title?: string
 }
 export function Mail({ defaultLayout = [265, 440, 655] }: MailProps) {
   const [campos, setCampos] = React.useState<Campo[]>([
     {
       tipo: types.NombreFormulario,
       placeholder: 'Ingresa el nombre del formulario',
-      id: '1'
+      id: '1',
     },
   ])
 
@@ -62,7 +67,9 @@ export function Mail({ defaultLayout = [265, 440, 655] }: MailProps) {
           <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <Tabs defaultValue="new">
               <TabsList className="ml-6">
-                <TabsTrigger value="created">Creados</TabsTrigger>
+                <TabsTrigger disabled value="created">
+                  Creados
+                </TabsTrigger>
                 <TabsTrigger value="new">Nuevo</TabsTrigger>
               </TabsList>
               <Separator className="mt-3 mb-3" />
@@ -83,10 +90,12 @@ export function Mail({ defaultLayout = [265, 440, 655] }: MailProps) {
           </div>
         </ResizablePanel>
         <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
-          {/* <MailDisplay
-            mail={mails.find(item => item.id === mail.selected) || null}
-          /> */}
+        <ResizablePanel
+          className="relative"
+          defaultSize={defaultLayout[1]}
+          minSize={30}
+        >
+         <div className="absolute inset-0 h-full w-full bg-white dark:bg-slate-950/70 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:16px_16px] rounded-e-xl rounded "></div>
           <FormDisplay campos={campos} />
         </ResizablePanel>
       </ResizablePanelGroup>
