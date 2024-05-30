@@ -8,6 +8,7 @@ import { useState } from 'react'
 import MotionTransition from './Animation/MotionTransition'
 import { useTheme } from 'next-themes'
 import { ModeToggle } from '../ui/ToogleDarkButton'
+import { Button } from '../ui/button'
 
 function Header() {
   //--Estados locales--//
@@ -52,6 +53,7 @@ function Header() {
           className="block text-3xl md:hidden cursor-pointer"
           onClick={() => setOpenMobileMenu(!openMobileMenu)}
         />
+
         <div
           className={`${
             openMobileMenu ? 'block' : 'hidden'
@@ -63,14 +65,19 @@ function Header() {
                 key={id}
                 className="px-4 transition-all duration-500 ease-in-out"
               >
-                <Link href={idLink} className="text-lg hover:text-cyan-600">
+                <Link href={idLink} className=" hover:text-cyan-600">
                   {name}
                 </Link>
               </div>
             ))}
           </div>
         </div>
-      
+        <Link href="/login">
+                <Button variant='default'>Login</Button>
+        </Link>
+        <Link href="/register">
+                <Button variant='outline'>Registrate</Button>
+        </Link>
       </nav>
     </MotionTransition>
   )

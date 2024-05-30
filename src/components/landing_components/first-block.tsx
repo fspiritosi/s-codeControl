@@ -27,13 +27,13 @@ function FirstBlock() {
               En CodeControl, nos apasiona ayudar a las empresas a alcanzar sus objetivos. Combinamos <strong>control de procesos, desarrollo de software y consultoría organizacional  </strong> para ofrecerte soluciones integrales que generan resultados reales.
             </p>
           </Reveal>
-          <Reveal>
+          {/* <Reveal>
             <div className="my-8">
               <Link href="/login">
                 <Button variant={'primary'}>Empieza ahora</Button>
               </Link>
             </div>
-          </Reveal>
+          </Reveal> */}
         </div>
         <MotionTransition className="flex items-center justify-center">
           <Image
