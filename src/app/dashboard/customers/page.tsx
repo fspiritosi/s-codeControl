@@ -1,3 +1,4 @@
+"use client"
 import { MissingDocumentList } from '@/components/MissingDocumentList'
 import {
   Card,
@@ -7,19 +8,35 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { columns } from './columns'
+import { DataCustomers } from './data-table'
+import { supabase } from '../../../../supabase/supabase'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import{useState, useEffect} from "react"
+import { useLoggedUserStore } from '@/store/loggedUser'
 
+export default function Customers() {
+   //const actualCompany = cookies().get('actualComp')
+   //const supabase = supabaseServer()
+   const [customers, setCustomers] = useState([''])
+   const allCompany = useLoggedUserStore(state => state.allCompanies)
+   const [showInactive, setShowInactive] = useState(false)
+   useEffect(() => {
+    const fetchCustomers = async () => {
+      const { data , error } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('is_active', true)
+      
+      if (error) {
+        console.error('Error fetching customers:', error)
+      } else {
+        setCustomers(data)
+      }
+    }
 
-export default async function Customers() {
-  // const actualCompany = cookies().get('actualComp')
-  // const supabase = supabaseServer()
-
-  // const { data: company, error: profileError } = await supabase
-  //   .from('company')
-  //   .select('*')
-  //   .eq('id', actualCompany?.value)
-
-  // console.log(company, 'company')
+    fetchCustomers()
+  }, [])
 
   return (
     <div>
@@ -33,7 +50,7 @@ export default async function Customers() {
             <CardHeader className="flex flex-row items-start bg-muted dark:bg-muted/50 border-b-2">
               <div className="grid gap-1">
                 <CardTitle className="flex items-center text-lg ">
-                  Clientes y Contactos
+                  Clientes
                 </CardTitle>
                 <CardDescription className="capitalize">
                   Todos tus Clientes
@@ -41,18 +58,16 @@ export default async function Customers() {
               </div>
             </CardHeader>
 
-            <CardContent></CardContent>
-            <div>
-              <Tabs defaultValue="Clientes">
-                <CardContent>
-                  <TabsList>
-                    <TabsTrigger value="Clientes">Clientes</TabsTrigger>
-                    <TabsTrigger value="Contactos">Contactos</TabsTrigger>
-                  </TabsList>
-                </CardContent>
-                
-              </Tabs>
-            </div>
+            <CardContent>
+            <DataCustomers
+            columns={columns}
+            data={customers || []}
+            allCompany={allCompany}
+            showInactive={showInactive}
+            setShowInactive={setShowInactive}
+          />
+            </CardContent>
+            
           </div>
           <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
         </Card>
