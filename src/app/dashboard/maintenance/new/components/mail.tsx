@@ -8,6 +8,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { useLoggedUserStore } from '@/store/loggedUser'
 import * as React from 'react'
 import { FormDisplay, FormularioPersonalizado } from './mail-list'
 interface MailProps {
@@ -25,6 +26,8 @@ enum types {
   SeleccionMultiple = 'Seleccion multiple',
   Date = 'Fecha',
   Seleccion = 'Seleccion',
+  SeleccionPredefinida = 'Seleccion Predefinida',
+  Subtitulo = 'Subtitulo',
 }
 
 interface Campo {
@@ -35,7 +38,7 @@ interface Campo {
   id: string
   title?: string
 }
-export function Mail({ defaultLayout = [265, 440, 655] }: MailProps) {
+export function Mail() {
   const [campos, setCampos] = React.useState<Campo[]>([
     {
       tipo: types.NombreFormulario,
@@ -43,6 +46,8 @@ export function Mail({ defaultLayout = [265, 440, 655] }: MailProps) {
       id: '1',
     },
   ])
+
+  const actualCompany = useLoggedUserStore(state => state.actualCompany)
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -55,15 +60,17 @@ export function Mail({ defaultLayout = [265, 440, 655] }: MailProps) {
         }}
         className="h-full max-h-[800px] items-stretch p-0 m-0"
       >
-        <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
-          <div>
-            <CardHeader>
-              <h2 className="text-xl font-bold">Crear CheckList</h2>
+        <ResizablePanel
+        
+        minSize={30}>
+          <CardHeader>
+            <div>
+              <h2 className="text-2xl font-bold">Crear CheckList</h2>
               <CardDescription>
                 Crear un nuevo CheckList para el mantenimiento de los equipos.
               </CardDescription>
-            </CardHeader>
-          </div>
+            </div>
+          </CardHeader>
           <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <Tabs defaultValue="new">
               <TabsList className="ml-6">
@@ -92,10 +99,10 @@ export function Mail({ defaultLayout = [265, 440, 655] }: MailProps) {
         <ResizableHandle withHandle />
         <ResizablePanel
           className="relative"
-          defaultSize={defaultLayout[1]}
+          // defaultSize={defaultLayout[1]}
           minSize={30}
         >
-         <div className="absolute inset-0 h-full w-full bg-white dark:bg-slate-950/70 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:16px_16px] rounded-e-xl rounded "></div>
+          <div className="absolute inset-0 h-full w-full bg-white dark:bg-slate-950/70 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:16px_16px] rounded-e-xl rounded "></div>
           <FormDisplay campos={campos} />
         </ResizablePanel>
       </ResizablePanelGroup>

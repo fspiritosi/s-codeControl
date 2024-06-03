@@ -109,7 +109,6 @@ export default function VehiclesForm2({ id }: { id: string }) {
     models: [],
     types: [],
   })
-  const documetsFetch = useLoggedUserStore(state => state.documetsFetch)
 
   const preloadFormData = (vehicleData: VehicleType) => {
     form.setValue('type_of_vehicle', vehicleData.type_of_vehicle.toString())
@@ -439,7 +438,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
             user_id: string | undefined
           }[] = []
 
-          mandatoryDocuments?.Equipos.forEach(async document => {
+          mandatoryDocuments?.Equipos.forEach(document => {
             documentsMissing.push({
               applies: vehicle?.[0]?.id,
               id_document_types: document.id,
@@ -474,7 +473,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   type: `image/${fileExtension}`,
                 },
               )
-              const imggg = await uploadImage(renamedFile, 'vehicle_photos')
+              await uploadImage(renamedFile, 'vehicle_photos')
 
               try {
                 const vehicleImage =
@@ -488,7 +487,6 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   .eq('id', id)
                   .eq('company_id', actualCompany?.id)
               } catch (error) {}
-              documetsFetch()
             } catch (error: any) {
               throw new Error(JSON.stringify(error))
             }
@@ -606,7 +604,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
           }
 
           setReadOnly(true)
-          router
+          router.push('/dashboard/equipment')
         } catch (error) {
           throw new Error('Error al editar el vehículo')
         }

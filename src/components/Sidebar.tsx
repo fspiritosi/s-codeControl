@@ -33,19 +33,16 @@ export default function SideBar() {
       'postgres_changes',
       { event: '*', schema: 'public', table: 'documents_employees' },
       async payload => {
-        console.log(
-          'Change received!',
-          (payload.new as { [key: string]: any }).applies,
-        )
-
         let { data: employees, error } = await supabase
           .from('employees')
           .select('*,company_id(*)')
           .eq('id', (payload.new as { [key: string]: any }).applies)
 
-        if (employees?.[0].company_id.id !== actualCompany?.id) return
-
-        documetsFetch()
+        if (employees?.[0]?.company_id?.id === actualCompany?.id) {
+          documetsFetch()
+        } else {
+          return
+        }
       },
     )
     .subscribe()
@@ -55,11 +52,19 @@ export default function SideBar() {
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'documents_equipment' },
-      payload => {
+      async payload => {
+        let { data: vehicle, error } = await supabase
+          .from('vehicles')
+          .select('*,company_id(*)')
+          .eq('id', (payload.new as { [key: string]: any }).applies)
+
+        if (vehicle?.[0]?.company_id?.id !== actualCompany?.id) return
+
         documetsFetch()
       },
     )
     .subscribe()
+
 
   return (
     <div

@@ -554,6 +554,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
   const documetsFetch = async () => {
     // set({ isLoading: true })
+    console.log(get()?.actualCompany?.id,'get()?.actualCompany?.id');
+    if (!get()?.actualCompany?.id) return
     let { data, error } = await supabase
       .from('documents_employees')
       .select(
@@ -585,9 +587,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
     const typedData: VehiclesAPI[] | null = equipmentData as VehiclesAPI[]
 
     if (error) {
-      console.error('Error al obtener los documentos:', error)
+      return 
     } else {
-      
       const lastMonth = new Date()
       lastMonth.setMonth(new Date().getMonth() + 1)
 
@@ -616,7 +617,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
         return isExpired
       })
 
-      console.log(filteredVehiclesData, 'filteredVehiclesData')
 
       const formatDate = (dateString: string) => {
         if (!dateString) return 'No vence'

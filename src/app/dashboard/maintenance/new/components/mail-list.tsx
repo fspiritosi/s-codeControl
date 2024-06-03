@@ -1,4 +1,5 @@
 'use client'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
@@ -10,14 +11,22 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { PlusCircledIcon, TrashIcon } from '@radix-ui/react-icons'
+import { supabaseBrowser } from '@/lib/supabase/browser'
+import { useLoggedUserStore } from '@/store/loggedUser'
+import {
+  InfoCircledIcon,
+  PlusCircledIcon,
+  TrashIcon,
+} from '@radix-ui/react-icons'
 import { Reorder } from 'framer-motion'
 import { useState } from 'react'
 
@@ -30,6 +39,8 @@ enum types {
   SeleccionMultiple = 'Seleccion multiple',
   Date = 'Fecha',
   Seleccion = 'Seleccion',
+  SeleccionPredefinida = 'Seleccion Predefinida',
+  Subtitulo = 'Subtitulo',
 }
 
 interface Campo {
@@ -85,7 +96,6 @@ export function FormularioPersonalizado({
     if (index === 0) {
       newCampos[index].opciones
     }
-    console.log(value, 'value')
     newCampos[optionIndex].opciones?.splice(index, 1, value)
     setCampos(newCampos)
   }
@@ -228,7 +238,7 @@ export function FormularioPersonalizado({
             </div>
             <Input
               placeholder={campo.placeholder}
-              onChange={handleInputChange(index)}
+              onChange={e => handleTitleChange(e.target.value, index)}
             />
             <div className="flex py-3 items-center gap-2">
               <Label>Opciones</Label>
@@ -303,7 +313,7 @@ export function FormularioPersonalizado({
             </div>
             <Input
               placeholder={campo.placeholder}
-              onChange={handleInputChange(index)}
+              onChange={e => handleTitleChange(e.target.value, index)}
             />
             <div className="flex py-3 items-center gap-2">
               <Label>Opciones</Label>
@@ -340,6 +350,59 @@ export function FormularioPersonalizado({
             </div>
           </div>
         )
+      case 'Seleccion Predefinida':
+        return (
+          <div className="w-full cursor-grabbing" key={campo.id}>
+            <div className="flex items-center gap-2 mb-3">
+              <Label>{campo.tipo}</Label>
+              <TrashIcon
+                onClick={() => borrarCampo(index)}
+                className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
+              />
+            </div>
+            <Input
+              placeholder="Ingresar titulo"
+              onChange={e => handleTitleChange(e.target.value, index)}
+            />
+            <div className="flex gap-2 flex-col py-3">
+              <Select
+                onValueChange={e => {
+                  handleOptionsChange(e, 0, index)
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar opciones a mostrar" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Vehiculos">Vehiculos</SelectItem>
+                  <SelectItem value="Otros">Otros</SelectItem>
+                  <SelectItem value="Numero interno">Numero Interno</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <CardDescription className="flex items-center text-blue-600">
+              <InfoCircledIcon className="mr-2 size-4 " />
+              Las opciones solo incluiran los recursos vinculados al cliente
+            </CardDescription>
+          </div>
+        )
+      case 'Subtitulo':
+        return (
+          <div className="w-full cursor-grabbing" key={campo.id}>
+            <div className="flex items-center gap-2 mb-3">
+              <Label>{campo.tipo}</Label>
+              <TrashIcon
+                onClick={() => borrarCampo(index)}
+                className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
+              />
+            </div>
+            <Input
+              placeholder="Ingresar titulo"
+              onChange={e => handleTitleChange(e.target.value, index)}
+            />
+          </div>
+        )
+
       default:
         return null
     }
@@ -399,6 +462,21 @@ export function FormularioPersonalizado({
           opciones: [],
         })
         break
+      case 'Seleccion Predefinida':
+        agregarCampo({
+          tipo: types.SeleccionPredefinida,
+          placeholder: 'Ingresa una opción',
+          id: new Date().getTime().toString(),
+          opciones: [],
+        })
+        break
+      case 'Subtitulo':
+        agregarCampo({
+          tipo: types.Subtitulo,
+          placeholder: 'Ingresa un subtitulo',
+          id: new Date().getTime().toString(),
+        })
+        break
       default:
         break
     }
@@ -413,8 +491,16 @@ export function FormularioPersonalizado({
       setCampos(newCampos)
     }
   return (
-    <ScrollArea className="flex flex-col gap-2 p-4 pt-0 space-y-2 mb-4 max-h-[68vh]">
-      <p>Edita los campos del formulario</p>
+    <ScrollArea className="flex flex-col gap-2 p-4 pt-0 space-y-2  max-h-[68vh]">
+      <div>
+        <CardTitle className="mb-1 text-lg">
+          Edita los campos del formulario
+        </CardTitle>
+        <CardDescription className="flex items-center mb-4 text-blue-600">
+          <InfoCircledIcon className="text-blue-600 mr-2 size-4" />
+          Puedes arrastrarlos para ordenarlos!
+        </CardDescription>
+      </div>
       <form>
         <Reorder.Group
           axis="y"
@@ -440,7 +526,11 @@ export function FormularioPersonalizado({
           <SelectItem value="Radio">Radio</SelectItem>
           <SelectItem value="Seleccion multiple">Seleccion multiple</SelectItem>
           <SelectItem value="Fecha">Fecha</SelectItem>
+          <SelectItem value="Subtitulo">Subtitulo</SelectItem>
           <SelectItem value="Seleccion">Seleccion</SelectItem>
+          <SelectItem value="Seleccion Predefinida">
+            Seleccion Predefinida
+          </SelectItem>
         </SelectContent>
       </Select>
     </ScrollArea>
@@ -452,6 +542,11 @@ interface MailDisplayProps {
 }
 
 export function FormDisplay({ campos }: MailDisplayProps) {
+  const supabase = supabaseBrowser()
+
+  const vehicles = useLoggedUserStore(state => state.vehicles)
+
+  console.log(vehicles)
   const renderizarCampo = (campo: Campo, index: number) => {
     switch (campo.tipo) {
       case 'Nombre del formulario':
@@ -471,7 +566,7 @@ export function FormDisplay({ campos }: MailDisplayProps) {
             <CardDescription className="mb-2">
               {campo.title ? campo.title : 'Titulo del campo'}
             </CardDescription>
-            <Input value={campo.value} placeholder={campo.placeholder} />
+            <Input placeholder={campo.value} />
           </div>
         )
       case 'Área de texto':
@@ -480,7 +575,7 @@ export function FormDisplay({ campos }: MailDisplayProps) {
             <CardDescription className="mb-2">
               {campo.title ? campo.title : 'Titulo del campo'}
             </CardDescription>
-            <Textarea value={campo.value} placeholder={campo.placeholder} />
+            <Textarea placeholder={campo.value} />
           </div>
         )
       case 'Separador':
@@ -570,16 +665,107 @@ export function FormDisplay({ campos }: MailDisplayProps) {
             </Select>
           </div>
         )
+      case 'Seleccion Predefinida':
+        return (
+          <div className="w-full" key={index}>
+            <CardDescription className="mb-2">
+              {' '}
+              {campo.title ? campo.title : 'Titulo del campo'}
+            </CardDescription>
+            <Select>
+              <SelectTrigger>
+                <SelectValue
+                  placeholder='Seleccionar opcion'
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {campo.opciones?.map((opcion, i) => {
+                  if (opcion === 'Vehiculos') {
+                    return (
+                      <SelectGroup key={i}>
+                        <SelectLabel>Dominios</SelectLabel>
+
+                        {vehicles
+                          .filter(e => e.domain)
+                          .map(e => {
+                            return (
+                              <SelectItem key={e.domain} value={e.domain}>
+                                {e.domain}
+                              </SelectItem>
+                            )
+                          })}
+                      </SelectGroup>
+                    )
+                  }
+                  if (opcion === 'Otros') {
+                    return (
+                      <SelectGroup key={i}>
+                        <SelectLabel>Numero de serie</SelectLabel>
+                        {vehicles
+                          .filter(e => e.serie)
+                          .map(e => {
+                            return (
+                              <SelectItem key={e.serie} value={e.serie}>
+                                {e.serie}
+                              </SelectItem>
+                            )
+                          })}
+                      </SelectGroup>
+                    )
+                  }
+                  if (opcion === 'Numero interno') {
+                    return (
+                      <SelectGroup key={i}>
+                        <SelectLabel>Numero interno</SelectLabel>
+                        {vehicles
+                          .filter(e => e.intern_number)
+                          .map(e => {
+                            return (
+                              <SelectItem
+                                key={e.intern_number}
+                                value={e.intern_number}
+                              >
+                                {e.intern_number}
+                              </SelectItem>
+                            )
+                          })}
+                      </SelectGroup>
+                    )
+                  }
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+        )
+      case 'Subtitulo':
+        return (
+          <div className="w-full" key={index}>
+            <CardTitle className="mb-2 mt-1">
+              {campo.title ? campo.title : 'Titulo del campo'}
+            </CardTitle>
+          </div>
+        )
       default:
         return null
     }
   }
+  const actualCompany = useLoggedUserStore(state => state.actualCompany)
 
   return (
     <ScrollArea className="h-screen px-8 py-5 overflow-auto  rounded-e-xl rounded ">
-      <CardTitle className="text-xl font-bold">
-        Vista previa del formulario
-      </CardTitle>
+      <div className="flex justify-between items-center">
+        <CardTitle className="text-2xl font-bold">
+          Vista previa del formulario
+        </CardTitle>
+        <Avatar>
+          <AvatarImage
+            // src="https://github.com/shadcn.png"
+            src={actualCompany?.company_logo ?? ''}
+            alt="Logo de la empresa"
+          />
+          <AvatarFallback>CN</AvatarFallback>
+        </Avatar>
+      </div>
       <div className="space-y-3">
         {campos.map((campo, index) => (
           <div key={index}>{renderizarCampo(campo, index)}</div>
