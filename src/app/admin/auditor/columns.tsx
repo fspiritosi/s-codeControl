@@ -1,17 +1,7 @@
 'use client'
 
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@/components/ui/drawer'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { ColumnDef } from '@tanstack/react-table'
 import { ArrowUpDown } from 'lucide-react'
 import Link from 'next/link'
@@ -101,9 +91,12 @@ export const AuditorColums: ColumnDef<Colum>[] = [
     header: 'Auditar',
     cell: ({ row }) => {
       return (
-       <Link href={`/admin/auditor/${row.original.id}`}>
-          <Button>Auditar</Button>
-       </Link>
+        <Link
+          href={`/admin/auditor/${row.original.id}`}
+          className={buttonVariants({ variant: 'default' })}
+        >
+          Auditar
+        </Link>
       )
     },
   },
