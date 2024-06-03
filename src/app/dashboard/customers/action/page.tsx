@@ -18,23 +18,7 @@ export default async function EquipmentFormAction({
     .eq('applies', searchParams.id)
   revalidatePath('/dashboard/equipment/action')
 
-  // const { data: vehicleData, error } = await supabase
-  //       .from('vehicles')
-  //       .select(
-  //         '*, brand_vehicles(name), model_vehicles(name),types_of_vehicles(name),type(name)',
-  //       )
-  //       .eq('id', id)
-  //       .eq('company_id', actualCompany?.id)
-
-  //       const transformedData = vehicleData?.map((item: VehicleType) => ({
-  //         ...item,
-  //         type_of_vehicle: item.types_of_vehicles.name,
-  //         brand: item.brand_vehicles.name,
-  //         model: item.model_vehicles.name,
-  //         type: item.type,
-  //       }))
-
-  // setVehicle(transformedData[0])
+  
 
   return (
     <section className="grid grid-cols-1 xl:grid-cols-2 gap-2 md:mx-7 py-4">
