@@ -616,7 +616,7 @@ export const columns: ColumnDef<Colum>[] = [
   },
   {
     accessorKey: 'workflow_diagram',
-    header: 'Diagrama de flujo',
+    header: 'Diagrama de trabajo',
   },
   {
     accessorKey: 'showUnavaliableEmployees',

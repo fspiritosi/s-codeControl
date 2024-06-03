@@ -1,5 +1,5 @@
 import { CompanyLogoBackground } from '@/components/CompanyLogoBackground'
-import { CardDescription } from '@/components/ui/card'
+import { Card, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
@@ -8,13 +8,12 @@ import { RegisterButton } from './componentsRegister/RegisterButton'
 
 export default function Register() {
   return (
-    <section className="flex items-center bg-black/5 justify-between flex-col lg:flex-row bg-white">
+    <section className="flex items-center  justify-between flex-col lg:flex-row ">
       <CompanyLogoBackground />
-      <section className=" md:w-1/2 w-[80%] lg:p-24 p-0 flex flex-col justify-center rounded-3xl min-h-screen md:p-0">
+      <Card className=" md:w-1/2 w-[80%] lg:p-24 p-0 flex flex-col justify-center rounded-3xl min-h-screen md:p-0">
         <h2 className="self-center text-2xl pb-5 text-pretty text-center">
           ¡Estás a un paso de unirte a nosotros!
         </h2>
-        {/* <RegisterForm /> */}
         <form className="space-y-6 flex flex-col">
           <div>
             <Label className="ml-2" htmlFor="firstname">
@@ -94,7 +93,7 @@ export default function Register() {
             </p>
           </div>
         </form>
-      </section>
+      </Card>
     </section>
   )
 }

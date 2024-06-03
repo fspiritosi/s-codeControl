@@ -178,7 +178,7 @@ export function DataTable<TData, TValue>({
     workflow_diagram: {
       name: 'workflow_diagram',
       option: allOptions.workflow_diagram,
-      label: 'Diagrama de flujo',
+      label: 'Diagrama de trabajo',
     },
     status: {
       name: 'status',

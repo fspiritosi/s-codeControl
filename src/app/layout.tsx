@@ -31,7 +31,7 @@ export default function RootLayout({
         >
           <Toaster />
           <Sonner richColors={true} />
-          <main>{children}</main>
+          <main className='bg-muted/40'>{children}</main>
         </ThemeProvider>
       </body>
     </html>

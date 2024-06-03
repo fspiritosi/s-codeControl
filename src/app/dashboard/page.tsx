@@ -24,10 +24,10 @@ export default async function Home() {
   // console.log(company, 'company')
 
   return (
-    <div>
+    <div className=''>
       <section className="grid sm:grid-cols-2 grid-cols-1 gap-6 mx-7">
         {false && <CardsGrid />}
-        <CardTitle className="text-[2vw]">Bienvenido a tu dashboard de Desarrollo</CardTitle>
+        <CardTitle className="text-[2vw]">Bienvenido a tu dashboard</CardTitle>
       </section>
       <section className="md:mx-7 grid grid-cols-1 mt-6 xl:grid-cols-3 gap-3 mb-4">
         <Card className="col-span-2 flex flex-col justify-between overflow-hidden">
