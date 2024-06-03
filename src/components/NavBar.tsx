@@ -81,8 +81,6 @@ export default function NavBar() {
   const notifications = useLoggedUserStore(state => state.notifications)
   const avatarUrl = actualUser && actualUser.length > 0 ? actualUser[0] : ''
 
-  console.log(actualUser)
-
   const handleLogout = async () => {
     try {
       await logout()

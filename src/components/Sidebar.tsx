@@ -1,6 +1,8 @@
 'use client'
 
+import { supabaseBrowser } from '@/lib/supabase/browser'
 import { cn } from '@/lib/utils'
+import { useLoggedUserStore } from '@/store/loggedUser'
 import { useTheme } from 'next-themes'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -20,6 +22,49 @@ export default function SideBar() {
   const toggleSidebar = () => {
     setExpanded(!expanded)
   }
+
+  const documetsFetch = useLoggedUserStore(state => state.documetsFetch)
+  const actualCompany = useLoggedUserStore(state => state.actualCompany)
+  const supabase = supabaseBrowser()
+
+  supabase
+    .channel('custom-all-channel1')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'documents_employees' },
+      async payload => {
+        let { data: employees, error } = await supabase
+          .from('employees')
+          .select('*,company_id(*)')
+          .eq('id', (payload.new as { [key: string]: any }).applies)
+
+        if (employees?.[0]?.company_id?.id === actualCompany?.id) {
+          documetsFetch()
+        } else {
+          return
+        }
+      },
+    )
+    .subscribe()
+
+  supabase
+    .channel('custom-all-channel2')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'documents_equipment' },
+      async payload => {
+        let { data: vehicle, error } = await supabase
+          .from('vehicles')
+          .select('*,company_id(*)')
+          .eq('id', (payload.new as { [key: string]: any }).applies)
+
+        if (vehicle?.[0]?.company_id?.id !== actualCompany?.id) return
+
+        documetsFetch()
+      },
+    )
+    .subscribe()
+
 
   return (
     <div

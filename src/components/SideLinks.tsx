@@ -1,6 +1,7 @@
 'use client'
 
 import { useLoggedUserStore } from '@/store/loggedUser'
+import { ArchiveIcon } from '@radix-ui/react-icons'
 import cookies from 'js-cookie'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -57,6 +58,11 @@ const Allinks = [
     href: '/dashboard/document',
     icon: <MdListAlt size={sizeIcons} />,
   },
+  // {
+  //   name: 'Mantenimiento',
+  //   href: '/dashboard/maintenance',
+  //   icon: <ArchiveIcon className="size-5" />,
+  // },
   {
     name: 'Ayuda',
     href: '/dashboard/help',
@@ -74,7 +80,7 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
   const userShared = cookies.get('guestRole')
   const isAuditor = profile?.[0]?.role === 'Auditor'
   const administrador = userShared === 'Administrador' || null
-  
+
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
     ?.owner_id.id
 

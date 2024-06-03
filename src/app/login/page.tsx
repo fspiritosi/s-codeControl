@@ -14,7 +14,7 @@ import GoogleButton from './componentsLogin/GoogleButton'
 import { LoginButton } from './componentsLogin/LoginButton'
 export default function Login() {
   return (
-    <section className="flex items-center h-screen bg-black/5 justify-between flex-col md:flex-row bg-white dark:bg-neutral-950">
+    <section className="flex items-center h-screen  justify-between flex-col md:flex-row ">
       <CompanyLogoBackground />
       <section className=" md:w-1/2 w-[80%] p-0 md:p-12 lg:p-24 flex flex-col justify-center rounded-3xl">
         <Card>
@@ -22,7 +22,6 @@ export default function Login() {
             <CardTitle>¡Es un placer verte de nuevo!</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* <LoginForm /> */}
             <form className="space-y-8 flex flex-col">
               <div>
                 <Label htmlFor="email">Email</Label>

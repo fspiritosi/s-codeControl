@@ -434,7 +434,7 @@ export const accordionSchema = z
       })
       .max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),
     workflow_diagram: z.string({
-      required_error: 'El diagrama de flujo es requerido',
+      required_error: 'El diagrama de trabajo es requerido',
     }),
     normal_hours: z
       .string({ required_error: 'Las horas normales son requeridas' })

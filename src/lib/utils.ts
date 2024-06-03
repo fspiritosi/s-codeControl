@@ -33,4 +33,3 @@ export function validarCUIL(cuil:string) {
   // Compara con el último dígito
   return parseInt(cuil[10]) === digitoVerificador;
 }
-

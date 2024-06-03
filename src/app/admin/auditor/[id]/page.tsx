@@ -1,6 +1,10 @@
-'use client'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Card, CardDescription, CardTitle, CardHeader } from '@/components/ui/card'
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatDate } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -8,15 +12,13 @@ import { es } from 'date-fns/locale'
 import ApproveDocModal from '@/components/ApproveDocModal'
 import DenyDocModal from '@/components/DenyDocModal'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useEffect, useState } from 'react'
-import { supabaseBrowser } from '@/lib/supabase/browser'
 
 //imports de la vista copiada
 
-import UpdateDocuments from '@/components/UpdateDocuments'
 import { Badge } from '@/components/ui/badge'
-import { buttonVariants } from '@/components/ui/button'
 
+import DownloadButton from '@/app/dashboard/document/documentComponents/DownloadButton'
+import BackButton from '@/components/BackButton'
 import {
   Table,
   TableBody,
@@ -25,24 +27,14 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
-import Link from 'next/link'
 import { Suspense } from 'react'
 import { supabase } from '../../../../../supabase/supabase'
-import DownloadButton from '@/app/dashboard/document/documentComponents/DownloadButton'
-
 
 export default async function page({ params }: { params: { id: string } }) {
-  // const router = useRouter()
-  // redirect('/dashboard/document')
+  console.log(params.id)
 
   let documents_employees: any[] | null = []
-  const [userEmail, setUserEmail] = useState<string | ''>('')
-  // const [documents_employees, setDocumentsEmployees] = useState<any[] | null>(
-  //   [],
-  // )
-  // const [resource, setResource] = useState<string | null>(null)
-  // const [documentName, setDocumentName] = useState<string | null>('')
-  // const [documentUrl, setDocumentUrl] = useState<string | null>(null)
+  // const [userEmail, setUserEmail] = useState<string | ''>('')
   let resource = ''
   let documentName = ''
   let documentUrl = ''
@@ -65,7 +57,7 @@ export default async function page({ params }: { params: { id: string } }) {
           *
           )
           ),
-          company_id(*,province_id(name))
+          company_id(*,province_id(name),owner_id(*))
           )
           `,
     )
@@ -78,7 +70,7 @@ export default async function page({ params }: { params: { id: string } }) {
         `
       *,
       document_types(*),
-      applies(*,brand(name),model(name),type_of_vehicle(name), company_id(*,province_id(name)))`,
+      applies(*,brand(name),model(name),type_of_vehicle(name), company_id(*,province_id(name),owner_id(*)))`,
       )
       .eq('id', params.id)
 
@@ -90,6 +82,8 @@ export default async function page({ params }: { params: { id: string } }) {
     resourceType = 'documentos-empleados'
     resource = 'employee'
   }
+
+  const email = document?.[0]?.applies?.company_id.owner_id.email
 
   documentType = document?.[0]?.document_types?.id
 
@@ -168,12 +162,7 @@ export default async function page({ params }: { params: { id: string } }) {
               fileName={documents_employees?.[0]?.document_types?.name}
               path={documents_employees?.[0]?.document_path}
             />
-            <Link
-              href={`/dashboard/document`}
-              className={buttonVariants({ variant: 'default' })}
-            >
-              Volver
-            </Link>
+            <BackButton />
           </div>
         </div>
         <div className="grid lg:grid-cols-3 grid-cols-1 gap-col-3 ">
@@ -739,24 +728,24 @@ export default async function page({ params }: { params: { id: string } }) {
                 </Card>
               </TabsContent>
               <TabsContent value="Auditar">
-              <Card>
-                <div className="p-3 text-center space-y-3">
-                  <CardDescription>
-                    Aqui podras auditar el documento que se le solicita al
-                    empleado
-                  </CardDescription>
-                  <div className="w-full flex justify-evenly">
-                    <ApproveDocModal id={params.id} resource={resource} />
-                    <DenyDocModal
-                      id={params.id}
-                      resource={resource}
-                      userEmail={userEmail}
-                    />
+                <Card>
+                  <div className="p-3 text-center space-y-3">
+                    <CardDescription>
+                      Aqui podras auditar el documento que se le solicita al
+                      empleado
+                    </CardDescription>
+                    <div className="w-full flex justify-evenly">
+                      <ApproveDocModal id={params.id} resource={resource} />
+                      <DenyDocModal
+                        id={params.id}
+                        resource={resource}
+                        userEmail={email}
+                      />
+                    </div>
                   </div>
-                </div>
-              </Card>
-            </TabsContent>
-              
+                </Card>
+              </TabsContent>
+
               {/* <TabsContent value="Auditar">
                 <Card>
                   <div className="p-3 text-center space-y-3">
