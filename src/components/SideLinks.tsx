@@ -58,11 +58,11 @@ const Allinks = [
     href: '/dashboard/document',
     icon: <MdListAlt size={sizeIcons} />,
   },
-  {
-    name: 'Mantenimiento',
-    href: '/dashboard/maintenance',
-    icon: <ArchiveIcon className="size-5" />,
-  },
+  // {
+  //   name: 'Mantenimiento',
+  //   href: '/dashboard/maintenance',
+  //   icon: <ArchiveIcon className="size-5" />,
+  // },
   {
     name: 'Ayuda',
     href: '/dashboard/help',

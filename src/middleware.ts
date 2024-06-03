@@ -71,7 +71,7 @@ export async function middleware(req: NextRequest) {
   const usuarioUser = ['/dashboard/company/actualCompany', 'admin/auditor']
 
   const administradorUser = ['admin/auditor']
-  const codeControlClientUser = ['admin/auditor']
+  const codeControlClientUser = ['admin/auditor', '/dashboard/maintenance','/dashboard/maintenance/new'	]
 
   const isAuditor = data?.[0]?.role === 'Auditor'
 
