@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { supabaseServer } from './lib/supabase/server'
-import { cookies } from 'next/headers'
 
 export async function middleware(req: NextRequest) {
   // await updateSession(req)
@@ -14,8 +13,6 @@ export async function middleware(req: NextRequest) {
   const {
     data: { session },
   } = await supabase.auth.getSession()
-
-  
 
   const { data } = await supabase
     .from('profile')
@@ -32,9 +29,9 @@ export async function middleware(req: NextRequest) {
     .select(`*`)
     .eq('profile_id', data?.[0]?.id)
 
-    const actualNoOwnerValue: string | null =
+  const actualNoOwnerValue: string | null =
     req.cookies.get('actualComp')?.value ?? null
-    
+
   const actualNoOwner = actualNoOwnerValue
     ? actualNoOwnerValue.replace(/^"|"$/g, '')
     : null
@@ -45,8 +42,8 @@ export async function middleware(req: NextRequest) {
     .select('role')
     .eq('profile_id ', data?.[0]?.id)
     .eq('company_id', actualNow)
-  
-    //response.cookies.set('guestRole', guestRole?.[0]?.role)
+
+  //response.cookies.set('guestRole', guestRole?.[0]?.role)
 
   if (
     !Companies?.length &&
@@ -59,8 +56,7 @@ export async function middleware(req: NextRequest) {
   //const theme = response.cookies.get('theme')
   //const actualCompanyId = req.cookies.get('actialCompanyId')
   // const actualNoOwner :string | null = req.cookies.get('actualComp')?.value
-  
- 
+
   const userRole = data?.[0]?.role
 
   const guestUser = [
@@ -78,9 +74,11 @@ export async function middleware(req: NextRequest) {
   const codeControlClientUser = ['admin/auditor']
 
   const isAuditor = data?.[0]?.role === 'Auditor'
+
   if (!session) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
+
   if (userRole === 'Admin') {
     return response // Permitir acceso sin restricciones para los usuarios con rol 'Admin'
   } else {
@@ -135,7 +133,6 @@ export const config = {
   matcher: [
     // '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     '/dashboard/:path*',
-    '/admin/auditor/:path*',
-
+    '/admin/:path*',
   ],
 }
