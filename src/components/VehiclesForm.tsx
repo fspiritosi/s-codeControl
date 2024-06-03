@@ -33,6 +33,7 @@ import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { supabase } from '../../supabase/supabase'
+import BackButton from './BackButton'
 import { ImageHander } from './ImageHandler'
 import { Modal } from './Modal'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
@@ -667,14 +668,18 @@ export default function VehiclesForm2({ id }: { id: string }) {
 
               <div className="mt-4">
                 {role !== 'Invitado' && readOnly && accion === 'view' && (
-                  <Button
-                    variant="primary"
-                    onClick={() => {
-                      setReadOnly(false)
-                    }}
-                  >
-                    Habilitar edición
-                  </Button>
+                  <div className="flex flex-grap gap-2">
+                    <Button
+                      variant="primary"
+                      onClick={() => {
+                        setReadOnly(false)
+                      }}
+                    >
+                      Habilitar edición
+                    </Button>
+
+                    <BackButton />
+                  </div>
                 )}
               </div>
             </CardHeader>

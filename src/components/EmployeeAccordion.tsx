@@ -59,6 +59,7 @@ import { ChangeEvent, Suspense, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
+import BackButton from './BackButton'
 import { ImageHander } from './ImageHandler'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
@@ -591,7 +592,7 @@ export default function EmployeeAccordion() {
     <Suspense fallback={<div>Loading...</div>}>
       <section>
         <header className="flex justify-between gap-4 flex-wrap">
-          <CardHeader className="h-[152px] flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
+          <CardHeader className="min-h-[152px] flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
             {accion === 'edit' || accion === 'view' ? (
               <div className="flex gap-3 items-center">
                 <CardTitle className=" font-bold tracking-tight">
@@ -621,14 +622,17 @@ export default function EmployeeAccordion() {
             )}
 
             {role !== 'Invitado' && readOnly && accion === 'view' && (
-              <Button
-                variant="primary"
-                onClick={() => {
-                  setReadOnly(false)
-                }}
-              >
-                Habilitar edición
-              </Button>
+              <div className="flex flex-grap gap-2">
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    setReadOnly(false)
+                  }}
+                >
+                  Habilitar edición
+                </Button>
+                <BackButton />
+              </div>
             )}
           </CardHeader>
         </header>
