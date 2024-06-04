@@ -1,4 +1,4 @@
-
+"use client"
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -6,38 +6,67 @@ import { Button } from '@/components/ui/button'
 import { supabaseServer } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
 import { revalidatePath } from 'next/cache'
-import { createdCustomer } from "../app/dashboard/customers/action/create"
-import { useState } from 'react';
-//import {supabase} from "../../supabase/supabase"
+import { createdCustomer, updateCustomer } from "../app/dashboard/customers/action/create"
+import { useEffect, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useLoggedUserStore } from '@/store/loggedUser'
+import {supabase} from "../../supabase/supabase"
 //import { useRouter} from "next/navigation"
 
-export default async function clientRegister() {
-
-    //const router = useRouter()
-    // const supabase = supabaseServer()
-
-    // const { data: { session }, } = await supabase.auth.getSession()
-
-    // const { data } = await supabase
-    //     .from('profile')
-    //     .select('*')
-    //     .eq('email', session?.user.email)
-    // console.log(data)
-    // const { data: Companies, error } = await supabase
-    //     .from('company')
-    //     .select(`*`)
-    //     .eq('owner_id', data?.[0]?.id)
-    // console.log(Companies)
-    // let { data: share_company_users, error: sharedError } = await supabase
-    //     .from('share_company_users')
-    //     .select(`*`)
-    //     .eq('profile_id', data?.[0]?.id)
-    // console.log(share_company_users)
-    //revalidatePath('/dashboard/company/new')
-
+export default  function clientRegister({ id }: { id: string }) {
+    const functionAction = id ? updateCustomer : createdCustomer;
+    const searchParams = useSearchParams()
+  // const id = params
+  const [accion, setAccion] = useState(searchParams.get('action'))
+  const pathname = usePathname()
+  const actualCompany = useLoggedUserStore(state => state.actualCompany)
+  const [action, setAction] = useState(searchParams.get('action'));
+  const [readOnly, setReadOnly] = useState(accion === 'edit' ? false : true)
+  const [clientData, setClientData] = useState<any>(null);
+  const [contactData, setContactData] = useState<any>(null);
+    //revalidatePath('/dashboard/customer/action')
     
-
-
+    useEffect(() => {
+        // Verificar si se está editando o creando un nuevo cliente
+        if (action === 'edit') {
+            setReadOnly(false)
+            
+            // Obtener los datos del cliente con el ID proporcionado
+            const id = searchParams.get('id');
+            const fetchCustomers = async () => {
+                const { data , error } = await supabase
+                  .from('customers')
+                  .select('*')
+                  .eq('id', id)
+                
+                if (error) {
+                  console.error('Error fetching customers:', error)
+                } else {
+                    setClientData(data[0])
+                }
+              }
+              const fetchContact = async () => {
+                const { data , error } = await supabase
+                  .from('contacts')
+                  .select('*')
+                  .eq('customer_id', id)
+                
+                if (error) {
+                  console.error('Error fetching contact:', error)
+                } else {
+                    setContactData(data[0])
+                }
+              }
+              
+              fetchCustomers()
+              fetchContact()
+            
+        }
+    }, [action, id]);
+    
+    console.log("contactData: ", contactData)
+    console.log("ID: ", id)
+    
 
     return (
         <section className={cn('md:mx-7')}>
@@ -49,7 +78,8 @@ export default async function clientRegister() {
                     Completa este formulario con los datos de tu nuevo Cliente
                 </CardDescription>
                 <div className="mt-6 rounded-xl flex w-full">
-                    <form action={createdCustomer}>
+                <form action={functionAction} >
+                <input type="hidden" name="id" value={id} />
                         <div className=" flex flex-wrap gap-3 items-center w-full">
                             <div>
                                 <Label htmlFor="company_name">Nombre de la compañía</Label>
@@ -58,6 +88,9 @@ export default async function clientRegister() {
                                     name="company_name"
                                     className="max-w-[350px] w-[300px]"
                                     placeholder="nombre de la compañía"
+                                    defaultValue={clientData?.name || ''}
+                                    // readOnly={readOnly}
+                                   
                                 />
 
                                 <CardDescription
@@ -71,7 +104,9 @@ export default async function clientRegister() {
                                     name="client_cuit"
                                     id="client_cuit"
                                     className="max-w-[350px] w-[300px]"
-                                    placeholder="nombre de la compañía"
+                                    placeholder="número de cuit"
+                                    defaultValue={clientData?.cuit || ''}
+                                    //readOnly={readOnly}
                                 />
                                 <CardDescription
                                     id="client_cuit_error"
@@ -86,6 +121,8 @@ export default async function clientRegister() {
                                     name="client_email"
                                     className="max-w-[350px] w-[300px]"
                                     placeholder="email"
+                                    defaultValue={clientData?.client_email || ''}
+                                    //readOnly={readOnly}
                                 />
                                 <CardDescription
                                     id="client_email_error"
@@ -99,6 +136,8 @@ export default async function clientRegister() {
                                     name="client_phone"
                                     className="max-w-[350px] w-[300px]"
                                     placeholder="teléfono"
+                                    defaultValue={clientData?.client_phone || ''}
+                                    //readOnly={readOnly}
                                 />
 
                                 <CardDescription
@@ -113,6 +152,8 @@ export default async function clientRegister() {
                                     name="address"
                                     className="max-w-[350px] w-[300px]"
                                     placeholder="dirección"
+                                    defaultValue={clientData?.address || ''}
+                                    //readOnly={readOnly}
                                 />
 
                             </div>
@@ -137,6 +178,7 @@ export default async function clientRegister() {
                                     name="contact_name"
                                     className="max-w-[350px] w-[300px]"
                                     placeholder="nombre del contacto"
+                                    defaultValue={contactData?.contact_name || ''}
                                 />
 
                                 <CardDescription
@@ -151,6 +193,7 @@ export default async function clientRegister() {
                                     name="contact_email"
                                     className="max-w-[350px] w-[300px]"
                                     placeholder="email"
+                                    defaultValue={contactData?.constact_email || ''}
                                 />
                                 <CardDescription
                                     id="contact_email_error"
@@ -164,6 +207,7 @@ export default async function clientRegister() {
                                     name="contact_phone"
                                     className="max-w-[350px] w-[300px]"
                                     placeholder="teléfono"
+                                    defaultValue={contactData?.contact_phone || ''}
                                 />
 
                                 <CardDescription
@@ -178,6 +222,7 @@ export default async function clientRegister() {
                                     name="contact_charge"
                                     className="max-w-[350px] w-[300px]"
                                     placeholder="cargo en la empresa"
+                                    defaultValue={contactData?.contact_charge || ''}
                                 />
 
                                 <CardDescription
@@ -188,10 +233,9 @@ export default async function clientRegister() {
                         </div>
                         <Button
                             type="submit"
-                            //formAction={formData => onSubmit(formData)}
                             className="mt-5"
                         >
-                            Registrar Cliente
+                            {id ? "Editar Cliente"  :"Registrar Cliente"}
                         </Button>
                     </form>
                 </div>

@@ -79,26 +79,12 @@ export function DataCustomers<TData, TValue>({
         }, {}),
     )
 
-    // const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+   
     const loader = useLoggedUserStore(state => state.isLoading)
     const filteredData = showInactive
         ? data?.filter((item: any) => item.is_active === false)
         : data
-    //   const allOptions = {
-    //     name: createOptions('name'),
-    //     client_email: createOptions('client_email'),
-    //     client_phone: createOptions('client_phone'),
-    //     address: createOptions('address'),
-    //     // status: createOptions('status'),
-    //   }
-
-    //   function createOptions(key: string) {
-    //     const values = data?.map((item: any) =>
-    //       item?.[key]?.name ? item?.[key]?.name : item?.[key],
-    //     )
-
-    //     return ['Todos', ...Array.from(new Set(values))]
-    //   }
+    
 
     const selectHeader = {
         // name: {
@@ -132,41 +118,18 @@ export function DataCustomers<TData, TValue>({
         onSortingChange: setSorting,
         getSortedRowModel: getSortedRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
-        //onColumnFiltersChange: setColumnFilters,
         getFilteredRowModel: getFilteredRowModel(),
         state: {
             sorting,
             columnVisibility,
-            //columnFilters,
         },
     })
-    //   const setActivesVehicles = useLoggedUserStore(
-    //     state => state.setActivesVehicles,
-    //   )
-    //const router = useRouter()
-
-    //   const handleClearFilters = () => {
-    //     table.getAllColumns().forEach(column => {
-    //       column.setFilterValue('')
-    //     })
-
-    // setSelectValues({
-    //   name: 'Todos',
-    //   cuit: 'todos',
-    //   client_email: 'Todos',
-    //   client_phone: 'Todos',
-    //   address: 'Todos',
-    //   status: 'Todos',
-    // })
-    //setActivesVehicles()
-    //}
+    
     const maxRows = ['20', '40', '60', '80', '100']
     const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
         {},
     )
-    // const handleToggleInactive = () => {
-    //   setShowInactive(!showInactive)
-    
+   
 
     return (
         <div>
@@ -179,15 +142,7 @@ export function DataCustomers<TData, TValue>({
                     }
                     className="max-w-sm"
                 />
-                {/* <Button
-          variant="outline"
-          size="default"
-          className="ml-2"
-          onClick={handleClearFilters}
-        >
-          Limpiar filtros
-        </Button> */}
-
+               
                 <div className=" flex gap-2 ml-2 flex-wrap">
                     <Select onValueChange={e => table.setPageSize(Number(e))}>
                         <SelectTrigger className="w-[180px]">
@@ -231,7 +186,6 @@ export function DataCustomers<TData, TValue>({
                                                     key={column.id}
                                                     className="capitalize  text-red-400"
                                                     checked={showInactive}
-                                                    //onChange={() => setShowInactive(!showInactive)}
                                                     onClick={() => setShowInactive(!showInactive)}
                                                     onCheckedChange={value =>
                                                         column.toggleVisibility(true)
@@ -266,7 +220,7 @@ export function DataCustomers<TData, TValue>({
                         {table.getHeaderGroups()?.map(headerGroup => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers?.map(header => {
-                                    console.log("header id: ",header.id)
+                                    
                                     return (
                                         <TableHead
                                             className="text-center text-balance"

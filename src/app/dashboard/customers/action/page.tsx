@@ -3,7 +3,6 @@ import { Card, CardFooter, CardTitle, CardHeader, CardDescription } from '@/comp
 import { cn } from '@/lib/utils'
 import { revalidatePath } from 'next/cache'
 import { supabase } from '../../../../../supabase/supabase'
-import VehiclesForm from '../../../../components/VehiclesForm'
 import CustomerComponent from "../../../../components/CustomerComponent"
 export default async function EquipmentFormAction({
   searchParams,
@@ -13,10 +12,10 @@ export default async function EquipmentFormAction({
   params: any
 }) {
   const { data } = await supabase
-    .from('documents_equipment')
-    .select('*,id_document_types(*)')
-    .eq('applies', searchParams.id)
-  revalidatePath('/dashboard/equipment/action')
+    .from('customers')
+    .select('*')
+    .eq('id', searchParams.id)
+  revalidatePath('/dashboard/customer/action')
 
   
 
@@ -28,7 +27,7 @@ export default async function EquipmentFormAction({
           'col-span-6 flex flex-col justify-between overflow-hidden',
           searchParams.action === 'new' && 'col-span-8',
         )} >
-                <CustomerComponent/>
+                <CustomerComponent id={searchParams.id}/>
               
               </div>
           

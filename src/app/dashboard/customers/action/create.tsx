@@ -43,6 +43,7 @@ export async function createdCustomer(formData: FormData) {
         client_email: formData.get('client_email'),
         client_phone: formData.get('client_phone'),
         address: formData.get('address'),
+        company_id: Companies?.[0].id
     }
     console.log("client Data: ", clientData)
 
@@ -83,5 +84,85 @@ export async function createdCustomer(formData: FormData) {
     } catch (error) {
         console.error(error);
     };
+    redirect("/dashboard/customers")
+}
+
+export async function updateCustomer(formData: FormData) {
+    const supabase = supabaseServer()
+
+    const { data: { session }, } = await supabase.auth.getSession()
+
+    const { data } = await supabase
+        .from('profile')
+        .select('*')
+        .eq('email', session?.user.email)
+    console.log(data)
+    const { data: Companies, error } = await supabase
+        .from('company')
+        .select(`*`)
+        .eq('owner_id', data?.[0]?.id)
+    console.log(Companies)
+    let { data: share_company_users, error: sharedError } = await supabase
+        .from('share_company_users')
+        .select(`*`)
+        .eq('profile_id', data?.[0]?.id)
+    // console.log(share_company_users)
+    revalidatePath('/dashboard/customers')
+
+
+    const id = formData.get("id")
+    console.log("id de formulario: ", id)
+    const clientData = {
+        name: formData.get('company_name'),
+        cuit: formData.get('client_cuit'),
+        client_email: formData.get('client_email'),
+        client_phone: formData.get('client_phone'),
+        address: formData.get('address'),
+        company_id: Companies?.[0].id
+    }
+    console.log("client Data Update: ", clientData)
+
+    const contactData = {
+        contact_name: formData.get ('contact_name') ,
+        constact_email: formData.get('contact_email'),
+        contact_phone: formData.get('contact_phone'),
+        contact_charge: formData.get('contact_charge'),
+        company_id: Companies?.[0].id
+    }
+    console.log("contact Data Update: ", contactData)
+    try {
+        // Guardar datos en la tabla 'customer'
+
+        const editClient = await supabase
+        .from('customers')
+        .update([clientData])
+        .eq("id",id)
+        .select()
+        
+        console.log("edit client: ", editClient)
+
+            // Guardar datos en la tabla 'contacts'
+        const customer_id = editClient?.data ? editClient?.data[0]?.id : null;
+
+        console.log("customer_id: ", customer_id)
+        const contactDataWithCustomerId = {
+            ...contactData,
+            customer_id: customer_id
+        };
+
+        const editContact = await supabase
+        .from('contacts')
+        .update(contactDataWithCustomerId)
+        .eq("customer_id",id)
+        .select();
+
+        console.log('Cliente editado:', editClient);
+        console.log('Contacto editado:', editContact);
+        
+
+    } catch (error) {
+        console.error(error);
+    };
+    
     redirect("/dashboard/customers")
 }

@@ -14,6 +14,9 @@ import { supabase } from '../../../../supabase/supabase'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import{useState, useEffect} from "react"
 import { useLoggedUserStore } from '@/store/loggedUser'
+import Link from 'next/link'
+import { buttonVariants } from '@/components/ui/button'
+import { useSearchParams } from 'next/navigation'
 
 export default function Customers() {
    //const actualCompany = cookies().get('actualComp')
@@ -21,6 +24,7 @@ export default function Customers() {
    const [customers, setCustomers] = useState([''])
    const allCompany = useLoggedUserStore(state => state.allCompanies)
    const [showInactive, setShowInactive] = useState(false)
+   const useSearch = useSearchParams()
    useEffect(() => {
     const fetchCustomers = async () => {
       const { data , error } = await supabase
@@ -47,7 +51,7 @@ export default function Customers() {
       <section className="md:mx-7 grid grid-cols-1 mt-6 xl:grid-cols-2 gap-3 mb-4">
         <Card className="col-span-2 flex flex-col justify-between overflow-hidden">
           <div>
-            <CardHeader className="flex flex-row items-start bg-muted dark:bg-muted/50 border-b-2">
+            <CardHeader className=" flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
               <div className="grid gap-1">
                 <CardTitle className="flex items-center text-lg ">
                   Clientes
@@ -56,6 +60,15 @@ export default function Customers() {
                   Todos tus Clientes
                 </CardDescription>
               </div>
+              <Link
+            href="/dashboard/customers/action?action=new"
+            className={[
+              'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
+              buttonVariants({ variant: 'outline', size: 'lg' }),
+            ].join(' ')}
+          >
+            Agregar nuevo cliente
+          </Link>
             </CardHeader>
 
             <CardContent>

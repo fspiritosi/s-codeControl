@@ -375,7 +375,7 @@ export const columns: ColumnDef<Colum>[] = [
             <DropdownMenuItem>
               <Link
                 className="w-full"
-                href={`/dashboard/customer/action?action=view&id=${customers?.id}`}
+                href={`/dashboard/customers/action?action=view&id=${customers?.id}`}
               >
                 Ver Cliente
               </Link>
@@ -384,7 +384,7 @@ export const columns: ColumnDef<Colum>[] = [
               {role !== 'Invitado' && (
                 <Link
                   className="w-full"
-                  href={`/dashboard/customer/action?action=edit&id=${customers?.id}`}
+                  href={`/dashboard/customers/action?action=edit&id=${customers?.id}`}
                 >
                   Editar Cliente
                 </Link>
