@@ -34,8 +34,7 @@ yarn-error.log*
 # vercel
 .vercel
 # SQL
-/supabase/seed.sql
-seed.sql
+*.sql
 
 # typescript
 *.tsbuildinfo
