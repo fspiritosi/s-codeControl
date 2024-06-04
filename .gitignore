@@ -34,7 +34,7 @@ yarn-error.log*
 # vercel
 .vercel
 # SQL
-*.sql
+seed.sql
 
 # typescript
 *.tsbuildinfo

@@ -10057,7 +10057,7 @@ SELECT pg_catalog.setval('"public"."brand_vehicles_id_seq"', 19, true);
 -- Name: documents_employees_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('"public"."documents_employees_logs_id_seq"', 1399, true);
+SELECT pg_catalog.setval('"public"."documents_employees_logs_id_seq"', 1399, true);sss
 
 
 --
