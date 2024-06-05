@@ -32,7 +32,7 @@ export async function createdCustomer(formData: FormData) {
         .select(`*`)
         .eq('profile_id', data?.[0]?.id)
     // console.log(share_company_users)
-    revalidatePath('/dashboard/customers')
+    revalidatePath('/dashboard/company/customers')
 
 
 
@@ -84,7 +84,7 @@ export async function createdCustomer(formData: FormData) {
     } catch (error) {
         console.error(error);
     };
-    redirect("/dashboard/customers")
+    redirect("/dashboard/company/actualCompany")
 }
 
 export async function updateCustomer(formData: FormData) {
@@ -107,7 +107,7 @@ export async function updateCustomer(formData: FormData) {
         .select(`*`)
         .eq('profile_id', data?.[0]?.id)
     // console.log(share_company_users)
-    revalidatePath('/dashboard/customers')
+    revalidatePath('/dashboard/company/actualCompany')
 
 
     const id = formData.get("id")
@@ -164,5 +164,5 @@ export async function updateCustomer(formData: FormData) {
         console.error(error);
     };
     
-    redirect("/dashboard/customers")
+    redirect("/dashboard/company/actualCompany")
 }

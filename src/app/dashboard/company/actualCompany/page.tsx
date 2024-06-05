@@ -31,6 +31,7 @@ import { DataTable } from './components/data-table'
 import { ItemCompany } from './components/itemCompany'
 import Link from 'next/link';
 import { CloudCog } from 'lucide-react'
+import Customers from '../customers/Customers'
 
 export default function page() {
   const router = useRouter()
@@ -54,7 +55,7 @@ export default function page() {
       img: user.avatar || '',
     }
   })
-  
+
 
   const sharedUsers =
     sharedUsersAll?.map(user => {
@@ -97,14 +98,16 @@ export default function page() {
           height={200}
         />
       </div>
-      
+
       <Tabs defaultValue="general">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>
+          <TabsTrigger value="customers">Clientes</TabsTrigger>
           <TabsTrigger value="modules" disabled>
             Modulos
           </TabsTrigger>
+
         </TabsList>
         <TabsContent value="general" className="space-y-4">
           <Card className="overflow-hidden">
@@ -224,6 +227,9 @@ export default function page() {
           </Card>
         </TabsContent>
         <TabsContent value="modules">Change your password here.</TabsContent>
+        <TabsContent value="customers">
+          <Customers />
+        </TabsContent>
       </Tabs>
     </div>
   )

@@ -184,7 +184,7 @@ export default async function companyRegister({
               <CityInput
                 provinces={provinces}
                 defaultProvince={companyData?.province_id}
-                defaultCity={companyData.city}
+                defaultCity={companyData?.city}
               />
               <div>
                 <Label htmlFor="industry">Seleccione una Industria</Label>

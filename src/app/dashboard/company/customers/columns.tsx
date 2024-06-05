@@ -66,7 +66,7 @@ import Link from 'next/link'
 import { Fragment, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { supabase } from '../../../../supabase/supabase'
+import { supabase } from '../../../../../supabase/supabase'
 const formSchema = z.object({
   reason_for_termination: z.string({
     required_error: 'La razón de la baja es requerida.',
@@ -375,7 +375,7 @@ export const columns: ColumnDef<Colum>[] = [
             <DropdownMenuItem>
               <Link
                 className="w-full"
-                href={`/dashboard/customers/action?action=view&id=${customers?.id}`}
+                href={`/dashboard/company/customers/action?action=view&id=${customers?.id}`}
               >
                 Ver Cliente
               </Link>
@@ -384,7 +384,7 @@ export const columns: ColumnDef<Colum>[] = [
               {role !== 'Invitado' && (
                 <Link
                   className="w-full"
-                  href={`/dashboard/customers/action?action=edit&id=${customers?.id}`}
+                  href={`/dashboard/company/customers/action?action=edit&id=${customers?.id}`}
                 >
                   Editar Cliente
                 </Link>
