@@ -44,3 +44,4 @@ bun.lockb
 
 # Test
 /cypress
+cypress.config.ts
