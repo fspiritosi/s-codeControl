@@ -42,3 +42,5 @@ next-env.d.ts
 NOTAS.md
 bun.lockb
 
+# Test
+/cypress
