@@ -64,12 +64,10 @@ import { addMonths, format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { ArrowUpDown, CalendarIcon } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../../../supabase/supabase'
-import React, { Fragment } from 'react';
-import cookie from 'js-cookie';
 
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -116,22 +114,21 @@ type Colum = {
 
 export const columns: ColumnDef<Colum>[] = [
   {
-    
     id: 'actions',
     cell: ({ row }: { row: any }) => {
       const profile = useLoggedUserStore(state => state)
-  let role = ""
-  if(profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id){
-     role = profile?.actualCompany?.owner_id?.role as string
-  }else{
-     role = profile?.actualCompany?.share_company_users?.[0]?.role as string
-  }
-  
+      let role = ''
+      if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
+        role = profile?.actualCompany?.owner_id?.role as string
+      } else {
+        role = profile?.actualCompany?.share_company_users?.[0]?.role as string
+      }
+
       const [showModal, setShowModal] = useState(false)
       const [integerModal, setIntegerModal] = useState(false)
       const [document, setDocument] = useState('')
       const user = row.original
-      
+
       const handleOpenModal = (id: string) => {
         setDocument(id)
         setShowModal(!showModal)
@@ -449,39 +446,39 @@ export const columns: ColumnDef<Colum>[] = [
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
-            {(role !== "Invitado") && (
-              <Link
-                href={`/dashboard/employee/action?action=edit&document=${user?.document_number}`}
-              >
-                Editar empleado
-              </Link>
-            )}
+              {role !== 'Invitado' && (
+                <Link
+                  href={`/dashboard/employee/action?action=edit&document=${user?.document_number}`}
+                >
+                  Editar empleado
+                </Link>
+              )}
             </DropdownMenuItem>
             <DropdownMenuItem>
-            {role !== "Invitado" && (
-              <Fragment>
-              {user.is_active ? (
-                <Button
-                  variant="destructive"
-                  onClick={() => handleOpenModal(user?.document_number)}
-                  className="text-sm"
-                >
-                  Dar de baja
-                </Button>
-              
-              ) : (
-                <Button
-                  variant="primary"
-                  onClick={() => handleOpenIntegerModal(user?.document_number)}
-                  className="text-sm"
-                >
-                  Reintegrar Empleado
-                </Button>
+              {role !== 'Invitado' && (
+                <Fragment>
+                  {user.is_active ? (
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleOpenModal(user?.document_number)}
+                      className="text-sm"
+                    >
+                      Dar de baja
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      onClick={() =>
+                        handleOpenIntegerModal(user?.document_number)
+                      }
+                      className="text-sm"
+                    >
+                      Reintegrar Empleado
+                    </Button>
+                  )}
+                </Fragment>
               )}
-              </Fragment>
-            )}
             </DropdownMenuItem>
-    
           </DropdownMenuContent>
         </DropdownMenu>
       )
