@@ -9,9 +9,9 @@ import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Campo, types } from '@/types/types'
-import * as React from 'react'
+import { useState } from 'react'
 import DisplayCreatedForms from './DisplayCreatedForms'
-import { FormularioPersonalizado } from './FormCustom'
+import { FormCustom } from './FormCustom'
 import { FormDisplay } from './FormDisplay'
 
 export function FormCustomContainer({
@@ -19,7 +19,7 @@ export function FormCustomContainer({
 }: {
   createdForms: any[] | null
 }) {
-  const [campos, setCampos] = React.useState<Campo[]>([
+  const [campos, setCampos] = useState<Campo[]>([
     {
       tipo: types.NombreFormulario,
       placeholder: 'Ingresa el nombre del formulario',
@@ -28,6 +28,7 @@ export function FormCustomContainer({
       opciones: [],
     },
   ])
+  const [selectedForm, setSelectedForm] = useState<Campo[]|undefined>([])
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -54,13 +55,10 @@ export function FormCustomContainer({
               </div>
               <Separator className="mb-3 mt-0" />
               <TabsContent value="created">
-                <DisplayCreatedForms createdForms={createdForms} />
+                <DisplayCreatedForms createdForms={createdForms} setSelectedForm={setSelectedForm} />
               </TabsContent>
               <TabsContent value="new">
-                <FormularioPersonalizado
-                  setCampos={setCampos}
-                  campos={campos}
-                />
+                <FormCustom setCampos={setCampos} campos={campos} setSelectedForm={setSelectedForm} />
               </TabsContent>
             </Tabs>
           </div>
@@ -68,7 +66,7 @@ export function FormCustomContainer({
         <ResizableHandle withHandle />
         <ResizablePanel className="relative" minSize={30}>
           <div className="absolute inset-0 h-full w-full bg-white dark:bg-slate-950/70 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:16px_16px] rounded-e-xl rounded "></div>
-          <FormDisplay campos={campos} />
+          <FormDisplay campos={selectedForm??campos} selectedForm={selectedForm} />
         </ResizablePanel>
       </ResizablePanelGroup>
     </TooltipProvider>
