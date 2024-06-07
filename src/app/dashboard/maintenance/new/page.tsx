@@ -11,9 +11,6 @@ export default async function MailPage() {
     .from('custom_form')
     .select('*')
     .eq('company_id', companyId?.value)
-  console.log(data)
-
-  console.log(error)
   return (
     <div className="hidden flex-col md:flex mt-6 md:mx-7 overflow-hidden max-h-full">
       <Card className="p-0">
