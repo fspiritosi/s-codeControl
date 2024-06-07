@@ -23,15 +23,24 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { Campo, types } from '@/types/types'
-import { useState } from 'react'
+import { Dispatch, SetStateAction, useState } from 'react'
 import { toast } from 'sonner'
 
 interface FormDisplayProps {
   campos: Campo[]
   selectedForm?: Campo[] | undefined
+  setSelectedTab: Dispatch<SetStateAction<'created' | 'new'>>
+  setCampos: Dispatch<SetStateAction<Campo[]>>
+  fetchForms: () => void
 }
 
-export function FormDisplay({ campos, selectedForm }: FormDisplayProps) {
+export function FormDisplay({
+  campos,
+  selectedForm,
+  setSelectedTab,
+  setCampos,
+  fetchForms
+}: FormDisplayProps) {
   const supabase = supabaseBrowser()
   const vehicles = useLoggedUserStore(state => state.vehicles)
 
@@ -423,7 +432,21 @@ export function FormDisplay({ campos, selectedForm }: FormDisplayProps) {
           name: campos.find(e => e.tipo === types.NombreFormulario)?.value,
         })
 
-        if (error) throw new Error(error.message)
+        if (error) {
+          throw new Error(error.message)
+        } else {
+          fetchForms()
+          setSelectedTab('created')
+          setCampos([
+            {
+              tipo: types.NombreFormulario,
+              placeholder: 'Ingresa el nombre del formulario',
+              id: '1',
+              title: 'Nombre del formulario',
+              opciones: [],
+            },
+          ])
+        }
       },
       {
         loading: 'Creando formulario...',
