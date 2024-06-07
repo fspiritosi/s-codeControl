@@ -5,13 +5,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
 import {
@@ -26,55 +23,36 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { supabaseBrowser } from '@/lib/supabase/browser'
-import { useLoggedUserStore } from '@/store/loggedUser'
+import { Campo, types } from '@/types/types'
 import {
   InfoCircledIcon,
   PlusCircledIcon,
   TrashIcon,
 } from '@radix-ui/react-icons'
 import { AnimatePresence, Reorder, motion } from 'framer-motion'
-import { ChangeEvent, useState } from 'react'
-import { toast } from 'sonner'
+import {
+  ChangeEvent,
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useState,
+} from 'react'
 
-enum types {
-  Texto = 'Texto',
-  AreaTexto = 'Área de texto',
-  Separador = 'Separador',
-  NombreFormulario = 'Nombre del formulario',
-  Radio = 'Radio',
-  SeleccionMultiple = 'Seleccion multiple',
-  Date = 'Fecha',
-  Seleccion = 'Seleccion',
-  SeleccionPredefinida = 'Seleccion Predefinida',
-  Subtitulo = 'Subtitulo',
-  SiNo = 'Si-No',
-  Titulo = 'Titulo',
-  Seccion = 'Seccion',
-}
-
-interface Campo {
-  tipo: types
-  placeholder?: string
-  opciones: string[]
-  value?: string
-  id: string
-  title: string
-  observation?: boolean
-  date?: boolean
-  sectionCampos?: Campo[]
-}
-export function FormularioPersonalizado({
+export function FormCustom({
   campos,
   setCampos,
+  setSelectedForm,
 }: {
   campos: Campo[]
   setCampos: (campos: Campo[]) => void
+  setSelectedForm: Dispatch<SetStateAction<Campo[] | undefined>>
 }) {
   const [tipoSeleccionado, setTipoSeleccionado] = useState('')
 
   const [selectKey, setSelectKey] = useState(0)
+  useEffect(() => {
+    setSelectedForm(undefined)
+  }, [])
 
   // Actualiza la clave del Select cada vez que se agrega un campo
   const agregarCampo = (campo: Campo, isInSection?: string) => {
@@ -128,17 +106,32 @@ export function FormularioPersonalizado({
   }
   const handleOptionsChange = (
     value: string,
-    index: number,
-    optionIndex: number,
+    sectionIndex: number | undefined,
+    campoIndex: number,
+    optionId?: number,
   ) => {
     const newCampos = [...campos]
-    if (index === 0) {
-      newCampos[index].opciones
+    if (sectionIndex === undefined) {
+      return
     }
-    newCampos[optionIndex].opciones?.splice(index, 1, value)
-    setCampos(newCampos)
-  }
 
+    if (optionId === undefined) {
+      const campo = newCampos[sectionIndex]
+      if (campo && campo.sectionCampos) {
+        campo.sectionCampos[campoIndex].opciones[0] = value
+        setCampos(newCampos)
+      }
+    } else {
+      const section = newCampos[sectionIndex]
+      if (section && section.sectionCampos) {
+        const campo = section.sectionCampos[campoIndex]
+        if (campo && campo.opciones) {
+          campo.opciones[optionId] = value
+          setCampos(newCampos)
+        }
+      }
+    }
+  }
   const handleTitleChange = (
     value: string,
     index: number,
@@ -208,7 +201,6 @@ export function FormularioPersonalizado({
     newCampos[index].date = boolean
     setCampos(newCampos)
   }
-
   const handleOptionDelete = (
     index: number,
     i: number,
@@ -224,7 +216,6 @@ export function FormularioPersonalizado({
     newCampos[index].opciones?.splice(i, 1)
     setCampos(newCampos)
   }
-
   const renderizarCampo = (
     campo: Campo,
     index: number,
@@ -390,7 +381,12 @@ export function FormularioPersonalizado({
                     name={`campo_${index}`}
                     placeholder={`Opcion ${i + 1}`}
                     onChange={e =>
-                      handleOptionsChange(e.target.value, i, index)
+                      handleOptionsChange(
+                        e.target.value,
+                        sectionIndex,
+                        index,
+                        i,
+                      )
                     }
                   />
 
@@ -451,7 +447,12 @@ export function FormularioPersonalizado({
                     name={`option_${index}`}
                     placeholder={`Opcion ${i + 1}`}
                     onChange={e =>
-                      handleOptionsChange(e.target.value, i, index)
+                      handleOptionsChange(
+                        e.target.value,
+                        sectionIndex,
+                        index,
+                        i,
+                      )
                     }
                   />
 
@@ -538,7 +539,12 @@ export function FormularioPersonalizado({
                     name={`select_${index}`}
                     placeholder={`Opcion ${i + 1}`}
                     onChange={e =>
-                      handleOptionsChange(e.target.value, i, index)
+                      handleOptionsChange(
+                        e.target.value,
+                        sectionIndex,
+                        index,
+                        i,
+                      )
                     }
                   />
 
@@ -584,7 +590,12 @@ export function FormularioPersonalizado({
             <div className="flex gap-2 flex-col py-3">
               <Select
                 onValueChange={e => {
-                  handleOptionsChange(e, 0, index)
+                  handleOptionsChange(
+                    e,
+                    sectionIndex,
+                    index,
+                    // i,
+                  )
                 }}
               >
                 <SelectTrigger>
@@ -662,7 +673,12 @@ export function FormularioPersonalizado({
                     name={`campo_${index}`}
                     placeholder={`Opcion ${i + 1}`}
                     onChange={e =>
-                      handleOptionsChange(e.target.value, i, index)
+                      handleOptionsChange(
+                        e.target.value,
+                        sectionIndex,
+                        index,
+                        i,
+                      )
                     }
                     value={opcion}
                   />
@@ -749,11 +765,12 @@ export function FormularioPersonalizado({
                     <SelectItem value="Seleccion Predefinida">
                       Seleccion Predefinida
                     </SelectItem>
+                    <SelectItem value="Archivo">Archivo</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
             </div>
-            <div className="mt-4 space-y-2">
+            <div className="mt-4 space-y-2 grid-cols-3">
               <AnimatePresence>
                 {campo.sectionCampos?.map((opcion, i) => {
                   return (
@@ -797,6 +814,38 @@ export function FormularioPersonalizado({
                   )
                 })}
               </AnimatePresence>
+            </div>
+          </div>
+        )
+      case 'Archivo':
+        return (
+          <div className="w-full cursor-grabbing space-y-2" key={campo.id}>
+            <Input
+              placeholder={campo.placeholder}
+              value={campo.value}
+              onChange={e =>
+                handleTitleChange(e.target.value, index, campo_id, sectionIndex)
+              }
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+                <Label>Observaciones</Label>
+                <Switch
+                  checked={campo.observation}
+                  onCheckedChange={boolean =>
+                    handleObservationChange(index, boolean, sectionIndex)
+                  }
+                />
+              </Card>
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+                <Label>Fecha</Label>
+                <Switch
+                  checked={campo.date}
+                  onCheckedChange={boolean =>
+                    handleDateChange(index, boolean, sectionIndex)
+                  }
+                />
+              </Card>
             </div>
           </div>
         )
@@ -970,6 +1019,19 @@ export function FormularioPersonalizado({
           isInSection,
         )
         break
+      case 'Archivo':
+        agregarCampo(
+          {
+            tipo: types.Archivo,
+            placeholder: 'Ingresa el titulo del campo',
+            id: new Date().getTime().toString(),
+            observation: false,
+            date: false,
+            opciones: [],
+            title: 'Titulo del campo',
+          },
+          isInSection,
+        )
       default:
         break
     }
@@ -996,16 +1058,34 @@ export function FormularioPersonalizado({
       setCampos(newCampos)
     }
   }
+
+  const handleAddSection = () => {
+    agregarCampo({
+      tipo: types.Seccion,
+      placeholder: 'Ingresa el titulo de la seccion',
+      id: new Date().getTime().toString(),
+      observation: false,
+      date: false,
+      opciones: [],
+      title: 'Titulo de la seccion',
+      sectionCampos: [],
+    })
+  }
   return (
     <ScrollArea className="flex flex-col gap-2 p-4 pt-0 space-y-2  max-h-[68vh]">
-      <div>
-        <CardTitle className="mb-1 text-lg">
-          Edita los campos del formulario
-        </CardTitle>
-        <CardDescription className="flex items-center mb-4 text-blue-600">
-          <InfoCircledIcon className="text-blue-600 mr-2 size-4" />
-          Puedes arrastrarlos para ordenarlos!
-        </CardDescription>
+      <div className="flex justify-between flex-wrap items-center">
+        <div>
+          <CardTitle className="mb-1 text-lg">
+            Edita los campos del formulario
+          </CardTitle>
+          <CardDescription className="flex items-center mb-4 text-blue-600">
+            <InfoCircledIcon className="text-blue-600 mr-2 size-4" />
+            Puedes arrastrarlos para ordenarlos!
+          </CardDescription>
+        </div>
+        <Button onClick={handleAddSection} className="mb-2">
+          Agregar seccion
+        </Button>
       </div>
       <form>
         <Reorder.Group
@@ -1041,7 +1121,17 @@ export function FormularioPersonalizado({
                         }
                         className=" dark:border-b-muted pl-2 border"
                       >
-                        {campo.tipo !== types.NombreFormulario ? (
+                        {campo.tipo === types.NombreFormulario ? (
+                          campo.tipo
+                        ) : campo.tipo === types.Seccion ? (
+                          <div className="flex gap-2">
+                            {campo.title?.length > 0 ? campo.title : campo.tipo}
+                            <TrashIcon
+                              onClick={() => borrarCampo(index)}
+                              className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
+                            />
+                          </div>
+                        ) : (
                           <div className="flex gap-2">
                             {campo.tipo}
                             <TrashIcon
@@ -1049,8 +1139,6 @@ export function FormularioPersonalizado({
                               className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
                             />
                           </div>
-                        ) : (
-                          campo.tipo
                         )}
                       </AccordionTrigger>
                       <AccordionContent className="border-none p-2 bg-white dark:bg-muted/10  dark:border-muted border-2">
@@ -1064,7 +1152,7 @@ export function FormularioPersonalizado({
           </AnimatePresence>
         </Reorder.Group>
       </form>
-      <Select key={selectKey} onValueChange={e => manejarSeleccion(e)}>
+      {/* <Select key={selectKey} onValueChange={e => manejarSeleccion(e)}>
         <SelectTrigger>
           <SelectValue placeholder="Selecciona un tipo de campo" />
         </SelectTrigger>
@@ -1092,7 +1180,7 @@ export function FormularioPersonalizado({
             </SelectItem>
           </SelectGroup>
         </SelectContent>
-      </Select>
+      </Select> */}
     </ScrollArea>
   )
 }
