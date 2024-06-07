@@ -13,6 +13,7 @@ export enum types {
   SiNo = 'Si-No',
   Titulo = 'Titulo',
   Seccion = 'Seccion',
+  Archivo = 'Archivo',
 }
 
 export interface Campo {

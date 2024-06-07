@@ -28,9 +28,10 @@ import { toast } from 'sonner'
 
 interface FormDisplayProps {
   campos: Campo[]
+  selectedForm?: Campo[] | undefined
 }
 
-export function FormDisplay({ campos }: FormDisplayProps) {
+export function FormDisplay({ campos, selectedForm }: FormDisplayProps) {
   const supabase = supabaseBrowser()
   const vehicles = useLoggedUserStore(state => state.vehicles)
 
@@ -49,7 +50,7 @@ export function FormDisplay({ campos }: FormDisplayProps) {
         )
       case 'Texto':
         return (
-          <div className="w-full" key={index}>
+          <div className="col-span-3" key={index}>
             <CardDescription className="mb-2">
               {campo.title ? campo.title : 'Titulo del campo'}
             </CardDescription>
@@ -70,7 +71,7 @@ export function FormDisplay({ campos }: FormDisplayProps) {
         )
       case 'Área de texto':
         return (
-          <div className="w-full" key={index}>
+          <div className="col-span-3" key={index}>
             <CardDescription className="mb-2">
               {campo.title ? campo.title : 'Titulo del campo'}
             </CardDescription>
@@ -91,7 +92,7 @@ export function FormDisplay({ campos }: FormDisplayProps) {
         )
       case 'Separador':
         return (
-          <div className="w-full my-2" key={index}>
+          <div className="col-span-3 w-full px-[20%]" key={index}>
             <Separator>{campo.value}</Separator>
           </div>
         )
@@ -178,7 +179,7 @@ export function FormDisplay({ campos }: FormDisplayProps) {
         )
       case 'Seleccion':
         return (
-          <div className="w-full" key={index}>
+          <div className="col-span-2" key={index}>
             <CardDescription className="mb-2">
               {' '}
               {campo.title ? campo.title : 'Titulo del campo'}
@@ -295,7 +296,7 @@ export function FormDisplay({ campos }: FormDisplayProps) {
         )
       case 'Subtitulo':
         return (
-          <div className="w-full" key={index}>
+          <div className="col-span-3" key={index}>
             <CardTitle className="mb-2 mt-1">
               {campo.title ? campo.title : 'Titulo del campo'}
             </CardTitle>
@@ -334,7 +335,7 @@ export function FormDisplay({ campos }: FormDisplayProps) {
         )
       case 'Titulo':
         return (
-          <div className="w-full" key={index}>
+          <div className="col-span-3" key={index}>
             <CardTitle className="mb-2 mt-1 text-xl">
               {campo.title ? campo.title : 'Titulo del campo'}
             </CardTitle>
@@ -346,13 +347,16 @@ export function FormDisplay({ campos }: FormDisplayProps) {
             <CardTitle className="mb-2 mt-1 text-xl">
               {campo.title ? campo.title : 'Titulo del campo'}
             </CardTitle>
-            {campo.sectionCampos?.map((opcion, i) => {
-              return (
-                <div key={i} className="w-full">
-                  {renderizarCampo(opcion, i)}
-                </div>
-              )
-            })}
+            <div className="grid grid-cols-3 gap-y-4 gap-x-4">
+              {campo.sectionCampos?.map((opcion, i) => {
+                return (
+                  // <div key={i} className='grid bg-blue-500'>
+                  renderizarCampo(opcion, i)
+                  // </div>
+                )
+              })}
+            </div>
+
             {campo.date && (
               <div className="flex flex-col gap-2 mt-2">
                 <CardDescription>Fecha</CardDescription>
@@ -366,6 +370,28 @@ export function FormDisplay({ campos }: FormDisplayProps) {
               </div>
             )}
             <Separator className="my-2" />
+          </div>
+        )
+      case 'Archivo':
+        return (
+          <div className="w-full" key={index}>
+            <CardDescription className="mb-2">
+              {' '}
+              {campo.title ? campo.title : 'Titulo del campo'}
+            </CardDescription>
+            <Input type="file" />
+            {campo.date && (
+              <div className="flex flex-col gap-2 mt-2">
+                <CardDescription>Fecha</CardDescription>
+                <Input type="date" />
+              </div>
+            )}
+            {campo.observation && (
+              <div className="flex flex-col gap-2 mt-2">
+                <CardDescription>Observaciones</CardDescription>
+                <Textarea placeholder="..." />
+              </div>
+            )}
           </div>
         )
       default:
@@ -409,8 +435,9 @@ export function FormDisplay({ campos }: FormDisplayProps) {
   }
   const [disabled, setDisabled] = useState(false)
 
+  console.log(campos, 'Campos')
   return (
-    <ScrollArea className="h-screen px-8 py-5 overflow-auto  rounded-e-xl rounded ">
+    <ScrollArea className="h-screen px-8 py-5 overflow-auto  rounded-e-xl rounded max-h-[85vh]">
       <div className="flex justify-between items-center">
         <CardTitle className="text-2xl font-bold">
           Vista previa del formulario
@@ -427,12 +454,23 @@ export function FormDisplay({ campos }: FormDisplayProps) {
         {campos.map((campo, index) => (
           <div key={index}>{renderizarCampo(campo, index)}</div>
         ))}
-        <Button
-          disabled={campos.length < 2 || disabled}
-          onClick={handleCreateCheckList}
-        >
-          Crear checkList
-        </Button>
+        <div className="flex w-full">
+          {!selectedForm ? (
+            <Button
+              disabled={campos.length < 2 || disabled}
+              onClick={handleCreateCheckList}
+            >
+              Crear checkList
+            </Button>
+          ) : (
+            <Button
+              onClick={() => toast.message('Proximamente!')}
+              className="ml-auto mt-2"
+            >
+              Editar formulario
+            </Button>
+          )}
+        </div>
       </div>
     </ScrollArea>
   )
