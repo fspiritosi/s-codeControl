@@ -8,17 +8,17 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 import { Campo, types } from '@/types/types'
-import { useState } from 'react'
+import cookie from 'js-cookie'
+import { useEffect, useState } from 'react'
 import DisplayCreatedForms from './DisplayCreatedForms'
 import { FormCustom } from './FormCustom'
 import { FormDisplay } from './FormDisplay'
-
-export function FormCustomContainer({
-  createdForms,
-}: {
-  createdForms: any[] | null
-}) {
+export function FormCustomContainer() {
+  const [createdFormsState, setCreatedFormsState] = useState<any[] | undefined>(
+    undefined,
+  )
   const [campos, setCampos] = useState<Campo[]>([
     {
       tipo: types.NombreFormulario,
@@ -28,7 +28,27 @@ export function FormCustomContainer({
       opciones: [],
     },
   ])
-  const [selectedForm, setSelectedForm] = useState<Campo[]|undefined>([])
+  const [selectedForm, setSelectedForm] = useState<Campo[] | undefined>([])
+  const [selectedTab, setSelectedTab] = useState<'created' | 'new'>('created')
+  const companyId = cookie.get('actualComp')
+  const fetchForms = async () => {
+    if (!companyId) return
+    const supabase = supabaseBrowser()
+    const { data, error } = await supabase
+      .from('custom_form')
+      .select('*')
+      .eq('company_id', companyId)
+    if (error) {
+      console.log(error)
+    }
+    if (data) {
+      setCreatedFormsState(data)
+    }
+  }
+
+  useEffect(() => {
+    fetchForms()
+  }, [])
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -46,19 +66,36 @@ export function FormCustomContainer({
             </div>
           </CardHeader>
           <div className="backdrop-blur supports-[backdrop-filter]:bg-background/60 bg-muted/50">
-            <Tabs defaultValue="created">
+            <Tabs value={selectedTab} defaultValue="created">
               <div className="bg-muted/50 pb-3">
                 <TabsList className="ml-6">
-                  <TabsTrigger value="created">Creados</TabsTrigger>
-                  <TabsTrigger value="new">Nuevo</TabsTrigger>
+                  <TabsTrigger
+                    value="created"
+                    onClick={() => setSelectedTab('created')}
+                  >
+                    Creados
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="new"
+                    onClick={() => setSelectedTab('new')}
+                  >
+                    Nuevo
+                  </TabsTrigger>
                 </TabsList>
               </div>
               <Separator className="mb-3 mt-0" />
               <TabsContent value="created">
-                <DisplayCreatedForms createdForms={createdForms} setSelectedForm={setSelectedForm} />
+                <DisplayCreatedForms
+                  createdForms={createdFormsState}
+                  setSelectedForm={setSelectedForm}
+                />
               </TabsContent>
               <TabsContent value="new">
-                <FormCustom setCampos={setCampos} campos={campos} setSelectedForm={setSelectedForm} />
+                <FormCustom
+                  setCampos={setCampos}
+                  campos={campos}
+                  setSelectedForm={setSelectedForm}
+                />
               </TabsContent>
             </Tabs>
           </div>
@@ -66,7 +103,13 @@ export function FormCustomContainer({
         <ResizableHandle withHandle />
         <ResizablePanel className="relative" minSize={30}>
           <div className="absolute inset-0 h-full w-full bg-white dark:bg-slate-950/70 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:16px_16px] rounded-e-xl rounded "></div>
-          <FormDisplay campos={selectedForm??campos} selectedForm={selectedForm} />
+          <FormDisplay
+            campos={selectedForm ?? campos}
+            selectedForm={selectedForm}
+            setSelectedTab={setSelectedTab}
+            setCampos={setCampos}
+            fetchForms={fetchForms}
+          />
         </ResizablePanel>
       </ResizablePanelGroup>
     </TooltipProvider>
