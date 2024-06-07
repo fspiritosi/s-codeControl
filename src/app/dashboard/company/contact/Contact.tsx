@@ -8,8 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { columns } from './action/columns'
-import { DataCustomers } from './action/data-table'
+import { columns } from '../contact/columns'
+import { DataContacts } from './data-table'
 import { supabase } from '../../../../../supabase/supabase'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useState, useEffect } from "react"
@@ -20,33 +20,33 @@ import { useSearchParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
-export default function Customers() {
+export default function Contact() {
   //const actualCompany = cookies().get('actualComp')
   //const supabase = supabaseServer()
   const router = useRouter()
-  const [customers, setCustomers] = useState([''])
+  const [contacts, setContacts] = useState([''])
   const allCompany = useLoggedUserStore(state => state.allCompanies)
   const [showInactive, setShowInactive] = useState(false)
   const useSearch = useSearchParams()
   useEffect(() => {
-    const fetchCustomers = async () => {
+    const fetchContacts = async () => {
       const { data, error } = await supabase
-        .from('customers')
+        .from('contacts')
         .select('*')
         .eq('is_active', true)
 
       if (error) {
         console.error('Error fetching customers:', error)
       } else {
-        setCustomers(data)
+        setContacts(data)
       }
     }
 
-    fetchCustomers()
+    fetchContacts()
   }, [])
-
-  const handleCreateClient = () => {
-    router.push(`/dashboard/company/customers/action?action=new`);
+  
+  const handleCreateContact = () => {
+    router.push(`/dashboard/company/contact/action?action=new`);
   };
 
   return (
@@ -61,28 +61,24 @@ export default function Customers() {
             <CardHeader className="w-full bg-muted dark:bg-muted/50 border-b-2">
               {/* <div className="grid gap-1"> */}
               <CardTitle className="text-2xl font-bold tracking-tight flex justify-between">
-                Clientes
-
-
-
-
+                Contactos
                 {/* </div> */}
                 <Button
                   className="ml-auto flex justify-between mb-2"
-                  onClick={handleCreateClient}
+                  onClick={handleCreateContact}
                 >
-                  Registrar Cliente
+                  Registrar Contacto
                 </Button>
               </CardTitle >
               <CardDescription className="text-muted-foreground">
-                Todos tus Clientes
+                Todos tus Contactos
               </CardDescription>
             </CardHeader>
 
             <CardContent>
-              <DataCustomers
+              <DataContacts
                 columns={columns}
-                data={customers || []}
+                data={contacts || []}
                 allCompany={allCompany}
                 showInactive={showInactive}
                 setShowInactive={setShowInactive}

@@ -24,7 +24,7 @@ export default function clientRegister({ id }: { id: string }) {
     const [readOnly, setReadOnly] = useState(action === 'edit' ? false : true)
     const [clientData, setClientData] = useState<any>(null);
     const [contactData, setContactData] = useState<any>(null);
-    //revalidatePath('/dashboard/customer/action')
+    //revalidatePath('/dashboard/company/customer/action')
 
     useEffect(() => {
         // Verificar si se está editando o creando un nuevo cliente
@@ -33,6 +33,9 @@ export default function clientRegister({ id }: { id: string }) {
             setReadOnly(true)
         }
         if (action === 'edit') {
+            setReadOnly(false)
+        }
+        if (action === 'new') {
             setReadOnly(false)
         }
             // Obtener los datos del cliente con el ID proporcionado

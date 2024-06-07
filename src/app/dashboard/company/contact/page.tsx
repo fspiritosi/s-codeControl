@@ -2,10 +2,10 @@ import { DocumentationDrawer } from '@/components/DocumentationDrawer'
 import { Card, CardFooter, CardTitle, CardHeader, CardDescription } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { revalidatePath } from 'next/cache'
-import { supabase } from '../../../../../../supabase/supabase'
-import CustomerComponent from "../../../../../components/CustomerComponent"
-import BackButton from "../../../../../components/BackButton"
-export default async function CustomerFormAction({
+import { supabase } from '../../../../../supabase/supabase'
+import ContactComponent from "../../../../components/ContactComponent"
+import BackButton from "../../../../components/BackButton"
+export default async function ContactFormAction({
   searchParams,
   params,
 }: {
@@ -16,7 +16,7 @@ export default async function CustomerFormAction({
     .from('customers')
     .select('*')
     .eq('id', searchParams.id)
-  //revalidatePath('/dashboard/company/customer/action')
+  revalidatePath('/dashboard/company/customer/action')
 
 
 
@@ -30,7 +30,7 @@ export default async function CustomerFormAction({
         'col-span-6 flex flex-col justify-between overflow-hidden',
         searchParams.action === 'new' && 'col-span-8',
       )} >
-        <CustomerComponent id={searchParams.id} />
+        <ContactComponent id={searchParams.id} />
       </div>
     </section>
   )

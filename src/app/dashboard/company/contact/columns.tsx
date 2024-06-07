@@ -77,11 +77,11 @@ const formSchema = z.object({
 })
 
 type Colum = {
-  name: string
-  cuit: number
-  client_email: string
-  client_phone: number
-  address: string
+  contact_name: string
+  constact_email: string
+  contact_phone: number
+  contact_charge: string
+  customer_id:{ name: string }
   is_active: boolean
   showInactive: boolean
   status: string
@@ -105,7 +105,7 @@ export const columns: ColumnDef<Colum>[] = [
       //const user = row.original
       const [showInactive, setShowInactive] = useState<boolean>(false)
       const [showDeletedCustomer, setShowDeletedCustomer] = useState(false)
-      const customers = row.original
+      const contacts = row.original
 
       const handleOpenModal = (id: string) => {
         setCuit(cuit)
@@ -113,14 +113,14 @@ export const columns: ColumnDef<Colum>[] = [
       }
       const actualCompany = useLoggedUserStore(state => state.actualCompany)
 
-      const fetchInactiveCustomer = async () => {
+      const fetchInactiveContacts = async () => {
         try {
           const { data, error } = await supabase
-            .from('customers')
+            .from('contacts')
             .select('*')
             .eq('is_active', false)
             .eq('company_id', actualCompany?.id)
-
+            console.log("DATA: ", data)
           if (error) {
             console.error(error)
           }
@@ -129,7 +129,7 @@ export const columns: ColumnDef<Colum>[] = [
         }
       }
       useEffect(() => {
-        fetchInactiveCustomer()
+        fetchInactiveContacts()
       }, [])
       const handleOpenIntegerModal = (id: string) => {
         setCuit(cuit)
@@ -147,16 +147,16 @@ export const columns: ColumnDef<Colum>[] = [
 
       const { toast } = useToast()
 
-      async function reintegerCustomer() {
+      async function reintegerContact() {
         try {
           const { data, error } = await supabase
-            .from('customers')
+            .from('contacts')
             .update({
               is_active: true,
               termination_date: null,
               reason_for_termination: null,
             })
-            .eq('id', customers.id)
+            .eq('id', contacts.id)
             .eq('company_id', actualCompany?.id)
             .select()
 
@@ -165,14 +165,14 @@ export const columns: ColumnDef<Colum>[] = [
           setShowDeletedCustomer(false)
           toast({
             variant: 'default',
-            title: 'Cliente reintegrado',
-            description: `El cliente ${customers?.name} ha sido reintegrado`,
+            title: 'Contacto reintegrado',
+            description: `El contacto ${contacts?.name} ha sido reintegrado`,
           })
         } catch (error: any) {
           const message = await errorTranslate(error?.message)
           toast({
             variant: 'destructive',
-            title: 'Error al reintegrar el cliente',
+            title: 'Error al reintegrar el contacto',
             description: message,
           })
         }
@@ -186,13 +186,13 @@ export const columns: ColumnDef<Colum>[] = [
 
         try {
           await supabase
-            .from('customers')
+            .from('contacts')
             .update({
               is_active: false,
               termination_date: data.termination_date,
               reason_for_termination: data.reason_for_termination,
             })
-            .eq('id', customers.name)
+            .eq('id', contacts.name)
             .eq('company_id', actualCompany?.id)
             .select()
 
@@ -200,14 +200,14 @@ export const columns: ColumnDef<Colum>[] = [
 
           toast({
             variant: 'default',
-            title: 'Cliente eliminado',
-            description: `El cliente ${customers.name} ha sido dado de baja`,
+            title: 'Contacto eliminado',
+            description: `El contacto ${contacts.name} ha sido dado de baja`,
           })
         } catch (error: any) {
           const message = await errorTranslate(error?.message)
           toast({
             variant: 'destructive',
-            title: 'Error al dar de baja el cliente',
+            title: 'Error al dar de baja el contacto',
             description: message,
           })
         }
@@ -215,6 +215,7 @@ export const columns: ColumnDef<Colum>[] = [
       const handleToggleInactive = () => {
         setShowInactive(!showInactive)
       }
+      console.log("id contacto: ", contacts.id)
 
       return (
         <DropdownMenu>
@@ -229,12 +230,12 @@ export const columns: ColumnDef<Colum>[] = [
                     ¿Estás completamente seguro?
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    {`Estás a punto de reintegrar al equipo ${customers.name}, quien fue dado de baja por ${customers.reason_for_termination} el día ${customers.termination_date}. Al reintegrar al cliente, se borrarán estas razones. Si estás seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
+                    {`Estás a punto de reintegrar el contacto ${contacts.name}, quien fue dado de baja por ${contacts.reason_for_termination} el día ${contacts.termination_date}. Al reintegrar al contacto, se borrarán estas razones. Si estás seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => reintegerCustomer()}>
+                  <AlertDialogAction onClick={() => reintegerContact()}>
                     Continuar
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -244,9 +245,9 @@ export const columns: ColumnDef<Colum>[] = [
           {showModal && (
             <Dialog defaultOpen onOpenChange={() => setShowModal(!showModal)}>
               <DialogContent className="dark:bg-slate-950">
-                <DialogTitle>Dar de baja Cliente</DialogTitle>
+                <DialogTitle>Dar de baja Contacto</DialogTitle>
                 <DialogDescription>
-                  ¿Estás seguro de que deseas dar de baja este cliente?, completa
+                  ¿Estás seguro de que deseas dar de baja este contacto?, completa
                   los campos para continuar.
                 </DialogDescription>
                 <DialogFooter>
@@ -285,7 +286,7 @@ export const columns: ColumnDef<Colum>[] = [
                               </Select>
                               <FormDescription>
                                 Elige la razón por la que deseas dar de baja el
-                                equipo
+                                contacto
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
@@ -368,46 +369,46 @@ export const columns: ColumnDef<Colum>[] = [
             <DropdownMenuLabel>Opciones</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(customers.cuit)}
+              onClick={() => navigator.clipboard.writeText(contacts.cuit)}
             >
               Copiar cuit
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Link
                 className="w-full"
-                href={`/dashboard/company/customers/action?action=view&id=${customers?.id}`}
+                href={`/dashboard/company/contact/action?action=view&id=${contacts?.id}`}
               >
-                Ver Cliente
+                Ver Contacto
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               {role !== 'Invitado' && (
                 <Link
                   className="w-full"
-                  href={`/dashboard/company/customers/action?action=edit&id=${customers?.id}`}
+                  href={`/dashboard/company/contact/action?action=edit&id=${contacts?.id}`}
                 >
-                  Editar Cliente
+                  Editar Contacto
                 </Link>
               )}
             </DropdownMenuItem>
             <DropdownMenuItem>
               {role !== 'Invitado' && (
                 <Fragment>
-                  {customers.is_active ? (
+                  {contacts.is_active ? (
                     <Button
                       variant="destructive"
-                      onClick={() => handleOpenModal(customers?.id)}
+                      onClick={() => handleOpenModal(contacts?.id)}
                       className="text-sm"
                     >
-                      Dar de baja Cliente
+                      Dar de baja Contacto
                     </Button>
                   ) : (
                     <Button
                       variant="primary"
-                      onClick={() => handleOpenIntegerModal(customers.id)}
+                      onClick={() => handleOpenIntegerModal(contacts.id)}
                       className="text-sm"
                     >
-                      Reintegrar Cliente
+                      Reintegrar Contacto
                     </Button>
                   )}
                 </Fragment>
@@ -419,7 +420,7 @@ export const columns: ColumnDef<Colum>[] = [
     },
   },
   {
-    accessorKey: 'cuit',
+    accessorKey: 'contact_name',
     header: ({ column }: { column: any }) => {
       return (
         <Button
@@ -427,23 +428,31 @@ export const columns: ColumnDef<Colum>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           className="p-0"
         >
-          Cuit
+          Nombre
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       )
     },
   },
   {
-    accessorKey: 'name',
+    accessorKey: 'contact_name',
     header: 'Nombre',
   },
   {
-    accessorKey: 'client_email',
+    accessorKey: 'constact_email',
     header: 'Email',
   },
   {
-    accessorKey: 'client_phone',
+    accessorKey: 'contact_phone',
     header: 'Teléfono',
+  },
+  {
+    accessorKey: 'contact_charge',
+    header: 'Cargo',
+  },
+  {
+    accessorKey: 'customer_id',
+    header: 'Cliente',
   },
   
   {

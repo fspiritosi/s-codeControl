@@ -32,6 +32,8 @@ import { ItemCompany } from './components/itemCompany'
 import Link from 'next/link';
 import { CloudCog } from 'lucide-react'
 import Customers from '../customers/Customers'
+import Client from '../customers/Customers'
+import Contact from '../contact/Contact'
 
 export default function page() {
   const router = useRouter()
@@ -104,6 +106,7 @@ export default function page() {
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>
           <TabsTrigger value="customers">Clientes</TabsTrigger>
+          <TabsTrigger value="contacts">Contactos</TabsTrigger>
           <TabsTrigger value="modules" disabled>
             Modulos
           </TabsTrigger>
@@ -226,10 +229,13 @@ export default function page() {
             <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
           </Card>
         </TabsContent>
-        <TabsContent value="modules">Change your password here.</TabsContent>
         <TabsContent value="customers">
           <Customers />
         </TabsContent>
+        <TabsContent value="contacts">
+          <Contact />
+        </TabsContent>
+        <TabsContent value="modules">Change your password here.</TabsContent>
       </Tabs>
     </div>
   )
