@@ -1,4 +1,10 @@
 'use client'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -7,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { ScrollArea } from '@/components/ui/scroll-area'
+
 import {
   Select,
   SelectContent,
@@ -21,7 +28,6 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { supabaseBrowser } from '@/lib/supabase/browser'
-import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import {
   InfoCircledIcon,
@@ -30,6 +36,7 @@ import {
 } from '@radix-ui/react-icons'
 import { AnimatePresence, Reorder, motion } from 'framer-motion'
 import { ChangeEvent, useState } from 'react'
+import { toast } from 'sonner'
 
 enum types {
   Texto = 'Texto',
@@ -82,6 +89,7 @@ export function FormularioPersonalizado({
     setSelectKey(prevKey => prevKey + 1) // Incrementa la clave
   }
   const borrarCampo = (index: number, campo_id?: string) => {
+    console.log('index', index)
     if (campo_id !== undefined && index !== undefined) {
       const newCampos = [...campos]
       newCampos
@@ -227,13 +235,6 @@ export function FormularioPersonalizado({
       case 'Texto':
         return (
           <div className="w-full cursor-grabbing" key={campo.id}>
-            <div className="flex items-center gap-2 mb-3">
-              <Label>{campo.tipo}</Label>
-              <TrashIcon
-                onClick={() => borrarCampo(index, campo_id)}
-                className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
-              />
-            </div>
             <div className="flex gap-2 flex-col">
               <Input
                 placeholder="Titulo del campo"
@@ -252,7 +253,7 @@ export function FormularioPersonalizado({
               />
               <Separator className="my-1" />
               <div className="grid grid-cols-2 gap-4">
-                <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
                   <Label>Observaciones</Label>
                   <Switch
                     checked={campo.observation}
@@ -261,7 +262,7 @@ export function FormularioPersonalizado({
                     }
                   />
                 </Card>
-                <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
                   <Label>Fecha</Label>
                   <Switch
                     checked={campo.date}
@@ -277,13 +278,6 @@ export function FormularioPersonalizado({
       case 'Área de texto':
         return (
           <div className="w-full cursor-grabbing " key={campo.id}>
-            <div className="flex items-center gap-2 mb-3">
-              <Label>{campo.tipo}</Label>
-              <TrashIcon
-                onClick={() => borrarCampo(index, campo_id)}
-                className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
-              />
-            </div>
             <div className="flex gap-2 flex-col">
               <Input
                 placeholder="Titulo del campo"
@@ -304,7 +298,7 @@ export function FormularioPersonalizado({
             </div>
             <Separator className="my-1" />
             <div className="grid grid-cols-2 gap-4">
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
                 <Label>Observaciones</Label>
                 <Switch
                   checked={campo.observation}
@@ -313,7 +307,7 @@ export function FormularioPersonalizado({
                   }
                 />
               </Card>
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
                 <Label>Fecha</Label>
                 <Switch
                   checked={campo.date}
@@ -340,24 +334,17 @@ export function FormularioPersonalizado({
       case 'Nombre del formulario':
         return (
           <div className="w-full cursor-grabbing" key={campo.id}>
-            <Label>{campo.tipo}</Label>
             <Input
               placeholder={campo.placeholder}
               value={campo.value}
               onChange={e => handleInputChange(e, index, sectionIndex)}
+              required
             />
           </div>
         )
       case 'Radio':
         return (
           <div className="w-full cursor-grabbing" key={campo.id}>
-            <div className="flex items-center gap-2 mb-3">
-              <Label>{campo.tipo}</Label>
-              <TrashIcon
-                onClick={() => borrarCampo(index, campo_id)}
-                className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
-              />
-            </div>
             <Input
               placeholder="Titulo del campo"
               onChange={e =>
@@ -366,7 +353,7 @@ export function FormularioPersonalizado({
             />
             <Separator className="my-2" />
             <div className="grid grid-cols-2 gap-4">
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
                 <Label>Observaciones</Label>
                 <Switch
                   checked={campo.observation}
@@ -375,7 +362,7 @@ export function FormularioPersonalizado({
                   }
                 />
               </Card>
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
                 <Label>Fecha</Label>
                 <Switch
                   checked={campo.date}
@@ -419,13 +406,6 @@ export function FormularioPersonalizado({
       case 'Seleccion multiple':
         return (
           <div className="w-full cursor-grabbing" key={campo.id}>
-            <div className="flex items-center gap-2 mb-3">
-              <Label>{campo.tipo}</Label>
-              <TrashIcon
-                onClick={() => borrarCampo(index, campo_id)}
-                className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
-              />
-            </div>
             <Input
               placeholder={campo.placeholder}
               onChange={e =>
@@ -434,7 +414,7 @@ export function FormularioPersonalizado({
             />
             <Separator className="my-2" />
             <div className="grid grid-cols-2 gap-4">
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
                 <Label>Observaciones</Label>
                 <Switch
                   checked={campo.observation}
@@ -443,7 +423,7 @@ export function FormularioPersonalizado({
                   }
                 />
               </Card>
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
                 <Label>Fecha</Label>
                 <Switch
                   checked={campo.date}
@@ -487,13 +467,6 @@ export function FormularioPersonalizado({
       case 'Fecha':
         return (
           <div className="w-full cursor-grabbing" key={campo.id}>
-            <div className="flex items-center gap-2 mb-3">
-              <Label>{campo.tipo}</Label>
-              <TrashIcon
-                onClick={() => borrarCampo(index, campo_id)}
-                className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
-              />
-            </div>
             <div className="flex gap-2 flex-col">
               <Input
                 placeholder="Titulo del campo"
@@ -520,13 +493,6 @@ export function FormularioPersonalizado({
       case 'Seleccion':
         return (
           <div className="w-full cursor-grabbing" key={campo.id}>
-            <div className="flex items-center gap-2 mb-3">
-              <Label>{campo.tipo}</Label>
-              <TrashIcon
-                onClick={() => borrarCampo(index, campo_id)}
-                className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
-              />
-            </div>
             <Input
               placeholder={campo.placeholder}
               onChange={e =>
@@ -535,7 +501,7 @@ export function FormularioPersonalizado({
             />
             <Separator className="my-1" />
             <div className="grid grid-cols-2 gap-4">
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
                 <Label>Observaciones</Label>
                 <Switch
                   checked={campo.observation}
@@ -544,7 +510,7 @@ export function FormularioPersonalizado({
                   }
                 />
               </Card>
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
                 <Label>Fecha</Label>
                 <Switch
                   checked={campo.date}
@@ -588,13 +554,6 @@ export function FormularioPersonalizado({
       case 'Seleccion Predefinida':
         return (
           <div className="w-full cursor-grabbing" key={campo.id}>
-            <div className="flex items-center gap-2 mb-3">
-              <Label>{campo.tipo}</Label>
-              <TrashIcon
-                onClick={() => borrarCampo(index, campo_id)}
-                className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
-              />
-            </div>
             <Input
               placeholder="Ingresar titulo"
               onChange={e =>
@@ -603,7 +562,7 @@ export function FormularioPersonalizado({
             />
             <Separator className="my-1" />
             <div className="grid grid-cols-2 gap-4">
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
                 <Label>Observaciones</Label>
                 <Switch
                   checked={campo.observation}
@@ -612,7 +571,7 @@ export function FormularioPersonalizado({
                   }
                 />
               </Card>
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
                 <Label>Fecha</Label>
                 <Switch
                   checked={campo.date}
@@ -647,13 +606,6 @@ export function FormularioPersonalizado({
       case 'Subtitulo':
         return (
           <div className="w-full cursor-grabbing" key={campo.id}>
-            <div className="flex items-center gap-2 mb-3">
-              <Label>{campo.tipo}</Label>
-              <TrashIcon
-                onClick={() => borrarCampo(index, campo_id)}
-                className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
-              />
-            </div>
             <Input
               placeholder="Ingresar titulo"
               onChange={e =>
@@ -665,13 +617,6 @@ export function FormularioPersonalizado({
       case 'Si-No':
         return (
           <div className="w-full cursor-grabbing" key={campo.id}>
-            <div className="flex items-center gap-2 mb-3">
-              <Label>{campo.tipo}</Label>
-              <TrashIcon
-                onClick={() => borrarCampo(index, campo_id)}
-                className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
-              />
-            </div>
             <Input
               placeholder="Titulo del campo"
               onChange={e =>
@@ -680,7 +625,7 @@ export function FormularioPersonalizado({
             />
             <Separator className="my-1" />
             <div className="grid grid-cols-2 gap-4">
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
                 <Label>Observaciones</Label>
                 <Switch
                   checked={campo.observation}
@@ -689,7 +634,7 @@ export function FormularioPersonalizado({
                   }
                 />
               </Card>
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
                 <Label>Fecha</Label>
                 <Switch
                   checked={campo.date}
@@ -734,13 +679,6 @@ export function FormularioPersonalizado({
       case 'Titulo':
         return (
           <div className="w-full cursor-grabbing" key={campo.id}>
-            <div className="flex items-center gap-2 mb-3">
-              <Label>{campo.tipo}</Label>
-              <TrashIcon
-                onClick={() => borrarCampo(index, campo_id)}
-                className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
-              />
-            </div>
             <Input
               placeholder={campo.placeholder}
               value={campo.value}
@@ -753,13 +691,6 @@ export function FormularioPersonalizado({
       case 'Seccion':
         return (
           <div className="w-full cursor-grabbing" key={campo.id}>
-            <div className="flex items-center gap-2 mb-3">
-              <CardTitle>{campo.tipo}</CardTitle>
-              <TrashIcon
-                onClick={() => borrarCampo(index, campo_id)}
-                className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
-              />
-            </div>
             <Input
               placeholder={campo.placeholder}
               value={campo.value}
@@ -769,7 +700,7 @@ export function FormularioPersonalizado({
             />
             <Separator className="my-2" />
             <div className="grid grid-cols-2 gap-4">
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
                 <Label>Observaciones</Label>
                 <Switch
                   checked={campo.observation}
@@ -778,7 +709,7 @@ export function FormularioPersonalizado({
                   }
                 />
               </Card>
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
                 <Label>Fecha</Label>
                 <Switch
                   checked={campo.date}
@@ -822,8 +753,7 @@ export function FormularioPersonalizado({
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="mt-4">
+            <div className="mt-4 space-y-2">
               <AnimatePresence>
                 {campo.sectionCampos?.map((opcion, i) => {
                   return (
@@ -833,7 +763,36 @@ export function FormularioPersonalizado({
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                     >
-                      {renderizarCampo(opcion, i, campo.id, index)}
+                      {opcion.tipo === types.Separador ? (
+                        <Card className="p-2">
+                          {renderizarCampo(opcion, i, campo.id, index)}
+                        </Card>
+                      ) : (
+                        <Accordion
+                          className="w-full bg-muted/40 rounded-lg  dark:border-muted border-2 outline-none overflow-hidden"
+                          type="single"
+                          collapsible
+                        >
+                          <AccordionItem value={opcion.id}>
+                            <AccordionTrigger className=" dark:border-b-muted pl-2 border">
+                              {opcion.tipo !== types.NombreFormulario ? (
+                                <div className="flex gap-2">
+                                  {opcion.tipo}
+                                  <TrashIcon
+                                    onClick={() => borrarCampo(i, campo.id)}
+                                    className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
+                                  />
+                                </div>
+                              ) : (
+                                opcion.tipo
+                              )}
+                            </AccordionTrigger>
+                            <AccordionContent className="border-none p-2 bg-white dark:bg-transparent border-2 dark:border-muted">
+                              {renderizarCampo(opcion, i, campo.id, index)}
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                      )}
                     </motion.div>
                   )
                 })}
@@ -1032,6 +991,9 @@ export function FormularioPersonalizado({
         sectionCampo.value = event.target.value
         setCampos(newCampos)
       }
+    } else {
+      newCampos[index].value = event.target.value
+      setCampos(newCampos)
     }
   }
   return (
@@ -1062,14 +1024,41 @@ export function FormularioPersonalizado({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <Card
-                  className={cn(
-                    'flex p-2 ',
-                    campo.tipo === 'Seccion' ? 'bg-muted/30' : '',
-                  )}
-                >
-                  {renderizarCampo(campo, index)}
-                </Card>
+                {campo.tipo === types.Separador ? (
+                  <Card className="p-2">{renderizarCampo(campo, index)}</Card>
+                ) : (
+                  <Accordion
+                    className="w-full bg-muted/50 rounded-lg border-2 dark:border-muted outline-none overflow-hidden"
+                    type="single"
+                    collapsible
+                  >
+                    <AccordionItem value={campo.id}>
+                      <AccordionTrigger
+                        id={
+                          campo.tipo === types.NombreFormulario
+                            ? 'MissingName'
+                            : ''
+                        }
+                        className=" dark:border-b-muted pl-2 border"
+                      >
+                        {campo.tipo !== types.NombreFormulario ? (
+                          <div className="flex gap-2">
+                            {campo.tipo}
+                            <TrashIcon
+                              onClick={() => borrarCampo(index)}
+                              className=" text-red-700 hover:bg-red-700 size-5 hover:text-white rounded-md cursor-pointer"
+                            />
+                          </div>
+                        ) : (
+                          campo.tipo
+                        )}
+                      </AccordionTrigger>
+                      <AccordionContent className="border-none p-2 bg-white dark:bg-muted/10  dark:border-muted border-2">
+                        {renderizarCampo(campo, index)}
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                )}
               </Reorder.Item>
             ))}
           </AnimatePresence>
@@ -1104,379 +1093,6 @@ export function FormularioPersonalizado({
           </SelectGroup>
         </SelectContent>
       </Select>
-    </ScrollArea>
-  )
-}
-
-interface FormDisplayProps {
-  campos: Campo[]
-}
-
-export function FormDisplay({ campos }: FormDisplayProps) {
-  const supabase = supabaseBrowser()
-  const vehicles = useLoggedUserStore(state => state.vehicles)
-
-
-  const renderizarCampo = (campo: Campo, index: number) => {
-    switch (campo.tipo) {
-      case 'Nombre del formulario':
-        return (
-          <div className="w-full my-5" key={index}>
-            <Label>
-              <Badge className="text-xl">
-                {' '}
-                {campo.value ?? 'Nombre del formulario'}
-              </Badge>
-            </Label>
-          </div>
-        )
-      case 'Texto':
-        return (
-          <div className="w-full" key={index}>
-            <CardDescription className="mb-2">
-              {campo.title ? campo.title : 'Titulo del campo'}
-            </CardDescription>
-            <Input placeholder={campo.value} />
-            {campo.date && (
-              <div className="flex flex-col gap-2 mt-2">
-                <CardDescription>Fecha</CardDescription>
-                <Input type="date" />
-              </div>
-            )}
-            {campo.observation && (
-              <div className="flex flex-col gap-2 mt-2">
-                <CardDescription>Observaciones</CardDescription>
-                <Textarea placeholder="..." />
-              </div>
-            )}
-          </div>
-        )
-      case 'Área de texto':
-        return (
-          <div className="w-full" key={index}>
-            <CardDescription className="mb-2">
-              {campo.title ? campo.title : 'Titulo del campo'}
-            </CardDescription>
-            <Textarea placeholder={campo.value} />
-            {campo.date && (
-              <div className="flex flex-col gap-2 mt-2">
-                <CardDescription>Fecha</CardDescription>
-                <Input type="date" />
-              </div>
-            )}
-            {campo.observation && (
-              <div className="flex flex-col gap-2 mt-2">
-                <CardDescription>Observaciones</CardDescription>
-                <Textarea placeholder="..." />
-              </div>
-            )}
-          </div>
-        )
-      case 'Separador':
-        return (
-          <div className="w-full my-2" key={index}>
-            <Separator>{campo.value}</Separator>
-          </div>
-        )
-      case 'Radio':
-        return (
-          <div className="w-full" key={index}>
-            <CardDescription className="mb-2">
-              {' '}
-              {campo.title ? campo.title : 'Titulo del campo'}
-            </CardDescription>
-            <RadioGroup className="flex gap-2 flex-col mt-2">
-              {campo.opciones?.map((opcion, i) => (
-                <div key={i} className="flex items-center space-x-2 ">
-                  <RadioGroupItem value={String(i)} id={String(i)} />
-                  <Label htmlFor={String(i)}>
-                    {opcion ? opcion : `Opcion ${i + 1}`}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-            {campo.date && (
-              <div className="flex flex-col gap-2 mt-2">
-                <CardDescription>Fecha</CardDescription>
-                <Input type="date" />
-              </div>
-            )}
-            {campo.observation && (
-              <div className="flex flex-col gap-2 mt-2">
-                <CardDescription>Observaciones</CardDescription>
-                <Textarea placeholder="..." />
-              </div>
-            )}
-          </div>
-        )
-      case 'Seleccion multiple':
-        return (
-          <div className="w-full" key={index}>
-            <CardDescription className="mb-2">
-              {' '}
-              {campo.title ? campo.title : 'Titulo del campo'}
-            </CardDescription>
-            <ToggleGroup
-              type="multiple"
-              className="flex w-full justify-start flex-wrap"
-            >
-              {campo.opciones?.map((opcion, i) => {
-                return (
-                  <ToggleGroupItem
-                    className="flex self-start border-muted-foreground border"
-                    key={i}
-                    value={opcion}
-                  >
-                    {opcion}
-                  </ToggleGroupItem>
-                )
-              })}
-            </ToggleGroup>
-            {campo.date && (
-              <div className="flex flex-col gap-2 mt-2">
-                <CardDescription>Fecha</CardDescription>
-                <Input type="date" />
-              </div>
-            )}
-            {campo.observation && (
-              <div className="flex flex-col gap-2 mt-2">
-                <CardDescription>Observaciones</CardDescription>
-                <Textarea placeholder="..." />
-              </div>
-            )}
-          </div>
-        )
-      case 'Fecha':
-        return (
-          <div className="w-full" key={index}>
-            <CardDescription className="mb-2">
-              {campo.title ? campo.title : 'Titulo del campo'}
-            </CardDescription>
-            <Input
-              type="date"
-              value={campo.value}
-              placeholder={campo.placeholder}
-            />
-          </div>
-        )
-      case 'Seleccion':
-        return (
-          <div className="w-full" key={index}>
-            <CardDescription className="mb-2">
-              {' '}
-              {campo.title ? campo.title : 'Titulo del campo'}
-            </CardDescription>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecciona una opción" />
-              </SelectTrigger>
-              <SelectContent>
-                {campo.opciones?.map((opcion, i) => {
-                  return (
-                    <SelectItem key={i} value={opcion || `Opcion ${i + 1}`}>
-                      {opcion || `Opcion ${i + 1}`}
-                    </SelectItem>
-                  )
-                })}
-              </SelectContent>
-            </Select>
-            {campo.date && (
-              <div className="flex flex-col gap-2 mt-2">
-                <CardDescription>Fecha</CardDescription>
-                <Input type="date" />
-              </div>
-            )}
-            {campo.observation && (
-              <div className="flex flex-col gap-2 mt-2">
-                <CardDescription>Observaciones</CardDescription>
-                <Textarea placeholder="..." />
-              </div>
-            )}
-          </div>
-        )
-      case 'Seleccion Predefinida':
-        return (
-          <div className="w-full" key={index}>
-            <CardDescription className="mb-2">
-              {' '}
-              {campo.title ? campo.title : 'Titulo del campo'}
-            </CardDescription>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar opcion" />
-              </SelectTrigger>
-              <SelectContent>
-                {campo.opciones?.map((opcion, i) => {
-                  if (opcion === 'Vehiculos') {
-                    return (
-                      <SelectGroup key={i}>
-                        <SelectLabel>Dominios</SelectLabel>
-
-                        {vehicles
-                          .filter(e => e.domain)
-                          .map(e => {
-                            return (
-                              <SelectItem key={e.domain} value={e.domain}>
-                                {e.domain}
-                              </SelectItem>
-                            )
-                          })}
-                      </SelectGroup>
-                    )
-                  }
-                  if (opcion === 'Otros') {
-                    return (
-                      <SelectGroup key={i}>
-                        <SelectLabel>Numero de serie</SelectLabel>
-                        {vehicles
-                          .filter(e => e.serie)
-                          .map(e => {
-                            return (
-                              <SelectItem key={e.serie} value={e.serie}>
-                                {e.serie}
-                              </SelectItem>
-                            )
-                          })}
-                      </SelectGroup>
-                    )
-                  }
-                  if (opcion === 'Numero interno') {
-                    return (
-                      <SelectGroup key={i}>
-                        <SelectLabel>Numero interno</SelectLabel>
-                        {vehicles
-                          .filter(e => e.intern_number)
-                          .map(e => {
-                            return (
-                              <SelectItem
-                                key={e.intern_number}
-                                value={e.intern_number}
-                              >
-                                {e.intern_number}
-                              </SelectItem>
-                            )
-                          })}
-                      </SelectGroup>
-                    )
-                  }
-                })}
-              </SelectContent>
-            </Select>
-            {campo.date && (
-              <div className="flex flex-col gap-2 mt-2">
-                <CardDescription>Fecha</CardDescription>
-                <Input type="date" />
-              </div>
-            )}
-            {campo.observation && (
-              <div className="flex flex-col gap-2 mt-2">
-                <CardDescription>Observaciones</CardDescription>
-                <Textarea placeholder="..." />
-              </div>
-            )}
-          </div>
-        )
-      case 'Subtitulo':
-        return (
-          <div className="w-full" key={index}>
-            <CardTitle className="mb-2 mt-1">
-              {campo.title ? campo.title : 'Titulo del campo'}
-            </CardTitle>
-          </div>
-        )
-      case 'Si-No':
-        return (
-          <div className="w-full" key={index}>
-            <CardDescription className="mb-2">
-              {' '}
-              {campo.title ? campo.title : 'Titulo del campo'}
-            </CardDescription>
-            <RadioGroup className="flex gap-2  mt-2">
-              {campo.opciones?.map((opcion, i) => (
-                <div key={i} className="flex items-center space-x-2 ">
-                  <RadioGroupItem value={String(i)} id={String(i)} />
-                  <Label htmlFor={String(i)}>
-                    {opcion ? opcion : `Opcion ${i + 1}`}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-            {campo.date && (
-              <div className="flex flex-col gap-2 mt-2">
-                <CardDescription>Fecha</CardDescription>
-                <Input type="date" />
-              </div>
-            )}
-            {campo.observation && (
-              <div className="flex flex-col gap-2 mt-2">
-                <CardDescription>Observaciones</CardDescription>
-                <Textarea placeholder="..." />
-              </div>
-            )}
-          </div>
-        )
-      case 'Titulo':
-        return (
-          <div className="w-full" key={index}>
-            <CardTitle className="mb-2 mt-1 text-xl">
-              {campo.title ? campo.title : 'Titulo del campo'}
-            </CardTitle>
-          </div>
-        )
-      case 'Seccion':
-        return (
-          <div className="w-full" key={index}>
-            <CardTitle className="mb-2 mt-1 text-xl">
-              {campo.title ? campo.title : 'Titulo del campo'}
-            </CardTitle>
-            {campo.sectionCampos?.map((opcion, i) => {
-              return (
-                <div key={i} className="w-full">
-                  {renderizarCampo(opcion, i)}
-                </div>
-              )
-            })}
-            {campo.date && (
-              <div className="flex flex-col gap-2 mt-2">
-                <CardDescription>Fecha</CardDescription>
-                <Input type="date" />
-              </div>
-            )}
-            {campo.observation && (
-              <div className="flex flex-col gap-2 mt-2">
-                <CardDescription>Observaciones</CardDescription>
-                <Textarea placeholder="..." />
-              </div>
-            )}
-            <Separator className="my-2" />
-          </div>
-        )
-      default:
-        return null
-    }
-  }
-  const actualCompany = useLoggedUserStore(state => state.actualCompany)
-
-  return (
-    <ScrollArea className="h-screen px-8 py-5 overflow-auto  rounded-e-xl rounded ">
-      <div className="flex justify-between items-center">
-        <CardTitle className="text-2xl font-bold">
-          Vista previa del formulario
-        </CardTitle>
-        <Avatar>
-          <AvatarImage
-            src={actualCompany?.company_logo ?? ''}
-            alt="Logo de la empresa"
-          />
-          <AvatarFallback>CN</AvatarFallback>
-        </Avatar>
-      </div>
-      <div className="space-y-3">
-        {campos.map((campo, index) => (
-          <div key={index}>{renderizarCampo(campo, index)}</div>
-        ))}
-        <Button  disabled={campos.length < 2}>Crear checkList</Button>
-      </div>
     </ScrollArea>
   )
 }
