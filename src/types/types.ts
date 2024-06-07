@@ -1,4 +1,31 @@
 import React from 'react'
+export enum types {
+  Texto = 'Texto',
+  AreaTexto = 'Área de texto',
+  Separador = 'Separador',
+  NombreFormulario = 'Nombre del formulario',
+  Radio = 'Radio',
+  SeleccionMultiple = 'Seleccion multiple',
+  Date = 'Fecha',
+  Seleccion = 'Seleccion',
+  SeleccionPredefinida = 'Seleccion Predefinida',
+  Subtitulo = 'Subtitulo',
+  SiNo = 'Si-No',
+  Titulo = 'Titulo',
+  Seccion = 'Seccion',
+}
+
+export interface Campo {
+  tipo: types
+  placeholder?: string
+  opciones: string[]
+  value?: string
+  id: string
+  title: string
+  observation?: boolean
+  date?: boolean
+  sectionCampos?: Campo[]
+}
 
 export type LoggedUser = {
   session: null | string
