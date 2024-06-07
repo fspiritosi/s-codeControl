@@ -170,7 +170,7 @@ export default function NavBar() {
 
   return (
     <nav className=" flex flex-shrink items-center justify-end sm:justify-between  text-white p-4 mb-2">
-      <div className=" items-center hidden sm:flex">
+      <div className=" items-center hidden sm:flex bg-muted/50 border rounded-lg">
         <Dialog open={showNewTeamDialog} onOpenChange={setShowNewTeamDialog}>
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild className="text-black dark:text-white">
@@ -200,8 +200,8 @@ export default function NavBar() {
                 <CaretSortIcon className="ml-auto h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0">
-              <Command>
+            <PopoverContent className="w-[200px] p-0 bg-muted/50">
+              <Command >
                 <CommandList>
                   <CommandInput placeholder="Buscar compañia" />
                   <CommandEmpty>Compañia no encontrada</CommandEmpty>
