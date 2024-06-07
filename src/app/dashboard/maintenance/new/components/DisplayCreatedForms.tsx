@@ -1,15 +1,15 @@
 'use client'
 import { Button } from '@/components/ui/button'
-import { Card, CardTitle } from '@/components/ui/card'
+import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { Campo } from '@/types/types'
 import { ReaderIcon } from '@radix-ui/react-icons'
 import { Dispatch, SetStateAction } from 'react'
 
 export default function DisplayCreatedForms({
   createdForms,
-  setSelectedForm
+  setSelectedForm,
 }: {
-  createdForms: any[] | null
+  createdForms: any[] | undefined
   setSelectedForm: Dispatch<SetStateAction<Campo[] | undefined>>
 }) {
   const handleSelectForm = (index: number) => {
@@ -34,6 +34,13 @@ export default function DisplayCreatedForms({
             </Card>
           )
         })}
+        {createdForms?.length === 0 && (
+          <Card className="p-2 flex items-center justify-between">
+            <CardDescription className="capitalize flex items-center">
+              No hay forms creados
+            </CardDescription>
+          </Card>
+        )}
       </div>
     </section>
   )
