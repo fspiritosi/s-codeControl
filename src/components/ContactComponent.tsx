@@ -94,18 +94,18 @@ export default function contactRegister({ id }: { id: string }) {
 
 
             <Card className="mt-6 p-8">
-                <CardTitle className="text-4xl mb-3">{action === "view" ? "Ver Contacto" : (action === "edit" ? "Editar Contacto" : "Registrar Contacto")}</CardTitle>
+                <CardTitle className="text-4xl mb-3">{action === "view" ? "" : (action === "edit" ? "Editar Contacto" : "Registrar Contacto")}</CardTitle>
                 <CardDescription>
-                    {action === "view" ? "En este formulario veras los datos de tu Contacto" : (action === "edit" ? "Edita este formulario con los datos de tu Contacto" : "Completa este formulario con los datos de tu nuevo Contacto")}
+                    {action === "view" ? "" : (action === "edit" ? "Edita este formulario con los datos de tu Contacto" : "Completa este formulario con los datos de tu nuevo Contacto")}
                 </CardDescription>
                 <div className="mt-6 rounded-xl flex w-full">
                     <form action={action === "view" ? undefined : (functionAction)} >
                         <input type="hidden" name="id" value={id} />
 
-                        <CardTitle className="text-2xl mb-3">Contacto</CardTitle>
+                        {/* <CardTitle className="text-2xl mb-3">Contacto</CardTitle>
                         <CardDescription className="mb-4" >
                             Completa este formulario con los datos de tu Contacto
-                        </CardDescription>
+                        </CardDescription> */}
                         <div className=" flex flex-wrap gap-3 items-center w-full">
                             <div>
                                 <Label htmlFor="contact_name">Nombre del Contacto</Label>
