@@ -135,10 +135,10 @@ export function DataCustomers<TData, TValue>({
         <div>
             <div className="flex items-center py-4 flex-wrap gap-y-2 overflow-auto">
                 <Input
-                    placeholder="Buscar por Cuit"
-                    value={(table.getColumn('cuit')?.getFilterValue() as string) ?? ''}
+                    placeholder="Buscar por nombre"
+                    value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
                     onChange={event =>
-                        table.getColumn('cuit')?.setFilterValue(event.target.value)
+                        table.getColumn('name')?.setFilterValue(event.target.value)
                     }
                     className="max-w-sm"
                 />
