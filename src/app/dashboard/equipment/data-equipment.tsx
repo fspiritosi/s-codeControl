@@ -238,7 +238,7 @@ export function DataEquipment<TData, TValue>({
                   ) {
                     return null
                   }
-                  if (column.id === 'is_active') {
+                  if (column.id === 'showUnavaliableEquipment') {
                     return (
                       <>
                         <DropdownMenuCheckboxItem
@@ -247,9 +247,9 @@ export function DataEquipment<TData, TValue>({
                           checked={showInactive}
                           //onChange={() => setShowInactive(!showInactive)}
                           onClick={() => setShowInactive(!showInactive)}
-                          onCheckedChange={value =>
-                            column.toggleVisibility(true)
-                          }
+                          // onCheckedChange={value =>
+                          //   column.toggleVisibility(true)
+                          // }
                         >
                           {column.columnDef.header}
                         </DropdownMenuCheckboxItem>

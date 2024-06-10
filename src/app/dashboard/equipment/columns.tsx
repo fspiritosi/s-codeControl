@@ -119,24 +119,24 @@ export const columns: ColumnDef<Colum>[] = [
       }
       const actualCompany = useLoggedUserStore(state => state.actualCompany)
 
-      const fetchInactiveEquipment = async () => {
-        try {
-          const { data, error } = await supabase
-            .from('vehicles')
-            .select('*')
-            .eq('is_active', false)
-            .eq('company_id', actualCompany?.id)
+      // const fetchInactiveEquipment = async () => {
+      //   try {
+      //     const { data, error } = await supabase
+      //       .from('vehicles')
+      //       .select('*')
+      //       //.eq('is_active', false)
+      //       .eq('company_id', actualCompany?.id)
 
-          if (error) {
-            console.error(error)
-          }
-        } catch (error) {
-          console.error(error)
-        }
-      }
-      useEffect(() => {
-        fetchInactiveEquipment()
-      }, [])
+      //     if (error) {
+      //       console.error(error)
+      //     }
+      //   } catch (error) {
+      //     console.error(error)
+      //   }
+      // }
+      // useEffect(() => {
+      //   fetchInactiveEquipment()
+      // }, [])
       const handleOpenIntegerModal = (id: string) => {
         setDomain(id)
         setIntegerModal(!integerModal)
@@ -481,7 +481,7 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Foto',
   },
   {
-    accessorKey: 'is_active',
-    header: 'Ver equipos dados de baja',
+    accessorKey: 'showUnavaliableEquipment',
+    header: 'Ver contactos dados de baja',
   },
 ]
