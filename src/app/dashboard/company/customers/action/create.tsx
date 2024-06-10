@@ -47,14 +47,14 @@ export async function createdCustomer(formData: FormData) {
     }
     console.log("client Data: ", clientData)
 
-    const contactData = {
-        contact_name: formData.get('contact_name'),
-        constact_email: formData.get('contact_email'),
-        contact_phone: formData.get('contact_phone'),
-        contact_charge: formData.get('contact_charge'),
-        company_id: Companies?.[0].id
-    }
-    console.log("contact Data: ", contactData)
+    // const contactData = {
+    //     contact_name: formData.get('contact_name'),
+    //     constact_email: formData.get('contact_email'),
+    //     contact_phone: formData.get('contact_phone'),
+    //     contact_charge: formData.get('contact_charge'),
+    //     company_id: Companies?.[0].id
+    // }
+    // console.log("contact Data: ", contactData)
 
     try {
         // Guardar datos en la tabla 'customer'
@@ -63,18 +63,18 @@ export async function createdCustomer(formData: FormData) {
         console.log("new client: ", newClient)
 
         //     // Guardar datos en la tabla 'contacts'
-        const customer_id = newClient?.data ? newClient?.data[0]?.id : null;
+        // const customer_id = newClient?.data ? newClient?.data[0]?.id : null;
 
-        console.log("customer_id: ", customer_id)
-        const contactDataWithCustomerId = {
-            ...contactData,
-            customer_id: customer_id
-        };
+        // console.log("customer_id: ", customer_id)
+        // const contactDataWithCustomerId = {
+        //     ...contactData,
+        //     customer_id: customer_id
+        // };
 
-        const createdContact = await supabase.from('contacts').insert(contactDataWithCustomerId).select();
+        // const createdContact = await supabase.from('contacts').insert(contactDataWithCustomerId).select();
 
-        console.log('Cliente creado:', createdCustomer);
-        console.log('Contacto creado:', createdContact);
+        // console.log('Cliente creado:', createdCustomer);
+        // console.log('Contacto creado:', createdContact);
         //return {
         //newClient,
         //createdContact
@@ -122,14 +122,14 @@ export async function updateCustomer(formData: FormData) {
     }
     console.log("client Data Update: ", clientData)
 
-    const contactData = {
-        contact_name: formData.get ('contact_name') ,
-        constact_email: formData.get('contact_email'),
-        contact_phone: formData.get('contact_phone'),
-        contact_charge: formData.get('contact_charge'),
-        company_id: Companies?.[0].id
-    }
-    console.log("contact Data Update: ", contactData)
+    // const contactData = {
+    //     contact_name: formData.get ('contact_name') ,
+    //     constact_email: formData.get('contact_email'),
+    //     contact_phone: formData.get('contact_phone'),
+    //     contact_charge: formData.get('contact_charge'),
+    //     company_id: Companies?.[0].id
+    // }
+    // console.log("contact Data Update: ", contactData)
     try {
         // Guardar datos en la tabla 'customer'
 
@@ -142,22 +142,22 @@ export async function updateCustomer(formData: FormData) {
         console.log("edit client: ", editClient)
 
             // Guardar datos en la tabla 'contacts'
-        const customer_id = editClient?.data ? editClient?.data[0]?.id : null;
+        //const customer_id = editClient?.data ? editClient?.data[0]?.id : null;
 
-        console.log("customer_id: ", customer_id)
-        const contactDataWithCustomerId = {
-            ...contactData,
-            customer_id: customer_id
-        };
+        // console.log("customer_id: ", customer_id)
+        // const contactDataWithCustomerId = {
+        //     ...contactData,
+        //     customer_id: customer_id
+        // };
 
-        const editContact = await supabase
-        .from('contacts')
-        .update(contactDataWithCustomerId)
-        .eq("customer_id",id)
-        .select();
+        // const editContact = await supabase
+        // .from('contacts')
+        // .update(contactDataWithCustomerId)
+        // .eq("customer_id",id)
+        // .select();
 
         console.log('Cliente editado:', editClient);
-        console.log('Contacto editado:', editContact);
+        // console.log('Contacto editado:', editContact);
         
 
     } catch (error) {

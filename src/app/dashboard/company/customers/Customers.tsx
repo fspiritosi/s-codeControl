@@ -33,7 +33,7 @@ export default function Customers() {
       const { data, error } = await supabase
         .from('customers')
         .select('*')
-        .eq('is_active', true)
+        //.eq('is_active', true)
 
       if (error) {
         console.error('Error fetching customers:', error)

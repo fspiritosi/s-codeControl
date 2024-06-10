@@ -81,9 +81,9 @@ export function DataCustomers<TData, TValue>({
 
    
     const loader = useLoggedUserStore(state => state.isLoading)
-    const filteredData = showInactive
-        ? data?.filter((item: any) => item.is_active === false)
-        : data
+    // const filteredData = showInactive
+    //     ? data?.filter((item: any) => item.is_active === false)
+    //     : data
     
 
     const selectHeader = {
@@ -179,7 +179,7 @@ export function DataCustomers<TData, TValue>({
                                     ) {
                                         return null
                                     }
-                                    if (column.id === 'is_active') {
+                                    if (column.id === 'showUnavaliableContacts') {
                                         return (
                                             <>
                                                 <DropdownMenuCheckboxItem
@@ -187,9 +187,9 @@ export function DataCustomers<TData, TValue>({
                                                     className="capitalize  text-red-400"
                                                     checked={showInactive}
                                                     onClick={() => setShowInactive(!showInactive)}
-                                                    onCheckedChange={value =>
-                                                        column.toggleVisibility(true)
-                                                    }
+                                                    // onCheckedChange={value =>
+                                                    //     column.toggleVisibility(true)
+                                                    // }
                                                 >
                                                     {column.columnDef.header}
                                                 </DropdownMenuCheckboxItem>

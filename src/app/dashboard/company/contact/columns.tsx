@@ -59,7 +59,7 @@ import { useLoggedUserStore } from '@/store/loggedUser'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { DotsVerticalIcon } from '@radix-ui/react-icons'
 import { ColumnDef } from '@tanstack/react-table'
-import { format } from 'date-fns'
+import { addMonths, format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { ArrowUpDown, CalendarIcon } from 'lucide-react'
 import Link from 'next/link'
@@ -81,8 +81,7 @@ type Colum = {
   constact_email: string
   contact_phone: number
   contact_charge: string
-  customer_id:{ name: string }
-  is_active: boolean
+  customer_id:{id:string, name:string}
   showInactive: boolean
   status: string
 }
@@ -101,26 +100,27 @@ export const columns: ColumnDef<Colum>[] = [
 
       const [showModal, setShowModal] = useState(false)
       const [integerModal, setIntegerModal] = useState(false)
-      const [cuit, setCuit] = useState('')
-      //const user = row.original
-      const [showInactive, setShowInactive] = useState<boolean>(false)
-      const [showDeletedCustomer, setShowDeletedCustomer] = useState(false)
+      const [id, setId] = useState('')
+      const [showInactive, setShowInactive] = useState('')
+      const [showDeletedContact, setShowDeletedContact] = useState(false)
       const contacts = row.original
 
       const handleOpenModal = (id: string) => {
-        setCuit(cuit)
+        setId(id)
         setShowModal(!showModal)
       }
       const actualCompany = useLoggedUserStore(state => state.actualCompany)
-
+     
       const fetchInactiveContacts = async () => {
         try {
           const { data, error } = await supabase
             .from('contacts')
             .select('*')
-            .eq('is_active', false)
+            //.eq('is_active', false)
             .eq('company_id', actualCompany?.id)
-            console.log("DATA: ", data)
+            .select()
+
+            
           if (error) {
             console.error(error)
           }
@@ -132,7 +132,7 @@ export const columns: ColumnDef<Colum>[] = [
         fetchInactiveContacts()
       }, [])
       const handleOpenIntegerModal = (id: string) => {
-        setCuit(cuit)
+        setId(id)
         setIntegerModal(!integerModal)
       }
 
@@ -153,16 +153,16 @@ export const columns: ColumnDef<Colum>[] = [
             .from('contacts')
             .update({
               is_active: true,
-              termination_date: null,
-              reason_for_termination: null,
+              //termination_date: null,
+              //reason_for_termination: null,
             })
             .eq('id', contacts.id)
-            .eq('company_id', actualCompany?.id)
+            //.eq('company_id', actualCompany?.id)
             .select()
 
           setIntegerModal(!integerModal)
           //setInactive(data as any)
-          setShowDeletedCustomer(false)
+          setShowDeletedContact(false)
           toast({
             variant: 'default',
             title: 'Contacto reintegrado',
@@ -189,10 +189,10 @@ export const columns: ColumnDef<Colum>[] = [
             .from('contacts')
             .update({
               is_active: false,
-              termination_date: data.termination_date,
-              reason_for_termination: data.reason_for_termination,
+              //termination_date: data.termination_date,
+              //reason_for_termination: data.reason_for_termination,
             })
-            .eq('id', contacts.name)
+            .eq('id', contacts.id)
             .eq('company_id', actualCompany?.id)
             .select()
 
@@ -212,10 +212,20 @@ export const columns: ColumnDef<Colum>[] = [
           })
         }
       }
-      const handleToggleInactive = () => {
-        setShowInactive(!showInactive)
-      }
-      console.log("id contacto: ", contacts.id)
+      const today = new Date()
+      const nextMonth = addMonths(new Date(), 1)
+      const [month, setMonth] = useState<Date>(nextMonth)
+
+      const yearsAhead = Array.from({ length: 20 }, (_, index) => {
+        const year = today.getFullYear() - index - 1
+        return year
+      })
+      const [years, setYear] = useState(today.getFullYear().toString())
+
+      // const handleToggleInactive = () => {
+      //   setShowInactive(!showInactive)
+      // }
+      // console.log("id contacto: ", contacts.id)
 
       return (
         <DropdownMenu>
@@ -323,7 +333,7 @@ export const columns: ColumnDef<Colum>[] = [
                                   className="w-auto p-0"
                                   align="start"
                                 >
-                                  <Calendar
+                                  {/* <Calendar
                                     mode="single"
                                     selected={field.value}
                                     onSelect={field.onChange}
@@ -333,6 +343,60 @@ export const columns: ColumnDef<Colum>[] = [
                                     }
                                     initialFocus
                                     locale={es}
+                                  /> */}
+                                  <Select
+                                    onValueChange={e => {
+                                      setMonth(new Date(e))
+                                      setYear(e)
+                                      const newYear = parseInt(e, 10)
+                                      const dateWithNewYear = new Date(
+                                        field.value,
+                                      )
+                                      dateWithNewYear.setFullYear(newYear)
+                                      field.onChange(dateWithNewYear)
+                                      setMonth(dateWithNewYear)
+                                    }}
+                                    value={
+                                      years || today.getFullYear().toString()
+                                    }
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Elegir año" />
+                                    </SelectTrigger>
+                                    <SelectContent position="popper">
+                                      <SelectItem
+                                        value={today.getFullYear().toString()}
+                                        disabled={
+                                          years ===
+                                          today.getFullYear().toString()
+                                        }
+                                      >
+                                        {today.getFullYear().toString()}
+                                      </SelectItem>
+                                      {yearsAhead?.map(year => (
+                                        <SelectItem
+                                          key={year}
+                                          value={`${year}`}
+                                        >
+                                          {year}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <Calendar
+                                    month={month}
+                                    onMonthChange={setMonth}
+                                    toDate={today}
+                                    locale={es}
+                                    mode="single"
+                                    disabled={date =>
+                                      date > new Date() ||
+                                      date < new Date('1900-01-01')
+                                    }
+                                    selected={new Date(field.value) || today}
+                                    onSelect={e => {
+                                      field.onChange(e)
+                                    }}
                                   />
                                 </PopoverContent>
                               </Popover>
@@ -351,9 +415,6 @@ export const columns: ColumnDef<Colum>[] = [
                         </div>
                       </form>
                     </Form>
-                    {/* <Button variant="destructive" onClick={() => handleDelete()}>
-                    Eliminar
-                  </Button> */}
                   </div>
                 </DialogFooter>
               </DialogContent>
@@ -369,9 +430,9 @@ export const columns: ColumnDef<Colum>[] = [
             <DropdownMenuLabel>Opciones</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(contacts.cuit)}
+              onClick={() => navigator.clipboard.writeText(contacts.constact_email)}
             >
-              Copiar cuit
+              Copiar email
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Link
@@ -434,10 +495,7 @@ export const columns: ColumnDef<Colum>[] = [
       )
     },
   },
-  {
-    accessorKey: 'contact_name',
-    header: 'Nombre',
-  },
+  
   {
     accessorKey: 'constact_email',
     header: 'Email',
@@ -451,12 +509,13 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Cargo',
   },
   {
-    accessorKey: 'customer_id',
+    accessorKey: 'customers.name',
     header: 'Cliente',
   },
   
+  
   {
-    accessorKey: 'is_active',
-    header: 'Ver clientes dados de baja',
+    accessorKey: 'showUnavaliableContacts',
+    header: 'Ver contactos dados de baja',
   },
 ]

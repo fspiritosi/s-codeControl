@@ -45,6 +45,7 @@ export default function page() {
   const ownerUser = useLoggedUserStore(state => state.profile)
   const [showPasswords, setShowPasswords] = useState(false)
   const [open, setOpen] = useState(false)
+  const [tabValue, setTabValue] = useState(localStorage.getItem('selectedTab') || 'general');
   const userShared = cookies.get('guestRole')
   console.log(actualCompany?.id, "actual company")
   const owner = ownerUser?.map(user => {
@@ -90,6 +91,12 @@ export default function page() {
     router.push(`/dashboard/company/${actualCompany!.id}`);
   };
 
+  const handleTabChange = (value:any) => {
+    setTabValue(value);
+    localStorage.setItem('selectedTab', value);
+  };
+  
+
   return (
     <div className="flex flex-col gap-6 py-4 px-6">
       <div className="w-full flex mb-6">
@@ -101,7 +108,7 @@ export default function page() {
         />
       </div>
 
-      <Tabs defaultValue="general">
+      <Tabs defaultValue={tabValue} onValueChange={handleTabChange}>
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>

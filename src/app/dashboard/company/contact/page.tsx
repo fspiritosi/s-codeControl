@@ -12,11 +12,11 @@ export default async function ContactFormAction({
   searchParams: any
   params: any
 }) {
-  const { data } = await supabase
-    .from('customers')
-    .select('*')
-    .eq('id', searchParams.id)
-  revalidatePath('/dashboard/company/customer/action')
+  // const { data } = await supabase
+  //   .from('customers')
+  //   .select('*')
+  //   .eq('id', searchParams.id)
+  // revalidatePath('/dashboard/company/customer/action')
 
 
 

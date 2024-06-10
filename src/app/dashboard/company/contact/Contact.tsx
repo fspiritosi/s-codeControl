@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { columns } from '../contact/columns'
+import { columns } from './columns'
 import { DataContacts } from './data-table'
 import { supabase } from '../../../../../supabase/supabase'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -32,9 +32,9 @@ export default function Contact() {
     const fetchContacts = async () => {
       const { data, error } = await supabase
         .from('contacts')
-        .select('*')
-        .eq('is_active', true)
-
+        .select('*, customers(id, name)')
+        //.eq('is_active', true)
+        console.log("fetchContact: ", data)
       if (error) {
         console.error('Error fetching customers:', error)
       } else {

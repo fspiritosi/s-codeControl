@@ -118,7 +118,7 @@ export const columns: ColumnDef<Colum>[] = [
           const { data, error } = await supabase
             .from('customers')
             .select('*')
-            .eq('is_active', false)
+            //.eq('is_active', false)
             .eq('company_id', actualCompany?.id)
 
           if (error) {
@@ -153,8 +153,8 @@ export const columns: ColumnDef<Colum>[] = [
             .from('customers')
             .update({
               is_active: true,
-              termination_date: null,
-              reason_for_termination: null,
+              // termination_date: null,
+              // reason_for_termination: null,
             })
             .eq('id', customers.id)
             .eq('company_id', actualCompany?.id)
@@ -189,10 +189,10 @@ export const columns: ColumnDef<Colum>[] = [
             .from('customers')
             .update({
               is_active: false,
-              termination_date: data.termination_date,
-              reason_for_termination: data.reason_for_termination,
+              // termination_date: data.termination_date,
+              // reason_for_termination: data.reason_for_termination,
             })
-            .eq('id', customers.name)
+            .eq('id', customers.id)
             .eq('company_id', actualCompany?.id)
             .select()
 
@@ -446,8 +446,9 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Teléfono',
   },
   
+  // },
   {
-    accessorKey: 'is_active',
+    accessorKey: 'showUnavaliableContacts',
     header: 'Ver clientes dados de baja',
   },
 ]

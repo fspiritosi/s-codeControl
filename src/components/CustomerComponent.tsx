@@ -174,11 +174,11 @@ export default function clientRegister({ id }: { id: string }) {
                         </div>
                         <br />
 
-                        <CardTitle className="text-2xl mb-3">Contacto</CardTitle>
+                        {/* <CardTitle className="text-2xl mb-3">Contacto</CardTitle>
                         <CardDescription className="mb-4" >
                             Completa este formulario con los datos de Conatcto de tu Cliente
-                        </CardDescription>
-                        <div className=" flex flex-wrap gap-3 items-center w-full">
+                        </CardDescription> */}
+                        {/* <div className=" flex flex-wrap gap-3 items-center w-full">
                             <div>
                                 <Label htmlFor="contact_name">Nombre del Contacto</Label>
                                 <Input
@@ -242,7 +242,7 @@ export default function clientRegister({ id }: { id: string }) {
                                     className="max-w-[300px]"
                                 />
                             </div>
-                        </div>
+                        </div> */}
                         {action === "view" ? null : (
                             <Button
                                 type="submit"
