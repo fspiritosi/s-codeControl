@@ -9,9 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatDate } from 'date-fns'
 import { es } from 'date-fns/locale'
 
+import BackButton from '@/components/BackButton'
 import UpdateDocuments from '@/components/UpdateDocuments'
 import { Badge } from '@/components/ui/badge'
-import { buttonVariants } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -20,8 +20,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import Link from 'next/link'
 import { Suspense } from 'react'
 import { supabase } from '../../../../../supabase/supabase'
 import DownloadButton from '../documentComponents/DownloadButton'
@@ -101,15 +106,24 @@ export default async function page({ params }: { params: { id: string } }) {
   documentUrl = url.publicUrl
   documents_employees = document
 
-  const expireInLastMonth = () => {
-    if (!documents_employees?.[0]?.document_types?.explired) return false
-    const date = documents_employees?.[0]?.document_types?.explired
-    const today = new Date()
-    const expireDate = new Date(date)
-    const lastMonth = new Date(today.setMonth(today.getMonth() - 1))
+  function expireInLastMonth() {
+    const validity = documents_employees?.[0]?.validity
+    if (!validity) return false
 
-    return expireDate < lastMonth
+    console.log('validity', validity)
+    // Convertir la fecha a formato "mm/dd/yyyy"
+    const [day, month, year] = validity.split('/')
+    const validityDate = new Date(`${month}/${day}/${year}`)
+
+    const oneMonthFromNow = new Date()
+    oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1)
+
+    return validityDate <= oneMonthFromNow
   }
+  console.log(
+    documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth(),
+    ' documents_employees?.[0]?.state =',
+  )
 
   return (
     <section className="md:mx-7">
@@ -161,12 +175,7 @@ export default async function page({ params }: { params: { id: string } }) {
               fileName={documents_employees?.[0]?.document_types?.name}
               path={documents_employees?.[0]?.document_path}
             />
-            <Link
-              href={`/dashboard/document`}
-              className={buttonVariants({ variant: 'default' })}
-            >
-              Volver
-            </Link>
+            <BackButton />
           </div>
         </div>
         <div className="grid lg:grid-cols-3 grid-cols-1 gap-col-3 ">
@@ -182,16 +191,42 @@ export default async function page({ params }: { params: { id: string } }) {
                 <TabsTrigger className="hover:bg-white/30" value="Documento">
                   Documento
                 </TabsTrigger>
-                <TabsTrigger
-                  className="hover:bg-white/30"
-                  disabled={
-                    documents_employees?.[0]?.state === 'aprobado' &&
-                    !expireInLastMonth()
-                  }
-                  value="Auditar"
-                >
-                  Actualizar
-                </TabsTrigger>
+                {documents_employees?.[0]?.state === 'aprobado' &&
+                !expireInLastMonth() ? (
+                  <TooltipProvider delayDuration={100}>
+                    <Tooltip>
+                      <TooltipTrigger disabled asChild>
+                        <div>
+                          <TabsTrigger
+                            className="hover:bg-white/30"
+                            disabled={
+                              documents_employees?.[0]?.state === 'aprobado' &&
+                              !expireInLastMonth()
+                            }
+                            value="Auditar"
+                          >
+                            Actualizar
+                          </TabsTrigger>
+                        </div>
+                      </TooltipTrigger>
+                      {documents_employees?.[0]?.state === 'aprobado' &&
+                      !expireInLastMonth() ? (
+                        <TooltipContent>
+                          <p>
+                            Este documento no puede ser modificado ya que se
+                            encuentra aprobado y no esta por vencer
+                          </p>
+                        </TooltipContent>
+                      ) : (
+                        false
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  <TabsTrigger className="hover:bg-white/30" value="Auditar">
+                    Auditar
+                  </TabsTrigger>
+                )}
               </TabsList>
               <TabsContent value="Empresa">
                 <Card>
@@ -670,7 +705,7 @@ export default async function page({ params }: { params: { id: string } }) {
                             <CardDescription>
                               {documents_employees?.[0]?.document_types
                                 ?.explired
-                                ? 'Tiene vencimiento'
+                                ? `Vence el ${documents_employees?.[0]?.validity}`
                                 : 'No tiene vencimiento'}
                             </CardDescription>
                           </TableCell>
@@ -744,6 +779,9 @@ export default async function page({ params }: { params: { id: string } }) {
                         id={params.id}
                         resource={resource}
                         documentName={documentName}
+                        expires={
+                          documents_employees?.[0]?.document_types?.explired
+                        }
                       />
                     </div>
                   </div>

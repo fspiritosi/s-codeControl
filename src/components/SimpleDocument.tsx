@@ -48,7 +48,6 @@ export default function SimpleDocument({
   defaultDocumentId?: string
   document?: string
 }) {
-  const documetsFetch = useLoggedUserStore(state => state.documetsFetch)
   const documentDrawerEmployees = useLoggedUserStore(
     state => state.documentDrawerEmployees,
   )
@@ -301,7 +300,6 @@ export default function SimpleDocument({
       if (id) {
         documentDrawerVehicles(id)
       }
-      documetsFetch()
       handleOpen()
     } catch (error) {
       console.error(error)

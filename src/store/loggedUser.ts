@@ -7,11 +7,11 @@ import {
 import { Company, SharedCompanies, Vehicle } from '@/zodSchemas/schemas'
 import { User } from '@supabase/supabase-js'
 import { format } from 'date-fns'
+import cookies from 'js-cookie'
 import { create } from 'zustand'
 import { supabase } from '../../supabase/supabase'
 import { VehiclesFormattedElement } from './../zodSchemas/schemas'
 import { useCountriesStore } from './countries'
-
 interface Document {
   date: string
   allocated_to: string
@@ -332,6 +332,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
   const setActualCompany = (company: Company[0]) => {
     set({ actualCompany: company })
+    cookies.set('actualComp', company.id)
     useCountriesStore.getState().documentTypes(company?.id)
     setActivesEmployees()
     fetchVehicles()
@@ -477,7 +478,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       model_vehicles(name)`,
       )
       .eq('company_id', get()?.actualCompany?.id)
-      .eq('is_active', true)
+      //.eq('is_active', true)
 
     // const validatedData = VehicleSchema.safeParse(data ?? [])
     // if (!validatedData.success) {
@@ -496,7 +497,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
   }
 
   const setActivesVehicles = () => {
-    const activesVehicles = get()?.vehicles.filter(vehicle => vehicle.is_active)
+    //const activesVehicles = get()?.vehicles.filter(vehicle => vehicle.is_active)
+    const activesVehicles =get()?.vehicles
     set({ vehiclesToShow: setVehiclesToShow(activesVehicles) })
   }
   const endorsedVehicles = () => {
@@ -553,6 +555,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
   const documetsFetch = async () => {
     // set({ isLoading: true })
+    console.log(get()?.actualCompany?.id,'get()?.actualCompany?.id');
+    if (!get()?.actualCompany?.id) return
     let { data, error } = await supabase
       .from('documents_employees')
       .select(
@@ -584,7 +588,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     const typedData: VehiclesAPI[] | null = equipmentData as VehiclesAPI[]
 
     if (error) {
-      console.error('Error al obtener los documentos:', error)
+      return 
     } else {
       const lastMonth = new Date()
       lastMonth.setMonth(new Date().getMonth() + 1)
@@ -614,7 +618,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
         return isExpired
       })
 
-      console.log(filteredVehiclesData, 'filteredVehiclesData')
 
       const formatDate = (dateString: string) => {
         if (!dateString) return 'No vence'

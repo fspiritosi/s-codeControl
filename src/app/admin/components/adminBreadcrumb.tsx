@@ -1,38 +1,32 @@
 'use client'
-import Link from "next/link"
 import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
-  } from "@/components/ui/breadcrumb"
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
+import Link from 'next/link'
 
-import { usePathname } from "next/navigation"
+import { usePathname } from 'next/navigation'
 
-export default function AdminBreadcrumb(){
+export default function AdminBreadcrumb() {
+  const path = usePathname()
+  const cortePath = path.split('/')
+  const pasos = cortePath.slice(2)
 
-    const path = usePathname()
-    const cortePath = path.split('/')
-    const pasos = cortePath.slice(2) 
- 
-    return(
-        <Breadcrumb className="hidden md:flex">
-        <BreadcrumbList>
+  return (
+    <Breadcrumb className="hidden md:flex">
+      <BreadcrumbList>
         {pasos.map((paso, index) => (
-            <BreadcrumbItem key={index}>
+          <BreadcrumbItem key={index}>
             <BreadcrumbLink asChild>
-              <Link href={`/admin/${paso}`}>
-              {paso}
-              </Link>
-              </BreadcrumbLink>
-            <BreadcrumbSeparator /> 
-            
+              <Link href={`/admin/${paso}`}>{paso}</Link>
+            </BreadcrumbLink>
+            {pasos.length - 1 === index ? null : <BreadcrumbSeparator />}
           </BreadcrumbItem>
-          
         ))}
-        </BreadcrumbList>
-      </Breadcrumb>
-    )
+      </BreadcrumbList>
+    </Breadcrumb>
+  )
 }

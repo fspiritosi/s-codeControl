@@ -59,7 +59,6 @@ export default function MultiResourceDocument({
   resource: string | undefined
   handleOpen: () => void
 }) {
-  const documetsFetch = useLoggedUserStore(state => state.documetsFetch)
   const [documenTypes, setDocumentTypes] = useState<any[] | null>([])
   const [expiredDate, setExpiredDate] = useState(false)
   const [disabled, setDisabled] = useState(false)
@@ -311,7 +310,6 @@ export default function MultiResourceDocument({
       variant: 'default',
     })
     handleOpen()
-    documetsFetch()
     setDisabled(false)
   }
 
@@ -389,7 +387,6 @@ export default function MultiResourceDocument({
                       <Input
                         readOnly
                         type="text"
-                        accept=".jpg, .jpeg, .png, .gif, .bmp, .tif, .tiff"
                         onClick={() => fileInputRef?.current?.click()} // Abre el diálogo de selección de archivos
                         className="self-center cursor-pointer"
                         placeholder={
@@ -407,7 +404,6 @@ export default function MultiResourceDocument({
                         }
                         ref={fileInputRef}
                         type="file"
-                        accept=".jpg, .jpeg, .png, .gif, .bmp, .tif, .tiff"
                         onChange={(event: ChangeEvent<HTMLInputElement>) => {
                           setFile(event.target.files?.[0])
                         }}
