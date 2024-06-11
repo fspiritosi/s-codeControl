@@ -478,7 +478,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       model_vehicles(name)`,
       )
       .eq('company_id', get()?.actualCompany?.id)
-      .eq('is_active', true)
+      //.eq('is_active', true)
 
     // const validatedData = VehicleSchema.safeParse(data ?? [])
     // if (!validatedData.success) {
@@ -497,7 +497,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
   }
 
   const setActivesVehicles = () => {
-    const activesVehicles = get()?.vehicles.filter(vehicle => vehicle.is_active)
+    //const activesVehicles = get()?.vehicles.filter(vehicle => vehicle.is_active)
+    const activesVehicles =get()?.vehicles
     set({ vehiclesToShow: setVehiclesToShow(activesVehicles) })
   }
   const endorsedVehicles = () => {
