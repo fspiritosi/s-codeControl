@@ -14,6 +14,7 @@ export enum types {
   Titulo = 'Titulo',
   Seccion = 'Seccion',
   Archivo = 'Archivo',
+  Observaciones = 'Observaciones',
 }
 
 export interface Campo {
@@ -26,6 +27,7 @@ export interface Campo {
   observation?: boolean
   date?: boolean
   sectionCampos?: Campo[]
+  formName?: string
 }
 
 export type LoggedUser = {

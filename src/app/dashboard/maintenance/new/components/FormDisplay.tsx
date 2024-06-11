@@ -240,8 +240,8 @@ export function FormDisplay({
                         <SelectLabel>Dominios</SelectLabel>
 
                         {vehicles
-                          .filter(e => e.domain)
-                          .map(e => {
+                          ?.filter(e => e.domain)
+                          ?.map(e => {
                             return (
                               <SelectItem key={e.domain} value={e.domain}>
                                 {e.domain}
@@ -458,7 +458,6 @@ export function FormDisplay({
   }
   const [disabled, setDisabled] = useState(false)
 
-  console.log(campos, 'Campos')
   return (
     <ScrollArea className="h-screen px-8 py-5 overflow-auto  rounded-e-xl rounded max-h-[85vh]">
       <div className="flex justify-between items-center">

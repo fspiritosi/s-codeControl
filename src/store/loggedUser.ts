@@ -45,7 +45,6 @@ interface State {
   sharedCompanies: SharedCompanies
   endorsedEmployees: () => void
   noEndorsedEmployees: () => void
-
   allDocumentsToShow: {
     employees: Document[]
     vehicles: Document[]
@@ -554,7 +553,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
   const documetsFetch = async () => {
     // set({ isLoading: true })
-    console.log(get()?.actualCompany?.id,'get()?.actualCompany?.id');
     if (!get()?.actualCompany?.id) return
     let { data, error } = await supabase
       .from('documents_employees')
@@ -603,8 +601,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
         const isExpired = date < lastMonth || doc.state === 'Vencido'
         return isExpired
       })
-
-      console.log(filteredData, 'filteredData')
 
       const filteredVehiclesData = typedData?.filter((doc: any) => {
         if (!doc.validity) return false
@@ -724,7 +720,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
             })
             ?.map(mapVehicle) || [],
       }
-      console.log(lastMonthValues, 'lastMonthValues')
       const AllvaluesToShow = {
         employees: data?.map(mapDocument) || [],
         vehicles: typedData?.map(mapVehicle) || [],
