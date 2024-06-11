@@ -376,7 +376,7 @@ export default function clientRegister({ id }: { id: string }) {
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>
-                <h1>Acá va el resto de las tablas</h1>
+                <h1>Acá va el resto de los datos</h1>
            </section>    
             ) : (
                 renderCard()
