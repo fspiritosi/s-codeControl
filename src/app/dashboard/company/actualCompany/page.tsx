@@ -99,14 +99,14 @@ export default function page() {
 
   return (
     <div className="flex flex-col gap-6 py-4 px-6">
-      <div className="w-full flex mb-6">
+      {/* <div className="w-full flex mb-6">
         <Image
           src={company?.company_logo || ''}
           alt={company?.company_name || ''}
           width={200}
           height={200}
         />
-      </div>
+      </div> */}
 
       <Tabs defaultValue={tabValue} onValueChange={handleTabChange}>
         <TabsList>
