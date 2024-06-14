@@ -42,6 +42,7 @@ export interface FormField {
   placeholder?: string
   Observaciones?: boolean
   observation?: boolean
+  required?: boolean
 }
 
 export interface Campo {
@@ -55,6 +56,7 @@ export interface Campo {
   date?: boolean
   sectionCampos?: Campo[]
   formName?: string
+  required?: boolean
 }
 
 export type LoggedUser = {

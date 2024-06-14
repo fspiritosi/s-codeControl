@@ -17,7 +17,7 @@ export default function DisplayCreatedForms({
   }
 
   return (
-    <section className="p-4 pt-0 max-h-[68vh]">
+    <section className="p-4 pt-0 max-h-[68vh] overflow-y-auto ">
       <CardTitle className="mb-2 text-xl">Forms creados</CardTitle>
 
       <div className="space-y-3">

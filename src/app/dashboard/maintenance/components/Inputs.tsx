@@ -47,11 +47,14 @@ export const SectionField: React.FC<FieldComponentProps> = ({
   index,
   completObjet,
 }) => {
-  console.log(campo)
   if (!form) {
     return (
       <div key={index}>
-        <CardTitle className="mb-2 mt-1 text-xl">{campo.title}</CardTitle>
+        <CardTitle className="mb-2 mt-1 text-xl">
+          {campo.title
+            ? campo.title.replaceAll('_', ' ')
+            : 'Titulo de la seccion'}
+        </CardTitle>
         {completObjet?.map((sectionCampo, sectionIndex) => (
           <React.Fragment key={sectionIndex}>
             <FieldRenderer
@@ -68,7 +71,7 @@ export const SectionField: React.FC<FieldComponentProps> = ({
             <Input type="date" />
           </div>
         )}
-        {campo.observation && (
+        {(campo.observation || campo.Observaciones) && (
           <div className="flex flex-col gap-2 mt-2">
             <CardDescription>Observaciones</CardDescription>
             <Textarea placeholder="..." />
@@ -128,10 +131,10 @@ export const RadioField: React.FC<FieldComponentProps> = ({
 }) => {
   if (!form) {
     return (
-      <div className="w-full" key={index}>
+      <div className="col-span-3 md:col-span-1" key={index}>
         <CardDescription className="mb-2">
           {' '}
-          {campo.title ? campo.title : 'Titulo del campo'}
+          {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
         <RadioGroup className="flex gap-2 flex-col mt-2">
           {campo.opciones?.map((opcion, i) => (
@@ -149,7 +152,7 @@ export const RadioField: React.FC<FieldComponentProps> = ({
             <Input type="date" />
           </div>
         )}
-        {campo.observation && (
+        {(campo.observation || campo.Observaciones) && (
           <div className="flex flex-col gap-2 mt-2">
             <CardDescription>Observaciones</CardDescription>
             <Textarea placeholder="..." />
@@ -158,8 +161,6 @@ export const RadioField: React.FC<FieldComponentProps> = ({
       </div>
     )
   }
-
-  console.log(campo)
 
   const dateInput = completObjet?.find(e =>
     e.title.includes(`${campo.title}_fecha`),
@@ -230,7 +231,7 @@ export const TextField: React.FC<FieldComponentProps> = ({
     return (
       <div className="col-span-3 md:col-span-1" key={index}>
         <CardDescription className="mb-2">
-          {campo.title ? campo.title : 'Titulo del campo'}
+          {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
         <Input placeholder={campo.value} />
         {campo.date && (
@@ -239,7 +240,7 @@ export const TextField: React.FC<FieldComponentProps> = ({
             <Input type="date" />
           </div>
         )}
-        {campo.observation && (
+        {(campo.observation || campo.Observaciones) && (
           <div className="flex flex-col gap-2 mt-2">
             <CardDescription>Observaciones</CardDescription>
             <Textarea placeholder="..." />
@@ -302,7 +303,7 @@ export const TextAreaField: React.FC<FieldComponentProps> = ({
     return (
       <div className="col-span-3 md:col-span-1" key={index}>
         <CardDescription className="mb-2">
-          {campo.title ? campo.title : 'Titulo del campo'}
+          {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
         <Textarea placeholder={campo.value} />
         {campo.date && (
@@ -311,7 +312,7 @@ export const TextAreaField: React.FC<FieldComponentProps> = ({
             <Input type="date" />
           </div>
         )}
-        {campo.observation && (
+        {(campo.observation || campo.Observaciones) && (
           <div className="flex flex-col gap-2 mt-2">
             <CardDescription>Observaciones</CardDescription>
             <Textarea placeholder="..." />
@@ -374,8 +375,7 @@ export const RadioGroupField: React.FC<FieldComponentProps> = ({
     return (
       <div className="w-full" key={index}>
         <CardDescription className="mb-2">
-          {' '}
-          {campo.title ? campo.title : 'Titulo del campo'}
+          {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
         <RadioGroup className="flex gap-2 flex-col mt-2">
           {campo.opciones?.map((opcion, i) => (
@@ -393,7 +393,7 @@ export const RadioGroupField: React.FC<FieldComponentProps> = ({
             <Input type="date" />
           </div>
         )}
-        {campo.observation && (
+        {(campo.observation || campo.Observaciones) && (
           <div className="flex flex-col gap-2 mt-2">
             <CardDescription>Observaciones</CardDescription>
             <Textarea placeholder="..." />
@@ -472,8 +472,7 @@ export const MultiSelectField: React.FC<FieldComponentProps> = ({
     return (
       <div className="w-full" key={index}>
         <CardDescription className="mb-2">
-          {' '}
-          {campo.title ? campo.title : 'Titulo del campo'}
+          {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
         <ToggleGroup
           type="multiple"
@@ -495,7 +494,7 @@ export const MultiSelectField: React.FC<FieldComponentProps> = ({
             <Input type="date" />
           </div>
         )}
-        {campo.observation && (
+        {(campo.observation || campo.Observaciones) && (
           <div className="flex flex-col gap-2 mt-2">
             <CardDescription>Observaciones</CardDescription>
             <Textarea placeholder="..." />
@@ -566,13 +565,12 @@ export const DateField: React.FC<FieldComponentProps> = ({
   form,
   index,
 }) => {
-  console.log(campo)
-
   if (!form) {
+    if (campo.formName !== 'Fecha') return null
     return (
-      <div className="w-full" key={index}>
+      <div className="col-span-3 md:col-span-1" key={index}>
         <CardDescription className="mb-2">
-          {campo.title ? campo.title : 'Titulo del campo'}
+          {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
         <Input
           type="date"
@@ -615,6 +613,78 @@ export const DateField: React.FC<FieldComponentProps> = ({
   )
 }
 
+export const FileField: React.FC<FieldComponentProps> = ({
+  campo,
+  form,
+  index,
+  completObjet,
+}) => {
+  if (!form) {
+    return (
+      <div className="col-span-3 md:col-span-1" key={index}>
+        <CardDescription className="mb-2">
+          {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
+        </CardDescription>
+        <Input type="file" placeholder={campo.value} />
+        {campo.date && (
+          <div className="flex flex-col gap-2 mt-2">
+            <CardDescription>Fecha</CardDescription>
+            <Input type="date" />
+          </div>
+        )}
+        {(campo.observation || campo.Observaciones) && (
+          <div className="flex flex-col gap-2 mt-2">
+            <CardDescription>Observaciones</CardDescription>
+            <Textarea placeholder="..." />
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  const dateInput = completObjet?.find(e =>
+    e.title.includes(`${campo.title}_fecha`),
+  )
+  const observationInput = completObjet?.find(e =>
+    e.title.includes(`${campo.title}_observaciones`),
+  )
+
+  return (
+    <div className="col-span-3 md:col-span-1" key={index}>
+      <FormField
+        key={campo.id || index}
+        control={form.control}
+        name={campo.formName!}
+        render={({ field }) => (
+          <FormItem className="space-y-3">
+            <FormLabel>{campo.title.replaceAll('_', ' ')}</FormLabel>
+            <FormControl>
+              <Input type="file" placeholder={campo.value} {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      {dateInput && (
+        <DateInput
+          completObjet={completObjet}
+          campo={campo}
+          form={form}
+          index={index}
+        />
+      )}
+      {observationInput && (
+        <ObservationInput
+          completObjet={completObjet}
+          campo={campo}
+          form={form}
+          index={index}
+        />
+      )}
+    </div>
+  )
+}
+
 export const SelectField: React.FC<FieldComponentProps> = ({
   campo,
   form,
@@ -626,7 +696,7 @@ export const SelectField: React.FC<FieldComponentProps> = ({
       <div className="col-span-3 md:col-span-1" key={index}>
         <CardDescription className="mb-2">
           {' '}
-          {campo.title ? campo.title : 'Titulo del campo'}
+          {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
         <Select>
           <SelectTrigger>
@@ -646,7 +716,7 @@ export const SelectField: React.FC<FieldComponentProps> = ({
             <Input type="date" />
           </div>
         )}
-        {campo.observation && (
+        {(campo.observation || campo.Observaciones) && (
           <div className="flex flex-col gap-2 mt-2">
             <CardDescription>Observaciones</CardDescription>
             <Textarea placeholder="..." />
@@ -661,11 +731,6 @@ export const SelectField: React.FC<FieldComponentProps> = ({
   const observationInput = completObjet?.find(e =>
     e.title.includes(`${campo.title}_observaciones`),
   )
-  console.log(completObjet)
-  console.log(campo)
-
-  console.log(dateInput)
-  console.log(observationInput)
   return (
     <div className="col-span-3 md:col-span-1 space-y-8" key={index}>
       <FormField
@@ -724,8 +789,7 @@ export const PredefinedSelectField: React.FC<FieldComponentProps> = ({
     return (
       <div className="w-full" key={index}>
         <CardDescription className="mb-2">
-          {' '}
-          {campo.title ? campo.title : 'Titulo del campo'}
+          {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
         <Select>
           <SelectTrigger>
@@ -794,7 +858,7 @@ export const PredefinedSelectField: React.FC<FieldComponentProps> = ({
             <Input type="date" />
           </div>
         )}
-        {campo.observation && (
+        {(campo.observation || campo.Observaciones) && (
           <div className="flex flex-col gap-2 mt-2">
             <CardDescription>Observaciones</CardDescription>
             <Textarea placeholder="..." />
@@ -930,9 +994,9 @@ export const DateInput: React.FC<FieldComponentProps> = ({
 }) => {
   if (!form)
     return (
-      <div className="w-full" key={index}>
+      <div className="col-span-3 md:col-span-1 space-y-8 w-full" key={index}>
         <CardDescription className="mb-2">
-          {campo.title ? campo.title : 'Titulo del campo'}
+          {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
         <Input
           type="date"
@@ -982,9 +1046,9 @@ export const ObservationInput: React.FC<FieldComponentProps> = ({
 }) => {
   if (!form) {
     return (
-      <div className="w-full" key={index}>
+      <div className="col-span-3 md:col-span-1 space-y-8 w-full" key={index}>
         <CardDescription className="mb-2">
-          {campo.title ? campo.title : 'Titulo del campo'}
+          {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
         <Textarea placeholder="Ingrese observaciones" />
       </div>
@@ -1019,9 +1083,9 @@ export const SeccionDate: React.FC<FieldComponentProps> = ({
 }) => {
   if (!form) {
     return (
-      <div className="w-full" key={index}>
+      <div className="col-span-3" key={index}>
         <CardDescription className="mb-2">
-          {campo.title ? campo.title : 'Titulo del campo'}
+          {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
         <Input
           type="date"
@@ -1032,7 +1096,7 @@ export const SeccionDate: React.FC<FieldComponentProps> = ({
     )
   }
   return (
-    <div className="w-full col-span-3">
+    <div className="col-span-3" key={index}>
       <FormField
         key={campo.id}
         control={form.control}
@@ -1068,9 +1132,9 @@ export const SeccionObservaciones: React.FC<FieldComponentProps> = ({
 }) => {
   if (!form) {
     return (
-      <div className="w-full" key={index}>
+      <div className="col-span-3" key={index}>
         <CardDescription className="mb-2">
-          {campo.title ? campo.title : 'Titulo del campo'}
+          {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
         <Textarea placeholder="Ingrese observaciones" />
       </div>

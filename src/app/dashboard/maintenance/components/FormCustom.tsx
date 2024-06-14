@@ -54,7 +54,6 @@ export function FormCustom({
     setSelectedForm(undefined)
   }, [])
 
-  // Actualiza la clave del Select cada vez que se agrega un campo
   const agregarCampo = (campo: Campo, isInSection?: string) => {
     if (isInSection && campo.tipo !== types.Seccion) {
       const newCampos = [...campos]
@@ -75,7 +74,6 @@ export function FormCustom({
         ?.sectionCampos?.splice(index, 1)
       setCampos(newCampos)
     } else if (index !== 0) {
-      // No permitir borrar el primer campo
       setCampos(campos.filter((_, i) => i !== index))
     }
   }
@@ -180,6 +178,29 @@ export function FormCustom({
       setCampos(newCampos)
     }
   }
+  const handleRequiredChange = (
+    index: number,
+    boolean: boolean,
+    sectionIndex: number | undefined,
+  ) => {
+    if (sectionIndex !== undefined) {
+      const newCampos = [...campos]
+      if (newCampos[sectionIndex]?.sectionCampos?.[index]) {
+        const sectionCampo = newCampos?.[sectionIndex].sectionCampos?.[index]
+        if (sectionCampo) {
+          sectionCampo.required = boolean
+          setCampos(newCampos)
+        }
+      }
+    }
+
+    const newCampos = [...campos]
+    if (newCampos[index]) {
+      newCampos[index].required = boolean
+      setCampos(newCampos)
+    }
+  }
+
   const handleDateChange = (
     index: number,
     boolean: boolean,
@@ -243,8 +264,8 @@ export function FormCustom({
                 onChange={e => handleInputChange(e, index, sectionIndex)}
               />
               <Separator className="my-1" />
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+              <div className="flex  gap-x-4 gap-y-2 flex-wrap">
+                <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
                   <Label>Observaciones</Label>
                   <Switch
                     checked={campo.observation}
@@ -253,7 +274,16 @@ export function FormCustom({
                     }
                   />
                 </Card>
-                <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+                <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
+                  <Label>Requerido</Label>
+                  <Switch
+                    checked={campo.required}
+                    onCheckedChange={boolean =>
+                      handleRequiredChange(index, boolean, sectionIndex)
+                    }
+                  />
+                </Card>
+                <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
                   <Label>Fecha</Label>
                   <Switch
                     checked={campo.date}
@@ -288,8 +318,8 @@ export function FormCustom({
               />
             </div>
             <Separator className="my-1" />
-            <div className="grid grid-cols-2 gap-4">
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+            <div className="flex  gap-x-4 gap-y-2 flex-wrap">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
                 <Label>Observaciones</Label>
                 <Switch
                   checked={campo.observation}
@@ -298,7 +328,16 @@ export function FormCustom({
                   }
                 />
               </Card>
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
+                <Label>Requerido</Label>
+                <Switch
+                  checked={campo.required}
+                  onCheckedChange={boolean =>
+                    handleRequiredChange(index, boolean, sectionIndex)
+                  }
+                />
+              </Card>
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
                 <Label>Fecha</Label>
                 <Switch
                   checked={campo.date}
@@ -343,8 +382,8 @@ export function FormCustom({
               }
             />
             <Separator className="my-2" />
-            <div className="grid grid-cols-2 gap-4">
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+            <div className="flex  gap-x-4 gap-y-2 flex-wrap">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
                 <Label>Observaciones</Label>
                 <Switch
                   checked={campo.observation}
@@ -353,7 +392,16 @@ export function FormCustom({
                   }
                 />
               </Card>
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
+                <Label>Requerido</Label>
+                <Switch
+                  checked={campo.required}
+                  onCheckedChange={boolean =>
+                    handleRequiredChange(index, boolean, sectionIndex)
+                  }
+                />
+              </Card>
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
                 <Label>Fecha</Label>
                 <Switch
                   checked={campo.date}
@@ -409,8 +457,8 @@ export function FormCustom({
               }
             />
             <Separator className="my-2" />
-            <div className="grid grid-cols-2 gap-4">
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+            <div className="flex  gap-x-4 gap-y-2 flex-wrap">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
                 <Label>Observaciones</Label>
                 <Switch
                   checked={campo.observation}
@@ -419,7 +467,16 @@ export function FormCustom({
                   }
                 />
               </Card>
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
+                <Label>Requerido</Label>
+                <Switch
+                  checked={campo.required}
+                  onCheckedChange={boolean =>
+                    handleRequiredChange(index, boolean, sectionIndex)
+                  }
+                />
+              </Card>
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
                 <Label>Fecha</Label>
                 <Switch
                   checked={campo.date}
@@ -488,6 +545,17 @@ export function FormCustom({
                 placeholder={campo.placeholder}
                 onChange={e => handleInputChange(e, index, sectionIndex)}
               />
+              <div className="flex  gap-x-4 gap-y-2 flex-wrap">
+                <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
+                  <Label>Requerido</Label>
+                  <Switch
+                    checked={campo.required}
+                    onCheckedChange={boolean =>
+                      handleRequiredChange(index, boolean, sectionIndex)
+                    }
+                  />
+                </Card>
+              </div>
             </div>
           </div>
         )
@@ -501,8 +569,8 @@ export function FormCustom({
               }
             />
             <Separator className="my-1" />
-            <div className="grid grid-cols-2 gap-4">
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+            <div className="flex  gap-x-4 gap-y-2 flex-wrap">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
                 <Label>Observaciones</Label>
                 <Switch
                   checked={campo.observation}
@@ -511,7 +579,16 @@ export function FormCustom({
                   }
                 />
               </Card>
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
+                <Label>Requerido</Label>
+                <Switch
+                  checked={campo.required}
+                  onCheckedChange={boolean =>
+                    handleRequiredChange(index, boolean, sectionIndex)
+                  }
+                />
+              </Card>
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
                 <Label>Fecha</Label>
                 <Switch
                   checked={campo.date}
@@ -567,8 +644,8 @@ export function FormCustom({
               }
             />
             <Separator className="my-1" />
-            <div className="grid grid-cols-2 gap-4">
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+            <div className="flex  gap-x-4 gap-y-2 flex-wrap">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
                 <Label>Observaciones</Label>
                 <Switch
                   checked={campo.observation}
@@ -577,7 +654,16 @@ export function FormCustom({
                   }
                 />
               </Card>
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
+                <Label>Requerido</Label>
+                <Switch
+                  checked={campo.required}
+                  onCheckedChange={boolean =>
+                    handleRequiredChange(index, boolean, sectionIndex)
+                  }
+                />
+              </Card>
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
                 <Label>Fecha</Label>
                 <Switch
                   checked={campo.date}
@@ -635,8 +721,8 @@ export function FormCustom({
               }
             />
             <Separator className="my-1" />
-            <div className="grid grid-cols-2 gap-4">
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+            <div className="flex  gap-x-4 gap-y-2 flex-wrap">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
                 <Label>Observaciones</Label>
                 <Switch
                   checked={campo.observation}
@@ -645,7 +731,16 @@ export function FormCustom({
                   }
                 />
               </Card>
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
+                <Label>Requerido</Label>
+                <Switch
+                  checked={campo.required}
+                  onCheckedChange={boolean =>
+                    handleRequiredChange(index, boolean, sectionIndex)
+                  }
+                />
+              </Card>
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
                 <Label>Fecha</Label>
                 <Switch
                   checked={campo.date}
@@ -715,8 +810,8 @@ export function FormCustom({
               }
             />
             <Separator className="my-2" />
-            <div className="grid grid-cols-2 gap-4">
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+            <div className="flex  gap-x-4 gap-y-2 flex-wrap">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
                 <Label>Observaciones</Label>
                 <Switch
                   checked={campo.observation}
@@ -725,7 +820,16 @@ export function FormCustom({
                   }
                 />
               </Card>
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
+                <Label>Requerido</Label>
+                <Switch
+                  checked={campo.required}
+                  onCheckedChange={boolean =>
+                    handleRequiredChange(index, boolean, sectionIndex)
+                  }
+                />
+              </Card>
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
                 <Label>Fecha</Label>
                 <Switch
                   checked={campo.date}
@@ -827,8 +931,8 @@ export function FormCustom({
                 handleTitleChange(e.target.value, index, campo_id, sectionIndex)
               }
             />
-            <div className="grid grid-cols-2 gap-4">
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+            <div className="flex  gap-x-4 gap-y-2 flex-wrap">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
                 <Label>Observaciones</Label>
                 <Switch
                   checked={campo.observation}
@@ -837,7 +941,16 @@ export function FormCustom({
                   }
                 />
               </Card>
-              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50">
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
+                <Label>Requerido</Label>
+                <Switch
+                  checked={campo.required}
+                  onCheckedChange={boolean =>
+                    handleRequiredChange(index, boolean, sectionIndex)
+                  }
+                />
+              </Card>
+              <Card className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm dark:bg-muted/50 flex-wrap min-w-[150px] flex-grow">
                 <Label>Fecha</Label>
                 <Switch
                   checked={campo.date}
@@ -853,7 +966,6 @@ export function FormCustom({
         return null
     }
   }
-
   const manejarSeleccion = (tipo: string, isInSection?: string) => {
     switch (tipo) {
       case 'Texto':
@@ -866,6 +978,8 @@ export function FormCustom({
             date: false,
             opciones: [],
             title: 'Titulo del campo',
+            value: '',
+            required: true,
           },
           isInSection,
         )
@@ -880,6 +994,8 @@ export function FormCustom({
             date: false,
             opciones: [],
             title: 'Titulo del campo',
+            value: '',
+            required: true,
           },
           isInSection,
         )
@@ -906,6 +1022,7 @@ export function FormCustom({
             observation: false,
             date: false,
             title: 'Titulo del campo',
+            required: true,
           },
           isInSection,
         )
@@ -920,6 +1037,7 @@ export function FormCustom({
             observation: false,
             date: false,
             title: 'Titulo del campo',
+            required: true,
           },
           isInSection,
         )
@@ -932,6 +1050,7 @@ export function FormCustom({
             id: new Date().getTime().toString(),
             opciones: [],
             title: 'Titulo del campo',
+            required: true,
           },
           isInSection,
         )
@@ -946,6 +1065,7 @@ export function FormCustom({
             observation: false,
             date: false,
             title: 'Titulo del campo',
+            required: true,
           },
           isInSection,
         )
@@ -960,6 +1080,7 @@ export function FormCustom({
             observation: false,
             date: false,
             title: 'Titulo del campo',
+            required: true,
           },
           isInSection,
         )
@@ -988,6 +1109,7 @@ export function FormCustom({
             observation: false,
             date: false,
             title: 'Titulo del campo',
+            required: true,
           },
           isInSection,
         )
@@ -1015,6 +1137,7 @@ export function FormCustom({
             opciones: [],
             title: 'Titulo de la seccion',
             sectionCampos: [],
+            required: true,
           },
           isInSection,
         )
@@ -1029,6 +1152,7 @@ export function FormCustom({
             date: false,
             opciones: [],
             title: 'Titulo del campo',
+            required: true,
           },
           isInSection,
         )
@@ -1037,7 +1161,6 @@ export function FormCustom({
     }
     setTipoSeleccionado('') // Restablecer el tipo seleccionado después de agregar un campo
   }
-
   const handleInputChange = (
     event: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>,
     index: number,
@@ -1058,7 +1181,6 @@ export function FormCustom({
       setCampos(newCampos)
     }
   }
-
   const handleAddSection = () => {
     agregarCampo({
       tipo: types.Seccion,
@@ -1069,6 +1191,7 @@ export function FormCustom({
       opciones: [],
       title: 'Titulo de la seccion',
       sectionCampos: [],
+      required: true,
     })
   }
   return (
@@ -1152,35 +1275,6 @@ export function FormCustom({
           </AnimatePresence>
         </Reorder.Group>
       </form>
-      {/* <Select key={selectKey} onValueChange={e => manejarSeleccion(e)}>
-        <SelectTrigger>
-          <SelectValue placeholder="Selecciona un tipo de campo" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectLabel>Componentes Armados</SelectLabel>
-            <SelectItem value="Si-No">Si / No</SelectItem>
-          </SelectGroup>
-          <SelectGroup>
-            <SelectLabel>Componentes</SelectLabel>
-            <SelectItem value="Texto">Texto</SelectItem>
-            <SelectItem value="Área de texto">Área de texto</SelectItem>
-            <SelectItem value="Separador">Separador</SelectItem>
-            <SelectItem value="Radio">Radio</SelectItem>
-            <SelectItem value="Seccion">Seccion</SelectItem>
-            <SelectItem value="Seleccion multiple">
-              Seleccion multiple
-            </SelectItem>
-            <SelectItem value="Fecha">Fecha</SelectItem>
-            <SelectItem value="Subtitulo">Subtitulo</SelectItem>
-            <SelectItem value="Seleccion">Seleccion</SelectItem>
-            <SelectItem value="Titulo">Titulo</SelectItem>
-            <SelectItem value="Seleccion Predefinida">
-              Seleccion Predefinida
-            </SelectItem>
-          </SelectGroup>
-        </SelectContent>
-      </Select> */}
     </ScrollArea>
   )
 }

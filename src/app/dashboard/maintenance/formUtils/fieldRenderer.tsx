@@ -3,6 +3,7 @@ import React from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import {
   DateField,
+  FileField,
   FormNameField,
   MultiSelectField,
   PredefinedSelectField,
@@ -64,6 +65,16 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
     case 'Área de texto':
       return (
         <TextAreaField
+          completObjet={completObjet}
+          campo={campo}
+          form={form}
+          index={index}
+        />
+      )
+
+    case 'Archivo':
+      return (
+        <FileField
           completObjet={completObjet}
           campo={campo}
           form={form}

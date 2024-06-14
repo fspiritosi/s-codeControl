@@ -22,9 +22,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { Campo, types } from '@/types/types'
+import { Campo, FormField, types } from '@/types/types'
 import { Dispatch, SetStateAction, useState } from 'react'
 import { toast } from 'sonner'
+import FieldRenderer from '../formUtils/fieldRenderer'
+import { buildFormData } from '../formUtils/formUtils'
 
 interface FormDisplayProps {
   campos: Campo[]
@@ -458,6 +460,7 @@ export function FormDisplay({
   }
   const [disabled, setDisabled] = useState(false)
 
+  const formObject = campos.length ? buildFormData(campos, true) : []
   return (
     <ScrollArea className="h-screen px-8 py-5 overflow-auto  rounded-e-xl rounded max-h-[85vh]">
       <div className="flex justify-between items-center">
@@ -473,9 +476,23 @@ export function FormDisplay({
         </Avatar>
       </div>
       <div className="space-y-3">
-        {campos.map((campo, index) => (
-          <div key={index}>{renderizarCampo(campo, index)}</div>
-        ))}
+        {selectedForm ? (
+          <div className="grid grid-cols-3 gap-y-4 gap-x-4">
+            {formObject?.map((campo: FormField, index: number) => (
+              <FieldRenderer
+                key={index}
+                campo={campo}
+                form={null}
+                index={index}
+                completObjet={formObject}
+              />
+            ))}
+          </div>
+        ) : (
+          campos.map((campo, index) => (
+            <div key={index}>{renderizarCampo(campo, index)}</div>
+          ))
+        )}
         <div className="flex w-full">
           {!selectedForm ? (
             <Button

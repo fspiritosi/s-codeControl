@@ -14,14 +14,17 @@ interface Props {
 }
 
 export function SubmitCustomForm({ campos }: Props) {
-  const formObject = buildFormData(campos)
+  const formObject = buildFormData(campos, false)
   const FormSchema = buildFormSchema(formObject)
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
   })
+
   function handleCustomFormSubmit(data: z.infer<typeof FormSchema>) {
     console.log('data', data)
   }
+
+  console.log(campos)
 
   return (
     <div className=" px-8 py-5  rounded-e-xl rounded">

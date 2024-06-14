@@ -14,7 +14,7 @@ async function page() {
 
   return (
     <div>
-      <SubmitCustomForm campos={[data?.[1]]} />
+      <SubmitCustomForm campos={[data?.[8]]} />
     </div>
   )
 }
