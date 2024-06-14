@@ -145,7 +145,7 @@ export default function EmployeeAccordion() {
           date_of_admission: undefined,
         },
   })
-
+  
   const [accordion1Errors, setAccordion1Errors] = useState(false)
   const [accordion2Errors, setAccordion2Errors] = useState(false)
   const [accordion3Errors, setAccordion3Errors] = useState(false)

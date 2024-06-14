@@ -34,12 +34,14 @@ export const MissingDocumentList = () => {
       const employeesDocuments = current?.employees?.filter(
         item =>
           item.document_path !== null &&
-          item.state.toLocaleLowerCase() === 'pendiente',
+          item.state.toLocaleLowerCase() === 'pendiente'&&
+          item.is_active,
       )
       const companyDocuments = current?.vehicles?.filter(
         item =>
           item.document_path !== null &&
-          item.state.toLocaleLowerCase() === 'pendiente',
+          item.state.toLocaleLowerCase() === 'pendiente'&&
+          item.is_active,
       )
 
       const groupedEmployees: { [key: string]: any[] } =
