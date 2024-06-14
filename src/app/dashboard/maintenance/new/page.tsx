@@ -1,5 +1,5 @@
 import { Card } from '@/components/ui/card'
-import { FormCustomContainer } from './components/FormCustomContainer'
+import { FormCustomContainer } from '../components/FormCustomContainer'
 
 export default function MailPage() {
   return (

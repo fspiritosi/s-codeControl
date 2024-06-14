@@ -39,7 +39,7 @@ export function FormDisplay({
   selectedForm,
   setSelectedTab,
   setCampos,
-  fetchForms
+  fetchForms,
 }: FormDisplayProps) {
   const supabase = supabaseBrowser()
   const vehicles = useLoggedUserStore(state => state.vehicles)

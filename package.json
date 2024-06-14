@@ -62,6 +62,7 @@
     "react-modal": "^3.16.1",
     "react-resizable-panels": "^2.0.19",
     "resend": "^3.2.0",
+    "sharp": "^0.33.4",
     "sonner": "^1.4.41",
     "swiper": "^11.0.5",
     "tailwind-merge": "^2.2.0",

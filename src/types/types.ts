@@ -15,6 +15,33 @@ export enum types {
   Seccion = 'Seccion',
   Archivo = 'Archivo',
   Observaciones = 'Observaciones',
+  SectionDate = 'SectionDate',
+  SectionObservaciones = 'SectionObservaciones',
+}
+
+export type FormEntry = {
+  id: string
+  tipo: string
+  title: string
+  value?: string
+  opciones: string[]
+  placeholder: string
+  date?: boolean
+  observation?: boolean
+  sectionCampos?: Campo[]
+}
+
+export interface FormField {
+  formName?: string
+  title: string
+  value?: string
+  tipo: string
+  opciones?: string[]
+  date?: boolean
+  id: string
+  placeholder?: string
+  Observaciones?: boolean
+  observation?: boolean
 }
 
 export interface Campo {

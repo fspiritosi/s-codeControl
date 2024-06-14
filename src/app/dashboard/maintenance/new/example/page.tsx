@@ -1,6 +1,6 @@
 import { supabaseServer } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { SubmitCustomForm } from '../components/SubmitCustomForm'
+import { SubmitCustomForm } from '../../components/SubmitCustomForm'
 
 async function page() {
   const supabase = supabaseServer()
