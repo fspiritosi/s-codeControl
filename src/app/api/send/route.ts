@@ -7,10 +7,15 @@ export async function POST(request: Request) {
   try {
     const requestData = await request.json()
     const userEmail = requestData.userEmail
+
     const template =
       requestData.to === 'info@codecontrol.com.ar'
         ? EmailTemplateHelp({ userEmail: userEmail, reason: requestData.react })
-        : EmailTemplate({ userEmail: userEmail, reason: requestData.react })
+        : EmailTemplate({
+            userEmail: userEmail,
+            reason: requestData.react,
+            emailInfo: requestData.body,
+          })
     const data = await resend.emails.send({
       //from: 'Codecontrol <onboarding@resend.dev>',
       from: 'Codecontrol <team@codecontrol.com.ar>',
