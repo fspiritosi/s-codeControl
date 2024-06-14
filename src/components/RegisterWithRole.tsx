@@ -187,10 +187,9 @@ export const RegisterWithRole = () => {
           return 'No se encontró el usuario'
         }
         if (!profile || profile?.length === 0) {
-          const { data, error } = await supabase.auth.admin.createUser({
+          const { data, error } = await supabase.auth.signUp({
             email: values.email,
-            password: values.password,
-            email_confirm: false,
+            password: values.password!,
           })
           if (error) {
             throw new Error('Error al registrar el usuario')
