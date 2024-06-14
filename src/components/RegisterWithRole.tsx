@@ -204,7 +204,7 @@ export const RegisterWithRole = () => {
                   id: data.user?.id,
                   email: values.email,
                   fullname: `${values.firstname} ${values.lastname}`,
-                  role: 'Externo',
+                  role: 'CodeControlClient',
                   credential_id: data.user?.id,
                 },
               ])
