@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from './ui/select'
 import { Toggle } from './ui/toggle'
+import { handleSupabaseError } from '@/lib/errorHandler'
 export const RegisterWithRole = () => {
   const [showPasswords, setShowPasswords] = useState(false)
   const [open, setOpen] = useState(false)
@@ -150,9 +151,9 @@ export const RegisterWithRole = () => {
           .select('*')
           .eq('email', values.email)
 
-        if (error) {
-          throw new Error('Error al buscar el usuario')
-        }
+          if (error) {
+            throw new Error(handleSupabaseError(error.message))
+          }
 
         if (profile && profile?.length > 0) {
           const { error: duplicatedError, data: sharedCompany } = await supabase
@@ -176,9 +177,9 @@ export const RegisterWithRole = () => {
               },
             ])
 
-          if (error) {
-            throw new Error('Error al registrar el usuario')
-          }
+            if (error) {
+              throw new Error(handleSupabaseError(error.message))
+            }
 
           return 'Usuario registrado correctamente'
         }
@@ -192,8 +193,8 @@ export const RegisterWithRole = () => {
             password: values.password!,
           })
           if (error) {
-            throw new Error('Error al registrar el usuario')
-          }
+              throw new Error(handleSupabaseError(error.message))
+            }
 
           if (data) {
             const { data: user, error } = await supabase
@@ -209,9 +210,9 @@ export const RegisterWithRole = () => {
               ])
               .select()
 
-            if (error) {
-              throw new Error('Error al registrar el usuario')
-            }
+              if (error) {
+                throw new Error(handleSupabaseError(error.message))
+              }
 
             if (user) {
               const { data, error } = await supabase
@@ -223,9 +224,9 @@ export const RegisterWithRole = () => {
                     role: values?.role,
                   },
                 ])
-              if (error) {
-                throw new Error('Error al registrar el usuario')
-              }
+                if (error) {
+                  throw new Error(handleSupabaseError(error.message))
+                }
               if (data) {
                 return 'Usuario registrado correctamente'
               }
@@ -242,7 +243,9 @@ export const RegisterWithRole = () => {
           FetchSharedUsers()
           return message
         },
-        error: err => err.message,
+        error: error => {
+          return error
+        },
       },
     )
   }

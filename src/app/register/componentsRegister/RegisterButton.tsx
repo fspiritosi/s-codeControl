@@ -50,12 +50,17 @@ export const RegisterButton = () => {
 
     toast.promise(
       async () => {
-        signup(formData, url)
+        const error = await signup(formData, url)
+        if (error) {
+          throw new Error(error)
+        }
       },
       {
         loading: 'Registrando...',
         success: '¡Revisa tu correo para confirmar tu cuenta!',
-        error: 'Hubo un error al registrarte',
+        error: error => {
+          return error
+        },
       },
     )
   }

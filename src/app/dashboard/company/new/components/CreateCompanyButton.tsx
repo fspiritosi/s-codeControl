@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation'
 import { ChangeEvent, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { AddCompany } from '../accions'
+import { handleSupabaseError } from '@/lib/errorHandler'
 
 export default function CreateCompanyButton() {
   const url = process.env.NEXT_PUBLIC_PROJECT_URL
@@ -78,6 +79,10 @@ export default function CreateCompanyButton() {
 
         const { data, error } = await AddCompany(formData, logoUrl)
 
+        if (error) {
+          throw new Error(handleSupabaseError(error.message))
+        }
+
         if (data && data?.length > 0) {
           if (imageFile) {
             const fileExtension = imageFile?.name.split('.').pop()
@@ -137,7 +142,9 @@ export default function CreateCompanyButton() {
             )
             .eq('owner_id', data?.[0]?.owner_id)
 
-          // await handleUpload(result.data.company_cuit as string)
+            if (companyError) {
+              throw new Error(handleSupabaseError(companyError.message))
+            }
 
           const actualCompany = company?.filter(
             company => company.id === data?.[0]?.id,
@@ -154,7 +161,9 @@ export default function CreateCompanyButton() {
       {
         loading: 'Registrando Compañía',
         success: 'Compañía Registrada',
-        error: 'Error al registrar Compañía',
+        error: error => {
+          return error
+        },
       },
     )
   }
