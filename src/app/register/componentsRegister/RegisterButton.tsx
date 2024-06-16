@@ -62,7 +62,7 @@ export const RegisterButton = () => {
 
   return (
     <Button
-      className="w-[100%] sm:w-[80%] lg:w-[60%] self-center"
+      className="w-[100%] sm:w-[80%] lg:w-[60%] self-center text-lg"
       formAction={e => {
         clientAccion(e)
       }}
