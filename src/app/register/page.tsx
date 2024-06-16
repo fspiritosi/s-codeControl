@@ -9,35 +9,11 @@ import { RegisterButton } from './componentsRegister/RegisterButton'
 
 export default function Register() {
   return (
-    <section className="h-screen  mb-4 lg:mb-0">
-      <div className="container relative flex-col grid-cols-1 justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0 bg-white md:px-4 h-screen">
-        <div className="relative hidden flex-col bg-muted p-10  lg:flex dark:border-r h-screen text-black">
-          <RenderBanner />
-          <Link
-            className="relative z-20 flex items-center font-bold text-2xl"
-            href="/"
-          >
-            <Image
-              src="https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/logo/24417298440.png"
-              alt="Logo de codecontrol"
-              className=" size-12 mr-4"
-              width={120}
-              height={120}
-            />
-            CodeControl
-          </Link>
-          <div className="relative z-20 mt-auto ">
-            <blockquote className="space-y-2">
-              <p className="text-xl bg-transparent text-pretty">
-                Combinamos control de procesos, desarrollo de software y
-                consultoría organizacional para ofrecerte soluciones integrales
-                que generan resultados reales.
-              </p>
-              <footer className="text-md">CodeControl</footer>
-            </blockquote>
-          </div>
-        </div>
-        <div className="lg:p-8 bg-white md:p-8 pt-7 p-0 flex flex-col justify-center items-center w-full">
+    <section className="h-screen  mb-4 lg:mb-0 bg-white dark:bg-transparent">
+      <div className="container relative flex-col grid-cols-1 justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0  md:px-4 h-screen">
+        <RenderBanner />
+
+        <div className="lg:p-8 relative z-50   md:p-8 pt-7 p-0 flex flex-col justify-center items-center w-full">
           <Link
             className="relative z-20 lg:hidden items-center font-bold lg:text-2xl flex text-3xl "
             href="/"

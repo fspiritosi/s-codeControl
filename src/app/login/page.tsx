@@ -8,19 +8,16 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { cookies } from 'next/headers'
 import Image from 'next/image'
 import Link from 'next/link'
 import GoogleButton from './componentsLogin/GoogleButton'
 import { LoginButton } from './componentsLogin/LoginButton'
 export default async function Login() {
-  const cookiesStore = cookies()
-  const theme = cookiesStore.get('theme')
   return (
-    <section className="h-screen overflow-hidden">
-      <div className="container relative flex-col grid-cols-1  justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0 bg-white md:px-2 p-0">
+    <section className="h-screen overflow-hidden bg-white dark:bg-transparent">
+      <div className="container relative flex-col grid-cols-1 justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0  md:px-2 p-0">
         <RenderBanner />
-        <div className="lg:p-8 bg-white md:p-8 pt-7 p-0 flex flex-col justify-center items-center w-full">
+        <div className="lg:p-8 relative z-50   md:p-8 pt-7 p-0 flex flex-col justify-center items-center w-full">
           <Link
             className="relative z-20 lg:hidden items-center font-bold text-2xl flex"
             href="/"
