@@ -44,6 +44,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { useImageUpload } from '@/hooks/useUploadImage'
+import { handleSupabaseError } from '@/lib/errorHandler'
 import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { names } from '@/types/types'
@@ -145,7 +146,7 @@ export default function EmployeeAccordion() {
           date_of_admission: undefined,
         },
   })
-  
+
   const [accordion1Errors, setAccordion1Errors] = useState(false)
   const [accordion2Errors, setAccordion2Errors] = useState(false)
   const [accordion3Errors, setAccordion3Errors] = useState(false)
@@ -401,7 +402,6 @@ export default function EmployeeAccordion() {
     fetchCityValues(provinceId)
   }
 
-
   async function onCreate(values: z.infer<typeof accordionSchema>) {
     toast.promise(
       async () => {
@@ -460,18 +460,18 @@ export default function EmployeeAccordion() {
             .select()
 
           if (error) {
-            throw new Error(JSON.stringify(error))
+            throw new Error(handleSupabaseError(error.message))
           }
 
           try {
             await handleUpload()
           } catch (error: PostgrestError | any) {
-            throw new Error(error)
+            throw new Error(handleSupabaseError(error.message))
           }
           getEmployees(true)
           router.push('/dashboard/employee')
         } catch (error: PostgrestError | any) {
-          throw new Error(error)
+          throw new Error(handleSupabaseError(error.message))
         }
       },
       {
@@ -519,13 +519,15 @@ export default function EmployeeAccordion() {
           await handleUpload()
           router.push('/dashboard/employee')
         } catch (error: PostgrestError | any) {
-          throw new Error(error)
+          throw new Error(handleSupabaseError(error.message))
         }
       },
       {
         loading: 'Actualizando empleado...',
         success: 'Empleado actualizado correctamente',
-        error: 'Error al actualizar empleado',
+        error: error => {
+          return error
+        },
       },
     )
   }

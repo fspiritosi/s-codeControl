@@ -36,6 +36,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '../../supabase/supabase'
+import { handleSupabaseError } from '@/lib/errorHandler'
 
 export default function NewDocumentType({
   codeControlClient,
@@ -111,6 +112,12 @@ export default function NewDocumentType({
           .from('document_types')
           .insert(formattedValues)
           .select()
+
+          if (error) {
+            throw new Error(handleSupabaseError(error.message))
+          }
+
+          
       },
       {
         loading: 'Creando documento...',
@@ -123,7 +130,9 @@ export default function NewDocumentType({
             return 'El documento se ha creado correctamente'
           }
         },
-        error: 'Error al crear el documento',
+        error: error => {
+          return error
+        },
       },
     )
     fetchDocumentTypes(useLoggedUserStore.getState().actualCompany?.id || '')

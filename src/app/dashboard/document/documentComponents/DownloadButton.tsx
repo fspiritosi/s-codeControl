@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { saveAs } from 'file-saver'
 import { toast } from 'sonner'
 import { supabase } from '../../../../../supabase/supabase'
+import { handleSupabaseError } from '@/lib/errorHandler'
 function DownloadButton({
   path,
   fileName,
@@ -17,9 +18,9 @@ function DownloadButton({
           .from('document_files')
           .download(path)
 
-        if (error) {
-          throw new Error('Error al descargar el documento')
-        }
+          if (error) {
+            throw new Error(handleSupabaseError(error.message))
+          }
 
         // Extrae la extensión del archivo del path
         const extension = path.split('.').pop()
@@ -32,7 +33,7 @@ function DownloadButton({
         loading: 'Descargando documento...',
         success: 'Documento descargado',
         error: error => {
-          return 'Error al descargar el documento'
+          return error
         },
       },
     )

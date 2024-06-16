@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation'
 import { ChangeEvent, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { AddCompany, EditCompany } from '../accions'
+import { handleSupabaseError } from '@/lib/errorHandler'
 
 interface EditCompanyButtonProps {
     defaultImage?: string | null;
@@ -82,6 +83,10 @@ interface EditCompanyButtonProps {
         } else {
           // Si no se ha seleccionado un archivo de imagen, solo actualizar la compañía sin URL de imagen
           const { data, error } = await EditCompany(formData, defaultImage as string)
+          if (error) {
+            throw new Error(handleSupabaseError(error.message))
+          }
+
         }
   
         // Resto del código para obtener la compañía actualizada y redirigir al dashboard...
@@ -89,7 +94,9 @@ interface EditCompanyButtonProps {
       {
         loading: 'Registrando Compañía',
         success: 'Compañía Registrada',
-        error: 'Error al registrar Compañía',
+        error: error => {
+          return error
+        },
       },
       
     )
