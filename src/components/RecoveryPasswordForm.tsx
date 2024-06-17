@@ -14,14 +14,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { AuthError } from '@supabase/supabase-js'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { z } from 'zod'
-import { Loader } from './svg/loader'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
-import { useToast } from './ui/use-toast'
 export const RecoveryPasswordForm = () => {
   const { recoveryPassword } = useAuthData()
-  const { toast } = useToast()
   const [showLoader, setShowLoader] = useState(false)
 
   const form = useForm<z.infer<typeof recoveryPassSchema>>({
@@ -32,23 +30,27 @@ export const RecoveryPasswordForm = () => {
   })
 
   const onSubmit = async (values: z.infer<typeof recoveryPassSchema>) => {
-    try {
-      setShowLoader(true)
-      await recoveryPassword(values.email)
-      toast({
-        title: 'Hemos enviado un email!',
-        description:
-          'Si existe una cuenta creada con ese email recibiras un correo con las instrucciones',
-      })
-    } catch (error: AuthError | any) {
-      toast({
-        title: 'Error',
-        description: `${error?.message}`,
-        variant: 'destructive',
-      })
-    } finally {
-      setShowLoader(false)
-    }
+    setShowLoader(true)
+    
+    toast.promise(
+      async () => {
+          await recoveryPassword(values.email)
+        },
+        {
+          loading: 'Enviando...',
+          success: data => {
+            return 'Si existe una cuenta creada con ese email recibiras un correo con las instrucciones'
+          },
+          error: error => {
+            return error
+          },
+          finally: () => {
+            setShowLoader(false)
+
+          }
+        },
+      )
+    
   }
 
   return (
@@ -58,12 +60,16 @@ export const RecoveryPasswordForm = () => {
           control={form.control}
           name="email"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
+            <FormItem className="flex flex-col gap-2">
+              <FormLabel className="text-lg">Email</FormLabel>
               <FormControl>
-                <Input placeholder="email@hotmail.com" {...field} />
+                <Input
+                  className="text-lg"
+                  placeholder="email@hotmail.com"
+                  {...field}
+                />
               </FormControl>
-              <FormDescription>
+              <FormDescription className="text-lg">
                 Ingresa tu email para recuperar tu contraseña.
               </FormDescription>
               <FormMessage />
@@ -71,7 +77,7 @@ export const RecoveryPasswordForm = () => {
           )}
         />
         <Button disabled={showLoader} type="submit">
-          {showLoader ? <Loader /> : 'Enviar'}
+          Enviar
         </Button>
       </form>
     </Form>

@@ -11,25 +11,22 @@ import {
 import { useAuthData } from '@/hooks/useAuthData'
 import { changePassSchema } from '@/zodSchemas/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AuthError } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { z } from 'zod'
 import { CloseEyeIcon } from './svg/closeEye'
-import { Loader } from './svg/loader'
 import { EyeIcon } from './svg/openEye'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Toggle } from './ui/toggle'
-import { useToast } from './ui/use-toast'
 
 export const UpdateUserPasswordForm = () => {
   const { updateUser } = useAuthData()
   const [showPassword, setShowPassword] = useState(false)
   const [showLoader, setShowLoader] = useState(false)
   const router = useRouter()
-  const { toast } = useToast()
 
   const form = useForm<z.infer<typeof changePassSchema>>({
     resolver: zodResolver(changePassSchema),
@@ -40,24 +37,26 @@ export const UpdateUserPasswordForm = () => {
   })
 
   const onSubmit = async (values: z.infer<typeof changePassSchema>) => {
-    try {
-      setShowLoader(true)
-      await updateUser(values)
-      toast({
-        title: 'Contraseña actualizada',
-        description:
-          'Tu contraseña ha sido cambiada con éxito. Ya puedes iniciar sesión con tu nueva contraseña.',
-      })
-    } catch (error: AuthError | any) {
-      toast({
-        title: 'Error',
-        description: `${error.message}`,
-        variant: 'destructive',
-      })
-    } finally {
-      setShowLoader(false)
-      router.push('/login')
-    }
+    setShowLoader(true)
+
+    toast.promise(
+      async () => {
+        await updateUser(values)
+      },
+      {
+        loading: 'Actualizada contraseña...',
+        success: data => {
+          return 'Tu contraseña ha sido cambiada con éxito. Ya puedes iniciar sesión con tu nueva contraseña.'
+        },
+        error: error => {
+          return error
+        },
+        finally: () => {
+          setShowLoader(false)
+          router.push('/login')
+        },
+      },
+    )
   }
 
   return (
@@ -68,13 +67,14 @@ export const UpdateUserPasswordForm = () => {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Contraseña</FormLabel>
+              <FormLabel className="text-lg">Contraseña</FormLabel>
               <div className="flex gap-2">
                 <FormControl>
                   <Input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="contraseña segura"
                     autoComplete="new-password"
+                    className="text-lg"
                     {...field}
                   />
                 </FormControl>
@@ -85,8 +85,8 @@ export const UpdateUserPasswordForm = () => {
                   {showPassword ? <CloseEyeIcon /> : <EyeIcon />}
                 </Toggle>
               </div>
-              <FormDescription>
-                Ingresa tu email para recuperar tu contraseña.
+              <FormDescription className="text-lg">
+                Ingresa tu nueva contraseña.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -97,13 +97,14 @@ export const UpdateUserPasswordForm = () => {
           name="confirmPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Confirmar contraseña</FormLabel>
+              <FormLabel className="text-lg">Confirmar contraseña</FormLabel>
               <div className="flex gap-2">
                 <FormControl>
                   <Input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="contraseña segura"
                     autoComplete="new-password"
+                    className="text-lg"
                     {...field}
                   />
                 </FormControl>
@@ -114,15 +115,15 @@ export const UpdateUserPasswordForm = () => {
                   {showPassword ? <CloseEyeIcon /> : <EyeIcon />}
                 </Toggle>
               </div>
-              <FormDescription>
-                Ingresa tu email para recuperar tu contraseña.
+              <FormDescription className="text-lg">
+                Ingresa tu nueva contraseña otra vez.
               </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
         <Button type="submit" disabled={showLoader}>
-          {showLoader ? <Loader /> : 'Cambiar contraseña'}
+          Cambiar contraseña
         </Button>
       </form>
     </Form>
