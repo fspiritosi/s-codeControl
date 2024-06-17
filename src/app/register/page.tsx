@@ -9,8 +9,8 @@ import { RegisterButton } from './componentsRegister/RegisterButton'
 
 export default function Register() {
   return (
-    <section className="h-screen  mb-4 lg:mb-0 bg-white dark:bg-transparent">
-      <div className="container relative flex-col grid-cols-1 justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0  md:px-4 h-screen">
+    <section className="min-h-screen  mb-4 lg:mb-0 bg-white dark:bg-transparent">
+      <div className="container relative flex-col grid-cols-1 justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0  md:px-4 min-h-screen">
         <RenderBanner />
 
         <div className="lg:p-8 relative z-50   md:p-8 pt-7 p-0 flex flex-col justify-center items-center w-full">
@@ -27,7 +27,7 @@ export default function Register() {
             />
             CodeControl
           </Link>
-          <div className="w-full">
+          <div className="w-full  overflow-y-auto max-h-screen">
             <CardTitle className="text-2xl font-semibold tracking-tight mb-4 text-balance lg:text-left text-center">
               ¡Estás a un paso de unirte a nosotros!
             </CardTitle>

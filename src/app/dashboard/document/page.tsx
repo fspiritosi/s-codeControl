@@ -42,6 +42,7 @@ import { useLoggedUserStore } from '@/store/loggedUser'
 import { useRouter } from 'next/navigation'
 import { ExpiredColums } from '../colums'
 import { ExpiredDataTable } from '../data-table'
+import { EditModal } from './documentComponents/EditDocumenTypeModal'
 
 export default function page() {
   const { allDocumentsToShow, actualCompany } = useLoggedUserStore()
@@ -61,7 +62,6 @@ export default function page() {
   } else {
     role = profile?.actualCompany?.share_company_users?.[0]?.role as string
   }
-  const router = useRouter()
   return (
     <section className={'flex flex-col md:mx-7'}>
       <Card>
@@ -78,9 +78,30 @@ export default function page() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nombre del Documento</TableHead>
-                      <TableHead className="w-[100px]">Multirecurso</TableHead>
-                      <TableHead className="w-[100px]">Vence</TableHead>
-                      <TableHead className="w-[100px]">Mandatorio</TableHead>
+                      <TableHead
+                        className="w-[100px] text-center"
+                        align="center"
+                      >
+                        Multirecurso
+                      </TableHead>
+                      <TableHead
+                        className="w-[100px] text-center"
+                        align="center"
+                      >
+                        Vence
+                      </TableHead>
+                      <TableHead
+                        className="w-[100px] text-center"
+                        align="center"
+                      >
+                        Mandatorio
+                      </TableHead>
+                      <TableHead
+                        className="w-[100px] text-center"
+                        align="center"
+                      >
+                        Editar
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -89,9 +110,20 @@ export default function page() {
                         <TableCell className="font-medium">
                           {doc.name}
                         </TableCell>
-                        <TableCell>{doc.multiresource ? 'Si' : 'No'}</TableCell>
-                        <TableCell>{doc.explired ? 'Si' : 'No'}</TableCell>
-                        <TableCell>{doc.mandatory ? 'Si' : 'No'}</TableCell>
+                        <TableCell align="center">
+                          {doc.multiresource ? 'Si' : 'No'}
+                        </TableCell>
+                        <TableCell align="center">
+                          {doc.explired ? 'Si' : 'No'}
+                        </TableCell>
+                        <TableCell align="center">
+                          {doc.mandatory ? 'Si' : 'No'}
+                        </TableCell>
+                        {doc.company_id && (
+                          <TableCell align="center">
+                           <EditModal Equipo={doc} />
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
