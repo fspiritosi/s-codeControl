@@ -50,19 +50,24 @@ export const RegisterButton = () => {
 
     toast.promise(
       async () => {
-        signup(formData, url)
+        const error = await signup(formData, url)
+        if (error) {
+          throw new Error(error)
+        }
       },
       {
         loading: 'Registrando...',
         success: '¡Revisa tu correo para confirmar tu cuenta!',
-        error: 'Hubo un error al registrarte',
+        error: error => {
+          return error
+        },
       },
     )
   }
 
   return (
     <Button
-      className="w-[100%] sm:w-[80%] lg:w-[60%] self-center"
+      className="w-[100%] sm:w-[80%] lg:w-[60%] self-center text-lg"
       formAction={e => {
         clientAccion(e)
       }}

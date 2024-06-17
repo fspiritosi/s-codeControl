@@ -22,7 +22,7 @@ export async function login(formData: FormData) {
   // })
 
   if (error) {
-    throw new Error(handleSupabaseError(error.message))
+    return handleSupabaseError(error.message)
   }
   if (user.session) {
     redirect(`/dashboard`)

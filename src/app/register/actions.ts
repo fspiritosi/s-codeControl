@@ -21,9 +21,13 @@ export async function signup(formData: FormData, url: string) {
     },
   })
 
+  if(error){
+    return error.message
+  }
+
   const firstname = formData.get('firstname') as string
   const lastname = formData.get('lastname') as string
-  await supabase
+  const {error:error2}=await supabase
     .from('profile')
     .insert({
       id: user.user?.id,
@@ -34,8 +38,8 @@ export async function signup(formData: FormData, url: string) {
     })
     .select()
 
-  if (error) {
-    return error
+  if (error2) {
+    return error2.message
   }
 
   revalidatePath('/', 'layout')
