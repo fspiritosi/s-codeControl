@@ -132,7 +132,7 @@ export default function AddModelModal({
             </FormItem>
             <div className="flex gap-2">
               <AlertDialogAction onClick={onSubmit}>
-                Agregar marca
+                Agregar modelo
               </AlertDialogAction>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
             </div>
