@@ -245,7 +245,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
 
               const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/
               if (year !== undefined) {
-                if (year < 2016) {
+                if (year <= 2015) {
                   return oldRegex.test(e)
                 } else {
                   return true
@@ -264,7 +264,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
 
               const newRegex = /^[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$/
               if (year !== undefined) {
-                if (year >= 2016) {
+                if (year >= 2017) {
                   return newRegex.test(e)
                 } else {
                   return true
@@ -275,6 +275,28 @@ export default function VehiclesForm2({ id }: { id: string }) {
             },
             {
               message: 'El dominio debe tener el formato AA000AA.',
+            },
+          )
+          .refine(
+            e => {
+              const year = Number(form.getValues('year'))
+
+              const newRegex = /^[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$/
+              const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/
+              if (year !== undefined) {
+                if (year === 2016 || year === 2015) {
+                  const result = newRegex.test(e) || oldRegex.test(e)
+                  return result
+                } else {
+                  return true
+                }
+              } else {
+                return 0
+              }
+            },
+            {
+              message:
+                'El dominio debe tener uno de los siguientes formatos AA000AA o AAA000',
             },
           )
           .refine(
@@ -492,7 +514,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
               throw new Error(handleSupabaseError(error.message))
             }
           }
-          
+
           router.push('/dashboard/equipment')
         } catch (error) {
           console.error(error)
@@ -1179,7 +1201,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                     <FormDescription>
                       Ingrese el dominio del vehículo
                     </FormDescription>
-                    <FormMessage />
+                    <FormMessage className='w-[250px]' />
                   </FormItem>
                 )}
               />
