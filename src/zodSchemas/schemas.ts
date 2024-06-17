@@ -146,7 +146,7 @@ export const companySchema = z.object({
         message: 'Ya existe una compañía con este CUIT.',
       },
     ),
-  
+
   description: z
     .string()
     .min(3, {
@@ -230,21 +230,21 @@ export const editCompanySchema = z.object({
       },
       { message: 'El CUIT es inválido' },
     )
-    .refine((value) => {
+    .refine(value => {
       return new Promise(async (resolve, reject) => {
         try {
-          const isDuplicated = await validateDuplicatedCuil(value);
+          const isDuplicated = await validateDuplicatedCuil(value)
           if (!isDuplicated) {
-            resolve(true);
+            resolve(true)
           } else {
-            reject(new Error('Ya existe una compañía con este CUIT.'));
+            reject(new Error('Ya existe una compañía con este CUIT.'))
           }
         } catch (error) {
-          reject(error);
+          reject(error)
         }
-      });
+      })
     }),
-    
+
   description: z
     .string()
     .min(3, {
@@ -308,7 +308,7 @@ export const editCompanySchema = z.object({
     .min(1, { message: 'City debe tener al menos 1 caracteres.' }),
   company_logo: z.string().optional(),
   by_defect: z.boolean().optional(),
-});
+})
 
 export const accordionSchema = z
   .object({
@@ -665,6 +665,7 @@ export const EquipoSchema = z
       special: z.boolean(),
       is_active: z.boolean(),
       description: z.union([z.null(), z.string()]),
+      company_id: z.string().optional().nullable(),
     }),
   )
   .default([])
