@@ -48,8 +48,8 @@ export default function page() {
   const { allDocumentsToShow, actualCompany } = useLoggedUserStore()
   const document_types = useCountriesStore(state => state.companyDocumentTypes)
   const fetchDocumentTypes = useCountriesStore(state => state.documentTypes)
-  let doc_personas = document_types?.filter(doc => doc.applies === 'Persona')
-  let doc_equipos = document_types?.filter(doc => doc.applies === 'Equipos')
+  let doc_personas = document_types?.filter(doc => doc.applies === 'Persona').filter(e=>e.is_active)
+  let doc_equipos = document_types?.filter(doc => doc.applies === 'Equipos').filter(e=>e.is_active)
 
   const profile = useLoggedUserStore(state => state)
 
