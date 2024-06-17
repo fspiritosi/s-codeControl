@@ -31,8 +31,6 @@ import { Suspense } from 'react'
 import { supabase } from '../../../../../supabase/supabase'
 
 export default async function page({ params }: { params: { id: string } }) {
-  console.log(params.id)
-
   let documents_employees: any[] | null = []
   // const [userEmail, setUserEmail] = useState<string | ''>('')
   let resource = ''
@@ -90,8 +88,6 @@ export default async function page({ params }: { params: { id: string } }) {
     .eq('company_id', document?.[0]?.applies?.company_id.id)
     .neq('role', 'Invitado')
 
-  console.log(sharedCompanies)
-
   const email = sharedCompanies?.map((company: any) => company.profile_id.email)
   email?.push(sharedUsersEmail)
 
@@ -127,14 +123,14 @@ export default async function page({ params }: { params: { id: string } }) {
   const userAndDocumentInfo = {
     recurso: resource,
     document_name: documents_employees?.[0]?.document_types?.name,
-    company_name: sharedCompanies?.[0].company_id.company_name,
+    company_name: documents_employees?.[0]?.applies?.company_id?.company_name,
     resource_name:
       resource === 'employee'
-        ? documents_employees?.[0]?.applies.lastname +
+        ? documents_employees?.[0]?.applies?.lastname +
           ' ' +
-          documents_employees?.[0]?.applies.firstname
-        : documents_employees?.[0]?.applies.domain ||
-          documents_employees?.[0]?.applies.intern_number,
+          documents_employees?.[0]?.applies?.firstname
+        : documents_employees?.[0]?.applies?.domain ||
+          documents_employees?.[0]?.applies?.intern_number,
     document_number:
       resource === 'employee'
         ? documents_employees?.[0]?.applies?.document_number

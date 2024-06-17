@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { handleSupabaseError } from '@/lib/errorHandler'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { SharedUser } from '@/zodSchemas/schemas'
 import { ColumnDef } from '@tanstack/react-table'
@@ -103,13 +104,19 @@ export const columns: ColumnDef<SharedUser>[] = [
               .update({ role })
               .eq('id', row.getValue('id'))
               .select()
+
+            if (error) {
+              throw new Error(handleSupabaseError(error.message))
+            }
           },
           {
             loading: 'Cargando...',
             success: data => {
               return `El rol ha sido cambiado a ${role}`
             },
-            error: 'Error',
+            error: error => {
+              return error
+            },
           },
         )
       }
@@ -178,6 +185,10 @@ export const columns: ColumnDef<SharedUser>[] = [
               .delete()
               .eq('id', row.getValue('id'))
               .select()
+
+              if (error) {
+                throw new Error(handleSupabaseError(error.message))
+              }
           },
           {
             loading: 'Eliminando...',
@@ -185,7 +196,9 @@ export const columns: ColumnDef<SharedUser>[] = [
               useLoggedUserStore?.getState()?.FetchSharedUsers()
               return 'Usuario eliminado'
             },
-            error: 'Error',
+            error: error => {
+              return error
+            },
           },
         )
       }

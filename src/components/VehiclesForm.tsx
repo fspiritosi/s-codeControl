@@ -25,6 +25,7 @@ import { ChangeEvent, useEffect, useState } from 'react'
 require('dotenv').config()
 
 import { useImageUpload } from '@/hooks/useUploadImage'
+import { handleSupabaseError } from '@/lib/errorHandler'
 import { useCountriesStore } from '@/store/countries'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -453,11 +454,11 @@ export default function VehiclesForm2({ id }: { id: string }) {
             .select()
 
           if (documentError) {
-            throw new Error(JSON.stringify(documentError))
+            throw new Error(handleSupabaseError(documentError.message))
           }
 
           if (error) {
-            throw new Error(JSON.stringify(error))
+            throw new Error(handleSupabaseError(error.message))
           }
 
           const id = vehicle?.[0].id
@@ -488,13 +489,10 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   .eq('company_id', actualCompany?.id)
               } catch (error) {}
             } catch (error: any) {
-              throw new Error(JSON.stringify(error))
+              throw new Error(handleSupabaseError(error.message))
             }
           }
-
-          if (error) {
-            throw new Error(error)
-          }
+          
           router.push('/dashboard/equipment')
         } catch (error) {
           console.error(error)
@@ -612,7 +610,9 @@ export default function VehiclesForm2({ id }: { id: string }) {
       {
         loading: 'Guardando...',
         success: 'Vehículo editado',
-        error: 'Error al editar el vehículo',
+        error: error => {
+          return error
+        },
       },
     )
   }

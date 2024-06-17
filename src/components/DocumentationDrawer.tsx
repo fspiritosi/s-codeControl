@@ -7,6 +7,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { handleSupabaseError } from '@/lib/errorHandler'
 import { cn } from '@/lib/utils'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import {
@@ -117,7 +118,7 @@ export const DocumentationDrawer = ({ resource, document, id }: Props) => {
               .download(doc.document_path)
 
             if (error) {
-              throw new Error('Error al descargar el documento')
+              throw new Error(handleSupabaseError(error.message))
             }
 
             // Extrae la extensión del archivo del document_path
@@ -141,7 +142,7 @@ export const DocumentationDrawer = ({ resource, document, id }: Props) => {
         loading: 'Descargando documentos...',
         success: 'Documentos descargados',
         error: error => {
-          return 'Error al descargar los documentos'
+          return error
         },
       },
     )

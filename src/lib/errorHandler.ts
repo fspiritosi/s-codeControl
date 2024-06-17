@@ -7,6 +7,11 @@ export function handleSupabaseError(error: string): string {
     'Invalid login credentials': 'Correo o contraseña inválidos',
   }
 
+  if (!errorMessages[error]) {
+    //Aqui podemos guardar este error en alguna tabla para poder manejarlo mas adelante
+    
+  }
+
   const errorMessage =
     errorMessages[error] || 'Ha ocurrido un error al procesar la solicitud'
   return errorMessage
