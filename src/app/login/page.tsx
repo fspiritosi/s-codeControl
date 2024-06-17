@@ -14,7 +14,7 @@ import GoogleButton from './componentsLogin/GoogleButton'
 import { LoginButton } from './componentsLogin/LoginButton'
 export default async function Login() {
   return (
-    <section className="h-screen overflow-hidden bg-white dark:bg-transparent">
+    <section className="min-h-screen overflow-hidden bg-white dark:bg-transparent">
       <div className="container relative flex-col grid-cols-1 justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0  md:px-2 p-0">
         <RenderBanner />
         <div className="lg:p-8 relative z-50   md:p-8 pt-7 p-0 flex flex-col justify-center items-center w-full">
@@ -31,7 +31,7 @@ export default async function Login() {
             />
             CodeControl
           </Link>
-          <div className="w-full">
+          <div className="w-full overflow-y-auto ">
             <CardHeader>
               <CardTitle className="text-3xl font-semibold tracking-tight lg:text-left text-center">
                 ¡Es un placer verte de nuevo!
