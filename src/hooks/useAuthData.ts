@@ -1,7 +1,7 @@
 import { login, profileUser, singUp } from '@/types/types'
-import { supabase } from '../../supabase/supabase'
 import { useEdgeFunctions } from './useEdgeFunctions'
 import { useProfileData } from './useProfileData'
+import { supabaseBrowser } from '@/lib/supabase/browser'
 
 /**
  * Custom hook for handling authentication data.
@@ -13,6 +13,7 @@ import { useProfileData } from './useProfileData'
 export const useAuthData = () => {
   const { filterByEmail } = useProfileData()
   const { errorTranslate } = useEdgeFunctions()
+  const supabase = supabaseBrowser()
 
   return {
     singUp: async (credentials: singUp) => {

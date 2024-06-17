@@ -665,6 +665,7 @@ export const EquipoSchema = z
       special: z.boolean(),
       is_active: z.boolean(),
       description: z.union([z.null(), z.string()]),
+      company_id: z.string().optional().nullable()
     }),
   )
   .default([])
