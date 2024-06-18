@@ -8,8 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { columns } from './action/columns'
-import { DataCustomers } from './action/data-table'
+import { columns } from './columns'
+import { DataCustomers } from './data-table'
 import { supabase } from '../../../../../supabase/supabase'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useState, useEffect } from "react"

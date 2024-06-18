@@ -66,7 +66,7 @@ import Link from 'next/link'
 import { Fragment, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { supabase } from '../../../../../../supabase/supabase'
+import { supabase } from '../../../../../supabase/supabase'
 const formSchema = z.object({
   reason_for_termination: z.string({
     required_error: 'La razón de la baja es requerida.',

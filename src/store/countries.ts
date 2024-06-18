@@ -20,7 +20,7 @@ interface State {
   fetchCities: (provinceId: any) => void
   hierarchy: generic[]
   workDiagram: generic[]
-  contractors: generic[]
+  customers: generic[]
   mandatoryDocuments: MandatoryDocuments
   documentTypes: (company_id?: string) => void
   companyDocumentTypes: Equipo
@@ -82,14 +82,14 @@ export const useCountriesStore = create<State>((set, get) => {
     }
   }
   const fetchContractors = async () => {
-    const { data: contractors, error } = await supabase
-      .from('contractors')
+    const { data: customers, error } = await supabase
+      .from('customers')
       .select('*')
 
     if (error) {
       console.error('Error al obtener los contratistas:', error)
     } else {
-      set({ contractors: contractors || [] })
+      set({ customers: customers || [] })
     }
   }
 
@@ -125,7 +125,7 @@ export const useCountriesStore = create<State>((set, get) => {
     fetchCities,
     hierarchy: get()?.hierarchy,
     workDiagram: get()?.workDiagram,
-    contractors: get()?.contractors,
+    customers: get()?.customers,
     mandatoryDocuments: get()?.mandatoryDocuments,
     documentTypes: (company_id?: string | undefined) =>
       documentTypes(company_id || ''),

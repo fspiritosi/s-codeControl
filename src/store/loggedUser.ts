@@ -104,9 +104,9 @@ const setEmployeesToShow = (employees: any) => {
       company_position: employees?.company_position,
       normal_hours: employees?.normal_hours,
       type_of_contract: employees?.type_of_contract,
-      allocated_to: employees?.contractor_employee
-        ?.map(({ contractors }: any) => contractors?.name)
-        ?.join(', '),
+      allocated_to: employees?.allocated_to,
+        // ?.map(({ contractors }: any) => contractors?.id === "073898b3-bf86-4757-8ce9-355d5a3d4259")
+        // ?.join(', '),
       picture: employees?.picture,
       nationality: employees?.nationality,
       lastname: `${employees?.lastname
