@@ -28,7 +28,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import {
@@ -73,6 +73,40 @@ export function DataTable<TData, TValue>({
     'type_of_contract',
     'allocated_to',
   ]
+
+  const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const valorGuardado = JSON.parse(
+        localStorage.getItem('employeeColumns') || '[]',
+      )
+      return valorGuardado.length ? valorGuardado : defaultVisibleColumns
+    }
+    return defaultVisibleColumns
+  })
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(
+        'employeeColumns',
+        JSON.stringify(defaultVisibleColumns1),
+      )
+    }
+  }, [defaultVisibleColumns1])
+
+  useEffect(() => {
+    const valorGuardado = JSON.parse(
+      localStorage.getItem('employeeColumns') || '[]',
+    )
+    if (valorGuardado.length) {
+      setColumnVisibility(
+        columns.reduce((acc: any, column: any) => {
+          acc[column.accessorKey] = valorGuardado.includes(column.accessorKey)
+          return acc
+        }, {}),
+      )
+    }
+  }, [columns])
+
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     columns.reduce((acc: any, column: any) => {
       acc[column.accessorKey] = defaultVisibleColumns.includes(
@@ -82,6 +116,22 @@ export function DataTable<TData, TValue>({
     }, {}),
   )
   // const [showDeletedEmployees, setShowDeletedEmployees] = useState(false)
+  const handleColumnVisibilityChange = (
+    columnId: string,
+    isVisible: boolean,
+  ) => {
+    setColumnVisibility(prev => ({
+      ...prev,
+      [columnId]: isVisible,
+    }))
+    setDefaultVisibleColumns1((prev: any) => {
+      const newVisibleColumns = isVisible
+        ? [...prev, columnId]
+        : prev.filter((id: string) => id !== columnId)
+      localStorage.setItem('employeeColumns', JSON.stringify(newVisibleColumns))
+      return newVisibleColumns
+    })
+  }
 
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const loader = useLoggedUserStore(state => state.isLoading)
@@ -313,7 +363,7 @@ export function DataTable<TData, TValue>({
                       className="capitalize"
                       checked={column.getIsVisible()}
                       onCheckedChange={value =>
-                        column.toggleVisibility(!!value)
+                        handleColumnVisibilityChange(column.id, !!value)
                       }
                     >
                       {column.columnDef.header}
