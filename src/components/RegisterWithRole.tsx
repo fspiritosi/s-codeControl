@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from './ui/select'
 import { Toggle } from './ui/toggle'
+import { handleSupabaseError } from '@/lib/errorHandler'
 export const RegisterWithRole = () => {
   const [showPasswords, setShowPasswords] = useState(false)
   const [open, setOpen] = useState(false)
@@ -150,9 +151,9 @@ export const RegisterWithRole = () => {
           .select('*')
           .eq('email', values.email)
 
-        if (error) {
-          throw new Error('Error al buscar el usuario')
-        }
+          if (error) {
+            throw new Error(handleSupabaseError(error.message))
+          }
 
         if (profile && profile?.length > 0) {
           const { error: duplicatedError, data: sharedCompany } = await supabase
@@ -176,9 +177,9 @@ export const RegisterWithRole = () => {
               },
             ])
 
-          if (error) {
-            throw new Error('Error al registrar el usuario')
-          }
+            if (error) {
+              throw new Error(handleSupabaseError(error.message))
+            }
 
           return 'Usuario registrado correctamente'
         }
@@ -187,14 +188,13 @@ export const RegisterWithRole = () => {
           return 'No se encontró el usuario'
         }
         if (!profile || profile?.length === 0) {
-          const { data, error } = await supabase.auth.admin.createUser({
+          const { data, error } = await supabase.auth.signUp({
             email: values.email,
-            password: values.password,
-            email_confirm: false,
+            password: values.password!,
           })
           if (error) {
-            throw new Error('Error al registrar el usuario')
-          }
+              throw new Error(handleSupabaseError(error.message))
+            }
 
           if (data) {
             const { data: user, error } = await supabase
@@ -204,15 +204,15 @@ export const RegisterWithRole = () => {
                   id: data.user?.id,
                   email: values.email,
                   fullname: `${values.firstname} ${values.lastname}`,
-                  role: 'Externo',
+                  role: 'CodeControlClient',
                   credential_id: data.user?.id,
                 },
               ])
               .select()
 
-            if (error) {
-              throw new Error('Error al registrar el usuario')
-            }
+              if (error) {
+                throw new Error(handleSupabaseError(error.message))
+              }
 
             if (user) {
               const { data, error } = await supabase
@@ -224,9 +224,9 @@ export const RegisterWithRole = () => {
                     role: values?.role,
                   },
                 ])
-              if (error) {
-                throw new Error('Error al registrar el usuario')
-              }
+                if (error) {
+                  throw new Error(handleSupabaseError(error.message))
+                }
               if (data) {
                 return 'Usuario registrado correctamente'
               }
@@ -243,7 +243,9 @@ export const RegisterWithRole = () => {
           FetchSharedUsers()
           return message
         },
-        error: err => err.message,
+        error: error => {
+          return error
+        },
       },
     )
   }

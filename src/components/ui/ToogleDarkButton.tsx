@@ -12,9 +12,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import cookies from 'js-cookie'
 
 export function ModeToggle() {
-  const { setTheme } = useTheme()
+  const { setTheme, systemTheme, theme } = useTheme()
+
+  if (theme && theme !== 'system') {
+    console.log(theme)
+    cookies.set('theme', theme)
+  } else if (systemTheme && theme === 'system') {
+    console.log(systemTheme)
+    cookies.set('theme', systemTheme)
+  }
+
+  const companyId = cookies.get('actualComp')
 
   return (
     <DropdownMenu>
@@ -22,11 +33,13 @@ export function ModeToggle() {
         <Button variant="outline" size="icon">
           <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-neutral-950" />
           <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Toggle theme</span>
+          <span className="sr-only">Seleccionar tema</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel className="font-bold">Cambiar tema</DropdownMenuLabel>
+        <DropdownMenuLabel className="font-bold">
+          Cambiar tema
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => setTheme('light')}>
           Claro

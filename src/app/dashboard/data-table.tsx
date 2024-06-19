@@ -41,7 +41,7 @@ import {
 } from '@/components/ui/table'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import { ArrowUpDown } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -50,6 +50,7 @@ interface DataTableProps<TData, TValue> {
   pending?: boolean
   vehicles?: boolean
   defaultVisibleColumnsCustom?: string[]
+  localStorageName: string
 }
 
 export function ExpiredDataTable<TData, TValue>({
@@ -59,6 +60,7 @@ export function ExpiredDataTable<TData, TValue>({
   pending,
   vehicles,
   defaultVisibleColumnsCustom,
+  localStorageName,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const loader = useLoggedUserStore(state => state.isLoading)
@@ -69,6 +71,42 @@ export function ExpiredDataTable<TData, TValue>({
     'validity',
     'id',
   ]
+
+  console.log(localStorageName)
+
+  const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const valorGuardado = JSON.parse(
+        localStorage.getItem(localStorageName) || '[]',
+      )
+      return valorGuardado.length ? valorGuardado : defaultVisibleColumns
+    }
+    return defaultVisibleColumns
+  })
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(
+        localStorageName,
+        JSON.stringify(defaultVisibleColumns1),
+      )
+    }
+  }, [defaultVisibleColumns1])
+
+  useEffect(() => {
+    const valorGuardado = JSON.parse(
+      localStorage.getItem(localStorageName) || '[]',
+    )
+    if (valorGuardado.length) {
+      setColumnVisibility(
+        columns.reduce((acc: any, column: any) => {
+          acc[column.accessorKey] = valorGuardado.includes(column.accessorKey)
+          return acc
+        }, {}),
+      )
+    }
+  }, [columns])
+
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     columns.reduce((acc: any, column: any) => {
@@ -103,6 +141,23 @@ export function ExpiredDataTable<TData, TValue>({
       },
     },
   })
+
+  const handleColumnVisibilityChange = (
+    columnId: string,
+    isVisible: boolean,
+  ) => {
+    setColumnVisibility(prev => ({
+      ...prev,
+      [columnId]: isVisible,
+    }))
+    setDefaultVisibleColumns1((prev: any) => {
+      const newVisibleColumns = isVisible
+        ? [...prev, columnId]
+        : prev.filter((id: string) => id !== columnId)
+      localStorage.setItem(localStorageName, JSON.stringify(newVisibleColumns))
+      return newVisibleColumns
+    })
+  }
 
   function createOptions(key: string) {
     const values = data?.flatMap((item: any) => item?.[key])
@@ -250,7 +305,7 @@ export function ExpiredDataTable<TData, TValue>({
                       className="capitalize"
                       checked={column.getIsVisible()}
                       onCheckedChange={value =>
-                        column.toggleVisibility(!!value)
+                        handleColumnVisibilityChange(column.id, !!value)
                       }
                     >
                       {column.columnDef.header}

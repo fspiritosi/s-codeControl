@@ -1,9 +1,5 @@
 'use client'
 
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { EmailTemplate } from './EmailTemplate'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -22,19 +18,32 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { useToast } from '@/components/ui/use-toast'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
 import { supabase } from '../../supabase/supabase'
 import { Textarea } from './ui/textarea'
+
+type EmailInfo = {
+  recurso: string
+  document_name: string
+  company_name: string
+  resource_name: string
+  document_number: string
+}
 
 export default function DenyDocModal({
   id,
   resource,
   userEmail,
+  emailInfo,
 }: {
   id: string
   resource: string | null
-  userEmail:string
+  userEmail: string[]
+  emailInfo: EmailInfo
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const FormSchema = z.object({
@@ -55,7 +64,6 @@ export default function DenyDocModal({
   const { toast } = useToast()
 
   async function onSubmit(menssaje: z.infer<typeof FormSchema>) {
-
     if (resource === 'employee') {
       const { data, error } = await supabase
         .from('documents_employees')
@@ -80,17 +88,15 @@ export default function DenyDocModal({
         body: JSON.stringify({
           to: userEmail,
           subject: 'Documento rechazado',
-          react:menssaje.reason ,
+          react: menssaje.reason,
           userEmail: userEmail,
+          body: emailInfo,
         }),
-      });
+      })
 
       if (!response.ok) {
-        throw new Error('Ocurrió un error al enviar el correo electrónico');
+        throw new Error('Ocurrió un error al enviar el correo electrónico')
       }
-
-      
-      
 
       toast({
         title: 'Documento rechazado',
@@ -104,8 +110,6 @@ export default function DenyDocModal({
         .eq('id', id)
         .select()
 
-        
-
       if (error) {
         setIsOpen(false)
         return toast({
@@ -114,18 +118,32 @@ export default function DenyDocModal({
           variant: 'destructive',
         })
       }
-      
+      const response = await fetch('/api/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: userEmail,
+          subject: 'Documento rechazado',
+          react: menssaje.reason,
+          userEmail: userEmail,
+          body: emailInfo,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Ocurrió un error al enviar el correo electrónico')
+      }
+
       toast({
         title: 'Documento rechazado',
         description: 'El documento ha sido rechazado correctamente',
         variant: 'default',
       })
-
-      
     }
-    
 
-    router.push('/auditor/auditor')
+    router.push('/admin/auditor')
     setIsOpen(false)
   }
   return (

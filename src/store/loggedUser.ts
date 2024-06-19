@@ -22,6 +22,7 @@ interface Document {
   resource: string
   state: string
   document_path?: string
+  is_active: boolean
 }
 
 interface State {
@@ -648,6 +649,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
             ?.toUpperCase()}${doc?.employees.firstname.slice(1)}`,
           document_number: doc.employees.document_number,
           document_url: doc.document_path,
+          is_active: doc.employees.is_active
         }
       }
 
@@ -666,6 +668,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
           id: doc.id,
           resource: doc.applies?.domain || doc.applies?.intern_number,
           vehicle_id: doc.applies?.id,
+          is_active: doc.applies?.is_active
         }
       }
 

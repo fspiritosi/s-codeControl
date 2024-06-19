@@ -31,8 +31,6 @@ import { Suspense } from 'react'
 import { supabase } from '../../../../../supabase/supabase'
 
 export default async function page({ params }: { params: { id: string } }) {
-  console.log(params.id)
-
   let documents_employees: any[] | null = []
   // const [userEmail, setUserEmail] = useState<string | ''>('')
   let resource = ''
@@ -82,8 +80,18 @@ export default async function page({ params }: { params: { id: string } }) {
     resourceType = 'documentos-empleados'
     resource = 'employee'
   }
+  const sharedUsersEmail = document?.[0]?.applies?.company_id.owner_id.email //->
 
-  const email = document?.[0]?.applies?.company_id.owner_id.email
+  const { data: sharedCompanies, error } = await supabase
+    .from('share_company_users')
+    .select('*,profile_id(email),company_id(company_name)')
+    .eq('company_id', document?.[0]?.applies?.company_id.id)
+    .neq('role', 'Invitado')
+
+  const email = sharedCompanies?.map((company: any) => company.profile_id.email)
+  email?.push(sharedUsersEmail)
+
+  //! incluir al dueño inicialmente
 
   documentType = document?.[0]?.document_types?.id
 
@@ -110,6 +118,23 @@ export default async function page({ params }: { params: { id: string } }) {
     const lastMonth = new Date(today.setMonth(today.getMonth() - 1))
 
     return expireDate < lastMonth
+  }
+
+  const userAndDocumentInfo = {
+    recurso: resource,
+    document_name: documents_employees?.[0]?.document_types?.name,
+    company_name: documents_employees?.[0]?.applies?.company_id?.company_name,
+    resource_name:
+      resource === 'employee'
+        ? documents_employees?.[0]?.applies?.lastname +
+          ' ' +
+          documents_employees?.[0]?.applies?.firstname
+        : documents_employees?.[0]?.applies?.domain ||
+          documents_employees?.[0]?.applies?.intern_number,
+    document_number:
+      resource === 'employee'
+        ? documents_employees?.[0]?.applies?.document_number
+        : undefined,
   }
 
   return (
@@ -739,31 +764,13 @@ export default async function page({ params }: { params: { id: string } }) {
                       <DenyDocModal
                         id={params.id}
                         resource={resource}
-                        userEmail={email}
+                        userEmail={email as string[]}
+                        emailInfo={userAndDocumentInfo}
                       />
                     </div>
                   </div>
                 </Card>
               </TabsContent>
-
-              {/* <TabsContent value="Auditar">
-                <Card>
-                  <div className="p-3 text-center space-y-3">
-                    <CardDescription>
-                      Si el documento es rechazado, vencido o necesita ser
-                      actualizado puedes hacerlo desde aquí, una vez aprobado el
-                      documento no podrá ser modificado
-                    </CardDescription>
-                    <div className="w-full flex justify-evenly">
-                      <UpdateDocuments
-                        id={params.id}
-                        resource={resource}
-                        documentName={documentName}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              </TabsContent> */}
             </Tabs>
           </div>
           <Suspense fallback={<Skeleton className=" w-full h-full mt-5" />}>

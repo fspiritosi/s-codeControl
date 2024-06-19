@@ -30,8 +30,8 @@ const schema = z
   .min(1, {
     message: 'El nombre de la marca debe tener al menos 1 caracteres',
   })
-  .max(15, {
-    message: 'El nombre de la marca debe tener menos de 15 caracteres',
+  .max(100, {
+    message: 'El nombre de la marca debe tener menos de 100 caracteres',
   })
 
 export default function AddModelModal({
@@ -132,7 +132,7 @@ export default function AddModelModal({
             </FormItem>
             <div className="flex gap-2">
               <AlertDialogAction onClick={onSubmit}>
-                Agregar marca
+                Agregar modelo
               </AlertDialogAction>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
             </div>
