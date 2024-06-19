@@ -39,7 +39,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useCountriesStore } from '@/store/countries'
 import { useLoggedUserStore } from '@/store/loggedUser'
-import { useRouter } from 'next/navigation'
 import { ExpiredColums } from '../colums'
 import { ExpiredDataTable } from '../data-table'
 import { EditModal } from './documentComponents/EditDocumenTypeModal'
@@ -48,8 +47,12 @@ export default function page() {
   const { allDocumentsToShow, actualCompany } = useLoggedUserStore()
   const document_types = useCountriesStore(state => state.companyDocumentTypes)
   const fetchDocumentTypes = useCountriesStore(state => state.documentTypes)
-  let doc_personas = document_types?.filter(doc => doc.applies === 'Persona').filter(e=>e.is_active)
-  let doc_equipos = document_types?.filter(doc => doc.applies === 'Equipos').filter(e=>e.is_active)
+  let doc_personas = document_types
+    ?.filter(doc => doc.applies === 'Persona')
+    .filter(e => e.is_active)
+  let doc_equipos = document_types
+    ?.filter(doc => doc.applies === 'Equipos')
+    .filter(e => e.is_active)
 
   const profile = useLoggedUserStore(state => state)
 
@@ -121,7 +124,7 @@ export default function page() {
                         </TableCell>
                         {doc.company_id && (
                           <TableCell align="center">
-                           <EditModal Equipo={doc} />
+                            <EditModal Equipo={doc} />
                           </TableCell>
                         )}
                       </TableRow>
@@ -230,6 +233,7 @@ export default function page() {
                       'mandatory',
                       'state',
                     ]}
+                    localStorageName={'dashboardEmployees'}
                   />
                 </TabsContent>
                 <TabsContent value="Vehiculos">
@@ -247,6 +251,7 @@ export default function page() {
                       'mandatory',
                       'state',
                     ]}
+                    localStorageName={'dashboardVehiculos'}
                   />
                 </TabsContent>
               </Tabs>
