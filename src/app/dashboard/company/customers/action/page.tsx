@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { supabase } from '../../../../../../supabase/supabase'
 import CustomerComponent from "../../../../../components/CustomerComponent"
 import BackButton from "../../../../../components/BackButton"
-import { columns } from './columnsCustomers'
+
 export default async function CustomerFormAction({
   searchParams,
   params,
