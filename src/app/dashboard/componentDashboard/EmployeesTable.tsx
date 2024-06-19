@@ -14,6 +14,7 @@ function EmployeesTable() {
       data={documentsToShow?.employees || []}
       setShowLastMonthDocuments={setShowLastMonthDocuments}
       columns={ExpiredColums}
+      localStorageName="dashboardEmployeesColumns"
     />
   )
 }

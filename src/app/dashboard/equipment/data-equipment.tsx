@@ -42,7 +42,7 @@ import {
 } from '@/components/ui/table'
 import { useLoggedUserStore } from '@/store/loggedUser'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface DataEquipmentProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
@@ -60,6 +60,7 @@ export function DataEquipment<TData, TValue>({
   allCompany,
 }: DataEquipmentProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
+
   const defaultVisibleColumns = [
     'domain',
     'year',
@@ -68,7 +69,42 @@ export function DataEquipment<TData, TValue>({
     'model',
     'picture',
     'status',
+    'intern_number',
   ]
+
+  const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const valorGuardado = JSON.parse(
+        localStorage.getItem('savedColumns') || '[]',
+      )
+      return valorGuardado.length ? valorGuardado : defaultVisibleColumns
+    }
+    return defaultVisibleColumns
+  })
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(
+        'savedColumns',
+        JSON.stringify(defaultVisibleColumns1),
+      )
+    }
+  }, [defaultVisibleColumns1])
+
+  useEffect(() => {
+    const valorGuardado = JSON.parse(
+      localStorage.getItem('savedColumns') || '[]',
+    )
+    if (valorGuardado.length) {
+      setColumnVisibility(
+        columns.reduce((acc: any, column: any) => {
+          acc[column.accessorKey] = valorGuardado.includes(column.accessorKey)
+          return acc
+        }, {}),
+      )
+    }
+  }, [columns])
+
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     columns.reduce((acc: any, column: any) => {
       acc[column.accessorKey] = defaultVisibleColumns.includes(
@@ -77,6 +113,23 @@ export function DataEquipment<TData, TValue>({
       return acc
     }, {}),
   )
+
+  const handleColumnVisibilityChange = (
+    columnId: string,
+    isVisible: boolean,
+  ) => {
+    setColumnVisibility(prev => ({
+      ...prev,
+      [columnId]: isVisible,
+    }))
+    setDefaultVisibleColumns1((prev: any) => {
+      const newVisibleColumns = isVisible
+        ? [...prev, columnId]
+        : prev.filter((id: string) => id !== columnId)
+      localStorage.setItem('savedColumns', JSON.stringify(newVisibleColumns))
+      return newVisibleColumns
+    })
+  }
 
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const loader = useLoggedUserStore(state => state.isLoading)
@@ -154,6 +207,28 @@ export function DataEquipment<TData, TValue>({
   )
   //const router = useRouter()
 
+  console.log(defaultVisibleColumns1)
+
+  useEffect(() => {
+    const valorGuardado = JSON.parse(localStorage.getItem('savedColumns') || '')
+    if (!valorGuardado.length) {
+      localStorage.setItem(
+        'savedColumns',
+        JSON.stringify(defaultVisibleColumns1),
+      )
+    } else {
+      localStorage.setItem(
+        'savedColumns',
+        JSON.stringify(
+          table
+            .getAllColumns()
+            ?.filter(column => column.getIsVisible())
+            .map(column => column.id),
+        ),
+      )
+    }
+  }, [columnVisibility])
+
   const handleClearFilters = () => {
     table.getAllColumns().forEach(column => {
       column.setFilterValue('')
@@ -181,6 +256,11 @@ export function DataEquipment<TData, TValue>({
   // const handleToggleInactive = () => {
   //   setShowInactive(!showInactive)
   // }
+
+  const specialValues: any = {
+    domain: 'Dominio',
+    intern_number: 'Numero Interno',
+  }
 
   return (
     <div>
@@ -231,12 +311,24 @@ export function DataEquipment<TData, TValue>({
               {table
                 .getAllColumns()
                 ?.filter(column => column.getCanHide())
-                ?.map(column => {
-                  if (
-                    column.id === 'actions' ||
-                    typeof column.columnDef.header !== 'string'
-                  ) {
+                ?.map((column: any) => {
+                  if (column.id === 'actions') {
                     return null
+                  }
+                  if (typeof column.columnDef.header !== 'string') {
+                    const name = `${column.columnDef.accessorKey}`
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={column.id}
+                        className="capitalize"
+                        checked={column.getIsVisible()}
+                        onCheckedChange={value => {
+                          handleColumnVisibilityChange(column.id, !!value)
+                        }}
+                      >
+                        {specialValues[name]}
+                      </DropdownMenuCheckboxItem>
+                    )
                   }
                   if (column.id === 'is_active') {
                     return (
@@ -245,10 +337,9 @@ export function DataEquipment<TData, TValue>({
                           key={column.id}
                           className="capitalize  text-red-400"
                           checked={showInactive}
-                          //onChange={() => setShowInactive(!showInactive)}
                           onClick={() => setShowInactive(!showInactive)}
                           onCheckedChange={value =>
-                            column.toggleVisibility(true)
+                            handleColumnVisibilityChange(column.id, true)
                           }
                         >
                           {column.columnDef.header}
@@ -262,7 +353,7 @@ export function DataEquipment<TData, TValue>({
                       className="capitalize"
                       checked={column.getIsVisible()}
                       onCheckedChange={value =>
-                        column.toggleVisibility(!!value)
+                        handleColumnVisibilityChange(column.id, !!value)
                       }
                     >
                       {column.columnDef.header}

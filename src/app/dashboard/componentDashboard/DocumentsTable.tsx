@@ -14,6 +14,7 @@ function DocumentsTable() {
       setShowLastMonthDocuments={setShowLastMonthDocuments}
       columns={ExpiredColums}
       vehicles={true}
+      localStorageName="dashboardVehiclesColumns"
     />
   )
 }

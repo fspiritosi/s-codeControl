@@ -129,7 +129,6 @@ export function EditModal({ Equipo }: Props) {
           throw new Error(handleSupabaseError(error.message))
         }
         fetchDocumentTypes(actualCompany?.id)
-
       },
       {
         loading: 'Actualizando...',
@@ -167,7 +166,7 @@ export function EditModal({ Equipo }: Props) {
       async () => {
         const { error } = await supabase
           .from('document_types')
-          .delete()
+          .update({ is_active: false })
           .eq('id', Equipo.id)
 
         if (error) {
@@ -356,7 +355,10 @@ export function EditModal({ Equipo }: Props) {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction className={buttonVariants({variant:'destructive'})} asChild>
+                      <AlertDialogAction
+                        className={buttonVariants({ variant: 'destructive' })}
+                        asChild
+                      >
                         <Button
                           onClick={() => handleDeleteDocumentType()}
                           variant={'destructive'}
