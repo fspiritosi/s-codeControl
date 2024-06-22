@@ -229,7 +229,7 @@ export default function ClientRegister({ id }: { id: string }) {
         <section className={cn('md:mx-7 max-w-full')}>
             {action === "view" ? (
                 <section className={cn('md:mx-7 mt-8')}>
-                    <Accordion type="single" collapsible className="border-2 pl-4 rounded-lg">
+                    <Accordion type="single" collapsible className="border-2 pl-4 rounded-lg mb-6">
                         <AccordionItem value="item-1">
                             <AccordionTrigger className="text-lg hover:no-underline p-2 border-b-2 ">{clientData?.name}</AccordionTrigger>
                             <AccordionContent>
@@ -237,8 +237,8 @@ export default function ClientRegister({ id }: { id: string }) {
                             </AccordionContent>
                         </AccordionItem>
                     </Accordion>
-                    <h1>Acá va el resto de los datos</h1>
-                    <Tabs defaultValue="empleados" className="h-full flex-1 flex-col ">
+                   
+                    <Tabs defaultValue="empleados" className="h-full flex-1 flex-col mt-6">
                         <TabsList>
                             <TabsTrigger value="empleados">Empleados</TabsTrigger>
                             <TabsTrigger value="equipos">Equipos</TabsTrigger>
