@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { handleSupabaseError } from '@/lib/errorHandler'
 import { cn } from '@/lib/utils'
 import { useCountriesStore } from '@/store/countries'
 import { useLoggedUserStore } from '@/store/loggedUser'
@@ -36,7 +37,6 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '../../supabase/supabase'
-import { handleSupabaseError } from '@/lib/errorHandler'
 
 export default function NewDocumentType({
   codeControlClient,
@@ -52,7 +52,7 @@ export default function NewDocumentType({
       .string({ required_error: 'Este campo es requerido' })
       .min(3, { message: 'El nombre debe contener mas de 3 caracteres' })
       .max(50, { message: 'El nombre debe contener menos de 50 caracteres' }),
-    applies: z.enum(['Persona', 'Equipos'], {
+    applies: z.enum(['Persona', 'Equipos', 'Empresa'], {
       required_error: 'Este campo es requerido',
     }),
     multiresource: z.boolean({
@@ -64,6 +64,7 @@ export default function NewDocumentType({
     description: special
       ? z.string({ required_error: 'Este campo es requerido' })
       : z.string().optional(),
+    is_it_montlhy: z.boolean({ required_error: 'Este campo es requerido' }),
   })
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -94,6 +95,11 @@ export default function NewDocumentType({
       label: 'Es especial?',
       tooltip: 'Si el documento requiere documentacion especial',
     },
+    {
+      id: 'is_it_montlhy',
+      label: 'Es mensual?',
+      tooltip: 'Si el documento vence mensualmente',
+    },
   ]
 
   async function onSubmit(values: z.infer<typeof FormSchema>) {
@@ -113,11 +119,9 @@ export default function NewDocumentType({
           .insert(formattedValues)
           .select()
 
-          if (error) {
-            throw new Error(handleSupabaseError(error.message))
-          }
-
-          
+        if (error) {
+          throw new Error(handleSupabaseError(error.message))
+        }
       },
       {
         loading: 'Creando documento...',
@@ -188,12 +192,13 @@ export default function NewDocumentType({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Personas o Equipos" />
+                      <SelectValue placeholder="Personas, Equipos o Empresa" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="Persona">Persona</SelectItem>
                     <SelectItem value="Equipos">Equipos</SelectItem>
+                    <SelectItem value="Empresa">Empresa</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

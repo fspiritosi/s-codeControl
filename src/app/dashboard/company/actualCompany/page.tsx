@@ -29,8 +29,6 @@ import { useState } from 'react'
 import { columns } from './components/columns'
 import { DataTable } from './components/data-table'
 import { ItemCompany } from './components/itemCompany'
-import Link from 'next/link';
-import { CloudCog } from 'lucide-react'
 
 export default function page() {
   const router = useRouter()
@@ -43,7 +41,7 @@ export default function page() {
   const [showPasswords, setShowPasswords] = useState(false)
   const [open, setOpen] = useState(false)
   const userShared = cookies.get('guestRole')
-  console.log(actualCompany?.id, "actual company")
+  console.log(actualCompany?.id, 'actual company')
   const owner = ownerUser?.map(user => {
     return {
       email: user.email,
@@ -54,7 +52,6 @@ export default function page() {
       img: user.avatar || '',
     }
   })
-  
 
   const sharedUsers =
     sharedUsersAll?.map(user => {
@@ -84,8 +81,8 @@ export default function page() {
   }
 
   const handleEditCompany = () => {
-    router.push(`/dashboard/company/${actualCompany!.id}`);
-  };
+    router.push(`/dashboard/company/${actualCompany!.id}`)
+  }
 
   return (
     <div className="flex flex-col gap-6 py-4 px-6">
@@ -97,11 +94,12 @@ export default function page() {
           height={200}
         />
       </div>
-      
+
       <Tabs defaultValue="general">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>
+          <TabsTrigger value="Documentos">Documentos</TabsTrigger>
           <TabsTrigger value="modules" disabled>
             Modulos
           </TabsTrigger>
@@ -219,6 +217,14 @@ export default function page() {
               <div className="p-8">
                 <DataTable data={data || []} columns={columns} />
               </div>
+            </div>
+            <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
+          </Card>
+        </TabsContent>
+        <TabsContent value="Documentos">
+          <Card className="overflow-hidden">
+            <div className=" h-full flex-1 flex-col space-y-8  md:flex">
+              Documentos
             </div>
             <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
           </Card>

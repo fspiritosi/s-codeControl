@@ -479,7 +479,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       model_vehicles(name)`,
       )
       .eq('company_id', get()?.actualCompany?.id)
-      //.eq('is_active', true)
+    //.eq('is_active', true)
 
     // const validatedData = VehicleSchema.safeParse(data ?? [])
     // if (!validatedData.success) {
@@ -499,7 +499,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
   const setActivesVehicles = () => {
     //const activesVehicles = get()?.vehicles.filter(vehicle => vehicle.is_active)
-    const activesVehicles =get()?.vehicles
+    const activesVehicles = get()?.vehicles
     set({ vehiclesToShow: setVehiclesToShow(activesVehicles) })
   }
   const endorsedVehicles = () => {
@@ -556,7 +556,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
   const documetsFetch = async () => {
     // set({ isLoading: true })
-    console.log(get()?.actualCompany?.id,'get()?.actualCompany?.id');
     if (!get()?.actualCompany?.id) return
     let { data, error } = await supabase
       .from('documents_employees')
@@ -589,7 +588,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     const typedData: VehiclesAPI[] | null = equipmentData as VehiclesAPI[]
 
     if (error) {
-      return 
+      return
     } else {
       const lastMonth = new Date()
       lastMonth.setMonth(new Date().getMonth() + 1)
@@ -618,7 +617,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
         const isExpired = date < lastMonth || doc.state === 'Vencido'
         return isExpired
       })
-
 
       const formatDate = (dateString: string) => {
         if (!dateString) return 'No vence'
@@ -649,7 +647,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
             ?.toUpperCase()}${doc?.employees.firstname.slice(1)}`,
           document_number: doc.employees.document_number,
           document_url: doc.document_path,
-          is_active: doc.employees.is_active
+          is_active: doc.employees.is_active,
         }
       }
 
@@ -668,7 +666,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
           id: doc.id,
           resource: doc.applies?.domain || doc.applies?.intern_number,
           vehicle_id: doc.applies?.id,
-          is_active: doc.applies?.is_active
+          is_active: doc.applies?.is_active,
         }
       }
 

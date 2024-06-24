@@ -53,6 +53,9 @@ export default function page() {
   let doc_equipos = document_types
     ?.filter(doc => doc.applies === 'Equipos')
     .filter(e => e.is_active)
+  let doc_empresa = document_types
+    ?.filter(doc => doc.applies === 'Empresa')
+    .filter(e => e.is_active)
 
   const profile = useLoggedUserStore(state => state)
 
@@ -149,6 +152,35 @@ export default function page() {
                   </TableHeader>
                   <TableBody>
                     {doc_equipos?.map(doc => (
+                      <TableRow key={doc.id}>
+                        <TableCell className="font-medium">
+                          {doc.name}
+                        </TableCell>
+                        <TableCell>{doc.multiresource ? 'Si' : 'No'}</TableCell>
+                        <TableCell>{doc.explired ? 'Si' : 'No'}</TableCell>
+                        <TableCell>{doc.mandatory ? 'Si' : 'No'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+          <Accordion type="single" collapsible>
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Empresa</AccordionTrigger>
+              <AccordionContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nombre del Documento</TableHead>
+                      <TableHead className="w-[100px]">Multirecurso</TableHead>
+                      <TableHead className="w-[100px]">Vence</TableHead>
+                      <TableHead className="w-[100px]">Mandatorio</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {doc_empresa?.map(doc => (
                       <TableRow key={doc.id}>
                         <TableCell className="font-medium">
                           {doc.name}
