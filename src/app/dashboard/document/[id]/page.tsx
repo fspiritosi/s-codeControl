@@ -110,7 +110,7 @@ export default async function page({ params }: { params: { id: string } }) {
     const validity = documents_employees?.[0]?.validity
     if (!validity) return false
 
-    console.log('validity', validity)
+    // // // console.log('validity', validity)
     // Convertir la fecha a formato "mm/dd/yyyy"
     const [day, month, year] = validity.split('/')
     const validityDate = new Date(`${month}/${day}/${year}`)
@@ -120,7 +120,7 @@ export default async function page({ params }: { params: { id: string } }) {
 
     return validityDate <= oneMonthFromNow
   }
-  console.log(
+  // // // console.log(
     documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth(),
     ' documents_employees?.[0]?.state =',
   )

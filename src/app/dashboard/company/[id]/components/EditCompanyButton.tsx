@@ -39,7 +39,7 @@ export default function EditCompanyButton() {
     // const values = Object.fromEntries(formData.entries())
     // const result = await companySchema.safeParseAsync(values)
 
-    console.log(formData)
+    // // // console.log(formData)
 
     // Object.keys(values).forEach(key => {
     //   const element = document.getElementById(`${key}_error`)

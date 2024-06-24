@@ -207,7 +207,7 @@ export function DataEquipment<TData, TValue>({
   )
   //const router = useRouter()
 
-  console.log(defaultVisibleColumns1)
+  // // // console.log(defaultVisibleColumns1)
 
   useEffect(() => {
     const valorGuardado = JSON.parse(localStorage.getItem('savedColumns') || '')

@@ -47,7 +47,7 @@ export default function page() {
   const [open, setOpen] = useState(false)
   const [tabValue, setTabValue] = useState(localStorage.getItem('selectedTab') || 'general');
   const userShared = cookies.get('guestRole')
-  console.log(actualCompany?.id, "actual company")
+  // // // console.log(actualCompany?.id, "actual company")
   const owner = ownerUser?.map(user => {
     return {
       email: user.email,

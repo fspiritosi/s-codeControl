@@ -135,7 +135,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
       setHideInput(true)
     }
     if (vehicle && vehicle.type_of_vehicle === 'Otros') {
-      console.log('otro')
+      // // // console.log('otro')
       setHideInput(false)
     }
     if (!vehicle) {
@@ -395,7 +395,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
   useEffect(() => {
     fetchData()
   }, [])
-  const contractorCompanies = useCountriesStore(state => state.customers)
+  const contractorCompanies = useCountriesStore(state => state.customers.filter((company:any) => company.company_id.toString() === actualCompany?.id))
   const vehicleBrands = data.brand
   const types = data.tipe_of_vehicles?.map(e => e.name)
   const vehicleModels = data.models
@@ -550,7 +550,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
     }
   }
 
-  console.log(form.formState.errors, 'formState.errors')
+  // // // console.log(form.formState.errors, 'formState.errors')
 
   async function onUpdate(values: z.infer<typeof vehicleSchema>) {
     toast.promise(
@@ -570,7 +570,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
         } = values
 
         try {
-          console.log('update', values)
+          // // // console.log('update', values)
           const { data: updated, error: updatedERROR } = await supabase
             .from('vehicles')
             .update({
@@ -592,8 +592,8 @@ export default function VehiclesForm2({ id }: { id: string }) {
             .eq('company_id', actualCompany?.id)
             .select()
 
-          console.log('updated', updated)
-          console.log('updatedERROR', updatedERROR)
+          // // // console.log('updated', updated)
+          // // // console.log('updatedERROR', updatedERROR)
 
           const id = vehicle?.id
           const fileExtension = imageFile?.name.split('.').pop()

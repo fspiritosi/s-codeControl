@@ -72,7 +72,7 @@ export function ExpiredDataTable<TData, TValue>({
     'id',
   ]
 
-  console.log(localStorageName)
+  // // // console.log(localStorageName)
 
   const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
     if (typeof window !== 'undefined') {

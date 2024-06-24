@@ -104,7 +104,8 @@ export default function EmployeeAccordion() {
   const countryOptions = useCountriesStore(state => state.countries)
   const hierarchyOptions = useCountriesStore(state => state.hierarchy)
   const workDiagramOptions = useCountriesStore(state => state.workDiagram)
-  const contractorCompanies = useCountriesStore(state => state.customers)
+  const contractorCompanies = useCountriesStore(state => state.customers?.filter((company:any) => company.company_id.toString() === profile?.actualCompany?.id))
+  const filteredContractorCompanies = contractorCompanies?.filter((company:any) => company.company_id.toString() === profile?.actualCompany?.id);
   const { updateEmployee, createEmployee } = useEmployeesData()
   const getEmployees = useLoggedUserStore(state => state.getEmployees)
   const router = useRouter()
@@ -117,7 +118,7 @@ export default function EmployeeAccordion() {
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
     defaultValues: user
-      ? { ...user, allocated_to: user?.contractor_employee }
+      ? { ...user, allocated_to: user?.allocated_to }
       : {
           lastname: '',
           firstname: '',
@@ -146,7 +147,7 @@ export default function EmployeeAccordion() {
           date_of_admission: undefined,
         },
   })
-
+  // // console.log(user?.allocated_to)
   const [accordion1Errors, setAccordion1Errors] = useState(false)
   const [accordion2Errors, setAccordion2Errors] = useState(false)
   const [accordion3Errors, setAccordion3Errors] = useState(false)
@@ -210,7 +211,7 @@ export default function EmployeeAccordion() {
 
       form.reset({
         ...foundUser,
-        allocated_to: foundUser?.contractor_employee,
+        allocated_to: foundUser?.allocated_to,
         date_of_admission: foundUser?.date_of_admission,
         normal_hours: String(foundUser?.normal_hours),
       })
