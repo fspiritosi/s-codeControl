@@ -1,36 +1,30 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { ControllerRenderProps } from 'react-hook-form'
-import { Checkbox } from './ui/checkbox'
-import { FormControl } from './ui/form'
-import { Label } from './ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ControllerRenderProps } from 'react-hook-form';
+import { Checkbox } from './ui/checkbox';
+import { FormControl } from './ui/form';
+import { Label } from './ui/label';
 
 type Province = {
-  id: number
-  name: string
-}
+  id: number;
+  name: string;
+};
 type multiple = {
-  id: string
-  name: string
-}
+  id: string;
+  name: string;
+};
 type Props = {
-  label?: string
-  placeholder: string
-  options: string[] | undefined | Province[] | multiple[] | multiple | any
-  onChange: (value: string) => void
-  value: string
-  field: ControllerRenderProps
-  isMultiple?: boolean
-  handleProvinceChange?: (value: string) => void
-  editing?: boolean
-  selectedValues?: string[]
-  disabled?: boolean
-}
+  label?: string;
+  placeholder: string;
+  options: string[] | undefined | Province[] | multiple[] | multiple | any;
+  onChange: (value: string) => void;
+  value: string;
+  field: ControllerRenderProps;
+  isMultiple?: boolean;
+  handleProvinceChange?: (value: string) => void;
+  editing?: boolean;
+  selectedValues?: string[];
+  disabled?: boolean;
+};
 
 export const SelectWithData = ({
   label,
@@ -45,12 +39,10 @@ export const SelectWithData = ({
   handleProvinceChange,
   selectedValues,
 }: Props) => {
-  let dataToRender = options
+  let dataToRender = options;
 
   if ((options?.[0] as Province)?.name) {
-    dataToRender = (options as Province[])?.map((option: Province) =>
-      option.name.trim(),
-    )
+    dataToRender = (options as Province[])?.map((option: Province) => option.name.trim());
   }
 
   if (isMultiple) {
@@ -59,10 +51,7 @@ export const SelectWithData = ({
         <Label className="ml-2" htmlFor={label}>
           {label}
         </Label>
-        <Select
-          onValueChange={field?.onChange}
-          defaultValue={field?.value || ''}
-        >
+        <Select onValueChange={field?.onChange} defaultValue={field?.value || ''}>
           <FormControl>
             <SelectTrigger>
               <SelectValue placeholder={placeholder} />
@@ -71,37 +60,27 @@ export const SelectWithData = ({
           <SelectContent>
             {options?.map((option: multiple) => {
               return (
-                <div
-                  key={option.id}
-                  className="flex items-center space-x-2 space-y-2"
-                >
+                <div key={option.id} className="flex items-center space-x-2 space-y-2">
                   <Checkbox
                     id={option.id}
                     checked={field.value?.includes(option.id)}
                     disabled={disabled}
-                    onCheckedChange={checked => {
+                    onCheckedChange={(checked) => {
                       return checked
                         ? field.onChange([...field.value, option.id])
-                        : field.onChange(
-                            field.value?.filter(
-                              (value: any) => value !== option.id,
-                            ),
-                          )
+                        : field.onChange(field.value?.filter((value: any) => value !== option.id));
                     }}
                   />
-                  <label
-                    htmlFor="terms"
-                    className={`text-sm font-medium leading-none`}
-                  >
+                  <label htmlFor="terms" className={`text-sm font-medium leading-none`}>
                     {option.name}
                   </label>
                 </div>
-              )
+              );
             })}
           </SelectContent>
         </Select>
       </>
-    )
+    );
   }
   return (
     <>
@@ -109,14 +88,11 @@ export const SelectWithData = ({
         {label}
       </Label>
       <Select
-        onValueChange={e => {
-          if (
-            handleProvinceChange &&
-            typeof handleProvinceChange === 'function'
-          ) {
-            handleProvinceChange(e)
+        onValueChange={(e) => {
+          if (handleProvinceChange && typeof handleProvinceChange === 'function') {
+            handleProvinceChange(e);
           }
-          field?.onChange(e)
+          field?.onChange(e);
         }}
         defaultValue={value}
       >
@@ -134,5 +110,5 @@ export const SelectWithData = ({
         </SelectContent>
       </Select>
     </>
-  )
-}
+  );
+};

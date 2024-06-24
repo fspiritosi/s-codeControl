@@ -1,10 +1,7 @@
-import React from 'react'
-import { Reveal } from './Animation/Reveal'
-import { Button } from '../ui/button'
-import Link from 'next/link'
-import { MdLockOutline, MdOutlineWhatsapp, MdOutlinePolicy } from 'react-icons/md'
-import { DactilarIcon, ChatIcon, SearchIcon } from '@/components/Icons'
-
+import { ChatIcon, DactilarIcon, SearchIcon } from '@/components/Icons';
+import Link from 'next/link';
+import { Button } from '../ui/button';
+import { Reveal } from './Animation/Reveal';
 
 function Services() {
   return (
@@ -21,16 +18,15 @@ function Services() {
           </Reveal>
           <Reveal>
             <p className="max-w-md mt-10">
-            Olvídate de las carpetas desorganizadas, los documentos duplicados y las versiones obsoletas. Con <strong>codeControl</strong>, podrás centralizar y gestionar todos tus recursos de forma eficiente.
+              Olvídate de las carpetas desorganizadas, los documentos duplicados y las versiones obsoletas. Con{' '}
+              <strong>codeControl</strong>, podrás centralizar y gestionar todos tus recursos de forma eficiente.
             </p>
-            <p>
-              Nuestro sistema de reporte y notificaciones te ayudará a gestionar con anticipación los vencimientos.
-            </p>
+            <p>Nuestro sistema de reporte y notificaciones te ayudará a gestionar con anticipación los vencimientos.</p>
           </Reveal>
           <Reveal>
             <div className="my-8">
               <Link href="#servicios">
-                <Button variant="outline" size='lg' className='font-bold'>
+                <Button variant="outline" size="lg" className="font-bold">
                   Contactanos
                 </Button>
               </Link>
@@ -38,66 +34,58 @@ function Services() {
           </Reveal>
         </div>
         <div className="grid items-center py-5 md:p-8">
-          
-            <Reveal>
-              <div className="grid grid-flow-col gap-5 px-4 py-2 rounded-3xl group ">
-                <div className="">
-                  <div className="flex items-center gap-4 mb-2">
-                    <div className="w-[50px] h-[50px]">
-                      <DactilarIcon/>
-                    </div>
-                    <h4 className="text-xl font-bold">
-                      100% Seguro
-                    </h4>
+          <Reveal>
+            <div className="grid grid-flow-col gap-5 px-4 py-2 rounded-3xl group ">
+              <div className="">
+                <div className="flex items-center gap-4 mb-2">
+                  <div className="w-[50px] h-[50px]">
+                    <DactilarIcon />
                   </div>
-                  <p className="text-gray-500">
-                 Tu información y documentos se guardan de manera segura en nuestras bases de datos.
-                  </p>
+                  <h4 className="text-xl font-bold">100% Seguro</h4>
                 </div>
+                <p className="text-gray-500">
+                  Tu información y documentos se guardan de manera segura en nuestras bases de datos.
+                </p>
               </div>
-            </Reveal>
-            <Reveal>
-              <div className="grid grid-flow-col gap-5 px-4 py-2 rounded-3xl group">
-                <div className="">
-                  <div className="flex items-center gap-4 mb-2">
-                    <div className="w-[50px] h-[50px]">
-                      <ChatIcon />
-                    
-                      {/* <MdOutlineWhatsapp className="w-full h-full" /> */}
-                    </div>
-                    <h4 className="text-xl font-bold">
-                      Notificaciones
-                    </h4>
+            </div>
+          </Reveal>
+          <Reveal>
+            <div className="grid grid-flow-col gap-5 px-4 py-2 rounded-3xl group">
+              <div className="">
+                <div className="flex items-center gap-4 mb-2">
+                  <div className="w-[50px] h-[50px]">
+                    <ChatIcon />
+
+                    {/* <MdOutlineWhatsapp className="w-full h-full" /> */}
                   </div>
-                  <p className="text-gray-500">
-                    A travez de nuestro sistema de notificaciones y alertas estarás siempre informado de tus vencimientos.
-                  </p>
+                  <h4 className="text-xl font-bold">Notificaciones</h4>
                 </div>
+                <p className="text-gray-500">
+                  A travez de nuestro sistema de notificaciones y alertas estarás siempre informado de tus vencimientos.
+                </p>
               </div>
-            </Reveal>
-            <Reveal>
-              <div className="grid grid-flow-col gap-5 px-4 py-2 rounded-3xl group">
-                <div className="">
-                  <div className="flex items-center gap-4 mb-2">
-                    <div className="w-[50px] h-[50px]">
-                      <SearchIcon/>
-                      {/* <MdOutlinePolicy className="w-full h-full" /> */}
-                    </div>
-                    <h4 className="text-xl font-bold">
-                      Auditoría
-                    </h4>
+            </div>
+          </Reveal>
+          <Reveal>
+            <div className="grid grid-flow-col gap-5 px-4 py-2 rounded-3xl group">
+              <div className="">
+                <div className="flex items-center gap-4 mb-2">
+                  <div className="w-[50px] h-[50px]">
+                    <SearchIcon />
+                    {/* <MdOutlinePolicy className="w-full h-full" /> */}
                   </div>
-                  <p className="text-gray-500">
-                    Auditamos tu documentación para asegurarte que cumpla con todos los requisitos legales
-                  </p>
+                  <h4 className="text-xl font-bold">Auditoría</h4>
                 </div>
+                <p className="text-gray-500">
+                  Auditamos tu documentación para asegurarte que cumpla con todos los requisitos legales
+                </p>
               </div>
-            </Reveal>
-          
+            </div>
+          </Reveal>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default Services
+export default Services;

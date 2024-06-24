@@ -1,50 +1,36 @@
-"use client"
-import { MissingDocumentList } from '@/components/MissingDocumentList'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { columns } from './columns'
-import { DataContacts } from './data-table'
-import { supabase } from '../../../../../supabase/supabase'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useState, useEffect } from "react"
-import { useLoggedUserStore } from '@/store/loggedUser'
-import Link from 'next/link'
-import { buttonVariants } from '@/components/ui/button'
-import { useSearchParams } from 'next/navigation'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
+'use client';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { supabase } from '../../../../../supabase/supabase';
+import { columns } from './columns';
+import { DataContacts } from './data-table';
 
 export default function Contact() {
   //const actualCompany = cookies().get('actualComp')
   //const supabase = supabaseServer()
-  const router = useRouter()
-  const [contacts, setContacts] = useState([''])
-  const allCompany = useLoggedUserStore(state => state.allCompanies)
-  const [showInactive, setShowInactive] = useState(false)
-  const useSearch = useSearchParams()
+  const router = useRouter();
+  const [contacts, setContacts] = useState(['']);
+  const allCompany = useLoggedUserStore((state) => state.allCompanies);
+  const [showInactive, setShowInactive] = useState(false);
+  const useSearch = useSearchParams();
   useEffect(() => {
     const fetchContacts = async () => {
-      const { data, error } = await supabase
-        .from('contacts')
-        .select('*, customers(id, name)')
-        //.eq('is_active', true)
-        console.log("fetchContact: ", data)
+      const { data, error } = await supabase.from('contacts').select('*, customers(id, name)');
+      //.eq('is_active', true)
+      console.log('fetchContact: ', data);
       if (error) {
-        console.error('Error fetching customers:', error)
+        console.error('Error fetching customers:', error);
       } else {
-        setContacts(data)
+        setContacts(data);
       }
-    }
+    };
 
-    fetchContacts()
-  }, [])
-  
+    fetchContacts();
+  }, []);
+
   const handleCreateContact = () => {
     router.push(`/dashboard/company/contact/action?action=new`);
   };
@@ -63,16 +49,11 @@ export default function Contact() {
               <CardTitle className="text-2xl font-bold tracking-tight flex justify-between">
                 Contactos
                 {/* </div> */}
-                <Button
-                  className="ml-auto flex justify-between mb-2"
-                  onClick={handleCreateContact}
-                >
+                <Button className="ml-auto flex justify-between mb-2" onClick={handleCreateContact}>
                   Registrar Contacto
                 </Button>
-              </CardTitle >
-              <CardDescription className="text-muted-foreground">
-                Todos tus Contactos
-              </CardDescription>
+              </CardTitle>
+              <CardDescription className="text-muted-foreground">Todos tus Contactos</CardDescription>
             </CardHeader>
 
             <CardContent>
@@ -84,12 +65,10 @@ export default function Contact() {
                 setShowInactive={setShowInactive}
               />
             </CardContent>
-
           </div>
           <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
         </Card>
-
       </section>
     </div>
-  )
+  );
 }

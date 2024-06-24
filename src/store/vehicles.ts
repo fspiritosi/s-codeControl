@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+import { create } from 'zustand';
 
 interface State {
   // allVehicles: any[]
@@ -11,13 +11,13 @@ interface State {
 }
 
 const setVehiclesToShow = (vehicles: any[]) => {
-  return vehicles?.map(item => ({
+  return vehicles?.map((item) => ({
     ...item,
     types_of_vehicles: item.types_of_vehicles.name,
     brand: item.brand_vehicles.name,
     model: item.model_vehicles.name,
-  }))
-}
+  }));
+};
 
 export const VehiclesActualCompany = create<State>((set, get) => {
   // const fetchVehicles = async () => {
@@ -85,5 +85,5 @@ export const VehiclesActualCompany = create<State>((set, get) => {
     // endorsedVehicles,
     // noEndorsedVehicles,
     // setVehicleTypes,
-  }
-})
+  };
+});

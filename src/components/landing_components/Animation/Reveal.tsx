@@ -1,20 +1,20 @@
-'use client'
-import { useAnimation, useInView, motion } from 'framer-motion'
-import { useEffect, useRef } from 'react'
+'use client';
+import { motion, useAnimation, useInView } from 'framer-motion';
+import { useEffect, useRef } from 'react';
 
 export function Reveal({ children }: { children: React.ReactNode }) {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: false })
-  const mainControls = useAnimation()
-  const slideControls = useAnimation()
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: false });
+  const mainControls = useAnimation();
+  const slideControls = useAnimation();
 
   useEffect(() => {
     if (isInView) {
-      mainControls.start('visible')
-      slideControls.start('visible')
+      mainControls.start('visible');
+      slideControls.start('visible');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInView])
+  }, [isInView]);
 
   return (
     <div ref={ref} className="relative overflow-hidden w-fit">
@@ -49,5 +49,5 @@ export function Reveal({ children }: { children: React.ReactNode }) {
         }}
       ></motion.div>
     </div>
-  )
+  );
 }

@@ -1,22 +1,10 @@
-'use client'
-import { logout } from '@/app/login/actions'
-import { ModeToggle } from '@/components/ui/ToogleDarkButton'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button, buttonVariants } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from '@/components/ui/dialog'
+'use client';
+import { logout } from '@/app/login/actions';
+import { ModeToggle } from '@/components/ui/ToogleDarkButton';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,17 +12,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { supabaseBrowser } from '@/lib/supabase/browser'
-import { revalidate } from '@/lib/useServer'
-import { cn } from '@/lib/utils'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { Company } from '@/zodSchemas/schemas'
+} from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { supabaseBrowser } from '@/lib/supabase/browser';
+import { revalidate } from '@/lib/useServer';
+import { cn } from '@/lib/utils';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { Company } from '@/zodSchemas/schemas';
 import {
   BellIcon,
   CaretSortIcon,
@@ -44,19 +28,19 @@ import {
   ExclamationTriangleIcon,
   LapTimerIcon,
   PlusCircledIcon,
-} from '@radix-ui/react-icons'
-import { formatRelative } from 'date-fns'
-import { es } from 'date-fns/locale'
-import { default as Cookies, default as cookie } from 'js-cookie'
-import { Check, CheckIcon, Loader } from 'lucide-react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
-import ModalCompany from './ModalCompany'
-import { UpdateUserPasswordForm } from './UpdateUserPasswordForm'
-import { UploadImage } from './UploadImage'
-import { AlertDialogHeader } from './ui/alert-dialog'
+} from '@radix-ui/react-icons';
+import { formatRelative } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { default as Cookies, default as cookie } from 'js-cookie';
+import { Check, CheckIcon, Loader } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import ModalCompany from './ModalCompany';
+import { UpdateUserPasswordForm } from './UpdateUserPasswordForm';
+import { UploadImage } from './UploadImage';
+import { AlertDialogHeader } from './ui/alert-dialog';
 import {
   Command,
   CommandEmpty,
@@ -65,72 +49,64 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from './ui/command'
-import { FormControl, FormField, FormItem, FormMessage } from './ui/form'
-import { Separator } from './ui/separator'
-import { useToast } from './ui/use-toast'
+} from './ui/command';
+import { FormControl, FormField, FormItem, FormMessage } from './ui/form';
+import { Separator } from './ui/separator';
+import { useToast } from './ui/use-toast';
 export default function NavBar() {
-  const sharedCompanies = useLoggedUserStore(state => state.sharedCompanies)
-  const allCompanies = useLoggedUserStore(state => state.allCompanies)
-  const actualCompany = useLoggedUserStore(state => state.actualCompany)
-  const setNewDefectCompany = useLoggedUserStore(
-    state => state.setNewDefectCompany,
-  )
-  const supabase = supabaseBrowser()
-  const actualUser = useLoggedUserStore(state => state.profile)
-  const notifications = useLoggedUserStore(state => state.notifications)
-  const avatarUrl = actualUser && actualUser.length > 0 ? actualUser[0] : ''
+  const sharedCompanies = useLoggedUserStore((state) => state.sharedCompanies);
+  const allCompanies = useLoggedUserStore((state) => state.allCompanies);
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
+  const setNewDefectCompany = useLoggedUserStore((state) => state.setNewDefectCompany);
+  const supabase = supabaseBrowser();
+  const actualUser = useLoggedUserStore((state) => state.profile);
+  const notifications = useLoggedUserStore((state) => state.notifications);
+  const avatarUrl = actualUser && actualUser.length > 0 ? actualUser[0] : '';
 
   const handleLogout = async () => {
     try {
-      await logout()
+      await logout();
     } catch (error) {
-      console.error('Error al cerrar sesión:', error)
+      console.error('Error al cerrar sesión:', error);
     }
-  }
+  };
 
-  const totalCompanies = [
-    sharedCompanies?.map(company => company.company_id),
-    allCompanies,
-  ].flat()
+  const totalCompanies = [sharedCompanies?.map((company) => company.company_id), allCompanies].flat();
 
-  const [isOpen, setIsOpen] = useState(false)
-  const [selectedCompany, setSelectedCompany] = useState(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const router = useRouter()
-  const setActualCompany = useLoggedUserStore(state => state.setActualCompany)
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
+  const setActualCompany = useLoggedUserStore((state) => state.setActualCompany);
 
   const handleNewCompany = async (company: Company[0]) => {
-    setNewDefectCompany(company)
-    setActualCompany(company)
-    setIsOpen(false)
-    Cookies.set('actualComp', company.id)
-    revalidate()
-    router.push('/dashboard')
-  }
-  const { control, formState, setValue } = useForm()
+    setNewDefectCompany(company);
+    setActualCompany(company);
+    setIsOpen(false);
+    Cookies.set('actualComp', company.id);
+    revalidate();
+    router.push('/dashboard');
+  };
+  const { control, formState, setValue } = useForm();
 
   const updateProfileAvatar = async (imageUrl: string) => {
     try {
       // Realiza la actualización en la tabla profile usando Supabase
-      const { data, error } = await supabase
-        .from('profile')
-        .update({ avatar: imageUrl })
-        .eq('id', actualUser[0].id)
+      const { data, error } = await supabase.from('profile').update({ avatar: imageUrl }).eq('id', actualUser[0].id);
 
       if (error) {
-        throw error
+        throw error;
       }
     } catch (error) {
-      console.error('Error al actualizar la URL de la imagen:', error)
+      console.error('Error al actualizar la URL de la imagen:', error);
     }
-  }
-  const [open, setOpen] = useState(false)
-  const [showNewTeamDialog, setShowNewTeamDialog] = useState(false)
-  const actualCompanyId = cookie.get('actualCompanyId')
+  };
+  const [open, setOpen] = useState(false);
+  const [showNewTeamDialog, setShowNewTeamDialog] = useState(false);
+  const actualCompanyId = cookie.get('actualCompanyId');
 
-  const markAllAsRead = useLoggedUserStore(state => state.markAllAsRead)
-  const { toast } = useToast()
+  const markAllAsRead = useLoggedUserStore((state) => state.markAllAsRead);
+  const { toast } = useToast();
 
   const groups = [
     {
@@ -139,14 +115,14 @@ export default function NavBar() {
         totalCompanies.length === 1
           ? totalCompanies
               // ?.filter(companyItem => companyItem?.id === actualCompanyId)
-              ?.map(companyItem => ({
+              ?.map((companyItem) => ({
                 label: companyItem?.company_name,
                 value: companyItem?.id,
                 logo: companyItem?.company_logo,
               }))
           : totalCompanies
-              ?.filter(companyItem => companyItem?.id === actualCompanyId)
-              ?.map(companyItem => ({
+              ?.filter((companyItem) => companyItem?.id === actualCompanyId)
+              ?.map((companyItem) => ({
                 label: companyItem?.company_name,
                 value: companyItem?.id,
                 logo: companyItem?.company_logo,
@@ -158,15 +134,15 @@ export default function NavBar() {
         totalCompanies.length === 1
           ? []
           : totalCompanies
-              ?.filter(companyItem => companyItem?.id !== actualCompanyId)
-              ?.map(companyItem => ({
+              ?.filter((companyItem) => companyItem?.id !== actualCompanyId)
+              ?.map((companyItem) => ({
                 label: companyItem?.company_name,
                 value: companyItem?.id,
                 logo: companyItem?.company_logo,
               })),
     },
-  ]
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  ];
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   return (
     <nav className=" flex flex-shrink items-center justify-end sm:justify-between  text-white p-4 mb-2">
@@ -182,18 +158,12 @@ export default function NavBar() {
                 className={'min-w-[200px] justify-between'}
               >
                 <Avatar className="mr-2 size-5 rounded-full">
-                  <AvatarImage
-                    src={actualCompany?.company_logo}
-                    alt={actualCompany?.company_name}
-                    className="size-5"
-                  />
+                  <AvatarImage src={actualCompany?.company_logo} alt={actualCompany?.company_name} className="size-5" />
                   <AvatarFallback className="uppercase">
                     {!actualCompany && <Loader className="animate-spin" />}
                     {actualCompany &&
                       !actualCompany?.company_logo &&
-                      `${actualCompany?.company_name.charAt(
-                        0,
-                      )}${actualCompany?.company_name.charAt(1)}`}
+                      `${actualCompany?.company_name.charAt(0)}${actualCompany?.company_name.charAt(1)}`}
                   </AvatarFallback>
                 </Avatar>
                 <span className="uppercase">{actualCompany?.company_name}</span>
@@ -205,37 +175,29 @@ export default function NavBar() {
                 <CommandList>
                   <CommandInput placeholder="Buscar compañia" />
                   <CommandEmpty>Compañia no encontrada</CommandEmpty>
-                  {groups?.map(group => (
+                  {groups?.map((group) => (
                     <CommandGroup key={group.label} heading={group.label}>
                       {group?.teams?.map((team, index) => (
                         <CommandItem
                           key={index}
                           onSelect={() => {
-                            const company = totalCompanies.find(
-                              companyItem => companyItem.id === team.value,
-                            )
+                            const company = totalCompanies.find((companyItem) => companyItem.id === team.value);
                             if (company) {
-                              handleNewCompany(company)
+                              handleNewCompany(company);
                             }
-                            setOpen(false)
+                            setOpen(false);
                           }}
                           className="text-sm"
                         >
                           <Avatar className="mr-2 h-5 w-5">
-                            <AvatarImage
-                              src={team.logo}
-                              alt={team.label}
-                              className="size-5 rounded-full"
-                            />
+                            <AvatarImage src={team.logo} alt={team.label} className="size-5 rounded-full" />
                             <AvatarFallback>compañia</AvatarFallback>
                           </Avatar>
                           {team.label}
                           <CheckIcon
                             className={cn(
                               'ml-auto h-4 w-4',
-                              actualCompany?.id === team.value
-                                ? 'opacity-100'
-                                : 'opacity-0',
+                              actualCompany?.id === team.value ? 'opacity-100' : 'opacity-0'
                             )}
                           />
                         </CommandItem>
@@ -260,15 +222,17 @@ export default function NavBar() {
           </Popover>
         </Dialog>
         {isModalOpen && (
-          <ModalCompany
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            selectedCard={selectedCompany}
-          />
+          <ModalCompany isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} selectedCard={selectedCompany} />
         )}
       </div>
       <div className="flex gap-8 items-center">
-      {actualUser?.[0]?.role === 'Admin' || actualUser?.[0]?.role === 'Super Admin' || actualUser?.[0]?.role === 'Developer' ? <Link href='/admin/panel'><Button variant='default'>Panel</Button></Link> : null}
+        {actualUser?.[0]?.role === 'Admin' ||
+        actualUser?.[0]?.role === 'Super Admin' ||
+        actualUser?.[0]?.role === 'Developer' ? (
+          <Link href="/admin/panel">
+            <Button variant="default">Panel</Button>
+          </Link>
+        ) : null}
         <DropdownMenu>
           <DropdownMenuTrigger>
             <div className="relative">
@@ -281,17 +245,12 @@ export default function NavBar() {
               <BellIcon className="text-black cursor-pointer size-5 dark:text-white" />
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="center"
-            className="min-w-[400px] bg-transparent border-none shadow-none"
-          >
+          <DropdownMenuContent align="center" className="min-w-[400px] bg-transparent border-none shadow-none">
             <Card className="w-[600px]">
               <CardHeader>
                 <CardTitle>Notificaciones</CardTitle>
                 {notifications?.length ? (
-                  <CardDescription>
-                    Tienes {notifications?.length} notificaciones pendientes
-                  </CardDescription>
+                  <CardDescription>Tienes {notifications?.length} notificaciones pendientes</CardDescription>
                 ) : (
                   false
                 )}
@@ -308,15 +267,9 @@ export default function NavBar() {
                         {notification?.category === 'rechazado' && (
                           <ExclamationTriangleIcon className="text-yellow-800" />
                         )}
-                        {notification?.category === 'aprobado' && (
-                          <CheckCircledIcon className="text-green-800" />
-                        )}
-                        {notification?.category === 'vencimiento' && (
-                          <LapTimerIcon className="text-red-800" />
-                        )}
-                        {notification?.category === 'noticia' && (
-                          <EnvelopeOpenIcon className="text-blue-800" />
-                        )}
+                        {notification?.category === 'aprobado' && <CheckCircledIcon className="text-green-800" />}
+                        {notification?.category === 'vencimiento' && <LapTimerIcon className="text-red-800" />}
+                        {notification?.category === 'noticia' && <EnvelopeOpenIcon className="text-blue-800" />}
                         {notification?.category === 'advertencia' && (
                           <ExclamationTriangleIcon className="text-yellow-800" />
                         )}
@@ -325,90 +278,51 @@ export default function NavBar() {
                           <div>
                             <p className="text-sm font-medium leading-none first-letter:uppercase">
                               {notification?.category === 'aprobado' &&
-                                `El documento ${
-                                  notification?.document?.documentName ||
-                                  '(no disponible)'
-                                }, del ${
-                                  notification.reference === 'employee'
-                                    ? 'empleado'
-                                    : 'vehiculo con patente'
+                                `El documento ${notification?.document?.documentName || '(no disponible)'}, del ${
+                                  notification.reference === 'employee' ? 'empleado' : 'vehiculo con patente'
                                 } ${
                                   notification?.document?.resource
                                     ?.split(' ')
-                                    ?.map(
-                                      word =>
-                                        word.charAt(0).toUpperCase() +
-                                        word.slice(1).toLowerCase(),
-                                    )
+                                    ?.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                                     .join(' ') || '(no disponible)'
                                 } ha sido aprobado`}
                               {notification?.category === 'rechazado' &&
-                                `El documento ${
-                                  notification?.document?.documentName ||
-                                  '(no disponible)'
-                                }, del ${
-                                  notification.reference === 'employee'
-                                    ? 'empleado'
-                                    : 'vehiculo con patente'
+                                `El documento ${notification?.document?.documentName || '(no disponible)'}, del ${
+                                  notification.reference === 'employee' ? 'empleado' : 'vehiculo con patente'
                                 } ${
                                   notification.reference === 'employee'
                                     ? notification?.document?.resource
                                         .split(' ')
-                                        ?.map(
-                                          word =>
-                                            word.charAt(0).toUpperCase() +
-                                            word.slice(1).toLowerCase(),
-                                        )
+                                        ?.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                                         .join(' ') || '(no disponible)'
                                     : notification?.document?.resource
                                         .split(' ')
-                                        ?.map(
-                                          word =>
-                                            word.charAt(0).toUpperCase() +
-                                            word.slice(1).toUpperCase(),
-                                        )
+                                        ?.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toUpperCase())
                                         .join(' ') || '(no disponible)'
                                 } ha sido rechazado`}
                               {notification?.category === 'vencimiento' &&
-                                `El documento ${
-                                  notification?.document?.documentName ||
-                                  '(no disponible)'
-                                }, del ${
-                                  notification.reference === 'employee'
-                                    ? 'empleado'
-                                    : 'vehiculo con patente'
+                                `El documento ${notification?.document?.documentName || '(no disponible)'}, del ${
+                                  notification.reference === 'employee' ? 'empleado' : 'vehiculo con patente'
                                 } ${
                                   notification?.document?.resource
                                     .split(' ')
-                                    ?.map(
-                                      word =>
-                                        word.charAt(0).toUpperCase() +
-                                        word.slice(1).toLowerCase(),
-                                    )
+                                    ?.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                                     .join(' ') || '(no disponible)'
                                 } ha vencido`}
                             </p>
 
                             <CardDescription>
                               {notification?.description.length > 50
-                                ? notification?.description.substring(0, 50) +
-                                  '...'
+                                ? notification?.description.substring(0, 50) + '...'
                                 : notification?.description}
                             </CardDescription>
                             <p className="text-sm text-muted-foreground/70 first-letter:">
                               {notification?.created_at &&
-                                formatRelative(
-                                  new Date(notification?.created_at),
-                                  new Date(),
-                                  { locale: es },
-                                )}
+                                formatRelative(new Date(notification?.created_at), new Date(), { locale: es })}
                             </p>
                           </div>
                           <Link
-                            className={[
-                              buttonVariants({ variant: 'outline' }),
-                              'w-20',
-                            ].join(' ')}
+                            className={[buttonVariants({ variant: 'outline' }), 'w-20'].join(' ')}
                             href={`/dashboard/document/${notification?.document?.id}`}
                           >
                             Ver
@@ -418,18 +332,12 @@ export default function NavBar() {
                     ))}
                   </div>
                 ) : (
-                  <CardDescription>
-                    No tienes notificaciones pendientes
-                  </CardDescription>
+                  <CardDescription>No tienes notificaciones pendientes</CardDescription>
                 )}
               </CardContent>
               <CardFooter>
                 <Button onClick={() => markAllAsRead()} className="w-full">
-                  <Check
-                    className="mr-2 h-4 w-4"
-                    onClick={() => markAllAsRead()}
-                  />{' '}
-                  Marcar todos como leido
+                  <Check className="mr-2 h-4 w-4" onClick={() => markAllAsRead()} /> Marcar todos como leido
                 </Button>
               </CardFooter>
             </Card>
@@ -440,9 +348,7 @@ export default function NavBar() {
           <DropdownMenu>
             <DropdownMenuTrigger className="cursor-pointer" asChild>
               <Avatar className="size-9">
-                <AvatarImage
-                  src={typeof avatarUrl === 'object' ? avatarUrl.avatar : ''}
-                />
+                <AvatarImage src={typeof avatarUrl === 'object' ? avatarUrl.avatar : ''} />
                 <AvatarFallback>CN</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
@@ -458,9 +364,7 @@ export default function NavBar() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => setShowDeleteDialog(true)}>
-                Editar perfil
-              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setShowDeleteDialog(true)}>Editar perfil</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <Button variant={'destructive'} className="w-full">
@@ -473,9 +377,7 @@ export default function NavBar() {
             <DialogContent className="sm:max-w-[500px] ">
               <AlertDialogHeader>
                 <DialogTitle>Editar perfil</DialogTitle>
-                <DialogDescription>
-                  Aqui se haran cambios en tu perfil
-                </DialogDescription>
+                <DialogDescription>Aqui se haran cambios en tu perfil</DialogDescription>
               </AlertDialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="w-[300px] flex  gap-2">
@@ -496,9 +398,9 @@ export default function NavBar() {
                                 // onImageChange={(imageUrl: string) =>
                                 //   setValue('profile', imageUrl)
                                 // }
-                                onImageChange={async imageUrl => {
-                                  setValue('profile', imageUrl)
-                                  await updateProfileAvatar(imageUrl) // Llama a la función para actualizar la URL
+                                onImageChange={async (imageUrl) => {
+                                  setValue('profile', imageUrl);
+                                  await updateProfileAvatar(imageUrl); // Llama a la función para actualizar la URL
                                 }}
                                 // onUploadSuccess={onUploadSuccess}
                                 inputStyle={{ width: '150px' }}
@@ -519,5 +421,5 @@ export default function NavBar() {
         </div>
       </div>
     </nav>
-  )
+  );
 }

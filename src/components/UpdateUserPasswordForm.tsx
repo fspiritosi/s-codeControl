@@ -1,32 +1,24 @@
-'use client'
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { useAuthData } from '@/hooks/useAuthData'
-import { changePassSchema } from '@/zodSchemas/schemas'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { toast } from 'sonner'
-import { z } from 'zod'
-import { CloseEyeIcon } from './svg/closeEye'
-import { EyeIcon } from './svg/openEye'
-import { Button } from './ui/button'
-import { Input } from './ui/input'
-import { Toggle } from './ui/toggle'
+'use client';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useAuthData } from '@/hooks/useAuthData';
+import { changePassSchema } from '@/zodSchemas/schemas';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
+import { CloseEyeIcon } from './svg/closeEye';
+import { EyeIcon } from './svg/openEye';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Toggle } from './ui/toggle';
 
 export const UpdateUserPasswordForm = () => {
-  const { updateUser } = useAuthData()
-  const [showPassword, setShowPassword] = useState(false)
-  const [showLoader, setShowLoader] = useState(false)
-  const router = useRouter()
+  const { updateUser } = useAuthData();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof changePassSchema>>({
     resolver: zodResolver(changePassSchema),
@@ -34,30 +26,30 @@ export const UpdateUserPasswordForm = () => {
       password: '',
       confirmPassword: '',
     },
-  })
+  });
 
   const onSubmit = async (values: z.infer<typeof changePassSchema>) => {
-    setShowLoader(true)
+    setShowLoader(true);
 
     toast.promise(
       async () => {
-        await updateUser(values)
+        await updateUser(values);
       },
       {
         loading: 'Actualizada contraseña...',
-        success: data => {
-          return 'Tu contraseña ha sido cambiada con éxito. Ya puedes iniciar sesión con tu nueva contraseña.'
+        success: (data) => {
+          return 'Tu contraseña ha sido cambiada con éxito. Ya puedes iniciar sesión con tu nueva contraseña.';
         },
-        error: error => {
-          return error
+        error: (error) => {
+          return error;
         },
         finally: () => {
-          setShowLoader(false)
-          router.push('/login')
+          setShowLoader(false);
+          router.push('/login');
         },
-      },
-    )
-  }
+      }
+    );
+  };
 
   return (
     <Form {...form}>
@@ -78,16 +70,11 @@ export const UpdateUserPasswordForm = () => {
                     {...field}
                   />
                 </FormControl>
-                <Toggle
-                  onClick={() => setShowPassword(!showPassword)}
-                  variant={'outline'}
-                >
+                <Toggle onClick={() => setShowPassword(!showPassword)} variant={'outline'}>
                   {showPassword ? <CloseEyeIcon /> : <EyeIcon />}
                 </Toggle>
               </div>
-              <FormDescription className="text-lg">
-                Ingresa tu nueva contraseña.
-              </FormDescription>
+              <FormDescription className="text-lg">Ingresa tu nueva contraseña.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -108,16 +95,11 @@ export const UpdateUserPasswordForm = () => {
                     {...field}
                   />
                 </FormControl>
-                <Toggle
-                  onClick={() => setShowPassword(!showPassword)}
-                  variant={'outline'}
-                >
+                <Toggle onClick={() => setShowPassword(!showPassword)} variant={'outline'}>
                   {showPassword ? <CloseEyeIcon /> : <EyeIcon />}
                 </Toggle>
               </div>
-              <FormDescription className="text-lg">
-                Ingresa tu nueva contraseña otra vez.
-              </FormDescription>
+              <FormDescription className="text-lg">Ingresa tu nueva contraseña otra vez.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -127,5 +109,5 @@ export const UpdateUserPasswordForm = () => {
         </Button>
       </form>
     </Form>
-  )
-}
+  );
+};

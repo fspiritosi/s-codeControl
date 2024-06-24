@@ -1,7 +1,7 @@
-import { login, profileUser, singUp } from '@/types/types'
-import { useEdgeFunctions } from './useEdgeFunctions'
-import { useProfileData } from './useProfileData'
-import { supabaseBrowser } from '@/lib/supabase/browser'
+import { supabaseBrowser } from '@/lib/supabase/browser';
+import { login, profileUser, singUp } from '@/types/types';
+import { useEdgeFunctions } from './useEdgeFunctions';
+import { useProfileData } from './useProfileData';
 
 /**
  * Custom hook for handling authentication data.
@@ -11,9 +11,9 @@ import { supabaseBrowser } from '@/lib/supabase/browser'
  * @returns An object containing the authentication functions.
  */
 export const useAuthData = () => {
-  const { filterByEmail } = useProfileData()
-  const { errorTranslate } = useEdgeFunctions()
-  const supabase = supabaseBrowser()
+  const { filterByEmail } = useProfileData();
+  const { errorTranslate } = useEdgeFunctions();
+  const supabase = supabaseBrowser();
 
   return {
     singUp: async (credentials: singUp) => {
@@ -23,52 +23,48 @@ export const useAuthData = () => {
         options: {
           emailRedirectTo: '/login',
         },
-      })
+      });
 
       if (error) {
-        const message = await errorTranslate(error.message)
-        throw new Error(String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error.message);
+        throw new Error(String(message).replaceAll('"', ''));
       }
-      return data
+      return data;
     },
     login: async (credentials: login) => {
-      let { data, error } = await supabase.auth.signInWithPassword(credentials)
+      let { data, error } = await supabase.auth.signInWithPassword(credentials);
 
       if (error) {
-        const message = await errorTranslate(error.message)
-        throw new Error(String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error.message);
+        throw new Error(String(message).replaceAll('"', ''));
       }
-      return data
+      return data;
     },
     recoveryPassword: async (email: string) => {
-      localStorage.setItem('email', email)
+      localStorage.setItem('email', email);
 
       let { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${process.env
-          .NEXT_PUBLIC_BASE_URL!}/reset_password/update-user`,
-      })
+        redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL!}/reset_password/update-user`,
+      });
       if (error) {
-        const message = await errorTranslate(error.message)
-        throw new Error(String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error.message);
+        throw new Error(String(message).replaceAll('"', ''));
       }
-      return data
+      return data;
     },
     updateUser: async ({ password }: { password: string }) => {
-      const email = localStorage.getItem('email')
-      const user = (await filterByEmail(email)) as profileUser[]
+      const email = localStorage.getItem('email');
+      const user = (await filterByEmail(email)) as profileUser[];
 
-      if (user.length === 0) throw new Error('Usuario no encontrado')
-      localStorage.removeItem('email')
+      if (user.length === 0) throw new Error('Usuario no encontrado');
+      localStorage.removeItem('email');
 
-      const { data, error } = await supabase.auth.admin.updateUserById(
-        user[0].credential_id,
-        { password },
-      )
+      const { data, error } = await supabase.auth.admin.updateUserById(user[0].credential_id, { password });
       if (error) {
-        const message = await errorTranslate(error.message)
-        throw new Error(String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error.message);
+        throw new Error(String(message).replaceAll('"', ''));
       }
-      return data
+      return data;
     },
     googleLogin: async () => {
       let { data, error } = await supabase.auth.signInWithOAuth({
@@ -76,12 +72,12 @@ export const useAuthData = () => {
         options: {
           redirectTo: window.location.origin + '/login/auth/callback',
         },
-      })
+      });
       if (error) {
-        const message = await errorTranslate(error.message)
-        throw new Error(String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error.message);
+        throw new Error(String(message).replaceAll('"', ''));
       }
-      return data
+      return data;
     },
     loginOnlyEmail: async (email: string) => {
       let { data, error } = await supabase.auth.signInWithOtp({
@@ -89,25 +85,25 @@ export const useAuthData = () => {
         options: {
           emailRedirectTo: window.location.origin + '/login/auth/callback',
         },
-      })
+      });
 
       if (error) {
-        const message = await errorTranslate(error.message)
-        throw new Error(String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error.message);
+        throw new Error(String(message).replaceAll('"', ''));
       }
-      return data
+      return data;
     },
     getSession: async (token: string) => {
       const {
         data: { user },
         error,
-      } = await supabase.auth.getUser(token)
+      } = await supabase.auth.getUser(token);
 
       if (error) {
-        const message = await errorTranslate(error.message)
-        throw new Error(String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error.message);
+        throw new Error(String(message).replaceAll('"', ''));
       }
-      return user
+      return user;
     },
-  }
-}
+  };
+};

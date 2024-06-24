@@ -1,31 +1,26 @@
-import React from 'react'
-import Modal from 'react-modal'
-import { CompanyRegister } from './CompanyRegister' // Importa tu formulario de registro de compañía
-import { company } from '@/types/types'
-import { formatCompanyName } from '@/lib/utils'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { useState } from 'react'
-import { Button } from './ui/button'
+import { formatCompanyName } from '@/lib/utils';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { company } from '@/types/types';
+import React, { useState } from 'react';
+import Modal from 'react-modal';
+import { CompanyRegister } from './CompanyRegister'; // Importa tu formulario de registro de compañía
+import { Button } from './ui/button';
 type ModalCompanyProps = {
-  isOpen: boolean
-  onClose: () => void
-  selectedCard: company | null
-}
+  isOpen: boolean;
+  onClose: () => void;
+  selectedCard: company | null;
+};
 
-const ModalCompany: React.FC<ModalCompanyProps> = ({
-  isOpen,
-  onClose,
-  selectedCard,
-}) => {
-  const [formEnabled, setFormEnabled] = useState(false)
+const ModalCompany: React.FC<ModalCompanyProps> = ({ isOpen, onClose, selectedCard }) => {
+  const [formEnabled, setFormEnabled] = useState(false);
 
   const toggleFormEnabled = () => {
-    setFormEnabled(prevState => !prevState)
-  }
+    setFormEnabled((prevState) => !prevState);
+  };
   const handleCloseModal = () => {
-    onClose()
-  }
-  const actualCompany = useLoggedUserStore(state => state.actualCompany)
+    onClose();
+  };
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   return (
     <Modal isOpen={isOpen} onRequestClose={onClose}>
       <div className="text-black">
@@ -36,9 +31,7 @@ const ModalCompany: React.FC<ModalCompanyProps> = ({
             </Button>
             <div className="flex  flex-1">
               <div className="flex-1 p-4">
-                <h2 className="text-2xl font-bold">
-                  {formatCompanyName(selectedCard.company_name)}
-                </h2>
+                <h2 className="text-2xl font-bold">{formatCompanyName(selectedCard.company_name)}</h2>
                 <p>{selectedCard.description}</p>
               </div>
               <div className="w-1/3  p-4">
@@ -60,7 +53,7 @@ const ModalCompany: React.FC<ModalCompanyProps> = ({
         )}
       </div>
     </Modal>
-  )
-}
+  );
+};
 
-export default ModalCompany
+export default ModalCompany;

@@ -1,13 +1,10 @@
-'use client'
-import { company } from '@/types/types'
+'use client';
+import { company } from '@/types/types';
 interface CompanyRegisterProps {
-  company?: company | null
-  formEnabled?: boolean
+  company?: company | null;
+  formEnabled?: boolean;
 }
-export function CompanyRegister({
-  company = null,
-  formEnabled = true,
-}: CompanyRegisterProps) {
+export function CompanyRegister({ company = null, formEnabled = true }: CompanyRegisterProps) {
   // const formEnabledProp = company ? formEnabled : true
   // const supabase = supabaseBrowser()
 
@@ -598,5 +595,5 @@ export function CompanyRegister({
     //   </form>
     // </Form>
     <></>
-  )
+  );
 }

@@ -1,19 +1,19 @@
- "use client"
+'use client';
+import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
-import { supabase } from "../../supabase/supabase";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { contactSchema } from '@/zodSchemas/schemas';
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { createdContact, updateContact } from "../app/dashboard/company/contact/action/create"
-import { cn } from '@/lib/utils'
+import { z } from 'zod';
+import { supabase } from '../../supabase/supabase';
+import { createdContact, updateContact } from '../app/dashboard/company/contact/action/create';
 
 type Action = 'view' | 'edit' | null;
 
@@ -22,7 +22,7 @@ type ContactFormValues = z.infer<typeof contactSchema>;
 export default function ContactRegister({ id }: { id: string }) {
   const functionAction = id ? updateContact : createdContact;
   const searchParams = useSearchParams();
-  const actualCompany = useLoggedUserStore(state => state.actualCompany?.id);
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany?.id);
 
   const [action, setAction] = useState<Action>(searchParams.get('action') as Action);
   const [readOnly, setReadOnly] = useState(action === 'edit' ? false : true);
@@ -39,7 +39,13 @@ export default function ContactRegister({ id }: { id: string }) {
     },
   });
 
-  const { register, handleSubmit, setValue, watch, formState: { errors: formErrors } } = form;
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors: formErrors },
+  } = form;
 
   useEffect(() => {
     const id = searchParams.get('id');
@@ -54,23 +60,17 @@ export default function ContactRegister({ id }: { id: string }) {
     }
 
     const fetchCustomers = async () => {
-      const { data, error } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('company_id', actualCompany);
+      const { data, error } = await supabase.from('customers').select('*').eq('company_id', actualCompany);
       if (error) {
         console.error('Error fetching customers:', error);
       } else {
         setClientData(data);
       }
-    }
+    };
 
     const fetchContact = async () => {
       if (id) {
-        const { data, error } = await supabase
-          .from('contacts')
-          .select('*')
-          .eq('id', id);
+        const { data, error } = await supabase.from('contacts').select('*').eq('id', id);
 
         if (error) {
           console.error('Error fetching contact:', error);
@@ -88,7 +88,7 @@ export default function ContactRegister({ id }: { id: string }) {
           }
         }
       }
-    }
+    };
 
     fetchCustomers();
     fetchContact();
@@ -96,24 +96,24 @@ export default function ContactRegister({ id }: { id: string }) {
 
   const customerValue = watch('customer');
 
-  console.log("clientData: ", clientData);
-  console.log("contactData: ", contactData);
-  console.log("ID: ", id);
-  console.log("Selected Customer: ", customerValue);
+  console.log('clientData: ', clientData);
+  console.log('contactData: ', contactData);
+  console.log('ID: ', id);
+  console.log('Selected Customer: ', customerValue);
 
   const onSubmit = async (formData: ContactFormValues) => {
     try {
-        if (!formData.customer || formData.customer === "undefined") {
-            throw new Error("Debe seleccionar un cliente válido.");
-          }
+      if (!formData.customer || formData.customer === 'undefined') {
+        throw new Error('Debe seleccionar un cliente válido.');
+      }
 
       const data = new FormData();
-      data.append("id", id);
-      data.append("contact_name", formData.contact_name);
-      data.append("contact_email", formData.contact_email || "");
-      data.append("contact_phone", formData.contact_phone);
-      data.append("contact_charge", formData.contact_charge);
-      data.append("customer", formData.customer);
+      data.append('id', id);
+      data.append('contact_name', formData.contact_name);
+      data.append('contact_email', formData.contact_email || '');
+      data.append('contact_phone', formData.contact_phone);
+      data.append('contact_charge', formData.contact_charge);
+      data.append('customer', formData.customer);
       await functionAction(data);
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -124,10 +124,14 @@ export default function ContactRegister({ id }: { id: string }) {
     <section className={cn('md:mx-7')}>
       <Card className="mt-6 p-8">
         <CardTitle className="text-4xl mb-3">
-          {action === "view" ? "" : (action === "edit" ? "Editar Contacto" : "Registrar Contacto")}
+          {action === 'view' ? '' : action === 'edit' ? 'Editar Contacto' : 'Registrar Contacto'}
         </CardTitle>
         <CardDescription>
-          {action === "view" ? "" : (action === "edit" ? "Edita este formulario con los datos de tu Contacto" : "Completa este formulario con los datos de tu nuevo Contacto")}
+          {action === 'view'
+            ? ''
+            : action === 'edit'
+              ? 'Edita este formulario con los datos de tu Contacto'
+              : 'Completa este formulario con los datos de tu nuevo Contacto'}
         </CardDescription>
         <div className="mt-6 rounded-xl flex w-full">
           <form onSubmit={handleSubmit(onSubmit)}>
@@ -190,13 +194,11 @@ export default function ContactRegister({ id }: { id: string }) {
                   onValueChange={(value) => setValue('customer', value)}
                   disabled={readOnly}
                 >
-                  <SelectTrigger
-                    id="customer"
-                    name="customer"
-                    className="max-w-[350px] w-[300px]"
-                  >
+                  <SelectTrigger id="customer" name="customer" className="max-w-[350px] w-[300px]">
                     <SelectValue
-                      placeholder={clientData?.find((cli: any) => cli.id === customerValue)?.name || "Seleccionar un cliente"}
+                      placeholder={
+                        clientData?.find((cli: any) => cli.id === customerValue)?.name || 'Seleccionar un cliente'
+                      }
                     />
                   </SelectTrigger>
                   <SelectContent>
@@ -230,14 +232,14 @@ export default function ContactRegister({ id }: { id: string }) {
                 )}
               </div>
             </div>
-            {action === "view" ? null : (
+            {action === 'view' ? null : (
               <Button type="submit" className="mt-5">
-                {id ? "Editar Contacto" : "Registrar Contacto"}
+                {id ? 'Editar Contacto' : 'Registrar Contacto'}
               </Button>
             )}
           </form>
         </div>
       </Card>
     </section>
-  )
+  );
 }

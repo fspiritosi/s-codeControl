@@ -1,11 +1,6 @@
-'use client'
-import DocumentNav from '@/components/DocumentNav'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
+'use client';
+import DocumentNav from '@/components/DocumentNav';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -15,58 +10,35 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
+} from '@/components/ui/alert-dialog';
 
-import NewDocumentType from '@/components/NewDocumentType'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useCountriesStore } from '@/store/countries'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { ExpiredColums } from '../colums'
-import { ExpiredDataTable } from '../data-table'
-import { EditModal } from './documentComponents/EditDocumenTypeModal'
+import NewDocumentType from '@/components/NewDocumentType';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useCountriesStore } from '@/store/countries';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { ExpiredColums } from '../colums';
+import { ExpiredDataTable } from '../data-table';
+import { EditModal } from './documentComponents/EditDocumenTypeModal';
 
 export default function page() {
-  const { allDocumentsToShow, actualCompany } = useLoggedUserStore()
-  const document_types = useCountriesStore(state => state.companyDocumentTypes)
-  const fetchDocumentTypes = useCountriesStore(state => state.documentTypes)
-  let doc_personas = document_types
-    ?.filter(doc => doc.applies === 'Persona')
-    .filter(e => e.is_active)
-  let doc_equipos = document_types
-    ?.filter(doc => doc.applies === 'Equipos')
-    .filter(e => e.is_active)
-  let doc_empresa = document_types
-    ?.filter(doc => doc.applies === 'Empresa')
-    .filter(e => e.is_active)
+  const { allDocumentsToShow, actualCompany } = useLoggedUserStore();
+  const document_types = useCountriesStore((state) => state.companyDocumentTypes);
+  const fetchDocumentTypes = useCountriesStore((state) => state.documentTypes);
+  let doc_personas = document_types?.filter((doc) => doc.applies === 'Persona').filter((e) => e.is_active);
+  let doc_equipos = document_types?.filter((doc) => doc.applies === 'Equipos').filter((e) => e.is_active);
+  let doc_empresa = document_types?.filter((doc) => doc.applies === 'Empresa').filter((e) => e.is_active);
 
-  const profile = useLoggedUserStore(state => state)
+  const profile = useLoggedUserStore((state) => state);
 
-  let role: string = ''
-  if (
-    profile?.actualCompany?.owner_id?.credential_id ===
-    profile?.credentialUser?.id
-  ) {
-    role = profile?.actualCompany?.owner_id?.role as string
+  let role: string = '';
+  if (profile?.actualCompany?.owner_id?.credential_id === profile?.credentialUser?.id) {
+    role = profile?.actualCompany?.owner_id?.role as string;
   } else {
-    role = profile?.actualCompany?.share_company_users?.[0]?.role as string
+    role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
   }
   return (
     <section className={'flex flex-col md:mx-7'}>
@@ -84,47 +56,27 @@ export default function page() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nombre del Documento</TableHead>
-                      <TableHead
-                        className="w-[100px] text-center"
-                        align="center"
-                      >
+                      <TableHead className="w-[100px] text-center" align="center">
                         Multirecurso
                       </TableHead>
-                      <TableHead
-                        className="w-[100px] text-center"
-                        align="center"
-                      >
+                      <TableHead className="w-[100px] text-center" align="center">
                         Vence
                       </TableHead>
-                      <TableHead
-                        className="w-[100px] text-center"
-                        align="center"
-                      >
+                      <TableHead className="w-[100px] text-center" align="center">
                         Mandatorio
                       </TableHead>
-                      <TableHead
-                        className="w-[100px] text-center"
-                        align="center"
-                      >
+                      <TableHead className="w-[100px] text-center" align="center">
                         Editar
                       </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {doc_personas?.map(doc => (
+                    {doc_personas?.map((doc) => (
                       <TableRow key={doc.id}>
-                        <TableCell className="font-medium">
-                          {doc.name}
-                        </TableCell>
-                        <TableCell align="center">
-                          {doc.multiresource ? 'Si' : 'No'}
-                        </TableCell>
-                        <TableCell align="center">
-                          {doc.explired ? 'Si' : 'No'}
-                        </TableCell>
-                        <TableCell align="center">
-                          {doc.mandatory ? 'Si' : 'No'}
-                        </TableCell>
+                        <TableCell className="font-medium">{doc.name}</TableCell>
+                        <TableCell align="center">{doc.multiresource ? 'Si' : 'No'}</TableCell>
+                        <TableCell align="center">{doc.explired ? 'Si' : 'No'}</TableCell>
+                        <TableCell align="center">{doc.mandatory ? 'Si' : 'No'}</TableCell>
                         {doc.company_id && (
                           <TableCell align="center">
                             <EditModal Equipo={doc} />
@@ -151,11 +103,9 @@ export default function page() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {doc_equipos?.map(doc => (
+                    {doc_equipos?.map((doc) => (
                       <TableRow key={doc.id}>
-                        <TableCell className="font-medium">
-                          {doc.name}
-                        </TableCell>
+                        <TableCell className="font-medium">{doc.name}</TableCell>
                         <TableCell>{doc.multiresource ? 'Si' : 'No'}</TableCell>
                         <TableCell>{doc.explired ? 'Si' : 'No'}</TableCell>
                         <TableCell>{doc.mandatory ? 'Si' : 'No'}</TableCell>
@@ -180,11 +130,9 @@ export default function page() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {doc_empresa?.map(doc => (
+                    {doc_empresa?.map((doc) => (
                       <TableRow key={doc.id}>
-                        <TableCell className="font-medium">
-                          {doc.name}
-                        </TableCell>
+                        <TableCell className="font-medium">{doc.name}</TableCell>
                         <TableCell>{doc.multiresource ? 'Si' : 'No'}</TableCell>
                         <TableCell>{doc.explired ? 'Si' : 'No'}</TableCell>
                         <TableCell>{doc.mandatory ? 'Si' : 'No'}</TableCell>
@@ -211,15 +159,13 @@ export default function page() {
               <AlertDialogFooter>
                 <Button
                   onClick={() => {
-                    document.getElementById('create_new_document')?.click()
-                    fetchDocumentTypes(actualCompany?.id)
+                    document.getElementById('create_new_document')?.click();
+                    fetchDocumentTypes(actualCompany?.id);
                   }}
                 >
                   Crear documento
                 </Button>
-                <AlertDialogCancel id="close_document_modal">
-                  Cancel
-                </AlertDialogCancel>
+                <AlertDialogCancel id="close_document_modal">Cancel</AlertDialogCancel>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -232,9 +178,7 @@ export default function page() {
             <section>
               <CardHeader className=" mb-4 flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
                 <div>
-                  <CardTitle className="text-2xl font-bold tracking-tight">
-                    Documentos cargados
-                  </CardTitle>
+                  <CardTitle className="text-2xl font-bold tracking-tight">Documentos cargados</CardTitle>
                   <CardDescription className="text-muted-foreground">
                     Aquí encontrarás todos los documentos cargados
                   </CardDescription>
@@ -292,5 +236,5 @@ export default function page() {
         </div>
       </div>
     </section>
-  )
+  );
 }

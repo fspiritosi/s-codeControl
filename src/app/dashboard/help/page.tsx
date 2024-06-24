@@ -1,10 +1,7 @@
-'use client'
+'use client';
 
-import { ReportAnIssue } from '@/components/ReportAnIssue'
-
+import { ReportAnIssue } from '@/components/ReportAnIssue';
 
 export default function page() {
-  return (
-    <ReportAnIssue />
-  )
+  return <ReportAnIssue />;
 }

@@ -2,7 +2,7 @@
  * This file contains the definition of the columns used in the dashboard.
  */
 
-'use client'
+'use client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,9 +12,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { Button } from '@/components/ui/button'
-import { Calendar } from '@/components/ui/calendar'
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import {
   Dialog,
   DialogClose,
@@ -22,7 +22,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,43 +30,25 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { useToast } from '@/components/ui/use-toast'
-import { useEdgeFunctions } from '@/hooks/useEdgeFunctions'
-import { cn } from '@/lib/utils'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { DotsVerticalIcon } from '@radix-ui/react-icons'
-import { ColumnDef } from '@tanstack/react-table'
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
-import { ArrowUpDown, CalendarIcon } from 'lucide-react'
-import Link from 'next/link'
-import { Fragment, useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { supabase } from '../../../../../supabase/supabase'
+} from '@/components/ui/dropdown-menu';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/components/ui/use-toast';
+import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
+import { cn } from '@/lib/utils';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { DotsVerticalIcon } from '@radix-ui/react-icons';
+import { ColumnDef } from '@tanstack/react-table';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { ArrowUpDown, CalendarIcon } from 'lucide-react';
+import Link from 'next/link';
+import { Fragment, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { supabase } from '../../../../../supabase/supabase';
 const formSchema = z.object({
   reason_for_termination: z.string({
     required_error: 'La razón de la baja es requerida.',
@@ -74,44 +56,44 @@ const formSchema = z.object({
   termination_date: z.date({
     required_error: 'La fecha de baja es requerida.',
   }),
-})
+});
 
 type Colum = {
-  name: string
-  cuit: number
-  client_email: string
-  client_phone: number
-  address: string
-  is_active: boolean
-  showInactive: boolean
-  status: string
-}
+  name: string;
+  cuit: number;
+  client_email: string;
+  client_phone: number;
+  address: string;
+  is_active: boolean;
+  showInactive: boolean;
+  status: string;
+};
 
 export const columns: ColumnDef<Colum>[] = [
   {
     id: 'actions',
     cell: ({ row }: { row: any }) => {
-      const profile = useLoggedUserStore(state => state)
-      let role = ''
+      const profile = useLoggedUserStore((state) => state);
+      let role = '';
       if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
-        role = profile?.actualCompany?.owner_id?.role as string
+        role = profile?.actualCompany?.owner_id?.role as string;
       } else {
-        role = profile?.actualCompany?.share_company_users?.[0]?.role as string
+        role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
       }
 
-      const [showModal, setShowModal] = useState(false)
-      const [integerModal, setIntegerModal] = useState(false)
-      const [cuit, setCuit] = useState('')
+      const [showModal, setShowModal] = useState(false);
+      const [integerModal, setIntegerModal] = useState(false);
+      const [cuit, setCuit] = useState('');
       //const user = row.original
-      const [showInactive, setShowInactive] = useState<boolean>(false)
-      const [showDeletedCustomer, setShowDeletedCustomer] = useState(false)
-      const customers = row.original
+      const [showInactive, setShowInactive] = useState<boolean>(false);
+      const [showDeletedCustomer, setShowDeletedCustomer] = useState(false);
+      const customers = row.original;
 
       const handleOpenModal = (id: string) => {
-        setCuit(cuit)
-        setShowModal(!showModal)
-      }
-      const actualCompany = useLoggedUserStore(state => state.actualCompany)
+        setCuit(cuit);
+        setShowModal(!showModal);
+      };
+      const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
       const fetchInactiveCustomer = async () => {
         try {
@@ -119,33 +101,33 @@ export const columns: ColumnDef<Colum>[] = [
             .from('customers')
             .select('*')
             //.eq('is_active', false)
-            .eq('company_id', actualCompany?.id)
+            .eq('company_id', actualCompany?.id);
 
           if (error) {
-            console.error(error)
+            console.error(error);
           }
         } catch (error) {
-          console.error(error)
+          console.error(error);
         }
-      }
+      };
       useEffect(() => {
-        fetchInactiveCustomer()
-      }, [])
+        fetchInactiveCustomer();
+      }, []);
       const handleOpenIntegerModal = (id: string) => {
-        setCuit(cuit)
-        setIntegerModal(!integerModal)
-      }
+        setCuit(cuit);
+        setIntegerModal(!integerModal);
+      };
 
-      const { errorTranslate } = useEdgeFunctions()
+      const { errorTranslate } = useEdgeFunctions();
 
       const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
           reason_for_termination: undefined,
         },
-      })
+      });
 
-      const { toast } = useToast()
+      const { toast } = useToast();
 
       async function reintegerCustomer() {
         try {
@@ -158,23 +140,23 @@ export const columns: ColumnDef<Colum>[] = [
             })
             .eq('id', customers.id)
             .eq('company_id', actualCompany?.id)
-            .select()
+            .select();
 
-          setIntegerModal(!integerModal)
+          setIntegerModal(!integerModal);
           //setInactive(data as any)
-          setShowDeletedCustomer(false)
+          setShowDeletedCustomer(false);
           toast({
             variant: 'default',
             title: 'Cliente reintegrado',
             description: `El cliente ${customers?.name} ha sido reintegrado`,
-          })
+          });
         } catch (error: any) {
-          const message = await errorTranslate(error?.message)
+          const message = await errorTranslate(error?.message);
           toast({
             variant: 'destructive',
             title: 'Error al reintegrar el cliente',
             description: message,
-          })
+          });
         }
       }
 
@@ -182,7 +164,7 @@ export const columns: ColumnDef<Colum>[] = [
         const data = {
           ...values,
           termination_date: format(values.termination_date, 'yyyy-MM-dd'),
-        }
+        };
 
         try {
           await supabase
@@ -194,49 +176,42 @@ export const columns: ColumnDef<Colum>[] = [
             })
             .eq('id', customers.id)
             .eq('company_id', actualCompany?.id)
-            .select()
+            .select();
 
-          setShowModal(!showModal)
+          setShowModal(!showModal);
 
           toast({
             variant: 'default',
             title: 'Cliente eliminado',
             description: `El cliente ${customers.name} ha sido dado de baja`,
-          })
+          });
         } catch (error: any) {
-          const message = await errorTranslate(error?.message)
+          const message = await errorTranslate(error?.message);
           toast({
             variant: 'destructive',
             title: 'Error al dar de baja el cliente',
             description: message,
-          })
+          });
         }
       }
       const handleToggleInactive = () => {
-        setShowInactive(!showInactive)
-      }
+        setShowInactive(!showInactive);
+      };
 
       return (
         <DropdownMenu>
           {integerModal && (
-            <AlertDialog
-              defaultOpen
-              onOpenChange={() => setIntegerModal(!integerModal)}
-            >
+            <AlertDialog defaultOpen onOpenChange={() => setIntegerModal(!integerModal)}>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    ¿Estás completamente seguro?
-                  </AlertDialogTitle>
+                  <AlertDialogTitle>¿Estás completamente seguro?</AlertDialogTitle>
                   <AlertDialogDescription>
                     {`Estás a punto de reintegrar al equipo ${customers.name}, quien fue dado de baja por ${customers.reason_for_termination} el día ${customers.termination_date}. Al reintegrar al cliente, se borrarán estas razones. Si estás seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => reintegerCustomer()}>
-                    Continuar
-                  </AlertDialogAction>
+                  <AlertDialogAction onClick={() => reintegerCustomer()}>Continuar</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -246,47 +221,31 @@ export const columns: ColumnDef<Colum>[] = [
               <DialogContent className="dark:bg-slate-950">
                 <DialogTitle>Dar de baja Cliente</DialogTitle>
                 <DialogDescription>
-                  ¿Estás seguro de que deseas dar de baja este cliente?, completa
-                  los campos para continuar.
+                  ¿Estás seguro de que deseas dar de baja este cliente?, completa los campos para continuar.
                 </DialogDescription>
                 <DialogFooter>
                   <div className="w-full">
                     <Form {...form}>
-                      <form
-                        onSubmit={form.handleSubmit(onSubmit)}
-                        className="space-y-8"
-                      >
+                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                         <FormField
                           control={form.control}
                           name="reason_for_termination"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Motivo de Baja</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Selecciona la razón" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="Fin del contrato">
-                                  Fin del Contrato
-                                  </SelectItem>
-                                  <SelectItem value="Cerro la empresa">
-                                  Cerro la Empresa
-                                  </SelectItem>
-                                  <SelectItem value="Otro">
-                                    Otro
-                                  </SelectItem>
+                                  <SelectItem value="Fin del contrato">Fin del Contrato</SelectItem>
+                                  <SelectItem value="Cerro la empresa">Cerro la Empresa</SelectItem>
+                                  <SelectItem value="Otro">Otro</SelectItem>
                                 </SelectContent>
                               </Select>
-                              <FormDescription>
-                                Elige la razón por la que deseas dar de baja el
-                                equipo
-                              </FormDescription>
+                              <FormDescription>Elige la razón por la que deseas dar de baja el equipo</FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -304,7 +263,7 @@ export const columns: ColumnDef<Colum>[] = [
                                       variant={'outline'}
                                       className={cn(
                                         ' pl-3 text-left font-normal',
-                                        !field.value && 'text-muted-foreground',
+                                        !field.value && 'text-muted-foreground'
                                       )}
                                     >
                                       {field.value ? (
@@ -318,26 +277,18 @@ export const columns: ColumnDef<Colum>[] = [
                                     </Button>
                                   </FormControl>
                                 </PopoverTrigger>
-                                <PopoverContent
-                                  className="w-auto p-0"
-                                  align="start"
-                                >
+                                <PopoverContent className="w-auto p-0" align="start">
                                   <Calendar
                                     mode="single"
                                     selected={field.value}
                                     onSelect={field.onChange}
-                                    disabled={date =>
-                                      date > new Date() ||
-                                      date < new Date('1900-01-01')
-                                    }
+                                    disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
                                     initialFocus
                                     locale={es}
                                   />
                                 </PopoverContent>
                               </Popover>
-                              <FormDescription>
-                                Fecha en la que se dio de baja
-                              </FormDescription>
+                              <FormDescription>Fecha en la que se dio de baja</FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -367,25 +318,17 @@ export const columns: ColumnDef<Colum>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Opciones</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(customers.cuit)}
-            >
+            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(customers.cuit)}>
               Copiar cuit
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Link
-                className="w-full"
-                href={`/dashboard/company/customers/action?action=view&id=${customers?.id}`}
-              >
+              <Link className="w-full" href={`/dashboard/company/customers/action?action=view&id=${customers?.id}`}>
                 Ver Cliente
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               {role !== 'Invitado' && (
-                <Link
-                  className="w-full"
-                  href={`/dashboard/company/customers/action?action=edit&id=${customers?.id}`}
-                >
+                <Link className="w-full" href={`/dashboard/company/customers/action?action=edit&id=${customers?.id}`}>
                   Editar Cliente
                 </Link>
               )}
@@ -394,19 +337,11 @@ export const columns: ColumnDef<Colum>[] = [
               {role !== 'Invitado' && (
                 <Fragment>
                   {customers.is_active ? (
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleOpenModal(customers?.id)}
-                      className="text-sm"
-                    >
+                    <Button variant="destructive" onClick={() => handleOpenModal(customers?.id)} className="text-sm">
                       Dar de baja Cliente
                     </Button>
                   ) : (
-                    <Button
-                      variant="primary"
-                      onClick={() => handleOpenIntegerModal(customers.id)}
-                      className="text-sm"
-                    >
+                    <Button variant="primary" onClick={() => handleOpenIntegerModal(customers.id)} className="text-sm">
                       Reintegrar Cliente
                     </Button>
                   )}
@@ -415,22 +350,18 @@ export const columns: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      )
+      );
     },
   },
   {
     accessorKey: 'cuit',
     header: ({ column }: { column: any }) => {
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="p-0"
-        >
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="p-0">
           Cuit
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
-      )
+      );
     },
   },
   {
@@ -445,10 +376,10 @@ export const columns: ColumnDef<Colum>[] = [
     accessorKey: 'client_phone',
     header: 'Teléfono',
   },
-  
+
   // },
   {
     accessorKey: 'showUnavaliableContacts',
     header: 'Ver clientes dados de baja',
   },
-]
+];

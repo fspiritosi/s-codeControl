@@ -1,109 +1,94 @@
-'use client'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { supabase } from '../../supabase/supabase'
-import { company } from './../types/types'
-import { useEdgeFunctions } from './useEdgeFunctions'
+'use client';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { supabase } from '../../supabase/supabase';
+import { company } from './../types/types';
+import { useEdgeFunctions } from './useEdgeFunctions';
 //import { industry } from './../types/types';
 
 export const useCompanyData = () => {
-  const { errorTranslate } = useEdgeFunctions()
+  const { errorTranslate } = useEdgeFunctions();
   //const [industry, setIndustry] = useState<any[]>([])
 
   return {
     fetchAllCompany: async () => {
-      let { data: company, error } = await supabase.from('company').select('*')
+      let { data: company, error } = await supabase.from('company').select('*');
 
       if (error) {
-        const message = await errorTranslate(error?.message)
-        throw new Error(String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error?.message);
+        throw new Error(String(message).replaceAll('"', ''));
       }
-      return company
+      return company;
     },
 
     findByOwner: async (owner: any) => {
-      let { data: company, error } = await supabase
-        .from('company')
-        .select('*')
-        .eq('owner_id', 'owner')
+      let { data: company, error } = await supabase.from('company').select('*').eq('owner_id', 'owner');
 
       if (error) {
-        const message = await errorTranslate(error?.message)
-        throw new Error(String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error?.message);
+        throw new Error(String(message).replaceAll('"', ''));
       }
-      return company
+      return company;
     },
     insertCompany: async (company: company) => {
-      const { data, error } = await supabase
-        .from('company')
-        .insert(company)
-        .select()
+      const { data, error } = await supabase.from('company').insert(company).select();
 
       if (error) {
-        const message = await errorTranslate(error?.message)
-        throw new Error(String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error?.message);
+        throw new Error(String(message).replaceAll('"', ''));
       }
-      return data
+      return data;
     },
 
     updateCompany: async (companyId: string, company: company) => {
-      const { data, error } = await supabase
-        .from('company')
-        .update(company)
-        .eq('id', companyId)
-        .select()
+      const { data, error } = await supabase.from('company').update(company).eq('id', companyId).select();
 
       if (error) {
-        const message = await errorTranslate(error.message)
-        throw new Error(String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error.message);
+        throw new Error(String(message).replaceAll('"', ''));
       }
-      return data
+      return data;
     },
     LogicDeleteCompany: async (companyId: string) => {
       const { data, error } = await supabase
         .from('company')
         .update({ is_Active: false }) // Establece is_Active en false para el borrado lógico
         .eq('id', companyId)
-        .select()
+        .select();
       if (error) {
-        const message = await errorTranslate(error.message)
-        throw new Error(String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error.message);
+        throw new Error(String(message).replaceAll('"', ''));
       }
-      return data
+      return data;
     },
 
     deleteCompany: async (companyId: string) => {
-      const { error } = await supabase
-        .from('company')
-        .delete()
-        .eq('id', 'companyId')
+      const { error } = await supabase.from('company').delete().eq('id', 'companyId');
 
       if (error) {
-        const message = await errorTranslate(error.message)
-        throw new Error(String(message).replaceAll('"', ''))
+        const message = await errorTranslate(error.message);
+        throw new Error(String(message).replaceAll('"', ''));
       }
     },
 
     fetchIndustryType: async () => {
-      const { data, error } = await supabase.from('industry_type').select('*')
+      const { data, error } = await supabase.from('industry_type').select('*');
 
       if (error) {
-        console.error('Error al obtener las industrias:', error)
+        console.error('Error al obtener las industrias:', error);
       }
 
-      return data
+      return data;
     },
 
     fetchCompanies: async () => {
       // Obtener las compañías actualizadas de Supabase
-      const { data, error } = await supabase
-        .from('company')
-        .select('*, province_id(id, name), city(id, name)')
+      const { data, error } = await supabase.from('company').select('*, province_id(id, name), city(id, name)');
       if (error) {
-        console.error('Error al obtener las compañías:', error)
+        console.error('Error al obtener las compañías:', error);
       } else {
         // Actualizar el estado global con las nuevas compañías
-        useLoggedUserStore.setState({ allCompanies: data || [] })
+        useLoggedUserStore.setState({ allCompanies: data || [] });
       }
     },
-  }
-}
+  };
+};

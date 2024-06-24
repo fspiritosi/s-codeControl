@@ -1,105 +1,105 @@
-import React from 'react'
+import React from 'react';
 
 export type LoggedUser = {
-  session: null | string
+  session: null | string;
   user: {
     app_metadata: {
-      provider: string
-      providers: string[]
-    }
-    aud: string
-    confirmation_sent_at: string
-    created_at: string
-    email: string
-    id: string
-    identities: any[]
-    phone: string
-    role: string
-    updated_at: string
-    user_metadata: Record<string, unknown>
-  } | null
-}
+      provider: string;
+      providers: string[];
+    };
+    aud: string;
+    confirmation_sent_at: string;
+    created_at: string;
+    email: string;
+    id: string;
+    identities: any[];
+    phone: string;
+    role: string;
+    updated_at: string;
+    user_metadata: Record<string, unknown>;
+  } | null;
+};
 
 export type Notifications = {
-  id: string
-  title: string
-  description: string
-  category: string
-  company_id: string
-  created_at: Date
-  document_id: string
-  reference: string
-  document: DocumentInsert
-}
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  company_id: string;
+  created_at: Date;
+  document_id: string;
+  reference: string;
+  document: DocumentInsert;
+};
 
 export type DocumentInsert = {
-  date: string
-  allocated_to: string
-  documentName: string
-  state: string
-  multiresource: string
-  validity: string
-  mandatory: string
-  id: string
-  resource: string
-  document_number: string
-}
+  date: string;
+  allocated_to: string;
+  documentName: string;
+  state: string;
+  multiresource: string;
+  validity: string;
+  mandatory: string;
+  id: string;
+  resource: string;
+  document_number: string;
+};
 
 export type profileUser = {
-  id?: string
-  created_at?: string
-  firstname: string
-  lastname: string
-  credential_id: string
-  email: string
-  avatar?: string
-  fullname?: string
-  role: string
-}
+  id?: string;
+  created_at?: string;
+  firstname: string;
+  lastname: string;
+  credential_id: string;
+  email: string;
+  avatar?: string;
+  fullname?: string;
+  role: string;
+};
 
 export type company = {
-  id?: string
-  company_name: string
-  company_cuit: string
-  description: string
-  website: string
-  contact_email: string
-  contact_phone: string
-  address: string
+  id?: string;
+  company_name: string;
+  company_cuit: string;
+  description: string;
+  website: string;
+  contact_email: string;
+  contact_phone: string;
+  address: string;
   city: {
-    id: number
-    name: string
-  }
-  country: string
-  industry: string
-  company_logo: string
+    id: number;
+    name: string;
+  };
+  country: string;
+  industry: string;
+  company_logo: string;
   province_id: {
-    id: number
-    name: string
-  }
-  by_defect: boolean
-  owner_id: string | undefined
-}
+    id: number;
+    name: string;
+  };
+  by_defect: boolean;
+  owner_id: string | undefined;
+};
 
 export type industry_type = {
-  id: number
-  name: string
-}[]
+  id: number;
+  name: string;
+}[];
 
 export type singUp = {
-  email: string
-  password: string
-}
+  email: string;
+  password: string;
+};
 
 export type login = {
-  email: string
-  password: string
-}
+  email: string;
+  password: string;
+};
 
 export type MotionTransitionProps = {
-  children: React.ReactNode
-  className?: string
-}
+  children: React.ReactNode;
+  className?: string;
+};
 
 export type names =
   | 'lastname'
@@ -112,131 +112,131 @@ export type names =
   | 'gender'
   | 'marital_status'
   | 'level_of_education'
-  | 'picture'
+  | 'picture';
 
 export type Employee = {
-  id?: string
-  lastname: string
-  firstname: string
-  nationality: string | undefined
-  cuil: string //!si
-  document_type: string | undefined
-  document_number: string //!si
-  birthplace: string | undefined
-  gender: string | undefined
-  marital_status: string | undefined
-  level_of_education: string | undefined //!si
-  picture?: string | undefined
-  street: string
-  street_number: string
-  province: string | undefined
-  city: string | undefined
-  postal_code: string
-  phone: string
-  email?: string //!si
-  file: undefined | null | string | number
-  hierarchical_position: string | undefined //!si
-  company_position: string //!si
-  workflow_diagram: string
-  normal_hours: string //!si
-  type_of_contract: string | undefined //!si
-  allocated_to?: string | undefined | string[] //!si
-  date_of_admission: Date | undefined | string
-  full_name?: string //!si
-  is_active?: boolean
-  reason_for_termination?: string | undefined
-  termination_date?: Date | undefined | string
-  status?: 'Avalado' | 'No avalado'
-}
+  id?: string;
+  lastname: string;
+  firstname: string;
+  nationality: string | undefined;
+  cuil: string; //!si
+  document_type: string | undefined;
+  document_number: string; //!si
+  birthplace: string | undefined;
+  gender: string | undefined;
+  marital_status: string | undefined;
+  level_of_education: string | undefined; //!si
+  picture?: string | undefined;
+  street: string;
+  street_number: string;
+  province: string | undefined;
+  city: string | undefined;
+  postal_code: string;
+  phone: string;
+  email?: string; //!si
+  file: undefined | null | string | number;
+  hierarchical_position: string | undefined; //!si
+  company_position: string; //!si
+  workflow_diagram: string;
+  normal_hours: string; //!si
+  type_of_contract: string | undefined; //!si
+  allocated_to?: string | undefined | string[]; //!si
+  date_of_admission: Date | undefined | string;
+  full_name?: string; //!si
+  is_active?: boolean;
+  reason_for_termination?: string | undefined;
+  termination_date?: Date | undefined | string;
+  status?: 'Avalado' | 'No avalado';
+};
 
 export type Documents = {
-  id: string
-  id_storage: string | null
-  id_document_types: string | null
-  applies: string | null
-  validity: Date | null
-  state: string
-  is_active: boolean
-  user_id: string | undefined
-  document_url: string | null
-}
+  id: string;
+  id_storage: string | null;
+  id_document_types: string | null;
+  applies: string | null;
+  validity: Date | null;
+  state: string;
+  is_active: boolean;
+  user_id: string | undefined;
+  document_url: string | null;
+};
 
 export type SharedUser = {
-  id: string
-  role: string
-  email: string
-  avatar: string
-  fullname: string
-  created_at: Date
-  credential_id: string
-  profile_id: profileUser
-}
+  id: string;
+  role: string;
+  email: string;
+  avatar: string;
+  fullname: string;
+  created_at: Date;
+  credential_id: string;
+  profile_id: profileUser;
+};
 
 export type TypeOfVehicle = {
-  id: string
-  name: string
-  created_at: string
-}
+  id: string;
+  name: string;
+  created_at: string;
+};
 export type Brand = {
-  id: string
-  name: string
-  created_at: string
-}
+  id: string;
+  name: string;
+  created_at: string;
+};
 export type Model = {
-  id: string
-  name: string
-  created_at: string
-}
+  id: string;
+  name: string;
+  created_at: string;
+};
 
 export type Vechicle = {
-  id: string
-  created_at: string
-  picture: string
-  type_of_vehicle: TypeOfVehicle
-  domain: string
-  chassis: string
-  engine: string
-  serie: string
-  intern_number: string
-  year: string
-  brand: Brand
-  model: Model
-  company_id: string
-  is_active: boolean
-  termination_date: string
-  reason_for_termination: string
-  user_id: string
-  status: 'Avalado' | 'No avalado'
-  type: Model
-}
+  id: string;
+  created_at: string;
+  picture: string;
+  type_of_vehicle: TypeOfVehicle;
+  domain: string;
+  chassis: string;
+  engine: string;
+  serie: string;
+  intern_number: string;
+  year: string;
+  brand: Brand;
+  model: Model;
+  company_id: string;
+  is_active: boolean;
+  termination_date: string;
+  reason_for_termination: string;
+  user_id: string;
+  status: 'Avalado' | 'No avalado';
+  type: Model;
+};
 
-type Resource = Vechicle | Employee
+type Resource = Vechicle | Employee;
 
 type DocumentType = {
-  id: string
-  name: string
-  description: string
-  applies: 'Equipos' | 'Persona'
-  multiresource: boolean
-  mandatory: boolean
-  expired: boolean
-  special: boolean
-  is_active: boolean
-  created_at: string
-}
+  id: string;
+  name: string;
+  description: string;
+  applies: 'Equipos' | 'Persona';
+  multiresource: boolean;
+  mandatory: boolean;
+  expired: boolean;
+  special: boolean;
+  is_active: boolean;
+  created_at: string;
+};
 
 type Document = {
-  id: string
-  created_at: string
-  id_storage: string
-  id_document_types: DocumentType
-  validity: string
-  state: 'presentado' | 'rechazado' | 'aprobado' | 'vencido'
-  is_active: boolean
-  user_id: string
-  applies: Resource
-  document_url: string
-}
+  id: string;
+  created_at: string;
+  id_storage: string;
+  id_document_types: DocumentType;
+  validity: string;
+  state: 'presentado' | 'rechazado' | 'aprobado' | 'vencido';
+  is_active: boolean;
+  user_id: string;
+  applies: Resource;
+  document_url: string;
+};
 
 export const AllDocuments: Document[] = [
   {
@@ -338,109 +338,109 @@ export const AllDocuments: Document[] = [
     document_url: 'https://example.com/document.pdf',
   },
   // Add more examples here...
-]
+];
 
 export type AuditorDocument = {
-  date: string
-  companyName: string
-  allocated_to: string
-  documentName: string
-  multiresource: string
-  validity: string
-  id: string
-  resource: string
-  state: string
-}
+  date: string;
+  companyName: string;
+  allocated_to: string;
+  documentName: string;
+  multiresource: string;
+  validity: string;
+  id: string;
+  resource: string;
+  state: string;
+};
 
 export type VehiclesAPI = {
-  created_at: Date
-  id_storage: null
-  id_document_types: string
-  applies: Applies
-  validity: null | string
-  state: string
-  is_active: boolean
-  id: string
-  user_id: string
-  document_url: string
-  document_types: DocumentTypes
-}
+  created_at: Date;
+  id_storage: null;
+  id_document_types: string;
+  applies: Applies;
+  validity: null | string;
+  state: string;
+  is_active: boolean;
+  id: string;
+  user_id: string;
+  document_url: string;
+  document_types: DocumentTypes;
+};
 
 export type Applies = {
-  id: string
-  type: Type
-  year: string
-  brand: Brand
-  model: Brand
-  serie: string
-  domain: string
-  engine: string
-  status: string
-  chassis: string
-  picture: string
-  user_id: string
-  is_active: boolean
-  company_id: string
-  created_at: Date
-  intern_number: string
-  type_of_vehicle: Brand
-  termination_date: null
-  reason_for_termination: null
-}
+  id: string;
+  type: Type;
+  year: string;
+  brand: Brand;
+  model: Brand;
+  serie: string;
+  domain: string;
+  engine: string;
+  status: string;
+  chassis: string;
+  picture: string;
+  user_id: string;
+  is_active: boolean;
+  company_id: string;
+  created_at: Date;
+  intern_number: string;
+  type_of_vehicle: Brand;
+  termination_date: null;
+  reason_for_termination: null;
+};
 
 export type Type = {
-  id: string
-  name: string
-  created_at: Date
-}
+  id: string;
+  name: string;
+  created_at: Date;
+};
 
 export type DocumentTypes = {
-  id: string
-  name: string
-  applies: string
-  special: boolean
-  explired: boolean
-  is_active: boolean
-  mandatory: boolean
-  created_at: Date
-  description: null
-  multiresource: boolean
-}
+  id: string;
+  name: string;
+  applies: string;
+  special: boolean;
+  explired: boolean;
+  is_active: boolean;
+  mandatory: boolean;
+  created_at: Date;
+  description: null;
+  multiresource: boolean;
+};
 export type DocumentsTable = {
-  created_at: Date
-  id_storage: null
-  id_document_types: string
-  applies: string
-  validity: string
-  state: string
-  is_active: boolean
-  id: string
-  user_id: string
-  document_url: string
-  vehicles: VehiclesTable
-  document_types: DocumentTypes
-  domain: string
-}
+  created_at: Date;
+  id_storage: null;
+  id_document_types: string;
+  applies: string;
+  validity: string;
+  state: string;
+  is_active: boolean;
+  id: string;
+  user_id: string;
+  document_url: string;
+  vehicles: VehiclesTable;
+  document_types: DocumentTypes;
+  domain: string;
+};
 
 export type DocumentTypesTable = {
-  id: string
-  name: string
-}
+  id: string;
+  name: string;
+};
 
 export type VehiclesTable = {
-  id: string
-  domain: string
-  company_id: string
-  intern_number: string
-}
+  id: string;
+  domain: string;
+  company_id: string;
+  intern_number: string;
+};
 
 export type AllDocumentsValues = {
-  id_document_types: string
-  validity: Date
-  document: string
-  applies: string
-  document_url: string
-  id_storage: null
-  is_active: boolean
-  user_id: string
-}
+  id_document_types: string;
+  validity: Date;
+  document: string;
+  applies: string;
+  document_url: string;
+  id_storage: null;
+  is_active: boolean;
+  user_id: string;
+};

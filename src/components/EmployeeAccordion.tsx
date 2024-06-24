@@ -1,20 +1,10 @@
-'use client'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
-require('dotenv').config()
+'use client';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+require('dotenv').config();
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
-import { useEmployeesData } from '@/hooks/useEmployeesData'
-import { useCountriesStore } from '@/store/countries'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useEmployeesData } from '@/hooks/useEmployeesData';
+import { useCountriesStore } from '@/store/countries';
 import {
   civilStateOptionsENUM,
   documentOptionsENUM,
@@ -22,97 +12,76 @@ import {
   instrutionsOptionsENUM,
   nacionaliOptionsENUM,
   typeOfContractENUM,
-} from '@/types/enums'
-import { supabase } from '../../supabase/supabase'
+} from '@/types/enums';
+import { supabase } from '../../supabase/supabase';
 
-import { CheckboxDefaultValues } from '@/components/CheckboxDefValues'
-import { SelectWithData } from '@/components/SelectWithData'
-import { Badge } from '@/components/ui/badge'
-import { Calendar } from '@/components/ui/calendar'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { useImageUpload } from '@/hooks/useUploadImage'
-import { handleSupabaseError } from '@/lib/errorHandler'
-import { cn } from '@/lib/utils'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { names } from '@/types/types'
-import { accordionSchema } from '@/zodSchemas/schemas'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { CalendarIcon } from '@radix-ui/react-icons'
-import { PostgrestError } from '@supabase/supabase-js'
-import { addMonths, format } from 'date-fns'
-import { es } from 'date-fns/locale'
-import { Loader } from 'lucide-react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { ChangeEvent, Suspense, useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { toast } from 'sonner'
-import { z } from 'zod'
-import BackButton from './BackButton'
-import { ImageHander } from './ImageHandler'
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-import { Button } from './ui/button'
-import { CardDescription, CardHeader, CardTitle } from './ui/card'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select'
+import { CheckboxDefaultValues } from '@/components/CheckboxDefValues';
+import { SelectWithData } from '@/components/SelectWithData';
+import { Badge } from '@/components/ui/badge';
+import { Calendar } from '@/components/ui/calendar';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useImageUpload } from '@/hooks/useUploadImage';
+import { handleSupabaseError } from '@/lib/errorHandler';
+import { cn } from '@/lib/utils';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { names } from '@/types/types';
+import { accordionSchema } from '@/zodSchemas/schemas';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { CalendarIcon } from '@radix-ui/react-icons';
+import { PostgrestError } from '@supabase/supabase-js';
+import { addMonths, format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { Loader } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ChangeEvent, Suspense, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
+import BackButton from './BackButton';
+import { ImageHander } from './ImageHandler';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Button } from './ui/button';
+import { CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 type Province = {
-  id: number
-  name: string
-}
+  id: number;
+  name: string;
+};
 
 export default function EmployeeAccordion() {
-  const profile = useLoggedUserStore(state => state)
-  let role = ''
+  const profile = useLoggedUserStore((state) => state);
+  let role = '';
   if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
-    role = profile?.actualCompany?.owner_id?.role as string
+    role = profile?.actualCompany?.owner_id?.role as string;
   } else {
-    role = profile?.actualCompany?.share_company_users?.[0]?.role as string
+    role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
   }
 
-  const searchParams = useSearchParams()
-  const document = searchParams.get('document')
-  const [accion, setAccion] = useState(searchParams.get('action'))
-  const employees = useLoggedUserStore(state => state.employees)
-  const [user, setUser] = useState(
-    employees?.find((user: any) => user.document_number === document),
-  )
-  const loggedUser = useLoggedUserStore(state => state.credentialUser?.id)
-  const { uploadImage } = useImageUpload()
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [base64Image, setBase64Image] = useState<string>('')
-  const fetchCityValues = useCountriesStore(state => state.fetchCities)
-  const provincesOptions = useCountriesStore(state => state.provinces)
-  const citysOptions = useCountriesStore(state => state.cities)
-  const countryOptions = useCountriesStore(state => state.countries)
-  const hierarchyOptions = useCountriesStore(state => state.hierarchy)
-  const workDiagramOptions = useCountriesStore(state => state.workDiagram)
-  const contractorCompanies = useCountriesStore(state => state.customers)
-  const { updateEmployee, createEmployee } = useEmployeesData()
-  const getEmployees = useLoggedUserStore(state => state.getEmployees)
-  const router = useRouter()
+  const searchParams = useSearchParams();
+  const document = searchParams.get('document');
+  const [accion, setAccion] = useState(searchParams.get('action'));
+  const employees = useLoggedUserStore((state) => state.employees);
+  const [user, setUser] = useState(employees?.find((user: any) => user.document_number === document));
+  const loggedUser = useLoggedUserStore((state) => state.credentialUser?.id);
+  const { uploadImage } = useImageUpload();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [base64Image, setBase64Image] = useState<string>('');
+  const fetchCityValues = useCountriesStore((state) => state.fetchCities);
+  const provincesOptions = useCountriesStore((state) => state.provinces);
+  const citysOptions = useCountriesStore((state) => state.cities);
+  const countryOptions = useCountriesStore((state) => state.countries);
+  const hierarchyOptions = useCountriesStore((state) => state.hierarchy);
+  const workDiagramOptions = useCountriesStore((state) => state.workDiagram);
+  const contractorCompanies = useCountriesStore((state) => state.customers);
+  const { updateEmployee, createEmployee } = useEmployeesData();
+  const getEmployees = useLoggedUserStore((state) => state.getEmployees);
+  const router = useRouter();
   // const { toast } = useToast()
-  const url = process.env.NEXT_PUBLIC_PROJECT_URL
-  const mandatoryDocuments = useCountriesStore(
-    state => state.mandatoryDocuments,
-  )
+  const url = process.env.NEXT_PUBLIC_PROJECT_URL;
+  const mandatoryDocuments = useCountriesStore((state) => state.mandatoryDocuments);
 
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
@@ -145,77 +114,73 @@ export default function EmployeeAccordion() {
           allocated_to: [],
           date_of_admission: undefined,
         },
-  })
+  });
 
-  const [accordion1Errors, setAccordion1Errors] = useState(false)
-  const [accordion2Errors, setAccordion2Errors] = useState(false)
-  const [accordion3Errors, setAccordion3Errors] = useState(false)
-  const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false)
+  const [accordion1Errors, setAccordion1Errors] = useState(false);
+  const [accordion2Errors, setAccordion2Errors] = useState(false);
+  const [accordion3Errors, setAccordion3Errors] = useState(false);
+  const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false);
 
-  const provinceId = provincesOptions?.find(
-    (province: Province) => province.name.trim() === user?.province,
-  )?.id
+  const provinceId = provincesOptions?.find((province: Province) => province.name.trim() === user?.province)?.id;
 
   useEffect(() => {
     if (provinceId) {
-      fetchCityValues(provinceId)
+      fetchCityValues(provinceId);
     }
 
-    const { errors } = form.formState
+    const { errors } = form.formState;
 
     // Inicializa un nuevo estado de error para los acordeones
-    const acordeon1 = []
-    const acordeon2 = []
-    const acordeon3 = []
+    const acordeon1 = [];
+    const acordeon2 = [];
+    const acordeon3 = [];
 
     // Itera sobre los errores de validación
     for (const error of Object.keys(errors)) {
       //Si todos los acordeones tienen errores parar de iterar
 
-      if (PERSONALDATA.find(e => e.name === error)) {
-        acordeon1.push(error)
+      if (PERSONALDATA.find((e) => e.name === error)) {
+        acordeon1.push(error);
       }
-      if (CONTACTDATA.find(e => e.name === error)) {
-        acordeon2.push(error)
+      if (CONTACTDATA.find((e) => e.name === error)) {
+        acordeon2.push(error);
       }
-      if (LABORALDATA.find(e => e.name === error)) {
-        acordeon3.push(error)
+      if (LABORALDATA.find((e) => e.name === error)) {
+        acordeon3.push(error);
       }
     }
     if (acordeon1.length > 0) {
-      setAccordion1Errors(true)
+      setAccordion1Errors(true);
     } else {
-      setAccordion1Errors(false)
+      setAccordion1Errors(false);
     }
     if (acordeon2.length > 0) {
-      setAccordion2Errors(true)
+      setAccordion2Errors(true);
     } else {
-      setAccordion2Errors(false)
+      setAccordion2Errors(false);
     }
     if (acordeon3.length > 0) {
-      setAccordion3Errors(true)
+      setAccordion3Errors(true);
     } else {
-      setAccordion3Errors(false)
+      setAccordion3Errors(false);
     }
 
     // Actualiza el estado de error de los acordeones
     // que se ejecute cuando cambie el estado de error y cuando ya no haya errores
 
-    const foundUser = employees?.find(
-      (user: any) => user.document_number === document,
-    )
+    const foundUser = employees?.find((user: any) => user.document_number === document);
 
     if (JSON.stringify(foundUser) !== JSON.stringify(user)) {
-      setUser(foundUser)
+      setUser(foundUser);
 
       form.reset({
         ...foundUser,
         allocated_to: foundUser?.contractor_employee,
         date_of_admission: foundUser?.date_of_admission,
         normal_hours: String(foundUser?.normal_hours),
-      })
+      });
     }
-  }, [form.formState.errors, provinceId, employees, user])
+  }, [form.formState.errors, provinceId, employees, user]);
 
   const PERSONALDATA = [
     {
@@ -290,7 +255,7 @@ export default function EmployeeAccordion() {
       placeholder: 'Foto',
       name: 'picture',
     },
-  ]
+  ];
   const CONTACTDATA = [
     {
       label: 'Calle',
@@ -336,7 +301,7 @@ export default function EmployeeAccordion() {
       placeholder: 'Email',
       name: 'email',
     },
-  ]
+  ];
   const LABORALDATA = [
     {
       label: 'Legajo',
@@ -393,183 +358,149 @@ export default function EmployeeAccordion() {
       placeholder: 'Fecha de ingreso',
       name: 'date_of_admission',
     },
-  ]
+  ];
 
   const handleProvinceChange = (name: any) => {
-    const provinceId = provincesOptions.find(
-      (province: Province) => province.name.trim() === name,
-    )?.id
-    fetchCityValues(provinceId)
-  }
+    const provinceId = provincesOptions.find((province: Province) => province.name.trim() === name)?.id;
+    fetchCityValues(provinceId);
+  };
 
   async function onCreate(values: z.infer<typeof accordionSchema>) {
     toast.promise(
       async () => {
-        const fileExtension = imageFile?.name.split('.').pop()
+        const fileExtension = imageFile?.name.split('.').pop();
         const finalValues = {
           ...values,
           date_of_admission:
             values.date_of_admission instanceof Date
               ? values.date_of_admission.toISOString()
               : values.date_of_admission,
-          province: String(
-            provincesOptions.find(e => e.name.trim() === values.province)?.id,
-          ),
-          birthplace: String(
-            countryOptions.find(e => e.name === values.birthplace)?.id,
-          ),
-          city: String(
-            citysOptions.find(e => e.name.trim() === values.city)?.id,
-          ),
-          hierarchical_position: String(
-            hierarchyOptions.find(e => e.name === values.hierarchical_position)
-              ?.id,
-          ),
-          workflow_diagram: String(
-            workDiagramOptions.find(e => e.name === values.workflow_diagram)
-              ?.id,
-          ),
+          province: String(provincesOptions.find((e) => e.name.trim() === values.province)?.id),
+          birthplace: String(countryOptions.find((e) => e.name === values.birthplace)?.id),
+          city: String(citysOptions.find((e) => e.name.trim() === values.city)?.id),
+          hierarchical_position: String(hierarchyOptions.find((e) => e.name === values.hierarchical_position)?.id),
+          workflow_diagram: String(workDiagramOptions.find((e) => e.name === values.workflow_diagram)?.id),
           picture: fileExtension
             ? `${url}/${values.document_number}.${fileExtension}`.trim()
             : values.gender === 'Masculino'
               ? 'https://ui.shadcn.com/avatars/02.png'
               : 'https://ui.shadcn.com/avatars/05.png',
-        }
-
-        
+        };
 
         try {
-          const applies = await createEmployee(finalValues)
+          const applies = await createEmployee(finalValues);
           const documentsMissing: {
-            applies: number
-            id_document_types: string
-            validity: string | null
-            user_id: string | undefined
-          }[] = []
+            applies: number;
+            id_document_types: string;
+            validity: string | null;
+            user_id: string | undefined;
+          }[] = [];
 
-          mandatoryDocuments?.Persona?.forEach(async document => {
+          mandatoryDocuments?.Persona?.forEach(async (document) => {
             documentsMissing.push({
               applies: applies[0].id,
               id_document_types: document.id,
               validity: null,
               user_id: loggedUser,
-            })
-          })
+            });
+          });
 
-          const { data, error } = await supabase
-            .from('documents_employees')
-            .insert(documentsMissing)
-            .select()
+          const { data, error } = await supabase.from('documents_employees').insert(documentsMissing).select();
 
           if (error) {
-            throw new Error(handleSupabaseError(error.message))
+            throw new Error(handleSupabaseError(error.message));
           }
 
           try {
-            await handleUpload()
+            await handleUpload();
           } catch (error: PostgrestError | any) {
-            throw new Error(handleSupabaseError(error.message))
+            throw new Error(handleSupabaseError(error.message));
           }
-          getEmployees(true)
-          router.push('/dashboard/employee')
+          getEmployees(true);
+          router.push('/dashboard/employee');
         } catch (error: PostgrestError | any) {
-          throw new Error(handleSupabaseError(error.message))
+          throw new Error(handleSupabaseError(error.message));
         }
       },
       {
         loading: 'Agregando empleado...',
         success: 'Empleado agregado correctamente',
-        error: error => {
-          return error
+        error: (error) => {
+          return error;
         },
-      },
-    )
+      }
+    );
   }
 
   // 2. Define a submit handler.
   async function onUpdate(values: z.infer<typeof accordionSchema>) {
     toast.promise(
       async () => {
-        const { full_name, ...rest } = values
+        const { full_name, ...rest } = values;
         const finalValues = {
           ...rest,
           date_of_admission:
             values.date_of_admission instanceof Date
               ? values.date_of_admission.toISOString()
               : values.date_of_admission,
-          province: String(
-            provincesOptions.find(e => e.name.trim() === values.province)?.id,
-          ),
-          birthplace: String(
-            countryOptions.find(e => e.name === values.birthplace)?.id,
-          ),
-          city: String(
-            citysOptions.find(e => e.name.trim() === values.city)?.id,
-          ),
-          hierarchical_position: String(
-            hierarchyOptions.find(e => e.name === values.hierarchical_position)
-              ?.id,
-          ),
-          workflow_diagram: String(
-            workDiagramOptions.find(e => e.name === values.workflow_diagram)
-              ?.id,
-          ),
-        }
-        
+          province: String(provincesOptions.find((e) => e.name.trim() === values.province)?.id),
+          birthplace: String(countryOptions.find((e) => e.name === values.birthplace)?.id),
+          city: String(citysOptions.find((e) => e.name.trim() === values.city)?.id),
+          hierarchical_position: String(hierarchyOptions.find((e) => e.name === values.hierarchical_position)?.id),
+          workflow_diagram: String(workDiagramOptions.find((e) => e.name === values.workflow_diagram)?.id),
+        };
+
         try {
-          await updateEmployee(finalValues, user?.id)
-          await handleUpload()
-          router.push('/dashboard/employee')
+          await updateEmployee(finalValues, user?.id);
+          await handleUpload();
+          router.push('/dashboard/employee');
         } catch (error: PostgrestError | any) {
-          throw new Error(handleSupabaseError(error.message))
+          throw new Error(handleSupabaseError(error.message));
         }
       },
       {
         loading: 'Actualizando empleado...',
         success: 'Empleado actualizado correctamente',
-        error: error => {
-          return error
+        error: (error) => {
+          return error;
         },
-      },
-    )
+      }
+    );
   }
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+    const file = event.target.files?.[0];
 
     if (file) {
-      setImageFile(file)
+      setImageFile(file);
       // Convertir la imagen a base64
-      const reader = new FileReader()
-      reader.onload = e => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
         if (e.target && typeof e.target.result === 'string') {
-          setBase64Image(e.target.result)
+          setBase64Image(e.target.result);
         }
-      }
-      reader.readAsDataURL(file)
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
   const handleUpload = async () => {
-    const document_number = form.getValues('document_number')
+    const document_number = form.getValues('document_number');
 
-    const fileExtension = imageFile?.name.split('.').pop()
+    const fileExtension = imageFile?.name.split('.').pop();
     if (imageFile) {
       try {
-        const renamedFile = new File(
-          [imageFile],
-          `${document_number}.${fileExtension}`,
-          { type: `image/${fileExtension?.replace(/\s/g, '')}` },
-        )
-        await uploadImage(renamedFile, 'employee_photos')
-        const employeeImage =
-          `${url}/employee_photos/${document_number}.${fileExtension}?timestamp=${Date.now()}`
-            .trim()
-            .replace(/\s/g, '')
+        const renamedFile = new File([imageFile], `${document_number}.${fileExtension}`, {
+          type: `image/${fileExtension?.replace(/\s/g, '')}`,
+        });
+        await uploadImage(renamedFile, 'employee_photos');
+        const employeeImage = `${url}/employee_photos/${document_number}.${fileExtension}?timestamp=${Date.now()}`
+          .trim()
+          .replace(/\s/g, '');
         const { data, error } = await supabase
           .from('employees')
           .update({ picture: employeeImage })
-          .eq('document_number', document_number)
+          .eq('document_number', document_number);
       } catch (error: any) {
         // toast({
         //   variant: 'destructive',
@@ -579,16 +510,16 @@ export default function EmployeeAccordion() {
         // })
       }
     }
-  }
-  const today = new Date()
-  const nextMonth = addMonths(new Date(), 1)
-  const [month, setMonth] = useState<Date>(nextMonth)
+  };
+  const today = new Date();
+  const nextMonth = addMonths(new Date(), 1);
+  const [month, setMonth] = useState<Date>(nextMonth);
 
   const yearsAhead = Array.from({ length: 20 }, (_, index) => {
-    const year = today.getFullYear() - index - 1
-    return year
-  })
-  const [years, setYear] = useState(today.getFullYear().toString())
+    const year = today.getFullYear() - index - 1;
+    return year;
+  });
+  const [years, setYear] = useState(today.getFullYear().toString());
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -602,8 +533,7 @@ export default function EmployeeAccordion() {
                     <AvatarImage
                       className="object-cover rounded-full"
                       src={
-                        user?.picture ||
-                        'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80'
+                        user?.picture || 'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80'
                       }
                       alt="Imagen del empleado"
                     />
@@ -618,9 +548,7 @@ export default function EmployeeAccordion() {
                 </CardDescription>
               </div>
             ) : (
-              <h2 className="text-4xl">
-                {accion === 'edit' ? 'Editar empleado' : 'Agregar empleado'}
-              </h2>
+              <h2 className="text-4xl">{accion === 'edit' ? 'Editar empleado' : 'Agregar empleado'}</h2>
             )}
 
             {role !== 'Invitado' && readOnly && accion === 'view' && (
@@ -628,7 +556,7 @@ export default function EmployeeAccordion() {
                 <Button
                   variant="primary"
                   onClick={() => {
-                    setReadOnly(false)
+                    setReadOnly(false);
                   }}
                 >
                   Habilitar edición
@@ -640,26 +568,16 @@ export default function EmployeeAccordion() {
         </header>
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(
-              accion === 'edit' || accion === 'view' ? onUpdate : onCreate,
-            )}
+            onSubmit={form.handleSubmit(accion === 'edit' || accion === 'view' ? onUpdate : onCreate)}
             className="w-full pr-2 px-6 pb-3"
           >
-            <Accordion
-              className="w-full"
-              type="single"
-              collapsible
-              defaultValue="personal-data"
-            >
+            <Accordion className="w-full" type="single" collapsible defaultValue="personal-data">
               <AccordionItem value="personal-data">
                 <AccordionTrigger className="text-lg hover:no-underline">
                   <div className="flex gap-5 items-center flex-wrap">
                     <span className="hover:underline"> Datos personales </span>
                     {accordion1Errors && (
-                      <Badge
-                        className="h-6 hover:no-underline"
-                        variant="destructive"
-                      >
+                      <Badge className="h-6 hover:no-underline" variant="destructive">
                         Falta corregir algunos campos
                       </Badge>
                     )}
@@ -696,14 +614,11 @@ export default function EmployeeAccordion() {
                               )}
                             />
                           </div>
-                        )
+                        );
                       }
                       if (data.type === 'select') {
                         return (
-                          <div
-                            key={index}
-                            className="w-[300px] flex flex-col gap-2"
-                          >
+                          <div key={index} className="w-[300px] flex flex-col gap-2">
                             <FormField
                               control={form.control}
                               name={data.name as names}
@@ -727,17 +642,14 @@ export default function EmployeeAccordion() {
 
                                     <FormMessage />
                                   </FormItem>
-                                )
+                                );
                               }}
                             />
                           </div>
-                        )
+                        );
                       } else {
                         return (
-                          <div
-                            key={index}
-                            className="w-[300px] flex flex-col gap-2 "
-                          >
+                          <div key={index} className="w-[300px] flex flex-col gap-2 ">
                             <FormField
                               control={form.control}
                               name={data.name as names}
@@ -762,7 +674,7 @@ export default function EmployeeAccordion() {
                               )}
                             />
                           </div>
-                        )
+                        );
                       }
                     })}
                   </div>
@@ -784,10 +696,7 @@ export default function EmployeeAccordion() {
                     {CONTACTDATA?.map((data, index) => {
                       if (data.type === 'select') {
                         return (
-                          <div
-                            key={index}
-                            className="w-[300px] flex flex-col gap-2"
-                          >
+                          <div key={index} className="w-[300px] flex flex-col gap-2">
                             <FormField
                               control={form.control}
                               name={data.name as names}
@@ -807,32 +716,27 @@ export default function EmployeeAccordion() {
                                         editing={true}
                                         value={field.value || ''}
                                         handleProvinceChange={
-                                          data.label === 'Provincia'
-                                            ? handleProvinceChange
-                                            : undefined
+                                          data.label === 'Provincia' ? handleProvinceChange : undefined
                                         }
-                                        onChange={event => {
+                                        onChange={(event) => {
                                           if (data.name === 'province') {
-                                            handleProvinceChange(event)
+                                            handleProvinceChange(event);
                                           }
 
-                                          field.onChange(event)
+                                          field.onChange(event);
                                         }}
                                       />
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
-                                )
+                                );
                               }}
                             />
                           </div>
-                        )
+                        );
                       } else {
                         return (
-                          <div
-                            key={index}
-                            className="w-[300px] flex flex-col gap-2"
-                          >
+                          <div key={index} className="w-[300px] flex flex-col gap-2">
                             <FormField
                               control={form.control}
                               name={data.name as names}
@@ -857,7 +761,7 @@ export default function EmployeeAccordion() {
                               )}
                             />
                           </div>
-                        )
+                        );
                       }
                     })}
                   </div>
@@ -879,28 +783,21 @@ export default function EmployeeAccordion() {
                     {LABORALDATA?.map((data, index) => {
                       if (data.name === 'date_of_admission') {
                         return (
-                          <div
-                            key={index}
-                            className="w-[300px] flex flex-col gap-2"
-                          >
+                          <div key={index} className="w-[300px] flex flex-col gap-2">
                             <FormField
                               control={form.control}
                               name="date_of_admission"
                               render={({ field }) => {
-                                const value = field.value
+                                const value = field.value;
 
-                                if (
-                                  value === 'undefined/undefined/undefined' ||
-                                  value === 'Invalid Date'
-                                ) {
-                                  field.value = ''
+                                if (value === 'undefined/undefined/undefined' || value === 'Invalid Date') {
+                                  field.value = '';
                                 }
 
                                 return (
                                   <FormItem className="flex flex-col">
                                     <FormLabel>
-                                      Fecha de ingreso{' '}
-                                      <span style={{ color: 'red' }}> *</span>
+                                      Fecha de ingreso <span style={{ color: 'red' }}> *</span>
                                     </FormLabel>
                                     <Popover>
                                       <PopoverTrigger asChild>
@@ -910,8 +807,7 @@ export default function EmployeeAccordion() {
                                             variant="outline"
                                             className={cn(
                                               'w-[300px] pl-3 text-left font-normal',
-                                              !field.value &&
-                                                'text-muted-foreground',
+                                              !field.value && 'text-muted-foreground'
                                             )}
                                           >
                                             {field.value ? (
@@ -920,7 +816,7 @@ export default function EmployeeAccordion() {
                                                 'PPP',
                                                 {
                                                   locale: es,
-                                                } || undefined,
+                                                } || undefined
                                               )
                                             ) : (
                                               <span>Elegir fecha</span>
@@ -929,47 +825,31 @@ export default function EmployeeAccordion() {
                                           </Button>
                                         </FormControl>
                                       </PopoverTrigger>
-                                      <PopoverContent
-                                        className="flex w-full flex-col space-y-2 p-2"
-                                        align="start"
-                                      >
+                                      <PopoverContent className="flex w-full flex-col space-y-2 p-2" align="start">
                                         <Select
-                                          onValueChange={e => {
-                                            setMonth(new Date(e))
-                                            setYear(e)
-                                            const newYear = parseInt(e, 10)
-                                            const dateWithNewYear = new Date(
-                                              field.value,
-                                            )
-                                            dateWithNewYear.setFullYear(newYear)
-                                            field.onChange(dateWithNewYear)
-                                            setMonth(dateWithNewYear)
+                                          onValueChange={(e) => {
+                                            setMonth(new Date(e));
+                                            setYear(e);
+                                            const newYear = parseInt(e, 10);
+                                            const dateWithNewYear = new Date(field.value);
+                                            dateWithNewYear.setFullYear(newYear);
+                                            field.onChange(dateWithNewYear);
+                                            setMonth(dateWithNewYear);
                                           }}
-                                          value={
-                                            years ||
-                                            today.getFullYear().toString()
-                                          }
+                                          value={years || today.getFullYear().toString()}
                                         >
                                           <SelectTrigger>
                                             <SelectValue placeholder="Elegir año" />
                                           </SelectTrigger>
                                           <SelectContent position="popper">
                                             <SelectItem
-                                              value={today
-                                                .getFullYear()
-                                                .toString()}
-                                              disabled={
-                                                years ===
-                                                today.getFullYear().toString()
-                                              }
+                                              value={today.getFullYear().toString()}
+                                              disabled={years === today.getFullYear().toString()}
                                             >
                                               {today.getFullYear().toString()}
                                             </SelectItem>
-                                            {yearsAhead?.map(year => (
-                                              <SelectItem
-                                                key={year}
-                                                value={`${year}`}
-                                              >
+                                            {yearsAhead?.map((year) => (
+                                              <SelectItem key={year} value={`${year}`}>
                                                 {year}
                                               </SelectItem>
                                             ))}
@@ -981,33 +861,27 @@ export default function EmployeeAccordion() {
                                           toDate={today}
                                           locale={es}
                                           mode="single"
-                                          selected={
-                                            new Date(field.value) || today
-                                          }
-                                          onSelect={e => {
-                                            field.onChange(e)
+                                          selected={new Date(field.value) || today}
+                                          onSelect={(e) => {
+                                            field.onChange(e);
                                           }}
                                         />
                                       </PopoverContent>
                                     </Popover>
                                     <FormMessage />
                                   </FormItem>
-                                )
+                                );
                               }}
                             />
                           </div>
-                        )
+                        );
                       }
                       if (data.type === 'select') {
-                        const isMultiple =
-                          data.name === 'allocated_to' ? true : false
+                        const isMultiple = data.name === 'allocated_to' ? true : false;
 
                         if (isMultiple) {
                           return (
-                            <div
-                              key={index}
-                              className="w-[300px] flex flex-col gap-2 justify-center"
-                            >
+                            <div key={index} className="w-[300px] flex flex-col gap-2 justify-center">
                               <FormField
                                 control={form.control}
                                 name={data.name as names}
@@ -1015,20 +889,17 @@ export default function EmployeeAccordion() {
                                   <CheckboxDefaultValues
                                     disabled={readOnly}
                                     options={data.options}
-                                    required={true}                                    
+                                    required={true}
                                     field={field}
-                                    placeholder="Afectado a"                                    
+                                    placeholder="Afectado a"
                                   />
                                 )}
                               />
                             </div>
-                          )
+                          );
                         }
                         return (
-                          <div
-                            key={index}
-                            className="w-[300px] flex flex-col gap-2"
-                          >
+                          <div key={index} className="w-[300px] flex flex-col gap-2">
                             <FormField
                               control={form.control}
                               name={data.name as names}
@@ -1046,25 +917,22 @@ export default function EmployeeAccordion() {
                                         isMultiple={isMultiple}
                                         options={data.options}
                                         field={{ ...field }}
-                                        onChange={event => {
-                                          field.onChange(event)
+                                        onChange={(event) => {
+                                          field.onChange(event);
                                         }}
                                         value={field.value || ''}
                                       />
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
-                                )
+                                );
                               }}
                             />
                           </div>
-                        )
+                        );
                       } else {
                         return (
-                          <div
-                            key={index}
-                            className="w-[300px] flex flex-col gap-2"
-                          >
+                          <div key={index} className="w-[300px] flex flex-col gap-2">
                             <FormField
                               control={form.control}
                               name={data.name as names}
@@ -1090,7 +958,7 @@ export default function EmployeeAccordion() {
                               )}
                             />
                           </div>
-                        )
+                        );
                       }
                     })}
                   </div>
@@ -1102,9 +970,7 @@ export default function EmployeeAccordion() {
                     <p className="w-fit">
                       {accion !== 'view' || !readOnly ? (
                         <Button type="submit" className="mt-5">
-                          {accion === 'edit' || accion === 'view'
-                            ? 'Guardar cambios'
-                            : 'Agregar empleado'}
+                          {accion === 'edit' || accion === 'view' ? 'Guardar cambios' : 'Agregar empleado'}
                         </Button>
                       ) : null}
                     </p>
@@ -1121,5 +987,5 @@ export default function EmployeeAccordion() {
         </Form>
       </section>
     </Suspense>
-  )
+  );
 }

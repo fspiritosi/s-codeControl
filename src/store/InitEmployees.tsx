@@ -1,8 +1,8 @@
-'use client'
-import { supabaseBrowser } from '@/lib/supabase/browser'
-import { useEffect, useRef } from 'react'
-import { useCountriesStore } from './countries'
-import { useLoggedUserStore } from './loggedUser'
+'use client';
+import { supabaseBrowser } from '@/lib/supabase/browser';
+import { useEffect, useRef } from 'react';
+import { useCountriesStore } from './countries';
+import { useLoggedUserStore } from './loggedUser';
 
 const formattedEmployees = (employees: any) => {
   const employee = employees?.map((employees: any) => {
@@ -16,9 +16,7 @@ const formattedEmployees = (employees: any) => {
       company_position: employees?.company_position,
       normal_hours: employees?.normal_hours,
       type_of_contract: employees?.type_of_contract,
-      allocated_to: employees?.contractor_employee
-        ?.map(({ contractors }: any) => contractors?.name)
-        ?.join(', '),
+      allocated_to: employees?.contractor_employee?.map(({ contractors }: any) => contractors?.name)?.join(', '),
       picture: employees?.picture,
       nationality: employees?.nationality,
       lastname: employees?.lastname,
@@ -39,23 +37,21 @@ const formattedEmployees = (employees: any) => {
       city: employees?.city?.name?.trim(),
       hierrical_position: employees?.hierarchical_position?.name,
       workflow_diagram: employees?.workflow_diagram?.name,
-      contractor_employee: employees?.contractor_employee?.map(
-        ({ contractors }: any) => contractors?.id,
-      ),
+      contractor_employee: employees?.contractor_employee?.map(({ contractors }: any) => contractors?.id),
       is_active: employees?.is_active,
       reason_for_termination: employees?.reason_for_termination,
       termination_date: employees?.termination_date,
       status: employees?.status,
-    }
-  })
+    };
+  });
 
-  return employee
-}
+  return employee;
+};
 
 export default function InitEmployees({ active }: { active: boolean }) {
-  const supabase = supabaseBrowser()
-  const initState = useRef(false)
-  const actualCompany = useLoggedUserStore(state => state.actualCompany)
+  const supabase = supabaseBrowser();
+  const initState = useRef(false);
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
   const fetchEmployees = async () => {
     let { data, error } = await supabase
@@ -80,24 +76,24 @@ export default function InitEmployees({ active }: { active: boolean }) {
               contractors(
                 *
               )
-            )`,
+            )`
       )
       .eq('company_id', actualCompany?.id)
-      .eq('is_active', active)
+      .eq('is_active', active);
 
-    const employees = formattedEmployees(data)
-    useLoggedUserStore.setState({ employeesToShow: employees })
-    useLoggedUserStore.setState({ employees: employees })
-  }
-  const documentTypes = useCountriesStore(state => state.documentTypes)
+    const employees = formattedEmployees(data);
+    useLoggedUserStore.setState({ employeesToShow: employees });
+    useLoggedUserStore.setState({ employees: employees });
+  };
+  const documentTypes = useCountriesStore((state) => state.documentTypes);
   useEffect(() => {
     if (!initState.current) {
       if (actualCompany?.id) {
-        fetchEmployees()
+        fetchEmployees();
       }
-      documentTypes(actualCompany?.id || '')
+      documentTypes(actualCompany?.id || '');
     }
-    initState.current = true
-  }, [actualCompany])
-  return <></>
+    initState.current = true;
+  }, [actualCompany]);
+  return <></>;
 }

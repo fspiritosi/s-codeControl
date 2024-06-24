@@ -1,20 +1,16 @@
-'use client'
-import { CardDescription, CardHeader } from '@/components/ui/card'
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from '@/components/ui/resizable'
-import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { TooltipProvider } from '@/components/ui/tooltip'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import * as React from 'react'
-import { FormDisplay, FormularioPersonalizado } from './mail-list'
+'use client';
+import { CardDescription, CardHeader } from '@/components/ui/card';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import * as React from 'react';
+import { FormDisplay, FormularioPersonalizado } from './mail-list';
 interface MailProps {
-  defaultLayout?: number[] | undefined
-  defaultCollapsed?: boolean
-  navCollapsedSize: number
+  defaultLayout?: number[] | undefined;
+  defaultCollapsed?: boolean;
+  navCollapsedSize: number;
 }
 
 enum types {
@@ -31,12 +27,12 @@ enum types {
 }
 
 interface Campo {
-  tipo: types
-  placeholder?: string
-  opciones?: string[]
-  value?: string
-  id: string
-  title?: string
+  tipo: types;
+  placeholder?: string;
+  opciones?: string[];
+  value?: string;
+  id: string;
+  title?: string;
 }
 export function Mail() {
   const [campos, setCampos] = React.useState<Campo[]>([
@@ -45,30 +41,24 @@ export function Mail() {
       placeholder: 'Ingresa el nombre del formulario',
       id: '1',
     },
-  ])
+  ]);
 
-  const actualCompany = useLoggedUserStore(state => state.actualCompany)
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
   return (
     <TooltipProvider delayDuration={0}>
       <ResizablePanelGroup
         direction="horizontal"
         onLayout={(sizes: number[]) => {
-          document.cookie = `react-resizable-panels:layout=${JSON.stringify(
-            sizes,
-          )}`
+          document.cookie = `react-resizable-panels:layout=${JSON.stringify(sizes)}`;
         }}
         className="h-full max-h-[800px] items-stretch p-0 m-0"
       >
-        <ResizablePanel
-        
-        minSize={30}>
+        <ResizablePanel minSize={30}>
           <CardHeader>
             <div>
               <h2 className="text-2xl font-bold">Crear CheckList</h2>
-              <CardDescription>
-                Crear un nuevo CheckList para el mantenimiento de los equipos.
-              </CardDescription>
+              <CardDescription>Crear un nuevo CheckList para el mantenimiento de los equipos.</CardDescription>
             </div>
           </CardHeader>
           <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -81,17 +71,11 @@ export function Mail() {
               </TabsList>
               <Separator className="mt-3 mb-3" />
               <TabsContent value="created">
-                <FormularioPersonalizado
-                  setCampos={setCampos}
-                  campos={campos}
-                />
+                <FormularioPersonalizado setCampos={setCampos} campos={campos} />
               </TabsContent>
               <TabsContent value="new">
                 {/* <MailList items={mails} /> */}
-                <FormularioPersonalizado
-                  setCampos={setCampos}
-                  campos={campos}
-                />
+                <FormularioPersonalizado setCampos={setCampos} campos={campos} />
               </TabsContent>
             </Tabs>
           </div>
@@ -107,5 +91,5 @@ export function Mail() {
         </ResizablePanel>
       </ResizablePanelGroup>
     </TooltipProvider>
-  )
+  );
 }

@@ -1,17 +1,15 @@
-'use client'
+'use client';
 
-import { Table } from '@tanstack/react-table'
+import { Table } from '@tanstack/react-table';
 
-import { Input } from '@/components/ui/input'
+import { Input } from '@/components/ui/input';
 
 interface DataTableToolbarProps<TData> {
-  table: Table<TData>
+  table: Table<TData>;
 }
 
-export function DataTableToolbar<TData>({
-  table,
-}: DataTableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0
+export function DataTableToolbar<TData>({ table }: DataTableToolbarProps<TData>) {
+  const isFiltered = table.getState().columnFilters.length > 0;
 
   return (
     <div className="flex items-center justify-between">
@@ -19,12 +17,10 @@ export function DataTableToolbar<TData>({
         <Input
           placeholder="Filtrar Nombre"
           value={(table.getColumn('fullname')?.getFilterValue() as string) ?? ''}
-          onChange={event =>
-            table.getColumn('fullname')?.setFilterValue(event.target.value)
-          }
+          onChange={(event) => table.getColumn('fullname')?.setFilterValue(event.target.value)}
           className="h-8 w-[150px] lg:w-[250px]"
         />
       </div>
     </div>
-  )
+  );
 }
