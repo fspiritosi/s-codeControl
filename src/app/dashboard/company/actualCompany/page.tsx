@@ -31,6 +31,9 @@ import { DataTable } from './components/data-table'
 import { ItemCompany } from './components/itemCompany'
 import Link from 'next/link';
 import { CloudCog } from 'lucide-react'
+import Customers from '../customers/Customers'
+import Client from '../customers/Customers'
+import Contact from '../contact/Contact'
 
 export default function page() {
   const router = useRouter()
@@ -42,6 +45,7 @@ export default function page() {
   const ownerUser = useLoggedUserStore(state => state.profile)
   const [showPasswords, setShowPasswords] = useState(false)
   const [open, setOpen] = useState(false)
+  const [tabValue, setTabValue] = useState(localStorage.getItem('selectedTab') || 'general');
   const userShared = cookies.get('guestRole')
   console.log(actualCompany?.id, "actual company")
   const owner = ownerUser?.map(user => {
@@ -54,7 +58,7 @@ export default function page() {
       img: user.avatar || '',
     }
   })
-  
+
 
   const sharedUsers =
     sharedUsersAll?.map(user => {
@@ -87,24 +91,33 @@ export default function page() {
     router.push(`/dashboard/company/${actualCompany!.id}`);
   };
 
+  const handleTabChange = (value:any) => {
+    setTabValue(value);
+    localStorage.setItem('selectedTab', value);
+  };
+  
+
   return (
     <div className="flex flex-col gap-6 py-4 px-6">
-      <div className="w-full flex mb-6">
+      {/* <div className="w-full flex mb-6">
         <Image
           src={company?.company_logo || ''}
           alt={company?.company_name || ''}
           width={200}
           height={200}
         />
-      </div>
-      
-      <Tabs defaultValue="general">
+      </div> */}
+
+      <Tabs defaultValue={tabValue} onValueChange={handleTabChange}>
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>
+          <TabsTrigger value="customers">Clientes</TabsTrigger>
+          <TabsTrigger value="contacts">Contactos</TabsTrigger>
           <TabsTrigger value="modules" disabled>
             Modulos
           </TabsTrigger>
+
         </TabsList>
         <TabsContent value="general" className="space-y-4">
           <Card className="overflow-hidden">
@@ -222,6 +235,12 @@ export default function page() {
             </div>
             <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
           </Card>
+        </TabsContent>
+        <TabsContent value="customers">
+          <Customers />
+        </TabsContent>
+        <TabsContent value="contacts">
+          <Contact />
         </TabsContent>
         <TabsContent value="modules">Change your password here.</TabsContent>
       </Tabs>

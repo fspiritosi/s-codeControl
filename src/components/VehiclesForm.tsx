@@ -48,6 +48,7 @@ import {
   FormMessage,
 } from './ui/form'
 import { Input } from './ui/input'
+import { CheckboxDefaultValues } from '@/components/CheckboxDefValues'
 // import { useToast } from './ui/use-toast'
 
 type VehicleType = {
@@ -123,7 +124,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
     form.setValue('intern_number', vehicleData.intern_number)
     form.setValue('picture', vehicleData.picture)
     form.setValue('type', vehicleData.type.name)
-    // form.setValue('allocated_to', vehicleData.allocated_to)
+    form.setValue('allocated_to', vehicleData.allocated_to)
   }
 
   useEffect(() => {
@@ -343,7 +344,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
     type: hideInput
       ? z.string().optional()
       : z.string({ required_error: 'El tipo es requerido' }),
-    // allocated_to: z.array(z.string()).optional(),
+    allocated_to: z.array(z.string()).optional(),
   })
   const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false)
 
@@ -394,7 +395,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
   useEffect(() => {
     fetchData()
   }, [])
-  const contractorCompanies = useCountriesStore(state => state.contractors)
+  const contractorCompanies = useCountriesStore(state => state.customers)
   const vehicleBrands = data.brand
   const types = data.tipe_of_vehicles?.map(e => e.name)
   const vehicleModels = data.models
@@ -410,7 +411,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
       domain: vehicle?.domain || '',
       intern_number: vehicle?.intern_number || '',
       picture: vehicle?.picture || '',
-      // allocated_to: [],
+      allocated_to: [],
     },
   })
 
@@ -585,7 +586,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
               domain: domain?.toUpperCase(),
               intern_number: intern_number,
               picture: picture,
-              // allocated_to: values.allocated_to,
+              allocated_to: values.allocated_to,
             })
             .eq('id', vehicle?.id)
             .eq('company_id', actualCompany?.id)
@@ -1236,7 +1237,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   </FormItem>
                 )}
               />
-              {/* <div className=" min-w-[250px] flex flex-col gap-2">
+              <div className=" min-w-[250px] flex flex-col gap-2">
                 <FormField
                   control={form.control}
                   name="allocated_to"
@@ -1255,7 +1256,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                     </>
                   )}
                 />
-              </div> */}
+              </div>
               <div className="w-[300px] flex  gap-2">
                 <FormField
                   control={form.control}

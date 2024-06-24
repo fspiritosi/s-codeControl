@@ -104,7 +104,7 @@ export default function EmployeeAccordion() {
   const countryOptions = useCountriesStore(state => state.countries)
   const hierarchyOptions = useCountriesStore(state => state.hierarchy)
   const workDiagramOptions = useCountriesStore(state => state.workDiagram)
-  const contractorCompanies = useCountriesStore(state => state.contractors)
+  const contractorCompanies = useCountriesStore(state => state.customers)
   const { updateEmployee, createEmployee } = useEmployeesData()
   const getEmployees = useLoggedUserStore(state => state.getEmployees)
   const router = useRouter()
@@ -142,7 +142,7 @@ export default function EmployeeAccordion() {
           company_position: '',
           workflow_diagram: undefined,
           type_of_contract: undefined,
-          allocated_to: undefined,
+          allocated_to: [],
           date_of_admission: undefined,
         },
   })
@@ -380,13 +380,13 @@ export default function EmployeeAccordion() {
       options: typeOfContractENUM,
       name: 'type_of_contract',
     },
-    // {
-    //   label: 'Afectado A',
-    //   type: 'select',
-    //   placeholder: 'Afectado A',
-    //   options: contractorCompanies,
-    //   name: 'allocated_to',
-    // },
+    {
+      label: 'Afectado A',
+      type: 'select',
+      placeholder: 'Afectado A',
+      options: contractorCompanies,
+      name: 'allocated_to',
+    },
     {
       label: 'Fecha de ingreso',
 
@@ -435,6 +435,8 @@ export default function EmployeeAccordion() {
               ? 'https://ui.shadcn.com/avatars/02.png'
               : 'https://ui.shadcn.com/avatars/05.png',
         }
+
+        
 
         try {
           const applies = await createEmployee(finalValues)
@@ -513,7 +515,7 @@ export default function EmployeeAccordion() {
               ?.id,
           ),
         }
-
+        
         try {
           await updateEmployee(finalValues, user?.id)
           await handleUpload()
@@ -1013,9 +1015,9 @@ export default function EmployeeAccordion() {
                                   <CheckboxDefaultValues
                                     disabled={readOnly}
                                     options={data.options}
-                                    required={true}
+                                    required={true}                                    
                                     field={field}
-                                    placeholder="Afectado a"
+                                    placeholder="Afectado a"                                    
                                   />
                                 )}
                               />
