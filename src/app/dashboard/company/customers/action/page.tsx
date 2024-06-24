@@ -17,13 +17,13 @@ export default async function CustomerFormAction({
     .from('customers')
     .select('*')
     .eq('id', searchParams.id)
-  //revalidatePath('/dashboard/company/customer/action')
+  revalidatePath('/dashboard/company/customer/action')
 
 
 
   return (
     <section className="grid grid-cols-2 xl:grid-cols-2 gap-2 py-4 justify-start">
-      <div className=" flex gap-2">
+      <div className="flex gap-2 col-start-2 justify-end mr-6">
         <BackButton />
       </div>
 

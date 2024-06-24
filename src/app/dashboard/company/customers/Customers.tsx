@@ -20,9 +20,9 @@ import { useSearchParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
+
 export default function Customers() {
-  //const actualCompany = cookies().get('actualComp')
-  //const supabase = supabaseServer()
+  const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const router = useRouter()
   const [customers, setCustomers] = useState([''])
   const allCompany = useLoggedUserStore(state => state.allCompanies)
@@ -33,14 +33,17 @@ export default function Customers() {
       const { data, error } = await supabase
         .from('customers')
         .select('*')
-        //.eq('is_active', true)
-
+        .eq('company_id', actualCompany?.id)
+        
       if (error) {
         console.error('Error fetching customers:', error)
       } else {
         setCustomers(data)
+        
       }
+      
     }
+    
 
     fetchCustomers()
   }, [])
