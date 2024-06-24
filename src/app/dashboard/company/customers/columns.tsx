@@ -66,7 +66,7 @@ import Link from 'next/link'
 import { Fragment, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { supabase } from '../../../../supabase/supabase'
+import { supabase } from '../../../../../supabase/supabase'
 const formSchema = z.object({
   reason_for_termination: z.string({
     required_error: 'La razón de la baja es requerida.',
@@ -77,17 +77,11 @@ const formSchema = z.object({
 })
 
 type Colum = {
-  picture: string
-  types_of_vehicles: { name: string }
-  type_of_vehicle: string
-  domain: string
-  chassis: string
-  engine: string
-  serie: string
-  intern_number: string
-  year: string
-  brand: string
-  model: string
+  name: string
+  cuit: number
+  client_email: string
+  client_phone: number
+  address: string
   is_active: boolean
   showInactive: boolean
   status: string
@@ -107,38 +101,38 @@ export const columns: ColumnDef<Colum>[] = [
 
       const [showModal, setShowModal] = useState(false)
       const [integerModal, setIntegerModal] = useState(false)
-      const [domain, setDomain] = useState('')
+      const [cuit, setCuit] = useState('')
       //const user = row.original
       const [showInactive, setShowInactive] = useState<boolean>(false)
-      const [showDeletedEquipment, setShowDeletedEquipment] = useState(false)
-      const equipment = row.original
+      const [showDeletedCustomer, setShowDeletedCustomer] = useState(false)
+      const customers = row.original
 
       const handleOpenModal = (id: string) => {
-        setDomain(id)
+        setCuit(cuit)
         setShowModal(!showModal)
       }
       const actualCompany = useLoggedUserStore(state => state.actualCompany)
 
-      // const fetchInactiveEquipment = async () => {
-      //   try {
-      //     const { data, error } = await supabase
-      //       .from('vehicles')
-      //       .select('*')
-      //       //.eq('is_active', false)
-      //       .eq('company_id', actualCompany?.id)
+      const fetchInactiveCustomer = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('customers')
+            .select('*')
+            //.eq('is_active', false)
+            .eq('company_id', actualCompany?.id)
 
-      //     if (error) {
-      //       console.error(error)
-      //     }
-      //   } catch (error) {
-      //     console.error(error)
-      //   }
-      // }
-      // useEffect(() => {
-      //   fetchInactiveEquipment()
-      // }, [])
+          if (error) {
+            console.error(error)
+          }
+        } catch (error) {
+          console.error(error)
+        }
+      }
+      useEffect(() => {
+        fetchInactiveCustomer()
+      }, [])
       const handleOpenIntegerModal = (id: string) => {
-        setDomain(id)
+        setCuit(cuit)
         setIntegerModal(!integerModal)
       }
 
@@ -153,32 +147,32 @@ export const columns: ColumnDef<Colum>[] = [
 
       const { toast } = useToast()
 
-      async function reintegerEquipment() {
+      async function reintegerCustomer() {
         try {
           const { data, error } = await supabase
-            .from('vehicles')
+            .from('customers')
             .update({
               is_active: true,
-              termination_date: null,
-              reason_for_termination: null,
+              // termination_date: null,
+              // reason_for_termination: null,
             })
-            .eq('id', equipment.id)
+            .eq('id', customers.id)
             .eq('company_id', actualCompany?.id)
             .select()
 
           setIntegerModal(!integerModal)
           //setInactive(data as any)
-          setShowDeletedEquipment(false)
+          setShowDeletedCustomer(false)
           toast({
             variant: 'default',
-            title: 'Equipo reintegrado',
-            description: `El equipo ${equipment?.engine} ha sido reintegrado`,
+            title: 'Cliente reintegrado',
+            description: `El cliente ${customers?.name} ha sido reintegrado`,
           })
         } catch (error: any) {
           const message = await errorTranslate(error?.message)
           toast({
             variant: 'destructive',
-            title: 'Error al reintegrar el equipo',
+            title: 'Error al reintegrar el cliente',
             description: message,
           })
         }
@@ -192,13 +186,13 @@ export const columns: ColumnDef<Colum>[] = [
 
         try {
           await supabase
-            .from('vehicles')
+            .from('customers')
             .update({
               is_active: false,
-              termination_date: data.termination_date,
-              reason_for_termination: data.reason_for_termination,
+              // termination_date: data.termination_date,
+              // reason_for_termination: data.reason_for_termination,
             })
-            .eq('id', equipment.id)
+            .eq('id', customers.id)
             .eq('company_id', actualCompany?.id)
             .select()
 
@@ -206,14 +200,14 @@ export const columns: ColumnDef<Colum>[] = [
 
           toast({
             variant: 'default',
-            title: 'Equipo eliminado',
-            description: `El equipo ${equipment.domain} ha sido dado de baja`,
+            title: 'Cliente eliminado',
+            description: `El cliente ${customers.name} ha sido dado de baja`,
           })
         } catch (error: any) {
           const message = await errorTranslate(error?.message)
           toast({
             variant: 'destructive',
-            title: 'Error al dar de baja el equipo',
+            title: 'Error al dar de baja el cliente',
             description: message,
           })
         }
@@ -235,12 +229,12 @@ export const columns: ColumnDef<Colum>[] = [
                     ¿Estás completamente seguro?
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    {`Estás a punto de reintegrar al equipo ${equipment.id}, quien fue dado de baja por ${equipment.reason_for_termination} el día ${equipment.termination_date}. Al reintegrar al equipo, se borrarán estas razones. Si estás seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
+                    {`Estás a punto de reintegrar al equipo ${customers.name}, quien fue dado de baja por ${customers.reason_for_termination} el día ${customers.termination_date}. Al reintegrar al cliente, se borrarán estas razones. Si estás seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => reintegerEquipment()}>
+                  <AlertDialogAction onClick={() => reintegerCustomer()}>
                     Continuar
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -250,9 +244,9 @@ export const columns: ColumnDef<Colum>[] = [
           {showModal && (
             <Dialog defaultOpen onOpenChange={() => setShowModal(!showModal)}>
               <DialogContent className="dark:bg-slate-950">
-                <DialogTitle>Dar de baja Equipo</DialogTitle>
+                <DialogTitle>Dar de baja Cliente</DialogTitle>
                 <DialogDescription>
-                  ¿Estás seguro de que deseas dar de baja este equipo?, completa
+                  ¿Estás seguro de que deseas dar de baja este cliente?, completa
                   los campos para continuar.
                 </DialogDescription>
                 <DialogFooter>
@@ -278,14 +272,14 @@ export const columns: ColumnDef<Colum>[] = [
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="Venta del vehículo">
-                                    Venta del vehículo
+                                  <SelectItem value="Fin del contrato">
+                                  Fin del Contrato
                                   </SelectItem>
-                                  <SelectItem value="Destrucción Total">
-                                    Destrucción Total
+                                  <SelectItem value="Cerro la empresa">
+                                  Cerro la Empresa
                                   </SelectItem>
-                                  <SelectItem value="Fundido">
-                                    Fundido
+                                  <SelectItem value="Otro">
+                                    Otro
                                   </SelectItem>
                                 </SelectContent>
                               </Select>
@@ -374,46 +368,46 @@ export const columns: ColumnDef<Colum>[] = [
             <DropdownMenuLabel>Opciones</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(equipment.domain)}
+              onClick={() => navigator.clipboard.writeText(customers.cuit)}
             >
-              Copiar Dominio
+              Copiar cuit
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Link
                 className="w-full"
-                href={`/dashboard/equipment/action?action=view&id=${equipment?.id}`}
+                href={`/dashboard/company/customers/action?action=view&id=${customers?.id}`}
               >
-                Ver equipo
+                Ver Cliente
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               {role !== 'Invitado' && (
                 <Link
                   className="w-full"
-                  href={`/dashboard/equipment/action?action=edit&id=${equipment?.id}`}
+                  href={`/dashboard/company/customers/action?action=edit&id=${customers?.id}`}
                 >
-                  Editar equipo
+                  Editar Cliente
                 </Link>
               )}
             </DropdownMenuItem>
             <DropdownMenuItem>
               {role !== 'Invitado' && (
                 <Fragment>
-                  {equipment.is_active ? (
+                  {customers.is_active ? (
                     <Button
                       variant="destructive"
-                      onClick={() => handleOpenModal(equipment?.id)}
+                      onClick={() => handleOpenModal(customers?.id)}
                       className="text-sm"
                     >
-                      Dar de baja equipo
+                      Dar de baja Cliente
                     </Button>
                   ) : (
                     <Button
                       variant="primary"
-                      onClick={() => handleOpenIntegerModal(equipment.id)}
+                      onClick={() => handleOpenIntegerModal(customers.id)}
                       className="text-sm"
                     >
-                      Reintegrar Equipo
+                      Reintegrar Cliente
                     </Button>
                   )}
                 </Fragment>
@@ -425,7 +419,7 @@ export const columns: ColumnDef<Colum>[] = [
     },
   },
   {
-    accessorKey: 'domain',
+    accessorKey: 'cuit',
     header: ({ column }: { column: any }) => {
       return (
         <Button
@@ -433,67 +427,28 @@ export const columns: ColumnDef<Colum>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           className="p-0"
         >
-          Dominio
+          Cuit
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       )
     },
   },
   {
-    accessorKey: 'chassis',
-    header: 'Chassis',
+    accessorKey: 'name',
+    header: 'Nombre',
   },
   {
-    accessorKey: 'status',
-    header: 'Estado',
+    accessorKey: 'client_email',
+    header: 'Email',
   },
   {
-    accessorKey: 'types_of_vehicles',
-    header: 'Tipos de vehículos',
+    accessorKey: 'client_phone',
+    header: 'Teléfono',
   },
-
+  
+  // },
   {
-    accessorKey: 'engine',
-    header: 'Motor',
-  },
-  {
-    accessorKey: 'serie',
-    header: 'Serie',
-  },
-  {
-    accessorKey: 'intern_number',
-    header: ({ column }: { column: any }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="p-0"
-        >
-          Numero interno
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    
-  },
-  {
-    accessorKey: 'year',
-    header: 'Año',
-  },
-  {
-    accessorKey: 'brand',
-    header: 'Marca',
-  },
-  {
-    accessorKey: 'model',
-    header: 'Modelo',
-  },
-  {
-    accessorKey: 'picture',
-    header: 'Foto',
-  },
-  {
-    accessorKey: 'showUnavaliableEquipment',
-    header: 'Ver contactos dados de baja',
+    accessorKey: 'showUnavaliableContacts',
+    header: 'Ver clientes dados de baja',
   },
 ]

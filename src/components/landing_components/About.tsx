@@ -1,5 +1,5 @@
 'use client'
-import { Md3GMobiledata, MdAddChart, MdLockOutline } from 'react-icons/md'
+import { Md3gMobiledata, MdAddChart, MdLockOutline } from 'react-icons/md'
 import { FaBookOpen } from "react-icons/fa6";
 import { TbWorldCode } from "react-icons/tb";
 import { FaHandsHelping } from "react-icons/fa";

@@ -59,14 +59,14 @@ import { useLoggedUserStore } from '@/store/loggedUser'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { DotsVerticalIcon } from '@radix-ui/react-icons'
 import { ColumnDef } from '@tanstack/react-table'
-import { format } from 'date-fns'
+import { addMonths, format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { ArrowUpDown, CalendarIcon } from 'lucide-react'
 import Link from 'next/link'
 import { Fragment, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { supabase } from '../../../../supabase/supabase'
+import { supabase } from '../../../../../supabase/supabase'
 const formSchema = z.object({
   reason_for_termination: z.string({
     required_error: 'La razón de la baja es requerida.',
@@ -77,18 +77,11 @@ const formSchema = z.object({
 })
 
 type Colum = {
-  picture: string
-  types_of_vehicles: { name: string }
-  type_of_vehicle: string
-  domain: string
-  chassis: string
-  engine: string
-  serie: string
-  intern_number: string
-  year: string
-  brand: string
-  model: string
-  is_active: boolean
+  contact_name: string
+  constact_email: string
+  contact_phone: number
+  contact_charge: string
+  customer_id:{id:string, name:string}
   showInactive: boolean
   status: string
 }
@@ -107,38 +100,39 @@ export const columns: ColumnDef<Colum>[] = [
 
       const [showModal, setShowModal] = useState(false)
       const [integerModal, setIntegerModal] = useState(false)
-      const [domain, setDomain] = useState('')
-      //const user = row.original
-      const [showInactive, setShowInactive] = useState<boolean>(false)
-      const [showDeletedEquipment, setShowDeletedEquipment] = useState(false)
-      const equipment = row.original
+      const [id, setId] = useState('')
+      const [showInactive, setShowInactive] = useState('')
+      const [showDeletedContact, setShowDeletedContact] = useState(false)
+      const contacts = row.original
 
       const handleOpenModal = (id: string) => {
-        setDomain(id)
+        setId(id)
         setShowModal(!showModal)
       }
       const actualCompany = useLoggedUserStore(state => state.actualCompany)
+     
+      const fetchInactiveContacts = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('contacts')
+            .select('*')
+            //.eq('is_active', false)
+            .eq('company_id', actualCompany?.id)
+            .select()
 
-      // const fetchInactiveEquipment = async () => {
-      //   try {
-      //     const { data, error } = await supabase
-      //       .from('vehicles')
-      //       .select('*')
-      //       //.eq('is_active', false)
-      //       .eq('company_id', actualCompany?.id)
-
-      //     if (error) {
-      //       console.error(error)
-      //     }
-      //   } catch (error) {
-      //     console.error(error)
-      //   }
-      // }
-      // useEffect(() => {
-      //   fetchInactiveEquipment()
-      // }, [])
+            
+          if (error) {
+            console.error(error)
+          }
+        } catch (error) {
+          console.error(error)
+        }
+      }
+      useEffect(() => {
+        fetchInactiveContacts()
+      }, [])
       const handleOpenIntegerModal = (id: string) => {
-        setDomain(id)
+        setId(id)
         setIntegerModal(!integerModal)
       }
 
@@ -153,32 +147,32 @@ export const columns: ColumnDef<Colum>[] = [
 
       const { toast } = useToast()
 
-      async function reintegerEquipment() {
+      async function reintegerContact() {
         try {
           const { data, error } = await supabase
-            .from('vehicles')
+            .from('contacts')
             .update({
               is_active: true,
-              termination_date: null,
-              reason_for_termination: null,
+              //termination_date: null,
+              //reason_for_termination: null,
             })
-            .eq('id', equipment.id)
-            .eq('company_id', actualCompany?.id)
+            .eq('id', contacts.id)
+            //.eq('company_id', actualCompany?.id)
             .select()
 
           setIntegerModal(!integerModal)
           //setInactive(data as any)
-          setShowDeletedEquipment(false)
+          setShowDeletedContact(false)
           toast({
             variant: 'default',
-            title: 'Equipo reintegrado',
-            description: `El equipo ${equipment?.engine} ha sido reintegrado`,
+            title: 'Contacto reintegrado',
+            description: `El contacto ${contacts?.name} ha sido reintegrado`,
           })
         } catch (error: any) {
           const message = await errorTranslate(error?.message)
           toast({
             variant: 'destructive',
-            title: 'Error al reintegrar el equipo',
+            title: 'Error al reintegrar el contacto',
             description: message,
           })
         }
@@ -192,13 +186,13 @@ export const columns: ColumnDef<Colum>[] = [
 
         try {
           await supabase
-            .from('vehicles')
+            .from('contacts')
             .update({
               is_active: false,
-              termination_date: data.termination_date,
-              reason_for_termination: data.reason_for_termination,
+              //termination_date: data.termination_date,
+              //reason_for_termination: data.reason_for_termination,
             })
-            .eq('id', equipment.id)
+            .eq('id', contacts.id)
             .eq('company_id', actualCompany?.id)
             .select()
 
@@ -206,21 +200,32 @@ export const columns: ColumnDef<Colum>[] = [
 
           toast({
             variant: 'default',
-            title: 'Equipo eliminado',
-            description: `El equipo ${equipment.domain} ha sido dado de baja`,
+            title: 'Contacto eliminado',
+            description: `El contacto ${contacts.name} ha sido dado de baja`,
           })
         } catch (error: any) {
           const message = await errorTranslate(error?.message)
           toast({
             variant: 'destructive',
-            title: 'Error al dar de baja el equipo',
+            title: 'Error al dar de baja el contacto',
             description: message,
           })
         }
       }
-      const handleToggleInactive = () => {
-        setShowInactive(!showInactive)
-      }
+      const today = new Date()
+      const nextMonth = addMonths(new Date(), 1)
+      const [month, setMonth] = useState<Date>(nextMonth)
+
+      const yearsAhead = Array.from({ length: 20 }, (_, index) => {
+        const year = today.getFullYear() - index - 1
+        return year
+      })
+      const [years, setYear] = useState(today.getFullYear().toString())
+
+      // const handleToggleInactive = () => {
+      //   setShowInactive(!showInactive)
+      // }
+      // console.log("id contacto: ", contacts.id)
 
       return (
         <DropdownMenu>
@@ -235,12 +240,12 @@ export const columns: ColumnDef<Colum>[] = [
                     ¿Estás completamente seguro?
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    {`Estás a punto de reintegrar al equipo ${equipment.id}, quien fue dado de baja por ${equipment.reason_for_termination} el día ${equipment.termination_date}. Al reintegrar al equipo, se borrarán estas razones. Si estás seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
+                    {`Estás a punto de reintegrar el contacto ${contacts.name}, quien fue dado de baja por ${contacts.reason_for_termination} el día ${contacts.termination_date}. Al reintegrar al contacto, se borrarán estas razones. Si estás seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => reintegerEquipment()}>
+                  <AlertDialogAction onClick={() => reintegerContact()}>
                     Continuar
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -250,9 +255,9 @@ export const columns: ColumnDef<Colum>[] = [
           {showModal && (
             <Dialog defaultOpen onOpenChange={() => setShowModal(!showModal)}>
               <DialogContent className="dark:bg-slate-950">
-                <DialogTitle>Dar de baja Equipo</DialogTitle>
+                <DialogTitle>Dar de baja Contacto</DialogTitle>
                 <DialogDescription>
-                  ¿Estás seguro de que deseas dar de baja este equipo?, completa
+                  ¿Estás seguro de que deseas dar de baja este contacto?, completa
                   los campos para continuar.
                 </DialogDescription>
                 <DialogFooter>
@@ -278,20 +283,20 @@ export const columns: ColumnDef<Colum>[] = [
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="Venta del vehículo">
-                                    Venta del vehículo
+                                  <SelectItem value="Fin del contrato">
+                                  Fin del Contrato
                                   </SelectItem>
-                                  <SelectItem value="Destrucción Total">
-                                    Destrucción Total
+                                  <SelectItem value="Cerro la empresa">
+                                  Cerro la Empresa
                                   </SelectItem>
-                                  <SelectItem value="Fundido">
-                                    Fundido
+                                  <SelectItem value="Otro">
+                                    Otro
                                   </SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormDescription>
                                 Elige la razón por la que deseas dar de baja el
-                                equipo
+                                contacto
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
@@ -328,7 +333,7 @@ export const columns: ColumnDef<Colum>[] = [
                                   className="w-auto p-0"
                                   align="start"
                                 >
-                                  <Calendar
+                                  {/* <Calendar
                                     mode="single"
                                     selected={field.value}
                                     onSelect={field.onChange}
@@ -338,6 +343,60 @@ export const columns: ColumnDef<Colum>[] = [
                                     }
                                     initialFocus
                                     locale={es}
+                                  /> */}
+                                  <Select
+                                    onValueChange={e => {
+                                      setMonth(new Date(e))
+                                      setYear(e)
+                                      const newYear = parseInt(e, 10)
+                                      const dateWithNewYear = new Date(
+                                        field.value,
+                                      )
+                                      dateWithNewYear.setFullYear(newYear)
+                                      field.onChange(dateWithNewYear)
+                                      setMonth(dateWithNewYear)
+                                    }}
+                                    value={
+                                      years || today.getFullYear().toString()
+                                    }
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Elegir año" />
+                                    </SelectTrigger>
+                                    <SelectContent position="popper">
+                                      <SelectItem
+                                        value={today.getFullYear().toString()}
+                                        disabled={
+                                          years ===
+                                          today.getFullYear().toString()
+                                        }
+                                      >
+                                        {today.getFullYear().toString()}
+                                      </SelectItem>
+                                      {yearsAhead?.map(year => (
+                                        <SelectItem
+                                          key={year}
+                                          value={`${year}`}
+                                        >
+                                          {year}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <Calendar
+                                    month={month}
+                                    onMonthChange={setMonth}
+                                    toDate={today}
+                                    locale={es}
+                                    mode="single"
+                                    disabled={date =>
+                                      date > new Date() ||
+                                      date < new Date('1900-01-01')
+                                    }
+                                    selected={new Date(field.value) || today}
+                                    onSelect={e => {
+                                      field.onChange(e)
+                                    }}
                                   />
                                 </PopoverContent>
                               </Popover>
@@ -356,9 +415,6 @@ export const columns: ColumnDef<Colum>[] = [
                         </div>
                       </form>
                     </Form>
-                    {/* <Button variant="destructive" onClick={() => handleDelete()}>
-                    Eliminar
-                  </Button> */}
                   </div>
                 </DialogFooter>
               </DialogContent>
@@ -374,46 +430,46 @@ export const columns: ColumnDef<Colum>[] = [
             <DropdownMenuLabel>Opciones</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(equipment.domain)}
+              onClick={() => navigator.clipboard.writeText(contacts.constact_email)}
             >
-              Copiar Dominio
+              Copiar email
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Link
                 className="w-full"
-                href={`/dashboard/equipment/action?action=view&id=${equipment?.id}`}
+                href={`/dashboard/company/contact/action?action=view&id=${contacts?.id}`}
               >
-                Ver equipo
+                Ver Contacto
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               {role !== 'Invitado' && (
                 <Link
                   className="w-full"
-                  href={`/dashboard/equipment/action?action=edit&id=${equipment?.id}`}
+                  href={`/dashboard/company/contact/action?action=edit&id=${contacts?.id}`}
                 >
-                  Editar equipo
+                  Editar Contacto
                 </Link>
               )}
             </DropdownMenuItem>
             <DropdownMenuItem>
               {role !== 'Invitado' && (
                 <Fragment>
-                  {equipment.is_active ? (
+                  {contacts.is_active ? (
                     <Button
                       variant="destructive"
-                      onClick={() => handleOpenModal(equipment?.id)}
+                      onClick={() => handleOpenModal(contacts?.id)}
                       className="text-sm"
                     >
-                      Dar de baja equipo
+                      Dar de baja Contacto
                     </Button>
                   ) : (
                     <Button
                       variant="primary"
-                      onClick={() => handleOpenIntegerModal(equipment.id)}
+                      onClick={() => handleOpenIntegerModal(contacts.id)}
                       className="text-sm"
                     >
-                      Reintegrar Equipo
+                      Reintegrar Contacto
                     </Button>
                   )}
                 </Fragment>
@@ -425,7 +481,7 @@ export const columns: ColumnDef<Colum>[] = [
     },
   },
   {
-    accessorKey: 'domain',
+    accessorKey: 'contact_name',
     header: ({ column }: { column: any }) => {
       return (
         <Button
@@ -433,67 +489,33 @@ export const columns: ColumnDef<Colum>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           className="p-0"
         >
-          Dominio
+          Nombre
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       )
     },
   },
+  
   {
-    accessorKey: 'chassis',
-    header: 'Chassis',
+    accessorKey: 'constact_email',
+    header: 'Email',
   },
   {
-    accessorKey: 'status',
-    header: 'Estado',
+    accessorKey: 'contact_phone',
+    header: 'Teléfono',
   },
   {
-    accessorKey: 'types_of_vehicles',
-    header: 'Tipos de vehículos',
-  },
-
-  {
-    accessorKey: 'engine',
-    header: 'Motor',
+    accessorKey: 'contact_charge',
+    header: 'Cargo',
   },
   {
-    accessorKey: 'serie',
-    header: 'Serie',
+    accessorKey: 'customers.name',
+    header: 'Cliente',
   },
+  
+  
   {
-    accessorKey: 'intern_number',
-    header: ({ column }: { column: any }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="p-0"
-        >
-          Numero interno
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    
-  },
-  {
-    accessorKey: 'year',
-    header: 'Año',
-  },
-  {
-    accessorKey: 'brand',
-    header: 'Marca',
-  },
-  {
-    accessorKey: 'model',
-    header: 'Modelo',
-  },
-  {
-    accessorKey: 'picture',
-    header: 'Foto',
-  },
-  {
-    accessorKey: 'showUnavaliableEquipment',
+    accessorKey: 'showUnavaliableContacts',
     header: 'Ver contactos dados de baja',
   },
 ]
