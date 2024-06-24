@@ -21,17 +21,17 @@ export async function createdContact(formData: FormData) {
         .from('profile')
         .select('*')
         .eq('email', session?.user.email)
-    console.log(data)
+    // // // console.log(data)
     const { data: Companies, error } = await supabase
         .from('company')
         .select(`*`)
         .eq('owner_id', data?.[0]?.id)
-    console.log(Companies)
+    // // // console.log(Companies)
     let { data: share_company_users, error: sharedError } = await supabase
         .from('share_company_users')
         .select(`*`)
         .eq('profile_id', data?.[0]?.id)
-    // console.log(share_company_users)
+    // // // // console.log(share_company_users)
     revalidatePath('/dashboard/company/customers')
 
     const contactData = {
@@ -42,14 +42,14 @@ export async function createdContact(formData: FormData) {
         company_id: Companies?.[0].id,
         customer_id:formData.get('customer'),
     }
-    console.log("contact Data: ", contactData)
+    // // // console.log("contact Data: ", contactData)
 
     try {
         
         //     // Guardar datos en la tabla 'contacts'
         //const customer_id = newClient?.data ? newClient?.data[0]?.id : null;
 
-        // console.log("customer_id: ", customer_id)
+        // // // // console.log("customer_id: ", customer_id)
         // const contactDataWithCustomerId = {
         //     ...contactData,
         //     customer_id: customer_id
@@ -57,7 +57,7 @@ export async function createdContact(formData: FormData) {
 
         const createdContact = await supabase.from('contacts').insert(contactData).select();
 
-        console.log('Contacto creado:', createdContact);
+        // // // console.log('Contacto creado:', createdContact);
         //return {
         //newClient,
         //createdContact
@@ -79,22 +79,22 @@ export async function updateContact(formData: FormData) {
         .from('profile')
         .select('*')
         .eq('email', session?.user.email)
-    console.log(data)
+    // // // console.log(data)
     const { data: Companies, error } = await supabase
         .from('company')
         .select(`*`)
         .eq('owner_id', data?.[0]?.id)
-    console.log(Companies)
+    // // // console.log(Companies)
     let { data: share_company_users, error: sharedError } = await supabase
         .from('share_company_users')
         .select(`*`)
         .eq('profile_id', data?.[0]?.id)
-    // console.log(share_company_users)
+    // // // // console.log(share_company_users)
     revalidatePath('/dashboard/company/actualCompany')
 
 
     const id = formData.get("id")
-    console.log("id de formulario: ", id)
+    // // // console.log("id de formulario: ", id)
     
 
     const contactData = {
@@ -105,7 +105,7 @@ export async function updateContact(formData: FormData) {
         company_id: Companies?.[0].id,
         customer_id:formData.get('customer'),
     }
-    console.log("contact Data Update: ", contactData)
+    // // // console.log("contact Data Update: ", contactData)
     try {
         // Guardar datos en la tabla 'customer'
 
@@ -113,7 +113,7 @@ export async function updateContact(formData: FormData) {
             // Guardar datos en la tabla 'contacts'
         //const customer_id = editClient?.data ? editClient?.data[0]?.id : null;
 
-        //console.log("customer_id: ", customer_id)
+        //// // // console.log("customer_id: ", customer_id)
         // const contactDataWithCustomerId = {
         //     ...contactData,
         //     customer_id: customer_id
@@ -126,7 +126,7 @@ export async function updateContact(formData: FormData) {
         .select();
 
         
-        console.log('Contacto editado:', editContact);
+        // // // console.log('Contacto editado:', editContact);
         
 
     } catch (error) {

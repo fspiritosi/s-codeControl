@@ -18,10 +18,10 @@ export function ModeToggle() {
   const { setTheme, systemTheme, theme } = useTheme()
 
   if (theme && theme !== 'system') {
-    console.log(theme)
+    // // // console.log(theme)
     cookies.set('theme', theme)
   } else if (systemTheme && theme === 'system') {
-    console.log(systemTheme)
+    // // // console.log(systemTheme)
     cookies.set('theme', systemTheme)
   }
 

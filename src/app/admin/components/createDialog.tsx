@@ -16,7 +16,7 @@ import { redirect } from 'next/navigation'
  
 export function CreateDialog({title, dbName}:any, ) {
 
-  console.log(dbName)
+  // // // console.log(dbName)
  
     async function createDiagram(formData:FormData) {
         'use server'
@@ -25,7 +25,7 @@ export function CreateDialog({title, dbName}:any, ) {
             name: formData.get('name')
         }
 
-        console.log(diagramFormData.name)
+        // // // console.log(diagramFormData.name)
         
         const { data, error } = await supabase
         .from(dbName)

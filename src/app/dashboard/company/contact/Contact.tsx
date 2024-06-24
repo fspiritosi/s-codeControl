@@ -21,8 +21,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
 export default function Contact() {
-  //const actualCompany = cookies().get('actualComp')
-  //const supabase = supabaseServer()
+  const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const router = useRouter()
   const [contacts, setContacts] = useState([''])
   const allCompany = useLoggedUserStore(state => state.allCompanies)
@@ -33,8 +32,8 @@ export default function Contact() {
       const { data, error } = await supabase
         .from('contacts')
         .select('*, customers(id, name)')
-        //.eq('is_active', true)
-        console.log("fetchContact: ", data)
+        .eq('company_id', actualCompany?.id)
+        
       if (error) {
         console.error('Error fetching customers:', error)
       } else {

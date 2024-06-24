@@ -203,7 +203,7 @@ export default function SimpleDocument({
               doc => doc.id === updateEntries[index].id_document_types,
             )?.mandatory
 
-            console.log('isMandatory', isMandatory)
+            // // // console.log('isMandatory', isMandatory)
 
             if (isMandatory) {
               const data = {
@@ -218,7 +218,7 @@ export default function SimpleDocument({
                 .eq('applies', idApplies || updateEntries[index].applies)
                 .eq('id_document_types', updateEntries[index].id_document_types)
 
-              console.log(error, 'error')
+              // // // console.log(error, 'error')
 
               if (error) {
                 toast({
@@ -245,7 +245,7 @@ export default function SimpleDocument({
               //   .eq('applies', idApplies || updateEntries[index].applies)
               //   .eq('id_document_types', updateEntries[index].id_document_types)
 
-              console.log('insert')
+              // // // console.log('insert')
 
               const { error } = await supabase.from(tableName).insert({
                 validity: updateEntries[index].validity,
@@ -258,7 +258,7 @@ export default function SimpleDocument({
               })
 
               if (error) {
-                console.log(error, 'error')
+                // // // console.log(error, 'error')
                 toast({
                   title: 'Error',
                   description:
