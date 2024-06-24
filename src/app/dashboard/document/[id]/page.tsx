@@ -120,10 +120,7 @@ export default async function page({ params }: { params: { id: string } }) {
 
     return validityDate <= oneMonthFromNow
   }
-  // // // console.log(
-    documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth(),
-    ' documents_employees?.[0]?.state =',
-  )
+  // console.log(documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth(), ' documents_employees?.[0]?.state =',)
 
   return (
     <section className="md:mx-7">
