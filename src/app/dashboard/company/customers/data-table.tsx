@@ -327,7 +327,7 @@ export function DataCustomers<TData, TValue>({
                                             </div>
                                         </div>
                                     ) : (
-                                        'No hay Equipos registrados'
+                                        'No hay Clientes registrados'
                                     )}
                                 </TableCell>
                             </TableRow>

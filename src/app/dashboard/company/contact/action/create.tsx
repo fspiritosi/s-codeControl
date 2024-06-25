@@ -1,17 +1,11 @@
 "use server"
-// import { Card, CardDescription, CardTitle } from '@/components/ui/card'
-// import { Input } from '@/components/ui/input'
-// import { Label } from '@/components/ui/label'
-// import { Button } from '@/components/ui/button'
+
 import { supabaseServer } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
 import { revalidatePath } from 'next/cache'
 import { redirect } from "next/navigation";
-//import {supabase} from "../../supabase/supabase"
-//import { useRouter} from "next/navigation"
+import { toast } from 'sonner'
 
-// export default async function registerCostumer() {
-//     //const router = useRouter()
 export async function createdContact(formData: FormData) {
     const supabase = supabaseServer()
 
@@ -40,32 +34,18 @@ export async function createdContact(formData: FormData) {
         contact_phone: formData.get('contact_phone'),
         contact_charge: formData.get('contact_charge'),
         company_id: Companies?.[0].id,
-        customer_id:formData.get('customer'),
+        customer_id: formData.get('customer'),
     }
-    // // // console.log("contact Data: ", contactData)
+    // console.log("contact Data: ", contactData)
 
     try {
+
         
-        //     // Guardar datos en la tabla 'contacts'
-        //const customer_id = newClient?.data ? newClient?.data[0]?.id : null;
-
-        // // // // console.log("customer_id: ", customer_id)
-        // const contactDataWithCustomerId = {
-        //     ...contactData,
-        //     customer_id: customer_id
-        // };
-
         const createdContact = await supabase.from('contacts').insert(contactData).select();
-
-        // // // console.log('Contacto creado:', createdContact);
-        //return {
-        //newClient,
-        //createdContact
-        //};
-
-
+        
     } catch (error) {
         console.error(error);
+        
     };
     redirect("/dashboard/company/actualCompany")
 }
@@ -79,59 +59,53 @@ export async function updateContact(formData: FormData) {
         .from('profile')
         .select('*')
         .eq('email', session?.user.email)
-    // // // console.log(data)
+    // console.log(data)
     const { data: Companies, error } = await supabase
         .from('company')
         .select(`*`)
         .eq('owner_id', data?.[0]?.id)
-    // // // console.log(Companies)
+    // console.log(Companies)
     let { data: share_company_users, error: sharedError } = await supabase
         .from('share_company_users')
         .select(`*`)
         .eq('profile_id', data?.[0]?.id)
-    // // // // console.log(share_company_users)
+    // console.log(share_company_users)
     revalidatePath('/dashboard/company/actualCompany')
 
 
     const id = formData.get("id")
-    // // // console.log("id de formulario: ", id)
-    
+    // console.log("id de formulario: ", id)
+
 
     const contactData = {
-        contact_name: formData.get ('contact_name') ,
+        contact_name: formData.get('contact_name'),
         constact_email: formData.get('contact_email'),
         contact_phone: formData.get('contact_phone'),
         contact_charge: formData.get('contact_charge'),
         company_id: Companies?.[0].id,
-        customer_id:formData.get('customer'),
+        customer_id: formData.get('customer'),
     }
-    // // // console.log("contact Data Update: ", contactData)
+    // console.log("contact Data Update: ", contactData)
     try {
-        // Guardar datos en la tabla 'customer'
-
-
-            // Guardar datos en la tabla 'contacts'
-        //const customer_id = editClient?.data ? editClient?.data[0]?.id : null;
-
-        //// // // console.log("customer_id: ", customer_id)
-        // const contactDataWithCustomerId = {
-        //     ...contactData,
-        //     customer_id: customer_id
-        // };
-
+        
         const editContact = await supabase
-        .from('contacts')
-        .update(contactData)
-        .eq("id",id)
-        .select();
+            .from('contacts')
+            .update(contactData)
+            .eq("id", id)
+            .select();
 
-        
-        // // // console.log('Contacto editado:', editContact);
-        
+
+        // console.log('Contacto editado:', editContact);
+
 
     } catch (error) {
         console.error(error);
     };
-    
+
     redirect("/dashboard/company/actualCompany")
 }
+
+
+
+
+

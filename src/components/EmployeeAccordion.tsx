@@ -104,10 +104,10 @@ export default function EmployeeAccordion() {
   const countryOptions = useCountriesStore(state => state.countries)
   const hierarchyOptions = useCountriesStore(state => state.hierarchy)
   const workDiagramOptions = useCountriesStore(state => state.workDiagram)
-  const contractorCompanies = useCountriesStore(state => state.customers?.filter((company:any) => company.company_id.toString() === profile?.actualCompany?.id))
-  const filteredContractorCompanies = contractorCompanies?.filter((company:any) => company.company_id.toString() === profile?.actualCompany?.id);
+  const contractorCompanies = useCountriesStore(state => state.customers?.filter((company:any) => company.company_id.toString() === profile?.actualCompany?.id && company.is_active))
+  // const filteredContractorCompanies = contractorCompanies?.filter((company:any) => company.company_id.toString() === profile?.actualCompany?.id && company.is_active);
   const { updateEmployee, createEmployee } = useEmployeesData()
-  const getEmployees = useLoggedUserStore(state => state.getEmployees)
+  const getEmployees = useLoggedUserStore((state:any) => state.getEmployees)
   const router = useRouter()
   // const { toast } = useToast()
   const url = process.env.NEXT_PUBLIC_PROJECT_URL
