@@ -92,6 +92,9 @@ export const columns: ColumnDef<Colum>[] = [
     id: 'actions',
     cell: ({ row }: { row: any }) => {
       const profile = useLoggedUserStore(state => state)
+      const employ = useLoggedUserStore(state => state.employeesToShow)
+      const equip = useLoggedUserStore(state => state.vehiclesToShow)
+      console.log(employ)
       let role = ''
       if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
         role = profile?.actualCompany?.owner_id?.role as string
@@ -176,6 +179,36 @@ export const columns: ColumnDef<Colum>[] = [
             description: message,
           })
         }
+
+        try {
+          const { data, error } = await supabase
+            .from('contacts')
+            .update({
+              is_active: true,
+              // termination_date: null,
+              // reason_for_termination: null,
+            })
+            .eq('customer_id', customers.id)
+            .eq('company_id', actualCompany?.id)
+            .select()
+
+          setIntegerModal(!integerModal)
+          //setInactive(data as any)
+          setShowDeletedCustomer(false)
+          toast({
+            variant: 'default',
+            title: 'Contacto reintegrado',
+            // description: `El cliente ${customers?.name} ha sido reintegrado`,
+          })
+        } catch (error: any) {
+          const message = await errorTranslate(error?.message)
+          toast({
+            variant: 'destructive',
+            title: 'Error al reintegrar el contacto',
+            description: message,
+          })
+        }
+
       }
 
       async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -201,7 +234,7 @@ export const columns: ColumnDef<Colum>[] = [
           toast({
             variant: 'default',
             title: 'Cliente eliminado',
-            description: `El cliente ${customers.name} ha sido dado de baja`,
+            // description: `El cliente ${customers.name} ha sido dado de baja`,
           })
         } catch (error: any) {
           const message = await errorTranslate(error?.message)
@@ -211,7 +244,78 @@ export const columns: ColumnDef<Colum>[] = [
             description: message,
           })
         }
+
+        try {
+          await supabase
+            .from('contacts')
+            .update({
+              is_active: false,
+              // termination_date: data.termination_date,
+              // reason_for_termination: data.reason_for_termination,
+            })
+            .eq('customer_id', customers.id)
+            .eq('company_id', actualCompany?.id)
+            .select()
+
+          setShowModal(!showModal)
+
+          toast({
+            variant: 'default',
+            title: 'Contacto eliminado',
+            // description: `El contacto ${contacts.} ha sido dado de baja`,
+          })
+        } catch (error: any) {
+          const message = await errorTranslate(error?.message)
+          toast({
+            variant: 'destructive',
+            title: 'Error al dar de baja el contacto',
+            description: message,
+          })
+        }
+          console.log(employ)
+          const updatedEmployeesPromises = employ.map((employee:any) => {
+            const updatedAllocatedTo = employee.allocated_to?.filter(
+                (clientId: string) => clientId !== customers.id
+            );
+            console.log(updatedAllocatedTo)
+            return supabase
+                .from('employees')
+                .update({ allocated_to: updatedAllocatedTo })
+                .eq('id', employee.id);
+        });
+
+        // Esperar a que todas las actualizaciones de empleados se completen
+        await Promise.all(updatedEmployeesPromises);
+
+      toast({
+          variant: 'default',
+          title: 'Empleados actualizados',
+          description: `Los empleados afectados han sido actualizados`,
+      });
+
+      console.log(equip)
+          const updatedEquipmentPromises = equip.map((equipment:any) => {
+            const updatedAllocatedTo = equipment.allocated_to?.filter(
+                (clientId: string) => clientId !== customers.id
+            );
+            console.log(updatedAllocatedTo)
+            return supabase
+                .from('vehicles')
+                .update({ allocated_to: updatedAllocatedTo })
+                .eq('id', equipment.id);
+        });
+
+        // Esperar a que todas las actualizaciones de empleados se completen
+        await Promise.all(updatedEquipmentPromises);
+
+      toast({
+          variant: 'default',
+          title: 'Equipos actualizados',
+          description: `Los equipos afectados han sido actualizados`,
+      });
       }
+
+      
       const handleToggleInactive = () => {
         setShowInactive(!showInactive)
       }
