@@ -27,26 +27,41 @@ export default function Contact() {
   const allCompany = useLoggedUserStore(state => state.allCompanies)
   const [showInactive, setShowInactive] = useState(false)
   const useSearch = useSearchParams()
-  useEffect(() => {
-    const fetchContacts = async () => {
-      const { data, error } = await supabase
-        .from('contacts')
-        .select('*, customers(id, name)')
-        .eq('company_id', actualCompany?.id)
-        
-      if (error) {
-        console.error('Error fetching customers:', error)
-      } else {
-        setContacts(data)
-      }
+  const fetchContacts = async () => {
+    const { data, error } = await supabase
+      .from('contacts')
+      .select('*, customers(id, name)')
+      .eq('company_id', actualCompany?.id)
+      
+    if (error) {
+      console.error('Error fetching customers:', error)
+    } else {
+      setContacts(data)
     }
+  }
+  useEffect(() => {
+    
 
     fetchContacts()
   }, [])
+
+
+const channels = supabase.channel('custom-all-channel')
+.on(
+  'postgres_changes',
+  { event: '*', schema: 'public', table: 'contacts' },
+  (payload) => {
+    console.log('Change received!', payload)
+    fetchContacts()
+  }
+)
+.subscribe()
   
   const handleCreateContact = () => {
     router.push(`/dashboard/company/contact/action?action=new`);
   };
+
+
 
   return (
     <div>

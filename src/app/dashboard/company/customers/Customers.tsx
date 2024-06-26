@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
 
+
 export default function Customers() {
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
   const router = useRouter()
@@ -28,25 +29,40 @@ export default function Customers() {
   const allCompany = useLoggedUserStore(state => state.allCompanies)
   const [showInactive, setShowInactive] = useState(false)
   const useSearch = useSearchParams()
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      const { data, error } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('company_id', actualCompany?.id)
-        
-      if (error) {
-        console.error('Error fetching customers:', error)
-      } else {
-        setCustomers(data)
-        
-      }
+
+  const   fetchCustomers = async () => {
+    const { data, error } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('company_id', actualCompany?.id)
+      
+    if (error) {
+      console.error('Error fetching customers:', error)
+    } else {
+      setCustomers(data)
       
     }
+    
+  }
+  useEffect(() => {
+    
     
 
     fetchCustomers()
   }, [])
+
+
+const channels = supabase.channel('custom-all-channel')
+.on(
+  'postgres_changes',
+  { event: '*', schema: 'public', table: 'customers' },
+  (payload) => {
+    console.log('Change received!', payload)
+    fetchCustomers()
+    
+  }
+)
+.subscribe()
 
   const handleCreateClient = () => {
     router.push(`/dashboard/company/customers/action?action=new`);
@@ -100,3 +116,4 @@ export default function Customers() {
     </div>
   )
 }
+
