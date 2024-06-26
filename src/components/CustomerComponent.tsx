@@ -109,10 +109,13 @@ export default function ClientRegister({ id }: { id: string }) {
             data.append("client_email", formData.client_email || "");
             data.append("client_phone", formData.client_phone);
             data.append("address", formData.address);
+            toast.loading("Creando cliente")
             await functionAction(data);
+            toast.dismiss();
             toast.success('Cliente creado satisfactoriamente!');
         } catch (error) {
             console.error('Error submitting form:', error);
+            toast.dismiss();
             toast.error('Error al crear el cliente')
         }
     };
