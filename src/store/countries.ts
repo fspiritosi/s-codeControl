@@ -24,6 +24,8 @@ interface State {
   mandatoryDocuments: MandatoryDocuments
   documentTypes: (company_id?: string) => void
   companyDocumentTypes: Equipo
+  fetchContractors: () => void // Añadir esta función al estado
+  subscribeToCustomersChanges: () => () => void
 }
 export const useCountriesStore = create<State>((set, get) => {
   const fetchCountrys = async () => {
@@ -113,6 +115,23 @@ export const useCountriesStore = create<State>((set, get) => {
     set({ mandatoryDocuments: groupedData })
   }
 
+  const subscribeToCustomersChanges = () => {
+    const channel = supabase.channel('custom-all-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'customers' },
+        (payload) => {
+          console.log('Change received!', payload)
+          fetchContractors() // Actualiza el estado global
+        }
+      )
+      .subscribe()
+
+    return () => {
+      channel.unsubscribe()
+    }
+  }
+
   fetchContractors()
   fetchworkDiagram()
   fetchHierarchy()
@@ -130,5 +149,7 @@ export const useCountriesStore = create<State>((set, get) => {
     documentTypes: (company_id?: string | undefined) =>
       documentTypes(company_id || ''),
     companyDocumentTypes: get()?.companyDocumentTypes,
+    fetchContractors, 
+    subscribeToCustomersChanges, 
   }
 })
