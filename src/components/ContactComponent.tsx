@@ -14,6 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { createdContact, updateContact } from "../app/dashboard/company/contact/action/create"
 import { cn } from '@/lib/utils'
+import { Toaster, toast } from 'sonner';
 
 type Action = 'view' | 'edit' | null;
 
@@ -57,6 +58,7 @@ export default function ContactRegister({ id }: { id: string }) {
       const { data, error } = await supabase
         .from('customers')
         .select('*')
+        .eq('is_active', true)
         .eq('company_id', actualCompany);
       if (error) {
         console.error('Error fetching customers:', error);
@@ -115,8 +117,10 @@ export default function ContactRegister({ id }: { id: string }) {
       data.append("contact_charge", formData.contact_charge);
       data.append("customer", formData.customer);
       await functionAction(data);
+      toast.success('Contacto creado satisfactoriamente!');
     } catch (error) {
       console.error('Error submitting form:', error);
+      toast.error('Error al crear el contacto')
     }
   };
 
@@ -233,8 +237,11 @@ export default function ContactRegister({ id }: { id: string }) {
             {action === "view" ? null : (
               <Button type="submit" className="mt-5">
                 {id ? "Editar Contacto" : "Registrar Contacto"}
+                
               </Button>
+              
             )}
+            <Toaster />
           </form>
         </div>
       </Card>

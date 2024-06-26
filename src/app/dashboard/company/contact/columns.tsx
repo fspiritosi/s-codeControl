@@ -67,6 +67,7 @@ import { Fragment, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { supabase } from '../../../../../supabase/supabase'
+import { Input } from '@/components/ui/input'
 const formSchema = z.object({
   reason_for_termination: z.string({
     required_error: 'La razón de la baja es requerida.',
@@ -153,8 +154,8 @@ export const columns: ColumnDef<Colum>[] = [
             .from('contacts')
             .update({
               is_active: true,
-              //termination_date: null,
-              //reason_for_termination: null,
+              termination_date: null,
+              reason_for_termination: null,
             })
             .eq('id', contacts.id)
             //.eq('company_id', actualCompany?.id)
@@ -189,8 +190,8 @@ export const columns: ColumnDef<Colum>[] = [
             .from('contacts')
             .update({
               is_active: false,
-              //termination_date: data.termination_date,
-              //reason_for_termination: data.reason_for_termination,
+              termination_date: data.termination_date,
+              reason_for_termination: data.reason_for_termination,
             })
             .eq('id', contacts.id)
             .eq('company_id', actualCompany?.id)
@@ -273,7 +274,16 @@ export const columns: ColumnDef<Colum>[] = [
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Motivo de Baja</FormLabel>
-                              <Select
+                              <Input
+                                    className="input w-[250px]"
+                                    placeholder="Escribe el motivo"
+                                    maxLength={80} // Limitar a 80 caracteres
+                                    value={field.value}
+                                    onChange={(e:any) => {
+                                      field.onChange(e.target.value)
+                                     }}
+                                   />
+                              {/* <Select
                                 onValueChange={field.onChange}
                                 defaultValue={field.value}
                               >
@@ -293,12 +303,12 @@ export const columns: ColumnDef<Colum>[] = [
                                     Otro
                                   </SelectItem>
                                 </SelectContent>
-                              </Select>
-                              <FormDescription>
+                              </Select> */}
+                              {/* <FormDescription>
                                 Elige la razón por la que deseas dar de baja el
                                 contacto
                               </FormDescription>
-                              <FormMessage />
+                              <FormMessage /> */}
                             </FormItem>
                           )}
                         />

@@ -21,6 +21,7 @@ import { columns } from '../app/dashboard/company/customers/action/columnsCustom
 import { DataEquipment } from '@/app/dashboard/equipment/data-equipment';
 import { columns as columns1 } from "../app/dashboard/equipment/columns";
 import { cn } from '@/lib/utils';
+import { Toaster, toast } from 'sonner';
 
 export default function ClientRegister({ id }: { id: string }) {
     const searchParams = useSearchParams();
@@ -109,8 +110,10 @@ export default function ClientRegister({ id }: { id: string }) {
             data.append("client_phone", formData.client_phone);
             data.append("address", formData.address);
             await functionAction(data);
+            toast.success('Cliente creado satisfactoriamente!');
         } catch (error) {
             console.error('Error submitting form:', error);
+            toast.error('Error al crear el cliente')
         }
     };
 
@@ -220,6 +223,7 @@ export default function ClientRegister({ id }: { id: string }) {
                             {id ? "Guardar" : "Registrar"}
                         </Button>
                     )}
+                    <Toaster />
                 </form>
             </div>
         </Card>

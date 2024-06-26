@@ -19,6 +19,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { useSearchParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { useCountriesStore } from '@/store/countries'
 
 export default function Contact() {
   const actualCompany = useLoggedUserStore(state => state.actualCompany)
@@ -27,26 +28,40 @@ export default function Contact() {
   const allCompany = useLoggedUserStore(state => state.allCompanies)
   const [showInactive, setShowInactive] = useState(false)
   const useSearch = useSearchParams()
-  useEffect(() => {
-    const fetchContacts = async () => {
-      const { data, error } = await supabase
-        .from('contacts')
-        .select('*, customers(id, name)')
-        .eq('company_id', actualCompany?.id)
-        
-      if (error) {
-        console.error('Error fetching customers:', error)
-      } else {
-        setContacts(data)
-      }
-    }
+  const fetchContacts = useCountriesStore(state => state.fetchContacts)
+  const subscribeToContactsChanges = useCountriesStore(state => state.subscribeToContactsChanges)
+  const contractorCompanies = useCountriesStore(state => state.contacts?.filter((company:any) => company.company_id.toString() === actualCompany?.id ))
+  console.log(contractorCompanies)
 
+  useEffect(() => {
     fetchContacts()
-  }, [])
+
+    const unsubscribe = subscribeToContactsChanges()
+
+    return () => {
+      unsubscribe()
+    }
+  }, [fetchContacts, subscribeToContactsChanges])
+
+
+const channels = supabase.channel('custom-all-channel')
+.on(
+  'postgres_changes',
+  { event: '*', schema: 'public', table: 'contacts' },
+  (payload) => {
+    console.log('Change received!', payload)
+    fetchContacts()
+    
+  }
+)
+.subscribe()
+  
   
   const handleCreateContact = () => {
     router.push(`/dashboard/company/contact/action?action=new`);
   };
+
+
 
   return (
     <div>
@@ -77,7 +92,7 @@ export default function Contact() {
             <CardContent>
               <DataContacts
                 columns={columns}
-                data={contacts || []}
+                data={contractorCompanies || []}
                 allCompany={allCompany}
                 showInactive={showInactive}
                 setShowInactive={setShowInactive}

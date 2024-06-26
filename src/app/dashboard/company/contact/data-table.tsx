@@ -420,7 +420,7 @@ export function DataContacts<TData, TValue>({
                       </div>
                     </div>
                   ) : (
-                    'No hay Equipos registrados'
+                    'No hay Contactos registrados'
                   )}
                 </TableCell>
               </TableRow>

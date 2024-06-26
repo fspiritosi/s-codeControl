@@ -395,7 +395,20 @@ export default function VehiclesForm2({ id }: { id: string }) {
   useEffect(() => {
     fetchData()
   }, [])
-  const contractorCompanies = useCountriesStore(state => state.customers.filter((company:any) => company.company_id.toString() === actualCompany?.id))
+  const fetchContractors = useCountriesStore(state => state.fetchContractors)
+  const subscribeToCustomersChanges = useCountriesStore(state => state.subscribeToCustomersChanges)
+  useEffect(() => {
+    fetchContractors()
+
+    const unsubscribe = subscribeToCustomersChanges()
+
+    return () => {
+      unsubscribe()
+    }
+  }, [fetchContractors, subscribeToCustomersChanges])
+  
+  const contractorCompanies = useCountriesStore(state => state.customers?.filter((company:any) => company.company_id.toString() === actualCompany?.id && company.is_active))
+  // console.log(contractorCompanies)
   const vehicleBrands = data.brand
   const types = data.tipe_of_vehicles?.map(e => e.name)
   const vehicleModels = data.models
