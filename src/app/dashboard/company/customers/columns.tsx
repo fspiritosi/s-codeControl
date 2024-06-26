@@ -52,6 +52,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/use-toast'
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions'
 import { cn } from '@/lib/utils'
@@ -222,8 +223,8 @@ export const columns: ColumnDef<Colum>[] = [
             .from('customers')
             .update({
               is_active: false,
-              // termination_date: data.termination_date,
-              // reason_for_termination: data.reason_for_termination,
+              termination_date: data.termination_date,
+              reason_for_termination: data.reason_for_termination,
             })
             .eq('id', customers.id)
             .eq('company_id', actualCompany?.id)
@@ -272,50 +273,50 @@ export const columns: ColumnDef<Colum>[] = [
             description: message,
           })
         }
-          console.log(employ)
-          const updatedEmployeesPromises = employ.map((employee:any) => {
-            const updatedAllocatedTo = employee.allocated_to?.filter(
-                (clientId: string) => clientId !== customers.id
-            );
-            console.log(updatedAllocatedTo)
-            return supabase
-                .from('employees')
-                .update({ allocated_to: updatedAllocatedTo })
-                .eq('id', employee.id);
+        console.log(employ)
+        const updatedEmployeesPromises = employ.map((employee: any) => {
+          const updatedAllocatedTo = employee.allocated_to?.filter(
+            (clientId: string) => clientId !== customers.id
+          );
+          console.log(updatedAllocatedTo)
+          return supabase
+            .from('employees')
+            .update({ allocated_to: updatedAllocatedTo })
+            .eq('id', employee.id);
         });
 
         // Esperar a que todas las actualizaciones de empleados se completen
         await Promise.all(updatedEmployeesPromises);
 
-      toast({
+        toast({
           variant: 'default',
           title: 'Empleados actualizados',
           description: `Los empleados afectados han sido actualizados`,
-      });
+        });
 
-      console.log(equip)
-          const updatedEquipmentPromises = equip.map((equipment:any) => {
-            const updatedAllocatedTo = equipment.allocated_to?.filter(
-                (clientId: string) => clientId !== customers.id
-            );
-            console.log(updatedAllocatedTo)
-            return supabase
-                .from('vehicles')
-                .update({ allocated_to: updatedAllocatedTo })
-                .eq('id', equipment.id);
+        console.log(equip)
+        const updatedEquipmentPromises = equip.map((equipment: any) => {
+          const updatedAllocatedTo = equipment.allocated_to?.filter(
+            (clientId: string) => clientId !== customers.id
+          );
+          console.log(updatedAllocatedTo)
+          return supabase
+            .from('vehicles')
+            .update({ allocated_to: updatedAllocatedTo })
+            .eq('id', equipment.id);
         });
 
         // Esperar a que todas las actualizaciones de empleados se completen
         await Promise.all(updatedEquipmentPromises);
 
-      toast({
+        toast({
           variant: 'default',
           title: 'Equipos actualizados',
           description: `Los equipos afectados han sido actualizados`,
-      });
+        });
       }
 
-      
+
       const handleToggleInactive = () => {
         setShowInactive(!showInactive)
       }
@@ -366,7 +367,23 @@ export const columns: ColumnDef<Colum>[] = [
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Motivo de Baja</FormLabel>
-                              <Select
+                              {/* <Controller
+                                name="reason_for_termination"
+                                control={form.control}
+                                defaultValue=""
+                                render={({ field.value }) => ( */}
+                                  <Input
+                                    className="input w-[250px]"
+                                    placeholder="Escribe el motivo"
+                                    maxLength={80} // Limitar a 80 caracteres
+                                    value={field.value}
+                                    onChange={(e:any) => {
+                                      field.onChange(e.target.value)
+                                     }}
+                                   />
+                                {/* )}
+                              /> */}
+                              {/* <Select
                                 onValueChange={field.onChange}
                                 defaultValue={field.value}
                               >
@@ -386,7 +403,7 @@ export const columns: ColumnDef<Colum>[] = [
                                     Otro
                                   </SelectItem>
                                 </SelectContent>
-                              </Select>
+                              </Select> */}
                               <FormDescription>
                                 Elige la razón por la que deseas dar de baja el
                                 equipo
@@ -549,7 +566,7 @@ export const columns: ColumnDef<Colum>[] = [
     accessorKey: 'client_phone',
     header: 'Teléfono',
   },
-  
+
   // },
   {
     accessorKey: 'showUnavaliableContacts',

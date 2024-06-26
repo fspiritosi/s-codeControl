@@ -21,12 +21,16 @@ interface State {
   hierarchy: generic[]
   workDiagram: generic[]
   customers: generic[]
+  contacts: generic[]
   mandatoryDocuments: MandatoryDocuments
   documentTypes: (company_id?: string) => void
   companyDocumentTypes: Equipo
   fetchContractors: () => void // Añadir esta función al estado
+  fetchContacts: () => void
   subscribeToCustomersChanges: () => () => void
+  subscribeToContactsChanges: () => () => void
 }
+
 export const useCountriesStore = create<State>((set, get) => {
   const fetchCountrys = async () => {
     const { data: fetchCountries, error } = await supabase
@@ -95,6 +99,19 @@ export const useCountriesStore = create<State>((set, get) => {
     }
   }
 
+  const fetchContacts = async () => {
+      const { data:contacts, error } = await supabase
+        .from('contacts')
+        .select('*, customers(id, name)')
+        // .eq('company_id', actualCompany?.id)
+        
+      if (error) {
+        console.error('Error fetching customers:', error)
+      } else {
+        set({ contacts: contacts || [] })
+      }
+    }
+
   const documentTypes = async (id: string | undefined) => {
     const company_id = id ?? useLoggedUserStore?.getState?.()?.actualCompany?.id
 
@@ -132,7 +149,25 @@ export const useCountriesStore = create<State>((set, get) => {
     }
   }
 
+  const subscribeToContactsChanges = () => {
+    const channel = supabase.channel('custom-all-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'contacts' },
+        (payload) => {
+          console.log('Change received!', payload)
+          fetchContacts() // Actualiza el estado global
+        }
+      )
+      .subscribe()
+
+    return () => {
+      channel.unsubscribe()
+    }
+  }
+
   fetchContractors()
+  fetchContacts()
   fetchworkDiagram()
   fetchHierarchy()
   fetchCountrys()
@@ -145,11 +180,14 @@ export const useCountriesStore = create<State>((set, get) => {
     hierarchy: get()?.hierarchy,
     workDiagram: get()?.workDiagram,
     customers: get()?.customers,
+    contacts: get()?.contacts || [],
     mandatoryDocuments: get()?.mandatoryDocuments,
     documentTypes: (company_id?: string | undefined) =>
       documentTypes(company_id || ''),
     companyDocumentTypes: get()?.companyDocumentTypes,
-    fetchContractors, 
+    fetchContractors,
+    fetchContacts, 
     subscribeToCustomersChanges, 
+    subscribeToContactsChanges,
   }
 })
