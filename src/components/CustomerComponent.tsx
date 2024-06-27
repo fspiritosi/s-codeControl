@@ -22,12 +22,14 @@ import { DataEquipment } from '@/app/dashboard/equipment/data-equipment';
 import { columns as columns1 } from "../app/dashboard/equipment/columns";
 import { cn } from '@/lib/utils';
 import { Toaster, toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 export default function ClientRegister({ id }: { id: string }) {
+    const router =useRouter()
     const searchParams = useSearchParams();
     const functionAction = id ? updateCustomer : createdCustomer;
     const [errors, setErrors] = useState<any>({});
-    const actualCompany = useLoggedUserStore(state => state.actualCompany);
+    const actualCompany = useLoggedUserStore(state => state.actualCompany?.id);
     const [action, setAction] = useState(searchParams.get('action'));
     const [readOnly, setReadOnly] = useState(action === 'edit' ? false : true);
     const [clientData, setClientData] = useState<any>(null);
@@ -40,7 +42,7 @@ export default function ClientRegister({ id }: { id: string }) {
             const filteredCustomersEquipment = equipment?.filter((customer: any) =>
                 customer.allocated_to && customer.allocated_to.includes(clientData?.id)
             );
-            // // // console.log(filteredCustomersEmployees)
+           
             const setActivesEmployees = useLoggedUserStore(
                 state => state.setActivesEmployees,
             )
@@ -101,22 +103,33 @@ export default function ClientRegister({ id }: { id: string }) {
     }, [action, id, setValue]);
 
     const onSubmit = async (formData: z.infer<typeof customersSchema>) => {
+        const data = new FormData();
+        data.append("id", id);
+        data.append("company_name", formData.company_name);
+        data.append("client_cuit", formData.client_cuit);
+        data.append("client_email", formData.client_email || "");
+        data.append("client_phone", formData.client_phone);
+        data.append("address", formData.address);
+        const company_id = actualCompany;
+        data.append("company_id", company_id as string);
+        toast.loading("Creando cliente")
         try {
-            const data = new FormData();
-            data.append("id", id);
-            data.append("company_name", formData.company_name);
-            data.append("client_cuit", formData.client_cuit);
-            data.append("client_email", formData.client_email || "");
-            data.append("client_phone", formData.client_phone);
-            data.append("address", formData.address);
-            toast.loading("Creando cliente")
-            await functionAction(data);
-            toast.dismiss();
-            toast.success('Cliente creado satisfactoriamente!');
-        } catch (error) {
-            console.error('Error submitting form:', error);
+            const response = await functionAction(data);
+            
+            
+            if (response.status === 201) {
+                toast.dismiss();
+                toast.success('Cliente creado satisfactoriamente!');
+                router.push("/dashboard/company/actualCompany")
+            } else {
+                toast.dismiss();
+                toast.error(response.body);
+            }
+        } catch (errors) {
+            // console.error('Error submitting form:', error);
             toast.dismiss();
             toast.error('Error al crear el cliente')
+            
         }
     };
 

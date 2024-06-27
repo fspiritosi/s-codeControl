@@ -51,7 +51,7 @@ const channels = supabase.channel('custom-all-channel')
   'postgres_changes',
   { event: '*', schema: 'public', table: 'customers' },
   (payload) => {
-    console.log('Change received!', payload)
+    
     fetchContractors()
     
   }

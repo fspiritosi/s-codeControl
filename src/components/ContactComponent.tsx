@@ -15,12 +15,14 @@ import { useForm } from 'react-hook-form';
 import { createdContact, updateContact } from "../app/dashboard/company/contact/action/create"
 import { cn } from '@/lib/utils'
 import { Toaster, toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 type Action = 'view' | 'edit' | null;
 
 type ContactFormValues = z.infer<typeof contactSchema>;
 
 export default function ContactRegister({ id }: { id: string }) {
+  const router =useRouter()
   const functionAction = id ? updateContact : createdContact;
   const searchParams = useSearchParams();
   const actualCompany = useLoggedUserStore(state => state.actualCompany?.id);
@@ -98,10 +100,7 @@ export default function ContactRegister({ id }: { id: string }) {
 
   const customerValue = watch('customer');
 
-  // // // console.log("clientData: ", clientData);
-  // // // console.log("contactData: ", contactData);
-  // // // console.log("ID: ", id);
-  // // // console.log("Selected Customer: ", customerValue);
+  
 
   const onSubmit = async (formData: ContactFormValues) => {
     try {
@@ -116,16 +115,28 @@ export default function ContactRegister({ id }: { id: string }) {
       data.append("contact_phone", formData.contact_phone);
       data.append("contact_charge", formData.contact_charge);
       data.append("customer", formData.customer);
+      const company_id = actualCompany;
+      data.append("company_id", company_id as string);
       toast.loading("Creando contacto")
-      await functionAction(data);
-      toast.dismiss();
-      toast.success('Contacto creado satisfactoriamente!');
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      toast.dismiss();
-      toast.error('Error al crear el contacto')
+      
+        const response = await functionAction(data);
+        
+        
+        if (response.status === 201) {
+            toast.dismiss();
+            toast.success('Contacto creado satisfactoriamente!');
+            router.push("/dashboard/company/actualCompany")
+        } else {
+            toast.dismiss();
+            toast.error(response.body);
+        }
+    } catch (errors) {
+        // console.error('Error submitting form:', error);
+        toast.dismiss();
+        toast.error('Error al crear el cliente')
+        
     }
-  };
+  }
 
   return (
     <section className={cn('md:mx-7')}>
