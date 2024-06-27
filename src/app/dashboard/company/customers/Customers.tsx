@@ -1,44 +1,31 @@
-"use client"
-import { MissingDocumentList } from '@/components/MissingDocumentList'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { columns } from './columns'
-import { DataCustomers } from './data-table'
-import { supabase } from '../../../../../supabase/supabase'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useState, useEffect } from "react"
-import { useLoggedUserStore } from '@/store/loggedUser'
-import Link from 'next/link'
-import { buttonVariants } from '@/components/ui/button'
-import { useSearchParams } from 'next/navigation'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { useCountriesStore } from '@/store/countries'
-
+'use client';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useCountriesStore } from '@/store/countries';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { supabase } from '../../../../../supabase/supabase';
+import { columns } from './columns';
+import { DataCustomers } from './data-table';
 
 export default function Customers() {
-  const actualCompany = useLoggedUserStore(state => state.actualCompany)
-  const router = useRouter()
-  const [customers, setCustomers] = useState([''])
-  const allCompany = useLoggedUserStore(state => state.allCompanies)
-  const [showInactive, setShowInactive] = useState(false)
-  const useSearch = useSearchParams()
-  const fetchContractors = useCountriesStore(state => state.fetchContractors)
-  const subscribeToCustomersChanges = useCountriesStore(state => state.subscribeToCustomersChanges)
-  const contractorCompanies = useCountriesStore(state => state.customers?.filter((company:any) => company.company_id.toString() === actualCompany?.id ))
-  
-  
-  
-  useEffect(() => {
-    fetchContractors()
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
+  const router = useRouter();
+  const [customers, setCustomers] = useState(['']);
+  const allCompany = useLoggedUserStore((state) => state.allCompanies);
+  const [showInactive, setShowInactive] = useState(false);
+  const useSearch = useSearchParams();
+  const fetchContractors = useCountriesStore((state) => state.fetchContractors);
+  const subscribeToCustomersChanges = useCountriesStore((state) => state.subscribeToCustomersChanges);
+  const contractorCompanies = useCountriesStore((state) =>
+    state.customers?.filter((company: any) => company.company_id.toString() === actualCompany?.id)
+  );
 
-    const unsubscribe = subscribeToCustomersChanges()
+  useEffect(() => {
+    fetchContractors();
+
+    const unsubscribe = subscribeToCustomersChanges();
 
     return () => {
       unsubscribe()
@@ -75,21 +62,12 @@ const channels = supabase.channel('custom-all-channel')
               {/* <div className="grid gap-1"> */}
               <CardTitle className="text-2xl font-bold tracking-tight flex justify-between">
                 Clientes
-
-
-
-
                 {/* </div> */}
-                <Button
-                  className="ml-auto flex justify-between mb-2"
-                  onClick={handleCreateClient}
-                >
+                <Button className="ml-auto flex justify-between mb-2" onClick={handleCreateClient}>
                   Registrar Cliente
                 </Button>
-              </CardTitle >
-              <CardDescription className="text-muted-foreground">
-                Todos tus Clientes
-              </CardDescription>
+              </CardTitle>
+              <CardDescription className="text-muted-foreground">Todos tus Clientes</CardDescription>
             </CardHeader>
 
             <CardContent>
@@ -102,13 +80,10 @@ const channels = supabase.channel('custom-all-channel')
                 setShowInactive={setShowInactive}
               />
             </CardContent>
-
           </div>
           <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
         </Card>
-
       </section>
     </div>
-  )
+  );
 }
-

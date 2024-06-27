@@ -1,5 +1,5 @@
-import { Card } from '@/components/ui/card'
-import { Mail } from './components/mail'
+import { Card } from '@/components/ui/card';
+import { Mail } from './components/mail';
 
 export default function MailPage() {
   return (
@@ -8,5 +8,5 @@ export default function MailPage() {
         <Mail />
       </Card>
     </div>
-  )
+  );
 }

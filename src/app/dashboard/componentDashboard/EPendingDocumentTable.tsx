@@ -1,11 +1,10 @@
-'use client'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { ExpiredColums } from '../colums'
-import { ExpiredDataTable } from '../data-table'
+'use client';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { ExpiredColums } from '../colums';
+import { ExpiredDataTable } from '../data-table';
 
 function EPendingDocumentTable() {
-  const employees = useLoggedUserStore(state => state.pendingDocuments)
-    ?.employees
+  const employees = useLoggedUserStore((state) => state.pendingDocuments)?.employees;
   return (
     <ExpiredDataTable
       data={employees || []}
@@ -13,7 +12,7 @@ function EPendingDocumentTable() {
       pending={true}
       localStorageName="dashboardPendingColumns"
     />
-  )
+  );
 }
 
-export default EPendingDocumentTable
+export default EPendingDocumentTable;

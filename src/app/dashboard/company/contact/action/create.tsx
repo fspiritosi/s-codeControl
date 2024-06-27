@@ -1,4 +1,4 @@
-"use server"
+'use server';
 
 import { supabaseServer } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
@@ -8,9 +8,11 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 
 export async function createdContact(formData: FormData) {
-    const supabase = supabaseServer()
+  const supabase = supabaseServer();
 
-    const { data: { session }, } = await supabase.auth.getSession()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
     const { data } = await supabase
         .from('profile')
@@ -75,9 +77,11 @@ export async function createdContact(formData: FormData) {
 }
 
 export async function updateContact(formData: FormData) {
-    const supabase = supabaseServer()
+  const supabase = supabaseServer();
 
-    const { data: { session }, } = await supabase.auth.getSession()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
     const { data } = await supabase
         .from('profile')
@@ -130,8 +134,3 @@ export async function updateContact(formData: FormData) {
 
     redirect("/dashboard/company/actualCompany")
 }
-
-
-
-
-

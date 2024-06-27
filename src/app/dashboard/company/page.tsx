@@ -1,41 +1,37 @@
-'use client'
-import ModalCompany from '@/components/ModalCompany'
-import { useCompanyData } from '@/hooks/useCompanyData'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { company } from '@/types/types'
-import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import Modal from 'react-modal'
-import { supabase } from '../../../../supabase/supabase'
-import { CardsGrid } from '../../../components/CardsGrid'
+'use client';
+import ModalCompany from '@/components/ModalCompany';
+import { useCompanyData } from '@/hooks/useCompanyData';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { company } from '@/types/types';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import Modal from 'react-modal';
+import { supabase } from '../../../../supabase/supabase';
+import { CardsGrid } from '../../../components/CardsGrid';
 
 function setupModalAppElement() {
   if (window.document) {
-    Modal.setAppElement('body')
+    Modal.setAppElement('body');
   }
 }
 
 export default function allCompany() {
-  const router = useRouter()
-  const { fetchCompanies } = useCompanyData()
+  const router = useRouter();
+  const { fetchCompanies } = useCompanyData();
 
   useEffect(() => {
-    setupModalAppElement()
+    setupModalAppElement();
     supabase
       .channel('custom-all-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'company' },
-        payload => {
-          fetchCompanies()
-        },
-      )
-      .subscribe()
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'company' }, (payload) => {
+        fetchCompanies();
+      })
+      .subscribe();
 
     // return () => {
     //   subscription.unsubscribe()
     // }
-  }, [])
+  }, []);
 
   useEffect(() => {
     const channels = supabase
@@ -44,37 +40,37 @@ export default function allCompany() {
         'postgres_changes',
         { event: '*', schema: 'storage', table: 'objects' },
 
-        payload => {
-          fetchCompanies()
-        },
+        (payload) => {
+          fetchCompanies();
+        }
       )
-      .subscribe()
-  }, [])
+      .subscribe();
+  }, []);
 
-  const [modalIsOpen, setModalIsOpen] = useState(false)
-  const [selectedCard, setSelectedCard] = useState<company | null>(null)
-  const allCompanies = useLoggedUserStore(state => state.allCompanies)
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<company | null>(null);
+  const allCompanies = useLoggedUserStore((state) => state.allCompanies);
 
   const handleCardClick = (card: any) => {
-    setSelectedCard(card)
-    setModalIsOpen(true)
-  }
+    setSelectedCard(card);
+    setModalIsOpen(true);
+  };
 
   const clearSelectedCard = () => {
-    setSelectedCard(null)
-  }
+    setSelectedCard(null);
+  };
 
   const handleCloseModal = () => {
-    setModalIsOpen(false)
-    router.refresh()
-  }
+    setModalIsOpen(false);
+    router.refresh();
+  };
 
   if (!allCompanies) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div>Cargando...</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -84,13 +80,7 @@ export default function allCompany() {
       <div className=" rounded-lg shadow-2xl p-4">
         <CardsGrid allCompanies={allCompanies} onCardClick={handleCardClick} />
       </div>
-      {modalIsOpen && (
-        <ModalCompany
-          isOpen={modalIsOpen}
-          onClose={handleCloseModal}
-          selectedCard={selectedCard}
-        />
-      )}
+      {modalIsOpen && <ModalCompany isOpen={modalIsOpen} onClose={handleCloseModal} selectedCard={selectedCard} />}
     </section>
-  )
+  );
 }

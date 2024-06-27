@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import Link from 'next/link'
-import CardButton from './CardButton'
-import CardNumber from './CardNumber'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from 'next/link';
+import CardButton from './CardButton';
+import CardNumber from './CardNumber';
 
 function CardsGrid() {
   return (
@@ -34,10 +34,7 @@ function CardsGrid() {
             <CardTitle>Empleados No Avalados</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-around items-center">
-            <CardNumber
-              nameData="Empleados No Avalados"
-              variant="destructive"
-            />
+            <CardNumber nameData="Empleados No Avalados" variant="destructive" />
             <Link href="/dashboard/employee">
               <CardButton functionName="noEndorsedEmployees" />
             </Link>
@@ -72,10 +69,7 @@ function CardsGrid() {
             <CardTitle>Equipos No Avalados</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-around items-center">
-            <CardNumber
-              nameData="Vehículos No Avalados"
-              variant="destructive"
-            />
+            <CardNumber nameData="Vehículos No Avalados" variant="destructive" />
             <Link href="/dashboard/equipment">
               <CardButton functionName="noEndorsedVehicles" />
             </Link>
@@ -83,7 +77,7 @@ function CardsGrid() {
         </Card>
       </div>
     </>
-  )
+  );
 }
 
-export default CardsGrid
+export default CardsGrid;

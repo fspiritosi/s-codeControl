@@ -1,21 +1,14 @@
-'use client'
+'use client';
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -27,10 +20,10 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from '@tanstack/react-table'
-import { useEffect, useState } from 'react'
+} from '@tanstack/react-table';
+import { useEffect, useState } from 'react';
 
-import { Badge } from '@/components/ui/badge'
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -39,17 +32,17 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useLoggedUserStore } from '@/store/loggedUser'
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useLoggedUserStore } from '@/store/loggedUser';
 
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[] | any
-  data: TData[]
-  setInactiveEmployees: () => void
-  setActivesEmployees: () => void
-  showDeletedEmployees: boolean
-  setShowDeletedEmployees: (showDeletedEmployees: boolean) => void
+  columns: ColumnDef<TData, TValue>[] | any;
+  data: TData[];
+  setInactiveEmployees: () => void;
+  setActivesEmployees: () => void;
+  showDeletedEmployees: boolean;
+  setShowDeletedEmployees: (showDeletedEmployees: boolean) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -60,7 +53,7 @@ export function DataTable<TData, TValue>({
   showDeletedEmployees,
   setShowDeletedEmployees,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([])
+  const [sorting, setSorting] = useState<SortingState>([]);
   const defaultVisibleColumns = [
     'full_name',
     'status',
@@ -72,69 +65,55 @@ export function DataTable<TData, TValue>({
     'normal_hours',
     'type_of_contract',
     'allocated_to',
-  ]
+  ];
 
   const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
     if (typeof window !== 'undefined') {
-      const valorGuardado = JSON.parse(
-        localStorage.getItem('employeeColumns') || '[]',
-      )
-      return valorGuardado.length ? valorGuardado : defaultVisibleColumns
+      const valorGuardado = JSON.parse(localStorage.getItem('employeeColumns') || '[]');
+      return valorGuardado.length ? valorGuardado : defaultVisibleColumns;
     }
-    return defaultVisibleColumns
-  })
+    return defaultVisibleColumns;
+  });
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(
-        'employeeColumns',
-        JSON.stringify(defaultVisibleColumns1),
-      )
+      localStorage.setItem('employeeColumns', JSON.stringify(defaultVisibleColumns1));
     }
-  }, [defaultVisibleColumns1])
+  }, [defaultVisibleColumns1]);
 
   useEffect(() => {
-    const valorGuardado = JSON.parse(
-      localStorage.getItem('employeeColumns') || '[]',
-    )
+    const valorGuardado = JSON.parse(localStorage.getItem('employeeColumns') || '[]');
     if (valorGuardado.length) {
       setColumnVisibility(
         columns.reduce((acc: any, column: any) => {
-          acc[column.accessorKey] = valorGuardado.includes(column.accessorKey)
-          return acc
-        }, {}),
-      )
+          acc[column.accessorKey] = valorGuardado.includes(column.accessorKey);
+          return acc;
+        }, {})
+      );
     }
-  }, [columns])
+  }, [columns]);
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     columns.reduce((acc: any, column: any) => {
-      acc[column.accessorKey] = defaultVisibleColumns.includes(
-        column.accessorKey,
-      )
-      return acc
-    }, {}),
-  )
+      acc[column.accessorKey] = defaultVisibleColumns.includes(column.accessorKey);
+      return acc;
+    }, {})
+  );
   // const [showDeletedEmployees, setShowDeletedEmployees] = useState(false)
-  const handleColumnVisibilityChange = (
-    columnId: string,
-    isVisible: boolean,
-  ) => {
-    setColumnVisibility(prev => ({
+  const handleColumnVisibilityChange = (columnId: string, isVisible: boolean) => {
+    setColumnVisibility((prev) => ({
       ...prev,
       [columnId]: isVisible,
-    }))
+    }));
     setDefaultVisibleColumns1((prev: any) => {
-      const newVisibleColumns = isVisible
-        ? [...prev, columnId]
-        : prev.filter((id: string) => id !== columnId)
-      localStorage.setItem('employeeColumns', JSON.stringify(newVisibleColumns))
-      return newVisibleColumns
-    })
-  }
+      const newVisibleColumns = isVisible ? [...prev, columnId] : prev.filter((id: string) => id !== columnId);
+      localStorage.setItem('employeeColumns', JSON.stringify(newVisibleColumns));
+      return newVisibleColumns;
+    });
+  };
 
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const loader = useLoggedUserStore(state => state.isLoading)
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const loader = useLoggedUserStore((state) => state.isLoading);
 
   const allOptions = {
     document_type: createOptions('document_type'),
@@ -152,11 +131,11 @@ export function DataTable<TData, TValue>({
     hierrical_position: createOptions('hierrical_position'),
     workflow_diagram: createOptions('workflow_diagram'),
     status: createOptions('status'),
-  }
+  };
 
   function createOptions(key: string) {
-    const values = data?.flatMap((item: any) => item?.[key])
-    return ['Todos', ...Array.from(new Set(values))]
+    const values = data?.flatMap((item: any) => item?.[key]);
+    return ['Todos', ...Array.from(new Set(values))];
   }
 
   const selectHeader = {
@@ -235,7 +214,7 @@ export function DataTable<TData, TValue>({
       option: allOptions.status,
       label: 'Estado',
     },
-  }
+  };
 
   let table = useReactTable({
     data,
@@ -252,12 +231,12 @@ export function DataTable<TData, TValue>({
       columnVisibility,
       columnFilters,
     },
-  })
+  });
 
   const handleClearFilters = () => {
-    table.getAllColumns().forEach(column => {
-      column.setFilterValue('')
-    })
+    table.getAllColumns().forEach((column) => {
+      column.setFilterValue('');
+    });
 
     setSelectValues({
       hierarchical_position: 'Todos',
@@ -274,39 +253,28 @@ export function DataTable<TData, TValue>({
       city: 'Todos',
       hierrical_position: 'Todos',
       status: 'Todos',
-    })
-  }
+    });
+  };
 
-  const maxRows = ['20', '40', '60', '80', '100']
+  const maxRows = ['20', '40', '60', '80', '100'];
 
-  const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(
-    {},
-  )
+  const [selectValues, setSelectValues] = useState<{ [key: string]: string }>({});
 
   return (
     <div className="w-full grid grid-cols-1">
       <div className="flex items-center py-4 flex-wrap gap-y-2 overflow-auto">
         <Input
           placeholder="Buscar por nombre"
-          value={
-            (table.getColumn('full_name')?.getFilterValue() as string) ?? ''
-          }
-          onChange={event =>
-            table.getColumn('full_name')?.setFilterValue(event.target.value)
-          }
+          value={(table.getColumn('full_name')?.getFilterValue() as string) ?? ''}
+          onChange={(event) => table.getColumn('full_name')?.setFilterValue(event.target.value)}
           className="max-w-sm"
         />
-        <Button
-          variant="outline"
-          size="default"
-          className="ml-2"
-          onClick={handleClearFilters}
-        >
+        <Button variant="outline" size="default" className="ml-2" onClick={handleClearFilters}>
           Limpiar filtros
         </Button>
 
         <div className=" flex gap-2 ml-2 flex-wrap">
-          <Select onValueChange={e => table.setPageSize(Number(e))}>
+          <Select onValueChange={(e) => table.setPageSize(Number(e))}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Cantidad de filas" />
             </SelectTrigger>
@@ -326,19 +294,13 @@ export function DataTable<TData, TValue>({
             <DropdownMenuTrigger asChild>
               <Button variant="outline">Columnas</Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="max-h-[50dvh] overflow-y-auto "
-            >
+            <DropdownMenuContent align="end" className="max-h-[50dvh] overflow-y-auto ">
               {table
                 .getAllColumns()
-                ?.filter(column => column.getCanHide())
-                ?.map(column => {
-                  if (
-                    column.id === 'actions' ||
-                    typeof column.columnDef.header !== 'string'
-                  ) {
-                    return null
+                ?.filter((column) => column.getCanHide())
+                ?.map((column) => {
+                  if (column.id === 'actions' || typeof column.columnDef.header !== 'string') {
+                    return null;
                   }
 
                   if (column.id === 'showUnavaliableEmployees') {
@@ -347,14 +309,14 @@ export function DataTable<TData, TValue>({
                         key={column.id}
                         className="capitalize text-red-400"
                         checked={showDeletedEmployees}
-                        onCheckedChange={value => {
-                          setShowDeletedEmployees(!!value)
-                          value ? setInactiveEmployees() : setActivesEmployees()
+                        onCheckedChange={(value) => {
+                          setShowDeletedEmployees(!!value);
+                          value ? setInactiveEmployees() : setActivesEmployees();
                         }}
                       >
                         {column.columnDef.header}
                       </DropdownMenuCheckboxItem>
-                    )
+                    );
                   }
 
                   return (
@@ -362,13 +324,11 @@ export function DataTable<TData, TValue>({
                       key={column.id}
                       className="capitalize"
                       checked={column.getIsVisible()}
-                      onCheckedChange={value =>
-                        handleColumnVisibilityChange(column.id, !!value)
-                      }
+                      onCheckedChange={(value) => handleColumnVisibilityChange(column.id, !!value)}
                     >
                       {column.columnDef.header}
                     </DropdownMenuCheckboxItem>
-                  )
+                  );
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -377,14 +337,11 @@ export function DataTable<TData, TValue>({
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups()?.map(headerGroup => (
+            {table.getHeaderGroups()?.map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers?.map(header => {
+                {headerGroup.headers?.map((header) => {
                   return (
-                    <TableHead
-                      className="text-center text-balance"
-                      key={header.id}
-                    >
+                    <TableHead className="text-center text-balance" key={header.id}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -393,15 +350,9 @@ export function DataTable<TData, TValue>({
                                 <div className="flex justify-center">
                                   <Input
                                     placeholder="Buscar por afectación"
-                                    value={
-                                      table
-                                        .getColumn('allocated_to')
-                                        ?.getFilterValue() as string
-                                    }
-                                    onChange={event =>
-                                      table
-                                        .getColumn('allocated_to')
-                                        ?.setFilterValue(event.target.value)
+                                    value={table.getColumn('allocated_to')?.getFilterValue() as string}
+                                    onChange={(event) =>
+                                      table.getColumn('allocated_to')?.setFilterValue(event.target.value)
                                     }
                                     className="max-w-sm"
                                   />
@@ -410,46 +361,34 @@ export function DataTable<TData, TValue>({
                                 <div className="flex justify-center">
                                   <Select
                                     value={selectValues[header.id]}
-                                    onValueChange={event => {
+                                    onValueChange={(event) => {
                                       if (event === 'Todos') {
-                                        table
-                                          .getColumn(header.id)
-                                          ?.setFilterValue('')
+                                        table.getColumn(header.id)?.setFilterValue('');
                                         setSelectValues({
                                           ...selectValues,
                                           [header.id]: event,
-                                        })
-                                        return
+                                        });
+                                        return;
                                       }
-                                      table
-                                        .getColumn(header.id)
-                                        ?.setFilterValue(event)
+                                      table.getColumn(header.id)?.setFilterValue(event);
                                       setSelectValues({
                                         ...selectValues,
                                         [header.id]: event,
-                                      })
+                                      });
                                     }}
                                   >
                                     <SelectTrigger className="">
-                                      <SelectValue
-                                        placeholder={
-                                          header.column.columnDef
-                                            .header as string
-                                        }
-                                      />
+                                      <SelectValue placeholder={header.column.columnDef.header as string} />
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectGroup>
-                                        {selectHeader[
-                                          header.id as keyof typeof selectHeader
-                                        ]?.option?.map((option: string) => (
-                                          <SelectItem
-                                            key={option}
-                                            value={option}
-                                          >
-                                            {option}
-                                          </SelectItem>
-                                        ))}
+                                        {selectHeader[header.id as keyof typeof selectHeader]?.option?.map(
+                                          (option: string) => (
+                                            <SelectItem key={option} value={option}>
+                                              {option}
+                                            </SelectItem>
+                                          )
+                                        )}
                                       </SelectGroup>
                                     </SelectContent>
                                   </Select>
@@ -458,30 +397,25 @@ export function DataTable<TData, TValue>({
                             ) : (
                               header.column.columnDef.header
                             ),
-                            header.getContext(),
+                            header.getContext()
                           )}
                     </TableHead>
-                  )
+                  );
                 })}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody className="max-w-[50vw] overflow-x-auto">
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows?.map(row => {
+              table.getRowModel().rows?.map((row) => {
                 return (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
-                  >
-                    {row.getVisibleCells()?.map(cell => {
-                      let is_active = (cell.row.original as any).is_active
+                  <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                    {row.getVisibleCells()?.map((cell) => {
+                      let is_active = (cell.row.original as any).is_active;
                       return (
                         <TableCell
                           key={cell.id}
-                          className={`text-center whitespace-nowrap ${
-                            is_active ? '' : 'text-red-500'
-                          }`}
+                          className={`text-center whitespace-nowrap ${is_active ? '' : 'text-red-500'}`}
                         >
                           {cell.column.id === 'picture' ? (
                             <img
@@ -490,33 +424,21 @@ export function DataTable<TData, TValue>({
                               className="size-10 rounded-full object-cover"
                             />
                           ) : cell.column.id === 'status' ? (
-                            <Badge
-                              variant={
-                                cell.getValue() === 'No avalado'
-                                  ? 'destructive'
-                                  : 'success'
-                              }
-                            >
+                            <Badge variant={cell.getValue() === 'No avalado' ? 'destructive' : 'success'}>
                               {cell.getValue() as React.ReactNode}
                             </Badge>
                           ) : (
-                            (flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            ) as React.ReactNode)
+                            (flexRender(cell.column.columnDef.cell, cell.getContext()) as React.ReactNode)
                           )}
                         </TableCell>
-                      )
+                      );
                     })}
                   </TableRow>
-                )
+                );
               })
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={columns.length} className="h-24 text-center">
                   {loader ? (
                     <div className="flex flex-col gap-3">
                       <div className="flex justify-between">
@@ -550,23 +472,13 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
+        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
           Anterior
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
+        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
           Siguiente
         </Button>
       </div>
     </div>
-  )
+  );
 }

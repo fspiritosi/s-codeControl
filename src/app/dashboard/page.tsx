@@ -1,16 +1,9 @@
-import { MissingDocumentList } from '@/components/MissingDocumentList'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import CardsGrid from './componentDashboard/CardsGrid'
-import DocumentsTable from './componentDashboard/DocumentsTable'
-import EmployeesTable from './componentDashboard/EmployeesTable'
+import { MissingDocumentList } from '@/components/MissingDocumentList';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import CardsGrid from './componentDashboard/CardsGrid';
+import DocumentsTable from './componentDashboard/DocumentsTable';
+import EmployeesTable from './componentDashboard/EmployeesTable';
 
 export default async function Home() {
   // const actualCompany = cookies().get('actualComp')
@@ -24,7 +17,7 @@ export default async function Home() {
   // // // // console.log(company, 'company')
 
   return (
-    <div className=''>
+    <div className="">
       <section className="grid sm:grid-cols-2 grid-cols-1 gap-6 mx-7">
         {false && <CardsGrid />}
         <CardTitle className="text-[2vw]">Bienvenido a tu dashboard</CardTitle>
@@ -34,12 +27,8 @@ export default async function Home() {
           <div>
             <CardHeader className="flex flex-row items-start bg-muted dark:bg-muted/50 border-b-2">
               <div className="grid gap-1">
-                <CardTitle className="flex items-center text-lg ">
-                  Proximos vencimientos
-                </CardTitle>
-                <CardDescription className="capitalize">
-                  Documentos que vencen en los proximos 30 dias
-                </CardDescription>
+                <CardTitle className="flex items-center text-lg ">Proximos vencimientos</CardTitle>
+                <CardDescription className="capitalize">Documentos que vencen en los proximos 30 dias</CardDescription>
               </div>
             </CardHeader>
 
@@ -68,5 +57,5 @@ export default async function Home() {
         </section>
       </section>
     </div>
-  )
+  );
 }

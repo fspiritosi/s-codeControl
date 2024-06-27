@@ -1,4 +1,4 @@
-"use server"
+'use server';
 
 import { supabaseServer } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
@@ -84,9 +84,11 @@ export async function createdCustomer(formData: FormData) {
 }
 
 export async function updateCustomer(formData: FormData) {
-    const supabase = supabaseServer()
+  const supabase = supabaseServer();
 
-    const { data: { session }, } = await supabase.auth.getSession()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
     const { data } = await supabase
         .from('profile')
