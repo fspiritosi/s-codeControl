@@ -116,7 +116,7 @@ export default function ContactRegister({ id }: { id: string }) {
       data.append("contact_phone", formData.contact_phone);
       data.append("contact_charge", formData.contact_charge);
       data.append("customer", formData.customer);
-      toast.loading("Creando cliente")
+      toast.loading("Creando contacto")
       await functionAction(data);
       toast.dismiss();
       toast.success('Contacto creado satisfactoriamente!');
