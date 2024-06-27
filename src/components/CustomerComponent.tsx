@@ -9,7 +9,7 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { supabase } from "../../supabase/supabase";
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { customersSchema } from '@/zodSchemas/schemas';
@@ -21,8 +21,6 @@ import { Toaster, toast } from 'sonner';
 import { z } from 'zod';
 import { columns } from '../app/dashboard/company/customers/action/columnsCustomers';
 import { columns as columns1 } from "../app/dashboard/equipment/columns";
-import { cn } from '@/lib/utils';
-import { Toaster, toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
 export default function ClientRegister({ id }: { id: string }) {
