@@ -1,27 +1,19 @@
-import RenderBanner from '@/components/RenderBanner'
-import {
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
-import Image from 'next/image'
-import Link from 'next/link'
-import GoogleButton from './componentsLogin/GoogleButton'
-import { LoginButton } from './componentsLogin/LoginButton'
+import RenderBanner from '@/components/RenderBanner';
+import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import Image from 'next/image';
+import Link from 'next/link';
+import GoogleButton from './componentsLogin/GoogleButton';
+import { LoginButton } from './componentsLogin/LoginButton';
 export default async function Login() {
   return (
     <section className="min-h-screen overflow-hidden bg-white dark:bg-transparent">
       <div className="container relative flex-col grid-cols-1 justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0  md:px-2 p-0">
         <RenderBanner />
         <div className="lg:p-8 relative z-50   md:p-8 pt-7 p-0 flex flex-col justify-center items-center w-full">
-          <Link
-            className="relative z-20 lg:hidden items-center font-bold text-2xl flex"
-            href="/"
-          >
+          <Link className="relative z-20 lg:hidden items-center font-bold text-2xl flex" href="/">
             <Image
               src="https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/logo/24417298440.png"
               alt="Logo de codecontrol"
@@ -74,19 +66,12 @@ export default async function Login() {
                 <div className="flex w-full justify-center flex-col items-center gap-2">
                   <LoginButton />
                   <Link href="/register" className="text-md">
-                    ¿No tienes una cuenta?{' '}
-                    <span className="text-blue-400 ml-1 ">Créate una aquí</span>
+                    ¿No tienes una cuenta? <span className="text-blue-400 ml-1 ">Créate una aquí</span>
                   </Link>
                 </div>
-                <Separator
-                  orientation="horizontal"
-                  className="my-2 w-[70%] self-center"
-                />
+                <Separator orientation="horizontal" className="my-2 w-[70%] self-center" />
                 <Link href="/reset_password" className="text-md m-auto">
-                  ¿Olvisdaste tu contraseña?{' '}
-                  <span className="text-blue-400 ml-1 ">
-                    restablecela aquí{' '}
-                  </span>
+                  ¿Olvisdaste tu contraseña? <span className="text-blue-400 ml-1 ">restablecela aquí </span>
                 </Link>
                 <GoogleButton />
               </form>
@@ -95,5 +80,5 @@ export default async function Login() {
         </div>
       </div>
     </section>
-  )
+  );
 }

@@ -1,24 +1,24 @@
-'use client'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Dispatch, SetStateAction } from 'react'
-import MultiResourceDocument from './MultiResourceDocument'
-import SimpleDocument from './SimpleDocument'
-import { AlertDialog, AlertDialogContent } from './ui/alert-dialog'
-import { Separator } from './ui/separator'
+'use client';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dispatch, SetStateAction } from 'react';
+import MultiResourceDocument from './MultiResourceDocument';
+import SimpleDocument from './SimpleDocument';
+import { AlertDialog, AlertDialogContent } from './ui/alert-dialog';
+import { Separator } from './ui/separator';
 
 export default function NewDocumentModal({
   setIsOpen,
   isOpen,
   multiresource,
 }: {
-  setIsOpen: Dispatch<SetStateAction<boolean>>
-  isOpen: boolean
-  multiresource: boolean | undefined
+  setIsOpen: Dispatch<SetStateAction<boolean>>;
+  isOpen: boolean;
+  multiresource: boolean | undefined;
 }) {
   const handleOpen = () => {
-    setIsOpen(!isOpen)
-    return
-  }
+    setIsOpen(!isOpen);
+    return;
+  };
   return (
     <>
       <AlertDialog open={isOpen} onOpenChange={handleOpen}>
@@ -28,19 +28,15 @@ export default function NewDocumentModal({
               <TabsTrigger value="Empleados">Empleados</TabsTrigger>
               <TabsTrigger value="Equipos">Equipos</TabsTrigger>
             </TabsList>
-            <TabsContent
-              value="Empleados"
-              className="space-y-2 dark:bg-slate-950"
-            >
+            <TabsContent value="Empleados" className="space-y-2 dark:bg-slate-950">
               {!multiresource && (
                 <>
                   {' '}
-                  <h2 className="text-lg font-semibold">
-                    Documento No multirecurso
-                  </h2>
+                  <h2 className="text-lg font-semibold">Documento No multirecurso</h2>
                   <Separator className="my-1" />
                   <p className="text-sm text-muted-foreground mb-3">
-                    Verifica que los documentos sean correctos y no hayan entradas duplicadas, en tal caso se subira la primera entrada encontrada y se marcaran las demas como duplicadas
+                    Verifica que los documentos sean correctos y no hayan entradas duplicadas, en tal caso se subira la
+                    primera entrada encontrada y se marcaran las demas como duplicadas
                   </p>
                 </>
               )}
@@ -60,12 +56,11 @@ export default function NewDocumentModal({
                 {!multiresource && (
                   <>
                     {' '}
-                    <h2 className="text-lg font-semibold">
-                      Documento No multirecurso
-                    </h2>
+                    <h2 className="text-lg font-semibold">Documento No multirecurso</h2>
                     <Separator className="my-1" />
                     <p className="text-sm text-muted-foreground mb-3">
-                    Verifica que los documentos sean correctos y no hayan entradas duplicadas, en tal caso se subira la primera entrada encontrada y se marcaran las demas como duplicadas
+                      Verifica que los documentos sean correctos y no hayan entradas duplicadas, en tal caso se subira
+                      la primera entrada encontrada y se marcaran las demas como duplicadas
                     </p>
                   </>
                 )}
@@ -83,5 +78,5 @@ export default function NewDocumentModal({
         </AlertDialogContent>
       </AlertDialog>
     </>
-  )
+  );
 }

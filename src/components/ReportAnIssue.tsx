@@ -1,24 +1,17 @@
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { useState } from 'react'
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { useState } from 'react';
 
 export function ReportAnIssue() {
-  const [area, setArea] = useState('billing') // Valor por defecto para el área
-  const [nivelSeguridad, setNivelSeguridad] = useState('2') // Valor por defecto para el nivel de seguridad
-  const [asunto, setAsunto] = useState('') // Valor inicial para el asunto
-  const [descripcion, setDescripcion] = useState('') // Valor inicial para la descripción
-  const emailUser = useLoggedUserStore(state => state.credentialUser?.email)
+  const [area, setArea] = useState('billing'); // Valor por defecto para el área
+  const [nivelSeguridad, setNivelSeguridad] = useState('2'); // Valor por defecto para el nivel de seguridad
+  const [asunto, setAsunto] = useState(''); // Valor inicial para el asunto
+  const [descripcion, setDescripcion] = useState(''); // Valor inicial para la descripción
+  const emailUser = useLoggedUserStore((state) => state.credentialUser?.email);
   async function submit() {
     try {
       //EmailTemplateHelp({ userEmail: emailUser as string, reason: descripcion });
@@ -33,13 +26,13 @@ export function ReportAnIssue() {
           react: descripcion,
           userEmail: emailUser,
         }),
-      })
+      });
 
       if (response.ok) {
       } else {
       }
     } catch (error) {
-      console.error('Error inesperado:', error)
+      console.error('Error inesperado:', error);
     }
   }
   return (
@@ -108,9 +101,7 @@ export function ReportAnIssue() {
       <Card>
         <CardHeader>
           <CardTitle>Reportar un problema</CardTitle>
-          <CardDescription>
-            Por favor, describe el problema que estás experimentando
-          </CardDescription>
+          <CardDescription>Por favor, describe el problema que estás experimentando</CardDescription>
         </CardHeader>
         <form onSubmit={submit}>
           <CardContent className="grid gap-6">
@@ -119,7 +110,7 @@ export function ReportAnIssue() {
               <Input
                 id="subject"
                 value={asunto}
-                onChange={event => setAsunto(event.target.value)}
+                onChange={(event) => setAsunto(event.target.value)}
                 placeholder="Necesito ayuda con..."
               />
             </div>
@@ -128,7 +119,7 @@ export function ReportAnIssue() {
               <Textarea
                 id="description"
                 value={descripcion}
-                onChange={event => setDescripcion(event.target.value)}
+                onChange={(event) => setDescripcion(event.target.value)}
                 placeholder="Por favor, incluye toda la información relevante sobre tu problema."
               />
             </div>
@@ -140,5 +131,5 @@ export function ReportAnIssue() {
         </form>
       </Card>
     </section>
-  )
+  );
 }

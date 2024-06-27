@@ -1,10 +1,10 @@
-import RenderBanner from '@/components/RenderBanner'
-import { CardDescription, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import Image from 'next/image'
-import Link from 'next/link'
-import { RegisterButton } from './componentsRegister/RegisterButton'
+import RenderBanner from '@/components/RenderBanner';
+import { CardDescription, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import Image from 'next/image';
+import Link from 'next/link';
+import { RegisterButton } from './componentsRegister/RegisterButton';
 // import { RegisterForm } from '@/components/RegisterForm'
 
 export default function Register() {
@@ -14,10 +14,7 @@ export default function Register() {
         <RenderBanner />
 
         <div className="lg:p-8 relative z-50   md:p-8 pt-7 p-0 flex flex-col justify-center items-center w-full">
-          <Link
-            className="relative z-20 lg:hidden items-center font-bold lg:text-2xl flex text-3xl "
-            href="/"
-          >
+          <Link className="relative z-20 lg:hidden items-center font-bold lg:text-2xl flex text-3xl " href="/">
             <Image
               src="https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/logo/24417298440.png"
               alt="Logo de codecontrol"
@@ -58,10 +55,7 @@ export default function Register() {
                   className="text-md"
                   required
                 />
-                <CardDescription
-                  id="lastname_error"
-                  className="max-w-full text-lg"
-                />
+                <CardDescription id="lastname_error" className="max-w-full text-lg" />
               </div>
               <div className="space-y-2">
                 <Label className="ml-2 text-lg" htmlFor="email">
@@ -75,10 +69,7 @@ export default function Register() {
                   type="email"
                   required
                 />
-                <CardDescription
-                  id="email_error"
-                  className="max-w-full text-lg"
-                />
+                <CardDescription id="email_error" className="max-w-full text-lg" />
               </div>
               <div className="space-y-2">
                 <Label className="ml-2 text-lg" htmlFor="password">
@@ -92,10 +83,7 @@ export default function Register() {
                   type="password"
                   required
                 />
-                <CardDescription
-                  id="password_error"
-                  className="max-w-full text-lg"
-                />
+                <CardDescription id="password_error" className="max-w-full text-lg" />
               </div>
               <div className="space-y-2">
                 <Label className="ml-2 text-lg" htmlFor="confirmPassword">
@@ -109,10 +97,7 @@ export default function Register() {
                   className="text-md"
                   required
                 />
-                <CardDescription
-                  id="confirmPassword_error"
-                  className="max-w-full text-lg"
-                />
+                <CardDescription id="confirmPassword_error" className="max-w-full text-lg" />
               </div>
               <div className="flex w-full justify-center flex-col items-center gap-5">
                 <RegisterButton />
@@ -128,5 +113,5 @@ export default function Register() {
         </div>
       </div>
     </section>
-  )
+  );
 }

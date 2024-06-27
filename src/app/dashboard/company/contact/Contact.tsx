@@ -77,16 +77,11 @@ const channels = supabase.channel('custom-all-channel')
               <CardTitle className="text-2xl font-bold tracking-tight flex justify-between">
                 Contactos
                 {/* </div> */}
-                <Button
-                  className="ml-auto flex justify-between mb-2"
-                  onClick={handleCreateContact}
-                >
+                <Button className="ml-auto flex justify-between mb-2" onClick={handleCreateContact}>
                   Registrar Contacto
                 </Button>
-              </CardTitle >
-              <CardDescription className="text-muted-foreground">
-                Todos tus Contactos
-              </CardDescription>
+              </CardTitle>
+              <CardDescription className="text-muted-foreground">Todos tus Contactos</CardDescription>
             </CardHeader>
 
             <CardContent>
@@ -98,12 +93,10 @@ const channels = supabase.channel('custom-all-channel')
                 setShowInactive={setShowInactive}
               />
             </CardContent>
-
           </div>
           <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
         </Card>
-
       </section>
     </div>
-  )
+  );
 }

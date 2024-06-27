@@ -1,15 +1,12 @@
-import Head from 'next/head'
-import * as React from 'react'
+import Head from 'next/head';
+import * as React from 'react';
 
 interface EmailTemplateHelpProps {
-  userEmail: string
-  reason: string
+  userEmail: string;
+  reason: string;
 }
 
-export const EmailTemplateHelp: React.FC<Readonly<EmailTemplateHelpProps>> = ({
-  userEmail,
-  reason,
-}) => (
+export const EmailTemplateHelp: React.FC<Readonly<EmailTemplateHelpProps>> = ({ userEmail, reason }) => (
   <div>
     <html lang="es">
       <Head>
@@ -54,13 +51,7 @@ export const EmailTemplateHelp: React.FC<Readonly<EmailTemplateHelpProps>> = ({
                   <tbody>
                     <tr>
                       <td>
-                        <table
-                          align="center"
-                          width="100%"
-                          border={0}
-                          cellPadding="0"
-                          cellSpacing="0"
-                        >
+                        <table align="center" width="100%" border={0} cellPadding="0" cellSpacing="0">
                           <tbody style={{ width: '100%' }}>
                             <tr style={{ width: '100%' }}>
                               <td style={{ padding: '20px 30px 15px' }}>
@@ -184,4 +175,4 @@ export const EmailTemplateHelp: React.FC<Readonly<EmailTemplateHelpProps>> = ({
       </body>
     </html>
   </div>
-)
+);

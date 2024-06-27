@@ -1,32 +1,31 @@
+'use client';
 
-"use client";
-
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { createdCustomer, updateCustomer } from '@/app/dashboard/company/customers/action/create';
+import { DataTable } from '@/app/dashboard/company/customers/action/data-table';
+import { DataEquipment } from '@/app/dashboard/equipment/data-equipment';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { useLoggedUserStore } from '@/store/loggedUser';
-import { supabase } from "../../supabase/supabase";
-import { useSearchParams } from 'next/navigation';
-import { customersSchema } from '@/zodSchemas/schemas';
-import { createdCustomer, updateCustomer } from "@/app/dashboard/company/customers/action/create";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DataTable } from '@/app/dashboard/company/customers/action/data-table';
-import { columns } from '../app/dashboard/company/customers/action/columnsCustomers';
-import { DataEquipment } from '@/app/dashboard/equipment/data-equipment';
-import { columns as columns1 } from "../app/dashboard/equipment/columns";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { customersSchema } from '@/zodSchemas/schemas';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { Toaster, toast } from 'sonner';
-
+import { z } from 'zod';
+import { columns } from '../app/dashboard/company/customers/action/columnsCustomers';
+import { columns as columns1 } from "../app/dashboard/equipment/columns";
 export default function ClientRegister({ id }: { id: string }) {
     const searchParams = useSearchParams();
     const functionAction = id ? updateCustomer : createdCustomer;
     const [errors, setErrors] = useState<any>({});
+    const supabase = supabaseBrowser()
     const actualCompany = useLoggedUserStore(state => state.actualCompany);
     const [action, setAction] = useState(searchParams.get('action'));
     const [readOnly, setReadOnly] = useState(action === 'edit' ? false : true);
@@ -66,22 +65,23 @@ export default function ClientRegister({ id }: { id: string }) {
         },
     });
 
-    const { register, handleSubmit, setValue, formState: { errors: formErrors } } = form;
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors: formErrors },
+  } = form;
 
-    useEffect(() => {
-        if (action === 'view') {
-            setReadOnly(true);
-        } else {
-            setReadOnly(false);
-        }
+  useEffect(() => {
+    if (action === 'view') {
+      setReadOnly(true);
+    } else {
+      setReadOnly(false);
+    }
 
-        const id = searchParams.get('id');
-        const fetchCustomerData = async () => {
-            const { data, error } = await supabase
-                .from('customers')
-                .select('*')
-                .eq('id', id)
-                .single();
+    const id = searchParams.get('id');
+    const fetchCustomerData = async () => {
+      const { data, error } = await supabase.from('customers').select('*').eq('id', id).single();
 
             if (error) {
                 console.error('Error fetching customer data:', error);
@@ -232,50 +232,51 @@ export default function ClientRegister({ id }: { id: string }) {
         </Card>
     );
 
-    return (
-        <section className={cn('md:mx-7 max-w-full')}>
-            {action === "view" ? (
-                <section className={cn('md:mx-7 mt-8')}>
-                    <Accordion type="single" collapsible className="border-2 pl-4 rounded-lg mb-6">
-                        <AccordionItem value="item-1">
-                            <AccordionTrigger className="text-lg hover:no-underline p-2 border-b-2 ">{clientData?.name}</AccordionTrigger>
-                            <AccordionContent>
-                                {renderCard()}
-                            </AccordionContent>
-                        </AccordionItem>
-                    </Accordion>
-                   
-                    <Tabs defaultValue="empleados" className="h-full flex-1 flex-col mt-6">
-                        <TabsList>
-                            <TabsTrigger value="empleados">Empleados</TabsTrigger>
-                            <TabsTrigger value="equipos">Equipos</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="empleados">
-                            <div className="h-full flex-1 flex-col space-y-8 md:flex">
-                                <DataTable
-                                    columns={columns}
-                                    data={filteredCustomersEmployees || []}
-                                    setActivesEmployees={setActivesEmployees}
-                                    setInactiveEmployees={setInactiveEmployees}
-                                    showDeletedEmployees={showDeletedEmployees}
-                                    setShowDeletedEmployees={setShowDeletedEmployees}
-                                />
-                            </div>
-                        </TabsContent>
-                        <TabsContent value="equipos">
-                            <DataEquipment
-                                columns={columns1}
-                                data={filteredCustomersEquipment || []}
-                                allCompany={allCompany}
-                                showInactive={showInactive}
-                                setShowInactive={setShowInactive}
-                            />
-                        </TabsContent>
-                    </Tabs>
-                </section>
-            ) : (
-                renderCard()
-            )}
+
+  return (
+    <section className={cn('md:mx-7 max-w-full')}>
+      {action === 'view' ? (
+        <section className={cn('md:mx-7 mt-8')}>
+          <Accordion type="single" collapsible className="border-2 pl-4 rounded-lg mb-6">
+            <AccordionItem value="item-1">
+              <AccordionTrigger className="text-lg hover:no-underline p-2 border-b-2 ">
+                {clientData?.name}
+              </AccordionTrigger>
+              <AccordionContent>{renderCard()}</AccordionContent>
+            </AccordionItem>
+          </Accordion>
+
+          <Tabs defaultValue="empleados" className="h-full flex-1 flex-col mt-6">
+            <TabsList>
+              <TabsTrigger value="empleados">Empleados</TabsTrigger>
+              <TabsTrigger value="equipos">Equipos</TabsTrigger>
+            </TabsList>
+            <TabsContent value="empleados">
+              <div className="h-full flex-1 flex-col space-y-8 md:flex">
+                <DataTable
+                  columns={columns}
+                  data={filteredCustomersEmployees || []}
+                  setActivesEmployees={setActivesEmployees}
+                  setInactiveEmployees={setInactiveEmployees}
+                  showDeletedEmployees={showDeletedEmployees}
+                  setShowDeletedEmployees={setShowDeletedEmployees}
+                />
+              </div>
+            </TabsContent>
+            <TabsContent value="equipos">
+              <DataEquipment
+                columns={columns1}
+                data={filteredCustomersEquipment || []}
+                allCompany={allCompany}
+                showInactive={showInactive}
+                setShowInactive={setShowInactive}
+              />
+            </TabsContent>
+          </Tabs>
         </section>
-    );
+      ) : (
+        renderCard()
+      )}
+    </section>
+  );
 }

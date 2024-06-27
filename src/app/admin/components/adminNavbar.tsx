@@ -1,56 +1,21 @@
+import { Home, LineChart, Package, Package2, PanelLeft, Search, ShoppingCart, Users2 } from 'lucide-react';
+import Link from 'next/link';
 
-import * as React from "react"
-import Image from "next/image"
-import Link from "next/link"
-import {
-
-  Home,
-  LineChart,
-
-  Package,
-  Package2,
-  PanelLeft,
-  Search,
-
-  ShoppingCart,
-
-  Users2,
-} from "lucide-react"
-
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button';
 //import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
+import { Input } from '@/components/ui/input';
 
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import AdminAvatar from "./adminAvatar"
-import { ModeToggle } from '@/components/ui/ToogleDarkButton'
-import AdminBreadcrumb from "./adminBreadcrumb"
+import { ModeToggle } from '@/components/ui/ToogleDarkButton';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import AdminAvatar from './adminAvatar';
+import AdminBreadcrumb from './adminBreadcrumb';
 
 //import { useLoggedUserStore } from "@/store/loggedUser"
 
 export default function AdminNavbar() {
-
-
-    // const actualUser = useLoggedUserStore(state => state.profile)
-    // const avatarUrl = actualUser && actualUser.length > 0 ? actualUser[0] : ''
-
+  // const actualUser = useLoggedUserStore(state => state.profile)
+  // const avatarUrl = actualUser && actualUser.length > 0 ? actualUser[0] : ''
 
   return (
     <div className="w-full bg-muted/40">
@@ -72,45 +37,30 @@ export default function AdminNavbar() {
                   <Package2 className="h-5 w-5 transition-all group-hover:scale-110" />
                   <span className="sr-only">Acme Inc</span>
                 </Link>
-                <Link
-                  href="#"
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                >
+                <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
                   <Home className="h-5 w-5" />
                   Dashboard
                 </Link>
-                <Link
-                  href="#"
-                  className="flex items-center gap-4 px-2.5 text-foreground"
-                >
+                <Link href="#" className="flex items-center gap-4 px-2.5 text-foreground">
                   <ShoppingCart className="h-5 w-5" />
                   Orders
                 </Link>
-                <Link
-                  href="#"
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                >
+                <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
                   <Package className="h-5 w-5" />
                   Products
                 </Link>
-                <Link
-                  href="#"
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                >
+                <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
                   <Users2 className="h-5 w-5" />
                   Customers
                 </Link>
-                <Link
-                  href="#"
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                >
+                <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
                   <LineChart className="h-5 w-5" />
                   Settings
                 </Link>
               </nav>
             </SheetContent>
           </Sheet>
-          <AdminBreadcrumb/>
+          <AdminBreadcrumb />
           {/* <Breadcrumb className="hidden md:flex">
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -132,7 +82,9 @@ export default function AdminNavbar() {
           </Breadcrumb> */}
 
           <div className="flex relative gap-2 ml-auto">
-            <Link href='/dashboard'><Button>Dashboard</Button></Link>
+            <Link href="/dashboard">
+              <Button>Dashboard</Button>
+            </Link>
             <ModeToggle />
             <div className="relative ml-auto flex-1 md:grow-0">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -147,5 +99,5 @@ export default function AdminNavbar() {
         </header>
       </div>
     </div>
-  )
+  );
 }

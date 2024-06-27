@@ -1,13 +1,11 @@
-'use client'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { ExpiredColums } from '../colums'
-import { ExpiredDataTable } from '../data-table'
+'use client';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { ExpiredColums } from '../colums';
+import { ExpiredDataTable } from '../data-table';
 
 function DocumentsTable() {
-  const documentsToShow = useLoggedUserStore(state => state.documentsToShow)
-  const setShowLastMonthDocuments = useLoggedUserStore(
-    state => state.setShowLastMonthDocuments,
-  )
+  const documentsToShow = useLoggedUserStore((state) => state.documentsToShow);
+  const setShowLastMonthDocuments = useLoggedUserStore((state) => state.setShowLastMonthDocuments);
   return (
     <ExpiredDataTable
       data={documentsToShow?.vehicles || []}
@@ -16,7 +14,7 @@ function DocumentsTable() {
       vehicles={true}
       localStorageName="dashboardVehiclesColumns"
     />
-  )
+  );
 }
 
-export default DocumentsTable
+export default DocumentsTable;

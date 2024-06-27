@@ -1,19 +1,19 @@
-'use server'
+'use server';
 
-import { handleSupabaseError } from '@/lib/errorHandler'
-import { supabaseServer } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
+import { handleSupabaseError } from '@/lib/errorHandler';
+import { supabaseServer } from '@/lib/supabase/server';
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 
 export async function login(formData: FormData) {
-  const supabase = supabaseServer()
+  const supabase = supabaseServer();
 
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
-  }
+  };
 
-  const { error, data: user } = await supabase.auth.signInWithPassword(data)
+  const { error, data: user } = await supabase.auth.signInWithPassword(data);
   // const { error, data: user } = await supabase.auth.signInWithOtp({
   //   email: data.email,
   //   options: {
@@ -22,24 +22,24 @@ export async function login(formData: FormData) {
   // })
 
   if (error) {
-    return handleSupabaseError(error.message)
+    return handleSupabaseError(error.message);
   }
   if (user.session) {
-    redirect(`/dashboard`)
+    redirect(`/dashboard`);
   } else {
-    redirect('/login')
+    redirect('/login');
   }
 }
 
 export async function logout() {
-  const supabase = supabaseServer()
-  await supabase.auth.signOut()
-  revalidatePath('/', 'layout')
-  redirect('/login')
+  const supabase = supabaseServer();
+  await supabase.auth.signOut();
+  revalidatePath('/', 'layout');
+  redirect('/login');
 }
 
 export async function googleLogin(url: string) {
-  const supabase = supabaseServer()
+  const supabase = supabaseServer();
 
   let { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -50,12 +50,12 @@ export async function googleLogin(url: string) {
         prompt: 'consent',
       },
     },
-  })
+  });
 
   if (error) {
-    return error
+    return error;
   }
   if (data.url) {
-    redirect(data.url) // use the redirect API for your server framework
+    redirect(data.url); // use the redirect API for your server framework
   }
 }

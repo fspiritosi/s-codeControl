@@ -1,34 +1,27 @@
 // import { AlertComponent } from '@/components/AlertComponent'
-import NavBar from '@/components/NavBar'
-import SideBar from '@/components/Sidebar'
-import { supabaseServer } from '@/lib/supabase/server'
-import InitCompanies from '@/store/InitCompanies'
-import { Inter } from 'next/font/google'
-import { cookies } from 'next/headers'
-import '../globals.css'
-import AdminSideBar from './components/adminSidebar'
-import AdminNavbar from './components/adminNavbar'
+import { supabaseServer } from '@/lib/supabase/server';
+import { Inter } from 'next/font/google';
+import { cookies } from 'next/headers';
+import '../globals.css';
+import AdminNavbar from './components/adminNavbar';
+import AdminSideBar from './components/adminSidebar';
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'] });
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const supabase = supabaseServer()
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const supabase = supabaseServer();
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
-  const cookiesStore = cookies()
+  const cookiesStore = cookies();
 
-  const actualCompany = cookiesStore.get('actualComp')
+  const actualCompany = cookiesStore.get('actualComp');
 
   const { data: profile, error: profileError } = await supabase
     .from('profile')
     .select('*')
-    .eq('credential_id', user?.id)
+    .eq('credential_id', user?.id);
 
   const { data: company, error: companyError } = await supabase
     .from('company')
@@ -72,9 +65,9 @@ export default async function DashboardLayout({
             )
           )
         )
-      `,
+      `
     )
-    .eq('owner_id', profile?.[0]?.id)
+    .eq('owner_id', profile?.[0]?.id);
 
   let { data: share_company_users, error: sharedError } = await supabase
     .from('share_company_users')
@@ -117,9 +110,9 @@ export default async function DashboardLayout({
             )
           )
         )
-      )`,
+      )`
     )
-    .eq('profile_id', profile?.[0]?.id)
+    .eq('profile_id', profile?.[0]?.id);
 
   //   let { data: document, error } = await supabase
   //     .from('documents_employees')
@@ -154,19 +147,18 @@ export default async function DashboardLayout({
   //   // // // console.log('document', document)
 
   return (
-    <div >
-        {/* <InitCompanies
+    <div>
+      {/* <InitCompanies
           company={company}
           share_company_users={share_company_users}
         /> */}
-      <AdminSideBar/>
+      <AdminSideBar />
       <div className="flex flex-col w-full mt-1 md:mt-0">
-        <AdminNavbar/>
+        <AdminNavbar />
         <div>{children}</div>
       </div>
     </div>
-  )
+  );
 }
-
 
 // className="flex"

@@ -1,44 +1,21 @@
-'use client'
-import * as React from "react"
-import Link from "next/link"
-import {
-
-  Home,
-  LineChart,
-  SearchCode,
-  Package,
-  Package2,
-  DatabaseIcon,
-  Settings,
-  ShoppingCart,
-
-  Users2,
-} from "lucide-react"
-import Image from "next/image"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import Logo from '../../../../public/logo-azul.png'
-import { usePathname } from "next/navigation"
-
+'use client';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DatabaseIcon, Home, LineChart, Package, SearchCode, Settings, ShoppingCart, Users2 } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import Logo from '../../../../public/logo-azul.png';
 
 export default function AdminSideBar() {
+  //TODO hacer un condicional de bg-acent para que el resaltado este en el que corresponde según el path
 
-   
-
-    //TODO hacer un condicional de bg-acent para que el resaltado este en el que corresponde según el path
-
-    const path = usePathname()
-    const active = "flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-    const noActive = "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-
-
+  const path = usePathname();
+  const active =
+    'flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-foreground transition-colors hover:text-foreground md:h-8 md:w-8';
+  const noActive =
+    'flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8';
 
   return (
-
     <div className="flex flex-col bg-muted/40">
       <TooltipProvider delayDuration={100}>
         <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
@@ -50,13 +27,10 @@ export default function AdminSideBar() {
               <Image src={Logo} alt="Logo Code Control" height={16} width={16}></Image>
               <span className="sr-only">Code Control</span>
             </Link>
-            
+
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link
-                  href="/admin/panel"
-                  className={path.includes("/panel") ? active : noActive}
-                >
+                <Link href="/admin/panel" className={path.includes('/panel') ? active : noActive}>
                   <Home className="h-5 w-5" />
                   <span className="sr-only">Panel</span>
                 </Link>
@@ -65,10 +39,7 @@ export default function AdminSideBar() {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link
-                  href="#"
-                  className={path.includes("/clients") ? active : noActive}
-                >
+                <Link href="#" className={path.includes('/clients') ? active : noActive}>
                   <ShoppingCart className="h-5 w-5" />
                   <span className="sr-only">Clientes</span>
                 </Link>
@@ -77,10 +48,7 @@ export default function AdminSideBar() {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link
-                  href="#"
-                  className={path.includes("/modulos") ? active : noActive}
-                >
+                <Link href="#" className={path.includes('/modulos') ? active : noActive}>
                   <Package className="h-5 w-5" />
                   <span className="sr-only">Modulos</span>
                 </Link>
@@ -89,10 +57,7 @@ export default function AdminSideBar() {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link
-                  href="#"
-                  className={path.includes("/usuarios") ? active : noActive}
-                >
+                <Link href="#" className={path.includes('/usuarios') ? active : noActive}>
                   <Users2 className="h-5 w-5" />
                   <span className="sr-only">Usuarios</span>
                 </Link>
@@ -101,10 +66,7 @@ export default function AdminSideBar() {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link
-                  href="#"
-                  className={path.includes("/estadisticas") ? active : noActive}
-                >
+                <Link href="#" className={path.includes('/estadisticas') ? active : noActive}>
                   <LineChart className="h-5 w-5" />
                   <span className="sr-only">Estadisticas</span>
                 </Link>
@@ -113,10 +75,7 @@ export default function AdminSideBar() {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link
-                  href="/admin/auditor"
-                  className={path.includes( "/auditor") ? active : noActive}
-                >
+                <Link href="/admin/auditor" className={path.includes('/auditor') ? active : noActive}>
                   <SearchCode className="h-5 w-5" />
                   <span className="sr-only">Auditor</span>
                 </Link>
@@ -125,10 +84,7 @@ export default function AdminSideBar() {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link
-                  href="/admin/tablas"
-                  className={path.includes( "/tablas") ? active : noActive}
-                >
+                <Link href="/admin/tablas" className={path.includes('/tablas') ? active : noActive}>
                   <DatabaseIcon className="h-5 w-5" />
                   <span className="sr-only">Tablas</span>
                 </Link>
@@ -152,7 +108,6 @@ export default function AdminSideBar() {
           </nav>
         </aside>
       </TooltipProvider>
-
     </div>
-  )
+  );
 }

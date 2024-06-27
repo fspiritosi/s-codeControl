@@ -1,130 +1,111 @@
-'use client'
-import { buttonVariants } from '@/components/ui/button'
-import {
-  Card,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import cookie from 'js-cookie'
-import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
-import { useEffect, useState, Suspense } from 'react'
-import { supabase } from '../../../../supabase/supabase'
-import { columns } from './columns'
-import { DataEquipment } from './data-equipment'
-import Cookies from 'js-cookie';
-
-
+'use client';
+import { buttonVariants } from '@/components/ui/button';
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { default as Cookies, default as cookie } from 'js-cookie';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { supabase } from '../../../../supabase/supabase';
+import { columns } from './columns';
+import { DataEquipment } from './data-equipment';
 
 export default function Equipment() {
-  const allCompany = useLoggedUserStore(state => state.allCompanies)
-  const actualCompany = useLoggedUserStore(state => state.actualCompany)
-  const fetchVehicles = useLoggedUserStore(state => state.fetchVehicles)
-  const useSearch = useSearchParams()
-  const type = useSearch.get('type')
-  const [showInactive, setShowInactive] = useState(false)
-  const vehiclesData = useLoggedUserStore(state => state.vehiclesToShow)
-  const setVehicleTypes = useLoggedUserStore(state => state.setVehicleTypes)
-  const actualCompanyID = cookie.get('actualCompanyId')
-  
-  const profile = useLoggedUserStore(state => state)
-  if (typeof window !== "undefined") {
-    
+  const allCompany = useLoggedUserStore((state) => state.allCompanies);
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
+  const fetchVehicles = useLoggedUserStore((state) => state.fetchVehicles);
+  const useSearch = useSearchParams();
+  const type = useSearch.get('type');
+  const [showInactive, setShowInactive] = useState(false);
+  const vehiclesData = useLoggedUserStore((state) => state.vehiclesToShow);
+  const setVehicleTypes = useLoggedUserStore((state) => state.setVehicleTypes);
+  const actualCompanyID = cookie.get('actualCompanyId');
+
+  const profile = useLoggedUserStore((state) => state);
+  if (typeof window !== 'undefined') {
     const company_id = localStorage.getItem('company_id');
     let actualComp = Cookies.set('actualComp', company_id as string);
- }
-  let role: string = ""
-  
+  }
+  let role: string = '';
 
-  if(profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id){
-     role = profile?.actualCompany?.owner_id?.role as string || ""
-  }else{
-     role = profile?.actualCompany?.share_company_users?.[0]?.role as string || ""
+  if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
+    role = (profile?.actualCompany?.owner_id?.role as string) || '';
+  } else {
+    role = (profile?.actualCompany?.share_company_users?.[0]?.role as string) || '';
   }
-  
- 
+
   const handleToggleInactive = () => {
-    setShowInactive(!showInactive)
-  }
+    setShowInactive(!showInactive);
+  };
   const channels = supabase
     .channel('custom-all-channel')
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'vehicles' },
-      payload => {
-        if (actualCompany) {
-          fetchVehicles()
-        }
-      },
-    )
-    .subscribe()
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, (payload) => {
+      if (actualCompany) {
+        fetchVehicles();
+      }
+    })
+    .subscribe();
 
   useEffect(() => {
     // if (vehiclesData.length === 0) {
-    fetchVehicles()
+    fetchVehicles();
     // }
-  }, [actualCompanyID])
+  }, [actualCompanyID]);
 
   useEffect(() => {
     if (type === '1') {
-      setVehicleTypes('Vehículos')
+      setVehicleTypes('Vehículos');
     } else if (type === '2') {
-      setVehicleTypes('Otros')
+      setVehicleTypes('Otros');
     } else if (type === 'Todos') {
-      setVehicleTypes('Todos')
+      setVehicleTypes('Todos');
     }
-  }, [type])
+  }, [type]);
 
-  let equipo = 'Equipos'
+  let equipo = 'Equipos';
   if (type === '1') {
-    equipo = 'Vehículos'
+    equipo = 'Vehículos';
   }
   if (type === '2') {
-    equipo = 'Otros'
+    equipo = 'Otros';
   }
 
   return (
-  <Suspense fallback={<div>Loading...</div>}>
-    <section>
-      <Card className="mt-6 md:mx-7 overflow-hidden">
-        <CardHeader className=" flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
-          <div>
-            <CardTitle className="text-2xl font-bold tracking-tight">
-              {equipo}
-            </CardTitle>
-            <CardDescription className="text-muted-foreground">
-              Aquí podrás ver todos los {equipo} que tienes registrados en tu
-              empresa
-            </CardDescription>
+    <Suspense fallback={<div>Loading...</div>}>
+      <section>
+        <Card className="mt-6 md:mx-7 overflow-hidden">
+          <CardHeader className=" flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
+            <div>
+              <CardTitle className="text-2xl font-bold tracking-tight">{equipo}</CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Aquí podrás ver todos los {equipo} que tienes registrados en tu empresa
+              </CardDescription>
+            </div>
+            {role !== 'Invitado' && (
+              <Link
+                href="/dashboard/equipment/action?action=new"
+                className={[
+                  'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
+                  buttonVariants({ variant: 'outline', size: 'lg' }),
+                ].join(' ')}
+              >
+                Agregar nuevo equipo
+              </Link>
+            )}
+          </CardHeader>
+          <div className="w-full grid grid-cols-1 px-8">
+            <DataEquipment
+              columns={columns}
+              data={vehiclesData || []}
+              allCompany={allCompany}
+              showInactive={showInactive}
+              setShowInactive={setShowInactive}
+            />
           </div>
-          {(role !== "Invitado") && (
-          <Link
-            href="/dashboard/equipment/action?action=new"
-            className={[
-              'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
-              buttonVariants({ variant: 'outline', size: 'lg' }),
-            ].join(' ')}
-          >
-            Agregar nuevo equipo
-          </Link>
-          )}
-        </CardHeader>
-        <div className="w-full grid grid-cols-1 px-8">
-          <DataEquipment
-            columns={columns}
-            data={vehiclesData || []}
-            allCompany={allCompany}
-            showInactive={showInactive}
-            setShowInactive={setShowInactive}
-          />
-        </div>
-        
-        <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
-      </Card>
-    </section>
-  </Suspense>
-  )
+
+          <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
+        </Card>
+      </section>
+    </Suspense>
+  );
 }

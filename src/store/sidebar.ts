@@ -1,8 +1,8 @@
-import { create } from 'zustand'
+import { create } from 'zustand';
 
 interface State {
-  expanded: boolean
-  setExpanded: (open: boolean) => void
+  expanded: boolean;
+  setExpanded: (open: boolean) => void;
 }
 
 /**
@@ -12,14 +12,14 @@ interface State {
  * @returns An object containing the store's state properties.
  */
 export const useSidebarOpen = create<State>((set, get) => {
-  set({ expanded: true })
+  set({ expanded: true });
 
   const setExpanded = () => {
-    set({ expanded: !get().expanded })
-  }
+    set({ expanded: !get().expanded });
+  };
 
   return {
     expanded: get().expanded,
     setExpanded,
-  }
-})
+  };
+});

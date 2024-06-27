@@ -8,9 +8,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
-import { FormItem, FormLabel } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
+} from '@/components/ui/alert-dialog';
+import { FormItem, FormLabel } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -19,11 +19,11 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { useState } from 'react'
-import { ZodError, z } from 'zod'
-import { supabase } from '../../supabase/supabase'
-import { useToast } from './ui/use-toast'
+} from '@/components/ui/select';
+import { useState } from 'react';
+import { ZodError, z } from 'zod';
+import { supabase } from '../../supabase/supabase';
+import { useToast } from './ui/use-toast';
 
 const schema = z
   .string()
@@ -32,35 +32,33 @@ const schema = z
   })
   .max(100, {
     message: 'El nombre de la marca debe tener menos de 100 caracteres',
-  })
+  });
 
 export default function AddModelModal({
   children,
   fetchModels,
   brandOptions,
 }: {
-  children: React.ReactNode
-  fetchModels?: (brand_id: string) => Promise<void>
-  brandOptions?: { label: string; id: string }[]
+  children: React.ReactNode;
+  fetchModels?: (brand_id: string) => Promise<void>;
+  brandOptions?: { label: string; id: string }[];
 }) {
-  const [name, setName] = useState('')
-  const [brand, setBrand] = useState('')
-  const { toast } = useToast()
+  const [name, setName] = useState('');
+  const [brand, setBrand] = useState('');
+  const { toast } = useToast();
 
   async function onSubmit() {
     try {
-      schema.parse(name)
+      schema.parse(name);
     } catch (error: ZodError | any) {
       toast({
         variant: 'destructive',
         title: 'Error al agregar el modelo',
         description: error.errors[0].message,
-      })
-      return
+      });
+      return;
     }
-    const brand_id = brandOptions?.find(
-      brandOption => brandOption.label === brand,
-    )?.id
+    const brand_id = brandOptions?.find((brandOption) => brandOption.label === brand)?.id;
 
     const { data, error } = await supabase
       .from('model_vehicles')
@@ -70,20 +68,20 @@ export default function AddModelModal({
           brand: brand_id,
         },
       ])
-      .select()
+      .select();
     if (error) {
       toast({
         title: 'Error al agregar el modelo',
         description: error.message,
-      })
-      return
+      });
+      return;
     }
     toast({
       title: 'Modelo agregado correctamente',
       description: 'El modelo ha sido agregado correctamente',
-    })
+    });
     if (fetchModels) {
-      fetchModels(brand_id || '')
+      fetchModels(brand_id || '');
     }
   }
 
@@ -92,12 +90,9 @@ export default function AddModelModal({
       <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>
-            Agregar un nuevo modelo de un vehículo
-          </AlertDialogTitle>
+          <AlertDialogTitle>Agregar un nuevo modelo de un vehículo</AlertDialogTitle>
           <AlertDialogDescription>
-            Por favor complete los siguientes campos para agregar un nuevo
-            modelo de vehículo.
+            Por favor complete los siguientes campos para agregar un nuevo modelo de vehículo.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -106,22 +101,20 @@ export default function AddModelModal({
               <FormLabel>Nombre del modelo</FormLabel>
               <Input
                 placeholder="Ingrese el nombre del modelo"
-                onChange={e => setName(e.target.value)}
+                onChange={(e) => setName(e.target.value)}
                 value={name}
               />
             </FormItem>
             <FormItem>
-              <FormLabel>
-                Seleccione la marca a la que pertenece el modelo
-              </FormLabel>
-              <Select onValueChange={value => setBrand(value)}>
+              <FormLabel>Seleccione la marca a la que pertenece el modelo</FormLabel>
+              <Select onValueChange={(value) => setBrand(value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccione una marca" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Marcas registradas</SelectLabel>
-                    {brandOptions?.map(option => (
+                    {brandOptions?.map((option) => (
                       <SelectItem key={option.id} value={option.label}>
                         {option.label}
                       </SelectItem>
@@ -131,14 +124,12 @@ export default function AddModelModal({
               </Select>
             </FormItem>
             <div className="flex gap-2">
-              <AlertDialogAction onClick={onSubmit}>
-                Agregar modelo
-              </AlertDialogAction>
+              <AlertDialogAction onClick={onSubmit}>Agregar modelo</AlertDialogAction>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
             </div>
           </div>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }

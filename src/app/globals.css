@@ -80,21 +80,20 @@ html {
   scroll-behavior: smooth;
 }
 
-
-details[open] summary ~ *{
-  animation: sweep .5s ease-in-out;
+details[open] summary ~ * {
+  animation: sweep 0.5s ease-in-out;
 }
 
 @keyframes sweep {
- from {
-  opacity: 0;
-  transform: translateY(-10px);
- }
- to {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
     opacity: 1;
     transform: translateY(0);
- }
-} 
+  }
+}
 
 summary::after {
   content: '';

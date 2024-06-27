@@ -1,10 +1,10 @@
-'use server'
-import { supabaseServer } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
+'use server';
+import { supabaseServer } from '@/lib/supabase/server';
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 
 export async function signup(formData: FormData, url: string) {
-  const supabase = supabaseServer()
+  const supabase = supabaseServer();
 
   // type-casting here for convenience
   // in practice, you should validate your inputs
@@ -19,15 +19,15 @@ export async function signup(formData: FormData, url: string) {
     options: {
       emailRedirectTo: `${url}`,
     },
-  })
+  });
 
-  if(error){
-    return error.message
+  if (error) {
+    return error.message;
   }
 
-  const firstname = formData.get('firstname') as string
-  const lastname = formData.get('lastname') as string
-  const {error:error2}=await supabase
+  const firstname = formData.get('firstname') as string;
+  const lastname = formData.get('lastname') as string;
+  const { error: error2 } = await supabase
     .from('profile')
     .insert({
       id: user.user?.id,
@@ -36,12 +36,12 @@ export async function signup(formData: FormData, url: string) {
       role: 'CodeControlClient',
       fullname: `${firstname} ${lastname}`,
     })
-    .select()
+    .select();
 
   if (error2) {
-    return error2.message
+    return error2.message;
   }
 
-  revalidatePath('/', 'layout')
-  redirect('/login')
+  revalidatePath('/', 'layout');
+  redirect('/login');
 }

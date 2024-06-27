@@ -1,34 +1,34 @@
-'use client'
-import { CardDescription } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { ChangeEvent, useRef, useState } from 'react'
+'use client';
+import { CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ChangeEvent, useRef, useState } from 'react';
 // import { FormDescription, FormLabel } from './ui/form'
 
 interface UploadImageProps {}
 
 export function ImageInput({}: UploadImageProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [file, setFile] = useState<File | undefined>()
-  const [required, setRequired] = useState(false)
-  const disabled = false
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [base64Image, setBase64Image] = useState<string>('')
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | undefined>();
+  const [required, setRequired] = useState(false);
+  const disabled = false;
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [base64Image, setBase64Image] = useState<string>('');
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+    const file = event.target.files?.[0];
 
     if (file) {
-      setImageFile(file)
+      setImageFile(file);
       // Convertir la imagen a base64
-      const reader = new FileReader()
-      reader.onload = e => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
         if (e.target && typeof e.target.result === 'string') {
-          setBase64Image(e.target.result)
+          setBase64Image(e.target.result);
         }
-      }
-      reader.readAsDataURL(file)
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
   return (
     <div>
@@ -52,8 +52,8 @@ export function ImageInput({}: UploadImageProps) {
           type="file"
           accept=".jpg, .jpeg, .png, .gif, .bmp, .tif, .tiff"
           onChange={(event: ChangeEvent<HTMLInputElement>) => {
-            handleImageChange && handleImageChange(event) // Accede al archivo file del input
-            setFile(event.target.files?.[0]) // Guarda el archivo en el estado
+            handleImageChange && handleImageChange(event); // Accede al archivo file del input
+            setFile(event.target.files?.[0]); // Guarda el archivo en el estado
           }}
           className="self-center hidden"
           id="fileInput"
@@ -72,5 +72,5 @@ export function ImageInput({}: UploadImageProps) {
         )}
       </div>
     </div>
-  )
+  );
 }

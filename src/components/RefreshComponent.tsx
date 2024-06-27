@@ -1,16 +1,16 @@
-'use client'
+'use client';
 
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 function RefreshComponent() {
-  const router = useRouter()
+  const router = useRouter();
 
   useEffect(() => {
-    router.refresh()
-  }, [])
+    router.refresh();
+  }, []);
 
-  return <></>
+  return <></>;
 }
 
-export default RefreshComponent
+export default RefreshComponent;
