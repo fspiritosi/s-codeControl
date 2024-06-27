@@ -197,7 +197,6 @@ export default function page() {
                 <TabsContent value="Empleados" className="">
                   <ExpiredDataTable
                     data={allDocumentsToShow?.employees || []}
-                    // setShowLastMonthDocuments={setShowLastMonthDocuments}
                     columns={ExpiredColums}
                     pending={true}
                     defaultVisibleColumnsCustom={[

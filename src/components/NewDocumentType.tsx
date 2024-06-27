@@ -24,36 +24,8 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
   const [special, setSpecial] = useState(false);
   const router = useRouter();
   const fetchDocumentTypes = useCountriesStore((state) => state.documentTypes);
-
-  const FormSchema = z.object({
-    name: z
-      .string({ required_error: 'Este campo es requerido' })
-      .min(3, { message: 'El nombre debe contener mas de 3 caracteres' })
-      .max(50, { message: 'El nombre debe contener menos de 50 caracteres' }),
-    applies: z.enum(['Persona', 'Equipos', 'Empresa'], {
-      required_error: 'Este campo es requerido',
-    }),
-    multiresource: z.boolean({
-      required_error: 'Se debe seleccionar una opcion',
-    }),
-    mandatory: z.boolean({ required_error: 'Se debe seleccionar una opcion' }),
-    explired: z.boolean({ required_error: 'Se debe seleccionar una opcion' }),
-    special: z.boolean({ required_error: 'Este campo es requerido' }),
-    description: special ? z.string({ required_error: 'Este campo es requerido' }) : z.string().optional(),
-    is_it_montlhy: z.boolean({ required_error: 'Este campo es requerido' }),
-  });
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: {
-      name: '',
-      multiresource: undefined,
-      mandatory: undefined,
-      explired: undefined,
-      special: undefined,
-    },
-  });
-
-  const items = [
+  const fetchDocuments = useLoggedUserStore((state) => state.documetsFetch);
+  const [items, setItems] = useState([
     {
       id: 'multiresource',
       label: 'Es multirecurso?',
@@ -75,7 +47,43 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
       label: 'Es mensual?',
       tooltip: 'Si el documento vence mensualmente',
     },
-  ];
+  ]);
+
+  const isOptional = items.length < 5;
+  const FormSchema = z.object({
+    name: z
+      .string({ required_error: 'Este campo es requerido' })
+      .min(3, { message: 'El nombre debe contener mas de 3 caracteres' })
+      .max(50, { message: 'El nombre debe contener menos de 50 caracteres' }),
+    applies: z.enum(['Persona', 'Equipos', 'Empresa'], {
+      required_error: 'Este campo es requerido',
+    }),
+    multiresource: isOptional
+      ? z.boolean().optional()
+      : z.boolean({
+          required_error: 'Se debe seleccionar una opcion',
+        }),
+    mandatory: isOptional ? z.boolean().optional() : z.boolean({ required_error: 'Se debe seleccionar una opcion' }),
+    explired: z.boolean({ required_error: 'Se debe seleccionar una opcion' }),
+    special: isOptional ? z.boolean().optional() : z.boolean({ required_error: 'Este campo es requerido' }),
+    description: isOptional
+      ? z.string().optional()
+      : special
+        ? z.string({ required_error: 'Este campo es requerido' })
+        : z.string().optional(),
+    is_it_montlhy: z.boolean({ required_error: 'Este campo es requerido' }),
+  });
+
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      name: '',
+      multiresource: undefined,
+      mandatory: undefined,
+      explired: undefined,
+      special: undefined,
+    },
+  });
 
   async function onSubmit(values: z.infer<typeof FormSchema>) {
     const formattedValues = {
@@ -83,6 +91,9 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
       name: formatName(values.name),
       description: formatDescription(values.description),
       company_id: codeControlClient ? useLoggedUserStore.getState().actualCompany?.id : null,
+      multiresource: isOptional ? false : values.multiresource,
+      mandatory: isOptional ? true : values.mandatory,
+      special: isOptional ? false : values.special,
     };
 
     toast.promise(
@@ -96,6 +107,8 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
       {
         loading: 'Creando documento...',
         success: (data) => {
+          fetchDocumentTypes(useLoggedUserStore.getState().actualCompany?.id || '');
+          fetchDocuments();
           if (codeControlClient) {
             document.getElementById('close_document_modal')?.click();
             return 'El documento se ha creado correctamente';
@@ -109,7 +122,6 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
         },
       }
     );
-    fetchDocumentTypes(useLoggedUserStore.getState().actualCompany?.id || '');
   }
 
   function formatName(name: string): string {
@@ -148,7 +160,47 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
             <FormItem>
               <div>
                 <FormLabel>Aplica a</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select
+                  onValueChange={(value) => {
+                    if (value === 'Empresa') {
+                      setItems([
+                        { id: 'explired', label: 'Expira?', tooltip: 'Si el documento expira' },
+                        {
+                          id: 'is_it_montlhy',
+                          label: 'Es mensual?',
+                          tooltip: 'Si el documento vence mensualmente',
+                        },
+                      ]);
+                    } else {
+                      setItems([
+                        {
+                          id: 'multiresource',
+                          label: 'Es multirecurso?',
+                          tooltip: 'Si el documento aplica a mas de una persona o equipo',
+                        },
+                        {
+                          id: 'mandatory',
+                          label: 'Es mandatorio?',
+                          tooltip: 'Si el documento es obligatorio, se crearan alertas para su cumplimiento',
+                        },
+                        { id: 'explired', label: 'Expira?', tooltip: 'Si el documento expira' },
+                        {
+                          id: 'special',
+                          label: 'Es especial?',
+                          tooltip: 'Si el documento requiere documentacion especial',
+                        },
+                        {
+                          id: 'is_it_montlhy',
+                          label: 'Es mensual?',
+                          tooltip: 'Si el documento vence mensualmente',
+                        },
+                      ]);
+                    }
+
+                    field.onChange(value);
+                  }}
+                  defaultValue={field.value}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Personas, Equipos o Empresa" />

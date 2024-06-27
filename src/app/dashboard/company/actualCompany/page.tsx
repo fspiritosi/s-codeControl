@@ -1,6 +1,6 @@
 'use client';
 import { RegisterWithRole } from '@/components/RegisterWithRole';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
@@ -16,27 +16,27 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import cookies from 'js-cookie';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Contact from '../contact/Contact';
 import Customers from '../customers/Customers';
 import { columns } from './components/columns';
 import { DataTable } from './components/data-table';
+import { columnsDocuments } from './components/document-colums';
 import { ItemCompany } from './components/itemCompany';
 
 export default function page() {
   const router = useRouter();
-  const companyId = cookies.get('actualComp');
   const company = useLoggedUserStore((state) => state.actualCompany);
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   const sharedUsersAll = useLoggedUserStore((state) => state.sharedUsers);
   const [verify, setVerify] = useState(false);
   const ownerUser = useLoggedUserStore((state) => state.profile);
-  const [showPasswords, setShowPasswords] = useState(false);
-  const [open, setOpen] = useState(false);
   const [tabValue, setTabValue] = useState(localStorage.getItem('selectedTab') || 'general');
   const userShared = cookies.get('guestRole');
-  console.log(actualCompany?.id, 'actual company');
+  const AllCompanyDocuments = useLoggedUserStore((state) => state.companyDocuments);
+
   const owner = ownerUser?.map((user) => {
     return {
       email: user.email,
@@ -66,6 +66,23 @@ export default function page() {
       fullname: user.fullname || '',
     })) || []
   );
+  const documentCompany = AllCompanyDocuments?.map((document) => {
+    const sharedUserRole = data?.find((e) => e.email === document.user_id?.email)?.role;
+    return {
+      email: document.user_id?.email ?? 'Documento pendiente',
+      fullname: document.id_document_types.name,
+      role: sharedUserRole ?? 'Documento pendiente',
+      alta: (document.user_id?.email && document.created_at) ?? 'Documento pendiente',
+      id: document.id_document_types.id,
+      img: document.user_id?.avatar,
+      vencimiento: document.validity
+        ? document.validity
+        : document.id_document_types.explired
+          ? 'Documento pendiente'
+          : 'No expira',
+      documentId: document.id,
+    };
+  });
 
   function compare(text: string) {
     if (text === company?.company_name) {
@@ -86,18 +103,10 @@ export default function page() {
 
   return (
     <div className="flex flex-col gap-6 py-4 px-6">
-      {/* <div className="w-full flex mb-6">
-        <Image
-          src={company?.company_logo || ''}
-          alt={company?.company_name || ''}
-          width={200}
-          height={200}
-        />
-      </div> */}
-
       <Tabs defaultValue={tabValue} onValueChange={handleTabChange}>
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="documentacion">Documentacion</TabsTrigger>
           <TabsTrigger value="users">Usuarios</TabsTrigger>
           <TabsTrigger value="customers">Clientes</TabsTrigger>
           <TabsTrigger value="contacts">Contactos</TabsTrigger>
@@ -107,14 +116,14 @@ export default function page() {
         </TabsList>
         <TabsContent value="general" className="space-y-4">
           <Card className="overflow-hidden">
-            <CardHeader className="w-full bg-muted dark:bg-muted/50 border-b-2">
-              <CardTitle className="text-2xl font-bold tracking-tight flex justify-between">
-                Datos generales de la empresa
-                <Button className="ml-auto flex justify-between mb-2" onClick={handleEditCompany}>
-                  Editar Compañía
-                </Button>
-              </CardTitle>
-              <CardDescription className="text-muted-foreground">Información de la empresa</CardDescription>
+            <CardHeader className="w-full flex bg-muted dark:bg-muted/50 border-b-2 flex-row justify-between">
+              <div className="w-fit">
+                <CardTitle className="text-2xl font-bold tracking-tight w-fit">Datos generales de la empresa</CardTitle>
+                <CardDescription className="text-muted-foreground w-fit">Información de la empresa</CardDescription>
+              </div>
+              <Button className="w-fit" onClick={handleEditCompany}>
+                Editar Compañía
+              </Button>
             </CardHeader>
             <CardContent className="py-4 px-4 ">
               {company && (
@@ -205,6 +214,27 @@ export default function page() {
         </TabsContent>
         <TabsContent value="contacts">
           <Contact />
+        </TabsContent>
+        <TabsContent value="documentacion">
+          <Card className="overflow-hidden">
+            <div className=" h-full flex-1 flex-col space-y-8  md:flex">
+              <CardHeader className="w-full flex flex-row justify-between items-start bg-muted dark:bg-muted/50 border-b-2">
+                <div>
+                  <CardTitle className="text-2xl font-bold tracking-tight">Documentos de la empresa</CardTitle>
+                  <CardDescription className="text-muted-foreground">
+                    Lista de documentos a nombre de la empresa
+                  </CardDescription>
+                </div>
+                <Link href={'/dashboard/document'} className={buttonVariants({ variant: 'default' })}>
+                  Nuevo Documento
+                </Link>
+              </CardHeader>
+              <div className="px-8 pb-8">
+                <DataTable isDocuments data={documentCompany || []} columns={columnsDocuments} />
+              </div>
+            </div>
+            <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
+          </Card>
         </TabsContent>
         <TabsContent value="modules">Change your password here.</TabsContent>
       </Tabs>

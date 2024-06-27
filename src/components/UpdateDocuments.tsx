@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
+import { useLoggedUserStore } from '@/store/loggedUser';
 import { CalendarIcon, InfoCircledIcon } from '@radix-ui/react-icons';
 import { addMonths, format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -50,6 +51,7 @@ export default function UpdateDocuments({
   const today = new Date();
   const nextMonth = addMonths(new Date(), 1);
   const [month, setMonth] = useState<Date>(nextMonth);
+  const fetchDocuments = useLoggedUserStore((state) => state.documetsFetch);
 
   const yearsAhead = Array.from({ length: 20 }, (_, index) => {
     const year = today.getFullYear() + index + 1;
@@ -65,25 +67,28 @@ export default function UpdateDocuments({
       return;
     }
     const fileExtension1 = file.name.split('.').pop();
-    const fileExtension2 = documentName?.split('.').pop();
-    const tableName = resource === 'vehicle' ? 'documents_equipment' : 'documents_employees';
+    const tableName =
+      resource === 'vehicle'
+        ? 'documents_equipment'
+        : resource === 'company'
+          ? 'documents_company'
+          : 'documents_employees';
 
-    if (fileExtension1 !== fileExtension2) {
-      // const pathDelete = resource === 'vehicle' ? `documentos-equipos/${documentName}.${fileExtension2}` : `documentos-empleados/${documentName}.${fileExtension2}`
-      if (!documentName) return;
-      const { error: storageError } = await supabase.storage.from('document_files').remove([documentName]);
+    const numberVersion = parseInt(documentName?.match(/-v(\d+)/)?.[1] || '0');
+    const version = expires ? format(new Date(), 'dd/MM/yyyy') : `v${numberVersion! + 1}`;
+    let documentNameWithOutExtension = documentName?.split('.').shift();
+    if (expires) {
+      documentNameWithOutExtension = documentName?.replace(/-\d{4}-\d{2}-\d{2}(?:\.\w+)?$/, '');
+    } else {
+      documentNameWithOutExtension = documentName?.replace(/-v\d+(?:\.\w+)?$/, '');
     }
-    const documentNameWithOutExtension = documentName?.split('.').shift();
 
     const { error: storageError, data } = await supabase.storage
       .from('document_files')
-      .upload(`/${documentNameWithOutExtension}.${fileExtension1}`, file, {
+      .upload(`/${documentNameWithOutExtension}-${version.replaceAll('/', '-')}.${fileExtension1}`, file, {
         cacheControl: '0',
         upsert: true,
       });
-
-    console.log(data, 'data');
-    console.log(storageError, 'storageError');
 
     const { error: updateError } = await supabase
       .from(tableName)
@@ -109,8 +114,12 @@ export default function UpdateDocuments({
       description: 'El documento se ha actualizado correctamente',
       variant: 'default',
     });
-
-    router.push('/dashboard');
+    fetchDocuments;
+    if (resource === 'company') {
+      router.push('/dashboard/company/actualCompany');
+    } else {
+      router.push('/dashboard/document');
+    }
     setIsOpen(false);
   }
   return (

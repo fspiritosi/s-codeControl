@@ -11,27 +11,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { revalidatePath } from 'next/cache';
 import { Suspense } from 'react';
 import { supabase } from '../../../../../supabase/supabase';
 import DownloadButton from '../documentComponents/DownloadButton';
 export default async function page({ params }: { params: { id: string } }) {
-  // const router = useRouter()
-  // redirect('/dashboard/document')
-
   let documents_employees: any[] | null = [];
-  // const [documents_employees, setDocumentsEmployees] = useState<any[] | null>(
-  //   [],
-  // )
-  // const [resource, setResource] = useState<string | null>(null)
-  // const [documentName, setDocumentName] = useState<string | null>('')
-  // const [documentUrl, setDocumentUrl] = useState<string | null>(null)
   let resource = '';
   let documentName = '';
   let documentUrl = '';
-  // const fetchDocument = async () => {
   let document: any[] | null = [];
   let documentType: string | null = null;
   let resourceType: string | null = null;
+  revalidatePath('/dashboard/document/[id]', 'page');
 
   let { data: documents_employee } = await supabase
     .from('documents_employees')
@@ -67,6 +59,19 @@ export default async function page({ params }: { params: { id: string } }) {
     document = documents_vehicle;
     resourceType = 'documentos-equipos';
     resource = 'vehicle';
+
+    if (documents_vehicle?.length === 0) {
+      let { data: documents_company } = await supabase
+        .from('documents_company')
+        .select(`*,document_types:id_document_types(*)`)
+        .eq('id', params.id);
+
+      document = documents_company;
+      resourceType = 'documentos-company';
+      resource = 'company';
+      console.log(params.id);
+      console.log(documents_company);
+    }
   } else {
     document = documents_employee;
     resourceType = 'documentos-empleados';
@@ -100,10 +105,6 @@ export default async function page({ params }: { params: { id: string } }) {
 
     return validityDate <= oneMonthFromNow;
   }
-  console.log(
-    documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth(),
-    ' documents_employees?.[0]?.state ='
-  );
 
   return (
     <section className="md:mx-7">
@@ -159,10 +160,10 @@ export default async function page({ params }: { params: { id: string } }) {
           <div className="lg:max-w-[30vw] col-span-1">
             <Tabs defaultValue="Documento" className="w-full px-2">
               <TabsList className="w-full justify-evenly">
-                <TabsTrigger className="hover:bg-white/30" value="Empresa">
+                <TabsTrigger className={cn('hover:bg-white/30', resource === 'company' && 'hidden')} value="Empresa">
                   Empresa
                 </TabsTrigger>
-                <TabsTrigger className="hover:bg-white/30" value="Empleado">
+                <TabsTrigger className={cn('hover:bg-white/30', resource === 'company' && 'hidden')} value="Empleado">
                   {resource === 'employee' ? 'Empleado' : 'Equipo'}
                 </TabsTrigger>
                 <TabsTrigger className="hover:bg-white/30" value="Documento">
@@ -185,7 +186,8 @@ export default async function page({ params }: { params: { id: string } }) {
                       {documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth() ? (
                         <TooltipContent>
                           <p>
-                            Este documento no puede ser modificado ya que se encuentra aprobado y no esta por vencer
+                            Este documento no puede ser modificado ya que se encuentra aprobado y su vencimiento es
+                            mayor a 30 dias
                           </p>
                         </TooltipContent>
                       ) : (
@@ -195,7 +197,7 @@ export default async function page({ params }: { params: { id: string } }) {
                   </TooltipProvider>
                 ) : (
                   <TabsTrigger className="hover:bg-white/30" value="Auditar">
-                    Auditar
+                    Actualizar
                   </TabsTrigger>
                 )}
               </TabsList>
@@ -546,7 +548,9 @@ export default async function page({ params }: { params: { id: string } }) {
                           <TableCell>
                             <CardDescription>
                               {documents_employees?.[0]?.document_types?.explired
-                                ? `Vence el ${documents_employees?.[0]?.validity}`
+                                ? resource === 'company'
+                                  ? `Vence el ${documents_employees?.[0]?.validity}`
+                                  : `Vence el ${documents_employees?.[0]?.validity}`
                                 : 'No tiene vencimiento'}
                             </CardDescription>
                           </TableCell>

@@ -545,7 +545,7 @@ export const SharedUser = z.object({
   email: z.string(),
   fullname: z.string(),
   role: z.string(),
-  alta: z.date(),
+  alta: z.date().or(z.string()),
   id: z.string(),
   img: z.string(),
 });
@@ -633,6 +633,7 @@ export const EquipoSchema = z
       is_active: z.boolean(),
       description: z.union([z.null(), z.string()]),
       company_id: z.string().optional().nullable(),
+      is_it_montlhy:z.boolean().optional().nullable()
     })
   )
   .default([]);

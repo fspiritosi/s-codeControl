@@ -328,7 +328,7 @@ export default function SimpleDocument({
                   <li className="space-y-4 ">
                     {!id && !documentResource && (
                       <div className="space-y-2 py-3 ">
-                        <Label className="block">Empleados</Label>
+                        <Label className="block">{resource === 'equipo' ? 'Equipos' : 'Empleados'}</Label>
                         <Controller
                           render={({ field }) => {
                             const selectedResourceName = data?.find(
@@ -649,7 +649,7 @@ export default function SimpleDocument({
         </div>
       </ul>
       <div className="flex justify-evenly mt-2">
-        <AlertDialogCancel className="text-black dark:bg-white" asChild>
+        <AlertDialogCancel className="text-black dark:bg-white hover:text-black/50" asChild>
           <Button onClick={() => handleOpen()}>Cancelar</Button>
         </AlertDialogCancel>
 
