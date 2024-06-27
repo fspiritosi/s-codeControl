@@ -88,7 +88,10 @@ export default function UpdateDocuments({
       .upload(`/${documentNameWithOutExtension}-${version.replaceAll('/', '-')}.${fileExtension1}`, file, {
         cacheControl: '0',
         upsert: true,
-      });
+      })
+
+    // // // console.log(data, 'data')
+    // // // console.log(storageError, 'storageError')
 
     const { error: updateError } = await supabase
       .from(tableName)

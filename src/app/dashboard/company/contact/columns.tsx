@@ -32,6 +32,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
@@ -134,8 +135,8 @@ export const columns: ColumnDef<Colum>[] = [
             .from('contacts')
             .update({
               is_active: true,
-              //termination_date: null,
-              //reason_for_termination: null,
+              termination_date: null,
+              reason_for_termination: null,
             })
             .eq('id', contacts.id)
             //.eq('company_id', actualCompany?.id)
@@ -170,8 +171,8 @@ export const columns: ColumnDef<Colum>[] = [
             .from('contacts')
             .update({
               is_active: false,
-              //termination_date: data.termination_date,
-              //reason_for_termination: data.reason_for_termination,
+              termination_date: data.termination_date,
+              reason_for_termination: data.reason_for_termination,
             })
             .eq('id', contacts.id)
             .eq('company_id', actualCompany?.id)
@@ -206,7 +207,7 @@ export const columns: ColumnDef<Colum>[] = [
       // const handleToggleInactive = () => {
       //   setShowInactive(!showInactive)
       // }
-      // console.log("id contacto: ", contacts.id)
+      // // // // console.log("id contacto: ", contacts.id)
 
       return (
         <DropdownMenu>
@@ -243,7 +244,19 @@ export const columns: ColumnDef<Colum>[] = [
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Motivo de Baja</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Input
+                                className="input w-[250px]"
+                                placeholder="Escribe el motivo"
+                                maxLength={80} // Limitar a 80 caracteres
+                                value={field.value}
+                                onChange={(e: any) => {
+                                  field.onChange(e.target.value);
+                                }}
+                              />
+                              {/* <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Selecciona la razón" />
@@ -254,11 +267,12 @@ export const columns: ColumnDef<Colum>[] = [
                                   <SelectItem value="Cerro la empresa">Cerro la Empresa</SelectItem>
                                   <SelectItem value="Otro">Otro</SelectItem>
                                 </SelectContent>
-                              </Select>
-                              <FormDescription>
-                                Elige la razón por la que deseas dar de baja el contacto
+                              </Select> */}
+                              {/* <FormDescription>
+                                Elige la razón por la que deseas dar de baja el
+                                contacto
                               </FormDescription>
-                              <FormMessage />
+                              <FormMessage /> */}
                             </FormItem>
                           )}
                         />

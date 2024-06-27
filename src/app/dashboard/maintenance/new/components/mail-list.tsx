@@ -467,7 +467,7 @@ export function FormDisplay({ campos }: MailDisplayProps) {
 
   const vehicles = useLoggedUserStore((state) => state.vehicles);
 
-  console.log(vehicles);
+  // // // console.log(vehicles)
   const renderizarCampo = (campo: Campo, index: number) => {
     switch (campo.tipo) {
       case 'Nombre del formulario':

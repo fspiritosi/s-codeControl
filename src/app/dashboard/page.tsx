@@ -14,7 +14,7 @@ export default async function Home() {
   //   .select('*')
   //   .eq('id', actualCompany?.value)
 
-  // console.log(company, 'company')
+  // // // // console.log(company, 'company')
 
   return (
     <div className="">

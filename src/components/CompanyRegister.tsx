@@ -132,7 +132,7 @@ export function CompanyRegister({ company = null, formEnabled = true }: CompanyR
   //             by_defect: false,
   //           })
   //           await handleUpload()
-  //           console.log('redireccionando 5')
+  //           // // // console.log('redireccionando 5')
   //           router.push('/dashboard')
   //         },
   //         {
@@ -161,13 +161,13 @@ export function CompanyRegister({ company = null, formEnabled = true }: CompanyR
   //             by_defect: false,
   //           })
   //           await handleUpload()
-  //           console.log('redireccionando 1')
+  //           // // // console.log('redireccionando 1')
   //           router.push('/dashboard')
   //         },
   //         {
   //           loading: 'Registrando compañía...',
   //           success: success => {
-  //             console.log('redireccionando 2')
+  //             // // // console.log('redireccionando 2')
   //             router.push('/dashboard')
   //             // redirect('/dashboard')
   //             return 'Compañía registrada correctamente'
@@ -178,7 +178,7 @@ export function CompanyRegister({ company = null, formEnabled = true }: CompanyR
   //         },
   //       )
   //     }
-  //     console.log('redireccionando 3')
+  //     // // // console.log('redireccionando 3')
   //     router.push('/dashboard')
   //   } catch (err) {
   //     console.error('Ocurrió un error:', err)

@@ -4,9 +4,11 @@ import { ExpiredColums } from '../colums';
 import { ExpiredDataTable } from '../data-table';
 
 function EmployeesTable() {
-  const documentsToShow = useLoggedUserStore((state) => state.documentsToShow);
-  const setShowLastMonthDocuments = useLoggedUserStore((state) => state.setShowLastMonthDocuments);
-  console.log(documentsToShow, 'documentsToShow');
+  const documentsToShow = useLoggedUserStore(state => state.documentsToShow)
+  const setShowLastMonthDocuments = useLoggedUserStore(
+    state => state.setShowLastMonthDocuments,
+  )
+  // // // console.log(documentsToShow, 'documentsToShow')
   return (
     <ExpiredDataTable
       data={documentsToShow?.employees || []}

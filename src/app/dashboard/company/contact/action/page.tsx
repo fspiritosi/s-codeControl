@@ -10,7 +10,7 @@ export default async function CustomerFormAction({ searchParams, params }: { sea
 
   return (
     <section className="grid grid-cols-2 xl:grid-cols-2 gap-2 py-4 justify-start">
-      <div className=" flex gap-2">
+      <div className="flex gap-2 col-start-2 justify-end ">
         <BackButton />
       </div>
 

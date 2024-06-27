@@ -34,10 +34,11 @@ export default function page() {
   const [verify, setVerify] = useState(false);
   const ownerUser = useLoggedUserStore((state) => state.profile);
   const [tabValue, setTabValue] = useState(localStorage.getItem('selectedTab') || 'general');
-  const userShared = cookies.get('guestRole');
   const AllCompanyDocuments = useLoggedUserStore((state) => state.companyDocuments);
 
-  const owner = ownerUser?.map((user) => {
+  const userShared = cookies.get('guestRole')
+  // // // console.log(actualCompany?.id, "actual company")
+  const owner = ownerUser?.map(user => {
     return {
       email: user.email,
       fullname: user.fullname as string,

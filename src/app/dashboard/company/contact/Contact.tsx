@@ -1,39 +1,67 @@
-'use client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useLoggedUserStore } from '@/store/loggedUser';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { supabase } from '../../../../../supabase/supabase';
-import { columns } from './columns';
-import { DataContacts } from './data-table';
+"use client"
+import { MissingDocumentList } from '@/components/MissingDocumentList'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { columns } from './columns'
+import { DataContacts } from './data-table'
+import { supabase } from '../../../../../supabase/supabase'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useState, useEffect } from "react"
+import { useLoggedUserStore } from '@/store/loggedUser'
+import Link from 'next/link'
+import { buttonVariants } from '@/components/ui/button'
+import { useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { useCountriesStore } from '@/store/countries'
 
 export default function Contact() {
-  //const actualCompany = cookies().get('actualComp')
-  //const supabase = supabaseServer()
-  const router = useRouter();
-  const [contacts, setContacts] = useState(['']);
-  const allCompany = useLoggedUserStore((state) => state.allCompanies);
-  const [showInactive, setShowInactive] = useState(false);
-  const useSearch = useSearchParams();
+  const actualCompany = useLoggedUserStore(state => state.actualCompany)
+  const router = useRouter()
+  const [contacts, setContacts] = useState([''])
+  const allCompany = useLoggedUserStore(state => state.allCompanies)
+  const [showInactive, setShowInactive] = useState(false)
+  const useSearch = useSearchParams()
+  const fetchContacts = useCountriesStore(state => state.fetchContacts)
+  const subscribeToContactsChanges = useCountriesStore(state => state.subscribeToContactsChanges)
+  const contractorCompanies = useCountriesStore(state => state.contacts?.filter((company:any) => company.company_id.toString() === actualCompany?.id ))
+  console.log(contractorCompanies)
+
   useEffect(() => {
-    const fetchContacts = async () => {
-      const { data, error } = await supabase.from('contacts').select('*, customers(id, name)');
-      //.eq('is_active', true)
-      console.log('fetchContact: ', data);
-      if (error) {
-        console.error('Error fetching customers:', error);
-      } else {
-        setContacts(data);
-      }
-    };
+    fetchContacts()
 
-    fetchContacts();
-  }, []);
+    const unsubscribe = subscribeToContactsChanges()
 
+    return () => {
+      unsubscribe()
+    }
+  }, [fetchContacts, subscribeToContactsChanges])
+
+
+const channels = supabase.channel('custom-all-channel')
+.on(
+  'postgres_changes',
+  { event: '*', schema: 'public', table: 'contacts' },
+  (payload) => {
+    console.log('Change received!', payload)
+    fetchContacts()
+    
+  }
+)
+.subscribe()
+  
+  
   const handleCreateContact = () => {
     router.push(`/dashboard/company/contact/action?action=new`);
   };
+
+
 
   return (
     <div>
@@ -59,7 +87,7 @@ export default function Contact() {
             <CardContent>
               <DataContacts
                 columns={columns}
-                data={contacts || []}
+                data={contractorCompanies || []}
                 allCompany={allCompany}
                 showInactive={showInactive}
                 setShowInactive={setShowInactive}

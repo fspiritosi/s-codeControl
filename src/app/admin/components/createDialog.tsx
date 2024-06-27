@@ -14,16 +14,12 @@ import { PlusCircle } from 'lucide-react';
 import { supabase } from '../../../../supabase/supabase';
 
 export function CreateDialog({ title, dbName }: any) {
-  console.log(dbName);
-
   async function createDiagram(formData: FormData) {
     'use server';
 
     const diagramFormData = {
       name: formData.get('name'),
     };
-
-    console.log(diagramFormData.name);
 
     const { data, error } = await supabase
       .from(dbName)

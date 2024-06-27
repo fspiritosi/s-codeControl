@@ -12,14 +12,14 @@ export const RegisterButton = () => {
   let url = '';
 
   if (typeof window !== 'undefined') {
-    url = window.location.origin;
-    console.log(url, 'url email');
+    url = window.location.origin
+    // // // console.log(url, 'url email')
   }
 
   const clientAccion = async (formData: FormData) => {
-    const values = Object.fromEntries(formData.entries());
-    const result = registerSchema.safeParse(values);
-    console.log(result, 'result');
+    const values = Object.fromEntries(formData.entries())
+    const result = registerSchema.safeParse(values)
+    // // // console.log(result, 'result')
 
     Object.keys(values).forEach((key) => {
       const element = document.getElementById(`${key}_error`);

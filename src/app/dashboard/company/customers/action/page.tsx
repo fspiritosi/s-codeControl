@@ -2,14 +2,24 @@ import { cn } from '@/lib/utils';
 import { supabase } from '../../../../../../supabase/supabase';
 import BackButton from '../../../../../components/BackButton';
 import CustomerComponent from '../../../../../components/CustomerComponent';
+import { revalidatePath } from 'next/cache';
 
-export default async function CustomerFormAction({ searchParams, params }: { searchParams: any; params: any }) {
-  const { data } = await supabase.from('customers').select('*').eq('id', searchParams.id);
-  //revalidatePath('/dashboard/company/customer/action')
+export default async function CustomerFormAction({
+  searchParams,
+  params,
+}: {
+  searchParams: any
+  params: any
+}) {
+  const { data } = await supabase
+    .from('customers')
+    .select('*')
+    .eq('id', searchParams.id)
+  revalidatePath('/dashboard/company/customer/action')
 
   return (
     <section className="grid grid-cols-2 xl:grid-cols-2 gap-2 py-4 justify-start">
-      <div className=" flex gap-2">
+      <div className="flex gap-2 col-start-2 justify-end mr-6">
         <BackButton />
       </div>
 

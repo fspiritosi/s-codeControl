@@ -4,6 +4,7 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { contactSchema } from '@/zodSchemas/schemas';
@@ -11,8 +12,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Toaster, toast } from 'sonner';
 import { z } from 'zod';
-import { supabase } from '../../supabase/supabase';
 import { createdContact, updateContact } from '../app/dashboard/company/contact/action/create';
 
 type Action = 'view' | 'edit' | null;
@@ -23,7 +24,7 @@ export default function ContactRegister({ id }: { id: string }) {
   const functionAction = id ? updateContact : createdContact;
   const searchParams = useSearchParams();
   const actualCompany = useLoggedUserStore((state) => state.actualCompany?.id);
-
+  const supabase = supabaseBrowser();
   const [action, setAction] = useState<Action>(searchParams.get('action') as Action);
   const [readOnly, setReadOnly] = useState(action === 'edit' ? false : true);
   const [clientData, setClientData] = useState<any>(null);
@@ -60,7 +61,11 @@ export default function ContactRegister({ id }: { id: string }) {
     }
 
     const fetchCustomers = async () => {
-      const { data, error } = await supabase.from('customers').select('*').eq('company_id', actualCompany);
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('is_active', true)
+        .eq('company_id', actualCompany);
       if (error) {
         console.error('Error fetching customers:', error);
       } else {
@@ -96,10 +101,10 @@ export default function ContactRegister({ id }: { id: string }) {
 
   const customerValue = watch('customer');
 
-  console.log('clientData: ', clientData);
-  console.log('contactData: ', contactData);
-  console.log('ID: ', id);
-  console.log('Selected Customer: ', customerValue);
+  // // // console.log("clientData: ", clientData);
+  // // // console.log("contactData: ", contactData);
+  // // // console.log("ID: ", id);
+  // // // console.log("Selected Customer: ", customerValue);
 
   const onSubmit = async (formData: ContactFormValues) => {
     try {
@@ -114,9 +119,14 @@ export default function ContactRegister({ id }: { id: string }) {
       data.append('contact_phone', formData.contact_phone);
       data.append('contact_charge', formData.contact_charge);
       data.append('customer', formData.customer);
+      toast.loading('Creando cliente');
       await functionAction(data);
+      toast.dismiss();
+      toast.success('Contacto creado satisfactoriamente!');
     } catch (error) {
       console.error('Error submitting form:', error);
+      toast.dismiss();
+      toast.error('Error al crear el contacto');
     }
   };
 
@@ -237,6 +247,7 @@ export default function ContactRegister({ id }: { id: string }) {
                 {id ? 'Editar Contacto' : 'Registrar Contacto'}
               </Button>
             )}
+            <Toaster />
           </form>
         </div>
       </Card>

@@ -201,9 +201,9 @@ export default function MultiResourceDocument({
         .then(async (response) => {
           const isMandatory = documenTypes?.find((doc) => doc.id === values.id_document_types)?.mandatory;
 
-          console.log('isMandatory', isMandatory);
-          console.log('documenTypes', documenTypes);
-          console.log('values', values);
+          // // // console.log('isMandatory', isMandatory)
+          // // // console.log('documenTypes', documenTypes)
+          // // // console.log('values', values)
 
           if (isMandatory) {
             const data = {
@@ -227,7 +227,7 @@ export default function MultiResourceDocument({
               });
             }
           } else {
-            console.log('creando');
+            // // // console.log('creando')
             const { error } = await supabase
               .from(tableName)
               .insert({
