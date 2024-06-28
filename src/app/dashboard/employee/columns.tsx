@@ -103,7 +103,6 @@ const allocatedToRangeFilter: FilterFn<Colum> = (
   addMeta: (meta: any) => void
 ) => {
   const values = row.original.allocated_to;
-  console.log(values);
   if (!values) return false; // No hay valores, no se muestra
 
   const actualCompany = useLoggedUserStore?.getState?.()?.actualCompany;
