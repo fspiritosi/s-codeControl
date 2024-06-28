@@ -1,70 +1,79 @@
-'use client'
+'use client';
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { cn } from '@/lib/utils'
-import { useCountriesStore } from '@/store/countries'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { InfoCircledIcon } from '@radix-ui/react-icons'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { toast } from 'sonner'
-import { supabase } from '../../supabase/supabase'
-import { handleSupabaseError } from '@/lib/errorHandler'
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { handleSupabaseError } from '@/lib/errorHandler';
+import { cn } from '@/lib/utils';
+import { useCountriesStore } from '@/store/countries';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { InfoCircledIcon } from '@radix-ui/react-icons';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { supabase } from '../../supabase/supabase';
 
-export default function NewDocumentType({
-  codeControlClient,
-}: {
-  codeControlClient?: boolean
-}) {
-  const [special, setSpecial] = useState(false)
-  const router = useRouter()
-  const fetchDocumentTypes = useCountriesStore(state => state.documentTypes)
+export default function NewDocumentType({ codeControlClient }: { codeControlClient?: boolean }) {
+  const [special, setSpecial] = useState(false);
+  const router = useRouter();
+  const fetchDocumentTypes = useCountriesStore((state) => state.documentTypes);
+  const fetchDocuments = useLoggedUserStore((state) => state.documetsFetch);
+  const [items, setItems] = useState([
+    {
+      id: 'multiresource',
+      label: 'Es multirecurso?',
+      tooltip: 'Si el documento aplica a mas de una persona o equipo',
+    },
+    {
+      id: 'mandatory',
+      label: 'Es mandatorio?',
+      tooltip: 'Si el documento es obligatorio, se crearan alertas para su cumplimiento',
+    },
+    { id: 'explired', label: 'Expira?', tooltip: 'Si el documento expira' },
+    {
+      id: 'special',
+      label: 'Es especial?',
+      tooltip: 'Si el documento requiere documentacion especial',
+    },
+    {
+      id: 'is_it_montlhy',
+      label: 'Es mensual?',
+      tooltip: 'Si el documento vence mensualmente',
+    },
+  ]);
 
+  const isOptional = items.length < 5;
   const FormSchema = z.object({
     name: z
       .string({ required_error: 'Este campo es requerido' })
       .min(3, { message: 'El nombre debe contener mas de 3 caracteres' })
       .max(50, { message: 'El nombre debe contener menos de 50 caracteres' }),
-    applies: z.enum(['Persona', 'Equipos'], {
+    applies: z.enum(['Persona', 'Equipos', 'Empresa'], {
       required_error: 'Este campo es requerido',
     }),
-    multiresource: z.boolean({
-      required_error: 'Se debe seleccionar una opcion',
-    }),
-    mandatory: z.boolean({ required_error: 'Se debe seleccionar una opcion' }),
+    multiresource: isOptional
+      ? z.boolean().optional()
+      : z.boolean({
+          required_error: 'Se debe seleccionar una opcion',
+        }),
+    mandatory: isOptional ? z.boolean().optional() : z.boolean({ required_error: 'Se debe seleccionar una opcion' }),
     explired: z.boolean({ required_error: 'Se debe seleccionar una opcion' }),
-    special: z.boolean({ required_error: 'Este campo es requerido' }),
-    description: special
-      ? z.string({ required_error: 'Este campo es requerido' })
-      : z.string().optional(),
-  })
+    special: isOptional ? z.boolean().optional() : z.boolean({ required_error: 'Este campo es requerido' }),
+    description: isOptional
+      ? z.string().optional()
+      : special
+        ? z.string({ required_error: 'Este campo es requerido' })
+        : z.string().optional(),
+    is_it_montlhy: z.boolean({ required_error: 'Este campo es requerido' }),
+  });
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -74,85 +83,58 @@ export default function NewDocumentType({
       explired: undefined,
       special: undefined,
     },
-  })
-
-  const items = [
-    {
-      id: 'multiresource',
-      label: 'Es multirecurso?',
-      tooltip: 'Si el documento aplica a mas de una persona o equipo',
-    },
-    {
-      id: 'mandatory',
-      label: 'Es mandatorio?',
-      tooltip:
-        'Si el documento es obligatorio, se crearan alertas para su cumplimiento',
-    },
-    { id: 'explired', label: 'Expira?', tooltip: 'Si el documento expira' },
-    {
-      id: 'special',
-      label: 'Es especial?',
-      tooltip: 'Si el documento requiere documentacion especial',
-    },
-  ]
+  });
 
   async function onSubmit(values: z.infer<typeof FormSchema>) {
     const formattedValues = {
       ...values,
       name: formatName(values.name),
       description: formatDescription(values.description),
-      company_id: codeControlClient
-        ? useLoggedUserStore.getState().actualCompany?.id
-        : null,
-    }
+      company_id: codeControlClient ? useLoggedUserStore.getState().actualCompany?.id : null,
+      multiresource: isOptional ? false : values.multiresource,
+      mandatory: isOptional ? true : values.mandatory,
+      special: isOptional ? false : values.special,
+    };
 
     toast.promise(
       async () => {
-        const { data, error } = await supabase
-          .from('document_types')
-          .insert(formattedValues)
-          .select()
+        const { data, error } = await supabase.from('document_types').insert(formattedValues).select();
 
-          if (error) {
-            throw new Error(handleSupabaseError(error.message))
-          }
-
-          
+        if (error) {
+          throw new Error(handleSupabaseError(error.message));
+        }
       },
       {
         loading: 'Creando documento...',
-        success: data => {
+        success: (data) => {
+          fetchDocumentTypes(useLoggedUserStore.getState().actualCompany?.id || '');
+          fetchDocuments();
           if (codeControlClient) {
-            document.getElementById('close_document_modal')?.click()
-            return 'El documento se ha creado correctamente'
+            document.getElementById('close_document_modal')?.click();
+            return 'El documento se ha creado correctamente';
           } else {
-            router.push('/auditor')
-            return 'El documento se ha creado correctamente'
+            router.push('/auditor');
+            return 'El documento se ha creado correctamente';
           }
         },
-        error: error => {
-          return error
+        error: (error) => {
+          return error;
         },
-      },
-    )
-    fetchDocumentTypes(useLoggedUserStore.getState().actualCompany?.id || '')
+      }
+    );
   }
 
   function formatName(name: string): string {
     // Capitalize first letter and convert the rest to lowercase
-    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
+    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
   }
 
-  function formatDescription(
-    description: string | undefined,
-  ): string | undefined {
+  function formatDescription(description: string | undefined): string | undefined {
     if (description) {
       // Capitalize first letter and convert the rest to lowercase
-      return (
-        description.charAt(0).toUpperCase() + description.slice(1).toLowerCase()
-      )
+      return description.charAt(0).toUpperCase() + description.slice(1).toLowerCase();
     }
-    return description
+    return description;
   }
 
   return (
@@ -165,11 +147,7 @@ export default function NewDocumentType({
             <FormItem>
               <FormLabel>Nombre</FormLabel>
               <FormControl>
-                <Input
-                  {...field}
-                  className="w-full rounded-md border p-4 shadow"
-                  placeholder="Nombre del documento"
-                />
+                <Input {...field} className="w-full rounded-md border p-4 shadow" placeholder="Nombre del documento" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -183,17 +161,55 @@ export default function NewDocumentType({
               <div>
                 <FormLabel>Aplica a</FormLabel>
                 <Select
-                  onValueChange={field.onChange}
+                  onValueChange={(value) => {
+                    if (value === 'Empresa') {
+                      setItems([
+                        { id: 'explired', label: 'Expira?', tooltip: 'Si el documento expira' },
+                        {
+                          id: 'is_it_montlhy',
+                          label: 'Es mensual?',
+                          tooltip: 'Si el documento vence mensualmente',
+                        },
+                      ]);
+                    } else {
+                      setItems([
+                        {
+                          id: 'multiresource',
+                          label: 'Es multirecurso?',
+                          tooltip: 'Si el documento aplica a mas de una persona o equipo',
+                        },
+                        {
+                          id: 'mandatory',
+                          label: 'Es mandatorio?',
+                          tooltip: 'Si el documento es obligatorio, se crearan alertas para su cumplimiento',
+                        },
+                        { id: 'explired', label: 'Expira?', tooltip: 'Si el documento expira' },
+                        {
+                          id: 'special',
+                          label: 'Es especial?',
+                          tooltip: 'Si el documento requiere documentacion especial',
+                        },
+                        {
+                          id: 'is_it_montlhy',
+                          label: 'Es mensual?',
+                          tooltip: 'Si el documento vence mensualmente',
+                        },
+                      ]);
+                    }
+
+                    field.onChange(value);
+                  }}
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Personas o Equipos" />
+                      <SelectValue placeholder="Personas, Equipos o Empresa" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="Persona">Persona</SelectItem>
                     <SelectItem value="Equipos">Equipos</SelectItem>
+                    <SelectItem value="Empresa">Empresa</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -203,29 +219,18 @@ export default function NewDocumentType({
         />
         <div className="grid md:grid-cols-2 grid-cols-1 gap-6 items-stretch justify-between">
           <TooltipProvider delayDuration={150}>
-            {items?.map(item => (
+            {items?.map((item) => (
               <FormField
                 key={item.id}
                 control={form.control}
-                name={
-                  item.id as
-                    | 'name'
-                    | 'applies'
-                    | 'multiresource'
-                    | 'mandatory'
-                    | 'explired'
-                    | 'special'
-                }
+                name={item.id as 'name' | 'applies' | 'multiresource' | 'mandatory' | 'explired' | 'special'}
                 render={({ field }) => (
                   <FormItem>
                     <div className="">
                       <FormLabel className="flex gap-1 items-center mb-2">
                         {item.label}
                         <Tooltip>
-                          <TooltipTrigger
-                            className="hover:cursor-help"
-                            type="button"
-                          >
+                          <TooltipTrigger className="hover:cursor-help" type="button">
                             <InfoCircledIcon className="text-blue-500 size-5" />
                           </TooltipTrigger>
                           <TooltipContent>
@@ -239,10 +244,10 @@ export default function NewDocumentType({
                             <div className="flex items-center gap-2">
                               <Checkbox
                                 checked={field.value === true}
-                                onCheckedChange={value => {
-                                  field.onChange(value ? true : false)
+                                onCheckedChange={(value) => {
+                                  field.onChange(value ? true : false);
                                   if (item.id === 'special') {
-                                    setSpecial(true)
+                                    setSpecial(true);
                                   }
                                 }}
                               />
@@ -251,10 +256,10 @@ export default function NewDocumentType({
                             <div className="flex items-center gap-2">
                               <Checkbox
                                 checked={field.value === false}
-                                onCheckedChange={value => {
-                                  field.onChange(value ? false : true)
+                                onCheckedChange={(value) => {
+                                  field.onChange(value ? false : true);
                                   if (item.id === 'special') {
-                                    setSpecial(false)
+                                    setSpecial(false);
                                   }
                                 }}
                               />
@@ -280,10 +285,7 @@ export default function NewDocumentType({
               <FormItem>
                 <div>
                   <FormLabel>Documentacion Especial</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar documento especial" />
@@ -291,9 +293,7 @@ export default function NewDocumentType({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="Maneja">Maneja</SelectItem>
-                      <SelectItem value="Habilitacion especial">
-                        Habilitacion especial
-                      </SelectItem>
+                      <SelectItem value="Habilitacion especial">Habilitacion especial</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -302,14 +302,10 @@ export default function NewDocumentType({
             )}
           />
         )}
-        <Button
-          type="submit"
-          id="create_new_document"
-          className={cn(codeControlClient ? 'hidden' : '')}
-        >
+        <Button type="submit" id="create_new_document" className={cn(codeControlClient ? 'hidden' : '')}>
           Crear tipo de documento
         </Button>
       </form>
     </Form>
-  )
+  );
 }

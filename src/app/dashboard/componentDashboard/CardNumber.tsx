@@ -1,33 +1,23 @@
-"use client"
-import { Badge } from '@/components/ui/badge'
-import { useLoggedUserStore } from '@/store/loggedUser'
+'use client';
+import { Badge } from '@/components/ui/badge';
+import { useLoggedUserStore } from '@/store/loggedUser';
 
 function CardNumber({
   nameData,
   variant,
 }: {
-  nameData: string
-  variant: "default" | "secondary" | "destructive" | "outline" | "success" | "yellow" | "red" | null | undefined
+  nameData: string;
+  variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'yellow' | 'red' | null | undefined;
 }) {
-  const user = useLoggedUserStore()
-  const employees = user.employees
-  const equipment = user.vehicles
+  const user = useLoggedUserStore();
+  const employees = user.employees;
+  const equipment = user.vehicles;
   const eNoAvalados =
-    employees?.length > 0
-      ? employees?.filter((employee: any) => employee.status === 'No avalado')
-      : []
-  const eAvalados =
-    employees?.length > 0
-      ? employees?.filter((employee: any) => employee.status === 'Avalado')
-      : []
+    employees?.length > 0 ? employees?.filter((employee: any) => employee.status === 'No avalado') : [];
+  const eAvalados = employees?.length > 0 ? employees?.filter((employee: any) => employee.status === 'Avalado') : [];
   const equiNoAvalados =
-    equipment?.length > 0
-      ? equipment?.filter((vehicle: any) => vehicle.status === 'No avalado')
-      : []
-  const equiAvalados =
-    equipment?.length > 0
-      ? equipment?.filter((vehicle: any) => vehicle.status === 'Avalado')
-      : []
+    equipment?.length > 0 ? equipment?.filter((vehicle: any) => vehicle.status === 'No avalado') : [];
+  const equiAvalados = equipment?.length > 0 ? equipment?.filter((vehicle: any) => vehicle.status === 'Avalado') : [];
 
   return (
     <Badge variant={variant} className="rounded-full text-lg">
@@ -45,7 +35,7 @@ function CardNumber({
                   ? equiNoAvalados.length
                   : 0}
     </Badge>
-  )
+  );
 }
 
-export default CardNumber
+export default CardNumber;

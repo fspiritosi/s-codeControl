@@ -1,24 +1,20 @@
-import Head from 'next/head'
-import * as React from 'react'
+import Head from 'next/head';
+import * as React from 'react';
 type EmailInfo = {
-  recurso: string
-  document_name: string
-  company_name: string
-  resource_name: string
-  document_number: string
-}
+  recurso: string;
+  document_name: string;
+  company_name: string;
+  resource_name: string;
+  document_number: string;
+};
 
 interface EmailTemplateProps {
-  userEmail: string
-  reason: string
-  emailInfo: EmailInfo
+  userEmail: string;
+  reason: string;
+  emailInfo: EmailInfo;
 }
 
-export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
-  userEmail,
-  reason,
-  emailInfo,
-}) => (
+export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({ userEmail, reason, emailInfo }) => (
   <html lang="es">
     <Head>
       <meta content="text/html; charset=UTF-8" />
@@ -26,9 +22,7 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
       <link rel="preconnect" href="https://fonts.gstatic.com" />
     </Head>
 
-    <body
-      style={{ backgroundColor: '#f3f3f5', fontFamily: 'Poppins, sans-serif' }}
-    >
+    <body style={{ backgroundColor: '#f3f3f5', fontFamily: 'Poppins, sans-serif' }}>
       <table
         align="center"
         width="100%"
@@ -108,8 +102,7 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
                           color: '#2b2d6e',
                         }}
                       >
-                        ¡Importante! Tenemos una actualización sobre tu
-                        documentación.
+                        ¡Importante! Tenemos una actualización sobre tu documentación.
                       </h2>
                       <p
                         style={{
@@ -119,10 +112,9 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
                           marginBottom: '30px',
                         }}
                       >
-                        Hemos detectado que uno de tus documentos ha sido
-                        rechazado y requiere tu atención inmediata. Por favor,
-                        revisa los detalles a continuación y realiza las
-                        acciones necesarias en tu bandeja de notificaciones.
+                        Hemos detectado que uno de tus documentos ha sido rechazado y requiere tu atención inmediata.
+                        Por favor, revisa los detalles a continuación y realiza las acciones necesarias en tu bandeja de
+                        notificaciones.
                       </p>
                       <table
                         width="100%"
@@ -163,8 +155,7 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
                                   marginBottom: '10px',
                                 }}
                               >
-                                <strong>Compañía:</strong>{' '}
-                                {emailInfo.company_name}
+                                <strong>Compañía:</strong> {emailInfo.company_name}
                               </p>
                               <p
                                 style={{
@@ -174,8 +165,7 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
                                   marginBottom: '10px',
                                 }}
                               >
-                                <strong>Recurso:</strong>{' '}
-                                {emailInfo.resource_name}
+                                <strong>Recurso:</strong> {emailInfo.resource_name}
                               </p>
                               <p
                                 style={{
@@ -185,8 +175,7 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
                                   marginBottom: '10px',
                                 }}
                               >
-                                <strong>Documento:</strong>{' '}
-                                {emailInfo.document_name}
+                                <strong>Documento:</strong> {emailInfo.document_name}
                               </p>
                               {emailInfo.document_number && (
                                 <p
@@ -197,8 +186,7 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
                                     marginBottom: '10px',
                                   }}
                                 >
-                                  <strong>Número de Documento:</strong>{' '}
-                                  {emailInfo.document_number}
+                                  <strong>Número de Documento:</strong> {emailInfo.document_number}
                                 </p>
                               )}
                               <p
@@ -255,4 +243,4 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
       </table>
     </body>
   </html>
-)
+);

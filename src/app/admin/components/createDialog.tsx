@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -7,76 +7,54 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { PlusCircle } from "lucide-react"
-import { supabase } from "../../../../supabase/supabase"
-import { redirect } from 'next/navigation'
- 
-export function CreateDialog({title, dbName}:any, ) {
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { PlusCircle } from 'lucide-react';
+import { supabase } from '../../../../supabase/supabase';
 
-  console.log(dbName)
- 
-    async function createDiagram(formData:FormData) {
-        'use server'
+export function CreateDialog({ title, dbName }: any) {
+  async function createDiagram(formData: FormData) {
+    'use server';
 
-        const diagramFormData = {
-            name: formData.get('name')
-        }
+    const diagramFormData = {
+      name: formData.get('name'),
+    };
 
-        console.log(diagramFormData.name)
-        
-        const { data, error } = await supabase
-        .from(dbName)
-        .insert([
-        { name: diagramFormData.name },
-        ])
-        .select()
-        //TODO falta la notificación y que cierre el dialogo de manera automática
-
-    }
-
-
-
+    const { data, error } = await supabase
+      .from(dbName)
+      .insert([{ name: diagramFormData.name }])
+      .select();
+    //TODO falta la notificación y que cierre el dialogo de manera automática
+  }
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-      <Button size="sm" className="h-7 gap-1">
+        <Button size="sm" className="h-7 gap-1">
           <PlusCircle className="h-3.5 w-3.5" />
-          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-            Añadir nuevo
-          </span>
+          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Añadir nuevo</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Nuevo {title}</DialogTitle>
-          <DialogDescription>
-            Crea un nuevo {title}
-          </DialogDescription>
+          <DialogDescription>Crea un nuevo {title}</DialogDescription>
         </DialogHeader>
         <form action={createDiagram}>
-            <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-                
-                <Label htmlFor="name" className="text-right">
+              <Label htmlFor="name" className="text-right">
                 Descripción
-                </Label>
-                <Input
-                id="name"
-                name="name"
-                placeholder="Ingresa un nuevo tipo"
-                className="col-span-3"
-                />
+              </Label>
+              <Input id="name" name="name" placeholder="Ingresa un nuevo tipo" className="col-span-3" />
             </div>
-            </div>
-            <DialogFooter>
+          </div>
+          <DialogFooter>
             <Button type="submit">Crear</Button>
-            </DialogFooter>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

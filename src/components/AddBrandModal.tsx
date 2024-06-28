@@ -8,18 +8,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
-import {
-  FormControl,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { useState } from 'react'
-import { ZodError, z } from 'zod'
-import { supabase } from '../../supabase/supabase'
-import { useToast } from './ui/use-toast'
+} from '@/components/ui/alert-dialog';
+import { FormControl, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { useState } from 'react';
+import { ZodError, z } from 'zod';
+import { supabase } from '../../supabase/supabase';
+import { useToast } from './ui/use-toast';
 
 const schema = z
   .string()
@@ -28,47 +23,47 @@ const schema = z
   })
   .max(15, {
     message: 'El nombre de la marca debe tener menos de 15 caracteres',
-  })
+  });
 
 export default function AddBrandModal({
   children,
   fetchData,
 }: {
-  children: React.ReactNode
-  fetchData: () => Promise<void>
+  children: React.ReactNode;
+  fetchData: () => Promise<void>;
 }) {
-  const [name, setName] = useState('')
-  const { toast } = useToast()
+  const [name, setName] = useState('');
+  const { toast } = useToast();
 
   async function onSubmit() {
     try {
-      schema.parse(name)
+      schema.parse(name);
     } catch (error: ZodError | any) {
       toast({
         variant: 'destructive',
         title: 'Error al agregar la marca',
         description: error.errors[0].message,
-      })
-      return
+      });
+      return;
     }
 
     const { data, error } = await supabase
       .from('brand_vehicles')
       .insert([{ name: name.slice(0, 1).toUpperCase() + name.slice(1) }])
-      .select()
+      .select();
     if (error) {
       toast({
         title: 'Error al agregar la marca',
         description: error.message,
-      })
-      return
+      });
+      return;
     }
     toast({
       title: 'Marca agregada',
       description: 'La marca ha sido agregada correctamente',
-    })
-    setName('')
-    fetchData()
+    });
+    setName('');
+    fetchData();
   }
 
   return (
@@ -78,8 +73,7 @@ export default function AddBrandModal({
         <AlertDialogHeader>
           <AlertDialogTitle>Agregar una nueva marca</AlertDialogTitle>
           <AlertDialogDescription>
-            Por favor complete los siguientes campos para agregar una nueva
-            marca de vehículo.
+            Por favor complete los siguientes campos para agregar una nueva marca de vehículo.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -89,21 +83,19 @@ export default function AddBrandModal({
               <FormControl>
                 <Input
                   placeholder="Ingrese el nombre de la marca"
-                  onChange={e => setName(e.target.value)}
+                  onChange={(e) => setName(e.target.value)}
                   value={name}
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
             <div className="flex gap-2">
-              <AlertDialogAction onClick={onSubmit}>
-                Agregar marca
-              </AlertDialogAction>
+              <AlertDialogAction onClick={onSubmit}>Agregar marca</AlertDialogAction>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
             </div>
           </div>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }

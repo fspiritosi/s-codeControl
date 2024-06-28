@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
-import { Moon, Sun } from 'lucide-react'
-import { useTheme } from 'next-themes'
+import { Moon, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,21 +11,19 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import cookies from 'js-cookie'
+} from '@/components/ui/dropdown-menu';
+import cookies from 'js-cookie';
 
 export function ModeToggle() {
-  const { setTheme, systemTheme, theme } = useTheme()
+  const { setTheme, systemTheme, theme } = useTheme();
 
   if (theme && theme !== 'system') {
-    console.log(theme)
     cookies.set('theme', theme)
   } else if (systemTheme && theme === 'system') {
-    console.log(systemTheme)
     cookies.set('theme', systemTheme)
   }
 
-  const companyId = cookies.get('actualComp')
+  const companyId = cookies.get('actualComp');
 
   return (
     <DropdownMenu>
@@ -37,20 +35,12 @@ export function ModeToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel className="font-bold">
-          Cambiar tema
-        </DropdownMenuLabel>
+        <DropdownMenuLabel className="font-bold">Cambiar tema</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => setTheme('light')}>
-          Claro
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('dark')}>
-          Oscuro
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('system')}>
-          Sistema
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme('light')}>Claro</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme('dark')}>Oscuro</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme('system')}>Sistema</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

@@ -1,16 +1,16 @@
-'use client'
-import { Input } from '@/components/ui/input'
-import React, { ChangeEvent, useRef, useState } from 'react'
-import { FormDescription, FormLabel } from './ui/form'
+'use client';
+import { Input } from '@/components/ui/input';
+import React, { ChangeEvent, useRef, useState } from 'react';
+import { FormDescription, FormLabel } from './ui/form';
 
 interface UploadImageProps {
-  inputStyle?: React.CSSProperties
-  desciption?: string
-  labelInput?: string
-  handleImageChange?: (event: ChangeEvent<HTMLInputElement>) => void //nueva
-  base64Image: string //nueva
-  disabled?: boolean
-  required?: boolean
+  inputStyle?: React.CSSProperties;
+  desciption?: string;
+  labelInput?: string;
+  handleImageChange?: (event: ChangeEvent<HTMLInputElement>) => void; //nueva
+  base64Image: string; //nueva
+  disabled?: boolean;
+  required?: boolean;
 }
 
 export function ImageHander({
@@ -22,8 +22,8 @@ export function ImageHander({
   disabled,
   required,
 }: UploadImageProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [file, setFile] = useState<File | undefined>()
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | undefined>();
 
   return (
     <>
@@ -40,9 +40,7 @@ export function ImageHander({
           onClick={() => fileInputRef?.current?.click()} // Abre el diálogo de selección de archivos
           className="self-center cursor-pointer"
           style={{ ...inputStyle }}
-          placeholder={
-            base64Image ? `${file?.name}` : 'Seleccionar foto o subir foto'
-          }
+          placeholder={base64Image ? `${file?.name}` : 'Seleccionar foto o subir foto'}
         />
         <Input
           ref={fileInputRef}
@@ -50,19 +48,15 @@ export function ImageHander({
           type="file"
           accept=".jpg, .jpeg, .png, .gif, .bmp, .tif, .tiff"
           onChange={(event: ChangeEvent<HTMLInputElement>) => {
-            handleImageChange && handleImageChange(event) // Accede al archivo file del input
-            setFile(event.target.files?.[0]) // Guarda el archivo en el estado
+            handleImageChange && handleImageChange(event); // Accede al archivo file del input
+            setFile(event.target.files?.[0]); // Guarda el archivo en el estado
           }}
           className="self-center hidden"
           id="fileInput"
           style={{ ...inputStyle }}
           placeholder="Seleccionar foto o subir foto"
         />
-        {desciption && (
-          <FormDescription className="max-w-[300px] p-0 m-0">
-            {desciption}
-          </FormDescription>
-        )}
+        {desciption && <FormDescription className="max-w-[300px] p-0 m-0">{desciption}</FormDescription>}
       </div>
 
       <div className="flex items-center gap-2 justify-around  rounded-xl">
@@ -75,5 +69,5 @@ export function ImageHander({
         )}
       </div>
     </>
-  )
+  );
 }

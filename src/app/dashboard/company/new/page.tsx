@@ -1,54 +1,38 @@
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Card, CardDescription, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
-import { supabaseServer } from '@/lib/supabase/server'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Card, CardDescription, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { supabaseServer } from '@/lib/supabase/server';
 
-import { cn } from '@/lib/utils'
-import { InfoCircledIcon } from '@radix-ui/react-icons'
-import { revalidatePath } from 'next/cache'
-import CityInput from './components/CityInput'
-import CreateCompanyButton from './components/CreateCompanyButton'
+import { cn } from '@/lib/utils';
+import { InfoCircledIcon } from '@radix-ui/react-icons';
+import { revalidatePath } from 'next/cache';
+import CityInput from './components/CityInput';
+import CreateCompanyButton from './components/CreateCompanyButton';
 export default async function companyRegister() {
-  const supabase = supabaseServer()
+  const supabase = supabaseServer();
   const {
     data: { session },
-  } = await supabase.auth.getSession()
+  } = await supabase.auth.getSession();
 
-  const { data } = await supabase
-    .from('profile')
-    .select('*')
-    .eq('email', session?.user.email)
+  const { data } = await supabase.from('profile').select('*').eq('email', session?.user.email);
 
-  const { data: Companies, error } = await supabase
-    .from('company')
-    .select(`*`)
-    .eq('owner_id', data?.[0]?.id)
+  const { data: Companies, error } = await supabase.from('company').select(`*`).eq('owner_id', data?.[0]?.id);
 
   let { data: share_company_users, error: sharedError } = await supabase
     .from('share_company_users')
     .select(`*`)
-    .eq('profile_id', data?.[0]?.id)
-  revalidatePath('/dashboard/company/new')
+    .eq('profile_id', data?.[0]?.id);
+  revalidatePath('/dashboard/company/new');
 
-  const showAlert = !Companies?.[0] && !share_company_users?.[0]
+  const showAlert = !Companies?.[0] && !share_company_users?.[0];
 
-  let { data: provinces, error: provincesError } = await supabase
-    .from('provinces')
-    .select('*')
+  let { data: provinces, error: provincesError } = await supabase.from('provinces').select('*');
 
-  let { data: industry_type, error: industryError } = await supabase
-    .from('industry_type')
-    .select('*')
+  let { data: industry_type, error: industryError } = await supabase.from('industry_type').select('*');
 
   return (
     <section className={cn('md:mx-7')}>
@@ -58,17 +42,13 @@ export default async function companyRegister() {
             <InfoCircledIcon className="inline size-5 mr-2 text-blue-500" />
             Parece que no tienes ninguna Compañía registrada.
           </AlertTitle>
-          <AlertDescription>
-            Para utilizar la aplicación debes registrar tu compañía
-          </AlertDescription>
+          <AlertDescription>Para utilizar la aplicación debes registrar tu compañía</AlertDescription>
         </Alert>
       )}
 
       <Card className="mt-6 p-8">
         <CardTitle className="text-4xl mb-3">Registrar Compañía</CardTitle>
-        <CardDescription>
-          Completa este formulario con los datos de tu nueva compañia
-        </CardDescription>
+        <CardDescription>Completa este formulario con los datos de tu nueva compañia</CardDescription>
         <div className="mt-6 rounded-xl flex w-full">
           <form>
             <div className=" flex flex-wrap gap-8 items-center w-full">
@@ -81,10 +61,7 @@ export default async function companyRegister() {
                   placeholder="nombre de la compañía"
                 />
 
-                <CardDescription
-                  id="company_name_error"
-                  className="max-w-[300px]"
-                />
+                <CardDescription id="company_name_error" className="max-w-[300px]" />
               </div>
               <div>
                 <Label htmlFor="company_cuit">CUIT de la compañía</Label>
@@ -94,10 +71,7 @@ export default async function companyRegister() {
                   className="max-w-[350px] w-[300px]"
                   placeholder="nombre de la compañía"
                 />
-                <CardDescription
-                  id="company_cuit_error"
-                  className="max-w-[300px]"
-                />
+                <CardDescription id="company_cuit_error" className="max-w-[300px]" />
               </div>
 
               <div>
@@ -120,10 +94,7 @@ export default async function companyRegister() {
                   className="max-w-[350px] w-[300px]"
                   placeholder="nombre de la compañía"
                 />
-                <CardDescription
-                  id="contact_email_error"
-                  className="max-w-[300px]"
-                />
+                <CardDescription id="contact_email_error" className="max-w-[300px]" />
               </div>
               <div>
                 <Label htmlFor="contact_phone">Número de teléfono</Label>
@@ -134,10 +105,7 @@ export default async function companyRegister() {
                   placeholder="nombre de la compañía"
                 />
 
-                <CardDescription
-                  id="contact_phone_error"
-                  className="max-w-[300px]"
-                />
+                <CardDescription id="contact_phone_error" className="max-w-[300px]" />
               </div>
               <div>
                 <Label htmlFor="address">Dirección</Label>
@@ -152,11 +120,7 @@ export default async function companyRegister() {
               <div>
                 <Label htmlFor="country">Seleccione un país</Label>
                 <Select name="country">
-                  <SelectTrigger
-                    id="country"
-                    name="country"
-                    className="max-w-[350px]  w-[300px]"
-                  >
+                  <SelectTrigger id="country" name="country" className="max-w-[350px]  w-[300px]">
                     <SelectValue placeholder="Seleccionar país" />
                   </SelectTrigger>
                   <SelectContent>
@@ -174,28 +138,18 @@ export default async function companyRegister() {
                   // onValueChange={handleIndustryChange}
                   name="industry"
                 >
-                  <SelectTrigger
-                    id="industry"
-                    name="industry"
-                    className="max-w-[350px] w-[300px]"
-                  >
-                    <SelectValue
-                      id="industry"
-                      placeholder="Seleccionar Industria"
-                    />
+                  <SelectTrigger id="industry" name="industry" className="max-w-[350px] w-[300px]">
+                    <SelectValue id="industry" placeholder="Seleccionar Industria" />
                   </SelectTrigger>
                   <SelectContent>
-                    {industry_type?.map(ind => (
+                    {industry_type?.map((ind) => (
                       <SelectItem key={ind?.id} value={ind?.name}>
                         {ind?.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <CardDescription
-                  id="industry_error"
-                  className="max-w-[300px]"
-                />
+                <CardDescription id="industry_error" className="max-w-[300px]" />
               </div>
 
               <div>
@@ -208,15 +162,10 @@ export default async function companyRegister() {
                   placeholder="Descripción de la compañía"
                 />
 
-                <CardDescription
-                  id="description_error"
-                  className="max-w-[300px]"
-                />
+                <CardDescription id="description_error" className="max-w-[300px]" />
               </div>
               <div className="flex flex-row-reverse gap-2 justify-center items-center max-w-[300px] w-[300px]">
-                <Label htmlFor="by_defect max-w-[300px] w-[300px]">
-                  Marcar para seleccionar Compañia por defecto
-                </Label>
+                <Label htmlFor="by_defect max-w-[300px] w-[300px]">Marcar para seleccionar Compañia por defecto</Label>
                 <Checkbox id="by_defect" name="by_defect" />
               </div>
             </div>
@@ -225,5 +174,5 @@ export default async function companyRegister() {
         </div>
       </Card>
     </section>
-  )
+  );
 }
