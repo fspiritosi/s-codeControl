@@ -10,7 +10,6 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useDocument } from '@/hooks/useDocuments';
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { addMonths, format } from 'date-fns';
@@ -32,6 +31,7 @@ export default function MultiResourceDocument({
 }) {
   const [documenTypes, setDocumentTypes] = useState<any[] | null>([]);
   const [expiredDate, setExpiredDate] = useState(false);
+  const [isMontlhy, setIsMontlhy] = useState(false);
   const [disabled, setDisabled] = useState(false);
   const vehicles = useLoggedUserStore((state) => state.vehicles)?.reduce(
     (acc: any, act: { year: string; intern_number: string; id: string }) => {
@@ -99,6 +99,7 @@ export default function MultiResourceDocument({
       .min(1, 'Selecciona al menos dos recursos')
       .optional(), //! Cambiar a 1 si se necesita que sea solo uno
     validity: expiredDate ? z.date({ required_error: 'Falta ingresar la fecha de vencimiento' }) : z.date().optional(),
+    period: isMontlhy ? z.string({ required_error: 'Este campo es requerido' }) : z.string().optional(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -113,7 +114,6 @@ export default function MultiResourceDocument({
   const [inputValue, setInputValue] = useState<string>('');
   const user = useLoggedUserStore((state) => state.credentialUser?.id);
   const { toast } = useToast();
-  const { insertMultiDocumentEmployees, insertMultiDocumentEquipment, uploadDocumentFile } = useDocument();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setDisabled(true);
@@ -183,6 +183,7 @@ export default function MultiResourceDocument({
           validity: values.validity ? format(values.validity, 'dd/MM/yyyy') : null,
           user_id: user,
           created_at: new Date(),
+          period: values.period,
         };
       });
 
@@ -201,16 +202,13 @@ export default function MultiResourceDocument({
         .then(async (response) => {
           const isMandatory = documenTypes?.find((doc) => doc.id === values.id_document_types)?.mandatory;
 
-          // // // console.log('isMandatory', isMandatory)
-          // // // console.log('documenTypes', documenTypes)
-          // // // console.log('values', values)
-
           if (isMandatory) {
             const data = {
               validity: tableEntries[index].validity,
               document_path: response.data?.path,
               created_at: new Date(),
               state: 'presentado',
+              period: tableEntries[index].period || null,
             };
             const { error } = await supabase
               .from(tableName)
@@ -235,6 +233,7 @@ export default function MultiResourceDocument({
                 state: 'presentado',
                 document_path: response.data?.path,
                 validity: tableEntries[index].validity ?? null,
+                period: tableEntries[index].period || null,
               })
               .select();
 
@@ -293,7 +292,9 @@ export default function MultiResourceDocument({
                   <Select
                     onValueChange={(e) => {
                       field.onChange(e);
-                      setExpiredDate(documenTypes?.find((doc) => doc.id === e)?.explired);
+                      const selected = documenTypes?.find((doc) => doc.id === e);
+                      setExpiredDate(selected?.explired);
+                      setIsMontlhy(selected.is_it_montlhy);
                     }}
                     defaultValue={field.value}
                   >
@@ -506,6 +507,25 @@ export default function MultiResourceDocument({
                         />
                       </PopoverContent>
                     </Popover>
+                    <FormDescription>La fecha de vencimiento del documento</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+            {isMontlhy && (
+              <FormField
+                control={form.control}
+                name="period"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Periodo</FormLabel>
+                    <Input
+                      placeholder="Seleccionar periodo"
+                      type="month"
+                      min={new Date().toISOString().split('T')[0]}
+                      {...field}
+                    />
                     <FormDescription>La fecha de vencimiento del documento</FormDescription>
                     <FormMessage />
                   </FormItem>

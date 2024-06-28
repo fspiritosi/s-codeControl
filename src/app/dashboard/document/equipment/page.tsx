@@ -1,13 +1,12 @@
 'use client';
-
 import { CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLoggedUserStore } from '@/store/loggedUser';
-import { ExpiredColums } from '../colums';
-import { ColumnsMonthly } from '../columsMonthly';
-import { ExpiredDataTable } from '../data-table';
+import { ExpiredColums } from '../../colums';
+import { ColumnsMonthly } from '../../columsMonthly';
+import { ExpiredDataTable } from '../../data-table';
 
-export default function page() {
+function page() {
   const { allDocumentsToShow } = useLoggedUserStore();
 
   return (
@@ -20,24 +19,28 @@ export default function page() {
       </CardContent>
       <TabsContent value="permanentes">
         <ExpiredDataTable
-          data={allDocumentsToShow?.employees.filter((e) => !e.isItMonthly) || []}
+          data={allDocumentsToShow?.vehicles.filter((e) => !e.isItMonthly) || []}
           columns={ExpiredColums}
+          vehicles={true}
           pending={true}
           defaultVisibleColumnsCustom={['date', 'resource', 'documentName', 'validity', 'id', 'mandatory', 'state']}
-          localStorageName={'dashboardEmployeesPermanentes'}
+          localStorageName={'dashboardVehiculosPermanentes'}
           permanent
         />
       </TabsContent>
       <TabsContent value="mensuales">
         <ExpiredDataTable
-          data={allDocumentsToShow?.employees.filter((e) => e.isItMonthly) || []}
+          data={allDocumentsToShow?.vehicles.filter((e) => e.isItMonthly) || []}
           columns={ColumnsMonthly}
+          vehicles={true}
           pending={true}
           defaultVisibleColumnsCustom={['date', 'resource', 'documentName', 'validity', 'id', 'mandatory', 'state']}
-          localStorageName={'dashboardEmployeesMensuales'}
+          localStorageName={'dashboardVehiculosMensuales'}
           monthly
         />
       </TabsContent>
     </Tabs>
   );
 }
+
+export default page;

@@ -18,6 +18,8 @@ interface Document {
   state: string;
   document_path?: string;
   is_active: boolean;
+  isItMonthly: boolean;
+  applies: string;
 }
 
 interface State {
@@ -95,6 +97,7 @@ interface CompanyDocumentsType {
   applies: string;
   deny_reason: null;
   document_path: null;
+  period: string;
 }
 
 interface UserId {
@@ -560,7 +563,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
   const documetsFetch = async () => {
     // set({ isLoading: true })
     // // // console.log(get()?.actualCompany?.id,'get()?.actualCompany?.id');
-    if (!get()?.actualCompany?.id) return
+    if (!get()?.actualCompany?.id) return;
     let { data, error } = await supabase
       .from('documents_employees')
       .select(
@@ -583,6 +586,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       .eq('applies', get()?.actualCompany?.id);
 
     set({ companyDocuments: documents_company as CompanyDocumentsType[] });
+    console.log(documents_company);
 
     let { data: equipmentData, error: equipmentError } = await supabase
       .from('documents_equipment')
@@ -596,7 +600,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
       .not('applies', 'is', null);
 
     const typedData: VehiclesAPI[] | null = equipmentData as VehiclesAPI[];
-
     if (error) {
       return;
     } else {
@@ -612,8 +615,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
         const isExpired = date < lastMonth || doc.state === 'Vencido';
         return isExpired;
       });
-
-      // // // console.log(filteredData, 'filteredData')
 
       const filteredVehiclesData = typedData?.filter((doc: any) => {
         if (!doc.validity) return false;
@@ -639,6 +640,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
           documentName: doc.document_types?.name,
           state: doc.state,
           multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+          isItMonthly: doc.document_types?.is_it_montlhy,
           validity: formattedDate,
           mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
           id: doc.id,
@@ -648,6 +650,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
           document_number: doc.employees.document_number,
           document_url: doc.document_path,
           is_active: doc.employees.is_active,
+          period: doc.period,
+          applies: doc.document_types.applies,
         };
       };
 
@@ -659,12 +663,15 @@ export const useLoggedUserStore = create<State>((set, get) => {
           documentName: doc.document_types?.name,
           state: doc.state,
           multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+          isItMonthly: doc.document_types?.is_it_montlhy,
           validity: formattedDate,
           mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
           id: doc.id,
           resource: doc.applies?.domain || doc.applies?.intern_number,
           vehicle_id: doc.applies?.id,
           is_active: doc.applies?.is_active,
+          period: doc.period,
+          applies: doc.document_types.applies,
         };
       };
 
@@ -705,7 +712,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
               return doc.state !== 'presentado' && (doc.validity !== 'No vence' || doc.validity !== null);
             })
             ?.map(mapVehicle) || [],
-      }
+      };
       // // // console.log(lastMonthValues, 'lastMonthValues')
       const AllvaluesToShow = {
         employees: data?.map(mapDocument) || [],

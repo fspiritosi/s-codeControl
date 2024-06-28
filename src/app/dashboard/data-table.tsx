@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -44,6 +45,8 @@ interface DataTableProps<TData, TValue> {
   vehicles?: boolean;
   defaultVisibleColumnsCustom?: string[];
   localStorageName: string;
+  monthly?: boolean;
+  permanent?: boolean;
 }
 
 export function ExpiredDataTable<TData, TValue>({
@@ -54,6 +57,8 @@ export function ExpiredDataTable<TData, TValue>({
   vehicles,
   defaultVisibleColumnsCustom,
   localStorageName,
+  monthly,
+  permanent,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const loader = useLoggedUserStore((state) => state.isLoading);
@@ -190,6 +195,8 @@ export function ExpiredDataTable<TData, TValue>({
     allOptions.resource = createOptions('resource');
   }
 
+  console.log('render');
+
   const maxRows = ['20', '40', '60', '80', '100'];
   const handleClearFilters = () => {
     table.getAllColumns().forEach((column) => {
@@ -214,65 +221,116 @@ export function ExpiredDataTable<TData, TValue>({
 
   return (
     <div className="mb-10  px-4 rounded-lg max-w-[100vw] overflow-x-auto">
-      <Input
-        placeholder={vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'}
-        value={(table.getColumn('resource')?.getFilterValue() as string) ?? ''}
-        onChange={(event) => table.getColumn('resource')?.setFilterValue(event.target.value)}
-        className="max-w-sm ml-2"
-      />
-      <div className="flex items-center py-4 flex-wrap gap-y-2">
-        <Button variant="outline" size="default" className="ml-2" onClick={handleClearFilters}>
-          Limpiar filtros
-        </Button>
-
-        <div className=" flex gap-2 ml-2 flex-wrap">
-          <Select onValueChange={(e) => table.setPageSize(Number(e))}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Cantidad de filas" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Filas por página</SelectLabel>
-                {maxRows?.map((option: string) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">Columnas</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="max-h-[50dvh] overflow-y-auto">
-              {table
-                .getAllColumns()
-                ?.filter((column) => column.getCanHide())
-                ?.map((column) => {
-                  if (column.id === 'actions' || typeof column.columnDef.header !== 'string') {
-                    return null;
-                  }
-
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) => handleColumnVisibilityChange(column.id, !!value)}
-                    >
-                      {column.columnDef.header}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        {!pending && (
-          <Button variant="outline" size="default" className="ml-2" onClick={showLastMonth}>
-            Ver todos los vencimientos
+      <div className="flex flex-wrap items-end pb-4 gap-y-4">
+        <Input
+          placeholder={vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'}
+          value={(table.getColumn('resource')?.getFilterValue() as string) ?? ''}
+          onChange={(event) => table.getColumn('resource')?.setFilterValue(event.target.value)}
+          className="max-w-sm ml-2"
+        />
+        <div className="flex items-start  flex-wrap gap-y-2 justify-start">
+          <Button variant="outline" size="default" className="ml-2 self-end" onClick={handleClearFilters}>
+            Limpiar filtros
           </Button>
+
+          <div className=" flex gap-2 ml-2 flex-wrap">
+            <Select onValueChange={(e) => table.setPageSize(Number(e))}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Cantidad de filas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Filas por página</SelectLabel>
+                  {maxRows?.map((option: string) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">Columnas</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="max-h-[50dvh] overflow-y-auto">
+                {table
+                  .getAllColumns()
+                  ?.filter((column) => column.getCanHide())
+                  ?.map((column) => {
+                    if (column.id === 'actions' || typeof column.columnDef.header !== 'string') {
+                      return null;
+                    }
+
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={column.id}
+                        className="capitalize"
+                        checked={column.getIsVisible()}
+                        onCheckedChange={(value) => handleColumnVisibilityChange(column.id, !!value)}
+                      >
+                        {column.columnDef.header}
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          {!pending && (
+            <Button variant="outline" size="default" className="ml-2" onClick={showLastMonth}>
+              Ver todos los vencimientos
+            </Button>
+          )}
+        </div>
+        {monthly && (
+          <div className="flex gap-4 flex-wrap">
+            <div className="flex flex-col">
+              <Label className="ml-4 mb-2">Desde</Label>
+              <Input
+                placeholder={vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'}
+                onChange={(event) => table.getColumn('validity')?.setFilterValue(event.target.value)}
+                className="max-w-sm ml-2"
+                type="month"
+                id="date-from"
+              />
+            </div>
+            <div className="flex flex-col self-start">
+              <Label className="ml-4 mb-2">Hasta</Label>
+
+              <Input
+                placeholder={vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'}
+                onChange={(event) => table.getColumn('validity')?.setFilterValue(event.target.value)}
+                className="max-w-sm ml-2"
+                type="month"
+                id="date-limit"
+              />
+            </div>
+          </div>
+        )}
+        {permanent && (
+          <div className="flex gap-4 flex-wrap">
+            <div className="flex flex-col">
+              <Label className="ml-4 mb-2">Desde (vencimiento)</Label>
+              <Input
+                placeholder={vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'}
+                onChange={(event) => table.getColumn('validity')?.setFilterValue(event.target.value)}
+                className="max-w-sm ml-2"
+                type="date"
+                id="date-from-full"
+              />
+            </div>
+            <div className="flex flex-col self-start">
+              <Label className="ml-4 mb-2">Hasta (vencimiento)</Label>
+              <Input
+                placeholder={vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'}
+                onChange={(event) => table.getColumn('validity')?.setFilterValue(event.target.value)}
+                className="max-w-sm ml-2"
+                type="date"
+                id="date-limit-full"
+              />
+            </div>
+          </div>
         )}
       </div>
       <div className="rounded-md border mb-6 overflow-x-auto">

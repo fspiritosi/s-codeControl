@@ -364,6 +364,7 @@ export type VehiclesAPI = {
   user_id: string;
   document_url: string;
   document_types: DocumentTypes;
+  period:string
 };
 
 export type Applies = {

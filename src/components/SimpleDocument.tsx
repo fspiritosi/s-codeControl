@@ -80,6 +80,7 @@ export default function SimpleDocument({
           file: '',
           validity: '',
           user_id: user,
+          period: null || '',
         },
       ],
     },
@@ -112,6 +113,7 @@ export default function SimpleDocument({
           validity: entry.validity ? format(entry.validity, 'dd/MM/yyyy') : null,
           user_id: user,
           created_at: new Date(),
+          period: entry.period,
         };
       });
       const storagePath = resource === 'empleado' ? 'documentos-empleados' : 'documentos-equipos';
@@ -144,11 +146,8 @@ export default function SimpleDocument({
           return setLoading(false);
         }
         const fileExtension = document.file.split('.').pop();
-
         const tableName = resource === 'empleado' ? 'documents_employees' : 'documents_equipment';
-
         const hasExpiredDate = updateEntries?.[index]?.validity?.replace(/\//g, '-') ?? 'v0';
-
         await supabase.storage
           .from('document_files')
           .upload(
@@ -172,6 +171,7 @@ export default function SimpleDocument({
                 document_path: response.data?.path,
                 created_at: new Date(),
                 state: 'presentado',
+                period: updateEntries[index].period || null,
               };
               const { error } = await supabase
                 .from(tableName)
@@ -215,6 +215,7 @@ export default function SimpleDocument({
                 applies: idApplies || updateEntries[index].applies,
                 id_document_types: updateEntries[index].id_document_types,
                 user_id: user,
+                period: updateEntries[index].period || null,
               });
 
               if (error) {
@@ -300,6 +301,7 @@ export default function SimpleDocument({
   const [filteredResources, setFilteredResources] = useState(data);
   const [inputValue, setInputValue] = useState<string>('');
   const [hasExpired, setHasExpired] = useState(false);
+  const [isMontlhy, setIsMontlhy] = useState(false);
   const [duplicatedDocument, setDuplicatedDocument] = useState(false);
   const [files, setFiles] = useState<File[] | undefined>([]);
   const [openResourceSelector, setOpenResourceSelector] = useState(false);
@@ -457,6 +459,7 @@ export default function SimpleDocument({
                             onValueChange={(e) => {
                               const selected = documenTypes?.find((doc) => doc.id === e);
                               setHasExpired(selected.explired);
+                              setIsMontlhy(selected.is_it_montlhy);
                               const resource = getValues('documents')[index].applies;
 
                               setDuplicatedDocument(
@@ -612,6 +615,34 @@ export default function SimpleDocument({
                         <CardDescription>La fecha de vencimiento del documento</CardDescription>
                       </div>
                     )}
+                    {isMontlhy && (
+                      <div className="space-y-2">
+                        <div className="flex flex-col gap-3">
+                          <Label>Periodo</Label>
+                          <Controller
+                            render={({ field }) => (
+                              <Input
+                                placeholder="Seleccionar periodo"
+                                type="month"
+                                min={new Date().toISOString().split('T')[0]}
+                                onChange={field.onChange}
+                              />
+                            )}
+                            name={`documents.${index}.period`}
+                            control={control}
+                            rules={isMontlhy ? { required: 'Falta seleccionar el periodo' } : undefined}
+                          />
+                        </div>
+                        {errors.documents && errors.documents[index] && errors?.documents?.[index]?.period && (
+                          <CardDescription className="text-red-700 mt-0">
+                            {errors?.documents?.[index]?.period?.message}
+                          </CardDescription>
+                        )}
+                        <CardDescription>
+                          El documento es mensual, debe seleccioar el periodo al que aplica
+                        </CardDescription>
+                      </div>
+                    )}
 
                     {fields.length > 1 && (
                       <Button
@@ -641,6 +672,7 @@ export default function SimpleDocument({
                 file: '',
                 validity: '',
                 user_id: user,
+                period: null || '',
               })
             }
           >
