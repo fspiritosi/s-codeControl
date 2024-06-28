@@ -40,7 +40,6 @@ export default function DocumentsLayout({ children }: { children: React.ReactNod
   const { actualCompany, allDocumentsToShow } = useLoggedUserStore();
   const fetchDocumentTypes = useCountriesStore((state) => state.documentTypes);
   const pathName = usePathname();
-  console.log(pathName);
   return (
     <div className="md:mx-7">
       <Card>

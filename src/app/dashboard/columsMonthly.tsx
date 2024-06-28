@@ -86,25 +86,15 @@ const periodRangeFilter: FilterFn<Colum> = (
   if (!validityDate) return false;
 
   if (startDateValue && !endDateValue) {
-    if (validityDate >= startDateValue) {
-      console.log(row.original.validity);
-    }
     return validityDate >= startDateValue;
   }
   if (!startDateValue && endDateValue) {
-    if (validityDate <= endDateValue) {
-      console.log(validityDate);
-    }
     return validityDate <= endDateValue;
   }
 
   if (startDateValue && endDateValue) {
-    if (validityDate >= startDateValue && validityDate <= endDateValue) {
-      console.log(validityDate);
-    }
     return validityDate >= startDateValue && validityDate <= endDateValue;
   }
-  console.log(validityDate);
 
   return false;
 };
@@ -550,8 +540,6 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
       };
       const id = row.getValue('id');
       const resource = row.getValue('applies');
-      console.log(id);
-      console.log(resource);
       const handleSavePeriod = async () => {
         const supabase = supabaseBrowser();
         toast.promise(

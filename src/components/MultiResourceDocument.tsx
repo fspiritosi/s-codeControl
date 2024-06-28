@@ -225,7 +225,6 @@ export default function MultiResourceDocument({
               });
             }
           } else {
-            // // // console.log('creando')
             const { error } = await supabase
               .from(tableName)
               .insert({

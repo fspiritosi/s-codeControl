@@ -12,14 +12,11 @@ export async function createdContact(formData: FormData) {
   } = await supabase.auth.getSession();
 
   const { data } = await supabase.from('profile').select('*').eq('email', session?.user.email);
-  // // // console.log(data)
   const { data: Companies, error } = await supabase.from('company').select(`*`).eq('owner_id', data?.[0]?.id);
-  // // // console.log(Companies)
   let { data: share_company_users, error: sharedError } = await supabase
     .from('share_company_users')
     .select(`*`)
     .eq('profile_id', data?.[0]?.id);
-  // // // // console.log(share_company_users)
   revalidatePath('/dashboard/company/customers');
 
   const contactData = {
@@ -30,7 +27,6 @@ export async function createdContact(formData: FormData) {
     company_id: Companies?.[0].id,
     customer_id: formData.get('customer'),
   };
-  // console.log("contact Data: ", contactData)
 
   try {
     const createdContact = await supabase.from('contacts').insert(contactData).select();
@@ -48,18 +44,14 @@ export async function updateContact(formData: FormData) {
   } = await supabase.auth.getSession();
 
   const { data } = await supabase.from('profile').select('*').eq('email', session?.user.email);
-  // console.log(data)
   const { data: Companies, error } = await supabase.from('company').select(`*`).eq('owner_id', data?.[0]?.id);
-  // console.log(Companies)
   let { data: share_company_users, error: sharedError } = await supabase
     .from('share_company_users')
     .select(`*`)
     .eq('profile_id', data?.[0]?.id);
-  // console.log(share_company_users)
   revalidatePath('/dashboard/company/actualCompany');
 
   const id = formData.get('id');
-  // console.log("id de formulario: ", id)
 
   const contactData = {
     contact_name: formData.get('contact_name'),
@@ -69,11 +61,9 @@ export async function updateContact(formData: FormData) {
     company_id: Companies?.[0].id,
     customer_id: formData.get('customer'),
   };
-  // console.log("contact Data Update: ", contactData)
   try {
     const editContact = await supabase.from('contacts').update(contactData).eq('id', id).select();
 
-    // console.log('Contacto editado:', editContact);
   } catch (error) {
     console.error(error);
   }

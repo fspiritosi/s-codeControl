@@ -64,8 +64,6 @@ export function ExpiredDataTable<TData, TValue>({
   const loader = useLoggedUserStore((state) => state.isLoading);
   const defaultVisibleColumns = defaultVisibleColumnsCustom || ['date', 'resource', 'documentName', 'validity', 'id'];
 
-  // // // console.log(localStorageName)
-
   const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
     if (typeof window !== 'undefined') {
       const valorGuardado = JSON.parse(localStorage.getItem(localStorageName) || '[]');
@@ -194,8 +192,6 @@ export function ExpiredDataTable<TData, TValue>({
   } else {
     allOptions.resource = createOptions('resource');
   }
-
-  console.log('render');
 
   const maxRows = ['20', '40', '60', '80', '100'];
   const handleClearFilters = () => {

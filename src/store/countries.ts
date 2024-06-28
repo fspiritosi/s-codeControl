@@ -125,7 +125,6 @@ export const useCountriesStore = create<State>((set, get) => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'customers' },
         (payload) => {
-          console.log('Change received!', payload)
           fetchContractors() // Actualiza el estado global
         }
       )
@@ -142,7 +141,6 @@ export const useCountriesStore = create<State>((set, get) => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'contacts' },
         (payload) => {
-          console.log('Change received!', payload)
           fetchContacts() // Actualiza el estado global
         }
       )

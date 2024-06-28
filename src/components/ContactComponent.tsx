@@ -101,10 +101,6 @@ export default function ContactRegister({ id }: { id: string }) {
 
   const customerValue = watch('customer');
 
-  // // // console.log("clientData: ", clientData);
-  // // // console.log("contactData: ", contactData);
-  // // // console.log("ID: ", id);
-  // // // console.log("Selected Customer: ", customerValue);
 
   const onSubmit = async (formData: ContactFormValues) => {
     try {

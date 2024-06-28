@@ -6,15 +6,6 @@ import DocumentsTable from './componentDashboard/DocumentsTable';
 import EmployeesTable from './componentDashboard/EmployeesTable';
 
 export default async function Home() {
-  // const actualCompany = cookies().get('actualComp')
-  // const supabase = supabaseServer()
-
-  // const { data: company, error: profileError } = await supabase
-  //   .from('company')
-  //   .select('*')
-  //   .eq('id', actualCompany?.value)
-
-  // // // // console.log(company, 'company')
 
   return (
     <div className="">

@@ -88,25 +88,16 @@ const dateRangeFilter: FilterFn<Colum> = (
   const [day, month, year] = row.original.validity.split('/');
   const validityDate = row.original.validity === 'No vence' ? null : new Date(`${year}-${month}-${day}`);
 
-  console.log(row.original.validity === 'No vence' ? null : new Date(row.original.validity));
-
   if (row.original.validity === 'No vence') return false;
 
   if (startDateValue && !endDateValue) {
-    if (validityDate! >= startDateValue) {
-    }
     return validityDate! >= startDateValue;
   }
   if (!startDateValue && endDateValue) {
-    if (validityDate! <= endDateValue) {
-      console.log(validityDate);
-    }
     return validityDate! <= endDateValue;
   }
 
   if (startDateValue && endDateValue) {
-    if (validityDate! >= startDateValue && validityDate! <= endDateValue) {
-    }
     return validityDate! >= startDateValue && validityDate! <= endDateValue;
   }
   return false;

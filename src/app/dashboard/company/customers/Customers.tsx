@@ -35,7 +35,6 @@ export default function Customers() {
   const channels = supabase
     .channel('custom-all-channel')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, (payload) => {
-      console.log('Change received!', payload);
       fetchContractors();
     })
     .subscribe();

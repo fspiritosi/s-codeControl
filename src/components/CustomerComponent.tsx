@@ -39,7 +39,6 @@ export default function ClientRegister({ id }: { id: string }) {
             const filteredCustomersEquipment = equipment?.filter((customer: any) =>
                 customer.allocated_to && customer.allocated_to.includes(clientData?.id)
             );
-            // // // console.log(filteredCustomersEmployees)
             const setActivesEmployees = useLoggedUserStore(
                 state => state.setActivesEmployees,
             )
