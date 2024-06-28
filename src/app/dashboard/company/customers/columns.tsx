@@ -95,7 +95,6 @@ export const columns: ColumnDef<Colum>[] = [
       const profile = useLoggedUserStore(state => state)
       const employ = useLoggedUserStore(state => state.employeesToShow)
       const equip = useLoggedUserStore(state => state.vehiclesToShow)
-      console.log(employ)
       let role = ''
       if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
         role = profile?.actualCompany?.owner_id?.role as string;
@@ -273,12 +272,10 @@ export const columns: ColumnDef<Colum>[] = [
             description: message,
           })
         }
-        console.log(employ)
         const updatedEmployeesPromises = employ.map((employee: any) => {
           const updatedAllocatedTo = employee.allocated_to?.filter(
             (clientId: string) => clientId !== customers.id
           );
-          console.log(updatedAllocatedTo)
           return supabase
             .from('employees')
             .update({ allocated_to: updatedAllocatedTo })
@@ -294,12 +291,10 @@ export const columns: ColumnDef<Colum>[] = [
           description: `Los empleados afectados han sido actualizados`,
         });
 
-        console.log(equip)
         const updatedEquipmentPromises = equip.map((equipment: any) => {
           const updatedAllocatedTo = equipment.allocated_to?.filter(
             (clientId: string) => clientId !== customers.id
           );
-          console.log(updatedAllocatedTo)
           return supabase
             .from('vehicles')
             .update({ allocated_to: updatedAllocatedTo })

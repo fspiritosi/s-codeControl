@@ -30,22 +30,25 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
+import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CalendarIcon, DotsVerticalIcon } from '@radix-ui/react-icons';
+import { CalendarIcon, DotsVerticalIcon, Pencil2Icon } from '@radix-ui/react-icons';
 import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
 import { addMonths, format, formatRelative } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 type Colum = {
@@ -69,41 +72,40 @@ const formSchema = z.object({
   }),
 });
 
+const periodRangeFilter: FilterFn<Colum> = (
+  row: Row<Colum>,
+  columnId: string,
+  filterValue: any,
+  addMeta: (meta: any) => void
+) => {
+  const startDateInput = document.getElementById('date-from') as HTMLInputElement;
+  const endDateInput = document.getElementById('date-limit') as HTMLInputElement;
+  const startDateValue = startDateInput?.value ? new Date(startDateInput?.value) : null;
+  const endDateValue = endDateInput?.value ? new Date(endDateInput?.value) : null;
+  const validityDate = row.getValue('period') ? new Date(row.getValue('period')) : null;
+  if (!validityDate) return false;
+
+  if (startDateValue && !endDateValue) {
+    return validityDate >= startDateValue;
+  }
+  if (!startDateValue && endDateValue) {
+    return validityDate <= endDateValue;
+  }
+
+  if (startDateValue && endDateValue) {
+    return validityDate >= startDateValue && validityDate <= endDateValue;
+  }
+
+  return false;
+};
+
 type DocumentHistory = {
   documents_employees_id: string;
   modified_by: string;
   updated_at: string;
 };
 
-const dateRangeFilter: FilterFn<Colum> = (
-  row: Row<Colum>,
-  columnId: string,
-  filterValue: any,
-  addMeta: (meta: any) => void
-) => {
-  const startDateInput = document.getElementById('date-from-full') as HTMLInputElement;
-  const endDateInput = document.getElementById('date-limit-full') as HTMLInputElement;
-  const startDateValue = startDateInput?.value ? new Date(startDateInput?.value) : null;
-  const endDateValue = endDateInput?.value ? new Date(endDateInput?.value) : null;
-  const [day, month, year] = row.original.validity.split('/');
-  const validityDate = row.original.validity === 'No vence' ? null : new Date(`${year}-${month}-${day}`);
-
-  if (row.original.validity === 'No vence') return false;
-
-  if (startDateValue && !endDateValue) {
-    return validityDate! >= startDateValue;
-  }
-  if (!startDateValue && endDateValue) {
-    return validityDate! <= endDateValue;
-  }
-
-  if (startDateValue && endDateValue) {
-    return validityDate! >= startDateValue && validityDate! <= endDateValue;
-  }
-  return false;
-};
-
-export const ExpiredColums: ColumnDef<Colum>[] = [
+export const ColumnsMonthly: ColumnDef<Colum>[] = [
   {
     id: 'actions',
     cell: ({ row }: { row: any }) => {
@@ -336,17 +338,6 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
                                   </FormControl>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
-                                  {/* <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={date =>
-                                      date > new Date() ||
-                                      date < new Date('1900-01-01')
-                                    }
-                                    initialFocus
-                                    locale={es}
-                                  /> */}
                                   <Select
                                     onValueChange={(e) => {
                                       setMonth(new Date(e));
@@ -517,29 +508,101 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
       return <Badge variant={variants[row.original.state]}>{row.original.state}</Badge>;
     },
   },
-
   {
     accessorKey: 'multiresource',
     header: 'Multirecurso',
   },
   {
+    accessorKey: 'period',
+    header: undefined,
+  },
+  {
+    accessorKey: 'applies',
+    header: undefined,
+  },
+  {
     accessorKey: 'validity',
-    filterFn: dateRangeFilter,
+    filterFn: periodRangeFilter,
     header: ({ column }) => {
       return (
         <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Vencimiento
+          Periodo
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
     cell: ({ row }) => {
-      const isNoPresented = row.getValue('state') === 'pendiente';
+      const isNoPresented = row.getValue('period');
+      const [disabled, setDisabled] = useState(true);
+      const [value, setValue] = useState<string>(row.getValue('period') || '');
+      const handleDisabled = () => {
+        setDisabled(!disabled);
+      };
+      const id = row.getValue('id');
+      const resource = row.getValue('applies');
+      const handleSavePeriod = async () => {
+        const supabase = supabaseBrowser();
+        toast.promise(
+          async () => {
+            if (resource === 'Persona') {
+              const { error } = await supabase
+                .from('documents_employees')
+                .update({
+                  period: value,
+                })
+                .eq('id', id);
+              if (error) {
+                throw new Error(handleSupabaseError(error.message));
+              }
+            }
+            if (resource === 'Equipos') {
+              const { error } = await supabase
+                .from('documents_equipment')
+                .update({
+                  period: value,
+                })
+                .eq('id', id);
+              if (error) {
+                throw new Error(handleSupabaseError(error.message));
+              }
+            }
+          },
+          {
+            loading: 'Actualizando',
+            success: 'El periodo se actualizo correctamente',
+            error: (error) => {
+              return error;
+            },
+          }
+        );
+        handleDisabled();
+      };
 
-      if (isNoPresented) {
+      if (!isNoPresented) {
         return 'No disponible';
       } else {
-        return row.original.validity;
+        return (
+          <div className="flex relative">
+            <Input
+              placeholder="Seleccionar periodo"
+              type="month"
+              min={new Date().toISOString().split('T')[0]}
+              onChange={(e) => setValue(e.target.value)}
+              defaultValue={row.getValue('period')}
+              className=""
+              disabled={disabled}
+              value={value || ''}
+            />
+            <Pencil2Icon
+              className={cn('size-4 absolute right-2 top-2.5 text-white hover:cursor-pointer', !disabled && 'hidden')}
+              onClick={handleDisabled}
+            />
+            <CheckCircle
+              className={cn('size-4 absolute right-2 top-2.5 text-white hover:cursor-pointer', disabled && 'hidden')}
+              onClick={handleSavePeriod}
+            />
+          </div>
+        );
       }
     },
   },

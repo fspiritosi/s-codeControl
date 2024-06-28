@@ -90,9 +90,6 @@ export default function UpdateDocuments({
         upsert: true,
       })
 
-    // // // console.log(data, 'data')
-    // // // console.log(storageError, 'storageError')
-
     const { error: updateError } = await supabase
       .from(tableName)
       .update({

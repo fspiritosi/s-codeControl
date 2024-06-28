@@ -207,7 +207,6 @@ export const columns: ColumnDef<Colum>[] = [
       // const handleToggleInactive = () => {
       //   setShowInactive(!showInactive)
       // }
-      // // // // console.log("id contacto: ", contacts.id)
 
       return (
         <DropdownMenu>

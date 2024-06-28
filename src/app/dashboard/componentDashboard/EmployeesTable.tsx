@@ -8,7 +8,6 @@ function EmployeesTable() {
   const setShowLastMonthDocuments = useLoggedUserStore(
     state => state.setShowLastMonthDocuments,
   )
-  // // // console.log(documentsToShow, 'documentsToShow')
   return (
     <ExpiredDataTable
       data={documentsToShow?.employees || []}

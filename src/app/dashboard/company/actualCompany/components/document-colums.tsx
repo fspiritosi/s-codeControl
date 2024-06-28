@@ -82,7 +82,6 @@ export const columnsDocuments: ColumnDef<SharedUser>[] = [
     accessorKey: 'alta',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Subido el" />,
     cell: ({ row }) => {
-      console.log(row.getValue('alta'));
       return (
         <div className="flex items-center">
           <span>
@@ -108,7 +107,6 @@ export const columnsDocuments: ColumnDef<SharedUser>[] = [
     accessorKey: 'vencimiento',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Vencimiento" />,
     cell: ({ row }) => {
-      console.log(row.getValue('vencimiento'));
       return (
         <div className="flex items-center">
           <span>
@@ -141,7 +139,6 @@ export const columnsDocuments: ColumnDef<SharedUser>[] = [
       //   return <Link href={`/dashboard/document/${documentId}`}></Link>;
       // }
       const redirectId = row.getValue('documentId');
-      console.log(redirectId);
       return (
         <AddCompanyDocumentForm
           documentId={documentId as string}

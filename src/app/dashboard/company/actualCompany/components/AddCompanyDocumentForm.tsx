@@ -38,7 +38,6 @@ function AddCompanyDocumentForm({
   const user = useLoggedUserStore((state) => state.credentialUser?.id);
   const companyId = useLoggedUserStore((state) => state.actualCompany)?.id;
   const documentForId = companyDocumentTypes.find((e) => e.id === documentId);
-  console.log(documentForId);
   const fetchDocuments = useLoggedUserStore((state) => state.documetsFetch);
   const FormSchema = z.object({
     id_document_types: z.string({

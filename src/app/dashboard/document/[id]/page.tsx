@@ -69,8 +69,6 @@ export default async function page({ params }: { params: { id: string } }) {
       document = documents_company;
       resourceType = 'documentos-company';
       resource = 'company';
-      console.log(params.id);
-      console.log(documents_company);
     }
   } else {
     document = documents_employee;
@@ -95,7 +93,6 @@ export default async function page({ params }: { params: { id: string } }) {
     const validity = documents_employees?.[0]?.validity;
     if (!validity) return false;
 
-    // // // console.log('validity', validity)
     // Convertir la fecha a formato "mm/dd/yyyy"
     const [day, month, year] = validity.split('/');
     const validityDate = new Date(`${month}/${day}/${year}`);
@@ -105,7 +102,6 @@ export default async function page({ params }: { params: { id: string } }) {
 
     return validityDate <= oneMonthFromNow;
   }
-  // console.log(documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth(), ' documents_employees?.[0]?.state =',)
 
   return (
     <section className="md:mx-7">

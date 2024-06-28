@@ -87,6 +87,7 @@ export const EmailTemplateHelp: React.FC<Readonly<EmailTemplateHelpProps>> = ({ 
                                     maxWidth: '100%',
                                   }}
                                   width="140"
+                                  alt="logo codeControl"
                                 />
                               </td>
                             </tr>

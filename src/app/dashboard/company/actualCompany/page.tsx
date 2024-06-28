@@ -33,12 +33,18 @@ export default function page() {
   const sharedUsersAll = useLoggedUserStore((state) => state.sharedUsers);
   const [verify, setVerify] = useState(false);
   const ownerUser = useLoggedUserStore((state) => state.profile);
-  const [tabValue, setTabValue] = useState(localStorage.getItem('selectedTab') || 'general');
+
+  const [tabValue, setTabValue] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('selectedTab') || 'general';
+    } else {
+      return 'general';
+    }
+  });
   const AllCompanyDocuments = useLoggedUserStore((state) => state.companyDocuments);
 
-  const userShared = cookies.get('guestRole')
-  // // // console.log(actualCompany?.id, "actual company")
-  const owner = ownerUser?.map(user => {
+  const userShared = cookies.get('guestRole');
+  const owner = ownerUser?.map((user) => {
     return {
       email: user.email,
       fullname: user.fullname as string,

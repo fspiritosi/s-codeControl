@@ -31,7 +31,6 @@ export default function Contact() {
   const fetchContacts = useCountriesStore(state => state.fetchContacts)
   const subscribeToContactsChanges = useCountriesStore(state => state.subscribeToContactsChanges)
   const contractorCompanies = useCountriesStore(state => state.contacts?.filter((company:any) => company.company_id.toString() === actualCompany?.id ))
-  
 
   useEffect(() => {
     fetchContacts()
@@ -49,7 +48,6 @@ const channels = supabase.channel('custom-all-channel')
   'postgres_changes',
   { event: '*', schema: 'public', table: 'contacts' },
   (payload) => {
-    
     fetchContacts()
     
   }
