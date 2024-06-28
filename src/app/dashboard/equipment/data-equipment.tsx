@@ -120,6 +120,7 @@ export function DataEquipment<TData, TValue>({
     brand: createOptions('brand_vehicles'),
     model: createOptions('model_vehicles'),
     status: createOptions('status'),
+    allocated_to: createOptions('allocated_to'),
   };
 
   function createOptions(key: string) {
@@ -159,6 +160,11 @@ export function DataEquipment<TData, TValue>({
       option: allOptions.status,
       label: 'Estado',
     },
+    allocated_to: {
+      name: 'allocated_to',
+      option: allOptions.allocated_to,
+      label: 'Afectado a',
+    },
   };
 
   let table = useReactTable({
@@ -179,7 +185,6 @@ export function DataEquipment<TData, TValue>({
   });
   const setActivesVehicles = useLoggedUserStore((state) => state.setActivesVehicles);
   //const router = useRouter()
-
 
   useEffect(() => {
     const valorGuardado = JSON.parse(localStorage.getItem('savedColumns') || '');
@@ -323,13 +328,26 @@ export function DataEquipment<TData, TValue>({
             {table.getHeaderGroups()?.map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers?.map((header) => {
+                  console.log(header.id)
                   return (
                     <TableHead className="text-center text-balance" key={header.id}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.id in selectHeader ? (
-                              header.id === 'intern_number' ? (
+                              header.id === 'allocated_to' ? (
+                                <div className="flex justify-center">
+                                  <Input
+                                    placeholder="Buscar por afectación"
+                                    value={table.getColumn('allocated_to')?.getFilterValue() as string}
+                                    onChange={(event) => {
+                                      console.log(event.target.value);
+                                      table.getColumn('allocated_to')?.setFilterValue(event.target.value);
+                                    }}
+                                    className="max-w-sm"
+                                  />
+                                </div>
+                              ) : header.id === 'intern_number' ? (
                                 <div className="flex justify-center">
                                   <Input
                                     placeholder="Número de interno"

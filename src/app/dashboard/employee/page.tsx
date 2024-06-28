@@ -38,6 +38,7 @@ const EmployeePage = () => {
       }
     })
     .subscribe();
+    
   return (
     <section className="max-w-full">
       <Card className="mt-6 md:mx-7 overflow-hidden">

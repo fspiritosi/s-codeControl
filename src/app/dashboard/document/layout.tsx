@@ -113,6 +113,11 @@ export default function DocumentsLayout({ children }: { children: React.ReactNod
                               <TableCell>{doc.multiresource ? 'Si' : 'No'}</TableCell>
                               <TableCell>{doc.explired ? 'Si' : 'No'}</TableCell>
                               <TableCell>{doc.mandatory ? 'Si' : 'No'}</TableCell>
+                              {doc.company_id && (
+                                <TableCell align="center">
+                                  <EditModal Equipo={doc} />
+                                </TableCell>
+                              )}
                             </TableRow>
                           ))}
                         </TableBody>
@@ -140,6 +145,11 @@ export default function DocumentsLayout({ children }: { children: React.ReactNod
                               <TableCell>{doc.multiresource ? 'Si' : 'No'}</TableCell>
                               <TableCell>{doc.explired ? 'Si' : 'No'}</TableCell>
                               <TableCell>{doc.mandatory ? 'Si' : 'No'}</TableCell>
+                              {doc.company_id && (
+                                <TableCell align="center">
+                                  <EditModal Equipo={doc} />
+                                </TableCell>
+                              )}
                             </TableRow>
                           ))}
                         </TableBody>

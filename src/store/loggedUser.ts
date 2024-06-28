@@ -172,6 +172,7 @@ const setEmployeesToShow = (employees: any) => {
 };
 
 const setVehiclesToShow = (vehicles: Vehicle) => {
+  console.log(vehicles)
   return vehicles?.map((item) => ({
     ...item,
     types_of_vehicles: item.types_of_vehicles.name,

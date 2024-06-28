@@ -52,7 +52,7 @@ export function EditModal({ Equipo }: Props) {
       .string({ required_error: 'Este campo es requerido' })
       .min(3, { message: 'El nombre debe contener mas de 3 caracteres' })
       .max(50, { message: 'El nombre debe contener menos de 50 caracteres' }),
-    applies: z.enum(['Persona', 'Equipos'], {
+    applies: z.enum(['Persona', 'Equipos', 'Empresa'], {
       required_error: 'Este campo es requerido',
     }),
     multiresource: z.boolean({
@@ -204,12 +204,13 @@ export function EditModal({ Equipo }: Props) {
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Personas o Equipos" />
+                            <SelectValue placeholder="Personas, Equipos o Empresa" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="Persona">Persona</SelectItem>
                           <SelectItem value="Equipos">Equipos</SelectItem>
+                          <SelectItem value="Empresa">Empresa</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
