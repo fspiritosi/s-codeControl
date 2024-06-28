@@ -480,31 +480,31 @@ export const columns: ColumnDef<Colum>[] = [
     accessorKey: 'type_of_contract',
     header: 'Tipo de contrato',
   },
-  {
-    accessorKey: 'allocated_to',
-    header: 'Afectado a',
-    cell: ({ row }) => {
-      const values = row.original.allocated_to;
-      console.log(values);
-      if (!values) return <Badge variant={'destructive'}>Sin afectar</Badge>;
-      const actualCompany = useLoggedUserStore((state) => state.actualCompany);
+  // {
+  //   accessorKey: 'allocated_to',
+  //   header: 'Afectado a',
+  //   cell: ({ row }) => {
+  //     const values = row.original.allocated_to;
+  //     console.log(values);
+  //     if (!values) return <Badge variant={'destructive'}>Sin afectar</Badge>;
+  //     const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
-      const contractorCompanies = Array.isArray(values)
-        ? values
-            .map((allocatedToId) =>
-              useCountriesStore(
-                (state) => state.customers?.find((company: any) => String(company.id) === String(allocatedToId))?.name
-              )
-            )
-            .join(', ')
-        : useCountriesStore(
-            (state) => state.customers?.find((company: any) => String(company.id) === String(values))?.name
-          );
+  //     const contractorCompanies = Array.isArray(values)
+  //       ? values
+  //           .map((allocatedToId) =>
+  //             useCountriesStore(
+  //               (state) => state.customers?.find((company: any) => String(company.id) === String(allocatedToId))?.name
+  //             )
+  //           )
+  //           .join(', ')
+  //       : useCountriesStore(
+  //           (state) => state.customers?.find((company: any) => String(company.id) === String(values))?.name
+  //         );
 
-      return <p>{contractorCompanies}</p>;
-    },
-    filterFn: allocatedToRangeFilter,
-  },
+  //     return <p>{contractorCompanies}</p>;
+  //   },
+  //   filterFn: allocatedToRangeFilter,
+  // },
   {
     accessorKey: 'picture',
     header: 'Foto',
