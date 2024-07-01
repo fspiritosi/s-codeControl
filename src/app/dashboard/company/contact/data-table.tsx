@@ -35,13 +35,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface DataContactsProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any;
   data: TData[];
   allCompany: any[];
   showInactive: boolean;
+  localStorageName: string;
   setShowInactive: (showInactive: boolean) => void;
 }
 
@@ -51,9 +52,37 @@ export function DataContacts<TData, TValue>({
   showInactive,
   setShowInactive,
   allCompany,
+  localStorageName,
 }: DataContactsProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const defaultVisibleColumns = ['contact_name', 'constact_email', 'contact_phone', 'contact_charge', 'customers.name'];
+
+  const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const valorGuardado = JSON.parse(localStorage.getItem(localStorageName) || '[]');
+      return valorGuardado.length ? valorGuardado : defaultVisibleColumns;
+    }
+    return defaultVisibleColumns;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(localStorageName, JSON.stringify(defaultVisibleColumns1));
+    }
+  }, [defaultVisibleColumns1]);
+
+  useEffect(() => {
+    const valorGuardado = JSON.parse(localStorage.getItem(localStorageName) || '[]');
+    if (valorGuardado.length) {
+      setColumnVisibility(
+        columns.reduce((acc: any, column: any) => {
+          acc[column.accessorKey] = valorGuardado.includes(column.accessorKey);
+          return acc;
+        }, {})
+      );
+    }
+  }, [columns]);
+
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     columns.reduce((acc: any, column: any) => {
       acc[column.accessorKey] = defaultVisibleColumns.includes(column.accessorKey);
@@ -101,6 +130,18 @@ export function DataContacts<TData, TValue>({
   //   state => state.setActivesVehicles,
   // )
   //const router = useRouter()
+
+  const handleColumnVisibilityChange = (columnId: string, isVisible: boolean) => {
+    setColumnVisibility((prev) => ({
+      ...prev,
+      [columnId]: isVisible,
+    }));
+    setDefaultVisibleColumns1((prev: any) => {
+      const newVisibleColumns = isVisible ? [...prev, columnId] : prev.filter((id: string) => id !== columnId);
+      localStorage.setItem(localStorageName, JSON.stringify(newVisibleColumns));
+      return newVisibleColumns;
+    });
+  };
 
   const handleClearFilters = () => {
     table.getAllColumns().forEach((column) => {
@@ -194,7 +235,7 @@ export function DataContacts<TData, TValue>({
                       key={column.id}
                       className="capitalize"
                       checked={column.getIsVisible()}
-                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                      onCheckedChange={(value) => handleColumnVisibilityChange(column.id, !!value)}
                     >
                       {column.columnDef.header}
                     </DropdownMenuCheckboxItem>
