@@ -15,14 +15,13 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { CaretUpIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import { EditModal } from './documentComponents/EditDocumenTypeModal';
 
 export default function DocumentsLayout({ children }: { children: React.ReactNode }) {
@@ -40,9 +39,12 @@ export default function DocumentsLayout({ children }: { children: React.ReactNod
   const { actualCompany, allDocumentsToShow } = useLoggedUserStore();
   const fetchDocumentTypes = useCountriesStore((state) => state.documentTypes);
   const pathName = usePathname();
+
+  const params = useParams();
+  if (params.id) return <>{children}</>;
   return (
     <div className="md:mx-7">
-      <Accordion type="single" className='mb-6' collapsible>
+      <Accordion type="single" className="mb-6" collapsible>
         <AccordionItem value="item-1">
           <AccordionTrigger className="text-xl pl-6 font-bold">Tipos de documento</AccordionTrigger>
           <AccordionContent>
@@ -208,7 +210,9 @@ export default function DocumentsLayout({ children }: { children: React.ReactNod
                   <Link
                     className={cn(
                       buttonVariants({ variant: 'outline' }),
-                      !pathName.includes('equipment') && !pathName.includes('company') && 'bg-muted'
+                      !pathName.includes('equipment') &&
+                        !pathName.includes('company') &&
+                        'bg-muted border-2 border-black/30'
                     )}
                     href={'/dashboard/document'}
                   >
@@ -221,7 +225,10 @@ export default function DocumentsLayout({ children }: { children: React.ReactNod
                     />
                   </Link>
                   <Link
-                    className={cn(buttonVariants({ variant: 'outline' }), pathName.includes('equipment') && 'bg-muted')}
+                    className={cn(
+                      buttonVariants({ variant: 'outline' }),
+                      pathName.includes('equipment') && 'bg-muted border-2 border-black/30'
+                    )}
                     href={'/dashboard/document/equipment'}
                   >
                     Equipos
