@@ -30,8 +30,10 @@ export const RegisterWithRole = () => {
   const [open, setOpen] = useState(false);
   const ownerUser = useLoggedUserStore((state) => state.profile);
   const [activeTab, setActiveTab] = useState('InviteUser');
-
+  const [clientData, setClientData] = useState<any>(null);
+  const [selectedRole, setSelectedRole] = useState('');
   const company = useLoggedUserStore((state) => state.actualCompany);
+  
   const passwordSchema = z
     .string()
     .min(8, { message: 'La contraseña debe tener al menos 8 caracteres.' })
@@ -53,36 +55,37 @@ export const RegisterWithRole = () => {
         activeTab === 'InviteUser'
           ? z.string().optional()
           : z
-              .string()
-              .min(2, {
-                message: 'El nombre debe tener al menos 2 caracteres.',
-              })
-              .max(30, {
-                message: 'El nombre debe tener menos de 30 caracteres.',
-              })
-              .regex(/^[a-zA-Z ]+$/, {
-                message: 'El nombre solo puede contener letras.',
-              })
-              .trim(),
+            .string()
+            .min(2, {
+              message: 'El nombre debe tener al menos 2 caracteres.',
+            })
+            .max(30, {
+              message: 'El nombre debe tener menos de 30 caracteres.',
+            })
+            .regex(/^[a-zA-Z ]+$/, {
+              message: 'El nombre solo puede contener letras.',
+            })
+            .trim(),
       lastname:
         activeTab === 'InviteUser'
           ? z.string().optional()
           : z
-              .string()
-              .min(2, {
-                message: 'El apellido debe tener al menos 2 caracteres.',
-              })
-              .max(30, {
-                message: 'El apellido debe tener menos de 30 caracteres.',
-              })
-              .regex(/^[a-zA-Z ]+$/, {
-                message: 'El apellido solo puede contener letras.',
-              })
-              .trim(),
+            .string()
+            .min(2, {
+              message: 'El apellido debe tener al menos 2 caracteres.',
+            })
+            .max(30, {
+              message: 'El apellido debe tener menos de 30 caracteres.',
+            })
+            .regex(/^[a-zA-Z ]+$/, {
+              message: 'El apellido solo puede contener letras.',
+            })
+            .trim(),
       email: z.string().email({ message: 'Email inválido' }),
       role: z.string({ required_error: 'El rol es requerido' }).min(1, {
         message: 'El rol debe tener al menos 1 caracteres.',
       }),
+      customer: z.string({ required_error: 'El cliente es requerido' }).optional(),
       password: activeTab === 'InviteUser' ? z.string().optional() : passwordSchema,
       confirmPassword: activeTab === 'InviteUser' ? z.string().optional() : passwordSchema,
     })
@@ -100,6 +103,7 @@ export const RegisterWithRole = () => {
       password: '',
       confirmPassword: '',
       role: '',
+      customer: '',
     },
   });
 
@@ -111,11 +115,24 @@ export const RegisterWithRole = () => {
   };
 
   useEffect(() => {
+    const fetchCustomers = async () => {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('is_active', true)
+        .eq('company_id', company?.id);
+      if (error) {
+        console.error('Error fetching customers:', error);
+      } else {
+        setClientData(data);
+      }
+    };
     getRoles();
+    fetchCustomers();
   }, []);
 
   const FetchSharedUsers = useLoggedUserStore((state) => state.FetchSharedUsers);
-
+  
   function onSubmit(values: z.infer<typeof registerSchemaWithRole>) {
     if (values?.email?.trim().toLocaleLowerCase() === ownerUser?.[0].email.toLocaleLowerCase()) {
       toast.error('No puedes compartir la empresa contigo mismo');
@@ -140,20 +157,21 @@ export const RegisterWithRole = () => {
           if (sharedCompany && sharedCompany?.length > 0) {
             throw new Error('El usuario ya tiene acceso a la empresa');
           }
-
+          
           //Compartir la empresa con el usuario
           const { data, error } = await supabase.from('share_company_users').insert([
             {
               company_id: company?.id,
               profile_id: profile[0].id,
               role: values?.role,
+              customer_id: values?.customer,
             },
           ]);
-
+          
           if (error) {
             throw new Error(handleSupabaseError(error.message));
           }
-
+          
           return 'Usuario registrado correctamente';
         }
 
@@ -193,6 +211,7 @@ export const RegisterWithRole = () => {
                   company_id: company?.id,
                   profile_id: user?.[0].id,
                   role: values?.role,
+                  customer_id: values?.customer,
                 },
               ]);
               if (error) {
@@ -357,7 +376,12 @@ export const RegisterWithRole = () => {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Rol</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select 
+                                  onValueChange={(value) => {
+                                    field.onChange(value);
+                                    setSelectedRole(value); // Actualiza el estado del rol seleccionado
+                                  }}
+                                   defaultValue={field.value}>
                                   <FormControl>
                                     <SelectTrigger>
                                       <SelectValue placeholder="Seleccionar rol" />
@@ -375,6 +399,37 @@ export const RegisterWithRole = () => {
                               </FormItem>
                             )}
                           />
+                          { selectedRole === "Invitado" &&(
+                          <div>
+                            <FormField
+                              control={form.control}
+                              name="customer"
+                              render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel>Cliente</FormLabel>
+                              <Select
+                                value={field.value}
+                                onValueChange={field.onChange} defaultValue={selectedRole!=="Invitado"?" ":field.value}
+                              >
+                                <SelectTrigger id="customer" name="customer" className="max-w-[500px] w-[450px]">
+                                  <SelectValue
+                                    placeholder={'Seleccionar un cliente'}
+                                  />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {clientData?.map((client: any) => (
+                                    <SelectItem key={client?.id} value={selectedRole!== "Invitado"? null:client?.id}>
+                                      {client?.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              </FormItem>
+                              )}
+                              />
+                              
+                            </div>
+                            )}
                           <div className="flex justify-end gap-4">
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <Button type="submit">Agregar</Button>
@@ -408,7 +463,10 @@ export const RegisterWithRole = () => {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="ml-3">Rol</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select  onValueChange={(value) => {
+                                    field.onChange(value);
+                                    setSelectedRole(value); // Actualiza el estado del rol seleccionado
+                                  }} defaultValue={field.value}>
                                   <FormControl>
                                     <SelectTrigger>
                                       <SelectValue placeholder="Seleccionar rol" />
@@ -426,6 +484,37 @@ export const RegisterWithRole = () => {
                               </FormItem>
                             )}
                           />
+                          { selectedRole === "Invitado" &&(
+                          <div>
+                            <FormField
+                              control={form.control}
+                              name="customer"
+                              render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel>Cliente</FormLabel>
+                              <Select
+                                value={field.value}
+                                onValueChange={field.onChange} defaultValue={field.value}
+                              >
+                                <SelectTrigger id="customer" name="customer" className="max-w-[500px] w-[450px]">
+                                  <SelectValue
+                                    placeholder={'Seleccionar un cliente'}
+                                  />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {clientData?.map((client: any) => (
+                                    <SelectItem key={client?.id} value={selectedRole!== "Invitado"? null :client?.id}>
+                                      {client?.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              </FormItem>
+                              )}
+                              />
+                              
+                            </div>
+                            )}
                           <div className="flex justify-end gap-4">
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <Button type="submit">Agregar</Button>

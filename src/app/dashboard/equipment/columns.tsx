@@ -316,10 +316,12 @@ export const columns: ColumnDef<Colum>[] = [
             </Dialog>
           )}
           <DropdownMenuTrigger asChild>
+            {role !== "Invitado" ? null :(
             <Button variant="ghost" className="h-8 w-8 p-0">
               <span className="sr-only">Open menu</span>
               <DotsVerticalIcon className="h-4 w-4" />
             </Button>
+            )}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Opciones</DropdownMenuLabel>

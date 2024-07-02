@@ -72,8 +72,7 @@ const channels = supabase.channel('custom-all-channel')
 
             <CardContent>
               <DataCustomers
-                columns={columns}
-                // data={customers || []}
+                columns={columns}        
                 data={contractorCompanies || []}
                 allCompany={allCompany}
                 showInactive={showInactive}
