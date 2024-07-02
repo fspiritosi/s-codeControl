@@ -16,8 +16,8 @@ export default function Equipment() {
   const fetchVehicles = useLoggedUserStore((state) => state.fetchVehicles);
   const [showInactive, setShowInactive] = useState(false);
   const vehiclesData = useLoggedUserStore((state) => state.vehiclesToShow);
-  const onlyVehicles = vehiclesData.filter((v) => v.type_of_vehicle === 1)
-  const onlyOthers = vehiclesData.filter((v) => v.type_of_vehicle === 2)
+  const onlyVehicles = vehiclesData?.filter((v) => v.type_of_vehicle === 1)
+  const onlyOthers = vehiclesData?.filter((v) => v.type_of_vehicle === 2)
   const actualCompanyID = cookie.get('actualCompanyId');
 
   const [tabValue, setTabValue] = useState<string>(() => {
