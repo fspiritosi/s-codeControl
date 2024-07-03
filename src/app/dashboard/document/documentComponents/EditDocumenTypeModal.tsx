@@ -63,6 +63,7 @@ export function EditModal({ Equipo }: Props) {
     special: z.boolean({ required_error: 'Este campo es requerido' }),
     description: special ? z.string({ required_error: 'Este campo es requerido' }) : z.string().optional(),
     is_it_montlhy: z.boolean({ required_error: 'Se debe seleccionar una opcion' }).optional(),
+    private: z.boolean({ required_error: 'Se debe seleccionar una opcion' }).optional(),
   });
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -74,7 +75,8 @@ export function EditModal({ Equipo }: Props) {
       special: Equipo.special,
       applies: Equipo.applies as 'Persona' | 'Equipos' | 'Empresa' | undefined,
       description: Equipo.description || '',
-      is_it_montlhy:Equipo.is_it_montlhy as  boolean 
+      is_it_montlhy: Equipo.is_it_montlhy as boolean,
+      private: Equipo.private as boolean,
     },
   });
 
@@ -99,6 +101,11 @@ export function EditModal({ Equipo }: Props) {
       id: 'is_it_montlhy',
       label: 'Es mensual?',
       tooltip: 'Si el documento vence mensualmente',
+    },
+    {
+      id: 'private',
+      label: 'Es público?',
+      tooltip: 'Si el documento es público es visible para todos los usuarios',
     },
   ];
 

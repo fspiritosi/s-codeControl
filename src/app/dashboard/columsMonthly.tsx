@@ -594,11 +594,19 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
               value={value || ''}
             />
             <Pencil2Icon
-              className={cn('size-4 absolute right-2 top-2.5 text-white hover:cursor-pointer', !disabled && 'hidden')}
+              className={cn(
+                'size-4 absolute right-2 top-2.5 dark:text-white hover:cursor-pointer',
+                !disabled && 'hidden',
+                row.original.state === 'aprobado' && 'hidden'
+              )}
               onClick={handleDisabled}
             />
             <CheckCircle
-              className={cn('size-4 absolute right-2 top-2.5 text-white hover:cursor-pointer', disabled && 'hidden')}
+              className={cn(
+                'size-4 absolute right-2 top-2.5 dark:text-white hover:cursor-pointer',
+                disabled && 'hidden',
+                row.original.state === 'aprobado' && 'hidden'
+              )}
               onClick={handleSavePeriod}
             />
           </div>
