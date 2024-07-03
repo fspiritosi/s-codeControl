@@ -79,6 +79,7 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
         ? z.string({ required_error: 'Este campo es requerido' })
         : z.string().optional(),
     is_it_montlhy: z.boolean({ required_error: 'Este campo es requerido' }),
+    private: z.boolean({ required_error: 'Este campo es requerido' }),
   });
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -101,6 +102,7 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
       multiresource: isOptional ? false : values.multiresource,
       mandatory: isOptional ? true : values.mandatory,
       special: isOptional ? false : values.special,
+      private: values.private,
     };
 
     toast.promise(

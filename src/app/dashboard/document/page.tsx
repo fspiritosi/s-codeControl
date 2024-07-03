@@ -1,7 +1,6 @@
 'use client';
 import DocumentNav from '@/components/DocumentNav';
 import NewDocumentType from '@/components/NewDocumentType';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -13,7 +12,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCountriesStore } from '@/store/countries';
@@ -90,6 +89,8 @@ export default function page() {
     };
   });
 
+  console.log(role);
+
   return (
     <>
       <Tabs defaultValue="Documentos de empleados" className="md:mx-7">
@@ -97,7 +98,7 @@ export default function page() {
           <TabsTrigger value="Documentos de empleados">Documentos de empleados</TabsTrigger>
           <TabsTrigger value="Documentos de equipos">Documentos de equipos</TabsTrigger>
           <TabsTrigger value="Documentos de empresa">Documentos de empresa</TabsTrigger>
-          <TabsTrigger value="Tipos de documentos">Tipos de documentos</TabsTrigger>
+          {role !== 'Invitado' && <TabsTrigger value="Tipos de documentos">Tipos de documentos</TabsTrigger>}
         </TabsList>
         <TabsContent value="Documentos de empleados">
           <Card>
@@ -233,9 +234,9 @@ export default function page() {
                     Aquí encontrarás todos los documentos publicos de la empresa
                   </CardDescription>
                 </div>
-                <div className="flex gap-4 flex-wrap pl-6">
+                {/* <div className="flex gap-4 flex-wrap pl-6">
                   <DocumentNav />
-                </div>
+                </div> */}
               </div>
             </CardHeader>
             <Tabs defaultValue="permanentes">
@@ -260,122 +261,141 @@ export default function page() {
         </TabsContent>
         <TabsContent value="Tipos de documentos">
           <Card>
-            <CardHeader>
-              <CardTitle>Tipos de documentos</CardTitle>
-              <CardDescription>Tipos de documentos auditables</CardDescription>
-            </CardHeader>
+            <div className="flex justify-between items-center">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold tracking-tight">Tipos de documentos</CardTitle>
+                <CardDescription className="text-muted-foreground">Tipos de documentos auditables</CardDescription>
+              </CardHeader>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild className="mr-4">
+                  {role && role !== 'Invitado' && <Button>Crear nuevo</Button>}
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Nuevo tipo de documento</AlertDialogTitle>
+                    <AlertDialogDescription asChild>
+                      <NewDocumentType codeControlClient />
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <Button
+                      onClick={() => {
+                        document.getElementById('create_new_document')?.click();
+                        fetchDocumentTypes(actualCompany?.id);
+                      }}
+                    >
+                      Crear documento
+                    </Button>
+                    <AlertDialogCancel id="close_document_modal">Cancel</AlertDialogCancel>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
             <CardContent>
-              <Accordion type="single" collapsible>
-                <AccordionItem value="item-1">
-                  <AccordionTrigger>Personas</AccordionTrigger>
-                  <AccordionContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Nombre del Documento</TableHead>
-                          <TableHead className="w-[100px] text-center" align="center">
-                            Multirecurso
-                          </TableHead>
-                          <TableHead className="w-[100px] text-center" align="center">
-                            Vence
-                          </TableHead>
-                          <TableHead className="w-[100px] text-center" align="center">
-                            Mandatorio
-                          </TableHead>
-                          <TableHead className="w-[100px] text-center" align="center">
-                            Editar
-                          </TableHead>
+              <Tabs defaultValue="Personas" className="w-full">
+                <TabsList>
+                  <TabsTrigger value="Personas">Personas</TabsTrigger>
+                  <TabsTrigger value="Equipos">Equipos</TabsTrigger>
+                  <TabsTrigger value="Empresa">Empresa</TabsTrigger>
+                </TabsList>
+                <TabsContent value="Personas">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nombre del Documento</TableHead>
+                        <TableHead className="w-[100px] text-center" align="center">
+                          Multirecurso
+                        </TableHead>
+                        <TableHead className="w-[100px] text-center" align="center">
+                          Vence
+                        </TableHead>
+                        <TableHead className="w-[100px] text-center" align="center">
+                          Mandatorio
+                        </TableHead>
+                        <TableHead className="w-[100px] text-center" align="center">
+                          Editar
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {doc_personas?.map((doc) => (
+                        <TableRow key={doc.id}>
+                          <TableCell className="font-medium">{doc.name}</TableCell>
+                          <TableCell align="center">{doc.multiresource ? 'Si' : 'No'}</TableCell>
+                          <TableCell align="center">{doc.explired ? 'Si' : 'No'}</TableCell>
+                          <TableCell align="center">{doc.mandatory ? 'Si' : 'No'}</TableCell>
+                          {doc.company_id && (
+                            <TableCell align="center">
+                              <EditModal Equipo={doc} />
+                            </TableCell>
+                          )}
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {doc_personas?.map((doc) => (
-                          <TableRow key={doc.id}>
-                            <TableCell className="font-medium">{doc.name}</TableCell>
-                            <TableCell align="center">{doc.multiresource ? 'Si' : 'No'}</TableCell>
-                            <TableCell align="center">{doc.explired ? 'Si' : 'No'}</TableCell>
-                            <TableCell align="center">{doc.mandatory ? 'Si' : 'No'}</TableCell>
-                            {doc.company_id && (
-                              <TableCell align="center">
-                                <EditModal Equipo={doc} />
-                              </TableCell>
-                            )}
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-              <Accordion type="single" collapsible>
-                <AccordionItem value="item-1">
-                  <AccordionTrigger>Equipos</AccordionTrigger>
-                  <AccordionContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Nombre del Documento</TableHead>
-                          <TableHead className="w-[100px]">Multirecurso</TableHead>
-                          <TableHead className="w-[100px] text-center">Vence</TableHead>
-                          <TableHead className="w-[100px]">Mandatorio</TableHead>
-                          <TableHead className="w-[100px] text-center" align="center">
-                            Editar
-                          </TableHead>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TabsContent>
+                <TabsContent value="Equipos">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nombre del Documento</TableHead>
+                        <TableHead className="w-[100px]">Multirecurso</TableHead>
+                        <TableHead className="w-[100px] text-center">Vence</TableHead>
+                        <TableHead className="w-[100px]">Mandatorio</TableHead>
+                        <TableHead className="w-[100px] text-center" align="center">
+                          Editar
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {doc_equipos?.map((doc) => (
+                        <TableRow key={doc.id}>
+                          <TableCell className="font-medium">{doc.name}</TableCell>
+                          <TableCell align="center">{doc.multiresource ? 'Si' : 'No'}</TableCell>
+                          <TableCell align="center">{doc.explired ? 'Si' : 'No'}</TableCell>
+                          <TableCell align="center">{doc.mandatory ? 'Si' : 'No'}</TableCell>
+                          {doc.company_id && (
+                            <TableCell align="center">
+                              <EditModal Equipo={doc} />
+                            </TableCell>
+                          )}
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {doc_equipos?.map((doc) => (
-                          <TableRow key={doc.id}>
-                            <TableCell className="font-medium">{doc.name}</TableCell>
-                            <TableCell align="center">{doc.multiresource ? 'Si' : 'No'}</TableCell>
-                            <TableCell align="center">{doc.explired ? 'Si' : 'No'}</TableCell>
-                            <TableCell align="center">{doc.mandatory ? 'Si' : 'No'}</TableCell>
-                            {doc.company_id && (
-                              <TableCell align="center">
-                                <EditModal Equipo={doc} />
-                              </TableCell>
-                            )}
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-              <Accordion type="single" collapsible>
-                <AccordionItem value="item-1">
-                  <AccordionTrigger>Empresa</AccordionTrigger>
-                  <AccordionContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Nombre del Documento</TableHead>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TabsContent>
+                <TabsContent value="Empresa">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nombre del Documento</TableHead>
 
-                          <TableHead className="w-[100px] text-center">Vence</TableHead>
-                          <TableHead className="w-[100px] text-center">Mandatorio</TableHead>
-                          <TableHead className="w-[100px] text-center">Editar</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {doc_empresa?.map((doc) => (
-                          <TableRow key={doc.id}>
-                            <TableCell className="font-medium">{doc.name}</TableCell>
+                        <TableHead className="w-[100px] text-center">Vence</TableHead>
+                        <TableHead className="w-[100px] text-center">Mandatorio</TableHead>
+                        <TableHead className="w-[100px] text-center">Editar</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {doc_empresa?.map((doc) => (
+                        <TableRow key={doc.id}>
+                          <TableCell className="font-medium">{doc.name}</TableCell>
 
-                            <TableCell align="center">{doc.explired ? 'Si' : 'No'}</TableCell>
-                            <TableCell align="center">{doc.mandatory ? 'Si' : 'No'}</TableCell>
-                            {doc.company_id && (
-                              <TableCell align="center">
-                                <EditModal Equipo={doc} />
-                              </TableCell>
-                            )}
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
+                          <TableCell align="center">{doc.explired ? 'Si' : 'No'}</TableCell>
+                          <TableCell align="center">{doc.mandatory ? 'Si' : 'No'}</TableCell>
+                          {doc.company_id && (
+                            <TableCell align="center">
+                              <EditModal Equipo={doc} />
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TabsContent>
+              </Tabs>
             </CardContent>
-            <CardFooter>
+            {/* <CardFooter>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   {role && role !== 'Invitado' && <Button>Crear nuevo</Button>}
@@ -400,7 +420,7 @@ export default function page() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-            </CardFooter>
+            </CardFooter> */}
           </Card>
         </TabsContent>
       </Tabs>
