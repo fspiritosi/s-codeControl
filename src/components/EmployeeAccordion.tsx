@@ -15,6 +15,9 @@ import {
 } from '@/types/enums';
 import { supabase } from '../../supabase/supabase';
 
+import { DocumentationDrawer } from '@/components/DocumentationDrawer';
+
+
 import { CheckboxDefaultValues } from '@/components/CheckboxDefValues';
 import { SelectWithData } from '@/components/SelectWithData';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +49,7 @@ import { Button } from './ui/button';
 import { CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import DocumentTable from '@/app/dashboard/document/DocumentTable';
 
 type Province = {
   id: number;
@@ -591,14 +595,17 @@ export default function EmployeeAccordion() {
                 <TabsTrigger value={'personalData'} className={cn(accordion1Errors &&  "bg-red-300 text-red-50" )}>Datos Personales</TabsTrigger>
                 <TabsTrigger value={'contactData'} className={cn(accordion2Errors &&  "bg-red-300 text-red-50" )}>Datos de Contacto</TabsTrigger>
                 <TabsTrigger value={'workData'} className={cn(accordion3Errors &&  "bg-red-300 text-red-50" )}>Datos Laborales</TabsTrigger>
+                {
+                  user && <TabsTrigger value='documents'>Documentación</TabsTrigger>
+                }
               </TabsList>
-              <TabsContent value='personalData' className=' px-2 py-2'>
+              <TabsContent value='personalData' className='px-2 py-2'>
               {accordion1Errors && (
                       <Badge className="h-6 hover:no-underline" variant="destructive">
                         Falta corregir algunos campos
                       </Badge>
               )}
-                                <div className="min-w-full max-w-sm flex flex-wrap gap-8 items-center">
+              <div className="min-w-full max-w-sm flex flex-wrap gap-8 items-center">
                     {PERSONALDATA?.map((data, index) => {
                       if (data.type === 'file') {
                         return (
@@ -693,7 +700,7 @@ export default function EmployeeAccordion() {
                     })}
                   </div>
               </TabsContent >
-              <TabsContent value='contactData' className=' px-2 py-2'>
+              <TabsContent value='contactData' className='px-2 py-2'>
                     {accordion2Errors && (
                       <Badge className="h-6" variant="destructive">
                         Falta corregir algunos campos
@@ -774,7 +781,7 @@ export default function EmployeeAccordion() {
                   </div>
 
               </TabsContent>
-              <TabsContent value='workData' className=' px-2 py-2'>
+              <TabsContent value='workData' className='px-2 py-2'>
                     {accordion3Errors && (
                       <Badge className="h-6" variant="destructive">
                         Faltan corregir algunos campos
@@ -964,6 +971,9 @@ export default function EmployeeAccordion() {
                     })}
                   </div>
 
+              </TabsContent>
+              <TabsContent value='documents' className='px-2 py-2'>
+                <DocumentTable document={user?.document_number || ''}/>
               </TabsContent>
               <TooltipProvider delayDuration={100}>
                 <Tooltip>
