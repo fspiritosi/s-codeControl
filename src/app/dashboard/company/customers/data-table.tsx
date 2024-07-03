@@ -34,13 +34,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface DataCustomersProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any;
   data: TData[];
   allCompany: any[];
   showInactive: boolean;
+  localStorageName: string;
   setShowInactive: (showInactive: boolean) => void;
 }
 
@@ -50,9 +51,37 @@ export function DataCustomers<TData, TValue>({
   showInactive,
   setShowInactive,
   allCompany,
+  localStorageName,
 }: DataCustomersProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const defaultVisibleColumns = ['cuit', 'name', 'client_email', 'client_phone', 'address'];
+
+  const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const valorGuardado = JSON.parse(localStorage.getItem(localStorageName) || '[]');
+      return valorGuardado.length ? valorGuardado : defaultVisibleColumns;
+    }
+    return defaultVisibleColumns;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(localStorageName, JSON.stringify(defaultVisibleColumns1));
+    }
+  }, [defaultVisibleColumns1]);
+
+  useEffect(() => {
+    const valorGuardado = JSON.parse(localStorage.getItem(localStorageName) || '[]');
+    if (valorGuardado.length) {
+      setColumnVisibility(
+        columns.reduce((acc: any, column: any) => {
+          acc[column.accessorKey] = valorGuardado.includes(column.accessorKey);
+          return acc;
+        }, {})
+      );
+    }
+  }, [columns]);
+
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     columns.reduce((acc: any, column: any) => {
       acc[column.accessorKey] = defaultVisibleColumns.includes(column.accessorKey);
@@ -61,9 +90,6 @@ export function DataCustomers<TData, TValue>({
   );
 
   const loader = useLoggedUserStore((state) => state.isLoading);
-  // const filteredData = showInactive
-  //     ? data?.filter((item: any) => item.is_active === false)
-  //     : data
 
   const selectHeader = {
     // name: {
@@ -88,6 +114,18 @@ export function DataCustomers<TData, TValue>({
     // }
   };
 
+  const handleColumnVisibilityChange = (columnId: string, isVisible: boolean) => {
+    setColumnVisibility((prev) => ({
+      ...prev,
+      [columnId]: isVisible,
+    }));
+    setDefaultVisibleColumns1((prev: any) => {
+      const newVisibleColumns = isVisible ? [...prev, columnId] : prev.filter((id: string) => id !== columnId);
+      localStorage.setItem(localStorageName, JSON.stringify(newVisibleColumns));
+      return newVisibleColumns;
+    });
+  };
+
   let table = useReactTable({
     data,
     columns,
@@ -104,7 +142,6 @@ export function DataCustomers<TData, TValue>({
   });
 
   const maxRows = ['20', '40', '60', '80', '100'];
-  const [selectValues, setSelectValues] = useState<{ [key: string]: string }>({});
 
   return (
     <div>
@@ -169,7 +206,7 @@ export function DataCustomers<TData, TValue>({
                         key={column.id}
                         className="capitalize"
                         checked={column.getIsVisible()}
-                        onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                        onCheckedChange={(value) => handleColumnVisibilityChange(column.id, !!value)}
                       >
                         {column.columnDef.header}
                       </DropdownMenuCheckboxItem>

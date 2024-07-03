@@ -88,6 +88,7 @@ export default function page() {
           ? 'Documento pendiente'
           : 'No expira',
       documentId: document.id,
+      private: document.id_document_types.private,
     };
   });
 
