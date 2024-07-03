@@ -41,7 +41,7 @@ import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
-import { ColumnDef } from '@tanstack/react-table';
+import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
 import { addMonths, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ArrowUpDown, CalendarIcon } from 'lucide-react';
@@ -50,6 +50,8 @@ import { Fragment, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { supabase } from '../../../../../../supabase/supabase';
+import { Badge } from '@/components/ui/badge';
+import { useCountriesStore } from '@/store/countries';
 
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -92,6 +94,35 @@ type Colum = {
   workflow_diagram: string;
   birthplace: string;
   status: string;
+};
+
+const allocatedToRangeFilter: FilterFn<Colum> = (
+  row: Row<Colum>,
+  columnId: string,
+  filterValue: any,
+  addMeta: (meta: any) => void
+) => {
+  const values = row.original.allocated_to;
+  if (!values) return false; // No hay valores, no se muestra
+
+  const actualCompany = useLoggedUserStore?.getState?.()?.actualCompany;
+  const contractorCompanies = Array.isArray(values)
+    ? values
+        .map(
+          (allocatedToId) =>
+            useCountriesStore
+              ?.getState?.()
+              ?.customers.find((company: any) => String(company.id) === String(allocatedToId))?.name
+        )
+        .join(', ')
+    : useCountriesStore?.getState?.()?.customers.find((company: any) => String(company.id) === String(values))?.name;
+
+  // Realizar la búsqueda sin distinguir mayúsculas ni minúsculas
+  const searchTerm = filterValue?.toLowerCase();
+  const found = contractorCompanies?.toLowerCase().includes(searchTerm);
+
+  // Si encontramos el término, mostrar el valor completo; de lo contrario, no se muestra
+  return found as boolean;
 };
 
 export const columns: ColumnDef<Colum>[] = [
@@ -449,10 +480,31 @@ export const columns: ColumnDef<Colum>[] = [
     accessorKey: 'type_of_contract',
     header: 'Tipo de contrato',
   },
-  {
-    accessorKey: 'allocated_to',
-    header: 'Afectado a',
-  },
+  // {
+  //   accessorKey: 'allocated_to',
+  //   header: 'Afectado a',
+  //   cell: ({ row }) => {
+  //     const values = row.original.allocated_to;
+  //     console.log(values);
+  //     if (!values) return <Badge variant={'destructive'}>Sin afectar</Badge>;
+  //     const actualCompany = useLoggedUserStore((state) => state.actualCompany);
+
+  //     const contractorCompanies = Array.isArray(values)
+  //       ? values
+  //           .map((allocatedToId) =>
+  //             useCountriesStore(
+  //               (state) => state.customers?.find((company: any) => String(company.id) === String(allocatedToId))?.name
+  //             )
+  //           )
+  //           .join(', ')
+  //       : useCountriesStore(
+  //           (state) => state.customers?.find((company: any) => String(company.id) === String(values))?.name
+  //         );
+
+  //     return <p>{contractorCompanies}</p>;
+  //   },
+  //   filterFn: allocatedToRangeFilter,
+  // },
   {
     accessorKey: 'picture',
     header: 'Foto',

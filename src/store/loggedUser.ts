@@ -18,8 +18,10 @@ interface Document {
   state: string;
   document_path?: string;
   is_active: boolean;
+  document_number?: string;
   isItMonthly: boolean;
   applies: string;
+  mandatory:string;
 }
 
 interface State {
@@ -123,6 +125,7 @@ interface Iddocumenttypes {
   description: null;
   is_it_montlhy: boolean;
   multiresource: boolean;
+  private: boolean;
 }
 
 const setEmployeesToShow = (employees: any) => {
@@ -172,6 +175,7 @@ const setEmployeesToShow = (employees: any) => {
 };
 
 const setVehiclesToShow = (vehicles: Vehicle) => {
+  console.log(vehicles);
   return vehicles?.map((item) => ({
     ...item,
     types_of_vehicles: item.types_of_vehicles.name,

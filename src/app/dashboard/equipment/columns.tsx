@@ -13,6 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -37,10 +38,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { cn } from '@/lib/utils';
+import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
-import { ColumnDef } from '@tanstack/react-table';
+import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ArrowUpDown, CalendarIcon } from 'lucide-react';
@@ -73,6 +75,28 @@ type Colum = {
   is_active: boolean;
   showInactive: boolean;
   status: string;
+  allocated_to: string;
+};
+
+const allocatedToRangeFilter: FilterFn<Colum> = (
+  row: Row<Colum>,
+  columnId: string,
+  filterValue: any,
+  addMeta: (meta: any) => void
+) => {
+  const contractorCompanies = useCountriesStore
+    ?.getState?.()
+    ?.customers.filter(
+      (company: any) => company.company_id.toString() === useLoggedUserStore?.getState?.()?.actualCompany?.id
+    )
+    .find((e) => String(e.id) === String(row.original.allocated_to))?.name;
+
+  if (contractorCompanies?.toLocaleLowerCase()?.includes(filterValue.toLocaleLowerCase())) {
+    return true;
+  }
+  const sinAfectar = 'sin afectar';
+  if (sinAfectar.includes(filterValue.toLocaleLowerCase()) && !row.original.allocated_to) return true;
+  return false;
 };
 
 export const columns: ColumnDef<Colum>[] = [
@@ -392,6 +416,28 @@ export const columns: ColumnDef<Colum>[] = [
   {
     accessorKey: 'serie',
     header: 'Serie',
+  },
+  {
+    accessorKey: 'allocated_to',
+    header: 'Afectado a',
+    cell: ({ row }) => {
+      return <Badge>Revisando...</Badge>;
+      const values = row.original.allocated_to;
+      if (!values) return <Badge variant={'destructive'}>Revisando...</Badge>;
+      console.log(values);
+      const actualCompany = useLoggedUserStore((state) => state.actualCompany);
+      const contractorCompanies = useCountriesStore((state) =>
+        state.customers?.filter((company: any) => company.company_id.toString() === actualCompany?.id)
+      );
+      console.log(contractorCompanies);
+      // console.log();
+      if (contractorCompanies.some((e) => e.name.includes(row.original.allocated_to))) return true;
+
+      // const name = contractorCompanies.find()
+
+      return <p>{row.original.allocated_to}</p>;
+    },
+    filterFn: allocatedToRangeFilter,
   },
   {
     accessorKey: 'intern_number',

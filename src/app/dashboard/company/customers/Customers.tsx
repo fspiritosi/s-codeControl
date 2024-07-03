@@ -28,22 +28,16 @@ export default function Customers() {
     const unsubscribe = subscribeToCustomersChanges();
 
     return () => {
-      unsubscribe()
-    }
-  }, [fetchContractors, subscribeToCustomersChanges])
+      unsubscribe();
+    };
+  }, [fetchContractors, subscribeToCustomersChanges]);
 
-
-const channels = supabase.channel('custom-all-channel')
-.on(
-  'postgres_changes',
-  { event: '*', schema: 'public', table: 'customers' },
-  (payload) => {
-    
-    fetchContractors()
-    
-  }
-)
-.subscribe()
+  const channels = supabase
+    .channel('custom-all-channel')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, (payload) => {
+      fetchContractors();
+    })
+    .subscribe();
 
   const handleCreateClient = () => {
     router.push(`/dashboard/company/customers/action?action=new`);
@@ -77,6 +71,7 @@ const channels = supabase.channel('custom-all-channel')
                 allCompany={allCompany}
                 showInactive={showInactive}
                 setShowInactive={setShowInactive}
+                localStorageName="customersColumns"
               />
             </CardContent>
           </div>
