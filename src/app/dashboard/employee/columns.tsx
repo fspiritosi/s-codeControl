@@ -43,7 +43,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { addMonths, format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { es, ro } from 'date-fns/locale';
 import { ArrowUpDown, CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Fragment, useState } from 'react';
@@ -92,18 +92,37 @@ type Colum = {
   workflow_diagram: string;
   birthplace: string;
   status: string;
+
 };
 
 export const columns: ColumnDef<Colum>[] = [
   {
     id: 'actions',
     cell: ({ row }: { row: any }) => {
-      const profile = useLoggedUserStore((state) => state);
+      const share = useLoggedUserStore((state) => state.sharedCompanies);
+      console.log('share: ', share)
+      const profile = useLoggedUserStore((state) => state.credentialUser?.id);
+      const owner = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
+      const users = useLoggedUserStore((state) => state);
+      const company = useLoggedUserStore((state) => state.actualCompany?.id);
+      console.log("company: ", company)
+      console.log("owner: ", owner)
+      console.log('profile: ', profile)
       let role = '';
-      if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
-        role = profile?.actualCompany?.owner_id?.role as string;
+      if (owner === profile) {
+        role = users?.actualCompany?.owner_id?.role as string;
+        console.log("rol dueño: ", role)
       } else {
-        role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
+        // const roleRaw = share?.filter((item: any) => Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))).map((item: any) => item.role);
+        const roleRaw = share
+          .filter((item: any) =>
+            item.company_id.id === company &&
+            Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))
+          )
+          .map((item: any) => item.role);
+        role = roleRaw?.join('');
+        // role = users?.actualCompany?.share_company_users?.[0]?.role as string;
+        console.log("rol empleado: ", role)
       }
 
       const [showModal, setShowModal] = useState(false);
@@ -356,11 +375,11 @@ export const columns: ColumnDef<Colum>[] = [
           )}
 
           <DropdownMenuTrigger asChild>
-            {role !== "Invitado"? null :(
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <DotsVerticalIcon className="h-4 w-4" />
-            </Button>
+            {role === "Invitado" ? null : (
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <DotsVerticalIcon className="h-4 w-4" />
+              </Button>
             )}
           </DropdownMenuTrigger>
 
