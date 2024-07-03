@@ -44,13 +44,9 @@ const Allinks = [
   },
   {
     name: 'Equipos',
-    href: '#',
+    href: '/dashboard/equipment',
     icon: <FiTruck size={sizeIcons} />,
-    submenu: [
-      { name: 'Todos', href: '/dashboard/equipment?type=Todos' },
-      { name: 'Vehículos', href: '/dashboard/equipment?type=1' },
-      { name: 'Otros', href: '/dashboard/equipment?type=2' },
-    ],
+    
   },
   {
     name: 'Documentación',
@@ -107,7 +103,7 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
           <Link
             href={link.href}
             className={`flex h-[48px] grow items-center justify-center gap-1 rounded-md p-3 text-black font-medium md:flex-none md:justify-start md:p-2 md:px-3 ${
-              pathname === link.href || pathname === link.submenu?.[0]?.href
+              pathname === link.href 
                 ? 'bg-white text-black'
                 : ' dark:text-neutral-100 text--neutral-950 hover:bg-blue-500 hover:shadow-[0px_0px_05px_05px_rgb(255,255,255,0.40)] hover:text-white'
             }`}
@@ -119,39 +115,13 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
                 {link.icon}
 
                 <p className="hidden md:block">{link.name}</p>
-                {link.submenu && (
-                  <div className="ml-2">
-                    {openSubMenu === index ? (
-                      <MdOutlineKeyboardArrowUp size={sizeIcons} />
-                    ) : (
-                      <MdOutlineKeyboardArrowDown size={sizeIcons} />
-                    )}
-                  </div>
-                )}
+                
               </>
             ) : (
               link.icon
             )}
           </Link>
-          {openSubMenu === index && link.submenu && (
-            <div
-              className={`${
-                expanded ? '' : 'absolute top-[190px]'
-              }ml-0 mt-1 dark:text-neutral-300 text-neutral-950 font-medium bg-muted dark:bg-muted p-2 rounded-md`}
-              style={{
-                marginLeft: expanded ? 0 : '1.6cm',
-                width: 'fit-content',
-              }}
-            >
-              {link.submenu?.map((submenuItem, subIndex) => (
-                <Link key={submenuItem.name} href={submenuItem.href} passHref>
-                  <div onClick={handleSubMenuItemClick} className="block py-2 cursor-pointer hover:text-blue-800 ">
-                    {submenuItem.name}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
+
         </div>
       ))}
     </>

@@ -20,6 +20,7 @@ interface Document {
   is_active: boolean;
   isItMonthly: boolean;
   applies: string;
+  mandatory:string;
 }
 
 interface State {

@@ -13,10 +13,10 @@ export const MissingDocumentList = () => {
   const allValuesToShow = [useLoggedUserStore((state) => state.allDocumentsToShow)].reduce(
     (acc: { employees: Document[][]; vehicles: Document[][] }, current) => {
       const employeesDocuments = current?.employees?.filter(
-        (item) => item.document_path !== null && item.state.toLocaleLowerCase() === 'pendiente' && item.is_active
+        (item) => item.document_path !== null && item.state.toLocaleLowerCase() === 'pendiente' && item.is_active && item.mandatory === "Si"
       );
       const companyDocuments = current?.vehicles?.filter(
-        (item) => item.document_path !== null && item.state.toLocaleLowerCase() === 'pendiente' && item.is_active
+        (item) => item.document_path !== null && item.state.toLocaleLowerCase() === 'pendiente' && item.is_active && item.mandatory === "Si"
       );
 
       const groupedEmployees: { [key: string]: any[] } = employeesDocuments?.reduce(
