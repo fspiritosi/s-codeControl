@@ -103,14 +103,38 @@ export const columns: ColumnDef<Colum>[] = [
   {
     id: 'actions',
     cell: ({ row }: { row: any }) => {
-      const profile = useLoggedUserStore((state) => state);
+      // const profile = useLoggedUserStore((state) => state);
+      // let role = '';
+      // if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
+      //   role = profile?.actualCompany?.owner_id?.role as string;
+      // } else {
+      //   role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
+      // }
+      const share = useLoggedUserStore((state) => state.sharedCompanies);
+      console.log('share: ', share)
+      const profile = useLoggedUserStore((state) => state.credentialUser?.id);
+      const owner = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
+      const users = useLoggedUserStore((state) => state);
+      const company = useLoggedUserStore((state) => state.actualCompany?.id);
+      console.log("company: ", company)
+      console.log("owner: ", owner)
+      console.log('profile: ', profile)
       let role = '';
-      if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
-        role = profile?.actualCompany?.owner_id?.role as string;
+      if (owner === profile) {
+        role = users?.actualCompany?.owner_id?.role as string;
+        console.log("rol dueño: ", role)
       } else {
-        role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
+        
+        const roleRaw = share
+          .filter((item: any) =>
+            item.company_id.id === company &&
+            Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))
+          )
+          .map((item: any) => item.role);
+        role = roleRaw?.join('');
+        
+        console.log("rol empleado: ", role)
       }
-
       const [showModal, setShowModal] = useState(false);
       const [integerModal, setIntegerModal] = useState(false);
       const [domain, setDomain] = useState('');
@@ -125,24 +149,7 @@ export const columns: ColumnDef<Colum>[] = [
       };
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
-      // const fetchInactiveEquipment = async () => {
-      //   try {
-      //     const { data, error } = await supabase
-      //       .from('vehicles')
-      //       .select('*')
-      //       //.eq('is_active', false)
-      //       .eq('company_id', actualCompany?.id)
-
-      //     if (error) {
-      //       console.error(error)
-      //     }
-      //   } catch (error) {
-      //     console.error(error)
-      //   }
-      // }
-      // useEffect(() => {
-      //   fetchInactiveEquipment()
-      // }, [])
+      
       const handleOpenIntegerModal = (id: string) => {
         setDomain(id);
         setIntegerModal(!integerModal);
@@ -173,7 +180,7 @@ export const columns: ColumnDef<Colum>[] = [
             .select();
 
           setIntegerModal(!integerModal);
-          //setInactive(data as any)
+      
           setShowDeletedEquipment(false);
           toast({
             variant: 'default',

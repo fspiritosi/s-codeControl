@@ -20,7 +20,6 @@ import {
 
 export default function Guests() {
   const [clientData, setClientData] = useState<any>(null);
-  // const [contactData, setContactData] = useState<any>(null);
   const profile = useLoggedUserStore(state => state.profile?.[0]?.id)
   const employees = useLoggedUserStore(state => state.employeesToShow);
   const equipment = useLoggedUserStore(state => state.vehiclesToShow);

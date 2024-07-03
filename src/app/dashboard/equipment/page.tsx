@@ -28,21 +28,79 @@ export default function Equipment() {
     }
   });
 
-  const profile = useLoggedUserStore((state) => state);
+  
 
   if (typeof window !== 'undefined') {
     const company_id = localStorage.getItem('company_id');
     let actualComp = Cookies.set('actualComp', company_id as string);
   }
-  let role: string = '';
+  // let role: string = '';
 
-  if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
-    role = (profile?.actualCompany?.owner_id?.role as string) || '';
+  // if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
+  //   role = (profile?.actualCompany?.owner_id?.role as string) || '';
+  // } else {
+  //   role = (profile?.actualCompany?.share_company_users?.[0]?.role as string) || '';
+  // }
+
+  const [clientData, setClientData] = useState<any>(null);
+  const share = useLoggedUserStore((state) => state.sharedCompanies);
+  console.log('share: ', share)
+  const profile = useLoggedUserStore((state) => state.credentialUser?.id);
+  const owner = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
+  const users = useLoggedUserStore((state) => state);
+  const company = useLoggedUserStore((state) => state.actualCompany?.id);
+
+  console.log("company: ", company)
+  console.log("owner: ", owner)
+  console.log('profile: ', profile)
+  let role = '';
+  if (owner === profile) {
+    role = users?.actualCompany?.owner_id?.role as string;
+    console.log("rol dueño: ", role)
   } else {
-    role = (profile?.actualCompany?.share_company_users?.[0]?.role as string) || '';
+    // const roleRaw = share?.filter((item: any) => Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))).map((item: any) => item.role);
+    const roleRaw = share?.filter((item: any) =>
+        item.company_id.id === company &&
+        Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))
+      )
+      .map((item: any) => item.role);
+    role = roleRaw?.join('');
+    // role = users?.actualCompany?.share_company_users?.[0]?.role as string;
+    console.log("rol empleado: ", role)
+   
   }
 
+  useEffect(() => {
 
+    if (company && profile && role === "Invitado") {
+      const fetchCustomers = async () => {
+        const { data, error } = await supabase
+          .from('share_company_users')
+          .select('*')
+          .eq('company_id', company)
+          .eq('profile_id', profile);
+
+        if (error) {
+          console.error('Error fetching customers:', error);
+        } else {
+          setClientData(data);
+
+        }
+      };
+
+      fetchCustomers();
+    }
+  }, [company, profile]);
+  
+  const filteredCustomersEquipment = vehiclesData?.filter((customer: any) =>
+    customer.allocated_to.includes(clientData?.[0]?.customer_id)
+  );
+  const filteredCustomersVehicles = onlyVehicles?.filter((customer: any) =>
+    customer.allocated_to.includes(clientData?.[0]?.customer_id)
+  );
+  const filteredCustomersOthers = onlyOthers?.filter((customer: any) =>
+    customer.allocated_to.includes(clientData?.[0]?.customer_id)
+  );
   const channels = supabase
     .channel('custom-all-channel')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, (payload) => {
@@ -99,7 +157,7 @@ export default function Equipment() {
               <div className="w-full grid grid-cols-1 px-8">
                 <DataEquipment
                   columns={columns}
-                  data={vehiclesData || []}
+                  data={role === "Invitado" ? filteredCustomersEquipment :vehiclesData || []}
                   allCompany={allCompany}
                   showInactive={showInactive}
                   setShowInactive={setShowInactive}
@@ -132,7 +190,7 @@ export default function Equipment() {
               <div className="w-full grid grid-cols-1 px-8">
                 <DataEquipment
                   columns={columns}
-                  data={onlyVehicles || []}
+                  data={role === "Invitado" ? filteredCustomersVehicles :onlyVehicles || []}
                   allCompany={allCompany}
                   showInactive={showInactive}
                   setShowInactive={setShowInactive}
@@ -165,7 +223,7 @@ export default function Equipment() {
               <div className="w-full grid grid-cols-1 px-8">
                 <DataEquipment
                   columns={columns}
-                  data={onlyOthers || []}
+                  data={role === "Invitado"? filteredCustomersOthers :onlyOthers || []}
                   allCompany={allCompany}
                   showInactive={showInactive}
                   setShowInactive={setShowInactive}
