@@ -62,6 +62,8 @@ export function EditModal({ Equipo }: Props) {
     explired: z.boolean({ required_error: 'Se debe seleccionar una opcion' }),
     special: z.boolean({ required_error: 'Este campo es requerido' }),
     description: special ? z.string({ required_error: 'Este campo es requerido' }) : z.string().optional(),
+    is_it_montlhy: z.boolean({ required_error: 'Se debe seleccionar una opcion' }).optional(),
+    private: z.boolean({ required_error: 'Se debe seleccionar una opcion' }).optional(),
   });
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -71,8 +73,10 @@ export function EditModal({ Equipo }: Props) {
       mandatory: Equipo.mandatory,
       explired: Equipo.explired,
       special: Equipo.special,
-      applies: Equipo.applies as 'Persona' | 'Equipos' | undefined,
+      applies: Equipo.applies as 'Persona' | 'Equipos' | 'Empresa' | undefined,
       description: Equipo.description || '',
+      is_it_montlhy: Equipo.is_it_montlhy as boolean,
+      private: Equipo.private as boolean,
     },
   });
 
@@ -92,6 +96,16 @@ export function EditModal({ Equipo }: Props) {
       id: 'special',
       label: 'Es especial?',
       tooltip: 'Si el documento requiere documentacion especial',
+    },
+    {
+      id: 'is_it_montlhy',
+      label: 'Es mensual?',
+      tooltip: 'Si el documento vence mensualmente',
+    },
+    {
+      id: 'private',
+      label: 'Es público?',
+      tooltip: 'Si el documento es público es visible para todos los usuarios',
     },
   ];
 
@@ -162,129 +176,91 @@ export function EditModal({ Equipo }: Props) {
     );
   }
 
+  async function handleDeleteAlerts() {
+    const tableNames = {
+      Equipo: 'documents_equipment',
+      Persona: 'documents_employees',
+      Empresa: 'documents_company',
+    };
+    const table = tableNames[Equipo.applies as 'Equipo' | 'Persona' | 'Empresa'];
+
+    toast.promise(
+      async () => {
+        const { data, error } = await supabase
+          .from(table)
+          .delete()
+          .eq('id_document_types', Equipo.id)
+          .is('document_path', null);
+
+        if (error) {
+          throw new Error(handleSupabaseError(error.message));
+        }
+      },
+      {
+        loading: 'Eliminando...',
+        success: (data) => {
+          fetchDocumentTypes(actualCompany?.id);
+          return 'Se han eliminado las alertas!';
+        },
+        error: (error) => {
+          return error;
+        },
+      }
+    );
+  }
+
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="outline">Editar</Button>
+        <Button id="close-edit-modal-documentypes" variant="outline">
+          Editar
+        </Button>
       </SheetTrigger>
-      <SheetContent className="border-l-4 border-l-muted">
-        <SheetHeader>
-          <SheetTitle>Editar tipo de documento</SheetTitle>
-          <SheetDescription>
-            Puedes editar el tipo de documento seleccionado, los documentos creados por defecto no son editables
-          </SheetDescription>
-        </SheetHeader>
-        <div className="grid gap-4 py-4">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        className="w-full rounded-md border p-4 shadow"
-                        placeholder="Nombre del documento"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="applies"
-                render={({ field }) => (
-                  <FormItem>
-                    <div>
-                      <FormLabel>Aplica a</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Personas, Equipos o Empresa" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Persona">Persona</SelectItem>
-                          <SelectItem value="Equipos">Equipos</SelectItem>
-                          <SelectItem value="Empresa">Empresa</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid md:grid-cols-2 grid-cols-1 gap-6 items-stretch justify-between">
-                <TooltipProvider delayDuration={150}>
-                  {items?.map((item) => (
-                    <FormField
-                      key={item.id}
-                      control={form.control}
-                      name={item.id as 'name' | 'applies' | 'multiresource' | 'mandatory' | 'explired' | 'special'}
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="">
-                            <FormLabel className="flex gap-1 items-center mb-2">{item.label}</FormLabel>
-                            <FormControl>
-                              <div className="flex flex-col space-x-2">
-                                <div className="flex gap-3">
-                                  <div className="flex items-center gap-2">
-                                    <Checkbox
-                                      checked={field.value === true}
-                                      onCheckedChange={(value) => {
-                                        field.onChange(value ? true : false);
-                                        if (item.id === 'special') {
-                                          setSpecial(true);
-                                        }
-                                      }}
-                                    />
-                                    <span>Sí</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Checkbox
-                                      checked={field.value === false}
-                                      onCheckedChange={(value) => {
-                                        field.onChange(value ? false : true);
-                                        if (item.id === 'special') {
-                                          setSpecial(false);
-                                        }
-                                      }}
-                                    />
-                                    <span>No</span>
-                                  </div>
-                                </div>
-                                <FormMessage />
-                              </div>
-                            </FormControl>
-                            <div className="space-y-1 leading-none"></div>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </TooltipProvider>
-              </div>
-              {special && (
+      <SheetContent className="border-l-4 border-l-muted flex flex-col justify-between">
+        <div>
+          <SheetHeader>
+            <SheetTitle>Editar tipo de documento</SheetTitle>
+            <SheetDescription>
+              Puedes editar el tipo de documento seleccionado, los documentos creados por defecto no son editables
+            </SheetDescription>
+          </SheetHeader>
+          <div className="grid gap-4 py-4">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
-                  name="description"
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className="w-full rounded-md border p-4 shadow"
+                          placeholder="Nombre del documento"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="applies"
                   render={({ field }) => (
                     <FormItem>
                       <div>
-                        <FormLabel>Documentacion Especial</FormLabel>
+                        <FormLabel>Aplica a</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar documento especial" />
+                              <SelectValue placeholder="Personas, Equipos o Empresa" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Maneja">Maneja</SelectItem>
-                            <SelectItem value="Habilitacion especial">Habilitacion especial</SelectItem>
+                            <SelectItem value="Persona">Persona</SelectItem>
+                            <SelectItem value="Equipos">Equipos</SelectItem>
+                            <SelectItem value="Empresa">Empresa</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -292,39 +268,139 @@ export function EditModal({ Equipo }: Props) {
                     </FormItem>
                   )}
                 />
-              )}
-              <SheetFooter className="flex  gap-11 flex-wrap">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant={'destructive'}>Eliminar</Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        Estas seguro que deseas eliminar el tipo de documento {Equipo.name}?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Esta accion no puede revertirse, y eliminara todos los documentos asociados a este tipo.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction className={buttonVariants({ variant: 'destructive' })} asChild>
-                        <Button onClick={() => handleDeleteDocumentType()} variant={'destructive'}>
-                          Eliminar
-                        </Button>
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-                <SheetClose asChild>
-                  <Button type="submit">Guardar cambios</Button>
-                </SheetClose>
-                <SheetClose id="cerrar-editor-modal" />
-              </SheetFooter>
-            </form>
-          </Form>
+                <div className="grid md:grid-cols-2 grid-cols-1 gap-6 items-stretch justify-between">
+                  <TooltipProvider delayDuration={150}>
+                    {items?.map((item) => (
+                      <FormField
+                        key={item.id}
+                        control={form.control}
+                        name={item.id as 'name' | 'applies' | 'multiresource' | 'mandatory' | 'explired' | 'special'}
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="">
+                              <FormLabel className="flex gap-1 items-center mb-2">{item.label}</FormLabel>
+                              <FormControl>
+                                <div className="flex flex-col space-x-2">
+                                  <div className="flex gap-3">
+                                    <div className="flex items-center gap-2">
+                                      <Checkbox
+                                        checked={field.value === true}
+                                        onCheckedChange={(value) => {
+                                          field.onChange(value ? true : false);
+                                          if (item.id === 'special') {
+                                            setSpecial(true);
+                                          }
+                                        }}
+                                      />
+                                      <span>Sí</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Checkbox
+                                        checked={field.value === false}
+                                        onCheckedChange={(value) => {
+                                          field.onChange(value ? false : true);
+                                          if (item.id === 'special') {
+                                            setSpecial(false);
+                                          }
+                                        }}
+                                      />
+                                      <span>No</span>
+                                    </div>
+                                  </div>
+                                  <FormMessage />
+                                </div>
+                              </FormControl>
+                              <div className="space-y-1 leading-none"></div>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    ))}
+                  </TooltipProvider>
+                </div>
+                {special && (
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div>
+                          <FormLabel>Documentacion Especial</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar documento especial" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Maneja">Maneja</SelectItem>
+                              <SelectItem value="Habilitacion especial">Habilitacion especial</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+                <SheetFooter className="flex  gap-11 flex-wrap">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant={'destructive'}>Eliminar</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Estas seguro que deseas eliminar el tipo de documento {Equipo.name}?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta accion no puede revertirse, y eliminara todos los documentos asociados a este tipo.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction className={buttonVariants({ variant: 'destructive' })} asChild>
+                          <Button onClick={() => handleDeleteDocumentType()} variant={'destructive'}>
+                            Eliminar
+                          </Button>
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  <SheetClose asChild>
+                    <Button type="submit">Guardar cambios</Button>
+                  </SheetClose>
+                  <SheetClose id="cerrar-editor-modal" />
+                </SheetFooter>
+              </form>
+            </Form>
+          </div>
         </div>
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant={'destructive'} className="self-end">
+              Eliminar alertas del documento
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Estas totalmente seguro?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción eliminará la alerta de todos los recursos a los que no se les haya subido el documento. Los
+                documentos ya subidos y vinculados a este tipo de documento permanecerán intactos.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction className={buttonVariants({ variant: 'destructive' })} asChild>
+                <Button variant={'destructive'} onClick={() => handleDeleteAlerts()}>
+                  Eliminar alertas
+                </Button>
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SheetContent>
     </Sheet>
   );

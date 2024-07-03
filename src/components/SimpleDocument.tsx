@@ -71,6 +71,7 @@ export default function SimpleDocument({
     setError,
     clearErrors,
     getValues,
+    setValue,
   } = useForm({
     defaultValues: {
       documents: [
@@ -163,7 +164,6 @@ export default function SimpleDocument({
               (doc) => doc.id === updateEntries[index].id_document_types
             )?.mandatory;
 
-
             if (isMandatory) {
               const data = {
                 validity: updateEntries[index].validity,
@@ -177,7 +177,6 @@ export default function SimpleDocument({
                 .update(data)
                 .eq('applies', idApplies || updateEntries[index].applies)
                 .eq('id_document_types', updateEntries[index].id_document_types);
-
 
               if (error) {
                 toast({
@@ -202,7 +201,6 @@ export default function SimpleDocument({
               //   .upsert(data)
               //   .eq('applies', idApplies || updateEntries[index].applies)
               //   .eq('id_document_types', updateEntries[index].id_document_types)
-
 
               const { error } = await supabase.from(tableName).insert({
                 validity: updateEntries[index].validity,
@@ -307,6 +305,8 @@ export default function SimpleDocument({
     const documentInfo = documenTypes?.find((documentType) => documentType.id === defaultDocumentId);
     setHasExpired(documentInfo?.explired);
   }, [defaultDocumentId, documenTypes]);
+
+  const [openPopovers, setOpenPopovers] = useState(Array(fields.length).fill(false));
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <ul className="flex flex-col gap-2">
@@ -451,48 +451,89 @@ export default function SimpleDocument({
                       <Label>Seleccione el tipo de documento a vincular al recurso</Label>
                       <Controller
                         render={({ field }) => (
-                          <Select
-                            onValueChange={(e) => {
-                              const selected = documenTypes?.find((doc) => doc.id === e);
-                              setHasExpired(selected.explired);
-                              setIsMontlhy(selected.is_it_montlhy);
-                              const resource = getValues('documents')[index].applies;
-
-                              setDuplicatedDocument(
-                                getValues('documents').some((document: any, document_index) => {
-                                  index !== document_index &&
-                                    document.id_document_types === e &&
-                                    document.applies === resource;
-                                })
-                              );
-                              if (duplicatedDocument) {
-                                return setError(`documents.${index}.id_document_types`, {
-                                  message: 'El documento ya ha sido seleccionado',
-                                  type: 'validate',
-                                  types: {
-                                    validate: 'El documento ya ha sido seleccionado',
-                                  },
-                                });
-                              } else {
-                                clearErrors(`documents.${index}.id_document_types`);
-                                field.onChange(e);
-                              }
+                          <Popover
+                            open={openPopovers[index]}
+                            onOpenChange={(isOpen) => {
+                              const newOpenPopovers = [...openPopovers];
+                              newOpenPopovers[index] = isOpen;
+                              setOpenPopovers(newOpenPopovers);
                             }}
-                            defaultValue={field.value}
                           >
-                            <SelectTrigger className={cn(field.value ? 'text-red-white' : 'text-muted-foreground')}>
-                              <SelectValue placeholder="Seleccionar tipo de documento" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {documenTypes?.map((documentType) => {
-                                return (
-                                  <SelectItem key={documentType.id} value={documentType.id}>
-                                    {documentType.name}
-                                  </SelectItem>
-                                );
-                              })}
-                            </SelectContent>
-                          </Select>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn('justify-between w-full', !field.value && 'text-muted-foreground')}
+                              >
+                                {field.value
+                                  ? documenTypes?.find((documenType) => documenType.id === field.value)?.name
+                                  : 'Seleccionar documento'}
+                                <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-full p-0 overflow-y-auto max-h-[50vh]">
+                              <div>
+                                <Command className="p-2">
+                                  <CommandInput placeholder="Buscar documento" className="h-9" />
+                                  <CommandEmpty>Documento no encontrado</CommandEmpty>
+                                  <CommandGroup>
+                                    {documenTypes?.map((documentType) => (
+                                      <CommandItem
+                                        value={documentType.name}
+                                        key={documentType.id}
+                                        onSelect={(e: string) => {
+                                          const selected = documenTypes?.find(
+                                            (doc) => doc.name.toLowerCase() === e.toLocaleLowerCase()
+                                          );
+
+                                          setHasExpired(selected.explired);
+                                          setIsMontlhy(selected.is_it_montlhy);
+                                          const resource = getValues('documents')[index].applies;
+                                          console.log(
+                                            getValues('documents').some((document: any, document_index) => {
+                                              index !== document_index &&
+                                                document.id_document_types === e &&
+                                                document.applies === resource;
+                                            })
+                                          );
+                                          setDuplicatedDocument(
+                                            getValues('documents').some((document: any, document_index) => {
+                                              index !== document_index &&
+                                                document.id_document_types === e &&
+                                                document.applies === resource;
+                                            })
+                                          );
+                                          if (duplicatedDocument) {
+                                            return setError(`documents.${index}.id_document_types`, {
+                                              message: 'El documento ya ha sido seleccionado',
+                                              type: 'validate',
+                                              types: {
+                                                validate: 'El documento ya ha sido seleccionado',
+                                              },
+                                            });
+                                          } else {
+                                            clearErrors(`documents.${index}.id_document_types`);
+                                            setValue(`documents.${index}.id_document_types`, selected?.id);
+                                            const newOpenPopovers = [...openPopovers];
+                                            newOpenPopovers[index] = !newOpenPopovers[index];
+                                            setOpenPopovers(newOpenPopovers);
+                                          }
+                                        }}
+                                      >
+                                        {documentType.name}
+                                        <CheckIcon
+                                          className={cn(
+                                            'ml-auto h-4 w-4',
+                                            documentType.name === field.value ? 'opacity-100' : 'opacity-0'
+                                          )}
+                                        />
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </Command>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                         )}
                         name={`documents.${index}.id_document_types`}
                         control={control}

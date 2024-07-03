@@ -633,7 +633,8 @@ export const EquipoSchema = z
       is_active: z.boolean(),
       description: z.union([z.null(), z.string()]),
       company_id: z.string().optional().nullable(),
-      is_it_montlhy:z.boolean().optional().nullable()
+      is_it_montlhy: z.boolean().optional().nullable(),
+      private: z.boolean().optional().nullable(),
     })
   )
   .default([]);

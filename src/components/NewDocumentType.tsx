@@ -20,34 +20,41 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../supabase/supabase';
 
+const defaultValues = [
+  {
+    id: 'multiresource',
+    label: 'Es multirecurso?',
+    tooltip: 'Si el documento aplica a mas de una persona o equipo',
+  },
+  {
+    id: 'mandatory',
+    label: 'Es mandatorio?',
+    tooltip: 'Si el documento es obligatorio, se crearan alertas para su cumplimiento',
+  },
+  { id: 'explired', label: 'Expira?', tooltip: 'Si el documento expira' },
+  {
+    id: 'special',
+    label: 'Es especial?',
+    tooltip: 'Si el documento requiere documentacion especial',
+  },
+  {
+    id: 'is_it_montlhy',
+    label: 'Es mensual?',
+    tooltip: 'Si el documento vence mensualmente',
+  },
+  {
+    id: 'private',
+    label: 'Es público?',
+    tooltip: 'Si el documento es público es visible para todos los usuarios',
+  },
+];
+
 export default function NewDocumentType({ codeControlClient }: { codeControlClient?: boolean }) {
   const [special, setSpecial] = useState(false);
   const router = useRouter();
   const fetchDocumentTypes = useCountriesStore((state) => state.documentTypes);
   const fetchDocuments = useLoggedUserStore((state) => state.documetsFetch);
-  const [items, setItems] = useState([
-    {
-      id: 'multiresource',
-      label: 'Es multirecurso?',
-      tooltip: 'Si el documento aplica a mas de una persona o equipo',
-    },
-    {
-      id: 'mandatory',
-      label: 'Es mandatorio?',
-      tooltip: 'Si el documento es obligatorio, se crearan alertas para su cumplimiento',
-    },
-    { id: 'explired', label: 'Expira?', tooltip: 'Si el documento expira' },
-    {
-      id: 'special',
-      label: 'Es especial?',
-      tooltip: 'Si el documento requiere documentacion especial',
-    },
-    {
-      id: 'is_it_montlhy',
-      label: 'Es mensual?',
-      tooltip: 'Si el documento vence mensualmente',
-    },
-  ]);
+  const [items, setItems] = useState(defaultValues);
 
   const isOptional = items.length < 5;
   const FormSchema = z.object({
@@ -72,6 +79,7 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
         ? z.string({ required_error: 'Este campo es requerido' })
         : z.string().optional(),
     is_it_montlhy: z.boolean({ required_error: 'Este campo es requerido' }),
+    private: z.boolean({ required_error: 'Este campo es requerido' }),
   });
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -94,6 +102,7 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
       multiresource: isOptional ? false : values.multiresource,
       mandatory: isOptional ? true : values.mandatory,
       special: isOptional ? false : values.special,
+      private: values.private,
     };
 
     toast.promise(
@@ -163,38 +172,13 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
                 <Select
                   onValueChange={(value) => {
                     if (value === 'Empresa') {
-                      setItems([
-                        { id: 'explired', label: 'Expira?', tooltip: 'Si el documento expira' },
-                        {
-                          id: 'is_it_montlhy',
-                          label: 'Es mensual?',
-                          tooltip: 'Si el documento vence mensualmente',
-                        },
-                      ]);
+                      setItems(
+                        defaultValues.filter(
+                          (e) => e.id === 'explired' || e.id === 'is_it_montlhy' || e.id === 'private'
+                        )
+                      );
                     } else {
-                      setItems([
-                        {
-                          id: 'multiresource',
-                          label: 'Es multirecurso?',
-                          tooltip: 'Si el documento aplica a mas de una persona o equipo',
-                        },
-                        {
-                          id: 'mandatory',
-                          label: 'Es mandatorio?',
-                          tooltip: 'Si el documento es obligatorio, se crearan alertas para su cumplimiento',
-                        },
-                        { id: 'explired', label: 'Expira?', tooltip: 'Si el documento expira' },
-                        {
-                          id: 'special',
-                          label: 'Es especial?',
-                          tooltip: 'Si el documento requiere documentacion especial',
-                        },
-                        {
-                          id: 'is_it_montlhy',
-                          label: 'Es mensual?',
-                          tooltip: 'Si el documento vence mensualmente',
-                        },
-                      ]);
+                      setItems(defaultValues);
                     }
 
                     field.onChange(value);
@@ -219,62 +203,65 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
         />
         <div className="grid md:grid-cols-2 grid-cols-1 gap-6 items-stretch justify-between">
           <TooltipProvider delayDuration={150}>
-            {items?.map((item) => (
-              <FormField
-                key={item.id}
-                control={form.control}
-                name={item.id as 'name' | 'applies' | 'multiresource' | 'mandatory' | 'explired' | 'special'}
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="">
-                      <FormLabel className="flex gap-1 items-center mb-2">
-                        {item.label}
-                        <Tooltip>
-                          <TooltipTrigger className="hover:cursor-help" type="button">
-                            <InfoCircledIcon className="text-blue-500 size-5" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{item.tooltip}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </FormLabel>
-                      <FormControl>
-                        <div className="flex flex-col space-x-2">
-                          <div className="flex gap-3">
-                            <div className="flex items-center gap-2">
-                              <Checkbox
-                                checked={field.value === true}
-                                onCheckedChange={(value) => {
-                                  field.onChange(value ? true : false);
-                                  if (item.id === 'special') {
-                                    setSpecial(true);
-                                  }
-                                }}
-                              />
-                              <span>Sí</span>
+            {items?.map((item) => {
+              if (!form.getValues('applies')) return;
+              return (
+                <FormField
+                  key={item.id}
+                  control={form.control}
+                  name={item.id as 'name' | 'applies' | 'multiresource' | 'mandatory' | 'explired' | 'special'}
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="">
+                        <FormLabel className="flex gap-1 items-center mb-2">
+                          {item.label}
+                          <Tooltip>
+                            <TooltipTrigger className="hover:cursor-help" type="button">
+                              <InfoCircledIcon className="text-blue-500 size-5" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{item.tooltip}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="flex flex-col space-x-2">
+                            <div className="flex gap-3">
+                              <div className="flex items-center gap-2">
+                                <Checkbox
+                                  checked={field.value === true}
+                                  onCheckedChange={(value) => {
+                                    field.onChange(value ? true : false);
+                                    if (item.id === 'special') {
+                                      setSpecial(true);
+                                    }
+                                  }}
+                                />
+                                <span>Sí</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Checkbox
+                                  checked={field.value === false}
+                                  onCheckedChange={(value) => {
+                                    field.onChange(value ? false : true);
+                                    if (item.id === 'special') {
+                                      setSpecial(false);
+                                    }
+                                  }}
+                                />
+                                <span>No</span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Checkbox
-                                checked={field.value === false}
-                                onCheckedChange={(value) => {
-                                  field.onChange(value ? false : true);
-                                  if (item.id === 'special') {
-                                    setSpecial(false);
-                                  }
-                                }}
-                              />
-                              <span>No</span>
-                            </div>
+                            <FormMessage />
                           </div>
-                          <FormMessage />
-                        </div>
-                      </FormControl>
-                      <div className="space-y-1 leading-none"></div>
-                    </div>
-                  </FormItem>
-                )}
-              />
-            ))}
+                        </FormControl>
+                        <div className="space-y-1 leading-none"></div>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              );
+            })}
           </TooltipProvider>
         </div>
         {special && (

@@ -224,7 +224,7 @@ function AddCompanyDocumentForm({
             )}
             <div className="flex justify-end gap-4">
               <AlertDialogCancel id="cerrar-modal-company-document">Cancelar</AlertDialogCancel>
-              <Button type="submit">Submit</Button>
+              <Button type="submit">Subir</Button>
             </div>
           </form>
         </Form>
