@@ -53,8 +53,7 @@ const EmployeePage = () => {
             <Link
               href="/dashboard/employee/action?action=new"
               className={[
-                'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
-                buttonVariants({ variant: 'outline' }),
+                buttonVariants({ variant: 'default' }),
               ].join(' ')}
             >
               Agregar nuevo empleado
