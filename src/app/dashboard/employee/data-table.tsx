@@ -407,7 +407,7 @@ export function DataTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody className="max-w-[50vw] overflow-x-auto">
-            {table.getRowModel().rows?.length ? (
+            {table?.getRowModel().rows?.length ? (
               table.getRowModel().rows?.map((row) => {
                 return (
                   <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>

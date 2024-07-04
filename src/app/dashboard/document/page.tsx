@@ -23,6 +23,8 @@ import { DataTable } from '../company/actualCompany/components/data-table';
 import { columnsDocuments } from '../company/actualCompany/components/document-colums';
 import { ExpiredDataTable } from '../data-table';
 import { EditModal } from './documentComponents/EditDocumenTypeModal';
+import { useEffect, useState } from 'react';
+import { supabase } from '../../../../supabase/supabase';
 export default function page() {
   const { actualCompany, allDocumentsToShow } = useLoggedUserStore();
 
@@ -33,12 +35,104 @@ export default function page() {
   const profile = useLoggedUserStore((state) => state);
   const sharedUsersAll = useLoggedUserStore((state) => state.sharedUsers);
 
-  let role: string = '';
-  if (profile?.actualCompany?.owner_id?.credential_id === profile?.credentialUser?.id) {
-    role = profile?.actualCompany?.owner_id?.role as string;
+  // let role: string = '';
+  // if (profile?.actualCompany?.owner_id?.credential_id === profile?.credentialUser?.id) {
+  //   role = profile?.actualCompany?.owner_id?.role as string;
+  // } else {
+  //   role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
+  // }
+  const [clientData, setClientData] = useState<any>(null);
+  const share = useLoggedUserStore((state) => state.sharedCompanies);
+  const profile2 = useLoggedUserStore((state) => state.credentialUser?.id);
+  const owner2 = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
+  const users = useLoggedUserStore((state) => state);
+  const company = useLoggedUserStore((state) => state.actualCompany?.id);
+
+  const employees = useLoggedUserStore((state) => state.employeesToShow);
+  // const setActivesEmployees = useLoggedUserStore((state) => state.setActivesEmployees);
+  // const setInactiveEmployees = useLoggedUserStore((state) => state.setInactiveEmployees);
+  // const showDeletedEmployees = useLoggedUserStore((state) => state.showDeletedEmployees);
+  // const setShowDeletedEmployees = useLoggedUserStore((state) => state.setShowDeletedEmployees);
+  const vehiclesData = useLoggedUserStore((state) => state.vehiclesToShow);
+
+  let role = '';
+  if (owner2 === profile2) {
+    role = users?.actualCompany?.owner_id?.role as string;
+
   } else {
-    role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
+
+    const roleRaw = share?.filter((item: any) =>
+      item.company_id.id === company &&
+      Object.values(item).some((value) => typeof value === 'string' && value.includes(profile2 as string))
+    )
+      .map((item: any) => item.role);
+    role = roleRaw?.join('');
   }
+
+  useEffect(() => {
+
+    if (company && profile && role === "Invitado") {
+      const fetchCustomers = async () => {
+        const { data, error } = await supabase
+          .from('share_company_users')
+          .select('*')
+          .eq('company_id', company)
+          .eq('profile_id', profile2);
+
+        if (error) {
+          console.error('Error fetching customers:', error);
+        } else {
+          setClientData(data);
+
+        }
+      };
+
+      fetchCustomers();
+    }
+  }, [company, profile]);
+  const filteredCustomers = employees?.filter((customer: any) =>
+    customer?.allocated_to?.includes(clientData?.[0]?.customer_id)
+  );
+  const filteredCustomersEmployeesRaw = allDocumentsToShow?.employees.filter((e) => !e.isItMonthly)
+  const filteredCustomersEmployeesRawMonthly = allDocumentsToShow?.employees.filter((e) => e.isItMonthly)
+  const filteredCustomersEmployees = filteredCustomersEmployeesRaw?.filter((customer: any) => {
+    const customerResource = customer?.resource; // Asumiendo que es una cadena
+    const employeeFullnames = filteredCustomers?.map((emp: any) => emp.full_name); // Array de cadenas
+
+
+    return employeeFullnames.includes(customerResource);
+  });
+
+  const filteredCustomersEmployeesMonthly = filteredCustomersEmployeesRawMonthly?.filter((customer: any) => {
+    const customerResource = customer?.resource; // Asumiendo que es una cadena
+    const employeeFullnames = filteredCustomers?.map((emp: any) => emp.full_name); // Array de cadenas
+
+
+    return employeeFullnames.includes(customerResource);
+  });
+
+  const filteredEquipment = vehiclesData?.filter((customer: any) =>
+    customer.allocated_to.includes(clientData?.[0]?.customer_id)
+  );
+  const filteredCustomersEquipmentRaw = allDocumentsToShow?.vehicles.filter((e) => !e.isItMonthly)
+  const filteredCustomersEquipmentRawMonthly = allDocumentsToShow?.vehicles.filter((e) => e.isItMonthly)
+
+  const filteredCustomersEquipment = filteredCustomersEquipmentRaw?.filter((customer: any) => {
+    const customerResource = customer?.resource; // Asumiendo que es una cadena
+    const equipmentFullnames = filteredEquipment?.map((emp: any) => emp.domain); // Array de cadenas
+
+
+    return equipmentFullnames.includes(customerResource);
+  });
+
+  const filteredCustomersEquipmentMonthly = filteredCustomersEquipmentRawMonthly?.filter((customer: any) => {
+    const customerResource = customer?.resource; // Asumiendo que es una cadena
+    const employeeFullnames = filteredCustomers?.map((emp: any) => emp.domain); // Array de cadenas
+
+
+    return employeeFullnames.includes(customerResource);
+  });
+
   const fetchDocumentTypes = useCountriesStore((state) => state.documentTypes);
   const AllCompanyDocuments = useLoggedUserStore((state) => state.companyDocuments);
   const ownerUser = useLoggedUserStore((state) => state.profile);
@@ -89,7 +183,7 @@ export default function page() {
     };
   });
 
-  console.log(role);
+  console.log("ROLE: ", role);
 
   return (
     <>
@@ -111,7 +205,7 @@ export default function page() {
                   </CardDescription>
                 </div>
                 <div className="flex gap-4 flex-wrap pl-6">
-                  <DocumentNav />
+                  {role === "Invitado"? null :<DocumentNav />}
                 </div>
               </div>
             </CardHeader>
@@ -124,7 +218,7 @@ export default function page() {
               </CardContent>
               <TabsContent value="permanentes">
                 <ExpiredDataTable
-                  data={allDocumentsToShow?.employees.filter((e) => !e.isItMonthly) || []}
+                  data={role === "Invitado" ? filteredCustomersEmployees : allDocumentsToShow?.employees.filter((e) => !e.isItMonthly) || []}
                   columns={ExpiredColums}
                   pending={true}
                   defaultVisibleColumnsCustom={[
@@ -142,7 +236,7 @@ export default function page() {
               </TabsContent>
               <TabsContent value="mensuales">
                 <ExpiredDataTable
-                  data={allDocumentsToShow?.employees.filter((e) => e.isItMonthly) || []}
+                  data={role === "Invitado" ? filteredCustomersEmployeesMonthly : allDocumentsToShow?.employees.filter((e) => e.isItMonthly) || []}
                   columns={ColumnsMonthly}
                   pending={true}
                   defaultVisibleColumnsCustom={[
@@ -172,7 +266,7 @@ export default function page() {
                   </CardDescription>
                 </div>
                 <div className="flex gap-4 flex-wrap pl-6">
-                  <DocumentNav />
+                  {role === "Invitado"? null :<DocumentNav />}
                 </div>
               </div>
             </CardHeader>
@@ -185,7 +279,7 @@ export default function page() {
               </CardContent>
               <TabsContent value="permanentes">
                 <ExpiredDataTable
-                  data={allDocumentsToShow?.vehicles.filter((e) => !e.isItMonthly) || []}
+                  data={role === "Invitado" ? filteredCustomersEquipment : allDocumentsToShow?.vehicles.filter((e) => !e.isItMonthly) || []}
                   columns={ExpiredColums}
                   pending={true}
                   vehicles
@@ -204,7 +298,7 @@ export default function page() {
               </TabsContent>
               <TabsContent value="mensuales">
                 <ExpiredDataTable
-                  data={allDocumentsToShow?.vehicles.filter((e) => e.isItMonthly) || []}
+                  data={role === "Invitado" ? filteredCustomersEquipmentMonthly : allDocumentsToShow?.vehicles.filter((e) => e.isItMonthly) || []}
                   columns={ColumnsMonthly}
                   pending={true}
                   vehicles
