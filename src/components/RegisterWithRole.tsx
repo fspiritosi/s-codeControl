@@ -15,7 +15,7 @@ import { handleSupabaseError } from '@/lib/errorHandler';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { EyeClosedIcon, EyeOpenIcon } from '@radix-ui/react-icons';
-import { useEffect, useState } from 'react';
+import { SetStateAction, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -33,7 +33,7 @@ export const RegisterWithRole = () => {
   const [clientData, setClientData] = useState<any>(null);
   const [selectedRole, setSelectedRole] = useState('');
   const company = useLoggedUserStore((state) => state.actualCompany);
-  
+  const [userType, setUserType] = useState<'Usuario' | 'Invitado' | null>(null);
   const passwordSchema = z
     .string()
     .min(8, { message: 'La contraseña debe tener al menos 8 caracteres.' })
@@ -110,7 +110,7 @@ export const RegisterWithRole = () => {
   const [roles, setRoles] = useState<any[] | null>([]);
 
   const getRoles = async () => {
-    let { data: roles, error } = await supabase.from('roles').select('*').eq('intern', false);
+    let { data: roles, error } = await supabase.from('roles').select('*').eq('intern', false).neq("name", "Invitado");
     setRoles(roles);
   };
 
@@ -132,7 +132,7 @@ export const RegisterWithRole = () => {
   }, []);
 
   const FetchSharedUsers = useLoggedUserStore((state) => state.FetchSharedUsers);
-  
+
   function onSubmit(values: z.infer<typeof registerSchemaWithRole>) {
     if (values?.email?.trim().toLocaleLowerCase() === ownerUser?.[0].email.toLocaleLowerCase()) {
       toast.error('No puedes compartir la empresa contigo mismo');
@@ -157,7 +157,7 @@ export const RegisterWithRole = () => {
           if (sharedCompany && sharedCompany?.length > 0) {
             throw new Error('El usuario ya tiene acceso a la empresa');
           }
-          
+
           //Compartir la empresa con el usuario
           const { data, error } = await supabase.from('share_company_users').insert([
             {
@@ -167,11 +167,11 @@ export const RegisterWithRole = () => {
               customer_id: values?.customer,
             },
           ]);
-          
+
           if (error) {
             throw new Error(handleSupabaseError(error.message));
           }
-          
+
           return 'Usuario registrado correctamente';
         }
 
@@ -243,6 +243,16 @@ export const RegisterWithRole = () => {
   const handleTabChange = (value: string) => {
     setActiveTab(value);
   };
+  const handleOpen = (type: 'Usuario' | 'Invitado') => {
+    setUserType(type);
+    setSelectedRole('Usuario')
+    form.setValue('role', 'Usuario');
+    if (type === 'Invitado') {
+      setSelectedRole('Invitado')
+      form.setValue('role', 'Invitado');
+    }
+    setOpen(true);
+  };
 
   return (
     <div className="flex items-center justify-between space-y-2">
@@ -256,7 +266,10 @@ export const RegisterWithRole = () => {
         <div>
           <AlertDialog open={open} onOpenChange={() => setOpen(!open)}>
             <AlertDialogTrigger asChild>
-              <Button variant="outline">Agregar Usuario</Button>
+              <Button variant="outline" className='mr-2' onClick={() => handleOpen('Usuario')}>Agregar Usuario</Button>
+            </AlertDialogTrigger>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" className='ml-2' onClick={() => handleOpen('Invitado')}>Agregar Invitado</Button>
             </AlertDialogTrigger>
             <AlertDialogContent className="max-h-[90vh] overflow-y-auto">
               <AlertDialogTitle>Compartir acceso a la empresa</AlertDialogTitle>
@@ -376,60 +389,71 @@ export const RegisterWithRole = () => {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Rol</FormLabel>
-                                <Select 
+                                <Select
                                   onValueChange={(value) => {
                                     field.onChange(value);
                                     setSelectedRole(value); // Actualiza el estado del rol seleccionado
                                   }}
-                                   defaultValue={field.value}>
+                                  defaultValue={field.value}>
                                   <FormControl>
                                     <SelectTrigger>
                                       <SelectValue placeholder="Seleccionar rol" />
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
-                                    {roles?.map((role) => (
+                                    {/* {roles?.map((role) => (
                                       <SelectItem key={role.id} value={role.name}>
                                         {role.name}
                                       </SelectItem>
-                                    ))}
+                                    ))} */}
+                                    {selectedRole === "Invitado" ? (
+                                      <SelectItem key="invitado" value="Invitado">
+                                        Invitado
+                                      </SelectItem>
+                                    ) : (
+                                      roles?.map((role) => (
+                                        <SelectItem key={role.id} value={role.name}>
+                                          {role.name}
+                                        </SelectItem>
+                                      ))
+                                    )}
                                   </SelectContent>
                                 </Select>
                                 <FormMessage />
                               </FormItem>
                             )}
                           />
-                          { selectedRole === "Invitado" &&(
-                          <div>
-                            <FormField
-                              control={form.control}
-                              name="customer"
-                              render={({ field }) => (
-                                            <FormItem>
-                                              <FormLabel>Cliente</FormLabel>
-                              <Select
-                                value={field.value}
-                                onValueChange={field.onChange} defaultValue={selectedRole!=="Invitado"?" ":field.value}
-                              >
-                                <SelectTrigger id="customer" name="customer" className="max-w-[500px] w-[450px]">
-                                  <SelectValue
-                                    placeholder={'Seleccionar un cliente'}
-                                  />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {clientData?.map((client: any) => (
-                                    <SelectItem key={client?.id} value={selectedRole!== "Invitado"? null:client?.id}>
-                                      {client?.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              </FormItem>
-                              )}
+                          {selectedRole === "Invitado" && (
+                            <div>
+                              <FormField
+                                control={form.control}
+                                name="customer"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Cliente</FormLabel>
+                                    <Select
+                                      value={field.value}
+                                      onValueChange={field.onChange} defaultValue={selectedRole !== "Invitado" ? " " : field.value}
+                                    >
+                                      <SelectTrigger id="customer" name="customer" className="max-w-[500px] w-[450px]">
+                                        <SelectValue
+                                          placeholder={'Seleccionar un cliente'}
+                                        />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {clientData?.map((client: any) => (
+                                          <SelectItem key={client?.id} value={selectedRole !== "Invitado" ? null : client?.id}>
+                                            {client?.name}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </FormItem>
+                                )}
                               />
-                              
+
                             </div>
-                            )}
+                          )}
                           <div className="flex justify-end gap-4">
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <Button type="submit">Agregar</Button>
@@ -463,58 +487,69 @@ export const RegisterWithRole = () => {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="ml-3">Rol</FormLabel>
-                                <Select  onValueChange={(value) => {
-                                    field.onChange(value);
-                                    setSelectedRole(value); // Actualiza el estado del rol seleccionado
-                                  }} defaultValue={field.value}>
+                                <Select onValueChange={(value) => {
+                                  field.onChange(value);
+                                  setSelectedRole(value); // Actualiza el estado del rol seleccionado
+                                }} defaultValue={field.value}>
                                   <FormControl>
                                     <SelectTrigger>
                                       <SelectValue placeholder="Seleccionar rol" />
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
-                                    {roles?.map((role) => (
+                                    {/* {roles?.map((role) => (
                                       <SelectItem key={role.id} value={role.name}>
                                         {role.name}
                                       </SelectItem>
-                                    ))}
+                                    ))} */}
+                                    {selectedRole === "Invitado" ? (
+                                      <SelectItem key="invitado" value="Invitado">
+                                        Invitado
+                                      </SelectItem>
+                                    ) : (
+                                      roles?.map((role) => (
+                                        <SelectItem key={role.id} value={role.name}>
+                                          {role.name}
+                                        </SelectItem>
+                                      ))
+                                    )}
                                   </SelectContent>
                                 </Select>
                                 <FormMessage />
                               </FormItem>
                             )}
                           />
-                          { selectedRole === "Invitado" &&(
-                          <div>
-                            <FormField
-                              control={form.control}
-                              name="customer"
-                              render={({ field }) => (
-                                            <FormItem>
-                                              <FormLabel>Cliente</FormLabel>
-                              <Select
-                                value={field.value}
-                                onValueChange={field.onChange} defaultValue={field.value}
-                              >
-                                <SelectTrigger id="customer" name="customer" className="max-w-[500px] w-[450px]">
-                                  <SelectValue
-                                    placeholder={'Seleccionar un cliente'}
-                                  />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {clientData?.map((client: any) => (
-                                    <SelectItem key={client?.id} value={selectedRole!== "Invitado"? null :client?.id}>
-                                      {client?.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              </FormItem>
-                              )}
+                          {selectedRole === "Invitado" && (
+                            <div>
+                              <FormField
+                                control={form.control}
+                                name="customer"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Cliente</FormLabel>
+                                    <Select
+                                      value={field.value}
+                                      onValueChange={field.onChange} defaultValue={field.value}
+                                    >
+                                      <SelectTrigger id="customer" name="customer" className="max-w-[500px] w-[450px]">
+                                        <SelectValue
+                                          placeholder={'Seleccionar un cliente'}
+                                        />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {clientData?.map((client: any) => (
+                                          <SelectItem key={client?.id} value={selectedRole !== "Invitado" ? null : client?.id}>
+                                            {client?.name}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </FormItem>
+                                )}
                               />
-                              
+
                             </div>
-                            )}
+                          )}
                           <div className="flex justify-end gap-4">
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <Button type="submit">Agregar</Button>
