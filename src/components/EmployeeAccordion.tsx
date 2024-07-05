@@ -73,7 +73,7 @@ export default function EmployeeAccordion() {
   let role = '';
   if (owner2 === profile2) {
     role = users?.actualCompany?.owner_id?.role as string;
-    console.log("rol dueño: ", role)
+    
   } else {
 
     const roleRaw = share.filter((item: any) =>
@@ -82,8 +82,6 @@ export default function EmployeeAccordion() {
       )
       .map((item: any) => item.role);
     role = roleRaw?.join('');
-
-    console.log("rol empleado: ", role)
   }
 
   const searchParams = useSearchParams()
@@ -910,9 +908,9 @@ export default function EmployeeAccordion() {
 
                       if (isMultiple) {
                         return (
-                          <div>
+                          <div key={index}>
                             {role === "Invitado" ? null : (
-                              <div key={index} className="w-[300px] flex flex-col gap-2 justify-center">
+                              <div  className="w-[300px] flex flex-col gap-2 justify-center">
                                 <FormField
                                   control={form.control}
                                   name={data.name as names}
