@@ -111,18 +111,15 @@ export const columns: ColumnDef<Colum>[] = [
       //   role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
       // }
       const share = useLoggedUserStore((state) => state.sharedCompanies);
-      console.log('share: ', share)
       const profile = useLoggedUserStore((state) => state.credentialUser?.id);
       const owner = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
       const users = useLoggedUserStore((state) => state);
       const company = useLoggedUserStore((state) => state.actualCompany?.id);
-      console.log("company: ", company)
-      console.log("owner: ", owner)
-      console.log('profile: ', profile)
+      
       let role = '';
       if (owner === profile) {
         role = users?.actualCompany?.owner_id?.role as string;
-        console.log("rol dueño: ", role)
+        
       } else {
         
         const roleRaw = share
@@ -132,8 +129,6 @@ export const columns: ColumnDef<Colum>[] = [
           )
           .map((item: any) => item.role);
         role = roleRaw?.join('');
-        
-        console.log("rol empleado: ", role)
       }
       const [showModal, setShowModal] = useState(false);
       const [integerModal, setIntegerModal] = useState(false);
@@ -431,12 +426,12 @@ export const columns: ColumnDef<Colum>[] = [
       return <Badge>Revisando...</Badge>;
       const values = row.original.allocated_to;
       if (!values) return <Badge variant={'destructive'}>Revisando...</Badge>;
-      console.log(values);
+      
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
       const contractorCompanies = useCountriesStore((state) =>
         state.customers?.filter((company: any) => company.company_id.toString() === actualCompany?.id)
       );
-      console.log(contractorCompanies);
+      
       // console.log();
       if (contractorCompanies.some((e) => e.name.includes(row.original.allocated_to))) return true;
 

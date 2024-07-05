@@ -54,7 +54,11 @@ export async function middleware(req: NextRequest) {
     '/dashboard/company/new',
     '/dashboard/company/actualCompany',
   ]; // -> Rol tabla profile
-
+  const allowedPathsguestUser = [
+    '/dashboard/document',
+    '/dashboard/employees',
+    '/dashboard/equipment',
+  ];
   const usuarioUser = ['/dashboard/company/actualCompany', 'admin/auditor'];
 
   const administradorUser = ['admin/auditor'];
@@ -72,7 +76,7 @@ export async function middleware(req: NextRequest) {
     const baseUrl = req.url.includes('?') ? req.url.split('?')[0] : req.url;
     const redirectUrl = new URL(baseUrl);
     redirectUrl.searchParams.set('access_denied', 'true');
-
+    
     if (isAuditor && !req.url.includes('admin/auditor')) {
       redirectUrl.pathname = '/auditor';
       return NextResponse.redirect(redirectUrl.toString());
@@ -86,11 +90,34 @@ export async function middleware(req: NextRequest) {
       redirectUrl.pathname = '/dashboard';
       return NextResponse.redirect(redirectUrl.toString());
     }
+    // if (guestRole?.[0]?.role === 'Invitado' && !req.url.includes('/dashboard/document')) {
+    //   redirectUrl.pathname = '/dashboard/document';
+    //   return NextResponse.redirect(redirectUrl.toString());
+    // }
+    
+    // if (guestRole?.[0]?.role === 'Invitado' && guestUser.some((url) => req.url.includes(url))) {
+    //   redirectUrl.pathname = '/dashboard/document/';
+    //   return NextResponse.redirect(redirectUrl.toString());
+    // }
+    if (guestRole?.[0]?.role === 'Invitado') {
+    // Si el usuario está en una ruta permitida, permitir la navegación
+    const isAllowedPath = allowedPathsguestUser.some(path => req.url.startsWith(path));
+    console.log('Is Allowed Path:', isAllowedPath);
 
-    if (guestRole?.[0]?.role === 'Invitado' && guestUser.some((url) => req.url.includes(url))) {
-      redirectUrl.pathname = '/dashboard';
-      return NextResponse.redirect(redirectUrl.toString());
+    if (isAllowedPath) {
+      return NextResponse.next();
     }
+
+    // Si el usuario está en una ruta restringida, redirigir a '/dashboard/document'
+    const isRestrictedPath = guestUser.some(path => req.url.startsWith(path));
+    console.log('Is Restricted Path:', isRestrictedPath);
+
+    if (isRestrictedPath) {
+      redirectUrl.pathname = '/dashboard/document';
+      console.log('Redirecting to /dashboard/document');
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
 
     if (guestRole?.[0]?.role === 'Administrador' && administradorUser.some((url) => req.url.includes(url))) {
       redirectUrl.pathname = '/dashboard';

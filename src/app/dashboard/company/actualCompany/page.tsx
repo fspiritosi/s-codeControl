@@ -90,7 +90,7 @@ export default function page() {
         fullname: user.fullname || '',
       })) || []
   
-  console.log(data)
+  
   const documentCompany = AllCompanyDocuments?.map((document) => {
     const sharedUserRole = data?.find((e) => e.email === document.user_id?.email)?.role;
     return {

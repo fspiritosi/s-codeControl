@@ -1,9 +1,10 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDate } from 'date-fns';
-import { es } from 'date-fns/locale';
-
+import { es, id } from 'date-fns/locale';
+import Cookies from 'js-cookie';
 import BackButton from '@/components/BackButton';
 import UpdateDocuments from '@/components/UpdateDocuments';
 import { Badge } from '@/components/ui/badge';
@@ -13,8 +14,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 import { revalidatePath } from 'next/cache';
 import { Suspense } from 'react';
-import { supabase } from '../../../../../supabase/supabase';
+// import { supabase } from '../../../../../supabase/supabase';
 import DownloadButton from '../documentComponents/DownloadButton';
+import { supabaseServer } from '@/lib/supabase/server';
 export default async function page({ params }: { params: { id: string } }) {
   let documents_employees: any[] | null = [];
   let resource = '';
@@ -23,7 +25,34 @@ export default async function page({ params }: { params: { id: string } }) {
   let document: any[] | null = [];
   let documentType: string | null = null;
   let resourceType: string | null = null;
-  revalidatePath('/dashboard/document/[id]', 'page');
+  // revalidatePath('/dashboard/document/[id]', 'page');
+  const supabase = supabaseServer();
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const { data: usuario } = await supabase.from('profile').select('*').eq('email', session?.user.email).single();
+  const { data: company, error } = await supabase.from('company').select(`id`);
+  let { data: share, error: sharedError } = await supabase
+    .from('share_company_users')
+    .select(`*`)
+    .eq('profile_id', usuario?.id)
+
+
+  let role = '';
+
+
+  const roleRaw = share?.filter(
+    (item: any) =>
+      company?.some((comp: any) => comp.id === item.company_id) &&
+      item.profile_id === usuario.id
+  )
+    .map((item: any) => item.role);
+
+  role = roleRaw?.join('') as string;
+
+
 
   let { data: documents_employee } = await supabase
     .from('documents_employees')
@@ -166,36 +195,36 @@ export default async function page({ params }: { params: { id: string } }) {
                 <TabsTrigger className="hover:bg-white/30" value="Documento">
                   Documento
                 </TabsTrigger>
-                {documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth() ? (
-                  <TooltipProvider delayDuration={100}>
-                    <Tooltip>
-                      <TooltipTrigger disabled asChild>
-                        <div>
-                          <TabsTrigger
-                            className="hover:bg-white/30"
-                            disabled={documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth()}
-                            value="Auditar"
-                          >
-                            Actualizar
-                          </TabsTrigger>
-                        </div>
-                      </TooltipTrigger>
-                      {documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth() ? (
-                        <TooltipContent>
-                          <p>
-                            Este documento no puede ser modificado ya que se encuentra aprobado y su vencimiento es
-                            mayor a 30 dias
-                          </p>
-                        </TooltipContent>
-                      ) : (
-                        false
-                      )}
-                    </Tooltip>
-                  </TooltipProvider>
-                ) : (
-                  <TabsTrigger className="hover:bg-white/30" value="Auditar">
-                    Actualizar
-                  </TabsTrigger>
+                {role === "Invitado" ? null : (
+                  documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth() ? (
+                    <TooltipProvider delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger disabled asChild>
+                          <div>
+                            <TabsTrigger
+                              className="hover:bg-white/30"
+                              disabled={documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth()}
+                              value="Auditar"
+                            >
+                              Actualizar
+                            </TabsTrigger>
+                          </div>
+                        </TooltipTrigger>
+                        {documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth() ? (
+                          <TooltipContent>
+                            <p>
+                              Este documento no puede ser modificado ya que se encuentra aprobado y su vencimiento es
+                              mayor a 30 días
+                            </p>
+                          </TooltipContent>
+                        ) : null}
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <TabsTrigger className="hover:bg-white/30" value="Auditar">
+                      Actualizar
+                    </TabsTrigger>
+                  )
                 )}
               </TabsList>
               <TabsContent value="Empresa">
@@ -327,10 +356,10 @@ export default async function page({ params }: { params: { id: string } }) {
                                 <CardTitle className="font-bold text-lg">
                                   {resource === 'employee'
                                     ? documents_employees?.[0]?.applies.lastname +
-                                      ' ' +
-                                      documents_employees?.[0]?.applies.firstname
+                                    ' ' +
+                                    documents_employees?.[0]?.applies.firstname
                                     : documents_employees?.[0]?.applies.domain ||
-                                      documents_employees?.[0]?.applies.intern_number}
+                                    documents_employees?.[0]?.applies.intern_number}
                                 </CardTitle>
                               </TableCell>
                             </TableRow>

@@ -69,21 +69,20 @@ export default function EmployeeAccordion() {
   const owner2 = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
   const users = useLoggedUserStore((state) => state);
   const company = useLoggedUserStore((state) => state.actualCompany?.id);
-  
+
   let role = '';
   if (owner2 === profile2) {
     role = users?.actualCompany?.owner_id?.role as string;
     console.log("rol dueño: ", role)
   } else {
-    
-    const roleRaw = share
-      .filter((item: any) =>
+
+    const roleRaw = share.filter((item: any) =>
         item.company_id.id === company &&
         Object.values(item).some((value) => typeof value === 'string' && value.includes(profile2 as string))
       )
       .map((item: any) => item.role);
     role = roleRaw?.join('');
-    
+
     console.log("rol empleado: ", role)
   }
 
@@ -911,21 +910,26 @@ export default function EmployeeAccordion() {
 
                       if (isMultiple) {
                         return (
-                          <div key={index} className="w-[300px] flex flex-col gap-2 justify-center">
-                            <FormField
-                              control={form.control}
-                              name={data.name as names}
-                              render={({ field }) => (
-                                <CheckboxDefaultValues
-                                  disabled={readOnly}
-                                  options={data.options}
-                                  required={true}
-                                  field={field}
-                                  placeholder="Afectado a"
+                          <div>
+                            {role === "Invitado" ? null : (
+                              <div key={index} className="w-[300px] flex flex-col gap-2 justify-center">
+                                <FormField
+                                  control={form.control}
+                                  name={data.name as names}
+                                  render={({ field }) => (
+                                    <CheckboxDefaultValues
+                                      disabled={readOnly}
+                                      options={data.options}
+                                      required={true}
+                                      field={field}
+                                      placeholder="Afectado a"
+                                    />
+                                  )}
                                 />
-                              )}
-                            />
+                              </div>
+                            )}
                           </div>
+
                         );
                       }
                       return (

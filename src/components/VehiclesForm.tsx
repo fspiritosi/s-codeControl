@@ -90,7 +90,6 @@ export default function VehiclesForm2({ id }: { id: string }) {
   let role = '';
   if (owner2 === profile2) {
     role = users?.actualCompany?.owner_id?.role as string;
-    console.log("rol dueño: ", role)
   } else {
     
     const roleRaw = share
@@ -100,8 +99,6 @@ export default function VehiclesForm2({ id }: { id: string }) {
       )
       .map((item: any) => item.role);
     role = roleRaw?.join('');
-    
-    console.log("rol empleado: ", role)
   }
 
   const [vehicle, setVehicle] = useState<VehicleType | null>(null);

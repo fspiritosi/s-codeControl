@@ -282,10 +282,10 @@ export const RegisterWithRole = () => {
               >
                 <TabsList className="w-full">
                   <TabsTrigger className="w-1/2" value="createUser">
-                    Crear usuario
+                    {userType  === 'Usuario'? "Crear usuario": "Crear Invitado" }
                   </TabsTrigger>
                   <TabsTrigger className="w-1/2" value="InviteUser">
-                    Invitar usuario
+                    Invitar usuario 
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="createUser">

@@ -96,13 +96,12 @@ export default function page() {
   const filteredCustomersEmployeesRaw = allDocumentsToShow?.employees.filter((e) => !e.isItMonthly)
   const filteredCustomersEmployeesRawMonthly = allDocumentsToShow?.employees.filter((e) => e.isItMonthly)
   const filteredCustomersEmployees = filteredCustomersEmployeesRaw?.filter((customer: any) => {
-    const customerResource = customer?.resource; // Asumiendo que es una cadena
-    const employeeFullnames = filteredCustomers?.map((emp: any) => emp.full_name); // Array de cadenas
-
+    const customerResource = customer?.resource_id; // Asumiendo que es una cadena
+    const employeeFullnames = filteredCustomers?.map((emp: any) => emp.id); // Array de cadenas
+    
 
     return employeeFullnames.includes(customerResource);
   });
-
   const filteredCustomersEmployeesMonthly = filteredCustomersEmployeesRawMonthly?.filter((customer: any) => {
     const customerResource = customer?.resource; // Asumiendo que es una cadena
     const employeeFullnames = filteredCustomers?.map((emp: any) => emp.full_name); // Array de cadenas
@@ -118,16 +117,16 @@ export default function page() {
   const filteredCustomersEquipmentRawMonthly = allDocumentsToShow?.vehicles.filter((e) => e.isItMonthly)
 
   const filteredCustomersEquipment = filteredCustomersEquipmentRaw?.filter((customer: any) => {
-    const customerResource = customer?.resource; // Asumiendo que es una cadena
-    const equipmentFullnames = filteredEquipment?.map((emp: any) => emp.domain); // Array de cadenas
+    const customerResource = customer?.resource_id; // Asumiendo que es una cadena
+    const equipmentFullnames = filteredEquipment?.map((emp: any) => emp.id); // Array de cadenas
 
 
     return equipmentFullnames.includes(customerResource);
   });
 
   const filteredCustomersEquipmentMonthly = filteredCustomersEquipmentRawMonthly?.filter((customer: any) => {
-    const customerResource = customer?.resource; // Asumiendo que es una cadena
-    const employeeFullnames = filteredCustomers?.map((emp: any) => emp.domain); // Array de cadenas
+    const customerResource = customer?.resource_id; // Asumiendo que es una cadena
+    const employeeFullnames = filteredCustomers?.map((emp: any) => emp.id); // Array de cadenas
 
 
     return employeeFullnames.includes(customerResource);
@@ -183,7 +182,6 @@ export default function page() {
     };
   });
 
-  console.log("ROLE: ", role);
 
   return (
     <>
