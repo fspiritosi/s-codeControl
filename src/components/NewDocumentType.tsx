@@ -44,8 +44,8 @@ const defaultValues = [
   },
   {
     id: 'private',
-    label: 'Es público?',
-    tooltip: 'Si el documento es público es visible para todos los usuarios',
+    label: 'Es privado?',
+    tooltip: 'Si el documento es privado no sera visible para los usuarios con el rol invitado',
   },
 ];
 
@@ -118,6 +118,7 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
         success: (data) => {
           fetchDocumentTypes(useLoggedUserStore.getState().actualCompany?.id || '');
           fetchDocuments();
+          router.refresh();
           if (codeControlClient) {
             document.getElementById('close_document_modal')?.click();
             return 'El documento se ha creado correctamente';
@@ -231,10 +232,16 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
                                 <Checkbox
                                   checked={field.value === true}
                                   onCheckedChange={(value) => {
-                                    field.onChange(value ? true : false);
                                     if (item.id === 'special') {
                                       setSpecial(true);
                                     }
+                                    if (item.id === 'is_it_montlhy') {
+                                      form.setValue('explired', value ? false : true);
+                                    }
+                                    if (item.id === 'explired') {
+                                      form.setValue('is_it_montlhy', value ? false : true);
+                                    }
+                                    field.onChange(value ? true : false);
                                   }}
                                 />
                                 <span>Sí</span>
@@ -246,6 +253,12 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
                                     field.onChange(value ? false : true);
                                     if (item.id === 'special') {
                                       setSpecial(false);
+                                    }
+                                    if (item.id === 'is_it_montlhy') {
+                                        form.setValue('explired', false);
+                                    }
+                                    if (item.id === 'explired') {
+                                        form.setValue('is_it_montlhy', false);
                                     }
                                   }}
                                 />

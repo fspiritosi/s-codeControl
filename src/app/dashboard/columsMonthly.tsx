@@ -34,7 +34,6 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
-import { useToast } from '@/components/ui/use-toast';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseBrowser } from '@/lib/supabase/browser';
@@ -150,12 +149,13 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
         },
       });
 
-      const { toast } = useToast();
-
       async function reintegerDocumentEmployees() {
-        const supabase = supabaseBrowser();
-        try {
-          const { data, error } = await supabase
+
+        toast.promise(
+          async () => {
+            const supabase = supabaseBrowser()
+
+            const { data, error } = await supabase
             .from('documents_employees')
             .update({
               is_active: true,
@@ -168,53 +168,52 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
           setIntegerModal(!integerModal);
           //setInactive(data as any)
           setShowDeletedEquipment(false);
-          toast({
-            variant: 'default',
-            title: 'Equipo reintegrado',
-            description: `El equipo ${equipment?.engine} ha sido reintegrado`,
-          });
-        } catch (error: any) {
-          const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al reintegrar el equipo',
-            description: message,
-          });
-        }
+
+            if (error) {
+              throw new Error(handleSupabaseError(error.message));
+            }
+          },
+          {
+            loading: 'Reintegrando...',
+            success: `El equipo ${equipment?.engine} ha sido reintegrado`,
+            error: (error) => {
+              return error;
+            },
+          }
+        );
       }
 
       async function onSubmit(values: z.infer<typeof formSchema>) {
-        const data = {
-          ...values,
-          termination_date: format(values.termination_date, 'yyyy-MM-dd'),
-        };
-        const supabase = supabaseBrowser();
-        try {
-          await supabase
-            .from('documents_employees')
-            .update({
-              is_active: false,
-              //termination_date: data.termination_date,
-              //reason_for_termination: data.reason_for_termination,
-            })
-            .eq('id', document.id)
-            .select();
+        toast.promise(
+          async () => {
+            const data = {
+              ...values,
+              termination_date: format(values.termination_date, 'yyyy-MM-dd'),
+            };
+            const supabase = supabaseBrowser();
+            const { error } = await supabase
+              .from('documents_employees')
+              .update({
+                is_active: false,
+                //termination_date: data.termination_date,
+                //reason_for_termination: data.reason_for_termination,
+              })
+              .eq('id', document.id)
+              .select();
 
-          setShowModal(!showModal);
-
-          toast({
-            variant: 'default',
-            title: 'Documento eliminado',
-            description: `El documento ${document.name} ha sido dado de baja`,
-          });
-        } catch (error: any) {
-          const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al dar de baja el documento',
-            description: message,
-          });
-        }
+            setShowModal(!showModal);
+            if (error) {
+              throw new Error(handleSupabaseError(error.message));
+            }
+          },
+          {
+            loading: 'Actualizando...',
+            success: 'Documento actualizado correctamente',
+            error: (error) => {
+              return error;
+            },
+          }
+        );
       }
       const handleToggleInactive = () => {
         setShowInactive(!showInactive);
@@ -222,22 +221,16 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
 
       async function viewDocumentEmployees() {
         const supabase = supabaseBrowser();
-        try {
-          const { data, error } = await supabase
-            .from('documents_employees_logs')
-            .select('*, documents_employees(user_id(email))')
-            .eq('documents_employees_id', document.id);
+        const { data, error } = await supabase
+          .from('documents_employees_logs')
+          .select('*, documents_employees(user_id(email))')
+          .eq('documents_employees_id', document.id);
 
-          if (data) {
-            setDocumentHistory(data);
-          }
-        } catch (error: any) {
-          const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al reintegrar el equipo',
-            description: message,
-          });
+        if (data) {
+          setDocumentHistory(data);
+        }
+        if (error) {
+          toast.error(`${handleSupabaseError(error.message)}`);
         }
       }
       useEffect(() => {

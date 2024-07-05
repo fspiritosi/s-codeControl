@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { CaretSortIcon, PlusCircledIcon } from '@radix-ui/react-icons';
 import { addMonths, format } from 'date-fns';
 import { Calendar as CalendarIcon, CheckIcon } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { Button } from './ui/button';
@@ -16,10 +16,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { es } from 'date-fns/locale';
+import { toast } from 'sonner';
 import { supabase } from '../../supabase/supabase';
 import { AlertDialogCancel } from './ui/alert-dialog';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from './ui/command';
-import { useToast } from './ui/use-toast';
 
 export default function SimpleDocument({
   resource,
@@ -32,6 +32,7 @@ export default function SimpleDocument({
   defaultDocumentId?: string;
   document?: string;
 }) {
+  const router = useRouter();
   const documentDrawerEmployees = useLoggedUserStore((state) => state.documentDrawerEmployees);
   const documentDrawerVehicles = useLoggedUserStore((state) => state.documentDrawerVehicles);
   const employees = useLoggedUserStore((state) => state.employees)?.reduce(
@@ -91,184 +92,143 @@ export default function SimpleDocument({
     control,
     name: 'documents',
   });
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async ({ documents }: any) => {
-    // Notificar los errores y consejos con un toast
+    toast.promise(
+      async () => {
+        setLoading(true);
+        let hasError = false;
+        const idApplies = id || employees.find((employee: any) => employee.document === documentResource)?.id;
 
-    /*
-     Id del recurso
-     recursoid - tipo de documentoid (fecha de vencimiento || v0)
-    */
-
-    setLoading(true);
-    let hasError = false;
-    try {
-      const idApplies = id || employees.find((employee: any) => employee.document === documentResource)?.id;
-
-      const updateEntries = documents?.map((entry: any) => {
-        return {
-          applies: entry.applies || idApplies,
-          id_document_types: entry.id_document_types,
-          validity: entry.validity ? format(entry.validity, 'dd/MM/yyyy') : null,
-          user_id: user,
-          created_at: new Date(),
-          period: entry.period,
-        };
-      });
-      const storagePath = resource === 'empleado' ? 'documentos-empleados' : 'documentos-equipos';
-
-      for (let index = 0; index < documents.length; index++) {
-        const document = documents[index];
-        const { data } = await supabase.storage.from('document_files').list(storagePath, {
-          search: `document-${document.id_document_types}-${updateEntries[index].applies}`,
+        const updateEntries = documents?.map((entry: any) => {
+          return {
+            applies: entry.applies || idApplies,
+            id_document_types: entry.id_document_types,
+            validity: entry.validity ? format(entry.validity, 'dd/MM/yyyy') : null,
+            user_id: user,
+            created_at: new Date(),
+            period: entry.period,
+          };
         });
+        const storagePath = resource === 'empleado' ? 'documentos-empleados' : 'documentos-equipos';
 
-        if (data?.length && data?.length > 0) {
-          setError(`documents.${index}.id_document_types`, {
-            message: 'El documento ya ha sido subido anteriormente',
-            type: 'validate',
-            types: {
-              validate: 'El documento ya ha sido subido anteriormente',
-            },
+        for (let index = 0; index < documents.length; index++) {
+          const document = documents[index];
+          const { data } = await supabase.storage.from('document_files').list(storagePath, {
+            search: `document-${document.id_document_types}-${updateEntries[index].applies}`,
           });
-          setLoading(false);
-          hasError = true;
-          toast({
-            title: 'El documento ya ha sido subido anteriormente',
-            description: 'Por favor, sube un documento diferente o elimina la entrada duplicada',
-            variant: 'destructive',
-          });
-          return;
+
+          if (data?.length && data?.length > 0) {
+            setError(`documents.${index}.id_document_types`, {
+              message: 'El documento ya ha sido subido anteriormente',
+              type: 'validate',
+              types: {
+                validate: 'El documento ya ha sido subido anteriormente',
+              },
+            });
+            setLoading(false);
+            hasError = true;
+
+            throw new Error('El documento ya ha sido subido anteriormente');
+          }
+
+          if (hasError) {
+            return setLoading(false);
+          }
+          const fileExtension = document.file.split('.').pop();
+          const tableName = resource === 'empleado' ? 'documents_employees' : 'documents_equipment';
+          const hasExpiredDate = updateEntries?.[index]?.validity?.replace(/\//g, '-') ?? 'v0';
+          await supabase.storage
+            .from('document_files')
+            .upload(
+              `/${storagePath}/document-${document.id_document_types}-${updateEntries[index].applies}-${hasExpiredDate}.${fileExtension}`,
+              files?.[index] || document.file,
+              {
+                cacheControl: '3600',
+                upsert: false,
+              }
+            )
+            .then(async (response) => {
+              const isMandatory = documenTypes?.find(
+                (doc) => doc.id === updateEntries[index].id_document_types
+              )?.mandatory;
+
+              if (isMandatory) {
+                const data = {
+                  validity: updateEntries[index].validity,
+                  document_path: response.data?.path,
+                  created_at: new Date(),
+                  state: 'presentado',
+                  period: updateEntries[index].period || null,
+                };
+                const { error } = await supabase
+                  .from(tableName)
+                  .update(data)
+                  .eq('applies', idApplies || updateEntries[index].applies)
+                  .eq('id_document_types', updateEntries[index].id_document_types);
+
+                if (error) {
+                  setLoading(false);
+                  hasError = true;
+
+                  throw new Error('Hubo un error al subir los documentos a la base de datos');
+                }
+              } else {
+                const { error } = await supabase.from(tableName).insert({
+                  validity: updateEntries[index].validity,
+                  document_path: response.data?.path,
+                  created_at: new Date(),
+                  state: 'presentado',
+                  applies: idApplies || updateEntries[index].applies,
+                  id_document_types: updateEntries[index].id_document_types,
+                  user_id: user,
+                  period: updateEntries[index].period || null,
+                });
+
+                if (error) {
+                  setLoading(false);
+                  hasError = true;
+                  throw new Error('Hubo un error al guardar el documento');
+                }
+              }
+            })
+            .catch((error) => {
+              setLoading(false);
+              hasError = true;
+
+              throw new Error('Hubo un error al subir los documentos al storage');
+            });
         }
 
         if (hasError) {
           return setLoading(false);
         }
-        const fileExtension = document.file.split('.').pop();
-        const tableName = resource === 'empleado' ? 'documents_employees' : 'documents_equipment';
-        const hasExpiredDate = updateEntries?.[index]?.validity?.replace(/\//g, '-') ?? 'v0';
-        await supabase.storage
-          .from('document_files')
-          .upload(
-            `/${storagePath}/document-${document.id_document_types}-${updateEntries[index].applies}-${hasExpiredDate}.${fileExtension}`,
-            files?.[index] || document.file,
-            {
-              cacheControl: '3600',
-              upsert: false,
-            }
-          )
-          .then(async (response) => {
-            const isMandatory = documenTypes?.find(
-              (doc) => doc.id === updateEntries[index].id_document_types
-            )?.mandatory;
 
-            if (isMandatory) {
-              const data = {
-                validity: updateEntries[index].validity,
-                document_path: response.data?.path,
-                created_at: new Date(),
-                state: 'presentado',
-                period: updateEntries[index].period || null,
-              };
-              const { error } = await supabase
-                .from(tableName)
-                .update(data)
-                .eq('applies', idApplies || updateEntries[index].applies)
-                .eq('id_document_types', updateEntries[index].id_document_types);
+        setLoading(false);
+        if (document) {
+          documentDrawerEmployees(document);
+        }
+        if (id) {
+          documentDrawerVehicles(id);
+        }
+        router.refresh();
+        handleOpen();
 
-              if (error) {
-                toast({
-                  title: 'Error',
-                  description: 'Hubo un error al subir los documentos a la base de datos',
-                  variant: 'destructive',
-                });
-                setLoading(false);
-                hasError = true;
-                console.error(error);
-                return;
-              }
-            } else {
-              // const data = {
-              //   validity: updateEntries[index].validity,
-              //   document_path: response.data?.path,
-              //   created_at: new Date(),
-              //   state: 'presentado',
-              // }
-              // const { error } = await supabase
-              //   .from(tableName)
-              //   .upsert(data)
-              //   .eq('applies', idApplies || updateEntries[index].applies)
-              //   .eq('id_document_types', updateEntries[index].id_document_types)
-
-              const { error } = await supabase.from(tableName).insert({
-                validity: updateEntries[index].validity,
-                document_path: response.data?.path,
-                created_at: new Date(),
-                state: 'presentado',
-                applies: idApplies || updateEntries[index].applies,
-                id_document_types: updateEntries[index].id_document_types,
-                user_id: user,
-                period: updateEntries[index].period || null,
-              });
-
-              if (error) {
-                toast({
-                  title: 'Error',
-                  description: 'Hubo un error al subir los documentos a la base de datos',
-                  variant: 'destructive',
-                });
-                setLoading(false);
-                hasError = true;
-                console.error(error);
-                return;
-              }
-            }
-          })
-          .catch((error) => {
-            toast({
-              title: 'Error',
-              description: 'Hubo un error al subir los documentos al storage',
-              variant: 'destructive',
-            });
-            setLoading(false);
-            hasError = true;
-            return;
-          });
+        setLoading(false);
+      },
+      {
+        loading: 'Subiendo...',
+        success: 'Documento(s) subidos correctamente',
+        error: (error) => {
+          return error;
+        },
       }
-
-      if (hasError) {
-        return setLoading(false);
-      }
-
-      toast({
-        title: 'Éxito',
-        description: 'Documentos subidos correctamente',
-        variant: 'default',
-      });
-      setLoading(false);
-      if (document) {
-        documentDrawerEmployees(document);
-      }
-      if (id) {
-        documentDrawerVehicles(id);
-      }
-      handleOpen();
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: 'Error',
-        description: 'Hubo un error al subir los documentos',
-        variant: 'destructive',
-      });
-      setLoading(false);
-    }
+    );
   };
 
   const fetchDocumentTypes = async () => {
     const applies = resource === 'empleado' ? 'Persona' : 'Equipos';
-
     let { data: document_types, error } = await supabase
       .from('document_types')
       .select('*')

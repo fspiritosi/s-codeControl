@@ -52,7 +52,9 @@ type Province = {
 };
 
 export default function EmployeeAccordion() {
+
   const profile = useLoggedUserStore((state) => state);
+  
   let role = '';
   if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
     role = profile?.actualCompany?.owner_id?.role as string;
@@ -84,7 +86,6 @@ export default function EmployeeAccordion() {
   const { updateEmployee, createEmployee } = useEmployeesData()
   const getEmployees = useLoggedUserStore((state:any) => state.getEmployees)
   const router = useRouter()
-  // const { toast } = useToast()
   const url = process.env.NEXT_PUBLIC_PROJECT_URL;
   const mandatoryDocuments = useCountriesStore((state) => state.mandatoryDocuments);
 

@@ -35,7 +35,6 @@ import {
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/components/ui/use-toast';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { cn } from '@/lib/utils';
 import { useCountriesStore } from '@/store/countries';
@@ -49,6 +48,7 @@ import { ArrowUpDown, CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Fragment, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../../../supabase/supabase';
 const formSchema = z.object({
@@ -157,8 +157,6 @@ export const columns: ColumnDef<Colum>[] = [
         },
       });
 
-      const { toast } = useToast();
-
       async function reintegerEquipment() {
         try {
           const { data, error } = await supabase
@@ -175,18 +173,12 @@ export const columns: ColumnDef<Colum>[] = [
           setIntegerModal(!integerModal);
           //setInactive(data as any)
           setShowDeletedEquipment(false);
-          toast({
-            variant: 'default',
-            title: 'Equipo reintegrado',
+          toast.success('Equipo reintegrado', {
             description: `El equipo ${equipment?.engine} ha sido reintegrado`,
           });
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al reintegrar el equipo',
-            description: message,
-          });
+          toast.error('Error al reintegrar el equipo', { description: message });
         }
       }
 
@@ -210,20 +202,13 @@ export const columns: ColumnDef<Colum>[] = [
 
           setShowModal(!showModal);
 
-          toast({
-            variant: 'default',
-            title: 'Equipo eliminado',
-            description: `El equipo ${equipment.domain} ha sido dado de baja`,
-          });
+          toast.success('Equipo eliminado', { description: `El equipo ${equipment.domain} ha sido dado de baja` });
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al dar de baja el equipo',
-            description: message,
-          });
+          toast.error('Error al dar de baja el equipo', { description: message })
         }
       }
+
       const handleToggleInactive = () => {
         setShowInactive(!showInactive);
       };

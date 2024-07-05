@@ -1,4 +1,5 @@
 'use server';
+import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseServer } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -11,7 +12,7 @@ export async function signup(formData: FormData, url: string) {
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
-  }
+  };
   const { error, data: user } = await supabase.auth.signUp({
     email: data.email,
     password: data.password,
@@ -38,7 +39,7 @@ export async function signup(formData: FormData, url: string) {
     .select();
 
   if (error2) {
-    return error2.message;
+    return handleSupabaseError(error2.message);
   }
 
   revalidatePath('/', 'layout');

@@ -7,6 +7,7 @@ export function handleSupabaseError(error: string): string {
     '23505': 'El valor ingresado ya existe, por favor ingresa uno diferente',
     '42501': 'No tienes permisos para realizar esta operación',
     'Invalid login credentials': 'Correo o contraseña inválidos',
+    'User already registered':'El usuario ya se encuentra registrado'
   };
 
   if (!errorMessages[error]) {
@@ -16,12 +17,15 @@ export function handleSupabaseError(error: string): string {
     const saveErrorMenssage = async () => {
       await supabase.from('handle_errors').insert({
         menssage: error,
-        path: window.location.origin,
+        path: window.location.pathname,
       });
+      console.log('guardado');
     };
 
     saveErrorMenssage();
   }
+
+  console.log(error);
 
   const errorMessage = errorMessages[error] || 'Ha ocurrido un error al procesar la solicitud';
   return errorMessage;

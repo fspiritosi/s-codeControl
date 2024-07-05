@@ -364,7 +364,7 @@ export type VehiclesAPI = {
   user_id: string;
   document_url: string;
   document_types: DocumentTypes;
-  period:string
+  period: string;
 };
 
 export type Applies = {
@@ -406,6 +406,7 @@ export type DocumentTypes = {
   created_at: Date;
   description: null;
   multiresource: boolean;
+  private: boolean;
 };
 export type DocumentsTable = {
   created_at: Date;

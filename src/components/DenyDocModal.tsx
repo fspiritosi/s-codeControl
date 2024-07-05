@@ -3,11 +3,11 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useToast } from '@/components/ui/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../supabase/supabase';
 import { Textarea } from './ui/textarea';
@@ -47,7 +47,6 @@ export default function DenyDocModal({
     resolver: zodResolver(FormSchema),
   });
   const router = useRouter();
-  const { toast } = useToast();
 
   async function onSubmit(menssaje: z.infer<typeof FormSchema>) {
     if (resource === 'employee') {
@@ -59,11 +58,7 @@ export default function DenyDocModal({
 
       if (error) {
         setIsOpen(false);
-        return toast({
-          title: 'Error',
-          description: 'Ocurrio un error al rechazar el documento',
-          variant: 'destructive',
-        });
+        return toast.error('Ocurrio un error al rechazar el documento');
       }
 
       const response = await fetch('/api/send', {

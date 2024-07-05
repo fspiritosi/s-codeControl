@@ -82,7 +82,6 @@ export default function VehiclesForm2({ id }: { id: string }) {
     role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
   }
   const [vehicle, setVehicle] = useState<VehicleType | null>(null);
-  // const { toast } = useToast()
   const pathname = usePathname();
   const [data, setData] = useState<dataType>({
     tipe_of_vehicles: [],
