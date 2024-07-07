@@ -148,8 +148,6 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
     return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
   }
 
-  console.log(documentTypes);
-
   function formatDescription(description: string | undefined): string | undefined {
     if (description) {
       // Capitalize first letter and convert the rest to lowercase

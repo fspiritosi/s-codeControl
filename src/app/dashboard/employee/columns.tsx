@@ -467,7 +467,6 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Afectado a',
     cell: ({ row }) => {
       const values = row.original.allocated_to;
-      console.log(values);
       if (!values) return <Badge variant={'destructive'}>Sin afectar</Badge>;
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 

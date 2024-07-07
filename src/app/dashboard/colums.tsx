@@ -555,7 +555,6 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
       const isNoPresented = row.getValue('state') === 'pendiente';
       const role = useLoggedUserStore?.getState?.().roleActualCompany;
 
-      console.log(row.original);
       const [open, setOpen] = useState(false);
 
       const handleOpen = () => setOpen(!open);

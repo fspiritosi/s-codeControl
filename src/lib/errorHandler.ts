@@ -19,13 +19,10 @@ export function handleSupabaseError(error: string): string {
         menssage: error,
         path: window.location.pathname,
       });
-      console.log('guardado');
     };
 
     saveErrorMenssage();
   }
-
-  console.log(error);
 
   const errorMessage = errorMessages[error] || 'Ha ocurrido un error al procesar la solicitud';
   return errorMessage;

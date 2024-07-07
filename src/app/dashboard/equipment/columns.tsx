@@ -386,7 +386,7 @@ export const columns: ColumnDef<Colum>[] = [
     accessorKey: 'allocated_to',
     header: 'Afectado a',
     cell: ({ row }) => {
-      return <Badge>Revisando...</Badge>;
+      return <Badge>Proximamente..</Badge>;
       const values = row.original.allocated_to;
       if (!values) return <Badge variant={'destructive'}>Revisando...</Badge>;
       console.log(values);

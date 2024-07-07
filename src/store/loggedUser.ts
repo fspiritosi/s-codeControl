@@ -177,7 +177,6 @@ const setEmployeesToShow = (employees: any) => {
 };
 
 const setVehiclesToShow = (vehicles: Vehicle) => {
-  console.log(vehicles);
   return vehicles?.map((item) => ({
     ...item,
     types_of_vehicles: item.types_of_vehicles.name,
@@ -349,8 +348,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
       console.error('Error al obtener el perfil:', error);
     } else {
       set({ profile: data || [] });
-
-      console.log(data);
       set({ codeControlRole: data?.[0].role });
 
       howManyCompanies(data[0]?.id);
@@ -675,8 +672,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
         const formattedDate = `${day}/${month}/${year}`;
         return formattedDate || 'No vence';
       };
-
-      console.log(filteredData);
       const mapDocument = (doc: any) => {
         const formattedDate = formatDate(doc.validity);
         return {
@@ -699,7 +694,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
           applies: doc.document_types.applies,
         };
       };
-      console.log(equipmentData1);
       const mapVehicle = (doc: any) => {
         const formattedDate = formatDate(doc.validity);
         return {

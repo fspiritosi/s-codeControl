@@ -140,8 +140,6 @@ function TabsDocuments({
       };
     });
   const router = useRouter();
-  console.log(doc_personas);
-
   return (
     <Tabs defaultValue="Documentos de empleados" className="md:mx-7">
       <TabsList>

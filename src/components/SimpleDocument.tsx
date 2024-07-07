@@ -480,13 +480,6 @@ export default function SimpleDocument({
                                           setHasExpired(selected.explired);
                                           setIsMontlhy(selected.is_it_montlhy);
                                           const resource = getValues('documents')[index].applies;
-                                          console.log(
-                                            getValues('documents').some((document: any, document_index) => {
-                                              index !== document_index &&
-                                                document.id_document_types === e &&
-                                                document.applies === resource;
-                                            })
-                                          );
                                           setDuplicatedDocument(
                                             getValues('documents').some((document: any, document_index) => {
                                               index !== document_index &&

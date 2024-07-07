@@ -103,8 +103,6 @@ export default async function page({ params }: { params: { id: string } }) {
     return validityDate <= oneMonthFromNow;
   }
 
-  console.log(documentUrl);
-
   return (
     <section className="md:mx-7">
       <Card className="p-4">

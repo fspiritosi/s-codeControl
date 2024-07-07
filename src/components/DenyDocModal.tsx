@@ -79,11 +79,7 @@ export default function DenyDocModal({
         throw new Error('Ocurrió un error al enviar el correo electrónico');
       }
 
-      toast({
-        title: 'Documento rechazado',
-        description: 'El documento ha sido rechazado correctamente',
-        variant: 'default',
-      });
+      toast('Documento rechazado', { description: 'El documento ha sido rechazado correctamente' });
     } else {
       const { data, error } = await supabase
         .from('documents_equipment')
@@ -93,11 +89,7 @@ export default function DenyDocModal({
 
       if (error) {
         setIsOpen(false);
-        return toast({
-          title: 'Error',
-          description: 'Ocurrio un error al rechazar el documento',
-          variant: 'destructive',
-        });
+        return toast.error('Ocurrio un error al rechazar el documento');
       }
       const response = await fetch('/api/send', {
         method: 'POST',
@@ -117,11 +109,7 @@ export default function DenyDocModal({
         throw new Error('Ocurrió un error al enviar el correo electrónico');
       }
 
-      toast({
-        title: 'Documento rechazado',
-        description: 'El documento ha sido rechazado correctamente',
-        variant: 'default',
-      });
+      toast('Documento rechazado', { description: 'El documento ha sido rechazado correctamente' });
     }
 
     router.push('/admin/auditor');
