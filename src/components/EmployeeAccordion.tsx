@@ -52,9 +52,8 @@ type Province = {
 };
 
 export default function EmployeeAccordion() {
-
   const profile = useLoggedUserStore((state) => state);
-  
+
   let role = '';
   if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
     role = profile?.actualCompany?.owner_id?.role as string;
@@ -62,30 +61,32 @@ export default function EmployeeAccordion() {
     role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
   }
 
-  const searchParams = useSearchParams()
-  const document = searchParams.get('document')
-  const [accion, setAccion] = useState(searchParams.get('action'))
-  const employees = useLoggedUserStore(state => state.employees)
-  const [user, setUser] = useState(
-    employees?.find((user: any) => user.document_number === document),
-  )
-  const loggedUser = useLoggedUserStore(state => state.credentialUser?.id)
-  const { uploadImage } = useImageUpload()
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [base64Image, setBase64Image] = useState<string>('')
-  const fetchCityValues = useCountriesStore(state => state.fetchCities)
-  const provincesOptions = useCountriesStore(state => state.provinces)
-  const citysOptions = useCountriesStore(state => state.cities)
-  const countryOptions = useCountriesStore(state => state.countries)
-  const hierarchyOptions = useCountriesStore(state => state.hierarchy)
-  const workDiagramOptions = useCountriesStore(state => state.workDiagram)
-  const fetchContractors = useCountriesStore(state => state.fetchContractors)
-  const subscribeToCustomersChanges = useCountriesStore(state => state.subscribeToCustomersChanges)
-  const contractorCompanies = useCountriesStore(state => state.customers?.filter((company:any) => company.company_id.toString() === profile?.actualCompany?.id && company.is_active))
+  const searchParams = useSearchParams();
+  const document = searchParams.get('document');
+  const [accion, setAccion] = useState(searchParams.get('action'));
+  const employees = useLoggedUserStore((state) => state.employees);
+  const [user, setUser] = useState(employees?.find((user: any) => user.document_number === document));
+  const loggedUser = useLoggedUserStore((state) => state.credentialUser?.id);
+  const { uploadImage } = useImageUpload();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [base64Image, setBase64Image] = useState<string>('');
+  const fetchCityValues = useCountriesStore((state) => state.fetchCities);
+  const provincesOptions = useCountriesStore((state) => state.provinces);
+  const citysOptions = useCountriesStore((state) => state.cities);
+  const countryOptions = useCountriesStore((state) => state.countries);
+  const hierarchyOptions = useCountriesStore((state) => state.hierarchy);
+  const workDiagramOptions = useCountriesStore((state) => state.workDiagram);
+  const fetchContractors = useCountriesStore((state) => state.fetchContractors);
+  const subscribeToCustomersChanges = useCountriesStore((state) => state.subscribeToCustomersChanges);
+  const contractorCompanies = useCountriesStore((state) =>
+    state.customers?.filter(
+      (company: any) => company.company_id.toString() === profile?.actualCompany?.id && company.is_active
+    )
+  );
   // const filteredContractorCompanies = contractorCompanies?.filter((company:any) => company.company_id.toString() === profile?.actualCompany?.id && company.is_active);
-  const { updateEmployee, createEmployee } = useEmployeesData()
-  const getEmployees = useLoggedUserStore((state:any) => state.getEmployees)
-  const router = useRouter()
+  const { updateEmployee, createEmployee } = useEmployeesData();
+  const getEmployees = useLoggedUserStore((state: any) => state.getEmployees);
+  const router = useRouter();
   const url = process.env.NEXT_PUBLIC_PROJECT_URL;
   const mandatoryDocuments = useCountriesStore((state) => state.mandatoryDocuments);
 
@@ -120,24 +121,24 @@ export default function EmployeeAccordion() {
           allocated_to: [],
           date_of_admission: undefined,
         },
-  })
-  const [accordion1Errors, setAccordion1Errors] = useState(false)
-  const [accordion2Errors, setAccordion2Errors] = useState(false)
-  const [accordion3Errors, setAccordion3Errors] = useState(false)
-  const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false)
+  });
+  const [accordion1Errors, setAccordion1Errors] = useState(false);
+  const [accordion2Errors, setAccordion2Errors] = useState(false);
+  const [accordion3Errors, setAccordion3Errors] = useState(false);
+  const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false);
 
   const provinceId = provincesOptions?.find((province: Province) => province.name.trim() === user?.province)?.id;
 
   useEffect(() => {
-    fetchContractors()
+    fetchContractors();
 
-    const unsubscribe = subscribeToCustomersChanges()
+    const unsubscribe = subscribeToCustomersChanges();
 
     return () => {
-      unsubscribe()
-    }
-  }, [fetchContractors, subscribeToCustomersChanges])
-  
+      unsubscribe();
+    };
+  }, [fetchContractors, subscribeToCustomersChanges]);
+
   useEffect(() => {
     if (provinceId) {
       fetchCityValues(provinceId);
@@ -404,6 +405,7 @@ export default function EmployeeAccordion() {
 
         try {
           const applies = await createEmployee(finalValues);
+          const allocated_to = finalValues.allocated_to;
           const documentsMissing: {
             applies: number;
             id_document_types: string;
@@ -481,6 +483,7 @@ export default function EmployeeAccordion() {
         },
       }
     );
+    router.refresh();
   }
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {

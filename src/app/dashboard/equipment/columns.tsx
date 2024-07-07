@@ -125,24 +125,6 @@ export const columns: ColumnDef<Colum>[] = [
       };
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
-      // const fetchInactiveEquipment = async () => {
-      //   try {
-      //     const { data, error } = await supabase
-      //       .from('vehicles')
-      //       .select('*')
-      //       //.eq('is_active', false)
-      //       .eq('company_id', actualCompany?.id)
-
-      //     if (error) {
-      //       console.error(error)
-      //     }
-      //   } catch (error) {
-      //     console.error(error)
-      //   }
-      // }
-      // useEffect(() => {
-      //   fetchInactiveEquipment()
-      // }, [])
       const handleOpenIntegerModal = (id: string) => {
         setDomain(id);
         setIntegerModal(!integerModal);
@@ -205,7 +187,7 @@ export const columns: ColumnDef<Colum>[] = [
           toast.success('Equipo eliminado', { description: `El equipo ${equipment.domain} ha sido dado de baja` });
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
-          toast.error('Error al dar de baja el equipo', { description: message })
+          toast.error('Error al dar de baja el equipo', { description: message });
         }
       }
 

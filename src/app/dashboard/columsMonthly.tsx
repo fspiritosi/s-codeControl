@@ -1,5 +1,6 @@
 'use client';
 
+import SimpleDocument from '@/components/SimpleDocument';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,6 +10,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,6 +40,7 @@ import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
+import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarIcon, DotsVerticalIcon, Pencil2Icon } from '@radix-ui/react-icons';
 import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
@@ -61,6 +64,7 @@ type Colum = {
   state: string;
   document_number?: string;
   mandatory?: string;
+  id_document_types?: string;
 };
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -150,24 +154,23 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
       });
 
       async function reintegerDocumentEmployees() {
-
         toast.promise(
           async () => {
-            const supabase = supabaseBrowser()
+            const supabase = supabaseBrowser();
 
             const { data, error } = await supabase
-            .from('documents_employees')
-            .update({
-              is_active: true,
-              // termination_date: null,
-              // reason_for_termination: null,
-            })
-            .eq('id', document.id)
-            .select();
+              .from('documents_employees')
+              .update({
+                is_active: true,
+                // termination_date: null,
+                // reason_for_termination: null,
+              })
+              .eq('id', document.id)
+              .select();
 
-          setIntegerModal(!integerModal);
-          //setInactive(data as any)
-          setShowDeletedEquipment(false);
+            setIntegerModal(!integerModal);
+            //setInactive(data as any)
+            setShowDeletedEquipment(false);
 
             if (error) {
               throw new Error(handleSupabaseError(error.message));
@@ -612,12 +615,37 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
     header: 'Revisar documento',
     cell: ({ row }) => {
       const isNoPresented = row.getValue('state') === 'pendiente';
+      const role = useLoggedUserStore?.getState?.().roleActualCompany;
+
+      console.log(row.original);
+      const [open, setOpen] = useState(false);
+
+      const handleOpen = () => setOpen(!open);
 
       if (isNoPresented) {
         return (
-          <Button disabled variant="link">
-            Falta subir documento
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              {role !== 'Invitado' && <Button variant="link">Falta subir documento</Button>}
+            </AlertDialogTrigger>
+            <AlertDialogContent asChild>
+              <AlertDialogHeader>
+                <div className="max-h-[90vh] overflow-y-auto">
+                  <div className="space-y-3">
+                    <div>
+                      <SimpleDocument
+                        resource={'empleado'}
+                        handleOpen={() => handleOpen()}
+                        defaultDocumentId={row.original.id_document_types}
+                        // document={document}
+                        numberDocument={row.original.document_number}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </AlertDialogHeader>
+            </AlertDialogContent>
+          </AlertDialog>
         );
       }
 

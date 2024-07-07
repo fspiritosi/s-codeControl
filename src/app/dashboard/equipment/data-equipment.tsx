@@ -13,6 +13,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -328,7 +329,6 @@ export function DataEquipment<TData, TValue>({
             {table.getHeaderGroups()?.map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers?.map((header) => {
-                  console.log(header.id)
                   return (
                     <TableHead className="text-center text-balance" key={header.id}>
                       {header.isPlaceholder
@@ -420,7 +420,14 @@ export function DataEquipment<TData, TValue>({
                         {cell.column.id === 'picture' ? (
                           cell.getValue() !== '' ? (
                             <Link href={cell.getValue() as any} target="_blank">
-                              <img src={cell.getValue() as any} alt="Foto" style={{ width: '50px' }} />
+                              <Avatar className="size-14 border border-black">
+                                <AvatarImage
+                                  src={cell.getValue() as any}
+                                  alt="imagen del vehiculo"
+                                  className="object-cover"
+                                />
+                                <AvatarFallback>foto</AvatarFallback>
+                              </Avatar>
                             </Link>
                           ) : (
                             'No disponible'

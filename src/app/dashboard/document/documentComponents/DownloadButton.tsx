@@ -1,6 +1,7 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import { handleSupabaseError } from '@/lib/errorHandler';
+import { DownloadIcon } from '@radix-ui/react-icons';
 import { saveAs } from 'file-saver';
 import { toast } from 'sonner';
 import { supabase } from '../../../../../supabase/supabase';
@@ -31,7 +32,12 @@ function DownloadButton({ path, fileName }: { path: string; fileName: string }) 
     );
   };
 
-  return <Button onClick={() => handleDownload(path, fileName)}>Descargar</Button>;
+  return (
+    <Button onClick={() => handleDownload(path, fileName)}>
+      <DownloadIcon className="size-5 mr-2" />
+      Descargar
+    </Button>
+  );
 }
 
 export default DownloadButton;

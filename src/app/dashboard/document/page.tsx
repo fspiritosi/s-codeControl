@@ -46,6 +46,7 @@ export default async function page() {
       is_active: doc.employees.is_active,
       period: doc.period,
       applies: doc.document_types.applies,
+      id_document_types: doc.document_types.id,
     };
   };
   const mapVehicle = (doc: any) => {
@@ -60,11 +61,12 @@ export default async function page() {
       validity: formattedDate,
       mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
       id: doc.id,
-      resource: doc.applies?.domain || doc.applies?.intern_number,
+      resource: `${doc.applies?.domain} (${doc.applies?.intern_number})`,
       vehicle_id: doc.applies?.id,
       is_active: doc.applies?.is_active,
       period: doc.period,
       applies: doc.document_types.applies,
+      id_document_types: doc.document_types.id,
     };
   };
 
@@ -125,7 +127,6 @@ export default async function page() {
     employees: employeesData?.map(mapDocument) || [],
     vehicles: equipmentData1?.map(mapVehicle) || [],
   };
-
   return (
     <>
       <TabsDocuments AllvaluesToShow={AllvaluesToShow} companyData={companyData} serverRole={role} />

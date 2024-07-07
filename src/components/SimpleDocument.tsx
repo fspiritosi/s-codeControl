@@ -14,6 +14,7 @@ import { Separator } from './ui/separator';
 
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -26,11 +27,13 @@ export default function SimpleDocument({
   handleOpen,
   defaultDocumentId,
   document,
+  numberDocument,
 }: {
   resource: string | undefined;
   handleOpen: () => void;
   defaultDocumentId?: string;
   document?: string;
+  numberDocument?: string;
 }) {
   const router = useRouter();
   const documentDrawerEmployees = useLoggedUserStore((state) => state.documentDrawerEmployees);
@@ -63,7 +66,9 @@ export default function SimpleDocument({
   const documentResource = searchParams.get('document');
   const id = searchParams.get('id');
   const user = useLoggedUserStore((state) => state.credentialUser?.id);
-  const idApplies = employees?.find((employee: any) => employee.document === documentResource)?.id as string;
+  const idApplies =
+    (employees?.find((employee: any) => employee.document === documentResource || employee.document === numberDocument)
+      ?.id as string) || (vehicles?.find((vehicle: any) => vehicle.id === numberDocument)?.id as string);
 
   const {
     control,
@@ -93,6 +98,7 @@ export default function SimpleDocument({
     name: 'documents',
   });
   const [loading, setLoading] = useState(false);
+  const [allTypesDocuments, setAllTypesDocuments] = useState<any[] | null>([]);
 
   const onSubmit = async ({ documents }: any) => {
     toast.promise(
@@ -236,6 +242,7 @@ export default function SimpleDocument({
       .or(`company_id.eq.${useLoggedUserStore?.getState?.()?.actualCompany?.id},company_id.is.null`);
 
     setDocumentTypes(document_types);
+    setAllTypesDocuments(document_types);
   };
 
   useEffect(() => {
@@ -264,9 +271,15 @@ export default function SimpleDocument({
   useEffect(() => {
     const documentInfo = documenTypes?.find((documentType) => documentType.id === defaultDocumentId);
     setHasExpired(documentInfo?.explired);
+    setIsMontlhy(documentInfo?.is_it_montlhy);
   }, [defaultDocumentId, documenTypes]);
 
   const [openPopovers, setOpenPopovers] = useState(Array(fields.length).fill(false));
+  const handleTypeFilter = (value: string) => {
+    if (value === 'Ambos') setDocumentTypes(allTypesDocuments);
+    if (value === 'Permanentes') setDocumentTypes(allTypesDocuments?.filter((e) => !e.is_it_montlhy) || []);
+    if (value === 'Mensuales') setDocumentTypes(allTypesDocuments?.filter((e) => e.is_it_montlhy) || []);
+  };
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <ul className="flex flex-col gap-2">
@@ -408,6 +421,24 @@ export default function SimpleDocument({
                       </div>
                     )}
                     <div className="space-y-2">
+                      {!defaultDocumentId && (
+                        <ToggleGroup
+                          defaultValue={'ambos'}
+                          type="single"
+                          variant="outline"
+                          className="w-full flex-col items-start mb-4 gap-y-3"
+                          onValueChange={(value) => {
+                            handleTypeFilter(value);
+                          }}
+                        >
+                          <Label>Filtrar tipos de documentos</Label>
+                          <div className="flex gap-4">
+                            <ToggleGroupItem value="Ambos">Ambos</ToggleGroupItem>
+                            <ToggleGroupItem value="Permanentes">Permanentes</ToggleGroupItem>
+                            <ToggleGroupItem value="Mensuales">Mensuales</ToggleGroupItem>
+                          </div>
+                        </ToggleGroup>
+                      )}
                       <Label>Seleccione el tipo de documento a vincular al recurso</Label>
                       <Controller
                         render={({ field }) => (

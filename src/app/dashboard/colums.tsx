@@ -1,5 +1,6 @@
 'use client';
 
+import SimpleDocument from '@/components/SimpleDocument';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,6 +10,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,6 +39,7 @@ import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
+import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarIcon, DotsVerticalIcon } from '@radix-ui/react-icons';
 import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
@@ -50,6 +53,8 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 type Colum = {
+  vehicle_id?: string | undefined;
+  applies: any;
   date: string;
   allocated_to: string;
   documentName: string;
@@ -60,6 +65,7 @@ type Colum = {
   state: string;
   document_number?: string;
   mandatory?: string;
+  id_document_types?: string;
 };
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -485,6 +491,10 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
     header: 'Empleado',
   },
   {
+    accessorKey: 'id_document_types',
+    header: undefined,
+  },
+  {
     accessorKey: 'allocated_to',
     header: 'Afectado a',
   },
@@ -543,12 +553,38 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
     header: 'Revisar documento',
     cell: ({ row }) => {
       const isNoPresented = row.getValue('state') === 'pendiente';
+      const role = useLoggedUserStore?.getState?.().roleActualCompany;
+
+      console.log(row.original);
+      const [open, setOpen] = useState(false);
+
+      const handleOpen = () => setOpen(!open);
+      const applies = row.original.applies === 'Persona' ? 'empleado' : 'equipo';
 
       if (isNoPresented) {
         return (
-          <Button disabled variant="link">
-            Falta subir documento
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              {role !== 'Invitado' && <Button variant="link">Falta subir documento</Button>}
+            </AlertDialogTrigger>
+            <AlertDialogContent asChild>
+              <AlertDialogHeader>
+                <div className="max-h-[90vh] overflow-y-auto">
+                  <div className="space-y-3">
+                    <div>
+                      <SimpleDocument
+                        resource={applies}
+                        handleOpen={() => handleOpen()}
+                        defaultDocumentId={row.original.id_document_types}
+                        // document={document}
+                        numberDocument={row.original.document_number || row.original.vehicle_id}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </AlertDialogHeader>
+            </AlertDialogContent>
+          </AlertDialog>
         );
       }
 

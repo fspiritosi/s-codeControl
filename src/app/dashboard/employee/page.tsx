@@ -11,7 +11,9 @@ import { DataTable } from './data-table';
 const EmployeePage = () => {
   if (typeof window !== 'undefined') {
     const company_id = localStorage.getItem('company_id');
-    let actualComp = Cookies.set('actualComp', company_id as string);
+    if (company_id) {
+      Cookies.set('actualComp', company_id as string);
+    }
   }
 
   const profile = useLoggedUserStore((state) => state);
@@ -38,7 +40,7 @@ const EmployeePage = () => {
       }
     })
     .subscribe();
-    
+
   return (
     <section className="max-w-full">
       <Card className="mt-6 md:mx-7 overflow-hidden">
