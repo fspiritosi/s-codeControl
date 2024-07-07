@@ -18,6 +18,7 @@ interface Document {
   state: string;
   document_path?: string;
   is_active: boolean;
+  document_number?: string;
   isItMonthly: boolean;
   applies: string;
   mandatory: string;
