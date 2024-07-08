@@ -19,13 +19,14 @@ import { useCountriesStore } from '@/store/countries';
 import { CompanyDocumentsType, useLoggedUserStore } from '@/store/loggedUser';
 import cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ExpiredColums } from '../../colums';
 import { ColumnsMonthly } from '../../columsMonthly';
 import { DataTable } from '../../company/actualCompany/components/data-table';
 import { columnsDocuments } from '../../company/actualCompany/components/document-colums';
 import { ExpiredDataTable } from '../../data-table';
 import { EditModal } from './EditDocumenTypeModal';
+import { supabaseBrowser } from '@/lib/supabase/browser';
 
 interface Document {
   date: string;
@@ -140,6 +141,79 @@ function TabsDocuments({
       };
     });
   const router = useRouter();
+
+  // const [clientData, setClientData] = useState<any>(null);
+  // const share = useLoggedUserStore((state) => state.sharedCompanies);
+  // const profile2 = useLoggedUserStore((state) => state.credentialUser?.id);
+  // const owner2 = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
+  // const users = useLoggedUserStore((state) => state);
+  // const company = useLoggedUserStore((state) => state.actualCompany?.id);
+
+  // const employees = useLoggedUserStore((state) => state.employeesToShow);
+  // const vehiclesData = useLoggedUserStore((state) => state.vehiclesToShow);
+  // const supabase = supabaseBrowser()
+  // useEffect(() => {
+
+  //   if (company && profile && role === "Invitado") {
+  //     const fetchCustomers = async () => {
+  //       const { data, error } = await supabase
+  //         .from('share_company_users')
+  //         .select('*')
+  //         .eq('company_id', company)
+  //         .eq('profile_id', profile2);
+
+  //       if (error) {
+  //         console.error('Error fetching customers:', error);
+  //       } else {
+  //         setClientData(data);
+
+  //       }
+  //     };
+
+  //     fetchCustomers();
+  //   }
+  // }, [company, profile]);
+  // const filteredCustomers = employees?.filter((customer: any) =>
+  //   customer?.allocated_to?.includes(clientData?.[0]?.customer_id)
+  // );
+  // const filteredCustomersEmployeesRaw = allDocumentsToShow?.employees.filter((e) => !e.isItMonthly)
+  // const filteredCustomersEmployeesRawMonthly = allDocumentsToShow?.employees.filter((e) => e.isItMonthly)
+  // const filteredCustomersEmployees = filteredCustomersEmployeesRaw?.filter((customer: any) => {
+  //   const customerResource = customer?.resource_id; // Asumiendo que es una cadena
+  //   const employeeFullnames = filteredCustomers?.map((emp: any) => emp.id); // Array de cadenas
+
+
+  //   return employeeFullnames.includes(customerResource);
+  // });
+  // const filteredCustomersEmployeesMonthly = filteredCustomersEmployeesRawMonthly?.filter((customer: any) => {
+  //   const customerResource = customer?.resource; // Asumiendo que es una cadena
+  //   const employeeFullnames = filteredCustomers?.map((emp: any) => emp.full_name); // Array de cadenas
+
+
+  //   return employeeFullnames.includes(customerResource);
+  // });
+
+  // const filteredEquipment = vehiclesData?.filter((customer: any) =>
+  //   customer.allocated_to.includes(clientData?.[0]?.customer_id)
+  // );
+  // const filteredCustomersEquipmentRaw = allDocumentsToShow?.vehicles.filter((e) => !e.isItMonthly)
+  // const filteredCustomersEquipmentRawMonthly = allDocumentsToShow?.vehicles.filter((e) => e.isItMonthly)
+
+  // const filteredCustomersEquipment = filteredCustomersEquipmentRaw?.filter((customer: any) => {
+  //   const customerResource = customer?.resource_id; // Asumiendo que es una cadena
+  //   const equipmentFullnames = filteredEquipment?.map((emp: any) => emp.id); // Array de cadenas
+
+
+  //   return equipmentFullnames.includes(customerResource);
+  // });
+
+  // const filteredCustomersEquipmentMonthly = filteredCustomersEquipmentRawMonthly?.filter((customer: any) => {
+  //   const customerResource = customer?.resource_id; // Asumiendo que es una cadena
+  //   const employeeFullnames = filteredCustomers?.map((emp: any) => emp.id); // Array de cadenas
+
+
+  //   return employeeFullnames.includes(customerResource);
+  // });
   return (
     <Tabs defaultValue="Documentos de empleados" className="md:mx-7">
       <TabsList>
@@ -220,7 +294,7 @@ function TabsDocuments({
                 </CardDescription>
               </div>
               <div className="flex gap-4 flex-wrap pl-6">
-                <DocumentNav />
+              {role !== "Invitado"&&<DocumentNav />}
               </div>
             </div>
           </CardHeader>
