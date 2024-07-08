@@ -25,7 +25,7 @@ import { toast } from 'sonner';
 import { supabase } from '../../../../../../supabase/supabase';
 import { DataTableColumnHeader } from './data-table-column-header';
 
-export const columns: ColumnDef<SharedUser>[] = [
+export const columnsGuests: ColumnDef<SharedUser>[] = [
   {
     accessorKey: 'fullname',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nombre" />,
@@ -60,75 +60,75 @@ export const columns: ColumnDef<SharedUser>[] = [
     header: ({ column }) => null,
     cell: ({ row }) => null,
   },
-  {
-    accessorKey: 'role',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Rol" />,
-    cell: ({ row }) => {
-      const [roles, setRoles] = useState<any[] | null>([]);
+//   {
+//     accessorKey: 'role',
+//     header: ({ column }) => <DataTableColumnHeader column={column} title="Rol" />,
+//     cell: ({ row }) => {
+//       const [roles, setRoles] = useState<any[] | null>([]);
 
-      const getRoles = async () => {
-        let { data: roles, error } = await supabase.from('roles').select('*').eq('intern', false).neq('name', 'Invitado');
-        setRoles(roles);
-      };
+//       const getRoles = async () => {
+//         let { data: roles, error } = await supabase.from('roles').select('*').eq('intern', false).neq('name', 'Invitado');
+//         setRoles(roles);
+//       };
 
-      useEffect(() => {
-        getRoles();
-      }, []);
+//       useEffect(() => {
+//         getRoles();
+//       }, []);
 
-      const changeRole = async (role: string) => {
-        toast.promise(
-          async () => {
-            const { data, error } = await supabase
-              .from('share_company_users')
-              .update({ role })
-              .eq('id', row.getValue('id'))
-              .select();
+//       const changeRole = async (role: string) => {
+//         toast.promise(
+//           async () => {
+//             const { data, error } = await supabase
+//               .from('share_company_users')
+//               .update({ role })
+//               .eq('id', row.getValue('id'))
+//               .select();
 
-            if (error) {
-              throw new Error(handleSupabaseError(error.message));
-            }
-          },
-          {
-            loading: 'Cargando...',
-            success: (data) => {
-              return `El rol ha sido cambiado a ${role}`;
-            },
-            error: (error) => {
-              return error;
-            },
-          }
-        );
-      };
-      return (
-        <div className="flex w-[100px] items-center">
-          <Select
-            onValueChange={(e) => changeRole(e)}
-            defaultValue={row.original?.role}
-            disabled={row.original?.role === 'Propietario'}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Rol" />
-            </SelectTrigger>
-            <SelectContent>
-              {roles?.map((role) => (
-                <SelectItem key={role.id} value={role.name}>
-                  {role.name}
-                </SelectItem>
-              ))}
-              {row.original?.role === 'Propietario' ? (
-                <SelectItem defaultValue={'Propietario'} disabled value="Propietario">
-                  Propietario
-                </SelectItem>
-              ) : null}
-            </SelectContent>
-          </Select>
-        </div>
-      );
-    },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
-  },
+//             if (error) {
+//               throw new Error(handleSupabaseError(error.message));
+//             }
+//           },
+//           {
+//             loading: 'Cargando...',
+//             success: (data) => {
+//               return `El rol ha sido cambiado a ${role}`;
+//             },
+//             error: (error) => {
+//               return error;
+//             },
+//           }
+//         );
+//       };
+//       return (
+//         <div className="flex w-[100px] items-center">
+//           <Select
+//             onValueChange={(e) => changeRole(e)}
+//             defaultValue={row.original?.role}
+//             disabled={row.original?.role === 'Propietario'}
+//           >
+//             <SelectTrigger className="w-[180px]">
+//               <SelectValue placeholder="Rol" />
+//             </SelectTrigger>
+//             <SelectContent>
+//               {roles?.map((role) => (
+//                 <SelectItem key={role.id} value={role.name}>
+//                   {role.name}
+//                 </SelectItem>
+//               ))}
+//               {row.original?.role === 'Propietario' ? (
+//                 <SelectItem defaultValue={'Propietario'} disabled value="Propietario">
+//                   Propietario
+//                 </SelectItem>
+//               ) : null}
+//             </SelectContent>
+//           </Select>
+//         </div>
+//       );
+//     },
+//     filterFn: (row, id, value) => {
+//       return value.includes(row.getValue(id));
+//     },
+//   },
   {
     accessorKey: 'alta',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Fecha de alta" />,

@@ -1,6 +1,6 @@
-alter table "public"."customers" drop constraint "customers_client_email_key";
+-- alter table "public"."customers" drop constraint "customers_client_email_key";
 
-alter table "public"."customers" drop constraint "customers_client_phone_key";
+-- alter table "public"."customers" drop constraint "customers_client_phone_key";
 
 alter table "public"."document_types" drop constraint "document_types_name_key";
 
@@ -10,9 +10,9 @@ drop function if exists "public"."enviar_documentos_a_45_dias"();
 
 drop function if exists "public"."enviar_documentos_por_vencer"();
 
-drop index if exists "public"."customers_client_email_key";
+-- drop index if exists "public"."customers_client_email_key";
 
-drop index if exists "public"."customers_client_phone_key";
+-- drop index if exists "public"."customers_client_phone_key";
 
 drop index if exists "public"."document_types_name_key";
 
