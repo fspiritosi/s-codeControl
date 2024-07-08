@@ -181,7 +181,7 @@ export default function NavBar() {
                         <CommandItem
                           key={index}
                           onSelect={() => {
-                            const company = totalCompanies.find((companyItem) => companyItem.id === team.value);
+                            const company = totalCompanies.find((companyItem) => companyItem?.id === team?.value);
                             if (company) {
                               handleNewCompany(company);
                             }

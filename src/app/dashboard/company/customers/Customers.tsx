@@ -66,8 +66,7 @@ export default function Customers() {
 
             <CardContent>
               <DataCustomers
-                columns={columns}
-                // data={customers || []}
+                columns={columns}        
                 data={contractorCompanies || []}
                 allCompany={allCompany}
                 showInactive={showInactive}

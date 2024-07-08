@@ -1,3 +1,4 @@
+import { Vechicle } from './../types/types';
 import { Notifications, SharedUser, VehiclesAPI, profileUser } from '@/types/types';
 import { Company, SharedCompanies, Vehicle } from '@/zodSchemas/schemas';
 import { User } from '@supabase/supabase-js';
@@ -175,7 +176,6 @@ const setEmployeesToShow = (employees: any) => {
 };
 
 const setVehiclesToShow = (vehicles: Vehicle) => {
-  console.log(vehicles);
   return vehicles?.map((item) => ({
     ...item,
     types_of_vehicles: item.types_of_vehicles.name,
@@ -654,6 +654,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
           is_active: doc.employees.is_active,
           period: doc.period,
           applies: doc.document_types.applies,
+          resource_id:doc.employees.id
         };
       };
 
@@ -674,6 +675,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
           is_active: doc.applies?.is_active,
           period: doc.period,
           applies: doc.document_types.applies,
+          resource_id: doc.applies?.id,
         };
       };
 

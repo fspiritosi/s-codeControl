@@ -103,14 +103,33 @@ export const columns: ColumnDef<Colum>[] = [
   {
     id: 'actions',
     cell: ({ row }: { row: any }) => {
-      const profile = useLoggedUserStore((state) => state);
+      // const profile = useLoggedUserStore((state) => state);
+      // let role = '';
+      // if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
+      //   role = profile?.actualCompany?.owner_id?.role as string;
+      // } else {
+      //   role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
+      // }
+      const share = useLoggedUserStore((state) => state.sharedCompanies);
+      const profile = useLoggedUserStore((state) => state.credentialUser?.id);
+      const owner = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
+      const users = useLoggedUserStore((state) => state);
+      const company = useLoggedUserStore((state) => state.actualCompany?.id);
+      
       let role = '';
-      if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
-        role = profile?.actualCompany?.owner_id?.role as string;
+      if (owner === profile) {
+        role = users?.actualCompany?.owner_id?.role as string;
+        
       } else {
-        role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
+        
+        const roleRaw = share
+          .filter((item: any) =>
+            item.company_id.id === company &&
+            Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))
+          )
+          .map((item: any) => item.role);
+        role = roleRaw?.join('');
       }
-
       const [showModal, setShowModal] = useState(false);
       const [integerModal, setIntegerModal] = useState(false);
       const [domain, setDomain] = useState('');
@@ -125,24 +144,7 @@ export const columns: ColumnDef<Colum>[] = [
       };
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
-      // const fetchInactiveEquipment = async () => {
-      //   try {
-      //     const { data, error } = await supabase
-      //       .from('vehicles')
-      //       .select('*')
-      //       //.eq('is_active', false)
-      //       .eq('company_id', actualCompany?.id)
-
-      //     if (error) {
-      //       console.error(error)
-      //     }
-      //   } catch (error) {
-      //     console.error(error)
-      //   }
-      // }
-      // useEffect(() => {
-      //   fetchInactiveEquipment()
-      // }, [])
+      
       const handleOpenIntegerModal = (id: string) => {
         setDomain(id);
         setIntegerModal(!integerModal);
@@ -173,7 +175,7 @@ export const columns: ColumnDef<Colum>[] = [
             .select();
 
           setIntegerModal(!integerModal);
-          //setInactive(data as any)
+      
           setShowDeletedEquipment(false);
           toast({
             variant: 'default',
@@ -340,10 +342,12 @@ export const columns: ColumnDef<Colum>[] = [
             </Dialog>
           )}
           <DropdownMenuTrigger asChild>
+            {/* {role === "Invitado" ? null :( */}
             <Button variant="ghost" className="h-8 w-8 p-0">
               <span className="sr-only">Open menu</span>
               <DotsVerticalIcon className="h-4 w-4" />
             </Button>
+            {/* )} */}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Opciones</DropdownMenuLabel>
@@ -422,12 +426,12 @@ export const columns: ColumnDef<Colum>[] = [
       return <Badge>Revisando...</Badge>;
       const values = row.original.allocated_to;
       if (!values) return <Badge variant={'destructive'}>Revisando...</Badge>;
-      console.log(values);
+      
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
       const contractorCompanies = useCountriesStore((state) =>
         state.customers?.filter((company: any) => company.company_id.toString() === actualCompany?.id)
       );
-      console.log(contractorCompanies);
+      
       // console.log();
       if (contractorCompanies.some((e) => e.name.includes(row.original.allocated_to))) return true;
 
