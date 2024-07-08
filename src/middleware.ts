@@ -53,10 +53,11 @@ export async function middleware(req: NextRequest) {
     '/dashboard/equipment/action?action=new',
     '/dashboard/company/new',
     '/dashboard/company/actualCompany',
+    '/dashboard',
   ]; // -> Rol tabla profile
   const allowedPathsguestUser = [
     '/dashboard/document',
-    '/dashboard/employees',
+    '/dashboard/employee',
     '/dashboard/equipment',
   ];
   const usuarioUser = ['/dashboard/company/actualCompany', 'admin/auditor'];
@@ -101,20 +102,20 @@ export async function middleware(req: NextRequest) {
     // }
     if (guestRole?.[0]?.role === 'Invitado') {
     // Si el usuario está en una ruta permitida, permitir la navegación
-    const isAllowedPath = allowedPathsguestUser.some(path => req.url.startsWith(path));
-    console.log('Is Allowed Path:', isAllowedPath);
+    const isAllowedPath = allowedPathsguestUser.some(path => req.url.includes(path));
+    // console.log('Is Allowed Path:', isAllowedPath);
 
     if (isAllowedPath) {
       return NextResponse.next();
     }
 
     // Si el usuario está en una ruta restringida, redirigir a '/dashboard/document'
-    const isRestrictedPath = guestUser.some(path => req.url.startsWith(path));
-    console.log('Is Restricted Path:', isRestrictedPath);
+    const isRestrictedPath = guestUser.some(path => req.url.includes(path));
+    // console.log('Is Restricted Path:', isRestrictedPath);
 
     if (isRestrictedPath) {
       redirectUrl.pathname = '/dashboard/document';
-      console.log('Redirecting to /dashboard/document');
+      // console.log('Redirecting to /dashboard/document');
       return NextResponse.redirect(redirectUrl);
     }
   }
