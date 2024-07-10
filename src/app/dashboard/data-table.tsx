@@ -219,7 +219,7 @@ export function ExpiredDataTable<TData, TValue>({
   const getColorForRow = (row: any) => {
     const isNoPresented = row.getValue('state') === 'pendiente';
     if (isNoPresented) {
-      return 'text-black'; // Clase por defecto si no está vencido
+      return ; // Clase por defecto si no está vencido
     } else {
       const validityDateStr = row.original.validity; // Obtener la fecha en formato "dd/mm/yyyy"
       const parts = validityDateStr.split('/'); // Separar la fecha en partes
@@ -233,7 +233,7 @@ export function ExpiredDataTable<TData, TValue>({
       } else if (differenceInDays <= 7) {
         return 'bg-yellow-100 hover:bg-yellow-100/30'; // Próximo a vencer en los próximos 7 días
       } else {
-        return 'text-black'; // Clase por defecto si no está vencido ni próximo a vencer
+        return
       }
     }
   };
