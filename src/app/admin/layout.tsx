@@ -59,7 +59,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               name
             ),
             contractor_employee(
-              contractors(
+              customers(
                 *
               )
             )
@@ -104,7 +104,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               name
             ),
             contractor_employee(
-              contractors(
+              customers(
                 *
               )
             )
