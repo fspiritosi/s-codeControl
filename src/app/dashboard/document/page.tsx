@@ -16,7 +16,7 @@ export default async function page() {
     const formattedDate = formatDate(doc.validity);
     return {
       date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
-      allocated_to: doc.employees?.contractor_employee?.map((doc: any) => doc.contractors.name).join(', '),
+      allocated_to: doc.employees?.contractor_employee?.map((doc: any) => doc.contractors?.name).join(', '),
       documentName: doc.document_types?.name,
       state: doc.state,
       multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
@@ -79,7 +79,7 @@ export default async function page() {
       `
     *,
     employees:employees(*,contractor_employee(
-      contractors(
+      customers(
         *
       )
     )),
@@ -116,9 +116,23 @@ export default async function page() {
     vehicles: equipmentData1?.map(mapVehicle) || [],
   };
 
+  let clientData: any[] | null = []
+
+  if (role === 'Invitado') {
+    const { data, error: shared_error } = await supabase
+      .from('share_company_users')
+      .select('*')
+      .eq('company_id', actualCompany)
+      .eq('profile_id', user?.data?.user?.id);
+
+      if(!error){
+        clientData = data
+      }
+  }
+
   return (
     <>
-      <TabsDocuments AllvaluesToShow={AllvaluesToShow} companyData={companyData} serverRole={role} />
+      <TabsDocuments clientData={clientData||[]} AllvaluesToShow={AllvaluesToShow} companyData={companyData} serverRole={role} />
     </>
   );
 }

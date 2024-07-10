@@ -411,7 +411,7 @@ export const accordionSchema = z
     type_of_contract: z.string({
       required_error: 'El tipo de contrato es requerido',
     }),
-    allocated_to: z.array(z.string()).optional(),
+    allocated_to: z.array(z.string()).optional().nullable(),
     date_of_admission: z
       .date({
         required_error: 'La fecha de ingreso es requerida',

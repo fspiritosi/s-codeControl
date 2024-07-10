@@ -1,5 +1,4 @@
 'use client';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 require('dotenv').config();
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -15,9 +14,7 @@ import {
 } from '@/types/enums';
 import { supabase } from '../../supabase/supabase';
 
-import { DocumentationDrawer } from '@/components/DocumentationDrawer';
-
-
+import DocumentTable from '@/app/dashboard/document/DocumentTable';
 import { CheckboxDefaultValues } from '@/components/CheckboxDefValues';
 import { SelectWithData } from '@/components/SelectWithData';
 import { Badge } from '@/components/ui/badge';
@@ -49,7 +46,6 @@ import { Button } from './ui/button';
 import { CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import DocumentTable from '@/app/dashboard/document/DocumentTable';
 
 type Province = {
   id: number;
@@ -73,41 +69,44 @@ export default function EmployeeAccordion() {
   let role = '';
   if (owner2 === profile2) {
     role = users?.actualCompany?.owner_id?.role as string;
-    
   } else {
-
-    const roleRaw = share.filter((item: any) =>
-        item.company_id.id === company &&
-        Object.values(item).some((value) => typeof value === 'string' && value.includes(profile2 as string))
+    const roleRaw = share
+      ?.filter(
+        (item: any) =>
+          item.company_id.id === company &&
+          Object.values(item).some((value) => typeof value === 'string' && value.includes(profile2 as string))
       )
       .map((item: any) => item.role);
     role = roleRaw?.join('');
   }
 
-  const searchParams = useSearchParams()
-  const document = searchParams.get('document')
-  const [accion, setAccion] = useState(searchParams.get('action'))
-  const employees = useLoggedUserStore(state => state.employees)
-  const [user, setUser] = useState(
-    employees?.find((user: any) => user.document_number === document),
-  )
-  const loggedUser = useLoggedUserStore(state => state.credentialUser?.id)
-  const { uploadImage } = useImageUpload()
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [base64Image, setBase64Image] = useState<string>('')
-  const fetchCityValues = useCountriesStore(state => state.fetchCities)
-  const provincesOptions = useCountriesStore(state => state.provinces)
-  const citysOptions = useCountriesStore(state => state.cities)
-  const countryOptions = useCountriesStore(state => state.countries)
-  const hierarchyOptions = useCountriesStore(state => state.hierarchy)
-  const workDiagramOptions = useCountriesStore(state => state.workDiagram)
-  const fetchContractors = useCountriesStore(state => state.fetchContractors)
-  const subscribeToCustomersChanges = useCountriesStore(state => state.subscribeToCustomersChanges)
-  const contractorCompanies = useCountriesStore(state => state.customers?.filter((company: any) => company.company_id.toString() === profile?.actualCompany?.id && company.is_active))
+  const searchParams = useSearchParams();
+  const document = searchParams.get('document');
+  const [accion, setAccion] = useState(searchParams.get('action'));
+  const employees = useLoggedUserStore((state) => state.employees);
+  const [user, setUser] = useState(employees?.find((user: any) => user.document_number === document));
+  const loggedUser = useLoggedUserStore((state) => state.credentialUser?.id);
+  const { uploadImage } = useImageUpload();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [base64Image, setBase64Image] = useState<string>('');
+  const fetchCityValues = useCountriesStore((state) => state.fetchCities);
+  const provincesOptions = useCountriesStore((state) => state.provinces);
+  const citysOptions = useCountriesStore((state) => state.cities);
+  const countryOptions = useCountriesStore((state) => state.countries);
+  const hierarchyOptions = useCountriesStore((state) => state.hierarchy);
+  const workDiagramOptions = useCountriesStore((state) => state.workDiagram);
+  const fetchContractors = useCountriesStore((state) => state.fetchContractors);
+  const subscribeToCustomersChanges = useCountriesStore((state) => state.subscribeToCustomersChanges);
+  const contractorCompanies = useCountriesStore((state) =>
+    state.customers?.filter(
+      (company: any) => company.company_id.toString() === profile?.actualCompany?.id && company.is_active
+    )
+  );
   // const filteredContractorCompanies = contractorCompanies?.filter((company:any) => company.company_id.toString() === profile?.actualCompany?.id && company.is_active);
-  const { updateEmployee, createEmployee } = useEmployeesData()
-  const getEmployees = useLoggedUserStore((state: any) => state.getEmployees)
-  const router = useRouter()
+  const setActivesEmployees = useLoggedUserStore((state) => state.setActivesEmployees);
+  const { updateEmployee, createEmployee } = useEmployeesData();
+  const getEmployees = useLoggedUserStore((state: any) => state.getEmployees);
+  const router = useRouter();
   // const { toast } = useToast()
   const url = process.env.NEXT_PUBLIC_PROJECT_URL;
   const mandatoryDocuments = useCountriesStore((state) => state.mandatoryDocuments);
@@ -117,37 +116,37 @@ export default function EmployeeAccordion() {
     defaultValues: user
       ? { ...user, allocated_to: user?.allocated_to }
       : {
-        lastname: '',
-        firstname: '',
-        nationality: undefined,
-        cuil: '',
-        document_type: undefined,
-        document_number: '',
-        birthplace: undefined,
-        gender: undefined,
-        marital_status: undefined,
-        level_of_education: undefined,
-        picture: '',
-        street: '',
-        street_number: '',
-        province: undefined,
-        city: undefined,
-        postal_code: '',
-        phone: '',
-        email: '',
-        file: '',
-        hierarchical_position: undefined,
-        company_position: '',
-        workflow_diagram: undefined,
-        type_of_contract: undefined,
-        allocated_to: [],
-        date_of_admission: undefined,
-      },
-  })
-  const [accordion1Errors, setAccordion1Errors] = useState(false)
-  const [accordion2Errors, setAccordion2Errors] = useState(false)
-  const [accordion3Errors, setAccordion3Errors] = useState(false)
-  const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false)
+          lastname: '',
+          firstname: '',
+          nationality: undefined,
+          cuil: '',
+          document_type: undefined,
+          document_number: '',
+          birthplace: undefined,
+          gender: undefined,
+          marital_status: undefined,
+          level_of_education: undefined,
+          picture: '',
+          street: '',
+          street_number: '',
+          province: undefined,
+          city: undefined,
+          postal_code: '',
+          phone: '',
+          email: '',
+          file: '',
+          hierarchical_position: undefined,
+          company_position: '',
+          workflow_diagram: undefined,
+          type_of_contract: undefined,
+          allocated_to: [],
+          date_of_admission: undefined,
+        },
+  });
+  const [accordion1Errors, setAccordion1Errors] = useState(false);
+  const [accordion2Errors, setAccordion2Errors] = useState(false);
+  const [accordion3Errors, setAccordion3Errors] = useState(false);
+  const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false);
 
   const provinceId = provincesOptions?.find((province: Province) => province.name.trim() === user?.province)?.id;
 
@@ -157,9 +156,9 @@ export default function EmployeeAccordion() {
     const unsubscribe = subscribeToCustomersChanges();
 
     return () => {
-      unsubscribe()
-    }
-  }, [fetchContractors, subscribeToCustomersChanges])
+      unsubscribe();
+    };
+  }, [fetchContractors, subscribeToCustomersChanges]);
 
   useEffect(() => {
     if (provinceId) {
@@ -425,9 +424,10 @@ export default function EmployeeAccordion() {
               : 'https://ui.shadcn.com/avatars/05.png',
         };
 
+        console.log(finalValues);
+
         try {
           const applies = await createEmployee(finalValues);
-          const allocated_to = finalValues.allocated_to;
           const documentsMissing: {
             applies: number;
             id_document_types: string;
@@ -473,6 +473,28 @@ export default function EmployeeAccordion() {
 
   // 2. Define a submit handler.
   async function onUpdate(values: z.infer<typeof accordionSchema>) {
+    function compareContractorEmployees(
+      originalObj: z.infer<typeof accordionSchema>,
+      modifiedObj: z.infer<typeof accordionSchema>
+    ) {
+      const originalSet = new Set(originalObj.allocated_to);
+      const modifiedSet = new Set(modifiedObj.allocated_to);
+      // Valores a eliminar
+      const valuesToRemove = [...originalSet].filter((value) => !modifiedSet.has(value));
+
+      // Valores a agregar
+      const valuesToAdd = [...modifiedSet].filter((value) => !originalSet.has(value));
+
+      // Valores que se mantienen
+      const valuesToKeep = [...originalSet].filter((value) => modifiedSet.has(value));
+
+      return {
+        valuesToRemove,
+        valuesToAdd,
+        valuesToKeep,
+      };
+    }
+
     toast.promise(
       async () => {
         const { full_name, ...rest } = values;
@@ -489,9 +511,43 @@ export default function EmployeeAccordion() {
           workflow_diagram: String(workDiagramOptions.find((e) => e.name === values.workflow_diagram)?.id),
         };
 
+        console.log(finalValues);
+        console.log(user);
+        // Valores a eliminar
+        const result = compareContractorEmployees(user, finalValues);
+        console.log(result);
+
+        result.valuesToRemove.forEach(async (e) => {
+          const { error } = await supabase
+            .from('contractor_employee')
+            .delete()
+            .eq('employee_id', user.id)
+            .eq('contractor_id', e);
+          if (error) return handleSupabaseError(error.message);
+        });
+
+        const error2 = await Promise.all(
+          result.valuesToAdd.map(async (e) => {
+            if (!result.valuesToKeep.includes(e)) {
+              const { error } = await supabase
+                .from('contractor_employee')
+                .insert({ employee_id: user.id, contractor_id: e });
+              if (error) return handleSupabaseError(error.message);
+            }
+          })
+        );
+
+        if (error2 && typeof error2[0] === 'string') {
+          console.log(error2);
+          throw new Error(error2[0]);
+        }
+
         try {
           await updateEmployee(finalValues, user?.id);
+
           await handleUpload();
+          getEmployees(true);
+          setActivesEmployees();
           router.push('/dashboard/employee');
         } catch (error: PostgrestError | any) {
           throw new Error(handleSupabaseError(error.message));
@@ -611,16 +667,20 @@ export default function EmployeeAccordion() {
             onSubmit={form.handleSubmit(accion === 'edit' || accion === 'view' ? onUpdate : onCreate)}
             className="w-full"
           >
-            <Tabs defaultValue="personalData" className='w-full m-4'>
+            <Tabs defaultValue="personalData" className="w-full m-4">
               <TabsList>
-                <TabsTrigger value={'personalData'} className={cn(accordion1Errors && "bg-red-300 text-red-50")}>Datos Personales</TabsTrigger>
-                <TabsTrigger value={'contactData'} className={cn(accordion2Errors && "bg-red-300 text-red-50")}>Datos de Contacto</TabsTrigger>
-                <TabsTrigger value={'workData'} className={cn(accordion3Errors && "bg-red-300 text-red-50")}>Datos Laborales</TabsTrigger>
-                {
-                  user && <TabsTrigger value='documents'>Documentación</TabsTrigger>
-                }
+                <TabsTrigger value={'personalData'} className={cn(accordion1Errors && 'bg-red-300 text-red-50')}>
+                  Datos Personales
+                </TabsTrigger>
+                <TabsTrigger value={'contactData'} className={cn(accordion2Errors && 'bg-red-300 text-red-50')}>
+                  Datos de Contacto
+                </TabsTrigger>
+                <TabsTrigger value={'workData'} className={cn(accordion3Errors && 'bg-red-300 text-red-50')}>
+                  Datos Laborales
+                </TabsTrigger>
+                {user && <TabsTrigger value="documents">Documentación</TabsTrigger>}
               </TabsList>
-              <TabsContent value='personalData' className='px-2 py-2'>
+              <TabsContent value="personalData" className="px-2 py-2">
                 {accordion1Errors && (
                   <Badge className="h-6 hover:no-underline" variant="destructive">
                     Falta corregir algunos campos
@@ -720,8 +780,8 @@ export default function EmployeeAccordion() {
                     }
                   })}
                 </div>
-              </TabsContent >
-              <TabsContent value='contactData' className='px-2 py-2'>
+              </TabsContent>
+              <TabsContent value="contactData" className="px-2 py-2">
                 {accordion2Errors && (
                   <Badge className="h-6" variant="destructive">
                     Falta corregir algunos campos
@@ -800,9 +860,8 @@ export default function EmployeeAccordion() {
                     }
                   })}
                 </div>
-
               </TabsContent>
-              <TabsContent value='workData' className='px-2 py-2'>
+              <TabsContent value="workData" className="px-2 py-2">
                 {accordion3Errors && (
                   <Badge className="h-6" variant="destructive">
                     Faltan corregir algunos campos
@@ -911,8 +970,8 @@ export default function EmployeeAccordion() {
                       if (isMultiple) {
                         return (
                           <div key={index}>
-                            {role === "Invitado" ? null : (
-                              <div  className="w-[300px] flex flex-col gap-2 justify-center">
+                            {role === 'Invitado' ? null : (
+                              <div className="w-[300px] flex flex-col gap-2 justify-center">
                                 <FormField
                                   control={form.control}
                                   name={data.name as names}
@@ -929,7 +988,6 @@ export default function EmployeeAccordion() {
                               </div>
                             )}
                           </div>
-
                         );
                       }
                       return (
@@ -996,9 +1054,8 @@ export default function EmployeeAccordion() {
                     }
                   })}
                 </div>
-
               </TabsContent>
-              <TabsContent value='documents' className='px-2 py-2'>
+              <TabsContent value="documents" className="px-2 py-2">
                 <DocumentTable document={user?.document_number || ''} />
               </TabsContent>
               <TooltipProvider delayDuration={100}>
