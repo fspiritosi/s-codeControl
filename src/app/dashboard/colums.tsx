@@ -66,6 +66,7 @@ type Colum = {
   document_number?: string;
   mandatory?: string;
   id_document_types?: string;
+  intern_number?: string;
 };
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -464,44 +465,45 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
     },
   },
   {
-    accessorKey: 'date',
-    sortingFn: 'datetime',
-    header: ({ column }) => {
-      return (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Subido el
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const isNoPresented = row.getValue('state') === 'pendiente';
-
-      if (isNoPresented) {
-        return 'No disponible';
-      } else {
-        const [day, month, year] = row.original.date.split('/');
-        const date = new Date(Number(year), Number(month) - 1, Number(day));
-        return format(date, 'P', { locale: es });
-      }
-    },
-  },
-  {
     accessorKey: 'resource',
     header: 'Empleado',
-  },
-  {
-    accessorKey: 'id_document_types',
-    header: undefined,
-  },
-  {
-    accessorKey: 'allocated_to',
-    header: 'Afectado a',
   },
   {
     accessorKey: 'documentName',
     header: 'Documento',
   },
+  {
+    accessorKey: 'intern_number',
+    header: ({ column, table, header }) => {
+      const rowId = column.id; // Suponiendo que props.column.id contiene el id de la fila
+      const row = table.getRowModel().rows.some((e) => e.original.intern_number);
+
+      // console.log(row);
+      if (!row) return null;
+      return (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Numero interno
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+
+    cell: ({ row, table }) => {
+      const isHide = table.getRowModel().rows.some((e) => e.original.intern_number);
+      if (!isHide) return null;
+      return <p>{row.original.intern_number}</p>;
+    },
+  },
+  {
+    accessorKey: 'id_document_types',
+    header: undefined,
+  },
+
+  {
+    accessorKey: 'allocated_to',
+    header: 'Afectado a',
+  },
+
   {
     accessorKey: 'mandatory',
     header: 'Mandatorio',
@@ -545,6 +547,29 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
         return 'No disponible';
       } else {
         return row.original.validity;
+      }
+    },
+  },
+  {
+    accessorKey: 'date',
+    sortingFn: 'datetime',
+    header: ({ column }) => {
+      return (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Subido el
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const isNoPresented = row.getValue('state') === 'pendiente';
+
+      if (isNoPresented) {
+        return 'No disponible';
+      } else {
+        const [day, month, year] = row.original.date.split('/');
+        const date = new Date(Number(year), Number(month) - 1, Number(day));
+        return format(date, 'P', { locale: es });
       }
     },
   },

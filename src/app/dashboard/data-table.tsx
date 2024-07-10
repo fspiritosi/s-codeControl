@@ -229,9 +229,9 @@ export function ExpiredDataTable<TData, TValue>({
       const differenceInDays = Math.ceil((validityDate - currentDate) / (1000 * 60 * 60 * 24));
 
       if (differenceInDays < 0) {
-        return 'bg-red-300 hover:bg-red-300/30'; // Vencido
+        return 'bg-red-100 hover:bg-red-100/30'; // Vencido
       } else if (differenceInDays <= 7) {
-        return 'bg-red-100 hover:bg-red-100/30'; // Próximo a vencer en los próximos 7 días
+        return 'bg-yellow-200 hover:bg-yellow-200/30'; // Próximo a vencer en los próximos 7 días
       } else {
         return 'text-black'; // Clase por defecto si no está vencido ni próximo a vencer
       }
@@ -277,6 +277,19 @@ export function ExpiredDataTable<TData, TValue>({
                   .getAllColumns()
                   ?.filter((column) => column.getCanHide())
                   ?.map((column) => {
+                    console.log(column);
+                    if (column.id === 'intern_number') {
+                      return (
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          className="capitalize"
+                          checked={column.getIsVisible()}
+                          onCheckedChange={(value) => handleColumnVisibilityChange(column.id, !!value)}
+                        >
+                          Numero interno
+                        </DropdownMenuCheckboxItem>
+                      );
+                    }
                     if (column.id === 'actions' || typeof column.columnDef.header !== 'string') {
                       return null;
                     }

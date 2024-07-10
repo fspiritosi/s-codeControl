@@ -95,13 +95,13 @@ export default function Equipment() {
   }, [company, profile]);
   
   const filteredCustomersEquipment = vehiclesData?.filter((customer: any) =>
-    customer.allocated_to.includes(clientData?.[0]?.customer_id)
+    customer.allocated_to?.includes(clientData?.[0]?.customer_id)
   );
   const filteredCustomersVehicles = onlyVehicles?.filter((customer: any) =>
-    customer.allocated_to.includes(clientData?.[0]?.customer_id)
+    customer.allocated_to?.includes(clientData?.[0]?.customer_id)
   );
   const filteredCustomersOthers = onlyOthers?.filter((customer: any) =>
-    customer.allocated_to.includes(clientData?.[0]?.customer_id)
+    customer.allocated_to?.includes(clientData?.[0]?.customer_id)
   );
   const channels = supabase
     .channel('custom-all-channel')

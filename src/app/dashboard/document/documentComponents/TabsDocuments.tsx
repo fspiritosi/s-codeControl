@@ -250,7 +250,6 @@ function TabsDocuments({
                 columns={ExpiredColums}
                 pending={true}
                 defaultVisibleColumnsCustom={[
-                  'date',
                   'resource',
                   'documentName',
                   'validity',
@@ -268,7 +267,6 @@ function TabsDocuments({
                 columns={ColumnsMonthly}
                 pending={true}
                 defaultVisibleColumnsCustom={[
-                  'date',
                   'resource',
                   'documentName',
                   'validity',
@@ -312,7 +310,6 @@ function TabsDocuments({
                 pending={true}
                 vehicles
                 defaultVisibleColumnsCustom={[
-                  'date',
                   'resource',
                   'documentName',
                   'validity',
@@ -331,7 +328,6 @@ function TabsDocuments({
                 pending={true}
                 vehicles
                 defaultVisibleColumnsCustom={[
-                  'date',
                   'resource',
                   'documentName',
                   'validity',

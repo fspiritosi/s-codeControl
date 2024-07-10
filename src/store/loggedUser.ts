@@ -1,4 +1,3 @@
-import { Vechicle } from './../types/types';
 import { Notifications, SharedUser, VehiclesAPI, profileUser } from '@/types/types';
 import { Company, SharedCompanies, Vehicle } from '@/zodSchemas/schemas';
 import { User } from '@supabase/supabase-js';
@@ -103,6 +102,7 @@ export interface CompanyDocumentsType {
   deny_reason: null;
   document_path: null;
   period: string;
+  intern_number?: string;
 }
 
 interface UserId {
@@ -693,7 +693,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
           is_active: doc.employees.is_active,
           period: doc.period,
           applies: doc.document_types.applies,
-          resource_id:doc.employees.id
+          resource_id: doc.employees.id,
         };
       };
       const mapVehicle = (doc: any) => {

@@ -2,6 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseBrowser } from '@/lib/supabase/browser';
@@ -212,6 +213,13 @@ export const columnsDocuments: ColumnDef<SharedUser>[] = [
       //   return <Link href={`/dashboard/document/${documentId}`}></Link>;
       // }
       const redirectId = row.getValue('documentId');
+      console.log(row.original);
+      if (
+        row.original.email === 'Documento pendiente' &&
+        useLoggedUserStore.getState().roleActualCompany === 'Invitado'
+      ) {
+        return <Button disabled>Falta subir</Button>;
+      }
       return (
         <AddCompanyDocumentForm
           documentId={documentId as string}

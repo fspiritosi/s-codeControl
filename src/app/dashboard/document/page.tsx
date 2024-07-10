@@ -4,21 +4,7 @@ import { VehiclesAPI } from '@/types/types';
 import { format } from 'date-fns';
 import { cookies } from 'next/headers';
 import TabsDocuments from './documentComponents/TabsDocuments';
-interface Document {
-  date: string;
-  allocated_to: string;
-  documentName: string;
-  multiresource: string;
-  validity: string;
-  id: string;
-  resource: string;
-  state: string;
-  document_path?: string;
-  is_active: boolean;
-  isItMonthly: boolean;
-  applies: string;
-  mandatory: string;
-}
+
 export default async function page() {
   const formatDate = (dateString: string) => {
     if (!dateString) return 'No vence';
@@ -47,6 +33,7 @@ export default async function page() {
       period: doc.period,
       applies: doc.document_types.applies,
       id_document_types: doc.document_types.id,
+      intern_number: null,
     };
   };
   const mapVehicle = (doc: any) => {
@@ -67,6 +54,7 @@ export default async function page() {
       period: doc.period,
       applies: doc.document_types.applies,
       id_document_types: doc.document_types.id,
+      intern_number: `${doc.applies?.intern_number}`,
     };
   };
 
@@ -127,6 +115,7 @@ export default async function page() {
     employees: employeesData?.map(mapDocument) || [],
     vehicles: equipmentData1?.map(mapVehicle) || [],
   };
+
   return (
     <>
       <TabsDocuments AllvaluesToShow={AllvaluesToShow} companyData={companyData} serverRole={role} />

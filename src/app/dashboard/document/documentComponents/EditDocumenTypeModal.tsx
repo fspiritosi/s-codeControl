@@ -80,7 +80,7 @@ export function EditModal({ Equipo }: Props) {
     },
   });
 
-  const items = [
+  const itemsTotales = [
     {
       id: 'multiresource',
       label: 'Es multirecurso?',
@@ -108,6 +108,11 @@ export function EditModal({ Equipo }: Props) {
       tooltip: 'Si el documento es privado no sera visible para los usuarios con el rol invitado',
     },
   ];
+  const [items, setItems] = useState(() => {
+    return Equipo.applies !== 'Empresa'
+      ? itemsTotales
+      : itemsTotales.filter((e) => e.id === 'is_it_montlhy' || e.id === 'private' || e.id === 'explired');
+  });
 
   async function onSubmit(values: z.infer<typeof FormSchema>) {
     const formattedValues = {
@@ -311,10 +316,10 @@ export function EditModal({ Equipo }: Props) {
                                           }
                                           if (item.id === 'is_it_montlhy') {
                                             form.setValue('explired', false);
-                                        }
-                                        if (item.id === 'explired') {
+                                          }
+                                          if (item.id === 'explired') {
                                             form.setValue('is_it_montlhy', false);
-                                        }
+                                          }
                                         }}
                                       />
                                       <span>No</span>
