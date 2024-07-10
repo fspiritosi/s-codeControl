@@ -30,44 +30,25 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
-import { useToast } from '@/components/ui/use-toast'
-import { useEdgeFunctions } from '@/hooks/useEdgeFunctions'
-import { cn } from '@/lib/utils'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { DotsVerticalIcon } from '@radix-ui/react-icons'
-import { ColumnDef } from '@tanstack/react-table'
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
-import { ArrowUpDown, CalendarIcon } from 'lucide-react'
-import Link from 'next/link'
-import { Fragment, useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { supabase } from '../../../../../supabase/supabase'
+} from '@/components/ui/dropdown-menu';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
+import { cn } from '@/lib/utils';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { DotsVerticalIcon } from '@radix-ui/react-icons';
+import { ColumnDef } from '@tanstack/react-table';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { ArrowUpDown, CalendarIcon } from 'lucide-react';
+import Link from 'next/link';
+import { Fragment, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
+import { supabase } from '../../../../../supabase/supabase';
 const formSchema = z.object({
   reason_for_termination: z.string({
     required_error: 'La razón de la baja es requerida.',
@@ -92,10 +73,11 @@ export const columns: ColumnDef<Colum>[] = [
   {
     id: 'actions',
     cell: ({ row }: { row: any }) => {
-      const profile = useLoggedUserStore(state => state)
-      const employ = useLoggedUserStore(state => state.employeesToShow)
-      const equip = useLoggedUserStore(state => state.vehiclesToShow)
-      let role = ''
+      const profile = useLoggedUserStore((state) => state);
+      const employ = useLoggedUserStore((state) => state.employeesToShow);
+      const equip = useLoggedUserStore((state) => state.vehiclesToShow);
+
+      let role = '';
       if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
         role = profile?.actualCompany?.owner_id?.role as string;
       } else {
@@ -148,8 +130,6 @@ export const columns: ColumnDef<Colum>[] = [
         },
       });
 
-      const { toast } = useToast();
-
       async function reintegerCustomer() {
         try {
           const { data, error } = await supabase
@@ -166,18 +146,10 @@ export const columns: ColumnDef<Colum>[] = [
           setIntegerModal(!integerModal);
           //setInactive(data as any)
           setShowDeletedCustomer(false);
-          toast({
-            variant: 'default',
-            title: 'Cliente reintegrado',
-            description: `El cliente ${customers?.name} ha sido reintegrado`,
-          });
+          toast('Cliente reintegrado', { description: `El cliente ${customers?.name} ha sido reintegrado` });
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al reintegrar el cliente',
-            description: message,
-          });
+          toast('Error al reintegrar el cliente', { description: message });
         }
 
         try {
@@ -190,25 +162,16 @@ export const columns: ColumnDef<Colum>[] = [
             })
             .eq('customer_id', customers.id)
             .eq('company_id', actualCompany?.id)
-            .select()
+            .select();
 
-          setIntegerModal(!integerModal)
+          setIntegerModal(!integerModal);
           //setInactive(data as any)
-          setShowDeletedCustomer(false)
-          toast({
-            variant: 'default',
-            title: 'Contacto reintegrado',
-            // description: `El cliente ${customers?.name} ha sido reintegrado`,
-          })
+          setShowDeletedCustomer(false);
+          toast('Contacto reintegrado');
         } catch (error: any) {
-          const message = await errorTranslate(error?.message)
-          toast({
-            variant: 'destructive',
-            title: 'Error al reintegrar el contacto',
-            description: message,
-          })
+          const message = await errorTranslate(error?.message);
+          toast('Error al reintegrar el contacto', { description: message });
         }
-
       }
 
       async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -231,18 +194,10 @@ export const columns: ColumnDef<Colum>[] = [
 
           setShowModal(!showModal);
 
-          toast({
-            variant: 'default',
-            title: 'Cliente eliminado',
-            // description: `El cliente ${customers.name} ha sido dado de baja`,
-          })
+          toast('Cliente eliminado');
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al dar de baja el cliente',
-            description: message,
-          });
+          toast('Error al dar de baja el cliente', { description: message });
         }
 
         try {
@@ -255,62 +210,35 @@ export const columns: ColumnDef<Colum>[] = [
             })
             .eq('customer_id', customers.id)
             .eq('company_id', actualCompany?.id)
-            .select()
+            .select();
 
-          setShowModal(!showModal)
+          setShowModal(!showModal);
 
-          toast({
-            variant: 'default',
-            title: 'Contacto eliminado',
-            // description: `El contacto ${contacts.} ha sido dado de baja`,
-          })
+          toast('Contacto eliminado');
         } catch (error: any) {
-          const message = await errorTranslate(error?.message)
-          toast({
-            variant: 'destructive',
-            title: 'Error al dar de baja el contacto',
-            description: message,
-          })
+          const message = await errorTranslate(error?.message);
+          toast('Error al dar de baja el contacto', { description: message });
         }
         const updatedEmployeesPromises = employ.map((employee: any) => {
-          const updatedAllocatedTo = employee.allocated_to?.filter(
-            (clientId: string) => clientId !== customers.id
-          );
-          return supabase
-            .from('employees')
-            .update({ allocated_to: updatedAllocatedTo })
-            .eq('id', employee.id);
+          const updatedAllocatedTo = employee.allocated_to?.filter((clientId: string) => clientId !== customers.id);
+          return supabase.from('employees').update({ allocated_to: updatedAllocatedTo }).eq('id', employee.id);
         });
 
         // Esperar a que todas las actualizaciones de empleados se completen
         await Promise.all(updatedEmployeesPromises);
 
-        toast({
-          variant: 'default',
-          title: 'Empleados actualizados',
-          description: `Los empleados afectados han sido actualizados`,
-        });
+        toast('Empleados actualizados', { description: `Los empleados afectados han sido actualizados` });
 
         const updatedEquipmentPromises = equip.map((equipment: any) => {
-          const updatedAllocatedTo = equipment.allocated_to?.filter(
-            (clientId: string) => clientId !== customers.id
-          );
-          return supabase
-            .from('vehicles')
-            .update({ allocated_to: updatedAllocatedTo })
-            .eq('id', equipment.id);
+          const updatedAllocatedTo = equipment.allocated_to?.filter((clientId: string) => clientId !== customers.id);
+          return supabase.from('vehicles').update({ allocated_to: updatedAllocatedTo }).eq('id', equipment.id);
         });
 
         // Esperar a que todas las actualizaciones de empleados se completen
         await Promise.all(updatedEquipmentPromises);
 
-        toast({
-          variant: 'default',
-          title: 'Equipos actualizados',
-          description: `Los equipos afectados han sido actualizados`,
-        });
+        toast('Equipos actualizados', { description: `Los equipos afectados han sido actualizados` });
       }
-
 
       const handleToggleInactive = () => {
         setShowInactive(!showInactive);
@@ -356,16 +284,16 @@ export const columns: ColumnDef<Colum>[] = [
                                 control={form.control}
                                 defaultValue=""
                                 render={({ field.value }) => ( */}
-                                  <Input
-                                    className="input w-[250px]"
-                                    placeholder="Escribe el motivo"
-                                    maxLength={80} // Limitar a 80 caracteres
-                                    value={field.value}
-                                    onChange={(e:any) => {
-                                      field.onChange(e.target.value)
-                                     }}
-                                   />
-                                {/* )}
+                              <Input
+                                className="input w-[250px]"
+                                placeholder="Escribe el motivo"
+                                maxLength={80} // Limitar a 80 caracteres
+                                value={field.value}
+                                onChange={(e: any) => {
+                                  field.onChange(e.target.value);
+                                }}
+                              />
+                              {/* )}
                               /> */}
                               {/* <Select
                                 onValueChange={field.onChange}
@@ -382,10 +310,7 @@ export const columns: ColumnDef<Colum>[] = [
                                   <SelectItem value="Otro">Otro</SelectItem>
                                 </SelectContent>
                               </Select> */}
-                              <FormDescription>
-                                Elige la razón por la que deseas dar de baja el
-                                equipo
-                              </FormDescription>
+                              <FormDescription>Elige la razón por la que deseas dar de baja el equipo</FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}

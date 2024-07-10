@@ -36,7 +36,6 @@ import {
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/components/ui/use-toast';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { cn } from '@/lib/utils';
 import { useCountriesStore } from '@/store/countries';
@@ -50,6 +49,7 @@ import { ArrowUpDown, CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Fragment, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../../../supabase/supabase';
 
@@ -182,8 +182,6 @@ export const columns: ColumnDef<Colum>[] = [
         },
       });
 
-      const { toast } = useToast();
-
       async function reintegerEmployee() {
         try {
           await supabase
@@ -199,18 +197,10 @@ export const columns: ColumnDef<Colum>[] = [
           setIntegerModal(!integerModal);
           setInactiveEmployees();
           setShowDeletedEmployees(false);
-          toast({
-            variant: 'default',
-            title: 'Empleado reintegrado',
-            description: `El empleado ${user.full_name} ha sido reintegrado`,
-          });
+          toast('Empleado reintegrado', { description: `El empleado ${user.full_name} ha sido reintegrado` });
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al reintegrar al empleado',
-            description: message,
-          });
+          toast('Error al reintegrar al empleado', { description: message });
         }
       }
 
@@ -233,18 +223,10 @@ export const columns: ColumnDef<Colum>[] = [
 
           setShowModal(!showModal);
 
-          toast({
-            variant: 'default',
-            title: 'Empleado eliminado',
-            description: `El empleado ${user.full_name} ha sido eliminado`,
-          });
+          toast('Empleado eliminado', { description: `El empleado ${user.full_name} ha sido eliminado` });
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al dar de baja al empleado',
-            description: message,
-          });
+          toast('Error al dar de baja al empleado', { description: message });
         }
       }
       const today = new Date();

@@ -22,7 +22,7 @@ export async function getDocumentsEmployees() {
     .select(
       `*,
   employees:employees(*,contractor_employee(
-    contractors(
+    customers(
       *
     )
   )),
@@ -75,7 +75,7 @@ export async function getEmployees() {
         name
       ),
       contractor_employee(
-        contractors(
+        customers(
           *
         )
       )`

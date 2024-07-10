@@ -17,7 +17,6 @@ import { CloseEyeIcon } from './svg/closeEye';
 import { Loader } from './svg/loader';
 import { EyeIcon } from './svg/openEye';
 import { Toggle } from './ui/toggle';
-import { useToast } from './ui/use-toast';
 
 export function RegisterForm() {
   const { singUp } = useAuthData();
@@ -25,7 +24,6 @@ export function RegisterForm() {
   const [showPasswords, setShowPasswords] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   // 1. Definir el form.
   const form = useForm<z.infer<typeof registerSchema>>({
@@ -52,17 +50,10 @@ export function RegisterForm() {
         email,
         role: 'CodeControlClient',
       });
-      toast({
-        title: 'Registro exitoso',
-        description: 'Tu cuenta ha sido creada con éxito.',
-      });
+     
       router.push('/login');
     } catch (err: AuthError | any) {
-      toast({
-        title: 'Error',
-        description: `${err?.message}`,
-        variant: 'destructive',
-      });
+     
     } finally {
       setShowLoader(false);
     }

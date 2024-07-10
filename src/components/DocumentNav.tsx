@@ -4,13 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { useState } from 'react';
 export default function DocumentNav() {
-  const profile = useLoggedUserStore((state) => state);
-  let role = '';
-  if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
-    role = profile?.actualCompany?.owner_id?.role as string;
-  } else {
-    role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
-  }
+  const role = useLoggedUserStore((state) => state.roleActualCompany);
   const [multiresource, setMultiresource] = useState<boolean | undefined>(undefined);
   const [isOpen, setIsOpen] = useState<boolean>(false);
 

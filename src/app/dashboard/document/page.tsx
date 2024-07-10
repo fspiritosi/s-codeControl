@@ -1,521 +1,138 @@
-'use client';
-import DocumentNav from '@/components/DocumentNav';
-import NewDocumentType from '@/components/NewDocumentType';
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useCountriesStore } from '@/store/countries';
-import { useLoggedUserStore } from '@/store/loggedUser';
-import { ExpiredColums } from '../colums';
-import { ColumnsMonthly } from '../columsMonthly';
-import { DataTable } from '../company/actualCompany/components/data-table';
-import { columnsDocuments } from '../company/actualCompany/components/document-colums';
-import { ExpiredDataTable } from '../data-table';
-import { EditModal } from './documentComponents/EditDocumenTypeModal';
-import { useEffect, useState } from 'react';
-import { supabase } from '../../../../supabase/supabase';
-export default function page() {
-  const { actualCompany, allDocumentsToShow } = useLoggedUserStore();
+import { supabaseServer } from '@/lib/supabase/server';
+import { CompanyDocumentsType } from '@/store/loggedUser';
+import { VehiclesAPI } from '@/types/types';
+import { format } from 'date-fns';
+import { cookies } from 'next/headers';
+import TabsDocuments from './documentComponents/TabsDocuments';
 
-  const document_types = useCountriesStore((state) => state.companyDocumentTypes);
-  let doc_personas = document_types?.filter((doc) => doc.applies === 'Persona').filter((e) => e.is_active);
-  let doc_equipos = document_types?.filter((doc) => doc.applies === 'Equipos').filter((e) => e.is_active);
-  let doc_empresa = document_types?.filter((doc) => doc.applies === 'Empresa').filter((e) => e.is_active);
-  const profile = useLoggedUserStore((state) => state);
-  const sharedUsersAll = useLoggedUserStore((state) => state.sharedUsers);
+export default async function page() {
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'No vence';
+    const [day, month, year] = dateString.split('/');
+    const formattedDate = `${day}/${month}/${year}`;
+    return formattedDate || 'No vence';
+  };
+  const mapDocument = (doc: any) => {
+    const formattedDate = formatDate(doc.validity);
+    return {
+      date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
+      allocated_to: doc.employees?.contractor_employee?.map((doc: any) => doc.contractors?.name).join(', '),
+      documentName: doc.document_types?.name,
+      state: doc.state,
+      multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+      isItMonthly: doc.document_types?.is_it_montlhy,
+      validity: formattedDate,
+      mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
+      id: doc.id,
+      resource: `${doc.employees?.lastname?.charAt(0)?.toUpperCase()}${doc?.employees.lastname.slice(
+        1
+      )} ${doc.employees?.firstname?.charAt(0)?.toUpperCase()}${doc?.employees.firstname.slice(1)}`,
+      document_number: doc.employees.document_number,
+      document_url: doc.document_path,
+      is_active: doc.employees.is_active,
+      period: doc.period,
+      applies: doc.document_types.applies,
+      id_document_types: doc.document_types.id,
+      intern_number: null,
+    };
+  };
+  const mapVehicle = (doc: any) => {
+    const formattedDate = formatDate(doc.validity);
+    return {
+      date: doc.created_at ? format(new Date(doc.created_at), 'dd/MM/yyyy') : 'No vence',
+      allocated_to: doc.applies?.type_of_vehicle?.name,
+      documentName: doc.document_types?.name,
+      state: doc.state,
+      multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+      isItMonthly: doc.document_types?.is_it_montlhy,
+      validity: formattedDate,
+      mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
+      id: doc.id,
+      resource: `${doc.applies?.domain} (${doc.applies?.intern_number})`,
+      vehicle_id: doc.applies?.id,
+      is_active: doc.applies?.is_active,
+      period: doc.period,
+      applies: doc.document_types.applies,
+      id_document_types: doc.document_types.id,
+      intern_number: `${doc.applies?.intern_number}`,
+    };
+  };
 
-  // let role: string = '';
-  // if (profile?.actualCompany?.owner_id?.credential_id === profile?.credentialUser?.id) {
-  //   role = profile?.actualCompany?.owner_id?.role as string;
-  // } else {
-  //   role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
-  // }
-  const [clientData, setClientData] = useState<any>(null);
-  const share = useLoggedUserStore((state) => state.sharedCompanies);
-  const profile2 = useLoggedUserStore((state) => state.credentialUser?.id);
-  const owner2 = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
-  const users = useLoggedUserStore((state) => state);
-  const company = useLoggedUserStore((state) => state.actualCompany?.id);
+  const supabase = supabaseServer();
+  const user = await supabase.auth.getUser();
+  const cookiesStore = cookies();
+  const { data: userShared } = await supabase
+    .from('share_company_users')
+    .select('*')
+    .eq('profile_id', user?.data?.user?.id);
+  const role: string | null = userShared?.[0]?.role || null;
+  const actualCompany = cookiesStore.get('actualComp')?.value;
 
-  const employees = useLoggedUserStore((state) => state.employeesToShow);
-  // const setActivesEmployees = useLoggedUserStore((state) => state.setActivesEmployees);
-  // const setInactiveEmployees = useLoggedUserStore((state) => state.setInactiveEmployees);
-  // const showDeletedEmployees = useLoggedUserStore((state) => state.showDeletedEmployees);
-  // const setShowDeletedEmployees = useLoggedUserStore((state) => state.setShowDeletedEmployees);
-  const vehiclesData = useLoggedUserStore((state) => state.vehiclesToShow);
+  let { data: documents_company, error: documents_company_error } = await supabase
+    .from('documents_company')
+    .select('*,id_document_types(*),user_id(*)')
+    .eq('applies', actualCompany);
 
-  let role = '';
-  if (owner2 === profile2) {
-    role = users?.actualCompany?.owner_id?.role as string;
-
-  } else {
-
-    const roleRaw = share?.filter((item: any) =>
-      item.company_id.id === company &&
-      Object.values(item).some((value) => typeof value === 'string' && value.includes(profile2 as string))
+  let { data: document_employees, error } = await supabase
+    .from('documents_employees')
+    .select(
+      `
+    *,
+    employees:employees(*,contractor_employee(
+      customers(
+        *
+      )
+    )),
+    document_types:document_types(*)
+`
     )
-      .map((item: any) => item.role);
-    role = roleRaw?.join('');
+    .not('employees', 'is', null)
+    .eq('employees.company_id', actualCompany);
+
+  let { data: equipmentData, error: equipmentError } = await supabase
+    .from('documents_equipment')
+    .select(
+      `*,
+    document_types:document_types(*),
+    applies(*,type(*),type_of_vehicle(*),model(*),brand(*))
+    `
+    )
+    .eq('applies.company_id', actualCompany)
+    .not('applies', 'is', null);
+
+  const typedData: VehiclesAPI[] | null = equipmentData as VehiclesAPI[];
+
+  const equipmentData1 = role === 'Invitado' ? typedData?.filter((e) => !e.document_types.private) : typedData; //! falta agrelar las columnas
+
+  const typedDataCompany: CompanyDocumentsType[] | null = documents_company as CompanyDocumentsType[];
+
+  const companyData =
+    role === 'Invitado' ? typedDataCompany?.filter((e) => !e.id_document_types.private) : typedDataCompany;
+  const employeesData =
+    role === 'Invitado' ? document_employees?.filter((e) => !e.document_types.private) : document_employees; //! falta agrelar las columnas
+
+  const AllvaluesToShow = {
+    employees: employeesData?.map(mapDocument) || [],
+    vehicles: equipmentData1?.map(mapVehicle) || [],
+  };
+
+  let clientData: any[] | null = []
+
+  if (role === 'Invitado') {
+    const { data, error: shared_error } = await supabase
+      .from('share_company_users')
+      .select('*')
+      .eq('company_id', actualCompany)
+      .eq('profile_id', user?.data?.user?.id);
+
+      if(!error){
+        clientData = data
+      }
   }
-
-  useEffect(() => {
-
-    if (company && profile && role === "Invitado") {
-      const fetchCustomers = async () => {
-        const { data, error } = await supabase
-          .from('share_company_users')
-          .select('*')
-          .eq('company_id', company)
-          .eq('profile_id', profile2);
-
-        if (error) {
-          console.error('Error fetching customers:', error);
-        } else {
-          setClientData(data);
-
-        }
-      };
-
-      fetchCustomers();
-    }
-  }, [company, profile]);
-  const filteredCustomers = employees?.filter((customer: any) =>
-    customer?.allocated_to?.includes(clientData?.[0]?.customer_id)
-  );
-  const filteredCustomersEmployeesRaw = allDocumentsToShow?.employees.filter((e) => !e.isItMonthly)
-  const filteredCustomersEmployeesRawMonthly = allDocumentsToShow?.employees.filter((e) => e.isItMonthly)
-  const filteredCustomersEmployees = filteredCustomersEmployeesRaw?.filter((customer: any) => {
-    const customerResource = customer?.resource_id; // Asumiendo que es una cadena
-    const employeeFullnames = filteredCustomers?.map((emp: any) => emp.id); // Array de cadenas
-    
-
-    return employeeFullnames.includes(customerResource);
-  });
-  const filteredCustomersEmployeesMonthly = filteredCustomersEmployeesRawMonthly?.filter((customer: any) => {
-    const customerResource = customer?.resource; // Asumiendo que es una cadena
-    const employeeFullnames = filteredCustomers?.map((emp: any) => emp.full_name); // Array de cadenas
-
-
-    return employeeFullnames.includes(customerResource);
-  });
-
-  const filteredEquipment = vehiclesData?.filter((customer: any) =>
-    customer.allocated_to.includes(clientData?.[0]?.customer_id)
-  );
-  const filteredCustomersEquipmentRaw = allDocumentsToShow?.vehicles.filter((e) => !e.isItMonthly)
-  const filteredCustomersEquipmentRawMonthly = allDocumentsToShow?.vehicles.filter((e) => e.isItMonthly)
-
-  const filteredCustomersEquipment = filteredCustomersEquipmentRaw?.filter((customer: any) => {
-    const customerResource = customer?.resource_id; // Asumiendo que es una cadena
-    const equipmentFullnames = filteredEquipment?.map((emp: any) => emp.id); // Array de cadenas
-
-
-    return equipmentFullnames.includes(customerResource);
-  });
-
-  const filteredCustomersEquipmentMonthly = filteredCustomersEquipmentRawMonthly?.filter((customer: any) => {
-    const customerResource = customer?.resource_id; // Asumiendo que es una cadena
-    const employeeFullnames = filteredCustomers?.map((emp: any) => emp.id); // Array de cadenas
-
-
-    return employeeFullnames.includes(customerResource);
-  });
-
-  const fetchDocumentTypes = useCountriesStore((state) => state.documentTypes);
-  const AllCompanyDocuments = useLoggedUserStore((state) => state.companyDocuments);
-  const ownerUser = useLoggedUserStore((state) => state.profile);
-  const sharedUsers =
-    sharedUsersAll?.map((user) => {
-      return {
-        email: user.profile_id.email,
-        fullname: user.profile_id.fullname,
-        role: user?.role,
-        alta: user.created_at,
-        id: user.id,
-        img: user.profile_id.avatar || '',
-      };
-    }) || [];
-  const owner = ownerUser?.map((user) => {
-    return {
-      email: user.email,
-      fullname: user.fullname as string,
-      role: 'Propietario',
-      alta: user.created_at ? new Date(user.created_at) : new Date(),
-      id: user.id || '',
-      img: user.avatar || '',
-    };
-  });
-
-  const data = owner?.concat(
-    sharedUsers?.map((user) => ({
-      ...user,
-      fullname: user.fullname || '',
-    })) || []
-  );
-  const documentCompany = AllCompanyDocuments?.filter((e) => !e.id_document_types.private).map((document) => {
-    const sharedUserRole = data?.find((e) => e.email === document.user_id?.email)?.role;
-    return {
-      email: document.user_id?.email ?? 'Documento pendiente',
-      fullname: document.id_document_types.name,
-      role: sharedUserRole ?? 'Documento pendiente',
-      alta: (document.user_id?.email && document.created_at) ?? 'Documento pendiente',
-      id: document.id_document_types.id,
-      img: document.user_id?.avatar,
-      vencimiento: document.validity
-        ? document.validity
-        : document.id_document_types.explired
-          ? 'Documento pendiente'
-          : 'No expira',
-      documentId: document.id,
-      private: document.id_document_types.private,
-    };
-  });
-
 
   return (
     <>
-      <Tabs defaultValue="Documentos de empleados" className="md:mx-7">
-        <TabsList>
-          <TabsTrigger value="Documentos de empleados">Documentos de empleados</TabsTrigger>
-          <TabsTrigger value="Documentos de equipos">Documentos de equipos</TabsTrigger>
-          <TabsTrigger value="Documentos de empresa">Documentos de empresa</TabsTrigger>
-          {role !== 'Invitado' && <TabsTrigger value="Tipos de documentos">Tipos de documentos</TabsTrigger>}
-        </TabsList>
-        <TabsContent value="Documentos de empleados">
-          <Card>
-            <CardHeader className=" mb-4  w-full bg-muted dark:bg-muted/50 border-b-2">
-              <div className="flex flex-row gap-4 justify-between items-center flex-wrap">
-                <div>
-                  <CardTitle className="text-2xl font-bold tracking-tight">Documentos cargados</CardTitle>
-                  <CardDescription className="text-muted-foreground">
-                    Aquí encontrarás todos los documentos de tus empleados
-                  </CardDescription>
-                </div>
-                <div className="flex gap-4 flex-wrap pl-6">
-                  {role === "Invitado"? null :<DocumentNav />}
-                </div>
-              </div>
-            </CardHeader>
-            <Tabs defaultValue="permanentes">
-              <CardContent>
-                <TabsList>
-                  <TabsTrigger value="permanentes">Documentos permanentes</TabsTrigger>
-                  <TabsTrigger value="mensuales">Documentos mensuales</TabsTrigger>
-                </TabsList>
-              </CardContent>
-              <TabsContent value="permanentes">
-                <ExpiredDataTable
-                  data={role === "Invitado" ? filteredCustomersEmployees : allDocumentsToShow?.employees.filter((e) => !e.isItMonthly) || []}
-                  columns={ExpiredColums}
-                  pending={true}
-                  defaultVisibleColumnsCustom={[
-                    'date',
-                    'resource',
-                    'documentName',
-                    'validity',
-                    'id',
-                    'mandatory',
-                    'state',
-                  ]}
-                  localStorageName={'dashboardEmployeesPermanentes'}
-                  permanent
-                />
-              </TabsContent>
-              <TabsContent value="mensuales">
-                <ExpiredDataTable
-                  data={role === "Invitado" ? filteredCustomersEmployeesMonthly : allDocumentsToShow?.employees.filter((e) => e.isItMonthly) || []}
-                  columns={ColumnsMonthly}
-                  pending={true}
-                  defaultVisibleColumnsCustom={[
-                    'date',
-                    'resource',
-                    'documentName',
-                    'validity',
-                    'id',
-                    'mandatory',
-                    'state',
-                  ]}
-                  localStorageName={'dashboardEmployeesMensuales'}
-                  monthly
-                />
-              </TabsContent>
-            </Tabs>
-          </Card>
-        </TabsContent>
-        <TabsContent value="Documentos de equipos">
-          <Card>
-            <CardHeader className=" mb-4  w-full bg-muted dark:bg-muted/50 border-b-2">
-              <div className="flex flex-row gap-4 justify-between items-center flex-wrap">
-                <div>
-                  <CardTitle className="text-2xl font-bold tracking-tight">Documentos cargados</CardTitle>
-                  <CardDescription className="text-muted-foreground">
-                    Aquí encontrarás todos los documentos de tus equipos
-                  </CardDescription>
-                </div>
-                <div className="flex gap-4 flex-wrap pl-6">
-                  {role === "Invitado"? null :<DocumentNav />}
-                </div>
-              </div>
-            </CardHeader>
-            <Tabs defaultValue="permanentes">
-              <CardContent>
-                <TabsList>
-                  <TabsTrigger value="permanentes">Documentos permanentes</TabsTrigger>
-                  <TabsTrigger value="mensuales">Documentos mensuales</TabsTrigger>
-                </TabsList>
-              </CardContent>
-              <TabsContent value="permanentes">
-                <ExpiredDataTable
-                  data={role === "Invitado" ? filteredCustomersEquipment : allDocumentsToShow?.vehicles.filter((e) => !e.isItMonthly) || []}
-                  columns={ExpiredColums}
-                  pending={true}
-                  vehicles
-                  defaultVisibleColumnsCustom={[
-                    'date',
-                    'resource',
-                    'documentName',
-                    'validity',
-                    'id',
-                    'mandatory',
-                    'state',
-                  ]}
-                  localStorageName={'dashboardVehiculosPermanentes'}
-                  permanent
-                />
-              </TabsContent>
-              <TabsContent value="mensuales">
-                <ExpiredDataTable
-                  data={role === "Invitado" ? filteredCustomersEquipmentMonthly : allDocumentsToShow?.vehicles.filter((e) => e.isItMonthly) || []}
-                  columns={ColumnsMonthly}
-                  pending={true}
-                  vehicles
-                  defaultVisibleColumnsCustom={[
-                    'date',
-                    'resource',
-                    'documentName',
-                    'validity',
-                    'id',
-                    'mandatory',
-                    'state',
-                  ]}
-                  localStorageName={'dashboardVehiculosMensuales'}
-                  monthly
-                />
-              </TabsContent>
-            </Tabs>
-          </Card>
-        </TabsContent>
-        <TabsContent value="Documentos de empresa">
-          <Card>
-            <CardHeader className=" mb-4  w-full bg-muted dark:bg-muted/50 border-b-2">
-              <div className="flex flex-row gap-4 justify-between items-center flex-wrap">
-                <div>
-                  <CardTitle className="text-2xl font-bold tracking-tight">Documentos cargados</CardTitle>
-                  <CardDescription className="text-muted-foreground">
-                    Aquí encontrarás todos los documentos publicos de la empresa
-                  </CardDescription>
-                </div>
-                {/* <div className="flex gap-4 flex-wrap pl-6">
-                  <DocumentNav />
-                </div> */}
-              </div>
-            </CardHeader>
-            <Tabs defaultValue="permanentes">
-              <CardContent>
-                <TabsList>
-                  <TabsTrigger value="permanentes">Documentos permanentes</TabsTrigger>
-                  <TabsTrigger value="mensuales">Documentos mensuales</TabsTrigger>
-                </TabsList>
-              </CardContent>
-              <TabsContent value="permanentes">
-                <div className="p-4">
-                  <DataTable isDocuments data={documentCompany || []} columns={columnsDocuments} />
-                </div>
-              </TabsContent>
-              <TabsContent value="mensuales">
-                <div className="p-4">
-                  <DataTable isDocuments data={documentCompany || []} columns={columnsDocuments} />
-                </div>
-              </TabsContent>
-            </Tabs>
-          </Card>
-        </TabsContent>
-        <TabsContent value="Tipos de documentos">
-          <Card>
-            <div className="flex justify-between items-center">
-              <CardHeader>
-                <CardTitle className="text-2xl font-bold tracking-tight">Tipos de documentos</CardTitle>
-                <CardDescription className="text-muted-foreground">Tipos de documentos auditables</CardDescription>
-              </CardHeader>
-
-              <AlertDialog>
-                <AlertDialogTrigger asChild className="mr-4">
-                  {role && role !== 'Invitado' && <Button>Crear nuevo</Button>}
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Nuevo tipo de documento</AlertDialogTitle>
-                    <AlertDialogDescription asChild>
-                      <NewDocumentType codeControlClient />
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <Button
-                      onClick={() => {
-                        document.getElementById('create_new_document')?.click();
-                        fetchDocumentTypes(actualCompany?.id);
-                      }}
-                    >
-                      Crear documento
-                    </Button>
-                    <AlertDialogCancel id="close_document_modal">Cancel</AlertDialogCancel>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-            <CardContent>
-              <Tabs defaultValue="Personas" className="w-full">
-                <TabsList>
-                  <TabsTrigger value="Personas">Personas</TabsTrigger>
-                  <TabsTrigger value="Equipos">Equipos</TabsTrigger>
-                  <TabsTrigger value="Empresa">Empresa</TabsTrigger>
-                </TabsList>
-                <TabsContent value="Personas">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nombre del Documento</TableHead>
-                        <TableHead className="w-[100px] text-center" align="center">
-                          Multirecurso
-                        </TableHead>
-                        <TableHead className="w-[100px] text-center" align="center">
-                          Vence
-                        </TableHead>
-                        <TableHead className="w-[100px] text-center" align="center">
-                          Mandatorio
-                        </TableHead>
-                        <TableHead className="w-[100px] text-center" align="center">
-                          Editar
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {doc_personas?.map((doc) => (
-                        <TableRow key={doc.id}>
-                          <TableCell className="font-medium">{doc.name}</TableCell>
-                          <TableCell align="center">{doc.multiresource ? 'Si' : 'No'}</TableCell>
-                          <TableCell align="center">{doc.explired ? 'Si' : 'No'}</TableCell>
-                          <TableCell align="center">{doc.mandatory ? 'Si' : 'No'}</TableCell>
-                          {doc.company_id && (
-                            <TableCell align="center">
-                              <EditModal Equipo={doc} />
-                            </TableCell>
-                          )}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TabsContent>
-                <TabsContent value="Equipos">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nombre del Documento</TableHead>
-                        <TableHead className="w-[100px]">Multirecurso</TableHead>
-                        <TableHead className="w-[100px] text-center">Vence</TableHead>
-                        <TableHead className="w-[100px]">Mandatorio</TableHead>
-                        <TableHead className="w-[100px] text-center" align="center">
-                          Editar
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {doc_equipos?.map((doc) => (
-                        <TableRow key={doc.id}>
-                          <TableCell className="font-medium">{doc.name}</TableCell>
-                          <TableCell align="center">{doc.multiresource ? 'Si' : 'No'}</TableCell>
-                          <TableCell align="center">{doc.explired ? 'Si' : 'No'}</TableCell>
-                          <TableCell align="center">{doc.mandatory ? 'Si' : 'No'}</TableCell>
-                          {doc.company_id && (
-                            <TableCell align="center">
-                              <EditModal Equipo={doc} />
-                            </TableCell>
-                          )}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TabsContent>
-                <TabsContent value="Empresa">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nombre del Documento</TableHead>
-
-                        <TableHead className="w-[100px] text-center">Vence</TableHead>
-                        <TableHead className="w-[100px] text-center">Mandatorio</TableHead>
-                        <TableHead className="w-[100px] text-center">Editar</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {doc_empresa?.map((doc) => (
-                        <TableRow key={doc.id}>
-                          <TableCell className="font-medium">{doc.name}</TableCell>
-
-                          <TableCell align="center">{doc.explired ? 'Si' : 'No'}</TableCell>
-                          <TableCell align="center">{doc.mandatory ? 'Si' : 'No'}</TableCell>
-                          {doc.company_id && (
-                            <TableCell align="center">
-                              <EditModal Equipo={doc} />
-                            </TableCell>
-                          )}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-            {/* <CardFooter>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  {role && role !== 'Invitado' && <Button>Crear nuevo</Button>}
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Nuevo tipo de documento</AlertDialogTitle>
-                    <AlertDialogDescription asChild>
-                      <NewDocumentType codeControlClient />
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <Button
-                      onClick={() => {
-                        document.getElementById('create_new_document')?.click();
-                        fetchDocumentTypes(actualCompany?.id);
-                      }}
-                    >
-                      Crear documento
-                    </Button>
-                    <AlertDialogCancel id="close_document_modal">Cancel</AlertDialogCancel>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </CardFooter> */}
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <TabsDocuments clientData={clientData||[]} AllvaluesToShow={AllvaluesToShow} companyData={companyData} serverRole={role} />
     </>
   );
 }

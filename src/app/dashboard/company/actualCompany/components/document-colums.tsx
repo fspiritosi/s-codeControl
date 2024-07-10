@@ -2,6 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseBrowser } from '@/lib/supabase/browser';
@@ -11,7 +12,7 @@ import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { formatRelative } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import AddCompanyDocumentForm from './AddCompanyDocumentForm';
 import { DataTableColumnHeader } from './data-table-column-header';
@@ -113,6 +114,7 @@ export const columnsDocuments: ColumnDef<SharedUser>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Acceso" />,
     cell: ({ row }) => {
       const pathname = usePathname();
+      const router = useRouter();
       if (!pathname.includes('company')) {
         return (
           <div className="flex items-center">
@@ -145,6 +147,7 @@ export const columnsDocuments: ColumnDef<SharedUser>[] = [
                 throw new Error(handleSupabaseError(error.message));
               }
               documetsFetch();
+              router.refresh();
             },
             {
               loading: 'Cambiando...',
@@ -160,7 +163,6 @@ export const columnsDocuments: ColumnDef<SharedUser>[] = [
             <Select
               onValueChange={(selected) => handlePrivateChange(selected)}
               defaultValue={row.getValue('private') ? 'Privado' : 'Publico'}
-              //TODO MANEJAR EL ACTUALIZA DOCUMENTO AL CAMBIAR EL VALOR
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue />
@@ -211,6 +213,13 @@ export const columnsDocuments: ColumnDef<SharedUser>[] = [
       //   return <Link href={`/dashboard/document/${documentId}`}></Link>;
       // }
       const redirectId = row.getValue('documentId');
+      console.log(row.original);
+      if (
+        row.original.email === 'Documento pendiente' &&
+        useLoggedUserStore.getState().roleActualCompany === 'Invitado'
+      ) {
+        return <Button disabled>Falta subir</Button>;
+      }
       return (
         <AddCompanyDocumentForm
           documentId={documentId as string}

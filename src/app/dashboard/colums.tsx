@@ -1,5 +1,6 @@
 'use client';
 
+import SimpleDocument from '@/components/SimpleDocument';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,6 +10,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -33,10 +35,11 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
-import { useToast } from '@/components/ui/use-toast';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
+import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
+import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarIcon, DotsVerticalIcon } from '@radix-ui/react-icons';
 import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
@@ -46,9 +49,12 @@ import { ArrowUpDown } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 type Colum = {
+  vehicle_id?: string | undefined;
+  applies: any;
   date: string;
   allocated_to: string;
   documentName: string;
@@ -59,6 +65,8 @@ type Colum = {
   state: string;
   document_number?: string;
   mandatory?: string;
+  id_document_types?: string;
+  intern_number?: string;
 };
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -148,71 +156,71 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
         },
       });
 
-      const { toast } = useToast();
-
       async function reintegerDocumentEmployees() {
-        const supabase = supabaseBrowser();
-        try {
-          const { data, error } = await supabase
-            .from('documents_employees')
-            .update({
-              is_active: true,
-              // termination_date: null,
-              // reason_for_termination: null,
-            })
-            .eq('id', document.id)
-            .select();
+        toast.promise(
+          async () => {
+            const supabase = supabaseBrowser();
+            const { data, error } = await supabase
+              .from('documents_employees')
+              .update({
+                is_active: true,
+                // termination_date: null,
+                // reason_for_termination: null,
+              })
+              .eq('id', document.id)
+              .select();
 
-          setIntegerModal(!integerModal);
-          //setInactive(data as any)
-          setShowDeletedEquipment(false);
-          toast({
-            variant: 'default',
-            title: 'Equipo reintegrado',
-            description: `El equipo ${equipment?.engine} ha sido reintegrado`,
-          });
-        } catch (error: any) {
-          const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al reintegrar el equipo',
-            description: message,
-          });
-        }
+            setIntegerModal(!integerModal);
+            //setInactive(data as any)
+            setShowDeletedEquipment(false);
+            if (error) {
+              throw new Error(error.message);
+            }
+          },
+          {
+            loading: 'Reintegrando...',
+            success: 'Documento reintegrado!',
+            error: (error) => {
+              return error;
+            },
+          }
+        );
       }
 
       async function onSubmit(values: z.infer<typeof formSchema>) {
-        const data = {
-          ...values,
-          termination_date: format(values.termination_date, 'yyyy-MM-dd'),
-        };
-        const supabase = supabaseBrowser();
-        try {
-          await supabase
-            .from('documents_employees')
-            .update({
-              is_active: false,
-              //termination_date: data.termination_date,
-              //reason_for_termination: data.reason_for_termination,
-            })
-            .eq('id', document.id)
-            .select();
+        toast.promise(
+          async () => {
+            const data = {
+              ...values,
+              termination_date: format(values.termination_date, 'yyyy-MM-dd'),
+            };
 
-          setShowModal(!showModal);
+            const supabase = supabaseBrowser();
 
-          toast({
-            variant: 'default',
-            title: 'Documento eliminado',
-            description: `El documento ${document.name} ha sido dado de baja`,
-          });
-        } catch (error: any) {
-          const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al dar de baja el documento',
-            description: message,
-          });
-        }
+            const { error } = await supabase
+              .from('documents_employees')
+              .update({
+                is_active: false,
+                //termination_date: data.termination_date,
+                //reason_for_termination: data.reason_for_termination,
+              })
+              .eq('id', document.id)
+              .select();
+
+            setShowModal(!showModal);
+
+            if (error) {
+              throw new Error(error.message);
+            }
+          },
+          {
+            loading: 'Eliminando...',
+            success: 'Documento eliminado!',
+            error: (error) => {
+              return error;
+            },
+          }
+        );
       }
       const handleToggleInactive = () => {
         setShowInactive(!showInactive);
@@ -220,22 +228,16 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
 
       async function viewDocumentEmployees() {
         const supabase = supabaseBrowser();
-        try {
-          const { data, error } = await supabase
-            .from('documents_employees_logs')
-            .select('*, documents_employees(user_id(email))')
-            .eq('documents_employees_id', document.id);
+        const { data, error } = await supabase
+          .from('documents_employees_logs')
+          .select('*, documents_employees(user_id(email))')
+          .eq('documents_employees_id', document.id);
 
-          if (data) {
-            setDocumentHistory(data);
-          }
-        } catch (error: any) {
-          const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al reintegrar el equipo',
-            description: message,
-          });
+        if (error) {
+          toast.error(`${handleSupabaseError(error.message)}`);
+        }
+        if (data) {
+          setDocumentHistory(data);
         }
       }
       useEffect(() => {
@@ -463,40 +465,45 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
     },
   },
   {
-    accessorKey: 'date',
-    sortingFn: 'datetime',
-    header: ({ column }) => {
-      return (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Subido el
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const isNoPresented = row.getValue('state') === 'pendiente';
-
-      if (isNoPresented) {
-        return 'No disponible';
-      } else {
-        const [day, month, year] = row.original.date.split('/');
-        const date = new Date(Number(year), Number(month) - 1, Number(day));
-        return format(date, 'P', { locale: es });
-      }
-    },
-  },
-  {
     accessorKey: 'resource',
     header: 'Empleado',
-  },
-  {
-    accessorKey: 'allocated_to',
-    header: 'Afectado a',
   },
   {
     accessorKey: 'documentName',
     header: 'Documento',
   },
+  {
+    accessorKey: 'intern_number',
+    header: ({ column, table, header }) => {
+      const rowId = column.id; // Suponiendo que props.column.id contiene el id de la fila
+      const row = table.getRowModel().rows.some((e) => e.original.intern_number);
+
+      // console.log(row);
+      if (!row) return null;
+      return (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Numero interno
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+
+    cell: ({ row, table }) => {
+      const isHide = table.getRowModel().rows.some((e) => e.original.intern_number);
+      if (!isHide) return null;
+      return <p>{row.original.intern_number}</p>;
+    },
+  },
+  {
+    accessorKey: 'id_document_types',
+    header: undefined,
+  },
+
+  {
+    accessorKey: 'allocated_to',
+    header: 'Afectado a',
+  },
+
   {
     accessorKey: 'mandatory',
     header: 'Mandatorio',
@@ -544,16 +551,64 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
     },
   },
   {
-    accessorKey: 'id',
-    header: 'Revisar documento',
+    accessorKey: 'date',
+    sortingFn: 'datetime',
+    header: ({ column }) => {
+      return (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Subido el
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
     cell: ({ row }) => {
       const isNoPresented = row.getValue('state') === 'pendiente';
 
       if (isNoPresented) {
+        return 'No disponible';
+      } else {
+        const [day, month, year] = row.original.date.split('/');
+        const date = new Date(Number(year), Number(month) - 1, Number(day));
+        return format(date, 'P', { locale: es });
+      }
+    },
+  },
+  {
+    accessorKey: 'id',
+    header: 'Revisar documento',
+    cell: ({ row }) => {
+      const isNoPresented = row.getValue('state') === 'pendiente';
+      const role = useLoggedUserStore?.getState?.().roleActualCompany;
+
+      const [open, setOpen] = useState(false);
+
+      const handleOpen = () => setOpen(!open);
+      const applies = row.original.applies === 'Persona' ? 'empleado' : 'equipo';
+
+      if (isNoPresented) {
         return (
-          <Button disabled variant="link">
-            Falta subir documento
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              {role !== 'Invitado' && <Button variant="link">Falta subir documento</Button>}
+            </AlertDialogTrigger>
+            <AlertDialogContent asChild>
+              <AlertDialogHeader>
+                <div className="max-h-[90vh] overflow-y-auto">
+                  <div className="space-y-3">
+                    <div>
+                      <SimpleDocument
+                        resource={applies}
+                        handleOpen={() => handleOpen()}
+                        defaultDocumentId={row.original.id_document_types}
+                        // document={document}
+                        numberDocument={row.original.document_number || row.original.vehicle_id}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </AlertDialogHeader>
+            </AlertDialogContent>
+          </AlertDialog>
         );
       }
 

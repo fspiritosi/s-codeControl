@@ -140,7 +140,7 @@ export type Employee = {
   workflow_diagram: string;
   normal_hours: string; //!si
   type_of_contract: string | undefined; //!si
-  allocated_to?: string | undefined | string[]; //!si
+  allocated_to?: string | undefined | string[] | null //!si
   date_of_admission: Date | undefined | string;
   full_name?: string; //!si
   is_active?: boolean;
@@ -364,7 +364,7 @@ export type VehiclesAPI = {
   user_id: string;
   document_url: string;
   document_types: DocumentTypes;
-  period:string
+  period: string;
 };
 
 export type Applies = {
@@ -406,6 +406,7 @@ export type DocumentTypes = {
   created_at: Date;
   description: null;
   multiresource: boolean;
+  private: boolean;
 };
 export type DocumentsTable = {
   created_at: Date;
