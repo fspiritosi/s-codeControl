@@ -73,7 +73,7 @@ export default function InitEmployees({ active }: { active: boolean }) {
               name
             ),
             contractor_employee(
-              contractors(
+              customers(
                 *
               )
             )`

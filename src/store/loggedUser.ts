@@ -223,7 +223,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
               name
             ),
             contractor_employee(
-              contractors(
+              customers(
                 *
               )
             )
@@ -268,7 +268,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
               name
             ),
             contractor_employee(
-              contractors(
+              customers(
                 *
               )
             )
@@ -391,7 +391,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
             name
           ),
           contractor_employee(
-            contractors(
+            customers(
               *
             )
           )`
@@ -466,7 +466,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
             name
           ),
           contractor_employee(
-            contractors(
+            customers(
               *
             )
           )`
@@ -570,7 +570,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
         `
     *,
     employees:employees(*,contractor_employee(
-      contractors(
+      customers(
         *
       )
     )),
@@ -635,7 +635,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
         const formattedDate = formatDate(doc.validity);
         return {
           date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
-          allocated_to: doc.employees?.contractor_employee?.map((doc: any) => doc.contractors.name).join(', '),
+          allocated_to: doc.employees?.contractor_employee?.map((doc: any) => doc.contractors?.name).join(', '),
           documentName: doc.document_types?.name,
           state: doc.state,
           multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
@@ -769,7 +769,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
               name
             ),
             contractor_employee(
-              contractors(
+              customers(
                 *
               )
             )
@@ -802,7 +802,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
             name
           ),
           contractor_employee(
-            contractors(
+            customers(
               *
             )
           )`

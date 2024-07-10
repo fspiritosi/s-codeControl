@@ -40,7 +40,7 @@ export default async function page({ params }: { params: { id: string } }) {
       city(name),
       province(name),
       contractor_employee(
-        contractors(
+        customers(
           *
           )
           ),

@@ -79,7 +79,7 @@ export default function Auditor() {
       document_types(*),
       applies(*,
         contractor_employee(
-          contractors(
+          customers(
             *
           )
         ),
@@ -96,7 +96,7 @@ export default function Auditor() {
       return {
         date: doc.created_at ? format(new Date(doc.created_at), 'dd/MM/yyyy') : 'No vence',
         companyName: doc.applies?.company_id?.company_name,
-        allocated_to: doc.applies?.contractor_employee?.map((doc: any) => doc.contractors.name).join(', '),
+        allocated_to: doc.applies?.contractor_employee?.map((doc: any) => doc.contractors?.name).join(', '),
         documentName: doc.document_types?.name,
         state: doc.state,
         multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
