@@ -456,6 +456,22 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Estado',
   },
   {
+    accessorKey: 'picture',
+    header: 'Foto',
+  },
+  {
+    accessorKey: 'file',
+    header: 'Legajo',
+  },
+  {
+    accessorKey: 'lastname',
+    header: 'Apellido',
+  },
+  {
+    accessorKey: 'firstname',
+    header: 'Nombre',
+  },
+  {
     accessorKey: 'email',
     header: 'Email',
   },
@@ -464,8 +480,32 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Cuil',
   },
   {
+    accessorKey: 'document_type',
+    header: 'Tipo de documento',
+  },
+  {
     accessorKey: 'document_number',
     header: 'Numero de documento',
+  },
+  {
+    accessorKey: 'nationality',
+    header: 'Nacionalidad',
+  },
+  {
+    accessorKey: 'gender',
+    header: 'Género',
+  },
+  {
+    accessorKey: 'birthplace',
+    header: 'Lugar de nacimiento',
+  },
+  {
+    accessorKey: 'marital_status',
+    header: 'Estado civil',
+  },
+  {
+    accessorKey: 'level_of_education',
+    header: 'Nivel de estudios',
   },
   {
     accessorKey: 'hierarchical_position',
@@ -509,40 +549,12 @@ export const columns: ColumnDef<Colum>[] = [
     filterFn: allocatedToRangeFilter,
   },
   {
-    accessorKey: 'picture',
-    header: 'Foto',
+    accessorKey: 'province',
+    header: 'Provincia',
   },
   {
-    accessorKey: 'nationality',
-    header: 'Nacionalidad',
-  },
-  {
-    accessorKey: 'lastname',
-    header: 'Apellido',
-  },
-  {
-    accessorKey: 'firstname',
-    header: 'Nombre',
-  },
-  {
-    accessorKey: 'birthplace',
-    header: 'Lugar de nacimiento',
-  },
-  {
-    accessorKey: 'document_type',
-    header: 'Tipo de documento',
-  },
-  {
-    accessorKey: 'gender',
-    header: 'Género',
-  },
-  {
-    accessorKey: 'marital_status',
-    header: 'Estado civil',
-  },
-  {
-    accessorKey: 'level_of_education',
-    header: 'Nivel de estudios',
+    accessorKey: 'city',
+    header: 'Ciudad',
   },
   {
     accessorKey: 'street',
@@ -553,10 +565,6 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Numero de calle',
   },
   {
-    accessorKey: 'province',
-    header: 'Provincia',
-  },
-  {
     accessorKey: 'postal_code',
     header: 'Codigo postal',
   },
@@ -565,21 +573,13 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Teléfono',
   },
   {
-    accessorKey: 'file',
-    header: 'Legajo',
-  },
-  {
     accessorKey: 'date_of_admission',
     header: 'Fecha de ingreso',
   },
-  {
-    accessorKey: 'affiliate_status',
-    header: 'Estado de afiliado',
-  },
-  {
-    accessorKey: 'city',
-    header: 'Ciudad',
-  },
+  // {
+  //   accessorKey: 'affiliate_status',
+  //   header: 'Estado de afiliado',
+  // },
   {
     accessorKey: 'hierrical_position',
     header: 'Posición jerárquica',
