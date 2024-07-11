@@ -55,7 +55,6 @@ export default function page() {
       img: user.avatar || '',
     };
   });
-  console.log(sharedUsersAll);
   const sharedUsers =
     sharedUsersAll?.map((user) => {
       return {
@@ -120,8 +119,6 @@ export default function page() {
     setTabValue(value);
     localStorage.setItem('selectedTab', value);
   };
-
-  console.log(guestsData);
 
   return (
     <div className="flex flex-col gap-6 py-4 px-6">

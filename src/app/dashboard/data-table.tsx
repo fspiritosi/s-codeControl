@@ -277,7 +277,6 @@ export function ExpiredDataTable<TData, TValue>({
                   .getAllColumns()
                   ?.filter((column) => column.getCanHide())
                   ?.map((column) => {
-                    console.log(column);
                     if (column.id === 'intern_number') {
                       return (
                         <DropdownMenuCheckboxItem

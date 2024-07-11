@@ -143,8 +143,6 @@ function TabsDocuments({
     });
   const router = useRouter();
 
-  console.log(clientData);
-
   // const share = useLoggedUserStore((state) => state.sharedCompanies);
   // const profile2 = useLoggedUserStore((state) => state.credentialUser?.id);
   // const owner2 = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);

@@ -46,19 +46,14 @@ export default function Equipment() {
 
   const [clientData, setClientData] = useState<any>(null);
   const share = useLoggedUserStore((state) => state.sharedCompanies);
-  console.log('share: ', share)
   const profile = useLoggedUserStore((state) => state.credentialUser?.id);
   const owner = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
   const users = useLoggedUserStore((state) => state);
   const company = useLoggedUserStore((state) => state.actualCompany?.id);
 
-  console.log("company: ", company)
-  console.log("owner: ", owner)
-  console.log('profile: ', profile)
   let role = '';
   if (owner === profile) {
     role = users?.actualCompany?.owner_id?.role as string;
-    console.log("rol dueño: ", role)
   } else {
     // const roleRaw = share?.filter((item: any) => Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))).map((item: any) => item.role);
     const roleRaw = share?.filter((item: any) =>
@@ -67,9 +62,6 @@ export default function Equipment() {
       )
       .map((item: any) => item.role);
     role = roleRaw?.join('');
-    // role = users?.actualCompany?.share_company_users?.[0]?.role as string;
-    console.log("rol empleado: ", role)
-   
   }
 
   useEffect(() => {

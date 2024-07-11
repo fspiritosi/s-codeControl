@@ -408,8 +408,6 @@ export default function EmployeeAccordion() {
               : 'https://ui.shadcn.com/avatars/05.png',
         };
 
-        console.log(finalValues);
-
         try {
           const applies = await createEmployee(finalValues);
           const documentsMissing: {
@@ -519,7 +517,6 @@ export default function EmployeeAccordion() {
         );
 
         if (error2 && typeof error2[0] === 'string') {
-          console.log(error2);
           throw new Error(error2[0]);
         }
 

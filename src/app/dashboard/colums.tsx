@@ -502,7 +502,6 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
       const rowId = column.id; // Suponiendo que props.column.id contiene el id de la fila
       const row = table.getRowModel().rows.some((e) => e.original.intern_number);
 
-      // console.log(row);
       if (!row) return null;
       return (
         <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>

@@ -621,8 +621,6 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
 
       const handleOpen = () => setOpen(!open);
 
-      console.log(row.original);
-      
       if (isNoPresented) {
         return (
           <AlertDialog>

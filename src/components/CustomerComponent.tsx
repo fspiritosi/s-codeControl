@@ -245,9 +245,6 @@ export default function ClientRegister({ id }: { id: string }) {
       };
     }) || [];
 
-  console.log(sharedUsersAll);
-  //   console.log(user[0].credential_id);
-
   const guestsData =
     sharedUsers
       ?.filter((user) => user.role === 'Invitado') // Filtrar usuarios donde el rol no sea "Invitado"
