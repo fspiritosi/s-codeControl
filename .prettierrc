@@ -1,11 +1,15 @@
 {
-  "printWidth": 80,
-  "tabWidth": 2,
-  "useTabs": false,
-  "semi": false,
+  "printWidth": 120,
   "singleQuote": true,
-  "trailingComma": "all",
-  "bracketSpacing": true,
-  "jsxBracketSameLine": false,
-  "arrowParens": "avoid"
+  "trailingComma": "es5",
+  "plugins": ["prettier-plugin-organize-imports"],
+  "overrides": [
+    {
+      "files": "*.js",
+      "options": {
+        "semi": false,
+        "trailingComma": "none"
+      }
+    }
+  ]
 }

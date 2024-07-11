@@ -1,12 +1,11 @@
-'use client'
+'use client';
 
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { ArchiveIcon } from '@radix-ui/react-icons'
-import cookies from 'js-cookie'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { useState } from 'react'
-import { FiTruck } from 'react-icons/fi'
+import { useLoggedUserStore } from '@/store/loggedUser';
+import cookies from 'js-cookie';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+import { FiTruck } from 'react-icons/fi';
 import {
   MdHelpOutline,
   MdListAlt,
@@ -15,17 +14,18 @@ import {
   MdOutlineKeyboardArrowUp,
   MdOutlinePersonAddAlt,
   MdOutlineSpaceDashboard,
-} from 'react-icons/md'
+} from 'react-icons/md';
 export async function getServerSideProps(context: any) {
-  const { params } = context
-  const { type } = params
+  const { params } = context;
+  const { type } = params;
   return {
     props: {
       type,
     },
-  }
+  };
 }
-const sizeIcons = 24
+
+const sizeIcons = 24;
 
 const Allinks = [
   {
@@ -45,13 +45,9 @@ const Allinks = [
   },
   {
     name: 'Equipos',
-    href: '#',
+    href: '/dashboard/equipment',
     icon: <FiTruck size={sizeIcons} />,
-    submenu: [
-      { name: 'Todos', href: '/dashboard/equipment?type=Todos' },
-      { name: 'Vehículos', href: '/dashboard/equipment?type=1' },
-      { name: 'Otros', href: '/dashboard/equipment?type=2' },
-    ],
+
   },
   {
     name: 'Documentación',
@@ -68,41 +64,57 @@ const Allinks = [
     href: '/dashboard/help',
     icon: <MdHelpOutline size={sizeIcons} />,
   },
-]
+];
 
 export default function SideLinks({ expanded }: { expanded: boolean }) {
   //cambio
-  const pathname = usePathname()
-  const [openSubMenu, setOpenSubMenu] = useState(null)
-  const owner_id = useLoggedUserStore(state => state.profile)?.[0]?.id
-  const profile = useLoggedUserStore(state => state.profile)
+  const pathname = usePathname();
+  const [openSubMenu, setOpenSubMenu] = useState(null);
+  const owner_id = useLoggedUserStore((state) => state.profile)?.[0]?.id;
+  const profile = useLoggedUserStore((state) => state.profile);
   //const userShared = useLoggedUserStore(state => state.sharedUsers?.[0]?.role)
-  const userShared = cookies.get('guestRole')
-  const isAuditor = profile?.[0]?.role === 'Auditor'
-  const administrador = userShared === 'Administrador' || null
+  const userShared = cookies.get('guestRole');
+  const isAuditor = profile?.[0]?.role === 'Auditor';
+  const administrador = userShared === 'Administrador' || null;
 
-  const actualCompany = useLoggedUserStore(state => state.actualCompany)
-    ?.owner_id.id
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany)?.owner_id.id;
 
-  const links =
-    !administrador && owner_id !== actualCompany
-      ? Allinks?.filter(link => link.name !== 'Empresa')
-      : Allinks
+  const share = useLoggedUserStore((state) => state.sharedCompanies);
+  const profile2 = useLoggedUserStore((state) => state.credentialUser?.id);
+  const owner2 = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
+  const users = useLoggedUserStore((state) => state);
+  const company = useLoggedUserStore((state) => state.actualCompany?.id);
+
+  let role = '';
+  if (owner2 === profile2) {
+    role = users?.actualCompany?.owner_id?.role as string;
+  } else {
+
+    const roleRaw = share?.filter((item: any) => item.company_id.id === company && Object.values(item).some((value) => typeof value === 'string' && value.includes(profile2 as string))).map((item: any) => item.role);
+    role = roleRaw?.join('');
+
+  }
+
+  // const links =
+  //   !administrador && owner_id !== actualCompany ? Allinks?.filter((link) => link.name !== 'Empresa') : Allinks;
+  const links = !administrador && owner_id !== actualCompany
+  ? Allinks.filter((link) => link.name !== 'Empresa' && (role !== 'Invitado' || (link.name !== 'Dashboard' && link.name !== 'Ayuda')))
+  : Allinks.filter((link) => role !== 'Invitado' || (link.name !== 'Dashboard' && link.name !== 'Ayuda'));
 
   if (isAuditor) {
-    return null
+    return null;
   }
   const handleSubMenuClick = (index: any) => {
     if (openSubMenu === index) {
-      setOpenSubMenu(null)
+      setOpenSubMenu(null);
     } else {
-      setOpenSubMenu(index)
+      setOpenSubMenu(index);
     }
-  }
+  };
 
   const handleSubMenuItemClick = () => {
-    setOpenSubMenu(null)
-  }
+    setOpenSubMenu(null);
+  };
 
   return (
     <>
@@ -110,11 +122,10 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
         <div key={link.name}>
           <Link
             href={link.href}
-            className={`flex h-[48px] grow items-center justify-center gap-1 rounded-md p-3 text-black font-medium md:flex-none md:justify-start md:p-2 md:px-3 ${
-              pathname === link.href || pathname === link.submenu?.[0]?.href
+            className={`flex h-[48px] grow items-center justify-center gap-1 rounded-md p-3 text-black font-medium md:flex-none md:justify-start md:p-2 md:px-3 ${pathname === link.href
                 ? 'bg-white text-black'
                 : ' dark:text-neutral-100 text--neutral-950 hover:bg-blue-500 hover:shadow-[0px_0px_05px_05px_rgb(255,255,255,0.40)] hover:text-white'
-            }`}
+              }`}
             onClick={() => handleSubMenuClick(index)}
             title={!expanded ? link.name : undefined}
           >
@@ -123,44 +134,15 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
                 {link.icon}
 
                 <p className="hidden md:block">{link.name}</p>
-                {link.submenu && (
-                  <div className="ml-2">
-                    {openSubMenu === index ? (
-                      <MdOutlineKeyboardArrowUp size={sizeIcons} />
-                    ) : (
-                      <MdOutlineKeyboardArrowDown size={sizeIcons} />
-                    )}
-                  </div>
-                )}
+
               </>
             ) : (
               link.icon
             )}
           </Link>
-          {openSubMenu === index && link.submenu && (
-            <div
-              className={`${
-                expanded ? '' : 'absolute top-[190px]'
-              }ml-0 mt-1 dark:text-neutral-300 text-neutral-950 font-medium bg-muted dark:bg-muted p-2 rounded-md`}
-              style={{
-                marginLeft: expanded ? 0 : '1.6cm',
-                width: 'fit-content',
-              }}
-            >
-              {link.submenu?.map((submenuItem, subIndex) => (
-                <Link key={submenuItem.name} href={submenuItem.href} passHref>
-                  <div
-                    onClick={handleSubMenuItemClick}
-                    className="block py-2 cursor-pointer hover:text-blue-800 "
-                  >
-                    {submenuItem.name}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
+
         </div>
       ))}
     </>
-  )
+  );
 }

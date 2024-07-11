@@ -1,162 +1,158 @@
-'use client'
+'use client';
 
-import { Button } from '@/components/ui/button'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from '@/components/ui/command'
-import { Form } from '@/components/ui/form'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { cn } from '@/lib/utils'
-import { zodResolver } from '@hookform/resolvers/zod'
-import {
-  CaretSortIcon,
-  CheckIcon,
-  PlusCircledIcon,
-} from '@radix-ui/react-icons'
-import { ChangeEvent, useEffect, useState } from 'react'
-require('dotenv').config()
+import { Button } from '@/components/ui/button';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { Form } from '@/components/ui/form';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { CaretSortIcon, CheckIcon, PlusCircledIcon } from '@radix-ui/react-icons';
+import { ChangeEvent, useEffect, useState } from 'react';
+require('dotenv').config();
 
-import { useImageUpload } from '@/hooks/useUploadImage'
-import { handleSupabaseError } from '@/lib/errorHandler'
-import { useCountriesStore } from '@/store/countries'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
-import { useForm } from 'react-hook-form'
-import { toast } from 'sonner'
-import { z } from 'zod'
-import { supabase } from '../../supabase/supabase'
-import BackButton from './BackButton'
-import { ImageHander } from './ImageHandler'
-import { Modal } from './Modal'
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-import { CardDescription, CardHeader, CardTitle } from './ui/card'
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from './ui/form'
-import { Input } from './ui/input'
+import { CheckboxDefaultValues } from '@/components/CheckboxDefValues';
+import { useImageUpload } from '@/hooks/useUploadImage';
+import { handleSupabaseError } from '@/lib/errorHandler';
+import { useCountriesStore } from '@/store/countries';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
+import { supabase } from '../../supabase/supabase';
+import BackButton from './BackButton';
+import { ImageHander } from './ImageHandler';
+import { Modal } from './Modal';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { CardDescription, CardHeader, CardTitle } from './ui/card';
+import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
+import { Input } from './ui/input';
 // import { useToast } from './ui/use-toast'
 
 type VehicleType = {
-  year: string
-  engine: string
-  chassis: string
-  serie: string
-  domain: string
-  intern_number: string
-  picture: string
-  type_of_vehicle: string
-  types_of_vehicles: { name: string }
-  brand_vehicles: { name: string }
-  brand: string
-  model_vehicles: { name: string }
-  model: string
-  type: { name: string }
-  id: string
-  allocated_to: string[]
-}
+  year: string;
+  engine: string;
+  chassis: string;
+  serie: string;
+  domain: string;
+  intern_number: string;
+  picture: string;
+  type_of_vehicle: string;
+  types_of_vehicles: { name: string };
+  brand_vehicles: { name: string };
+  brand: string;
+  model_vehicles: { name: string };
+  model: string;
+  type: { name: string };
+  id: string;
+  allocated_to: string[];
+};
 type generic = {
-  name: string
-  id: string
-}
+  name: string;
+  id: string;
+};
 
 type dataType = {
-  tipe_of_vehicles: generic[]
+  tipe_of_vehicles: generic[];
   brand: {
-    label: string
-    id: string
-  }[]
+    label: string;
+    id: string;
+  }[];
   models: {
-    name: string
-    id: string
-  }[]
+    name: string;
+    id: string;
+  }[];
   types: {
-    name: string
-    id: string
-  }[]
-}
+    name: string;
+    id: string;
+  }[];
+};
 
 export default function VehiclesForm2({ id }: { id: string }) {
-  const searchParams = useSearchParams()
+  const searchParams = useSearchParams();
   // const id = params
-  const [accion, setAccion] = useState(searchParams.get('action'))
-  const actualCompany = useLoggedUserStore(state => state.actualCompany)
-  const profile = useLoggedUserStore(state => state)
-  let role = ''
-  if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
-    role = profile?.actualCompany?.owner_id?.role as string
+  const [accion, setAccion] = useState(searchParams.get('action'));
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
+  const profile = useLoggedUserStore((state) => state);
+  // let role = '';
+  // if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
+  //   role = profile?.actualCompany?.owner_id?.role as string;
+  // } else {
+  //   role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
+  // }
+  const share = useLoggedUserStore((state) => state.sharedCompanies);
+  const profile2 = useLoggedUserStore((state) => state.credentialUser?.id);
+  const owner2 = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
+  const users = useLoggedUserStore((state) => state);
+  const company = useLoggedUserStore((state) => state.actualCompany?.id);
+  
+  let role = '';
+  if (owner2 === profile2) {
+    role = users?.actualCompany?.owner_id?.role as string;
   } else {
-    role = profile?.actualCompany?.share_company_users?.[0]?.role as string
+    
+    const roleRaw = share
+      .filter((item: any) =>
+        item.company_id.id === company &&
+        Object.values(item).some((value) => typeof value === 'string' && value.includes(profile2 as string))
+      )
+      .map((item: any) => item.role);
+    role = roleRaw?.join('');
   }
-  const [vehicle, setVehicle] = useState<VehicleType | null>(null)
-  // const { toast } = useToast()
-  const pathname = usePathname()
+
+  const [vehicle, setVehicle] = useState<VehicleType | null>(null);
+  const pathname = usePathname();
   const [data, setData] = useState<dataType>({
     tipe_of_vehicles: [],
     brand: [],
     models: [],
     types: [],
-  })
+  });
 
   const preloadFormData = (vehicleData: VehicleType) => {
-    form.setValue('type_of_vehicle', vehicleData.type_of_vehicle.toString())
-    form.setValue('brand', vehicle?.brand)
-    form.setValue('model', vehicle?.model)
-    form.setValue('year', vehicleData.year)
-    form.setValue('engine', vehicleData.engine)
-    form.setValue('chassis', vehicleData.chassis)
-    form.setValue('serie', vehicleData.serie)
-    form.setValue('domain', vehicleData.domain)
-    form.setValue('intern_number', vehicleData.intern_number)
-    form.setValue('picture', vehicleData.picture)
-    form.setValue('type', vehicleData.type.name)
-    // form.setValue('allocated_to', vehicleData.allocated_to)
-  }
+    form.setValue('type_of_vehicle', vehicleData.type_of_vehicle.toString());
+    form.setValue('brand', vehicle?.brand);
+    form.setValue('model', vehicle?.model);
+    form.setValue('year', vehicleData.year);
+    form.setValue('engine', vehicleData.engine);
+    form.setValue('chassis', vehicleData.chassis);
+    form.setValue('serie', vehicleData.serie);
+    form.setValue('domain', vehicleData.domain);
+    form.setValue('intern_number', vehicleData.intern_number);
+    form.setValue('picture', vehicleData.picture);
+    form.setValue('type', vehicleData.type.name);
+    form.setValue('allocated_to', vehicleData.allocated_to);
+  };
 
   useEffect(() => {
     if (vehicle) {
-      preloadFormData(vehicle)
+      preloadFormData(vehicle);
     }
     if (vehicle && vehicle.type_of_vehicle === 'Vehículos') {
-      setHideInput(true)
+      setHideInput(true);
     }
     if (vehicle && vehicle.type_of_vehicle === 'Otros') {
-      console.log('otro')
       setHideInput(false)
     }
     if (!vehicle) {
-      setHideInput(false)
+      setHideInput(false);
     }
-  }, [vehicle])
+  }, [vehicle]);
 
   const fetchVehicleData = async () => {
-    if (!id || !actualCompany?.id) return
+    if (!id || !actualCompany?.id) return;
     try {
       const { data: vehicleData, error } = await supabase
         .from('vehicles')
-        .select(
-          '*, brand_vehicles(name), model_vehicles(name),types_of_vehicles(name),type(name)',
-        )
+        .select('*, brand_vehicles(name), model_vehicles(name),types_of_vehicles(name),type(name)')
         .eq('id', id)
-        .eq('company_id', actualCompany?.id)
+        .eq('company_id', actualCompany?.id);
 
       //.single()
 
       if (error) {
-        console.error('Error al obtener los datos del vehículo:', error)
+        console.error('Error al obtener los datos del vehículo:', error);
       } else {
         const transformedData = vehicleData?.map((item: VehicleType) => ({
           ...item,
@@ -164,21 +160,21 @@ export default function VehiclesForm2({ id }: { id: string }) {
           brand: item.brand_vehicles.name,
           model: item.model_vehicles.name,
           type: item.type,
-        }))
+        }));
 
-        setVehicle(transformedData[0])
+        setVehicle(transformedData[0]);
       }
     } catch (error) {
-      console.error('Error al obtener los datos del vehículo:', error)
+      console.error('Error al obtener los datos del vehículo:', error);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchVehicleData()
-  }, [id, actualCompany])
+    fetchVehicleData();
+  }, [id, actualCompany]);
 
-  const router = useRouter()
-  const [hideInput, setHideInput] = useState(false)
+  const router = useRouter();
+  const [hideInput, setHideInput] = useState(false);
   const vehicleSchema = z.object({
     brand: z
       .string({
@@ -191,23 +187,23 @@ export default function VehiclesForm2({ id }: { id: string }) {
       })
       .optional(),
     year: z.string({ required_error: 'El año es requerido' }).refine(
-      e => {
-        const year = Number(e)
-        const actualYear = new Date().getFullYear()
+      (e) => {
+        const year = Number(e);
+        const actualYear = new Date().getFullYear();
         if (year !== undefined) {
           // Aquí puedes usar year de manera segura
           if (year < 1900 || year > actualYear) {
-            return false
+            return false;
           } else {
-            return true
+            return true;
           }
         } else {
-          return 0
+          return 0;
         }
       },
       {
         message: 'El año debe ser mayor a 1900 y menor al año actual.',
-      },
+      }
     ),
     engine: z
       .string({
@@ -239,43 +235,64 @@ export default function VehiclesForm2({ id }: { id: string }) {
           })
           .max(7, { message: 'El dominio debe tener menos de 7 caracteres.' })
           .refine(
-            e => {
+            (e) => {
               //old regex para validar dominio AAA000 (3 letras y 3 numeros)
-              const year = Number(form.getValues('year'))
+              const year = Number(form.getValues('year'));
 
-              const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/
+              const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/;
               if (year !== undefined) {
                 if (year <= 2015) {
-                  return oldRegex.test(e)
+                  return oldRegex.test(e);
                 } else {
-                  return true
+                  return true;
                 }
               } else {
-                return 0
+                return 0;
               }
             },
             {
               message: 'El dominio debe tener el formato AAA000.',
-            },
+            }
           )
           .refine(
-            e => {
-              const year = Number(form.getValues('year'))
+            (e) => {
+              const year = Number(form.getValues('year'));
 
-              const newRegex = /^[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$/
+              const newRegex = /^[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$/;
               if (year !== undefined) {
                 if (year >= 2017) {
-                  return newRegex.test(e)
+                  return newRegex.test(e);
                 } else {
-                  return true
+                  return true;
                 }
               } else {
-                return 0
+                return 0;
               }
             },
             {
               message: 'El dominio debe tener el formato AA000AA.',
+            }
+          )
+          .refine(
+            (e) => {
+              const year = Number(form.getValues('year'));
+
+              const newRegex = /^[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$/;
+              const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/;
+              if (year !== undefined) {
+                if (year === 2016 || year === 2015) {
+                  const result = newRegex.test(e) || oldRegex.test(e);
+                  return result;
+                } else {
+                  return true;
+                }
+              } else {
+                return 0;
+              }
             },
+            {
+              message: 'El dominio debe tener uno de los siguientes formatos AA000AA o AAA000',
+            }
           )
           .refine(
             e => {
@@ -305,18 +322,15 @@ export default function VehiclesForm2({ id }: { id: string }) {
                 .from('vehicles')
                 .select('*')
                 .eq('domain', domain.toUpperCase())
-                .eq('company_id', actualCompany?.id)
+                .eq('company_id', actualCompany?.id);
 
-              if (
-                vehicles?.[0] &&
-                pathname === '/dashboard/equipment/action?action=new'
-              ) {
-                return false
+              if (vehicles?.[0] && pathname === '/dashboard/equipment/action?action=new') {
+                return false;
               } else {
-                return true
+                return true;
               }
             },
-            { message: 'El dominio ya existe' },
+            { message: 'El dominio ya existe' }
           )
       : z.string().optional().nullable(),
     serie: hideInput
@@ -340,61 +354,59 @@ export default function VehiclesForm2({ id }: { id: string }) {
         message: 'El número interno debe tener menos de 30 caracteres.',
       }),
     picture: z.string().optional(),
-    type: hideInput
-      ? z.string().optional()
-      : z.string({ required_error: 'El tipo es requerido' }),
-    // allocated_to: z.array(z.string()).optional(),
-  })
-  const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false)
+    type: hideInput ? z.string().optional() : z.string({ required_error: 'El tipo es requerido' }),
+    allocated_to: z.array(z.string()).optional(),
+  });
+  const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false);
 
   const fetchData = async () => {
-    let { data: types_of_vehicles } = await supabase
-      .from('types_of_vehicles')
-      .select('*')
+    let { data: types_of_vehicles } = await supabase.from('types_of_vehicles').select('*');
 
-    let { data: brand_vehicles } = await supabase
-      .from('brand_vehicles')
-      .select('*')
+    let { data: brand_vehicles } = await supabase.from('brand_vehicles').select('*');
 
-    let { data: type, error } = await supabase.from('type').select('*')
+    let { data: type, error } = await supabase.from('type').select('*');
     setData({
       ...data,
       tipe_of_vehicles: types_of_vehicles as generic[],
-      brand: (brand_vehicles || [])?.map(e => {
-        return { label: e.name as string, id: e.id as string }
+      brand: (brand_vehicles || [])?.map((e) => {
+        return { label: e.name as string, id: e.id as string };
       }),
       types: type as generic[],
+    });
+  };
+
+  supabase
+    .channel('custom-all-channel')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'brand_vehicles' }, () => {
+      fetchData();
     })
-  }
+    .subscribe();
 
   supabase
     .channel('custom-all-channel')
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'brand_vehicles' },
-      () => {
-        fetchData()
-      },
-    )
-    .subscribe()
-
-  supabase
-    .channel('custom-all-channel')
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'model_vehicles' },
-      () => {
-        const brand = form.getValues('brand')
-        const brand_id = data.brand.find(e => e.label === brand)?.id as string
-        fetchModels(brand_id || '')
-      },
-    )
-    .subscribe()
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'model_vehicles' }, () => {
+      const brand = form.getValues('brand');
+      const brand_id = data.brand.find((e) => e.label === brand)?.id as string;
+      fetchModels(brand_id || '');
+    })
+    .subscribe();
 
   useEffect(() => {
     fetchData()
   }, [])
-  const contractorCompanies = useCountriesStore(state => state.contractors)
+  const fetchContractors = useCountriesStore(state => state.fetchContractors)
+  const subscribeToCustomersChanges = useCountriesStore(state => state.subscribeToCustomersChanges)
+  useEffect(() => {
+    fetchContractors()
+
+    const unsubscribe = subscribeToCustomersChanges()
+
+    return () => {
+      unsubscribe()
+    }
+  }, [fetchContractors, subscribeToCustomersChanges])
+  
+  const contractorCompanies = useCountriesStore(state => state.customers?.filter((company:any) => company.company_id.toString() === actualCompany?.id && company.is_active))
   const vehicleBrands = data.brand
   const types = data.tipe_of_vehicles?.map(e => e.name)
   const vehicleModels = data.models
@@ -410,31 +422,26 @@ export default function VehiclesForm2({ id }: { id: string }) {
       domain: vehicle?.domain || '',
       intern_number: vehicle?.intern_number || '',
       picture: vehicle?.picture || '',
-      // allocated_to: [],
+      allocated_to: [],
     },
-  })
+  });
 
   const fetchModels = async (brand_id: string) => {
-    let { data: model_vehicles } = await supabase
-      .from('model_vehicles')
-      .select('*')
-      .eq('brand', brand_id)
+    let { data: model_vehicles } = await supabase.from('model_vehicles').select('*').eq('brand', brand_id);
 
     setData({
       ...data,
       models: model_vehicles as generic[],
-    })
-  }
-  const url = process.env.NEXT_PUBLIC_PROJECT_URL
-  const mandatoryDocuments = useCountriesStore(
-    state => state.mandatoryDocuments,
-  )
-  const loggedUser = useLoggedUserStore(state => state.credentialUser?.id)
+    });
+  };
+  const url = process.env.NEXT_PUBLIC_PROJECT_URL;
+  const mandatoryDocuments = useCountriesStore((state) => state.mandatoryDocuments);
+  const loggedUser = useLoggedUserStore((state) => state.credentialUser?.id);
 
   async function onCreate(values: z.infer<typeof vehicleSchema>) {
     toast.promise(
       async () => {
-        const { type_of_vehicle, brand, model, domain } = values
+        const { type_of_vehicle, brand, model, domain } = values;
 
         try {
           const { data: vehicle, error } = await supabase
@@ -443,141 +450,117 @@ export default function VehiclesForm2({ id }: { id: string }) {
               {
                 ...values,
                 domain: domain?.toUpperCase() || null,
-                type_of_vehicle: data.tipe_of_vehicles.find(
-                  e => e.name === type_of_vehicle,
-                )?.id,
-                brand: data.brand.find(e => e.label === brand)?.id,
-                model: data.models.find(e => e.name === model)?.id,
-                type: data.types.find(e => e.name === values.type)?.id,
+                type_of_vehicle: data.tipe_of_vehicles.find((e) => e.name === type_of_vehicle)?.id,
+                brand: data.brand.find((e) => e.label === brand)?.id,
+                model: data.models.find((e) => e.name === model)?.id,
+                type: data.types.find((e) => e.name === values.type)?.id,
                 company_id: actualCompany?.id,
               },
             ])
-            .select()
+            .select();
 
           const documentsMissing: {
-            applies: number
-            id_document_types: string
-            validity: string | null
-            user_id: string | undefined
-          }[] = []
+            applies: number;
+            id_document_types: string;
+            validity: string | null;
+            user_id: string | undefined;
+          }[] = [];
 
-          mandatoryDocuments?.Equipos.forEach(document => {
+          mandatoryDocuments?.Equipos.forEach((document) => {
             documentsMissing.push({
               applies: vehicle?.[0]?.id,
               id_document_types: document.id,
               validity: null,
               user_id: loggedUser,
-            })
-          })
+            });
+          });
 
           const { data: documentData, error: documentError } = await supabase
             .from('documents_equipment')
             .insert(documentsMissing)
-            .select()
+            .select();
 
           if (documentError) {
-            throw new Error(handleSupabaseError(documentError.message))
+            throw new Error(handleSupabaseError(documentError.message));
           }
 
           if (error) {
-            throw new Error(handleSupabaseError(error.message))
+            throw new Error(handleSupabaseError(error.message));
           }
 
-          const id = vehicle?.[0].id
+          const id = vehicle?.[0].id;
 
-          const fileExtension = imageFile?.name.split('.').pop()
+          const fileExtension = imageFile?.name.split('.').pop();
 
           if (imageFile) {
             try {
-              const renamedFile = new File(
-                [imageFile],
-                `${id.replace(/\s/g, '')}.${fileExtension}`,
-                {
-                  type: `image/${fileExtension}`,
-                },
-              )
-              await uploadImage(renamedFile, 'vehicle_photos')
+              const renamedFile = new File([imageFile], `${id.replace(/\s/g, '')}.${fileExtension}`, {
+                type: `image/${fileExtension}`,
+              });
+              await uploadImage(renamedFile, 'vehicle_photos');
 
               try {
-                const vehicleImage =
-                  `${url}/vehicle_photos/${id}.${fileExtension}`
-                    .trim()
-                    .replace(/\s/g, '')
+                const vehicleImage = `${url}/vehicle_photos/${id}.${fileExtension}`.trim().replace(/\s/g, '');
 
                 const { data, error } = await supabase
                   .from('vehicles')
                   .update({ picture: vehicleImage })
                   .eq('id', id)
-                  .eq('company_id', actualCompany?.id)
+                  .eq('company_id', actualCompany?.id);
               } catch (error) {}
             } catch (error: any) {
-              throw new Error(handleSupabaseError(error.message))
+              throw new Error(handleSupabaseError(error.message));
             }
           }
 
-          router.push('/dashboard/equipment')
+          router.push('/dashboard/equipment');
         } catch (error) {
-          console.error(error)
+          console.error(error);
         }
       },
       {
         loading: 'Guardando...',
         success: 'Vehículo registrado',
-        error: error => {
-          return error
+        error: (error) => {
+          return error;
         },
-      },
-    )
+      }
+    );
   }
-  const { uploadImage } = useImageUpload()
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [base64Image, setBase64Image] = useState<string>('')
+  const { uploadImage } = useImageUpload();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [base64Image, setBase64Image] = useState<string>('');
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+    const file = event.target.files?.[0];
 
     if (file) {
-      setImageFile(file)
+      setImageFile(file);
       // Convertir la imagen a base64
-      const reader = new FileReader()
-      reader.onload = e => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
         if (e.target && typeof e.target.result === 'string') {
-          setBase64Image(e.target.result)
+          setBase64Image(e.target.result);
         }
-      }
-      reader.readAsDataURL(file)
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
-  console.log(form.formState.errors, 'formState.errors')
 
   async function onUpdate(values: z.infer<typeof vehicleSchema>) {
     toast.promise(
       async () => {
-        const {
-          type_of_vehicle,
-          brand,
-          model,
-          year,
-          engine,
-          chassis,
-          serie,
-          domain,
-          intern_number,
-          picture,
-          type,
-        } = values
+        const { type_of_vehicle, brand, model, year, engine, chassis, serie, domain, intern_number, picture, type } =
+          values;
 
         try {
-          console.log('update', values)
           const { data: updated, error: updatedERROR } = await supabase
             .from('vehicles')
             .update({
-              type_of_vehicle: data.tipe_of_vehicles.find(
-                e => e.name === type_of_vehicle,
-              )?.id,
-              brand: data.brand.find(e => e.label === brand)?.id,
-              model: data.models.find(e => e.name === model)?.id,
+              type_of_vehicle: data.tipe_of_vehicles.find((e) => e.name === type_of_vehicle)?.id,
+              brand: data.brand.find((e) => e.label === brand)?.id,
+              model: data.models.find((e) => e.name === model)?.id,
               year: year,
               engine: engine,
               chassis: chassis,
@@ -585,58 +568,51 @@ export default function VehiclesForm2({ id }: { id: string }) {
               domain: domain?.toUpperCase(),
               intern_number: intern_number,
               picture: picture,
-              // allocated_to: values.allocated_to,
+              allocated_to: values.allocated_to,
             })
             .eq('id', vehicle?.id)
             .eq('company_id', actualCompany?.id)
-            .select()
+            .select();
 
-          console.log('updated', updated)
-          console.log('updatedERROR', updatedERROR)
 
-          const id = vehicle?.id
-          const fileExtension = imageFile?.name.split('.').pop()
+          const id = vehicle?.id;
+          const fileExtension = imageFile?.name.split('.').pop();
           if (imageFile) {
             try {
-              const renamedFile = new File(
-                [imageFile],
-                `${id?.replace(/\s/g, '')}.${fileExtension}`,
-                {
-                  type: `image/${fileExtension}`,
-                },
-              )
-              await uploadImage(renamedFile, 'vehicle_photos')
+              const renamedFile = new File([imageFile], `${id?.replace(/\s/g, '')}.${fileExtension}`, {
+                type: `image/${fileExtension}`,
+              });
+              await uploadImage(renamedFile, 'vehicle_photos');
 
               try {
-                const vehicleImage =
-                  `${url}/vehicle_photos/${id}.${fileExtension}?timestamp=${Date.now()}`
-                    .trim()
-                    .replace(/\s/g, '')
+                const vehicleImage = `${url}/vehicle_photos/${id}.${fileExtension}?timestamp=${Date.now()}`
+                  .trim()
+                  .replace(/\s/g, '');
                 const { data, error } = await supabase
                   .from('vehicles')
                   .update({ picture: vehicleImage })
                   .eq('id', id)
-                  .eq('company_id', actualCompany?.id)
+                  .eq('company_id', actualCompany?.id);
               } catch (error) {}
             } catch (error: any) {
-              throw new Error('Error al subir la imagen')
+              throw new Error('Error al subir la imagen');
             }
           }
 
-          setReadOnly(true)
-          router.push('/dashboard/equipment')
+          setReadOnly(true);
+          router.push('/dashboard/equipment');
         } catch (error) {
-          throw new Error('Error al editar el vehículo')
+          throw new Error('Error al editar el vehículo');
         }
       },
       {
         loading: 'Guardando...',
         success: 'Vehículo editado',
-        error: error => {
-          return error
+        error: (error) => {
+          return error;
         },
-      },
-    )
+      }
+    );
   }
 
   return (
@@ -676,11 +652,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   </CardTitle>
                   <CardDescription className="text-muted-foreground text-xl">
                     {accion === 'edit' || accion === 'view'
-                      ? `${
-                          readOnly
-                            ? 'Vista previa de equipo'
-                            : ' En esta vista puedes editar los datos del equipo'
-                        }`
+                      ? `${readOnly ? 'Vista previa de equipo' : ' En esta vista puedes editar los datos del equipo'}`
                       : 'En esta vista puedes agregar un nuevo equipo'}
                   </CardDescription>
                 </div>
@@ -692,7 +664,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                     <Button
                       variant="primary"
                       onClick={() => {
-                        setReadOnly(false)
+                        setReadOnly(false);
                       }}
                     >
                       Habilitar edición
@@ -707,9 +679,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
         </header>
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(
-              accion === 'edit' || accion === 'view' ? onUpdate : onCreate,
-            )}
+            onSubmit={form.handleSubmit(accion === 'edit' || accion === 'view' ? onUpdate : onCreate)}
             className="space-y-8 w-full px-6 pb-3"
           >
             <div className=" flex gap-[2vw] flex-wrap items-center">
@@ -729,14 +699,9 @@ export default function VehiclesForm2({ id }: { id: string }) {
                             variant="outline"
                             role="combobox"
                             value={vehicle?.type_of_vehicle}
-                            className={cn(
-                              'w-[250px] justify-between',
-                              !field.value && 'text-muted-foreground',
-                            )}
+                            className={cn('w-[250px] justify-between', !field.value && 'text-muted-foreground')}
                           >
-                            {field.value
-                              ? field.value
-                              : 'Seleccionar tipo de equipo'}
+                            {field.value ? field.value : 'Seleccionar tipo de equipo'}
                             <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </FormControl>
@@ -749,22 +714,20 @@ export default function VehiclesForm2({ id }: { id: string }) {
                             className="h-9"
                             //value={field.value}
                           />
-                          <CommandEmpty>
-                            No se encontro ningun resultado
-                          </CommandEmpty>
+                          <CommandEmpty>No se encontro ningun resultado</CommandEmpty>
                           <CommandGroup>
-                            {types?.map(option => (
+                            {types?.map((option) => (
                               <CommandItem
                                 value={option}
                                 key={option}
                                 onSelect={() => {
-                                  form.setValue('type_of_vehicle', option)
+                                  form.setValue('type_of_vehicle', option);
 
                                   if (option === 'Vehículos') {
-                                    setHideInput(true)
+                                    setHideInput(true);
                                   }
                                   if (option === 'Otros') {
-                                    setHideInput(false)
+                                    setHideInput(false);
                                   }
                                 }}
                               >
@@ -772,9 +735,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                                 <CheckIcon
                                   className={cn(
                                     'ml-auto h-4 w-4',
-                                    option === field.value
-                                      ? 'opacity-100'
-                                      : 'opacity-0',
+                                    option === field.value ? 'opacity-100' : 'opacity-0'
                                   )}
                                 />
                               </CommandItem>
@@ -783,9 +744,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                         </Command>
                       </PopoverContent>
                     </Popover>
-                    <FormDescription>
-                      Selecciona el tipo de vehículo
-                    </FormDescription>
+                    <FormDescription>Selecciona el tipo de vehículo</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -806,10 +765,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                             variant="outline"
                             role="combobox"
                             value={field.value}
-                            className={cn(
-                              'w-[250px] justify-between',
-                              !field.value && 'text-muted-foreground',
-                            )}
+                            className={cn('w-[250px] justify-between', !field.value && 'text-muted-foreground')}
                           >
                             {field.value || 'Seleccionar marca'}
                             <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -818,21 +774,14 @@ export default function VehiclesForm2({ id }: { id: string }) {
                       </PopoverTrigger>
                       <PopoverContent className="w-[250px] p-0 max-h-[200px] overflow-y-auto">
                         <Command>
-                          <CommandInput
-                            disabled={readOnly}
-                            placeholder="Buscar marca..."
-                            className="h-9"
-                          />
+                          <CommandInput disabled={readOnly} placeholder="Buscar marca..." className="h-9" />
                           <CommandEmpty className="py-2 px-2">
                             <Modal modal="addBrand" fetchData={fetchData}>
                               <Button
                                 disabled={readOnly}
                                 variant="outline"
                                 role="combobox"
-                                className={cn(
-                                  'w-full justify-between',
-                                  !field.value && 'text-muted-foreground',
-                                )}
+                                className={cn('w-full justify-between', !field.value && 'text-muted-foreground')}
                               >
                                 Agregar marca
                                 <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -840,25 +789,21 @@ export default function VehiclesForm2({ id }: { id: string }) {
                             </Modal>
                           </CommandEmpty>
                           <CommandGroup>
-                            {vehicleBrands?.map(option => (
+                            {vehicleBrands?.map((option) => (
                               <CommandItem
                                 value={option.label}
                                 key={option.label}
                                 onSelect={() => {
-                                  form.setValue('brand', option.label)
-                                  const brand_id = data.brand.find(
-                                    e => e.label === option.label,
-                                  )?.id
-                                  fetchModels(brand_id as string)
+                                  form.setValue('brand', option.label);
+                                  const brand_id = data.brand.find((e) => e.label === option.label)?.id;
+                                  fetchModels(brand_id as string);
                                 }}
                               >
                                 {option.label}
                                 <CheckIcon
                                   className={cn(
                                     'ml-auto h-4 w-4',
-                                    option.label === field.value
-                                      ? 'opacity-100'
-                                      : 'opacity-0',
+                                    option.label === field.value ? 'opacity-100' : 'opacity-0'
                                   )}
                                 />
                               </CommandItem>
@@ -867,9 +812,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                         </Command>
                       </PopoverContent>
                     </Popover>
-                    <FormDescription>
-                      Selecciona la marca del vehículo
-                    </FormDescription>
+                    <FormDescription>Selecciona la marca del vehículo</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -890,10 +833,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                             disabled={readOnly}
                             variant="outline"
                             role="combobox"
-                            className={cn(
-                              'w-[250px] justify-between',
-                              !field.value && 'text-muted-foreground',
-                            )}
+                            className={cn('w-[250px] justify-between', !field.value && 'text-muted-foreground')}
                           >
                             {field.value || 'Seleccionar marca'}
                             <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -902,25 +842,14 @@ export default function VehiclesForm2({ id }: { id: string }) {
                       </PopoverTrigger>
                       <PopoverContent className="w-[250px] p-0">
                         <Command>
-                          <CommandInput
-                            disabled={readOnly}
-                            placeholder="Buscar modelo..."
-                            className="h-9"
-                          />
+                          <CommandInput disabled={readOnly} placeholder="Buscar modelo..." className="h-9" />
                           <CommandEmpty className="py-2 px-2">
-                            <Modal
-                              modal="addModel"
-                              fetchModels={fetchModels}
-                              brandOptions={data.brand}
-                            >
+                            <Modal modal="addModel" fetchModels={fetchModels} brandOptions={data.brand}>
                               <Button
                                 disabled={readOnly}
                                 variant="outline"
                                 role="combobox"
-                                className={cn(
-                                  'w-full justify-between',
-                                  !field.value && 'text-muted-foreground',
-                                )}
+                                className={cn('w-full justify-between', !field.value && 'text-muted-foreground')}
                               >
                                 Agregar modelo
                                 <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -929,40 +858,31 @@ export default function VehiclesForm2({ id }: { id: string }) {
                           </CommandEmpty>
                           <CommandGroup>
                             <>
-                              {vehicleModels?.map(option => (
+                              {vehicleModels?.map((option) => (
                                 <CommandItem
                                   value={option.name}
                                   key={option.name}
                                   onSelect={() => {
-                                    form.setValue('model', option.name)
+                                    form.setValue('model', option.name);
                                   }}
                                 >
                                   {option.name}
                                   <CheckIcon
                                     className={cn(
                                       'ml-auto h-4 w-4',
-                                      option.name === field.value
-                                        ? 'opacity-100'
-                                        : 'opacity-0',
+                                      option.name === field.value ? 'opacity-100' : 'opacity-0'
                                     )}
                                   />
                                 </CommandItem>
                               ))}
                             </>
                             <>
-                              <Modal
-                                modal="addModel"
-                                fetchModels={fetchModels}
-                                brandOptions={data.brand}
-                              >
+                              <Modal modal="addModel" fetchModels={fetchModels} brandOptions={data.brand}>
                                 <Button
                                   disabled={readOnly}
                                   variant="outline"
                                   role="combobox"
-                                  className={cn(
-                                    'w-full justify-between',
-                                    !field.value && 'text-muted-foreground',
-                                  )}
+                                  className={cn('w-full justify-between', !field.value && 'text-muted-foreground')}
                                 >
                                   Agregar modelo
                                   <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -973,9 +893,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                         </Command>
                       </PopoverContent>
                     </Popover>
-                    <FormDescription>
-                      Selecciona el modelo del vehículo
-                    </FormDescription>
+                    <FormDescription>Selecciona el modelo del vehículo</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -994,18 +912,12 @@ export default function VehiclesForm2({ id }: { id: string }) {
                       disabled={readOnly}
                       className="input w-[250px]"
                       placeholder="Año"
-                      value={
-                        field.value !== undefined
-                          ? field.value
-                          : vehicle?.year || ''
-                      }
-                      onChange={e => {
-                        form.setValue('year', e.target.value)
+                      value={field.value !== undefined ? field.value : vehicle?.year || ''}
+                      onChange={(e) => {
+                        form.setValue('year', e.target.value);
                       }}
                     />
-                    <FormDescription>
-                      Ingrese el año del vehículo
-                    </FormDescription>
+                    <FormDescription>Ingrese el año del vehículo</FormDescription>
                     <FormMessage className="max-w-[250px]" />
                   </FormItem>
                 )}
@@ -1023,9 +935,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                       placeholder="Ingrese el tipo de motor"
                       value={field.value}
                     />
-                    <FormDescription>
-                      Ingrese el tipo de motor del vehículo
-                    </FormDescription>
+                    <FormDescription>Ingrese el tipo de motor del vehículo</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1034,12 +944,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                 control={form.control}
                 name="type"
                 render={({ field }) => (
-                  <FormItem
-                    className={cn(
-                      'flex flex-col min-w-[250px]',
-                      form.getValues('type_of_vehicle'),
-                    )}
-                  >
+                  <FormItem className={cn('flex flex-col min-w-[250px]', form.getValues('type_of_vehicle'))}>
                     <FormLabel>
                       Tipo <span style={{ color: 'red' }}>*</span>{' '}
                     </FormLabel>
@@ -1051,10 +956,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                             role="combobox"
                             disabled={readOnly}
                             value={field.value}
-                            className={cn(
-                              'w-[250px] justify-between',
-                              !field.value && 'text-muted-foreground',
-                            )}
+                            className={cn('w-[250px] justify-between', !field.value && 'text-muted-foreground')}
                           >
                             {field.value ? field.value : 'Seleccione tipo'}
                             <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1063,29 +965,22 @@ export default function VehiclesForm2({ id }: { id: string }) {
                       </PopoverTrigger>
                       <PopoverContent className="w-[250px] p-0">
                         <Command>
-                          <CommandInput
-                            placeholder="Buscar tipo..."
-                            className="h-9"
-                          />
-                          <CommandEmpty>
-                            No se encontro ningun resultado
-                          </CommandEmpty>
+                          <CommandInput placeholder="Buscar tipo..." className="h-9" />
+                          <CommandEmpty>No se encontro ningun resultado</CommandEmpty>
                           <CommandGroup>
-                            {types_vehicles?.map(option => (
+                            {types_vehicles?.map((option) => (
                               <CommandItem
                                 value={option}
                                 key={option}
                                 onSelect={() => {
-                                  form.setValue('type', option)
+                                  form.setValue('type', option);
                                 }}
                               >
                                 {option}
                                 <CheckIcon
                                   className={cn(
                                     'ml-auto h-4 w-4',
-                                    option === field.value
-                                      ? 'opacity-100'
-                                      : 'opacity-0',
+                                    option === field.value ? 'opacity-100' : 'opacity-0'
                                   )}
                                 />
                               </CommandItem>
@@ -1103,12 +998,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                 control={form.control}
                 name="chassis"
                 render={({ field }) => (
-                  <FormItem
-                    className={cn(
-                      'flex flex-col min-w-[250px]',
-                      !hideInput && 'hidden',
-                    )}
-                  >
+                  <FormItem className={cn('flex flex-col min-w-[250px]', !hideInput && 'hidden')}>
                     <FormLabel>
                       Chasis del vehículo<span style={{ color: 'red' }}>*</span>
                     </FormLabel>
@@ -1118,18 +1008,12 @@ export default function VehiclesForm2({ id }: { id: string }) {
                       type="text"
                       className="input w-[250px]"
                       placeholder="Ingrese el chasis"
-                      value={
-                        field.value !== ''
-                          ? field.value
-                          : vehicle?.chassis || ''
-                      }
-                      onChange={e => {
-                        form.setValue('chassis', e.target.value)
+                      value={field.value !== '' ? field.value : vehicle?.chassis || ''}
+                      onChange={(e) => {
+                        form.setValue('chassis', e.target.value);
                       }}
                     />
-                    <FormDescription>
-                      Ingrese el chasis del vehículo
-                    </FormDescription>
+                    <FormDescription>Ingrese el chasis del vehículo</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1141,9 +1025,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   <FormItem
                     className={cn(
                       'flex flex-col min-w-[250px]',
-                      form.getValues('type_of_vehicle') &&
-                        hideInput &&
-                        'hidden',
+                      form.getValues('type_of_vehicle') && hideInput && 'hidden'
                     )}
                   >
                     <FormLabel>
@@ -1155,15 +1037,13 @@ export default function VehiclesForm2({ id }: { id: string }) {
                       disabled={readOnly}
                       className="input w-[250px]"
                       placeholder="Ingrese la serie"
-                      onChange={e => {
-                        form.setValue('serie', e.target.value)
+                      onChange={(e) => {
+                        form.setValue('serie', e.target.value);
                       }}
                       defaultValue={vehicle?.serie}
                     />
 
-                    <FormDescription>
-                      Ingrese la serie del vehículo
-                    </FormDescription>
+                    <FormDescription>Ingrese la serie del vehículo</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1172,12 +1052,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                 control={form.control}
                 name="domain"
                 render={({ field }) => (
-                  <FormItem
-                    className={cn(
-                      'flex flex-col min-w-[250px]',
-                      !hideInput && 'hidden',
-                    )}
-                  >
+                  <FormItem className={cn('flex flex-col min-w-[250px]', !hideInput && 'hidden')}>
                     <FormLabel>
                       Dominio del vehículo
                       <span style={{ color: 'red' }}>*</span>
@@ -1188,20 +1063,14 @@ export default function VehiclesForm2({ id }: { id: string }) {
                       type="text"
                       className="input w-[250px]"
                       placeholder="Ingrese el dominio"
-                      value={
-                        field.value !== ''
-                          ? field.value ?? ''
-                          : vehicle?.domain ?? ''
-                      }
+                      value={field.value !== '' ? field.value ?? '' : vehicle?.domain ?? ''}
                       defaultValue={vehicle?.domain}
-                      onChange={e => {
-                        form.setValue('domain', e.target.value)
+                      onChange={(e) => {
+                        form.setValue('domain', e.target.value);
                       }}
                     />
-                    <FormDescription>
-                      Ingrese el dominio del vehículo
-                    </FormDescription>
-                    <FormMessage className='w-[250px]' />
+                    <FormDescription>Ingrese el dominio del vehículo</FormDescription>
+                    <FormMessage className="w-[250px]" />
                   </FormItem>
                 )}
               />
@@ -1220,23 +1089,17 @@ export default function VehiclesForm2({ id }: { id: string }) {
                       type="text"
                       className="input w-[250px]"
                       placeholder="Ingrese el número interno"
-                      value={
-                        field.value !== ''
-                          ? field.value
-                          : vehicle?.intern_number || ''
-                      }
-                      onChange={e => {
-                        form.setValue('intern_number', e.target.value)
+                      value={field.value !== '' ? field.value : vehicle?.intern_number || ''}
+                      onChange={(e) => {
+                        form.setValue('intern_number', e.target.value);
                       }}
                     />
-                    <FormDescription>
-                      Ingrese el número interno del vehículo
-                    </FormDescription>
+                    <FormDescription>Ingrese el número interno del vehículo</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              {/* <div className=" min-w-[250px] flex flex-col gap-2">
+              <div className=" min-w-[250px] flex flex-col gap-2">
                 <FormField
                   control={form.control}
                   name="allocated_to"
@@ -1249,13 +1112,11 @@ export default function VehiclesForm2({ id }: { id: string }) {
                         field={field}
                         placeholder="Afectado a"
                       />
-                      <FormDescription>
-                        Selecciona a quien se le asignará el equipo
-                      </FormDescription>
+                      <FormDescription>Selecciona a quien se le asignará el equipo</FormDescription>
                     </>
                   )}
                 />
-              </div> */}
+              </div>
               <div className="w-[300px] flex  gap-2">
                 <FormField
                   control={form.control}
@@ -1285,14 +1146,12 @@ export default function VehiclesForm2({ id }: { id: string }) {
             </div>
             {!readOnly && (
               <Button type="submit" className="mt-5">
-                {accion === 'edit' || accion === 'view'
-                  ? 'Guardar cambios'
-                  : 'Agregar equipo'}
+                {accion === 'edit' || accion === 'view' ? 'Guardar cambios' : 'Agregar equipo'}
               </Button>
             )}
           </form>
         </Form>
       </section>
     </Suspense>
-  )
+  );
 }

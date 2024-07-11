@@ -1,16 +1,13 @@
-'use client'
-import Link from 'next/link'
-import React from 'react'
-import { Button } from '../ui/button'
-import MotionTransition from './Animation/MotionTransition'
-import Image from 'next/image'
-import Logo_blanco from '../../../public/logoLetrasBlancas.png'
-import Logo_negro from '../../../public/logoLetrasNegras.png'
-import { Reveal } from './Animation/Reveal'
-import { useTheme } from 'next-themes'
+'use client';
+import { useTheme } from 'next-themes';
+import Image from 'next/image';
+import Logo_blanco from '../../../public/logoLetrasBlancas.png';
+import Logo_negro from '../../../public/logoLetrasNegras.png';
+import MotionTransition from './Animation/MotionTransition';
+import { Reveal } from './Animation/Reveal';
 
 function FirstBlock() {
-  const {theme} = useTheme()
+  const { theme } = useTheme();
   return (
     <div className="relative p-4 md:py-40">
       <div className="grid max-w-5xl mx-auto md:grid-cols-2">
@@ -24,7 +21,9 @@ function FirstBlock() {
           </Reveal>
           <Reveal>
             <p className="text-xs md:text-xl mt-10 ">
-              En CodeControl, nos apasiona ayudar a las empresas a alcanzar sus objetivos. Combinamos <strong>control de procesos, desarrollo de software y consultoría organizacional  </strong> para ofrecerte soluciones integrales que generan resultados reales.
+              En CodeControl, nos apasiona ayudar a las empresas a alcanzar sus objetivos. Combinamos{' '}
+              <strong>control de procesos, desarrollo de software y consultoría organizacional </strong> para ofrecerte
+              soluciones integrales que generan resultados reales.
             </p>
           </Reveal>
           {/* <Reveal>
@@ -37,7 +36,7 @@ function FirstBlock() {
         </div>
         <MotionTransition className="flex items-center justify-center">
           <Image
-            src={theme === 'dark' ? Logo_blanco : Logo_negro} 
+            src={theme === 'dark' ? Logo_blanco : Logo_negro}
             alt="imagen de fondo"
             width={450}
             height={450}
@@ -46,7 +45,7 @@ function FirstBlock() {
         </MotionTransition>
       </div>
     </div>
-  )
+  );
 }
 
-export default FirstBlock
+export default FirstBlock;

@@ -1,51 +1,27 @@
-import { PlusCircle, MoreHorizontal } from "lucide-react"
+import { MoreHorizontal } from 'lucide-react';
 
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/components/ui/toggle-group"
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-
+import { Badge } from '@/components/ui/badge';
 import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-  } from "@/components/ui/dropdown-menu"
-import { supabase } from "../../../../supabase/supabase"
-import { parseISO, format } from 'date-fns';
-import { Badge } from "@/components/ui/badge"
-import { CreateDialog } from "./createDialog"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { format } from 'date-fns';
+import { CreateDialog } from './createDialog';
 
 type Props = {
-    title: string,
-    data: any[] | null,
-    dbName: string
-}
+  title: string;
+  data: any[] | null;
+  dbName: string;
+};
 
-export default function CardTable({title, data, dbName}: Props) {
+export default function CardTable({ title, data, dbName }: Props) {
   return (
     <Card className="md:min-w-[600px]">
       <CardHeader>
@@ -55,60 +31,50 @@ export default function CardTable({title, data, dbName}: Props) {
         </CardDescription> */}
       </CardHeader>
       <CardContent>
-      <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Index</TableHead>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="hidden md:table-cell">
-                  Creado
-                </TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Index</TableHead>
+              <TableHead>Nombre</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead className="hidden md:table-cell">Creado</TableHead>
+              <TableHead>
+                <span className="sr-only">Actions</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data?.map((dataType, index) => (
+              <TableRow key={index}>
+                <TableCell className="hidden sm:table-cell">{index + 1}</TableCell>
+                <TableCell className="font-medium">{dataType.name}</TableCell>
+                <TableCell>
+                  {dataType.is_active ? (
+                    <Badge variant="outline">Activo</Badge>
+                  ) : (
+                    <Badge variant="default">Inactivo</Badge>
+                  )}
+                </TableCell>
+                <TableCell className="hidden md:table-cell">{format(dataType.created_at, 'yyyy')}</TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button aria-haspopup="true" size="icon" variant="ghost">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Toggle menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem>Edit</DropdownMenuItem>
+                      <DropdownMenuItem>Delete</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-
-                {data?.map((dataType, index) => (
-                  <TableRow key={index}>
-                  <TableCell className="hidden sm:table-cell">
-                    {index + 1}
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {dataType.name}
-                  </TableCell>
-                  <TableCell>
-                    {dataType.is_active ? <Badge variant="outline">Activo</Badge> : <Badge variant="default">Inactivo</Badge>}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {format(dataType.created_at, 'yyyy')}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup="true"
-                          size="icon"
-                          variant="ghost"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>Delete</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-                ))}
-                
-            </TableBody>
-          </Table>
+            ))}
+          </TableBody>
+        </Table>
         {/* <Table>
           <TableHeader>
             <TableRow>
@@ -189,12 +155,12 @@ export default function CardTable({title, data, dbName}: Props) {
         </Table> */}
       </CardContent>
       <CardFooter className="justify-center border-t p-4">
-      <CreateDialog title={title} dbName={dbName}/>
+        <CreateDialog title={title} dbName={dbName} />
         {/* <Button size="sm" variant="ghost" className="gap-1">
           <PlusCircle className="h-3.5 w-3.5" />
           Agregar {title}
         </Button> */}
       </CardFooter>
     </Card>
-  )
+  );
 }

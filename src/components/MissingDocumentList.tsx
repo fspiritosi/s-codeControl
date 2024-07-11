@@ -1,74 +1,50 @@
-'use client'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import {
-  DotFilledIcon,
-  ExclamationTriangleIcon,
-  FileTextIcon,
-  PersonIcon,
-} from '@radix-ui/react-icons'
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
-import { CarIcon } from 'lucide-react'
-import Link from 'next/link'
-import { Badge } from './ui/badge'
-import { buttonVariants } from './ui/button'
+'use client';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { DotFilledIcon, ExclamationTriangleIcon, FileTextIcon, PersonIcon } from '@radix-ui/react-icons';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { CarIcon } from 'lucide-react';
+import Link from 'next/link';
+import { Badge } from './ui/badge';
+import { buttonVariants } from './ui/button';
 export const MissingDocumentList = () => {
-  const allValuesToShow = [
-    useLoggedUserStore(state => state.allDocumentsToShow),
-  ].reduce(
+  const allValuesToShow = [useLoggedUserStore((state) => state.allDocumentsToShow)].reduce(
     (acc: { employees: Document[][]; vehicles: Document[][] }, current) => {
       const employeesDocuments = current?.employees?.filter(
-        item =>
-          item.document_path !== null &&
-          item.state.toLocaleLowerCase() === 'pendiente'&&
-          item.is_active,
-      )
+        (item) => item.document_path !== null && item.state.toLocaleLowerCase() === 'pendiente' && item.is_active && item.mandatory === "Si"
+      );
       const companyDocuments = current?.vehicles?.filter(
-        item =>
-          item.document_path !== null &&
-          item.state.toLocaleLowerCase() === 'pendiente'&&
-          item.is_active,
-      )
+        (item) => item.document_path !== null && item.state.toLocaleLowerCase() === 'pendiente' && item.is_active && item.mandatory === "Si"
+      );
 
-      const groupedEmployees: { [key: string]: any[] } =
-        employeesDocuments?.reduce(
-          (grouped: { [key: string]: any[] }, item) => {
-            ;(grouped[item.resource] = grouped[item.resource] || []).push(item)
-            return grouped
-          },
-          {},
-        )
+      const groupedEmployees: { [key: string]: any[] } = employeesDocuments?.reduce(
+        (grouped: { [key: string]: any[] }, item) => {
+          (grouped[item.resource] = grouped[item.resource] || []).push(item);
+          return grouped;
+        },
+        {}
+      );
 
-      const groupedVehicles: { [key: string]: any[] } =
-        companyDocuments?.reduce((grouped: { [key: string]: any[] }, item) => {
-          ;(grouped[item.resource] = grouped[item.resource] || []).push(item)
-          return grouped
-        }, {})
+      const groupedVehicles: { [key: string]: any[] } = companyDocuments?.reduce(
+        (grouped: { [key: string]: any[] }, item) => {
+          (grouped[item.resource] = grouped[item.resource] || []).push(item);
+          return grouped;
+        },
+        {}
+      );
 
       return {
         employees: groupedEmployees ? Object.values(groupedEmployees) : [],
         vehicles: groupedVehicles ? Object.values(groupedVehicles) : [],
-      }
+      };
     },
     {
       employees: [[]],
       vehicles: [[]],
-    },
-  )
+    }
+  );
 
   return (
     <Card className="overflow-hidden">
@@ -76,8 +52,7 @@ export const MissingDocumentList = () => {
         <div className="grid gap-1">
           <CardTitle className="flex items-center text-lg ">
             Documentos Pendientes{' '}
-            {(allValuesToShow?.employees?.length > 0 ||
-              allValuesToShow?.vehicles?.length > 0) && (
+            {(allValuesToShow?.employees?.length > 0 || allValuesToShow?.vehicles?.length > 0) && (
               <DotFilledIcon className="text-red-500 p-0 m-0 size-6 animate-pulse" />
             )}
           </CardTitle>
@@ -108,12 +83,7 @@ export const MissingDocumentList = () => {
                 {allValuesToShow?.employees?.length > 0 &&
                   allValuesToShow.employees?.map((item: any, index) => {
                     return (
-                      <Accordion
-                        key={index}
-                        type="single"
-                        className=""
-                        collapsible
-                      >
+                      <Accordion key={index} type="single" className="" collapsible>
                         <AccordionItem value="item-1">
                           <AccordionTrigger className="px-2">
                             <div
@@ -124,7 +94,7 @@ export const MissingDocumentList = () => {
                                 {item[0].resource
                                   .split(' ')
                                   .map((word: string) => {
-                                    return word[0].toUpperCase() + word.slice(1)
+                                    return word[0].toUpperCase() + word.slice(1);
                                   })
                                   .join(' ')}
                               </Badge>
@@ -140,11 +110,7 @@ export const MissingDocumentList = () => {
                           </AccordionTrigger>
                           <AccordionContent className="flex flex-col gap-4 ">
                             {item?.map((document: any, index: number) => (
-                              <Badge
-                                key={index}
-                                className="text-white h-8 mx-2 w-fit"
-                                variant={'destructive'}
-                              >
+                              <Badge key={index} className="text-white h-8 mx-2 w-fit" variant={'destructive'}>
                                 <FileTextIcon className="inline mr-2 text-white size-5" />
                                 {document.documentName}
                               </Badge>
@@ -152,7 +118,7 @@ export const MissingDocumentList = () => {
                           </AccordionContent>
                         </AccordionItem>
                       </Accordion>
-                    )
+                    );
                   })}
               </AccordionContent>
             </AccordionItem>
@@ -199,11 +165,7 @@ export const MissingDocumentList = () => {
                           </AccordionTrigger>
                           <AccordionContent className="flex flex-col gap-4 ">
                             {item?.map((document: any, index: number) => (
-                              <Badge
-                                key={index}
-                                className="text-white h-8 mx-2 w-fit"
-                                variant={'destructive'}
-                              >
+                              <Badge key={index} className="text-white h-8 mx-2 w-fit" variant={'destructive'}>
                                 <ExclamationTriangleIcon className="inline mr-2 text-white-500/70 size-5" />
                                 {document.documentName}
                               </Badge>
@@ -211,7 +173,7 @@ export const MissingDocumentList = () => {
                           </AccordionContent>
                         </AccordionItem>
                       </Accordion>
-                    )
+                    );
                   })}
               </AccordionContent>
             </AccordionItem>
@@ -220,5 +182,5 @@ export const MissingDocumentList = () => {
       </CardContent>
       <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
     </Card>
-  )
-}
+  );
+};

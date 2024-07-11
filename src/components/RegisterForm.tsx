@@ -1,39 +1,29 @@
-'use client'
-import { Button } from '@/components/ui/button'
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { useAuthData } from '@/hooks/useAuthData'
-import { useProfileData } from '@/hooks/useProfileData'
-import { LoggedUser } from '@/types/types'
-import { registerSchema } from '@/zodSchemas/schemas'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { AuthError } from '@supabase/supabase-js'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import * as z from 'zod'
-import { CloseEyeIcon } from './svg/closeEye'
-import { Loader } from './svg/loader'
-import { EyeIcon } from './svg/openEye'
-import { Toggle } from './ui/toggle'
-import { useToast } from './ui/use-toast'
+'use client';
+import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { useAuthData } from '@/hooks/useAuthData';
+import { useProfileData } from '@/hooks/useProfileData';
+import { LoggedUser } from '@/types/types';
+import { registerSchema } from '@/zodSchemas/schemas';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { AuthError } from '@supabase/supabase-js';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { CloseEyeIcon } from './svg/closeEye';
+import { Loader } from './svg/loader';
+import { EyeIcon } from './svg/openEye';
+import { Toggle } from './ui/toggle';
 
 export function RegisterForm() {
-  const { singUp } = useAuthData()
-  const { insertProfile } = useProfileData()
-  const [showPasswords, setShowPasswords] = useState(false)
-  const [showLoader, setShowLoader] = useState(false)
-  const router = useRouter()
-  const { toast } = useToast()
+  const { singUp } = useAuthData();
+  const { insertProfile } = useProfileData();
+  const [showPasswords, setShowPasswords] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
+  const router = useRouter();
 
   // 1. Definir el form.
   const form = useForm<z.infer<typeof registerSchema>>({
@@ -45,36 +35,29 @@ export function RegisterForm() {
       password: '',
       confirmPassword: '',
     },
-  })
+  });
 
   // 2. Definir la función submit.
   const onSubmit = async (credentials: z.infer<typeof registerSchema>) => {
-    setShowLoader(true)
-    const { email, password, confirmPassword, ...rest } = credentials
+    setShowLoader(true);
+    const { email, password, confirmPassword, ...rest } = credentials;
     try {
-      const userData = (await singUp({ email, password })) as LoggedUser
+      const userData = (await singUp({ email, password })) as LoggedUser;
 
       await insertProfile({
         ...rest,
         credential_id: userData.user?.id || '',
         email,
         role: 'CodeControlClient',
-      })
-      toast({
-        title: 'Registro exitoso',
-        description: 'Tu cuenta ha sido creada con éxito.',
-      })
-      router.push('/login')
+      });
+     
+      router.push('/login');
     } catch (err: AuthError | any) {
-      toast({
-        title: 'Error',
-        description: `${err?.message}`,
-        variant: 'destructive',
-      })
+     
     } finally {
-      setShowLoader(false)
+      setShowLoader(false);
     }
-  }
+  };
 
   return (
     <div className="flex flex-col h-full p-4">
@@ -103,9 +86,7 @@ export function RegisterForm() {
                 <FormControl>
                   <Input placeholder="Tu apellido" {...field} />
                 </FormControl>
-                <FormDescription>
-                  Por favor ingresa tu apellido.
-                </FormDescription>
+                <FormDescription>Por favor ingresa tu apellido.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -117,11 +98,7 @@ export function RegisterForm() {
               <FormItem>
                 <FormLabel>Correo</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="ejemplo@correo.com"
-                    autoComplete="email"
-                    {...field}
-                  />
+                  <Input placeholder="ejemplo@correo.com" autoComplete="email" {...field} />
                 </FormControl>
                 <FormDescription>Por favor ingresa tu correo.</FormDescription>
                 <FormMessage />
@@ -143,16 +120,11 @@ export function RegisterForm() {
                       {...field}
                     />
                   </FormControl>
-                  <Toggle
-                    onClick={() => setShowPasswords(!showPasswords)}
-                    variant={'outline'}
-                  >
+                  <Toggle onClick={() => setShowPasswords(!showPasswords)} variant={'outline'}>
                     {showPasswords ? <CloseEyeIcon /> : <EyeIcon />}
                   </Toggle>
                 </div>
-                <FormDescription>
-                  Por favor ingresa tu contraseña.
-                </FormDescription>
+                <FormDescription>Por favor ingresa tu contraseña.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -172,27 +144,18 @@ export function RegisterForm() {
                       {...field}
                     />
                   </FormControl>
-                  <Toggle
-                    onClick={() => setShowPasswords(!showPasswords)}
-                    variant={'outline'}
-                  >
+                  <Toggle onClick={() => setShowPasswords(!showPasswords)} variant={'outline'}>
                     {showPasswords ? <CloseEyeIcon /> : <EyeIcon />}
                   </Toggle>
                 </div>
-                <FormDescription>
-                  Por favor ingresa otra vez tu contraseña.
-                </FormDescription>
+                <FormDescription>Por favor ingresa otra vez tu contraseña.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
 
           <div className="flex w-full justify-center flex-col items-center gap-5">
-            <Button
-              className="w-[100%] sm:w-[80%] lg:w-[60%] self-center"
-              type="submit"
-              disabled={showLoader}
-            >
+            <Button className="w-[100%] sm:w-[80%] lg:w-[60%] self-center" type="submit" disabled={showLoader}>
               {showLoader ? <Loader /> : 'Ingresar'}
             </Button>
             <p className="text-[0.9rem]">
@@ -205,5 +168,5 @@ export function RegisterForm() {
         </form>
       </Form>
     </div>
-  )
+  );
 }

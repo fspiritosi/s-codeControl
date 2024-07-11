@@ -1,19 +1,19 @@
-'use client'
+'use client';
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
-import Link from 'next/link'
+} from '@/components/ui/breadcrumb';
+import Link from 'next/link';
 
-import { usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation';
 
 export default function AdminBreadcrumb() {
-  const path = usePathname()
-  const cortePath = path.split('/')
-  const pasos = cortePath.slice(2)
+  const path = usePathname();
+  const cortePath = path.split('/');
+  const pasos = cortePath.slice(2);
 
   return (
     <Breadcrumb className="hidden md:flex">
@@ -28,5 +28,5 @@ export default function AdminBreadcrumb() {
         ))}
       </BreadcrumbList>
     </Breadcrumb>
-  )
+  );
 }

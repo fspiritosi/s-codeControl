@@ -1,11 +1,5 @@
 export const GoogleIcon = () => (
-  <svg
-    width="20"
-    height="21"
-    viewBox="0 0 20 21"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
+  <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
       d="M19.8692 10.8587C19.87 10.1772 19.812 9.49701 19.6957 8.82544H10.2V12.6766H15.6387C15.5274 13.2917 15.2919 13.8781 14.9462 14.4003C14.6006 14.9226 14.1521 15.3699 13.6277 15.7154V18.2152H16.8736C18.7741 16.4751 19.8692 13.9016 19.8692 10.8587Z"
       fill="#4285F4"
@@ -23,4 +17,4 @@ export const GoogleIcon = () => (
       fill="#EA4335"
     />
   </svg>
-)
+);

@@ -1,5 +1,6 @@
-import { Card } from '@/components/ui/card'
-import { FormCustomContainer } from '../components/FormCustomContainer'
+import { Card } from '@/components/ui/card';
+import { Mail } from './components/mail';
+import { FormCustomContainer } from '../components/FormCustomContainer';
 
 export default function MailPage() {
   return (
@@ -8,5 +9,5 @@ export default function MailPage() {
         <FormCustomContainer />
       </Card>
     </div>
-  )
+  );
 }

@@ -1,47 +1,38 @@
-import { validarCUIL } from '@/lib/utils'
-import * as z from 'zod'
-import { supabase } from '../../supabase/supabase'
+import { validarCUIL } from '@/lib/utils';
+import * as z from 'zod';
+import { supabase } from '../../supabase/supabase';
 
 const getAllFiles = async (legajo: string) => {
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
-  const profile = await supabase
-    .from('profile')
-    .select('*')
-    .eq('credential_id', user?.id)
+  const profile = await supabase.from('profile').select('*').eq('credential_id', user?.id);
 
-  const { data } = await supabase
-    .from('company')
-    .select('*')
-    .eq('owner_id', profile.data?.[0].id)
+  const { data } = await supabase.from('company').select('*').eq('owner_id', profile.data?.[0].id);
 
   const { data: employee } = await supabase
     .from('employees')
     .select('*')
     // .eq('company_id', data?.[0].id)
-    .eq('file', legajo)
+    .eq('file', legajo);
 
   if (employee && employee.length > 0) {
-    return true
+    return true;
   } else {
-    return true
+    return true;
   }
-}
+};
 
 const validateDuplicatedCuil = async (cuil: string) => {
-  const { data: employees } = await supabase
-    .from('company')
-    .select('*')
-    .eq('company_cuit', cuil)
+  const { data: employees } = await supabase.from('company').select('*').eq('company_cuit', cuil);
 
   if (employees && employees.length > 0) {
-    return false
+    return false;
   } else {
-    return true
+    return true;
   }
-}
+};
 
 // const AllFiles =
 
@@ -58,18 +49,16 @@ const passwordSchema = z
   .regex(/[0-9]/, { message: 'La contraseña debe tener al menos un número.' })
   .regex(/[^A-Za-z0-9]/, {
     message: 'La contraseña debe tener al menos un carácter especial.',
-  })
+  });
 
 export const loginSchema = z.object({
   email: z.string().email({ message: 'Email inválido' }),
   password: passwordSchema,
-})
+});
 
 export const employeeSchema = z.object({
-  name: z
-    .string()
-    .max(25, { message: 'El nombre debe tener menos de 25 caracteres.' }),
-})
+  name: z.string().max(25, { message: 'El nombre debe tener menos de 25 caracteres.' }),
+});
 
 export const registerSchema = z
   .object({
@@ -101,24 +90,24 @@ export const registerSchema = z
     password: passwordSchema,
     confirmPassword: passwordSchema,
   })
-  .refine(data => data.password === data.confirmPassword, {
+  .refine((data) => data.password === data.confirmPassword, {
     message: 'Las contraseñas no coinciden.',
     path: ['confirmPassword'],
-  })
+  });
 
 export const recoveryPassSchema = z.object({
   email: z.string().email({ message: 'Email inválido' }),
-})
+});
 
 export const changePassSchema = z
   .object({
     password: passwordSchema,
     confirmPassword: passwordSchema,
   })
-  .refine(data => data.password === data.confirmPassword, {
+  .refine((data) => data.password === data.confirmPassword, {
     message: 'Las contraseñas no coinciden.',
     path: ['confirmPassword'],
-  })
+  });
 
 export const companySchema = z.object({
   company_name: z
@@ -129,22 +118,22 @@ export const companySchema = z.object({
     .max(30, { message: 'La compañia debe tener menos de 30 caracteres.' }),
   company_cuit: z
     .string()
-    .refine(value => /^\d{11}$/.test(value), {
+    .refine((value) => /^\d{11}$/.test(value), {
       message: 'El CUIT debe contener 11 números.',
     })
     .refine(
-      cuil => {
-        return validarCUIL(cuil)
+      (cuil) => {
+        return validarCUIL(cuil);
       },
-      { message: 'El CUIT es inválido' },
+      { message: 'El CUIT es inválido' }
     )
     .refine(
-      async value => {
-        return await validateDuplicatedCuil(value)
+      async (value) => {
+        return await validateDuplicatedCuil(value);
       },
       {
         message: 'Ya existe una compañía con este CUIT.',
-      },
+      }
     ),
 
   description: z
@@ -158,17 +147,16 @@ export const companySchema = z.object({
   website: z
     .string()
     .refine(
-      value => {
-        if (value === '') return true
+      (value) => {
+        if (value === '') return true;
 
-        const urlRegex =
-          /^(?:(?:https?|ftp):\/\/)?(?:www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+([/?].*)?$/i
+        const urlRegex = /^(?:(?:https?|ftp):\/\/)?(?:www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+([/?].*)?$/i;
 
-        return urlRegex.test(value)
+        return urlRegex.test(value);
       },
       {
         message: 'La URL proporcionada no es válida.',
-      },
+      }
     )
     .optional(),
   contact_email: z.string().email({ message: 'Email inválido' }),
@@ -183,7 +171,7 @@ export const companySchema = z.object({
     .regex(/^\+?[0-9]{1,25}$/, {
       message: 'El número de teléfono debe contener solo números',
     })
-    .refine(value => /^\+?[0-9]{1,25}$/.test(value), {
+    .refine((value) => /^\+?[0-9]{1,25}$/.test(value), {
       message: 'El número de teléfono debe contener solo números',
     }),
   address: z
@@ -193,25 +181,16 @@ export const companySchema = z.object({
       message: 'Address debe tener menos de 50 caracteres.',
     })
     .regex(/^[a-zA-Z0-9\s]*$/, {
-      message:
-        'Address debe contener solo letras y números y tener hasta 50 caracteres',
+      message: 'Address debe contener solo letras y números y tener hasta 50 caracteres',
     }),
-  country: z
-    .string()
-    .min(2, { message: 'Country debe tener al menos 2 caracteres.' }),
-  province_id: z
-    .string()
-    .min(1, { message: 'Province debe tener al menos 1 caracteres.' }),
-  industry: z
-    .string()
-    .min(2, { message: 'Industry debe tener al menos 2 caracteres.' }),
-  city: z
-    .string()
-    .min(1, { message: 'City debe tener al menos 1 caracteres.' }),
+  country: z.string().min(2, { message: 'Country debe tener al menos 2 caracteres.' }),
+  province_id: z.string().min(1, { message: 'Province debe tener al menos 1 caracteres.' }),
+  industry: z.string().min(2, { message: 'Industry debe tener al menos 2 caracteres.' }),
+  city: z.string().min(1, { message: 'City debe tener al menos 1 caracteres.' }),
   company_logo: z.string().optional(),
   by_defect: z.boolean().optional(),
   //employees_id: z.string().nullable(),
-})
+});
 export const editCompanySchema = z.object({
   company_name: z
     .string({ required_error: 'El nombre de la compañía es requerido' })
@@ -221,14 +200,14 @@ export const editCompanySchema = z.object({
     .max(30, { message: 'La compañia debe tener menos de 30 caracteres.' }),
   company_cuit: z
     .string()
-    .refine(value => /^\d{11}$/.test(value), {
+    .refine((value) => /^\d{11}$/.test(value), {
       message: 'El CUIT debe contener 11 números.',
     })
     .refine(
-      cuil => {
-        return validarCUIL(cuil)
+      (cuil) => {
+        return validarCUIL(cuil);
       },
-      { message: 'El CUIT es inválido' },
+      { message: 'El CUIT es inválido' }
     )
     .refine(value => {
       return new Promise(async (resolve, reject) => {
@@ -256,17 +235,16 @@ export const editCompanySchema = z.object({
   website: z
     .string()
     .refine(
-      value => {
-        if (value === '') return true
+      (value) => {
+        if (value === '') return true;
 
-        const urlRegex =
-          /^(?:(?:https?|ftp):\/\/)?(?:www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+([/?].*)?$/i
+        const urlRegex = /^(?:(?:https?|ftp):\/\/)?(?:www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+([/?].*)?$/i;
 
-        return urlRegex.test(value)
+        return urlRegex.test(value);
       },
       {
         message: 'La URL proporcionada no es válida.',
-      },
+      }
     )
     .optional(),
   contact_email: z.string().email({ message: 'Email inválido' }),
@@ -281,7 +259,7 @@ export const editCompanySchema = z.object({
     .regex(/^\+?[0-9]{1,25}$/, {
       message: 'El número de teléfono debe contener solo números',
     })
-    .refine(value => /^\+?[0-9]{1,25}$/.test(value), {
+    .refine((value) => /^\+?[0-9]{1,25}$/.test(value), {
       message: 'El número de teléfono debe contener solo números',
     }),
   address: z
@@ -291,21 +269,12 @@ export const editCompanySchema = z.object({
       message: 'Address debe tener menos de 50 caracteres.',
     })
     .regex(/^[a-zA-Z0-9\s]*$/, {
-      message:
-        'Address debe contener solo letras y números y tener hasta 50 caracteres',
+      message: 'Address debe contener solo letras y números y tener hasta 50 caracteres',
     }),
-  country: z
-    .string()
-    .min(2, { message: 'Country debe tener al menos 2 caracteres.' }),
-  province_id: z
-    .string()
-    .min(1, { message: 'Province debe tener al menos 1 caracteres.' }),
-  industry: z
-    .string()
-    .min(2, { message: 'Industry debe tener al menos 2 caracteres.' }),
-  city: z
-    .string()
-    .min(1, { message: 'City debe tener al menos 1 caracteres.' }),
+  country: z.string().min(2, { message: 'Country debe tener al menos 2 caracteres.' }),
+  province_id: z.string().min(1, { message: 'Province debe tener al menos 1 caracteres.' }),
+  industry: z.string().min(2, { message: 'Industry debe tener al menos 2 caracteres.' }),
+  city: z.string().min(1, { message: 'City debe tener al menos 1 caracteres.' }),
   company_logo: z.string().optional(),
   by_defect: z.boolean().optional(),
 })
@@ -330,14 +299,14 @@ export const accordionSchema = z
     }),
     cuil: z
       .string({ required_error: 'El cuil es requerido' })
-      .refine(value => /^\d{11}$/.test(value), {
+      .refine((value) => /^\d{11}$/.test(value), {
         message: 'El CUIT debe contener 11 números.',
       })
       .refine(
-        cuil => {
-          return validarCUIL(cuil)
+        (cuil) => {
+          return validarCUIL(cuil);
         },
-        { message: 'El CUIT es inválido' },
+        { message: 'El CUIT es inválido' }
       ),
     document_type: z.string({
       required_error: 'El tipo de documento es requerido',
@@ -415,12 +384,12 @@ export const accordionSchema = z
         message: 'El legajo debe contener al menos un número',
       })
       .refine(
-        async value => {
-          return await getAllFiles(value)
+        async (value) => {
+          return await getAllFiles(value);
         },
         {
           message: 'El legajo ya existe',
-        },
+        }
       ),
     hierarchical_position: z.string({
       required_error: 'El nivel jerárquico es requerido',
@@ -442,7 +411,7 @@ export const accordionSchema = z
     type_of_contract: z.string({
       required_error: 'El tipo de contrato es requerido',
     }),
-    // allocated_to: z.array(z.string()).optional(),
+    allocated_to: z.array(z.string()).optional().nullable(),
     date_of_admission: z
       .date({
         required_error: 'La fecha de ingreso es requerida',
@@ -455,9 +424,9 @@ export const accordionSchema = z
         code: z.ZodIssueCode.custom,
         path: ['cuil'],
         message: 'El CUIL debe contener el número de documento.',
-      })
+      });
     }
-  })
+  });
 
 export const ProfileSchema = z.object({
   id: z.string(),
@@ -467,8 +436,8 @@ export const ProfileSchema = z.object({
   fullname: z.string(),
   created_at: z.coerce.date(),
   credential_id: z.string(),
-})
-export type Profile = z.infer<typeof ProfileSchema>
+});
+export type Profile = z.infer<typeof ProfileSchema>;
 
 export const ShareCompanyUserSchema = z.object({
   id: z.string(),
@@ -477,26 +446,26 @@ export const ShareCompanyUserSchema = z.object({
   company_id: z.string(),
   created_at: z.coerce.date(),
   profile_id: z.string(),
-})
+});
 
-export type ShareCompanyUser = z.infer<typeof ShareCompanyUserSchema>
+export type ShareCompanyUser = z.infer<typeof ShareCompanyUserSchema>;
 
 export const ContractorsSchema = z.object({
   id: z.string(),
   name: z.string(),
   created_at: z.coerce.date(),
-})
-export type Contractors = z.infer<typeof ContractorsSchema>
+});
+export type Contractors = z.infer<typeof ContractorsSchema>;
 
 export const ContractorEmployeeSchema = z.object({
   contractors: ContractorsSchema,
-})
-export type ContractorEmployee = z.infer<typeof ContractorEmployeeSchema>
+});
+export type ContractorEmployee = z.infer<typeof ContractorEmployeeSchema>;
 
 export const BirthplaceSchema = z.object({
   name: z.string(),
-})
-export type Birthplace = z.infer<typeof BirthplaceSchema>
+});
+export type Birthplace = z.infer<typeof BirthplaceSchema>;
 
 export const EmployeesSchema = z.object({
   id: z.string(),
@@ -534,19 +503,19 @@ export const EmployeesSchema = z.object({
   contractor_employee: z.array(ContractorEmployeeSchema),
   hierarchical_position: BirthplaceSchema,
   reason_for_termination: z.null() || z.string(),
-})
-export type Employees = z.infer<typeof EmployeesSchema>
+});
+export type Employees = z.infer<typeof EmployeesSchema>;
 
 export const CompaniesEmployeeSchema = z.object({
   employees: EmployeesSchema,
-})
-export type CompaniesEmployee = z.infer<typeof CompaniesEmployeeSchema>
+});
+export type CompaniesEmployee = z.infer<typeof CompaniesEmployeeSchema>;
 
 export const CitySchema = z.object({
   id: z.number(),
   name: z.string(),
-})
-export type City = z.infer<typeof CitySchema>
+});
+export type City = z.infer<typeof CitySchema>;
 
 export const CompanySchema = z.array(
   z.object({
@@ -568,25 +537,26 @@ export const CompanySchema = z.array(
     by_defect: z.boolean(),
     share_company_users: z.array(ShareCompanyUserSchema) || null,
     companies_employees: z.array(CompaniesEmployeeSchema) || null,
-  }),
-)
-export type Company = z.infer<typeof CompanySchema>
+  })
+);
+export type Company = z.infer<typeof CompanySchema>;
 
 export const SharedUser = z.object({
   email: z.string(),
   fullname: z.string(),
   role: z.string(),
-  alta: z.date(),
+  alta: z.date().or(z.string()),
   id: z.string(),
   img: z.string(),
-})
+  customerName:z.string().optional()
+});
 
-export type SharedUser = z.infer<typeof SharedUser>
+export type SharedUser = z.infer<typeof SharedUser>;
 
 export const BrandVehiclesClassSchema = z.object({
   name: z.string(),
-})
-export type BrandVehiclesClass = z.infer<typeof BrandVehiclesClassSchema>
+});
+export type BrandVehiclesClass = z.infer<typeof BrandVehiclesClassSchema>;
 
 export const VehicleSchema =
   z.array(
@@ -613,15 +583,15 @@ export const VehicleSchema =
       types_of_vehicles: BrandVehiclesClassSchema,
       brand_vehicles: BrandVehiclesClassSchema,
       model_vehicles: BrandVehiclesClassSchema,
-    }),
-  ) || []
+    })
+  ) || [];
 
-export type Vehicle = z.infer<typeof VehicleSchema>
+export type Vehicle = z.infer<typeof VehicleSchema>;
 
 export const VehiclesSchema = z.object({
   name: z.string(),
-})
-export type Vehicles = z.infer<typeof VehiclesSchema>
+});
+export type Vehicles = z.infer<typeof VehiclesSchema>;
 export const VehiclesFormattedElementSchema = z.array(
   z.object({
     created_at: z.coerce.date(),
@@ -646,11 +616,9 @@ export const VehiclesFormattedElementSchema = z.array(
     types_of_vehicles: z.string(),
     brand_vehicles: VehiclesSchema,
     model_vehicles: VehiclesSchema,
-  }),
-)
-export type VehiclesFormattedElement = z.infer<
-  typeof VehiclesFormattedElementSchema
->
+  })
+);
+export type VehiclesFormattedElement = z.infer<typeof VehiclesFormattedElementSchema>;
 
 export const EquipoSchema = z
   .array(
@@ -668,15 +636,15 @@ export const EquipoSchema = z
       company_id: z.string().optional().nullable(),
     }),
   )
-  .default([])
+  .default([]);
 
-export type Equipo = z.infer<typeof EquipoSchema>
+export type Equipo = z.infer<typeof EquipoSchema>;
 
 export const MandatoryDocumentsSchema = z.object({
   Persona: EquipoSchema,
   Equipos: EquipoSchema,
-})
-export type MandatoryDocuments = z.infer<typeof MandatoryDocumentsSchema>
+});
+export type MandatoryDocuments = z.infer<typeof MandatoryDocumentsSchema>;
 
 export const CompanyIdSchema =
   z.object({
@@ -698,8 +666,8 @@ export const CompanyIdSchema =
     contact_phone: z.string(),
     companies_employees: z.array(CompaniesEmployeeSchema) || null,
     share_company_users: z.array(ShareCompanyUserSchema) || null,
-  }) || undefined
-export type CompanyId = z.infer<typeof CompanyIdSchema>
+  }) || undefined;
+export type CompanyId = z.infer<typeof CompanyIdSchema>;
 
 export const SharedCompaniesSchema = z.array(
   z.object({
@@ -708,6 +676,77 @@ export const SharedCompaniesSchema = z.array(
     company_id: CompanyIdSchema,
     role: z.string(),
     id: z.string(),
+  })
+);
+
+export const customersSchema = z.object({
+  company_name: z
+    .string({ required_error: 'El nombre es requerido' })
+    .min(2, {
+      message: 'El nombre debe tener al menos 2 caracteres.',
+    })
+    .max(40, { message: 'EL nombre debe tener menos de 40 caracteres.' }),
+
+  client_cuit: z
+    .string({ required_error: 'El cuit es requerido' })
+    .refine((value) => /^\d{11}$/.test(value), {
+      message: 'El CUIT debe contener 11 números.',
+    })
+    .refine(
+      (cuil) => {
+        return validarCUIL(cuil);
+      },
+      { message: 'El CUIT es inválido' }
+    ),
+
+  address: z.string({ required_error: 'la calle es requerida' }).min(2, {
+    message: 'La dirección debe tener al menos 2 caracteres.',
   }),
-)
-export type SharedCompanies = z.infer<typeof SharedCompaniesSchema>
+
+  client_phone: z
+    .string({ required_error: 'El numero de teléfono es requerido' })
+    .min(4, {
+      message: 'El teléfono debe tener al menos 4 caracteres.',
+    })
+    .max(15, {
+      message: 'El teléfono debe tener menos de 15 caracteres.',
+    }),
+  client_email: z
+    .string()
+    .email({
+      message: 'Email inválido',
+    })
+    .optional(),
+});
+
+export const contactSchema = z.object({
+  contact_name: z
+    .string({ required_error: 'El nombre es requerido' })
+    .min(2, {
+      message: 'El nombre debe tener al menos 2 caracteres.',
+    })
+    .max(40, { message: 'EL nombre debe tener menos de 40 caracteres.' }),
+
+  contact_phone: z
+    .string({ required_error: 'El numero de teléfono es requerido' })
+    .min(4, {
+      message: 'El teléfono debe tener al menos 4 caracteres.',
+    })
+    .max(15, {
+      message: 'El teléfono debe tener menos de 15 caracteres.',
+    }),
+  contact_email: z
+    .string()
+    .email({
+      message: 'Email inválido',
+    })
+    .optional(),
+  contact_charge: z
+    .string({ required_error: 'El cargo es requerido' })
+    .min(4, {
+      message: 'El cargo debe tener al menos 4 caracteres.',
+    })
+    .max(30, { message: 'EL cargo debe tener menos de 30 caracteres.' }),
+  customer: z.string({ required_error: 'El cliente es requerido' }).optional(),
+});
+export type SharedCompanies = z.infer<typeof SharedCompaniesSchema>;

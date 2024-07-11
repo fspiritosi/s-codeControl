@@ -18,45 +18,27 @@ alter table "public"."custom_form" add constraint "custom_form_company_id_fkey" 
 alter table "public"."custom_form" validate constraint "custom_form_company_id_fkey";
 
 grant delete on table "public"."custom_form" to "anon";
-
 grant insert on table "public"."custom_form" to "anon";
-
 grant references on table "public"."custom_form" to "anon";
-
 grant select on table "public"."custom_form" to "anon";
-
 grant trigger on table "public"."custom_form" to "anon";
-
 grant truncate on table "public"."custom_form" to "anon";
-
 grant update on table "public"."custom_form" to "anon";
 
 grant delete on table "public"."custom_form" to "authenticated";
-
 grant insert on table "public"."custom_form" to "authenticated";
-
 grant references on table "public"."custom_form" to "authenticated";
-
 grant select on table "public"."custom_form" to "authenticated";
-
 grant trigger on table "public"."custom_form" to "authenticated";
-
 grant truncate on table "public"."custom_form" to "authenticated";
-
 grant update on table "public"."custom_form" to "authenticated";
 
 grant delete on table "public"."custom_form" to "service_role";
-
 grant insert on table "public"."custom_form" to "service_role";
-
 grant references on table "public"."custom_form" to "service_role";
-
 grant select on table "public"."custom_form" to "service_role";
-
 grant trigger on table "public"."custom_form" to "service_role";
-
 grant truncate on table "public"."custom_form" to "service_role";
-
 grant update on table "public"."custom_form" to "service_role";
 
 create policy "Enable read access for all users"
@@ -66,13 +48,9 @@ for select
 to public
 using (true);
 
-
 create policy "Permitir insert a untenticados"
 on "public"."custom_form"
 as permissive
 for insert
 to authenticated
 with check (true);
-
-
-

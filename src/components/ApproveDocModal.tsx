@@ -1,5 +1,5 @@
-'use client'
-import { Button } from '@/components/ui/button'
+'use client';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -8,67 +8,44 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { useToast } from '@/components/ui/use-toast'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { supabase } from '../../supabase/supabase'
+} from '@/components/ui/dialog';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { supabase } from '../../supabase/supabase';
 
-export default function ApproveDocModal({
-  id,
-  resource,
-}: {
-  id: string
-  resource: string | null
-}) {
-  const [isOpen, setIsOpen] = useState(false)
-  const router = useRouter()
-  const { toast } = useToast()
+export default function ApproveDocModal({ id, resource }: { id: string; resource: string | null }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
   const handleApprove = async () => {
     if (resource === 'employee') {
       const { data, error } = await supabase
         .from('documents_employees')
         .update({ state: 'aprobado' })
         .eq('id', id)
-        .select()
+        .select();
 
       if (error) {
-        return toast({
-          title: 'Error',
-          description: 'Ocurrio un error al aprobar el documento',
-          variant: 'destructive',
-        })
+        return toast.error('Ocurrio un error al aprobar el documento');
       }
 
-      toast({
-        title: 'Documento aprobado',
-        description: 'El documento ha sido aprobado correctamente',
-        variant: 'default',
-      })
+      toast.success('El documento ha sido aprobado correctamente');
     } else {
       const { data, error } = await supabase
         .from('documents_equipment')
         .update({ state: 'aprobado' })
         .eq('id', id)
-        .select()
+        .select();
 
       if (error) {
-        return toast({
-          title: 'Error',
-          description: 'Ocurrio un error al aprobar el documento',
-          variant: 'destructive',
-        })
+        return toast.error('Ocurrio un error al aprobar el documento');
       }
 
-      toast({
-        title: 'Documento aprobado',
-        description: 'El documento ha sido aprobado correctamente',
-        variant: 'default',
-      })
+      toast.success('El documento ha sido aprobado correctamente');
     }
 
-    router.push('/admin/auditor')
-  }
+    router.push('/admin/auditor');
+  };
   return (
     <Dialog open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
       <DialogTrigger asChild>
@@ -78,20 +55,15 @@ export default function ApproveDocModal({
         <DialogHeader>
           <DialogTitle>Aprobar documento</DialogTitle>
           <DialogDescription>
-            Estas seguro que deseas aprobar este documento? esta acción no se
-            puede deshacer.
+            Estas seguro que deseas aprobar este documento? esta acción no se puede deshacer.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button
-            onClick={() => handleApprove()}
-            type="submit"
-            variant="success"
-          >
+          <Button onClick={() => handleApprove()} type="submit" variant="success">
             Aprobar
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

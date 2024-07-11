@@ -1,38 +1,24 @@
-'use client'
+'use client';
 
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { useToast } from '@/components/ui/use-toast'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { supabase } from '../../supabase/supabase'
-import { Textarea } from './ui/textarea'
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
+import { supabase } from '../../supabase/supabase';
+import { Textarea } from './ui/textarea';
 
 type EmailInfo = {
-  recurso: string
-  document_name: string
-  company_name: string
-  resource_name: string
-  document_number: string
-}
+  recurso: string;
+  document_name: string;
+  company_name: string;
+  resource_name: string;
+  document_number: string;
+};
 
 export default function DenyDocModal({
   id,
@@ -40,12 +26,12 @@ export default function DenyDocModal({
   userEmail,
   emailInfo,
 }: {
-  id: string
-  resource: string | null
-  userEmail: string[]
-  emailInfo: EmailInfo
+  id: string;
+  resource: string | null;
+  userEmail: string[];
+  emailInfo: EmailInfo;
 }) {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
   const FormSchema = z.object({
     reason: z
       .string({ required_error: 'El motivo es requerido' })
@@ -55,13 +41,12 @@ export default function DenyDocModal({
       .max(160, {
         message: 'El motivo no puede tener más de 160 caracteres.',
       }),
-  })
+  });
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-  })
-  const router = useRouter()
-  const { toast } = useToast()
+  });
+  const router = useRouter();
 
   async function onSubmit(menssaje: z.infer<typeof FormSchema>) {
     if (resource === 'employee') {
@@ -69,15 +54,11 @@ export default function DenyDocModal({
         .from('documents_employees')
         .update({ state: 'rechazado', deny_reason: menssaje.reason })
         .eq('id', id)
-        .select()
+        .select();
 
       if (error) {
-        setIsOpen(false)
-        return toast({
-          title: 'Error',
-          description: 'Ocurrio un error al rechazar el documento',
-          variant: 'destructive',
-        })
+        setIsOpen(false);
+        return toast.error('Ocurrio un error al rechazar el documento');
       }
 
       const response = await fetch('/api/send', {
@@ -92,31 +73,23 @@ export default function DenyDocModal({
           userEmail: userEmail,
           body: emailInfo,
         }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error('Ocurrió un error al enviar el correo electrónico')
+        throw new Error('Ocurrió un error al enviar el correo electrónico');
       }
 
-      toast({
-        title: 'Documento rechazado',
-        description: 'El documento ha sido rechazado correctamente',
-        variant: 'default',
-      })
+      toast('Documento rechazado', { description: 'El documento ha sido rechazado correctamente' });
     } else {
       const { data, error } = await supabase
         .from('documents_equipment')
         .update({ state: 'rechazado', deny_reason: menssaje.reason, id })
         .eq('id', id)
-        .select()
+        .select();
 
       if (error) {
-        setIsOpen(false)
-        return toast({
-          title: 'Error',
-          description: 'Ocurrio un error al rechazar el documento',
-          variant: 'destructive',
-        })
+        setIsOpen(false);
+        return toast.error('Ocurrio un error al rechazar el documento');
       }
       const response = await fetch('/api/send', {
         method: 'POST',
@@ -130,21 +103,17 @@ export default function DenyDocModal({
           userEmail: userEmail,
           body: emailInfo,
         }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error('Ocurrió un error al enviar el correo electrónico')
+        throw new Error('Ocurrió un error al enviar el correo electrónico');
       }
 
-      toast({
-        title: 'Documento rechazado',
-        description: 'El documento ha sido rechazado correctamente',
-        variant: 'default',
-      })
+      toast('Documento rechazado', { description: 'El documento ha sido rechazado correctamente' });
     }
 
-    router.push('/admin/auditor')
-    setIsOpen(false)
+    router.push('/admin/auditor');
+    setIsOpen(false);
   }
   return (
     <Dialog open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
@@ -173,18 +142,13 @@ export default function DenyDocModal({
                         />
                       </FormControl>
                       <FormDescription>
-                        Notificaremos al usuario el motivo por el cual
-                        rechazaste el documento.
+                        Notificaremos al usuario el motivo por el cual rechazaste el documento.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button
-                  type="submit"
-                  variant="destructive"
-                  className="self-end mt-5"
-                >
+                <Button type="submit" variant="destructive" className="self-end mt-5">
                   Rechazar
                 </Button>
               </div>
@@ -193,5 +157,5 @@ export default function DenyDocModal({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

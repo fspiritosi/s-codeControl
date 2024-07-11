@@ -1,99 +1,95 @@
-'use client'
-import { Button } from '@/components/ui/button'
-import { CardDescription } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { useImageUpload } from '@/hooks/useUploadImage'
-import { supabaseBrowser } from '@/lib/supabase/browser'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { Company, companySchema } from '@/zodSchemas/schemas'
-import { useRouter } from 'next/navigation'
-import { ChangeEvent, useRef, useState } from 'react'
-import { toast } from 'sonner'
-import { AddCompany } from '../accions'
-import { handleSupabaseError } from '@/lib/errorHandler'
+'use client';
+import { Button } from '@/components/ui/button';
+import { CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useImageUpload } from '@/hooks/useUploadImage';
+import { handleSupabaseError } from '@/lib/errorHandler';
+import { supabaseBrowser } from '@/lib/supabase/browser';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { Company, companySchema } from '@/zodSchemas/schemas';
+import { useRouter } from 'next/navigation';
+import { ChangeEvent, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { AddCompany } from '../accions';
 
 export default function CreateCompanyButton() {
-  const url = process.env.NEXT_PUBLIC_PROJECT_URL
-  const router = useRouter()
-  const supabase = supabaseBrowser()
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [file, setFile] = useState<File | undefined>()
-  const [required, setRequired] = useState(false)
-  const { uploadImage, loading } = useImageUpload()
-  const disabled = false
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [base64Image, setBase64Image] = useState<string>('')
+  const url = process.env.NEXT_PUBLIC_PROJECT_URL;
+  const router = useRouter();
+  const supabase = supabaseBrowser();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | undefined>();
+  const [required, setRequired] = useState(false);
+  const { uploadImage, loading } = useImageUpload();
+  const disabled = false;
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [base64Image, setBase64Image] = useState<string>('');
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+    const file = event.target.files?.[0];
 
     if (file) {
-      setImageFile(file)
+      setImageFile(file);
       // Convertir la imagen a base64
-      const reader = new FileReader()
-      reader.onload = e => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
         if (e.target && typeof e.target.result === 'string') {
-          setBase64Image(e.target.result)
+          setBase64Image(e.target.result);
         }
-      }
-      reader.readAsDataURL(file)
+      };
+      reader.readAsDataURL(file);
     }
-  }
-  
+  };
+
   const clientAccion = async (formData: FormData) => {
-    const values = Object.fromEntries(formData.entries())
-    const result = await companySchema.safeParseAsync(values)
-    
-    Object.keys(values).forEach(key => {
-      const element = document.getElementById(`${key}_error`)
+    const values = Object.fromEntries(formData.entries());
+    const result = await companySchema.safeParseAsync(values);
+
+    Object.keys(values).forEach((key) => {
+      const element = document.getElementById(`${key}_error`);
       if (element) {
-        element.innerText = ''
+        element.innerText = '';
       }
-    })
+    });
 
     if (!result.success) {
-      result.error.issues.forEach(issue => {
-        const element = document.getElementById(`${issue.path}_error`)
+      result.error.issues.forEach((issue) => {
+        const element = document.getElementById(`${issue.path}_error`);
         if (element) {
-          element.innerText = issue.message //->mensaje de error
-          element.style.color = 'red'
+          element.innerText = issue.message; //->mensaje de error
+          element.style.color = 'red';
         }
-      })
+      });
 
-      Object.keys(values).forEach(key => {
-        if (!result.error.issues.some(issue => issue.path.includes(key))) {
-          const element = document.getElementById(`${key}_error`)
+      Object.keys(values).forEach((key) => {
+        if (!result.error.issues.some((issue) => issue.path.includes(key))) {
+          const element = document.getElementById(`${key}_error`);
           if (element) {
-            element.innerText = ''
+            element.innerText = '';
           }
         }
-      })
-      return
+      });
+      return;
     }
 
     toast.promise(
       async () => {
-        const cuit = formData.get('company_cuit') as string
-        const fileExtension = imageFile?.name.split('.').pop()
-        const logoUrl = `${url}/logo/${cuit}.${fileExtension}`
+        const cuit = formData.get('company_cuit') as string;
+        const fileExtension = imageFile?.name.split('.').pop();
+        const logoUrl = `${url}/logo/${cuit}.${fileExtension}`;
 
-        const { data, error } = await AddCompany(formData, logoUrl)
+        const { data, error } = await AddCompany(formData, logoUrl);
 
         if (error) {
-          throw new Error(handleSupabaseError(error.message))
+          throw new Error(handleSupabaseError(error.message));
         }
 
         if (data && data?.length > 0) {
           if (imageFile) {
-            const fileExtension = imageFile?.name.split('.').pop()
-            const renamedFile = new File(
-              [imageFile],
-              `${cuit}.${fileExtension}`,
-              {
-                type: `image/${fileExtension?.replace(/\s/g, '')}`,
-              },
-            )
-            await uploadImage(renamedFile, 'logo')
+            const fileExtension = imageFile?.name.split('.').pop();
+            const renamedFile = new File([imageFile], `${cuit}.${fileExtension}`, {
+              type: `image/${fileExtension?.replace(/\s/g, '')}`,
+            });
+            await uploadImage(renamedFile, 'logo');
           }
 
           const { data: company, error: companyError } = await supabase
@@ -132,41 +128,39 @@ export default function CreateCompanyButton() {
                   name
                 ),
                 contractor_employee(
-                  contractors(
+                  customers(
                     *
                   )
                 )
               )
             )
-          `,
+          `
             )
-            .eq('owner_id', data?.[0]?.owner_id)
+            .eq('owner_id', data?.[0]?.owner_id);
 
-            if (companyError) {
-              throw new Error(handleSupabaseError(companyError.message))
-            }
+          if (companyError) {
+            throw new Error(handleSupabaseError(companyError.message));
+          }
 
-          const actualCompany = company?.filter(
-            company => company.id === data?.[0]?.id,
-          )
+          const actualCompany = company?.filter((company) => company.id === data?.[0]?.id);
 
           useLoggedUserStore.setState({
             actualCompany: actualCompany?.[0] as Company[0],
-          })
-          useLoggedUserStore.setState({ allCompanies: company as Company })
+          });
+          useLoggedUserStore.setState({ allCompanies: company as Company });
 
-          router.push('/dashboard')
+          router.push('/dashboard');
         }
       },
       {
         loading: 'Registrando Compañía',
         success: 'Compañía Registrada',
-        error: error => {
-          return error
+        error: (error) => {
+          return error;
         },
-      },
-    )
-  }
+      }
+    );
+  };
 
   return (
     <>
@@ -191,8 +185,8 @@ export default function CreateCompanyButton() {
             type="file"
             accept=".jpg, .jpeg, .png, .gif, .bmp, .tif, .tiff"
             onChange={(event: ChangeEvent<HTMLInputElement>) => {
-              handleImageChange && handleImageChange(event) // Accede al archivo file del input
-              setFile(event.target.files?.[0]) // Guarda el archivo en el estado
+              handleImageChange && handleImageChange(event); // Accede al archivo file del input
+              setFile(event.target.files?.[0]); // Guarda el archivo en el estado
             }}
             className="self-center hidden"
             id="fileInput"
@@ -211,13 +205,9 @@ export default function CreateCompanyButton() {
           )}
         </div>
       </div>
-      <Button
-        type="submit"
-        formAction={formData => clientAccion(formData)}
-        className="mt-5"
-      >
+      <Button type="submit" formAction={(formData) => clientAccion(formData)} className="mt-5">
         Registrar Compañía
       </Button>
     </>
-  )
+  );
 }
