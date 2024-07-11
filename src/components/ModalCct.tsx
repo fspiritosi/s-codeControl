@@ -12,7 +12,7 @@ export function ModalCct({
   modal: string;
   fetchData?: () => Promise<void>;
   covenantOptions?: { name: string; id: string }[];
-  fetchCategory: (name: string) => Promise<void>;
+  fetchCategory?: (name: string) => Promise<void>;
 }) {
   return (
     <>

@@ -15,7 +15,7 @@ import {
   import { ZodError, z } from 'zod';
   import { supabase } from '../../supabase/supabase';
   import { useToast } from './ui/use-toast';
-  
+  import { useLoggedUserStore } from '@/store/loggedUser';
   const schema = z
     .string()
     .min(3, {
@@ -34,7 +34,7 @@ import {
   }) {
     const [name, setName] = useState('');
     const { toast } = useToast();
-  
+    const company = useLoggedUserStore((state) => state.actualCompany?.id);
     async function onSubmit() {
       try {
         schema.parse(name);
@@ -49,7 +49,7 @@ import {
   
       const { data, error } = await supabase
         .from('covenant')
-        .insert([{ name: name.slice(0, 1).toUpperCase() + name.slice(1) }])
+        .insert([{ name: name.slice(0, 1).toUpperCase() + name.slice(1), company_id: company  }])
         .select();
       if (error) {
         toast({

@@ -26,7 +26,7 @@ import { columnsGuests } from './components/columnsGuests';
 import { DataTable } from './components/data-table';
 import { columnsDocuments } from './components/document-colums';
 import { ItemCompany } from './components/itemCompany';
-
+import Cct from './components/CctComponent';
 export default function page() {
   const router = useRouter();
   const company = useLoggedUserStore((state) => state.actualCompany);
@@ -129,6 +129,7 @@ export default function page() {
           <TabsTrigger value="users">Usuarios</TabsTrigger>
           <TabsTrigger value="customers">Clientes</TabsTrigger>
           <TabsTrigger value="contacts">Contactos</TabsTrigger>
+          <TabsTrigger value="covenant">CCT</TabsTrigger>
           <TabsTrigger value="modules" disabled>
             Modulos
           </TabsTrigger>
@@ -267,6 +268,9 @@ export default function page() {
             </div>
             <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
           </Card>
+        </TabsContent>
+        <TabsContent value="covenant">
+          <Cct />
         </TabsContent>
         <TabsContent value="modules">Change your password here.</TabsContent>
       </Tabs>
