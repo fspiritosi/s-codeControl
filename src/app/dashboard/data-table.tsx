@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { ArrowUpDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -215,11 +216,32 @@ export function ExpiredDataTable<TData, TValue>({
     }
   };
 
+  const getColorForRow = (row: any) => {
+    const isNoPresented = row.getValue('state') === 'pendiente';
+    if (isNoPresented) {
+      return ; // Clase por defecto si no está vencido
+    } else {
+      const validityDateStr = row.original.validity; // Obtener la fecha en formato "dd/mm/yyyy"
+      const parts = validityDateStr.split('/'); // Separar la fecha en partes
+
+      const validityDate = new Date(`${parts[1]}/${parts[0]}/${parts[2]}`).getTime();
+      const currentDate = new Date().getTime();
+      const differenceInDays = Math.ceil((validityDate - currentDate) / (1000 * 60 * 60 * 24));
+
+      if (differenceInDays < 0) {
+        return 'bg-red-100 hover:bg-red-100/30'; // Vencido
+      } else if (differenceInDays <= 7) {
+        return 'bg-yellow-100 hover:bg-yellow-100/30'; // Próximo a vencer en los próximos 7 días
+      } else {
+        return
+      }
+    }
+  };
   return (
     <div className="mb-10  px-4 rounded-lg max-w-[100vw] overflow-x-auto">
       <div className="flex flex-wrap items-end pb-4 gap-y-4">
         <Input
-          placeholder={vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'}
+          placeholder={vehicles ? 'Buscar por dominio o numero interno' : 'Buscar por nombre de empleado'}
           value={(table.getColumn('resource')?.getFilterValue() as string) ?? ''}
           onChange={(event) => table.getColumn('resource')?.setFilterValue(event.target.value)}
           className="max-w-sm ml-2"
@@ -255,6 +277,18 @@ export function ExpiredDataTable<TData, TValue>({
                   .getAllColumns()
                   ?.filter((column) => column.getCanHide())
                   ?.map((column) => {
+                    if (column.id === 'intern_number') {
+                      return (
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          className="capitalize"
+                          checked={column.getIsVisible()}
+                          onCheckedChange={(value) => handleColumnVisibilityChange(column.id, !!value)}
+                        >
+                          Numero interno
+                        </DropdownMenuCheckboxItem>
+                      );
+                    }
                     if (column.id === 'actions' || typeof column.columnDef.header !== 'string') {
                       return null;
                     }
@@ -273,11 +307,11 @@ export function ExpiredDataTable<TData, TValue>({
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          {!pending && (
+          {/* {!pending && (
             <Button variant="outline" size="default" className="ml-2" onClick={showLastMonth}>
               Ver todos los vencimientos
             </Button>
-          )}
+          )} */}
         </div>
         {monthly && (
           <div className="flex gap-4 flex-wrap">
@@ -428,7 +462,11 @@ export function ExpiredDataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel()?.rows?.length ? (
               table.getRowModel().rows?.map((row) => (
-                <TableRow key={row.id} className="text-center" data-state={row.getIsSelected() && 'selected'}>
+                <TableRow
+                  key={row.id}
+                  className={cn('text-center', getColorForRow(row))}
+                  data-state={row.getIsSelected() && 'selected'}
+                >
                   {row.getVisibleCells()?.map((cell) => {
                     return (
                       <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>

@@ -36,7 +36,6 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
-import { useToast } from '@/components/ui/use-toast';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -47,6 +46,7 @@ import { es } from 'date-fns/locale';
 import { ArrowUpDown, CalendarIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../../../supabase/supabase';
 
@@ -121,8 +121,6 @@ export const columEmp: ColumnDef<Colum>[] = [
         },
       });
 
-      const { toast } = useToast();
-
       async function reintegerDocumentEmployees() {
         try {
           const { data, error } = await supabase
@@ -138,18 +136,10 @@ export const columEmp: ColumnDef<Colum>[] = [
           setIntegerModal(!integerModal);
           //setInactive(data as any)
           setShowDeletedEquipment(false);
-          toast({
-            variant: 'default',
-            title: 'Equipo reintegrado',
-            description: `El equipo ${equipment?.engine} ha sido reintegrado`,
-          });
+          toast('Equipo reintegrado', { description: `El equipo ${equipment?.engine} ha sido reintegrado` });
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al reintegrar el equipo',
-            description: message,
-          });
+          toast('Error al reintegrar el equipo', { description: message });
         }
       }
 
@@ -172,18 +162,10 @@ export const columEmp: ColumnDef<Colum>[] = [
 
           setShowModal(!showModal);
 
-          toast({
-            variant: 'default',
-            title: 'Documento eliminado',
-            description: `El documento ${document.name} ha sido dado de baja`,
-          });
+          toast('Documento eliminado', { description: `El documento ${document.name} ha sido dado de baja` });
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al dar de baja el documento',
-            description: message,
-          });
+          toast('Error al dar de baja el documento', { description: message });
         }
       }
       const handleToggleInactive = () => {
@@ -202,11 +184,10 @@ export const columEmp: ColumnDef<Colum>[] = [
           }
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al reintegrar el equipo',
-            description: message,
-          });
+          toast(
+           'Error al reintegrar el equipo',
+           { description: message,}
+          );
         }
       }
       useEffect(() => {

@@ -128,7 +128,7 @@ export default function CreateCompanyButton() {
                   name
                 ),
                 contractor_employee(
-                  contractors(
+                  customers(
                     *
                   )
                 )

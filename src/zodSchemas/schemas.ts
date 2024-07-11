@@ -550,6 +550,7 @@ export const SharedUser = z.object({
   alta: z.date().or(z.string()),
   id: z.string(),
   img: z.string(),
+  customerName:z.string().optional()
 });
 
 export type SharedUser = z.infer<typeof SharedUser>;

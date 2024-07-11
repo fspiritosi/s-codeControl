@@ -15,12 +15,12 @@ import { useLoggedUserStore } from '@/store/loggedUser';
 import { addMonths, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '../../supabase/supabase';
 import { Badge } from './ui/badge';
 import { Calendar } from './ui/calendar';
 import { Input } from './ui/input';
 import { Separator } from './ui/separator';
-import { useToast } from './ui/use-toast';
 
 export default function MultiResourceDocument({
   resource,
@@ -113,7 +113,6 @@ export default function MultiResourceDocument({
   const [selectedResources, setSelectedResources] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState<string>('');
   const user = useLoggedUserStore((state) => state.credentialUser?.id);
-  const { toast } = useToast();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setDisabled(true);
@@ -167,10 +166,8 @@ export default function MultiResourceDocument({
         form.setError('document', {
           message: 'Este documento ya ha sido subido anteriormente',
         });
-        toast({
-          title: `El recurso ${resourceName[index]} ya tiene un documento de este tipo`,
+        toast.error(`El recurso ${resourceName[index]} ya tiene un documento de este tipo`, {
           description: 'Por favor, sube un documento diferente o elige otro recurso',
-          variant: 'destructive',
         });
         setDisabled(false);
         return;
@@ -218,11 +215,7 @@ export default function MultiResourceDocument({
 
             if (error) {
               console.error(error);
-              toast({
-                title: 'Error',
-                description: 'Hubo un error al guardar el documento',
-                variant: 'destructive',
-              });
+              toast.error('Hubo un error al guardar el documento');
             }
           } else {
             const { error } = await supabase
@@ -238,11 +231,7 @@ export default function MultiResourceDocument({
 
             if (error) {
               console.error(error);
-              toast({
-                title: 'Error',
-                description: 'Hubo un error al guardar el documento',
-                variant: 'destructive',
-              });
+              toast.error('Hubo un error al guardar el documento');
             }
           }
           setDisabled(false);
@@ -250,11 +239,7 @@ export default function MultiResourceDocument({
         });
     }
 
-    toast({
-      title: 'Éxito',
-      description: 'Documentos subidos correctamente',
-      variant: 'default',
-    });
+    toast.success('Documentos subidos correctamente');
     handleOpen();
     setDisabled(false);
   }

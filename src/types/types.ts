@@ -140,7 +140,7 @@ export type Employee = {
   workflow_diagram: string;
   normal_hours: string; //!si
   type_of_contract: string | undefined; //!si
-  allocated_to?: string | undefined | string[]; //!si
+  allocated_to?: string | undefined | string[] | null //!si
   date_of_admission: Date | undefined | string;
   full_name?: string; //!si
   is_active?: boolean;
@@ -170,6 +170,19 @@ export type SharedUser = {
   created_at: Date;
   credential_id: string;
   profile_id: profileUser;
+  customer_id: {
+    id: string,
+    cuit: number,
+    name: string,
+    address: string,
+    is_active: boolean,
+    company_id: string,
+    created_at: string,
+    client_email: string,
+    client_phone: number,
+    termination_date: null | string,
+    reason_for_termination: null| string
+  }
 };
 
 export type TypeOfVehicle = {
@@ -364,7 +377,7 @@ export type VehiclesAPI = {
   user_id: string;
   document_url: string;
   document_types: DocumentTypes;
-  period:string
+  period: string;
 };
 
 export type Applies = {
@@ -406,6 +419,7 @@ export type DocumentTypes = {
   created_at: Date;
   description: null;
   multiresource: boolean;
+  private: boolean;
 };
 export type DocumentsTable = {
   created_at: Date;

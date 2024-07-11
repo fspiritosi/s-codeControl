@@ -12,6 +12,7 @@ import Logo1 from '../../public/logo-azul.png';
 import LogoBlanco from '../../public/logoLetrasBlancas.png';
 import LogoNegro from '../../public/logoLetrasNegras.png';
 import SideLinks from './SideLinks';
+import { useRouter } from 'next/navigation';
 
 export default function SideBar() {
   const [expanded, setExpanded] = useState(true);
@@ -23,6 +24,7 @@ export default function SideBar() {
   const documetsFetch = useLoggedUserStore((state) => state.documetsFetch);
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   const supabase = supabaseBrowser();
+  const router = useRouter()
 
   supabase
     .channel('custom-all-channel1')
@@ -34,6 +36,7 @@ export default function SideBar() {
 
       if (employees?.[0]?.company_id?.id === actualCompany?.id) {
         documetsFetch();
+        router.refresh()
       } else {
         return;
       }
@@ -51,6 +54,7 @@ export default function SideBar() {
       if (vehicle?.[0]?.company_id?.id !== actualCompany?.id) return;
 
       documetsFetch();
+      router.refresh()
     })
     .subscribe();
 

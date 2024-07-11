@@ -21,9 +21,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { ZodError, z } from 'zod';
 import { supabase } from '../../supabase/supabase';
-import { useToast } from './ui/use-toast';
 
 const schema = z
   .string()
@@ -45,15 +45,12 @@ export default function AddModelModal({
 }) {
   const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
-  const { toast } = useToast();
 
   async function onSubmit() {
     try {
       schema.parse(name);
     } catch (error: ZodError | any) {
-      toast({
-        variant: 'destructive',
-        title: 'Error al agregar el modelo',
+      toast('Error al agregar el modelo', {
         description: error.errors[0].message,
       });
       return;
@@ -70,16 +67,12 @@ export default function AddModelModal({
       ])
       .select();
     if (error) {
-      toast({
-        title: 'Error al agregar el modelo',
+      toast('Error al agregar el modelo', {
         description: error.message,
       });
       return;
     }
-    toast({
-      title: 'Modelo agregado correctamente',
-      description: 'El modelo ha sido agregado correctamente',
-    });
+    toast('Modelo agregado correctamente', { description: 'El modelo ha sido agregado correctamente' });
     if (fetchModels) {
       fetchModels(brand_id || '');
     }

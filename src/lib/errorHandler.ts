@@ -7,6 +7,8 @@ export function handleSupabaseError(error: string): string {
     '23505': 'El valor ingresado ya existe, por favor ingresa uno diferente',
     '42501': 'No tienes permisos para realizar esta operación',
     'Invalid login credentials': 'Correo o contraseña inválidos',
+    'User already registered': 'El usuario ya se encuentra registrado',
+    'duplicate key value violates unique constraint "unique_contractor_employee"': 'Afectacion duplicada',
   };
 
   if (!errorMessages[error]) {
@@ -16,7 +18,7 @@ export function handleSupabaseError(error: string): string {
     const saveErrorMenssage = async () => {
       await supabase.from('handle_errors').insert({
         menssage: error,
-        path: window.location.origin,
+        path: window.location.pathname,
       });
     };
 
