@@ -456,6 +456,22 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Estado',
   },
   {
+    accessorKey: 'picture',
+    header: 'Foto',
+  },
+  {
+    accessorKey: 'file',
+    header: 'Legajo',
+  },
+  {
+    accessorKey: 'lastname',
+    header: 'Apellido',
+  },
+  {
+    accessorKey: 'firstname',
+    header: 'Nombre',
+  },
+  {
     accessorKey: 'email',
     header: 'Email',
   },
@@ -464,8 +480,36 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Cuil',
   },
   {
+    accessorKey: 'document_type',
+    header: 'Tipo de documento',
+  },
+  {
     accessorKey: 'document_number',
     header: 'Numero de documento',
+  },
+  {
+    accessorKey: 'nationality',
+    header: 'Nacionalidad',
+  },
+  {
+    accessorKey: 'gender',
+    header: 'Género',
+  },
+  {
+    accessorKey: 'birthplace',
+    header: 'Lugar de nacimiento',
+  },
+  {
+    accessorKey: 'marital_status',
+    header: 'Estado civil',
+  },
+  {
+    accessorKey: 'level_of_education',
+    header: 'Nivel de estudios',
+  },
+  {
+    accessorKey: 'date_of_admission',
+    header: 'Fecha de ingreso',
   },
   {
     accessorKey: 'hierarchical_position',
@@ -478,6 +522,10 @@ export const columns: ColumnDef<Colum>[] = [
   {
     accessorKey: 'normal_hours',
     header: 'Horas normales',
+  },
+  {
+    accessorKey: 'workflow_diagram',
+    header: 'Diagrama de trabajo',
   },
   {
     accessorKey: 'type_of_contract',
@@ -509,40 +557,12 @@ export const columns: ColumnDef<Colum>[] = [
     filterFn: allocatedToRangeFilter,
   },
   {
-    accessorKey: 'picture',
-    header: 'Foto',
+    accessorKey: 'province',
+    header: 'Provincia',
   },
   {
-    accessorKey: 'nationality',
-    header: 'Nacionalidad',
-  },
-  {
-    accessorKey: 'lastname',
-    header: 'Apellido',
-  },
-  {
-    accessorKey: 'firstname',
-    header: 'Nombre',
-  },
-  {
-    accessorKey: 'birthplace',
-    header: 'Lugar de nacimiento',
-  },
-  {
-    accessorKey: 'document_type',
-    header: 'Tipo de documento',
-  },
-  {
-    accessorKey: 'gender',
-    header: 'Género',
-  },
-  {
-    accessorKey: 'marital_status',
-    header: 'Estado civil',
-  },
-  {
-    accessorKey: 'level_of_education',
-    header: 'Nivel de estudios',
+    accessorKey: 'city',
+    header: 'Ciudad',
   },
   {
     accessorKey: 'street',
@@ -553,10 +573,6 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Numero de calle',
   },
   {
-    accessorKey: 'province',
-    header: 'Provincia',
-  },
-  {
     accessorKey: 'postal_code',
     header: 'Codigo postal',
   },
@@ -564,30 +580,16 @@ export const columns: ColumnDef<Colum>[] = [
     accessorKey: 'phone',
     header: 'Teléfono',
   },
-  {
-    accessorKey: 'file',
-    header: 'Legajo',
-  },
-  {
-    accessorKey: 'date_of_admission',
-    header: 'Fecha de ingreso',
-  },
-  {
-    accessorKey: 'affiliate_status',
-    header: 'Estado de afiliado',
-  },
-  {
-    accessorKey: 'city',
-    header: 'Ciudad',
-  },
-  {
-    accessorKey: 'hierrical_position',
-    header: 'Posición jerárquica',
-  },
-  {
-    accessorKey: 'workflow_diagram',
-    header: 'Diagrama de trabajo',
-  },
+
+  // {
+  //   accessorKey: 'affiliate_status',
+  //   header: 'Estado de afiliado',
+  // },
+  // {
+  //   accessorKey: 'hierrical_position',
+  //   header: 'Posición jerárquica',
+  // },
+
   {
     accessorKey: 'showUnavaliableEmployees',
     header: 'Ver empleados dados de baja',

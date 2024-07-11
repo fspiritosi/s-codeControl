@@ -7,7 +7,7 @@ import { DataTable } from '@/app/dashboard/company/customers/action/data-table';
 import { DataEquipment } from '@/app/dashboard/equipment/data-equipment';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { Card, CardDescription, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -125,6 +125,7 @@ export default function ClientRegister({ id }: { id: string }) {
   };
 
   const renderCard = () => (
+    // <Card className="mt-6 p-8"></Card>
     <Card className="mt-6 p-8">
       <CardTitle className="text-4xl mb-3">
         {action === 'view' ? '' : action === 'edit' ? 'Editar Cliente' : 'Registrar Cliente'}
@@ -230,7 +231,7 @@ export default function ClientRegister({ id }: { id: string }) {
       </div>
     </Card>
   );
-  const sharedUsersAll = useLoggedUserStore((state) => state.sharedUsers).filter((e) => e.customer_id?.id === id);
+  const sharedUsersAll = useLoggedUserStore((state) => state.sharedUsers)?.filter((e) => e.customer_id?.id === id);
   const user = useLoggedUserStore((state) => state.profile);
   const sharedUsers =
     sharedUsersAll?.map((user) => {
@@ -274,29 +275,41 @@ export default function ClientRegister({ id }: { id: string }) {
             </TabsList>
             <TabsContent value="empleados">
               <div className="h-full flex-1 flex-col space-y-8 md:flex">
-                <DataTable
-                  columns={columns}
-                  data={filteredCustomersEmployees || []}
-                  setActivesEmployees={setActivesEmployees}
-                  setInactiveEmployees={setInactiveEmployees}
-                  showDeletedEmployees={showDeletedEmployees}
-                  setShowDeletedEmployees={setShowDeletedEmployees}
-                />
+                <Card>
+                  <CardContent>
+                    <DataTable
+                      columns={columns}
+                      data={filteredCustomersEmployees || []}
+                      setActivesEmployees={setActivesEmployees}
+                      setInactiveEmployees={setInactiveEmployees}
+                      showDeletedEmployees={showDeletedEmployees}
+                      setShowDeletedEmployees={setShowDeletedEmployees}
+                    />
+                  </CardContent>
+
+                </Card>
               </div>
             </TabsContent>
             <TabsContent value="equipos">
-              <DataEquipment
-                columns={columns1}
-                data={filteredCustomersEquipment || []}
-                allCompany={allCompany}
-                showInactive={showInactive}
-                setShowInactive={setShowInactive}
-              />
+              <Card>
+                <CardContent>
+                  <DataEquipment
+                    columns={columns1}
+                    data={filteredCustomersEquipment || []}
+                    allCompany={allCompany}
+                    showInactive={showInactive}
+                    setShowInactive={setShowInactive}
+                  />
+                </CardContent>
+              </Card>
             </TabsContent>
             <TabsContent value="invitados">
-              <div className="p-8">
-                <DataTableInvited data={guestsData || []} columns={columnsGuests} />
-              </div>
+                <Card>
+                  <CardContent className='p-4'>
+                    <DataTableInvited data={guestsData || []} columns={columnsGuests} />
+                  </CardContent>
+                </Card>
+              
             </TabsContent>
           </Tabs>
         </section>
