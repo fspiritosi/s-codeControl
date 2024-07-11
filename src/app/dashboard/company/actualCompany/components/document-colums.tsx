@@ -213,7 +213,6 @@ export const columnsDocuments: ColumnDef<SharedUser>[] = [
       //   return <Link href={`/dashboard/document/${documentId}`}></Link>;
       // }
       const redirectId = row.getValue('documentId');
-      console.log(row.original);
       if (
         row.original.email === 'Documento pendiente' &&
         useLoggedUserStore.getState().roleActualCompany === 'Invitado'

@@ -21,8 +21,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Contact from '../contact/Contact';
 import Customers from '../customers/Customers';
-import {columns} from './components/columns';
-import {columnsGuests} from './components/columnsGuests'
+import { columns } from './components/columns';
+import { columnsGuests } from './components/columnsGuests';
 import { DataTable } from './components/data-table';
 import { columnsDocuments } from './components/document-colums';
 import { ItemCompany } from './components/itemCompany';
@@ -55,7 +55,6 @@ export default function page() {
       img: user.avatar || '',
     };
   });
-
   const sharedUsers =
     sharedUsersAll?.map((user) => {
       return {
@@ -65,32 +64,26 @@ export default function page() {
         alta: user.created_at,
         id: user.id,
         img: user.profile_id.avatar || '',
+        customerName: user.customer_id?.name,
       };
     }) || [];
 
-  // const data = owner?.concat(
-  //   sharedUsers?.map((user) => ({
-  //     ...user,
-  //     fullname: user.fullname || '',
-  //   })) || []
-  // );
   const data = owner?.concat(
     sharedUsers
-      ?.filter(user => user.role !== "Invitado") // Filtrar usuarios donde el rol no sea "Invitado"
-      ?.map(user => ({
+      ?.filter((user) => user.role !== 'Invitado') // Filtrar usuarios donde el rol no sea "Invitado"
+      ?.map((user) => ({
         ...user,
         fullname: user.fullname || '',
       })) || []
   );
-  const guestsData = 
+  const guestsData =
     sharedUsers
-      ?.filter(user => user.role === "Invitado") // Filtrar usuarios donde el rol no sea "Invitado"
-      ?.map(user => ({
+      ?.filter((user) => user.role === 'Invitado') // Filtrar usuarios donde el rol no sea "Invitado"
+      ?.map((user) => ({
         ...user,
         fullname: user.fullname || '',
-      })) || []
-  
-  
+      })) || [];
+
   const documentCompany = AllCompanyDocuments?.map((document) => {
     const sharedUserRole = data?.find((e) => e.email === document.user_id?.email)?.role;
     return {
@@ -229,7 +222,7 @@ export default function page() {
             <div className=" h-full flex-1 flex-col space-y-8  md:flex">
               <RegisterWithRole />
               <Tabs defaultValue="employ" className="w-full">
-                <TabsList className='ml-8'>
+                <TabsList className="ml-8">
                   <TabsTrigger value="employ">Empleados</TabsTrigger>
                   <TabsTrigger value="guests">Invitados</TabsTrigger>
                 </TabsList>

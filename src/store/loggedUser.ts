@@ -131,7 +131,7 @@ interface Iddocumenttypes {
   private: boolean;
 }
 
-const  setEmployeesToShow = (employees: any) => {
+const setEmployeesToShow = (employees: any) => {
   const employee = employees?.map((employees: any) => {
     return {
       full_name: `${employees?.lastname?.charAt(0).toUpperCase()}${employees?.lastname?.slice(1)} ${employees?.firstname
@@ -775,10 +775,11 @@ export const useLoggedUserStore = create<State>((set, get) => {
   };
   const FetchSharedUsers = async () => {
     const companyId = get()?.actualCompany?.id;
+
     const { data, error } = await supabase
       .from('share_company_users')
       .select(
-        `*,profile_id(*),company_id(*,
+        `*,customer_id(*),profile_id(*),company_id(*,
           owner_id(*),
         share_company_users(*,
           profile(*)

@@ -111,6 +111,29 @@ const dateRangeFilter: FilterFn<Colum> = (
   return false;
 };
 
+const domainAndInternNumber: FilterFn<Colum> = (
+  row: Row<Colum>,
+  columnId: string,
+  filterValue: any,
+  addMeta: (meta: any) => void
+) => {
+  const words = filterValue.split(' ');
+
+  if (!row.original?.intern_number) {
+    if (row.original.resource.toUpperCase().includes(filterValue.toUpperCase())) return true;
+    return false;
+  }
+
+  if (
+    words.some((word: string) => row.original.resource.toUpperCase().includes(word.toUpperCase())) ||
+    words.some((word: string) => row.original?.intern_number?.toUpperCase()?.includes(word.toUpperCase()))
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
 export const ExpiredColums: ColumnDef<Colum>[] = [
   {
     id: 'actions',
@@ -467,6 +490,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
   {
     accessorKey: 'resource',
     header: 'Empleado',
+    filterFn: domainAndInternNumber,
   },
   {
     accessorKey: 'documentName',
@@ -478,7 +502,6 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
       const rowId = column.id; // Suponiendo que props.column.id contiene el id de la fila
       const row = table.getRowModel().rows.some((e) => e.original.intern_number);
 
-      // console.log(row);
       if (!row) return null;
       return (
         <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>

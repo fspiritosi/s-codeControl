@@ -48,7 +48,7 @@ export default async function page() {
       validity: formattedDate,
       mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
       id: doc.id,
-      resource: `${doc.applies?.domain} (${doc.applies?.intern_number})`,
+      resource: `${doc.applies?.domain}`,
       vehicle_id: doc.applies?.id,
       is_active: doc.applies?.is_active,
       period: doc.period,
@@ -116,7 +116,7 @@ export default async function page() {
     vehicles: equipmentData1?.map(mapVehicle) || [],
   };
 
-  let clientData: any[] | null = []
+  let clientData: any[] | null = [];
 
   if (role === 'Invitado') {
     const { data, error: shared_error } = await supabase
@@ -125,14 +125,19 @@ export default async function page() {
       .eq('company_id', actualCompany)
       .eq('profile_id', user?.data?.user?.id);
 
-      if(!error){
-        clientData = data
-      }
+    if (!error) {
+      clientData = data;
+    }
   }
 
   return (
     <>
-      <TabsDocuments clientData={clientData||[]} AllvaluesToShow={AllvaluesToShow} companyData={companyData} serverRole={role} />
+      <TabsDocuments
+        clientData={clientData || []}
+        AllvaluesToShow={AllvaluesToShow}
+        companyData={companyData}
+        serverRole={role}
+      />
     </>
   );
 }

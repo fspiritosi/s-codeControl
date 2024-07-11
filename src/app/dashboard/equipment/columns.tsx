@@ -417,7 +417,6 @@ export const columns: ColumnDef<Colum>[] = [
         state.customers?.filter((company: any) => company.company_id.toString() === actualCompany?.id)
       );
       
-      // console.log();
       if (contractorCompanies.some((e) => e.name.includes(row.original.allocated_to))) return true;
 
       // const name = contractorCompanies.find()

@@ -12,4 +12,3 @@ const files = glob.sync('**/*.{js,ts,tsx}', { ignore: 'node_modules/**' });
 
 files.forEach(commentLogs);
 
-  console.log('Todos los console.log han sido comentados.');
