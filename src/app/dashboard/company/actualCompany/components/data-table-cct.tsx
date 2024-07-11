@@ -103,11 +103,11 @@ export function DataCct<TData, TValue>({
   }
 
   const selectHeader = {
-    name: {
-      name: 'name',
-      option: name,
-      label: 'Nombre',
-    },
+    // name: {
+    //   name: 'name',
+    //   option: name,
+    //   label: 'Nombre',
+    // },
   };
 
   let table = useReactTable({

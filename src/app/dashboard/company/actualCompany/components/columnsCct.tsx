@@ -412,25 +412,25 @@ export const columns: ColumnDef<Colum>[] = [
       );
     },
   },
+  // {
+  //   accessorKey: 'name',
+  //   header: ({ column }: { column: any }) => {
+  //     return (
+  //       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="p-0">
+  //         Nombre
+  //         <ArrowUpDown className="ml-2 h-4 w-4" />
+  //       </Button>
+  //     );
+  //   },
+  // },
   {
     accessorKey: 'name',
-    header: ({ column }: { column: any }) => {
-      return (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="p-0">
-          Nombre
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
+    header: 'Nombre',
   },
 
   {
     accessorKey: 'id',
     header: 'id',
-  },
-  {
-    accessorKey: 'company_id',
-    header: 'Compñia',
   },
   
   {

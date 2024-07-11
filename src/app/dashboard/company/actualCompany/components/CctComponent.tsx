@@ -28,7 +28,8 @@ export default function Cct() {
     
     let { data: covenants } = await supabase
     .from('covenant')
-    .select('*');
+    .select('*')
+    .eq('company_id', actualCompany?.id)
     
     // console.log(covenants)
     // let { data: type, error } = await supabase.from('type').select('*');
