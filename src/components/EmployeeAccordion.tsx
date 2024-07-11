@@ -55,7 +55,7 @@ type Province = {
   name: string;
 };
 
-export default function EmployeeAccordion() {
+export default function EmployeeAccordion({ role }: { role: string | null }) {
   const profile = useLoggedUserStore((state) => state);
 
   const share = useLoggedUserStore((state) => state.sharedCompanies);
@@ -63,7 +63,7 @@ export default function EmployeeAccordion() {
   const owner2 = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
   const users = useLoggedUserStore((state) => state);
   const company = useLoggedUserStore((state) => state.actualCompany?.id);
-  const role = useLoggedUserStore((state) => state.roleActualCompany);
+  // const role = useLoggedUserStore((state) => state.roleActualCompany);
   const searchParams = useSearchParams();
   const document = searchParams.get('document');
   const [accion, setAccion] = useState(searchParams.get('action'));
