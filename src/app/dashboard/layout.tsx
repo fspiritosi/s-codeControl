@@ -6,19 +6,7 @@ import '../globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
-<<<<<<< HEAD
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const supabase = supabaseServer()
-  const {
-    data: { user },
-} = await supabase.auth.getUser()
-=======
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
->>>>>>> 37a920db50574ef4220d3221ba76c05d12563b78
 
   return (
     <div className="flex">
