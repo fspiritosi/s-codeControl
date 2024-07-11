@@ -441,8 +441,6 @@ export const columns: ColumnDef<Colum>[] = [
     accessorKey: 'client_phone',
     header: 'Teléfono',
   },
-
-  // },
   {
     accessorKey: 'showUnavaliableContacts',
     header: 'Ver clientes dados de baja',

@@ -57,7 +57,7 @@ function TabsDocuments({
   };
   clientData: any[] | null;
 }) {
-  const { actualCompany, allDocumentsToShow } = useLoggedUserStore();
+  const { actualCompany } = useLoggedUserStore();
   const actualComp = cookies.get('actualComp');
 
   useEffect(() => {
@@ -179,8 +179,8 @@ function TabsDocuments({
   const filteredCustomers = employees?.filter((customer: any) =>
     customer?.allocated_to?.includes(clientData?.[0]?.customer_id)
   );
-  const filteredCustomersEmployeesRaw = allDocumentsToShow?.employees.filter((e) => !e.isItMonthly);
-  const filteredCustomersEmployeesRawMonthly = allDocumentsToShow?.employees.filter((e) => e.isItMonthly);
+  const filteredCustomersEmployeesRaw = AllvaluesToShow?.employees.filter((e) => !e.isItMonthly);
+  const filteredCustomersEmployeesRawMonthly = AllvaluesToShow?.employees.filter((e) => e.isItMonthly);
   const filteredCustomersEmployees = filteredCustomersEmployeesRaw?.filter((customer: any) => {
     const customerResource = customer?.resource_id; // Asumiendo que es una cadena
     const employeeFullnames = filteredCustomers?.map((emp: any) => emp.id); // Array de cadenas
@@ -197,8 +197,8 @@ function TabsDocuments({
   const filteredEquipment = vehiclesData?.filter((customer: any) =>
     customer.allocated_to?.includes(clientData?.[0]?.customer_id)
   );
-  const filteredCustomersEquipmentRaw = allDocumentsToShow?.vehicles.filter((e) => !e.isItMonthly);
-  const filteredCustomersEquipmentRawMonthly = allDocumentsToShow?.vehicles.filter((e) => e.isItMonthly);
+  const filteredCustomersEquipmentRaw = AllvaluesToShow?.vehicles.filter((e) => !e.isItMonthly);
+  const filteredCustomersEquipmentRawMonthly = AllvaluesToShow?.vehicles.filter((e) => e.isItMonthly);
 
   const filteredCustomersEquipment = filteredCustomersEquipmentRaw?.filter((customer: any) => {
     const customerResource = customer?.resource_id; // Asumiendo que es una cadena
@@ -245,7 +245,11 @@ function TabsDocuments({
             </CardContent>
             <TabsContent value="permanentes">
               <ExpiredDataTable
-                data={role === "Invitado" ? filteredCustomersEmployees : allDocumentsToShow?.employees.filter((e) => !e.isItMonthly) || []}
+                data={
+                  role === 'Invitado'
+                    ? filteredCustomersEmployees
+                    : AllvaluesToShow?.employees.filter((e) => !e.isItMonthly) || []
+                }
                 columns={ExpiredColums}
                 pending={true}
                 defaultVisibleColumnsCustom={['resource', 'documentName', 'validity', 'id', 'mandatory', 'state']}
@@ -255,7 +259,11 @@ function TabsDocuments({
             </TabsContent>
             <TabsContent value="mensuales">
               <ExpiredDataTable
-                data={role === "Invitado" ? filteredCustomersEmployeesMonthly : allDocumentsToShow?.employees.filter((e) => e.isItMonthly) || []}
+                data={
+                  role === 'Invitado'
+                    ? filteredCustomersEmployeesMonthly
+                    : AllvaluesToShow?.employees.filter((e) => e.isItMonthly) || []
+                }
                 columns={ColumnsMonthly}
                 pending={true}
                 defaultVisibleColumnsCustom={['resource', 'documentName', 'validity', 'id', 'mandatory', 'state']}
@@ -288,7 +296,11 @@ function TabsDocuments({
             </CardContent>
             <TabsContent value="permanentes">
               <ExpiredDataTable
-              data={role === "Invitado" ? filteredCustomersEquipment : allDocumentsToShow?.vehicles.filter((e) => !e.isItMonthly) || []}
+                data={
+                  role === 'Invitado'
+                    ? filteredCustomersEquipment
+                    : AllvaluesToShow?.vehicles.filter((e) => !e.isItMonthly) || []
+                }
                 columns={ExpiredColums}
                 pending={true}
                 vehicles
@@ -299,7 +311,11 @@ function TabsDocuments({
             </TabsContent>
             <TabsContent value="mensuales">
               <ExpiredDataTable
-                data={role === "Invitado" ? filteredCustomersEquipmentMonthly : allDocumentsToShow?.vehicles.filter((e) => e.isItMonthly) || []}
+                data={
+                  role === 'Invitado'
+                    ? filteredCustomersEquipmentMonthly
+                    : AllvaluesToShow?.vehicles.filter((e) => e.isItMonthly) || []
+                }
                 columns={ColumnsMonthly}
                 pending={true}
                 vehicles

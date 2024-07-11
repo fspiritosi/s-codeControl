@@ -170,6 +170,19 @@ export type SharedUser = {
   created_at: Date;
   credential_id: string;
   profile_id: profileUser;
+  customer_id: {
+    id: string,
+    cuit: number,
+    name: string,
+    address: string,
+    is_active: boolean,
+    company_id: string,
+    created_at: string,
+    client_email: string,
+    client_phone: number,
+    termination_date: null | string,
+    reason_for_termination: null| string
+  }
 };
 
 export type TypeOfVehicle = {
