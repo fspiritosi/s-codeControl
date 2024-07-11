@@ -508,6 +508,10 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Nivel de estudios',
   },
   {
+    accessorKey: 'date_of_admission',
+    header: 'Fecha de ingreso',
+  },
+  {
     accessorKey: 'hierarchical_position',
     header: 'Posición jerárquica',
   },
@@ -518,6 +522,10 @@ export const columns: ColumnDef<Colum>[] = [
   {
     accessorKey: 'normal_hours',
     header: 'Horas normales',
+  },
+  {
+    accessorKey: 'workflow_diagram',
+    header: 'Diagrama de trabajo',
   },
   {
     accessorKey: 'type_of_contract',
@@ -572,22 +580,16 @@ export const columns: ColumnDef<Colum>[] = [
     accessorKey: 'phone',
     header: 'Teléfono',
   },
-  {
-    accessorKey: 'date_of_admission',
-    header: 'Fecha de ingreso',
-  },
+
   // {
   //   accessorKey: 'affiliate_status',
   //   header: 'Estado de afiliado',
   // },
-  {
-    accessorKey: 'hierrical_position',
-    header: 'Posición jerárquica',
-  },
-  {
-    accessorKey: 'workflow_diagram',
-    header: 'Diagrama de trabajo',
-  },
+  // {
+  //   accessorKey: 'hierrical_position',
+  //   header: 'Posición jerárquica',
+  // },
+
   {
     accessorKey: 'showUnavaliableEmployees',
     header: 'Ver empleados dados de baja',
