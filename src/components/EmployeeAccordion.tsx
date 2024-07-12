@@ -57,7 +57,6 @@ type Province = {
 
 export default function EmployeeAccordion({ role }: { role: string | null }) {
   const profile = useLoggedUserStore((state) => state);
-
   const share = useLoggedUserStore((state) => state.sharedCompanies);
   const profile2 = useLoggedUserStore((state) => state.credentialUser?.id);
   const owner2 = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
@@ -67,7 +66,7 @@ export default function EmployeeAccordion({ role }: { role: string | null }) {
   const searchParams = useSearchParams();
   const document = searchParams.get('document');
   const [accion, setAccion] = useState(searchParams.get('action'));
-  const employees = useLoggedUserStore((state) => state.employees);
+  const employees = useLoggedUserStore((state) => state.active_and_inactive_employees);
   const [user, setUser] = useState(employees?.find((user: any) => user.document_number === document));
   const loggedUser = useLoggedUserStore((state) => state.credentialUser?.id);
   const { uploadImage } = useImageUpload();
@@ -660,9 +659,10 @@ export default function EmployeeAccordion({ role }: { role: string | null }) {
                     </AvatarFallback>
                   </Avatar>
                 </CardTitle>
-                <CardDescription className="text-muted-foreground text-3xl">
+                <CardDescription className="text-muted-foreground text-3xl flex items-center gap-4">
                   {`${user?.lastname || 'cargando...'}
-                ${user?.firstname || ''}`}
+                ${user?.firstname || ''}`}{' '}
+                  {!user?.is_active && <Badge variant={'destructive'}>Dado de baja</Badge>}
                 </CardDescription>
               </div>
             ) : (
