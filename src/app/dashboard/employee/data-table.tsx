@@ -34,6 +34,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 
 interface DataTableProps<TData, TValue> {
@@ -351,10 +352,9 @@ export function DataTable<TData, TValue>({
                                   <Input
                                     placeholder="Buscar por afectación"
                                     value={table.getColumn('allocated_to')?.getFilterValue() as string}
-                                    onChange={(event) =>
-                                      {
-                                      table.getColumn('allocated_to')?.setFilterValue(event.target.value)}
-                                    }
+                                    onChange={(event) => {
+                                      table.getColumn('allocated_to')?.setFilterValue(event.target.value);
+                                    }}
                                     className="max-w-sm"
                                   />
                                 </div>
@@ -410,9 +410,33 @@ export function DataTable<TData, TValue>({
             {table?.getRowModel().rows?.length ? (
               table.getRowModel().rows?.map((row) => {
                 return (
-                  <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                  <TableRow
+                    className={cn(!(row.original as any).is_active && 'opacity-40')}
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                  >
                     {row.getVisibleCells()?.map((cell) => {
                       let is_active = (cell.row.original as any).is_active;
+                      return (
+                        <TableCell
+                          key={cell.id}
+                          className={`text-center whitespace-nowrap ${is_active ? '' : 'text-red-500'}`}
+                        >
+                          {cell.column.id === 'picture' ? (
+                            <img
+                              src={cell.getValue() as any}
+                              alt="Foto"
+                              className="size-10 rounded-full object-cover"
+                            />
+                          ) : cell.column.id === 'status' ? (
+                            <Badge variant={cell.getValue() === 'No avalado' ? 'destructive' : 'success'}>
+                              {cell.getValue() as React.ReactNode}
+                            </Badge>
+                          ) : (
+                            (flexRender(cell.column.columnDef.cell, cell.getContext()) as React.ReactNode)
+                          )}
+                        </TableCell>
+                      );
                       return (
                         <TableCell
                           key={cell.id}
