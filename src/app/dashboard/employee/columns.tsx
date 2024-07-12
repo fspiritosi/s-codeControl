@@ -44,9 +44,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
 import { addMonths, format } from 'date-fns';
-import { es, ro } from 'date-fns/locale';
+import { es } from 'date-fns/locale';
 import { ArrowUpDown, CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Fragment, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -94,7 +95,7 @@ type Colum = {
   workflow_diagram: string;
   birthplace: string;
   status: string;
-
+  is_active: boolean;
 };
 
 const allocatedToRangeFilter: FilterFn<Colum> = (
@@ -135,22 +136,21 @@ export const columns: ColumnDef<Colum>[] = [
       const owner = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
       const users = useLoggedUserStore((state) => state);
       const company = useLoggedUserStore((state) => state.actualCompany?.id);
-      
+
       let role = '';
       if (owner === profile) {
         role = users?.actualCompany?.owner_id?.role as string;
-        
       } else {
         // const roleRaw = share?.filter((item: any) => Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))).map((item: any) => item.role);
         const roleRaw = share
-          .filter((item: any) =>
-            item.company_id.id === company &&
-            Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))
+          .filter(
+            (item: any) =>
+              item.company_id.id === company &&
+              Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))
           )
           .map((item: any) => item.role);
         role = roleRaw?.join('');
         // role = users?.actualCompany?.share_company_users?.[0]?.role as string;
-        
       }
 
       const [showModal, setShowModal] = useState(false);
@@ -162,7 +162,7 @@ export const columns: ColumnDef<Colum>[] = [
         setDocument(id);
         setShowModal(!showModal);
       };
-
+      const fetchDocuments = useLoggedUserStore((state) => state.documetsFetch);
       const setInactiveEmployees = useLoggedUserStore((state) => state.setInactiveEmployees);
       const setActivesEmployees = useLoggedUserStore((state) => state.setActivesEmployees);
       const setShowDeletedEmployees = useLoggedUserStore((state) => state.setShowDeletedEmployees);
@@ -181,8 +181,15 @@ export const columns: ColumnDef<Colum>[] = [
           reason_for_termination: undefined,
         },
       });
+      const router = useRouter();
 
       async function reintegerEmployee() {
+        const documentToUpdate = useLoggedUserStore
+          ?.getState()
+          ?.active_and_inactive_employees.find((e: any) => e.document_number === document)
+          .documents_employees?.filter((e: any) => e.id_document_types.down_document)
+          ?.map((e: any) => e.id);
+
         try {
           await supabase
             .from('employees')
@@ -191,12 +198,23 @@ export const columns: ColumnDef<Colum>[] = [
               termination_date: null,
               reason_for_termination: null,
             })
-            .eq('document_number', document)
-            .select();
+            .eq('document_number', document);
+
+          documentToUpdate.forEach(async (element: string) => {
+            const { data, error } = await supabase
+              .from('documents_employees')
+              .update({
+                document_path: null,
+                state: 'pendiente',
+              })
+              .eq('id', element);
+          });
 
           setIntegerModal(!integerModal);
-          setInactiveEmployees();
+          setActivesEmployees();
           setShowDeletedEmployees(false);
+          router.refresh();
+          fetchDocuments();
           toast('Empleado reintegrado', { description: `El empleado ${user.full_name} ha sido reintegrado` });
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
@@ -224,6 +242,9 @@ export const columns: ColumnDef<Colum>[] = [
           setShowModal(!showModal);
 
           toast('Empleado eliminado', { description: `El empleado ${user.full_name} ha sido eliminado` });
+          setActivesEmployees();
+          router.refresh();
+          fetchDocuments();
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
           toast('Error al dar de baja al empleado', { description: message });
@@ -386,10 +407,10 @@ export const columns: ColumnDef<Colum>[] = [
 
           <DropdownMenuTrigger asChild>
             {/* {role === "Invitado" ? null : ( */}
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Abrir menu</span>
-                <DotsVerticalIcon className="h-4 w-4" />
-              </Button>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Abrir menu</span>
+              <DotsVerticalIcon className="h-4 w-4" />
+            </Button>
             {/* )} */}
           </DropdownMenuTrigger>
 
@@ -436,7 +457,6 @@ export const columns: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
       );
     },
   },
@@ -536,7 +556,7 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Afectado a',
     cell: ({ row }) => {
       const values = row.original.allocated_to;
-      
+
       if (!values) return <Badge variant={'destructive'}>Sin afectar</Badge>;
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
