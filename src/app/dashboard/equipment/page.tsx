@@ -1,6 +1,6 @@
 'use client';
 import { buttonVariants } from '@/components/ui/button';
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { default as Cookies, default as cookie } from 'js-cookie';
@@ -10,6 +10,7 @@ import { supabase } from '../../../../supabase/supabase';
 import { columns } from './columns';
 import { DataEquipment } from './data-equipment';
 import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
+import EquipmentDocumentsTable from '../document/documentComponents/EquipmentDocumentsTable';
 
 export default function Equipment() {
   const allCompany = useLoggedUserStore((state) => state.allCompanies);
@@ -118,7 +119,7 @@ export default function Equipment() {
             <TabsTrigger value="all">Equipos</TabsTrigger>
             <TabsTrigger value="vehicles">Vehículos</TabsTrigger>
             <TabsTrigger value="others">Otros</TabsTrigger>
-            <TabsTrigger value="documents_type">Tipos de documentos</TabsTrigger>
+            <TabsTrigger value="documents_type">Documentación</TabsTrigger>
             {/* {
             role !== 'Invitado' && (
               <TabsTrigger value="forms">Check List</TabsTrigger>
@@ -225,7 +226,29 @@ export default function Equipment() {
             </Card>
           </TabsContent>
           <TabsContent value='documents_type'>
-            <TypesDocumentsView equipos/>
+            <Card>
+              <CardHeader>
+                <CardTitle>Documentación Equipos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Tabs>
+                  <TabsList>
+                    <TabsTrigger value='equipment_doc'>Documentos de Equipos</TabsTrigger>
+                    <TabsTrigger value='types'>
+                      Tipos de Documentos
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value='equipment_doc'>
+                    {/* <EquipmentDocumentsTable /> */}
+                    Tabla de documentos de equipos
+                  </TabsContent>
+                  <TabsContent value='types'>
+                  <TypesDocumentsView equipos/>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+            
           </TabsContent>
           {/* <TabsContent value="forms" className="space-y-4">
             <Card className="mt-6 overflow-hidden">
