@@ -88,7 +88,7 @@ export default function EmployeeAccordion() {
   const owner2 = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
   const users = useLoggedUserStore((state) => state);
   const company = useLoggedUserStore((state) => state.actualCompany?.id);
-
+  console.log(company)
   let role = '';
   if (owner2 === profile2) {
     role = users?.actualCompany?.owner_id?.role as string;
@@ -131,11 +131,11 @@ export default function EmployeeAccordion() {
   // const { toast } = useToast()
   const url = process.env.NEXT_PUBLIC_PROJECT_URL;
   const mandatoryDocuments = useCountriesStore((state) => state.mandatoryDocuments);
-
+  console.log(user)
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
     defaultValues: user
-      ? { ...user, allocated_to: user?.allocated_to }
+      ? { ...user, allocated_to: user?.allocated_to, covenants: user?.covenants, category: user?.category }
       : {
         lastname: '',
         firstname: '',
@@ -196,10 +196,8 @@ export default function EmployeeAccordion() {
     
     let { data: covenants } = await supabase
     .from('covenant')
-    .select('*');
-    
-    console.log(covenants)
-    // let { data: type, error } = await supabase.from('type').select('*');
+    .select('*')
+    .eq('company_id', company)
     setData({
       ...data,
       
@@ -209,7 +207,7 @@ export default function EmployeeAccordion() {
     
     });
   };
-  
+  console.log(data.covenants)
   useEffect(() => {
     fetchData()
     
@@ -226,7 +224,7 @@ export default function EmployeeAccordion() {
     let { data: category } = await supabase
     .from('category')
     .select('*')
-    .eq('covenant_id', covenant_id);
+    .eq('covenant_id', covenant_id || user.covenant.id);
 
     setData({
       ...data,
@@ -1125,6 +1123,7 @@ export default function EmployeeAccordion() {
                                               setCovenantId(covenant_id?.id as any || null)
                                               console.log(covenantId)
                                               fetchCategory(covenant_id?.id as any);
+                                              form.setValue('category', '');
                                             }}
                                           >
                                             {option.name}

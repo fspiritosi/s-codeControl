@@ -171,6 +171,8 @@ const setEmployeesToShow = (employees: any) => {
       reason_for_termination: employees?.reason_for_termination,
       termination_date: employees?.termination_date,
       status: employees?.status,
+      covenants: employees?.covenants?.name?.trim(),
+      category: employees?.category?.name?.trim(),
     };
   });
 
@@ -832,6 +834,12 @@ export const useLoggedUserStore = create<State>((set, get) => {
             name
           ),
           province(
+            name
+          ),
+          covenants(
+          name
+          ),
+          category(
             name
           ),
           workflow_diagram(
