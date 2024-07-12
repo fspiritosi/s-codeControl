@@ -122,37 +122,8 @@ function TabsDocuments({
       };
     });
   const router = useRouter();
-
-  // const share = useLoggedUserStore((state) => state.sharedCompanies);
-  // const profile2 = useLoggedUserStore((state) => state.credentialUser?.id);
-  // const owner2 = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
-  // const users = useLoggedUserStore((state) => state);
-  // const company = useLoggedUserStore((state) => state.actualCompany?.id);
-
   const employees = useLoggedUserStore((state) => state.employeesToShow);
   const vehiclesData = useLoggedUserStore((state) => state.vehiclesToShow);
-  // const supabase = supabaseBrowser()
-  // useEffect(() => {
-
-  //   if (company && profile && role === "Invitado") {
-  //     const fetchCustomers = async () => {
-  //       const { data, error } = await supabase
-  //         .from('share_company_users')
-  //         .select('*')
-  //         .eq('company_id', company)
-  //         .eq('profile_id', profile2);
-
-  //       if (error) {
-  //         console.error('Error fetching customers:', error);
-  //       } else {
-  //         setClientData(data);
-
-  //       }
-  //     };
-
-  //     fetchCustomers();
-  //   }
-  // }, [company, profile]);
 
   const filteredCustomers = employees?.filter((customer: any) =>
     customer?.allocated_to?.includes(clientData?.[0]?.customer_id)
@@ -338,7 +309,7 @@ function TabsDocuments({
         </Card>
       </TabsContent>
       <TabsContent value="Tipos de documentos">
-        <TypesDocumentsView />
+        <TypesDocumentsView equipos empresa personas />
       </TabsContent>
     </Tabs>
   );
