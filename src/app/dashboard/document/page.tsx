@@ -112,8 +112,22 @@ export default async function page() {
     role === 'Invitado' ? document_employees?.filter((e) => !e.document_types.private) : document_employees; //! falta agrelar las columnas
 
   const AllvaluesToShow = {
-    employees: employeesData?.map(mapDocument) || [],
-    vehicles: equipmentData1?.map(mapVehicle) || [],
+    employees:
+      employeesData
+        ?.filter(
+          (e) =>
+            (!e.employees.termination_date && !e.document_types.down_document) ||
+            (e.employees.termination_date && e.document_types.down_document)
+        )
+        .map(mapDocument) || [],
+    vehicles:
+      equipmentData1
+        ?.filter(
+          (e) =>
+            (!e.applies.termination_date && !e.document_types.down_document) ||
+            (e.applies.termination_date && e.document_types.down_document)
+        )
+        .map(mapVehicle) || [],
   };
 
   let clientData: any[] | null = [];
