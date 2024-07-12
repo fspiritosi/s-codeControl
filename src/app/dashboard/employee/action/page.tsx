@@ -1,9 +1,7 @@
-import { DocumentationDrawer } from '@/components/DocumentationDrawer';
 import EmployeeAccordion from '@/components/EmployeeAccordion';
 import { Card, CardFooter } from '@/components/ui/card';
 import { supabaseServer } from '@/lib/supabase/server';
 import { cn } from '@/lib/utils';
-import { revalidatePath } from 'next/cache';
 
 export default async function EmployeeFormAction({ searchParams }: { searchParams: any }) {
   // const { data } = await supabase
@@ -13,21 +11,20 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
   //   .eq('applies.document_number', searchParams.document)
   //   .not('applies', 'is', null)
 
-  revalidatePath('/dashboard/employee/action');
-  const supabase = supabaseServer()
+  const supabase = supabaseServer();
   const user = await supabase.auth.getUser();
 
   const { data: userShared } = await supabase
-  .from('share_company_users')
-  .select('*')
-  .eq('profile_id', user?.data?.user?.id);
-const role: string | null = userShared?.[0]?.role || null;
+    .from('share_company_users')
+    .select('*')
+    .eq('profile_id', user?.data?.user?.id);
+  const role: string | null = userShared?.[0]?.role || null;
 
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">
       <Card
         className={cn(
-          'col-span-8 flex flex-col justify-between overflow-hidden',
+          'col-span-8 flex flex-col justify-between overflow-hidden'
           // searchParams.action === 'new' && 'col-span-8'
         )}
       >
