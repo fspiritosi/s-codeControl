@@ -9,6 +9,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { supabase } from '../../../../supabase/supabase';
 import { columns } from './columns';
 import { DataEquipment } from './data-equipment';
+import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
 
 export default function Equipment() {
   const allCompany = useLoggedUserStore((state) => state.allCompanies);
@@ -117,6 +118,7 @@ export default function Equipment() {
             <TabsTrigger value="all">Equipos</TabsTrigger>
             <TabsTrigger value="vehicles">Vehículos</TabsTrigger>
             <TabsTrigger value="others">Otros</TabsTrigger>
+            <TabsTrigger value="documents_type">Tipos de documentos</TabsTrigger>
             {/* {
             role !== 'Invitado' && (
               <TabsTrigger value="forms">Check List</TabsTrigger>
@@ -221,6 +223,9 @@ export default function Equipment() {
               </div>
               <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
             </Card>
+          </TabsContent>
+          <TabsContent value='documents_type'>
+            <TypesDocumentsView equipos/>
           </TabsContent>
           {/* <TabsContent value="forms" className="space-y-4">
             <Card className="mt-6 overflow-hidden">

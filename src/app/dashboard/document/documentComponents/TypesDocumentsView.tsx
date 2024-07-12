@@ -18,7 +18,7 @@ import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { EditModal } from './EditDocumenTypeModal';
 
-function TypesDocumentsView() {
+function TypesDocumentsView({personas, equipos, empresa}:{personas?:boolean, equipos?:boolean, empresa?:boolean}) {
   const fetchDocumentTypes = useCountriesStore((state) => state.documentTypes);
   const document_types = useCountriesStore((state) => state.companyDocumentTypes);
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
@@ -26,6 +26,11 @@ function TypesDocumentsView() {
   let doc_personas = document_types?.filter((doc) => doc.applies === 'Persona').filter((e) => e.is_active);
   let doc_equipos = document_types?.filter((doc) => doc.applies === 'Equipos').filter((e) => e.is_active);
   let doc_empresa = document_types?.filter((doc) => doc.applies === 'Empresa').filter((e) => e.is_active);
+
+  //condicion para mostrar el tab seleccionado por defecto
+  const optionValue = personas && equipos && empresa ? "Personas" : personas ? "Personas" : equipos ? "Equipos" : "Empresa";
+  const optionChildrenProp = personas && equipos && empresa ? "all" : personas ? "Personas" : equipos ? "Equipos" : "Empresa";
+  console.log(optionChildrenProp)
   return (
     <Card>
       <div className="flex justify-between items-center">
@@ -42,7 +47,7 @@ function TypesDocumentsView() {
             <AlertDialogHeader>
               <AlertDialogTitle>Nuevo tipo de documento</AlertDialogTitle>
               <AlertDialogDescription asChild>
-                <NewDocumentType codeControlClient />
+                <NewDocumentType codeControlClient optionChildrenProp={optionChildrenProp} /> 
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -60,11 +65,11 @@ function TypesDocumentsView() {
         </AlertDialog>
       </div>
       <CardContent>
-        <Tabs defaultValue="Personas" className="w-full">
+        <Tabs defaultValue={optionValue} className="w-full">
           <TabsList>
-            <TabsTrigger value="Personas">Personas</TabsTrigger>
-            <TabsTrigger value="Equipos">Equipos</TabsTrigger>
-            <TabsTrigger value="Empresa">Empresa</TabsTrigger>
+            {personas && <TabsTrigger value="Personas">Personas</TabsTrigger>}
+            {equipos && <TabsTrigger value="Equipos">Equipos</TabsTrigger>}
+           {empresa &&  <TabsTrigger value="Empresa">Empresa</TabsTrigger>}
           </TabsList>
           <TabsContent value="Personas">
             <Table>
