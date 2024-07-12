@@ -38,15 +38,17 @@ import {
     children,
     fetchCategory,
     covenantOptions,
+    covenant_id
   }: {
     children: React.ReactNode;
     fetchCategory?: (covenant_id: string) => Promise<void>;
     covenantOptions?: { name: string; id: string }[];
+    covenant_id?: string
   }) {
     const [name, setName] = useState('');
-    const [covenant, setCovenant] = useState('');
+    // const [covenant, setCovenant] = useState('');
     const { toast } = useToast();
-  
+    
     async function onSubmit() {
       try {
         schema.parse(name);
@@ -58,8 +60,8 @@ import {
         });
         return;
       }
-      const covenant_id = covenantOptions?.find((covenantOption) => covenantOption.name === covenant)?.id;
-  
+      // const covenant_id = covenantOptions?.find((covenantOption) => covenantOption.name === covenant)?.id;
+      console.log(covenant_id)
       const { data, error } = await supabase
         .from('category')
         .insert([
@@ -105,7 +107,7 @@ import {
                   value={name}
                 />
               </FormItem>
-              <FormItem>
+              {/* <FormItem>
                 <FormLabel>Seleccione el convenio al que pertenece la categoria</FormLabel>
                 <Select onValueChange={(value) => setCovenant(value)}>
                   <SelectTrigger>
@@ -122,7 +124,7 @@ import {
                     </SelectGroup>
                   </SelectContent>
                 </Select>
-              </FormItem>
+              </FormItem> */}
               <div className="flex gap-2">
                 <AlertDialogAction onClick={onSubmit}>Agregar Categoria</AlertDialogAction>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>

@@ -110,6 +110,7 @@ export default function EmployeeAccordion() {
   const [user, setUser] = useState(
     employees?.find((user: any) => user.document_number === document),
   )
+  const [covenantId, setCovenantId] = useState()
   const loggedUser = useLoggedUserStore(state => state.credentialUser?.id)
   const { uploadImage } = useImageUpload()
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -1121,6 +1122,8 @@ export default function EmployeeAccordion() {
                                               form.setValue('covenants', option.name);                                          
                                               const covenant_id = data.covenants.find((e) => e.id === option?.id);
                                               console.log('covenant_id', covenant_id?.id)
+                                              setCovenantId(covenant_id?.id as any || null)
+                                              console.log(covenantId)
                                               fetchCategory(covenant_id?.id as any);
                                             }}
                                           >
@@ -1170,7 +1173,7 @@ export default function EmployeeAccordion() {
                                       <CommandInput disabled={readOnly} placeholder="Buscar categoria..." className="h-9" />
                                       <CommandEmpty className="py-2 px-2">
                                         <ModalCct modal="addCategory" 
-                                        fetchCategory={fetchCategory} covenantOptions={data.category as any}
+                                        fetchCategory={fetchCategory} covenant_id ={covenantId as any} covenantOptions={data.category as any}
                                         >
                                           <Button
                                             disabled={readOnly}
@@ -1206,7 +1209,7 @@ export default function EmployeeAccordion() {
                                         </>
                                         <>
                                           <ModalCct modal="addCategory" 
-                                          fetchCategory={fetchCategory} covenantOptions={data.covenants}
+                                          fetchCategory={fetchCategory} covenant_id={covenantId} covenantOptions={data.covenants}
                                           >
                                             <Button
                                               disabled={readOnly}
