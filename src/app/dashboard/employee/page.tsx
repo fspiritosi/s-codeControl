@@ -2,9 +2,9 @@
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLoggedUserStore } from '@/store/loggedUser';
-import { useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { supabase } from '../../../../supabase/supabase';
 import { columns } from './columns';
 import { DataTable } from './data-table';
@@ -37,27 +37,10 @@ const EmployeePage = () => {
   const setInactiveEmployees = useLoggedUserStore((state) => state.setInactiveEmployees);
   const showDeletedEmployees = useLoggedUserStore((state) => state.showDeletedEmployees);
   const setShowDeletedEmployees = useLoggedUserStore((state) => state.setShowDeletedEmployees);
-
-  let role = '';
-  if (owner === profile) {
-    role = users?.actualCompany?.owner_id?.role as string;
-    
-  } else {
-    // const roleRaw = share?.filter((item: any) => Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))).map((item: any) => item.role);
-    const roleRaw = share?.filter((item: any) =>
-        item.company_id.id === company &&
-        Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))
-      )
-      .map((item: any) => item.role);
-    role = roleRaw?.join('');
-    // role = users?.actualCompany?.share_company_users?.[0]?.role as string;
-    
-   
-  }
+  const role = useLoggedUserStore((state) => state.roleActualCompany);
 
   useEffect(() => {
-
-    if (company && profile && role === "Invitado") {
+    if (company && profile && role === 'Invitado') {
       const fetchCustomers = async () => {
         const { data, error } = await supabase
           .from('share_company_users')
@@ -69,22 +52,16 @@ const EmployeePage = () => {
           console.error('Error fetching customers:', error);
         } else {
           setClientData(data);
-
         }
       };
 
       fetchCustomers();
     }
   }, [company, profile]);
-  
+
   const filteredCustomersEmployees = employees?.filter((customer: any) =>
     customer?.allocated_to?.includes(clientData?.[0]?.customer_id)
   );
-
-
-
-
-
 
   supabase
     .channel('custom-all-channel')
@@ -110,9 +87,7 @@ const EmployeePage = () => {
           {role && role !== 'Invitado' && (
             <Link
               href="/dashboard/employee/action?action=new"
-              className={[
-                buttonVariants({ variant: 'default' }),
-              ].join(' ')}
+              className={[buttonVariants({ variant: 'default' })].join(' ')}
             >
               Agregar nuevo empleado
             </Link>
@@ -122,7 +97,15 @@ const EmployeePage = () => {
         <div className=" px-8 ">
           <DataTable
             columns={columns}
-            data={role === "Invitado" ? filteredCustomersEmployees : employees || []}
+            data={
+              role === 'Invitado'
+                ? filteredCustomersEmployees?.sort((a: any, b: any) =>
+                    a.original?.is_active === b?.original?.is_active ? 0 : a.original?.is_active ? -1 : 1
+                  )
+                : employees?.sort((a: any, b: any) =>
+                    a.original?.is_active === b?.original?.is_active ? 0 : a.original?.is_active ? -1 : 1
+                  ) || []
+            }
             setActivesEmployees={setActivesEmployees}
             setInactiveEmployees={setInactiveEmployees}
             showDeletedEmployees={showDeletedEmployees}
