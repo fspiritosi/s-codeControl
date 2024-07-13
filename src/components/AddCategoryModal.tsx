@@ -11,20 +11,11 @@ import {
   } from '@/components/ui/alert-dialog';
   import { FormItem, FormLabel } from '@/components/ui/form';
   import { Input } from '@/components/ui/input';
-  import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
-  } from '@/components/ui/select';
   import { useState } from 'react';
   import { ZodError, z } from 'zod';
   import { supabase } from '../../supabase/supabase';
   import { useToast } from './ui/use-toast';
-  
+  import { useEffect } from 'react';
   const schema = z
     .string()
     .min(1, {
@@ -38,17 +29,23 @@ import {
     children,
     fetchCategory,
     covenantOptions,
-    covenant_id
+    covenant_id,
+    searchText,
   }: {
     children: React.ReactNode;
     fetchCategory?: (covenant_id: string) => Promise<void>;
     covenantOptions?: { name: string; id: string }[];
     covenant_id?: string
+    searchText:string;
   }) {
     const [name, setName] = useState('');
     // const [covenant, setCovenant] = useState('');
     const { toast } = useToast();
     
+    useEffect(() => {
+      setName(searchText);
+    }, [searchText]);
+
     async function onSubmit() {
       try {
         schema.parse(name);
@@ -103,28 +100,10 @@ import {
                 <FormLabel>Nombre de la categoria</FormLabel>
                 <Input
                   placeholder="Ingrese el nombre de la categoria"
-                  onChange={(e) => setName(e.target.value)}
                   value={name}
+                  onChange={(e) => setName(e.target.value)}
                 />
               </FormItem>
-              {/* <FormItem>
-                <FormLabel>Seleccione el convenio al que pertenece la categoria</FormLabel>
-                <Select onValueChange={(value) => setCovenant(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccione una categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Categorias registradas</SelectLabel>
-                      {covenantOptions?.map((option) => (
-                        <SelectItem key={option.id} value={option.name}>
-                          {option.name}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </FormItem> */}
               <div className="flex gap-2">
                 <AlertDialogAction onClick={onSubmit}>Agregar Categoria</AlertDialogAction>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>

@@ -53,9 +53,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../../../../../supabase/supabase';
 const formSchema = z.object({
-  reason_for_termination: z.string({
-    required_error: 'La razón de la baja es requerida.',
-  }),
+  
   termination_date: z.date({
     required_error: 'La fecha de baja es requerida.',
   }),
@@ -67,7 +65,7 @@ type Colum = {
   is_active:boolean;
 };
 
-export const columns: ColumnDef<Colum>[] = [
+export const columnsGuild: ColumnDef<Colum>[] = [
   {
     id: 'actions',
     cell: ({ row }: { row: any }) => {
@@ -84,10 +82,11 @@ export const columns: ColumnDef<Colum>[] = [
       const [id, setId] = useState('');
       const [showInactive, setShowInactive] = useState('');
       const [showDeletedContact, setShowDeletedContact] = useState(false);
-      const covenant = row.original;
+      const guild = row.original;
 
       const handleOpenModal = (id: string) => {
         setId(id);
+        console.log("ID", id)
         setShowModal(!showModal);
       };
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
@@ -125,19 +124,19 @@ export const columns: ColumnDef<Colum>[] = [
         },
       });
 
-      async function reintegerCct() {
+      async function reintegerGuild() {
         toast.promise(
           async () => {
             const supabase = supabaseBrowser();
 
             const { data, error } = await supabase
-              .from('covenant')
+              .from('guild')
               .update({
                 is_active: true,
                 
               })
-              .eq('id', covenant.id)
-              //.eq('company_id', actualCompany?.id)
+              .eq('id', guild.id)
+              .eq('company_id', actualCompany?.id)
               .select();
 
             setIntegerModal(!integerModal);
@@ -150,7 +149,7 @@ export const columns: ColumnDef<Colum>[] = [
           },
           {
             loading: 'Reintegrando...',
-            success: `Convenio reintegrado`,
+            success: `Sindicato reintegrado`,
             error: (error) => {
               return error;
             },
@@ -168,15 +167,15 @@ export const columns: ColumnDef<Colum>[] = [
 
             const supabase = supabaseBrowser();
             const { error } = await supabase
-              .from('covenant')
+              .from('guild')
               .update({
                 is_active: false,
                 
               })
-              .eq('id', covenant.id)
+              .eq('id', guild.id)
               .eq('company_id', actualCompany?.id)
-              .select();
-
+              
+              console.log(guild.id)
             setShowModal(!showModal);
             if (error) {
               throw new Error(handleSupabaseError(error.message));
@@ -184,7 +183,7 @@ export const columns: ColumnDef<Colum>[] = [
           },
           {
             loading: 'Eliminando...',
-            success: 'Contacto eliminado',
+            success: 'Sindicato eliminado',
             error: (error) => {
               return error;
             },
@@ -209,12 +208,12 @@ export const columns: ColumnDef<Colum>[] = [
                 <AlertDialogHeader>
                   <AlertDialogTitle>¿Estás completamente seguro?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    {`Estás a punto de reintegrar el convenio ${covenant.name}`}
+                    {`Estás a punto de reintegrar el sindicato ${guild.name}`}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => reintegerCct()}>Continuar</AlertDialogAction>
+                  <AlertDialogAction onClick={() => reintegerGuild()}>Continuar</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -222,9 +221,9 @@ export const columns: ColumnDef<Colum>[] = [
           {showModal && (
             <Dialog defaultOpen onOpenChange={() => setShowModal(!showModal)}>
               <DialogContent className="dark:bg-slate-950">
-                <DialogTitle>Dar de baja Convenio</DialogTitle>
+                <DialogTitle>Dar de baja Sindicato</DialogTitle>
                 <DialogDescription>
-                  ¿Estás seguro de que deseas dar de baja este convenio?, completa los campos para continuar.
+                  ¿Estás seguro de que deseas dar de baja este sindicato?, completa los campos para continuar.
                 </DialogDescription>
                 <DialogFooter>
                   <div className="w-full">
@@ -395,13 +394,13 @@ export const columns: ColumnDef<Colum>[] = [
             <DropdownMenuItem>
               {role !== 'Invitado' && (
                 <Fragment>
-                  {covenant.is_active ? (
-                    <Button variant="destructive" onClick={() => handleOpenModal(covenant?.id)} className="text-sm">
-                      Dar de baja Convenio
+                  {guild.is_active ? (
+                    <Button variant="destructive" onClick={() => handleOpenModal(guild?.id)} className="text-sm">
+                      Dar de baja sindicato
                     </Button>
                   ) : (
-                    <Button variant="primary" onClick={() => handleOpenIntegerModal(covenant.id)} className="text-sm">
-                      Reintegrar Convenio
+                    <Button variant="primary" onClick={() => handleOpenIntegerModal(guild?.id)} className="text-sm">
+                      Reintegrar Sindicato
                     </Button>
                   )}
                 </Fragment>
@@ -429,12 +428,7 @@ export const columns: ColumnDef<Colum>[] = [
   },
 
   {
-    accessorKey: 'id',
-    header: 'id',
-  },
-  
-  {
     accessorKey: 'showUnavaliableCovenant',
-    header: 'Ver convenios dados de baja',
+    header: 'Ver sindicatos dados de baja',
   },
 ];

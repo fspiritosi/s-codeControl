@@ -753,4 +753,14 @@ export const contactSchema = z.object({
     .max(30, { message: 'EL cargo debe tener menos de 30 caracteres.' }),
   customer: z.string({ required_error: 'El cliente es requerido' }).optional(),
 });
+
+export const covenantSchema = z.object({
+  name: z
+    .string({ required_error: 'El nombre es requerido' })
+    .min(2, {
+      message: 'El nombre debe tener al menos 2 caracteres.',
+    })
+    .max(100, { message: 'EL nombre debe tener menos de 100 caracteres.' }),
+    category: z.string().optional(),
+  });
 export type SharedCompanies = z.infer<typeof SharedCompaniesSchema>;

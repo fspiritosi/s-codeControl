@@ -26,7 +26,7 @@ import { columnsGuests } from './components/columnsGuests';
 import { DataTable } from './components/data-table';
 import { columnsDocuments } from './components/document-colums';
 import { ItemCompany } from './components/itemCompany';
-import Cct from './components/CctComponent';
+import Cct from './covenant/CctComponent';
 export default function page() {
   const router = useRouter();
   const company = useLoggedUserStore((state) => state.actualCompany);
