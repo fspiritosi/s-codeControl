@@ -18,7 +18,12 @@ import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { EditModal } from './EditDocumenTypeModal';
 
+<<<<<<< HEAD
 function TypesDocumentsView({empresa,equipos,personas}: { personas?: boolean; equipos?: boolean; empresa?: boolean }) {
+=======
+
+function TypesDocumentsView({personas, equipos, empresa}:{personas?:boolean, equipos?:boolean, empresa?:boolean}) {
+>>>>>>> facc09f9da3db5009e203ad9fb18af414b5fc9c3
   const fetchDocumentTypes = useCountriesStore((state) => state.documentTypes);
   const document_types = useCountriesStore((state) => state.companyDocumentTypes);
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
@@ -62,6 +67,10 @@ function TypesDocumentsView({empresa,equipos,personas}: { personas?: boolean; eq
       <CardContent>
         <Tabs defaultValue="Personas" className="w-full">
           <TabsList>
+<<<<<<< HEAD
+=======
+            
+>>>>>>> facc09f9da3db5009e203ad9fb18af414b5fc9c3
             {personas && <TabsTrigger value="Personas">Personas</TabsTrigger>}
             {equipos && <TabsTrigger value="Equipos">Equipos</TabsTrigger>}
             {empresa && <TabsTrigger value="Empresa">Empresa</TabsTrigger>}
