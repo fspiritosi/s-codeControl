@@ -5,7 +5,7 @@ import { useLoggedUserStore } from "@/store/loggedUser"
 import { cookies } from "next/headers"
 
 
-export async function page() {
+export async function Equipment() {
     const URL = process.env.NEXT_PUBLIC_BASE_URL
 
 
