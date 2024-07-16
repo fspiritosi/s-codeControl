@@ -1,6 +1,7 @@
 'use strict';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useLoggedUserStore } from '@/store/loggedUser';
 // eslint-disable-next-line react-hooks/rules-of-hooks
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -32,3 +33,9 @@ export function validarCUIL(cuil: string) {
   // Compara con el último dígito
   return parseInt(cuil[10]) === digitoVerificador;
 }
+
+// export function getState(){
+//   const estado = useLoggedUserStore((state) => state )
+//   return estado
+// } 
+

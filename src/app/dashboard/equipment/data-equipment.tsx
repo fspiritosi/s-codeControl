@@ -43,7 +43,7 @@ interface DataEquipmentProps<TData, TValue> {
   data: TData[];
   allCompany: any[];
   showInactive: boolean;
-  setShowInactive: (showInactive: boolean) => void;
+  setShowInactive?: (showInactive: boolean) => void;
 }
 
 export function DataEquipment<TData, TValue>({
@@ -54,6 +54,8 @@ export function DataEquipment<TData, TValue>({
   allCompany,
 }: DataEquipmentProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
+
+ 
 
   const defaultVisibleColumns = [
     'domain',
@@ -300,7 +302,7 @@ export function DataEquipment<TData, TValue>({
                           key={column.id}
                           className="capitalize  text-red-400"
                           checked={showInactive}
-                          onClick={() => setShowInactive(!showInactive)}
+                          //onClick={() => setShowInactive(!showInactive)}
                           onCheckedChange={(value) => handleColumnVisibilityChange(column.id, true)}
                         >
                           {column.columnDef.header}
