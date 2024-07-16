@@ -25,7 +25,7 @@ const name = await fetch('/api/equipment')
 const res = name.json()
 console.log(res)
 
-export default function Equipment() {
+export default function Equipmenta() {
   const allCompany = useLoggedUserStore((state) => state.allCompanies);
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   const fetchVehicles = useLoggedUserStore((state) => state.fetchVehicles);
