@@ -12,13 +12,38 @@ import { DataEquipment } from './data-equipment';
 import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
 import EquipmentDocumentsTable from '../document/documentComponents/EquipmentDocumentsTable';
 
-import { getSessionData, getUserRol, filterResourses } from '@/lib/testingFunctions';
 
+import { Resend } from 'resend';
+import { EmailTemplate } from '../../../components/EmailTemplate';
+import { EmailTemplateHelp } from '../../../components/EmailTemplateHelp';
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-const data = async () => {
-  const equipos = await filterResourses()
-  console.log(equipos)
-  return equipos
+export async function POST(request: Request) {
+  try {
+    const requestData = await request.json();
+    const userEmail = requestData.userEmail;
+
+    const template =
+      requestData.to === 'info@codecontrol.com.ar'
+        ? EmailTemplateHelp({ userEmail: userEmail, reason: requestData.react })
+        : EmailTemplate({
+            userEmail: userEmail,
+            reason: requestData.react,
+            emailInfo: requestData.body,
+          });
+    const data = await resend.emails.send({
+      //from: 'Codecontrol <onboarding@resend.dev>',
+      from: 'Codecontrol <team@codecontrol.com.ar>',
+      to: requestData.to,
+      subject: requestData.subject,
+      react: template,
+      text: '',
+    });
+
+    return Response.json(data);
+  } catch (error) {
+    return Response.json({ error });
+  }
 }
 
 const name = await fetch('/api/equipment')
@@ -49,9 +74,6 @@ export default function Equipmenta() {
       return 'all';
     }
   });
-
-  console.log(getSessionData())
-  console.log(getUserRol())
 
 
 
