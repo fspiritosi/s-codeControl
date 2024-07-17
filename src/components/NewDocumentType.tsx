@@ -62,7 +62,13 @@ const defaultValues = [
   },
 ];
 
-export default function NewDocumentType({ codeControlClient, optionChildrenProp }: { codeControlClient?: boolean, optionChildrenProp:string  }) {
+export default function NewDocumentType({
+  codeControlClient,
+  optionChildrenProp,
+}: {
+  codeControlClient?: boolean;
+  optionChildrenProp?: string;
+}) {
   const [special, setSpecial] = useState(false);
   const router = useRouter();
   const fetchDocumentTypes = useCountriesStore((state) => state.documentTypes);
@@ -70,8 +76,7 @@ export default function NewDocumentType({ codeControlClient, optionChildrenProp 
   const fetchDocuments = useLoggedUserStore((state) => state.documetsFetch);
   const [items, setItems] = useState(defaultValues);
 
-  const selectOptions = optionChildrenProp === "all" ? "Personas, Equipos o Empresa" : optionChildrenProp 
-
+  const selectOptions = optionChildrenProp === 'all' ? 'Personas, Equipos o Empresa' : optionChildrenProp;
 
   const isOptional = items.length < 5;
   const FormSchema = z.object({
@@ -240,19 +245,17 @@ export default function NewDocumentType({ codeControlClient, optionChildrenProp 
                       <SelectValue placeholder={selectOptions} />
                     </SelectTrigger>
                   </FormControl>
-                  {
-                    optionChildrenProp === "all" ?  
-                      <SelectContent>
-                        <SelectItem value="Persona">Persona</SelectItem>
-                        <SelectItem value="Equipos">Equipos</SelectItem>
-                        <SelectItem value="Empresa">Empresa</SelectItem>
-                      </SelectContent>
-                  :
+                  {optionChildrenProp === 'all' ? (
                     <SelectContent>
-                      <SelectItem value={optionChildrenProp}>{optionChildrenProp}</SelectItem>
+                      <SelectItem value="Persona">Persona</SelectItem>
+                      <SelectItem value="Equipos">Equipos</SelectItem>
+                      <SelectItem value="Empresa">Empresa</SelectItem>
                     </SelectContent>
-
-                  }
+                  ) : (
+                    <SelectContent>
+                      <SelectItem value={optionChildrenProp || ''}>{optionChildrenProp}</SelectItem>
+                    </SelectContent>
+                  )}
                 </Select>
               </div>
               <FormMessage />
