@@ -143,7 +143,7 @@ export const columns: ColumnDef<Colum>[] = [
       } else {
         // const roleRaw = share?.filter((item: any) => Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))).map((item: any) => item.role);
         const roleRaw = share
-          .filter(
+          ?.filter(
             (item: any) =>
               item.company_id.id === company &&
               Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))
