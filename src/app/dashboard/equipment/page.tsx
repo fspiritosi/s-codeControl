@@ -32,6 +32,7 @@ export default async function Equipment() {
             content: {
               title: 'Equipos totales',
               description: 'Todos los equipos',
+              buttonActioRestricted: [''],
               component: (
                 <div className="w-full grid grid-cols-1 px-8">
                   <DataEquipment
@@ -51,6 +52,7 @@ export default async function Equipment() {
             content: {
               title: 'Vehículos',
               description: 'Solo Vehículos',
+              buttonActioRestricted: [''],
               component: (
                 <div className="w-full grid grid-cols-1 px-8">
                   <DataEquipment
@@ -69,6 +71,7 @@ export default async function Equipment() {
             restricted: [],
             content: {
               title: 'Otros Equipos',
+              buttonActioRestricted: [''],
               description: 'Todos los Equipos no vehículos',
               component: (
                 <div className="w-full grid grid-cols-1 px-8">
