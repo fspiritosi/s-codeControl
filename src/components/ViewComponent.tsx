@@ -21,11 +21,12 @@ interface ViewDataObj {
         name: string,
         restricted: string[],
         content: {
-        title: string,
-        description: string,
-        buttonAction?: React.ReactNode,
-        component:React.ReactNode
-    }}[],
+          title: string,
+          description: string,
+          buttonAction?: React.ReactNode,
+          component:React.ReactNode
+        }
+    }[],
 }
 
 export default function Viewcomponent({viewData}:{viewData:ViewDataObj}) {
