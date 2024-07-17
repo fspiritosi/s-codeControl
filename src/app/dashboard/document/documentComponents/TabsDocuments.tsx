@@ -338,7 +338,7 @@ function TabsDocuments({
         </Card>
       </TabsContent>
       <TabsContent value="Tipos de documentos">
-        <TypesDocumentsView />
+        <TypesDocumentsView empresa equipos personas />
       </TabsContent>
     </Tabs>
   );
