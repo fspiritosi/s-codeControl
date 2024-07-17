@@ -238,7 +238,7 @@ type DocumentType = {
   created_at: string;
 };
 
-type Document = {
+type Document2 = {
   id: string;
   created_at: string;
   id_storage: string;
@@ -251,7 +251,7 @@ type Document = {
   document_url: string;
 };
 
-export const AllDocuments: Document[] = [
+export const AllDocuments: Document2[] = [
   {
     id: '1',
     created_at: '2022-01-01',
@@ -437,6 +437,23 @@ export type DocumentsTable = {
   document_types: DocumentTypes;
   domain: string;
 };
+
+export interface Document {
+  date: string;
+  allocated_to: string;
+  documentName: string;
+  multiresource: string;
+  validity: string;
+  id: string;
+  resource: string;
+  state: string;
+  document_path?: string;
+  is_active: boolean;
+  isItMonthly: boolean;
+  applies: string;
+  mandatory: string;
+  id_document_types?: string;
+}
 
 export type DocumentTypesTable = {
   id: string;
