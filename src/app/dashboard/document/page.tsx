@@ -1,7 +1,6 @@
 import DocumentNav from '@/components/DocumentNav';
 import Viewcomponent from '@/components/ViewComponent';
 import { supabaseServer } from '@/lib/supabase/server';
-import { getActualRole } from '@/lib/utils';
 import { CompanyDocumentsType } from '@/store/loggedUser';
 import { cookies } from 'next/headers';
 import CompanyTabs from './documentComponents/CompanyTabs';
@@ -21,7 +20,6 @@ export default async function page() {
     .eq('profile_id', user?.data?.user?.id);
   const role: string | null = userShared?.[0]?.role || null;
   const actualCompany = cookiesStore.get('actualComp')?.value;
-
 
   let { data: documents_company, error: documents_company_error } = await supabase
     .from('documents_company')
@@ -88,7 +86,7 @@ export default async function page() {
         content: {
           title: 'Tipos de documentos',
           description: 'Tipos de documentos auditables',
-          buttonAction: <TypesDocumentAction />,
+          buttonAction: <TypesDocumentAction optionChildrenProp="all" />,
           component: <TypesDocumentsView equipos empresa personas />,
         },
       },

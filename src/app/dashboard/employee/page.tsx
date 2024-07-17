@@ -41,7 +41,7 @@ const EmployeePage = async () => {
         content: {
           title: 'Tipos de documentos',
           description: 'Tipos de documentos auditables',
-          buttonAction: <TypesDocumentAction />,
+          buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
           component: <TypesDocumentsView personas />,
         },
       },

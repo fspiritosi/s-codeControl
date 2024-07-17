@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
 
-function TypesDocumentAction() {
+function TypesDocumentAction({ optionChildrenProp }: { optionChildrenProp: string }) {
   const fetchDocumentTypes = useCountriesStore((state) => state.documentTypes);
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   const role = useLoggedUserStore((state) => state.roleActualCompany);
@@ -28,7 +28,7 @@ function TypesDocumentAction() {
         <AlertDialogHeader>
           <AlertDialogTitle>Nuevo tipo de documento</AlertDialogTitle>
           <AlertDialogDescription asChild>
-            <NewDocumentType codeControlClient />
+            <NewDocumentType codeControlClient optionChildrenProp={optionChildrenProp} />
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

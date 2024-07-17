@@ -67,7 +67,7 @@ export default function NewDocumentType({
   optionChildrenProp,
 }: {
   codeControlClient?: boolean;
-  optionChildrenProp?: string;
+  optionChildrenProp: string;
 }) {
   const [special, setSpecial] = useState(false);
   const router = useRouter();
@@ -253,7 +253,7 @@ export default function NewDocumentType({
                     </SelectContent>
                   ) : (
                     <SelectContent>
-                      <SelectItem value={optionChildrenProp || ''}>{optionChildrenProp}</SelectItem>
+                      <SelectItem value={optionChildrenProp || 'All'}>{optionChildrenProp}</SelectItem>
                     </SelectContent>
                   )}
                 </Select>
