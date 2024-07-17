@@ -341,7 +341,9 @@ function TabsDocuments({
         </Card>
       </TabsContent>
       <TabsContent value="Tipos de documentos">
+
         <TypesDocumentsView personas equipos empresa />
+
       </TabsContent>
     </Tabs>
   );
