@@ -13,6 +13,7 @@ interface ViewDataObj {
     content: {
       title: string;
       description: string;
+      buttonActioRestricted: string[];
       buttonAction?: React.ReactNode;
       component: React.ReactNode;
     };
@@ -47,11 +48,7 @@ export default async function Viewcomponent({ viewData }: { viewData: ViewDataOb
                   <CardTitle className="text-2xl font-bold tracking-tight w-fit">{tab.content.title}</CardTitle>
                   <CardDescription className="text-muted-foreground w-fit">{tab.content.description}</CardDescription>
                 </div>
-
-                {tab.content.buttonAction}
-                {/* <Button className="w-fit" onClick={handleEditCompany}>
-                Editar Compañía
-              </Button> */}
+                {tab.content.buttonActioRestricted?.includes(role) ? false : tab.content.buttonAction}
               </CardHeader>
               <CardContent className="py-4 px-4 ">{tab.content.component}</CardContent>
               <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
