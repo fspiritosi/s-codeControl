@@ -39,7 +39,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 type Props = {
-  Equipo: Equipo[0];
+  Equipo: Equipo[0] | any;
 };
 export function EditModal({ Equipo }: Props) {
   const supabase = supabaseBrowser();

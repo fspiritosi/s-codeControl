@@ -32,45 +32,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-<<<<<<< HEAD
-} from '@/components/ui/dropdown-menu'
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { useToast } from '@/components/ui/use-toast'
-import { useEdgeFunctions } from '@/hooks/useEdgeFunctions'
-import { cn } from '@/lib/utils'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { DotsVerticalIcon } from '@radix-ui/react-icons'
-import { ColumnDef } from '@tanstack/react-table'
-import { addMonths, format } from 'date-fns'
-import { es } from 'date-fns/locale'
-import { ArrowUpDown, CalendarIcon } from 'lucide-react'
-import Link from 'next/link'
-import { Fragment, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { supabase } from '../../../../supabase/supabase'
-=======
 } from '@/components/ui/dropdown-menu';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -83,7 +44,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
 import { addMonths, format } from 'date-fns';
-import { es, ro } from 'date-fns/locale';
+import { es } from 'date-fns/locale';
 import { ArrowUpDown, CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Fragment, useState } from 'react';
@@ -91,7 +52,6 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../../../supabase/supabase';
->>>>>>> 37a920db50574ef4220d3221ba76c05d12563b78
 
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -134,7 +94,6 @@ type Colum = {
   workflow_diagram: string;
   birthplace: string;
   status: string;
-
 };
 
 const allocatedToRangeFilter: FilterFn<Colum> = (
@@ -170,46 +129,26 @@ export const columns: ColumnDef<Colum>[] = [
   {
     id: 'actions',
     cell: ({ row }: { row: any }) => {
-<<<<<<< HEAD
-      const profile = useLoggedUserStore(state => state)
-      let role = ''
-      if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
-        role = profile?.actualCompany?.owner_id?.role as string
-      } else {
-        role = profile?.actualCompany?.share_company_users?.[0]?.role as string
-      }
-
-      const [showModal, setShowModal] = useState(false)
-      const [integerModal, setIntegerModal] = useState(false)
-      const [document, setDocument] = useState('')
-      const user = row.original
-
-      const handleOpenModal = (id: string) => {
-        setDocument(id)
-        setShowModal(!showModal)
-=======
       const share = useLoggedUserStore((state) => state.sharedCompanies);
       const profile = useLoggedUserStore((state) => state.credentialUser?.id);
       const owner = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
       const users = useLoggedUserStore((state) => state);
       const company = useLoggedUserStore((state) => state.actualCompany?.id);
-      
+
       let role = '';
       if (owner === profile) {
         role = users?.actualCompany?.owner_id?.role as string;
-        
       } else {
         // const roleRaw = share?.filter((item: any) => Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))).map((item: any) => item.role);
         const roleRaw = share
-          .filter((item: any) =>
-            item.company_id.id === company &&
-            Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))
+          .filter(
+            (item: any) =>
+              item.company_id.id === company &&
+              Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))
           )
           .map((item: any) => item.role);
         role = roleRaw?.join('');
         // role = users?.actualCompany?.share_company_users?.[0]?.role as string;
-        
->>>>>>> 37a920db50574ef4220d3221ba76c05d12563b78
       }
 
       const [showModal, setShowModal] = useState(false);
@@ -445,10 +384,10 @@ export const columns: ColumnDef<Colum>[] = [
 
           <DropdownMenuTrigger asChild>
             {/* {role === "Invitado" ? null : ( */}
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Abrir menu</span>
-                <DotsVerticalIcon className="h-4 w-4" />
-              </Button>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Abrir menu</span>
+              <DotsVerticalIcon className="h-4 w-4" />
+            </Button>
             {/* )} */}
           </DropdownMenuTrigger>
 
@@ -465,13 +404,7 @@ export const columns: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
             <DropdownMenuItem>
               {role !== 'Invitado' && (
-<<<<<<< HEAD
-                <Link
-                  href={`/dashboard/employee/action?action=edit&document=${user?.document_number}`}
-                >
-=======
                 <Link href={`/dashboard/employee/action?action=edit&document=${user?.document_number}`}>
->>>>>>> 37a920db50574ef4220d3221ba76c05d12563b78
                   Editar empleado
                 </Link>
               )}
@@ -490,13 +423,7 @@ export const columns: ColumnDef<Colum>[] = [
                   ) : (
                     <Button
                       variant="primary"
-<<<<<<< HEAD
-                      onClick={() =>
-                        handleOpenIntegerModal(user?.document_number)
-                      }
-=======
                       onClick={() => handleOpenIntegerModal(user?.document_number)}
->>>>>>> 37a920db50574ef4220d3221ba76c05d12563b78
                       className="text-sm"
                     >
                       Reintegrar Empleado
@@ -507,7 +434,6 @@ export const columns: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
       );
     },
   },
@@ -607,7 +533,7 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Afectado a',
     cell: ({ row }) => {
       const values = row.original.allocated_to;
-      
+
       if (!values) return <Badge variant={'destructive'}>Sin afectar</Badge>;
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
