@@ -48,7 +48,7 @@ import { addMonths, format, formatRelative } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ArrowUpDown, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -128,11 +128,7 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
         setDomain(id);
         setShowModal(!showModal);
       };
-      // const { fetchDocumentEquipmentByCompany } = useDocument()
 
-      // useEffect(() => {
-      //   fetchDocumentEquipmentByCompany
-      // }, [])
       const handleOpenIntegerModal = (id: string) => {
         setDomain(id);
         setIntegerModal(!integerModal);
@@ -140,8 +136,8 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
 
       const handleOpenViewModal = (id: string) => {
         setDomain(id);
-
         setViewModal(!viewModal);
+        viewDocumentEmployees();
       };
 
       const { errorTranslate } = useEdgeFunctions();
@@ -236,9 +232,9 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
           toast.error(`${handleSupabaseError(error.message)}`);
         }
       }
-      useEffect(() => {
-        viewDocumentEmployees();
-      }, []);
+
+      // useEffect(() => {
+      // }, []);
 
       const today = new Date();
       const nextMonth = addMonths(new Date(), 1);

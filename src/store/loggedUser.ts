@@ -33,6 +33,7 @@ interface State {
   actualCompany: Company[0] | null;
   setActualCompany: (company: Company[0]) => void;
   employees: any;
+  active_and_inactive_employees: any;
   setEmployees: (employees: any) => void;
   isLoading: boolean;
   employeesToShow: any;
@@ -171,6 +172,7 @@ const setEmployeesToShow = (employees: any) => {
       reason_for_termination: employees?.reason_for_termination,
       termination_date: employees?.termination_date,
       status: employees?.status,
+      documents_employees: employees.documents_employees,
     };
   });
 
@@ -693,7 +695,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
           is_active: doc.employees.is_active,
           period: doc.period,
           applies: doc.document_types.applies,
-          resource_id: doc.employees.id,
+          id_document_types: doc.document_types.id,
+          intern_number: null,
         };
       };
       const mapVehicle = (doc: any) => {
@@ -708,18 +711,25 @@ export const useLoggedUserStore = create<State>((set, get) => {
           validity: formattedDate,
           mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
           id: doc.id,
-          resource: doc.applies?.domain || doc.applies?.intern_number,
+          resource: `${doc.applies?.domain}`,
           vehicle_id: doc.applies?.id,
           is_active: doc.applies?.is_active,
           period: doc.period,
           applies: doc.document_types.applies,
           resource_id: doc.applies?.id,
+          id_document_types: doc.document_types.id,
+          intern_number: `${doc.applies?.intern_number}`,
         };
       };
 
       const lastMonthValues = {
         employees:
           filteredData
+            ?.filter(
+              (e) =>
+                (!e.employees.termination_date && !e.document_types.down_document) ||
+                (e.employees.termination_date && e.document_types.down_document)
+            )
             ?.filter((doc: any) => {
               if (!doc.validity || doc.validity === 'No vence') return false;
               return doc.state !== 'pendiente' && (doc.validity !== 'No vence' || doc.validity !== null);
@@ -727,6 +737,11 @@ export const useLoggedUserStore = create<State>((set, get) => {
             ?.map(mapDocument) || [],
         vehicles:
           filteredVehiclesData
+            ?.filter(
+              (e) =>
+                (!e.applies.termination_date && !e.document_types.down_document) ||
+                (e.applies.termination_date && e.document_types.down_document)
+            )
             .filter((doc: any) => {
               if (!doc.validity || doc.validity === 'No vence') return false;
               return doc.state !== 'pendiente' && (doc.validity !== 'No vence' || doc.validity !== null);
@@ -735,13 +750,34 @@ export const useLoggedUserStore = create<State>((set, get) => {
       };
 
       const pendingDocuments = {
-        employees: employeesData?.filter((doc: any) => doc.state === 'presentado')?.map(mapDocument) || [],
-        vehicles: equipmentData1.filter((doc: any) => doc.state === 'presentado')?.map(mapVehicle) || [],
+        employees:
+          employeesData
+            ?.filter(
+              (e) =>
+                (!e.employees.termination_date && !e.document_types.down_document) ||
+                (e.employees.termination_date && e.document_types.down_document)
+            )
+            .filter((doc: any) => doc.state === 'presentado')
+            ?.map(mapDocument) || [],
+        vehicles:
+          equipmentData1
+            ?.filter(
+              (e) =>
+                (!e.applies.termination_date && !e.document_types.down_document) ||
+                (e.applies.termination_date && e.document_types.down_document)
+            )
+            .filter((doc: any) => doc.state === 'presentado')
+            ?.map(mapVehicle) || [],
       };
 
       const Allvalues = {
         employees:
           employeesData
+            ?.filter(
+              (e) =>
+                (!e.employees.termination_date && !e.document_types.down_document) ||
+                (e.employees.termination_date && e.document_types.down_document)
+            )
             ?.filter((doc: any) => {
               if (!doc.validity || doc.validity === 'No vence') return false;
               return doc.state !== 'presentado' && (doc.validity !== 'No vence' || doc.validity !== null);
@@ -749,15 +785,39 @@ export const useLoggedUserStore = create<State>((set, get) => {
             ?.map(mapDocument) || [],
         vehicles:
           equipmentData1
+            ?.filter(
+              (e) =>
+                (!e.applies.termination_date && !e.document_types.down_document) ||
+                (e.applies.termination_date && e.document_types.down_document)
+            )
             ?.filter((doc: any) => {
               if (!doc.validity || doc.validity === 'No vence') return false;
               return doc.state !== 'presentado' && (doc.validity !== 'No vence' || doc.validity !== null);
             })
             ?.map(mapVehicle) || [],
       };
+      // const AllvaluesToShow = {
+      //   employees: employeesData?.map(mapDocument) || [],
+      //   vehicles: equipmentData1?.map(mapVehicle) || [],
+      // };
+
       const AllvaluesToShow = {
-        employees: employeesData?.map(mapDocument) || [],
-        vehicles: equipmentData1?.map(mapVehicle) || [],
+        employees:
+          employeesData
+            ?.filter(
+              (e) =>
+                (!e.employees.termination_date && !e.document_types.down_document) ||
+                (e.employees.termination_date && e.document_types.down_document)
+            )
+            .map(mapDocument) || [],
+        vehicles:
+          equipmentData1
+            ?.filter(
+              (e) =>
+                (!e.applies.termination_date && !e.document_types.down_document) ||
+                (e.applies.termination_date && e.document_types.down_document)
+            )
+            .map(mapVehicle) || [],
       };
       set({ allDocumentsToShow: AllvaluesToShow });
       set({ showLastMonthDocuments: true });
@@ -843,17 +903,66 @@ export const useLoggedUserStore = create<State>((set, get) => {
           birthplace(
             name
           ),
+           documents_employees(
+            *,id_document_types(*)
+          ),
           contractor_employee(
             customers(
               *
             )
           )`
       )
-      .eq('company_id', get()?.actualCompany?.id)
-      .eq('is_active', active);
+      .eq('company_id', get()?.actualCompany?.id);
+    // .eq('is_active', active);
+    set({ active_and_inactive_employees: setEmployeesToShow(employees) });
+    console.log(
+      employees
+        ?.filter((e) => !e.is_active)?.[0]
+        ?.documents_employees.filter((e: any) => e.id_document_types.down_document)
+        ?.every((e: any) => e.state === 'presentado')
+    );
 
-    const employeesToShow = setEmployeesToShow(employees);
-    return employeesToShow;
+    // Filtrar empleados activos
+    const activeEmployees = employees?.filter((e) => {
+      if (e.is_active) {
+        return true;
+      } else {
+        // Verificar si todos los documentos de baja están en estado "pendiente"
+        return e.documents_employees
+          ?.filter((e: any) => e.id_document_types.down_document)
+          ?.some((doc: any) => doc.state === 'pendiente');
+      }
+    });
+
+    // Filtrar empleados inactivos con todos los documentos de baja presentados
+    const inactiveEmployees = employees?.filter((e) => {
+      return (
+        !e.is_active &&
+        e.documents_employees
+          .filter((e: any) => e.id_document_types.down_document)
+          .every((doc: any) => doc.state === 'presentado')
+      );
+    });
+
+    console.log('Empleados activos:');
+    console.log(activeEmployees);
+
+    console.log(
+      employees
+        ?.find((e) => e.id === '4c58b1c4-f10c-440a-8fc8-9a21ac4602e2')
+        .documents_employees?.filter((e: any) => e.id_document_types.down_document)
+    );
+
+    console.log('Empleados inactivos:');
+    console.log(inactiveEmployees);
+
+    if (active) {
+      const employeesToShow = setEmployeesToShow(activeEmployees);
+      return employeesToShow;
+    } else {
+      const employeesToShow = setEmployeesToShow(inactiveEmployees);
+      return employeesToShow;
+    }
   };
   const realTimeSharedUsers = supabase
     .channel('custom-all-channel')
@@ -882,11 +991,13 @@ export const useLoggedUserStore = create<State>((set, get) => {
       howManyCompanies(get()?.profile?.[0]?.id || '');
     })
     .subscribe();
+
   const setActivesEmployees = async () => {
     const employeesToShow = await getEmployees(true);
     set({ employeesToShow });
     set({ employees: employeesToShow });
   };
+
   const resetDefectCompanies = async (company: Company[0]) => {
     const { data, error } = await supabase
       .from('company')
@@ -972,5 +1083,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
     companyDocuments: get()?.companyDocuments,
     codeControlRole: get()?.codeControlRole,
     roleActualCompany: get()?.roleActualCompany,
+    active_and_inactive_employees: get()?.active_and_inactive_employees,
   };
 });

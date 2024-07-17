@@ -74,32 +74,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
   // const id = params
   const [accion, setAccion] = useState(searchParams.get('action'));
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
-  const profile = useLoggedUserStore((state) => state);
-  // let role = '';
-  // if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
-  //   role = profile?.actualCompany?.owner_id?.role as string;
-  // } else {
-  //   role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
-  // }
-  const share = useLoggedUserStore((state) => state.sharedCompanies);
-  const profile2 = useLoggedUserStore((state) => state.credentialUser?.id);
-  const owner2 = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
-  const users = useLoggedUserStore((state) => state);
-  const company = useLoggedUserStore((state) => state.actualCompany?.id);
-  
-  let role = '';
-  if (owner2 === profile2) {
-    role = users?.actualCompany?.owner_id?.role as string;
-  } else {
-    
-    const roleRaw = share
-      .filter((item: any) =>
-        item.company_id.id === company &&
-        Object.values(item).some((value) => typeof value === 'string' && value.includes(profile2 as string))
-      )
-      .map((item: any) => item.role);
-    role = roleRaw?.join('');
-  }
+  const role = useLoggedUserStore((state) => state.roleActualCompany);
 
   const [vehicle, setVehicle] = useState<VehicleType | null>(null);
   const pathname = usePathname();
@@ -133,7 +108,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
       setHideInput(true);
     }
     if (vehicle && vehicle.type_of_vehicle === 'Otros') {
-      setHideInput(false)
+      setHideInput(false);
     }
     if (!vehicle) {
       setHideInput(false);
@@ -370,25 +345,27 @@ export default function VehiclesForm2({ id }: { id: string }) {
     .subscribe();
 
   useEffect(() => {
-    fetchData()
-  }, [])
-  const fetchContractors = useCountriesStore(state => state.fetchContractors)
-  const subscribeToCustomersChanges = useCountriesStore(state => state.subscribeToCustomersChanges)
+    fetchData();
+  }, []);
+  const fetchContractors = useCountriesStore((state) => state.fetchContractors);
+  const subscribeToCustomersChanges = useCountriesStore((state) => state.subscribeToCustomersChanges);
   useEffect(() => {
-    fetchContractors()
+    fetchContractors();
 
-    const unsubscribe = subscribeToCustomersChanges()
+    const unsubscribe = subscribeToCustomersChanges();
 
     return () => {
-      unsubscribe()
-    }
-  }, [fetchContractors, subscribeToCustomersChanges])
-  
-  const contractorCompanies = useCountriesStore(state => state.customers?.filter((company:any) => company.company_id.toString() === actualCompany?.id && company.is_active))
-  const vehicleBrands = data.brand
-  const types = data.tipe_of_vehicles?.map(e => e.name)
-  const vehicleModels = data.models
-  const types_vehicles = data.types?.map(e => e.name)
+      unsubscribe();
+    };
+  }, [fetchContractors, subscribeToCustomersChanges]);
+
+  const contractorCompanies = useCountriesStore((state) =>
+    state.customers?.filter((company: any) => company.company_id.toString() === actualCompany?.id && company.is_active)
+  );
+  const vehicleBrands = data.brand;
+  const types = data.tipe_of_vehicles?.map((e) => e.name);
+  const vehicleModels = data.models;
+  const types_vehicles = data.types?.map((e) => e.name);
 
   const form = useForm<z.infer<typeof vehicleSchema>>({
     resolver: zodResolver(vehicleSchema),
@@ -525,10 +502,49 @@ export default function VehiclesForm2({ id }: { id: string }) {
     }
   };
 
-
   async function onUpdate(values: z.infer<typeof vehicleSchema>) {
+    function compareContractorEmployees(originalObj: VehicleType | null, modifiedObj: z.infer<typeof vehicleSchema>) {
+      const originalSet = new Set(originalObj?.allocated_to);
+      const modifiedSet = new Set(modifiedObj?.allocated_to);
+      // Valores a eliminar
+      const valuesToRemove = [...originalSet].filter((value) => !modifiedSet.has(value));
+
+      // Valores a agregar
+      const valuesToAdd = [...modifiedSet].filter((value) => !originalSet.has(value));
+
+      // Valores que se mantienen
+      const valuesToKeep = [...originalSet].filter((value) => modifiedSet.has(value));
+
+      return {
+        valuesToRemove,
+        valuesToAdd,
+        valuesToKeep,
+      };
+    }
     toast.promise(
       async () => {
+        const result = compareContractorEmployees(vehicle, values);
+
+        result.valuesToRemove.forEach(async (e) => {
+          const { error } = await supabase
+            .from('contractor_equipment')
+            .delete()
+            .eq('equipment_id', vehicle?.id)
+            .eq('contractor_id', e);
+          if (error) return handleSupabaseError(error.message);
+        });
+
+        const error2 = await Promise.all(
+          result.valuesToAdd.map(async (e) => {
+            if (!result.valuesToKeep.includes(e)) {
+              const { error } = await supabase
+                .from('contractor_equipment')
+                .insert({ equipment_id: vehicle?.id, contractor_id: e });
+              if (error) return handleSupabaseError(error.message);
+            }
+          })
+        );
+
         const { type_of_vehicle, brand, model, year, engine, chassis, serie, domain, intern_number, picture, type } =
           values;
 
@@ -551,7 +567,6 @@ export default function VehiclesForm2({ id }: { id: string }) {
             .eq('id', vehicle?.id)
             .eq('company_id', actualCompany?.id)
             .select();
-
 
           const id = vehicle?.id;
           const fileExtension = imageFile?.name.split('.').pop();
