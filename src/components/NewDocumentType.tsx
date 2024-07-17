@@ -62,13 +62,16 @@ const defaultValues = [
   },
 ];
 
-export default function NewDocumentType({ codeControlClient }: { codeControlClient?: boolean }) {
+export default function NewDocumentType({ codeControlClient, optionChildrenProp }: { codeControlClient?: boolean, optionChildrenProp:string  }) {
   const [special, setSpecial] = useState(false);
   const router = useRouter();
   const fetchDocumentTypes = useCountriesStore((state) => state.documentTypes);
   const documentTypes = useCountriesStore((state) => state.companyDocumentTypes);
   const fetchDocuments = useLoggedUserStore((state) => state.documetsFetch);
   const [items, setItems] = useState(defaultValues);
+
+  const selectOptions = optionChildrenProp === "all" ? "Personas, Equipos o Empresa" : optionChildrenProp 
+
 
   const isOptional = items.length < 5;
   const FormSchema = z.object({
@@ -234,14 +237,22 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Personas, Equipos o Empresa" />
+                      <SelectValue placeholder={selectOptions} />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Persona">Persona</SelectItem>
-                    <SelectItem value="Equipos">Equipos</SelectItem>
-                    <SelectItem value="Empresa">Empresa</SelectItem>
-                  </SelectContent>
+                  {
+                    optionChildrenProp === "all" ?  
+                      <SelectContent>
+                        <SelectItem value="Persona">Persona</SelectItem>
+                        <SelectItem value="Equipos">Equipos</SelectItem>
+                        <SelectItem value="Empresa">Empresa</SelectItem>
+                      </SelectContent>
+                  :
+                    <SelectContent>
+                      <SelectItem value={optionChildrenProp}>{optionChildrenProp}</SelectItem>
+                    </SelectContent>
+
+                  }
                 </Select>
               </div>
               <FormMessage />

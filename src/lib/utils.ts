@@ -1,5 +1,4 @@
 'use strict';
-import { useLoggedUserStore } from '@/store/loggedUser';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { supabaseServer } from './supabase/server';
@@ -92,7 +91,7 @@ export const FetchSharedUsers = async (companyId: string) => {
   }
 };
 
-export async function getActualRole(companyId: string,profile:string) {
+export async function getActualRole(companyId: string, profile: string) {
   const sharedUsers = await FetchSharedUsers(companyId);
   console.log(sharedUsers);
   const user = sharedUsers?.find((e) => e.profile_id.id === profile);

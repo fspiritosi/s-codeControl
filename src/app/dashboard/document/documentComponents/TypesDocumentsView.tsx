@@ -15,13 +15,16 @@ function TypesDocumentsView({
   equipos?: boolean;
   empresa?: boolean;
 }) {
-  const fetchDocumentTypes = useCountriesStore((state) => state.documentTypes);
   const document_types = useCountriesStore((state) => state.companyDocumentTypes);
-  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
-  const role = useLoggedUserStore((state) => state.roleActualCompany);
   let doc_personas = document_types?.filter((doc) => doc.applies === 'Persona').filter((e) => e.is_active);
   let doc_equipos = document_types?.filter((doc) => doc.applies === 'Equipos').filter((e) => e.is_active);
   let doc_empresa = document_types?.filter((doc) => doc.applies === 'Empresa').filter((e) => e.is_active);
+
+  //condicion para mostrar el tab seleccionado por defecto
+  const optionValue =
+    personas && equipos && empresa ? 'Personas' : personas ? 'Personas' : equipos ? 'Equipos' : 'Empresa';
+  const optionChildrenProp =
+    personas && equipos && empresa ? 'all' : personas ? 'Personas' : equipos ? 'Equipos' : 'Empresa';
   return (
     <CardContent>
       <Tabs defaultValue="Personas" className="w-full">
