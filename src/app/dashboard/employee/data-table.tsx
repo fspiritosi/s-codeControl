@@ -40,20 +40,9 @@ import { useLoggedUserStore } from '@/store/loggedUser';
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any;
   data: TData[];
-  setInactiveEmployees: () => void;
-  setActivesEmployees: () => void;
-  showDeletedEmployees: boolean;
-  setShowDeletedEmployees: (showDeletedEmployees: boolean) => void;
 }
 
-export function DataTable<TData, TValue>({
-  columns,
-  data,
-  setActivesEmployees,
-  setInactiveEmployees,
-  showDeletedEmployees,
-  setShowDeletedEmployees,
-}: DataTableProps<TData, TValue>) {
+export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const defaultVisibleColumns = [
     'full_name',
@@ -67,6 +56,8 @@ export function DataTable<TData, TValue>({
     'type_of_contract',
     'allocated_to',
   ];
+
+  // const data = setEmployeesToShow(employees) as TData[];
 
   const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -309,10 +300,10 @@ export function DataTable<TData, TValue>({
                       <DropdownMenuCheckboxItem
                         key={column.id}
                         className="capitalize text-red-400"
-                        checked={showDeletedEmployees}
+                        // checked={showDeletedEmployees}
                         onCheckedChange={(value) => {
-                          setShowDeletedEmployees(!!value);
-                          value ? setInactiveEmployees() : setActivesEmployees();
+                          // setShowDeletedEmployees(!!value);
+                          // value ? setInactiveEmployees() : setActivesEmployees();
                         }}
                       >
                         {column.columnDef.header}
@@ -485,8 +476,6 @@ export function DataTable<TData, TValue>({
                         <Skeleton className="h-7 w-[13%]" />
                       </div>
                     </div>
-                  ) : showDeletedEmployees ? (
-                    'No hay empleados inactivos'
                   ) : (
                     'No hay empleados activos'
                   )}

@@ -28,45 +28,20 @@ export default function Equipment() {
     }
   });
 
-  
-
   if (typeof window !== 'undefined') {
     const company_id = localStorage.getItem('company_id');
     if (company_id) {
       Cookies.set('actualComp', company_id as string);
     }
   }
-  // let role: string = '';
-
-  // if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
-  //   role = (profile?.actualCompany?.owner_id?.role as string) || '';
-  // } else {
-  //   role = (profile?.actualCompany?.share_company_users?.[0]?.role as string) || '';
-  // }
 
   const [clientData, setClientData] = useState<any>(null);
-  const share = useLoggedUserStore((state) => state.sharedCompanies);
   const profile = useLoggedUserStore((state) => state.credentialUser?.id);
-  const owner = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
-  const users = useLoggedUserStore((state) => state);
   const company = useLoggedUserStore((state) => state.actualCompany?.id);
-
-  let role = '';
-  if (owner === profile) {
-    role = users?.actualCompany?.owner_id?.role as string;
-  } else {
-    // const roleRaw = share?.filter((item: any) => Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))).map((item: any) => item.role);
-    const roleRaw = share?.filter((item: any) =>
-        item.company_id.id === company &&
-        Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))
-      )
-      .map((item: any) => item.role);
-    role = roleRaw?.join('');
-  }
+  const role = useLoggedUserStore.getState().roleActualCompany;
 
   useEffect(() => {
-
-    if (company && profile && role === "Invitado") {
+    if (company && profile && role === 'Invitado') {
       const fetchCustomers = async () => {
         const { data, error } = await supabase
           .from('share_company_users')
@@ -78,14 +53,13 @@ export default function Equipment() {
           console.error('Error fetching customers:', error);
         } else {
           setClientData(data);
-
         }
       };
 
       fetchCustomers();
     }
   }, [company, profile]);
-  
+
   const filteredCustomersEquipment = vehiclesData?.filter((customer: any) =>
     customer.allocated_to?.includes(clientData?.[0]?.customer_id)
   );
@@ -108,7 +82,7 @@ export default function Equipment() {
     setTabValue(value);
     localStorage.setItem('selectedEquipmentTab', value);
   };
-
+  const vehiculos = useLoggedUserStore.getState().allDocumentsToShow?.vehicles;
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <section className="flex flex-col gap-6 py-4 px-6">
@@ -117,11 +91,7 @@ export default function Equipment() {
             <TabsTrigger value="all">Equipos</TabsTrigger>
             <TabsTrigger value="vehicles">Vehículos</TabsTrigger>
             <TabsTrigger value="others">Otros</TabsTrigger>
-            {/* {
-            role !== 'Invitado' && (
-              <TabsTrigger value="forms">Check List</TabsTrigger>
-            )
-          } */}
+            <TabsTrigger value="Documentos">Documentos</TabsTrigger>
           </TabsList>
           <TabsContent value="all" className="space-y-4">
             <Card className="mt-6  overflow-hidden">
@@ -147,7 +117,7 @@ export default function Equipment() {
               <div className="w-full grid grid-cols-1 px-8">
                 <DataEquipment
                   columns={columns}
-                  data={role === "Invitado" ? filteredCustomersEquipment :vehiclesData || []}
+                  data={role === 'Invitado' ? filteredCustomersEquipment : vehiclesData || []}
                   allCompany={allCompany}
                   showInactive={showInactive}
                   setShowInactive={setShowInactive}
@@ -180,7 +150,7 @@ export default function Equipment() {
               <div className="w-full grid grid-cols-1 px-8">
                 <DataEquipment
                   columns={columns}
-                  data={role === "Invitado" ? filteredCustomersVehicles :onlyVehicles || []}
+                  data={role === 'Invitado' ? filteredCustomersVehicles : onlyVehicles || []}
                   allCompany={allCompany}
                   showInactive={showInactive}
                   setShowInactive={setShowInactive}
@@ -213,7 +183,7 @@ export default function Equipment() {
               <div className="w-full grid grid-cols-1 px-8">
                 <DataEquipment
                   columns={columns}
-                  data={role === "Invitado"? filteredCustomersOthers :onlyOthers || []}
+                  data={role === 'Invitado' ? filteredCustomersOthers : onlyOthers || []}
                   allCompany={allCompany}
                   showInactive={showInactive}
                   setShowInactive={setShowInactive}
@@ -222,39 +192,9 @@ export default function Equipment() {
               <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
             </Card>
           </TabsContent>
-          {/* <TabsContent value="forms" className="space-y-4">
-            <Card className="mt-6 overflow-hidden">
-            <CardHeader className=" flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
-              <div>
-                <CardTitle className="text-2xl font-bold tracking-tight">Check List de Equipos</CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Listado de todos los check List realizados a tus equipos
-                </CardDescription>
-              </div>
-              {role !== 'Invitado' && (
-                <Link
-                  href="/dashboard/equipment/action?action=new"
-                  className={[
-                    'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
-                    buttonVariants({ variant: 'outline', size: 'lg' }),
-                  ].join(' ')}
-                >
-                  Crear nuevo Check List
-                </Link>
-              )}
-            </CardHeader>
-              <div className="w-full grid grid-cols-1 px-8">
-                <DataEquipment
-                  columns={columns}
-                  data={onlyOthers || []}
-                  allCompany={allCompany}
-                  showInactive={showInactive}
-                  setShowInactive={setShowInactive}
-                />
-              </div>
-            <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
-            </Card>
-          </TabsContent> */}
+          <TabsContent value="Documentos" className="space-y-4">
+            {/* <EquipmentTabs /> */}
+          </TabsContent>
         </Tabs>
       </section>
     </Suspense>

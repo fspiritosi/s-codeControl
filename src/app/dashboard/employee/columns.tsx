@@ -127,7 +127,7 @@ const allocatedToRangeFilter: FilterFn<Colum> = (
   return found as boolean;
 };
 
-export const columns: ColumnDef<Colum>[] = [
+export const EmployeesListColumns: ColumnDef<Colum>[] = [
   {
     id: 'actions',
     cell: ({ row }: { row: any }) => {

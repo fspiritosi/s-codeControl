@@ -8,7 +8,7 @@ export default async function page() {
     <Viewcomponent 
       viewData={
         {
-          defaulValue: "general",
+          defaultValue: "general",
           tabsValues:[
             {
               value: "general",

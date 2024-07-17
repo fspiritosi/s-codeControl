@@ -34,6 +34,7 @@ function TabsDocuments({
   companyData,
   AllvaluesToShow,
   clientData,
+  data1,
 }: {
   serverRole: string | null;
   companyData: CompanyDocumentsType[];
@@ -42,12 +43,15 @@ function TabsDocuments({
     vehicles: Document[];
   };
   clientData: any[] | null;
+  data1?: any[] | null;
 }) {
   const actualComp = cookies.get('actualComp');
 
   useEffect(() => {
     router.refresh();
   }, [actualComp]);
+
+  // const supabase = supabaseBrowser();
 
   const profile = useLoggedUserStore((state) => state);
   const sharedUsersAll = useLoggedUserStore((state) => state.sharedUsers);
@@ -128,14 +132,17 @@ function TabsDocuments({
   const filteredCustomers = employees?.filter((customer: any) =>
     customer?.allocated_to?.includes(clientData?.[0]?.customer_id)
   );
+
   const filteredCustomersEmployeesRaw = AllvaluesToShow?.employees.filter((e) => !e.isItMonthly);
   const filteredCustomersEmployeesRawMonthly = AllvaluesToShow?.employees.filter((e) => e.isItMonthly);
+
   const filteredCustomersEmployees = filteredCustomersEmployeesRaw?.filter((customer: any) => {
     const customerResource = customer?.resource_id; // Asumiendo que es una cadena
     const employeeFullnames = filteredCustomers?.map((emp: any) => emp.id); // Array de cadenas
 
     return employeeFullnames?.includes(customerResource);
   });
+
   const filteredCustomersEmployeesMonthly = filteredCustomersEmployeesRawMonthly?.filter((customer: any) => {
     const customerResource = customer?.resource; // Asumiendo que es una cadena
     const employeeFullnames = filteredCustomers?.map((emp: any) => emp.full_name); // Array de cadenas
@@ -162,10 +169,11 @@ function TabsDocuments({
 
     return employeeFullnames?.includes(customerResource);
   });
+
   return (
     <Tabs defaultValue="Documentos de empleados" className="md:mx-7">
       <TabsList>
-        <TabsTrigger value="Documentos de empleados">Documentos de empleados</TabsTrigger>
+        <TabsTrigger value="Documentos de empleados">Documentos de empleados </TabsTrigger>
         <TabsTrigger value="Documentos de equipos">Documentos de equipos</TabsTrigger>
         <TabsTrigger value="Documentos de empresa">Documentos de empresa</TabsTrigger>
         {role !== 'Invitado' && <TabsTrigger value="Tipos de documentos">Tipos de documentos</TabsTrigger>}
