@@ -12,9 +12,9 @@ import {
 import { FormControl, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { ZodError, z } from 'zod';
 import { supabase } from '../../supabase/supabase';
-import { useToast } from './ui/use-toast';
 
 const schema = z
   .string()
@@ -33,17 +33,12 @@ export default function AddBrandModal({
   fetchData: () => Promise<void>;
 }) {
   const [name, setName] = useState('');
-  const { toast } = useToast();
 
   async function onSubmit() {
     try {
       schema.parse(name);
     } catch (error: ZodError | any) {
-      toast({
-        variant: 'destructive',
-        title: 'Error al agregar la marca',
-        description: error.errors[0].message,
-      });
+      toast.error('Error al agregar la marca', { description: error.errors[0].message });
       return;
     }
 
@@ -52,16 +47,10 @@ export default function AddBrandModal({
       .insert([{ name: name.slice(0, 1).toUpperCase() + name.slice(1) }])
       .select();
     if (error) {
-      toast({
-        title: 'Error al agregar la marca',
-        description: error.message,
-      });
+      toast('Error al agregar la marca', { description: error.message });
       return;
     }
-    toast({
-      title: 'Marca agregada',
-      description: 'La marca ha sido agregada correctamente',
-    });
+    toast('Marca agregada', { description: 'La marca ha sido agregada correctamente' });
     setName('');
     fetchData();
   }

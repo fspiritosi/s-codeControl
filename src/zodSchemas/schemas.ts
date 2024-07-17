@@ -411,7 +411,7 @@ export const accordionSchema = z
     type_of_contract: z.string({
       required_error: 'El tipo de contrato es requerido',
     }),
-    allocated_to: z.array(z.string()).optional(),
+    allocated_to: z.array(z.string()).optional().nullable(),
     date_of_admission: z
       .date({
         required_error: 'La fecha de ingreso es requerida',
@@ -548,6 +548,7 @@ export const SharedUser = z.object({
   alta: z.date().or(z.string()),
   id: z.string(),
   img: z.string(),
+  customerName:z.string().optional()
 });
 
 export type SharedUser = z.infer<typeof SharedUser>;
@@ -633,7 +634,8 @@ export const EquipoSchema = z
       is_active: z.boolean(),
       description: z.union([z.null(), z.string()]),
       company_id: z.string().optional().nullable(),
-      is_it_montlhy:z.boolean().optional().nullable()
+      is_it_montlhy: z.boolean().optional().nullable(),
+      private: z.boolean().optional().nullable(),
     })
   )
   .default([]);

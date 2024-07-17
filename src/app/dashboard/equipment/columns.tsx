@@ -35,7 +35,6 @@ import {
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/components/ui/use-toast';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { cn } from '@/lib/utils';
 import { useCountriesStore } from '@/store/countries';
@@ -49,6 +48,7 @@ import { ArrowUpDown, CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Fragment, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../../../supabase/supabase';
 const formSchema = z.object({
@@ -103,14 +103,33 @@ export const columns: ColumnDef<Colum>[] = [
   {
     id: 'actions',
     cell: ({ row }: { row: any }) => {
-      const profile = useLoggedUserStore((state) => state);
+      // const profile = useLoggedUserStore((state) => state);
+      // let role = '';
+      // if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
+      //   role = profile?.actualCompany?.owner_id?.role as string;
+      // } else {
+      //   role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
+      // }
+      const share = useLoggedUserStore((state) => state.sharedCompanies);
+      const profile = useLoggedUserStore((state) => state.credentialUser?.id);
+      const owner = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
+      const users = useLoggedUserStore((state) => state);
+      const company = useLoggedUserStore((state) => state.actualCompany?.id);
+      
       let role = '';
-      if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
-        role = profile?.actualCompany?.owner_id?.role as string;
+      if (owner === profile) {
+        role = users?.actualCompany?.owner_id?.role as string;
+        
       } else {
-        role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
+        
+        const roleRaw = share
+          .filter((item: any) =>
+            item.company_id.id === company &&
+            Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))
+          )
+          .map((item: any) => item.role);
+        role = roleRaw?.join('');
       }
-
       const [showModal, setShowModal] = useState(false);
       const [integerModal, setIntegerModal] = useState(false);
       const [domain, setDomain] = useState('');
@@ -125,24 +144,7 @@ export const columns: ColumnDef<Colum>[] = [
       };
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
-      // const fetchInactiveEquipment = async () => {
-      //   try {
-      //     const { data, error } = await supabase
-      //       .from('vehicles')
-      //       .select('*')
-      //       //.eq('is_active', false)
-      //       .eq('company_id', actualCompany?.id)
-
-      //     if (error) {
-      //       console.error(error)
-      //     }
-      //   } catch (error) {
-      //     console.error(error)
-      //   }
-      // }
-      // useEffect(() => {
-      //   fetchInactiveEquipment()
-      // }, [])
+      
       const handleOpenIntegerModal = (id: string) => {
         setDomain(id);
         setIntegerModal(!integerModal);
@@ -156,8 +158,6 @@ export const columns: ColumnDef<Colum>[] = [
           reason_for_termination: undefined,
         },
       });
-
-      const { toast } = useToast();
 
       async function reintegerEquipment() {
         try {
@@ -173,20 +173,14 @@ export const columns: ColumnDef<Colum>[] = [
             .select();
 
           setIntegerModal(!integerModal);
-          //setInactive(data as any)
+      
           setShowDeletedEquipment(false);
-          toast({
-            variant: 'default',
-            title: 'Equipo reintegrado',
+          toast.success('Equipo reintegrado', {
             description: `El equipo ${equipment?.engine} ha sido reintegrado`,
           });
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al reintegrar el equipo',
-            description: message,
-          });
+          toast.error('Error al reintegrar el equipo', { description: message });
         }
       }
 
@@ -210,20 +204,13 @@ export const columns: ColumnDef<Colum>[] = [
 
           setShowModal(!showModal);
 
-          toast({
-            variant: 'default',
-            title: 'Equipo eliminado',
-            description: `El equipo ${equipment.domain} ha sido dado de baja`,
-          });
+          toast.success('Equipo eliminado', { description: `El equipo ${equipment.domain} ha sido dado de baja` });
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al dar de baja el equipo',
-            description: message,
-          });
+          toast.error('Error al dar de baja el equipo', { description: message });
         }
       }
+
       const handleToggleInactive = () => {
         setShowInactive(!showInactive);
       };
@@ -340,10 +327,12 @@ export const columns: ColumnDef<Colum>[] = [
             </Dialog>
           )}
           <DropdownMenuTrigger asChild>
+            {/* {role === "Invitado" ? null :( */}
             <Button variant="ghost" className="h-8 w-8 p-0">
               <span className="sr-only">Open menu</span>
               <DotsVerticalIcon className="h-4 w-4" />
             </Button>
+            {/* )} */}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Opciones</DropdownMenuLabel>
@@ -419,16 +408,15 @@ export const columns: ColumnDef<Colum>[] = [
     accessorKey: 'allocated_to',
     header: 'Afectado a',
     cell: ({ row }) => {
-      return <Badge>Revisando...</Badge>;
+      return <Badge>Proximamente..</Badge>;
       const values = row.original.allocated_to;
       if (!values) return <Badge variant={'destructive'}>Revisando...</Badge>;
-      console.log(values);
+      
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
       const contractorCompanies = useCountriesStore((state) =>
         state.customers?.filter((company: any) => company.company_id.toString() === actualCompany?.id)
       );
-      console.log(contractorCompanies);
-      // console.log();
+      
       if (contractorCompanies.some((e) => e.name.includes(row.original.allocated_to))) return true;
 
       // const name = contractorCompanies.find()

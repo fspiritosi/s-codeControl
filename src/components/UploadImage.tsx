@@ -1,10 +1,11 @@
 'use client';
 import { Input } from '@/components/ui/input';
 import { useImageUpload } from '@/hooks/useUploadImage';
+import { handleSupabaseError } from '@/lib/errorHandler';
 import React, { ChangeEvent, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { FormDescription, FormLabel } from './ui/form';
-import { useToast } from './ui/use-toast';
 require('dotenv').config();
 interface UploadImageProps {
   onImageChange: (imageUrl: string) => void;
@@ -37,7 +38,6 @@ export function UploadImage({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [base64Image, setBase64Image] = useState<string>('');
   const [disabled, setDisabled] = useState<boolean>(false);
-  const { toast } = useToast();
   const url = process.env.NEXT_PUBLIC_PROJECT_URL;
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -78,10 +78,7 @@ export function UploadImage({
         if (setAvailableToSubmit) setAvailableToSubmit(true);
         setDisabled(true);
       } catch (error: any) {
-        toast({
-          variant: 'destructive',
-          title: error.message,
-        });
+        toast.error(`${handleSupabaseError(error.message)}`);
       }
     }
   };

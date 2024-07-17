@@ -352,7 +352,7 @@ export function DataTable<TData, TValue>({
                                     placeholder="Buscar por afectación"
                                     value={table.getColumn('allocated_to')?.getFilterValue() as string}
                                     onChange={(event) =>
-                                      {console.log(event.target.value)
+                                      {
                                       table.getColumn('allocated_to')?.setFilterValue(event.target.value)}
                                     }
                                     className="max-w-sm"
@@ -407,7 +407,7 @@ export function DataTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody className="max-w-[50vw] overflow-x-auto">
-            {table.getRowModel().rows?.length ? (
+            {table?.getRowModel().rows?.length ? (
               table.getRowModel().rows?.map((row) => {
                 return (
                   <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>

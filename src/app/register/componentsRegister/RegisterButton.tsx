@@ -5,6 +5,7 @@ import { Loader2Icon } from 'lucide-react';
 import { useFormStatus } from 'react-dom';
 import { toast } from 'sonner';
 import { signup } from '../actions';
+import { handleSupabaseError } from '@/lib/errorHandler';
 
 export const RegisterButton = () => {
   const { pending } = useFormStatus();
@@ -50,7 +51,7 @@ export const RegisterButton = () => {
       async () => {
         const error = await signup(formData, url);
         if (error) {
-          throw new Error(error);
+          throw new Error(handleSupabaseError(error));
         }
       },
       {

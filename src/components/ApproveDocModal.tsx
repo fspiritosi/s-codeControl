@@ -9,15 +9,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { useToast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '../../supabase/supabase';
 
 export default function ApproveDocModal({ id, resource }: { id: string; resource: string | null }) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
   const handleApprove = async () => {
     if (resource === 'employee') {
       const { data, error } = await supabase
@@ -27,18 +26,10 @@ export default function ApproveDocModal({ id, resource }: { id: string; resource
         .select();
 
       if (error) {
-        return toast({
-          title: 'Error',
-          description: 'Ocurrio un error al aprobar el documento',
-          variant: 'destructive',
-        });
+        return toast.error('Ocurrio un error al aprobar el documento');
       }
 
-      toast({
-        title: 'Documento aprobado',
-        description: 'El documento ha sido aprobado correctamente',
-        variant: 'default',
-      });
+      toast.success('El documento ha sido aprobado correctamente');
     } else {
       const { data, error } = await supabase
         .from('documents_equipment')
@@ -47,18 +38,10 @@ export default function ApproveDocModal({ id, resource }: { id: string; resource
         .select();
 
       if (error) {
-        return toast({
-          title: 'Error',
-          description: 'Ocurrio un error al aprobar el documento',
-          variant: 'destructive',
-        });
+        return toast.error('Ocurrio un error al aprobar el documento');
       }
 
-      toast({
-        title: 'Documento aprobado',
-        description: 'El documento ha sido aprobado correctamente',
-        variant: 'default',
-      });
+      toast.success('El documento ha sido aprobado correctamente');
     }
 
     router.push('/admin/auditor');

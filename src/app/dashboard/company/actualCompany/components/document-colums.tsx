@@ -1,13 +1,19 @@
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { handleSupabaseError } from '@/lib/errorHandler';
+import { supabaseBrowser } from '@/lib/supabase/browser';
+import { useLoggedUserStore } from '@/store/loggedUser';
 import { SharedUser } from '@/zodSchemas/schemas';
+import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { formatRelative } from 'date-fns';
 import { es } from 'date-fns/locale';
-
-import { Badge } from '@/components/ui/badge';
-import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
+import { usePathname, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import AddCompanyDocumentForm from './AddCompanyDocumentForm';
 import { DataTableColumnHeader } from './data-table-column-header';
 
@@ -104,6 +110,74 @@ export const columnsDocuments: ColumnDef<SharedUser>[] = [
     },
   },
   {
+    accessorKey: 'private',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Acceso" />,
+    cell: ({ row }) => {
+      const pathname = usePathname();
+      const router = useRouter();
+      if (!pathname.includes('company')) {
+        return (
+          <div className="flex items-center">
+            <span>
+              {row.getValue('private') ? (
+                <Badge variant={'outline'} className="bg-muted">
+                  {' '}
+                  Documento privado
+                </Badge>
+              ) : (
+                <Badge variant={'outline'} className="bg-muted">
+                  Documento publico
+                </Badge>
+              )}
+            </span>
+          </div>
+        );
+      } else {
+        const handlePrivateChange = async (selected: string) => {
+          toast.promise(
+            async () => {
+              const supabase = supabaseBrowser();
+              const documetsFetch = useLoggedUserStore?.getState?.().documetsFetch;
+              const { error } = await supabase
+                .from('document_types')
+                .update({ private: selected === 'Privado' })
+                .eq('id', row.original.id);
+
+              if (error) {
+                throw new Error(handleSupabaseError(error.message));
+              }
+              documetsFetch();
+              router.refresh();
+            },
+            {
+              loading: 'Cambiando...',
+              success: 'Documento actualizado correctamente',
+              error: (error) => {
+                return error;
+              },
+            }
+          );
+        };
+        return (
+          <div className="flex items-center">
+            <Select
+              onValueChange={(selected) => handlePrivateChange(selected)}
+              defaultValue={row.getValue('private') ? 'Privado' : 'Publico'}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Privado">Privado</SelectItem>
+                <SelectItem value="Publico">Público</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        );
+      }
+    },
+  },
+  {
     accessorKey: 'vencimiento',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Vencimiento" />,
     cell: ({ row }) => {
@@ -113,7 +187,7 @@ export const columnsDocuments: ColumnDef<SharedUser>[] = [
             {row.getValue('vencimiento') !== 'Documento pendiente' && row.getValue('vencimiento') !== 'No expira' ? (
               row.getValue('vencimiento')
             ) : (
-              <Badge className="bg-muted text-white">
+              <Badge className="bg-muted  dark:text-white text-black">
                 {' '}
                 {row.getValue('vencimiento') === 'No expira' ? (
                   'No vence'
@@ -139,6 +213,12 @@ export const columnsDocuments: ColumnDef<SharedUser>[] = [
       //   return <Link href={`/dashboard/document/${documentId}`}></Link>;
       // }
       const redirectId = row.getValue('documentId');
+      if (
+        row.original.email === 'Documento pendiente' &&
+        useLoggedUserStore.getState().roleActualCompany === 'Invitado'
+      ) {
+        return <Button disabled>Falta subir</Button>;
+      }
       return (
         <AddCompanyDocumentForm
           documentId={documentId as string}

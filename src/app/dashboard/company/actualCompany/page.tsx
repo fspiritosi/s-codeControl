@@ -22,6 +22,7 @@ import { useState } from 'react';
 import Contact from '../contact/Contact';
 import Customers from '../customers/Customers';
 import { columns } from './components/columns';
+import { columnsGuests } from './components/columnsGuests';
 import { DataTable } from './components/data-table';
 import { columnsDocuments } from './components/document-colums';
 import { ItemCompany } from './components/itemCompany';
@@ -54,7 +55,6 @@ export default function page() {
       img: user.avatar || '',
     };
   });
-
   const sharedUsers =
     sharedUsersAll?.map((user) => {
       return {
@@ -64,15 +64,26 @@ export default function page() {
         alta: user.created_at,
         id: user.id,
         img: user.profile_id.avatar || '',
+        customerName: user.customer_id?.name,
       };
     }) || [];
 
   const data = owner?.concat(
-    sharedUsers?.map((user) => ({
-      ...user,
-      fullname: user.fullname || '',
-    })) || []
+    sharedUsers
+      ?.filter((user) => user.role !== 'Invitado') // Filtrar usuarios donde el rol no sea "Invitado"
+      ?.map((user) => ({
+        ...user,
+        fullname: user.fullname || '',
+      })) || []
   );
+  const guestsData =
+    sharedUsers
+      ?.filter((user) => user.role === 'Invitado') // Filtrar usuarios donde el rol no sea "Invitado"
+      ?.map((user) => ({
+        ...user,
+        fullname: user.fullname || '',
+      })) || [];
+
   const documentCompany = AllCompanyDocuments?.map((document) => {
     const sharedUserRole = data?.find((e) => e.email === document.user_id?.email)?.role;
     return {
@@ -88,6 +99,7 @@ export default function page() {
           ? 'Documento pendiente'
           : 'No expira',
       documentId: document.id,
+      private: document.id_document_types.private,
     };
   });
 
@@ -209,9 +221,22 @@ export default function page() {
           <Card className="overflow-hidden">
             <div className=" h-full flex-1 flex-col space-y-8  md:flex">
               <RegisterWithRole />
-              <div className="p-8">
-                <DataTable data={data || []} columns={columns} />
-              </div>
+              <Tabs defaultValue="employ" className="w-full">
+                <TabsList className="ml-8">
+                  <TabsTrigger value="employ">Empleados</TabsTrigger>
+                  <TabsTrigger value="guests">Invitados</TabsTrigger>
+                </TabsList>
+                <TabsContent value="employ">
+                  <div className="p-8">
+                    <DataTable data={data || []} columns={columns} />
+                  </div>
+                </TabsContent>
+                <TabsContent value="guests">
+                  <div className="p-8">
+                    <DataTable data={guestsData || []} columns={columnsGuests} />
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
             <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
           </Card>

@@ -35,8 +35,9 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/components/ui/use-toast';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
+import { handleSupabaseError } from '@/lib/errorHandler';
+import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -48,6 +49,7 @@ import { ArrowUpDown, CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Fragment, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../../../../supabase/supabase';
 const formSchema = z.object({
@@ -104,10 +106,10 @@ export const columns: ColumnDef<Colum>[] = [
             .select();
 
           if (error) {
-            console.error(error);
+            toast.error(`${handleSupabaseError(error.message)}`);
           }
         } catch (error) {
-          console.error(error);
+          toast.error(handleSupabaseError(`${error}`));
         }
       };
       useEffect(() => {
@@ -127,72 +129,73 @@ export const columns: ColumnDef<Colum>[] = [
         },
       });
 
-      const { toast } = useToast();
-
       async function reintegerContact() {
-        try {
-          const { data, error } = await supabase
-            .from('contacts')
-            .update({
-              is_active: true,
-              termination_date: null,
-              reason_for_termination: null,
-            })
-            .eq('id', contacts.id)
-            //.eq('company_id', actualCompany?.id)
-            .select();
+        toast.promise(
+          async () => {
+            const supabase = supabaseBrowser();
 
-          setIntegerModal(!integerModal);
-          //setInactive(data as any)
-          setShowDeletedContact(false);
-          toast({
-            variant: 'default',
-            title: 'Contacto reintegrado',
-            description: `El contacto ${contacts?.name} ha sido reintegrado`,
-          });
-        } catch (error: any) {
-          const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al reintegrar el contacto',
-            description: message,
-          });
-        }
+            const { data, error } = await supabase
+              .from('contacts')
+              .update({
+                is_active: true,
+                termination_date: null,
+                reason_for_termination: null,
+              })
+              .eq('id', contacts.id)
+              //.eq('company_id', actualCompany?.id)
+              .select();
+
+            setIntegerModal(!integerModal);
+            //setInactive(data as any)
+            setShowDeletedContact(false);
+
+            if (error) {
+              throw new Error(handleSupabaseError(error.message));
+            }
+          },
+          {
+            loading: 'Reintegrando...',
+            success: `Contacto reintegrado`,
+            error: (error) => {
+              return error;
+            },
+          }
+        );
       }
 
       async function onSubmit(values: z.infer<typeof formSchema>) {
-        const data = {
-          ...values,
-          termination_date: format(values.termination_date, 'yyyy-MM-dd'),
-        };
+        toast.promise(
+          async () => {
+            const data = {
+              ...values,
+              termination_date: format(values.termination_date, 'yyyy-MM-dd'),
+            };
 
-        try {
-          await supabase
-            .from('contacts')
-            .update({
-              is_active: false,
-              termination_date: data.termination_date,
-              reason_for_termination: data.reason_for_termination,
-            })
-            .eq('id', contacts.id)
-            .eq('company_id', actualCompany?.id)
-            .select();
+            const supabase = supabaseBrowser();
+            const { error } = await supabase
+              .from('contacts')
+              .update({
+                is_active: false,
+                termination_date: data.termination_date,
+                reason_for_termination: data.reason_for_termination,
+              })
+              .eq('id', contacts.id)
+              .eq('company_id', actualCompany?.id)
+              .select();
 
-          setShowModal(!showModal);
-
-          toast({
-            variant: 'default',
-            title: 'Contacto eliminado',
-            description: `El contacto ${contacts.name} ha sido dado de baja`,
-          });
-        } catch (error: any) {
-          const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al dar de baja el contacto',
-            description: message,
-          });
-        }
+            setShowModal(!showModal);
+            if (error) {
+              throw new Error(handleSupabaseError(error.message));
+            }
+          },
+          {
+            loading: 'Eliminando...',
+            success: 'Contacto eliminado',
+            error: (error) => {
+              return error;
+            },
+          }
+        );
       }
       const today = new Date();
       const nextMonth = addMonths(new Date(), 1);
@@ -203,10 +206,6 @@ export const columns: ColumnDef<Colum>[] = [
         return year;
       });
       const [years, setYear] = useState(today.getFullYear().toString());
-
-      // const handleToggleInactive = () => {
-      //   setShowInactive(!showInactive)
-      // }
 
       return (
         <DropdownMenu>

@@ -36,7 +36,6 @@ import {
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/components/ui/use-toast';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { cn } from '@/lib/utils';
 import { useCountriesStore } from '@/store/countries';
@@ -45,11 +44,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
 import { addMonths, format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { es, ro } from 'date-fns/locale';
 import { ArrowUpDown, CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Fragment, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../../../supabase/supabase';
 
@@ -94,6 +94,7 @@ type Colum = {
   workflow_diagram: string;
   birthplace: string;
   status: string;
+
 };
 
 const allocatedToRangeFilter: FilterFn<Colum> = (
@@ -129,12 +130,27 @@ export const columns: ColumnDef<Colum>[] = [
   {
     id: 'actions',
     cell: ({ row }: { row: any }) => {
-      const profile = useLoggedUserStore((state) => state);
+      const share = useLoggedUserStore((state) => state.sharedCompanies);
+      const profile = useLoggedUserStore((state) => state.credentialUser?.id);
+      const owner = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
+      const users = useLoggedUserStore((state) => state);
+      const company = useLoggedUserStore((state) => state.actualCompany?.id);
+      
       let role = '';
-      if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
-        role = profile?.actualCompany?.owner_id?.role as string;
+      if (owner === profile) {
+        role = users?.actualCompany?.owner_id?.role as string;
+        
       } else {
-        role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
+        // const roleRaw = share?.filter((item: any) => Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))).map((item: any) => item.role);
+        const roleRaw = share
+          .filter((item: any) =>
+            item.company_id.id === company &&
+            Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))
+          )
+          .map((item: any) => item.role);
+        role = roleRaw?.join('');
+        // role = users?.actualCompany?.share_company_users?.[0]?.role as string;
+        
       }
 
       const [showModal, setShowModal] = useState(false);
@@ -166,8 +182,6 @@ export const columns: ColumnDef<Colum>[] = [
         },
       });
 
-      const { toast } = useToast();
-
       async function reintegerEmployee() {
         try {
           await supabase
@@ -183,18 +197,10 @@ export const columns: ColumnDef<Colum>[] = [
           setIntegerModal(!integerModal);
           setInactiveEmployees();
           setShowDeletedEmployees(false);
-          toast({
-            variant: 'default',
-            title: 'Empleado reintegrado',
-            description: `El empleado ${user.full_name} ha sido reintegrado`,
-          });
+          toast('Empleado reintegrado', { description: `El empleado ${user.full_name} ha sido reintegrado` });
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al reintegrar al empleado',
-            description: message,
-          });
+          toast('Error al reintegrar al empleado', { description: message });
         }
       }
 
@@ -217,18 +223,10 @@ export const columns: ColumnDef<Colum>[] = [
 
           setShowModal(!showModal);
 
-          toast({
-            variant: 'default',
-            title: 'Empleado eliminado',
-            description: `El empleado ${user.full_name} ha sido eliminado`,
-          });
+          toast('Empleado eliminado', { description: `El empleado ${user.full_name} ha sido eliminado` });
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
-          toast({
-            variant: 'destructive',
-            title: 'Error al dar de baja al empleado',
-            description: message,
-          });
+          toast('Error al dar de baja al empleado', { description: message });
         }
       }
       const today = new Date();
@@ -385,12 +383,16 @@ export const columns: ColumnDef<Colum>[] = [
               </DialogContent>
             </Dialog>
           )}
+
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <DotsVerticalIcon className="h-4 w-4" />
-            </Button>
+            {/* {role === "Invitado" ? null : ( */}
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Abrir menu</span>
+                <DotsVerticalIcon className="h-4 w-4" />
+              </Button>
+            {/* )} */}
           </DropdownMenuTrigger>
+
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Opciones</DropdownMenuLabel>
             <DropdownMenuItem onClick={() => navigator.clipboard.writeText(user.document_number)}>
@@ -434,6 +436,7 @@ export const columns: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
       );
     },
   },
@@ -453,6 +456,22 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Estado',
   },
   {
+    accessorKey: 'picture',
+    header: 'Foto',
+  },
+  {
+    accessorKey: 'file',
+    header: 'Legajo',
+  },
+  {
+    accessorKey: 'lastname',
+    header: 'Apellido',
+  },
+  {
+    accessorKey: 'firstname',
+    header: 'Nombre',
+  },
+  {
     accessorKey: 'email',
     header: 'Email',
   },
@@ -461,8 +480,36 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Cuil',
   },
   {
+    accessorKey: 'document_type',
+    header: 'Tipo de documento',
+  },
+  {
     accessorKey: 'document_number',
     header: 'Numero de documento',
+  },
+  {
+    accessorKey: 'nationality',
+    header: 'Nacionalidad',
+  },
+  {
+    accessorKey: 'gender',
+    header: 'Género',
+  },
+  {
+    accessorKey: 'birthplace',
+    header: 'Lugar de nacimiento',
+  },
+  {
+    accessorKey: 'marital_status',
+    header: 'Estado civil',
+  },
+  {
+    accessorKey: 'level_of_education',
+    header: 'Nivel de estudios',
+  },
+  {
+    accessorKey: 'date_of_admission',
+    header: 'Fecha de ingreso',
   },
   {
     accessorKey: 'hierarchical_position',
@@ -477,6 +524,10 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Horas normales',
   },
   {
+    accessorKey: 'workflow_diagram',
+    header: 'Diagrama de trabajo',
+  },
+  {
     accessorKey: 'type_of_contract',
     header: 'Tipo de contrato',
   },
@@ -485,7 +536,7 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Afectado a',
     cell: ({ row }) => {
       const values = row.original.allocated_to;
-      console.log(values);
+      
       if (!values) return <Badge variant={'destructive'}>Sin afectar</Badge>;
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
@@ -506,40 +557,12 @@ export const columns: ColumnDef<Colum>[] = [
     filterFn: allocatedToRangeFilter,
   },
   {
-    accessorKey: 'picture',
-    header: 'Foto',
+    accessorKey: 'province',
+    header: 'Provincia',
   },
   {
-    accessorKey: 'nationality',
-    header: 'Nacionalidad',
-  },
-  {
-    accessorKey: 'lastname',
-    header: 'Apellido',
-  },
-  {
-    accessorKey: 'firstname',
-    header: 'Nombre',
-  },
-  {
-    accessorKey: 'birthplace',
-    header: 'Lugar de nacimiento',
-  },
-  {
-    accessorKey: 'document_type',
-    header: 'Tipo de documento',
-  },
-  {
-    accessorKey: 'gender',
-    header: 'Género',
-  },
-  {
-    accessorKey: 'marital_status',
-    header: 'Estado civil',
-  },
-  {
-    accessorKey: 'level_of_education',
-    header: 'Nivel de estudios',
+    accessorKey: 'city',
+    header: 'Ciudad',
   },
   {
     accessorKey: 'street',
@@ -550,10 +573,6 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Numero de calle',
   },
   {
-    accessorKey: 'province',
-    header: 'Provincia',
-  },
-  {
     accessorKey: 'postal_code',
     header: 'Codigo postal',
   },
@@ -561,30 +580,16 @@ export const columns: ColumnDef<Colum>[] = [
     accessorKey: 'phone',
     header: 'Teléfono',
   },
-  {
-    accessorKey: 'file',
-    header: 'Legajo',
-  },
-  {
-    accessorKey: 'date_of_admission',
-    header: 'Fecha de ingreso',
-  },
-  {
-    accessorKey: 'affiliate_status',
-    header: 'Estado de afiliado',
-  },
-  {
-    accessorKey: 'city',
-    header: 'Ciudad',
-  },
-  {
-    accessorKey: 'hierrical_position',
-    header: 'Posición jerárquica',
-  },
-  {
-    accessorKey: 'workflow_diagram',
-    header: 'Diagrama de trabajo',
-  },
+
+  // {
+  //   accessorKey: 'affiliate_status',
+  //   header: 'Estado de afiliado',
+  // },
+  // {
+  //   accessorKey: 'hierrical_position',
+  //   header: 'Posición jerárquica',
+  // },
+
   {
     accessorKey: 'showUnavaliableEmployees',
     header: 'Ver empleados dados de baja',

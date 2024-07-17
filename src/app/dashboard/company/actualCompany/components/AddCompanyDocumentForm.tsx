@@ -19,6 +19,7 @@ import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -39,6 +40,7 @@ function AddCompanyDocumentForm({
   const companyId = useLoggedUserStore((state) => state.actualCompany)?.id;
   const documentForId = companyDocumentTypes.find((e) => e.id === documentId);
   const fetchDocuments = useLoggedUserStore((state) => state.documetsFetch);
+  const router = useRouter();
   const FormSchema = z.object({
     id_document_types: z.string({
       required_error: 'Este campo es requerido',
@@ -100,6 +102,7 @@ function AddCompanyDocumentForm({
               await supabase.storage.from('document_files').remove([response.data?.path || '']);
             }
             fetchDocuments();
+            router.refresh();
           });
       },
       {
@@ -224,7 +227,7 @@ function AddCompanyDocumentForm({
             )}
             <div className="flex justify-end gap-4">
               <AlertDialogCancel id="cerrar-modal-company-document">Cancelar</AlertDialogCancel>
-              <Button type="submit">Submit</Button>
+              <Button type="submit">Subir</Button>
             </div>
           </form>
         </Form>

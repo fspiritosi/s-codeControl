@@ -84,7 +84,6 @@ export default function NavBar() {
     setActualCompany(company);
     setIsOpen(false);
     Cookies.set('actualComp', company.id);
-    revalidate();
     router.push('/dashboard');
   };
   const { control, formState, setValue } = useForm();
@@ -106,11 +105,10 @@ export default function NavBar() {
   const actualCompanyId = cookie.get('actualCompanyId');
 
   const markAllAsRead = useLoggedUserStore((state) => state.markAllAsRead);
-  const { toast } = useToast();
 
   const groups = [
     {
-      label: 'Compañia actual propia',
+      label: 'Compañia actual',
       teams:
         totalCompanies.length === 1
           ? totalCompanies
@@ -129,7 +127,7 @@ export default function NavBar() {
               })),
     },
     {
-      label: 'Otras compañias propias',
+      label: 'Otras compañias',
       teams:
         totalCompanies.length === 1
           ? []
@@ -181,7 +179,7 @@ export default function NavBar() {
                         <CommandItem
                           key={index}
                           onSelect={() => {
-                            const company = totalCompanies.find((companyItem) => companyItem.id === team.value);
+                            const company = totalCompanies.find((companyItem) => companyItem?.id === team?.value);
                             if (company) {
                               handleNewCompany(company);
                             }
