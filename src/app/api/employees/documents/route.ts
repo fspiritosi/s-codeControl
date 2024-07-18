@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
       .eq('employees.company_id', company_id);
 
     const data = documents;
+    console.log(documents)
 
     if (error) {
       throw new Error(JSON.stringify(error));

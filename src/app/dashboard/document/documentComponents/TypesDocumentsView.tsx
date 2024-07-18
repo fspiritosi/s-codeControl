@@ -27,7 +27,7 @@ function TypesDocumentsView({
     personas && equipos && empresa ? 'all' : personas ? 'Personas' : equipos ? 'Equipos' : 'Empresa';
   return (
     <CardContent>
-      <Tabs defaultValue="Personas" className="w-full">
+      <Tabs defaultValue={optionValue} className="w-full">
         <TabsList>
           {personas && <TabsTrigger value="Personas">Personas</TabsTrigger>}
           {equipos && <TabsTrigger value="Equipos">Equipos</TabsTrigger>}

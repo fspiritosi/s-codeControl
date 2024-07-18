@@ -2,33 +2,24 @@ import { CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabaseServer } from '@/lib/supabase/server';
 import { mapVehicle } from '@/lib/utils/utils';
+import { Document } from '@/types/types';
 import { cookies } from 'next/headers';
 import { ExpiredColums } from '../../colums';
 import { ColumnsMonthly } from '../../columsMonthly';
 import { ExpiredDataTable } from '../../data-table';
 
 async function EquipmentTabs() {
+  const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const supabase = supabaseServer();
   const cookiesStore = cookies();
-  const actualCompany = cookiesStore.get('actualComp')?.value;
-  let { data, error: equipmentError } = await supabase
-    .from('documents_equipment')
-    .select(
-      `*,
-  document_types:document_types(*),
-  applies(*,type(*),type_of_vehicle(*),model(*),brand(*),contractor_equipment(customers(*)))
-  `
-    )
-    .eq('applies.company_id', actualCompany)
-    .not('applies', 'is', null);
-  const URL = process.env.NEXT_PUBLIC_BASE_URL;
+  const company_id = cookiesStore.get('actualComp')?.value;
 
-  const response = await fetch(`${URL}/api/equipment`, { cache: 'no-store' });
-  const response2 = await response.json();
 
-  console.log(response2);
+  const { data: equipments } = await fetch(`${URL}/api/equipment/documents?actual=${company_id}`).then((e) => e.json());
 
-  const vehicles = data?.map(mapVehicle);
+  
+
+  const vehicles = equipments?.map(mapVehicle) as Document[];
   return (
     <Tabs defaultValue="permanentes">
       <CardContent>
