@@ -47,7 +47,7 @@ import { addMonths, format, formatRelative } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ArrowUpDown } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -168,6 +168,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
         setDomain(id);
 
         setViewModal(!viewModal);
+        viewDocumentEmployees();
       };
 
       const { errorTranslate } = useEdgeFunctions();
@@ -263,9 +264,8 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
           setDocumentHistory(data);
         }
       }
-      useEffect(() => {
-        viewDocumentEmployees();
-      }, []);
+      // useEffect(() => {
+      // }, []);
 
       const today = new Date();
       const nextMonth = addMonths(new Date(), 1);
@@ -592,7 +592,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
       } else {
         const [day, month, year] = row.original.date.split('/');
         const date = new Date(Number(year), Number(month) - 1, Number(day));
-        return format(date, 'P', { locale: es });
+        return date.toLocaleDateString();
       }
     },
   },

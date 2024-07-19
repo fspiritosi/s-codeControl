@@ -64,6 +64,7 @@ export function EditModal({ Equipo }: Props) {
     description: special ? z.string({ required_error: 'Este campo es requerido' }) : z.string().optional(),
     is_it_montlhy: z.boolean({ required_error: 'Se debe seleccionar una opcion' }).optional(),
     private: z.boolean({ required_error: 'Se debe seleccionar una opcion' }).optional(),
+    down_document: z.boolean({ required_error: 'Este campo es requerido' }),
   });
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -77,6 +78,7 @@ export function EditModal({ Equipo }: Props) {
       description: Equipo.description || '',
       is_it_montlhy: Equipo.is_it_montlhy as boolean,
       private: Equipo.private as boolean,
+      down_document: Equipo.down_document as boolean,
     },
   });
 
@@ -106,6 +108,11 @@ export function EditModal({ Equipo }: Props) {
       id: 'private',
       label: 'Es privado?',
       tooltip: 'Si el documento es privado no sera visible para los usuarios con el rol invitado',
+    },
+    {
+      id: 'down_document',
+      label: 'Es un documento de baja?',
+      tooltip: 'Si el documento es de baja solo se pedira cuando el empleado este dado de baja',
     },
   ];
   const [items, setItems] = useState(() => {

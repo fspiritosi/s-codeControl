@@ -55,15 +55,28 @@ const defaultValues = [
     label: 'Es privado?',
     tooltip: 'Si el documento es privado no sera visible para los usuarios con el rol invitado',
   },
+  {
+    id: 'down_document',
+    label: 'Es un documento de baja?',
+    tooltip: 'Si el documento es de baja solo se pedira cuando el empleado este dado de baja',
+  },
 ];
 
-export default function NewDocumentType({ codeControlClient }: { codeControlClient?: boolean }) {
+export default function NewDocumentType({
+  codeControlClient,
+  optionChildrenProp,
+}: {
+  codeControlClient?: boolean;
+  optionChildrenProp: string;
+}) {
   const [special, setSpecial] = useState(false);
   const router = useRouter();
   const fetchDocumentTypes = useCountriesStore((state) => state.documentTypes);
   const documentTypes = useCountriesStore((state) => state.companyDocumentTypes);
   const fetchDocuments = useLoggedUserStore((state) => state.documetsFetch);
   const [items, setItems] = useState(defaultValues);
+
+  const selectOptions = optionChildrenProp === 'all' ? 'Personas, Equipos o Empresa' : optionChildrenProp;
 
   const isOptional = items.length < 5;
   const FormSchema = z.object({
@@ -89,6 +102,7 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
         : z.string().optional(),
     is_it_montlhy: z.boolean({ required_error: 'Este campo es requerido' }),
     private: z.boolean({ required_error: 'Este campo es requerido' }),
+    down_document: z.boolean({ required_error: 'Este campo es requerido' }),
   });
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -111,6 +125,7 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
       multiresource: isOptional ? false : values.multiresource,
       mandatory: isOptional ? true : values.mandatory,
       special: isOptional ? false : values.special,
+      down_document: isOptional ? false : values.down_document,
       private: values.private,
     };
 
@@ -179,7 +194,7 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
     allocated_to: 'Afectaciones',
     status: 'Estado',
   };
-
+  const [down, setDown] = useState(false);
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -211,6 +226,12 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
                           (e) => e.id === 'explired' || e.id === 'is_it_montlhy' || e.id === 'private'
                         )
                       );
+                      if (down) {
+                        setDown(false);
+                        const name = form.getValues('name');
+                        form.reset({ name });
+                        form.setValue('applies', 'Empresa');
+                      }
                     } else {
                       setItems(defaultValues);
                     }
@@ -221,14 +242,20 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Personas, Equipos o Empresa" />
+                      <SelectValue placeholder={selectOptions} />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Persona">Persona</SelectItem>
-                    <SelectItem value="Equipos">Equipos</SelectItem>
-                    <SelectItem value="Empresa">Empresa</SelectItem>
-                  </SelectContent>
+                  {optionChildrenProp === 'all' ? (
+                    <SelectContent>
+                      <SelectItem value="Persona">Persona</SelectItem>
+                      <SelectItem value="Equipos">Equipos</SelectItem>
+                      <SelectItem value="Empresa">Empresa</SelectItem>
+                    </SelectContent>
+                  ) : (
+                    <SelectContent>
+                      <SelectItem value={optionChildrenProp || 'All'}>{optionChildrenProp}</SelectItem>
+                    </SelectContent>
+                  )}
                 </Select>
               </div>
               <FormMessage />
@@ -264,6 +291,14 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
                               <div className="flex items-center gap-2">
                                 <Checkbox
                                   checked={field.value === true}
+                                  disabled={
+                                    down &&
+                                    (item.id === 'is_it_montlhy' ||
+                                      item.id === 'mandatory' ||
+                                      item.id === 'explired' ||
+                                      item.id === 'special' ||
+                                      item.id === 'multiresource')
+                                  }
                                   onCheckedChange={(value) => {
                                     if (item.id === 'special') {
                                       setSpecial(true);
@@ -274,6 +309,14 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
                                     if (item.id === 'explired') {
                                       form.setValue('is_it_montlhy', value ? false : true);
                                     }
+                                    if (item.id === 'down_document') {
+                                      form.setValue('is_it_montlhy', false);
+                                      form.setValue('mandatory', true);
+                                      form.setValue('explired', false);
+                                      form.setValue('special', false);
+                                      form.setValue('multiresource', false);
+                                      setDown(true);
+                                    }
                                     field.onChange(value ? true : false);
                                   }}
                                 />
@@ -282,6 +325,14 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
                               <div className="flex items-center gap-2">
                                 <Checkbox
                                   checked={field.value === false}
+                                  disabled={
+                                    down &&
+                                    (item.id === 'is_it_montlhy' ||
+                                      item.id === 'mandatory' ||
+                                      item.id === 'explired' ||
+                                      item.id === 'special' ||
+                                      item.id === 'multiresource')
+                                  }
                                   onCheckedChange={(value) => {
                                     field.onChange(value ? false : true);
                                     if (item.id === 'special') {
@@ -292,6 +343,9 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
                                     }
                                     if (item.id === 'explired') {
                                       form.setValue('is_it_montlhy', false);
+                                    }
+                                    if (item.id === 'down_document') {
+                                      setDown(false);
                                     }
                                   }}
                                 />

@@ -140,7 +140,7 @@ export type Employee = {
   workflow_diagram: string;
   normal_hours: string; //!si
   type_of_contract: string | undefined; //!si
-  allocated_to?: string | undefined | string[] | null //!si
+  allocated_to?: string | undefined | string[] | null; //!si
   date_of_admission: Date | undefined | string;
   full_name?: string; //!si
   is_active?: boolean;
@@ -171,18 +171,18 @@ export type SharedUser = {
   credential_id: string;
   profile_id: profileUser;
   customer_id: {
-    id: string,
-    cuit: number,
-    name: string,
-    address: string,
-    is_active: boolean,
-    company_id: string,
-    created_at: string,
-    client_email: string,
-    client_phone: number,
-    termination_date: null | string,
-    reason_for_termination: null| string
-  }
+    id: string;
+    cuit: number;
+    name: string;
+    address: string;
+    is_active: boolean;
+    company_id: string;
+    created_at: string;
+    client_email: string;
+    client_phone: number;
+    termination_date: null | string;
+    reason_for_termination: null | string;
+  };
 };
 
 export type TypeOfVehicle = {
@@ -238,7 +238,7 @@ type DocumentType = {
   created_at: string;
 };
 
-type Document = {
+type Document2 = {
   id: string;
   created_at: string;
   id_storage: string;
@@ -251,7 +251,7 @@ type Document = {
   document_url: string;
 };
 
-export const AllDocuments: Document[] = [
+export const AllDocuments: Document2[] = [
   {
     id: '1',
     created_at: '2022-01-01',
@@ -420,6 +420,7 @@ export type DocumentTypes = {
   description: null;
   multiresource: boolean;
   private: boolean;
+  down_document: boolean;
 };
 export type DocumentsTable = {
   created_at: Date;
@@ -436,6 +437,23 @@ export type DocumentsTable = {
   document_types: DocumentTypes;
   domain: string;
 };
+
+export interface Document {
+  date: string;
+  allocated_to: string;
+  documentName: string;
+  multiresource: string;
+  validity: string;
+  id: string;
+  resource: string;
+  state: string;
+  document_path?: string;
+  is_active: boolean;
+  isItMonthly: boolean;
+  applies: string;
+  mandatory: string;
+  id_document_types?: string;
+}
 
 export type DocumentTypesTable = {
   id: string;
