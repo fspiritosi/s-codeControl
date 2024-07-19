@@ -72,7 +72,7 @@ import {
         description: 'El convenio ha sido agregado correctamente',
       });
       setName('');
-      fetchData(name);
+      fetchData(guildId);
     }
   
     return (

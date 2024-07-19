@@ -37,7 +37,7 @@ type dataType = {
         name: string;
         id: string;
         is_active: boolean;
-        
+
     }[];
     covenants: {
         name: string;
@@ -66,21 +66,22 @@ export const CovenantRegister = () => {
     // const [userType, setUserType] = useState<'Usuario' | 'Invitado' | null>(null);
     const searchParams = useSearchParams()
     const document = searchParams.get('document')
-    const [searchText,setSearchText]=useState()
+    const [searchText, setSearchText] = useState()
     const [accion, setAccion] = useState(searchParams.get('action'))
     const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false)
     const [guildId, setGuildId] = useState()
+    
     const [guildData, setGuildData] = useState<dataType>({
-        guild:[],
+        guild: [],
         covenants: [],
         category: [],
     });
     const [data, setData] = useState<dataType>({
-        guild:[],
+        guild: [],
         covenants: [],
         category: [],
     });
-    
+
 
     const covenantRegisterSchema = z
         .object({
@@ -116,7 +117,7 @@ export const CovenantRegister = () => {
                 })
 
                 .trim(),
-            
+
         });
 
 
@@ -137,65 +138,69 @@ export const CovenantRegister = () => {
     //     setRoles(roles);
     // };
     console.log("company: ", company?.id)
-    
+
     const fetchGuild = async () => {
         try {
-        let { data: guilds } = await supabase
-            .from('guild')
-            .select('*')
-            .eq('company_id', company?.id)
-            console.log("guils: ",guilds)
-            
-        setData({
-            ...data,
+            let { data: guilds } = await supabase
+                .from('guild')
+                .select('*')
+                .eq('company_id', company?.id)
+            console.log("guils: ", guilds)
 
-            guild: (guilds || [])?.map((e) => {
-                return { name: e.name as string, id: e.id as string, is_active: e.is_active };
-            }),
+            setData({
+                ...data,
 
-        });
-    } catch (error) {
-        console.error('Error fetching data:', error);
-        // Muestra un mensaje de error al usuario
-        toast.error('Error fetching data');
-    }
+                guild: (guilds || [])?.map((e) => {
+                    return { name: e.name as string, id: e.id as string, is_active: e.is_active };
+                }),
+
+            });
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            // Muestra un mensaje de error al usuario
+            toast.error('Error fetching data');
+        }
     };
 
-    console.log("guild: ", data.guild  )
-    
-    const fetchData = async (guild_id:string) => {
+    console.log("guild: ", data.guild)
+
+    const fetchData = async (guild_id: string) => {
         try {
-        let { data: covenants } = await supabase
-            .from('covenant')
-            .select('*')
-            .eq('company_id', company?.id)
-            .eq('guild_id', guild_id)
+            let { data: covenants } = await supabase
+                .from('covenant')
+                .select('*')
+                .eq('company_id', company?.id)
+                .eq('guild_id', guild_id)
 
-            
-        setData({
-            ...data,
 
-            covenants: (covenants || [])?.map((e) => {
-                return { name: e.name as string, id: e.id as string, number: e.number as string, guild_id: e.guild_id as string, is_active: e.is_active };
-            }),
-            
-        });
-    } catch (error) {
-        console.error('Error fetching data:', error);
-        // Muestra un mensaje de error al usuario
-        toast.error('Error fetching data');
-    }
+            setData({
+                ...data,
+
+                covenants: (covenants || [])?.map((e) => {
+                    return { name: e.name as string, id: e.id as string, number: e.number as string, guild_id: e.guild_id as string, is_active: e.is_active };
+                }),
+
+            });
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            // Muestra un mensaje de error al usuario
+            toast.error('Error fetching data');
+        }
     };
     console.log("covenants: ", data.covenants)
-    
+
     useEffect(() => {
         console.log('useEffect')
         fetchGuild()
-        // fetchData()
+       
+        
     }, [])
-    console.log("guild: ", data.guild  )
-    console.log("covenants: ",data.covenants)
     
+        
+    
+    
+    
+
     const fetchCategory = async (covenant_id: string) => {
         let { data: category } = await supabase
             .from('category')
@@ -206,14 +211,32 @@ export const CovenantRegister = () => {
             ...data,
             category: category as any,
         });
-        console.log("category: ",category)
+        console.log("category: ", category)
     };
 
     function onSubmit(values: z.infer<typeof covenantRegisterSchema>) {
+        
+        setOpen(false);
+
 
         return 'convenio registrado correctamente';
-        
+
     }
+    const channels = supabase
+    .channel('custom-all-channel')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'covenant' }, (payload) => {
+      
+    })
+    .subscribe();
+
+  const channels1 = supabase
+    .channel('custom-all-channel')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'guild' }, (payload) => {
+      fetchGuild();
+    })
+    .subscribe();
+
+    
 
     const handleOpen = () => {
         setOpen(true);
@@ -237,20 +260,20 @@ export const CovenantRegister = () => {
                             <AlertDialogDescription asChild>
                                 <Form {...form}>
                                     <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
-                                        
+
                                         <div>
-                                        <FormField 
+                                            <FormField
                                                 control={form.control}
                                                 name="guild"
                                                 render={({ field }) => (
                                                     <FormItem className="flex flex-col min-w-[250px] " >
                                                         <FormLabel>
-                                                        Asosiacion gremial<span style={{ color: 'red' }}>*</span>
+                                                            Asosiacion gremial<span style={{ color: 'red' }}>*</span>
                                                         </FormLabel>
                                                         <Popover>
                                                             <PopoverTrigger asChild>
                                                                 <FormControl>
-                                                                    <Button 
+                                                                    <Button
                                                                         disabled={readOnly}
                                                                         variant="outline"
                                                                         role="combobox"
@@ -264,14 +287,14 @@ export const CovenantRegister = () => {
                                                             </PopoverTrigger>
                                                             <PopoverContent className="w-[300px] p-0 max-h-[200px] overflow-y-auto" asChild>
                                                                 <Command >
-                                                                    <CommandInput 
-                                                                    disabled={readOnly} 
-                                                                    placeholder="Buscar  Asosiacion gremial..."                         
-                                                                    value={searchText} 
-                                                                    onValueChange={(value : any) => setSearchText(value)}
-                                                                    className="h-9" />
+                                                                    <CommandInput
+                                                                        disabled={readOnly}
+                                                                        placeholder="Buscar  Asosiacion gremial..."
+                                                                        value={searchText}
+                                                                        onValueChange={(value: any) => setSearchText(value)}
+                                                                        className="h-9" />
                                                                     <CommandEmpty className="py-2 px-2">
-                                                                        <ModalCct modal="addGuild"                                                                            
+                                                                        <ModalCct modal="addGuild"
                                                                             fetchGuild={fetchGuild}
                                                                             searchText={searchText}
                                                                         >
@@ -282,7 +305,7 @@ export const CovenantRegister = () => {
                                                                                 className={cn('w-full justify-between', !field.value && 'text-muted-foreground')}
                                                                             >
                                                                                 Agregar Asosiacion gremial
-                                                                                <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50"/>
+                                                                                <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                                             </Button>
                                                                         </ModalCct>
                                                                     </CommandEmpty>
@@ -344,11 +367,11 @@ export const CovenantRegister = () => {
                                                             </PopoverTrigger>
                                                             <PopoverContent className="w-[300px] p-0 max-h-[200px] overflow-y-auto" asChild>
                                                                 <Command>
-                                                                    <CommandInput 
-                                                                    disabled={readOnly} 
-                                                                    placeholder="Buscar convenio..." 
-                                                                    onValueChange={(value : any) => setSearchText(value)}
-                                                                    className="h-9" />
+                                                                    <CommandInput
+                                                                        disabled={readOnly}
+                                                                        placeholder="Buscar convenio..."
+                                                                        onValueChange={(value: any) => setSearchText(value)}
+                                                                        className="h-9" />
                                                                     <CommandEmpty className="py-2 px-2">
                                                                         <ModalCct modal="addCovenant"
                                                                             fetchData={fetchData}
@@ -376,7 +399,7 @@ export const CovenantRegister = () => {
                                                                                     const covenant_id = data.covenants.find((e) => e.id === option?.id);
                                                                                     console.log('covenant_id', covenant_id?.id)
                                                                                     setCovenantId(covenant_id?.id as any || null)
-                                                                                    console.log("CovenantId; ",covenantId)
+                                                                                    console.log("CovenantId; ", covenantId)
                                                                                     fetchCategory(covenant_id?.id as any);
                                                                                     form.setValue('category', '');
                                                                                 }}
@@ -424,15 +447,15 @@ export const CovenantRegister = () => {
                                                             </PopoverTrigger>
                                                             <PopoverContent className="w-[300px] p-0" asChild>
                                                                 <Command>
-                                                                    <CommandInput 
-                                                                    disabled={readOnly} 
-                                                                    placeholder="Buscar categoria..." 
-                                                                    onValueChange={(value : any) => setSearchText(value)}
-                                                                    className="h-9" />
+                                                                    <CommandInput
+                                                                        disabled={readOnly}
+                                                                        placeholder="Buscar categoria..."
+                                                                        onValueChange={(value: any) => setSearchText(value)}
+                                                                        className="h-9" />
                                                                     <CommandEmpty className="py-2 px-2">
                                                                         <ModalCct modal="addCategory"
-                                                                            fetchCategory={fetchCategory} 
-                                                                            covenant_id={covenantId as any} 
+                                                                            fetchCategory={fetchCategory}
+                                                                            covenant_id={covenantId as any}
                                                                             covenantOptions={data.category as any}
                                                                             searchText={searchText}
                                                                         >
