@@ -4,6 +4,7 @@ import EmployeeDocumentsTabs from '../document/documentComponents/EmployeeDocume
 import EmployeeListTabs from '../document/documentComponents/EmployeeListTabs';
 import TypesDocumentAction from '../document/documentComponents/TypesDocumentAction';
 import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
+import EmployesDiagram from '@/components/EmployesDiagram';
 
 const EmployeePage = async () => {
   const viewData = {
@@ -32,6 +33,17 @@ const EmployeePage = async () => {
             </div>
           ),
           component: <EmployeeDocumentsTabs />,
+        },
+      },
+      {
+        value: 'diagrams',
+        name: 'Diagramas',
+        restricted: ['Invitado'],
+        content: {
+          title: 'Diagramas de personal',
+          description: 'Carga de novedades de trabajo del persoanl',
+          buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
+          component: <EmployesDiagram/>,
         },
       },
       {

@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 
 const name = await fetch('/api/equipment')
 const res = name.json()
-console.log(res)
+//console.log(res)
 
 export default function Equipmenta() {
   const allCompany = useLoggedUserStore((state) => state.allCompanies);
