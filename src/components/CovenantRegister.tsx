@@ -71,6 +71,7 @@ export const CovenantRegister = () => {
     const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false)
     const [guildId, setGuildId] = useState()
     
+    
     const [guildData, setGuildData] = useState<dataType>({
         guild: [],
         covenants: [],
@@ -137,7 +138,7 @@ export const CovenantRegister = () => {
     //     let { data: roles, error } = await supabase.from('roles').select('*').eq('intern', false).neq("name", "Invitado");
     //     setRoles(roles);
     // };
-    console.log("company: ", company?.id)
+    
 
     const fetchGuild = async () => {
         try {
@@ -145,7 +146,8 @@ export const CovenantRegister = () => {
                 .from('guild')
                 .select('*')
                 .eq('company_id', company?.id)
-            console.log("guils: ", guilds)
+                .eq('is_active', true)
+            
 
             setData({
                 ...data,
@@ -162,15 +164,16 @@ export const CovenantRegister = () => {
         }
     };
 
-    console.log("guild: ", data.guild)
+    
 
     const fetchData = async (guild_id: string) => {
         try {
             let { data: covenants } = await supabase
                 .from('covenant')
-                .select('*')
+                .select('*, guild_id(is_active)')
                 .eq('company_id', company?.id)
                 .eq('guild_id', guild_id)
+                .eq('guild_id(is_active)', true)
 
 
             setData({
@@ -187,13 +190,10 @@ export const CovenantRegister = () => {
             toast.error('Error fetching data');
         }
     };
-    console.log("covenants: ", data.covenants)
+    
 
     useEffect(() => {
-        console.log('useEffect')
         fetchGuild()
-       
-        
     }, [])
     
         
@@ -211,7 +211,7 @@ export const CovenantRegister = () => {
             ...data,
             category: category as any,
         });
-        console.log("category: ", category)
+        
     };
 
     function onSubmit(values: z.infer<typeof covenantRegisterSchema>) {
@@ -309,7 +309,7 @@ export const CovenantRegister = () => {
                                                                             </Button>
                                                                         </ModalCct>
                                                                     </CommandEmpty>
-                                                                    <CommandGroup>
+                                                                    <CommandGroup className="max-h-[200px] overflow-y-auto">
                                                                         {data.guild?.map((option) => (
                                                                             <CommandItem
                                                                                 value={option.name}
@@ -317,9 +317,9 @@ export const CovenantRegister = () => {
                                                                                 onSelect={() => {
                                                                                     form.setValue('guild', option.name);
                                                                                     const guild_id = data.guild.find((e) => e.id === option?.id);
-                                                                                    console.log('guild_id', guild_id?.id)
+                                                                                    
                                                                                     setGuildId(guild_id?.id as any || null)
-                                                                                    console.log(guildId)
+                                                                                    
                                                                                     fetchData(guild_id?.id as any);
                                                                                     form.setValue('covenants', '');
                                                                                 }}
@@ -389,7 +389,7 @@ export const CovenantRegister = () => {
                                                                             </Button>
                                                                         </ModalCct>
                                                                     </CommandEmpty>
-                                                                    <CommandGroup>
+                                                                    <CommandGroup className="max-h-[200px] overflow-y-auto">
                                                                         {data.covenants?.map((option) => (
                                                                             <CommandItem
                                                                                 value={option.name}
@@ -397,9 +397,9 @@ export const CovenantRegister = () => {
                                                                                 onSelect={() => {
                                                                                     form.setValue('covenants', option.name);
                                                                                     const covenant_id = data.covenants.find((e) => e.id === option?.id);
-                                                                                    console.log('covenant_id', covenant_id?.id)
+                                                                                    
                                                                                     setCovenantId(covenant_id?.id as any || null)
-                                                                                    console.log("CovenantId; ", covenantId)
+                                                                                    
                                                                                     fetchCategory(covenant_id?.id as any);
                                                                                     form.setValue('category', '');
                                                                                 }}
@@ -470,7 +470,7 @@ export const CovenantRegister = () => {
                                                                             </Button>
                                                                         </ModalCct>
                                                                     </CommandEmpty>
-                                                                    <CommandGroup>
+                                                                    <CommandGroup className="max-h-[200px] overflow-y-auto">
                                                                         <>
                                                                             {data.category?.map((option) => (
                                                                                 <CommandItem

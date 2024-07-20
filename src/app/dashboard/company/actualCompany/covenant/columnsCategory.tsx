@@ -90,26 +90,7 @@ export const columnsCategory: ColumnDef<Colum>[] = [
       };
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
-      // const fetchCategory = async () => {
-      //   try {
-      //     const { data, error } = await supabase
-      //       .from('category')
-      //       .select('*')
-      //       //.eq('is_active', false)
-      //       // .eq('company_id', actualCompany?.id)
-      //       .select();
-      //       console.log(data);
-
-      //     if (error) {
-      //       toast.error(`${handleSupabaseError(error.message)}`);
-      //     }
-      //   } catch (error) {
-      //     toast.error(handleSupabaseError(`${error}`));
-      //   }
-      // };
-      // useEffect(() => {
-      //   fetchCategory();
-      // }, []);
+      
       const handleOpenIntegerModal = (id: string) => {
         setId(id);
         setIntegerModal(!integerModal);
@@ -423,7 +404,7 @@ export const columnsCategory: ColumnDef<Colum>[] = [
   // },
   {
     accessorKey: 'name',
-    header: 'Nombre',
+    header: 'Categoría',
   },
 
   {

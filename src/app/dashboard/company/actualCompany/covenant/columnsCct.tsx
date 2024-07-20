@@ -175,6 +175,19 @@ export const columns: ColumnDef<Colum>[] = [
               .eq('company_id', actualCompany?.id)
               .select();
 
+
+              const { error: categoryError } = await supabase
+              .from('category')
+              .update({
+                is_active: false,
+              })
+              .eq('covenant_id', covenant.id)
+              // .eq('company_id', actualCompany?.id);
+
+            if (categoryError) {
+              throw new Error(handleSupabaseError(categoryError.message));
+            }
+
             setShowModal(!showModal);
             if (error) {
               throw new Error(handleSupabaseError(error.message));
@@ -182,7 +195,7 @@ export const columns: ColumnDef<Colum>[] = [
           },
           {
             loading: 'Eliminando...',
-            success: 'Convenio eliminado',
+            success: 'Convenio y categoría eliminados',
             error: (error) => {
               return error;
             },

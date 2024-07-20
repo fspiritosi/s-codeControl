@@ -46,8 +46,8 @@ export default function Cct() {
       .select('*')
       .eq('company_id', actualCompany?.id)
       .select()
-    console.log(guild)
-    // let { data: type, error } = await supabase.from('type').select('*');
+    
+    
     setGuild({
       ...guild,
 
@@ -57,15 +57,13 @@ export default function Cct() {
 
     });
   };
-  console.log("guild: ", guild)
+  
   const fetchCovenant = async () => {
 
     let { data: covenants } = await supabase
       .from('covenant')
       .select('*, guild_id(name)')
       .eq('company_id', actualCompany?.id)
-
-    console.log(data.covenants)
 
     setData({
       ...data,
@@ -83,8 +81,6 @@ export default function Cct() {
       .select('*, covenant_id(name,guild_id(name))')
     // .eq('company_id', actualCompany?.id)
 
-    console.log(category)
-
     setCategory({
       ...category,
 
@@ -94,25 +90,14 @@ export default function Cct() {
 
     });
   };
-  console.log(data.category)
+  
   useEffect(() => {
     fetchGuild();
     fetchCovenant();
     fetchCategory();
 
   }, [actualCompany?.id]);
-  // console.log(data)
   
-// const channels1 = supabase.channel('custom-all-channel')
-// .on(
-//   'postgres_changes',
-//   { event: '*', schema: 'public', table: 'covenant' },
-//   (payload) => {
-//     console.log('Change received!', payload)
-//     fetchCovenant()
-//   }
-// )
-// .subscribe()
 
   
 const channels = supabase.channel('custom-all-channel')
@@ -149,19 +134,9 @@ const channels = supabase.channel('custom-all-channel')
 
 
   
-// const channels2 = supabase.channel('custom-all-channel')
-// .on(
-//   'postgres_changes',
-//   { event: '*', schema: 'public', table: 'category' },
-//   (payload) => {
-//     console.log('Change received!', payload)
-//     fetchCategory()
-//   }
-// )
-// .subscribe()
 
 
-  // console.log(data)
+ 
   return (
     <div>
       {/* <section className="grid sm:grid-cols-2 grid-cols-1 gap-6 mx-7">

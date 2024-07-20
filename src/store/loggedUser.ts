@@ -958,7 +958,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     console.log(
       employees
         ?.find((e) => e.id === '4c58b1c4-f10c-440a-8fc8-9a21ac4602e2')
-        .documents_employees?.filter((e: any) => e.id_document_types.down_document)
+        ?.documents_employees?.filter((e: any) => e.id_document_types.down_document)
     );
 
     console.log('Empleados inactivos:');
