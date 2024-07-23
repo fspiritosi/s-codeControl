@@ -1,8 +1,6 @@
 "use client"
 
-import * as React from "react"
-import { addDays, format } from "date-fns"
-import { DateRange } from "react-day-picker"
+import {useEffect, useState} from "react"
 import { Calendar as CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -22,18 +20,21 @@ import {
     FormMessage,
   } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "./ui/select";
-import { Input } from "./ui/input";
+
 import { Label } from "./ui/label"
 import { z } from "zod";
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { format } from "date-fns"
+import { POST } from "@/app/api/send/route"
 
-export function DiagramForm({activeEmploees}:{activeEmploees:[]}) {
-    const [fromDate, setFromDate] = React.useState<Date | undefined>()
-    const [toDate, setToDate] = React.useState<Date | undefined>()
-    const [duration, setDuration] = React.useState<number>(0);
+export function DiagramForm({activeEmploees, diagrams_types}:{activeEmploees:[], diagrams_types:[]}) {
+    const [fromDate, setFromDate] = useState<Date | undefined>()
+    const [toDate, setToDate] = useState<Date | undefined>()
+    const [duration, setDuration] = useState<number>(0);
 
-    React.useEffect(() => {
+
+  useEffect(() => {
         if (fromDate && toDate) {
             const diferenciaMilisegundos = toDate.getTime() - fromDate.getTime();
             const milisegundosPorDia = 1000 * 60 * 60 * 24;
@@ -44,29 +45,10 @@ export function DiagramForm({activeEmploees}:{activeEmploees:[]}) {
         }
     }, [fromDate && toDate]);
 
-    const novedades = [
-        {   
-            id:"1",
-            nombre: "Trabajando de Dia",
-        },
-        {   
-            id:"2",
-            nombre: "Trabajando de Noche",
-        },
-        {   
-            id:"3",
-            nombre: "Franco",
-        },
-        {   
-            id:"4",
-            nombre: "Licencia x maternidad",
-            cantidad_de_dias: 90
-        }
-    ]
 
     const Diagram = z.object({
-        employee: z.string(),
-        event_diagram: z.string(),
+        employee: z.string().min(1,{message: "Debe selecciónar un empleado"}),
+        event_diagram: z.string().min(1,{message: "Debe selecciónar un tipo de novedad"}),
         initial_date: z.date(),
         finaly_date: z.date(),
     })
@@ -83,8 +65,10 @@ export function DiagramForm({activeEmploees}:{activeEmploees:[]}) {
         }
     })
 
-    function onSubmit(values: Diagram){
-        console.log(values)
+    async function onSubmit(values: Diagram){
+        const data = values;
+        console.log(data)
+       
     }
 
     return (
@@ -108,6 +92,7 @@ export function DiagramForm({activeEmploees}:{activeEmploees:[]}) {
                                     ))}
                                 </SelectContent>
                             </Select>
+                            <FormMessage/>
                         </FormItem>
                     )}
                 />
@@ -124,11 +109,12 @@ export function DiagramForm({activeEmploees}:{activeEmploees:[]}) {
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    {novedades.map((n) => (
-                                        <SelectItem value={n.id} key={n.id}>{n.nombre}</SelectItem>
+                                    {diagrams_types?.map((n) => (
+                                        <SelectItem value={n.id} key={n.id}>{n.name}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
+                            <FormMessage/>
                         </FormItem>
                     )}
                 />
@@ -149,7 +135,7 @@ export function DiagramForm({activeEmploees}:{activeEmploees:[]}) {
                                                     !field.value && "text-muted-foreground"
                                                 )}
                                             >
-                                                {field.value ? format(field.value, "PPP") : "Elegir fecha"}
+                                                {field.value ? field.value.toLocaleDateString() : "Elegir fecha"}
                                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                             </Button>
                                         </PopoverTrigger>
@@ -189,7 +175,7 @@ export function DiagramForm({activeEmploees}:{activeEmploees:[]}) {
                                                 !field.value && "text-muted-foreground"
                                             )}
                                         >
-                                            {field.value ? format(field.value, "PPP") : "Elegir fecha"}
+                                            {field.value ? field.value.toLocaleDateString() : "Elegir fecha"}
                                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                         </Button>
                                     </PopoverTrigger>
