@@ -68,7 +68,7 @@ export function DiagramForm({activeEmploees, diagrams_types}:{activeEmploees:[],
     async function onSubmit(values: Diagram){
         const data = values;
         console.log(data)
-       
+
     }
 
     return (
@@ -87,7 +87,7 @@ export function DiagramForm({activeEmploees, diagrams_types}:{activeEmploees:[],
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    {activeEmploees.map((e) => (
+                                    {activeEmploees.map((e:any) => (
                                         <SelectItem value={e.id} key={e.id}>{e.full_name}</SelectItem>
                                     ))}
                                 </SelectContent>
@@ -109,7 +109,7 @@ export function DiagramForm({activeEmploees, diagrams_types}:{activeEmploees:[],
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    {diagrams_types?.map((n) => (
+                                    {diagrams_types?.map((n:any) => (
                                         <SelectItem value={n.id} key={n.id}>{n.name}</SelectItem>
                                     ))}
                                 </SelectContent>
