@@ -132,12 +132,7 @@ export const CovenantRegister = () => {
         },
     });
 
-    // const [roles, setRoles] = useState<any[] | null>([]);
-
-    // const getRoles = async () => {
-    //     let { data: roles, error } = await supabase.from('roles').select('*').eq('intern', false).neq("name", "Invitado");
-    //     setRoles(roles);
-    // };
+    
     
 
     const fetchGuild = async () => {
@@ -268,7 +263,7 @@ export const CovenantRegister = () => {
                                                 render={({ field }) => (
                                                     <FormItem className="flex flex-col min-w-[250px] " >
                                                         <FormLabel>
-                                                            Asosiacion gremial<span style={{ color: 'red' }}>*</span>
+                                                            Asosiacion gremial
                                                         </FormLabel>
                                                         <Popover>
                                                             <PopoverTrigger asChild>
@@ -348,7 +343,7 @@ export const CovenantRegister = () => {
                                                 render={({ field }) => (
                                                     <FormItem className="flex flex-col min-w-[250px] ">
                                                         <FormLabel>
-                                                            Convenio <span style={{ color: 'red' }}>*</span>
+                                                            Convenio 
                                                         </FormLabel>
                                                         <Popover>
                                                             <PopoverTrigger asChild>
@@ -429,7 +424,7 @@ export const CovenantRegister = () => {
                                                     <FormItem className="flex flex-col min-w-[250px]">
                                                         <FormLabel>
                                                             {' '}
-                                                            Categoría <span style={{ color: 'red' }}>*</span>
+                                                            Categoría 
                                                         </FormLabel>
                                                         <Popover>
                                                             <PopoverTrigger asChild>

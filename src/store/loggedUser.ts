@@ -1,3 +1,4 @@
+
 import { Notifications, SharedUser, VehiclesAPI, profileUser } from '@/types/types';
 import { Company, SharedCompanies, Vehicle } from '@/zodSchemas/schemas';
 import { User } from '@supabase/supabase-js';
@@ -172,8 +173,10 @@ const setEmployeesToShow = (employees: any) => {
       reason_for_termination: employees?.reason_for_termination,
       termination_date: employees?.termination_date,
       status: employees?.status,
-      covenants: employees?.covenants?.name?.trim(),
-      category: employees?.category?.name?.trim(),
+      guild: employees?.guild,
+      covenants: employees?.covenants,
+      category:employees?.category,
+
       documents_employees: employees.documents_employees,
     };
   });
@@ -894,12 +897,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
             name
           ),
           province(
-            name
-          ),
-          covenants(
-          name
-          ),
-          category(
             name
           ),
           workflow_diagram(

@@ -412,8 +412,38 @@ export const accordionSchema = z
       required_error: 'El tipo de contrato es requerido',
     }),
     allocated_to: z.array(z.string()).optional(),
-    covenants: z.string().optional(),
-    category: z.string().optional(),
+    guild: z.string().min(2, {
+      message: 'El nombre debe tener al menos 2 caracteres.',
+  })
+      .max(30, {
+          message: 'El nombre debe tener menos de 30 caracteres.',
+      })
+      // .regex(/^[a-zA-Z ]+$/, {
+      //     message: 'El nombre solo puede contener letras.',
+      // })
+      .trim(),
+  covenants: z.string()
+      .min(2, {
+          message: 'El convenio debe tener al menos 2 caracteres.',
+      })
+      .max(30, {
+          message: 'El convenio debe tener menos de 30 caracteres.',
+      })
+
+      .trim()
+      // .regex(/^[a-zA-Z ]+$/, {
+      //     message: 'El apellido solo puede contener letras.',
+      // })
+      .optional(),
+  category: z.string()
+      .min(1, {
+          message: 'La categoria debe tener al menos 1 caracteres.',
+      })
+      .max(30, {
+          message: 'La categoria debe tener menos de 30 caracteres.',
+      })
+
+      .trim(),
     date_of_admission: z
       .date({
         required_error: 'La fecha de ingreso es requerida',

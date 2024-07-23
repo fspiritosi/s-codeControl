@@ -88,7 +88,7 @@ export const columnsGuild: ColumnDef<Colum>[] = [
     
       
       const guild = row.original;
-
+      
       const handleOpenModal = (id: string) => {
         setId(id);
         
@@ -190,15 +190,51 @@ export const columnsGuild: ColumnDef<Colum>[] = [
               .eq('id', guild.id)
               .eq('company_id', actualCompany?.id)
 
-            
+              const{data: covenant , error: covenantError}= await supabase
+              .from('covenant')
+              .select('*')
+              .eq('guild_id', guild.id)
+              // .eq('company_id', actualCompany?.id)
+              .select();  
+              console.log(guild.id)
+              console.log(covenant)
+              const covenantIds = covenant?.map((covenant) => covenant.id);
+              console.log(covenantIds)
+
+              const { error:coveError } = await supabase
+              .from('covenant')
+              .update({
+                is_active: false,
+                
+              })
+              .eq('guild_id', guild.id)
+              // .eq('company_id', actualCompany?.id)
+              .select();
+              
+
+              const { error: categoryError } = await supabase
+              .from('category')
+              .update({
+                is_active: false,
+              })
+              .in('covenant_id', covenantIds || [])
+              // .eq('company_id', actualCompany?.id);
+
+            if (categoryError) {
+              throw new Error(handleSupabaseError(categoryError.message));
+            }
+
             setShowModal(!showModal);
             if (error) {
               throw new Error(handleSupabaseError(error.message));
             }
-          },
+          },  
+
+            
+            
           {
             loading: 'Eliminando...',
-            success: 'Sindicato eliminado',
+            success: 'Sindicato eliminado, convenio y categorías eliminados',
             error: (error) => {
               return error;
             },
