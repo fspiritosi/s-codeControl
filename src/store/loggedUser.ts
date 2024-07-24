@@ -911,6 +911,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
            documents_employees(
             *,id_document_types(*)
           ),
+          guild(id,name),
+          covenants(id,name),
+          category(id,name),
           contractor_employee(
             customers(
               *

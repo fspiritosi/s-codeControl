@@ -32,6 +32,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Toggle } from './ui/toggle';
 import { error } from 'console';
 import Error from 'next/error';
+import { set } from 'date-fns';
 type dataType = {
     guild: {
         name: string;
@@ -70,8 +71,10 @@ export const CovenantRegister = () => {
     const [accion, setAccion] = useState(searchParams.get('action'))
     const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false)
     const [guildId, setGuildId] = useState()
-    
-    
+    const [showCovenants, setShowCovenants] = useState(false);
+    const [showCategories, setShowCategories] = useState(false);
+    const [showButton, setShowButton] = useState(true);
+    const [showButton2, setShowButton2] = useState(true);
     const [guildData, setGuildData] = useState<dataType>({
         guild: [],
         covenants: [],
@@ -92,8 +95,8 @@ export const CovenantRegister = () => {
                 .max(30, {
                     message: 'El nombre debe tener menos de 30 caracteres.',
                 })
-                .regex(/^[a-zA-Z ]+$/, {
-                    message: 'El nombre solo puede contener letras.',
+                .regex(/^[a-zA-Z0-9 ]+$/, {
+                    message: 'El nombre solo puede contener letras y números.',
                 })
                 .trim(),
             covenants: z.string()
@@ -108,7 +111,8 @@ export const CovenantRegister = () => {
                 // .regex(/^[a-zA-Z ]+$/, {
                 //     message: 'El apellido solo puede contener letras.',
                 // })
-                .optional(),
+                .optional()
+                .nullable(),
             category: z.string()
                 .min(1, {
                     message: 'La categoria debe tener al menos 1 caracteres.',
@@ -117,7 +121,9 @@ export const CovenantRegister = () => {
                     message: 'La categoria debe tener menos de 30 caracteres.',
                 })
 
-                .trim(),
+                .trim()
+                .optional()
+                .nullable(),
 
         });
 
@@ -132,8 +138,8 @@ export const CovenantRegister = () => {
         },
     });
 
-    
-    
+
+
 
     const fetchGuild = async () => {
         try {
@@ -142,7 +148,7 @@ export const CovenantRegister = () => {
                 .select('*')
                 .eq('company_id', company?.id)
                 .eq('is_active', true)
-            
+
 
             setData({
                 ...data,
@@ -159,17 +165,19 @@ export const CovenantRegister = () => {
         }
     };
 
-    
 
-    const fetchData = async (guild_id: string) => {
+
+    const fetchData = async (guild_id?: string) => {
         try {
             let { data: covenants } = await supabase
                 .from('covenant')
-                .select('*, guild_id(is_active)')
+                .select('*')
                 .eq('company_id', company?.id)
+                .eq('is_active', true)
                 .eq('guild_id', guild_id)
-                .eq('guild_id(is_active)', true)
 
+            // .eq('guild_id(is_active)', true)
+            console.log(covenants, 'covenants')
 
             setData({
                 ...data,
@@ -185,53 +193,42 @@ export const CovenantRegister = () => {
             toast.error('Error fetching data');
         }
     };
-    
+
 
     useEffect(() => {
         fetchGuild()
     }, [])
-    
-        
-    
-    
-    
+
+
+
+
+
 
     const fetchCategory = async (covenant_id: string) => {
         let { data: category } = await supabase
             .from('category')
             .select('*')
-            .eq('covenant_id', covenant_id);
+            .eq('covenant_id', covenant_id)
+            .eq('is_active', true)
 
         setData({
             ...data,
             category: category as any,
         });
-        
+
     };
 
     function onSubmit(values: z.infer<typeof covenantRegisterSchema>) {
-        
+
         setOpen(false);
 
 
         return 'convenio registrado correctamente';
 
     }
-    const channels = supabase
-    .channel('custom-all-channel')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'covenant' }, (payload) => {
-      
-    })
-    .subscribe();
-
-  const channels1 = supabase
-    .channel('custom-all-channel')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'guild' }, (payload) => {
-      fetchGuild();
-    })
-    .subscribe();
-
     
+
+
 
     const handleOpen = () => {
         setOpen(true);
@@ -311,11 +308,12 @@ export const CovenantRegister = () => {
                                                                                 key={option.name}
                                                                                 onSelect={() => {
                                                                                     form.setValue('guild', option.name);
-                                                                                    const guild_id = data.guild.find((e) => e.id === option?.id);
-                                                                                    
-                                                                                    setGuildId(guild_id?.id as any || null)
-                                                                                    
-                                                                                    fetchData(guild_id?.id as any);
+                                                                                    console.log(option.id, 'option.id')
+                                                                                    const guild_id = data?.guild?.find((e) => e.id === option?.id);
+
+                                                                                    setGuildId(guild_id as any || null)
+                                                                                    console.log(guild_id?.id, 'guild_id')
+                                                                                    fetchData(guild_id?.id as any)
                                                                                     form.setValue('covenants', '');
                                                                                 }}
                                                                             >
@@ -337,144 +335,79 @@ export const CovenantRegister = () => {
                                                     </FormItem>
                                                 )}
                                             />
-                                            <FormField
-                                                control={form.control}
-                                                name="covenants"
-                                                render={({ field }) => (
-                                                    <FormItem className="flex flex-col min-w-[250px] ">
-                                                        <FormLabel>
-                                                            Convenio 
-                                                        </FormLabel>
-                                                        <Popover>
-                                                            <PopoverTrigger asChild>
-                                                                <FormControl>
-                                                                    <Button
-                                                                        disabled={readOnly}
-                                                                        variant="outline"
-                                                                        role="combobox"
-                                                                        value={field.value}
-                                                                        className={cn('w-[300px] justify-between', !field.value && 'text-muted-foreground')}
-                                                                    >
-                                                                        {field.value || 'Seleccionar Convenio'}
-                                                                        <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                                                    </Button>
-                                                                </FormControl>
-                                                            </PopoverTrigger>
-                                                            <PopoverContent className="w-[300px] p-0 max-h-[200px] overflow-y-auto" asChild>
-                                                                <Command>
-                                                                    <CommandInput
-                                                                        disabled={readOnly}
-                                                                        placeholder="Buscar convenio..."
-                                                                        onValueChange={(value: any) => setSearchText(value)}
-                                                                        className="h-9" />
-                                                                    <CommandEmpty className="py-2 px-2">
-                                                                        <ModalCct modal="addCovenant"
-                                                                            fetchData={fetchData}
-                                                                            guildId={guildId}
-                                                                            searchText={searchText}
+                                            {showButton && (
+                                            <Button
+                                                onClick={() => {
+                                                    setShowCovenants(true); // Suponiendo que esta función hace algo más en tu aplicación
+                                                    setShowButton(false); // Esto hará que el botón desaparezca después de ser clickeado
+                                                  }}
+                                            // Otras propiedades del botón
+                                            >
+                                                Agregar Convenio
+                                            </Button>
+                                        )}
+                                            {showCovenants && (<>
+                                                <FormField
+                                                    control={form.control}
+                                                    name="covenants"
+                                                    render={({ field }) => (
+                                                        <FormItem className="flex flex-col min-w-[250px] ">
+                                                            <FormLabel>
+                                                                Convenio
+                                                            </FormLabel>
+                                                            <Popover>
+                                                                <PopoverTrigger asChild>
+                                                                    <FormControl>
+                                                                        <Button
+                                                                            disabled={readOnly}
+                                                                            variant="outline"
+                                                                            role="combobox"
+                                                                            value={field.value || ""}
+                                                                            className={cn('w-[300px] justify-between', !field.value && 'text-muted-foreground')}
                                                                         >
-                                                                            <Button
-                                                                                disabled={readOnly}
-                                                                                variant="outline"
-                                                                                role="combobox"
-                                                                                className={cn('w-full justify-between', !field.value && 'text-muted-foreground')}
+                                                                            {field.value || 'Seleccionar Convenio'}
+                                                                            <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                                        </Button>
+                                                                    </FormControl>
+                                                                </PopoverTrigger>
+                                                                <PopoverContent className="w-[300px] p-0 max-h-[200px] overflow-y-auto" asChild>
+                                                                    <Command>
+                                                                        <CommandInput
+                                                                            disabled={readOnly}
+                                                                            placeholder="Buscar convenio..."
+                                                                            onValueChange={(value: any) => setSearchText(value)}
+                                                                            className="h-9" />
+                                                                        <CommandEmpty className="py-2 px-2">
+                                                                            <ModalCct modal="addCovenant"
+                                                                                fetchData={fetchData}
+                                                                                guildId={guildId}
+                                                                                searchText={searchText}
                                                                             >
-                                                                                Agregar Convenio
-                                                                                <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                                                            </Button>
-                                                                        </ModalCct>
-                                                                    </CommandEmpty>
-                                                                    <CommandGroup className="max-h-[200px] overflow-y-auto">
-                                                                        {data.covenants?.map((option) => (
-                                                                            <CommandItem
-                                                                                value={option.name}
-                                                                                key={option.name}
-                                                                                onSelect={() => {
-                                                                                    form.setValue('covenants', option.name);
-                                                                                    const covenant_id = data.covenants.find((e) => e.id === option?.id);
-                                                                                    
-                                                                                    setCovenantId(covenant_id?.id as any || null)
-                                                                                    
-                                                                                    fetchCategory(covenant_id?.id as any);
-                                                                                    form.setValue('category', '');
-                                                                                }}
-                                                                            >
-                                                                                {option.name}
-                                                                                <CheckIcon
-                                                                                    className={cn(
-                                                                                        'ml-auto h-4 w-4',
-                                                                                        option.name === field.value ? 'opacity-100' : 'opacity-0'
-                                                                                    )}
-                                                                                />
-                                                                            </CommandItem>
-                                                                        ))}
-                                                                    </CommandGroup>
-                                                                </Command>
-                                                            </PopoverContent>
-                                                        </Popover>
-                                                        <FormDescription>Selecciona el convenio</FormDescription>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="category"
-                                                render={({ field }) => (
-                                                    <FormItem className="flex flex-col min-w-[250px]">
-                                                        <FormLabel>
-                                                            {' '}
-                                                            Categoría 
-                                                        </FormLabel>
-                                                        <Popover>
-                                                            <PopoverTrigger asChild>
-                                                                <FormControl>
-                                                                    <Button
-                                                                        disabled={readOnly}
-                                                                        variant="outline"
-                                                                        role="combobox"
-                                                                        className={cn('w-[300px] justify-between', !field.value && 'text-muted-foreground')}
-                                                                    >
-                                                                        {field.value || 'Seleccionar Categoría'}
-                                                                        <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                                                    </Button>
-                                                                </FormControl>
-                                                            </PopoverTrigger>
-                                                            <PopoverContent className="w-[300px] p-0" asChild>
-                                                                <Command>
-                                                                    <CommandInput
-                                                                        disabled={readOnly}
-                                                                        placeholder="Buscar categoria..."
-                                                                        onValueChange={(value: any) => setSearchText(value)}
-                                                                        className="h-9" />
-                                                                    <CommandEmpty className="py-2 px-2">
-                                                                        <ModalCct modal="addCategory"
-                                                                            fetchCategory={fetchCategory}
-                                                                            covenant_id={covenantId as any}
-                                                                            covenantOptions={data.category as any}
-                                                                            searchText={searchText}
-                                                                        >
-                                                                            <Button
-                                                                                disabled={readOnly}
-                                                                                variant="outline"
-                                                                                role="combobox"
-                                                                                className={cn('w-full justify-between', !field.value && 'text-muted-foreground')}
-                                                                            >
-                                                                                Agregar Categoría
-                                                                                <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                                                            </Button>
-                                                                        </ModalCct>
-                                                                    </CommandEmpty>
-                                                                    <CommandGroup className="max-h-[200px] overflow-y-auto">
-                                                                        <>
-                                                                            {data.category?.map((option) => (
+                                                                                <Button
+                                                                                    disabled={readOnly}
+                                                                                    variant="outline"
+                                                                                    role="combobox"
+                                                                                    className={cn('w-full justify-between', !field.value && 'text-muted-foreground')}
+                                                                                >
+                                                                                    Agregar Convenio
+                                                                                    <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                                                </Button>
+                                                                            </ModalCct>
+                                                                        </CommandEmpty>
+                                                                        <CommandGroup className="max-h-[200px] overflow-y-auto">
+                                                                            {data.covenants?.map((option) => (
                                                                                 <CommandItem
                                                                                     value={option.name}
-                                                                                    key={option.id}
+                                                                                    key={option.name}
                                                                                     onSelect={() => {
-                                                                                        form.setValue('category', option.name);
-                                                                                    }}
+                                                                                        form.setValue('covenants', option.name);
+                                                                                        const covenant_id = data.covenants.find((e) => e.id === option?.id);
 
+                                                                                        setCovenantId(covenant_id?.id as any || null)
+
+                                                                                        fetchCategory(covenant_id?.id as any);
+                                                                                        form.setValue('category', '');
+                                                                                    }}
                                                                                 >
                                                                                     {option.name}
                                                                                     <CheckIcon
@@ -485,10 +418,64 @@ export const CovenantRegister = () => {
                                                                                     />
                                                                                 </CommandItem>
                                                                             ))}
-                                                                        </>
-                                                                        <>
+                                                                        </CommandGroup>
+                                                                    </Command>
+                                                                </PopoverContent>
+                                                            </Popover>
+                                                            <FormDescription>Selecciona el convenio</FormDescription>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                {showButton2 && (
+                                                <Button
+                                                    onClick={() =>{ setShowCategories(true)
+                                                        setShowButton2(false); // Esto hará que el botón desaparezca después de ser clickeado
+                                                    }}
+                                                // Otras propiedades del botón
+                                                >
+                                                    Agregar Categoría
+                                                </Button>
+                                            )}
+                                            </>
+                                            )}
+                                            {showCategories && (
+                                                <FormField
+                                                    control={form.control}
+                                                    name="category"
+                                                    render={({ field }) => (
+                                                        <FormItem className="flex flex-col min-w-[250px]">
+                                                            <FormLabel>
+                                                                {' '}
+                                                                Categoría
+                                                            </FormLabel>
+                                                            <Popover>
+                                                                <PopoverTrigger asChild>
+                                                                    <FormControl>
+                                                                        <Button
+                                                                            disabled={readOnly}
+                                                                            variant="outline"
+                                                                            role="combobox"
+                                                                            className={cn('w-[300px] justify-between', !field.value && 'text-muted-foreground')}
+                                                                        >
+                                                                            {field.value || 'Seleccionar Categoría'}
+                                                                            <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                                        </Button>
+                                                                    </FormControl>
+                                                                </PopoverTrigger>
+                                                                <PopoverContent className="w-[300px] p-0" asChild>
+                                                                    <Command>
+                                                                        <CommandInput
+                                                                            disabled={readOnly}
+                                                                            placeholder="Buscar categoria..."
+                                                                            onValueChange={(value: any) => setSearchText(value)}
+                                                                            className="h-9" />
+                                                                        <CommandEmpty className="py-2 px-2">
                                                                             <ModalCct modal="addCategory"
-                                                                                fetchCategory={fetchCategory} covenant_id={covenantId} covenantOptions={data.covenants}
+                                                                                fetchCategory={fetchCategory}
+                                                                                covenant_id={covenantId as any}
+                                                                                covenantOptions={data.category as any}
+                                                                                searchText={searchText}
                                                                             >
                                                                                 <Button
                                                                                     disabled={readOnly}
@@ -500,16 +487,53 @@ export const CovenantRegister = () => {
                                                                                     <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                                                 </Button>
                                                                             </ModalCct>
-                                                                        </>
-                                                                    </CommandGroup>
-                                                                </Command>
-                                                            </PopoverContent>
-                                                        </Popover>
-                                                        <FormDescription>Selecciona la categoría</FormDescription>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
+                                                                        </CommandEmpty>
+                                                                        <CommandGroup className="max-h-[200px] overflow-y-auto">
+                                                                            <>
+                                                                                {data.category?.map((option) => (
+                                                                                    <CommandItem
+                                                                                        value={option.name}
+                                                                                        key={option.id}
+                                                                                        onSelect={() => {
+                                                                                            form.setValue('category', option.name);
+                                                                                        }}
+
+                                                                                    >
+                                                                                        {option.name}
+                                                                                        <CheckIcon
+                                                                                            className={cn(
+                                                                                                'ml-auto h-4 w-4',
+                                                                                                option.name === field.value ? 'opacity-100' : 'opacity-0'
+                                                                                            )}
+                                                                                        />
+                                                                                    </CommandItem>
+                                                                                ))}
+                                                                            </>
+                                                                            <>
+                                                                                <ModalCct modal="addCategory"
+                                                                                    fetchCategory={fetchCategory} covenant_id={covenantId} covenantOptions={data.covenants}
+                                                                                >
+                                                                                    <Button
+                                                                                        disabled={readOnly}
+                                                                                        variant="outline"
+                                                                                        role="combobox"
+                                                                                        className={cn('w-full justify-between', !field.value && 'text-muted-foreground')}
+                                                                                    >
+                                                                                        Agregar Categoría
+                                                                                        <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                                                    </Button>
+                                                                                </ModalCct>
+                                                                            </>
+                                                                        </CommandGroup>
+                                                                    </Command>
+                                                                </PopoverContent>
+                                                            </Popover>
+                                                            <FormDescription>Selecciona la categoría</FormDescription>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            )}
                                         </div>
                                         <div className="flex justify-end gap-4">
                                             <AlertDialogCancel>Cancel</AlertDialogCancel>

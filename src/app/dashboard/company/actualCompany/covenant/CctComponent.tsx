@@ -22,8 +22,7 @@ export default function Cct() {
   const allCompany = useLoggedUserStore((state) => state.allCompanies);
   const [showInactive, setShowInactive] = useState(false);
   const useSearch = useSearchParams();
-  //const fetchContacts = useCountriesStore((state) => state.fetchContacts);
-  // const subscribeToContactsChanges = useCountriesStore((state) => state.subscribeToContactsChanges);
+  
   const contractorCompanies = useCountriesStore((state) =>
     state.contacts?.filter((company: any) => company.company_id.toString() === actualCompany?.id)
   );
@@ -46,8 +45,8 @@ export default function Cct() {
       .select('*')
       .eq('company_id', actualCompany?.id)
       .select()
-    
-    
+
+
     setGuild({
       ...guild,
 
@@ -57,7 +56,7 @@ export default function Cct() {
 
     });
   };
-  
+
   const fetchCovenant = async () => {
 
     let { data: covenants } = await supabase
@@ -90,53 +89,44 @@ export default function Cct() {
 
     });
   };
-  
+
   useEffect(() => {
     fetchGuild();
     fetchCovenant();
     fetchCategory();
 
   }, [actualCompany?.id]);
-  
-
-  
-const channels = supabase.channel('custom-all-channel')
-.on(
-  'postgres_changes',
-  { event: '*', schema: 'public', table: 'guild' },
-  (payload) => {
-    console.log('Change received!', payload)
-    fetchGuild()
-  }
-  
-)
-.on(
-  'postgres_changes',
-  { event: '*', schema: 'public', table: 'covenant' },
-  (payload) => {
-    console.log('Change received!', payload)
-    fetchCovenant()
-  }
-)
-.on(
-  'postgres_changes',
-  { event: '*', schema: 'public', table: 'category' },
-  (payload) => {
-    console.log('Change received!', payload)
-    // fetchCategory()
-  }
-)
-.subscribe()
-
-
-
 
 
 
   
+  const channels = supabase
+    .channel('custom-all-channel')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'guild' }, (payload) => {
+      // console.log('Change received!', payload);
+      fetchGuild();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'covenant' }, (payload) => {
+      // console.log('Change received!', payload);
+      fetchCovenant();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'category' }, (payload) => {
+      // console.log('Change received!', payload);
+      fetchCategory();
+    })
+    .subscribe();
 
 
- 
+
+
+
+
+
+
+
+
+
+
   return (
     <div>
       {/* <section className="grid sm:grid-cols-2 grid-cols-1 gap-6 mx-7">

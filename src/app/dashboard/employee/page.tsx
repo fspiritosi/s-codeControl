@@ -4,7 +4,8 @@ import EmployeeDocumentsTabs from '../document/documentComponents/EmployeeDocume
 import EmployeeListTabs from '../document/documentComponents/EmployeeListTabs';
 import TypesDocumentAction from '../document/documentComponents/TypesDocumentAction';
 import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
-
+import Link from 'next/link';
+import { buttonVariants } from '@/components/ui/button';
 const EmployeePage = async () => {
   const viewData = {
     defaultValue: 'employees',
@@ -16,6 +17,19 @@ const EmployeePage = async () => {
         content: {
           title: 'Empleados',
           description: 'Aquí encontrarás todos empleados dados de baja',
+          buttonAction: (
+            <div className="flex gap-4 flex-wrap pl-6">
+              <Link
+                href="/dashboard/employee/action?action=new"
+                className={[
+                  'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
+                  buttonVariants({ variant: 'outline' }),
+                ].join(' ')}
+              >
+                Agregar nuevo empleado
+              </Link>
+            </div>
+          ),
           component: <EmployeeListTabs actives inactives />,
         },
       },

@@ -107,10 +107,7 @@ export default function CovenantComponent({ id }: { id: string }) {
       const data = new FormData();
       data.append("id", id);
       data.append("name", formData.name);
-      // data.append("contact_email", formData.contact_email || "");
-      // data.append("contact_phone", formData.contact_phone);
-      // data.append("contact_charge", formData.contact_charge);
-      // data.append("customer", formData.customer);
+     
       const company_id = actualCompany;
       data.append("company_id", company_id as string);
       toast.loading("Creando contacto")
@@ -168,38 +165,7 @@ export default function CovenantComponent({ id }: { id: string }) {
                   </CardDescription>
                 )}
               </div>
-              {/* <div>
-                <Label htmlFor="contact_email">Email</Label>
-                <Input
-                  id="contact_email"
-                  {...register('contact_email')}
-                  className="max-w-[350px] w-[300px]"
-                  placeholder="email"
-                  defaultValue={contactData?.contact_email || ''}
-                  readOnly={readOnly}
-                />
-                {formErrors.contact_email && (
-                  <CardDescription id="contact_email_error" className="max-w-[300px]">
-                    {formErrors.contact_email.message}
-                  </CardDescription>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="contact_phone">Número de teléfono</Label>
-                <Input
-                  id="contact_phone"
-                  {...register('contact_phone')}
-                  className="max-w-[350px] w-[300px]"
-                  placeholder="teléfono"
-                  defaultValue={contactData?.contact_phone || ''}
-                  readOnly={readOnly}
-                />
-                {formErrors.contact_phone && (
-                  <CardDescription id="contact_phone_error" className="max-w-[300px]">
-                    {formErrors.contact_phone.message}
-                  </CardDescription>
-                )}
-              </div> */}
+             
 
               <div>
                 <Label htmlFor="category">Seleccione una Categoria</Label>
@@ -229,22 +195,7 @@ export default function CovenantComponent({ id }: { id: string }) {
                   </CardDescription>
                 )}
               </div>
-              {/* <div>
-                <Label htmlFor="contact_charge">Cargo</Label>
-                <Input
-                  id="contact_charge"
-                  {...register('contact_charge')}
-                  className="max-w-[350px] w-[300px]"
-                  placeholder="cargo en la empresa"
-                  defaultValue={contactData?.contact_charge || ''}
-                  readOnly={readOnly}
-                />
-                {formErrors.contact_charge && (
-                  <CardDescription id="contact_charge_error" className="max-w-[300px]">
-                    {formErrors.contact_charge.message}
-                  </CardDescription>
-                )}
-              </div> */}
+              
             </div>
             {action === 'view' ? null : (
               <Button type="submit" className="mt-5">
