@@ -245,7 +245,7 @@ export function DataCustomers<TData, TValue>({
                 table.getRowModel().rows?.map((row) => (
                   <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                     {row.getVisibleCells()?.map((cell) => {
-                      let is_active = (cell.row.original as any).is_active;
+                      let is_active = (cell.row.original as any)?.is_active;
                       return (showInactive && !is_active) || (!showInactive && is_active) ? (
                         <TableCell
                           key={cell.id}

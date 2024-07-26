@@ -116,36 +116,8 @@ export default function Cct() {
     })
     .subscribe();
 
-
-
-
-
-
-
-
-
-
-
-
   return (
-    <div>
-      {/* <section className="grid sm:grid-cols-2 grid-cols-1 gap-6 mx-7">
-        
-        <CardTitle className="text-[2vw]">Bienvenido a Clientes</CardTitle>
-      </section> */}
-      <section className="grid grid-cols-1  xl:grid-cols-2 gap-3 mb-4">
-        <Card className="col-span-3 flex flex-col justify-between overflow-hidden">
           <div>
-            <CardHeader className="w-full bg-muted dark:bg-muted/50 border-b-2">
-
-              <CardTitle className="text-2xl font-bold tracking-tight flex justify-between">
-                Convenios
-                <CovenantRegister />
-              </CardTitle>
-              {/* <CardDescription className="text-muted-foreground">Todos tus Convenios</CardDescription> */}
-            </CardHeader>
-
-            <CardContent>
               <Tabs defaultValue="guild" className="w-full">
                 <TabsList className="ml-4 mt-4">
                   <TabsTrigger value="guild">Sindicatos</TabsTrigger>
@@ -187,11 +159,7 @@ export default function Cct() {
                   />
                 </TabsContent>
               </Tabs>
-            </CardContent>
           </div>
-          <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
-        </Card>
-      </section>
-    </div>
+         
   );
 }
