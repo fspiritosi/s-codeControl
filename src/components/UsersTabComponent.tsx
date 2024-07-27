@@ -1,37 +1,39 @@
-
+'use client';
 import React from 'react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { columnsGuests } from '@/app/dashboard/company/actualCompany/components/columnsGuests';
 import { DataTable } from '@/app/dashboard/company/actualCompany/components/data-table';
 import { columns } from '@/app/dashboard/company/actualCompany/components/columns';
 import { supabaseServer } from '@/lib/supabase/server';
-import {cookies} from 'next/headers';
-
-export default async function UsersTabComponent() {
-    const supabase = supabaseServer();
-    const user = await supabase.auth.getUser();
+import cookies from 'js-cookie';
+import { useLoggedUserStore } from '@/store/loggedUser';
+export default function UsersTabComponent() {
+  const sharedUsersAll = useLoggedUserStore((state) => state.sharedUsers);
+  const ownerUser = useLoggedUserStore((state) => state.profile);
+    // const supabase = supabaseServer();
+    // const user = await supabase.auth.getUser();
     const URL = process.env.NEXT_PUBLIC_BASE_URL;
-    const coockiesStore = cookies();
-    const company_id = coockiesStore.get('actualComp')?.value;
-    const ownerUserResponse = await fetch(`${URL}/api/profile/?user=${user?.data?.user?.id}`);
-    const ownerUser = await ownerUserResponse.json();
-    console.log(ownerUser.data);
-  
- 
-    const { data: userShared } = await supabase
-    .from('share_company_users')
-    .select('*')
-    .eq('profile_id', user?.data?.user?.id);
-    console.log(userShared);
     
-    let { data: sharedUsersAll, error: sharedError } = await supabase
-    .from('share_company_users')
-    .select(`*, profile_id(*)`)
-      .eq('company_id', company_id);
+    const company_id = cookies.get('actualComp');
+    // const ownerUserResponse = await fetch(`${URL}/api/profile/?user=${user?.data?.user?.id}`);
+    // const ownerUser = await ownerUserResponse.json();
+    // console.log(ownerUser.data);
+    const userShared = cookies.get('guestRole');
+ 
+    // const { data: userShared } = await supabase
+    // .from('share_company_users')
+    // .select('*')
+    // .eq('profile_id', user?.data?.user?.id);
+    // console.log(userShared);
+    
+    // let { data: sharedUsersAll, error: sharedError } = await supabase
+    // .from('share_company_users')
+    // .select(`*, profile_id(*)`)
+    //   .eq('company_id', company_id);
 
-    console.log(sharedUsersAll, "sharedUsersAll");
+    // console.log(sharedUsersAll, "sharedUsersAll");
 
-    const owner = ownerUser.data?.map((user: any) => {
+    const owner = ownerUser?.map((user: any) => {
         return {
           email: user.email,
           fullname: user.fullname as string,
@@ -41,7 +43,7 @@ export default async function UsersTabComponent() {
           img: user.avatar || '',
         };
       });
-    console.log(owner);
+    // console.log(owner);
 
     const sharedUsers =
     sharedUsersAll?.map((user) => {
@@ -53,10 +55,10 @@ export default async function UsersTabComponent() {
         alta: user.created_at,
         id: user.id,
         img: user.profile_id.avatar || '',
-        customerName: user.employee?.customer_id?.name,
+        customerName: user.customer_id?.name,
       };
     }) || [];
-    console.log(sharedUsers);
+    // console.log(sharedUsers);
     const data = owner?.concat(
         sharedUsers
           ?.filter((user) => user.role !== 'Invitado') // Filtrar usuarios donde el rol no sea "Invitado"
@@ -65,7 +67,7 @@ export default async function UsersTabComponent() {
             fullname: user.fullname || '',
           })) || []
       );
-      console.log(data);
+      // console.log(data);
       const guestsData =
         sharedUsers
           ?.filter((user) => user.role === 'Invitado') // Filtrar usuarios donde el rol no sea "Invitado"
@@ -73,7 +75,7 @@ export default async function UsersTabComponent() {
             ...user,
             fullname: user.fullname || '',
           })) || [];
-          console.log(guestsData);
+          // console.log(guestsData);
   
   return (
     <div>
