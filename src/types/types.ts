@@ -147,9 +147,9 @@ export type Employee = {
   reason_for_termination?: string | undefined;
   termination_date?: Date | undefined | string;
   status?: 'Avalado' | 'No avalado';
-  guild?: { name: string } | undefined;
-  covenant?: { id: string; name: string } | undefined;
-  category?:{ id: string; name: string } | undefined;
+  guild?: string|undefined;
+  covenant?: string|undefined;
+  category?: string|undefined;
 };
 
 export type Documents = {
