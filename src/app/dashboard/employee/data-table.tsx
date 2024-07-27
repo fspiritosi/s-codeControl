@@ -123,6 +123,9 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
     hierrical_position: createOptions('hierrical_position'),
     workflow_diagram: createOptions('workflow_diagram'),
     status: createOptions('status'),
+    guild: createOptions('guild'),
+    covenants: createOptions('covenants'),
+    category: createOptions('category'),
   };
 
   function createOptions(key: string) {
@@ -206,6 +209,21 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
       option: allOptions.status,
       label: 'Estado',
     },
+    guild: {
+      name: 'guild',
+      option: allOptions.guild,
+      label: 'Gremio',
+    },
+    covenants: {
+      name: 'covenants',
+      option: allOptions.covenants,
+      label: 'Convenios',
+    },
+    category: {
+      name: 'category',
+      option: allOptions.category,
+      label: 'Categoria',
+    },
   };
 
   let table = useReactTable({
@@ -245,6 +263,9 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
       city: 'Todos',
       hierrical_position: 'Todos',
       status: 'Todos',
+      guild: 'Todos',
+      covenants: 'Todos',
+      category: 'Todos',
     });
   };
 

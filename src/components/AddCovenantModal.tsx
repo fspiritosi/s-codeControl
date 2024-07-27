@@ -34,19 +34,19 @@ import {
   }: {
     children: React.ReactNode;
     fetchData: (name: string) => Promise<void>;
-    guildId: string;
+    guildId: {name:string;id:string};
     searchText:string;
   }) {
     const [name, setName] = useState('');
     const { toast } = useToast();
     const company = useLoggedUserStore((state) => state.actualCompany?.id);
-
+    
     useEffect(() => {
       setName(searchText);
     }, [searchText]);
     async function onSubmit() {
       try {
-        schema.parse(name);
+        // schema.parse(name);
       } catch (error: ZodError | any) {
         toast({
           variant: 'destructive',
@@ -55,10 +55,11 @@ import {
         });
         return;
       }
-  
+      
+
       const { data, error } = await supabase
         .from('covenant')
-        .insert([{ name: name.slice(0, 1).toUpperCase() + name.slice(1), company_id: company, guild_id: guildId  }])
+        .insert([{ name:name, company_id: company, guild_id: guildId.id  }])
         .select();
       if (error) {
         toast({
@@ -72,7 +73,7 @@ import {
         description: 'El convenio ha sido agregado correctamente',
       });
       setName('');
-      fetchData(guildId);
+      fetchData(guildId.id);
     }
   
     return (

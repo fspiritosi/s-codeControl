@@ -15,7 +15,7 @@ export default async function UsersTabComponent() {
     const company_id = coockiesStore.get('actualComp')?.value;
     const ownerUserResponse = await fetch(`${URL}/api/profile/?user=${user?.data?.user?.id}`);
     const ownerUser = await ownerUserResponse.json();
-  console.log(ownerUser.data);
+    console.log(ownerUser.data);
   
  
     const { data: userShared } = await supabase

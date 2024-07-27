@@ -40,23 +40,23 @@ import { useEffect, useState } from 'react';
 interface DataCategoryProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any;
   data: TData[];
-  allCompany: any[];
-  showInactive: boolean;
+  // allCompany: any[];
+  // showInactive: boolean;
   localStorageName: string;
-  setShowInactive: (showInactive: boolean) => void;
+  // setShowInactive: (showInactive: boolean) => void;
 }
 
 export function DataCategory<TData, TValue>({
   columns,
   data,
-  showInactive,
-  setShowInactive,
-  allCompany,
+  // showInactive,
+  // setShowInactive,
+  // allCompany,
   localStorageName,
 }: DataCategoryProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const defaultVisibleColumns = ['name', 'id', 'company_id'];
-
+  const [showInactive, setShowInactive] = useState(false);
   const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
     if (typeof window !== 'undefined') {
       const valorGuardado = JSON.parse(localStorage.getItem(localStorageName) || '[]');

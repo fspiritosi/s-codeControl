@@ -129,9 +129,6 @@ export default function Cct() {
                     <DataCct
                       columns={columns}
                       data={data.covenants || []}
-                      allCompany={allCompany}
-                      showInactive={showInactive}
-                      setShowInactive={setShowInactive}
                       localStorageName="covenantColums"
                     />
                   </div>
@@ -141,9 +138,6 @@ export default function Cct() {
                     <DataGuild
                       columns={columnsGuild}
                       data={guild.guild || []}
-                      allCompany={allCompany}
-                      showInactive={showInactive}
-                      setShowInactive={setShowInactive}
                       localStorageName="guildColums"
                     />
                   </div>
@@ -152,9 +146,6 @@ export default function Cct() {
                   <DataCategory
                     columns={columnsCategory}
                     data={category.category || []}
-                    allCompany={allCompany}
-                    showInactive={showInactive}
-                    setShowInactive={setShowInactive}
                     localStorageName="categoryColums"
                   />
                 </TabsContent>

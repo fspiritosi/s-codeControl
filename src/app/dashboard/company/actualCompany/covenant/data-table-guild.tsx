@@ -40,23 +40,23 @@ import { useEffect, useState } from 'react';
 interface DataCctProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any;
   data: TData[];
-  allCompany: any[];
-  showInactive: boolean;
+  // allCompany: any[];
+  // showInactive: boolean;
   localStorageName: string;
-  setShowInactive: (showInactive: boolean) => void;
+  // setShowInactive: (showInactive: boolean) => void;
 }
 
 export function DataGuild<TData, TValue>({
   columns,
   data,
-  showInactive,
-  setShowInactive,
-  allCompany,
+  // showInactive,
+  // setShowInactive,
+  // allCompany,
   localStorageName,
 }: DataCctProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const defaultVisibleColumns = ['name'];
-
+  const [showInactive, setShowInactive] = useState(false);
   const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
     if (typeof window !== 'undefined') {
       const valorGuardado = JSON.parse(localStorage.getItem(localStorageName) || '[]');
