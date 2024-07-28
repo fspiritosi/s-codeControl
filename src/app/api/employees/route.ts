@@ -9,16 +9,33 @@ export async function GET(request: NextRequest) {
   try {
     let { data: employees, error } = await supabase
       .from('employees')
-      .select('*')
+      .select(   `*, city (
+        name
+      ),
+      province(
+        name
+      ),
+      workflow_diagram(
+        name
+      ),
+      hierarchical_position(
+        name
+      ),
+      birthplace(
+        name
+      ),
+      contractor_employee(
+        customers(
+          *
+        )
+      )`)
       // Filters
       .eq('company_id', company_id);
-
-    const data = employees;
 
     if (error) {
       throw new Error(JSON.stringify(error));
     }
-    return Response.json({ data });
+    return Response.json({ employees });
   } catch (error) {
     console.log(error);
   }
