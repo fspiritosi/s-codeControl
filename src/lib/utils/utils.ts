@@ -35,7 +35,7 @@ export const mapVehicle = (doc: any) => {
   const formattedDate = formatDate(doc.validity);
   return {
     date: doc.created_at ? format(new Date(doc.created_at), 'dd/MM/yyyy') : 'No vence',
-    allocated_to: doc.applies?.type_of_vehicle?.name,
+    allocated_to: doc.applies?.allocated_to,
     documentName: doc.document_types?.name,
     state: doc.state,
     multiresource: doc.document_types?.multiresource ? 'Si' : 'No',

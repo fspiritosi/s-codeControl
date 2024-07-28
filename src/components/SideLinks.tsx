@@ -53,7 +53,7 @@ const Allinks = [
     icon: <MdListAlt size={sizeIcons} />,
   },
   {
-    name: 'Mantenimiento',
+    name: 'Formularios',
     href: '/dashboard/maintenance',
     icon: <ArchiveIcon className="size-5" />,
   },

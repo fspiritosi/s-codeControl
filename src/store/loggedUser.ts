@@ -429,7 +429,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
           )`
       )
       .eq('company_id', get()?.actualCompany?.id)
-      .eq('status', 'No avalado');
+      .eq('status', 'Incompleto');
 
     if (error) {
       console.error('Error al obtener los empleados no avalados:', error);
@@ -548,12 +548,12 @@ export const useLoggedUserStore = create<State>((set, get) => {
     set({ vehiclesToShow: setVehiclesToShow(activesVehicles) });
   };
   const endorsedVehicles = () => {
-    const endorsedVehicles = get()?.vehicles.filter((vehicle) => vehicle.status === 'Avalado');
+    const endorsedVehicles = get()?.vehicles.filter((vehicle) => vehicle.status === 'Completo');
 
     set({ vehiclesToShow: setVehiclesToShow(endorsedVehicles) });
   };
   const noEndorsedVehicles = () => {
-    const noEndorsedVehicles = get()?.vehicles.filter((vehicle) => vehicle.status === 'No avalado');
+    const noEndorsedVehicles = get()?.vehicles.filter((vehicle) => vehicle.status !== 'Completo');
     set({ vehiclesToShow: setVehiclesToShow(noEndorsedVehicles) });
   };
   const documentDrawerEmployees = async (document: string) => {
@@ -594,7 +594,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
     // set({ isLoading: true })
     if (!get()?.actualCompany?.id) return;
 
-    let { data, error } = await supabase
+    let data;
+
+    let { data: dataEmployes, error } = await supabase
       .from('documents_employees')
       .select(
         `
@@ -609,6 +611,22 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
       .not('employees', 'is', null)
       .eq('employees.company_id', get()?.actualCompany?.id);
+
+    data = dataEmployes;
+
+    if (dataEmployes?.length === 1000) {
+      const { data: data2, error: error2 } = await supabase
+        .from('documents_employees')
+        .select(`*, employees:employees(*,contractor_employee(customers(*))), document_types:document_types(*)`)
+        .range(1000, 2000);
+
+      console.log(data2);
+      if (data2) data = data ? [...data, ...data2] : data2;
+    }
+
+    console.log(data);
+
+    console.log(data?.find((e) => e.employees.email === 'maxig003@gmail.com'));
 
     let { data: documents_company, error: documents_company_error } = await supabase
       .from('documents_company')

@@ -55,19 +55,11 @@ type Province = {
   name: string;
 };
 
-export default function EmployeeAccordion({ role }: { role: string | null }) {
+export default function EmployeeAccordion({ role, user }: { role: string | null; user: any }) {
   const profile = useLoggedUserStore((state) => state);
-  const share = useLoggedUserStore((state) => state.sharedCompanies);
-  const profile2 = useLoggedUserStore((state) => state.credentialUser?.id);
-  const owner2 = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
-  const users = useLoggedUserStore((state) => state);
-  const company = useLoggedUserStore((state) => state.actualCompany?.id);
-  // const role = useLoggedUserStore((state) => state.roleActualCompany);
   const searchParams = useSearchParams();
-  const document = searchParams.get('document');
   const [accion, setAccion] = useState(searchParams.get('action'));
   const employees = useLoggedUserStore((state) => state.active_and_inactive_employees);
-  const [user, setUser] = useState(employees?.find((user: any) => user.document_number === document));
   const loggedUser = useLoggedUserStore((state) => state.credentialUser?.id);
   const { uploadImage } = useImageUpload();
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -188,18 +180,18 @@ export default function EmployeeAccordion({ role }: { role: string | null }) {
     // Actualiza el estado de error de los acordeones
     // que se ejecute cuando cambie el estado de error y cuando ya no haya errores
 
-    const foundUser = employees?.find((user: any) => user.document_number === document);
+    // const foundUser = employees?.find((user: any) => user.document_number === document);
 
-    if (JSON.stringify(foundUser) !== JSON.stringify(user)) {
-      setUser(foundUser);
+    // if (JSON.stringify(foundUser) !== JSON.stringify(user)) {
+    //   setUser(foundUser);
 
-      form.reset({
-        ...foundUser,
-        allocated_to: foundUser?.allocated_to,
-        date_of_admission: foundUser?.date_of_admission,
-        normal_hours: String(foundUser?.normal_hours),
-      });
-    }
+    //   form.reset({
+    //     ...foundUser,
+    //     allocated_to: foundUser?.allocated_to,
+    //     date_of_admission: foundUser?.date_of_admission,
+    //     normal_hours: String(foundUser?.normal_hours),
+    //   });
+    // }
   }, [form.formState.errors, provinceId, employees, user]);
 
   const PERSONALDATA = [
@@ -637,6 +629,8 @@ export default function EmployeeAccordion({ role }: { role: string | null }) {
       reason_for_termination: undefined,
     },
   });
+
+  console.log(user?.document_number);
 
   return (
     <Suspense fallback={<div>Loading...</div>}>

@@ -29,6 +29,8 @@ async function EquipmentTabs() {
   console.log(response2);
 
   const vehicles = data?.map(mapVehicle);
+
+  console.log(vehicles);
   return (
     <Tabs defaultValue="permanentes">
       <CardContent>

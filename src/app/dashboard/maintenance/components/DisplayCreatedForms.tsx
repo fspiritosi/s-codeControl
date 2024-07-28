@@ -19,7 +19,7 @@ export default function DisplayCreatedForms({
 
   return (
     <section className="p-4 pt-0 max-h-[68vh] overflow-y-auto ">
-      <CardTitle className="mb-2 text-xl">Forms creados</CardTitle>
+      <CardTitle className="mb-2 text-xl">Formularios creados</CardTitle>
 
       <div className="space-y-3">
         {createdForms?.map((form, index) => {
@@ -30,7 +30,10 @@ export default function DisplayCreatedForms({
                   <ReaderIcon className="size-6 mr-2" />
                   {form.name}
                 </CardTitle>
-                <Link href={`/dashboard/maintenance/new/example?formid=${form.id}`} className="flex items-center justify-center">
+                <Link
+                  href={`/dashboard/maintenance/new/example?formid=${form.id}`}
+                  className="flex items-center justify-center"
+                >
                   <CardDescription className="capitalize flex items-center hover:underline hover:cursor-pointer">
                     Ver formulario en la app
                   </CardDescription>
@@ -42,7 +45,7 @@ export default function DisplayCreatedForms({
         })}
         {createdForms?.length === 0 && (
           <Card className="p-2 flex items-center justify-between">
-            <CardDescription className="capitalize flex items-center">No hay forms creados</CardDescription>
+            <CardDescription className="capitalize flex items-center">No hay formularios creados</CardDescription>
           </Card>
         )}
       </div>

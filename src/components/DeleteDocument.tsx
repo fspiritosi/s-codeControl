@@ -22,7 +22,7 @@ import { Input } from './ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
-export default function UpdateDocuments({
+export default function DeleteDocument({
   documentName,
   resource,
   id,
@@ -119,8 +119,8 @@ export default function UpdateDocuments({
         setIsOpen(false);
       },
       {
-        loading: 'Renovando...',
-        success: 'Documento renovado correctamente',
+        loading: 'Eliminando...',
+        success: 'Documento eliminado correctamente',
         error: (error) => {
           return error;
         },
@@ -130,11 +130,13 @@ export default function UpdateDocuments({
   return (
     <Dialog open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
       <DialogTrigger asChild>
-        <Button>Renovar </Button>
+        <Button variant={'destructive'} >
+          Eliminar
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] dark:bg-slate-950">
         <DialogHeader>
-          <DialogTitle>Renovar documento</DialogTitle>
+          <DialogTitle>Eliminar documento</DialogTitle>
         </DialogHeader>
         <div className="grid w-full gap-2">
           <Form {...form}>
@@ -236,12 +238,12 @@ export default function UpdateDocuments({
                 <div className="text-blue-500 flex items-center">
                   <InfoCircledIcon className="size-7 inline-block mr-2" />
                   <FormDescription className="text-blue-500 mt-4">
-                    Este nuevo documento sera el nuevo documento vigente y el anterior sera almacenado en la historia.
+                    Este nuevo documento será eliminado y no podra ser recuperado. Asegurate de que sea el correcto.
                   </FormDescription>
                 </div>
 
                 <Button type="submit" variant="default" className="self-end mt-5">
-                  Renovar
+                  Eliminar
                 </Button>
               </div>
             </form>

@@ -38,6 +38,7 @@ export default function SimpleDocument({
   const router = useRouter();
   const documentDrawerEmployees = useLoggedUserStore((state) => state.documentDrawerEmployees);
   const documentDrawerVehicles = useLoggedUserStore((state) => state.documentDrawerVehicles);
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   const employees = useLoggedUserStore((state) => state.employees)?.reduce(
     (acc: any, act: { full_name: string; document_number: string; id: string }) => {
       const data = {
@@ -100,7 +101,12 @@ export default function SimpleDocument({
   const [loading, setLoading] = useState(false);
   const [allTypesDocuments, setAllTypesDocuments] = useState<any[] | null>([]);
 
+  console.log(actualCompany);
+
   const onSubmit = async ({ documents }: any) => {
+    const isSpecial = documenTypes?.find((e) => e.id === documents[0].id_document_types);
+    console.log(documents);
+    return;
     toast.promise(
       async () => {
         setLoading(true);
@@ -145,6 +151,12 @@ export default function SimpleDocument({
           const fileExtension = document.file.split('.').pop();
           const tableName = resource === 'empleado' ? 'documents_employees' : 'documents_equipment';
           const hasExpiredDate = updateEntries?.[index]?.validity?.replace(/\//g, '-') ?? 'v0';
+
+          //TODO const isSpecial = documenTypes?.find((e) => e.id === documents[index].id_document_types)[0]?.special;
+          const is_it_montlhy = documenTypes?.find((e) => e.id === documents[index].id_document_types)[0]
+            ?.is_it_montlhy;
+          const period = document.period;
+
           await supabase.storage
             .from('document_files')
             .upload(

@@ -31,7 +31,7 @@ import { buildFormData } from '../formUtils/formUtils';
 interface FormDisplayProps {
   campos: Campo[];
   selectedForm?: Campo[] | undefined;
-  setSelectedTab: Dispatch<SetStateAction<'created' | 'new'>>;
+  setSelectedTab: Dispatch<SetStateAction<'created' | 'new'| 'charged'>>;
   setCampos: Dispatch<SetStateAction<Campo[]>>;
   fetchForms: () => void;
 }
@@ -420,11 +420,9 @@ export function FormDisplay({ campos, selectedForm, setSelectedTab, setCampos, f
           campos.map((campo, index) => <div key={index}>{renderizarCampo(campo, index)}</div>)
         )}
         <div className="flex w-full justify-center">
-          {selectedForm && (
-            <Button disabled={campos.length < 2 || disabled} onClick={handleCreateCheckList}>
-              Crear checkList
-            </Button>
-          )}
+          <Button disabled={campos.length < 2 || disabled} onClick={handleCreateCheckList}>
+            Crear formulario
+          </Button>
         </div>
       </div>
     </ScrollArea>

@@ -29,7 +29,7 @@ export function FormCustomContainer() {
     },
   ])
   const [selectedForm, setSelectedForm] = useState<Campo[] | undefined>([])
-  const [selectedTab, setSelectedTab] = useState<'created' | 'new'>('created')
+  const [selectedTab, setSelectedTab] = useState<'created' | 'new'|'charged'>('created')
   const companyId = cookie.get('actualComp')
   const fetchForms = async () => {
     if (!companyId) return
@@ -59,9 +59,9 @@ export function FormCustomContainer() {
         <ResizablePanel minSize={30}>
           <CardHeader className="bg-muted/50">
             <div>
-              <h2 className="text-2xl font-bold">Crear CheckList</h2>
+              <h2 className="text-2xl font-bold">Crear formulario</h2>
               <CardDescription>
-                Crear un nuevo CheckList para el mantenimiento de los equipos.
+                Crear un nuevo formulario para el mantenimiento de los equipos.
               </CardDescription>
             </div>
           </CardHeader>
@@ -80,6 +80,12 @@ export function FormCustomContainer() {
                     onClick={() => setSelectedTab('new')}
                   >
                     Nuevo
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="charged"
+                    onClick={() => setSelectedTab('charged')}
+                  >
+                    Cargados
                   </TabsTrigger>
                 </TabsList>
               </div>

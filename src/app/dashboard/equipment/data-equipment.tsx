@@ -434,9 +434,17 @@ export function DataEquipment<TData, TValue>({
                             'No disponible'
                           )
                         ) : cell.column.id === 'status' ? (
-                          <Badge variant={cell.getValue() === 'No avalado' ? 'destructive' : 'success'}>
-                            {cell.getValue() as React.ReactNode}
-                          </Badge>
+                          <Badge
+                          variant={
+                            cell.getValue() === 'Completo'
+                              ? 'success'
+                              : cell.getValue() === 'Completo con doc vencida'
+                                ? 'yellow'
+                                : 'destructive'
+                          }
+                        >
+                          {cell.getValue() as React.ReactNode}
+                        </Badge>
                         ) : cell.column.id === 'domain' ? (
                           !cell.getValue() ? (
                             'No posee'
