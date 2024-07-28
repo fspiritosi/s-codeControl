@@ -39,6 +39,7 @@ import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
+import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarIcon, DotsVerticalIcon } from '@radix-ui/react-icons';
@@ -525,6 +526,26 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
   {
     accessorKey: 'allocated_to',
     header: 'Afectado a',
+    cell: ({ row }) => {
+      const values = row.original.allocated_to;
+
+      console.log(values);
+
+      if (!values) return <Badge variant={'outline'}>Sin afectar</Badge>;
+      const contractorCompanies = Array.isArray(values)
+        ? values
+            .map((allocatedToId) =>
+              useCountriesStore(
+                (state) => state.customers?.find((company: any) => String(company.id) === String(allocatedToId))?.name
+              )
+            )
+            .join(', ')
+        : useCountriesStore(
+            (state) => state.customers?.find((company: any) => String(company.id) === String(values))?.name
+          );
+
+      return <p>{contractorCompanies}</p>;
+    },
   },
 
   {
