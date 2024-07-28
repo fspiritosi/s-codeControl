@@ -1,5 +1,7 @@
 import DocumentNav from '@/components/DocumentNav';
 import Viewcomponent from '@/components/ViewComponent';
+import { buttonVariants } from '@/components/ui/button';
+import Link from 'next/link';
 import EmployeeDocumentsTabs from '../document/documentComponents/EmployeeDocumentsTabs';
 import EmployeeListTabs from '../document/documentComponents/EmployeeListTabs';
 import TypesDocumentAction from '../document/documentComponents/TypesDocumentAction';
@@ -17,6 +19,7 @@ const EmployeePage = async () => {
         content: {
           title: 'Empleados',
           description: 'Aquí encontrarás todos empleados dados de baja',
+          buttonActioRestricted: [''],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
               <Link
@@ -40,6 +43,7 @@ const EmployeePage = async () => {
         content: {
           title: 'Documentos cargados',
           description: 'Aquí encontrarás todos los documentos de tus empleados',
+          buttonActioRestricted: [''],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
               <DocumentNav />
@@ -55,6 +59,7 @@ const EmployeePage = async () => {
         content: {
           title: 'Tipos de documentos',
           description: 'Tipos de documentos auditables',
+          buttonActioRestricted: [''],
           buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
           component: <TypesDocumentsView personas />,
         },

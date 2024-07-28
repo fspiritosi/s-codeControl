@@ -809,6 +809,8 @@ console.log(user)
                 <BackButton />
               </div>
             ) : (
+              !readOnly &&
+              accion !== 'new' &&
               role !== 'Invitado' && (
                 <div className="flex flex-grap gap-2">
                   <Dialog onOpenChange={() => setShowModal(!showModal)}>
