@@ -7,6 +7,7 @@ import EmployeeListTabs from '../document/documentComponents/EmployeeListTabs';
 import TypesDocumentAction from '../document/documentComponents/TypesDocumentAction';
 import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
 
+
 const EmployeePage = async () => {
   const viewData = {
     defaultValue: 'employees',

@@ -1,14 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -21,9 +12,16 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { useEffect, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -34,34 +32,34 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useLoggedUserStore } from '@/store/loggedUser';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
-interface DataTableProps<TData, TValue> {
+interface DataCctProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any;
   data: TData[];
+  // allCompany: any[];
+  // showInactive: boolean;
+  localStorageName: string;
+  // setShowInactive: (showInactive: boolean) => void;
 }
 
-export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
+export function DataGuild<TData, TValue>({
+  columns,
+  data,
+  // showInactive,
+  // setShowInactive,
+  // allCompany,
+  localStorageName,
+}: DataCctProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
-  const defaultVisibleColumns = [
-    'full_name',
-    'status',
-    'cuil',
-    'document_number',
-    'document_type',
-    'hierarchical_position',
-    'company_position',
-    'normal_hours',
-    'type_of_contract',
-    'allocated_to',
-  ];
-
-  // const data = setEmployeesToShow(employees) as TData[];
-
+  const defaultVisibleColumns = ['name'];
+  const [showInactive, setShowInactive] = useState(false);
   const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
     if (typeof window !== 'undefined') {
-      const valorGuardado = JSON.parse(localStorage.getItem('employeeColumns') || '[]');
+      const valorGuardado = JSON.parse(localStorage.getItem(localStorageName) || '[]');
       return valorGuardado.length ? valorGuardado : defaultVisibleColumns;
     }
     return defaultVisibleColumns;
@@ -69,12 +67,12 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('employeeColumns', JSON.stringify(defaultVisibleColumns1));
+      localStorage.setItem(localStorageName, JSON.stringify(defaultVisibleColumns1));
     }
   }, [defaultVisibleColumns1]);
 
   useEffect(() => {
-    const valorGuardado = JSON.parse(localStorage.getItem('employeeColumns') || '[]');
+    const valorGuardado = JSON.parse(localStorage.getItem(localStorageName) || '[]');
     if (valorGuardado.length) {
       setColumnVisibility(
         columns.reduce((acc: any, column: any) => {
@@ -91,139 +89,25 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
       return acc;
     }, {})
   );
-  // const [showDeletedEmployees, setShowDeletedEmployees] = useState(false)
-  const handleColumnVisibilityChange = (columnId: string, isVisible: boolean) => {
-    setColumnVisibility((prev) => ({
-      ...prev,
-      [columnId]: isVisible,
-    }));
-    setDefaultVisibleColumns1((prev: any) => {
-      const newVisibleColumns = isVisible ? [...prev, columnId] : prev.filter((id: string) => id !== columnId);
-      localStorage.setItem('employeeColumns', JSON.stringify(newVisibleColumns));
-      return newVisibleColumns;
-    });
-  };
 
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const loader = useLoggedUserStore((state) => state.isLoading);
-
+  console.log(data)
+ 
   const allOptions = {
-    document_type: createOptions('document_type'),
-    hierarchical_position: createOptions('hierarchical_position'),
-    type_of_contract: createOptions('type_of_contract'),
-    allocated_to: createOptions('allocated_to'),
-    nationality: createOptions('nationality'),
-    birthplace: createOptions('birthplace'),
-    gender: createOptions('gender'),
-    marital_status: createOptions('marital_status'),
-    level_of_education: createOptions('level_of_education'),
-    province: createOptions('province'),
-    affiliate_status: createOptions('affiliate_status'),
-    city: createOptions('city'),
-    hierrical_position: createOptions('hierrical_position'),
-    workflow_diagram: createOptions('workflow_diagram'),
-    status: createOptions('status'),
-    guild: createOptions('guild'),
-    covenants: createOptions('covenants'),
-    category: createOptions('category'),
+    name: createOptions('name'),
   };
-
   function createOptions(key: string) {
     const values = data?.flatMap((item: any) => item?.[key]);
     return ['Todos', ...Array.from(new Set(values))];
   }
 
   const selectHeader = {
-    document_type: {
-      name: 'document_type',
-      option: allOptions.document_type,
-      label: 'Tipo de documento',
-    },
-    hierarchical_position: {
-      name: 'hierarchical_position',
-      option: allOptions.hierarchical_position,
-      label: 'Posición jerárquica',
-    },
-    type_of_contract: {
-      name: 'type_of_contract',
-      option: allOptions.type_of_contract,
-      label: 'Tipo de contrato',
-    },
-    allocated_to: {
-      name: 'allocated_to',
-      option: allOptions.allocated_to,
-      label: 'Afectado a',
-    },
-    nationality: {
-      name: 'nationality',
-      option: allOptions.nationality,
-      label: 'Nacionalidad',
-    },
-    birthplace: {
-      name: 'birthplace',
-      option: allOptions.birthplace,
-      label: 'Lugar de nacimiento',
-    },
-    gender: {
-      name: 'gender',
-      option: allOptions.gender,
-      label: 'Genero',
-    },
-    marital_status: {
-      name: 'marital_status',
-      option: allOptions.marital_status,
-      label: 'Estado civil',
-    },
-    level_of_education: {
-      name: 'level_of_education',
-      option: allOptions.level_of_education,
-      label: 'Nivel de educacion',
-    },
-    province: {
-      name: 'province',
-      option: allOptions.province,
-      label: 'Provincia',
-    },
-    affiliate_status: {
-      name: 'affiliate_status',
-      option: allOptions.affiliate_status,
-      label: 'Estado de afiliado',
-    },
-    city: {
-      name: 'city',
-      option: allOptions.city,
-      label: 'Ciudad',
-    },
-    hierrical_position: {
-      name: 'hierrical_position',
-      option: allOptions.hierrical_position,
-      label: 'Posición jerárquica',
-    },
-    workflow_diagram: {
-      name: 'workflow_diagram',
-      option: allOptions.workflow_diagram,
-      label: 'Diagrama de trabajo',
-    },
-    status: {
-      name: 'status',
-      option: allOptions.status,
-      label: 'Estado',
-    },
-    guild: {
-      name: 'guild',
-      option: allOptions.guild,
-      label: 'Gremio',
-    },
-    covenants: {
-      name: 'covenants',
-      option: allOptions.covenants,
-      label: 'Convenios',
-    },
-    category: {
-      name: 'category',
-      option: allOptions.category,
-      label: 'Categoria',
-    },
+    // name: {
+    //   name: 'name',
+    //   option: name,
+    //   label: 'Nombre',
+    // },
   };
 
   let table = useReactTable({
@@ -242,6 +126,22 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
       columnFilters,
     },
   });
+  // const setActivesVehicles = useLoggedUserStore(
+  //   state => state.setActivesVehicles,
+  // )
+  //const router = useRouter()
+
+  const handleColumnVisibilityChange = (columnId: string, isVisible: boolean) => {
+    setColumnVisibility((prev) => ({
+      ...prev,
+      [columnId]: isVisible,
+    }));
+    setDefaultVisibleColumns1((prev: any) => {
+      const newVisibleColumns = isVisible ? [...prev, columnId] : prev.filter((id: string) => id !== columnId);
+      localStorage.setItem(localStorageName, JSON.stringify(newVisibleColumns));
+      return newVisibleColumns;
+    });
+  };
 
   const handleClearFilters = () => {
     table.getAllColumns().forEach((column) => {
@@ -249,37 +149,33 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
     });
 
     setSelectValues({
-      hierarchical_position: 'Todos',
-      type_of_contract: 'Todos',
-      allocated_to: 'Todos',
-      document_type: 'Todos',
-      nationality: 'Todos',
-      birthplace: 'Todos',
-      gender: 'Todos',
-      marital_status: 'Todos',
-      level_of_education: 'Todos',
-      province: 'Todos',
-      affiliate_status: 'Todos',
-      city: 'Todos',
-      hierrical_position: 'Todos',
-      status: 'Todos',
-      guild: 'Todos',
-      covenants: 'Todos',
-      category: 'Todos',
+      name: 'Todos',
+      //is_active: 'todos',
+      //   domain: 'Todos',
+      //   chassis: 'Todos',
+      //   engine: 'Todos',
+      //   serie: 'Todos',
+      //   intern_number: 'Todos',
+      //   year: 'Todos',
+      //   brand: 'Todos',
+      //   model: 'Todos',
+      //   status: 'Todos',
     });
+    //setActivesVehicles()
   };
-
   const maxRows = ['20', '40', '60', '80', '100'];
-
   const [selectValues, setSelectValues] = useState<{ [key: string]: string }>({});
+  // const handleToggleInactive = () => {
+  //   setShowInactive(!showInactive)
+  // }
 
   return (
-    <div className="w-full grid grid-cols-1">
+    <div>
       <div className="flex items-center py-4 flex-wrap gap-y-2 overflow-auto">
         <Input
-          placeholder="Buscar por nombre"
-          value={(table.getColumn('full_name')?.getFilterValue() as string) ?? ''}
-          onChange={(event) => table.getColumn('full_name')?.setFilterValue(event.target.value)}
+          placeholder="Buscar por Nombre"
+          value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
+          onChange={(event) => table.getColumn('name')?.setFilterValue(event.target.value)}
           className="max-w-sm"
         />
         <Button variant="outline" size="default" className="ml-2" onClick={handleClearFilters}>
@@ -302,12 +198,13 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
               </SelectGroup>
             </SelectContent>
           </Select>
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">Columnas</Button>
+              <Button variant="outline" className="ml-auto">
+                Columnas
+              </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="max-h-[50dvh] overflow-y-auto ">
+            <DropdownMenuContent align="end" className="max-h-[50dvh] overflow-y-auto">
               {table
                 .getAllColumns()
                 ?.filter((column) => column.getCanHide())
@@ -315,23 +212,24 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
                   if (column.id === 'actions' || typeof column.columnDef.header !== 'string') {
                     return null;
                   }
-
-                  if (column.id === 'showUnavaliableEmployees') {
+                  if (column.id === 'showUnavaliableCovenant') {
                     return (
-                      <DropdownMenuCheckboxItem
-                        key={column.id}
-                        className="capitalize text-red-400"
-                        // checked={showDeletedEmployees}
-                        onCheckedChange={(value) => {
-                          // setShowDeletedEmployees(!!value);
-                          // value ? setInactiveEmployees() : setActivesEmployees();
-                        }}
-                      >
-                        {column.columnDef.header}
-                      </DropdownMenuCheckboxItem>
+                      <>
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          className="capitalize  text-red-400"
+                          checked={showInactive}
+                          //onChange={() => setShowInactive(!showInactive)}
+                          onClick={() => setShowInactive(!showInactive)}
+                          // onCheckedChange={value =>
+                          //   column.toggleVisibility(!true)
+                          // }
+                        >
+                          {column.columnDef.header}
+                        </DropdownMenuCheckboxItem>
+                      </>
                     );
                   }
-
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}
@@ -359,14 +257,14 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
                         ? null
                         : flexRender(
                             header.id in selectHeader ? (
-                              header.id === 'allocated_to' ? (
+                              header.id === 'intern_number' ? (
                                 <div className="flex justify-center">
                                   <Input
-                                    placeholder="Buscar por afectación"
-                                    value={table.getColumn('allocated_to')?.getFilterValue() as string}
-                                    onChange={(event) => {
-                                      table.getColumn('allocated_to')?.setFilterValue(event.target.value);
-                                    }}
+                                    placeholder="Número de interno"
+                                    value={table.getColumn('intern_number')?.getFilterValue() as string}
+                                    onChange={(event) =>
+                                      table.getColumn('intern_number')?.setFilterValue(event.target.value)
+                                    }
                                     className="max-w-sm"
                                   />
                                 </div>
@@ -390,18 +288,18 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
                                       });
                                     }}
                                   >
-                                    <SelectTrigger className="">
+                                    <SelectTrigger className="w-[180px]">
                                       <SelectValue placeholder={header.column.columnDef.header as string} />
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectGroup>
-                                        {selectHeader[header.id as keyof typeof selectHeader]?.option?.map(
+                                        {/* {selectHeader[header.id as keyof typeof selectHeader]?.option?.map(
                                           (option: string) => (
                                             <SelectItem key={option} value={option}>
                                               {option}
                                             </SelectItem>
                                           )
-                                        )}
+                                        )} */}
                                       </SelectGroup>
                                     </SelectContent>
                                   </Select>
@@ -419,60 +317,42 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
             ))}
           </TableHeader>
           <TableBody className="max-w-[50vw] overflow-x-auto">
-            {table?.getRowModel().rows?.length ? (
-              table.getRowModel().rows?.map((row) => {
-                return (
-                  <TableRow
-                    className={cn(!(row.original as any).is_active && 'opacity-40')}
-                    key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
-                  >
-                    {row.getVisibleCells()?.map((cell) => {
-                      let is_active = (cell.row.original as any).is_active;
-                      return (
-                        <TableCell
-                          key={cell.id}
-                          className={`text-center whitespace-nowrap ${is_active ? '' : 'text-red-500'}`}
-                        >
-                          {cell.column.id === 'picture' ? (
-                            <img
-                              src={cell.getValue() as any}
-                              alt="Foto"
-                              className="size-10 rounded-full object-cover"
-                            />
-                          ) : cell.column.id === 'status' ? (
-                            <Badge variant={cell.getValue() === 'No avalado' ? 'destructive' : 'success'}>
-                              {cell.getValue() as React.ReactNode}
-                            </Badge>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows?.map((row) => (
+                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                  {row.getVisibleCells()?.map((cell) => {
+                    let is_active = (cell.row.original as any).is_active;
+                    return (showInactive && !is_active) || (!showInactive && is_active) ? (
+                      <TableCell
+                        key={cell.id}
+                        className={`text-center whitespace-nowrap ${is_active ? '' : 'text-red-500'}`}
+                      >
+                        {cell.column.id === 'picture' ? (
+                          cell.getValue() !== '' ? (
+                            <Link href={cell.getValue() as any} target="_blank">
+                              <img src={cell.getValue() as any} alt="Foto" style={{ width: '50px' }} />
+                            </Link>
                           ) : (
-                            (flexRender(cell.column.columnDef.cell, cell.getContext()) as React.ReactNode)
-                          )}
-                        </TableCell>
-                      );
-                      return (
-                        <TableCell
-                          key={cell.id}
-                          className={`text-center whitespace-nowrap ${is_active ? '' : 'text-red-500'}`}
-                        >
-                          {cell.column.id === 'picture' ? (
-                            <img
-                              src={cell.getValue() as any}
-                              alt="Foto"
-                              className="size-10 rounded-full object-cover"
-                            />
-                          ) : cell.column.id === 'status' ? (
-                            <Badge variant={cell.getValue() === 'No avalado' ? 'destructive' : 'success'}>
-                              {cell.getValue() as React.ReactNode}
-                            </Badge>
+                            'No disponible'
+                          )
+                        ) : cell.column.id === 'status' ? (
+                          <Badge variant={cell.getValue() === 'No avalado' ? 'destructive' : 'success'}>
+                            {cell.getValue() as React.ReactNode}
+                          </Badge>
+                        ) : cell.column.id === 'domain' ? (
+                          !cell.getValue() ? (
+                            'No posee'
                           ) : (
-                            (flexRender(cell.column.columnDef.cell, cell.getContext()) as React.ReactNode)
-                          )}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                );
-              })
+                            (cell.getValue() as React.ReactNode)
+                          )
+                        ) : (
+                          flexRender(cell.column.columnDef.cell, cell.getContext())
+                        )}
+                      </TableCell>
+                    ) : null;
+                  })}
+                </TableRow>
+              ))
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
@@ -498,7 +378,7 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
                       </div>
                     </div>
                   ) : (
-                    'No hay empleados activos'
+                    'No hay sindicatos registrados'
                   )}
                 </TableCell>
               </TableRow>

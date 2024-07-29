@@ -5,15 +5,14 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
   const user_id = searchParams.get('user');
-  console.log(user_id); //AQUI ME QUEDE
+  console.log(company_id); 
   try {
-    let { data: employees, error } = await supabase
-      .from('employees')
-      .select('*,guild(name),covenants(name),category(name)')
-      // Filters
-      .eq('company_id', company_id);
+    let { data: companies, error } = await supabase
+      .from('company')
+      .select('*,city(name)')
+      .eq('id', company_id);
 
-    const data = employees;
+    const data = companies;
 
     if (error) {
       throw new Error(JSON.stringify(error));
