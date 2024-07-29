@@ -6,8 +6,8 @@ import EmployeeDocumentsTabs from '../document/documentComponents/EmployeeDocume
 import EmployeeListTabs from '../document/documentComponents/EmployeeListTabs';
 import TypesDocumentAction from '../document/documentComponents/TypesDocumentAction';
 import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
-import Link from 'next/link';
-import { buttonVariants } from '@/components/ui/button';
+
+
 const EmployeePage = async () => {
   const viewData = {
     defaultValue: 'employees',

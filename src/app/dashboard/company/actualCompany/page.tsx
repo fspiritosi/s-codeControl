@@ -29,6 +29,7 @@ export default async function CompanyPage() {
         content: {
           title: 'Datos generales de la empresa',
           description: 'Información de la empresa',
+          buttonActioRestricted: [''],
           buttonAction: (
               <EditCompanyButton companyId={company_id?.toString() ?? ''} />
           ),
@@ -46,6 +47,7 @@ export default async function CompanyPage() {
         content: {
           title: 'Documentos de la empresa',
           description: 'Lista de documentos a nombre de la empresa',
+          buttonActioRestricted: [''],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
               <Link href={'/dashboard/document'} className={buttonVariants({ variant: 'default' })}>
@@ -65,6 +67,7 @@ export default async function CompanyPage() {
         content: {
           title: "Usuarios de la empresa",
           description: "Lista de usuarios de la empresa",
+          buttonActioRestricted: [''],
           buttonAction: (
             <RegisterWithRole />
           ),
@@ -79,6 +82,7 @@ export default async function CompanyPage() {
         content:{
           title:"Clientes de la empresa",
           description:"Lista de clientes de la empresa",
+          buttonActioRestricted: [''],
           buttonAction:( 
             <Link href={'/dashboard/company/customers/action?action=new'} className={buttonVariants({ variant: 'default' })}>
               Registrar Cliente
@@ -94,6 +98,7 @@ export default async function CompanyPage() {
         content:{
           title:"Contactos de la empresa",
           description:"Lista de contactos de la empresa",
+          buttonActioRestricted: [''],
           buttonAction:( 
             <Link href={'/dashboard/company/contact/action?action=new'} className={buttonVariants({ variant: 'default' })}>
               Registrar Contacto
@@ -109,6 +114,7 @@ export default async function CompanyPage() {
         content:{
           title:"Convenios colectivos de trabajo",
           description:"Lista de Convenios colectivos de trabajo",
+          buttonActioRestricted: [''],
           buttonAction:(
           <CovenantRegister />
         ),
