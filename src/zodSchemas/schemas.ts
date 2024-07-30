@@ -412,40 +412,32 @@ export const accordionSchema = z
       required_error: 'El tipo de contrato es requerido',
     }),
     allocated_to: z.array(z.string()).optional(),
-    guild: z.string().min(2, {
-      message: 'El nombre debe tener al menos 2 caracteres.',
-    })
-      .max(30, {
-        message: 'El nombre debe tener menos de 30 caracteres.',
-      })
-      // .regex(/^[a-zA-Z ]+$/, {
-      //     message: 'El nombre solo puede contener letras.',
-      // })
-      .trim(),
+    guild: z.string()
+      .trim()
+      .optional()
+      .refine((value) => !value || (value.length >= 2 && value.length <= 100), {
+        message: 'El nombre debe tener entre 2 y 100 caracteres.',
+      }),
     guild_id: z.string().optional(),
     covenants: z.string()
-      .min(2, {
-        message: 'El convenio debe tener al menos 2 caracteres.',
-      })
-      .max(30, {
-        message: 'El convenio debe tener menos de 30 caracteres.',
-      })
-
-      .trim(),
+      .trim()
+      .optional()
+      .nullable()
+      .refine((value) => !value || (value.length >= 2 && value.length <= 30), {
+        message: 'El convenio debe tener entre 2 y 30 caracteres.',
+      }),
     covenants_id: z.string().optional(),
     // .regex(/^[a-zA-Z ]+$/, {
     //     message: 'El apellido solo puede contener letras.',
     // })
 
     category: z.string()
-      .min(1, {
-        message: 'La categoria debe tener al menos 1 caracteres.',
-      })
-      .max(30, {
-        message: 'La categoria debe tener menos de 30 caracteres.',
-      })
-
-      .trim(),
+      .trim()
+      .optional()
+      .nullable()
+      .refine((value) => !value || (value.length >= 1 && value.length <= 30), {
+        message: 'La categoria debe tener entre 1 y 30 caracteres.',
+      }),
     category_id: z.string().optional(),
     date_of_admission: z
       .date({

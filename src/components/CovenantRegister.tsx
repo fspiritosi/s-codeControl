@@ -8,19 +8,19 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { ModalCct } from './ModalCct';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { CaretSortIcon, CheckIcon, PlusCircledIcon } from '@radix-ui/react-icons';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { handleSupabaseError } from '@/lib/errorHandler';
+// import { handleSupabaseError } from '@/lib/errorHandler';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { EyeClosedIcon, EyeOpenIcon } from '@radix-ui/react-icons';
-import { SetStateAction, useEffect, useState } from 'react';
+// import { EyeClosedIcon, EyeOpenIcon } from '@radix-ui/react-icons';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -67,7 +67,7 @@ export const CovenantRegister = () => {
     // const [userType, setUserType] = useState<'Usuario' | 'Invitado' | null>(null);
     const searchParams = useSearchParams()
     const document = searchParams.get('document')
-    const [searchText, setSearchText] = useState()
+    const [searchText, setSearchText] = useState('')
     const [accion, setAccion] = useState(searchParams.get('action'))
     const [readOnly, setReadOnly] = useState(accion === 'view' ? true : false)
     const [guildId, setGuildId] = useState()
@@ -93,7 +93,7 @@ export const CovenantRegister = () => {
                 message: 'El nombre debe tener al menos 2 caracteres.',
             })
                 .max(30, {
-                    message: 'El nombre debe tener menos de 30 caracteres.',
+                    message: 'El nombre debe tener menos de 100 caracteres.',
                 })
                 .regex(/^[a-zA-Z0-9 ]+$/, {
                     message: 'El nombre solo puede contener letras y números.',
@@ -127,7 +127,6 @@ export const CovenantRegister = () => {
 
         });
 
-
     const form = useForm<z.infer<typeof covenantRegisterSchema>>({
         resolver: zodResolver(covenantRegisterSchema),
         defaultValues: {
@@ -137,6 +136,21 @@ export const CovenantRegister = () => {
 
         },
     });
+
+    useEffect(() => {
+        // Restablecer los valores del formulario cuando el componente se monta
+
+        fetchGuild()
+        form.reset({
+            guild: '',
+            covenants: '',
+            category: ''
+        });
+
+    }, [form]);
+
+
+
 
 
 
@@ -195,9 +209,9 @@ export const CovenantRegister = () => {
     };
 
 
-    useEffect(() => {
-        fetchGuild()
-    }, [])
+    // useEffect(() => {
+
+    // }, [])
 
 
 
@@ -218,20 +232,43 @@ export const CovenantRegister = () => {
 
     };
 
-    function onSubmit(values: z.infer<typeof covenantRegisterSchema>) {
+    function onSubmit() {
 
         setOpen(false);
-
+        form.reset({
+            guild: '',
+            covenants: '',
+            category: '',
+        });
 
         return 'convenio registrado correctamente';
 
     }
-    
+
 
 
 
     const handleOpen = () => {
         setOpen(true);
+        form.reset({
+            guild: '',
+            covenants: '',
+            category: '',
+        });
+        setSearchText('');
+        setShowCovenants(false);
+        setShowCategories(false);
+        setShowButton(true);
+        setShowButton2(true);
+
+    }; const handleClose = () => {
+        form.reset({
+            guild: '',
+            covenants: '',
+            category: '',
+        });
+        setSearchText('');
+
     };
 
     return (
@@ -270,14 +307,14 @@ export const CovenantRegister = () => {
                                                                         variant="outline"
                                                                         role="combobox"
                                                                         value={field.value}
-                                                                        className={cn('w-[300px] justify-between', !field.value && 'text-muted-foreground')}
+                                                                        className={cn('w-[400px] justify-between', !field.value && 'text-muted-foreground')}
                                                                     >
                                                                         {field.value || 'Seleccionar  Asosiacion gremial'}
                                                                         <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                                     </Button>
                                                                 </FormControl>
                                                             </PopoverTrigger>
-                                                            <PopoverContent className="w-[300px] p-0 max-h-[200px] overflow-y-auto" asChild>
+                                                            <PopoverContent className="w-[400px] p-0 max-h-[200px] overflow-y-auto" asChild>
                                                                 <Command >
                                                                     <CommandInput
                                                                         disabled={readOnly}
@@ -336,16 +373,16 @@ export const CovenantRegister = () => {
                                                 )}
                                             />
                                             {showButton && (
-                                            <Button
-                                                onClick={() => {
-                                                    setShowCovenants(true); // Suponiendo que esta función hace algo más en tu aplicación
-                                                    setShowButton(false); // Esto hará que el botón desaparezca después de ser clickeado
-                                                  }}
-                                            // Otras propiedades del botón
-                                            >
-                                                Agregar Convenio
-                                            </Button>
-                                        )}
+                                                <Button
+                                                    onClick={() => {
+                                                        setShowCovenants(true); // Suponiendo que esta función hace algo más en tu aplicación
+                                                        setShowButton(false); // Esto hará que el botón desaparezca después de ser clickeado
+                                                    }}
+                                                // Otras propiedades del botón
+                                                >
+                                                    Agregar Convenio
+                                                </Button>
+                                            )}
                                             {showCovenants && (<>
                                                 <FormField
                                                     control={form.control}
@@ -363,14 +400,14 @@ export const CovenantRegister = () => {
                                                                             variant="outline"
                                                                             role="combobox"
                                                                             value={field.value || ""}
-                                                                            className={cn('w-[300px] justify-between', !field.value && 'text-muted-foreground')}
+                                                                            className={cn('w-[400px] justify-between', !field.value && 'text-muted-foreground')}
                                                                         >
                                                                             {field.value || 'Seleccionar Convenio'}
                                                                             <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                                         </Button>
                                                                     </FormControl>
                                                                 </PopoverTrigger>
-                                                                <PopoverContent className="w-[300px] p-0 max-h-[200px] overflow-y-auto" asChild>
+                                                                <PopoverContent className="w-[400px] p-0 max-h-[200px] overflow-y-auto" asChild>
                                                                     <Command>
                                                                         <CommandInput
                                                                             disabled={readOnly}
@@ -428,15 +465,16 @@ export const CovenantRegister = () => {
                                                     )}
                                                 />
                                                 {showButton2 && (
-                                                <Button
-                                                    onClick={() =>{ setShowCategories(true)
-                                                        setShowButton2(false); // Esto hará que el botón desaparezca después de ser clickeado
-                                                    }}
-                                                // Otras propiedades del botón
-                                                >
-                                                    Agregar Categoría
-                                                </Button>
-                                            )}
+                                                    <Button
+                                                        onClick={() => {
+                                                            setShowCategories(true)
+                                                            setShowButton2(false); // Esto hará que el botón desaparezca después de ser clickeado
+                                                        }}
+                                                    // Otras propiedades del botón
+                                                    >
+                                                        Agregar Categoría
+                                                    </Button>
+                                                )}
                                             </>
                                             )}
                                             {showCategories && (
@@ -536,8 +574,8 @@ export const CovenantRegister = () => {
                                             )}
                                         </div>
                                         <div className="flex justify-end gap-4">
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <Button type="submit">Agregar</Button>
+                                            <AlertDialogCancel onClick={handleClose} >Cerrar</AlertDialogCancel>
+                                            {/* <Button type="submit">Agregar</Button> */}
                                         </div>
                                     </form>
                                 </Form>
