@@ -1,8 +1,4 @@
 import Viewcomponent from '@/components/ViewComponent';
-import { useLoggedUserStore } from '@/store/loggedUser';
-import { cookies } from 'next/headers';
-// import { columns } from './columns';
-// import { DataEquipment } from './data-equipment';
 import EquipmentListTabs from './equipmentComponentes/EquipmentListTabs';
 import DocumentNav from '@/components/DocumentNav';
 import EquipmentTabs from '../document/documentComponents/EquipmentTabs';
@@ -11,8 +7,7 @@ import TypesDocumentsView from '../document/documentComponents/TypesDocumentsVie
 
 export default async function Equipment() {
   
-  const viewData = {
-    defaultValue: 'equipos',
+  const viewData = {    defaultValue: 'equipos',
         tabsValues: [
           {
             value: 'equipos',

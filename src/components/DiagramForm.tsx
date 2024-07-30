@@ -67,8 +67,11 @@ export function DiagramForm({activeEmploees, diagrams_types}:{activeEmploees:[],
 
     async function onSubmit(values: Diagram){
         const data = values;
+        const valueToSend = JSON.stringify(values)
         console.log(data)
-
+        const response = await fetch('http://localhost:3000/api/employees/diagrams', {method: 'POST', body:valueToSend})
+        console.log(response.json())
+        return response
     }
 
     return (
