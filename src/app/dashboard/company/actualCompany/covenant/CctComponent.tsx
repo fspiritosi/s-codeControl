@@ -68,10 +68,11 @@ export default function Cct() {
       ...data,
 
       covenants: (covenants || [])?.map((e) => {
-        return { name: e.name as string, id: e.id as string, number: e.number as string, guild_id: e.guild_id.name as string, is_active: e.is_active };
+        return { name: e.name as string, id: e.id as string, number: e.number as string, guild_id: e.guild_id?.name ?? '', is_active: e.is_active };
       }),
 
     });
+    console.log(data);
   };
   const fetchCategory = async () => {
 

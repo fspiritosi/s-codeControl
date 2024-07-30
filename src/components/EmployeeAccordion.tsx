@@ -52,6 +52,8 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } fr
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { log } from 'console';
+import { Anek_Malayalam } from 'next/font/google';
+import { channel } from 'diagnostics_channel';
 
 type Province = {
   id: number;
@@ -60,7 +62,7 @@ type Province = {
 type dataType = {
   guild: {
     name: string;
-    id: string;
+    id: string ;
     is_active: boolean;
 
   }[];
@@ -170,9 +172,9 @@ console.log(user)
         type_of_contract: undefined,
         allocated_to: [],
         date_of_admission: undefined,
-        guild: undefined,
-        covenants: undefined,
-        category: undefined,
+        guild: null,
+        covenants: null,
+        category: null,
       },
   });
   const [accordion1Errors, setAccordion1Errors] = useState(false);
@@ -236,6 +238,7 @@ console.log(user)
   useEffect(() => {
     fetchContractors();
     fetchGuild()
+    
     const unsubscribe = subscribeToCustomersChanges();
 
     return () => {
@@ -504,6 +507,7 @@ console.log(user)
   async function onCreate(values: z.infer<typeof accordionSchema>) {
     toast.promise(
       async () => {
+        const { guild_id, covenants_id, category_id, full_name, ...rest } = values;
         const fileExtension = imageFile?.name.split('.').pop();
         const finalValues = {
           ...values,
@@ -511,6 +515,9 @@ console.log(user)
             values.date_of_admission instanceof Date
               ? values.date_of_admission.toISOString()
               : values.date_of_admission,
+              guild: form.getValues("guild") === "" ? undefined : form.getValues("guild_id") as string,
+              covenants: form.getValues("covenants") === null ? null : (form.getValues("covenants_id")===undefined? user?.covenant?.id : form.getValues("covenants_id") as string),
+              category: form.getValues("category") === null? null : (form.getValues("category_id")===undefined? user?.category?.id : form.getValues("category_id") as string),
           province: String(provincesOptions.find((e) => e.name.trim() === values.province)?.id),
           birthplace: String(countryOptions.find((e) => e.name === values.birthplace)?.id),
           city: String(citysOptions.find((e) => e.name.trim() === values.city)?.id),
@@ -602,9 +609,9 @@ console.log(user)
             values.date_of_admission instanceof Date
               ? values.date_of_admission.toISOString()
               : values.date_of_admission,
-          guild: form.getValues("guild_id") as string,
-          covenants: form.getValues("covenants_id") as string,
-          category: form.getValues("category_id") as string,
+          guild: form.getValues("guild") === ""? null : form.getValues("guild_id") as string,
+          covenants: form.getValues("covenants") === null ? null : (form.getValues("covenants_id")===undefined? user?.covenant?.id : form.getValues("covenants_id") as string),
+          category: form.getValues("category") === null? null : (form.getValues("category_id")===undefined? user?.category?.id : form.getValues("category_id") as string),
           province: String(provincesOptions.find((e) => e.name.trim() === values.province)?.id),
           birthplace: String(countryOptions.find((e) => e.name === values.birthplace)?.id),
           city: String(citysOptions.find((e) => e.name.trim() === values.city)?.id),
@@ -613,7 +620,7 @@ console.log(user)
         };
         console.log(finalValues)
         // Valores a eliminar
-        const result = compareContractorEmployees(user, finalValues);
+        const result = compareContractorEmployees(user, finalValues as any);
 
         result.valuesToRemove.forEach(async (e) => {
           const { error } = await supabase
@@ -765,6 +772,34 @@ console.log(user)
     }
     return 'Seleccionar Asosiacion gremial';
   }
+
+  
+// const channels = supabase.channel('custom-all-channel')
+// .on(
+//   'postgres_changes',
+//   { event: '*', schema: 'public', table: 'guild' },
+//   (payload) => {
+//     console.log('Change received!', payload)
+//     fetchGuild()
+//   }
+// )
+// .on(
+//   'postgres_changes',
+//   { event: '*', schema: 'public', table: 'covenant' },
+//   (payload) => {
+//     console.log('Change received!', payload)
+//     fetchCovenant(guildId)
+//   }
+// )
+// .on(
+//   'postgres_changes',
+//   { event: '*', schema: 'public', table: 'category' },
+//   (payload) => {
+//     console.log('Change received!', payload)
+//     fetchCategory(covenantId)
+//   }
+// )
+// .subscribe()
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -1397,10 +1432,10 @@ console.log(user)
                                       form.setValue('guild', option.name);
                                       form.setValue('guild_id', option.id)
                                       const guild_id = data2.guild.find((e) => e.id === option?.id);
-                                      setGuildId(guild_id?.id as any || null)
+                                      setGuildId(guild_id as any || null)
                                       fetchCovenant(guild_id?.id as any);
-                                      form.setValue('covenants', '');
-                                      form.setValue('category', '');
+                                      form.setValue('covenants', null);
+                                      form.setValue('category', null);
                                     }}
                                   >
                                     {option.name}
@@ -1436,7 +1471,7 @@ console.log(user)
                                 disabled={readOnly}
                                 variant="outline"
                                 role="combobox"
-                                value={field.value}
+                                value={field.value || undefined}
                                 className={cn('w-[300px] justify-between', !field.value && 'text-muted-foreground')}
                               >
                                 {typeof field.value === 'string' && field.value !== '' ? field.value : field.value ? getFieldName(field.value) : 'Seleccionar Convenio'}
@@ -1483,7 +1518,7 @@ console.log(user)
                                       setCovenantId(covenant_id?.id as any || null)
 
                                       fetchCategory(covenant_id?.id as any);
-                                      form.setValue('category', '');
+                                      form.setValue('category', null);
                                       console.log(option, 'option')
                                     }}
                                   >
