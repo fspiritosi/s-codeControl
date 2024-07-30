@@ -19,15 +19,15 @@ const EmployeePage = async () => {
         restricted: [''],
         content: {
           title: 'Empleados',
-          description: 'Aquí encontrarás todos empleados dados de baja',
+          description: 'Aquí encontrarás todos empleados',
           buttonActioRestricted: [''],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
               <Link
                 href="/dashboard/employee/action?action=new"
                 className={[
-                  'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
-                  buttonVariants({ variant: 'outline' }),
+                  
+                  buttonVariants({ variant: 'default' }),
                 ].join(' ')}
               >
                 Agregar nuevo empleado
