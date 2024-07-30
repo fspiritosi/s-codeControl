@@ -4,7 +4,7 @@ import { columnsGuests } from '@/app/dashboard/company/actualCompany/components/
 import { DataTable as DataTableInvited } from '@/app/dashboard/company/actualCompany/components/data-table';
 import { createdCustomer, updateCustomer } from '@/app/dashboard/company/customers/action/create';
 import { DataTable } from '@/app/dashboard/company/customers/action/data-table';
-import { DataEquipment } from '@/app/dashboard/equipment/data-equipment';
+import { EquipmentTable } from '@/app/dashboard/equipment/data-equipment';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
@@ -22,7 +22,7 @@ import { Toaster, toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../supabase/supabase';
 import { columns } from '../app/dashboard/company/customers/action/columnsCustomers';
-import { columns as columns1 } from '../app/dashboard/equipment/columns';
+import { EquipmentColums as columns1 } from '../app/dashboard/equipment/columns';
 
 export default function ClientRegister({ id }: { id: string }) {
   const router = useRouter();
@@ -293,12 +293,12 @@ export default function ClientRegister({ id }: { id: string }) {
             <TabsContent value="equipos">
               <Card>
                 <CardContent>
-                  <DataEquipment
+                  <EquipmentTable
                     columns={columns1}
                     data={filteredCustomersEquipment || []}
-                    allCompany={allCompany}
-                    showInactive={showInactive}
-                    setShowInactive={setShowInactive}
+                    // allCompany={allCompany}
+                    // showInactive={showInactive}
+                    // setShowInactive={setShowInactive}
                   />
                 </CardContent>
               </Card>
