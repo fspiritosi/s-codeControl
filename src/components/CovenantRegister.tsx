@@ -273,10 +273,6 @@ export const CovenantRegister = () => {
 
     return (
         <div className="flex items-center justify-between space-y-0">
-            <CardHeader className="w-full flex flex-row justify-between items-start bg-muted dark:bg-muted/50 ">
-            </CardHeader >
-
-            <div>
                 <AlertDialog open={open} onOpenChange={() => setOpen(!open)}>
 
                     <AlertDialogTrigger asChild>
@@ -583,8 +579,6 @@ export const CovenantRegister = () => {
                         </AlertDialogHeader>
                     </AlertDialogContent>
                 </AlertDialog>
-            </div>
-            {/* </CardHeader > */}
         </div >
     );
 };
