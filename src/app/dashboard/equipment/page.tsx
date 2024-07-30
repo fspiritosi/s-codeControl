@@ -1,92 +1,64 @@
 import Viewcomponent from '@/components/ViewComponent';
-import { useLoggedUserStore } from '@/store/loggedUser';
-import { cookies } from 'next/headers';
-import { columns } from './columns';
-import { DataEquipment } from './data-equipment';
+import EquipmentListTabs from './equipmentComponentes/EquipmentListTabs';
+import DocumentNav from '@/components/DocumentNav';
+import EquipmentTabs from '../document/documentComponents/EquipmentTabs';
+import TypesDocumentAction from '../document/documentComponents/TypesDocumentAction';
+import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
 
 export default async function Equipment() {
-  const URL = process.env.NEXT_PUBLIC_BASE_URL;
-
-  const allCompany = useLoggedUserStore.getState().allCompanies;
-  const cookiesStore = cookies();
-  const actualCompanyId = cookiesStore.get('actualComp')?.value;
-  const showInactive = false;
-
-  const res = await fetch(`${URL}/api/equipment/${actualCompanyId}`, { cache: 'no-store' });
-  const info = await res.json();
-
-  console.log('infoData', info);
-
-  const onlyVehicles = info.info?.filter((v: { type_of_vehicle: number }) => v.type_of_vehicle === 1);
-  const onlyNoVehicles = info.info?.filter((v: { type_of_vehicle: number }) => v.type_of_vehicle === 2);
-
-  return (
-    <Viewcomponent
-      viewData={{
-        defaultValue: 'equipos',
+  
+  const viewData = {    defaultValue: 'equipos',
         tabsValues: [
           {
             value: 'equipos',
-            name: 'Todos',
+            name: 'Equipos',
             restricted: [],
             content: {
               title: 'Equipos totales',
               description: 'Todos los equipos',
               buttonActioRestricted: [''],
               component: (
-                <div className="w-full grid grid-cols-1 px-8">
-                  <DataEquipment
-                    columns={columns}
-                    data={info.info}
-                    allCompany={allCompany}
-                    showInactive={showInactive}
-                  />
-                </div>
+               <EquipmentListTabs/>
               ),
             },
           },
           {
-            value: 'vehicles',
-            name: 'Vehículos',
-            restricted: [],
+            value: 'Documentos de equipos',
+            name: 'Documentos de equipos',
+            restricted: [''],
             content: {
-              title: 'Vehículos',
-              description: 'Solo Vehículos',
+              title: 'Documentos cargados',
+              description: 'Aquí encontrarás todos los documentos de tus equipos',
               buttonActioRestricted: [''],
-              component: (
-                <div className="w-full grid grid-cols-1 px-8">
-                  <DataEquipment
-                    columns={columns}
-                    data={onlyVehicles}
-                    allCompany={allCompany}
-                    showInactive={showInactive}
-                  />
+              buttonAction: (
+                <div className="flex gap-4 flex-wrap pl-6">
+                  <DocumentNav />
                 </div>
               ),
+              component: <EquipmentTabs />,
             },
           },
           {
-            value: 'others',
-            name: 'Otros Equipos',
-            restricted: [],
+            value: 'Tipos de documentos',
+            name: 'Tipos de documentos',
+            restricted: ['Invitado'],
             content: {
-              title: 'Otros Equipos',
+              title: 'Tipos de documentos',
               buttonActioRestricted: [''],
-              description: 'Todos los Equipos no vehículos',
-              component: (
-                <div className="w-full grid grid-cols-1 px-8">
-                  <DataEquipment
-                    columns={columns}
-                    data={onlyNoVehicles}
-                    allCompany={allCompany}
-                    showInactive={showInactive}
-                  />
-                </div>
-              ),
+              description: 'Tipos de documentos auditables',
+              buttonAction: <TypesDocumentAction optionChildrenProp="Equipos" />,
+              component: <TypesDocumentsView equipos  />,
             },
           },
+
         ],
-      }}
+  }
+
+  
+
+  return (
+    <Viewcomponent
+      viewData={viewData}
     />
   );
 }

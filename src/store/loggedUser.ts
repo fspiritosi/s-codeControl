@@ -970,8 +970,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
       );
     });
 
-    console.log('Empleados activos:');
-    console.log(activeEmployees);
+    //console.log('Empleados activos:');
+    //console.log(activeEmployees);
 
     console.log(
       employees
@@ -979,8 +979,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
         ?.documents_employees?.filter((e: any) => e.id_document_types.down_document)
     );
 
-    console.log('Empleados inactivos:');
-    console.log(inactiveEmployees);
+    //console.log('Empleados inactivos:');
+    //console.log(inactiveEmployees);
 
     if (active) {
       const employeesToShow = setEmployeesToShow(activeEmployees);
