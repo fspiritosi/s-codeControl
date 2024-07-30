@@ -16,6 +16,7 @@ export default async function Equipment() {
             content: {
               title: 'Equipos totales',
               description: 'Todos los equipos',
+              buttonActioRestricted: [''],
               component: (
                <EquipmentListTabs/>
               ),
@@ -28,6 +29,7 @@ export default async function Equipment() {
             content: {
               title: 'Documentos cargados',
               description: 'Aquí encontrarás todos los documentos de tus equipos',
+              buttonActioRestricted: [''],
               buttonAction: (
                 <div className="flex gap-4 flex-wrap pl-6">
                   <DocumentNav />
@@ -42,6 +44,7 @@ export default async function Equipment() {
             restricted: ['Invitado'],
             content: {
               title: 'Tipos de documentos',
+              buttonActioRestricted: [''],
               description: 'Tipos de documentos auditables',
               buttonAction: <TypesDocumentAction optionChildrenProp="Equipos" />,
               component: <TypesDocumentsView equipos  />,

@@ -1,3 +1,4 @@
+
 import { Notifications, SharedUser, VehiclesAPI, profileUser } from '@/types/types';
 import { Company, SharedCompanies, Vehicle } from '@/zodSchemas/schemas';
 import { User } from '@supabase/supabase-js';
@@ -172,6 +173,10 @@ const setEmployeesToShow = (employees: any) => {
       reason_for_termination: employees?.reason_for_termination,
       termination_date: employees?.termination_date,
       status: employees?.status,
+      guild: employees?.guild,
+      covenants: employees?.covenants,
+      category:employees?.category,
+
       documents_employees: employees.documents_employees,
     };
   });
@@ -594,7 +599,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
     // set({ isLoading: true })
     if (!get()?.actualCompany?.id) return;
 
-    let { data, error } = await supabase
+    let data;
+
+    let { data: dataEmployes, error } = await supabase
       .from('documents_employees')
       .select(
         `
@@ -609,6 +616,22 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
       .not('employees', 'is', null)
       .eq('employees.company_id', get()?.actualCompany?.id);
+
+    data = dataEmployes;
+
+    if (dataEmployes?.length === 1000) {
+      const { data: data2, error: error2 } = await supabase
+        .from('documents_employees')
+        .select(`*, employees:employees(*,contractor_employee(customers(*))), document_types:document_types(*)`)
+        .range(1000, 2000);
+
+      console.log(data2);
+      if (data2) data = data ? [...data, ...data2] : data2;
+    }
+
+    console.log(data);
+
+    console.log(data?.find((e) => e.employees.email === 'maxig003@gmail.com'));
 
     let { data: documents_company, error: documents_company_error } = await supabase
       .from('documents_company')
@@ -906,6 +929,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
            documents_employees(
             *,id_document_types(*)
           ),
+          guild(id,name),
+          covenants(id,name),
+          category(id,name),
           contractor_employee(
             customers(
               *
@@ -950,7 +976,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     console.log(
       employees
         ?.find((e) => e.id === '4c58b1c4-f10c-440a-8fc8-9a21ac4602e2')
-        .documents_employees?.filter((e: any) => e.id_document_types.down_document)
+        ?.documents_employees?.filter((e: any) => e.id_document_types.down_document)
     );
 
     //console.log('Empleados inactivos:');

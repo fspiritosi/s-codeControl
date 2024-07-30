@@ -96,6 +96,9 @@ type Colum = {
   birthplace: string;
   status: string;
   is_active: boolean;
+  guild: string;
+  covenants: string;
+  category: string;
 };
 
 const allocatedToRangeFilter: FilterFn<Colum> = (
@@ -600,7 +603,18 @@ export const EmployeesListColumns: ColumnDef<Colum>[] = [
     accessorKey: 'phone',
     header: 'Teléfono',
   },
-
+  {
+    accessorKey: 'guild',
+    header: 'Asosiación gremial',
+  },
+  {
+    accessorKey: 'covenants',
+    header: 'Convenio',
+  },
+  {
+    accessorKey: 'category',
+    header: 'Categoría',
+  },
   // {
   //   accessorKey: 'affiliate_status',
   //   header: 'Estado de afiliado',

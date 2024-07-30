@@ -13,7 +13,9 @@ import {
   typeOfContractENUM,
 } from '@/types/enums';
 import { supabase } from '../../supabase/supabase';
-
+import { CaretSortIcon, CheckIcon, PlusCircledIcon } from '@radix-ui/react-icons';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { ModalCct } from './ModalCct';
 import DocumentTable from '@/app/dashboard/document/DocumentTable';
 import { CheckboxDefaultValues } from '@/components/CheckboxDefValues';
 import { SelectWithData } from '@/components/SelectWithData';
@@ -33,13 +35,13 @@ import { DialogTrigger } from '@radix-ui/react-dialog';
 import { CalendarIcon } from '@radix-ui/react-icons';
 import { PostgrestError } from '@supabase/supabase-js';
 import { addMonths, format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { ca, es } from 'date-fns/locale';
 import { Loader } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChangeEvent, Suspense, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
+import { string, z } from 'zod';
 import BackButton from './BackButton';
 import { ImageHander } from './ImageHandler';
 import { AlertDialogFooter } from './ui/alert-dialog';
@@ -49,10 +51,33 @@ import { CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { log } from 'console';
 
 type Province = {
   id: number;
   name: string;
+};
+type dataType = {
+  guild: {
+    name: string;
+    id: string;
+    is_active: boolean;
+
+  }[];
+  covenants: {
+    name: string;
+    number: string
+    guild_id: string;
+    id: string;
+    is_active: boolean;
+  }[];
+  category: {
+    name: string;
+    id: string;
+    covenant_id: string;
+    is_active: boolean;
+  }[];
+
 };
 
 export default function EmployeeAccordion({ role }: { role: string | null }) {
@@ -62,9 +87,11 @@ export default function EmployeeAccordion({ role }: { role: string | null }) {
   const owner2 = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
   const users = useLoggedUserStore((state) => state);
   const company = useLoggedUserStore((state) => state.actualCompany?.id);
-  // const role = useLoggedUserStore((state) => state.roleActualCompany);
+  //  const role = useLoggedUserStore((state) => state.roleActualCompany);
   const searchParams = useSearchParams();
   const document = searchParams.get('document');
+  const [covenantId, setCovenantId] = useState()
+  const [searchText, setSearchText] = useState()
   const [accion, setAccion] = useState(searchParams.get('action'));
   const employees = useLoggedUserStore((state) => state.active_and_inactive_employees);
   const [user, setUser] = useState(employees?.find((user: any) => user.document_number === document));
@@ -85,6 +112,19 @@ export default function EmployeeAccordion({ role }: { role: string | null }) {
       (company: any) => company.company_id.toString() === profile?.actualCompany?.id && company.is_active
     )
   );
+  const [guildId, setGuildId] = useState()
+
+
+  const [guildData, setGuildData] = useState<dataType>({
+    guild: [],
+    covenants: [],
+    category: [],
+  });
+  const [data2, setData2] = useState<dataType>({
+    guild: [],
+    covenants: [],
+    category: [],
+  });
   // const filteredContractorCompanies = contractorCompanies?.filter((company:any) => company.company_id.toString() === profile?.actualCompany?.id && company.is_active);
   const setActivesEmployees = useLoggedUserStore((state) => state.setActivesEmployees);
   const { updateEmployee, createEmployee } = useEmployeesData();
@@ -93,38 +133,47 @@ export default function EmployeeAccordion({ role }: { role: string | null }) {
   // const { toast } = useToast()
   const url = process.env.NEXT_PUBLIC_PROJECT_URL;
   const mandatoryDocuments = useCountriesStore((state) => state.mandatoryDocuments);
+console.log(user)
 
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
     defaultValues: user
-      ? { ...user, allocated_to: user?.allocated_to }
+      ? {
+        ...user, allocated_to: user?.allocated_to,
+        guild: user?.guild?.name,
+        covenants: user?.covenants?.name,
+        category: user?.category?.name
+      }
       : {
-          lastname: '',
-          firstname: '',
-          nationality: undefined,
-          cuil: '',
-          document_type: undefined,
-          document_number: '',
-          birthplace: undefined,
-          gender: undefined,
-          marital_status: undefined,
-          level_of_education: undefined,
-          picture: '',
-          street: '',
-          street_number: '',
-          province: undefined,
-          city: undefined,
-          postal_code: '',
-          phone: '',
-          email: '',
-          file: '',
-          hierarchical_position: undefined,
-          company_position: '',
-          workflow_diagram: undefined,
-          type_of_contract: undefined,
-          allocated_to: [],
-          date_of_admission: undefined,
-        },
+        lastname: '',
+        firstname: '',
+        nationality: undefined,
+        cuil: '',
+        document_type: undefined,
+        document_number: '',
+        birthplace: undefined,
+        gender: undefined,
+        marital_status: undefined,
+        level_of_education: undefined,
+        picture: '',
+        street: '',
+        street_number: '',
+        province: undefined,
+        city: undefined,
+        postal_code: '',
+        phone: '',
+        email: '',
+        file: '',
+        hierarchical_position: undefined,
+        company_position: '',
+        workflow_diagram: undefined,
+        type_of_contract: undefined,
+        allocated_to: [],
+        date_of_admission: undefined,
+        guild: undefined,
+        covenants: undefined,
+        category: undefined,
+      },
   });
   const [accordion1Errors, setAccordion1Errors] = useState(false);
   const [accordion2Errors, setAccordion2Errors] = useState(false);
@@ -133,9 +182,60 @@ export default function EmployeeAccordion({ role }: { role: string | null }) {
 
   const provinceId = provincesOptions?.find((province: Province) => province.name.trim() === user?.province)?.id;
 
+  const fetchGuild = async () => {
+    try {
+      let { data: guilds } = await supabase
+        .from('guild')
+        .select('*')
+        .eq('company_id', company)
+        .eq('is_active', true)
+
+
+      setData2({
+        ...data2,
+
+        guild: (guilds || [])?.map((e) => {
+          return { name: e.name as string, id: e.id as string, is_active: e.is_active };
+        }),
+
+      });
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      // Muestra un mensaje de error al usuario
+      toast.error('Error fetching data');
+    }
+  };
+
+
+
+  const fetchCovenant = async (guild_id: string) => {
+    try {
+      let { data: covenants } = await supabase
+        .from('covenant')
+        // .select('*, guild_id(is_active)')
+        .select('*')
+        // .eq('company_id', company)
+        .eq('guild_id', guild_id)
+      // .eq('guild_id(is_active)', true)
+
+
+      setData2({
+        ...data2,
+
+        covenants: (covenants || [])?.map((e) => {
+          return { name: e.name as string, id: e.id as string, number: e.number as string, guild_id: e.guild_id as string, is_active: e.is_active };
+        }),
+
+      });
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      // Muestra un mensaje de error al usuario
+      toast.error('Error fetching data');
+    }
+  };
   useEffect(() => {
     fetchContractors();
-
+    fetchGuild()
     const unsubscribe = subscribeToCustomersChanges();
 
     return () => {
@@ -143,6 +243,22 @@ export default function EmployeeAccordion({ role }: { role: string | null }) {
     };
   }, [fetchContractors, subscribeToCustomersChanges]);
 
+  const fetchCategory = async (covenant_id: string) => {
+    let { data: category } = await supabase
+      .from('category')
+      .select('*')
+      .eq('covenant_id', covenant_id);
+
+    setData2({
+      ...data2,
+      category: (category || [])?.map((e) => {
+        return { name: e.name as string, id: e.id as string, covenant_id: e.guild_id as string, is_active: e.is_active };
+      }),
+
+      // category: category as any,
+    });
+
+  };
   useEffect(() => {
     if (provinceId) {
       fetchCityValues(provinceId);
@@ -478,20 +594,24 @@ export default function EmployeeAccordion({ role }: { role: string | null }) {
 
     toast.promise(
       async () => {
-        const { full_name, ...rest } = values;
+        const { guild_id, covenants_id, category_id, full_name, ...rest } = values;
+        
         const finalValues = {
           ...rest,
           date_of_admission:
             values.date_of_admission instanceof Date
               ? values.date_of_admission.toISOString()
               : values.date_of_admission,
+          guild: form.getValues("guild_id") as string,
+          covenants: form.getValues("covenants_id") as string,
+          category: form.getValues("category_id") as string,
           province: String(provincesOptions.find((e) => e.name.trim() === values.province)?.id),
           birthplace: String(countryOptions.find((e) => e.name === values.birthplace)?.id),
           city: String(citysOptions.find((e) => e.name.trim() === values.city)?.id),
           hierarchical_position: String(hierarchyOptions.find((e) => e.name === values.hierarchical_position)?.id),
           workflow_diagram: String(workDiagramOptions.find((e) => e.name === values.workflow_diagram)?.id),
         };
-
+        console.log(finalValues)
         // Valores a eliminar
         const result = compareContractorEmployees(user, finalValues);
 
@@ -520,6 +640,7 @@ export default function EmployeeAccordion({ role }: { role: string | null }) {
         }
 
         try {
+          console.log(finalValues)
           await updateEmployee(finalValues, user?.id);
 
           await handleUpload();
@@ -637,6 +758,13 @@ export default function EmployeeAccordion({ role }: { role: string | null }) {
       reason_for_termination: undefined,
     },
   });
+  
+  function getFieldName(fieldValue: any): string {
+    if (typeof fieldValue === 'object' && fieldValue !== null && 'name' in fieldValue) {
+      return fieldValue.name;
+    }
+    return 'Seleccionar Asosiacion gremial';
+  }
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -681,6 +809,8 @@ export default function EmployeeAccordion({ role }: { role: string | null }) {
                 <BackButton />
               </div>
             ) : (
+              !readOnly &&
+              accion !== 'new' &&
               role !== 'Invitado' && (
                 <div className="flex flex-grap gap-2">
                   <Dialog onOpenChange={() => setShowModal(!showModal)}>
@@ -1116,6 +1246,7 @@ export default function EmployeeAccordion({ role }: { role: string | null }) {
                               );
                             }}
                           />
+
                         </div>
                       );
                     }
@@ -1204,11 +1335,274 @@ export default function EmployeeAccordion({ role }: { role: string | null }) {
                               </FormItem>
                             )}
                           />
+
                         </div>
                       );
                     }
                   })}
+                  {/* <div> */}
+                  <FormField
+                    control={form.control}
+                    name="guild"
+                    render={({ field  }) => (
+                      <FormItem className="flex flex-col min-w-[250px] " >
+                        <FormLabel>
+                          Asosiacion gremial
+                        </FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                disabled={readOnly}
+                                variant="outline"
+                                role="combobox"
+                                value={field.value}
+                                className={cn('w-[300px] justify-between', !field.value && 'text-muted-foreground')}
+                              >
+                                {typeof field.value === 'string' ? field.value : field.value ? getFieldName(field.value) : 'Seleccionar Asosiacion gremial'}
+                                <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[300px] p-0 max-h-[200px] overflow-y-auto" asChild>
+                            <Command >
+                              <CommandInput
+                                disabled={readOnly}
+                                placeholder="Buscar  Asosiacion gremial..."
+                                value={searchText}
+                                onValueChange={(value: any) => setSearchText(value)}
+                                className="h-9" />
+                              <CommandEmpty className="py-2 px-2">
+                                <ModalCct modal="addGuild"
+                                  fetchGuild={fetchGuild}
+                                  searchText={searchText}
+                                >
+                                  <Button
+                                    disabled={readOnly}
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn('w-full justify-between', !field.value && 'text-muted-foreground')}
+                                  >
+                                    Agregar Asosiacion gremial
+                                    <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </ModalCct>
+                              </CommandEmpty>
+                              <CommandGroup className="max-h-[200px] overflow-y-auto">
+                                {data2.guild?.map((option) => (
+                                  <CommandItem
+                                    value={option.name}
+                                    key={option.id}
+                                    onSelect={() => {
+                                      form.setValue('guild', option.name);
+                                      form.setValue('guild_id', option.id)
+                                      const guild_id = data2.guild.find((e) => e.id === option?.id);
+                                      setGuildId(guild_id?.id as any || null)
+                                      fetchCovenant(guild_id?.id as any);
+                                      form.setValue('covenants', '');
+                                      form.setValue('category', '');
+                                    }}
+                                  >
+                                    {option.name}
+                                    <CheckIcon
+                                      className={cn(
+                                        'ml-auto h-4 w-4',
+                                        option.name === field.value? 'opacity-100' : 'opacity-0'
+                                      )}
+                                    />
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <FormDescription>Selecciona la Asosiacion Gremial</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="covenants"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col min-w-[250px] ">
+                        <FormLabel>
+                          Convenio
+                        </FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                disabled={readOnly}
+                                variant="outline"
+                                role="combobox"
+                                value={field.value}
+                                className={cn('w-[300px] justify-between', !field.value && 'text-muted-foreground')}
+                              >
+                                {typeof field.value === 'string' && field.value !== '' ? field.value : field.value ? getFieldName(field.value) : 'Seleccionar Convenio'}
+                                <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[300px] p-0 max-h-[200px] overflow-y-auto" asChild>
+                            <Command>
+                              <CommandInput
+                                disabled={readOnly}
+                                placeholder="Buscar convenio..."
+                                onValueChange={(value: any) => setSearchText(value)}
+                                className="h-9" />
+                              <CommandEmpty className="py-2 px-2">
+                                <ModalCct modal="addCovenant"
+                                  fetchData={fetchCovenant}
+                                  guildId={guildId}
+                                  searchText={searchText}
+                                >
+                                  <Button
+                                    disabled={readOnly}
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn('w-full justify-between', !field.value && 'text-muted-foreground')}
+                                  >
+                                    Agregar Convenio
+                                    <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </ModalCct>
+                              </CommandEmpty>
+                              <CommandGroup className="max-h-[200px] overflow-y-auto">
+                                {data2.covenants?.map((option) => (
+                                  
+                                  <CommandItem
+                                    value={option.name}
+                                    key={option.id}
+                                    onSelect={() => {
+                                      form.setValue('covenants', option.name);
+                                      form.setValue('covenants_id', option.id)
+                                      
+                                      const covenant_id = data2.covenants.find((e) => e.id === option?.id);
+
+                                      setCovenantId(covenant_id?.id as any || null)
+
+                                      fetchCategory(covenant_id?.id as any);
+                                      form.setValue('category', '');
+                                      console.log(option, 'option')
+                                    }}
+                                  >
+                                    {option.name}
+                                    <CheckIcon
+                                      className={cn(
+                                        'ml-auto h-4 w-4',
+                                        option.name === field.value ? 'opacity-100' : 'opacity-0'
+                                      )}
+                                    />
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <FormDescription>Selecciona el convenio</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col min-w-[250px]">
+                        <FormLabel>
+                        
+                          Categoría
+                        </FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                disabled={readOnly}
+                                variant="outline"
+                                role="combobox"
+                                className={cn('w-[300px] justify-between', !field.value && 'text-muted-foreground')}
+                              >
+                                {typeof field.value === 'string' && field.value !== '' ? field.value : field.value ? getFieldName(field.value) : 'Seleccionar Categoría'}
+                                <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[300px] p-0" asChild>
+                            <Command>
+                              <CommandInput
+                                disabled={readOnly}
+                                placeholder="Buscar categoria..."
+                                onValueChange={(value: any) => setSearchText(value)}
+                                className="h-9" />
+                              <CommandEmpty className="py-2 px-2">
+                                <ModalCct modal="addCategory"
+                                  fetchCategory={fetchCategory}
+                                  covenant_id={covenantId as any}
+                                  covenantOptions={data2.category as any}
+                                  searchText={searchText}
+                                >
+                                  <Button
+                                    disabled={readOnly}
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn('w-full justify-between', !field.value && 'text-muted-foreground')}
+                                  >
+                                    Agregar Categoría
+                                    <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </ModalCct>
+                              </CommandEmpty>
+                              <CommandGroup className="max-h-[200px] overflow-y-auto">
+                                <>
+                                  {data2?.category?.map((option) => (
+                                    <CommandItem
+                                      value={option.name}
+                                      key={option.id}
+                                      onSelect={() => {
+                                        form.setValue('category', option.name);
+                                        form.setValue('category_id', option.id)
+                                        
+                                      }}
+
+                                    >
+                                      {option.name}
+                                      <CheckIcon
+                                      className={cn(
+                                        'ml-auto h-4 w-4',
+                                        option.name === field.value ? 'opacity-100' : 'opacity-0'
+                                      )}
+                                    />
+                                    </CommandItem>
+                                  ))}
+                                </>
+                                <>
+                                  <ModalCct modal="addCategory"
+                                    fetchCategory={fetchCategory} covenant_id={covenantId} covenantOptions={data2.covenants}
+                                  >
+                                    <Button
+                                      disabled={readOnly}
+                                      variant="outline"
+                                      role="combobox"
+                                      className={cn('w-full justify-between', !field.name && 'text-muted-foreground')}
+                                    >
+                                      Agregar Categoría
+                                      <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                  </ModalCct>
+                                </>
+                              </CommandGroup>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <FormDescription>Selecciona la categoría</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {/* </div> */}
                 </div>
+
               </TabsContent>
               <TabsContent value="documents" className="px-2 py-2">
                 <DocumentTable document={user?.document_number || ''} />
@@ -1238,3 +1632,8 @@ export default function EmployeeAccordion({ role }: { role: string | null }) {
     </Suspense>
   );
 }
+
+
+
+
+

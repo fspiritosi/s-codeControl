@@ -147,6 +147,9 @@ export type Employee = {
   reason_for_termination?: string | undefined;
   termination_date?: Date | undefined | string;
   status?: 'Avalado' | 'No avalado';
+  guild?: string|undefined;
+  covenant?: string|undefined;
+  category?: string|undefined;
 };
 
 export type Documents = {
@@ -407,6 +410,26 @@ export type Type = {
   name: string;
   created_at: Date;
 };
+export enum types {
+  Texto = 'Texto',
+  AreaTexto = 'Área de texto',
+  Separador = 'Separador',
+  NombreFormulario = 'Nombre del formulario',
+  Radio = 'Radio',
+  SeleccionMultiple = 'Seleccion multiple',
+  Date = 'Fecha',
+  Seleccion = 'Seleccion',
+  SeleccionPredefinida = 'Seleccion Predefinida',
+  Subtitulo = 'Subtitulo',
+  SiNo = 'Si-No',
+  Titulo = 'Titulo',
+  Seccion = 'Seccion',
+  Archivo = 'Archivo',
+  Observaciones = 'Observaciones',
+  SectionDate = 'SectionDate',
+  SectionObservaciones = 'SectionObservaciones',
+}
+
 
 export type DocumentTypes = {
   id: string;
@@ -437,6 +460,32 @@ export type DocumentsTable = {
   document_types: DocumentTypes;
   domain: string;
 };
+export interface Campo {
+  tipo: types
+  placeholder?: string
+  opciones: string[]
+  value?: string
+  id: string
+  title: string
+  observation?: boolean
+  date?: boolean
+  sectionCampos?: Campo[]
+  formName?: string
+  required?: boolean
+}
+export interface FormField {
+  formName?: string
+  title: string
+  value?: string
+  tipo: string
+  opciones?: string[]
+  date?: boolean
+  id: string
+  placeholder?: string
+  Observaciones?: boolean
+  observation?: boolean
+  required?: boolean
+}
 
 export interface Document {
   date: string;

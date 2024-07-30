@@ -41,6 +41,7 @@ export default async function page() {
         content: {
           title: 'Documentos cargados',
           description: 'Aquí encontrarás todos los documentos de tus empleados',
+          buttonActioRestricted: [''],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
               <DocumentNav />
@@ -56,6 +57,7 @@ export default async function page() {
         content: {
           title: 'Documentos cargados',
           description: 'Aquí encontrarás todos los documentos de tus equipos',
+          buttonActioRestricted: [''],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
               <DocumentNav />
@@ -71,6 +73,7 @@ export default async function page() {
         content: {
           title: 'Documentos cargados',
           description: 'Aquí encontrarás todos los documentos de tus empresa',
+          buttonActioRestricted: [''],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
               <DocumentNav />
@@ -86,6 +89,7 @@ export default async function page() {
         content: {
           title: 'Tipos de documentos',
           description: 'Tipos de documentos auditables',
+          buttonActioRestricted: [''],
           buttonAction: <TypesDocumentAction optionChildrenProp="all" />,
           component: <TypesDocumentsView equipos empresa personas />,
         },
