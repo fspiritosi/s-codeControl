@@ -33,7 +33,6 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
   index,
   completObjet,
 }) => {
-  console.log(campo)
   switch (campo.tipo) {
     case 'Seccion':
       return (

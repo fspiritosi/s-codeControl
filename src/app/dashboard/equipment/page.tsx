@@ -15,8 +15,6 @@ export default async function Equipment() {
   const res = await fetch(`${URL}/api/equipment/${actualCompanyId}`, { cache: 'no-store' });
   const info = await res.json();
 
-  console.log('infoData', info);
-
   const onlyVehicles = info.info?.filter((v: { type_of_vehicle: number }) => v.type_of_vehicle === 1);
   const onlyNoVehicles = info.info?.filter((v: { type_of_vehicle: number }) => v.type_of_vehicle === 2);
 

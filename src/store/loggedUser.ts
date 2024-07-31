@@ -620,13 +620,10 @@ export const useLoggedUserStore = create<State>((set, get) => {
         .select(`*, employees:employees(*,contractor_employee(customers(*))), document_types:document_types(*)`)
         .range(1000, 2000);
 
-      console.log(data2);
       if (data2) data = data ? [...data, ...data2] : data2;
     }
 
-    console.log(data);
 
-    console.log(data?.find((e) => e.employees.email === 'maxig003@gmail.com'));
 
     let { data: documents_company, error: documents_company_error } = await supabase
       .from('documents_company')
@@ -933,13 +930,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       .eq('company_id', get()?.actualCompany?.id);
     // .eq('is_active', active);
     set({ active_and_inactive_employees: setEmployeesToShow(employees) });
-    console.log(
-      employees
-        ?.filter((e) => !e.is_active)?.[0]
-        ?.documents_employees.filter((e: any) => e.id_document_types.down_document)
-        ?.every((e: any) => e.state === 'presentado')
-    );
-
+  
     // Filtrar empleados activos
     const activeEmployees = employees?.filter((e) => {
       if (e.is_active) {
@@ -961,18 +952,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
           .every((doc: any) => doc.state === 'presentado')
       );
     });
-
-    console.log('Empleados activos:');
-    console.log(activeEmployees);
-
-    console.log(
-      employees
-        ?.find((e) => e.id === '4c58b1c4-f10c-440a-8fc8-9a21ac4602e2')
-        .documents_employees?.filter((e: any) => e.id_document_types.down_document)
-    );
-
-    console.log('Empleados inactivos:');
-    console.log(inactiveEmployees);
 
     if (active) {
       const employeesToShow = setEmployeesToShow(activeEmployees);

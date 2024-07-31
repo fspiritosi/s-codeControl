@@ -67,9 +67,10 @@ export default function SimpleDocument({
   const documentResource = searchParams.get('document');
   const id = searchParams.get('id');
   const user = useLoggedUserStore((state) => state.credentialUser?.id);
-  const idApplies =
-    (employees?.find((employee: any) => employee.document === documentResource || employee.document === numberDocument)
-      ?.id as string) || (vehicles?.find((vehicle: any) => vehicle.id === numberDocument)?.id as string);
+  const idAppliesUser: any =
+    (employees?.find(
+      (employee: any) => employee.document === documentResource || employee.document === numberDocument
+    ) as string) || (vehicles?.find((vehicle: any) => vehicle.id === numberDocument) as string);
 
   const {
     control,
@@ -83,7 +84,7 @@ export default function SimpleDocument({
     defaultValues: {
       documents: [
         {
-          applies: idApplies || '',
+          applies: `${idAppliesUser?.id}` || '',
           id_document_types: defaultDocumentId ?? '',
           file: '',
           validity: '',
@@ -101,12 +102,12 @@ export default function SimpleDocument({
   const [loading, setLoading] = useState(false);
   const [allTypesDocuments, setAllTypesDocuments] = useState<any[] | null>([]);
 
-  console.log(actualCompany);
+  console.log(idAppliesUser);
+  console.log(documenTypes);
 
   const onSubmit = async ({ documents }: any) => {
     const isSpecial = documenTypes?.find((e) => e.id === documents[0].id_document_types);
-    console.log(documents);
-    return;
+
     toast.promise(
       async () => {
         setLoading(true);
@@ -127,9 +128,21 @@ export default function SimpleDocument({
 
         for (let index = 0; index < documents.length; index++) {
           const document = documents[index];
-          const { data } = await supabase.storage.from('document_files').list(storagePath, {
-            search: `document-${document.id_document_types}-${updateEntries[index].applies}`,
-          });
+          const fileExtension = document.file.split('.').pop();
+          const tableName = resource === 'empleado' ? 'documents_employees' : 'documents_equipment';
+          const period = document.period;
+          const hasExpiredDate = updateEntries?.[index]?.validity?.replace(/\//g, '-') || period || 'v0';
+          const documetType = documenTypes?.find((e) => e.id === documents[index].id_document_types);
+          const formatedCompanyName = actualCompany?.company_name.toLowerCase().replace(/ /g, '-');
+          const formatedAppliesName = `${idAppliesUser?.name.toLowerCase().replace(/ /g, '-')}-(${idAppliesUser?.document})`;
+          const formatedDocumentTypeName = documetType?.name.toLowerCase().replace(/ /g, '-');
+          const formatedAppliesPath = documetType.applies.toLowerCase().replace(/ /g, '-');
+
+          const { data } = await supabase.storage
+            .from('document_files')
+            .list(`${formatedCompanyName}-(${actualCompany?.company_cuit})`, {
+              search: `/${formatedAppliesPath}/${formatedAppliesName}/${formatedDocumentTypeName}-(${hasExpiredDate}).${fileExtension}`,
+            });
 
           if (data?.length && data?.length > 0) {
             setError(`documents.${index}.id_document_types`, {
@@ -148,19 +161,11 @@ export default function SimpleDocument({
           if (hasError) {
             return setLoading(false);
           }
-          const fileExtension = document.file.split('.').pop();
-          const tableName = resource === 'empleado' ? 'documents_employees' : 'documents_equipment';
-          const hasExpiredDate = updateEntries?.[index]?.validity?.replace(/\//g, '-') ?? 'v0';
-
-          //TODO const isSpecial = documenTypes?.find((e) => e.id === documents[index].id_document_types)[0]?.special;
-          const is_it_montlhy = documenTypes?.find((e) => e.id === documents[index].id_document_types)[0]
-            ?.is_it_montlhy;
-          const period = document.period;
 
           await supabase.storage
             .from('document_files')
             .upload(
-              `/${storagePath}/document-${document.id_document_types}-${updateEntries[index].applies}-${hasExpiredDate}.${fileExtension}`,
+              `${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/${formatedAppliesName}/${formatedDocumentTypeName}-(${hasExpiredDate}).${fileExtension}`,
               files?.[index] || document.file,
               {
                 cacheControl: '3600',

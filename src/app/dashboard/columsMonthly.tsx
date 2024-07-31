@@ -66,6 +66,7 @@ type Colum = {
   document_number?: string;
   mandatory?: string;
   id_document_types?: string;
+  applies: string;
 };
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -664,7 +665,7 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
       }
 
       return (
-        <Link href={`/dashboard/document/${row.original.id}`}>
+        <Link href={`/dashboard/document/${row.original.id}?resource=${row.original.applies}`}>
           <Button>Ver documento</Button>
         </Link>
       );

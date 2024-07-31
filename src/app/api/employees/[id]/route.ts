@@ -6,7 +6,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   const company_id = searchParams.get('actual');
   const user_id = searchParams.get('user');
   const id = params.id;
-  console.log(id); //AQUI ME QUEDE
+  // console.log(id); //AQUI ME QUEDE
 
 
   try {

@@ -66,7 +66,6 @@ export function FormCustom({
     setSelectKey(prevKey => prevKey + 1) // Incrementa la clave
   }
   const borrarCampo = (index: number, campo_id?: string) => {
-    console.log('index', index)
     if (campo_id !== undefined && index !== undefined) {
       const newCampos = [...campos]
       newCampos

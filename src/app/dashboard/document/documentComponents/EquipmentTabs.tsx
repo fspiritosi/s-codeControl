@@ -26,11 +26,9 @@ async function EquipmentTabs() {
   const response = await fetch(`${URL}/api/equipment`, { cache: 'no-store' });
   const response2 = await response.json();
 
-  console.log(response2);
 
   const vehicles = data?.map(mapVehicle);
 
-  console.log(vehicles);
   return (
     <Tabs defaultValue="permanentes">
       <CardContent>

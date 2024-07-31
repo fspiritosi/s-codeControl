@@ -20,12 +20,10 @@ export function SubmitCustomForm({ campos }: Props) {
     resolver: zodResolver(FormSchema),
   });
   
-  console.log('render');
   function handleCustomFormSubmit(data: z.infer<typeof FormSchema>) {
     console.log('data', data);
   }
 
-  console.log(campos);
 
   return (
     <div className=" px-8 py-5  rounded-e-xl rounded">

@@ -630,7 +630,6 @@ export default function EmployeeAccordion({ role, user }: { role: string | null;
     },
   });
 
-  console.log(user?.document_number);
 
   return (
     <Suspense fallback={<div>Loading...</div>}>

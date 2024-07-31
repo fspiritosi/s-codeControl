@@ -10,7 +10,9 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { handleSupabaseError } from '@/lib/errorHandler';
 import { cn } from '@/lib/utils';
+import { formatDocumentTypeName } from '@/lib/utils/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { addMonths, format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -33,6 +35,7 @@ export default function MultiResourceDocument({
   const [expiredDate, setExpiredDate] = useState(false);
   const [isMontlhy, setIsMontlhy] = useState(false);
   const [disabled, setDisabled] = useState(false);
+  const currentCompany = useLoggedUserStore((state) => state.actualCompany);
   const vehicles = useLoggedUserStore((state) => state.vehicles)?.reduce(
     (acc: any, act: { year: string; intern_number: string; id: string }) => {
       const data = {
@@ -115,132 +118,158 @@ export default function MultiResourceDocument({
   const user = useLoggedUserStore((state) => state.credentialUser?.id);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setDisabled(true);
-    if (!file)
-      return form.setError('document', {
-        message: 'Por favor, selecciona un documento',
-      });
+    //! Refactorizar este codigo para que se suba 1 vez el documento y se vincule a todos los recursos, ver de que manera guardarlo en el storage
 
-    const storagePath = resource === 'equipo' ? 'documentos-equipos' : 'documentos-empleados';
-
-    const resourceId =
-      resource === 'equipo'
-        ? selectedResources?.map((resource) => {
-            const vehicle = vehicles.find((element: any) => {
-              return element.document === resource;
-            });
-            return vehicle?.id;
-          })
-        : selectedResources?.map((resource) => {
-            const employee = employees.find((element: any) => {
-              return element.document === resource;
-            });
-            return employee?.id;
+    toast.promise(
+      async () => {
+        setDisabled(true);
+        if (!file)
+          return form.setError('document', {
+            message: 'Por favor, selecciona un documento',
           });
+        const period = values?.period?.replaceAll('/', '-') ?? null;
+        const validity = values?.validity ? format(values.validity, 'dd/MM/yyyy').replaceAll('/', '-') : null;
 
-    const fileExtension = file?.name.split('.').pop();
+        const hasExpiredDate = validity || period || 'v0';
 
-    const tableName = resource === 'equipo' ? 'documents_equipment' : 'documents_employees';
+        const documetType = documenTypes?.find((e) => e.id === values.id_document_types);
+        const formatedCompanyName = currentCompany?.company_name.toLowerCase().replace(/ /g, '-');
+        const formatedDocumentTypeName = formatDocumentTypeName(documetType?.name);
+        const formatedAppliesPath = documetType.applies.toLowerCase().replace(/ /g, '-');
 
-    for (let index = 0; index < resourceId.length; index++) {
-      const { data } = await supabase.storage.from('document_files').list(storagePath, {
-        search: `document-${values.id_document_types}-${resourceId[index]}`,
-      });
-
-      if (data?.length && data?.length > 0) {
-        const resourceName =
+        const resourceId =
           resource === 'equipo'
             ? selectedResources?.map((resource) => {
                 const vehicle = vehicles.find((element: any) => {
                   return element.document === resource;
                 });
-                return vehicle.name;
+                return vehicle?.id;
               })
             : selectedResources?.map((resource) => {
                 const employee = employees.find((element: any) => {
                   return element.document === resource;
                 });
-                return employee.name;
+                return employee?.id;
               });
 
-        form.setError('document', {
-          message: 'Este documento ya ha sido subido anteriormente',
+        const fileExtension = file?.name.split('.').pop();
+        const tableName = resource === 'equipo' ? 'documents_equipment' : 'documents_employees';
+
+        const { data } = await supabase.storage
+          .from('document_files')
+          .list(`${formatedCompanyName}-(${currentCompany?.company_cuit})/multirecursos/${formatedAppliesPath}/`, {
+            search: `${formatedDocumentTypeName}`,
+          });
+
+        if (data?.length && data?.length > 0) {
+          const resourceName =
+            resource === 'equipo'
+              ? selectedResources?.map((resource) => {
+                  const vehicle = vehicles.find((element: any) => {
+                    return element.document === resource;
+                  });
+                  return vehicle.name;
+                })
+              : selectedResources?.map((resource) => {
+                  const employee = employees.find((element: any) => {
+                    return element.document === resource;
+                  });
+                  return employee.name;
+                });
+
+          form.setError('id_document_types', {
+            message: 'Este documento ya ha sido subido anteriormente',
+          });
+
+          throw new Error('Este documento ya ha sido subido anteriormente');
+        }
+
+        const tableEntries = resourceId?.map((resourceId) => {
+          return {
+            id_document_types: values.id_document_types,
+            applies: resourceId,
+            validity: values.validity ? format(values.validity, 'dd/MM/yyyy') : null,
+            user_id: user,
+            created_at: new Date(),
+            period: values.period,
+          };
         });
-        toast.error(`El recurso ${resourceName[index]} ya tiene un documento de este tipo`, {
-          description: 'Por favor, sube un documento diferente o elige otro recurso',
-        });
-        setDisabled(false);
-        return;
-      }
 
-      const tableEntries = resourceId?.map((resourceId) => {
-        return {
-          id_document_types: values.id_document_types,
-          applies: resourceId,
-          validity: values.validity ? format(values.validity, 'dd/MM/yyyy') : null,
-          user_id: user,
-          created_at: new Date(),
-          period: values.period,
-        };
-      });
-
-      const hasExpiredDate = tableEntries[index].validity ? tableEntries?.[index]?.validity?.replace(/\//g, '-') : 'v0';
-
-      await supabase.storage
-        .from('document_files')
-        .upload(
-          `/${storagePath}/document-${values.id_document_types}-${resourceId[index]}-${hasExpiredDate}.${fileExtension}`,
-          file,
-          {
-            cacheControl: '3600',
-            upsert: false,
-          }
-        )
-        .then(async (response) => {
-          const isMandatory = documenTypes?.find((doc) => doc.id === values.id_document_types)?.mandatory;
-
-          if (isMandatory) {
-            const data = {
-              validity: tableEntries[index].validity,
-              document_path: response.data?.path,
-              created_at: new Date(),
-              state: 'presentado',
-              period: tableEntries[index].period || null,
-            };
-            const { error } = await supabase
-              .from(tableName)
-              .update(data)
-              .eq('applies', resourceId[index])
-              .eq('id_document_types', values.id_document_types);
-
-            if (error) {
-              console.error(error);
-              toast.error('Hubo un error al guardar el documento');
+        await supabase.storage
+          .from('document_files')
+          .upload(
+            `${formatedCompanyName}-(${currentCompany?.company_cuit})/multirecursos/${formatedAppliesPath}/${formatedDocumentTypeName}-(${hasExpiredDate}).${fileExtension}`,
+            file,
+            {
+              cacheControl: '3600',
+              upsert: false,
             }
-          } else {
-            const { error } = await supabase
-              .from(tableName)
-              .insert({
-                ...tableEntries[index],
-                state: 'presentado',
-                document_path: response.data?.path,
-                validity: tableEntries[index].validity ?? null,
-                period: tableEntries[index].period || null,
-              })
-              .select();
+          )
+          .then(async (response) => {
+            console.log(response);
+            const isMandatory = documenTypes?.find((doc) => doc.id === values.id_document_types)?.mandatory;
+            resourceId.forEach(async (id, index) => {
+              if (isMandatory) {
+                //!El ciclo da solo 1 vuelta
+                console.log({
+                  validity: tableEntries[index].validity,
+                  document_path: response.data?.path,
+                  created_at: new Date(),
+                  state: 'presentado',
+                  period: tableEntries[index].period || null,
+                });
+                const { error } = await supabase
+                  .from(tableName)
+                  .update({
+                    validity: tableEntries[index].validity,
+                    document_path: response.data?.path,
+                    created_at: new Date(),
+                    state: 'presentado',
+                    period: tableEntries[index].period || null,
+                  })
+                  .eq('applies', id)
+                  .eq('id_document_types', values.id_document_types);
 
-            if (error) {
-              console.error(error);
-              toast.error('Hubo un error al guardar el documento');
-            }
-          }
+                if (error) {
+                  console.log(error);
+                  throw new Error(handleSupabaseError(error.message));
+                }
+              } else {
+                console.log('no es mandatory');
+                const { error } = await supabase
+                  .from(tableName)
+                  .insert({
+                    ...tableEntries[index],
+                    state: 'presentado',
+                    document_path: response.data?.path,
+                    validity: tableEntries[index].validity ?? null,
+                    period: tableEntries[index].period || null,
+                  })
+                  .select();
+
+                if (error) {
+                  throw new Error(handleSupabaseError(error.message));
+                }
+              }
+            });
+          })
+          .catch((error) => {});
+      },
+      {
+        loading: 'Subiendo documento...',
+        success: (data) => {
           setDisabled(false);
-          return;
-        });
-    }
+          handleOpen();
+          return 'Documento subido exitosamente';
+        },
+        error: (error) => {
+          setDisabled(false);
 
-    toast.success('Documentos subidos correctamente');
-    handleOpen();
+          return error;
+        },
+      }
+    );
+
     setDisabled(false);
   }
 
@@ -382,7 +411,7 @@ export default function MultiResourceDocument({
                           }}
                         />
                         <CommandEmpty>No se encontraron recursos con ese nombre o documento</CommandEmpty>
-                        <CommandGroup>
+                        <CommandGroup className="max-h-[400px] overflow-y-auto">
                           {filteredResources?.map((person: any) => {
                             const key = /^\d+$/.test(inputValue) ? person.document : person.name;
                             const value = /^\d+$/.test(inputValue) ? person.document : person.name;

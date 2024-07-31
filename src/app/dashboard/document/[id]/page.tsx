@@ -1,4 +1,6 @@
 import BackButton from '@/components/BackButton';
+import DeleteDocument from '@/components/DeleteDocument';
+import ReplaceDocument from '@/components/ReplaceDocument';
 import UpdateDocuments from '@/components/UpdateDocuments';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -7,16 +9,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { supabaseServer } from '@/lib/supabase/server';
 import { cn } from '@/lib/utils';
 import { formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Suspense } from 'react';
-// import { supabase } from '../../../../../supabase/supabase';
-import DeleteDocument from '@/components/DeleteDocument';
-import ReplaceDocument from '@/components/ReplaceDocument';
-import { supabaseServer } from '@/lib/supabase/server';
 import DownloadButton from '../documentComponents/DownloadButton';
-export default async function page({ params }: { params: { id: string } }) {
+export default async function page({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { resource: string };
+}) {
   let documents_employees: any[] | null = [];
   let resource = '';
   let documentName = '';
@@ -27,7 +32,9 @@ export default async function page({ params }: { params: { id: string } }) {
   const supabase = supabaseServer();
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
 
-  const { response } = await fetch(`${URL}/api/document/` + params.id, { cache: 'no-store' }).then((e) => e.json());
+  const { response } = await fetch(`${URL}/api/document/${params.id}?resource=${searchParams.resource}`, {
+    cache: 'no-store',
+  }).then((e) => e.json());
 
   console.log(response); //-> queda pendiente refactorizar este componente para que use esta respuesta y generar los endpoints para los 3 botones
 

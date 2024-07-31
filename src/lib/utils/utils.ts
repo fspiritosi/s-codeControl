@@ -52,7 +52,6 @@ export const mapVehicle = (doc: any) => {
     intern_number: `${doc.applies?.intern_number}`,
   };
 };
-
 export const setEmployeesToShow = (employees: any) => {
   const employee = employees?.map((employees: any) => {
     return {
@@ -99,7 +98,6 @@ export const setEmployeesToShow = (employees: any) => {
 
   return employee;
 };
-
 export const getUser = async () => {
   const supabase = supabaseServer();
   const {
@@ -111,4 +109,16 @@ export const getUser = async () => {
     return user;
   }
   return error;
+};
+export const formatDocumentTypeName = (documentType: string) => {
+  const formatedDocumentTypeName = documentType
+    .toLowerCase()
+    .replace(/[áäàâ]/g, 'a')
+    .replace(/[éëèê]/g, 'e')
+    .replace(/[íïìî]/g, 'i')
+    .replace(/[óöòô]/g, 'o')
+    .replace(/[úüùû]/g, 'u')
+    .replace(/['"]/g, '') // Elimina apóstrofes y comillas
+    .replace(/\s+/g, '-'); // Reemplaza espacios por guiones
+  return formatedDocumentTypeName;
 };

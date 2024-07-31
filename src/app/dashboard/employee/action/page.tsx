@@ -13,7 +13,6 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
   //   .eq('applies.document_number', searchParams.document)
   //   .not('applies', 'is', null)
 
-  console.log(searchParams);
 
   const supabase = supabaseServer();
   const user = await supabase.auth.getUser();
@@ -36,11 +35,9 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
       `${URL}/api/employees/${searchParams.employee_id}?actual=${company_id}&user=${user?.data?.user?.id}`
     ).then((e) => e.json());
 
-    console.log(employee);
     formattedEmployee = setEmployeesToShow(employee)?.[0];
   }
 
-  console.log(formattedEmployee);
 
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">

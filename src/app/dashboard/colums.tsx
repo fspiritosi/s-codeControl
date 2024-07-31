@@ -529,7 +529,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
     cell: ({ row }) => {
       const values = row.original.allocated_to;
 
-      console.log(values);
+      // console.log(values);
 
       if (!values) return <Badge variant={'outline'}>Sin afectar</Badge>;
       const contractorCompanies = Array.isArray(values)
@@ -657,7 +657,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
       }
 
       return (
-        <Link href={`/dashboard/document/${row.original.id}`}>
+        <Link href={`/dashboard/document/${row.original.id}?resource=${row.original.applies}`}>
           <Button>Ver documento</Button>
         </Link>
       );

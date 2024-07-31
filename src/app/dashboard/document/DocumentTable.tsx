@@ -12,8 +12,8 @@ type Props = { document: string };
 export default function DocumentTable({ document }: Props) {
   const { allDocumentsToShow } = useLoggedUserStore();
 
-  console.log(document);
-  console.log(allDocumentsToShow.employees.filter((e) => e.document_number === document));
+  // console.log(document);
+  // console.log(allDocumentsToShow.employees.filter((e) => e.document_number === document));
   return (
     <Tabs defaultValue="permanentes">
       <CardContent>
