@@ -454,6 +454,6 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
   },
   {
     accessorKey: 'showUnavaliableEquipment',
-    header: 'Ver contactos dados de baja',
+    header: 'Ver equipos dados de baja',
   },
 ];
