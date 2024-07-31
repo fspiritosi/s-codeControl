@@ -23,8 +23,8 @@ export default async function Equipment() {
                   <Link
                     href="/dashboard/equipment/action?action=new"
                     className={[
-                      'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
-                      buttonVariants({ variant: 'outline' }),
+                      ' py-2 px-4 rounded',
+                      buttonVariants({ variant: 'default' }),
                     ].join(' ')}
                   >
                     Agregar nuevo equipo

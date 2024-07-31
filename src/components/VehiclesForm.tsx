@@ -656,7 +656,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                 {role !== 'Invitado' && readOnly && accion === 'view' && (
                   <div className="flex flex-grap gap-2">
                     <Button
-                      variant="primary"
+                      variant='default'
                       onClick={() => {
                         setReadOnly(false);
                       }}

@@ -428,6 +428,13 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
         </Button>
       );
     },
+    cell: ({ row }: { row: any }) => {
+      return (
+        <Link href={`/dashboard/equipment/action?action=view&id=${row.original.id}`} className="hover:underline">
+          {row.original.intern_number}
+        </Link>
+      );
+    },
   },
   {
     accessorKey: 'year',
