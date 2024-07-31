@@ -10,9 +10,9 @@ export async function GET(request: NextRequest, context: any) {
   const { params } = context;
   const searchParams = request.nextUrl.searchParams;
   const user_id = searchParams.get('user');
-  console.log(user_id); //AQUI ME QUEDE (Me falta pasar por query params del tipo de documento)
+  const resource = searchParams.get('resource');
+
   const documentId = params.id;
-  console.log(documentId);
 
   let response: response = {
     document: null,
@@ -20,53 +20,34 @@ export async function GET(request: NextRequest, context: any) {
     resource: null,
   };
 
-  
   try {
-    const employeeDocument = await getEmployeeDocument(documentId);
-    if (Array.isArray(employeeDocument) && employeeDocument.length > 0) {
+    if (resource === 'Persona') {
+      const employeeDocument = await getEmployeeDocument(documentId);
       response = {
-        document: employeeDocument[0],
+        document: employeeDocument,
         resourceType: 'documentos-empleados',
         resource: 'employee',
       };
     }
-    if (employeeDocument instanceof Error) {
+
+    if (resource === 'Equipos') {
+      const equipmentDocument = await getEquipmentDocument(documentId);
       response = {
-        document: employeeDocument,
-        resourceType: 'error',
-        resource: 'error',
-      };
-    }
-    const equipmentDocument = await getEquipmentDocument(documentId);
-    if (Array.isArray(equipmentDocument) && equipmentDocument.length > 0) {
-      response = {
-        document: equipmentDocument[0],
+        document: equipmentDocument,
         resourceType: 'documentos-equipos',
         resource: 'vehicle',
       };
     }
-    if (equipmentDocument instanceof Error) {
+
+    if (resource === 'Empresa') {
+      const companyDocument = await getCompanyDocument(documentId);
       response = {
-        document: equipmentDocument,
-        resourceType: 'error',
-        resource: 'error',
-      };
-    }
-    const companyDocument = await getCompanyDocument(documentId);
-    if (Array.isArray(companyDocument) && companyDocument.length > 0) {
-      response = {
-        document: companyDocument[0],
+        document: companyDocument,
         resourceType: 'documentos-company',
         resource: 'company',
       };
     }
-    if (companyDocument instanceof Error) {
-      response = {
-        document: companyDocument,
-        resourceType: 'error',
-        resource: 'error',
-      };
-    }
+
     return Response.json({ response });
   } catch (error) {
     console.log(error);
@@ -99,7 +80,7 @@ const getEmployeeDocument = async (documentId: string) => {
     return error;
   }
 
-  return documents_employee;
+  return documents_employee?.[0];
 };
 
 const getEquipmentDocument = async (documentId: string) => {
@@ -119,7 +100,7 @@ const getEquipmentDocument = async (documentId: string) => {
     return error;
   }
 
-  return documents_vehicle;
+  return documents_vehicle?.[0];
 };
 
 const getCompanyDocument = async (documentId: string) => {
@@ -133,5 +114,5 @@ const getCompanyDocument = async (documentId: string) => {
     return error;
   }
 
-  return documents_company;
+  return documents_company?.[0];
 };
