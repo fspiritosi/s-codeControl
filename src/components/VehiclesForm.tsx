@@ -9,7 +9,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CaretSortIcon, CheckIcon, PlusCircledIcon } from '@radix-ui/react-icons';
 import { ChangeEvent, useEffect, useState } from 'react';
 require('dotenv').config();
-
 import { CheckboxDefaultValues } from '@/components/CheckboxDefValues';
 import { useImageUpload } from '@/hooks/useUploadImage';
 import { handleSupabaseError } from '@/lib/errorHandler';
@@ -28,6 +27,8 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { CardDescription, CardHeader, CardTitle } from './ui/card';
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
 import { Input } from './ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import DocumentEquipmentComponent from '@/components/DocumentEquipmentComponent' 
 // import { useToast } from './ui/use-toast'
 
 type VehicleType = {
@@ -192,110 +193,110 @@ export default function VehiclesForm2({ id }: { id: string }) {
     type_of_vehicle: z.string({ required_error: 'El tipo es requerido' }),
     chassis: hideInput
       ? z
-          .string({
-            required_error: 'El chasis es requerido',
-          })
-          .min(2, {
-            message: 'El chasis debe tener al menos 2 caracteres.',
-          })
-          .max(30, { message: 'El chasis debe tener menos de 30 caracteres.' })
+        .string({
+          required_error: 'El chasis es requerido',
+        })
+        .min(2, {
+          message: 'El chasis debe tener al menos 2 caracteres.',
+        })
+        .max(30, { message: 'El chasis debe tener menos de 30 caracteres.' })
       : z.string().optional(),
     domain: hideInput
       ? z
-          .string({
-            required_error: 'El dominio es requerido',
-          })
-          .min(6, {
-            message: 'El dominio debe tener al menos 6 caracteres.',
-          })
-          .max(7, { message: 'El dominio debe tener menos de 7 caracteres.' })
-          .refine(
-            (e) => {
-              //old regex para validar dominio AAA000 (3 letras y 3 numeros)
-              const year = Number(form.getValues('year'));
+        .string({
+          required_error: 'El dominio es requerido',
+        })
+        .min(6, {
+          message: 'El dominio debe tener al menos 6 caracteres.',
+        })
+        .max(7, { message: 'El dominio debe tener menos de 7 caracteres.' })
+        .refine(
+          (e) => {
+            //old regex para validar dominio AAA000 (3 letras y 3 numeros)
+            const year = Number(form.getValues('year'));
 
-              const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/;
-              if (year !== undefined) {
-                if (year <= 2015) {
-                  return oldRegex.test(e);
-                } else {
-                  return true;
-                }
-              } else {
-                return 0;
-              }
-            },
-            {
-              message: 'El dominio debe tener el formato AAA000.',
-            }
-          )
-          .refine(
-            (e) => {
-              const year = Number(form.getValues('year'));
-
-              const newRegex = /^[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$/;
-              if (year !== undefined) {
-                if (year >= 2017) {
-                  return newRegex.test(e);
-                } else {
-                  return true;
-                }
-              } else {
-                return 0;
-              }
-            },
-            {
-              message: 'El dominio debe tener el formato AA000AA.',
-            }
-          )
-          .refine(
-            (e) => {
-              const year = Number(form.getValues('year'));
-
-              const newRegex = /^[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$/;
-              const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/;
-              if (year !== undefined) {
-                if (year === 2016 || year === 2015) {
-                  const result = newRegex.test(e) || oldRegex.test(e);
-                  return result;
-                } else {
-                  return true;
-                }
-              } else {
-                return 0;
-              }
-            },
-            {
-              message: 'El dominio debe tener uno de los siguientes formatos AA000AA o AAA000',
-            }
-          )
-          .refine(
-            async (domain: string) => {
-              let { data: vehicles, error } = await supabase
-                .from('vehicles')
-                .select('*')
-                .eq('domain', domain.toUpperCase())
-                .eq('company_id', actualCompany?.id);
-
-              if (vehicles?.[0] && pathname === '/dashboard/equipment/action?action=new') {
-                return false;
+            const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/;
+            if (year !== undefined) {
+              if (year <= 2015) {
+                return oldRegex.test(e);
               } else {
                 return true;
               }
-            },
-            { message: 'El dominio ya existe' }
-          )
+            } else {
+              return 0;
+            }
+          },
+          {
+            message: 'El dominio debe tener el formato AAA000.',
+          }
+        )
+        .refine(
+          (e) => {
+            const year = Number(form.getValues('year'));
+
+            const newRegex = /^[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$/;
+            if (year !== undefined) {
+              if (year >= 2017) {
+                return newRegex.test(e);
+              } else {
+                return true;
+              }
+            } else {
+              return 0;
+            }
+          },
+          {
+            message: 'El dominio debe tener el formato AA000AA.',
+          }
+        )
+        .refine(
+          (e) => {
+            const year = Number(form.getValues('year'));
+
+            const newRegex = /^[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$/;
+            const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/;
+            if (year !== undefined) {
+              if (year === 2016 || year === 2015) {
+                const result = newRegex.test(e) || oldRegex.test(e);
+                return result;
+              } else {
+                return true;
+              }
+            } else {
+              return 0;
+            }
+          },
+          {
+            message: 'El dominio debe tener uno de los siguientes formatos AA000AA o AAA000',
+          }
+        )
+        .refine(
+          async (domain: string) => {
+            let { data: vehicles, error } = await supabase
+              .from('vehicles')
+              .select('*')
+              .eq('domain', domain.toUpperCase())
+              .eq('company_id', actualCompany?.id);
+
+            if (vehicles?.[0] && pathname === '/dashboard/equipment/action?action=new') {
+              return false;
+            } else {
+              return true;
+            }
+          },
+          { message: 'El dominio ya existe' }
+        )
       : z.string().optional().nullable(),
     serie: hideInput
       ? z.string().optional()
       : z
-          .string({
-            required_error: 'La serie es requerida',
-          })
-          .min(2, {
-            message: 'La serie debe tener al menos 2 caracteres.',
-          })
-          .max(30, { message: 'La serie debe tener menos de 3- caracteres.' }),
+        .string({
+          required_error: 'La serie es requerida',
+        })
+        .min(2, {
+          message: 'La serie debe tener al menos 2 caracteres.',
+        })
+        .max(30, { message: 'La serie debe tener menos de 3- caracteres.' }),
     intern_number: z
       .string({
         required_error: 'El número interno es requerido',
@@ -462,7 +463,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   .update({ picture: vehicleImage })
                   .eq('id', id)
                   .eq('company_id', actualCompany?.id);
-              } catch (error) {}
+              } catch (error) { }
             } catch (error: any) {
               throw new Error(handleSupabaseError(error.message));
             }
@@ -586,7 +587,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   .update({ picture: vehicleImage })
                   .eq('id', id)
                   .eq('company_id', actualCompany?.id);
-              } catch (error) {}
+              } catch (error) { }
             } catch (error: any) {
               throw new Error('Error al subir la imagen');
             }
@@ -611,8 +612,8 @@ export default function VehiclesForm2({ id }: { id: string }) {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <section>
-        <header className="flex justify-between gap-4">
-          <div className="mb-8 flex justify-between w-full">
+        <header className="flex justify-between gap-4 flex-wrap">
+          <div className="mb-4 flex justify-between w-full">
             <CardHeader className="h-[152px] flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
               {accion === 'edit' || accion === 'view' ? (
                 <div className="flex gap-3 items-center">
@@ -670,10 +671,16 @@ export default function VehiclesForm2({ id }: { id: string }) {
             </CardHeader>
           </div>
         </header>
-        <Form {...form}>
+        <Tabs defaultValue="equipment" className="w-full ml-4 mt-0 m-2">
+          <TabsList>
+            <TabsTrigger value="equipment">Equipo</TabsTrigger>
+           {accion !== "new" && <TabsTrigger value="documents">Documentos</TabsTrigger>}
+          </TabsList>
+          <TabsContent value="equipment" className="px-2 py-2">
+          <Form {...form}>
           <form
             onSubmit={form.handleSubmit(accion === 'edit' || accion === 'view' ? onUpdate : onCreate)}
-            className="space-y-8 w-full px-6 pb-3"
+            className="w-full"
           >
             <div className=" flex gap-[2vw] flex-wrap items-center">
               <FormField
@@ -705,7 +712,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                             disabled={readOnly}
                             placeholder="Buscar tipo de vehículo..."
                             className="h-9"
-                            //value={field.value}
+                          //value={field.value}
                           />
                           <CommandEmpty>No se encontro ningun resultado</CommandEmpty>
                           <CommandGroup>
@@ -1144,6 +1151,13 @@ export default function VehiclesForm2({ id }: { id: string }) {
             )}
           </form>
         </Form>
+          </TabsContent>
+          <TabsContent value="documents" className="-ml-6 py-2">
+          <DocumentEquipmentComponent id={id}/>
+          </TabsContent>
+        </Tabs>
+
+        
       </section>
     </Suspense>
   );

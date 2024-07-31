@@ -4,7 +4,8 @@ import DocumentNav from '@/components/DocumentNav';
 import EquipmentTabs from '../document/documentComponents/EquipmentTabs';
 import TypesDocumentAction from '../document/documentComponents/TypesDocumentAction';
 import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
-
+import Link from 'next/link';
+import { buttonVariants } from '@/components/ui/button';
 export default async function Equipment() {
   
   const viewData = {    defaultValue: 'equipos',
@@ -17,6 +18,19 @@ export default async function Equipment() {
               title: 'Equipos totales',
               description: 'Todos los equipos',
               buttonActioRestricted: [''],
+              buttonAction: (
+                <div className="flex gap-4 flex-wrap pl-6">
+                  <Link
+                    href="/dashboard/equipment/action?action=new"
+                    className={[
+                      'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
+                      buttonVariants({ variant: 'outline' }),
+                    ].join(' ')}
+                  >
+                    Agregar nuevo equipo
+                  </Link>
+                </div>
+              ),
               component: (
                <EquipmentListTabs/>
               ),

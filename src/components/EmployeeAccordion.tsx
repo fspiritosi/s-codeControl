@@ -51,9 +51,6 @@ import { CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { log } from 'console';
-import { Anek_Malayalam } from 'next/font/google';
-import { channel } from 'diagnostics_channel';
 
 type Province = {
   id: number;

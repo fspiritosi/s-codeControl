@@ -37,13 +37,13 @@ async function EquipmentListTabs({ inactives, actives }: { inactives?: boolean; 
         </TabsList>
       </CardContent>
       <TabsContent value="all">
-        <EquipmentTable columns={EquipmentColums} data={data || []} />,
+        <EquipmentTable columns={EquipmentColums} data={data || []} />
       </TabsContent>
       <TabsContent value="vehicles">
-        <EquipmentTable columns={EquipmentColums} data={onlyVehicles || []} />,
+        <EquipmentTable columns={EquipmentColums} data={onlyVehicles || []} />
       </TabsContent>
       <TabsContent value="others">
-        <EquipmentTable columns={EquipmentColums} data={onlyNoVehicles || []} />,
+        <EquipmentTable columns={EquipmentColums} data={onlyNoVehicles || []} />
       </TabsContent>
     </Tabs>
   );
