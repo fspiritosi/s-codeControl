@@ -652,9 +652,9 @@ export default function VehiclesForm2({ id }: { id: string }) {
                 </div>
               )}
 
-              <div className="mt-4">
+              <div className="mt-4 flex flex-row gap-2">
                 {role !== 'Invitado' && readOnly && accion === 'view' && (
-                  <div className="flex flex-grap gap-2">
+                  <div className="flex flex-row gap-2">
                     <Button
                       variant='default'
                       onClick={() => {
@@ -664,9 +664,11 @@ export default function VehiclesForm2({ id }: { id: string }) {
                       Habilitar edición
                     </Button>
 
-                    <BackButton />
                   </div>
                 )}
+                <div className="flex flex-row gap-2">
+                <BackButton />
+                </div>
               </div>
             </CardHeader>
           </div>

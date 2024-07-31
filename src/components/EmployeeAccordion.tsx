@@ -849,6 +849,7 @@ console.log(user)
                     <DialogTrigger asChild>
                       <Button variant="destructive">Dar de baja</Button>
                     </DialogTrigger>
+                    <BackButton/>
                     <DialogContent className="dark:bg-slate-950">
                       <DialogTitle>Dar de baja</DialogTitle>
                       <DialogDescription>
