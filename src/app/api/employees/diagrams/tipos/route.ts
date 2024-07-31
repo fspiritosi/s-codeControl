@@ -26,3 +26,27 @@ export async function GET(request: NextRequest){
    
 
 }
+
+
+export async function POST(request: NextRequest){
+    const supabase = supabaseServer();
+    const bodyData = await request.json()
+
+
+    try {
+        const { data, error } = await supabase
+    .from('diagram_type')
+    .insert([
+    { name: bodyData.name, company_id: '0dd82eb6-67f9-477e-ae57-774f23c64f8c', color: bodyData.color, short_description: bodyData.short_description  },
+    ])
+    
+    if(!error){ return Response.json(data)}
+    console.log(error)
+
+
+    } catch (error) {
+        console.log(error)
+    }
+    
+
+}
