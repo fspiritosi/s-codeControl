@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import { supabaseServer } from '../supabase/server';
+import { Carter_One } from 'next/font/google';
 
 export const formatDate = (dateString: string) => {
   if (!dateString) return 'No vence';
@@ -93,6 +94,9 @@ export const setEmployeesToShow = (employees: any) => {
       termination_date: employees?.termination_date,
       status: employees?.status,
       documents_employees: employees.documents_employees,
+      guild: employees?.guild?.name,
+      covenants: employees?.covenants?.name,
+      category: employees?.category?.name,
     };
   });
 

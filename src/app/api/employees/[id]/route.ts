@@ -8,11 +8,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   const id = params.id;
   // console.log(id); //AQUI ME QUEDE
 
-
   try {
     let { data: employee, error } = await supabase
       .from('employees')
-      .select(   `*, city (
+      .select(
+        `*, city (
         name
       ),
       province(
@@ -31,7 +31,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         customers(
           *
         )
-      )`)
+      )`
+      )
       .eq('company_id', company_id)
       .eq('id', id);
 

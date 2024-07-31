@@ -172,6 +172,10 @@ const setEmployeesToShow = (employees: any) => {
       reason_for_termination: employees?.reason_for_termination,
       termination_date: employees?.termination_date,
       status: employees?.status,
+      guild: employees?.guild,
+      covenants: employees?.covenants,
+      category: employees?.category,
+
       documents_employees: employees.documents_employees,
     };
   });
@@ -623,8 +627,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
       if (data2) data = data ? [...data, ...data2] : data2;
     }
 
-
-
     let { data: documents_company, error: documents_company_error } = await supabase
       .from('documents_company')
       .select('*,id_document_types(*),user_id(*)')
@@ -921,6 +923,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
            documents_employees(
             *,id_document_types(*)
           ),
+          guild(id,name),
+          covenants(id,name),
+          category(id,name),
           contractor_employee(
             customers(
               *
@@ -930,7 +935,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       .eq('company_id', get()?.actualCompany?.id);
     // .eq('is_active', active);
     set({ active_and_inactive_employees: setEmployeesToShow(employees) });
-  
+
     // Filtrar empleados activos
     const activeEmployees = employees?.filter((e) => {
       if (e.is_active) {

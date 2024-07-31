@@ -41,17 +41,17 @@ import { useEffect, useState } from 'react';
 interface DataEquipmentProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any;
   data: TData[];
-  allCompany: any[];
-  showInactive: boolean;
-  setShowInactive?: (showInactive: boolean) => void;
+  // allCompany: any[];
+  // showInactive: boolean;
+  // setShowInactive?: (showInactive: boolean) => void;
 }
 
-export function DataEquipment<TData, TValue>({
+export function EquipmentTable<TData, TValue>({
   columns,
   data,
-  showInactive,
-  setShowInactive,
-  allCompany,
+  // showInactive,
+  // setShowInactive,
+  // allCompany,
 }: DataEquipmentProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -115,7 +115,7 @@ export function DataEquipment<TData, TValue>({
 
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const loader = useLoggedUserStore((state) => state.isLoading);
-  const filteredData = showInactive ? data?.filter((item: any) => item.is_active === false) : data;
+  //const filteredData = showInactive ? data?.filter((item: any) => item.is_active === false) : data;
   const allOptions = {
     type_of_vehicle: createOptions('type_of_vehicle'),
     types_of_vehicles: createOptions('types_of_vehicles'),
@@ -295,21 +295,21 @@ export function DataEquipment<TData, TValue>({
                       </DropdownMenuCheckboxItem>
                     );
                   }
-                  if (column.id === 'is_active') {
-                    return (
-                      <>
-                        <DropdownMenuCheckboxItem
-                          key={column.id}
-                          className="capitalize  text-red-400"
-                          checked={showInactive}
-                          //onClick={() => setShowInactive(!showInactive)}
-                          onCheckedChange={(value) => handleColumnVisibilityChange(column.id, true)}
-                        >
-                          {column.columnDef.header}
-                        </DropdownMenuCheckboxItem>
-                      </>
-                    );
-                  }
+                  // if (column.id === 'is_active') {
+                  //   return (
+                  //     <>
+                  //       <DropdownMenuCheckboxItem
+                  //         key={column.id}
+                  //         className="capitalize  text-red-400"
+                  //         checked={showInactive}
+                  //         //onClick={() => setShowInactive(!showInactive)}
+                  //         onCheckedChange={(value) => handleColumnVisibilityChange(column.id, true)}
+                  //       >
+                  //         {column.columnDef.header}
+                  //       </DropdownMenuCheckboxItem>
+                  //     </>
+                  //   );
+                  // }
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}
@@ -413,7 +413,8 @@ export function DataEquipment<TData, TValue>({
                 <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                   {row.getVisibleCells()?.map((cell) => {
                     let is_active = (cell.row.original as any).is_active;
-                    return (showInactive && !is_active) || (!showInactive && is_active) ? (
+                    return (
+
                       <TableCell
                         key={cell.id}
                         className={`text-center whitespace-nowrap ${is_active ? '' : 'text-red-500'}`}
@@ -455,7 +456,8 @@ export function DataEquipment<TData, TValue>({
                           flexRender(cell.column.columnDef.cell, cell.getContext())
                         )}
                       </TableCell>
-                    ) : null;
+                    
+                    )
                   })}
                 </TableRow>
               ))

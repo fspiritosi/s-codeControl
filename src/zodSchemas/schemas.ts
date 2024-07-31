@@ -411,7 +411,34 @@ export const accordionSchema = z
     type_of_contract: z.string({
       required_error: 'El tipo de contrato es requerido',
     }),
-    allocated_to: z.array(z.string()).optional().nullable(),
+    allocated_to: z.array(z.string()).optional(),
+    guild: z.string()
+      .trim()
+      .optional()
+      .refine((value) => !value || (value.length >= 2 && value.length <= 100), {
+        message: 'El nombre debe tener entre 2 y 100 caracteres.',
+      }),
+    guild_id: z.string().optional(),
+    covenants: z.string()
+      .trim()
+      .optional()
+      .nullable()
+      .refine((value) => !value || (value.length >= 2 && value.length <= 30), {
+        message: 'El convenio debe tener entre 2 y 30 caracteres.',
+      }),
+    covenants_id: z.string().optional(),
+    // .regex(/^[a-zA-Z ]+$/, {
+    //     message: 'El apellido solo puede contener letras.',
+    // })
+
+    category: z.string()
+      .trim()
+      .optional()
+      .nullable()
+      .refine((value) => !value || (value.length >= 1 && value.length <= 30), {
+        message: 'La categoria debe tener entre 1 y 30 caracteres.',
+      }),
+    category_id: z.string().optional(),
     date_of_admission: z
       .date({
         required_error: 'La fecha de ingreso es requerida',
@@ -548,7 +575,7 @@ export const SharedUser = z.object({
   alta: z.date().or(z.string()),
   id: z.string(),
   img: z.string(),
-  customerName:z.string().optional()
+  customerName: z.string().optional()
 });
 
 export type SharedUser = z.infer<typeof SharedUser>;
@@ -751,5 +778,15 @@ export const contactSchema = z.object({
     })
     .max(30, { message: 'EL cargo debe tener menos de 30 caracteres.' }),
   customer: z.string({ required_error: 'El cliente es requerido' }).optional(),
+});
+
+export const covenantSchema = z.object({
+  name: z
+    .string({ required_error: 'El nombre es requerido' })
+    .min(2, {
+      message: 'El nombre debe tener al menos 2 caracteres.',
+    })
+    .max(100, { message: 'EL nombre debe tener menos de 100 caracteres.' }),
+  category: z.string().optional(),
 });
 export type SharedCompanies = z.infer<typeof SharedCompaniesSchema>;
