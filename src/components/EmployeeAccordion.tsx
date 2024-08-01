@@ -1,9 +1,22 @@
 'use client';
 require('dotenv').config();
 
+import DocumentTable from '@/app/dashboard/document/DocumentTable';
+import { CheckboxDefaultValues } from '@/components/CheckboxDefValues';
+import { SelectWithData } from '@/components/SelectWithData';
+import { Badge } from '@/components/ui/badge';
+import { Calendar } from '@/components/ui/calendar';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useEmployeesData } from '@/hooks/useEmployeesData';
+import { useImageUpload } from '@/hooks/useUploadImage';
+import { handleSupabaseError } from '@/lib/errorHandler';
+import { cn } from '@/lib/utils';
 import { useCountriesStore } from '@/store/countries';
+import { useLoggedUserStore } from '@/store/loggedUser';
 import {
   civilStateOptionsENUM,
   documentOptionsENUM,
@@ -12,38 +25,24 @@ import {
   nacionaliOptionsENUM,
   typeOfContractENUM,
 } from '@/types/enums';
-import { supabase } from '../../supabase/supabase';
-import { CaretSortIcon, CheckIcon, PlusCircledIcon } from '@radix-ui/react-icons';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
-import { ModalCct } from './ModalCct';
-import DocumentTable from '@/app/dashboard/document/DocumentTable';
-import { CheckboxDefaultValues } from '@/components/CheckboxDefValues';
-import { SelectWithData } from '@/components/SelectWithData';
-import { Badge } from '@/components/ui/badge';
-import { Calendar } from '@/components/ui/calendar';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useImageUpload } from '@/hooks/useUploadImage';
-import { handleSupabaseError } from '@/lib/errorHandler';
-import { cn } from '@/lib/utils';
-import { useLoggedUserStore } from '@/store/loggedUser';
 import { names } from '@/types/types';
 import { accordionSchema } from '@/zodSchemas/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DialogTrigger } from '@radix-ui/react-dialog';
-import { CalendarIcon } from '@radix-ui/react-icons';
+import { CalendarIcon, CaretSortIcon, CheckIcon, PlusCircledIcon } from '@radix-ui/react-icons';
 import { PostgrestError } from '@supabase/supabase-js';
 import { addMonths, format } from 'date-fns';
-import { ca, es } from 'date-fns/locale';
+import { es } from 'date-fns/locale';
 import { Loader } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChangeEvent, Suspense, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { string, z } from 'zod';
+import { z } from 'zod';
+import { supabase } from '../../supabase/supabase';
 import BackButton from './BackButton';
 import { ImageHander } from './ImageHandler';
+import { ModalCct } from './ModalCct';
 import { AlertDialogFooter } from './ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Button } from './ui/button';
@@ -51,9 +50,6 @@ import { CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { log } from 'console';
-import { Anek_Malayalam } from 'next/font/google';
-import { channel } from 'diagnostics_channel';
 
 type Province = {
   id: number;
@@ -62,13 +58,12 @@ type Province = {
 type dataType = {
   guild: {
     name: string;
-    id: string ;
+    id: string;
     is_active: boolean;
-
   }[];
   covenants: {
     name: string;
-    number: string
+    number: string;
     guild_id: string;
     id: string;
     is_active: boolean;
@@ -79,24 +74,19 @@ type dataType = {
     covenant_id: string;
     is_active: boolean;
   }[];
-
 };
 
-export default function EmployeeAccordion({ role }: { role: string | null }) {
+export default function EmployeeAccordion({ role, user }: { role: string | null; user: any }) {
   const profile = useLoggedUserStore((state) => state);
-  const share = useLoggedUserStore((state) => state.sharedCompanies);
-  const profile2 = useLoggedUserStore((state) => state.credentialUser?.id);
-  const owner2 = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
-  const users = useLoggedUserStore((state) => state);
   const company = useLoggedUserStore((state) => state.actualCompany?.id);
   //  const role = useLoggedUserStore((state) => state.roleActualCompany);
   const searchParams = useSearchParams();
   const document = searchParams.get('document');
-  const [covenantId, setCovenantId] = useState()
-  const [searchText, setSearchText] = useState()
+  const [covenantId, setCovenantId] = useState();
+  const [searchText, setSearchText] = useState();
   const [accion, setAccion] = useState(searchParams.get('action'));
   const employees = useLoggedUserStore((state) => state.active_and_inactive_employees);
-  const [user, setUser] = useState(employees?.find((user: any) => user.document_number === document));
+  // const [user, setUser] = useState(employees?.find((user: any) => user.document_number === document));
   const loggedUser = useLoggedUserStore((state) => state.credentialUser?.id);
   const { uploadImage } = useImageUpload();
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -114,8 +104,7 @@ export default function EmployeeAccordion({ role }: { role: string | null }) {
       (company: any) => company.company_id.toString() === profile?.actualCompany?.id && company.is_active
     )
   );
-  const [guildId, setGuildId] = useState()
-
+  const [guildId, setGuildId] = useState();
 
   const [guildData, setGuildData] = useState<dataType>({
     guild: [],
@@ -135,47 +124,48 @@ export default function EmployeeAccordion({ role }: { role: string | null }) {
   // const { toast } = useToast()
   const url = process.env.NEXT_PUBLIC_PROJECT_URL;
   const mandatoryDocuments = useCountriesStore((state) => state.mandatoryDocuments);
-console.log(user)
+  console.log(user);
 
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
     defaultValues: user
       ? {
-        ...user, allocated_to: user?.allocated_to,
-        guild: user?.guild?.name,
-        covenants: user?.covenants?.name,
-        category: user?.category?.name
-      }
+          ...user,
+          allocated_to: user?.allocated_to,
+          guild: user?.guild?.name,
+          covenants: user?.covenants?.name,
+          category: user?.category?.name,
+        }
       : {
-        lastname: '',
-        firstname: '',
-        nationality: undefined,
-        cuil: '',
-        document_type: undefined,
-        document_number: '',
-        birthplace: undefined,
-        gender: undefined,
-        marital_status: undefined,
-        level_of_education: undefined,
-        picture: '',
-        street: '',
-        street_number: '',
-        province: undefined,
-        city: undefined,
-        postal_code: '',
-        phone: '',
-        email: '',
-        file: '',
-        hierarchical_position: undefined,
-        company_position: '',
-        workflow_diagram: undefined,
-        type_of_contract: undefined,
-        allocated_to: [],
-        date_of_admission: undefined,
-        guild: null,
-        covenants: null,
-        category: null,
-      },
+          lastname: '',
+          firstname: '',
+          nationality: undefined,
+          cuil: '',
+          document_type: undefined,
+          document_number: '',
+          birthplace: undefined,
+          gender: undefined,
+          marital_status: undefined,
+          level_of_education: undefined,
+          picture: '',
+          street: '',
+          street_number: '',
+          province: undefined,
+          city: undefined,
+          postal_code: '',
+          phone: '',
+          email: '',
+          file: '',
+          hierarchical_position: undefined,
+          company_position: '',
+          workflow_diagram: undefined,
+          type_of_contract: undefined,
+          allocated_to: [],
+          date_of_admission: undefined,
+          guild: null,
+          covenants: null,
+          category: null,
+        },
   });
   const [accordion1Errors, setAccordion1Errors] = useState(false);
   const [accordion2Errors, setAccordion2Errors] = useState(false);
@@ -186,12 +176,7 @@ console.log(user)
 
   const fetchGuild = async () => {
     try {
-      let { data: guilds } = await supabase
-        .from('guild')
-        .select('*')
-        .eq('company_id', company)
-        .eq('is_active', true)
-
+      let { data: guilds } = await supabase.from('guild').select('*').eq('company_id', company).eq('is_active', true);
 
       setData2({
         ...data2,
@@ -199,7 +184,6 @@ console.log(user)
         guild: (guilds || [])?.map((e) => {
           return { name: e.name as string, id: e.id as string, is_active: e.is_active };
         }),
-
       });
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -208,8 +192,6 @@ console.log(user)
     }
   };
 
-
-
   const fetchCovenant = async (guild_id: string) => {
     try {
       let { data: covenants } = await supabase
@@ -217,17 +199,21 @@ console.log(user)
         // .select('*, guild_id(is_active)')
         .select('*')
         // .eq('company_id', company)
-        .eq('guild_id', guild_id)
+        .eq('guild_id', guild_id);
       // .eq('guild_id(is_active)', true)
-
 
       setData2({
         ...data2,
 
         covenants: (covenants || [])?.map((e) => {
-          return { name: e.name as string, id: e.id as string, number: e.number as string, guild_id: e.guild_id as string, is_active: e.is_active };
+          return {
+            name: e.name as string,
+            id: e.id as string,
+            number: e.number as string,
+            guild_id: e.guild_id as string,
+            is_active: e.is_active,
+          };
         }),
-
       });
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -237,30 +223,29 @@ console.log(user)
   };
   useEffect(() => {
     fetchContractors();
-    fetchGuild()
-    
+    fetchGuild();
     const unsubscribe = subscribeToCustomersChanges();
-
     return () => {
       unsubscribe();
     };
   }, [fetchContractors, subscribeToCustomersChanges]);
 
   const fetchCategory = async (covenant_id: string) => {
-    let { data: category } = await supabase
-      .from('category')
-      .select('*')
-      .eq('covenant_id', covenant_id);
+    let { data: category } = await supabase.from('category').select('*').eq('covenant_id', covenant_id);
 
     setData2({
       ...data2,
       category: (category || [])?.map((e) => {
-        return { name: e.name as string, id: e.id as string, covenant_id: e.guild_id as string, is_active: e.is_active };
+        return {
+          name: e.name as string,
+          id: e.id as string,
+          covenant_id: e.guild_id as string,
+          is_active: e.is_active,
+        };
       }),
 
       // category: category as any,
     });
-
   };
   useEffect(() => {
     if (provinceId) {
@@ -302,22 +287,6 @@ console.log(user)
       setAccordion3Errors(true);
     } else {
       setAccordion3Errors(false);
-    }
-
-    // Actualiza el estado de error de los acordeones
-    // que se ejecute cuando cambie el estado de error y cuando ya no haya errores
-
-    const foundUser = employees?.find((user: any) => user.document_number === document);
-
-    if (JSON.stringify(foundUser) !== JSON.stringify(user)) {
-      setUser(foundUser);
-
-      form.reset({
-        ...foundUser,
-        allocated_to: foundUser?.allocated_to,
-        date_of_admission: foundUser?.date_of_admission,
-        normal_hours: String(foundUser?.normal_hours),
-      });
     }
   }, [form.formState.errors, provinceId, employees, user]);
 
@@ -515,9 +484,19 @@ console.log(user)
             values.date_of_admission instanceof Date
               ? values.date_of_admission.toISOString()
               : values.date_of_admission,
-              guild: form.getValues("guild") === "" ? undefined : form.getValues("guild_id") as string,
-              covenants: form.getValues("covenants") === null ? null : (form.getValues("covenants_id")===undefined? user?.covenant?.id : form.getValues("covenants_id") as string),
-              category: form.getValues("category") === null? null : (form.getValues("category_id")===undefined? user?.category?.id : form.getValues("category_id") as string),
+          guild: form.getValues('guild') === '' ? undefined : (form.getValues('guild_id') as string),
+          covenants:
+            form.getValues('covenants') === null
+              ? null
+              : form.getValues('covenants_id') === undefined
+                ? user?.covenant?.id
+                : (form.getValues('covenants_id') as string),
+          category:
+            form.getValues('category') === null
+              ? null
+              : form.getValues('category_id') === undefined
+                ? user?.category?.id
+                : (form.getValues('category_id') as string),
           province: String(provincesOptions.find((e) => e.name.trim() === values.province)?.id),
           birthplace: String(countryOptions.find((e) => e.name === values.birthplace)?.id),
           city: String(citysOptions.find((e) => e.name.trim() === values.city)?.id),
@@ -602,23 +581,33 @@ console.log(user)
     toast.promise(
       async () => {
         const { guild_id, covenants_id, category_id, full_name, ...rest } = values;
-        
+
         const finalValues = {
           ...rest,
           date_of_admission:
             values.date_of_admission instanceof Date
               ? values.date_of_admission.toISOString()
               : values.date_of_admission,
-          guild: form.getValues("guild") === ""? null : form.getValues("guild_id") as string,
-          covenants: form.getValues("covenants") === null ? null : (form.getValues("covenants_id")===undefined? user?.covenant?.id : form.getValues("covenants_id") as string),
-          category: form.getValues("category") === null? null : (form.getValues("category_id")===undefined? user?.category?.id : form.getValues("category_id") as string),
+          guild: form.getValues('guild') === '' ? null : (form.getValues('guild_id') as string),
+          covenants:
+            form.getValues('covenants') === null
+              ? null
+              : form.getValues('covenants_id') === undefined
+                ? user?.covenant?.id
+                : (form.getValues('covenants_id') as string),
+          category:
+            form.getValues('category') === null
+              ? null
+              : form.getValues('category_id') === undefined
+                ? user?.category?.id
+                : (form.getValues('category_id') as string),
           province: String(provincesOptions.find((e) => e.name.trim() === values.province)?.id),
           birthplace: String(countryOptions.find((e) => e.name === values.birthplace)?.id),
           city: String(citysOptions.find((e) => e.name.trim() === values.city)?.id),
           hierarchical_position: String(hierarchyOptions.find((e) => e.name === values.hierarchical_position)?.id),
           workflow_diagram: String(workDiagramOptions.find((e) => e.name === values.workflow_diagram)?.id),
         };
-        console.log(finalValues)
+        console.log(finalValues);
         // Valores a eliminar
         const result = compareContractorEmployees(user, finalValues as any);
 
@@ -647,7 +636,7 @@ console.log(user)
         }
 
         try {
-          console.log(finalValues)
+          console.log(finalValues);
           await updateEmployee(finalValues, user?.id);
 
           await handleUpload();
@@ -765,7 +754,7 @@ console.log(user)
       reason_for_termination: undefined,
     },
   });
-  
+
   function getFieldName(fieldValue: any): string {
     if (typeof fieldValue === 'object' && fieldValue !== null && 'name' in fieldValue) {
       return fieldValue.name;
@@ -773,33 +762,32 @@ console.log(user)
     return 'Seleccionar Asosiacion gremial';
   }
 
-  
-// const channels = supabase.channel('custom-all-channel')
-// .on(
-//   'postgres_changes',
-//   { event: '*', schema: 'public', table: 'guild' },
-//   (payload) => {
-//     console.log('Change received!', payload)
-//     fetchGuild()
-//   }
-// )
-// .on(
-//   'postgres_changes',
-//   { event: '*', schema: 'public', table: 'covenant' },
-//   (payload) => {
-//     console.log('Change received!', payload)
-//     fetchCovenant(guildId)
-//   }
-// )
-// .on(
-//   'postgres_changes',
-//   { event: '*', schema: 'public', table: 'category' },
-//   (payload) => {
-//     console.log('Change received!', payload)
-//     fetchCategory(covenantId)
-//   }
-// )
-// .subscribe()
+  // const channels = supabase.channel('custom-all-channel')
+  // .on(
+  //   'postgres_changes',
+  //   { event: '*', schema: 'public', table: 'guild' },
+  //   (payload) => {
+  //     console.log('Change received!', payload)
+  //     fetchGuild()
+  //   }
+  // )
+  // .on(
+  //   'postgres_changes',
+  //   { event: '*', schema: 'public', table: 'covenant' },
+  //   (payload) => {
+  //     console.log('Change received!', payload)
+  //     fetchCovenant(guildId)
+  //   }
+  // )
+  // .on(
+  //   'postgres_changes',
+  //   { event: '*', schema: 'public', table: 'category' },
+  //   (payload) => {
+  //     console.log('Change received!', payload)
+  //     fetchCategory(covenantId)
+  //   }
+  // )
+  // .subscribe()
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -1281,7 +1269,6 @@ console.log(user)
                               );
                             }}
                           />
-
                         </div>
                       );
                     }
@@ -1370,7 +1357,6 @@ console.log(user)
                               </FormItem>
                             )}
                           />
-
                         </div>
                       );
                     }
@@ -1379,11 +1365,9 @@ console.log(user)
                   <FormField
                     control={form.control}
                     name="guild"
-                    render={({ field  }) => (
-                      <FormItem className="flex flex-col min-w-[250px] " >
-                        <FormLabel>
-                          Asosiacion gremial
-                        </FormLabel>
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col min-w-[250px] ">
+                        <FormLabel>Asosiacion gremial</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
@@ -1394,24 +1378,26 @@ console.log(user)
                                 value={field.value}
                                 className={cn('w-[300px] justify-between', !field.value && 'text-muted-foreground')}
                               >
-                                {typeof field.value === 'string' ? field.value : field.value ? getFieldName(field.value) : 'Seleccionar Asosiacion gremial'}
+                                {typeof field.value === 'string'
+                                  ? field.value
+                                  : field.value
+                                    ? getFieldName(field.value)
+                                    : 'Seleccionar Asosiacion gremial'}
                                 <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
                           <PopoverContent className="w-[300px] p-0 max-h-[200px] overflow-y-auto" asChild>
-                            <Command >
+                            <Command>
                               <CommandInput
                                 disabled={readOnly}
                                 placeholder="Buscar  Asosiacion gremial..."
                                 value={searchText}
                                 onValueChange={(value: any) => setSearchText(value)}
-                                className="h-9" />
+                                className="h-9"
+                              />
                               <CommandEmpty className="py-2 px-2">
-                                <ModalCct modal="addGuild"
-                                  fetchGuild={fetchGuild}
-                                  searchText={searchText}
-                                >
+                                <ModalCct modal="addGuild" fetchGuild={fetchGuild} searchText={searchText}>
                                   <Button
                                     disabled={readOnly}
                                     variant="outline"
@@ -1430,9 +1416,9 @@ console.log(user)
                                     key={option.id}
                                     onSelect={() => {
                                       form.setValue('guild', option.name);
-                                      form.setValue('guild_id', option.id)
+                                      form.setValue('guild_id', option.id);
                                       const guild_id = data2.guild.find((e) => e.id === option?.id);
-                                      setGuildId(guild_id as any || null)
+                                      setGuildId((guild_id as any) || null);
                                       fetchCovenant(guild_id?.id as any);
                                       form.setValue('covenants', null);
                                       form.setValue('category', null);
@@ -1442,7 +1428,7 @@ console.log(user)
                                     <CheckIcon
                                       className={cn(
                                         'ml-auto h-4 w-4',
-                                        option.name === field.value? 'opacity-100' : 'opacity-0'
+                                        option.name === field.value ? 'opacity-100' : 'opacity-0'
                                       )}
                                     />
                                   </CommandItem>
@@ -1461,9 +1447,7 @@ console.log(user)
                     name="covenants"
                     render={({ field }) => (
                       <FormItem className="flex flex-col min-w-[250px] ">
-                        <FormLabel>
-                          Convenio
-                        </FormLabel>
+                        <FormLabel>Convenio</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
@@ -1474,7 +1458,11 @@ console.log(user)
                                 value={field.value || undefined}
                                 className={cn('w-[300px] justify-between', !field.value && 'text-muted-foreground')}
                               >
-                                {typeof field.value === 'string' && field.value !== '' ? field.value : field.value ? getFieldName(field.value) : 'Seleccionar Convenio'}
+                                {typeof field.value === 'string' && field.value !== ''
+                                  ? field.value
+                                  : field.value
+                                    ? getFieldName(field.value)
+                                    : 'Seleccionar Convenio'}
                                 <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </FormControl>
@@ -1485,9 +1473,11 @@ console.log(user)
                                 disabled={readOnly}
                                 placeholder="Buscar convenio..."
                                 onValueChange={(value: any) => setSearchText(value)}
-                                className="h-9" />
+                                className="h-9"
+                              />
                               <CommandEmpty className="py-2 px-2">
-                                <ModalCct modal="addCovenant"
+                                <ModalCct
+                                  modal="addCovenant"
                                   fetchData={fetchCovenant}
                                   guildId={guildId}
                                   searchText={searchText}
@@ -1505,21 +1495,20 @@ console.log(user)
                               </CommandEmpty>
                               <CommandGroup className="max-h-[200px] overflow-y-auto">
                                 {data2.covenants?.map((option) => (
-                                  
                                   <CommandItem
                                     value={option.name}
                                     key={option.id}
                                     onSelect={() => {
                                       form.setValue('covenants', option.name);
-                                      form.setValue('covenants_id', option.id)
-                                      
+                                      form.setValue('covenants_id', option.id);
+
                                       const covenant_id = data2.covenants.find((e) => e.id === option?.id);
 
-                                      setCovenantId(covenant_id?.id as any || null)
+                                      setCovenantId((covenant_id?.id as any) || null);
 
                                       fetchCategory(covenant_id?.id as any);
                                       form.setValue('category', null);
-                                      console.log(option, 'option')
+                                      console.log(option, 'option');
                                     }}
                                   >
                                     {option.name}
@@ -1545,10 +1534,7 @@ console.log(user)
                     name="category"
                     render={({ field }) => (
                       <FormItem className="flex flex-col min-w-[250px]">
-                        <FormLabel>
-                        
-                          Categoría
-                        </FormLabel>
+                        <FormLabel>Categoría</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
@@ -1558,7 +1544,11 @@ console.log(user)
                                 role="combobox"
                                 className={cn('w-[300px] justify-between', !field.value && 'text-muted-foreground')}
                               >
-                                {typeof field.value === 'string' && field.value !== '' ? field.value : field.value ? getFieldName(field.value) : 'Seleccionar Categoría'}
+                                {typeof field.value === 'string' && field.value !== ''
+                                  ? field.value
+                                  : field.value
+                                    ? getFieldName(field.value)
+                                    : 'Seleccionar Categoría'}
                                 <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </FormControl>
@@ -1569,9 +1559,11 @@ console.log(user)
                                 disabled={readOnly}
                                 placeholder="Buscar categoria..."
                                 onValueChange={(value: any) => setSearchText(value)}
-                                className="h-9" />
+                                className="h-9"
+                              />
                               <CommandEmpty className="py-2 px-2">
-                                <ModalCct modal="addCategory"
+                                <ModalCct
+                                  modal="addCategory"
                                   fetchCategory={fetchCategory}
                                   covenant_id={covenantId as any}
                                   covenantOptions={data2.category as any}
@@ -1596,24 +1588,25 @@ console.log(user)
                                       key={option.id}
                                       onSelect={() => {
                                         form.setValue('category', option.name);
-                                        form.setValue('category_id', option.id)
-                                        
+                                        form.setValue('category_id', option.id);
                                       }}
-
                                     >
                                       {option.name}
                                       <CheckIcon
-                                      className={cn(
-                                        'ml-auto h-4 w-4',
-                                        option.name === field.value ? 'opacity-100' : 'opacity-0'
-                                      )}
-                                    />
+                                        className={cn(
+                                          'ml-auto h-4 w-4',
+                                          option.name === field.value ? 'opacity-100' : 'opacity-0'
+                                        )}
+                                      />
                                     </CommandItem>
                                   ))}
                                 </>
                                 <>
-                                  <ModalCct modal="addCategory"
-                                    fetchCategory={fetchCategory} covenant_id={covenantId} covenantOptions={data2.covenants}
+                                  <ModalCct
+                                    modal="addCategory"
+                                    fetchCategory={fetchCategory}
+                                    covenant_id={covenantId}
+                                    covenantOptions={data2.covenants}
                                   >
                                     <Button
                                       disabled={readOnly}
@@ -1637,7 +1630,6 @@ console.log(user)
                   />
                   {/* </div> */}
                 </div>
-
               </TabsContent>
               <TabsContent value="documents" className="px-2 py-2">
                 <DocumentTable document={user?.document_number || ''} />
@@ -1667,8 +1659,3 @@ console.log(user)
     </Suspense>
   );
 }
-
-
-
-
-
