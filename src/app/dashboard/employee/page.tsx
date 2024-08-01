@@ -19,7 +19,7 @@ const EmployeePage = async () => {
         restricted: [''],
         content: {
           title: 'Empleados',
-          description: 'Aquí encontrarás todos empleados dados de baja',
+          description: 'Aquí encontrarás todos empleados',
           buttonActioRestricted: [''],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
