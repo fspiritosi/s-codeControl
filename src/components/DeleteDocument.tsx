@@ -8,19 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { handleSupabaseError } from '@/lib/errorHandler';
+import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
-import { useLoggedUserStore } from '@/store/loggedUser';
-import { CalendarIcon, InfoCircledIcon } from '@radix-ui/react-icons';
-import { addMonths, format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '../../supabase/supabase';
-import { Calendar } from './ui/calendar';
 import { Input } from './ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 export default function DeleteDocument({
   documentName,
@@ -33,83 +27,64 @@ export default function DeleteDocument({
   id: string;
   expires: boolean;
 }) {
+  const supabase = supabaseBrowser();
   const [isOpen, setIsOpen] = useState(false);
   const FormSchema = z.object({
-    new_document: z.string({ required_error: 'El documento es requerido' }),
-    validity: expires ? z.date({ invalid_type_error: 'Se debe elegir una fecha' }) : z.string().optional(),
+    delete_document: z.string({ required_error: 'El documento es requerido' }).refine((value) => value === 'ELIMINAR', {
+      message: 'Debe ingresar la palabra ELIMINAR para eliminar el documento',
+    }),
   });
-
+  console.log(documentName);
+  console.log(resource);
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      validity: '',
-      new_document: '',
+      delete_document: '',
     },
   });
   const router = useRouter();
-  const [file, setFile] = useState<File | null>(null);
-  const today = new Date();
-  const nextMonth = addMonths(new Date(), 1);
-  const [month, setMonth] = useState<Date>(nextMonth);
-  const fetchDocuments = useLoggedUserStore((state) => state.documetsFetch);
 
-  const yearsAhead = Array.from({ length: 20 }, (_, index) => {
-    const year = today.getFullYear() + index + 1;
-    return year;
-  });
-  const [years, setYear] = useState(today.getFullYear().toString());
   async function onSubmit(filename: z.infer<typeof FormSchema>) {
     toast.promise(
       async () => {
-        if (!file) {
-          form.setError('new_document', {
-            type: 'manual',
-            message: 'El documento es requerido',
-          });
-          return;
-        }
-        const fileExtension1 = file.name.split('.').pop();
-        const tableName =
-          resource === 'vehicle'
-            ? 'documents_equipment'
-            : resource === 'company'
-              ? 'documents_company'
-              : 'documents_employees';
+        if (!documentName) return;
 
-        const numberVersion = parseInt(documentName?.match(/-v(\d+)/)?.[1] || '0');
-        const version = expires ? format(new Date(), 'dd/MM/yyyy') : `v${numberVersion! + 1}`;
-        let documentNameWithOutExtension = documentName?.split('.').shift();
-        if (expires) {
-          documentNameWithOutExtension = documentName?.replace(/-\d{4}-\d{2}-\d{2}(?:\.\w+)?$/, '');
-        } else {
-          documentNameWithOutExtension = documentName?.replace(/-v\d+(?:\.\w+)?$/, '');
-        }
-
-        const { error: storageError, data } = await supabase.storage
+        await supabase.storage
           .from('document_files')
-          .upload(`/${documentNameWithOutExtension}-${version.replaceAll('/', '-')}.${fileExtension1}`, file, {
-            cacheControl: '0',
-            upsert: true,
+          .remove([documentName])
+          .then(async () => {
+            if (resource === 'employee') {
+              const { data, error } = await supabase
+                .from('documents_employees')
+                .update({
+                  validity: null,
+                  document_path: null,
+                  state: 'pendiente',
+                  period: null,
+                })
+                .eq('document_path', documentName);
+              if (error) {
+                throw new Error(handleSupabaseError(error.message));
+              }
+            } else {
+              const { data, error } = await supabase
+                .from('documents_equipment')
+                .update({
+                  validity: null,
+                  document_path: null,
+                  state: 'pendiente',
+                  period: null,
+                })
+                .eq('document_path', documentName);
+              if (error) {
+                throw new Error(handleSupabaseError(error.message));
+              }
+            }
+          })
+          .catch((error: any) => {
+            throw new Error(handleSupabaseError(error.message));
           });
 
-        const { error: updateError } = await supabase
-          .from(tableName)
-          .update({
-            state: 'presentado',
-            deny_reason: null,
-            document_path: data?.path,
-            validity: filename.validity ? new Date(filename.validity).toLocaleDateString('es-ES') : null,
-          })
-          .match({ id });
-
-        if (storageError) {
-          throw new Error(handleSupabaseError(storageError.message));
-        }
-        if (updateError) {
-          throw new Error(handleSupabaseError(updateError.message));
-        }
-
-        fetchDocuments();
         router.refresh();
         if (resource === 'company') {
           router.push('/dashboard/company/actualCompany');
@@ -130,9 +105,7 @@ export default function DeleteDocument({
   return (
     <Dialog open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
       <DialogTrigger asChild>
-        <Button variant={'destructive'} >
-          Eliminar
-        </Button>
+        <Button variant={'destructive'}>Eliminar</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] dark:bg-slate-950">
         <DialogHeader>
@@ -144,97 +117,26 @@ export default function DeleteDocument({
               <div className="flex flex-col">
                 <FormField
                   control={form.control}
-                  name="new_document"
+                  name="delete_document"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nuevo Documento</FormLabel>
+                      <FormLabel>
+                        Ingresa la palabra <span className="text-red-700">ELIMINAR</span> para eliminar el documento
+                      </FormLabel>
                       <FormControl>
                         <Input
+                          className={cn(
+                            field.value === 'ELIMINAR' ? 'border border-green-500 ' : 'border border-red-500'
+                          )}
+                          placeholder="Ingresa la palabra ELIMINAR"
                           {...field}
-                          onChange={(e) => {
-                            setFile(e.target.files?.[0] || null);
-                            field.onChange(e);
-                          }}
-                          type="file"
                         />
                       </FormControl>
-                      <FormDescription>Sube el nuevo documento</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                {expires && (
-                  <FormField
-                    control={form.control}
-                    name="validity"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col mt-4">
-                        <FormLabel>Fecha de vencimiento</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={'outline'}
-                                className={cn('pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
-                              >
-                                {field.value ? (
-                                  format(field.value, 'PPP', { locale: es })
-                                ) : (
-                                  <span>Seleccionar fecha de vencimiento</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-2" align="center">
-                            <Select
-                              onValueChange={(e) => {
-                                setMonth(new Date(e));
-                                setYear(e);
-                                const newYear = parseInt(e, 10);
-                                const dateWithNewYear = new Date(field.value || '');
-                                dateWithNewYear.setFullYear(newYear);
-                                field.onChange(dateWithNewYear);
-                                setMonth(dateWithNewYear);
-                              }}
-                              value={years || today.getFullYear().toString()}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Elegir año" />
-                              </SelectTrigger>
-                              <SelectContent position="popper">
-                                <SelectItem
-                                  value={today.getFullYear().toString()}
-                                  disabled={years === today.getFullYear().toString()}
-                                >
-                                  {today.getFullYear().toString()}
-                                </SelectItem>
-                                {yearsAhead?.map((year) => (
-                                  <SelectItem key={year} value={`${year}`}>
-                                    {year}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Calendar
-                              month={month}
-                              onMonthChange={setMonth}
-                              fromDate={today}
-                              locale={es}
-                              mode="single"
-                              selected={new Date(field.value || '')}
-                              onSelect={(e) => {
-                                field.onChange(e);
-                              }}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormDescription>La fecha de vencimiento del documento</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
+
                 <div className="text-blue-500 flex items-center">
                   <InfoCircledIcon className="size-7 inline-block mr-2" />
                   <FormDescription className="text-blue-500 mt-4">
