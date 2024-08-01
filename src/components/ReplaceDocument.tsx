@@ -7,7 +7,6 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { handleSupabaseError } from '@/lib/errorHandler';
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { CalendarIcon, InfoCircledIcon } from '@radix-ui/react-icons';
@@ -16,7 +15,6 @@ import { es } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '../../supabase/supabase';
 import { Calendar } from './ui/calendar';
 import { Input } from './ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -35,15 +33,14 @@ export default function ReplaceDocument({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const FormSchema = z.object({
-    new_document: z.string({ required_error: 'El documento es requerido' }),
-    validity: expires ? z.date({ invalid_type_error: 'Se debe elegir una fecha' }) : z.string().optional(),
+    reeplace_document: z.string({ required_error: 'El documento es requerido' }),
+    validity: expires ? z.string({ invalid_type_error: 'Se debe elegir una fecha' }) : z.string().optional(),
   });
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      validity: '',
-      new_document: '',
+      reeplace_document: '',
     },
   });
   const router = useRouter();
@@ -51,7 +48,6 @@ export default function ReplaceDocument({
   const today = new Date();
   const nextMonth = addMonths(new Date(), 1);
   const [month, setMonth] = useState<Date>(nextMonth);
-  const fetchDocuments = useLoggedUserStore((state) => state.documetsFetch);
 
   const yearsAhead = Array.from({ length: 20 }, (_, index) => {
     const year = today.getFullYear() + index + 1;
@@ -62,54 +58,13 @@ export default function ReplaceDocument({
     toast.promise(
       async () => {
         if (!file) {
-          form.setError('new_document', {
+          form.setError('reeplace_document', {
             type: 'manual',
             message: 'El documento es requerido',
           });
           return;
         }
-        const fileExtension1 = file.name.split('.').pop();
-        const tableName =
-          resource === 'vehicle'
-            ? 'documents_equipment'
-            : resource === 'company'
-              ? 'documents_company'
-              : 'documents_employees';
 
-        const numberVersion = parseInt(documentName?.match(/-v(\d+)/)?.[1] || '0');
-        const version = expires ? format(new Date(), 'dd/MM/yyyy') : `v${numberVersion! + 1}`;
-        let documentNameWithOutExtension = documentName?.split('.').shift();
-        if (expires) {
-          documentNameWithOutExtension = documentName?.replace(/-\d{4}-\d{2}-\d{2}(?:\.\w+)?$/, '');
-        } else {
-          documentNameWithOutExtension = documentName?.replace(/-v\d+(?:\.\w+)?$/, '');
-        }
-
-        const { error: storageError, data } = await supabase.storage
-          .from('document_files')
-          .upload(`/${documentNameWithOutExtension}-${version.replaceAll('/', '-')}.${fileExtension1}`, file, {
-            cacheControl: '0',
-            upsert: true,
-          });
-
-        const { error: updateError } = await supabase
-          .from(tableName)
-          .update({
-            state: 'presentado',
-            deny_reason: null,
-            document_path: data?.path,
-            validity: filename.validity ? new Date(filename.validity).toLocaleDateString('es-ES') : null,
-          })
-          .match({ id });
-
-        if (storageError) {
-          throw new Error(handleSupabaseError(storageError.message));
-        }
-        if (updateError) {
-          throw new Error(handleSupabaseError(updateError.message));
-        }
-
-        fetchDocuments();
         router.refresh();
         if (resource === 'company') {
           router.push('/dashboard/company/actualCompany');
@@ -144,7 +99,7 @@ export default function ReplaceDocument({
               <div className="flex flex-col">
                 <FormField
                   control={form.control}
-                  name="new_document"
+                  name="reeplace_document"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Nuevo Documento</FormLabel>
