@@ -124,25 +124,40 @@ export default function SimpleDocument({
             period: entry.period,
           };
         });
-        const storagePath = resource === 'empleado' ? 'documentos-empleados' : 'documentos-equipos';
+        console.log(updateEntries);
 
         for (let index = 0; index < documents.length; index++) {
           const document = documents[index];
+          const appliesName: any =
+            (employees?.find(
+              (employee: any) => employee.id === document.applies || employee.id === document.applies
+            ) as string) || (vehicles?.find((vehicle: any) => vehicle.id === document.applies) as string);
+          console.log(appliesName);
           const fileExtension = document.file.split('.').pop();
           const tableName = resource === 'empleado' ? 'documents_employees' : 'documents_equipment';
           const period = document.period;
           const hasExpiredDate = updateEntries?.[index]?.validity?.replace(/\//g, '-') || period || 'v0';
           const documetType = documenTypes?.find((e) => e.id === documents[index].id_document_types);
           const formatedCompanyName = actualCompany?.company_name.toLowerCase().replace(/ /g, '-');
-          const formatedAppliesName = `${idAppliesUser?.name.toLowerCase().replace(/ /g, '-')}-(${idAppliesUser?.document})`;
+          const formatedAppliesName = appliesName
+            ? `${appliesName?.name.toLowerCase().replace(/ /g, '-')}-(${appliesName?.document})`
+            : `${idAppliesUser?.name.toLowerCase().replace(/ /g, '-')}-(${idAppliesUser?.document})`;
           const formatedDocumentTypeName = documetType?.name.toLowerCase().replace(/ /g, '-');
           const formatedAppliesPath = documetType.applies.toLowerCase().replace(/ /g, '-');
 
+          console.log(formatedAppliesPath);
+          console.log(formatedAppliesName);
+
           const { data } = await supabase.storage
             .from('document_files')
-            .list(`${formatedCompanyName}-(${actualCompany?.company_cuit})`, {
-              search: `/${formatedAppliesPath}/${formatedAppliesName}/${formatedDocumentTypeName}-(${hasExpiredDate}).${fileExtension}`,
-            });
+            .list(
+              `${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/`,
+              {
+                search: `${formatedAppliesName}/${formatedDocumentTypeName}`,
+              }
+            );
+
+           
 
           if (data?.length && data?.length > 0) {
             setError(`documents.${index}.id_document_types`, {
