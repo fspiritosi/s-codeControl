@@ -378,7 +378,7 @@ export function DataCategory<TData, TValue>({
                       </div>
                     </div>
                   ) : (
-                    'No hay Convenios registrados'
+                    'No hay Categorías registradas'
                   )}
                 </TableCell>
               </TableRow>

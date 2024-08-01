@@ -263,10 +263,10 @@ export const RegisterWithRole = () => {
         <div>
           <AlertDialog open={open} onOpenChange={() => setOpen(!open)}>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" className='mr-2' onClick={() => handleOpen('Usuario')}>Agregar Usuario</Button>
+              <Button variant='default' className='mr-2' onClick={() => handleOpen('Usuario')}>Agregar Usuario</Button>
             </AlertDialogTrigger>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" className='ml-2' onClick={() => handleOpen('Invitado')}>Agregar Invitado</Button>
+              <Button variant='default' className='ml-2' onClick={() => handleOpen('Invitado')}>Agregar Invitado</Button>
             </AlertDialogTrigger>
             <AlertDialogContent className="max-h-[90vh] overflow-y-auto">
               <AlertDialogTitle>Compartir acceso a la empresa</AlertDialogTitle>

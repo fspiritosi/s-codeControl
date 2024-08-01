@@ -16,9 +16,7 @@ async function EmployeeListTabs({ inactives, actives }: { inactives?: boolean; a
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
   const { data } = await fetch(`${URL}/api/employees?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
-  console.log(data);
   const activeEmploees = setEmployeesToShow(data?.filter((e: any) => e.is_active));
-  console.log(activeEmploees);
   const inactiveEmploees = setEmployeesToShow(data?.filter((e: any) => !e.is_active));
   return (
     <Tabs defaultValue="Empleados activos">
@@ -29,10 +27,10 @@ async function EmployeeListTabs({ inactives, actives }: { inactives?: boolean; a
         </TabsList>
       </CardContent>
       <TabsContent value="Empleados activos">
-        <EmployeesTable columns={EmployeesListColumns} data={activeEmploees || []} />,
+        <EmployeesTable columns={EmployeesListColumns} data={activeEmploees || []} />
       </TabsContent>
       <TabsContent value="Empleados inactivos">
-        <EmployeesTable columns={EmployeesListColumns} data={inactiveEmploees || []} />,
+        <EmployeesTable columns={EmployeesListColumns} data={inactiveEmploees || []} />
       </TabsContent>
     </Tabs>
   );

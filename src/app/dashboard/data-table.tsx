@@ -239,7 +239,7 @@ export function ExpiredDataTable<TData, TValue>({
   };
   return (
     <div className="mb-10  px-4 rounded-lg max-w-[100vw] overflow-x-auto">
-      <div className="flex flex-wrap items-end pb-4 gap-y-4">
+      <div className="flex flex-wrap items-end pb-4 gap-y-4 overflow-x-auto">
         <Input
           placeholder={vehicles ? 'Buscar por dominio o numero interno' : 'Buscar por nombre de empleado'}
           value={(table.getColumn('resource')?.getFilterValue() as string) ?? ''}
