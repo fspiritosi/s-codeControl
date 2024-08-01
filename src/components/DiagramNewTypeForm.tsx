@@ -1,15 +1,8 @@
 "use client"
 
-import {useEffect, useState} from "react"
-import { Calendar as CalendarIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
+
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+
 import {
     Form,
     FormControl,
@@ -19,20 +12,17 @@ import {
     FormLabel,
     FormMessage,
   } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "./ui/select";
 
-
-import { Label } from "./ui/label"
 import { z } from "zod";
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from "date-fns"
-import { POST } from "@/app/api/send/route"
 import { Input } from "./ui/input"
+import cookies from 'js-cookie';
 
 export function DiagramNewTypeForm() {
 
- 
+    const company_id = cookies.get('actualComp')
+    console.log(company_id)
 
     const NewDiagramType = z.object({
         name: z.string().min(1,{message: "El nombre de la novedad no puede estar vacío"}),
@@ -56,7 +46,7 @@ export function DiagramNewTypeForm() {
         
         const data = JSON.stringify(values);
         
-        const response = await fetch(`http://localhost:3000/api/employees/diagrams/tipos`, {method: 'POST', body: data})
+        const response = await fetch(`http://localhost:3000/api/employees/diagrams/tipos?actual=${company_id}`, {method: 'POST', body: data})
         return response
         
     }

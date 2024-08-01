@@ -17,28 +17,20 @@ type DiamgramParsed = {
 }
 
 function DiagramEmployeeView({diagrams}:{diagrams:any}) {
-  console.log(diagrams)
-  const diagraParse = (diagrams:any) => {
-    const diamframsToShow : DiamgramParsed[] = []
-    //console.log(diagrams)
-    diagrams.forEach((d:any) => {
-      const fromDate = new Date(d.from_date);
-      const toDate = new Date(d.to_date);
-      const currentDate = new Date(fromDate);
-      const currentEmployee = d.employee_id
-      while(currentEmployee === d.employee_id) 
-      while(currentDate <= toDate){
-        diamframsToShow.push({
-          name: d.employees.firstname,
-          lastName: d.employees.lastname,
-          diagram_type: d.diagram_type.name,
-          date:currentDate.toLocaleDateString()
-        });
-        currentDate.setDate(currentDate.getDate()+1)
-      }
-    })
-    return diamframsToShow
+  //console.log(diagrams)
+
+  function generarDiasEntreFechas({fechaInicio, fechaFin}:{fechaInicio:Date, fechaFin:Date}) {
+    const dias = [];
+    let fechaActual = new Date(fechaInicio);
+  
+    while (fechaActual <= new Date(fechaFin)) {
+      dias.push(new Date(fechaActual));
+      fechaActual.setDate(fechaActual.getDate() + 1);
+    }
+  
+    return dias;
   }
+  
 
   function generarFechas(fromDate:string, toDate:string) {
     let fechas = [];
@@ -63,14 +55,15 @@ function DiagramEmployeeView({diagrams}:{diagrams:any}) {
         fechas.forEach(fecha => {
             agrupadoPorEmpleado[obj.employee_id].push({
                 diagram_type: obj.diagram_type,
-                date: fecha,
+                date: {fecha},
             });
         });
     });
     let nuevoArray = Object.keys(agrupadoPorEmpleado).map(employee_id => {
       return {
           employee_id: employee_id,
-          diagrams: agrupadoPorEmpleado[employee_id]
+          diagrams: agrupadoPorEmpleado[employee_id],
+          
       };
     });
     
@@ -82,6 +75,11 @@ function DiagramEmployeeView({diagrams}:{diagrams:any}) {
 
 const diagramEmployees = generarArrayEmpleados(diagrams)
 
+const fechaInicio = new Date('2024/07/01');
+const fechaFin = new Date('2024/07/31');
+
+const mes = generarDiasEntreFechas({fechaInicio, fechaFin})
+
 
  
   return (
@@ -91,15 +89,21 @@ const diagramEmployees = generarArrayEmpleados(diagrams)
     <Table>
       <TableHeader>
       <TableHead >Empleado</TableHead>
-      <TableHead>Dia</TableHead>
+      {mes.map((d, index) => (<TableHead key={index}>{d.getDate() + '/' + (d.getMonth() + 1) }</TableHead>))}
+      
       </TableHeader>
       <TableBody>
         {diagramEmployees.map((d:any, index:number) => (
           <TableRow key={index}>
             <TableCell>{d.employee_id}</TableCell>
-            {d.diagrams.map((o:any, index:number) => (
-              <TableCell key={index}>{o.diagram_type.name === "Trabajando Diurno" ? "TD" : o.diagram_type.name === "Trabajando Nocturno" ? "TN" : "F"}</TableCell>
-            ))}
+            {mes.map(day => {
+
+              const diagram = d.diagrams.find((d:any )=> new Date(d.date.fecha).toLocaleDateString() === day.toLocaleDateString())
+              
+              {diagram && console.log(diagram.diagram_type.color)}
+             
+              return <TableCell key={index} className={`bg-[${diagram?.diagram_type.color.replace(/['"]/g, '')}]`}>{diagram?.diagram_type.short_description}</TableCell>
+            })}
           </TableRow>
         ))}
       </TableBody>
