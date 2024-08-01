@@ -47,7 +47,7 @@ export default async function page() {
               <DocumentNav />
             </div>
           ),
-          component: <EmployeeDocumentsTabs />,
+          component: <EmployeeDocumentsTabs />
         },
       },
       {

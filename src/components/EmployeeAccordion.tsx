@@ -51,9 +51,6 @@ import { CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { log } from 'console';
-import { Anek_Malayalam } from 'next/font/google';
-import { channel } from 'diagnostics_channel';
 
 type Province = {
   id: number;
@@ -834,7 +831,7 @@ console.log(user)
             {role !== 'Invitado' && readOnly && accion === 'view' ? (
               <div className="flex flex-grap gap-2">
                 <Button
-                  variant="primary"
+                  variant='default'
                   onClick={() => {
                     setReadOnly(false);
                   }}
@@ -852,6 +849,7 @@ console.log(user)
                     <DialogTrigger asChild>
                       <Button variant="destructive">Dar de baja</Button>
                     </DialogTrigger>
+                    <BackButton/>
                     <DialogContent className="dark:bg-slate-950">
                       <DialogTitle>Dar de baja</DialogTitle>
                       <DialogDescription>

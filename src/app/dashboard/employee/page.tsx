@@ -26,7 +26,7 @@ const EmployeePage = async () => {
               <Link
                 href="/dashboard/employee/action?action=new"
                 className={[
-                  
+                  ' py-2 px-4 rounded',
                   buttonVariants({ variant: 'default' }),
                 ].join(' ')}
               >
@@ -34,7 +34,7 @@ const EmployeePage = async () => {
               </Link>
             </div>
           ),
-          component: <EmployeeListTabs actives inactives />,
+          component: <EmployeeListTabs actives inactives />
         },
       },
       {
@@ -50,7 +50,7 @@ const EmployeePage = async () => {
               <DocumentNav />
             </div>
           ),
-          component: <EmployeeDocumentsTabs />,
+          component: <EmployeeDocumentsTabs />
         },
       },
       {
@@ -62,7 +62,7 @@ const EmployeePage = async () => {
           description: 'Carga de novedades de trabajo del persoanl',
           buttonActioRestricted: [''],
           buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
-          component: <EmployesDiagram/>,
+          component: <EmployesDiagram/>
         },
       },
       {
@@ -74,7 +74,7 @@ const EmployeePage = async () => {
           description: 'Tipos de documentos auditables',
           buttonActioRestricted: [''],
           buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
-          component: <TypesDocumentsView personas />,
+          component: <TypesDocumentsView personas />
         },
       },
     ],
