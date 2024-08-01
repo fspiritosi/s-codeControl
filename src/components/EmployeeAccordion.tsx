@@ -78,6 +78,10 @@ type dataType = {
 
 export default function EmployeeAccordion({ role, user }: { role: string | null; user: any }) {
   const profile = useLoggedUserStore((state) => state);
+  const share = useLoggedUserStore((state) => state.sharedCompanies);
+  const profile2 = useLoggedUserStore((state) => state.credentialUser?.id);
+  const owner2 = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
+  const users = useLoggedUserStore((state) => state);
   const company = useLoggedUserStore((state) => state.actualCompany?.id);
   //  const role = useLoggedUserStore((state) => state.roleActualCompany);
   const searchParams = useSearchParams();
@@ -224,7 +228,9 @@ export default function EmployeeAccordion({ role, user }: { role: string | null;
   useEffect(() => {
     fetchContractors();
     fetchGuild();
+
     const unsubscribe = subscribeToCustomersChanges();
+
     return () => {
       unsubscribe();
     };
@@ -288,6 +294,22 @@ export default function EmployeeAccordion({ role, user }: { role: string | null;
     } else {
       setAccordion3Errors(false);
     }
+
+    // Actualiza el estado de error de los acordeones
+    // que se ejecute cuando cambie el estado de error y cuando ya no haya errores
+
+    // const foundUser = employees?.find((user: any) => user.document_number === document);
+
+    // if (JSON.stringify(foundUser) !== JSON.stringify(user)) {
+    //   setUser(foundUser);
+
+    //   form.reset({
+    //     ...foundUser,
+    //     allocated_to: foundUser?.allocated_to,
+    //     date_of_admission: foundUser?.date_of_admission,
+    //     normal_hours: String(foundUser?.normal_hours),
+    //   });
+    // }
   }, [form.formState.errors, provinceId, employees, user]);
 
   const PERSONALDATA = [
@@ -822,7 +844,7 @@ export default function EmployeeAccordion({ role, user }: { role: string | null;
             {role !== 'Invitado' && readOnly && accion === 'view' ? (
               <div className="flex flex-grap gap-2">
                 <Button
-                  variant="primary"
+                  variant="default"
                   onClick={() => {
                     setReadOnly(false);
                   }}
@@ -840,6 +862,7 @@ export default function EmployeeAccordion({ role, user }: { role: string | null;
                     <DialogTrigger asChild>
                       <Button variant="destructive">Dar de baja</Button>
                     </DialogTrigger>
+                    <BackButton />
                     <DialogContent className="dark:bg-slate-950">
                       <DialogTitle>Dar de baja</DialogTitle>
                       <DialogDescription>

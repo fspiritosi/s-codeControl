@@ -28,10 +28,10 @@ async function EmployeeListTabs({ inactives, actives }: { inactives?: boolean; a
         </TabsList>
       </CardContent>
       <TabsContent value="Empleados activos">
-        <EmployeesTable columns={EmployeesListColumns} data={activeEmploees || []} />,
+        <EmployeesTable columns={EmployeesListColumns} data={activeEmploees || []} />
       </TabsContent>
       <TabsContent value="Empleados inactivos">
-        <EmployeesTable columns={EmployeesListColumns} data={inactiveEmploees || []} />,
+        <EmployeesTable columns={EmployeesListColumns} data={inactiveEmploees || []} />
       </TabsContent>
     </Tabs>
   );

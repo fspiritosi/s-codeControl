@@ -276,7 +276,7 @@ export const CovenantRegister = () => {
                 <AlertDialog open={open} onOpenChange={() => setOpen(!open)}>
 
                     <AlertDialogTrigger asChild>
-                        <Button variant="outline" className='ml-2' onClick={() => handleOpen()}>Agregar Convenio</Button>
+                        <Button variant='default' className='ml-2' onClick={() => handleOpen()}>Agregar Convenio</Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent className="max-h-[90vh] overflow-y-auto">
                         <AlertDialogTitle>Registrar Sindicatos y Convenios</AlertDialogTitle>

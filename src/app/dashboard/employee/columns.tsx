@@ -463,6 +463,7 @@ export const EmployeesListColumns: ColumnDef<Colum>[] = [
       );
     },
   },
+
   {
     accessorKey: 'full_name',
     header: ({ column }: { column: any }) => {
@@ -473,7 +474,15 @@ export const EmployeesListColumns: ColumnDef<Colum>[] = [
         </Button>
       );
     },
+    cell: ({ row }: { row: any }) => {
+      return (
+        <Link href={`/dashboard/employee/action?action=view&document=${row.original.document_number}`} className="hover:underline">
+          {row.original.full_name}
+        </Link>
+      );
+    },
   },
+  
   {
     accessorKey: 'status',
     header: 'Legajo',
