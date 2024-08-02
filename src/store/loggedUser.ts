@@ -592,7 +592,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
     // set({ isLoading: true })
     if (!get()?.actualCompany?.id) return;
 
-    let { data, error } = await supabase
+    let data;
+
+    let { data: dataEmployes, error } = await supabase
       .from('documents_employees')
       .select(
         `
@@ -607,6 +609,22 @@ export const useLoggedUserStore = create<State>((set, get) => {
       )
       .not('employees', 'is', null)
       .eq('employees.company_id', get()?.actualCompany?.id);
+
+    data = dataEmployes;
+
+    if (dataEmployes?.length === 1000) {
+      const { data: data2, error: error2 } = await supabase
+        .from('documents_employees')
+        .select(`*, employees:employees(*,contractor_employee(customers(*))), document_types:document_types(*)`)
+        .range(1000, 2000);
+
+      console.log(data2);
+      if (data2) data = data ? [...data, ...data2] : data2;
+    }
+
+    console.log(data);
+
+    console.log(data?.find((e) => e.employees.email === 'maxig003@gmail.com'));
 
     let { data: documents_company, error: documents_company_error } = await supabase
       .from('documents_company')
@@ -693,7 +711,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
           is_active: doc.employees.is_active,
           period: doc.period,
           applies: doc.document_types.applies,
-          resource_id: doc.employees.id,
+          id_document_types: doc.document_types.id,
+          intern_number: null,
         };
       };
       const mapVehicle = (doc: any) => {
@@ -708,18 +727,25 @@ export const useLoggedUserStore = create<State>((set, get) => {
           validity: formattedDate,
           mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
           id: doc.id,
-          resource: doc.applies?.domain || doc.applies?.intern_number,
+          resource: `${doc.applies?.domain}`,
           vehicle_id: doc.applies?.id,
           is_active: doc.applies?.is_active,
           period: doc.period,
           applies: doc.document_types.applies,
           resource_id: doc.applies?.id,
+          id_document_types: doc.document_types.id,
+          intern_number: `${doc.applies?.intern_number}`,
         };
       };
 
       const lastMonthValues = {
         employees:
           filteredData
+            ?.filter(
+              (e) =>
+                (!e.employees.termination_date && !e.document_types.down_document) ||
+                (e.employees.termination_date && e.document_types.down_document)
+            )
             ?.filter((doc: any) => {
               if (!doc.validity || doc.validity === 'No vence') return false;
               return doc.state !== 'pendiente' && (doc.validity !== 'No vence' || doc.validity !== null);
@@ -727,6 +753,11 @@ export const useLoggedUserStore = create<State>((set, get) => {
             ?.map(mapDocument) || [],
         vehicles:
           filteredVehiclesData
+            ?.filter(
+              (e) =>
+                (!e.applies.termination_date && !e.document_types.down_document) ||
+                (e.applies.termination_date && e.document_types.down_document)
+            )
             .filter((doc: any) => {
               if (!doc.validity || doc.validity === 'No vence') return false;
               return doc.state !== 'pendiente' && (doc.validity !== 'No vence' || doc.validity !== null);
@@ -735,13 +766,34 @@ export const useLoggedUserStore = create<State>((set, get) => {
       };
 
       const pendingDocuments = {
-        employees: employeesData?.filter((doc: any) => doc.state === 'presentado')?.map(mapDocument) || [],
-        vehicles: equipmentData1.filter((doc: any) => doc.state === 'presentado')?.map(mapVehicle) || [],
+        employees:
+          employeesData
+            ?.filter(
+              (e) =>
+                (!e.employees.termination_date && !e.document_types.down_document) ||
+                (e.employees.termination_date && e.document_types.down_document)
+            )
+            .filter((doc: any) => doc.state === 'presentado')
+            ?.map(mapDocument) || [],
+        vehicles:
+          equipmentData1
+            ?.filter(
+              (e) =>
+                (!e.applies.termination_date && !e.document_types.down_document) ||
+                (e.applies.termination_date && e.document_types.down_document)
+            )
+            .filter((doc: any) => doc.state === 'presentado')
+            ?.map(mapVehicle) || [],
       };
 
       const Allvalues = {
         employees:
           employeesData
+            ?.filter(
+              (e) =>
+                (!e.employees.termination_date && !e.document_types.down_document) ||
+                (e.employees.termination_date && e.document_types.down_document)
+            )
             ?.filter((doc: any) => {
               if (!doc.validity || doc.validity === 'No vence') return false;
               return doc.state !== 'presentado' && (doc.validity !== 'No vence' || doc.validity !== null);
@@ -749,15 +801,39 @@ export const useLoggedUserStore = create<State>((set, get) => {
             ?.map(mapDocument) || [],
         vehicles:
           equipmentData1
+            ?.filter(
+              (e) =>
+                (!e.applies.termination_date && !e.document_types.down_document) ||
+                (e.applies.termination_date && e.document_types.down_document)
+            )
             ?.filter((doc: any) => {
               if (!doc.validity || doc.validity === 'No vence') return false;
               return doc.state !== 'presentado' && (doc.validity !== 'No vence' || doc.validity !== null);
             })
             ?.map(mapVehicle) || [],
       };
+      // const AllvaluesToShow = {
+      //   employees: employeesData?.map(mapDocument) || [],
+      //   vehicles: equipmentData1?.map(mapVehicle) || [],
+      // };
+
       const AllvaluesToShow = {
-        employees: employeesData?.map(mapDocument) || [],
-        vehicles: equipmentData1?.map(mapVehicle) || [],
+        employees:
+          employeesData
+            ?.filter(
+              (e) =>
+                (!e.employees.termination_date && !e.document_types.down_document) ||
+                (e.employees.termination_date && e.document_types.down_document)
+            )
+            .map(mapDocument) || [],
+        vehicles:
+          equipmentData1
+            ?.filter(
+              (e) =>
+                (!e.applies.termination_date && !e.document_types.down_document) ||
+                (e.applies.termination_date && e.document_types.down_document)
+            )
+            .map(mapVehicle) || [],
       };
       set({ allDocumentsToShow: AllvaluesToShow });
       set({ showLastMonthDocuments: true });
