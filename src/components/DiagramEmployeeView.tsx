@@ -17,7 +17,7 @@ type DiamgramParsed = {
 }
 
 function DiagramEmployeeView({diagrams}:{diagrams:any}) {
-  //console.log(diagrams)
+  console.log(diagrams)
 
   function generarDiasEntreFechas({fechaInicio, fechaFin}:{fechaInicio:Date, fechaFin:Date}) {
     const dias = [];
@@ -83,31 +83,22 @@ const mes = generarDiasEntreFechas({fechaInicio, fechaFin})
 
  
   return (
- 
-
-
     <Table>
       <TableHeader>
       <TableHead >Empleado</TableHead>
-      {mes.map((d, index) => (<TableHead key={index}>{d.getDate() + '/' + (d.getMonth() + 1) }</TableHead>))}
-      
+        {mes.map((d, index) => (<TableHead key={index}>{d.getDate() + '/' + (d.getMonth() + 1) }</TableHead>))}
       </TableHeader>
       <TableBody>
         {diagramEmployees.map((d:any, index:number) => (
           <TableRow key={index}>
             <TableCell>{d.employee_id}</TableCell>
             {mes.map(day => {
-
-              const diagram = d.diagrams.find((d:any )=> new Date(d.date.fecha).toLocaleDateString() === day.toLocaleDateString())
-              
-              {diagram && console.log(diagram.diagram_type.color)}
-             
+              const diagram = d.diagrams.find((d:any )=> new Date(d.date.fecha).toLocaleDateString() === day.toLocaleDateString())                       
               return <TableCell key={index} className={`bg-[${diagram?.diagram_type.color.replace(/['"]/g, '')}]`}>{diagram?.diagram_type.short_description}</TableCell>
             })}
           </TableRow>
         ))}
       </TableBody>
-
     </Table>
     
   )

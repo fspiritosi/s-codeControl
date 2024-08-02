@@ -1,8 +1,5 @@
 "use client"
-
-
 import { Button } from "@/components/ui/button"
-
 import {
     Form,
     FormControl,
@@ -12,7 +9,6 @@ import {
     FormLabel,
     FormMessage,
   } from "@/components/ui/form"
-
 import { z } from "zod";
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -20,10 +16,7 @@ import { Input } from "./ui/input"
 import cookies from 'js-cookie';
 
 export function DiagramNewTypeForm() {
-
     const company_id = cookies.get('actualComp')
-    console.log(company_id)
-
     const NewDiagramType = z.object({
         name: z.string().min(1,{message: "El nombre de la novedad no puede estar vacío"}),
         short_description: z.string().min(1,{message: "La descripción dorta no puede estar vacía"}),
@@ -45,7 +38,7 @@ export function DiagramNewTypeForm() {
     async function onSubmit(values: NewDiagramType){
         
         const data = JSON.stringify(values);
-        
+        //TODO TENGO QUE TRAER LA URL DESDE EL .ENV
         const response = await fetch(`http://localhost:3000/api/employees/diagrams/tipos?actual=${company_id}`, {method: 'POST', body: data})
         return response
         
