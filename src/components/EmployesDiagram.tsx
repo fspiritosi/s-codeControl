@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { DiagramForm } from "./DiagramForm";
 import DiagramEmployeeView from "./DiagramEmployeeView";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { DiagramNewTypeForm } from "./DiagramNewTypeForm";
 
 
 
@@ -30,6 +31,7 @@ async function EmployesDiagram() {
       <TabsList >
         <TabsTrigger value="new">Cargar Diagrama</TabsTrigger>
         <TabsTrigger value="old">Diagrama Cargados</TabsTrigger>
+        <TabsTrigger value="newsTypes">Tipos de Novedades</TabsTrigger>
       </TabsList>
       <TabsContent value="new">
         <DiagramForm activeEmploees={activeEmploees} diagrams_types={diagrams_types}/>
@@ -37,9 +39,27 @@ async function EmployesDiagram() {
       <TabsContent value="old">
         <DiagramEmployeeView diagrams={diagrams}/>
       </TabsContent>
+      <TabsContent value="newsTypes">
+       <DiagramNewTypeForm />
+      </TabsContent>
     </Tabs>
     
   )
 }
 
 export default EmployesDiagram
+
+
+/*TODO
+  1 - Crear el formalario para la creación de novedades 👌 
+  2 - Crear vista de para la creación de novedades 👌 
+  3 - Finalizar la vista de diagrama del mes
+  4 - Crear vista de diagrama de la persona en el perfil de la persona.
+  5 - Tipos de diagramas debe ser editable para cada company
+  6 - En las novedades agregar "Descripción Corta" - "Seleccionar Color" - 👌 
+      6.1 - Se agrearon las columnas "short_description" y "color" en la tabla diagram_type 👌  
+      6.2 - Recordar cambiar la columna de short_description a no null
+      6.3 - Agregar estos campos en el Formulario 👌 
+  7 - El color y la descripción corta es lo que vamos a usar para mostrar el diagrama.
+
+*/ 
