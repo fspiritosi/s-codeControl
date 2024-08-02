@@ -116,8 +116,7 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
         
        } else {
         
-         const roleRaw = share
-           .filter((item: any) =>
+         const roleRaw = share?.filter((item: any) =>
              item.company_id.id === company &&
              Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))
            )
@@ -153,55 +152,55 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
        });
 
        async function reintegerEquipment() {
-  //       try {
-  //         const { data, error } = await supabase
-  //           .from('vehicles')
-  //           .update({
-  //             is_active: true,
-  //             termination_date: null,
-  //             reason_for_termination: null,
-  //           })
-  //           .eq('id', equipment.id)
-  //           .eq('company_id', actualCompany?.id)
-  //           .select();
+        try {
+          const { data, error } = await supabase
+            .from('vehicles')
+            .update({
+              is_active: true,
+              termination_date: null,
+              reason_for_termination: null,
+            })
+            .eq('id', equipment.id)
+            .eq('company_id', actualCompany?.id)
+            .select();
 
-  //         setIntegerModal(!integerModal);
+          setIntegerModal(!integerModal);
       
-  //         setShowDeletedEquipment(false);
-  //         toast.success('Equipo reintegrado', {
-  //           description: `El equipo ${equipment?.engine} ha sido reintegrado`,
-  //         });
-  //       } catch (error: any) {
-  //         const message = await errorTranslate(error?.message);
-  //         toast.error('Error al reintegrar el equipo', { description: message });
-  //       }
+          setShowDeletedEquipment(false);
+          toast.success('Equipo reintegrado', {
+            description: `El equipo ${equipment?.engine} ha sido reintegrado`,
+          });
+        } catch (error: any) {
+          const message = await errorTranslate(error?.message);
+          toast.error('Error al reintegrar el equipo', { description: message });
+        }
        }
 
        async function onSubmit(values: z.infer<typeof formSchema>) {
-  //       const data = {
-  //         ...values,
-  //         termination_date: format(values.termination_date, 'yyyy-MM-dd'),
-  //       };
+        const data = {
+          ...values,
+          termination_date: format(values.termination_date, 'yyyy-MM-dd'),
+        };
 
-  //       try {
-  //         await supabase
-  //           .from('vehicles')
-  //           .update({
-  //             is_active: false,
-  //             termination_date: data.termination_date,
-  //             reason_for_termination: data.reason_for_termination,
-  //           })
-  //           .eq('id', equipment.id)
-  //           .eq('company_id', actualCompany?.id)
-  //           .select();
+        try {
+          await supabase
+            .from('vehicles')
+            .update({
+              is_active: false,
+              termination_date: data.termination_date,
+              reason_for_termination: data.reason_for_termination,
+            })
+            .eq('id', equipment.id)
+            .eq('company_id', actualCompany?.id)
+            .select();
 
-  //         setShowModal(!showModal);
+          setShowModal(!showModal);
 
-  //         toast.success('Equipo eliminado', { description: `El equipo ${equipment.domain} ha sido dado de baja` });
-  //       } catch (error: any) {
-  //         const message = await errorTranslate(error?.message);
-  //         toast.error('Error al dar de baja el equipo', { description: message });
-  //       }
+          toast.success('Equipo eliminado', { description: `El equipo ${equipment.domain} ha sido dado de baja` });
+        } catch (error: any) {
+          const message = await errorTranslate(error?.message);
+          toast.error('Error al dar de baja el equipo', { description: message });
+        }
        }
 
        const handleToggleInactive = () => {
@@ -365,6 +364,24 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
        );
      },
    },
+   {
+    accessorKey: 'intern_number',
+    header: ({ column }: { column: any }) => {
+      return (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="p-0">
+          Numero interno
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }: { row: any }) => {
+      return (
+        <Link href={`/dashboard/equipment/action?action=view&id=${row.original.id}`} className="hover:underline">
+          {row.original.intern_number}
+        </Link>
+      );
+    },
+  },
   {
     accessorKey: 'domain',
     header: ({ column }: { column: any }) => {
@@ -418,24 +435,7 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
     },
     filterFn: allocatedToRangeFilter,
   },
-  {
-    accessorKey: 'intern_number',
-    header: ({ column }: { column: any }) => {
-      return (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="p-0">
-          Numero interno
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }: { row: any }) => {
-      return (
-        <Link href={`/dashboard/equipment/action?action=view&id=${row.original.id}`} className="hover:underline">
-          {row.original.intern_number}
-        </Link>
-      );
-    },
-  },
+  
   {
     accessorKey: 'year',
     header: 'Año',
