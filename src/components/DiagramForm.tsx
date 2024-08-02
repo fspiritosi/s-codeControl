@@ -1,5 +1,8 @@
 "use client"
 
+
+
+
 import {useEffect, useState} from "react"
 import { Calendar as CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -32,7 +35,7 @@ export function DiagramForm({activeEmploees, diagrams_types}:{activeEmploees:[],
     const [fromDate, setFromDate] = useState<Date | undefined>()
     const [toDate, setToDate] = useState<Date | undefined>()
     const [duration, setDuration] = useState<number>(0);
-
+    const URL = process.env.NEXT_PUBLIC_BASE_URL;
 
   useEffect(() => {
         if (fromDate && toDate) {
@@ -68,8 +71,7 @@ export function DiagramForm({activeEmploees, diagrams_types}:{activeEmploees:[],
     async function onSubmit(values: Diagram){
         const data = values;
         const valueToSend = JSON.stringify(values)
-        //TODO TENGO QUE TRAER LA URL DESDE EL .ENV
-        const response = await fetch('http://localhost:3000/api/employees/diagrams', {method: 'POST', body:valueToSend})
+        const response = await fetch(`${URL}/api/employees/diagrams`, {method: 'POST', body:valueToSend})
         return response
     }
 

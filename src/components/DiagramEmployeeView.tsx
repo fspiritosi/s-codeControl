@@ -17,7 +17,8 @@ type DiamgramParsed = {
 }
 
 function DiagramEmployeeView({diagrams}:{diagrams:any}) {
-  console.log(diagrams)
+  
+  //console.log(diagrams)
 
   function generarDiasEntreFechas({fechaInicio, fechaFin}:{fechaInicio:Date, fechaFin:Date}) {
     const dias = [];
@@ -67,7 +68,7 @@ function DiagramEmployeeView({diagrams}:{diagrams:any}) {
       };
     });
     
-    console.log(nuevoArray)
+    //console.log(nuevoArray)
     return nuevoArray
 
   }
