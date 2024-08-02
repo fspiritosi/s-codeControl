@@ -54,7 +54,7 @@ export function EquipmentTable<TData, TValue>({
   // allCompany,
 }: DataEquipmentProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
-
+  const [showInactive, setShowInactive] = useState(false);
  
 
   const defaultVisibleColumns = [
@@ -275,41 +275,40 @@ export function EquipmentTable<TData, TValue>({
             <DropdownMenuContent align="end" className="max-h-[50dvh] overflow-y-auto">
               {table
                 .getAllColumns()
-                ?.filter((column) => column.getCanHide())
+                ?.filter((column) => column.getCanHide()&& column.id !== 'intern_number'&& column.id !== 'domain')
                 ?.map((column: any) => {
                   if (column.id === 'actions') {
                     return null;
                   }
-                  if (typeof column.columnDef.header !== 'string') {
-                    const name = `${column.columnDef.accessorKey}`;
+                  // if (typeof column.columnDef.header !== 'string') {
+                  //   const name = `${column.columnDef.accessorKey}`;
+                    if (column.id === 'showUnavaliableEquipment') {
                     return (
                       <DropdownMenuCheckboxItem
                         key={column.id}
-                        className="capitalize"
-                        checked={column.getIsVisible()}
-                        onCheckedChange={(value) => {
-                          handleColumnVisibilityChange(column.id, !!value);
-                        }}
+                        className="capitalize text-red-400"
+                        checked={showInactive}
+                            onClick={() => setShowInactive(!showInactive)}
                       >
-                        {specialValues[name]}
+                        {column.columnDef.header}
                       </DropdownMenuCheckboxItem>
                     );
                   }
-                  // if (column.id === 'is_active') {
-                  //   return (
-                  //     <>
-                  //       <DropdownMenuCheckboxItem
-                  //         key={column.id}
-                  //         className="capitalize  text-red-400"
-                  //         checked={showInactive}
-                  //         //onClick={() => setShowInactive(!showInactive)}
-                  //         onCheckedChange={(value) => handleColumnVisibilityChange(column.id, true)}
-                  //       >
-                  //         {column.columnDef.header}
-                  //       </DropdownMenuCheckboxItem>
-                  //     </>
-                  //   );
-                  // }
+                  if (column.id === 'is_active' ) {
+                    return (
+                      <>
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          className="capitalize  text-red-400"
+                          checked={showInactive}
+                          onClick={() => setShowInactive(!showInactive)}
+                          // onCheckedChange={(value) => handleColumnVisibilityChange(column.id, true)}
+                        >
+                          {column.columnDef.header}
+                        </DropdownMenuCheckboxItem>
+                      </>
+                    );
+                  }
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}
@@ -413,7 +412,7 @@ export function EquipmentTable<TData, TValue>({
                 <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                   {row.getVisibleCells()?.map((cell) => {
                     let is_active = (cell.row.original as any).is_active;
-                    return (
+                    return (showInactive && !is_active) || (!showInactive && is_active) ? (
 
                       <TableCell
                         key={cell.id}
@@ -448,8 +447,8 @@ export function EquipmentTable<TData, TValue>({
                           flexRender(cell.column.columnDef.cell, cell.getContext())
                         )}
                       </TableCell>
-                    
-                    )
+
+                    ) : null;
                   })}
                 </TableRow>
               ))
