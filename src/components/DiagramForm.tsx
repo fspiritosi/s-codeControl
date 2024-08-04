@@ -28,15 +28,14 @@ import { Label } from "./ui/label"
 import { z } from "zod";
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from "date-fns"
-import { POST } from "@/app/api/send/route"
+import { toast } from "sonner"
 
 export function DiagramForm({activeEmploees, diagrams_types}:{activeEmploees:[], diagrams_types:[]}) {
     const [fromDate, setFromDate] = useState<Date | undefined>()
     const [toDate, setToDate] = useState<Date | undefined>()
     const [duration, setDuration] = useState<number>(0);
     const URL = process.env.NEXT_PUBLIC_BASE_URL;
-
+    
   useEffect(() => {
         if (fromDate && toDate) {
             const diferenciaMilisegundos = toDate.getTime() - fromDate.getTime();
@@ -47,7 +46,6 @@ export function DiagramForm({activeEmploees, diagrams_types}:{activeEmploees:[],
             setDuration(0);
         }
     }, [fromDate && toDate]);
-
 
     const Diagram = z.object({
         employee: z.string().min(1,{message: "Debe selecciónar un empleado"}),
@@ -70,9 +68,18 @@ export function DiagramForm({activeEmploees, diagrams_types}:{activeEmploees:[],
 
     async function onSubmit(values: Diagram){
         const data = values;
+        const tipoDeDiagrama:any = diagrams_types.find((d:any) => d.id  === data.event_diagram)
+        const employee:any = activeEmploees.find((e:any) => e.id === data.employee)
+
+       toast.promise(async () => {
         const valueToSend = JSON.stringify(values)
         const response = await fetch(`${URL}/api/employees/diagrams`, {method: 'POST', body:valueToSend})
         return response
+        }, {
+            loading: "Cargando...",
+            success: `Se creo la novedad de ${tipoDeDiagrama?.name} para el empleado ${employee.full_name}`,
+            error: "No se pudo crear la novedad"
+        })
     }
 
     return (

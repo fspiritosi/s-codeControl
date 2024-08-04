@@ -44,7 +44,7 @@ export function DiagramNewTypeForm() {
             return response
         }, {
             loading: "Cargando...",
-            success: "Novedad cargada con exito",
+            success: `Novedad ${values.name} cargada con exito`,
             error: "No se pudo crear la novedad"
         })
         
@@ -52,7 +52,7 @@ export function DiagramNewTypeForm() {
 
     return (
         <Form {...form} >
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-[400px]">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 w-[400px]">
                 <FormField 
                     control={form.control}
                     name='name'

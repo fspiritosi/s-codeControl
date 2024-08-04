@@ -5,6 +5,12 @@ import { DiagramForm } from "./DiagramForm";
 import DiagramEmployeeView from "./DiagramEmployeeView";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { DiagramNewTypeForm } from "./DiagramNewTypeForm";
+import { DiagramTypeTable } from "./DiagramTypeTable";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable"
 
 
 
@@ -40,7 +46,12 @@ async function EmployesDiagram() {
         <DiagramEmployeeView diagrams={diagrams}/>
       </TabsContent>
       <TabsContent value="newsTypes">
-       <DiagramNewTypeForm />
+      <ResizablePanelGroup direction="horizontal" className="pt-6">
+      <ResizablePanel> <DiagramNewTypeForm /></ResizablePanel>
+      <ResizableHandle withHandle />
+      <ResizablePanel className="pl-6 min-w-[600px]" defaultSize={70}><DiagramTypeTable diagramsType={diagrams_types}/></ResizablePanel>
+    </ResizablePanelGroup>
+      
       </TabsContent>
     </Tabs>
     
