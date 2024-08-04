@@ -17,7 +17,7 @@ type DiamgramParsed = {
 }
 
 function DiagramEmployeeView({diagrams, activeEmployees}:{diagrams:any, activeEmployees:any}) {
-  console.log(diagrams)
+
   function generarDiasEntreFechas({fechaInicio, fechaFin}:{fechaInicio:Date, fechaFin:Date}) {
     const dias = [];
     let fechaActual = new Date(fechaInicio);
@@ -80,14 +80,12 @@ const fechaInicio = new Date('2024/06/28');
 const fechaFin = new Date('2024/07/15');
 
 const mes = generarDiasEntreFechas({fechaInicio, fechaFin})
-console.log(diagramEmployees)
-console.log(activeEmployees)
- 
+
   return (
     <Table>
       <TableHeader>
       <TableHead >Empleado</TableHead>
-        {mes.map((d, index) => (<TableHead key={index}>{d.getDate() + '/' + (d.getMonth() + 1) }</TableHead>))}
+        {mes.map((d, index) => (<TableHead key={index}>{(d.getDate()) + '/' + (d.getMonth() + 1) }</TableHead>))}
       </TableHeader>
       <TableBody>
         {diagramEmployees.map((d:any, index:number) => (
