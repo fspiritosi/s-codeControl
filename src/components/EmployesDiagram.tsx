@@ -43,7 +43,7 @@ async function EmployesDiagram() {
         <DiagramForm activeEmploees={activeEmploees} diagrams_types={diagrams_types}/>
       </TabsContent>
       <TabsContent value="old">
-        <DiagramEmployeeView diagrams={diagrams}/>
+        <DiagramEmployeeView diagrams={diagrams} activeEmployees={activeEmploees}/>
       </TabsContent>
       <TabsContent value="newsTypes">
       <ResizablePanelGroup direction="horizontal" className="pt-6">
