@@ -13,6 +13,7 @@ import Customers from '../customers/Customers'
 import Contacts from "../contact/Contact"
 import Cct from './covenant/CctComponent';
 import { CovenantRegister } from "@/components/CovenantRegister";
+import ServiceComponent from '@/components/ServiceComponent'
 export default async function CompanyPage() {
 
   const coockiesStore = cookies();
@@ -119,6 +120,20 @@ export default async function CompanyPage() {
           <CovenantRegister />
         ),
           component:<Cct/>
+        }
+      },
+      {
+        value:"service",
+        name:"Servicios",
+        restricted:[""],
+        content:{
+          title:"Servicios de la empresa",
+          description:"Crear y ver servicios de la empresa",
+          buttonActioRestricted: [''],
+          buttonAction:(
+          ''
+        ),
+          component:<ServiceComponent/>
         }
       },
       // {
