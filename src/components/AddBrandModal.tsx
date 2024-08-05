@@ -49,7 +49,7 @@ export default function AddBrandModal({
 
     const { data, error } = await supabase
       .from('brand_vehicles')
-      .insert([{ name: name.slice(0, 1).toUpperCase() + name.slice(1) }])
+      .insert([{ name: name.slice(0, 1)?.toUpperCase() + name.slice(1) }])
       .select();
     if (error) {
       toast({

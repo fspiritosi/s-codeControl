@@ -126,13 +126,13 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
 
   function formatName(name: string): string {
     // Capitalize first letter and convert the rest to lowercase
-    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+    return name.charAt(0)?.toUpperCase() + name.slice(1).toLowerCase();
   }
 
   function formatDescription(description: string | undefined): string | undefined {
     if (description) {
       // Capitalize first letter and convert the rest to lowercase
-      return description.charAt(0).toUpperCase() + description.slice(1).toLowerCase();
+      return description.charAt(0)?.toUpperCase() + description.slice(1).toLowerCase();
     }
     return description;
   }
