@@ -299,7 +299,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
               let { data: vehicles, error } = await supabase
                 .from('vehicles')
                 .select('*')
-                .eq('domain', domain.toUpperCase())
+                .eq('domain', domain?.toUpperCase())
                 .eq('company_id', actualCompany?.id);
 
               if (vehicles?.[0] && pathname === '/dashboard/equipment/action?action=new') {

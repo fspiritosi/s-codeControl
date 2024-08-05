@@ -94,7 +94,7 @@ export const MissingDocumentList = () => {
                                 {item[0].resource
                                   .split(' ')
                                   .map((word: string) => {
-                                    return word[0].toUpperCase() + word.slice(1);
+                                    return word[0]?.toUpperCase() + word.slice(1);
                                   })
                                   .join(' ')}
                               </Badge>

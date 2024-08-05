@@ -134,9 +134,9 @@ interface Iddocumenttypes {
 const setEmployeesToShow = (employees: any) => {
   const employee = employees?.map((employees: any) => {
     return {
-      full_name: `${employees?.lastname?.charAt(0).toUpperCase()}${employees?.lastname?.slice(1)} ${employees?.firstname
+      full_name: `${employees?.lastname?.charAt(0)?.toUpperCase()}${employees?.lastname?.slice(1)} ${employees?.firstname
         ?.charAt(0)
-        .toUpperCase()}${employees?.firstname?.slice(1)}`,
+        ?.toUpperCase()}${employees?.firstname?.slice(1)}`,
       id: employees?.id,
       email: employees?.email,
       cuil: employees?.cuil,
