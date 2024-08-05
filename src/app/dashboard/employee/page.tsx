@@ -6,7 +6,7 @@ import EmployeeDocumentsTabs from '../document/documentComponents/EmployeeDocume
 import EmployeeListTabs from '../document/documentComponents/EmployeeListTabs';
 import TypesDocumentAction from '../document/documentComponents/TypesDocumentAction';
 import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
-import EmployesDiagram from '@/components/EmployesDiagram';
+import EmployesDiagram from '@/components/Diagrams/EmployesDiagram';
 
 
 const EmployeePage = async () => {

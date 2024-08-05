@@ -78,7 +78,7 @@ function DiagramEmployeeView({diagrams, activeEmployees,  className}:{diagrams:a
     ]
   }
 
-  console.log(selectEmployees)
+
 
 const mes = generarDiasEntreFechas({fechaInicio,fechaFin})
 
@@ -148,26 +148,16 @@ const mes = generarDiasEntreFechas({fechaInicio,fechaFin})
       <Table>
         <TableHeader>
         <TableHead >Empleado</TableHead>
-          {mes.map((d, index) => (<TableHead key={index}>{(d.getDate()) + '/' + (d.getMonth() + 1) }</TableHead>))}
+          {mes.map((d, index) => (<TableHead key={index} className="text-center">{(d.getDate()) + '/' + (d.getMonth() + 1) }</TableHead>))}
         </TableHeader>
-        {/* <TableBody>
-          {diagramEmployees.map((d:any, index:number) => (
-            <TableRow key={index}>
-              <TableCell>{d.employee_name}</TableCell>
-              {mes.map(day => {
-                const diagram = d.diagrams.find((d:any )=> new Date(d.date).toLocaleDateString() === day.toLocaleDateString())                       
-                return <TableCell key={index} className='text-center' style={{ backgroundColor: diagram?.diagram_type.color }}>{diagram?.diagram_type.short_description}</TableCell>
-              })}
-            </TableRow>
-          ))}
-        </TableBody> */}
+
         <TableBody>
           {diagrams.map((d:any, index:number) => (
             <TableRow key={index}>
               <TableCell>{d.employees.lastname}, {d.employees.firstname}</TableCell>
               {mes.map(day => {
                 const diagram = diagrams.find((d:any )=> d.day === day.getDate() && d.month === (day.getMonth()+1) && d.year === day.getFullYear())  
-                return <TableCell key={index} className='text-center' style={{ backgroundColor: diagram?.diagram_type.color }}>{diagram?.diagram_type.short_description}</TableCell>
+                return <TableCell key={index} className='text-center border' style={{ backgroundColor: diagram?.diagram_type.color }}>{diagram?.diagram_type.short_description}</TableCell>
               })}
             </TableRow>
           ))}

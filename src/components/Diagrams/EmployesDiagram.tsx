@@ -3,7 +3,7 @@ import { setEmployeesToShow } from "@/lib/utils/utils";
 import { cookies } from "next/headers";
 import { DiagramForm } from "./DiagramForm";
 import DiagramEmployeeView from "./DiagramEmployeeView";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { DiagramNewTypeForm } from "./DiagramNewTypeForm";
 import { DiagramTypeTable } from "./DiagramTypeTable";
 import {

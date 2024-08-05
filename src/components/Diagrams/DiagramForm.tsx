@@ -19,7 +19,7 @@ import {
     FormLabel,
     FormMessage,
   } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "./ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "../ui/select";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -27,13 +27,13 @@ import {
 } from "@/components/ui/resizable"
 
 
-import { Label } from "./ui/label"
+import { Label } from "../ui/label"
 import { z } from "zod";
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
 
 const datosDumy = [
 
