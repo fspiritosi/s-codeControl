@@ -12,46 +12,39 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
 
-
-
 async function EmployesDiagram() {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const supabase = supabaseServer();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
   const { data } = await fetch(`${URL}/api/employees?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
-  //const { diagrams } = await fetch(`${URL}/api/employees/diagrams`).then((e) => e.json());
+  const activeEmploees = setEmployeesToShow(data?.filter((e: any) => e.is_active));
   const  {data: diagrams}  = await fetch(`${URL}/api/employees/diagrams`).then((e) => e.json());
   const {data: diagrams_types} = await fetch(`${URL}/api/employees/diagrams/tipos?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
-  const activeEmploees = setEmployeesToShow(data?.filter((e: any) => e.is_active));
-  const myDiagrams = await diagrams
-  // console.log(myDiagrams)
-  // console.log(activeEmploees)
+
 
   return (
-    <Tabs defaultValue="new">
+    <Tabs defaultValue="old">
       <TabsList >
-        <TabsTrigger value="new">Cargar Diagrama</TabsTrigger>
         <TabsTrigger value="old">Diagrama Cargados</TabsTrigger>
+        <TabsTrigger value="new">Cargar Diagrama</TabsTrigger>
         <TabsTrigger value="newsTypes">Tipos de Novedades</TabsTrigger>
       </TabsList>
-      <TabsContent value="new">
-        <DiagramForm activeEmploees={activeEmploees} diagrams_types={diagrams_types}/>
-      </TabsContent>
       <TabsContent value="old">
         <DiagramEmployeeView diagrams={diagrams} activeEmployees={activeEmploees}/>
       </TabsContent>
+      <TabsContent value="new">
+        <DiagramForm activeEmploees={activeEmploees} diagrams_types={diagrams_types}/>
+      </TabsContent>
       <TabsContent value="newsTypes">
-      <ResizablePanelGroup direction="horizontal" className="pt-6">
-      <ResizablePanel> <DiagramNewTypeForm /></ResizablePanel>
-      <ResizableHandle withHandle />
-      <ResizablePanel className="pl-6 min-w-[600px]" defaultSize={70}><DiagramTypeTable diagramsType={diagrams_types}/></ResizablePanel>
-    </ResizablePanelGroup>
-      
+        <ResizablePanelGroup direction="horizontal" className="pt-6">
+        <ResizablePanel> <DiagramNewTypeForm /></ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel className="pl-6 min-w-[600px]" defaultSize={70}><DiagramTypeTable diagramsType={diagrams_types}/></ResizablePanel>
+        </ResizablePanelGroup>
       </TabsContent>
     </Tabs>
     

@@ -35,10 +35,6 @@ import { toast } from "sonner"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
 
-
-
-
-
 const datosDumy = [
 
   {
@@ -214,9 +210,6 @@ const datosDumy = [
   }
 
 ]
-
-
-
 
 export function DiagramForm({activeEmploees, diagrams_types}:{activeEmploees:[], diagrams_types:[]}) {
     const [fromDate, setFromDate] = useState<Date | undefined>()

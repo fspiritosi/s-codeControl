@@ -59,7 +59,7 @@ const EmployeePage = async () => {
         restricted: ['Invitado'],
         content: {
           title: 'Diagramas de personal',
-          description: 'Carga de novedades de trabajo del persoanl',
+          description: 'Carga de novedades de trabajo del personal',
           buttonActioRestricted: [''],
           buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
           component: <EmployesDiagram/>
