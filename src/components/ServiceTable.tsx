@@ -35,15 +35,9 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
     const [selectedCustomer, setSelectedCustomer] = useState<string>('all');
     const [editingService, setEditingService] = useState<Service | null>(null);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const [isActiveFilter, setIsActiveFilter] = useState(true); // Estado para el filtro de activos/inactivos
+    const [isActiveFilter, setIsActiveFilter] = useState(true); 
     
-    // useEffect(() => {
-    //     if (selectedCustomer === 'all') {
-    //         setFilteredServices(services);
-    //     } else {
-    //         setFilteredServices(services.filter(service => service.customer_id.toString() === selectedCustomer));
-    //     }
-    // }, [selectedCustomer, services]);
+    
     useEffect(() => {
         filterServices();
     }, [selectedCustomer, isActiveFilter, services]);
@@ -127,17 +121,27 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
         }
     };
     
-const channels = supabase.channel('custom-all-channel')
-.on(
-  'postgres_changes',
-  { event: '*', schema: 'public', table: 'customer_services' },
-  async (payload) => {
-    console.log('Change received!', payload)
-    // Actualizar la lista de servicios con el servicio editado
-    const{data, error} = await supabase .from('customer_services').select('*')
-  }
-)
-.subscribe()
+    useEffect(() => {
+        const channel = supabase.channel('custom-all-channel')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'customer_services' },
+                async (payload) => {
+                    console.log('Change received!', payload);
+                    const { data, error } = await supabase.from('customer_services').select('*');
+                    if (error) {
+                        console.error('Error fetching services:', error);
+                    } else {
+                        setFilteredServices(data);
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
     return (
         <div>
             

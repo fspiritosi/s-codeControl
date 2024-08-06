@@ -14,11 +14,22 @@ export default async function ServiceComponent() {
     const {data: { user }, error} = await supabase.auth.getUser();
     const cookiesStore = cookies();
     const company_id = cookiesStore.get('actualComp')?.value || '';
-    console.log(company_id)
+    // console.log(company_id)
     const { customers } = await fetch(`${URL}/api/company/customers?actual=${company_id}`).then((e) => e.json());
     const { services } = await fetch(`${URL}/api/services?actual=${company_id}`).then((e) => e.json());
-    console.log(services);
-    console.log(customers);
+    // console.log(services);
+    // console.log(customers);
+    const channels = supabase.channel('custom-all-channel')
+.on(
+  'postgres_changes',
+  { event: '*', schema: 'public', table: 'customer_services' },
+  async (payload) => {
+    console.log('Change received!', payload)
+    // Actualizar la lista de servicios con el servicio editado
+    const { services } = await fetch(`${URL}/api/services?actual=${company_id}`).then((e) => e.json());
+  }
+)
+.subscribe()
 
    
   return (

@@ -23,6 +23,8 @@ import { z } from 'zod';
 import { supabase } from '../../supabase/supabase';
 import { columns } from '../app/dashboard/company/customers/action/columnsCustomers';
 import { EquipmentColums as columns1 } from '../app/dashboard/equipment/columns';
+import { EmployeesTable } from '@/app/dashboard/employee/data-table';
+import { EmployeesListColumns } from '@/app/dashboard/employee/columns';
 
 export default function ClientRegister({ id }: { id: string }) {
   const router = useRouter();
@@ -36,19 +38,27 @@ export default function ClientRegister({ id }: { id: string }) {
   const [contactData, setContactData] = useState<any>(null);
   const employees = useLoggedUserStore((state) => state.employeesToShow);
   const equipment = useLoggedUserStore((state) => state.vehiclesToShow);
-  const filteredCustomersEmployees = employees?.filter(
-    (customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id)
-  );
+  // const filteredCustomersEmployees = employees?.filter(
+  //   (customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id)
+  // );
+  const filteredCustomersEmployees = employees
+  ?.filter((customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id))
+  .map((customer: any) => ({
+    ...customer,
+    guild: customer.guild?.name
+  }));
+
+
   const filteredCustomersEquipment = equipment?.filter(
     (customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id)
   );
-
-  const setActivesEmployees = useLoggedUserStore((state) => state.setActivesEmployees);
-  const setInactiveEmployees = useLoggedUserStore((state) => state.setInactiveEmployees);
-  const showDeletedEmployees = useLoggedUserStore((state) => state.showDeletedEmployees);
-  const setShowDeletedEmployees = useLoggedUserStore((state) => state.setShowDeletedEmployees);
-  const allCompany = useLoggedUserStore((state) => state.allCompanies);
-  const [showInactive, setShowInactive] = useState(false);
+  console.log(filteredCustomersEquipment);
+  // const setActivesEmployees = useLoggedUserStore((state) => state.setActivesEmployees);
+  // const setInactiveEmployees = useLoggedUserStore((state) => state.setInactiveEmployees);
+  // const showDeletedEmployees = useLoggedUserStore((state) => state.showDeletedEmployees);
+  // const setShowDeletedEmployees = useLoggedUserStore((state) => state.setShowDeletedEmployees);
+  // const allCompany = useLoggedUserStore((state) => state.allCompanies);
+  // const [showInactive, setShowInactive] = useState(false);
   const form = useForm<z.infer<typeof customersSchema>>({
     resolver: zodResolver(customersSchema),
     defaultValues: {
@@ -277,14 +287,21 @@ export default function ClientRegister({ id }: { id: string }) {
               <div className="h-full flex-1 flex-col space-y-8 md:flex">
                 <Card>
                   <CardContent>
-                    <DataTable
-                      columns={columns}
+                    {/* <DataTable
+                      columns={columns}                      
                       data={filteredCustomersEmployees || []}
                       setActivesEmployees={setActivesEmployees}
                       setInactiveEmployees={setInactiveEmployees}
                       showDeletedEmployees={showDeletedEmployees}
                       setShowDeletedEmployees={setShowDeletedEmployees}
-                    />
+                    /> */}
+                    <EmployeesTable
+                      columns={EmployeesListColumns}
+                      data={filteredCustomersEmployees || []}
+                      // allCompany={allCompany}
+                      // showInactive={showInactive}
+                      // setShowInactive={setShowInactive}
+                      />
                   </CardContent>
 
                 </Card>
