@@ -16,7 +16,7 @@ import { Input } from "../ui/input"
 import cookies from 'js-cookie';
 import { toast } from "sonner";
 
-export function DiagramNewTypeForm() {
+export function DiagramNewTypeForm({selectedDiagram}:{selectedDiagram?:any}) {
     const company_id = cookies.get('actualComp')
     const URL = process.env.NEXT_PUBLIC_BASE_URL;
     const NewDiagramType = z.object({
@@ -25,19 +25,24 @@ export function DiagramNewTypeForm() {
         color: z.string().min(1,{message: "Por favor selecciona un color para la novedad"}),
        
     })
-
+    console.log(selectedDiagram)
     type NewDiagramType = z.infer<typeof NewDiagramType>;
 
     const form = useForm<NewDiagramType>({
         resolver: zodResolver(NewDiagramType),
         defaultValues:{
             name:'',
-            short_description:"",
-            color:""
+            short_description: "",
+            color: ""
         }
     })
 
+    
     async function onSubmit(values: NewDiagramType){
+        selectedDiagram 
+        ?
+        console.log('aca llego',values)
+        : 
         toast.promise(async () => {
             const data = JSON.stringify(values);
             const response = await fetch(`${URL}/api/employees/diagrams/tipos?actual=${company_id}`, {method: 'POST', body: data})
@@ -59,7 +64,7 @@ export function DiagramNewTypeForm() {
                     render={({field}) => (
                         <FormItem>
                             <FormLabel>Nombre de la novedad</FormLabel>
-                            <Input  placeholder="Ingresa un nombre para la novedad"  {...field}/>
+                            <Input  placeholder="Ingresa un nombre para la novedad" {...field}  value={selectedDiagram?.name}/>
                             <FormMessage/>
                         </FormItem>
                     )}
@@ -70,7 +75,7 @@ export function DiagramNewTypeForm() {
                     render={({field}) => (
                         <FormItem>
                             <FormLabel>Descripción corta</FormLabel>
-                            <Input  placeholder="Ingresa una descripción corta, ej: TD"  {...field}/>
+                            <Input  placeholder="Ingresa una descripción corta, ej: TD"  {...field} value={selectedDiagram?.short_description}/>
                             <FormMessage/>
                         </FormItem>
                     )}
@@ -81,7 +86,7 @@ export function DiagramNewTypeForm() {
                     render={({field}) => (
                         <FormItem>
                             <FormLabel>Color</FormLabel>
-                            <Input className=" max-w-20" placeholder="Elige un color"  type="color" {...field} />
+                            <Input className=" max-w-20" placeholder="Elige un color"  type="color" {...field}  value={selectedDiagram?.color} />
                             <FormMessage/>
                         </FormItem>
                     )}

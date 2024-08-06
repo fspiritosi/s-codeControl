@@ -5,12 +5,13 @@ import { DiagramForm } from "./DiagramForm";
 import DiagramEmployeeView from "./DiagramEmployeeView";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { DiagramNewTypeForm } from "./DiagramNewTypeForm";
-import { DiagramTypeTable } from "./DiagramTypeTable";
+
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
+import DiagramTypeComponent from "./DiagramTypeComponent";
 
 async function EmployesDiagram() {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -37,14 +38,11 @@ async function EmployesDiagram() {
         <DiagramEmployeeView diagrams={diagrams} activeEmployees={activeEmploees}/>
       </TabsContent>
       <TabsContent value="new">
-        <DiagramForm activeEmploees={activeEmploees} diagrams_types={diagrams_types}/>
+        <DiagramForm activeEmploees={activeEmploees} diagrams={diagrams} diagrams_types={diagrams_types}/>
       </TabsContent>
       <TabsContent value="newsTypes">
-        <ResizablePanelGroup direction="horizontal" className="pt-6">
-        <ResizablePanel> <DiagramNewTypeForm /></ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel className="pl-6 min-w-[600px]" defaultSize={70}><DiagramTypeTable diagramsType={diagrams_types}/></ResizablePanel>
-        </ResizablePanelGroup>
+        <DiagramTypeComponent diagrams_types={diagrams_types}/>
+        
       </TabsContent>
     </Tabs>
     

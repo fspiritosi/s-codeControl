@@ -45,10 +45,12 @@ type DiamgramParsed = {
 
 function DiagramEmployeeView({diagrams, activeEmployees,  className}:{diagrams:any, activeEmployees:any, className?:React.HTMLAttributes<HTMLDivElement>}) {
 
+  console.log(diagrams)
   const [date, setDate] = useState<DateRange | undefined>({
     from: new Date(),
     to: addDays(new Date(), 30),
   })
+  const [diagramsToShow, setDiagramsToShow] = useState<{}[]>([])
   const [showStatusBar, setShowStatusBar] = useState<Checked>(true)
   const [selectEmployees, setSelectEmployees] = useState<string[]>([]);
 
@@ -78,9 +80,26 @@ function DiagramEmployeeView({diagrams, activeEmployees,  className}:{diagrams:a
     ]
   }
 
+const groupedDiagrams = diagrams.reduce((acc:any, diagram:any) => {
+  if (!acc[diagram.employee_id]) {
+    acc[diagram.employee_id] = [];
+  }
+  acc[diagram.employee_id].push(diagram);
+  return acc;
+}, {});
+
 
 
 const mes = generarDiasEntreFechas({fechaInicio,fechaFin})
+
+const filteredDiagrams = () => {
+  if (fechaInicio && fechaFin){
+    setDiagramsToShow(diagrams.filter((d:any) => {d.day >= fechaInicio && d.day <= fechaFin})) 
+    console.log(diagramsToShow)
+  }
+}
+
+
 
   return (
     <div>
@@ -144,6 +163,7 @@ const mes = generarDiasEntreFechas({fechaInicio,fechaFin})
         </PopoverContent>
       </Popover>
       </div>
+      <Button onClick={filteredDiagrams}>Mostrar diagramas</Button>
       </div>
       <Table>
         <TableHeader>
@@ -152,15 +172,34 @@ const mes = generarDiasEntreFechas({fechaInicio,fechaFin})
         </TableHeader>
 
         <TableBody>
-          {diagrams.map((d:any, index:number) => (
-            <TableRow key={index}>
-              <TableCell>{d.employees.lastname}, {d.employees.firstname}</TableCell>
-              {mes.map(day => {
-                const diagram = diagrams.find((d:any )=> d.day === day.getDate() && d.month === (day.getMonth()+1) && d.year === day.getFullYear())  
-                return <TableCell key={index} className='text-center border' style={{ backgroundColor: diagram?.diagram_type.color }}>{diagram?.diagram_type.short_description}</TableCell>
-              })}
-            </TableRow>
-          ))}
+
+            {Object.keys(groupedDiagrams).map((employeeId, index) => {
+  const employeeDiagrams = groupedDiagrams[employeeId];
+  const employee = employeeDiagrams[0].employees; // Asumimos que todos los diagramas tienen el mismo empleado
+
+  return (
+    <TableRow key={index}>
+      <TableCell>{employee.lastname}, {employee.firstname}</TableCell>
+      {mes.map((day, dayIndex) => {
+        const diagram = employeeDiagrams.find((diagram:any) => 
+          diagram.day === day.getDate() && 
+          diagram.month === (day.getMonth() + 1) && 
+          diagram.year === day.getFullYear()
+        );
+        return (
+          <TableCell 
+            key={dayIndex} 
+            className='text-center border' 
+            style={{ backgroundColor: diagram?.diagram_type.color }}
+          >
+            {diagram?.diagram_type.short_description}
+          </TableCell>
+        );
+      })}
+    </TableRow>
+  );
+})}
+
         </TableBody>
       </Table>
       

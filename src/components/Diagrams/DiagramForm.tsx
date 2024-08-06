@@ -211,13 +211,15 @@ const datosDumy = [
 
 ]
 
-export function DiagramForm({activeEmploees, diagrams_types}:{activeEmploees:[], diagrams_types:[]}) {
+export function DiagramForm({activeEmploees, diagrams_types, diagrams}:{diagrams:[],activeEmploees:[], diagrams_types:[]}) {
     const [fromDate, setFromDate] = useState<Date | undefined>()
     const [toDate, setToDate] = useState<Date | undefined>()
     const [duration, setDuration] = useState<number>(0);
     const [succesDiagrams, setSuccesDiagrams] = useState<DiagramaToCreate[]>([])
     const [errorsDiagrams, setErrorsDiagrams] = useState<ErrorToCreate[]>([])
     const URL = process.env.NEXT_PUBLIC_BASE_URL;
+
+
 
   useEffect(() => {
         if (fromDate && toDate) {
@@ -308,12 +310,13 @@ export function DiagramForm({activeEmploees, diagrams_types}:{activeEmploees:[],
                  year: i.getFullYear()
             }
 
-            let checkExist = datosDumy.find((d:any) => d.employee_id === element.employee && d.year === element.year && d.month === element.month && d.day === element.day)
+            let checkExist = diagrams.find((d:any) => d.employee_id === element.employee && d.year === element.year && d.month === element.month && d.day === element.day)
+          
             if(checkExist){
-                const prevEventName:any = diagrams_types.find((d:any) => d.id  === checkExist.diagram_type.id)
+                const prevEventName:any = diagrams_types.find((d:any) => d.id  === checkExist?.diagram_type.id)
                 let errorElement = {
                     ...element,
-                     prev_event: prevEventName.name
+                   prev_event: prevEventName.name
                 }
                 errorToCreate.push(errorElement)
             }else{
@@ -558,9 +561,7 @@ export function DiagramForm({activeEmploees, diagrams_types}:{activeEmploees:[],
                         </CardFooter>
                         }
                     </Card>
-
                 }
-
             </ResizablePanel>
         </ResizablePanelGroup>
 
