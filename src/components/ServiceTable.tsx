@@ -5,7 +5,8 @@ import { Table, TableHead, TableRow, TableCell, TableBody } from '@/components/u
 import { Button } from '@/components/ui/button';
 import EditModal from '@/components/EditModal';
 import { Input } from '@/components/ui/input';
-
+import { toast } from 'sonner';
+import { supabaseBrowser } from '@/lib/supabase/browser';
 
 type Service = {
     id: number;
@@ -15,6 +16,7 @@ type Service = {
     service_price: number;
     service_start: string;
     service_validity: string;
+    is_active: true;
 };
 
 type Customer = {
@@ -28,18 +30,35 @@ type ServiceTableProps = {
 };
 
 const ServiceTable = ({ services, customers }: ServiceTableProps) => {
+    const supabase = supabaseBrowser();
     const [filteredServices, setFilteredServices] = useState<Service[]>(services);
     const [selectedCustomer, setSelectedCustomer] = useState<string>('all');
     const [editingService, setEditingService] = useState<Service | null>(null);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-
+    const [isActiveFilter, setIsActiveFilter] = useState(true); // Estado para el filtro de activos/inactivos
+    
+    // useEffect(() => {
+    //     if (selectedCustomer === 'all') {
+    //         setFilteredServices(services);
+    //     } else {
+    //         setFilteredServices(services.filter(service => service.customer_id.toString() === selectedCustomer));
+    //     }
+    // }, [selectedCustomer, services]);
     useEffect(() => {
-        if (selectedCustomer === 'all') {
-            setFilteredServices(services);
-        } else {
-            setFilteredServices(services.filter(service => service.customer_id.toString() === selectedCustomer));
+        filterServices();
+    }, [selectedCustomer, isActiveFilter, services]);
+
+    const filterServices = () => {
+        let filtered = services;
+
+        if (selectedCustomer !== 'all') {
+            filtered = filtered.filter(service => service.customer_id.toString() === selectedCustomer);
         }
-    }, [selectedCustomer, services]);
+
+        filtered = filtered.filter(service => service.is_active === isActiveFilter);
+
+        setFilteredServices(filtered);
+    };
     const modified_editing_service_id = editingService?.id.toString().replace(/"/g, '');
     const handleEditClick = (service: Service) => {
         setEditingService(service);
@@ -65,29 +84,86 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
                             service.id === updatedService.id ? updatedService : service
                         )
                     );
+                    toast.success('Servicio actualizado correctamente');
                     setIsModalOpen(false);
                 } else {
                     console.error('Error al actualizar el servicio');
+                    toast.error('Error al actualizar el servicio');
                 }
             } catch (error) {
                 console.error('Error al actualizar el servicio:', error);
             }
         }
     };
-
+    const handleDeactivate = async () => {
+        if (editingService) {
+            try {
+                const newActiveState = !editingService.is_active;
+                const response = await fetch(`/api/services/?id=${modified_editing_service_id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ ...editingService, is_active: newActiveState}),
+                });
+                
+                if (response.ok) {
+                    // Actualizar la lista de servicios con el servicio desactivado
+                    const updatedService = await response.json();
+                    setFilteredServices((prevServices) =>
+                        prevServices.map((service) =>
+                            service.id === updatedService.id ? updatedService : service
+                        )
+                    );
+                    toast.success(`Servicio ${newActiveState ? 'activado' : 'desactivado'} correctamente`);
+                    setIsModalOpen(false);
+                } else {
+                    console.error('Error al desactivar el servicio');
+                    toast.error('Error al desactivar el servicio');
+                }
+            } catch (error) {
+                console.error('Error al desactivar el servicio:', error);
+            }
+        }
+    };
+    
+const channels = supabase.channel('custom-all-channel')
+.on(
+  'postgres_changes',
+  { event: '*', schema: 'public', table: 'customer_services' },
+  async (payload) => {
+    console.log('Change received!', payload)
+    // Actualizar la lista de servicios con el servicio editado
+    const{data, error} = await supabase .from('customer_services').select('*')
+  }
+)
+.subscribe()
     return (
         <div>
-            <Select onValueChange={(value) => setSelectedCustomer(value)} value={selectedCustomer} defaultValue='all'>
-                <SelectTrigger className="w-[400px]">
-                    <SelectValue placeholder="Filtrar por cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value='all'>Todos los clientes</SelectItem>
-                    {customers.map((customer: Customer) => (
-                        <SelectItem value={String(customer.id)} key={customer.id}>{customer.name}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            
+            <div className="flex space-x-4">
+        <Select onValueChange={(value) => setSelectedCustomer(value)} value={selectedCustomer} defaultValue='all'>
+            <SelectTrigger className="w-[400px]">
+                <SelectValue placeholder="Filtrar por cliente" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value='all'>Todos los clientes</SelectItem>
+                {customers.map((customer: Customer) => (
+                    <SelectItem value={String(customer.id)} key={customer.id}>{customer.name}</SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+        
+        <Select onValueChange={(value) => setIsActiveFilter(value === 'true')} value={String(isActiveFilter)} defaultValue='true'>
+            <SelectTrigger className="w-[400px]">
+                <SelectValue placeholder="Filtrar por estado" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value='true'>Activos</SelectItem>
+                <SelectItem value='false'>Inactivos</SelectItem>
+            </SelectContent>
+        </Select>
+    </div>
 
             <div className="overflow-x-auto">
                 <Table className="min-w-full">
@@ -172,6 +248,9 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
                     <div className="flex justify-end space-x-2 mt-4">
                         <Button onClick={handleSave}   >Guardar</Button>
                         <Button onClick={() => setIsModalOpen(false)} >Cancelar</Button>
+                        <Button onClick={handleDeactivate} variant={editingService.is_active ?'destructive':'success'}>
+                        {editingService.is_active ? 'Dar de Baja' : 'Dar de Alta'}
+                        </Button>
                     </div>
                 </div>
             </EditModal>

@@ -1,4 +1,5 @@
 import { supabaseServer } from '@/lib/supabase/server';
+import { is } from 'date-fns/locale';
 import { NextRequest } from 'next/server';
 export async function GET(request: NextRequest) {
     const supabase = supabaseServer();
@@ -76,7 +77,7 @@ export async function PUT(request: NextRequest) {
     const user_id = searchParams.get('user');
     const id = searchParams.get('id');
     const body = await request.json();
-    const { service_name, service_price, service_validity } = body;
+    const { service_name, service_price, service_validity, is_active } = body;
     const [day, month, year] = service_validity.split('/');
     const serviceValidityDate = new Date(`${year}-${month}-${day}`);
     try {
@@ -85,7 +86,8 @@ export async function PUT(request: NextRequest) {
             .update({
                 service_name: service_name,
                 service_price: service_price,
-                service_validity: serviceValidityDate
+                service_validity: serviceValidityDate,
+                is_active: is_active
             })
             .eq('id', id)
         console.log(services);
