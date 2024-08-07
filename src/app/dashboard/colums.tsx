@@ -39,6 +39,7 @@ import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
+import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarIcon, DotsVerticalIcon } from '@radix-ui/react-icons';
@@ -46,6 +47,7 @@ import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
 import { addMonths, format, formatRelative } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ArrowUpDown } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -518,13 +520,52 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
     },
   },
   {
-    accessorKey: 'id_document_types',
+    accessorKey: 'id_document_types'.replaceAll('_', ' '),
     header: undefined,
   },
 
   {
     accessorKey: 'allocated_to',
     header: 'Afectado a',
+    cell: ({ row }) => {
+      const values = row.original.allocated_to;
+      const theme = useTheme();
+
+      // console.log(values);
+
+      if (!values)
+        return (
+          <Badge
+            variant={
+              cn(theme.theme === 'dark' ? 'default' : 'outline') as
+                | 'default'
+                | 'secondary'
+                | 'destructive'
+                | 'outline'
+                | 'success'
+                | 'yellow'
+                | 'red'
+                | null
+                | undefined
+            }
+          >
+            Sin afectar
+          </Badge>
+        );
+      const contractorCompanies = Array.isArray(values)
+        ? values
+            .map((allocatedToId) =>
+              useCountriesStore(
+                (state) => state.customers?.find((company: any) => String(company.id) === String(allocatedToId))?.name
+              )
+            )
+            .join(', ')
+        : useCountriesStore(
+            (state) => state.customers?.find((company: any) => String(company.id) === String(values))?.name
+          );
+
+      return <p>{contractorCompanies}</p>;
+    },
   },
 
   {
@@ -636,7 +677,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
       }
 
       return (
-        <Link href={`/dashboard/document/${row.original.id}`}>
+        <Link href={`/dashboard/document/${row.original.id}?resource=${row.original.applies}`}>
           <Button>Ver documento</Button>
         </Link>
       );

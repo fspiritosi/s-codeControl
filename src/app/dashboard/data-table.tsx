@@ -229,9 +229,9 @@ export function ExpiredDataTable<TData, TValue>({
       const differenceInDays = Math.ceil((validityDate - currentDate) / (1000 * 60 * 60 * 24));
 
       if (differenceInDays < 0) {
-        return 'bg-red-100 hover:bg-red-100/30'; // Vencido
+        return 'bg-red-100 dark:bg-red-100/30 hover:bg-red-100/30'; // Vencido
       } else if (differenceInDays <= 7) {
-        return 'bg-yellow-100 hover:bg-yellow-100/30'; // Próximo a vencer en los próximos 7 días
+        return 'bg-yellow-100 dark:bg-yellow-100/30 hover:bg-yellow-100/30'; // Próximo a vencer en los próximos 7 días
       } else {
         return
       }

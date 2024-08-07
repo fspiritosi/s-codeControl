@@ -386,9 +386,17 @@ export function DataTable<TData, TValue>({
                               className="size-10 rounded-full object-cover"
                             />
                           ) : cell.column.id === 'status' ? (
-                            <Badge variant={cell.getValue() === 'No avalado' ? 'destructive' : 'success'}>
-                              {cell.getValue() as React.ReactNode}
-                            </Badge>
+                            <Badge
+                            variant={
+                              cell.getValue() === 'Completo'
+                                ? 'success'
+                                : cell.getValue() === 'Completo con doc vencida'
+                                  ? 'yellow'
+                                  : 'destructive'
+                            }
+                          >
+                            {cell.getValue() as React.ReactNode}
+                          </Badge>
                           ) : (
                             (flexRender(cell.column.columnDef.cell, cell.getContext()) as React.ReactNode)
                           )}

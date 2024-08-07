@@ -424,15 +424,11 @@ export const EmployeesListColumns: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              <Link href={`/dashboard/employee/action?action=view&document=${user?.document_number}`}>
-                Ver empleado
-              </Link>
+              <Link href={`/dashboard/employee/action?action=view&employee_id=${user?.id}`}>Ver empleado</Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               {role !== 'Invitado' && (
-                <Link href={`/dashboard/employee/action?action=edit&document=${user?.document_number}`}>
-                  Editar empleado
-                </Link>
+                <Link href={`/dashboard/employee/action?action=edit&employee_id=${user?.id}`}>Editar empleado</Link>
               )}
             </DropdownMenuItem>
             <DropdownMenuItem>
@@ -476,16 +472,19 @@ export const EmployeesListColumns: ColumnDef<Colum>[] = [
     },
     cell: ({ row }: { row: any }) => {
       return (
-        <Link href={`/dashboard/employee/action?action=view&document=${row.original.document_number}`} className="hover:underline">
+        <Link
+          href={`/dashboard/employee/action?action=view&employee_id=${row.original.id}`}
+          className="hover:underline"
+        >
           {row.original.full_name}
         </Link>
       );
     },
   },
-  
+
   {
     accessorKey: 'status',
-    header: 'Estado',
+    header: 'Legajo',
   },
   {
     accessorKey: 'picture',
@@ -569,7 +568,7 @@ export const EmployeesListColumns: ColumnDef<Colum>[] = [
     cell: ({ row }) => {
       const values = row.original.allocated_to;
 
-      if (!values) return <Badge variant={'destructive'}>Sin afectar</Badge>;
+      if (!values) return <Badge variant={'outline'}>Sin afectar</Badge>;
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
       const contractorCompanies = Array.isArray(values)

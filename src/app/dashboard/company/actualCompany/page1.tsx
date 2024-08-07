@@ -32,7 +32,6 @@ export default function page() {
   const company = useLoggedUserStore((state) => state.actualCompany);
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   const sharedUsersAll = useLoggedUserStore((state) => state.sharedUsers);
-  console.log('sharedUsersAll', sharedUsersAll);
   const [verify, setVerify] = useState(false);
   const ownerUser = useLoggedUserStore((state) => state.profile);
 
@@ -46,7 +45,6 @@ export default function page() {
   const AllCompanyDocuments = useLoggedUserStore((state) => state.companyDocuments);
 
   const userShared = cookies.get('guestRole');
-  console.log('userShared', userShared);
   const owner = ownerUser?.map((user) => {
     return {
       email: user.email,
@@ -69,7 +67,6 @@ export default function page() {
         customerName: user.customer_id?.name,
       };
     }) || [];
-    console.log('sharedUsers', sharedUsers);
   const data = owner?.concat(
     sharedUsers
       ?.filter((user) => user.role !== 'Invitado') // Filtrar usuarios donde el rol no sea "Invitado"

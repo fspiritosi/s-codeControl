@@ -9,8 +9,7 @@ export async function GET(request: NextRequest) {
     let { data: documents, error } = await supabase
       .from('documents_employees')
       .select(
-        `
-    *,
+        `*,
     employees:employees(*,contractor_employee(
       customers(
         *
@@ -22,13 +21,10 @@ export async function GET(request: NextRequest) {
       .not('employees', 'is', null)
       .eq('employees.company_id', company_id);
 
-    const data = documents;
-    //console.log(documents)
-
     if (error) {
       throw new Error(JSON.stringify(error));
     }
-    return Response.json({ data });
+    return Response.json({ documents });
   } catch (error) {
     console.log(error);
   }

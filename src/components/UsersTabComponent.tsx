@@ -47,7 +47,6 @@ export default function UsersTabComponent() {
 
     const sharedUsers =
     sharedUsersAll?.map((user) => {
-      console.log(user);
       return {
         email: user.profile_id?.email,
         fullname: user.profile_id.fullname,
