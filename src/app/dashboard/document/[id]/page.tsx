@@ -117,6 +117,8 @@ export default async function page({
 
   const { data: url } = supabase.storage.from('document_files').getPublicUrl(document?.[0]?.document_path);
 
+  console.log(document);
+
   documentName = document?.[0]?.document_path;
   documentUrl = url.publicUrl;
   documents_employees = document;
@@ -634,12 +636,15 @@ export default async function page({
                         resource={resource}
                         documentName={documentName}
                         expires={documents_employees?.[0]?.document_types?.explired}
+                        montly={documents_employees?.[0]?.document_types?.is_it_montlhy}
                       />
                       <ReplaceDocument
                         id={params.id}
                         resource={resource}
                         documentName={documentName}
-                        expires={documents_employees?.[0]?.document_types?.explired}
+                        expires={documents_employees?.[0]?.validity}
+                        montly={documents_employees?.[0]?.period}
+                        appliesId={document?.[0]?.id}
                       />
                       <DeleteDocument
                         id={params.id}
