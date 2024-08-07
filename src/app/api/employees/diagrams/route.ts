@@ -43,7 +43,7 @@ export async function POST(request: NextRequest){
     const { data, error } = await supabase
     .from('employees_diagram')
     .insert([
-       { employee_id: bodyData.employee, diagram_type: bodyData.event_diagram, from_date: bodyData.initial_date, to_date: bodyData.finaly_date },
+       { employee_id: bodyData.employee, diagram_type: bodyData.event_diagram, day: bodyData.day, month: bodyData.month, year: bodyData.year },
      ])
 
 
