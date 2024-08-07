@@ -18,9 +18,7 @@ export default function DisplayCreatedForms({
   };
 
   return (
-    <section className="p-4 pt-0 max-h-[68vh] overflow-y-auto ">
-      <CardTitle className="mb-2 text-xl">Formularios creados</CardTitle>
-
+    <section className="min-h-[60vh] p-4 pt-0 overflow-y-auto ">
       <div className="space-y-3">
         {createdForms?.map((form, index) => {
           return (
