@@ -9,7 +9,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,6 @@ import { toast } from 'sonner';
 const ServiceSchema = z.object({
     customer_id: z.string().min(1, { message: "Debe seleccionar un cliente" }),
     service_name: z.string().min(1, { message: "Debe ingresar el nombre del servicio" }),
-    service_price: z.preprocess((val) => Number(val), z.number().min(0, { message: "Debe ingresar un precio válido" })),
     service_start: z.date(),
     service_validity: z.date(),
 });
@@ -40,7 +39,6 @@ export default function ServicesForm({ customers, company_id }: { customers: Ser
 
             customer_id: '',
             service_name: '',
-            service_price: 0,
             service_start: new Date(),
             service_validity: new Date(),
         },
@@ -114,24 +112,6 @@ export default function ServicesForm({ customers, company_id }: { customers: Ser
                                     {...field}
                                     className="input w-[400px]"
                                     placeholder="Nombre del servicio"
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name='service_price'
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Precio del Servicio</FormLabel>
-                            <FormControl>
-                                <Input
-                                    type="number"
-                                    {...field}
-                                    className="input w-[400px]"
-                                    placeholder="Precio del servicio"
                                 />
                             </FormControl>
                             <FormMessage />
