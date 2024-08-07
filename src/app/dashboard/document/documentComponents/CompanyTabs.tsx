@@ -36,7 +36,6 @@ function CompanyTabs({ companyData }: { companyData: CompanyDocumentsType[] }) {
     })) || []
   );
 
-  console.log(companyData);
   const documentCompany = companyData
     ?.filter((e) => !e.id_document_types.private && !e.id_document_types.is_it_montlhy)
     .map((document) => {

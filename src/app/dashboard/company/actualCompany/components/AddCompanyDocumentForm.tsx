@@ -63,7 +63,6 @@ function AddCompanyDocumentForm({
   });
   const [file, setFile] = useState<File | undefined>(undefined);
 
-  console.log(documentForId);
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     toast.promise(
       async () => {

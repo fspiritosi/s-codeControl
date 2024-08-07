@@ -32,8 +32,6 @@ function FormCard({
     //setear query parameter
   };
 
-  console.log(params.get('form_id'));
-
   // Encuentra el índice del formulario actual en el chartData
   const activeIndex = chartData.findIndex(
     (item: any) => item.browser.replace('_', '_') === form.name.replace('_', '_')

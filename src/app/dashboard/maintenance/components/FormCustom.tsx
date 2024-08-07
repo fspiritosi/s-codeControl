@@ -592,7 +592,6 @@ export function FormCustom({
           </div>
         );
       case 'Si-No':
-        console.log(campo);
         return (
           <div className="w-full cursor-grabbing" key={campo.id}>
             <Input

@@ -32,7 +32,6 @@ export default async function CompanyComponent() {
   const company_id = coockiesStore.get('actualComp')?.value;
   const companyResponse = await fetch(`${URL}/api/company/?actual=${company_id}`);
   const companyDataResponse = companyResponse.ok ? await companyResponse.json() : null;
-  console.log(companyDataResponse.data);
 
   const companyData = companyDataResponse.data[0];
   

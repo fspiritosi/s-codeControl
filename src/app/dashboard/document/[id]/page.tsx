@@ -36,8 +36,6 @@ export default async function page({
     cache: 'no-store',
   }).then((e) => e.json());
 
-  console.log(response); //-> queda pendiente refactorizar este componente para que use esta respuesta y generar los endpoints para los 3 botones
-
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -117,7 +115,6 @@ export default async function page({
 
   const { data: url } = supabase.storage.from('document_files').getPublicUrl(document?.[0]?.document_path);
 
-  console.log(document);
 
   documentName = document?.[0]?.document_path;
   documentUrl = url.publicUrl;

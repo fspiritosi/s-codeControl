@@ -104,12 +104,6 @@ export default function SimpleDocument({
   const [loading, setLoading] = useState(false);
   const [allTypesDocuments, setAllTypesDocuments] = useState<any[] | null>([]);
 
-  console.log(idAppliesUser);
-  console.log(documenTypes);
-  console.log(documentResource);
-  console.log(numberDocument);
-  console.log(resource);
-
   const onSubmit = async ({ documents }: any) => {
     const isSpecial = documenTypes?.find((e) => e.id === documents[0].id_document_types);
 
@@ -132,7 +126,6 @@ export default function SimpleDocument({
             period: entry.period,
           };
         });
-        console.log(updateEntries);
 
         for (let index = 0; index < documents.length; index++) {
           const document = documents[index];
@@ -140,7 +133,6 @@ export default function SimpleDocument({
             (employees?.find(
               (employee: any) => employee.id === document.applies || employee.id === document.applies
             ) as string) || (vehicles?.find((vehicle: any) => vehicle.id === document.applies) as string);
-          console.log(appliesName);
 
           if (!appliesName) throw new Error('No se encontro el recurso');
           const fileExtension = document.file.split('.').pop();
@@ -160,19 +152,11 @@ export default function SimpleDocument({
           const formatedDocumentTypeName = formatDocumentTypeName(documetType?.name);
           const formatedAppliesPath = documetType.applies.toLowerCase().replace(/ /g, '-');
 
-          console.log(formatedAppliesPath);
-          console.log(formatedAppliesName);
-          console.log(tableName);
           const { data } = await supabase.storage
             .from('document_files')
             .list(`${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/`, {
               search: `${formatedAppliesName}/${formatedDocumentTypeName}`,
             });
-
-          console.log(data);
-          console.log(
-            `${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/${formatedAppliesName}/${formatedDocumentTypeName}`
-          );
 
           if (data?.length && data?.length > 0) {
             setError(`documents.${index}.id_document_types`, {
@@ -205,9 +189,6 @@ export default function SimpleDocument({
               }
             );
 
-          console.log(response);
-          console.log(error);
-
           if (error) {
             setLoading(false);
             hasError = true;
@@ -216,7 +197,6 @@ export default function SimpleDocument({
 
           const isMandatory = documenTypes?.find((doc) => doc.id === updateEntries[index].id_document_types)?.mandatory;
 
-          console.log(isMandatory);
           if (isMandatory) {
             const data = {
               validity: updateEntries[index].validity,
@@ -231,7 +211,6 @@ export default function SimpleDocument({
               .eq('applies', idApplies || updateEntries[index].applies)
               .eq('id_document_types', updateEntries[index].id_document_types);
 
-            console.log(userupdated);
             if (error) {
               setLoading(false);
               hasError = true;
@@ -239,7 +218,6 @@ export default function SimpleDocument({
               throw new Error('Hubo un error al subir los documentos a la base de datos');
             }
           } else {
-            console.log('creando keloke');
             const { error } = await supabase.from(tableName).insert({
               validity: updateEntries[index].validity,
               document_path: response?.path,

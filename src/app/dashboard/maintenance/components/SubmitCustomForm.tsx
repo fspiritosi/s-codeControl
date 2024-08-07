@@ -22,10 +22,6 @@ export function SubmitCustomForm({ campos }: Props) {
     resolver: zodResolver(FormSchema),
   });
 
-  console.log(form.formState.errors);
-
-  console.log(campos);
-
   async function handleCustomFormSubmit(data: z.infer<typeof FormSchema>) {
     toast.promise(
       async () => {

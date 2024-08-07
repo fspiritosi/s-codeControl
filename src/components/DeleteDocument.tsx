@@ -34,8 +34,6 @@ export default function DeleteDocument({
       message: 'Debe ingresar la palabra ELIMINAR para eliminar el documento',
     }),
   });
-  console.log(documentName);
-  console.log(resource);
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -90,7 +88,6 @@ export default function DeleteDocument({
                   user_id: null,
                 })
                 .eq('document_path', documentName);
-              console.log(data);
               if (error) {
                 throw new Error(handleSupabaseError(error.message));
               }

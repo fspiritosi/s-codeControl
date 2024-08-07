@@ -32,7 +32,6 @@ export default async function DocumentTabComponent() {
     .eq('applies', actualCompany);
 
     const AllCompanyDocuments = documents_company;
-    console.log('userShared', userShared);
     const ownerData = ownerUser?.map((user) => {
         return {
             email: user.email,
@@ -89,7 +88,6 @@ export default async function DocumentTabComponent() {
             private: document.id_document_types.private,
         };
     });
-    console.log('documentCompany', documentCompany);
     return (
         <div>
             <div className="px-8 pb-8">

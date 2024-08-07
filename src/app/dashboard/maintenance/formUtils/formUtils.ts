@@ -184,8 +184,6 @@ export const buildFormData = (campos: any[] | null, isPreview: boolean): FormFie
 export const buildFormSchema = (formObject: any[]) => {
   const formSchema: { [key: string]: any } = {};
 
-  console.log(formObject);
-
   formObject.forEach((campo) => {
     const formattedTitle = campo.title.replace(/ /g, '_');
     const displayTitle = campo.title.replace(/_/g, ' ');

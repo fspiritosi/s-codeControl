@@ -128,7 +128,6 @@ export default function EmployeeAccordion({ role, user }: { role: string | null;
   // const { toast } = useToast()
   const url = process.env.NEXT_PUBLIC_PROJECT_URL;
   const mandatoryDocuments = useCountriesStore((state) => state.mandatoryDocuments);
-  console.log(user);
 
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
@@ -629,8 +628,6 @@ export default function EmployeeAccordion({ role, user }: { role: string | null;
           hierarchical_position: String(hierarchyOptions.find((e) => e.name === values.hierarchical_position)?.id),
           workflow_diagram: String(workDiagramOptions.find((e) => e.name === values.workflow_diagram)?.id),
         };
-        console.log(finalValues);
-        // Valores a eliminar
         const result = compareContractorEmployees(user, finalValues as any);
 
         result.valuesToRemove.forEach(async (e) => {
@@ -658,7 +655,6 @@ export default function EmployeeAccordion({ role, user }: { role: string | null;
         }
 
         try {
-          console.log(finalValues);
           await updateEmployee(finalValues, user?.id);
 
           await handleUpload();
@@ -1531,7 +1527,6 @@ export default function EmployeeAccordion({ role, user }: { role: string | null;
 
                                       fetchCategory(covenant_id?.id as any);
                                       form.setValue('category', null);
-                                      console.log(option, 'option');
                                     }}
                                   >
                                     {option.name}

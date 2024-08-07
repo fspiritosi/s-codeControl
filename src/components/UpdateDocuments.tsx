@@ -104,8 +104,6 @@ export default function UpdateDocuments({
           newDocumentName = documentName.replace(periodRegex, `(${newPeriod})`) + `.${newExtension}`;
         }
 
-        console.log('Nuevo nombre del documento:', newDocumentName);
-
         if (montly) {
           const { error: newDocumentError, data } = await supabase.storage
             .from('document_files')

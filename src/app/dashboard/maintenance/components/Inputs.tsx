@@ -375,7 +375,6 @@ export const MultiSelectField: React.FC<FieldComponentProps> = ({ campo, form, i
 };
 
 export const DateField: React.FC<FieldComponentProps> = ({ campo, form, index }) => {
-  console.log(campo);
   if (!form) {
     if (campo.formName !== 'Fecha') return null;
     return (
@@ -391,7 +390,6 @@ export const DateField: React.FC<FieldComponentProps> = ({ campo, form, index })
   if (campo.formName === 'Fecha') return null;
   const [date, setDate] = useState<Date>();
 
-  console.log(campo);
   return (
     <div className="col-span-3 md:col-span-1" key={index}>
       <FormField

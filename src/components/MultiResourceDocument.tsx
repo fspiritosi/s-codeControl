@@ -206,18 +206,9 @@ export default function MultiResourceDocument({
             }
           )
           .then(async (response) => {
-            console.log(response);
             const isMandatory = documenTypes?.find((doc) => doc.id === values.id_document_types)?.mandatory;
             resourceId.forEach(async (id, index) => {
               if (isMandatory) {
-                //!El ciclo da solo 1 vuelta
-                console.log({
-                  validity: tableEntries[index].validity,
-                  document_path: response.data?.path,
-                  created_at: new Date(),
-                  state: 'presentado',
-                  period: tableEntries[index].period || null,
-                });
                 const { error } = await supabase
                   .from(tableName)
                   .update({
@@ -235,7 +226,6 @@ export default function MultiResourceDocument({
                   throw new Error(handleSupabaseError(error.message));
                 }
               } else {
-                console.log('no es mandatory');
                 const { error } = await supabase
                   .from(tableName)
                   .insert({

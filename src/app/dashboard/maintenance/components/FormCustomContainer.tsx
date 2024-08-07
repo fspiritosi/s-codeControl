@@ -33,7 +33,6 @@ export async function FormCustomContainer({
   const cookiesStore = cookies();
   const company_id = cookiesStore.get('actualComp');
   const createdFormsState = (await getForms(company_id?.value as string)) as FormData[];
-  console.log(createdFormsState);
   return (
     <FormCardContainer
       form={createdFormsState}
