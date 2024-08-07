@@ -8,6 +8,7 @@ import EmployeeDocumentsTabs from './documentComponents/EmployeeDocumentsTabs';
 import EquipmentTabs from './documentComponents/EquipmentTabs';
 import TypesDocumentAction from './documentComponents/TypesDocumentAction';
 import TypesDocumentsView from './documentComponents/TypesDocumentsView';
+import { FormCustomContainer } from '../maintenance/components/FormCustomContainer';
 
 export default async function page() {
   const supabase = supabaseServer();
@@ -92,6 +93,18 @@ export default async function page() {
           buttonActioRestricted: [''],
           buttonAction: <TypesDocumentAction optionChildrenProp="all" />,
           component: <TypesDocumentsView equipos empresa personas />,
+        },
+      },
+      {
+        value: 'forms',
+        name: 'Formularios',
+        restricted: [],
+        content: {
+          title: 'Formularios',
+          description: 'Formularios de documentos',
+          buttonActioRestricted: [''],
+          // buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
+          component: <FormCustomContainer documents={true} />,
         },
       },
     ],
