@@ -94,9 +94,6 @@ function DiagramEmployeeView({
 
   const mes = generarDiasEntreFechas({ fechaInicio, fechaFin });
 
-  console.log(filteredResources);
-  console.log(selectedResources);
-
   useEffect(() => {
     form.reset();
     setSelectedResources([]);
@@ -104,7 +101,7 @@ function DiagramEmployeeView({
 
   return (
     <div>
-      <div className="py-2 w-full flex justify-around">
+      <div className="py-2 w-full flex justify-start gap-4">
         <>
           <div>
             <Form {...form}>
