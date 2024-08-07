@@ -13,7 +13,6 @@ import { FormCustomContainer } from '../../maintenance/components/FormCustomCont
 import Contacts from '../contact/Contact';
 import Customers from '../customers/Customers';
 import Cct from './covenant/CctComponent';
-import { CovenantRegister } from "@/components/CovenantRegister";
 import ServiceComponent from '@/components/Services/ServiceComponent'
 export default async function CompanyPage() {
   const coockiesStore = cookies();
