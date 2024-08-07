@@ -66,7 +66,7 @@ export default function DeleteDocument({
               if (error) {
                 throw new Error(handleSupabaseError(error.message));
               }
-            } else {
+            } else if (resource === 'vehicle') {
               const { data, error } = await supabase
                 .from('documents_equipment')
                 .update({
@@ -76,6 +76,21 @@ export default function DeleteDocument({
                   period: null,
                 })
                 .eq('document_path', documentName);
+              if (error) {
+                throw new Error(handleSupabaseError(error.message));
+              }
+            } else {
+              const { data, error } = await supabase
+                .from('documents_company')
+                .update({
+                  validity: null,
+                  document_path: null,
+                  state: 'pendiente',
+                  period: null,
+                  user_id: null,
+                })
+                .eq('document_path', documentName);
+              console.log(data);
               if (error) {
                 throw new Error(handleSupabaseError(error.message));
               }
