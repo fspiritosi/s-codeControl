@@ -1,11 +1,8 @@
-import { FormField } from '@/types/types'
-import { z } from 'zod'
+import { FormField } from '@/types/types';
+import { z } from 'zod';
 
-export const buildFormData = (
-  campos: any[] | null,
-  isPreview: boolean,
-): FormField[] => {
-  const formArray: FormField[] = []
+export const buildFormData = (campos: any[] | null, isPreview: boolean): FormField[] => {
+  const formArray: FormField[] = [];
 
   formArray.push({
     formName: 'Nombre del formulario',
@@ -14,7 +11,7 @@ export const buildFormData = (
     tipo: 'Nombre del formulario',
     id: '',
     placeholder: '',
-  })
+  });
 
   if (isPreview) {
     if (campos && campos.length > 0) {
@@ -27,7 +24,7 @@ export const buildFormData = (
             tipo: 'Titulo',
             id: '',
             placeholder: '',
-          })
+          });
           campo.sectionCampos.forEach((sectionCampo: any) => {
             formArray.push({
               formName: `${sectionCampo.title.replace(/ /g, '_')}`,
@@ -39,20 +36,17 @@ export const buildFormData = (
               placeholder: sectionCampo.placeholder,
               date: sectionCampo.date,
               Observaciones: sectionCampo.observation,
-            })
+            });
 
             if (sectionCampo.observation) {
               formArray.push({
-                formName: `${sectionCampo.title.replace(
-                  / /g,
-                  '_',
-                )}_observaciones`,
+                formName: `${sectionCampo.title.replace(/ /g, '_')}_observaciones`,
                 title: `${sectionCampo.title.replace(/ /g, '_')}_observaciones`,
                 value: '',
                 tipo: 'Observaciones',
                 id: sectionCampo.id,
                 placeholder: sectionCampo.placeholder,
-              })
+              });
             }
             if (sectionCampo.date) {
               formArray.push({
@@ -62,9 +56,9 @@ export const buildFormData = (
                 tipo: 'Fecha',
                 id: sectionCampo.id,
                 placeholder: sectionCampo.placeholder,
-              })
+              });
             }
-          })
+          });
 
           if (campo.date) {
             formArray.push({
@@ -74,7 +68,7 @@ export const buildFormData = (
               tipo: 'SectionDate',
               id: campo.id,
               placeholder: campo.placeholder,
-            })
+            });
           }
 
           if (campo.observation) {
@@ -85,7 +79,7 @@ export const buildFormData = (
               tipo: 'SectionObservaciones',
               id: campo.id,
               placeholder: campo.placeholder,
-            })
+            });
           }
           formArray.push({
             formName: `fin_seccion_${campo.title.replace(/ /g, '_')}`,
@@ -94,9 +88,9 @@ export const buildFormData = (
             tipo: 'Separador',
             id: '',
             placeholder: '',
-          })
+          });
         }
-      })
+      });
     }
   } else {
     if (campos && campos.length > 0 && campos[0]?.form) {
@@ -109,7 +103,7 @@ export const buildFormData = (
             tipo: 'Titulo',
             id: '',
             placeholder: '',
-          })
+          });
           campo.sectionCampos.forEach((sectionCampo: any) => {
             formArray.push({
               formName: `${sectionCampo.title.replace(/ /g, '_')}`,
@@ -122,21 +116,18 @@ export const buildFormData = (
               date: sectionCampo.date,
               Observaciones: sectionCampo.observation,
               required: sectionCampo.required,
-            })
+            });
 
             if (sectionCampo.observation) {
               formArray.push({
-                formName: `${sectionCampo.title.replace(
-                  / /g,
-                  '_',
-                )}_observaciones`,
+                formName: `${sectionCampo.title.replace(/ /g, '_')}_observaciones`,
                 title: `${sectionCampo.title.replace(/ /g, '_')}_observaciones`,
                 value: '',
                 tipo: 'Observaciones',
                 id: sectionCampo.id,
                 placeholder: sectionCampo.placeholder,
                 required: sectionCampo.required,
-              })
+              });
             }
             if (sectionCampo.date) {
               formArray.push({
@@ -147,9 +138,9 @@ export const buildFormData = (
                 id: sectionCampo.id,
                 placeholder: sectionCampo.placeholder,
                 required: sectionCampo.required,
-              })
+              });
             }
-          })
+          });
 
           if (campo.date) {
             formArray.push({
@@ -160,7 +151,7 @@ export const buildFormData = (
               id: campo.id,
               placeholder: campo.placeholder,
               required: campo.required,
-            })
+            });
           }
 
           if (campo.observation) {
@@ -172,7 +163,7 @@ export const buildFormData = (
               id: campo.id,
               placeholder: campo.placeholder,
               required: campo.required,
-            })
+            });
           }
           formArray.push({
             formName: `fin_seccion_${campo.title.replace(/ /g, '_')}`,
@@ -181,24 +172,24 @@ export const buildFormData = (
             tipo: 'Separador',
             id: '',
             placeholder: '',
-          })
+          });
         }
-      })
+      });
     }
   }
 
-  return formArray
-}
+  return formArray;
+};
 
 export const buildFormSchema = (formObject: any[]) => {
-  const formSchema: { [key: string]: any } = {}
+  const formSchema: { [key: string]: any } = {};
 
-  console.log(formObject)
+  console.log(formObject);
 
-  formObject.forEach(campo => {
-    const formattedTitle = campo.title.replace(/ /g, '_')
-    const displayTitle = campo.title.replace(/_/g, ' ')
-    const isRequired = campo.required !== false // Si no se especifica, se asume que es requerido
+  formObject.forEach((campo) => {
+    const formattedTitle = campo.title.replace(/ /g, '_');
+    const displayTitle = campo.title.replace(/_/g, ' ');
+    const isRequired = campo.required !== false; // Si no se especifica, se asume que es requerido
 
     switch (campo.tipo) {
       case 'Si-No':
@@ -211,8 +202,8 @@ export const buildFormSchema = (formObject: any[]) => {
               .enum(campo.opciones, {
                 invalid_type_error: `El valor ingresado en "${displayTitle}" no es válido`,
               })
-              .optional()
-        break
+              .optional();
+        break;
 
       case 'Archivo':
         formSchema[formattedTitle] = isRequired
@@ -221,11 +212,8 @@ export const buildFormSchema = (formObject: any[]) => {
                 required_error: `El campo "${displayTitle}" es obligatorio`,
               })
               .min(1, `El campo "${displayTitle}" no puede estar vacío`)
-          : z
-              .string()
-              .min(1, `El campo "${displayTitle}" no puede estar vacío`)
-              .optional()
-        break
+          : z.string().min(1, `El campo "${displayTitle}" no puede estar vacío`).optional();
+        break;
       case 'Texto':
         formSchema[formattedTitle] = isRequired
           ? z
@@ -233,11 +221,8 @@ export const buildFormSchema = (formObject: any[]) => {
                 required_error: `El campo "${displayTitle}" es obligatorio`,
               })
               .min(1, `El campo "${displayTitle}" no puede estar vacío`)
-          : z
-              .string()
-              .min(1, `El campo "${displayTitle}" no puede estar vacío`)
-              .optional()
-        break
+          : z.string().min(1, `El campo "${displayTitle}" no puede estar vacío`).optional();
+        break;
       case 'Área de texto':
         formSchema[formattedTitle] = isRequired
           ? z
@@ -245,11 +230,8 @@ export const buildFormSchema = (formObject: any[]) => {
                 required_error: `El campo "${displayTitle}" es obligatorio`,
               })
               .min(1, `El campo "${displayTitle}" no puede estar vacío`)
-          : z
-              .string()
-              .min(1, `El campo "${displayTitle}" no puede estar vacío`)
-              .optional()
-        break
+          : z.string().min(1, `El campo "${displayTitle}" no puede estar vacío`).optional();
+        break;
       case 'Radio':
         formSchema[formattedTitle] = isRequired
           ? z.enum(campo.opciones, {
@@ -260,8 +242,8 @@ export const buildFormSchema = (formObject: any[]) => {
               .enum(campo.opciones, {
                 invalid_type_error: `El valor ingresado en "${displayTitle}" no es válido`,
               })
-              .optional()
-        break
+              .optional();
+        break;
       case 'Seleccion multiple':
         formSchema[formattedTitle] = isRequired
           ? z
@@ -271,82 +253,62 @@ export const buildFormSchema = (formObject: any[]) => {
                 }),
                 {
                   required_error: `El campo "${displayTitle}" es obligatorio`,
-                },
+                }
               )
               .min(1, `El campo "${displayTitle}" no puede estar vacío`)
-          : z
-              .array(z.string())
-              .min(1, `El campo "${displayTitle}" no puede estar vacío`)
-              .optional()
-        break
+          : z.array(z.string()).min(1, `El campo "${displayTitle}" no puede estar vacío`).optional();
+        break;
       case 'Fecha':
         formSchema[formattedTitle] = isRequired
-          ? z.string({
+          ? z.date({
               required_error: `El campo "${displayTitle}" es obligatorio`,
+              invalid_type_error: `El valor ingresado en "${displayTitle}" no es válido`,
             })
-          : z.string().optional()
-        break
+          : z.string().optional();
+        break;
       case 'Seleccion':
         formSchema[formattedTitle] = isRequired
           ? z.string({
               required_error: `Por favor, selecciona una opción para el campo "${displayTitle}"`,
             })
-          : z.string().optional()
-        break
+          : z.string().optional();
+        break;
       case 'Seleccion Predefinida':
         formSchema[formattedTitle] = isRequired
           ? z.string({
               required_error: `Por favor, selecciona una opción para el campo "${displayTitle}"`,
             })
-          : z.string().optional()
-        break
+          : z.string().optional();
+        break;
       case 'Observaciones':
         formSchema[`${formattedTitle}`] = isRequired
           ? z
               .string({
                 required_error: `El campo "${displayTitle}" es obligatorio`,
               })
-              .min(
-                1,
-                `El campo "${displayTitle} - Observaciones" no puede estar vacío`,
-              )
-          : z
-              .string()
-              .min(
-                1,
-                `El campo "${displayTitle} - Observaciones" no puede estar vacío`,
-              )
-              .optional()
+              .min(1, `El campo "${displayTitle} - Observaciones" no puede estar vacío`)
+          : z.string().min(1, `El campo "${displayTitle} - Observaciones" no puede estar vacío`).optional();
       case 'SectionDate':
         formSchema[formattedTitle] = isRequired
           ? z.string({
               required_error: `El campo "${displayTitle}" es obligatorio`,
             })
-          : z.string().optional()
-        break
+          : z.string().optional();
+        break;
       case 'SectionObservaciones':
         formSchema[`${formattedTitle}`] = isRequired
           ? z
               .string({
                 required_error: `El campo "${displayTitle}" es obligatorio`,
               })
-              .min(
-                1,
-                `El campo "${displayTitle} - Observaciones" no puede estar vacío`,
-              )
-          : z
-              .string()
-              .min(
-                1,
-                `El campo "${displayTitle} - Observaciones" no puede estar vacío`,
-              )
-              .optional()
-        break
+              .min(1, `El campo "${displayTitle} - Observaciones" no puede estar vacío`)
+          : z.string().min(1, `El campo "${displayTitle} - Observaciones" no puede estar vacío`).optional();
+        break;
       default:
-        break
+        break;
     }
-  })
+  });
 
-  const finalFormSchema = z.object(formSchema)
-  return finalFormSchema
-}
+  const finalFormSchema = z.object(formSchema);
+  return finalFormSchema;
+};
