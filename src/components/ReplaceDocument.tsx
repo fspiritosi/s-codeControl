@@ -7,8 +7,9 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { handleSupabaseError } from '@/lib/errorHandler';
+import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
-import { useLoggedUserStore } from '@/store/loggedUser';
 import { CalendarIcon, InfoCircledIcon } from '@radix-ui/react-icons';
 import { addMonths, format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -25,22 +26,33 @@ export default function ReplaceDocument({
   resource,
   id,
   expires,
+  montly,
+  appliesId,
 }: {
   documentName: string | null;
   resource: string | null;
   id: string;
-  expires: boolean;
+  expires: string | null;
+  montly: string | null;
+  appliesId: string | null;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const FormSchema = z.object({
     reeplace_document: z.string({ required_error: 'El documento es requerido' }),
-    validity: expires ? z.string({ invalid_type_error: 'Se debe elegir una fecha' }) : z.string().optional(),
+    validity: expires
+      ? z.date({ invalid_type_error: 'Se debe elegir una fecha', required_error: 'Se debe elegir una fecha' })
+      : z.string().optional(),
+    period: montly ? z.string({ required_error: 'El periodo es requerido' }).optional() : z.string().optional(),
   });
+
+  console.log(expires);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       reeplace_document: '',
+      validity: expires ?? '',
+      period: montly ?? '',
     },
   });
   const router = useRouter();
@@ -48,21 +60,99 @@ export default function ReplaceDocument({
   const today = new Date();
   const nextMonth = addMonths(new Date(), 1);
   const [month, setMonth] = useState<Date>(nextMonth);
+  const supabase = supabaseBrowser();
 
   const yearsAhead = Array.from({ length: 20 }, (_, index) => {
     const year = today.getFullYear() + index + 1;
     return year;
   });
   const [years, setYear] = useState(today.getFullYear().toString());
+
+  console.log(appliesId);
+
   async function onSubmit(filename: z.infer<typeof FormSchema>) {
+    if (!file) {
+      form.setError('reeplace_document', {
+        type: 'manual',
+        message: 'El documento es requerido',
+      });
+      return;
+    }
+    if (!documentName) return;
+    const tableName =
+      resource === 'employee'
+        ? 'documents_employees'
+        : resource === 'company'
+          ? 'documents_company'
+          : 'documents_equipment';
+
     toast.promise(
       async () => {
-        if (!file) {
-          form.setError('reeplace_document', {
-            type: 'manual',
-            message: 'El documento es requerido',
+        if (!documentName) return;
+        console.log(documentName?.split('/')?.slice(0, 2).join('/'));
+
+        console.log(documentName?.split('/')?.slice(2).join('/'));
+
+        console.log(documentName);
+
+        const newExtension = file.name.split('.').pop();
+        let newDocumentName = documentName.split('.')[0];
+
+        console.log(newDocumentName);
+        console.log();
+
+        const dateRegex = /\((\d{2}-\d{2}-\d{4})\)\./;
+
+        if (dateRegex.test(documentName)) {
+          const newDate = format(filename.validity as Date, 'dd/MM/yyyy').replaceAll('/', '-');
+          newDocumentName = newDocumentName.replace(dateRegex, `(${newDate})`) + `.${newExtension}`;
+        } else {
+          newDocumentName = newDocumentName + `.${newExtension}`;
+        }
+
+        console.log(newDocumentName);
+
+        const { error, data: response } = await supabase.storage.from('document_files').remove([documentName]);
+
+        console.log(`/${documentName?.split('/')?.slice(2).join('/').split('.')[0]}`);
+
+        const { data: respons2e } = await supabase.storage
+          .from('document_files')
+          .list(documentName?.split('/')?.slice(0, 2).join('/'), {
+            search: `/${documentName?.split('/')?.slice(3).join('/').split('.')[0]}`,
           });
-          return;
+        console.log(respons2e);
+
+        console.log(response);
+
+        if (error) throw new Error(handleSupabaseError(error.message));
+
+        const { error: finalerror, data: finalDocument } = await supabase.storage
+          .from('document_files')
+          .upload(newDocumentName, file, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        console.log(error);
+
+        const { error: updateError } = await supabase
+          .from(tableName)
+          .update({
+            document_path: finalDocument?.path,
+            validity: filename.validity,
+            created_at: format(new Date(), 'dd/MM/yyyy'),
+          })
+          .eq('id', appliesId);
+
+        console.log(updateError);
+
+        if (updateError) {
+          throw new Error(handleSupabaseError(updateError?.message));
+        }
+
+        if (finalerror) {
+          throw new Error(handleSupabaseError(finalerror?.message));
         }
 
         router.refresh();
@@ -75,13 +165,15 @@ export default function ReplaceDocument({
       },
       {
         loading: 'Reemplazando...',
-        success: 'Documento reemplazado correctamente',
+        success: 'Documento reemplazado correctamente (puede tardar unos minutos para que se actualice)',
         error: (error) => {
           return error;
         },
       }
     );
   }
+
+  console.log(form.formState);
   return (
     <Dialog open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
       <DialogTrigger asChild>
@@ -132,8 +224,10 @@ export default function ReplaceDocument({
                                 variant={'outline'}
                                 className={cn('pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
                               >
-                                {field.value ? (
-                                  format(field.value, 'PPP', { locale: es })
+                                {typeof field.value === 'string' && field.value !== '' ? (
+                                  field.value
+                                ) : typeof field.value === 'object' ? (
+                                  format(field.value, 'dd/MM/yyyy')
                                 ) : (
                                   <span>Seleccionar fecha de vencimiento</span>
                                 )}
@@ -179,12 +273,36 @@ export default function ReplaceDocument({
                               mode="single"
                               selected={new Date(field.value || '')}
                               onSelect={(e) => {
+                                if (!e) return;
+                                console.log(e);
+                                form.setValue('validity', e.toISOString());
                                 field.onChange(e);
                               }}
                             />
                           </PopoverContent>
                         </Popover>
                         <FormDescription>La fecha de vencimiento del documento</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+                {montly && (
+                  <FormField
+                    control={form.control}
+                    name="period"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col mt-4">
+                        <FormLabel>Periodo</FormLabel>
+                        <Input
+                          placeholder="Seleccionar periodo"
+                          type="month"
+                          min={new Date().toISOString().split('T')[0]}
+                          onChange={(e) => {
+                            form.setValue('period', e.target.value);
+                          }}
+                        />
+                        <FormDescription>El periodo del documento</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

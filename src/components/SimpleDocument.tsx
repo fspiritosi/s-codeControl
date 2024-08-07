@@ -15,6 +15,8 @@ import { Separator } from './ui/separator';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { handleSupabaseError } from '@/lib/errorHandler';
+import { formatDocumentTypeName } from '@/lib/utils/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -104,6 +106,9 @@ export default function SimpleDocument({
 
   console.log(idAppliesUser);
   console.log(documenTypes);
+  console.log(documentResource);
+  console.log(numberDocument);
+  console.log(resource);
 
   const onSubmit = async ({ documents }: any) => {
     const isSpecial = documenTypes?.find((e) => e.id === documents[0].id_document_types);
@@ -112,7 +117,10 @@ export default function SimpleDocument({
       async () => {
         setLoading(true);
         let hasError = false;
-        const idApplies = id || employees.find((employee: any) => employee.document === documentResource)?.id;
+        const idApplies =
+          id ||
+          employees.find((employee: any) => employee.document === documentResource)?.id ||
+          (vehicles?.find((vehicle: any) => vehicle.id === numberDocument) as string);
 
         const updateEntries = documents?.map((entry: any) => {
           return {
@@ -133,8 +141,15 @@ export default function SimpleDocument({
               (employee: any) => employee.id === document.applies || employee.id === document.applies
             ) as string) || (vehicles?.find((vehicle: any) => vehicle.id === document.applies) as string);
           console.log(appliesName);
+
+          if (!appliesName) throw new Error('No se encontro el recurso');
           const fileExtension = document.file.split('.').pop();
-          const tableName = resource === 'empleado' ? 'documents_employees' : 'documents_equipment';
+          const tableName =
+            resource === 'empleado'
+              ? 'documents_employees'
+              : resource === 'equipo'
+                ? 'documents_equipment'
+                : 'documents_company';
           const period = document.period;
           const hasExpiredDate = updateEntries?.[index]?.validity?.replace(/\//g, '-') || period || 'v0';
           const documetType = documenTypes?.find((e) => e.id === documents[index].id_document_types);
@@ -142,22 +157,22 @@ export default function SimpleDocument({
           const formatedAppliesName = appliesName
             ? `${appliesName?.name.toLowerCase().replace(/ /g, '-')}-(${appliesName?.document})`
             : `${idAppliesUser?.name.toLowerCase().replace(/ /g, '-')}-(${idAppliesUser?.document})`;
-          const formatedDocumentTypeName = documetType?.name.toLowerCase().replace(/ /g, '-');
+          const formatedDocumentTypeName = formatDocumentTypeName(documetType?.name);
           const formatedAppliesPath = documetType.applies.toLowerCase().replace(/ /g, '-');
 
           console.log(formatedAppliesPath);
           console.log(formatedAppliesName);
-
+          console.log(tableName);
           const { data } = await supabase.storage
             .from('document_files')
-            .list(
-              `${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/`,
-              {
-                search: `${formatedAppliesName}/${formatedDocumentTypeName}`,
-              }
-            );
+            .list(`${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/`, {
+              search: `${formatedAppliesName}/${formatedDocumentTypeName}`,
+            });
 
-           
+          console.log(data);
+          console.log(
+            `${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/${formatedAppliesName}/${formatedDocumentTypeName}`
+          );
 
           if (data?.length && data?.length > 0) {
             setError(`documents.${index}.id_document_types`, {
@@ -174,10 +189,12 @@ export default function SimpleDocument({
           }
 
           if (hasError) {
+            console.log(hasError);
             return setLoading(false);
           }
 
-          await supabase.storage
+          //! la extnsion en el equipo no se cambia bien
+          const { data: response, error } = await supabase.storage
             .from('document_files')
             .upload(
               `${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/${formatedAppliesName}/${formatedDocumentTypeName}-(${hasExpiredDate}).${fileExtension}`,
@@ -186,57 +203,60 @@ export default function SimpleDocument({
                 cacheControl: '3600',
                 upsert: false,
               }
-            )
-            .then(async (response) => {
-              const isMandatory = documenTypes?.find(
-                (doc) => doc.id === updateEntries[index].id_document_types
-              )?.mandatory;
+            );
 
-              if (isMandatory) {
-                const data = {
-                  validity: updateEntries[index].validity,
-                  document_path: response.data?.path,
-                  created_at: new Date(),
-                  state: 'presentado',
-                  period: updateEntries[index].period || null,
-                };
-                const { error } = await supabase
-                  .from(tableName)
-                  .update(data)
-                  .eq('applies', idApplies || updateEntries[index].applies)
-                  .eq('id_document_types', updateEntries[index].id_document_types);
+          console.log(response);
+          console.log(error);
 
-                if (error) {
-                  setLoading(false);
-                  hasError = true;
+          if (error) {
+            setLoading(false);
+            hasError = true;
+            throw new Error(handleSupabaseError(error.message));
+          }
 
-                  throw new Error('Hubo un error al subir los documentos a la base de datos');
-                }
-              } else {
-                const { error } = await supabase.from(tableName).insert({
-                  validity: updateEntries[index].validity,
-                  document_path: response.data?.path,
-                  created_at: new Date(),
-                  state: 'presentado',
-                  applies: idApplies || updateEntries[index].applies,
-                  id_document_types: updateEntries[index].id_document_types,
-                  user_id: user,
-                  period: updateEntries[index].period || null,
-                });
+          const isMandatory = documenTypes?.find((doc) => doc.id === updateEntries[index].id_document_types)?.mandatory;
 
-                if (error) {
-                  setLoading(false);
-                  hasError = true;
-                  throw new Error('Hubo un error al guardar el documento');
-                }
-              }
-            })
-            .catch((error) => {
+          console.log(isMandatory);
+          if (isMandatory) {
+            const data = {
+              validity: updateEntries[index].validity,
+              document_path: response?.path,
+              created_at: new Date(),
+              state: 'presentado',
+              period: updateEntries[index].period || null,
+            };
+            const { error, data: userupdated } = await supabase
+              .from(tableName)
+              .update(data)
+              .eq('applies', idApplies || updateEntries[index].applies)
+              .eq('id_document_types', updateEntries[index].id_document_types);
+
+            console.log(userupdated);
+            if (error) {
               setLoading(false);
               hasError = true;
 
-              throw new Error('Hubo un error al subir los documentos al storage');
+              throw new Error('Hubo un error al subir los documentos a la base de datos');
+            }
+          } else {
+            console.log('creando keloke');
+            const { error } = await supabase.from(tableName).insert({
+              validity: updateEntries[index].validity,
+              document_path: response?.path,
+              created_at: new Date(),
+              state: 'presentado',
+              applies: idApplies || updateEntries[index].applies,
+              id_document_types: updateEntries[index].id_document_types,
+              user_id: user,
+              period: updateEntries[index].period || null,
             });
+
+            if (error) {
+              setLoading(false);
+              hasError = true;
+              throw new Error('Hubo un error al guardar el documento');
+            }
+          }
         }
 
         if (hasError) {
@@ -257,7 +277,13 @@ export default function SimpleDocument({
       },
       {
         loading: 'Subiendo...',
-        success: 'Documento(s) subidos correctamente',
+        success: () => {
+          handleOpen();
+          setLoading(false);
+          router.refresh();
+
+          return 'Documento(s) subidos correctamente';
+        },
         error: (error) => {
           return error;
         },
