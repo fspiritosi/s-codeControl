@@ -77,7 +77,7 @@ export async function PUT(request: NextRequest) {
     const user_id = searchParams.get('user');
     const id = searchParams.get('id');
     const body = await request.json();
-    const { service_name, service_price, service_validity, is_active } = body;
+    const { service_name, service_validity, is_active } = body;
     const [day, month, year] = service_validity.split('/');
     const serviceValidityDate = new Date(`${year}-${month}-${day}`);
     try {
@@ -85,7 +85,6 @@ export async function PUT(request: NextRequest) {
             .from('customer_services')
             .update({
                 service_name: service_name,
-                service_price: service_price,
                 service_validity: serviceValidityDate,
                 is_active: is_active
             })

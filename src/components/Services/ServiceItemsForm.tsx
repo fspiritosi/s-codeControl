@@ -32,12 +32,12 @@ const ItemsSchema = z.object({
     item_measure_units: z.string().min(1, { message: "Debe seleccionar la unidad de medida" }),
 
 });
-type costumer = {
+type customer = {
     id: string;
     name: string;
 }
 type Service = z.infer<typeof ItemsSchema>;
-export default function ServiceItemsForm({ measure_units, customers, services, company_id }: { measure_units: string[], customers: costumer[], services: Service[], company_id: string }) {
+export default function ServiceItemsForm({ measure_units, customers, services, company_id }: { measure_units: string[], customers: customer[], services: Service[], company_id: string }) {
     const form = useForm<Service>({
         resolver: zodResolver(ItemsSchema),
         defaultValues: {
@@ -51,7 +51,9 @@ export default function ServiceItemsForm({ measure_units, customers, services, c
     });
     const { reset } = form;
     const [selectedClient, setSelectedClient] = useState('');
+    console.log(services)
     const filteredServices = services.filter(service => service.customer_id === selectedClient);
+    console.log(filteredServices)
     console.log(measure_units)
 
     const onSubmit = async (values: Service) => {
@@ -61,11 +63,11 @@ export default function ServiceItemsForm({ measure_units, customers, services, c
         const modified_company_id = company_id.replace(/"/g, '');
         const modified_editing_service_id = values.customer_service_id.replace(/"/g, '');
         console.log(modified_editing_service_id)
-        const updatedValues = { ...values, costumer_service_id: modified_editing_service_id };
+        const updatedValues = { ...values, customer_service_id: modified_editing_service_id, customer_id: customer_id };
         const data = JSON.stringify(updatedValues);
         console.log(data);
         try {
-            const response = await fetch(`/api/services/items`, {
+            const response = await fetch(`/api/services/items?actual=${modified_company_id}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

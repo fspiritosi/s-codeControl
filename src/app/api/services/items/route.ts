@@ -35,15 +35,15 @@ export async function POST(request: NextRequest) {
     const user_id = searchParams.get('user');
     const sercices_id = searchParams.get('service');
     const body = await request.json();
-    const { costumer_service_id, item_name, item_description, item_measure_units, item_price, costumer_id } = body;
+    const { customer_service_id, item_name, item_description, item_measure_units, item_price, customer_id } = body;
     company_id = company_id ? company_id.replace(/['"]/g, '') : null;
 
     try {
         let { data: items, error } = await supabase
             .from('service_items')
             .insert({
-                costumer_service_id: costumer_service_id,
-                costumer_id: costumer_id,
+                customer_service_id: customer_service_id,
+                customer_id: customer_id,
                 item_name: item_name,
                 item_description: item_description,
                 item_measure_units: item_measure_units,
@@ -82,7 +82,8 @@ export async function PUT(request: NextRequest) {
                 item_measure_units: item_measure_units,
                 item_price: item_price,
                 is_active: is_active,
-                costumer_id: costumer_id
+                costumer_id: costumer_id,
+                // company_id: company_id
             })
             .eq('id', id)
         console.log(items);

@@ -7,6 +7,8 @@ import EditModal from '@/components/EditModal';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { supabaseBrowser } from '@/lib/supabase/browser';
+import Link from 'next/link';
+
 
 type Service = {
     id: number;
@@ -184,7 +186,9 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
                         <TableBody>
                             {filteredServices.map((service: Service) => (
                                 <TableRow key={service.id}>
-                                    <TableCell>{service.service_name}</TableCell>
+                                    <Link href={`/dashboard/company/actualCompany/services/${service.id}`}>
+                                    <TableCell>{service.service_name}</TableCell>    
+                                    </Link>
                                     {/* <TableCell>${service.service_price}</TableCell> */}
                                     <TableCell>{service.service_start}</TableCell>
                                     <TableCell>{service.service_validity}</TableCell>
@@ -210,13 +214,13 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
                             onChange={(e: any) => setEditingService({ ...editingService, service_name: e.target.value })}
                             className="w-full p-2 mb-2 border border-gray-300 dark:border-gray-700 rounded"
                         />
-                        <label htmlFor="service_price" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Precio del Servicio</label>
+                        {/* <label htmlFor="service_price" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Precio del Servicio</label>
                         <Input
                             type="text"
                             value={editingService.service_price}
                             onChange={(e: any) => setEditingService({ ...editingService, service_price: e.target.value })}
                             className="w-full p-2 mb-2 border border-gray-300 dark:border-gray-700 rounded"
-                        />
+                        /> */}
                         <label htmlFor="service_start" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de inicio del Servicio</label>
                         <Input
                             type="text"

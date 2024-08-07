@@ -46,11 +46,9 @@ export default async function ServiceComponent() {
       <TabsTrigger value="itemsTable">Items Cargados</TabsTrigger>
     </TabsList>
     <TabsContent value="services">
-      <h1>Cargar Servicios</h1>
       <ServiceForm customers={customers} company_id={String(company_id)}/>
     </TabsContent>
     <TabsContent value="servicesItems">
-      <h1>Cargar Items </h1>
       <ServiceItemsForm measure_units={measure_units as string[]} customers={customers} services={services} company_id={String(company_id)}/>
     </TabsContent>
     <TabsContent value="servicesTable">
