@@ -15,6 +15,8 @@ import { Separator } from './ui/separator';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { handleSupabaseError } from '@/lib/errorHandler';
+import { formatDocumentTypeName } from '@/lib/utils/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -38,6 +40,7 @@ export default function SimpleDocument({
   const router = useRouter();
   const documentDrawerEmployees = useLoggedUserStore((state) => state.documentDrawerEmployees);
   const documentDrawerVehicles = useLoggedUserStore((state) => state.documentDrawerVehicles);
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   const employees = useLoggedUserStore((state) => state.employees)?.reduce(
     (acc: any, act: { full_name: string; document_number: string; id: string }) => {
       const data = {
@@ -66,9 +69,10 @@ export default function SimpleDocument({
   const documentResource = searchParams.get('document');
   const id = searchParams.get('id');
   const user = useLoggedUserStore((state) => state.credentialUser?.id);
-  const idApplies =
-    (employees?.find((employee: any) => employee.document === documentResource || employee.document === numberDocument)
-      ?.id as string) || (vehicles?.find((vehicle: any) => vehicle.id === numberDocument)?.id as string);
+  const idAppliesUser: any =
+    (employees?.find(
+      (employee: any) => employee.document === documentResource || employee.document === numberDocument
+    ) as string) || (vehicles?.find((vehicle: any) => vehicle.id === numberDocument) as string);
 
   const {
     control,
@@ -82,7 +86,7 @@ export default function SimpleDocument({
     defaultValues: {
       documents: [
         {
-          applies: idApplies || '',
+          applies: `${idAppliesUser?.id}` || '',
           id_document_types: defaultDocumentId ?? '',
           file: '',
           validity: '',
@@ -101,11 +105,16 @@ export default function SimpleDocument({
   const [allTypesDocuments, setAllTypesDocuments] = useState<any[] | null>([]);
 
   const onSubmit = async ({ documents }: any) => {
+    const isSpecial = documenTypes?.find((e) => e.id === documents[0].id_document_types);
+
     toast.promise(
       async () => {
         setLoading(true);
         let hasError = false;
-        const idApplies = id || employees.find((employee: any) => employee.document === documentResource)?.id;
+        const idApplies =
+          id ||
+          employees.find((employee: any) => employee.document === documentResource)?.id ||
+          (vehicles?.find((vehicle: any) => vehicle.id === numberDocument) as string);
 
         const updateEntries = documents?.map((entry: any) => {
           return {
@@ -117,13 +126,37 @@ export default function SimpleDocument({
             period: entry.period,
           };
         });
-        const storagePath = resource === 'empleado' ? 'documentos-empleados' : 'documentos-equipos';
 
         for (let index = 0; index < documents.length; index++) {
           const document = documents[index];
-          const { data } = await supabase.storage.from('document_files').list(storagePath, {
-            search: `document-${document.id_document_types}-${updateEntries[index].applies}`,
-          });
+          const appliesName: any =
+            (employees?.find(
+              (employee: any) => employee.id === document.applies || employee.id === document.applies
+            ) as string) || (vehicles?.find((vehicle: any) => vehicle.id === document.applies) as string);
+
+          if (!appliesName) throw new Error('No se encontro el recurso');
+          const fileExtension = document.file.split('.').pop();
+          const tableName =
+            resource === 'empleado'
+              ? 'documents_employees'
+              : resource === 'equipo'
+                ? 'documents_equipment'
+                : 'documents_company';
+          const period = document.period;
+          const hasExpiredDate = updateEntries?.[index]?.validity?.replace(/\//g, '-') || period || 'v0';
+          const documetType = documenTypes?.find((e) => e.id === documents[index].id_document_types);
+          const formatedCompanyName = actualCompany?.company_name.toLowerCase().replace(/ /g, '-');
+          const formatedAppliesName = appliesName
+            ? `${appliesName?.name.toLowerCase().replace(/ /g, '-')}-(${appliesName?.document})`
+            : `${idAppliesUser?.name.toLowerCase().replace(/ /g, '-')}-(${idAppliesUser?.document})`;
+          const formatedDocumentTypeName = formatDocumentTypeName(documetType?.name);
+          const formatedAppliesPath = documetType.applies.toLowerCase().replace(/ /g, '-');
+
+          const { data } = await supabase.storage
+            .from('document_files')
+            .list(`${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/`, {
+              search: `${formatedAppliesName}/${formatedDocumentTypeName}`,
+            });
 
           if (data?.length && data?.length > 0) {
             setError(`documents.${index}.id_document_types`, {
@@ -140,71 +173,68 @@ export default function SimpleDocument({
           }
 
           if (hasError) {
+            console.log(hasError);
             return setLoading(false);
           }
-          const fileExtension = document.file.split('.').pop();
-          const tableName = resource === 'empleado' ? 'documents_employees' : 'documents_equipment';
-          const hasExpiredDate = updateEntries?.[index]?.validity?.replace(/\//g, '-') ?? 'v0';
-          await supabase.storage
+
+          //! la extnsion en el equipo no se cambia bien
+          const { data: response, error } = await supabase.storage
             .from('document_files')
             .upload(
-              `/${storagePath}/document-${document.id_document_types}-${updateEntries[index].applies}-${hasExpiredDate}.${fileExtension}`,
+              `${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/${formatedAppliesName}/${formatedDocumentTypeName}-(${hasExpiredDate}).${fileExtension}`,
               files?.[index] || document.file,
               {
                 cacheControl: '3600',
                 upsert: false,
               }
-            )
-            .then(async (response) => {
-              const isMandatory = documenTypes?.find(
-                (doc) => doc.id === updateEntries[index].id_document_types
-              )?.mandatory;
+            );
 
-              if (isMandatory) {
-                const data = {
-                  validity: updateEntries[index].validity,
-                  document_path: response.data?.path,
-                  created_at: new Date(),
-                  state: 'presentado',
-                  period: updateEntries[index].period || null,
-                };
-                const { error } = await supabase
-                  .from(tableName)
-                  .update(data)
-                  .eq('applies', idApplies || updateEntries[index].applies)
-                  .eq('id_document_types', updateEntries[index].id_document_types);
+          if (error) {
+            setLoading(false);
+            hasError = true;
+            throw new Error(handleSupabaseError(error.message));
+          }
 
-                if (error) {
-                  setLoading(false);
-                  hasError = true;
+          const isMandatory = documenTypes?.find((doc) => doc.id === updateEntries[index].id_document_types)?.mandatory;
 
-                  throw new Error('Hubo un error al subir los documentos a la base de datos');
-                }
-              } else {
-                const { error } = await supabase.from(tableName).insert({
-                  validity: updateEntries[index].validity,
-                  document_path: response.data?.path,
-                  created_at: new Date(),
-                  state: 'presentado',
-                  applies: idApplies || updateEntries[index].applies,
-                  id_document_types: updateEntries[index].id_document_types,
-                  user_id: user,
-                  period: updateEntries[index].period || null,
-                });
+          if (isMandatory) {
+            const data = {
+              validity: updateEntries[index].validity,
+              document_path: response?.path,
+              created_at: new Date(),
+              state: 'presentado',
+              period: updateEntries[index].period || null,
+            };
+            const { error, data: userupdated } = await supabase
+              .from(tableName)
+              .update(data)
+              .eq('applies', idApplies || updateEntries[index].applies)
+              .eq('id_document_types', updateEntries[index].id_document_types);
 
-                if (error) {
-                  setLoading(false);
-                  hasError = true;
-                  throw new Error('Hubo un error al guardar el documento');
-                }
-              }
-            })
-            .catch((error) => {
+            if (error) {
               setLoading(false);
               hasError = true;
 
-              throw new Error('Hubo un error al subir los documentos al storage');
+              throw new Error('Hubo un error al subir los documentos a la base de datos');
+            }
+          } else {
+            const { error } = await supabase.from(tableName).insert({
+              validity: updateEntries[index].validity,
+              document_path: response?.path,
+              created_at: new Date(),
+              state: 'presentado',
+              applies: idApplies || updateEntries[index].applies,
+              id_document_types: updateEntries[index].id_document_types,
+              user_id: user,
+              period: updateEntries[index].period || null,
             });
+
+            if (error) {
+              setLoading(false);
+              hasError = true;
+              throw new Error('Hubo un error al guardar el documento');
+            }
+          }
         }
 
         if (hasError) {
@@ -225,7 +255,13 @@ export default function SimpleDocument({
       },
       {
         loading: 'Subiendo...',
-        success: 'Documento(s) subidos correctamente',
+        success: () => {
+          handleOpen();
+          setLoading(false);
+          router.refresh();
+
+          return 'Documento(s) subidos correctamente';
+        },
         error: (error) => {
           return error;
         },

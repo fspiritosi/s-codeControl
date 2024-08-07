@@ -15,9 +15,10 @@ async function EmployeeListTabs({ inactives, actives }: { inactives?: boolean; a
   } = await supabase.auth.getUser();
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
-  const { data } = await fetch(`${URL}/api/employees?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
-  const activeEmploees = setEmployeesToShow(data?.filter((e: any) => e.is_active));
-  const inactiveEmploees = setEmployeesToShow(data?.filter((e: any) => !e.is_active));
+  const { employees } = await fetch(`${URL}/api/employees?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
+
+  const activeEmploees = setEmployeesToShow(employees?.filter((e: any) => e.is_active));
+  const inactiveEmploees = setEmployeesToShow(employees?.filter((e: any) => !e.is_active));
   return (
     <Tabs defaultValue="Empleados activos">
       <CardContent>

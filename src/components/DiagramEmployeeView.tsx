@@ -17,10 +17,8 @@ type DiamgramParsed = {
 }
 
 function DiagramEmployeeView({diagrams}:{diagrams:any}) {
-  console.log(diagrams)
   const diagraParse = (diagrams:any) => {
     const diamframsToShow : DiamgramParsed[] = []
-    //console.log(diagrams)
     diagrams.forEach((d:any) => {
       const fromDate = new Date(d.from_date);
       const toDate = new Date(d.to_date);
@@ -74,7 +72,6 @@ function DiagramEmployeeView({diagrams}:{diagrams:any}) {
       };
     });
     
-    console.log(nuevoArray)
     return nuevoArray
 
   }

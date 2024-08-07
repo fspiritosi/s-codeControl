@@ -1,4 +1,5 @@
 import React from 'react';
+import { UseFormReturn } from 'react-hook-form';
 
 export type LoggedUser = {
   session: null | string;
@@ -147,9 +148,9 @@ export type Employee = {
   reason_for_termination?: string | undefined;
   termination_date?: Date | undefined | string;
   status?: 'Avalado' | 'No avalado';
-  guild?: string|null;
-  covenant?: string|null;
-  category?: string|null;
+  guild?: string | null;
+  covenant?: string | null;
+  category?: string | null;
 };
 
 export type Documents = {
@@ -430,7 +431,6 @@ export enum types {
   SectionObservaciones = 'SectionObservaciones',
 }
 
-
 export type DocumentTypes = {
   id: string;
   name: string;
@@ -461,30 +461,31 @@ export type DocumentsTable = {
   domain: string;
 };
 export interface Campo {
-  tipo: types
-  placeholder?: string
-  opciones: string[]
-  value?: string
-  id: string
-  title: string
-  observation?: boolean
-  date?: boolean
-  sectionCampos?: Campo[]
-  formName?: string
-  required?: boolean
+  tipo: types;
+  placeholder?: string;
+  opciones: string[];
+  value?: string;
+  id: string;
+  title: string;
+  observation?: boolean;
+  date?: boolean;
+  sectionCampos?: Campo[];
+  formName?: string;
+  required?: boolean;
+  apply?: string;
 }
 export interface FormField {
-  formName?: string
-  title: string
-  value?: string
-  tipo: string
-  opciones?: string[]
-  date?: boolean
-  id: string
-  placeholder?: string
-  Observaciones?: boolean
-  observation?: boolean
-  required?: boolean
+  formName?: string;
+  title: string;
+  value?: string;
+  tipo: string;
+  opciones?: string[];
+  date?: boolean;
+  id: string;
+  placeholder?: string;
+  Observaciones?: boolean;
+  observation?: boolean;
+  required?: boolean;
 }
 
 export interface Document {
@@ -526,3 +527,48 @@ export type AllDocumentsValues = {
   is_active: boolean;
   user_id: string;
 };
+
+export interface FieldComponentProps {
+  campo: FormField;
+  form: UseFormReturn<any> | null;
+  index: number;
+  completObjet: FormField[] | null;
+}
+
+export interface FieldComponentPropsDecorative {
+  campo: FormField;
+  index: number;
+}
+
+export interface SectionCampo {
+  id: string;
+  date: boolean;
+  tipo: string;
+  title: string;
+  opciones: string[];
+  required: boolean;
+  observation: boolean;
+  placeholder: string;
+  value?: string; // opcional ya que algunos campos no tienen 'value'
+}
+
+export interface FormField {
+  id: string;
+  tipo: string;
+  title: string;
+  value?: string; // opcional ya que algunos campos no tienen 'value'
+  opciones?: string[];
+  placeholder?: string;
+  required?: boolean; // opcional ya que algunos campos no tienen 'required'
+  observation?: boolean; // opcional ya que algunos campos no tienen 'observation'
+  date?: boolean; // opcional ya que algunos campos no tienen 'date'
+  sectionCampos?: SectionCampo[]; // opcional ya que algunos campos no tienen 'sectionCampos'
+}
+
+export interface FormData {
+  id: string;
+  created_at: string;
+  company_id: string;
+  form: FormField[];
+  name: string;
+}

@@ -116,6 +116,7 @@ export default function NewDocumentType({
     },
   });
 
+  console.log(form.formState.errors);
   async function onSubmit(values: z.infer<typeof FormSchema>) {
     const formattedValues = {
       ...values,
@@ -231,6 +232,8 @@ export default function NewDocumentType({
                         const name = form.getValues('name');
                         form.reset({ name });
                         form.setValue('applies', 'Empresa');
+                      } else {
+                        form.setValue('down_document', false);
                       }
                     } else {
                       setItems(defaultValues);

@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
+import { formatDocumentTypeName } from '@/lib/utils/utils';
 import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -37,6 +38,7 @@ function AddCompanyDocumentForm({
     (e) => e.applies === 'Empresa'
   );
   const user = useLoggedUserStore((state) => state.credentialUser?.id);
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   const companyId = useLoggedUserStore((state) => state.actualCompany)?.id;
   const documentForId = companyDocumentTypes.find((e) => e.id === documentId);
   const fetchDocuments = useLoggedUserStore((state) => state.documetsFetch);
@@ -66,21 +68,31 @@ function AddCompanyDocumentForm({
       async () => {
         const supabase = supabaseBrowser();
 
-        const { data: DuplicatedDocument } = await supabase.storage.from('document_files').list('documentos-empresa', {
-          search: `document-${documentId}-${companyId}`,
-        });
+        const formatedDocumentTypeName = formatDocumentTypeName(documentForId?.name || '');
+        const hasExpiredDate = data.validity?.replace(/\//g, '-') ?? 'v0';
+        const { data: DuplicatedDocument } = await supabase.storage
+          .from('document_files')
+          .list(
+            `${actualCompany?.company_name.toLowerCase().replace(/ /g, '-')}-(${actualCompany?.company_cuit})/empresa`,
+            {
+              search: `${formatedDocumentTypeName}-(${hasExpiredDate})`,
+            }
+          );
         if (DuplicatedDocument?.length && DuplicatedDocument?.length > 0) {
           throw new Error('Este documento ya se encuentra subido');
         }
         const fileExtension = data.file.split('.').pop();
-        const hasExpiredDate = data.validity?.replace(/\//g, '-') ?? 'v0';
         if (!file) throw new Error('No se ha subido el archivo');
         await supabase.storage
           .from('document_files')
-          .upload(`/documentos-empresa/document-${documentId}-${companyId}-${hasExpiredDate}.${fileExtension}`, file, {
-            cacheControl: '3600',
-            upsert: false,
-          })
+          .upload(
+            `/${actualCompany?.company_name.toLowerCase().replace(/ /g, '-')}-(${actualCompany?.company_cuit})/empresa/${formatedDocumentTypeName}-(${hasExpiredDate}).${fileExtension}`,
+            file,
+            {
+              cacheControl: '3600',
+              upsert: false,
+            }
+          )
           .then(async (response) => {
             const { file, ...rest } = data;
             const allData = {

@@ -196,10 +196,7 @@ export const columnsGuild: ColumnDef<Colum>[] = [
               .eq('guild_id', guild.id)
               // .eq('company_id', actualCompany?.id)
               .select();  
-              console.log(guild.id)
-              console.log(covenant)
               const covenantIds = covenant?.map((covenant) => covenant.id);
-              console.log(covenantIds)
 
               const { error:coveError } = await supabase
               .from('covenant')

@@ -15,9 +15,10 @@ async function EmployeeDocumentsTabs() {
     data: { user },
   } = await supabase.auth.getUser();
   const coockiesStore = cookies();
-  const company_id = coockiesStore.get('actualComp')?.value;
-  const { data: employees } = await fetch(`${URL}/api/employees/documents?actual=${company_id}`).then((e) => e.json());
-  const documents = employees.map(mapDocument) as Document[];
+  const company_id = coockiesStore.get('actualComp')?.value; //Al momento de crear una company debemos setear esta cookie
+  const { documents } = await fetch(`${URL}/api/employees/documents?actual=${company_id}`).then((e) => e.json());
+  const data = documents?.map(mapDocument) as Document[];
+
 
   return (
     <Tabs defaultValue="permanentes">
@@ -29,7 +30,7 @@ async function EmployeeDocumentsTabs() {
       </CardContent>
       <TabsContent value="permanentes">
         <ExpiredDataTable
-          data={documents.filter((e) => !e.isItMonthly) || []}
+          data={data?.filter((e) => !e.isItMonthly) || []}
           columns={ExpiredColums}
           pending={true}
           defaultVisibleColumnsCustom={['resource', 'documentName', 'validity', 'id', 'mandatory', 'state']}
@@ -39,7 +40,7 @@ async function EmployeeDocumentsTabs() {
       </TabsContent>
       <TabsContent value="mensuales">
         <ExpiredDataTable
-          data={documents.filter((e) => e.isItMonthly) || []}
+          data={data?.filter((e) => e.isItMonthly) || []}
           columns={ColumnsMonthly}
           pending={true}
           defaultVisibleColumnsCustom={['resource', 'documentName', 'validity', 'id', 'mandatory', 'state']}

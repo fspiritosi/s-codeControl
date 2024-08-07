@@ -1,16 +1,19 @@
-'use client'
-import { Badge } from '@/components/ui/badge'
-import { CardDescription, CardTitle } from '@/components/ui/card'
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+'use client';
+import { Badge } from '@/components/ui/badge';
+import { CardDescription, CardTitle } from '@/components/ui/card';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+
+import { CalendarIcon } from '@radix-ui/react-icons';
+import { format } from 'date-fns';
+
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+
 import {
   Select,
   SelectContent,
@@ -19,50 +22,26 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Separator } from '@/components/ui/separator'
-import { Textarea } from '@/components/ui/textarea'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { useLoggedUserStore } from '@/store/loggedUser'
-import { FormField as TypeFormField } from '@/types/types'
-import React from 'react'
-import { UseFormReturn } from 'react-hook-form'
-import FieldRenderer from '../formUtils/fieldRenderer'
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { useLoggedUserStore } from '@/store/loggedUser';
+import { FieldComponentProps, FieldComponentPropsDecorative } from '@/types/types';
+import { es } from 'date-fns/locale';
+import React, { useState } from 'react';
+import FieldRenderer from '../formUtils/fieldRenderer';
 
-interface FieldComponentProps {
-  campo: TypeFormField
-  form: UseFormReturn<any> | null
-  index: number
-  completObjet: TypeFormField[] | null
-}
-
-interface FieldComponentPropsDecorative {
-  campo: TypeFormField
-  index: number
-}
-
-export const SectionField: React.FC<FieldComponentProps> = ({
-  campo,
-  form,
-  index,
-  completObjet,
-}) => {
+export const SectionField: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
       <div key={index}>
         <CardTitle className="mb-2 mt-1 text-xl">
-          {campo.title
-            ? campo.title.replaceAll('_', ' ')
-            : 'Titulo de la seccion'}
+          {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo de la seccion'}
         </CardTitle>
         {completObjet?.map((sectionCampo, sectionIndex) => (
           <React.Fragment key={sectionIndex}>
-            <FieldRenderer
-              campo={sectionCampo}
-              form={null}
-              index={sectionIndex}
-              completObjet={completObjet}
-            />
+            <FieldRenderer campo={sectionCampo} form={null} index={sectionIndex} completObjet={completObjet} />
           </React.Fragment>
         ))}
         {campo.date && (
@@ -78,57 +57,31 @@ export const SectionField: React.FC<FieldComponentProps> = ({
           </div>
         )}
       </div>
-    )
+    );
   }
-  const dateInputSection = completObjet?.find(e =>
-    e.title.includes(`${campo.title}_fecha`),
-  )
-  const observationInputSection = completObjet?.find(e =>
-    e.title.includes(`${campo.title}_observaciones`),
-  )
+  const dateInputSection = completObjet?.find((e) => e.title.includes(`${campo.title}_fecha`));
+  const observationInputSection = completObjet?.find((e) => e.title.includes(`${campo.title}_observaciones`));
 
   return (
     <div key={index}>
       <CardTitle className="mb-2 mt-1 text-xl">{campo.title}</CardTitle>
       {completObjet?.map((sectionCampo, sectionIndex) => (
         <React.Fragment key={sectionIndex}>
-          <FieldRenderer
-            campo={sectionCampo}
-            form={form}
-            index={sectionIndex}
-            completObjet={completObjet}
-          />
+          <FieldRenderer campo={sectionCampo} form={form} index={sectionIndex} completObjet={completObjet} />
         </React.Fragment>
       ))}
-      {dateInputSection && (
-        <DateInput
-          completObjet={completObjet}
-          campo={dateInputSection}
-          form={form}
-          index={index}
-        />
-      )}
+      {dateInputSection && <DateInput completObjet={completObjet} campo={dateInputSection} form={form} index={index} />}
       {observationInputSection && (
-        <ObservationInput
-          completObjet={completObjet}
-          campo={observationInputSection}
-          form={form}
-          index={index}
-        />
+        <ObservationInput completObjet={completObjet} campo={observationInputSection} form={form} index={index} />
       )}
       <div className="col-span-3 w-full">
         <Separator />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export const RadioField: React.FC<FieldComponentProps> = ({
-  campo,
-  form,
-  index,
-  completObjet,
-}) => {
+export const RadioField: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
       <div className="col-span-3 md:col-span-1" key={index}>
@@ -140,9 +93,7 @@ export const RadioField: React.FC<FieldComponentProps> = ({
           {campo.opciones?.map((opcion, i) => (
             <div key={i} className="flex items-center space-x-2 ">
               <RadioGroupItem value={String(i)} id={String(i)} />
-              <Label htmlFor={String(i)}>
-                {opcion ? opcion : `Opcion ${i + 1}`}
-              </Label>
+              <Label htmlFor={String(i)}>{opcion ? opcion : `Opcion ${i + 1}`}</Label>
             </div>
           ))}
         </RadioGroup>
@@ -159,15 +110,11 @@ export const RadioField: React.FC<FieldComponentProps> = ({
           </div>
         )}
       </div>
-    )
+    );
   }
 
-  const dateInput = completObjet?.find(e =>
-    e.title.includes(`${campo.title}_fecha`),
-  )
-  const observationInput = completObjet?.find(e =>
-    e.title.includes(`${campo.title}_observaciones`),
-  )
+  const dateInput = completObjet?.find((e) => e.title.includes(`${campo.title}_fecha`));
+  const observationInput = completObjet?.find((e) => e.title.includes(`${campo.title}_observaciones`));
 
   return (
     <div className="col-span-3 md:col-span-1" key={index}>
@@ -179,16 +126,9 @@ export const RadioField: React.FC<FieldComponentProps> = ({
           <FormItem className="space-y-3">
             <FormLabel>{campo.title.replaceAll('_', ' ')}</FormLabel>
             <FormControl>
-              <RadioGroup
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-                className="flex flex-col space-y-1"
-              >
+              <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
                 {campo.opciones?.map((opcion, i) => (
-                  <FormItem
-                    key={i}
-                    className="flex items-center space-x-3 space-y-0"
-                  >
+                  <FormItem key={i} className="flex items-center space-x-3 space-y-0">
                     <FormControl>
                       <RadioGroupItem value={opcion} />
                     </FormControl>
@@ -201,32 +141,13 @@ export const RadioField: React.FC<FieldComponentProps> = ({
           </FormItem>
         )}
       />
-      {dateInput && (
-        <DateInput
-          completObjet={completObjet}
-          campo={campo}
-          form={form}
-          index={index}
-        />
-      )}
-      {observationInput && (
-        <ObservationInput
-          completObjet={completObjet}
-          campo={campo}
-          form={form}
-          index={index}
-        />
-      )}
+      {dateInput && <DateInput completObjet={completObjet} campo={campo} form={form} index={index} />}
+      {observationInput && <ObservationInput completObjet={completObjet} campo={campo} form={form} index={index} />}
     </div>
-  )
-}
+  );
+};
 
-export const TextField: React.FC<FieldComponentProps> = ({
-  campo,
-  form,
-  index,
-  completObjet,
-}) => {
+export const TextField: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
       <div className="col-span-3 md:col-span-1" key={index}>
@@ -247,15 +168,11 @@ export const TextField: React.FC<FieldComponentProps> = ({
           </div>
         )}
       </div>
-    )
+    );
   }
 
-  const dateInput = completObjet?.find(e =>
-    e.title.includes(`${campo.title}_fecha`),
-  )
-  const observationInput = completObjet?.find(e =>
-    e.title.includes(`${campo.title}_observaciones`),
-  )
+  const dateInput = completObjet?.find((e) => e.title.includes(`${campo.title}_fecha`));
+  const observationInput = completObjet?.find((e) => e.title.includes(`${campo.title}_observaciones`));
 
   return (
     <div className="col-span-3 md:col-span-1" key={index}>
@@ -273,32 +190,13 @@ export const TextField: React.FC<FieldComponentProps> = ({
           </FormItem>
         )}
       />
-      {dateInput && (
-        <DateInput
-          completObjet={completObjet}
-          campo={campo}
-          form={form}
-          index={index}
-        />
-      )}
-      {observationInput && (
-        <ObservationInput
-          completObjet={completObjet}
-          campo={campo}
-          form={form}
-          index={index}
-        />
-      )}
+      {dateInput && <DateInput completObjet={completObjet} campo={campo} form={form} index={index} />}
+      {observationInput && <ObservationInput completObjet={completObjet} campo={campo} form={form} index={index} />}
     </div>
-  )
-}
+  );
+};
 
-export const TextAreaField: React.FC<FieldComponentProps> = ({
-  campo,
-  form,
-  index,
-  completObjet,
-}) => {
+export const TextAreaField: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
       <div className="col-span-3 md:col-span-1" key={index}>
@@ -319,15 +217,11 @@ export const TextAreaField: React.FC<FieldComponentProps> = ({
           </div>
         )}
       </div>
-    )
+    );
   }
 
-  const dateInput = completObjet?.find(e =>
-    e.title.includes(`${campo.title}_fecha`),
-  )
-  const observationInput = completObjet?.find(e =>
-    e.title.includes(`${campo.title}_observaciones`),
-  )
+  const dateInput = completObjet?.find((e) => e.title.includes(`${campo.title}_fecha`));
+  const observationInput = completObjet?.find((e) => e.title.includes(`${campo.title}_observaciones`));
 
   return (
     <div className="col-span-3 md:col-span-1" key={index}>
@@ -345,32 +239,13 @@ export const TextAreaField: React.FC<FieldComponentProps> = ({
           </FormItem>
         )}
       />
-      {dateInput && (
-        <DateInput
-          completObjet={completObjet}
-          campo={campo}
-          form={form}
-          index={index}
-        />
-      )}
-      {observationInput && (
-        <ObservationInput
-          completObjet={completObjet}
-          campo={campo}
-          form={form}
-          index={index}
-        />
-      )}
+      {dateInput && <DateInput completObjet={completObjet} campo={campo} form={form} index={index} />}
+      {observationInput && <ObservationInput completObjet={completObjet} campo={campo} form={form} index={index} />}
     </div>
-  )
-}
+  );
+};
 
-export const RadioGroupField: React.FC<FieldComponentProps> = ({
-  campo,
-  form,
-  index,
-  completObjet,
-}) => {
+export const RadioGroupField: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
       <div className="w-full" key={index}>
@@ -381,9 +256,7 @@ export const RadioGroupField: React.FC<FieldComponentProps> = ({
           {campo.opciones?.map((opcion, i) => (
             <div key={i} className="flex items-center space-x-2 ">
               <RadioGroupItem value={String(i)} id={String(i)} />
-              <Label htmlFor={String(i)}>
-                {opcion ? opcion : `Opcion ${i + 1}`}
-              </Label>
+              <Label htmlFor={String(i)}>{opcion ? opcion : `Opcion ${i + 1}`}</Label>
             </div>
           ))}
         </RadioGroup>
@@ -400,15 +273,11 @@ export const RadioGroupField: React.FC<FieldComponentProps> = ({
           </div>
         )}
       </div>
-    )
+    );
   }
 
-  const dateInput = completObjet?.find(e =>
-    e.title.includes(`${campo.title}_fecha`),
-  )
-  const observationInput = completObjet?.find(e =>
-    e.title.includes(`${campo.title}_observaciones`),
-  )
+  const dateInput = completObjet?.find((e) => e.title.includes(`${campo.title}_fecha`));
+  const observationInput = completObjet?.find((e) => e.title.includes(`${campo.title}_observaciones`));
 
   return (
     <div className="col-span-3 md:col-span-1" key={index}>
@@ -420,16 +289,9 @@ export const RadioGroupField: React.FC<FieldComponentProps> = ({
           <FormItem className="space-y-3">
             <FormLabel>{campo.title.replaceAll('_', ' ')}</FormLabel>
             <FormControl>
-              <RadioGroup
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-                className="flex flex-col space-y-1"
-              >
+              <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
                 {campo.opciones?.map((opcion, i) => (
-                  <FormItem
-                    key={i}
-                    className="flex items-center space-x-3 space-y-0"
-                  >
+                  <FormItem key={i} className="flex items-center space-x-3 space-y-0">
                     <FormControl>
                       <RadioGroupItem value={opcion} />
                     </FormControl>
@@ -442,48 +304,22 @@ export const RadioGroupField: React.FC<FieldComponentProps> = ({
           </FormItem>
         )}
       />
-      {dateInput && (
-        <DateInput
-          completObjet={completObjet}
-          campo={campo}
-          form={form}
-          index={index}
-        />
-      )}
-      {observationInput && (
-        <ObservationInput
-          completObjet={completObjet}
-          campo={campo}
-          form={form}
-          index={index}
-        />
-      )}
+      {dateInput && <DateInput completObjet={completObjet} campo={campo} form={form} index={index} />}
+      {observationInput && <ObservationInput completObjet={completObjet} campo={campo} form={form} index={index} />}
     </div>
-  )
-}
+  );
+};
 
-export const MultiSelectField: React.FC<FieldComponentProps> = ({
-  campo,
-  form,
-  index,
-  completObjet,
-}) => {
+export const MultiSelectField: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
       <div className="w-full" key={index}>
         <CardDescription className="mb-2">
           {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
-        <ToggleGroup
-          type="multiple"
-          className="flex w-full justify-start flex-wrap"
-        >
+        <ToggleGroup type="multiple" className="flex w-full justify-start flex-wrap">
           {campo.opciones?.map((opcion, i) => (
-            <ToggleGroupItem
-              key={i}
-              value={opcion}
-              className="flex self-start border-muted-foreground border"
-            >
+            <ToggleGroupItem key={i} value={opcion} className="flex self-start border-muted-foreground border">
               {opcion}
             </ToggleGroupItem>
           ))}
@@ -501,14 +337,10 @@ export const MultiSelectField: React.FC<FieldComponentProps> = ({
           </div>
         )}
       </div>
-    )
+    );
   }
-  const dateInput = completObjet?.find(e =>
-    e.title.includes(`${campo.title}_fecha`),
-  )
-  const observationInput = completObjet?.find(e =>
-    e.title.includes(`${campo.title}_observaciones`),
-  )
+  const dateInput = completObjet?.find((e) => e.title.includes(`${campo.title}_fecha`));
+  const observationInput = completObjet?.find((e) => e.title.includes(`${campo.title}_observaciones`));
   return (
     <div className="col-span-3 md:col-span-1" key={index}>
       <FormField
@@ -526,11 +358,7 @@ export const MultiSelectField: React.FC<FieldComponentProps> = ({
                 className="flex w-full justify-start flex-wrap"
               >
                 {campo.opciones?.map((opcion, i) => (
-                  <ToggleGroupItem
-                    key={i}
-                    value={opcion}
-                    className="flex self-start border-muted-foreground border"
-                  >
+                  <ToggleGroupItem key={i} value={opcion} className="flex self-start border-muted-foreground border">
                     {opcion}
                   </ToggleGroupItem>
                 ))}
@@ -540,48 +368,27 @@ export const MultiSelectField: React.FC<FieldComponentProps> = ({
           </FormItem>
         )}
       />
-      {dateInput && (
-        <DateInput
-          completObjet={completObjet}
-          campo={campo}
-          form={form}
-          index={index}
-        />
-      )}
-      {observationInput && (
-        <ObservationInput
-          completObjet={completObjet}
-          campo={campo}
-          form={form}
-          index={index}
-        />
-      )}
+      {dateInput && <DateInput completObjet={completObjet} campo={campo} form={form} index={index} />}
+      {observationInput && <ObservationInput completObjet={completObjet} campo={campo} form={form} index={index} />}
     </div>
-  )
-}
+  );
+};
 
-export const DateField: React.FC<FieldComponentProps> = ({
-  campo,
-  form,
-  index,
-}) => {
+export const DateField: React.FC<FieldComponentProps> = ({ campo, form, index }) => {
   if (!form) {
-    if (campo.formName !== 'Fecha') return null
+    if (campo.formName !== 'Fecha') return null;
     return (
       <div className="col-span-3 md:col-span-1" key={index}>
         <CardDescription className="mb-2">
           {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
-        <Input
-          type="date"
-          value={campo.value}
-          placeholder={campo.placeholder}
-        />
+        <Input type="date" value={campo.value} placeholder={campo.placeholder} />
       </div>
-    )
+    );
   }
 
-  if (campo.formName !== 'Fecha') return null
+  if (campo.formName === 'Fecha') return null;
+  const [date, setDate] = useState<Date>();
 
   return (
     <div className="col-span-3 md:col-span-1" key={index}>
@@ -593,32 +400,39 @@ export const DateField: React.FC<FieldComponentProps> = ({
           return (
             <FormItem className="space-y-3">
               <FormLabel>{campo.title.replaceAll('_', ' ')}</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  type="date"
-                  value={
-                    field.value
-                      ? new Date(field.value)?.toISOString().split('T')[0]
-                      : ''
-                  }
-                />
-              </FormControl>
+              <div className="flex">
+                <FormControl>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={'outline'}
+                          className={cn(
+                            'w-[240px] pl-3 text-left font-normal',
+                            !field.value && 'text-muted-foreground'
+                          )}
+                        >
+                          {field.value ? format(field.value, 'PPP', { locale: es }) : <span>{campo.placeholder}</span>}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                    </PopoverContent>
+                  </Popover>
+                </FormControl>
+              </div>
               <FormMessage />
             </FormItem>
-          )
+          );
         }}
       />
     </div>
-  )
-}
+  );
+};
 
-export const FileField: React.FC<FieldComponentProps> = ({
-  campo,
-  form,
-  index,
-  completObjet,
-}) => {
+export const FileField: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
       <div className="col-span-3 md:col-span-1" key={index}>
@@ -639,15 +453,11 @@ export const FileField: React.FC<FieldComponentProps> = ({
           </div>
         )}
       </div>
-    )
+    );
   }
 
-  const dateInput = completObjet?.find(e =>
-    e.title.includes(`${campo.title}_fecha`),
-  )
-  const observationInput = completObjet?.find(e =>
-    e.title.includes(`${campo.title}_observaciones`),
-  )
+  const dateInput = completObjet?.find((e) => e.title.includes(`${campo.title}_fecha`));
+  const observationInput = completObjet?.find((e) => e.title.includes(`${campo.title}_observaciones`));
 
   return (
     <div className="col-span-3 md:col-span-1" key={index}>
@@ -665,32 +475,13 @@ export const FileField: React.FC<FieldComponentProps> = ({
           </FormItem>
         )}
       />
-      {dateInput && (
-        <DateInput
-          completObjet={completObjet}
-          campo={campo}
-          form={form}
-          index={index}
-        />
-      )}
-      {observationInput && (
-        <ObservationInput
-          completObjet={completObjet}
-          campo={campo}
-          form={form}
-          index={index}
-        />
-      )}
+      {dateInput && <DateInput completObjet={completObjet} campo={campo} form={form} index={index} />}
+      {observationInput && <ObservationInput completObjet={completObjet} campo={campo} form={form} index={index} />}
     </div>
-  )
-}
+  );
+};
 
-export const SelectField: React.FC<FieldComponentProps> = ({
-  campo,
-  form,
-  index,
-  completObjet,
-}) => {
+export const SelectField: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
       <div className="col-span-3 md:col-span-1" key={index}>
@@ -723,14 +514,10 @@ export const SelectField: React.FC<FieldComponentProps> = ({
           </div>
         )}
       </div>
-    )
+    );
   }
-  const dateInput = completObjet?.find(e =>
-    e.title.includes(`${campo.title}_fecha`),
-  )
-  const observationInput = completObjet?.find(e =>
-    e.title.includes(`${campo.title}_observaciones`),
-  )
+  const dateInput = completObjet?.find((e) => e.title.includes(`${campo.title}_fecha`));
+  const observationInput = completObjet?.find((e) => e.title.includes(`${campo.title}_observaciones`));
   return (
     <div className="col-span-3 md:col-span-1 space-y-8" key={index}>
       <FormField
@@ -758,34 +545,15 @@ export const SelectField: React.FC<FieldComponentProps> = ({
           </FormItem>
         )}
       />
-      {dateInput && (
-        <DateInput
-          completObjet={completObjet}
-          campo={campo}
-          form={form}
-          index={index}
-        />
-      )}
-      {observationInput && (
-        <ObservationInput
-          completObjet={completObjet}
-          campo={campo}
-          form={form}
-          index={index}
-        />
-      )}
+      {dateInput && <DateInput completObjet={completObjet} campo={campo} form={form} index={index} />}
+      {observationInput && <ObservationInput completObjet={completObjet} campo={campo} form={form} index={index} />}
     </div>
-  )
-}
+  );
+};
 
-export const PredefinedSelectField: React.FC<FieldComponentProps> = ({
-  campo,
-  form,
-  index,
-  completObjet,
-}) => {
+export const PredefinedSelectField: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
-    const vehicles = useLoggedUserStore(state => state.vehicles)
+    const vehicles = useLoggedUserStore((state) => state.vehicles);
     return (
       <div className="w-full" key={index}>
         <CardDescription className="mb-2">
@@ -803,51 +571,48 @@ export const PredefinedSelectField: React.FC<FieldComponentProps> = ({
                     <SelectLabel>Dominios</SelectLabel>
 
                     {vehicles
-                      ?.filter(e => e.domain)
-                      ?.map(e => {
+                      ?.filter((e) => e.domain)
+                      ?.map((e) => {
                         return (
                           <SelectItem key={e.domain} value={e.domain}>
                             {e.domain}
                           </SelectItem>
-                        )
+                        );
                       })}
                   </SelectGroup>
-                )
+                );
               }
               if (opcion === 'Otros') {
                 return (
                   <SelectGroup key={i}>
                     <SelectLabel>Numero de serie</SelectLabel>
                     {vehicles
-                      .filter(e => e.serie)
-                      .map(e => {
+                      .filter((e) => e.serie)
+                      .map((e) => {
                         return (
                           <SelectItem key={e.serie} value={e.serie}>
                             {e.serie}
                           </SelectItem>
-                        )
+                        );
                       })}
                   </SelectGroup>
-                )
+                );
               }
               if (opcion === 'Numero interno') {
                 return (
                   <SelectGroup key={i}>
                     <SelectLabel>Numero interno</SelectLabel>
                     {vehicles
-                      .filter(e => e.intern_number)
-                      .map(e => {
+                      .filter((e) => e.intern_number)
+                      .map((e) => {
                         return (
-                          <SelectItem
-                            key={e.intern_number}
-                            value={e.intern_number}
-                          >
+                          <SelectItem key={e.intern_number} value={e.intern_number}>
                             {e.intern_number}
                           </SelectItem>
-                        )
+                        );
                       })}
                   </SelectGroup>
-                )
+                );
               }
             })}
           </SelectContent>
@@ -865,14 +630,10 @@ export const PredefinedSelectField: React.FC<FieldComponentProps> = ({
           </div>
         )}
       </div>
-    )
+    );
   }
-  const dateInput = completObjet?.find(e =>
-    e.title.includes(`${campo.title}_fecha`),
-  )
-  const observationInput = completObjet?.find(e =>
-    e.title.includes(`${campo.title}_observaciones`),
-  )
+  const dateInput = completObjet?.find((e) => e.title.includes(`${campo.title}_fecha`));
+  const observationInput = completObjet?.find((e) => e.title.includes(`${campo.title}_observaciones`));
   return (
     <div className="col-span-3 md:col-span-1 space-y-8" key={index}>
       <FormItem className="space-y-3">
@@ -884,10 +645,7 @@ export const PredefinedSelectField: React.FC<FieldComponentProps> = ({
           render={({ field }) => (
             <FormControl>
               <>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar opción" />
                   </SelectTrigger>
@@ -905,106 +663,65 @@ export const PredefinedSelectField: React.FC<FieldComponentProps> = ({
           )}
         />
       </FormItem>
-      {dateInput && (
-        <DateInput
-          completObjet={completObjet}
-          campo={campo}
-          form={form}
-          index={index}
-        />
-      )}
-      {observationInput && (
-        <ObservationInput
-          completObjet={completObjet}
-          campo={campo}
-          form={form}
-          index={index}
-        />
-      )}
+      {dateInput && <DateInput completObjet={completObjet} campo={campo} form={form} index={index} />}
+      {observationInput && <ObservationInput completObjet={completObjet} campo={campo} form={form} index={index} />}
     </div>
-  )
-}
+  );
+};
 
-export const FormNameField: React.FC<FieldComponentPropsDecorative> = ({
-  campo,
-  index,
-}) => {
+export const FormNameField: React.FC<FieldComponentPropsDecorative> = ({ campo, index }) => {
   return (
     <div className="my-5 col-span-3" key={index}>
       <Label>
-        <Badge className="text-xl">
-          {' '}
-          {campo.value ?? 'Nombre del formulario'}
-        </Badge>
+        <Badge className="text-xl text-balance text-center"> {campo.value ?? 'Nombre del formulario'}</Badge>
       </Label>
     </div>
-  )
-}
+  );
+};
 
-export const TitleField: React.FC<FieldComponentPropsDecorative> = ({
-  campo,
-  index,
-}) => {
+export const TitleField: React.FC<FieldComponentPropsDecorative> = ({ campo, index }) => {
   return (
     <div className="col-span-3" key={index}>
       <CardTitle className="mb-2 mt-1 text-xl">
-        {campo.title
-          ? campo?.title?.replaceAll('_', ' ')
-          : campo?.value?.replaceAll('_', ' ')}
+        {campo.title ? campo?.title?.replaceAll('_', ' ') : campo?.value?.replaceAll('_', ' ')}
       </CardTitle>
     </div>
-  )
-}
+  );
+};
 
-export const SubtitleField: React.FC<FieldComponentPropsDecorative> = ({
-  campo,
-  index,
-}) => {
+export const SubtitleField: React.FC<FieldComponentPropsDecorative> = ({ campo, index }) => {
   return (
     <div className="col-span-3" key={index}>
-      <CardTitle className="mb-2 mt-1">
-        {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
-      </CardTitle>
+      <CardTitle className="mb-2 mt-1">{campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}</CardTitle>
     </div>
-  )
-}
+  );
+};
 
-export const SeparatorField: React.FC<FieldComponentPropsDecorative> = ({
-  campo,
-  index,
-}) => {
+export const SeparatorField: React.FC<FieldComponentPropsDecorative> = ({ campo, index }) => {
   if (campo.formName) {
     return (
       <div className="col-span-3 w-full " key={index}>
         <Separator>{campo.value}</Separator>
       </div>
-    )
+    );
   }
   return (
     <div className="col-span-3 w-full px-[20%]" key={index}>
       <Separator>{campo.value}</Separator>
     </div>
-  )
-}
+  );
+};
 
-export const DateInput: React.FC<FieldComponentProps> = ({
-  campo,
-  form,
-  index,
-}) => {
+export const DateInput: React.FC<FieldComponentProps> = ({ campo, form, index }) => {
   if (!form)
     return (
       <div className="col-span-3 md:col-span-1 space-y-8 w-full" key={index}>
         <CardDescription className="mb-2">
           {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
-        <Input
-          type="date"
-          value={campo.value}
-          placeholder={campo.placeholder}
-        />
+        <Input type="date" value={campo.value} placeholder={campo.placeholder} />
       </div>
-    )
+    );
 
   return (
     <div className="col-span-3 md:col-span-1 space-y-8 w-full" key={index}>
@@ -1015,35 +732,24 @@ export const DateInput: React.FC<FieldComponentProps> = ({
         render={({ field }) => {
           return (
             <FormItem className="space-y-3">
-              <FormLabel>{`${campo.title.replaceAll(
-                '_',
-                ' ',
-              )} Fecha`}</FormLabel>
+              <FormLabel>{`${campo.title.replaceAll('_', ' ')} Fecha`}</FormLabel>
               <FormControl>
                 <Input
                   {...field}
                   type="date"
-                  value={
-                    field.value
-                      ? new Date(field.value)?.toISOString().split('T')[0]
-                      : ''
-                  }
+                  value={field.value ? new Date(field.value)?.toISOString().split('T')[0] : ''}
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
-          )
+          );
         }}
       />
     </div>
-  )
-}
+  );
+};
 
-export const ObservationInput: React.FC<FieldComponentProps> = ({
-  campo,
-  form,
-  index,
-}) => {
+export const ObservationInput: React.FC<FieldComponentProps> = ({ campo, form, index }) => {
   if (!form) {
     return (
       <div className="col-span-3 md:col-span-1 space-y-8 w-full" key={index}>
@@ -1052,7 +758,7 @@ export const ObservationInput: React.FC<FieldComponentProps> = ({
         </CardDescription>
         <Textarea placeholder="Ingrese observaciones" />
       </div>
-    )
+    );
   }
   return (
     <FormField
@@ -1061,10 +767,7 @@ export const ObservationInput: React.FC<FieldComponentProps> = ({
       name={`${campo.formName}_observaciones`}
       render={({ field }) => (
         <FormItem className="space-y-3">
-          <FormLabel>{`${campo.title.replaceAll(
-            '_',
-            ' ',
-          )} Observaciones`}</FormLabel>
+          <FormLabel>{`${campo.title.replaceAll('_', ' ')} Observaciones`}</FormLabel>
           <FormControl>
             <Textarea placeholder="Ingrese observaciones" {...field} />
           </FormControl>
@@ -1072,28 +775,19 @@ export const ObservationInput: React.FC<FieldComponentProps> = ({
         </FormItem>
       )}
     />
-  )
-}
+  );
+};
 
-export const SeccionDate: React.FC<FieldComponentProps> = ({
-  campo,
-  form,
-  index,
-  completObjet,
-}) => {
+export const SeccionDate: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
       <div className="col-span-3" key={index}>
         <CardDescription className="mb-2">
           {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
-        <Input
-          type="date"
-          value={campo.value}
-          placeholder={campo.placeholder}
-        />
+        <Input type="date" value={campo.value} placeholder={campo.placeholder} />
       </div>
-    )
+    );
   }
   return (
     <div className="col-span-3" key={index}>
@@ -1109,27 +803,18 @@ export const SeccionDate: React.FC<FieldComponentProps> = ({
                 <Input
                   {...field}
                   type="date"
-                  value={
-                    field.value
-                      ? new Date(field.value)?.toISOString().split('T')[0]
-                      : ''
-                  }
+                  value={field.value ? new Date(field.value)?.toISOString().split('T')[0] : ''}
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
-          )
+          );
         }}
       />
     </div>
-  )
-}
-export const SeccionObservaciones: React.FC<FieldComponentProps> = ({
-  campo,
-  form,
-  index,
-  completObjet,
-}) => {
+  );
+};
+export const SeccionObservaciones: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
       <div className="col-span-3" key={index}>
@@ -1138,7 +823,7 @@ export const SeccionObservaciones: React.FC<FieldComponentProps> = ({
         </CardDescription>
         <Textarea placeholder="Ingrese observaciones" />
       </div>
-    )
+    );
   }
   return (
     <div className="col-span-3" key={index}>
@@ -1157,5 +842,5 @@ export const SeccionObservaciones: React.FC<FieldComponentProps> = ({
         )}
       />
     </div>
-  )
-}
+  );
+};

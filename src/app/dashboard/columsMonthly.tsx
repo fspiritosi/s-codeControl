@@ -40,6 +40,7 @@ import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
+import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarIcon, DotsVerticalIcon, Pencil2Icon } from '@radix-ui/react-icons';
@@ -65,6 +66,7 @@ type Colum = {
   document_number?: string;
   mandatory?: string;
   id_document_types?: string;
+  applies: string;
 };
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -475,6 +477,24 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
   {
     accessorKey: 'allocated_to',
     header: 'Afectado a',
+    cell: ({ row }) => {
+      const values = row.original.allocated_to;
+
+      if (!values) return <Badge variant={'outline'}>Sin afectar</Badge>;
+      const contractorCompanies = Array.isArray(values)
+        ? values
+            .map((allocatedToId) =>
+              useCountriesStore(
+                (state) => state.customers?.find((company: any) => String(company.id) === String(allocatedToId))?.name
+              )
+            )
+            .join(', ')
+        : useCountriesStore(
+            (state) => state.customers?.find((company: any) => String(company.id) === String(values))?.name
+          );
+
+      return <p>{contractorCompanies}</p>;
+    },
   },
   {
     accessorKey: 'documentName',
@@ -645,7 +665,7 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
       }
 
       return (
-        <Link href={`/dashboard/document/${row.original.id}`}>
+        <Link href={`/dashboard/document/${row.original.id}?resource=${row.original.applies}`}>
           <Button>Ver documento</Button>
         </Link>
       );

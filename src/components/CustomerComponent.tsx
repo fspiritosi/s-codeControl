@@ -294,7 +294,7 @@ export default function ClientRegister({ id }: { id: string }) {
               <Card>
                 <CardContent>
                   <EquipmentTable
-                    columns={columns1}
+                    columns={columns1||[]}
                     data={filteredCustomersEquipment || []}
                     // allCompany={allCompany}
                     // showInactive={showInactive}

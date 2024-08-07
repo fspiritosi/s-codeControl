@@ -88,7 +88,6 @@ export const columnsCategory: ColumnDef<Colum>[] = [
       const [id, setId] = useState('');
      
       const category = row.original;
-      console.log(category)
       const handleOpenModal = (id: string) => {
         setId(id);
         setShowModal(!showModal);
