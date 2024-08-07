@@ -35,6 +35,8 @@ function CompanyTabs({ companyData }: { companyData: CompanyDocumentsType[] }) {
       fullname: user.fullname || '',
     })) || []
   );
+
+  console.log(companyData);
   const documentCompany = companyData
     ?.filter((e) => !e.id_document_types.private && !e.id_document_types.is_it_montlhy)
     .map((document) => {
@@ -76,7 +78,7 @@ function CompanyTabs({ companyData }: { companyData: CompanyDocumentsType[] }) {
       };
     });
   return (
-    <Tabs defaultValue="mensuales">
+    <Tabs defaultValue="permanentes">
       <CardContent>
         <TabsList>
           <TabsTrigger value="permanentes">Documentos permanentes</TabsTrigger>
