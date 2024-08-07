@@ -47,6 +47,7 @@ import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
 import { addMonths, format, formatRelative } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ArrowUpDown } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -519,7 +520,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
     },
   },
   {
-    accessorKey: 'id_document_types',
+    accessorKey: 'id_document_types'.replaceAll('_', ' '),
     header: undefined,
   },
 
@@ -528,10 +529,29 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
     header: 'Afectado a',
     cell: ({ row }) => {
       const values = row.original.allocated_to;
+      const theme = useTheme();
 
       // console.log(values);
 
-      if (!values) return <Badge variant={'outline'}>Sin afectar</Badge>;
+      if (!values)
+        return (
+          <Badge
+            variant={
+              cn(theme.theme === 'dark' ? 'default' : 'outline') as
+                | 'default'
+                | 'secondary'
+                | 'destructive'
+                | 'outline'
+                | 'success'
+                | 'yellow'
+                | 'red'
+                | null
+                | undefined
+            }
+          >
+            Sin afectar
+          </Badge>
+        );
       const contractorCompanies = Array.isArray(values)
         ? values
             .map((allocatedToId) =>
