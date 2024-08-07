@@ -1,4 +1,5 @@
 import DocumentNav from '@/components/DocumentNav';
+import EmployesDiagram from '@/components/EmployesDiagram';
 import Viewcomponent from '@/components/ViewComponent';
 import { buttonVariants } from '@/components/ui/button';
 import Link from 'next/link';
@@ -6,8 +7,7 @@ import EmployeeDocumentsTabs from '../document/documentComponents/EmployeeDocume
 import EmployeeListTabs from '../document/documentComponents/EmployeeListTabs';
 import TypesDocumentAction from '../document/documentComponents/TypesDocumentAction';
 import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
-import EmployesDiagram from '@/components/EmployesDiagram';
-
+import { FormCustomContainer } from '../maintenance/components/FormCustomContainer';
 
 const EmployeePage = async () => {
   const viewData = {
@@ -25,16 +25,13 @@ const EmployeePage = async () => {
             <div className="flex gap-4 flex-wrap pl-6">
               <Link
                 href="/dashboard/employee/action?action=new"
-                className={[
-                  ' py-2 px-4 rounded',
-                  buttonVariants({ variant: 'default' }),
-                ].join(' ')}
+                className={[' py-2 px-4 rounded', buttonVariants({ variant: 'default' })].join(' ')}
               >
                 Agregar nuevo empleado
               </Link>
             </div>
           ),
-          component: <EmployeeListTabs actives inactives />
+          component: <EmployeeListTabs actives inactives />,
         },
       },
       {
@@ -50,7 +47,7 @@ const EmployeePage = async () => {
               <DocumentNav />
             </div>
           ),
-          component: <EmployeeDocumentsTabs />
+          component: <EmployeeDocumentsTabs />,
         },
       },
       {
@@ -62,7 +59,7 @@ const EmployeePage = async () => {
           description: 'Carga de novedades de trabajo del persoanl',
           buttonActioRestricted: [''],
           buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
-          component: <EmployesDiagram/>
+          component: <EmployesDiagram />,
         },
       },
       {
@@ -74,7 +71,19 @@ const EmployeePage = async () => {
           description: 'Tipos de documentos auditables',
           buttonActioRestricted: [''],
           buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
-          component: <TypesDocumentsView personas />
+          component: <TypesDocumentsView personas />,
+        },
+      },
+      {
+        value: 'forms',
+        name: 'Formularios',
+        restricted: [],
+        content: {
+          title: 'Formularios',
+          description: 'Formularios de empleados',
+          buttonActioRestricted: [''],
+          // buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
+          component: <FormCustomContainer employees={true} />,
         },
       },
     ],
