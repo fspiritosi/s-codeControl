@@ -280,7 +280,7 @@ export default function NavBar() {
                                 } ${
                                   notification?.document?.resource
                                     ?.split(' ')
-                                    ?.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                                    ?.map((word) => word.charAt(0)?.toUpperCase() + word.slice(1).toLowerCase())
                                     .join(' ') || '(no disponible)'
                                 } ha sido aprobado`}
                               {notification?.category === 'rechazado' &&
@@ -290,7 +290,7 @@ export default function NavBar() {
                                   notification.reference === 'employee'
                                     ? notification?.document?.resource
                                         .split(' ')
-                                        ?.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                                        ?.map((word) => word.charAt(0)?.toUpperCase() + word.slice(1).toLowerCase())
                                         .join(' ') || '(no disponible)'
                                     : notification?.document?.resource
                                         .split(' ')
