@@ -52,16 +52,6 @@ export function DiagramForm({
     finaly_date: z.date(),
   });
 
-  type DbDiagrama = {
-    employee_id: string;
-    employee_name: string;
-    diagram_type: string;
-    event_diagram_name: string;
-    day: number;
-    month: number;
-    year: number;
-  };
-
   type Diagram = z.infer<typeof Diagram>;
 
   type DiagramaToCreate = {
@@ -74,6 +64,7 @@ export function DiagramForm({
     year: number;
   };
   type ErrorToCreate = {
+    id: string;
     employee: string;
     employee_name: string;
     event_diagram: string;
@@ -94,10 +85,9 @@ export function DiagramForm({
     },
   });
 
+  //CREA UN SOLO REGISTRO EN LA BASE DE DATOS
   async function createDiagram(values: DiagramaToCreate) {
     const data = values;
-    console.log(data);
-
     toast.promise(
       async () => {
         const valueToSend = JSON.stringify(values);
@@ -121,7 +111,7 @@ export function DiagramForm({
       )
     );
   }
-
+  //CREA TODOS LOS REGISTROS EN LA BASE DE DATOS
   function createAll(data: DiagramaToCreate[]) {
     console.log(data);
     data.map((novedad) => {
@@ -133,6 +123,38 @@ export function DiagramForm({
       }
     });
   }
+
+  //ACTUALIZA UN REGISTRO EN LA BASE DE DATOS
+  async function updateDiagram(values: ErrorToCreate) {
+    const data = values;
+    console.log(data);
+    toast.promise(
+      async () => {
+        const valueToSend = JSON.stringify(values);
+        const response = await fetch(`${URL}/api/employees/diagrams`, { method: 'PUT', body: valueToSend });
+        return response;
+        console.log(response);
+      },
+      {
+        loading: 'Cargando...',
+        success: `Se actualizó la novedad de ${data.employee_name} para el empleado ${data.event_diagram_name} para el día ${data.day}/${data.month}/${data.year}`,
+        error: 'No se pudo actualizar la novedad',
+      }
+    );
+    // Filtrar el evento específico de succesDiagrams
+    setErrorsDiagrams(
+      errorsDiagrams.filter(
+        (diagram) =>
+          diagram.employee !== data.employee ||
+          diagram.year !== data.year ||
+          diagram.month !== data.month ||
+          diagram.day !== data.day
+      )
+    );
+  }
+
+  //ACTUALIZA TODOS LOS REGISTROS EN LA BASE DE DATOS
+  async function updateAll(data: ErrorToCreate[]) {}
 
   async function onSubmit2(values: Diagram) {
     const data = values;
@@ -155,7 +177,7 @@ export function DiagramForm({
         year: i.getFullYear(),
       };
 
-      let checkExist = diagrams.find(
+      let checkExist: any = diagrams.find(
         (d: any) =>
           d.employee_id === element.employee &&
           d.year === element.year &&
@@ -165,9 +187,11 @@ export function DiagramForm({
 
       if (checkExist) {
         const prevEventName: any = diagrams_types.find((d: any) => d.id === checkExist?.diagram_type.id);
+
         let errorElement = {
           ...element,
           prev_event: prevEventName.name,
+          id: checkExist.id,
         };
         errorToCreate.push(errorElement);
       } else {
@@ -354,7 +378,9 @@ export function DiagramForm({
                       <TableCell>{d.event_diagram_name}</TableCell>
                       <TableCell>{d.prev_event}</TableCell>
                       <TableCell className="flex gap-2 justify-around">
-                        <Button variant={'default'}>Actualizar</Button>
+                        <Button variant={'default'} onClick={() => updateDiagram(d)}>
+                          Actualizar
+                        </Button>
                         <Button variant={'link'} className="font-bold text-red-600">
                           Descartar
                         </Button>
