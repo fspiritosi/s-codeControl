@@ -21,6 +21,8 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { supabaseBrowser } from '@/lib/supabase/browser';
+import { COMPANIES_TABLE, DOCUMENTS_TABLE, EMPLOYEES_TABLE, VEHICLES_TABLE } from '@/lib/utils/utils';
+import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { Campo, FormField, types } from '@/types/types';
 import { useRouter } from 'next/navigation';
@@ -40,9 +42,45 @@ interface FormDisplayProps {
 export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, created }: FormDisplayProps) {
   const supabase = supabaseBrowser();
   const vehicles = useLoggedUserStore((state) => state.vehicles);
+  const employees = useLoggedUserStore((state) => state.employees);
+  const currentCompany: any = [useLoggedUserStore((state) => state.actualCompany)].map((e) => {
+    return {
+      ...e,
+      city: e?.city.name,
+    };
+  })[0];
+  const documenttypes = useCountriesStore((state) => state.companyDocumentTypes);
+
 
   const router = useRouter();
 
+  const applies = campos.find((e) => e.tipo === types.NombreFormulario)?.apply;
+
+  function getColumnValues<T>(table: string, column: any) {
+
+    if (table === 'employees') return Array.from(new Set(employees.map((e: any) => e[column])));
+    if (table === 'vehicles') return Array.from(new Set(vehicles.map((e: any) => e[column])));
+    if (table === 'company') return Array.from(new Set([currentCompany?.[column]]));
+    if (table === 'document_types') return Array.from(new Set(documenttypes.map((e: any) => e[column])));
+
+    return ['Selecciona a que aplica el formulario'];
+  }
+  // Mapea el valor de 'applies' a la tabla correspondiente
+  const getValuesForField = (applies: string, column: string) => {
+
+    switch (applies) {
+      case 'employees':
+        return getColumnValues('employees', column);
+      case 'documents':
+        return getColumnValues('document_types', column);
+      case 'equipment':
+        return getColumnValues('vehicles', column);
+      case 'company':
+        return getColumnValues('company', column);
+      default:
+        return [];
+    }
+  };
   const renderizarCampo = (campo: Campo, index: number) => {
     switch (campo.tipo) {
       case 'Nombre del formulario':
@@ -190,6 +228,9 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
           </div>
         );
       case 'Seleccion Predefinida':
+        const data = (campo.opciones as any) || [];
+        const column = data?.[0];
+        let values = getValuesForField(applies || '', column);
         return (
           <div className="w-full" key={index}>
             <CardDescription className="mb-2"> {campo.title ? campo.title : 'Titulo del campo'}</CardDescription>
@@ -199,55 +240,27 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
               </SelectTrigger>
               <SelectContent>
                 {campo.opciones?.map((opcion, i) => {
-                  if (opcion === 'Vehiculos') {
-                    return (
-                      <SelectGroup key={i}>
-                        <SelectLabel>Dominios</SelectLabel>
+                  const label =
+                    EMPLOYEES_TABLE[opcion as 'lastname'] ||
+                    VEHICLES_TABLE[opcion as 'domain'] ||
+                    COMPANIES_TABLE[opcion as 'city'] ||
+                    DOCUMENTS_TABLE[opcion as 'special'];
 
-                        {vehicles
-                          ?.filter((e) => e.domain)
-                          ?.map((e) => {
-                            return (
-                              <SelectItem key={e.domain} value={e.domain}>
-                                {e.domain}
-                              </SelectItem>
-                            );
-                          })}
-                      </SelectGroup>
-                    );
+
+                  if (label === 'Afectaciones') {
+                    values = Array.from(new Set(employees.map((e: any) => e.contractor_name)));
                   }
-                  if (opcion === 'Otros') {
-                    return (
-                      <SelectGroup key={i}>
-                        <SelectLabel>Numero de serie</SelectLabel>
-                        {vehicles
-                          .filter((e) => e.serie)
-                          .map((e) => {
-                            return (
-                              <SelectItem key={e.serie} value={e.serie}>
-                                {e.serie}
-                              </SelectItem>
-                            );
-                          })}
-                      </SelectGroup>
-                    );
-                  }
-                  if (opcion === 'Numero interno') {
-                    return (
-                      <SelectGroup key={i}>
-                        <SelectLabel>Numero interno</SelectLabel>
-                        {vehicles
-                          .filter((e) => e.intern_number)
-                          .map((e) => {
-                            return (
-                              <SelectItem key={e.intern_number} value={e.intern_number}>
-                                {e.intern_number}
-                              </SelectItem>
-                            );
-                          })}
-                      </SelectGroup>
-                    );
-                  }
+
+                  return (
+                    <SelectGroup key={i}>
+                      <SelectLabel>{label}</SelectLabel>
+                      {values.map((value: string, j) => (
+                        <SelectItem key={j} value={value}>
+                          {value}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  );
                 })}
               </SelectContent>
             </Select>

@@ -1,47 +1,63 @@
 'use client';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Pie, PieChart, Sector } from 'recharts';
-import { PieSectorDataItem } from 'recharts/types/polar/Pie';
+import { TrendingUp } from 'lucide-react';
+import { useState } from 'react';
+import { Bar, BarChart, CartesianGrid, LabelList, XAxis } from 'recharts';
 
 export function FormUseChart({
   chartConfig,
   chartData,
   formName,
-  activeIndex, // Añadido para manejar el índice activo
 }: {
   chartConfig: ChartConfig;
   chartData: any;
   formName: string;
-  activeIndex: number; // Añadido para manejar el índice activo
 }) {
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
+
+  const getMonthLabel = (month: number) => {
+    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    return monthNames[month - 1];
+  };
+
   return (
-    <Card className="flex flex-col bg-muted justify-between ">
-      <CardHeader className="items-center pb-0">
-        <CardTitle className='text-center text-balance'>{formName}</CardTitle>
+    <Card>
+      <CardHeader>
+        <CardTitle>Grafico de barras</CardTitle>
+        <CardDescription>{`${getMonthLabel(currentMonth - 5)} -  ${getMonthLabel(currentMonth)} ${currentYear}`}</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 pb-0 h-full">
-        <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[250px]">
-          <PieChart>
-            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-            <Pie
-              data={chartData}
-              dataKey="visitors"
-              nameKey="browser"
-              innerRadius={60}
-              strokeWidth={5}
-              activeIndex={activeIndex} // Configura el índice activo
-              activeShape={({ outerRadius = 0, ...props }: PieSectorDataItem) => (
-                <Sector {...props} outerRadius={outerRadius + 10} />
-              )}
+      <CardContent>
+        <ChartContainer config={chartConfig}>
+          <BarChart
+            accessibilityLayer
+            data={chartData}
+            margin={{
+              top: 20,
+            }}
+          >
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="month"
+              tickLine={false}
+              tickMargin={10}
+              axisLine={false}
+              tickFormatter={(value) => value.slice(0, 3)}
+              className="fill-white"
             />
-          </PieChart>
+            <ChartTooltip cursor={false} content={<ChartTooltipContent className="fill-black bg-muted" hideLabel />} />
+            <Bar dataKey="respuestas" className="fill-muted-foreground" radius={8}>
+              <LabelList position="top" offset={12} className="fill-white" fontSize={12} />
+            </Bar>
+          </BarChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="leading-none text-muted-foreground text-center">
-          Mostrando el total de respuestas en comparación con los demás formularios
+      <CardFooter className="flex-col items-start gap-2 text-sm">
+        <div className="flex gap-2 font-medium leading-none">
+          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
         </div>
+        <div className="leading-none text-muted-foreground">Comparacion de respuestas de los ultimos 6 meses</div>
       </CardFooter>
     </Card>
   );

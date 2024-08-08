@@ -1,25 +1,23 @@
 'use client';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCaption, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { FormData } from '@/types/types';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import AnswerCard from './CardAnswer';
 import FormCard from './FormCard';
-const generateChartConfig = (data: any, category: string) => {
-  const generateColor = (index: number) => `hsl(var(--chart-${index + 1}))`;
 
+const generateChartConfig = (data: any, category: string) => {
   const categoryConfig: any = {};
   data[category].forEach((item: any, index: number) => {
     const key = item.name ? item.name.replace(/_/g, ' ') : `item_${index}`;
 
-    console.log(item.name.replace(/_/g, ' ') || `Item ${index + 1}`);
-    console.log(item.name ? item.name.replace(/_/g, ' ') : `item_${index}`);
     categoryConfig[key] = {
       label: item.name.replace(/_/g, ' ') || `Item ${index + 1}`,
-      color: generateColor(index),
+      color: 'hsl(var(--chart-5))',
     };
   });
 
@@ -27,15 +25,24 @@ const generateChartConfig = (data: any, category: string) => {
 };
 
 const generateChartData = (categoryConfig: any, forms: any[]) => {
-  return Object.keys(categoryConfig).map((key) => {
+  // Obtener los últimos 6 meses en español
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    const monthName = d.toLocaleString('es', { month: 'long' });
+    months.push(monthName.charAt(0).toUpperCase() + monthName.slice(1));
+  }
+
+  // Mapear cada mes a su correspondiente objeto de datos
+  return months.map((month) => {
     // Encuentra el formulario correspondiente usando el nombre clave
-    const form = forms.find((f) => f.name === key);
-    const item = categoryConfig[key.replace(/_/g, ' ')];
-    console.log(form ? form.form_answers.length : 10);
+    const form = forms.find((f) => f.name === month);
+    const item = categoryConfig[month.replace(/_/g, ' ')] || { color: 'defaultColor' }; // Asegurar que item no sea undefined
     return {
-      browser: key,
-      visitors: form.form_answers.length === 0 ? 1 : form.form_answers.length, // Usa form_answers.length
-      fill: item.color, // Color específico para el ítem
+      month: month, // Usar el nombre del mes como identificador
+      respuestas: form ? (form.form_answers.length === 0 ? 1 : form.form_answers.length) : 10, // Asignar valor a desktop
+      fill: item.color, // Usar el color especificado en categoryConfig o un color por defecto
     };
   });
 };
@@ -80,9 +87,7 @@ function FormCardContainer({
   const params = new URLSearchParams(searchParams);
   const formId = params.get('form_id');
 
-  console.log(formData);
-
-  const groupedForms: GroupedForms = formData.reduce(
+  const groupedForms: GroupedForms = formData?.reduce(
     (acc, curr) => {
       const mainForm = curr.form.find((f) => f.id === '1') as FormWithApply | undefined;
       if (mainForm && mainForm.apply) {
@@ -101,8 +106,6 @@ function FormCardContainer({
     }
   );
 
-  console.log(groupedForms);
-
   const defaultValue = employees
     ? 'employees'
     : equipment
@@ -118,14 +121,10 @@ function FormCardContainer({
   const chartConfigForEmployees = generateChartConfig(groupedForms, 'employees');
   const chartDataForEmployees = generateChartData(chartConfigForEmployees.employees || {}, groupedForms.employees);
 
-  console.log(chartConfigForEmployees);
-  console.log(chartDataForEmployees);
 
   const chartConfigForEquipment = generateChartConfig(groupedForms, 'equipment');
   const chartDataForEquipment = generateChartData(chartConfigForEquipment.equipment || {}, groupedForms.equipment);
 
-  console.log(chartConfigForEquipment);
-  console.log(chartDataForEquipment);
 
   const chartConfigForCompany = generateChartConfig(groupedForms, 'company');
   const chartDataForCompany = generateChartData(chartConfigForCompany.company || {}, groupedForms.company);
@@ -154,6 +153,9 @@ function FormCardContainer({
     if (formId) fetchAnswers();
   }, [formId]);
 
+  const formKeys = Object.keys(JSON.parse(forms?.[0]?.answer || '{}'));
+
+
   return (
     <>
       {formId ? (
@@ -161,10 +163,49 @@ function FormCardContainer({
           <Button className="self-end" onClick={() => handleAnswersChange()}>
             Volver
           </Button>
-          <CardTitle>{forms?.[0]?.form_id?.form.find((e: any) => e.id === '1').value}</CardTitle>
-          <div className="mt-4 flex gap-4">
-            {forms?.map((formItem, index) => <AnswerCard key={index} data={JSON.parse(formItem.answer)} />)}
-          </div>
+          <CardTitle className="text-xl mb-3">
+            {forms?.[0]?.form_id?.form.find((e: any) => e.id === '1').value}
+          </CardTitle>
+          <Table>
+            <TableCaption>Lista de respuestas del formulario</TableCaption>
+            <TableHeader>
+              <TableRow>
+                {formKeys.map((key, index) => {
+                  return <TableCell key={index}>{key.replaceAll('_', ' ')}</TableCell>;
+                })}
+                <TableCell>Imprimir</TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {forms?.map((formItem, formIndex) => (
+                <TableRow key={formIndex}>
+                  {formKeys.map((key, index) => {
+                    const value = JSON.parse(formItem.answer)[key];
+                    // Comprobar si el valor parece una fecha
+                    const isDate =
+                      typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(value);
+                    const formattedValue = isDate ? new Date(value).toLocaleDateString() : value;
+                    return (
+                      <TableCell key={index}>
+                        {Array.isArray(formattedValue) ? (
+                          <div className="gap-2 flex flex-col">
+                            {formattedValue.map((item, itemIndex) => (
+                              <Badge key={itemIndex}>{item}</Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          formattedValue
+                        )}
+                      </TableCell>
+                    );
+                  })}
+                  <TableCell>
+                    <Button>Imprimir</Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </Card>
       ) : (
         <Tabs defaultValue={defaultValue}>
