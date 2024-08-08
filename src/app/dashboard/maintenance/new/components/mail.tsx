@@ -57,8 +57,8 @@ export function Mail() {
         <ResizablePanel minSize={30}>
           <CardHeader>
             <div>
-              <h2 className="text-2xl font-bold">Crear CheckList</h2>
-              <CardDescription>Crear un nuevo CheckList para el mantenimiento de los equipos.</CardDescription>
+              <h2 className="text-2xl font-bold">Crear formulario</h2>
+              <CardDescription>Crear un nuevo formulario para el mantenimiento de los equipos.</CardDescription>
             </div>
           </CardHeader>
           <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

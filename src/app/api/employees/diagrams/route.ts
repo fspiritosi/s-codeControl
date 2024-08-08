@@ -37,7 +37,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest){
   const supabase = supabaseServer();
   const bodyData = await request.json()
-  console.log(bodyData)
 
   try {
     const { data, error } = await supabase

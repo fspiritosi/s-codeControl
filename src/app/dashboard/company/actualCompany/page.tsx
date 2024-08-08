@@ -1,23 +1,21 @@
-import React from 'react'
-import Viewcomponent from '@/components/ViewComponent'
-import CompanyComponent from '@/components/CompanyComponent'
-import DangerZoneComponent from '@/components/DangerZoneComponent'
-import EditCompanyButton from '@/components/EditCompanyButton'
+import CompanyComponent from '@/components/CompanyComponent';
+import { CovenantRegister } from '@/components/CovenantRegister';
+import DangerZoneComponent from '@/components/DangerZoneComponent';
+import DocumentTabComponent from '@/components/DocumentTabComponent';
+import EditCompanyButton from '@/components/EditCompanyButton';
+import { RegisterWithRole } from '@/components/RegisterWithRole';
+import UsersTabComponent from '@/components/UsersTabComponent';
+import Viewcomponent from '@/components/ViewComponent';
+import { buttonVariants } from '@/components/ui/button';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
-import { buttonVariants } from '@/components/ui/button';
-import DocumentTabComponent from '@/components/DocumentTabComponent'
-import { RegisterWithRole } from '@/components/RegisterWithRole'
-import UsersTabComponent from '@/components/UsersTabComponent'
-import Customers from '../customers/Customers'
-import Contacts from "../contact/Contact"
+import { FormCustomContainer } from '../../maintenance/components/FormCustomContainer';
+import Contacts from '../contact/Contact';
+import Customers from '../customers/Customers';
 import Cct from './covenant/CctComponent';
-import { CovenantRegister } from "@/components/CovenantRegister";
 export default async function CompanyPage() {
-
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
-
 
   const viewData = {
     defaultValue: 'general',
@@ -30,14 +28,13 @@ export default async function CompanyPage() {
           title: 'Datos generales de la empresa',
           description: 'Información de la empresa',
           buttonActioRestricted: [''],
-          buttonAction: (
-              <EditCompanyButton companyId={company_id?.toString() ?? ''} />
-          ),
-          component:
+          buttonAction: <EditCompanyButton companyId={company_id?.toString() ?? ''} />,
+          component: (
             <div>
               <CompanyComponent />
               <DangerZoneComponent />
-            </div>,
+            </div>
+          ),
         },
       },
       {
@@ -55,71 +52,82 @@ export default async function CompanyPage() {
               </Link>
             </div>
           ),
-          component:
-              <DocumentTabComponent />
-
+          component: <DocumentTabComponent />,
         },
       },
       {
-        value: "users",
-        name: "Usuarios",
-        restricted: [""],
+        value: 'users',
+        name: 'Usuarios',
+        restricted: [''],
         content: {
-          title: "Usuarios de la empresa",
-          description: "Lista de usuarios de la empresa",
+          title: 'Usuarios de la empresa',
+          description: 'Lista de usuarios de la empresa',
+          buttonActioRestricted: [''],
+          buttonAction: <RegisterWithRole />,
+          component: <UsersTabComponent />,
+        },
+      },
+      {
+        value: 'customers',
+        name: 'Clientes',
+        restricted: [''],
+        content: {
+          title: 'Clientes de la empresa',
+          description: 'Lista de clientes de la empresa',
           buttonActioRestricted: [''],
           buttonAction: (
-            <RegisterWithRole />
-          ),
-          component: <UsersTabComponent/>
-
-        },
-      },
-      {
-        value:"customers",
-        name:"Clientes",
-        restricted:[""],
-        content:{
-          title:"Clientes de la empresa",
-          description:"Lista de clientes de la empresa",
-          buttonActioRestricted: [''],
-          buttonAction:( 
-            <Link href={'/dashboard/company/customers/action?action=new'} className={buttonVariants({ variant: 'default' })}>
+            <Link
+              href={'/dashboard/company/customers/action?action=new'}
+              className={buttonVariants({ variant: 'default' })}
+            >
               Registrar Cliente
             </Link>
           ),
-          component:<Customers/>
-        }
+          component: <Customers />,
+        },
       },
       {
-        value:"contacts",
-        name:"Contactos",
-        restricted:[""],
-        content:{
-          title:"Contactos de la empresa",
-          description:"Lista de contactos de la empresa",
+        value: 'contacts',
+        name: 'Contactos',
+        restricted: [''],
+        content: {
+          title: 'Contactos de la empresa',
+          description: 'Lista de contactos de la empresa',
           buttonActioRestricted: [''],
-          buttonAction:( 
-            <Link href={'/dashboard/company/contact/action?action=new'} className={buttonVariants({ variant: 'default' })}>
+          buttonAction: (
+            <Link
+              href={'/dashboard/company/contact/action?action=new'}
+              className={buttonVariants({ variant: 'default' })}
+            >
               Registrar Contacto
             </Link>
           ),
-          component:<Contacts/>
-        }
+          component: <Contacts />,
+        },
       },
       {
-        value:"covenant",
-        name:"CCT",
-        restricted:[""],
-        content:{
-          title:"Convenios colectivos de trabajo",
-          description:"Lista de Convenios colectivos de trabajo",
+        value: 'covenant',
+        name: 'CCT',
+        restricted: [''],
+        content: {
+          title: 'Convenios colectivos de trabajo',
+          description: 'Lista de Convenios colectivos de trabajo',
           buttonActioRestricted: [''],
-          buttonAction:(
-          <CovenantRegister />
-        ),
-          component:<Cct/>
-        }
+          buttonAction: <CovenantRegister />,
+          component: <Cct />,
+        },
+      },
+      {
+        value: 'forms',
+        name: 'Formularios',
+        restricted: [],
+        content: {
+          title: 'Formularios',
+          description: 'Formularios de empresa',
+          buttonActioRestricted: [''],
+          // buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
+          component: <FormCustomContainer company={true} />,
+        },
       },
       // {
       //   value:"modules",
@@ -128,7 +136,7 @@ export default async function CompanyPage() {
       //   content:{
       //     title:"Módulos habilitados",
       //     description:"Lista de módulos habilitados",
-      //     buttonAction:( 
+      //     buttonAction:(
       //       ""
       //     ),
       //     component:<div>Modulos</div>
@@ -140,4 +148,3 @@ export default async function CompanyPage() {
 
   return <Viewcomponent viewData={viewData} />;
 }
-

@@ -72,7 +72,6 @@ export default function Cct() {
       }),
 
     });
-    console.log(data);
   };
   const fetchCategory = async () => {
 

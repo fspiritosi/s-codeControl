@@ -23,6 +23,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { Campo, FormField, types } from '@/types/types';
+import { useRouter } from 'next/navigation';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { toast } from 'sonner';
 import FieldRenderer from '../formUtils/fieldRenderer';
@@ -30,15 +31,17 @@ import { buildFormData } from '../formUtils/formUtils';
 
 interface FormDisplayProps {
   campos: Campo[];
+  setCampos?: Dispatch<SetStateAction<Campo[]>>;
+  fetchForms?: () => void;
   selectedForm?: Campo[] | undefined;
-  setSelectedTab: Dispatch<SetStateAction<'created' | 'new'>>;
-  setCampos: Dispatch<SetStateAction<Campo[]>>;
-  fetchForms: () => void;
+  created?: boolean;
 }
 
-export function FormDisplay({ campos, selectedForm, setSelectedTab, setCampos, fetchForms }: FormDisplayProps) {
+export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, created }: FormDisplayProps) {
   const supabase = supabaseBrowser();
   const vehicles = useLoggedUserStore((state) => state.vehicles);
+
+  const router = useRouter();
 
   const renderizarCampo = (campo: Campo, index: number) => {
     switch (campo.tipo) {
@@ -364,9 +367,15 @@ export function FormDisplay({ campos, selectedForm, setSelectedTab, setCampos, f
           setDisabled(false);
 
           throw new Error('El formulario debe tener un nombre');
-        } else {
-          document.getElementById('MissingName')?.style.setProperty('color', 'black');
         }
+
+        if (!campos.find((e) => e.tipo === types.NombreFormulario)?.apply) {
+          document.getElementById('MissingName')?.style.setProperty('color', 'red');
+          setDisabled(false);
+          throw new Error('El formulario debe tener una aplicación');
+        }
+
+        document.getElementById('MissingName')?.style.setProperty('color', 'black');
         const { data, error } = await supabase.from('custom_form').insert({
           company_id: actualCompany?.id,
           form: campos,
@@ -376,22 +385,37 @@ export function FormDisplay({ campos, selectedForm, setSelectedTab, setCampos, f
         if (error) {
           throw new Error(error.message);
         } else {
-          fetchForms();
-          setSelectedTab('created');
-          setCampos([
-            {
-              tipo: types.NombreFormulario,
-              placeholder: 'Ingresa el nombre del formulario',
-              id: '1',
-              title: 'Nombre del formulario',
-              opciones: [],
-            },
-          ]);
+          if (fetchForms && setCampos) {
+            fetchForms();
+            setCampos([
+              {
+                tipo: types.NombreFormulario,
+                placeholder: 'Ingresa el nombre del formulario',
+                id: '1',
+                title: 'Nombre del formulario',
+                opciones: [],
+              },
+            ]);
+          }
         }
       },
       {
         loading: 'Creando formulario...',
-        success: 'Formulario creado exitosamente',
+        success: () => {
+          if (setCampos) {
+            setCampos([
+              {
+                tipo: types.NombreFormulario,
+                placeholder: 'Ingresa el nombre del formulario',
+                id: '1',
+                title: 'Nombre del formulario',
+                opciones: [],
+              },
+            ]);
+          }
+          router.refresh();
+          return 'Formulario creado exitosamente';
+        },
         error: (error: string) => `Error al crear el formulario: ${error}`,
         finally: () => setDisabled(false),
       }
@@ -401,7 +425,7 @@ export function FormDisplay({ campos, selectedForm, setSelectedTab, setCampos, f
 
   const formObject = campos.length ? buildFormData(campos, true) : [];
   return (
-    <ScrollArea className="h-screen px-8 py-5 overflow-auto  rounded-e-xl rounded max-h-[85vh]">
+    <ScrollArea className="min-h-[60vh] px-8 py-5 overflow-auto  rounded-e-xl rounded">
       <div className="flex justify-between items-center">
         <CardTitle className="text-2xl font-bold">Vista previa del formulario</CardTitle>
         <Avatar>
@@ -420,11 +444,9 @@ export function FormDisplay({ campos, selectedForm, setSelectedTab, setCampos, f
           campos.map((campo, index) => <div key={index}>{renderizarCampo(campo, index)}</div>)
         )}
         <div className="flex w-full justify-center">
-          {selectedForm && (
-            <Button disabled={campos.length < 2 || disabled} onClick={handleCreateCheckList}>
-              Crear checkList
-            </Button>
-          )}
+          <Button disabled={campos.length < 2 || created} onClick={handleCreateCheckList}>
+            {created ? 'Editar formulario' : 'Crear formulario'}
+          </Button>
         </div>
       </div>
     </ScrollArea>

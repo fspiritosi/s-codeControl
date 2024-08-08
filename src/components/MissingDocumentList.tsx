@@ -99,7 +99,7 @@ export const MissingDocumentList = () => {
                                   .join(' ')}
                               </Badge>
                               <Link
-                                href={`/dashboard/employee/action?action=view&document=${item?.[0].document_number}`}
+                                href={`/dashboard/employee/action?action=view&employee_id=${item?.[0].id}`}
                                 className={buttonVariants({
                                   variant: 'default',
                                 })}

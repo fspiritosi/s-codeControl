@@ -92,7 +92,6 @@ export function DataCct<TData, TValue>({
 
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const loader = useLoggedUserStore((state) => state.isLoading);
-  console.log(data)
  
   const allOptions = {
     name: createOptions('name'),

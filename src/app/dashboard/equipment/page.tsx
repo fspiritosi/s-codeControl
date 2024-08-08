@@ -6,6 +6,7 @@ import TypesDocumentAction from '../document/documentComponents/TypesDocumentAct
 import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
 import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
+import { FormCustomContainer } from '../maintenance/components/FormCustomContainer';
 export default async function Equipment() {
   
   const viewData = {    defaultValue: 'equipos',
@@ -62,6 +63,18 @@ export default async function Equipment() {
               description: 'Tipos de documentos auditables',
               buttonAction: <TypesDocumentAction optionChildrenProp="Equipos" />,
               component: <TypesDocumentsView equipos  />,
+            },
+          },
+          {
+            value: 'forms',
+            name: 'Formularios',
+            restricted: [],
+            content: {
+              title: 'Formularios',
+              description: 'Formularios de equipos',
+              buttonActioRestricted: [''],
+              // buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
+              component: <FormCustomContainer equipment={true} />,
             },
           },
 

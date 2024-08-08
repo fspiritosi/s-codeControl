@@ -441,34 +441,23 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
                               className="size-10 rounded-full object-cover"
                             />
                           ) : cell.column.id === 'status' ? (
-                            <Badge variant={cell.getValue() === 'No avalado' ? 'destructive' : 'success'}>
-                              {cell.getValue() as React.ReactNode}
-                            </Badge>
+                            <Badge
+                            variant={
+                              cell.getValue() === 'Completo'
+                                ? 'success'
+                                : cell.getValue() === 'Completo con doc vencida'
+                                  ? 'yellow'
+                                  : 'destructive'
+                            }
+                          >
+                            {cell.getValue() as React.ReactNode}
+                          </Badge>
                           ) : (
                             (flexRender(cell.column.columnDef.cell, cell.getContext()) as React.ReactNode)
                           )}
                         </TableCell>
                       );
-                      return (
-                        <TableCell
-                          key={cell.id}
-                          className={`text-center whitespace-nowrap ${is_active ? '' : 'text-red-500'}`}
-                        >
-                          {cell.column.id === 'picture' ? (
-                            <img
-                              src={cell.getValue() as any}
-                              alt="Foto"
-                              className="size-10 rounded-full object-cover"
-                            />
-                          ) : cell.column.id === 'status' ? (
-                            <Badge variant={cell.getValue() === 'No avalado' ? 'destructive' : 'success'}>
-                              {cell.getValue() as React.ReactNode}
-                            </Badge>
-                          ) : (
-                            (flexRender(cell.column.columnDef.cell, cell.getContext()) as React.ReactNode)
-                          )}
-                        </TableCell>
-                      );
+                    
                     })}
                   </TableRow>
                 );
