@@ -13,10 +13,18 @@ export const MissingDocumentList = () => {
   const allValuesToShow = [useLoggedUserStore((state) => state.allDocumentsToShow)].reduce(
     (acc: { employees: Document[][]; vehicles: Document[][] }, current) => {
       const employeesDocuments = current?.employees?.filter(
-        (item) => item.document_path !== null && item.state.toLocaleLowerCase() === 'pendiente' && item.is_active && item.mandatory === "Si"
+        (item) =>
+          item.document_path !== null &&
+          item.state.toLocaleLowerCase() === 'pendiente' &&
+          item.is_active &&
+          item.mandatory === 'Si'
       );
       const companyDocuments = current?.vehicles?.filter(
-        (item) => item.document_path !== null && item.state.toLocaleLowerCase() === 'pendiente' && item.is_active && item.mandatory === "Si"
+        (item) =>
+          item.document_path !== null &&
+          item.state.toLocaleLowerCase() === 'pendiente' &&
+          item.is_active &&
+          item.mandatory === 'Si'
       );
 
       const groupedEmployees: { [key: string]: any[] } = employeesDocuments?.reduce(
@@ -94,7 +102,7 @@ export const MissingDocumentList = () => {
                                 {item[0].resource
                                   .split(' ')
                                   .map((word: string) => {
-                                    return word[0].toUpperCase() + word.slice(1);
+                                    return word[0]?.toUpperCase() + word.slice(1);
                                   })
                                   .join(' ')}
                               </Badge>
