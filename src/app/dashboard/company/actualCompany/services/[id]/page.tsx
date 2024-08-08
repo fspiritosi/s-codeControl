@@ -260,7 +260,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
             </Card>
             {isModalOpen && editingService && (
                 <EditModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-                    <h2 className="text-lg font-semibold">Editar Servicio</h2>
+                    <h2 className="text-lg font-semibold">Editar Item</h2>
                     <div className="p-4 bg-gray-100 dark:bg-gray-800 text-black dark:text-white">
                         <label htmlFor="item_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre del Servicio</label>
                         <Input
