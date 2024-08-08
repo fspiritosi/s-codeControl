@@ -1,133 +1,152 @@
-alter table "public"."documents_employees" drop constraint "documents_employees_docoment_path_key";
+drop policy "Enable read access for all users" on "public"."custom_form";
 
-drop index if exists "public"."documents_employees_docoment_path_key";
+alter table "public"."customers" drop constraint "customers_client_email_key";
 
-alter table "public"."employees" alter column "status" drop default;
+alter table "public"."customers" drop constraint "customers_client_phone_key";
 
-alter table "public"."vehicles" alter column "status" drop default;
+alter table "public"."documents_employees" drop constraint "documents_employees_document_path_key";
 
-alter type "public"."status_type" rename to "status_type__old_version_to_be_dropped";
+drop index if exists "public"."customers_client_email_key";
 
-create type "public"."status_type" as enum ('Avalado', 'No avalado', 'Incompleto', 'Completo', 'Completo con doc vencida');
+drop index if exists "public"."customers_client_phone_key";
 
-create table "public"."contractor_equipment" (
+drop index if exists "public"."documents_employees_document_path_key";
+
+create table "public"."category" (
     "id" uuid not null default gen_random_uuid(),
     "created_at" timestamp with time zone not null default now(),
-    "equipment_id" uuid,
-    "contractor_id" uuid
+    "covenant_id" uuid,
+    "name" text,
+    "is_active" boolean default true
 );
 
 
-alter table "public"."contractor_equipment" enable row level security;
+alter table "public"."category" enable row level security;
 
-alter table "public"."employees" alter column status type "public"."status_type" using status::text::"public"."status_type";
+create table "public"."category_employee" (
+    "created_at" timestamp with time zone not null default now(),
+    "category_id" uuid,
+    "emplyee_id" uuid,
+    "id" uuid not null default gen_random_uuid()
+);
 
-alter table "public"."vehicles" alter column status type "public"."status_type" using status::text::"public"."status_type";
 
-alter table "public"."employees" alter column "status" set default 'No avalado'::status_type;
+alter table "public"."category_employee" enable row level security;
 
-alter table "public"."vehicles" alter column "status" set default 'No avalado'::status_type;
+create table "public"."covenant" (
+    "id" uuid not null default gen_random_uuid(),
+    "created_at" timestamp with time zone not null default now(),
+    "name" text,
+    "company_id" uuid,
+    "is_active" boolean default true,
+    "guild_id" uuid
+);
 
-drop type "public"."status_type__old_version_to_be_dropped";
 
-alter table "public"."document_types" add column "down_document" boolean;
+alter table "public"."covenant" enable row level security;
 
-alter table "public"."employees" alter column "status" set default 'Incompleto'::status_type;
+create table "public"."form_answers" (
+    "id" uuid not null default gen_random_uuid(),
+    "created_at" timestamp with time zone not null default now(),
+    "form_id" uuid not null,
+    "answer" json not null
+);
 
--- alter table "public"."share_company_users" alter column "customer_id" set data type uuid using "customer_id"::uuid;
 
-alter table "public"."vehicles" alter column "status" set default 'Incompleto'::status_type;
+alter table "public"."form_answers" enable row level security;
 
-CREATE UNIQUE INDEX contractor_equipment_employee_id_contractor_id_key ON public.contractor_equipment USING btree (equipment_id, contractor_id);
+create table "public"."guild" (
+    "id" uuid not null default gen_random_uuid(),
+    "created_at" timestamp with time zone not null default now(),
+    "name" text,
+    "company_id" uuid,
+    "is_active" boolean not null default true
+);
 
-CREATE UNIQUE INDEX contractor_equipment_pkey ON public.contractor_equipment USING btree (id);
 
-CREATE UNIQUE INDEX documents_employees_document_path_key ON public.documents_employees USING btree (document_path);
+alter table "public"."guild" enable row level security;
 
-alter table "public"."contractor_equipment" add constraint "contractor_equipment_pkey" PRIMARY KEY using index "contractor_equipment_pkey";
+alter table "public"."contacts" add column "reason_for_termination" text;
 
-alter table "public"."contractor_equipment" add constraint "contractor_equipment_contractor_id_fkey" FOREIGN KEY (contractor_id) REFERENCES customers(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+alter table "public"."contacts" add column "termination_date" date;
 
-alter table "public"."contractor_equipment" validate constraint "contractor_equipment_contractor_id_fkey";
+alter table "public"."customers" add column "reason_for_termination" text;
 
-alter table "public"."contractor_equipment" add constraint "contractor_equipment_employee_id_contractor_id_key" UNIQUE using index "contractor_equipment_employee_id_contractor_id_key";
+alter table "public"."customers" add column "termination_date" date;
 
-alter table "public"."contractor_equipment" add constraint "contractor_equipment_equipment_id_fkey" FOREIGN KEY (equipment_id) REFERENCES vehicles(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+alter table "public"."employees" add column "category" uuid;
 
-alter table "public"."contractor_equipment" validate constraint "contractor_equipment_equipment_id_fkey";
+alter table "public"."employees" add column "covenants" uuid;
 
-alter table "public"."documents_employees" add constraint "documents_employees_document_path_key" UNIQUE using index "documents_employees_document_path_key";
+alter table "public"."employees" add column "guild" uuid;
 
--- alter table "public"."share_company_users" add constraint "share_company_users_customer_id_fkey" FOREIGN KEY (customer_id) REFERENCES customers(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
+alter table "public"."share_company_users" add column "customer_id" uuid;
 
--- alter table "public"."share_company_users" validate constraint "share_company_users_customer_id_fkey";
+CREATE UNIQUE INDEX category_employee_created_at_key ON public.category_employee USING btree (created_at);
+
+CREATE UNIQUE INDEX category_employee_pkey ON public.category_employee USING btree (id);
+
+CREATE UNIQUE INDEX category_pkey ON public.category USING btree (id);
+
+CREATE UNIQUE INDEX covenant_pkey ON public.covenant USING btree (id);
+
+CREATE UNIQUE INDEX form_answers_pkey ON public.form_answers USING btree (id);
+
+CREATE UNIQUE INDEX guild_pkey ON public.guild USING btree (id);
+
+alter table "public"."category" add constraint "category_pkey" PRIMARY KEY using index "category_pkey";
+
+alter table "public"."category_employee" add constraint "category_employee_pkey" PRIMARY KEY using index "category_employee_pkey";
+
+alter table "public"."covenant" add constraint "covenant_pkey" PRIMARY KEY using index "covenant_pkey";
+
+alter table "public"."form_answers" add constraint "form_answers_pkey" PRIMARY KEY using index "form_answers_pkey";
+
+alter table "public"."guild" add constraint "guild_pkey" PRIMARY KEY using index "guild_pkey";
+
+alter table "public"."category" add constraint "public_category_covenant_id_fkey" FOREIGN KEY (covenant_id) REFERENCES covenant(id) not valid;
+
+alter table "public"."category" validate constraint "public_category_covenant_id_fkey";
+
+alter table "public"."category_employee" add constraint "category_employee_created_at_key" UNIQUE using index "category_employee_created_at_key";
+
+alter table "public"."category_employee" add constraint "public_covenant_category_category_id_fkey" FOREIGN KEY (category_id) REFERENCES category(id) not valid;
+
+alter table "public"."category_employee" validate constraint "public_covenant_category_category_id_fkey";
+
+alter table "public"."category_employee" add constraint "public_covenant_employee_emplyee_id_fkey" FOREIGN KEY (emplyee_id) REFERENCES employees(id) not valid;
+
+alter table "public"."category_employee" validate constraint "public_covenant_employee_emplyee_id_fkey";
+
+alter table "public"."covenant" add constraint "public_covenant_guild_id_fkey" FOREIGN KEY (guild_id) REFERENCES guild(id) not valid;
+
+alter table "public"."covenant" validate constraint "public_covenant_guild_id_fkey";
+
+alter table "public"."employees" add constraint "public_employees_category_fkey" FOREIGN KEY (category) REFERENCES category(id) not valid;
+
+alter table "public"."employees" validate constraint "public_employees_category_fkey";
+
+alter table "public"."employees" add constraint "public_employees_covenants_fkey" FOREIGN KEY (covenants) REFERENCES covenant(id) not valid;
+
+alter table "public"."employees" validate constraint "public_employees_covenants_fkey";
+
+alter table "public"."employees" add constraint "public_employees_guild_fkey" FOREIGN KEY (guild) REFERENCES guild(id) not valid;
+
+alter table "public"."employees" validate constraint "public_employees_guild_fkey";
+
+alter table "public"."form_answers" add constraint "form_answers_form_id_fkey" FOREIGN KEY (form_id) REFERENCES custom_form(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+
+alter table "public"."form_answers" validate constraint "form_answers_form_id_fkey";
+
+alter table "public"."guild" add constraint "public_guild_company_id_fkey" FOREIGN KEY (company_id) REFERENCES company(id) not valid;
+
+alter table "public"."guild" validate constraint "public_guild_company_id_fkey";
+
+alter table "public"."share_company_users" add constraint "share_company_users_customer_id_fkey" FOREIGN KEY (customer_id) REFERENCES customers(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
+
+alter table "public"."share_company_users" validate constraint "share_company_users_customer_id_fkey";
 
 set check_function_bodies = off;
-
-CREATE OR REPLACE FUNCTION public.equipment_allocated_to()
- RETURNS trigger
- LANGUAGE plpgsql
-AS $function$
-DECLARE
-  contractor_id UUID;
-BEGIN
-  IF NEW.allocated_to IS NOT NULL AND array_length(NEW.allocated_to, 1) > 0 THEN
-    -- Insertar en contractor_employee para cada ID en allocated_to
-    FOREACH contractor_id IN ARRAY NEW.allocated_to
-    LOOP
-      INSERT INTO contractor_equipment(contractor_id, equipment_id)
-      VALUES (contractor_id, NEW.id);
-    END LOOP;
-  END IF;
-
-  RETURN NEW;
-END;
-$function$
-;
-
-CREATE OR REPLACE FUNCTION public.update_status_trigger()
- RETURNS trigger
- LANGUAGE plpgsql
-AS $function$
-BEGIN
-  -- Para documents_employees
-  IF TG_TABLE_NAME = 'documents_employees' THEN
-    IF NEW.state = 'vencido' THEN
-      UPDATE employees
-      SET status = 'Completo con doc vencida'
-      WHERE id = NEW.applies;
-    ELSIF (SELECT COUNT(*) FROM documents_employees WHERE applies = NEW.applies AND state != 'presentado') = 0 THEN
-      UPDATE employees
-      SET status = 'Completo'
-      WHERE id = NEW.applies;
-    ELSE
-      UPDATE employees
-      SET status = 'Incompleto'
-      WHERE id = NEW.applies;
-    END IF;
-  END IF;
-
-  -- Para documents_equipment
-  IF TG_TABLE_NAME = 'documents_equipment' THEN
-    IF NEW.state = 'vencido' THEN
-      UPDATE vehicles
-      SET status = 'Completo con doc vencida'
-      WHERE id = NEW.applies;
-    ELSIF (SELECT COUNT(*) FROM documents_equipment WHERE applies = NEW.applies AND state != 'presentado') = 0 THEN
-      UPDATE vehicles
-      SET status = 'Completo'
-      WHERE id = NEW.applies;
-    ELSE
-      UPDATE vehicles
-      SET status = 'Incompleto'
-      WHERE id = NEW.applies;
-    END IF;
-  END IF;
-
-  RETURN NEW;
-END;
-$function$
-;
 
 CREATE OR REPLACE FUNCTION public.actualizar_estado_documentos()
  RETURNS void
@@ -516,6 +535,27 @@ BEGIN
 END;$function$
 ;
 
+CREATE OR REPLACE FUNCTION public.equipment_allocated_to()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+  contractor_id UUID;
+BEGIN
+  IF NEW.allocated_to IS NOT NULL AND array_length(NEW.allocated_to, 1) > 0 THEN
+    -- Insertar en contractor_employee para cada ID en allocated_to
+    FOREACH contractor_id IN ARRAY NEW.allocated_to
+    LOOP
+      INSERT INTO contractor_equipment(contractor_id, equipment_id)
+      VALUES (contractor_id, NEW.id);
+    END LOOP;
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
 CREATE OR REPLACE FUNCTION public.log_document_employee_changes()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -605,60 +645,346 @@ END;
 $function$
 ;
 
-grant delete on table "public"."contractor_equipment" to "anon";
+CREATE OR REPLACE FUNCTION public.update_status_trigger()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+  -- Para documents_employees
+  IF TG_TABLE_NAME = 'documents_employees' THEN
+    IF NEW.state = 'vencido' THEN
+      UPDATE employees
+      SET status = 'Completo con doc vencida'
+      WHERE id = NEW.applies;
+    ELSIF (SELECT COUNT(*) FROM documents_employees WHERE applies = NEW.applies AND state != 'presentado') = 0 THEN
+      UPDATE employees
+      SET status = 'Completo'
+      WHERE id = NEW.applies;
+    ELSE
+      UPDATE employees
+      SET status = 'Incompleto'
+      WHERE id = NEW.applies;
+    END IF;
+  END IF;
 
-grant insert on table "public"."contractor_equipment" to "anon";
+  -- Para documents_equipment
+  IF TG_TABLE_NAME = 'documents_equipment' THEN
+    IF NEW.state = 'vencido' THEN
+      UPDATE vehicles
+      SET status = 'Completo con doc vencida'
+      WHERE id = NEW.applies;
+    ELSIF (SELECT COUNT(*) FROM documents_equipment WHERE applies = NEW.applies AND state != 'presentado') = 0 THEN
+      UPDATE vehicles
+      SET status = 'Completo'
+      WHERE id = NEW.applies;
+    ELSE
+      UPDATE vehicles
+      SET status = 'Incompleto'
+      WHERE id = NEW.applies;
+    END IF;
+  END IF;
 
-grant references on table "public"."contractor_equipment" to "anon";
+  RETURN NEW;
+END;
+$function$
+;
 
-grant select on table "public"."contractor_equipment" to "anon";
+grant delete on table "public"."category" to "anon";
 
-grant trigger on table "public"."contractor_equipment" to "anon";
+grant insert on table "public"."category" to "anon";
 
-grant truncate on table "public"."contractor_equipment" to "anon";
+grant references on table "public"."category" to "anon";
 
-grant update on table "public"."contractor_equipment" to "anon";
+grant select on table "public"."category" to "anon";
 
-grant delete on table "public"."contractor_equipment" to "authenticated";
+grant trigger on table "public"."category" to "anon";
 
-grant insert on table "public"."contractor_equipment" to "authenticated";
+grant truncate on table "public"."category" to "anon";
 
-grant references on table "public"."contractor_equipment" to "authenticated";
+grant update on table "public"."category" to "anon";
 
-grant select on table "public"."contractor_equipment" to "authenticated";
+grant delete on table "public"."category" to "authenticated";
 
-grant trigger on table "public"."contractor_equipment" to "authenticated";
+grant insert on table "public"."category" to "authenticated";
 
-grant truncate on table "public"."contractor_equipment" to "authenticated";
+grant references on table "public"."category" to "authenticated";
 
-grant update on table "public"."contractor_equipment" to "authenticated";
+grant select on table "public"."category" to "authenticated";
 
-grant delete on table "public"."contractor_equipment" to "service_role";
+grant trigger on table "public"."category" to "authenticated";
 
-grant insert on table "public"."contractor_equipment" to "service_role";
+grant truncate on table "public"."category" to "authenticated";
 
-grant references on table "public"."contractor_equipment" to "service_role";
+grant update on table "public"."category" to "authenticated";
 
-grant select on table "public"."contractor_equipment" to "service_role";
+grant delete on table "public"."category" to "service_role";
 
-grant trigger on table "public"."contractor_equipment" to "service_role";
+grant insert on table "public"."category" to "service_role";
 
-grant truncate on table "public"."contractor_equipment" to "service_role";
+grant references on table "public"."category" to "service_role";
 
-grant update on table "public"."contractor_equipment" to "service_role";
+grant select on table "public"."category" to "service_role";
+
+grant trigger on table "public"."category" to "service_role";
+
+grant truncate on table "public"."category" to "service_role";
+
+grant update on table "public"."category" to "service_role";
+
+grant delete on table "public"."category_employee" to "anon";
+
+grant insert on table "public"."category_employee" to "anon";
+
+grant references on table "public"."category_employee" to "anon";
+
+grant select on table "public"."category_employee" to "anon";
+
+grant trigger on table "public"."category_employee" to "anon";
+
+grant truncate on table "public"."category_employee" to "anon";
+
+grant update on table "public"."category_employee" to "anon";
+
+grant delete on table "public"."category_employee" to "authenticated";
+
+grant insert on table "public"."category_employee" to "authenticated";
+
+grant references on table "public"."category_employee" to "authenticated";
+
+grant select on table "public"."category_employee" to "authenticated";
+
+grant trigger on table "public"."category_employee" to "authenticated";
+
+grant truncate on table "public"."category_employee" to "authenticated";
+
+grant update on table "public"."category_employee" to "authenticated";
+
+grant delete on table "public"."category_employee" to "service_role";
+
+grant insert on table "public"."category_employee" to "service_role";
+
+grant references on table "public"."category_employee" to "service_role";
+
+grant select on table "public"."category_employee" to "service_role";
+
+grant trigger on table "public"."category_employee" to "service_role";
+
+grant truncate on table "public"."category_employee" to "service_role";
+
+grant update on table "public"."category_employee" to "service_role";
+
+grant delete on table "public"."covenant" to "anon";
+
+grant insert on table "public"."covenant" to "anon";
+
+grant references on table "public"."covenant" to "anon";
+
+grant select on table "public"."covenant" to "anon";
+
+grant trigger on table "public"."covenant" to "anon";
+
+grant truncate on table "public"."covenant" to "anon";
+
+grant update on table "public"."covenant" to "anon";
+
+grant delete on table "public"."covenant" to "authenticated";
+
+grant insert on table "public"."covenant" to "authenticated";
+
+grant references on table "public"."covenant" to "authenticated";
+
+grant select on table "public"."covenant" to "authenticated";
+
+grant trigger on table "public"."covenant" to "authenticated";
+
+grant truncate on table "public"."covenant" to "authenticated";
+
+grant update on table "public"."covenant" to "authenticated";
+
+grant delete on table "public"."covenant" to "service_role";
+
+grant insert on table "public"."covenant" to "service_role";
+
+grant references on table "public"."covenant" to "service_role";
+
+grant select on table "public"."covenant" to "service_role";
+
+grant trigger on table "public"."covenant" to "service_role";
+
+grant truncate on table "public"."covenant" to "service_role";
+
+grant update on table "public"."covenant" to "service_role";
+
+grant delete on table "public"."form_answers" to "anon";
+
+grant insert on table "public"."form_answers" to "anon";
+
+grant references on table "public"."form_answers" to "anon";
+
+grant select on table "public"."form_answers" to "anon";
+
+grant trigger on table "public"."form_answers" to "anon";
+
+grant truncate on table "public"."form_answers" to "anon";
+
+grant update on table "public"."form_answers" to "anon";
+
+grant delete on table "public"."form_answers" to "authenticated";
+
+grant insert on table "public"."form_answers" to "authenticated";
+
+grant references on table "public"."form_answers" to "authenticated";
+
+grant select on table "public"."form_answers" to "authenticated";
+
+grant trigger on table "public"."form_answers" to "authenticated";
+
+grant truncate on table "public"."form_answers" to "authenticated";
+
+grant update on table "public"."form_answers" to "authenticated";
+
+grant delete on table "public"."form_answers" to "service_role";
+
+grant insert on table "public"."form_answers" to "service_role";
+
+grant references on table "public"."form_answers" to "service_role";
+
+grant select on table "public"."form_answers" to "service_role";
+
+grant trigger on table "public"."form_answers" to "service_role";
+
+grant truncate on table "public"."form_answers" to "service_role";
+
+grant update on table "public"."form_answers" to "service_role";
+
+grant delete on table "public"."guild" to "anon";
+
+grant insert on table "public"."guild" to "anon";
+
+grant references on table "public"."guild" to "anon";
+
+grant select on table "public"."guild" to "anon";
+
+grant trigger on table "public"."guild" to "anon";
+
+grant truncate on table "public"."guild" to "anon";
+
+grant update on table "public"."guild" to "anon";
+
+grant delete on table "public"."guild" to "authenticated";
+
+grant insert on table "public"."guild" to "authenticated";
+
+grant references on table "public"."guild" to "authenticated";
+
+grant select on table "public"."guild" to "authenticated";
+
+grant trigger on table "public"."guild" to "authenticated";
+
+grant truncate on table "public"."guild" to "authenticated";
+
+grant update on table "public"."guild" to "authenticated";
+
+grant delete on table "public"."guild" to "service_role";
+
+grant insert on table "public"."guild" to "service_role";
+
+grant references on table "public"."guild" to "service_role";
+
+grant select on table "public"."guild" to "service_role";
+
+grant trigger on table "public"."guild" to "service_role";
+
+grant truncate on table "public"."guild" to "service_role";
+
+grant update on table "public"."guild" to "service_role";
+
+create policy "Enable insert for authenticated users only"
+on "public"."category"
+as permissive
+for insert
+to authenticated
+with check (true);
+
+
+create policy "Enable read access for all users"
+on "public"."category"
+as permissive
+for select
+to public
+using (true);
+
+
+create policy "update category"
+on "public"."category"
+as permissive
+for update
+to authenticated
+using (true);
+
+
+create policy "Enable insert for authenticated users only"
+on "public"."covenant"
+as permissive
+for insert
+to authenticated
+with check (true);
+
+
+create policy "Enable read access for all users"
+on "public"."covenant"
+as permissive
+for select
+to public
+using (true);
+
+
+create policy "update covenant"
+on "public"."covenant"
+as permissive
+for update
+to authenticated
+using (true);
+
 
 create policy "todos los permisos"
-on "public"."contractor_equipment"
+on "public"."custom_form"
 as permissive
 for all
 to authenticated
 using (true);
 
 
-CREATE TRIGGER trg_update_documents_employees AFTER UPDATE ON public.documents_employees FOR EACH ROW EXECUTE FUNCTION update_status_trigger();
+create policy "Permitir todo a autenticated"
+on "public"."form_answers"
+as permissive
+for all
+to authenticated
+using (true);
 
-CREATE TRIGGER trg_update_documents_equipment AFTER UPDATE ON public.documents_equipment FOR EACH ROW EXECUTE FUNCTION update_status_trigger();
 
-CREATE TRIGGER add_contractor_equipment BEFORE INSERT ON public.vehicles FOR EACH ROW EXECUTE FUNCTION equipment_allocated_to();
+create policy "Enable insert for authenticated users only"
+on "public"."guild"
+as permissive
+for insert
+to authenticated
+with check (true);
+
+
+create policy "Enable read access for all users"
+on "public"."guild"
+as permissive
+for select
+to public
+using (true);
+
+
+create policy "update guild"
+on "public"."guild"
+as permissive
+for update
+to authenticated
+using (true);
+
 
 

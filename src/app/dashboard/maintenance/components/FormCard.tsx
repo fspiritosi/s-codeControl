@@ -33,9 +33,6 @@ function FormCard({
   };
 
   // Encuentra el índice del formulario actual en el chartData
-  const activeIndex = chartData.findIndex(
-    (item: any) => item.browser.replace('_', '_') === form.name.replace('_', '_')
-  );
 
   return (
     <Card className="max-w-xs" x-chunk="charts-01-chunk-3">
@@ -70,7 +67,7 @@ function FormCard({
           {form.form.length - 1} {form.form.length - 1 > 1 ? 'secciones' : 'sección'}
         </CardDescription>
       </CardHeader>
-      <FormUseChart chartConfig={chartConfig} formName={form.name} chartData={chartData} activeIndex={activeIndex} />
+      <FormUseChart chartConfig={chartConfig} formName={form.name} chartData={chartData} />
     </Card>
   );
 }

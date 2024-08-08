@@ -42,7 +42,7 @@ export async function POST(request: NextRequest){
     const { data, error } = await supabase
     .from('employees_diagram')
     .insert([
-       { employee_id: bodyData.employee, diagram_type: bodyData.event_diagram, from_date: bodyData.initial_date, to_date: bodyData.finaly_date },
+       { employee_id: bodyData.employee, diagram_type: bodyData.event_diagram, day: bodyData.day, month: bodyData.month, year: bodyData.year },
      ])
 
 
@@ -53,4 +53,22 @@ export async function POST(request: NextRequest){
     console.log(error)
   }
 
+}
+
+export async function PUT(request:NextRequest) {
+  const supabase = supabaseServer();
+  const bodyData = await request.json()
+  console.log(bodyData)
+  try {
+    const { data, error } = await supabase
+    .from('employees_diagram')
+    .update({ diagram_type: bodyData.event_diagram })
+    .eq('id', bodyData.id)
+    
+    if(!error){ return Response.json(data)}
+    console.log(error)
+  } catch (error) {
+    console.log(error)
+  }
+  
 }

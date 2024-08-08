@@ -134,6 +134,7 @@ interface Iddocumenttypes {
 
 const setEmployeesToShow = (employees: any) => {
   const employee = employees?.map((employees: any) => {
+    console.log(employees);
     return {
       full_name: `${employees?.lastname?.charAt(0).toUpperCase()}${employees?.lastname?.slice(1)} ${employees?.firstname
         ?.charAt(0)
@@ -167,7 +168,8 @@ const setEmployeesToShow = (employees: any) => {
       city: employees?.city?.name?.trim(),
       hierrl_position: employees?.hierarchical_position?.name,
       workflow_diagram: employees?.workflow_diagram?.name,
-      contractor_employee: employees?.contractor_employee?.map(({ contractors }: any) => contractors?.id),
+      contractor_employee: employees?.contractor_employee?.map(({ customers }: any) => customers?.id),
+      contractor_name: employees?.contractor_employee?.map(({ customers }: any) => customers?.name),
       is_active: employees?.is_active,
       reason_for_termination: employees?.reason_for_termination,
       termination_date: employees?.termination_date,
@@ -175,7 +177,6 @@ const setEmployeesToShow = (employees: any) => {
       guild: employees?.guild,
       covenants: employees?.covenants,
       category: employees?.category,
-
       documents_employees: employees.documents_employees,
     };
   });

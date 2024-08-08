@@ -1,5 +1,5 @@
+import EmployesDiagram from '@/components/Diagrams/EmployesDiagram';
 import DocumentNav from '@/components/DocumentNav';
-import EmployesDiagram from '@/components/EmployesDiagram';
 import Viewcomponent from '@/components/ViewComponent';
 import { buttonVariants } from '@/components/ui/button';
 import Link from 'next/link';
@@ -7,6 +7,7 @@ import EmployeeDocumentsTabs from '../document/documentComponents/EmployeeDocume
 import EmployeeListTabs from '../document/documentComponents/EmployeeListTabs';
 import TypesDocumentAction from '../document/documentComponents/TypesDocumentAction';
 import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
+
 import { FormCustomContainer } from '../maintenance/components/FormCustomContainer';
 
 const EmployeePage = async () => {
@@ -56,7 +57,7 @@ const EmployeePage = async () => {
         restricted: ['Invitado'],
         content: {
           title: 'Diagramas de personal',
-          description: 'Carga de novedades de trabajo del persoanl',
+          description: 'Carga de novedades de trabajo del personal',
           buttonActioRestricted: [''],
           buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
           component: <EmployesDiagram />,

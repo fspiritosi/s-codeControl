@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { cn } from '@/lib/utils';
+import { EMPLOYEES_TABLE } from '@/lib/utils/utils';
 import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { InfoCircledIcon } from '@radix-ui/react-icons';
@@ -171,30 +172,7 @@ export default function NewDocumentType({
     }
     return description;
   }
-  const EMPLOYEES_TABLE: any = {
-    nationality: 'Nacionalidad',
-    lastname: 'Apellido',
-    firstname: 'Nombre',
-    cuil: 'CUIL',
-    document_type: 'Tipo de documento',
-    document_number: 'Numero de documento',
-    birthplace: 'Lugar de nacimiento',
-    gender: 'Genero',
-    marital_status: 'Estado civil',
-    level_of_education: 'Nivel de educacion',
-    province: 'Provincia',
-    file: 'Legajo',
-    normal_hours: 'Horas normales',
-    date_of_admission: 'Fecha de admision',
-    affiliate_status: 'Estado de afiliacion',
-    company_position: 'Posicion en la compañia',
-    city: 'Ciudad',
-    hierarchical_position: 'Posicion Jerarquica',
-    workflow_diagram: 'Diagrama de trabajo',
-    type_of_contract: 'Tipo de contrato',
-    allocated_to: 'Afectaciones',
-    status: 'Estado',
-  };
+
   const [down, setDown] = useState(false);
   return (
     <Form {...form}>

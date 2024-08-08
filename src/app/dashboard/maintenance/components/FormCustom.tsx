@@ -18,6 +18,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { COMPANIES_TABLE, DOCUMENTS_TABLE, EMPLOYEES_TABLE, VEHICLES_TABLE } from '@/lib/utils/utils';
 import { Campo, types } from '@/types/types';
 import { InfoCircledIcon, PlusCircledIcon, TrashIcon } from '@radix-ui/react-icons';
 import { AnimatePresence, Reorder, motion } from 'framer-motion';
@@ -33,6 +34,8 @@ export function FormCustom({
   setSelectedForm?: Dispatch<SetStateAction<Campo[] | undefined>>;
 }) {
   const [tipoSeleccionado, setTipoSeleccionado] = useState('');
+
+  const applies = campos.find((campo) => campo.tipo === 'Nombre del formulario')?.apply;
 
   const [selectKey, setSelectKey] = useState(0);
 
@@ -194,6 +197,14 @@ export function FormCustom({
     newCampos[index].opciones?.splice(i, 1);
     setCampos(newCampos);
   };
+  function renderSelectItems<T extends object>(table: T) {
+    return (Object.keys(table) as (keyof T)[]).map((key) => (
+      <SelectItem key={key as string} value={key as string}>
+        {table[key] as string}
+      </SelectItem>
+    ));
+  }
+
   const renderizarCampo = (campo: Campo, index: number, campo_id?: string, sectionIndex?: number) => {
     switch (campo.tipo) {
       case 'Texto':
@@ -569,9 +580,10 @@ export function FormCustom({
                   <SelectValue placeholder="Seleccionar opciones a mostrar" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Vehiculos">Vehiculos</SelectItem>
-                  <SelectItem value="Otros">Otros</SelectItem>
-                  <SelectItem value="Numero interno">Numero Interno</SelectItem>
+                  {applies === 'employees' && renderSelectItems(EMPLOYEES_TABLE)}
+                  {applies === 'company' && renderSelectItems(COMPANIES_TABLE)}
+                  {applies === 'equipment' && renderSelectItems(VEHICLES_TABLE)}
+                  {applies === 'documents' && renderSelectItems(DOCUMENTS_TABLE)}
                 </SelectContent>
               </Select>
             </div>
@@ -994,8 +1006,35 @@ export function FormCustom({
   };
   const handleTypeChange = (value: string, index: number, sectionIndex?: number) => {
     const newCampos = [...campos];
-    newCampos[index].apply = value;
-    setCampos(newCampos);
+
+
+    // Modificar la estructura de newCampos si el tipo es 'Seccion'
+    const updatedCampos = newCampos.map((item, i) => {
+      if (item.tipo === 'Seccion' && item.sectionCampos) {
+        // Actualizar sectionCampos para que 'opciones' sea un array vacío
+        const updatedSectionCampos = item.sectionCampos.map((campo: any) => {
+          if (campo.tipo === 'Seleccion Predefinida') {
+            return {
+              ...campo,
+              opciones: [],
+            };
+          }
+          return campo;
+        });
+
+        return {
+          ...item,
+          sectionCampos: updatedSectionCampos,
+        };
+      }
+      return item;
+    });
+
+
+    // Asignar el nuevo valor al campo `apply`
+    updatedCampos[index].apply = value;
+
+    setCampos(updatedCampos);
   };
   const handleInputChange = (
     event: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>,
