@@ -58,7 +58,7 @@ import {
         return;
       }
       // const covenant_id = covenantOptions?.find((covenantOption) => covenantOption.name === covenant)?.id;
-      console.log(covenant_id)
+     
       const { data, error } = await supabase
         .from('category')
         .insert([

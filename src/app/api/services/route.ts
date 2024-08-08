@@ -6,8 +6,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const company_id = searchParams.get('actual');
     const user_id = searchParams.get('user');
-    console.log(company_id)
-    //console.log(user_id); //AQUI ME QUEDE
+   
     try {
         let { data: services, error } = await supabase
             .from('customer_services')
@@ -15,7 +14,7 @@ export async function GET(request: NextRequest) {
             // Filters
 
             .eq('company_id', company_id);
-        console.log(services);
+        
 
 
         if (error) {
@@ -44,9 +43,9 @@ const year = date.getFullYear();
 const month = String(date.getMonth() + 1).padStart(2, '0'); // Los meses son 0-indexados
 const day = String(date.getDate()).padStart(2, '0');
 const formattedDate1 = `${year1}/${month1}/${day1}`;
-    console.log(formattedDate1);
+    
 const formattedDate = `${year}/${month}/${day}`;
-    console.log(formattedDate);
+    
     try {
         let { data: services, error } = await supabase
             .from('customer_services')
@@ -60,7 +59,7 @@ const formattedDate = `${year}/${month}/${day}`;
             })
         // Filters
 
-        console.log(services);
+        
         if (error) {
             throw new Error(JSON.stringify(error));
         }
@@ -89,7 +88,7 @@ export async function PUT(request: NextRequest) {
                 is_active: is_active
             })
             .eq('id', id)
-        console.log(services);
+        
         if (error) {
             throw new Error(JSON.stringify(error));
         }

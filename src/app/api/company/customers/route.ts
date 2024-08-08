@@ -5,14 +5,13 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
   const user_id = searchParams.get('user');
-  console.log(company_id)
-  //console.log(user_id); //AQUI ME QUEDE
+  
   try {
       let { data: customers, error } = await supabase
           .from('customers')
           .select('*')
           .eq('company_id', company_id);
-      console.log(customers);
+      
 
 
       if (error) {

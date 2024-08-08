@@ -8,6 +8,8 @@ import EditModal from '@/components/EditModal';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import cookies from 'js-cookie';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import BackButton from '@/components/BackButton';
 interface Item {
     id: string;
     item_name: string;
@@ -39,7 +41,18 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
     const company_id = cookies.get('actualComp');
     const modified_company_id = company_id?.replace(/"/g, '');
     const modified_editing_service_id = params.id?.replace(/"/g, '');
-    console.log(params.id)
+    const [filteredItems, setFilteredItems] = useState<Item[]>([]);
+    const [isActiveFilter, setIsActiveFilter] = useState(true);
+   
+
+    useEffect(() => {
+        filterServices();
+    }, [isActiveFilter, items]);
+
+    const filterServices = () => {
+        const filtered = items.filter(item => item.is_active === isActiveFilter);
+        setFilteredItems(filtered);
+    };
     useEffect(() => {
         const fetchItemsAndCustomers = async () => {
             const supabase = supabaseBrowser();
@@ -72,7 +85,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
                 .from('customer_services')
                 .select('*')
                 .eq('customer_id', selectedClient); // Asegúrate de usar el ID del cliente adecuado
-            console.log(customerServices)
+            
             if (customerServicesError) {
                 console.error(customerServicesError);
             } else {
@@ -94,7 +107,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
         setEditingService(service_items);
         setIsModalOpen(true);
     };
-    console.log(editingService)
+    
     const handleSave = async () => {
         if (editingService) {
             try {
@@ -135,55 +148,113 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
             }
         }
     };
+   
+    const handleDeactivateItem = async () => {
+        if (editingService) {
+            try {
+                const newActiveState = !editingService.is_active;
+                
+                const response = await fetch(`/api/services/items/?id=${modified_editing_item_service_id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ is_active: newActiveState }),
+                });
+
+                if (response.ok) {
+                    // Actualizar la lista de items con el item desactivado
+                    const updatedItem = await response.json();
+                    setFilteredItems((prevItems) =>
+                        prevItems.map((item) =>
+                            item.id === updatedItem.id ? updatedItem : item
+                        )
+                    );
+                    toast.success(`Item ${newActiveState ? 'activado' : 'desactivado'} correctamente`);
+                    setIsModalOpen(false);
+                } else {
+                    console.error('Error al desactivar el item');
+                    toast.error('Error al desactivar el item');
+                }
+            } catch (error) {
+                console.error('Error al desactivar el item:', error);
+                toast.error('Error al desactivar el item');
+            }
+        }
+    };
 
     return (
         <div>
-            <h1>Detalles del Servicio</h1>
-            <div className="flex space-x-4">
-                <Table className="min-w-full divide-y divide-gray-200">
-                    <TableHead className="bg-gray-50">
-                        <TableRow>
-                            <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Nombre
-                            </TableCell>
-                            <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Descripción
-                            </TableCell>
-                            <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Unidades
-                            </TableCell>
-                            <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Precio
-                            </TableCell>
-                            <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Activo
-                            </TableCell>
-                            <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Cliente
-                            </TableCell>
-                            <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Acciones
-                            </TableCell>
-                        </TableRow>
-
-                        <TableBody className="bg-white divide-y divide-gray-200">
-                            {items.map((item) => (
-                                <TableRow key={item.id}>
-                                    <TableCell className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.item_name}</TableCell>
-                                    <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.item_description}</TableCell>
-                                    <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.item_measure_units?.unit}</TableCell>
-                                    <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.item_price}</TableCell>
-                                    <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.is_active ? 'Sí' : 'No'}</TableCell>
-                                    <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.customer_id.name}</TableCell>
-                                    <TableCell>
-                                        <Button onClick={() => handleEditClick(item)}>Editar</Button>
+            <div className="flex  justify-end">
+            <BackButton />
+            </div>
+            <Card className="overflow-hidden">
+                <CardHeader className="w-full flex bg-muted dark:bg-muted/50 border-b-2 flex-row justify-between">
+                    <div className="w-fit">
+                        <CardTitle className="text-2xl font-bold tracking-tight w-fit">Items del Servicio </CardTitle>
+                        <CardDescription className="text-muted-foreground w-fit">Detalle de todos los Items del servicio</CardDescription>
+                    </div>
+                </CardHeader>
+                <CardContent className="py-4 px-4 ">
+                    <div className="flex space-x-4 p-4">
+                        <Select onValueChange={(value) => setIsActiveFilter(value === 'true')} value={String(isActiveFilter)} defaultValue='true'>
+                            <SelectTrigger className="w-[400px]">
+                                <SelectValue placeholder="Filtrar por estado" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value='true'>Activos</SelectItem>
+                                <SelectItem value='false'>Inactivos</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex space-x-4">
+                        <Table className="min-w-full divide-y divide-gray-200">
+                            <TableHead className="bg-header-background">
+                                <TableRow>
+                                    <TableCell className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                        Nombre
+                                    </TableCell>
+                                    <TableCell className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                        Descripción
+                                    </TableCell>
+                                    <TableCell className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                        Unidades
+                                    </TableCell>
+                                    <TableCell className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                        Precio
+                                    </TableCell>
+                                    <TableCell className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                        Activo
+                                    </TableCell>
+                                    <TableCell className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                        Cliente
+                                    </TableCell>
+                                    <TableCell className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                        Acciones
                                     </TableCell>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </TableHead>
-                </Table>
-            </div>
+
+                                <TableBody className="bg-background divide-y ">
+                                    {filteredItems.map((item) => (
+                                        <TableRow key={item.id}>
+                                            <TableCell className="px-6 py-4 whitespace-nowrap text-sm font-medium text-muted-foreground">{item.item_name}</TableCell>
+                                            <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{item.item_description}</TableCell>
+                                            <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{item.item_measure_units?.unit}</TableCell>
+                                            <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">${item.item_price}</TableCell>
+                                            <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{item.is_active ? 'Sí' : 'No'}</TableCell>
+                                            <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{item.customer_id.name}</TableCell>
+                                            <TableCell>
+                                                <Button onClick={() => handleEditClick(item)}>Editar</Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </TableHead>
+                        </Table>
+                    </div>
+                </CardContent>
+                <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
+            </Card>
             {isModalOpen && editingService && (
                 <EditModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
                     <h2 className="text-lg font-semibold">Editar Servicio</h2>
@@ -258,9 +329,9 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
                         <div className="flex justify-end space-x-2 mt-4">
                             <Button onClick={handleSave}   >Guardar</Button>
                             <Button onClick={() => setIsModalOpen(false)} >Cancelar</Button>
-                            {/* <Button onClick={handleDeactivate} variant={editingService.is_active ? 'destructive' : 'success'}>
+                            <Button onClick={handleDeactivateItem} variant={editingService.is_active ? 'destructive' : 'success'}>
                                 {editingService.is_active ? 'Dar de Baja' : 'Dar de Alta'}
-                            </Button> */}
+                            </Button>
                         </div>
                     </div>
                 </EditModal>

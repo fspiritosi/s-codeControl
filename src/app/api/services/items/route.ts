@@ -6,8 +6,8 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const company_id = searchParams.get('actual');
     const user_id = searchParams.get('user');
-    console.log(company_id)
-    //console.log(user_id); //AQUI ME QUEDE
+   
+   
     try {
         let { data: items, error } = await supabase
             .from('service_items')
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
             // Filters
 
             .eq('company_id', company_id);
-        console.log(items);
+        
 
 
         if (error) {
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const supabase = supabaseServer();
     const searchParams = request.nextUrl.searchParams;
     let company_id = searchParams.get('actual');
-    console.log('Company ID:', company_id);
+   
     const user_id = searchParams.get('user');
     const sercices_id = searchParams.get('service');
     const body = await request.json();
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
                 company_id: company_id
             });
 
-        console.log('Inserted Items:', items);
+       
         if (error) {
             console.error('Supabase Error:', error);
             throw new Error(JSON.stringify(error));
@@ -86,7 +86,7 @@ export async function PUT(request: NextRequest) {
                 // company_id: company_id
             })
             .eq('id', id)
-        console.log(items);
+       
         if (error) {
             throw new Error(JSON.stringify(error));
         }

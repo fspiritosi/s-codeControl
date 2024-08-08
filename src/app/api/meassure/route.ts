@@ -7,8 +7,7 @@ export async function GET(request: NextRequest) {
     const company_id = searchParams.get('actual');
     const user_id = searchParams.get('user');
     
-    // console.log(company_id)
-    //console.log(user_id); //AQUI ME QUEDE
+    
     try {
         let { data: measure, error } = await supabase
           .from('measure_units')

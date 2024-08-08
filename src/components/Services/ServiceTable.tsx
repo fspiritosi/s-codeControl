@@ -122,14 +122,14 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
             }
         }
     };
-
+    
     useEffect(() => {
         const channel = supabase.channel('custom-all-channel')
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'customer_services' },
                 async (payload) => {
-                    console.log('Change received!', payload);
+                    
                     const { data, error } = await supabase.from('customer_services').select('*');
                     if (error) {
                         console.error('Error fetching services:', error);
