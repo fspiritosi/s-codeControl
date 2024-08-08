@@ -1,17 +1,10 @@
-import { supabaseServer } from "@/lib/supabase/server";
-import { setEmployeesToShow } from "@/lib/utils/utils";
-import { cookies } from "next/headers";
-import { DiagramForm } from "./DiagramForm";
-import DiagramEmployeeView from "./DiagramEmployeeView";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { DiagramNewTypeForm } from "./DiagramNewTypeForm";
-
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable"
-import DiagramTypeComponent from "./DiagramTypeComponent";
+import { supabaseServer } from '@/lib/supabase/server';
+import { setEmployeesToShow } from '@/lib/utils/utils';
+import { cookies } from 'next/headers';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import DiagramEmployeeView from './DiagramEmployeeView';
+import { DiagramForm } from './DiagramForm';
+import DiagramTypeComponent from './DiagramTypeComponent';
 
 async function EmployesDiagram() {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -21,36 +14,35 @@ async function EmployesDiagram() {
   } = await supabase.auth.getUser();
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
-  const { data } = await fetch(`${URL}/api/employees?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
-  const activeEmploees = setEmployeesToShow(data?.filter((e: any) => e.is_active));
-  const  {data: diagrams}  = await fetch(`${URL}/api/employees/diagrams`).then((e) => e.json());
-  const {data: diagrams_types} = await fetch(`${URL}/api/employees/diagrams/tipos?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
+  const { employees } = await fetch(`${URL}/api/employees?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
 
+  const activeEmploees = setEmployeesToShow(employees?.filter((e: any) => e.is_active));
+  const { data: diagrams } = await fetch(`${URL}/api/employees/diagrams`).then((e) => e.json());
+  const { data: diagrams_types } = await fetch(
+    `${URL}/api/employees/diagrams/tipos?actual=${company_id}&user=${user?.id}`
+  ).then((e) => e.json());
 
   return (
     <Tabs defaultValue="old">
-      <TabsList >
+      <TabsList>
         <TabsTrigger value="old">Diagrama Cargados</TabsTrigger>
         <TabsTrigger value="new">Cargar Diagrama</TabsTrigger>
         <TabsTrigger value="newsTypes">Tipos de Novedades</TabsTrigger>
       </TabsList>
       <TabsContent value="old">
-        <DiagramEmployeeView diagrams={diagrams} activeEmployees={activeEmploees}/>
+        <DiagramEmployeeView diagrams={diagrams} activeEmployees={activeEmploees} />
       </TabsContent>
       <TabsContent value="new">
-        <DiagramForm activeEmploees={activeEmploees} diagrams={diagrams} diagrams_types={diagrams_types}/>
+        <DiagramForm activeEmploees={activeEmploees} diagrams={diagrams} diagrams_types={diagrams_types} />
       </TabsContent>
       <TabsContent value="newsTypes">
-        <DiagramTypeComponent diagrams_types={diagrams_types}/>
-        
+        <DiagramTypeComponent diagrams_types={diagrams_types} />
       </TabsContent>
     </Tabs>
-    
-  )
+  );
 }
 
-export default EmployesDiagram
-
+export default EmployesDiagram;
 
 /*TODO
   1 - Crear el formalario para la creación de novedades 👌 
@@ -89,4 +81,4 @@ export default EmployesDiagram
                 
   20 - Hacer el suscribe de todas las tablas
 
-*/ 
+*/

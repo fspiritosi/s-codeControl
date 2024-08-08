@@ -82,7 +82,7 @@ function FormCardContainer({
 
   console.log(formData);
 
-  const groupedForms: GroupedForms = formData.reduce(
+  const groupedForms: GroupedForms = formData?.reduce(
     (acc, curr) => {
       const mainForm = curr.form.find((f) => f.id === '1') as FormWithApply | undefined;
       if (mainForm && mainForm.apply) {

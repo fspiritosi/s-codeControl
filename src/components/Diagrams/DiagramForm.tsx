@@ -220,7 +220,7 @@ export function DiagramForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {activeEmploees.map((e: any) => (
+                      {activeEmploees?.map((e: any) => (
                         <SelectItem value={e.id} key={e.id}>
                           {e.full_name}
                         </SelectItem>
