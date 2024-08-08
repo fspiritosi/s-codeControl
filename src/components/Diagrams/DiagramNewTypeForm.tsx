@@ -1,15 +1,5 @@
 "use client"
-
-import {useEffect, useState} from "react"
-import { Calendar as CalendarIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
 import {
     Form,
     FormControl,
@@ -19,58 +9,62 @@ import {
     FormLabel,
     FormMessage,
   } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "./ui/select";
-
-
-import { Label } from "./ui/label"
 import { z } from "zod";
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from "date-fns"
-import { POST } from "@/app/api/send/route"
-import { Input } from "./ui/input"
+import { Input } from "../ui/input"
+import cookies from 'js-cookie';
+import { toast } from "sonner";
 
-export function DiagramNewTypeForm() {
-
- 
-
+export function DiagramNewTypeForm({selectedDiagram}:{selectedDiagram?:any}) {
+    const company_id = cookies.get('actualComp')
+    const URL = process.env.NEXT_PUBLIC_BASE_URL;
     const NewDiagramType = z.object({
         name: z.string().min(1,{message: "El nombre de la novedad no puede estar vacío"}),
         short_description: z.string().min(1,{message: "La descripción dorta no puede estar vacía"}),
         color: z.string().min(1,{message: "Por favor selecciona un color para la novedad"}),
        
     })
-
+    console.log(selectedDiagram)
     type NewDiagramType = z.infer<typeof NewDiagramType>;
 
     const form = useForm<NewDiagramType>({
         resolver: zodResolver(NewDiagramType),
         defaultValues:{
             name:'',
-            short_description:"",
-            color:""
+            short_description: "",
+            color: ""
         }
     })
 
+    
     async function onSubmit(values: NewDiagramType){
-        
-        const data = JSON.stringify(values);
-        
-        const response = await fetch(`http://localhost:3000/api/employees/diagrams/tipos`, {method: 'POST', body: data})
-        return response
+        selectedDiagram 
+        ?
+        console.log('aca llego',values)
+        : 
+        toast.promise(async () => {
+            const data = JSON.stringify(values);
+            const response = await fetch(`${URL}/api/employees/diagrams/tipos?actual=${company_id}`, {method: 'POST', body: data})
+            return response
+        }, {
+            loading: "Cargando...",
+            success: `Novedad ${values.name} cargada con exito`,
+            error: "No se pudo crear la novedad"
+        })
         
     }
 
     return (
         <Form {...form} >
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-[400px]">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 w-[400px]">
                 <FormField 
                     control={form.control}
                     name='name'
                     render={({field}) => (
                         <FormItem>
                             <FormLabel>Nombre de la novedad</FormLabel>
-                            <Input  placeholder="Ingresa un nombre para la novedad"  {...field}/>
+                            <Input  placeholder="Ingresa un nombre para la novedad" {...field}  value={selectedDiagram?.name}/>
                             <FormMessage/>
                         </FormItem>
                     )}
@@ -81,7 +75,7 @@ export function DiagramNewTypeForm() {
                     render={({field}) => (
                         <FormItem>
                             <FormLabel>Descripción corta</FormLabel>
-                            <Input  placeholder="Ingresa una descripción corta, ej: TD"  {...field}/>
+                            <Input  placeholder="Ingresa una descripción corta, ej: TD"  {...field} value={selectedDiagram?.short_description}/>
                             <FormMessage/>
                         </FormItem>
                     )}
@@ -92,7 +86,7 @@ export function DiagramNewTypeForm() {
                     render={({field}) => (
                         <FormItem>
                             <FormLabel>Color</FormLabel>
-                            <Input className=" max-w-20" placeholder="Elige un color"  type="color" {...field} />
+                            <Input className=" max-w-20" placeholder="Elige un color"  type="color" {...field}  value={selectedDiagram?.color} />
                             <FormMessage/>
                         </FormItem>
                     )}

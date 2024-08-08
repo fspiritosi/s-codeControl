@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
   const company_id = searchParams.get('actual');
   const user_id = searchParams.get('user');
   //console.log(user_id); //AQUI ME QUEDE
+
   try {
     let { data: equipments, error } = await supabase
       .from('vehicles')
