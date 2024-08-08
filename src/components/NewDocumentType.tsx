@@ -9,18 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { cn } from '@/lib/utils';
-import { EMPLOYEES_TABLE } from '@/lib/utils/utils';
 import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { InfoCircledIcon } from '@radix-ui/react-icons';
@@ -362,14 +353,14 @@ export default function NewDocumentType({
                     <SelectContent>
                       <SelectItem value="Maneja">Maneja</SelectItem>
                       <SelectItem value="Habilitacion especial">Habilitacion especial</SelectItem>
-                      <SelectGroup>
+                      {/* <SelectGroup>
                         <SelectLabel>Siguientes Opciones</SelectLabel>
                         {Object.keys(EMPLOYEES_TABLE).map((e) => (
                           <SelectItem key={EMPLOYEES_TABLE[e]} value={EMPLOYEES_TABLE[e]}>
                             {EMPLOYEES_TABLE[e]}
                           </SelectItem>
                         ))}
-                      </SelectGroup>
+                      </SelectGroup> */}
                     </SelectContent>
                   </Select>
                 </div>
