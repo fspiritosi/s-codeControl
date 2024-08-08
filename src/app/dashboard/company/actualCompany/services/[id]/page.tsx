@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 import cookies from 'js-cookie';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import BackButton from '@/components/BackButton';
+import { Badge } from '@/components/ui/badge';
+
 interface Item {
     id: string;
     item_name: string;
@@ -43,7 +45,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
     const modified_editing_service_id = params.id?.replace(/"/g, '');
     const [filteredItems, setFilteredItems] = useState<Item[]>([]);
     const [isActiveFilter, setIsActiveFilter] = useState(true);
-   
+
 
     useEffect(() => {
         filterServices();
@@ -85,7 +87,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
                 .from('customer_services')
                 .select('*')
                 .eq('customer_id', selectedClient); // Asegúrate de usar el ID del cliente adecuado
-            
+
             if (customerServicesError) {
                 console.error(customerServicesError);
             } else {
@@ -107,7 +109,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
         setEditingService(service_items);
         setIsModalOpen(true);
     };
-    
+
     const handleSave = async () => {
         if (editingService) {
             try {
@@ -148,12 +150,12 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
             }
         }
     };
-   
+
     const handleDeactivateItem = async () => {
         if (editingService) {
             try {
                 const newActiveState = !editingService.is_active;
-                
+
                 const response = await fetch(`/api/services/items/?id=${modified_editing_item_service_id}`, {
                     method: 'PUT',
                     headers: {
@@ -185,14 +187,15 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
 
     return (
         <div>
-            <div className="flex  justify-end">
-            <BackButton />
-            </div>
+
             <Card className="overflow-hidden">
                 <CardHeader className="w-full flex bg-muted dark:bg-muted/50 border-b-2 flex-row justify-between">
                     <div className="w-fit">
                         <CardTitle className="text-2xl font-bold tracking-tight w-fit">Items del Servicio </CardTitle>
                         <CardDescription className="text-muted-foreground w-fit">Detalle de todos los Items del servicio</CardDescription>
+                    </div>
+                    <div className="flex  justify-end">
+                        <BackButton />
                     </div>
                 </CardHeader>
                 <CardContent className="py-4 px-4 ">
@@ -224,7 +227,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
                                         Precio
                                     </TableCell>
                                     <TableCell className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                        Activo
+                                        Estado
                                     </TableCell>
                                     <TableCell className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                         Cliente
@@ -241,7 +244,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
                                             <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{item.item_description}</TableCell>
                                             <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{item.item_measure_units?.unit}</TableCell>
                                             <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">${item.item_price}</TableCell>
-                                            <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{item.is_active ? 'Sí' : 'No'}</TableCell>
+                                            <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground"><Badge variant={item.is_active ? 'success' : 'default'}>{item.is_active ? 'Activo' : 'Inactivo'}</Badge></TableCell>
                                             <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{item.customer_id.name}</TableCell>
                                             <TableCell>
                                                 <Button onClick={() => handleEditClick(item)}>Editar</Button>

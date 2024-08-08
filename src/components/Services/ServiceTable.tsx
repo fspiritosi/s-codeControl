@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
 
 
 type Service = {
@@ -122,14 +123,14 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
             }
         }
     };
-    
+
     useEffect(() => {
         const channel = supabase.channel('custom-all-channel')
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'customer_services' },
                 async (payload) => {
-                    
+
                     const { data, error } = await supabase.from('customer_services').select('*');
                     if (error) {
                         console.error('Error fetching services:', error);
@@ -177,6 +178,7 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
                         <TableRow>
                             <TableCell>Nombre del Servicio</TableCell>
                             {/* <TableCell>Precio del Servicio</TableCell> */}
+                            <TableCell>Estado</TableCell>
                             <TableCell>Inicio del Servicio</TableCell>
                             <TableCell>Validez del Servicio</TableCell>
                             <TableCell>Cliente</TableCell>
@@ -187,9 +189,14 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
                             {filteredServices.map((service: Service) => (
                                 <TableRow key={service.id}>
                                     <Link href={`/dashboard/company/actualCompany/services/${service.id}`}>
-                                    <TableCell>{service.service_name}</TableCell>    
+                                        <TableCell>{service.service_name}</TableCell>
                                     </Link>
                                     {/* <TableCell>${service.service_price}</TableCell> */}
+                                    <TableCell>
+                                        <Badge variant={service.is_active ? 'success' : 'default'}>
+                                            {service.is_active ? 'Activo' : 'Inactivo'}
+                                        </Badge>
+                                    </TableCell>
                                     <TableCell>{service.service_start}</TableCell>
                                     <TableCell>{service.service_validity}</TableCell>
                                     <TableCell>{customers.find(customer => customer.id.toString() === service.customer_id.toString())?.name}</TableCell>
@@ -214,13 +221,6 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
                             onChange={(e: any) => setEditingService({ ...editingService, service_name: e.target.value })}
                             className="w-full p-2 mb-2 border border-gray-300 dark:border-gray-700 rounded"
                         />
-                        {/* <label htmlFor="service_price" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Precio del Servicio</label>
-                        <Input
-                            type="text"
-                            value={editingService.service_price}
-                            onChange={(e: any) => setEditingService({ ...editingService, service_price: e.target.value })}
-                            className="w-full p-2 mb-2 border border-gray-300 dark:border-gray-700 rounded"
-                        /> */}
                         <label htmlFor="service_start" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de inicio del Servicio</label>
                         <Input
                             type="text"
