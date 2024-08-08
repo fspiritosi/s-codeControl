@@ -362,14 +362,14 @@ export default function NewDocumentType({
                     <SelectContent>
                       <SelectItem value="Maneja">Maneja</SelectItem>
                       <SelectItem value="Habilitacion especial">Habilitacion especial</SelectItem>
-                      <SelectGroup>
+                      {/* <SelectGroup>
                         <SelectLabel>Siguientes Opciones</SelectLabel>
                         {Object.keys(EMPLOYEES_TABLE).map((e) => (
                           <SelectItem key={EMPLOYEES_TABLE[e]} value={EMPLOYEES_TABLE[e]}>
                             {EMPLOYEES_TABLE[e]}
                           </SelectItem>
                         ))}
-                      </SelectGroup>
+                      </SelectGroup> */}
                     </SelectContent>
                   </Select>
                 </div>
