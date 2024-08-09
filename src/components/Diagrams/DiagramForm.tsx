@@ -113,7 +113,7 @@ export function DiagramForm({
   }
   //CREA TODOS LOS REGISTROS EN LA BASE DE DATOS
   function createAll(data: DiagramaToCreate[]) {
-    console.log(data);
+    //console.log(data);
     data.map((novedad) => {
       try {
         createDiagram(novedad);
@@ -127,13 +127,12 @@ export function DiagramForm({
   //ACTUALIZA UN REGISTRO EN LA BASE DE DATOS
   async function updateDiagram(values: ErrorToCreate) {
     const data = values;
-    console.log(data);
+    //console.log(data);
     toast.promise(
       async () => {
         const valueToSend = JSON.stringify(values);
         const response = await fetch(`${URL}/api/employees/diagrams`, { method: 'PUT', body: valueToSend });
         return response;
-        console.log(response);
       },
       {
         loading: 'Cargando...',

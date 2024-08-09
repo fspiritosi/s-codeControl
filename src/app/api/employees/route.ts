@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       .select('*')
       // Filters
       .eq('company_id', company_id);
-      console.log(employees)
+      //console.log(employees)
     if (error) {
       throw new Error(JSON.stringify(error));
       
