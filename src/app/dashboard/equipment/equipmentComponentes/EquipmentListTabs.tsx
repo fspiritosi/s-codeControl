@@ -1,32 +1,36 @@
 import { CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabaseServer } from '@/lib/supabase/server';
-import { setEmployeesToShow } from '@/lib/utils/utils';
+import { setVehiclesToShow } from '@/lib/utils/utils';
 import { cookies } from 'next/headers';
-import { EmployeesListColumns } from '../../employee/columns';
 
-import { EmployeesTable } from '../../employee/data-table';
 import { EquipmentColums } from '../columns';
 import { EquipmentTable } from '../data-equipment';
 
 async function EquipmentListTabs({ inactives, actives }: { inactives?: boolean; actives?: boolean }) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
-  
+
   const supabase = supabaseServer();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  
+
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
-  const { data } = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
+  const { data: equipment } = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) =>
+    e.json()
+  );
   // const { data } = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
- 
-  const onlyVehicles = data?.filter((v: { type_of_vehicle: number }) => v.type_of_vehicle === 1);
-  const onlyNoVehicles = data?.filter((v: { type_of_vehicle: number }) => v.type_of_vehicle === 2);
 
- 
+  const onlyVehicles = setVehiclesToShow(
+    equipment?.filter((v: { type_of_vehicle: number }) => v.type_of_vehicle === 1)
+  );
+  const onlyNoVehicles = setVehiclesToShow(
+    equipment?.filter((v: { type_of_vehicle: number }) => v.type_of_vehicle === 2)
+  );
+  const data = setVehiclesToShow(equipment);
+
   return (
     <Tabs defaultValue="all">
       <CardContent>
@@ -37,13 +41,13 @@ async function EquipmentListTabs({ inactives, actives }: { inactives?: boolean; 
         </TabsList>
       </CardContent>
       <TabsContent value="all">
-        <EquipmentTable columns={EquipmentColums||[]} data={data || []} />
+        <EquipmentTable columns={EquipmentColums || []} data={data || []} />
       </TabsContent>
       <TabsContent value="vehicles">
-        <EquipmentTable columns={EquipmentColums||[]} data={onlyVehicles || []} />
+        <EquipmentTable columns={EquipmentColums || []} data={onlyVehicles || []} />
       </TabsContent>
       <TabsContent value="others">
-        <EquipmentTable columns={EquipmentColums||[]} data={onlyNoVehicles || []} />
+        <EquipmentTable columns={EquipmentColums || []} data={onlyNoVehicles || []} />
       </TabsContent>
     </Tabs>
   );

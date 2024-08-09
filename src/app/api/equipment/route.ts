@@ -9,8 +9,12 @@ export async function GET(request: NextRequest) {
   try {
     let { data: equipments, error } = await supabase
       .from('vehicles')
-      .select('*, brand_vehicles(name), model_vehicles(name),types_of_vehicles(name),type(name)')
-      // Filters
+      .select(
+        `*,
+      types_of_vehicles(name),
+      brand_vehicles(name),
+      model_vehicles(name)`
+      )
       .eq('company_id', company_id);
 
     const data = equipments;

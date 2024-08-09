@@ -4,6 +4,7 @@ import {
   EmployeesTableOptions,
   VehiclesTableOptions,
 } from '@/types/types';
+import { Vehicle } from '@/zodSchemas/schemas';
 import { format } from 'date-fns';
 import { supabaseServer } from '../supabase/server';
 
@@ -200,4 +201,12 @@ export const DOCUMENTS_TABLE: DocumentsTableOptions = {
   private:'Privados',
   special:'Especiales'
 
+};
+export const setVehiclesToShow = (vehicles: Vehicle) => {
+  return vehicles?.map((item) => ({
+    ...item,
+    types_of_vehicles: item.types_of_vehicles.name,
+    brand: item.brand_vehicles.name,
+    model: item.model_vehicles.name,
+  }));
 };
