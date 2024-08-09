@@ -103,15 +103,15 @@ export default function Cct() {
   const channels = supabase
     .channel('custom-all-channel')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'guild' }, (payload) => {
-      // console.log('Change received!', payload);
+      
       fetchGuild();
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'covenant' }, (payload) => {
-      // console.log('Change received!', payload);
+      
       fetchCovenant();
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'category' }, (payload) => {
-      // console.log('Change received!', payload);
+      
       fetchCategory();
     })
     .subscribe();

@@ -5,21 +5,20 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
   const user_id = searchParams.get('user');
- 
+  
   try {
-    let { data: equipments, error } = await supabase
-      .from('vehicles')
-      .select('*')
-      // Filters
-      // .eq('company_id', company_id);
+      let { data: customers, error } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('company_id', company_id);
+      
 
-    const data = equipments;
-    
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
-    return Response.json({ data });
+
+      if (error) {
+          throw new Error(JSON.stringify(error));
+      }
+      return Response.json({ customers });
   } catch (error) {
-    
+      console.log(error);
   }
 }

@@ -23,7 +23,7 @@ export default async function Customers() {
         data={contractorCompanies || []}
         localStorageName="customersColumns"
       />
-
+    
     </div>
   );
 }
