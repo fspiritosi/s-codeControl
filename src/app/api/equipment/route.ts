@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
       .from('vehicles')
       .select('*')
       // Filters
-      // .eq('company_id', company_id);
+      .eq('company_id', company_id);
 
     const data = equipments;
     
