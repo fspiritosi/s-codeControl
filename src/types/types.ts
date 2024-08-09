@@ -572,3 +572,75 @@ export interface FormData {
   form: FormField[];
   name: string;
 }
+
+export type EmployeesTableOptions = {
+  nationality: string;
+  lastname: string;
+  firstname: string;
+  cuil: string;
+  document_type: string;
+  document_number: string;
+  birthplace: string;
+  gender: string;
+  marital_status: string;
+  level_of_education: string;
+  province: string;
+  file: string;
+  normal_hours: string;
+  date_of_admission: string;
+  affiliate_status: string;
+  company_position: string;
+  city: string;
+  hierarchical_position: string;
+  workflow_diagram: string;
+  type_of_contract: string;
+  allocated_to: string;
+  status: string;
+  created_at: string;
+  is_active: string;
+};
+
+export type VehiclesTableOptions = {
+  created_at: string;
+  type_of_vehicle: string;
+  domain: string;
+  chassis: string;
+  engine: string;
+  serie: string;
+  intern_number: string;
+  year: string;
+  brand: string;
+  model: string;
+  is_active: string;
+  termination_date: string;
+  reason_for_termination: string;
+  type: string;
+  status: string;
+  allocated_to: string;
+};
+
+export type CompaniesTableOptions = {
+  company_name: string;
+  contact_email: string;
+  contact_phone: string;
+  address: string;
+  city: string;
+  country: string;
+  industry: string;
+  company_logo: string;
+  company_cuit: string;
+};
+
+export type DocumentsTableOptions = {
+  created_at: string,
+  name: string,
+  applies: string,
+  multiresource: string,
+  mandatory: string,
+  explired: string,
+  special: string,
+  description: string,
+  is_it_montlhy: string,
+  private: string,
+  down_document: string
+};
