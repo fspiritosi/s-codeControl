@@ -191,8 +191,7 @@ export const CovenantRegister = () => {
                 .eq('guild_id', guild_id)
 
             // .eq('guild_id(is_active)', true)
-            console.log(covenants, 'covenants')
-
+           
             setData({
                 ...data,
 
@@ -341,11 +340,11 @@ export const CovenantRegister = () => {
                                                                                 key={option.name}
                                                                                 onSelect={() => {
                                                                                     form.setValue('guild', option.name);
-                                                                                    console.log(option.id, 'option.id')
+                                                                                    
                                                                                     const guild_id = data?.guild?.find((e) => e.id === option?.id);
 
                                                                                     setGuildId(guild_id as any || null)
-                                                                                    console.log(guild_id?.id, 'guild_id')
+                                                                                   
                                                                                     fetchData(guild_id?.id as any)
                                                                                     form.setValue('covenants', '');
                                                                                 }}

@@ -20,9 +20,9 @@ async function EquipmentListTabs({ inactives, actives }: { inactives?: boolean; 
   
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
-
   const { data } = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
-  
+  // const { data } = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
+ 
   const onlyVehicles = data?.filter((v: { type_of_vehicle: number }) => v.type_of_vehicle === 1);
   const onlyNoVehicles = data?.filter((v: { type_of_vehicle: number }) => v.type_of_vehicle === 2);
 

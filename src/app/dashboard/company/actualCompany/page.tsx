@@ -13,6 +13,7 @@ import CreatedForm from '../../maintenance/components/CreatedForm';
 import Contacts from '../contact/Contact';
 import Customers from '../customers/Customers';
 import Cct from './covenant/CctComponent';
+import ServiceComponent from '@/components/Services/ServiceComponent'
 export default async function CompanyPage() {
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
@@ -128,6 +129,20 @@ export default async function CompanyPage() {
           // buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
           component: <CreatedForm />,
         },
+      },
+      {
+        value:"service",
+        name:"Servicios",
+        restricted:[""],
+        content:{
+          title:"Servicios de la empresa",
+          description:"Crear y ver servicios de la empresa",
+          buttonActioRestricted: [''],
+          buttonAction:(
+          ''
+        ),
+          component:<ServiceComponent/>
+        }
       },
       // {
       //   value:"modules",
