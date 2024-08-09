@@ -55,6 +55,8 @@ npx supabase migration up
 
 ```
 
+## Subir cambios a la DB - PREVIO SE DEBE ASEGURAR TENER LA DB ACTUALIZADA
+
 Esto actualiza nuestra base de datos local igualandola con la de producción, pero mantiene los cambios que hayamos realizado en local.
 
 ##### Crear la migración de los ultimos cambios
@@ -75,7 +77,7 @@ npx supabase db push
 
 ```bash
 git  add .
-git commit -m "nombredel Commit"
+git commit -m "nombre del Commit"
 git push
 
 ```
