@@ -22,6 +22,22 @@ export function FormUseChart({
     return monthNames[month - 1];
   };
 
+  console.log(chartData);
+
+  const porcentajeCambio = chartData[5].respuestas - chartData[4].respuestas;
+  let porcentajeTexto;
+
+  if (chartData[4].respuestas === 0) {
+    if (chartData[5].respuestas > 0) {
+      porcentajeTexto = 'Incremento significativo este mes';
+    } else {
+      porcentajeTexto = 'sin cambios este mes';
+    }
+  } else {
+    const porcentaje = (porcentajeCambio / chartData[4].respuestas) * 100;
+    porcentajeTexto = `Tendencia al alza por ${porcentaje.toFixed(1)}% este mes`;
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -54,8 +70,8 @@ export function FormUseChart({
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+        <div className="flex gap-2 font-medium leading-none items-center">
+          {porcentajeTexto} <TrendingUp className="size-5" />
         </div>
         <div className="leading-none text-muted-foreground">Comparacion de respuestas de los ultimos 6 meses</div>
       </CardFooter>

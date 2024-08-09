@@ -9,7 +9,7 @@ import Viewcomponent from '@/components/ViewComponent';
 import { buttonVariants } from '@/components/ui/button';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
-import { FormCustomContainer } from '../../maintenance/components/FormCustomContainer';
+import CreatedForm from '../../maintenance/components/CreatedForm';
 import Contacts from '../contact/Contact';
 import Customers from '../customers/Customers';
 import Cct from './covenant/CctComponent';
@@ -126,7 +126,7 @@ export default async function CompanyPage() {
           description: 'Formularios de empresa',
           buttonActioRestricted: [''],
           // buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
-          component: <FormCustomContainer company={true} />,
+          component: <CreatedForm />,
         },
       },
       // {

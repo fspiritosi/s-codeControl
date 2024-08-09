@@ -7,8 +7,7 @@ import EmployeeDocumentsTabs from '../document/documentComponents/EmployeeDocume
 import EmployeeListTabs from '../document/documentComponents/EmployeeListTabs';
 import TypesDocumentAction from '../document/documentComponents/TypesDocumentAction';
 import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
-
-import { FormCustomContainer } from '../maintenance/components/FormCustomContainer';
+import CreatedForm from '../maintenance/components/CreatedForm';
 
 const EmployeePage = async () => {
   const viewData = {
@@ -83,8 +82,7 @@ const EmployeePage = async () => {
           title: 'Formularios',
           description: 'Formularios de empleados',
           buttonActioRestricted: [''],
-          // buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
-          component: <FormCustomContainer employees={true} />,
+          component: <CreatedForm />,
         },
       },
     ],
