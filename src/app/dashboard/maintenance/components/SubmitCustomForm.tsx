@@ -5,6 +5,7 @@ import { Form } from '@/components/ui/form';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { FormField } from '@/types/types';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -13,14 +14,16 @@ import { buildFormData, buildFormSchema } from '../formUtils/formUtils';
 
 interface Props {
   campos: any[] | null;
+  fetchAnswers?: () => Promise<void>;
 }
 
-export function SubmitCustomForm({ campos }: Props) {
+export function SubmitCustomForm({ campos, fetchAnswers }: Props) {
   const formObject = buildFormData(campos, false);
   const FormSchema = buildFormSchema(formObject);
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
   });
+  const router = useRouter();
 
   async function handleCustomFormSubmit(data: z.infer<typeof FormSchema>) {
     toast.promise(
@@ -33,13 +36,14 @@ export function SubmitCustomForm({ campos }: Props) {
         if (error) {
           throw new Error(error.message);
         }
+        if (fetchAnswers) await fetchAnswers();
       },
       {
         loading: 'Guardando...',
         success: () => {
           document.getElementById('close-drawer')?.click();
-
-          return 'Respuesta guardada exitosamente'},
+          return 'Respuesta guardada exitosamente';
+        },
         error: (error) => {
           return error;
         },

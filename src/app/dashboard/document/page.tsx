@@ -3,12 +3,12 @@ import Viewcomponent from '@/components/ViewComponent';
 import { supabaseServer } from '@/lib/supabase/server';
 import { CompanyDocumentsType } from '@/store/loggedUser';
 import { cookies } from 'next/headers';
+import CreatedForm from '../maintenance/components/CreatedForm';
 import CompanyTabs from './documentComponents/CompanyTabs';
 import EmployeeDocumentsTabs from './documentComponents/EmployeeDocumentsTabs';
 import EquipmentTabs from './documentComponents/EquipmentTabs';
 import TypesDocumentAction from './documentComponents/TypesDocumentAction';
 import TypesDocumentsView from './documentComponents/TypesDocumentsView';
-import { FormCustomContainer } from '../maintenance/components/FormCustomContainer';
 
 export default async function page() {
   const supabase = supabaseServer();
@@ -48,7 +48,7 @@ export default async function page() {
               <DocumentNav />
             </div>
           ),
-          component: <EmployeeDocumentsTabs />
+          component: <EmployeeDocumentsTabs />,
         },
       },
       {
@@ -104,7 +104,7 @@ export default async function page() {
           description: 'Formularios de documentos',
           buttonActioRestricted: [''],
           // buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
-          component: <FormCustomContainer documents={true} />,
+          component: <CreatedForm />,
         },
       },
     ],

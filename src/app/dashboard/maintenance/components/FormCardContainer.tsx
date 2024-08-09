@@ -82,7 +82,7 @@ function FormCardContainer({
   showAnswers?: boolean;
 }) {
   const [formData, setFormData] = useState<FormData[]>(form);
-
+  console.log(formData);
   const searchParams = useSearchParams();
   const params = new URLSearchParams(searchParams);
   const formId = params.get('form_id');
@@ -121,10 +121,8 @@ function FormCardContainer({
   const chartConfigForEmployees = generateChartConfig(groupedForms, 'employees');
   const chartDataForEmployees = generateChartData(chartConfigForEmployees.employees || {}, groupedForms.employees);
 
-
   const chartConfigForEquipment = generateChartConfig(groupedForms, 'equipment');
   const chartDataForEquipment = generateChartData(chartConfigForEquipment.equipment || {}, groupedForms.equipment);
-
 
   const chartConfigForCompany = generateChartConfig(groupedForms, 'company');
   const chartDataForCompany = generateChartData(chartConfigForCompany.company || {}, groupedForms.company);
@@ -154,7 +152,6 @@ function FormCardContainer({
   }, [formId]);
 
   const formKeys = Object.keys(JSON.parse(forms?.[0]?.answer || '{}'));
-
 
   return (
     <>
@@ -220,7 +217,6 @@ function FormCardContainer({
               <div className="flex gap-4 flex-wrap">
                 {groupedForms.employees?.map((form: FormData, index: number) => (
                   <FormCard
-                    showAnswers={showAnswers}
                     chartConfig={chartConfigForEmployees}
                     chartData={chartDataForEmployees}
                     key={index}
@@ -235,7 +231,6 @@ function FormCardContainer({
               <div className="flex gap-4 flex-wrap">
                 {groupedForms.equipment?.map((form: FormData, index: number) => (
                   <FormCard
-                    showAnswers={showAnswers}
                     chartConfig={chartConfigForEquipment}
                     chartData={chartDataForEquipment}
                     key={index}
@@ -250,7 +245,6 @@ function FormCardContainer({
               <div className="flex gap-4 flex-wrap">
                 {groupedForms.company?.map((form: FormData, index: number) => (
                   <FormCard
-                    showAnswers={showAnswers}
                     chartConfig={chartConfigForCompany}
                     chartData={chartDataForCompany}
                     key={index}
@@ -265,7 +259,6 @@ function FormCardContainer({
               <div className="flex gap-4 flex-wrap">
                 {groupedForms.documents?.map((form: FormData, index: number) => (
                   <FormCard
-                    showAnswers={showAnswers}
                     chartConfig={chartConfigForDocuments}
                     chartData={chartDataForDocuments}
                     key={index}

@@ -1,6 +1,5 @@
 import Viewcomponent from '@/components/ViewComponent';
 import CreatedForm from './components/CreatedForm';
-import { FormCustomContainer } from './components/FormCustomContainer';
 import NewForm from './components/NewForm';
 
 function MandenimientoPage() {
@@ -29,17 +28,17 @@ function MandenimientoPage() {
           component: <NewForm />,
         },
       },
-      {
-        value: 'Cargados',
-        name: 'Formularios cargados',
-        restricted: [''],
-        content: {
-          title: 'Formularios cargados',
-          description: 'Aquí encontrarás todos los formularios cargados',
-          buttonActioRestricted: [''],
-          component: <FormCustomContainer showAnswers={true} employees={true} company={true}  documents={true} equipment={true} />,
-        },
-      },
+      // {
+      //   value: 'Cargados',
+      //   name: 'Formularios cargados',
+      //   restricted: [''],
+      //   content: {
+      //     title: 'Formularios cargados',
+      //     description: 'Aquí encontrarás todos los formularios cargados',
+      //     buttonActioRestricted: [''],
+      //     component: <FormCustomContainer showAnswers={true} employees={true} company={true}  documents={true} equipment={true} />,
+      //   },
+      // },
     ],
   };
 
