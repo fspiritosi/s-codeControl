@@ -16,7 +16,7 @@ export function DiagramNewTypeForm({ selectedDiagram }: { selectedDiagram?: any 
     short_description: z.string().min(1, { message: 'La descripción dorta no puede estar vacía' }),
     color: z.string().min(1, { message: 'Por favor selecciona un color para la novedad' }),
   });
-  console.log(selectedDiagram);
+
   type NewDiagramType = z.infer<typeof NewDiagramType>;
 
   const form = useForm<NewDiagramType>({

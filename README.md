@@ -34,3 +34,52 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+
+## Actualizar Supabase DB
+
+Para sincronizar la Base de datos Local con la Deploy seguir los siguientes pasos.
+
+##### Actualizar la rama local con dev
+
+```bash
+git pull origin dev
+
+```
+
+Esto asegura que tenemos la ultima migración que se encuentra en producción.
+
+Una vez tengamos la ultima migración en nuestro local, se debe correr
+
+```bash
+npx supabase migration up
+
+```
+
+## Subir cambios a la DB - PREVIO SE DEBE ASEGURAR TENER LA DB ACTUALIZADA
+
+Esto actualiza nuestra base de datos local igualandola con la de producción, pero mantiene los cambios que hayamos realizado en local.
+
+##### Crear la migración de los ultimos cambios
+
+```bash
+npx supabase db diff -f nombreDeLaMigracion
+
+```
+
+##### Enviar los cambios de la migración a producción
+
+```bash
+npx supabase db push
+
+```
+
+##### Crear un commit de la rama con la nueva migración.
+
+```bash
+git  add .
+git commit -m "nombre del Commit"
+git push
+
+```
+
+##### Crear un PR para incluir los cambios de la migración en DEV.
