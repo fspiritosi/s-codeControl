@@ -614,9 +614,20 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
     if (dataEmployes?.length === 1000) {
       const { data: data2, error: error2 } = await supabase
-        .from('documents_employees')
-        .select(`*, employees:employees(*,contractor_employee(customers(*))), document_types:document_types(*)`)
-        .eq('employees.company_id', get()?.actualCompany?.id)
+      .from('documents_employees')
+      .select(
+        `
+    *,
+    employees:employees(*,contractor_employee(
+      customers(
+        *
+      )
+    )),
+    document_types:document_types(*)
+`
+      )
+      .not('employees', 'is', null)
+      .eq('employees.company_id', get()?.actualCompany?.id)
         .range(1000, 2000);
 
       if (data2) data = data ? [...data, ...data2] : data2;
@@ -759,6 +770,10 @@ export const useLoggedUserStore = create<State>((set, get) => {
             })
             ?.map(mapVehicle) || [],
       };
+      console.log(
+        'lastMonthValues',
+        data?.find((e) => e.id === 'ab7e2558-dcb0-4c47-8172-d2472e3bccad')
+      );
 
       const pendingDocuments = {
         employees:
