@@ -9,7 +9,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     // console.log(id); //AQUI ME QUEDE
 
     try {
-        let { data: employee, error } = await supabase
+        let { data: service, error } = await supabase
             .from('service_items')
             .select(`*`)
             .eq('company_id', company_id)
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         if (error) {
             throw new Error(JSON.stringify(error));
         }
-        return Response.json({ employee });
+        return Response.json({ service });
     } catch (error) {
         console.log(error);
     }

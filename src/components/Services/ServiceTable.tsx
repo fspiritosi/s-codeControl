@@ -12,9 +12,9 @@ import { Badge } from '@/components/ui/badge';
 
 
 type Service = {
-    id: number;
+    id: string;
     service_name: string;
-    customer_id: number;
+    customer_id: string;
     description: string;
     service_price: number;
     service_start: string;
@@ -40,7 +40,7 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [isActiveFilter, setIsActiveFilter] = useState(true);
 
-
+    console.log(customers)
     useEffect(() => {
         filterServices();
     }, [selectedCustomer, isActiveFilter, services]);
@@ -64,6 +64,7 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
 
     const handleSave = async () => {
         if (editingService) {
+            console.log('editingService', editingService);
             try {
                 const response = await fetch(`/api/services/?id=${modified_editing_service_id}`, {
                     method: 'PUT',
@@ -199,7 +200,7 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
                                     </TableCell>
                                     <TableCell>{service.service_start}</TableCell>
                                     <TableCell>{service.service_validity}</TableCell>
-                                    <TableCell>{customers.find(customer => customer.id.toString() === service.customer_id.toString())?.name}</TableCell>
+                                    <TableCell>{customers.find(customer => customer.id.toString() === service.customer_id?.toString())?.name}</TableCell>
                                     <TableCell>
                                         <Button onClick={() => handleEditClick(service)}>Editar</Button>
                                     </TableCell>
@@ -238,11 +239,11 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
                         <label htmlFor="customer" className="block mt-4">Cliente</label>
                         <select
                             id="customer"
-                            value={editingService.customer_id}
+                            value={String(editingService.customer_id)}
                             onChange={(e) =>
                                 setEditingService({
                                     ...editingService,
-                                    customer_id: Number(e.target.value),
+                                    customer_id: e.target.value,
                                 })
                             }
                             className="block w-full mt-2 p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-black dark:text-white"

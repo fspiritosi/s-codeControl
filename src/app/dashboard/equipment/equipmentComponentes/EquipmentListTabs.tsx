@@ -22,7 +22,7 @@ async function EquipmentListTabs({ inactives, actives }: { inactives?: boolean; 
     e.json()
   );
   // const { data } = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
-
+ console.log(equipment);
   const onlyVehicles = setVehiclesToShow(
     equipment?.filter((v: { type_of_vehicle: number }) => v.type_of_vehicle === 1)
   );

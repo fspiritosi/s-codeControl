@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
           
     
         const data = measure;
-    
+        console.log(data);
         if (error) {
           throw new Error(JSON.stringify(error));
         }
