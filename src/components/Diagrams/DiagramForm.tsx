@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -33,7 +34,7 @@ export function DiagramForm({
   const [succesDiagrams, setSuccesDiagrams] = useState<DiagramaToCreate[]>([]);
   const [errorsDiagrams, setErrorsDiagrams] = useState<ErrorToCreate[]>([]);
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
-
+  const router = useRouter();
   useEffect(() => {
     if (fromDate && toDate) {
       const diferenciaMilisegundos = toDate.getTime() - fromDate.getTime();
@@ -153,7 +154,48 @@ export function DiagramForm({
   }
 
   //ACTUALIZA TODOS LOS REGISTROS EN LA BASE DE DATOS
-  async function updateAll(data: ErrorToCreate[]) {}
+  async function updateAll(data: ErrorToCreate[]) {
+    data.map((novedad) => {
+      try {
+        updateDiagram(novedad);
+        setErrorsDiagrams([]);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+  }
+
+  //FUNCION DESCARTAR UNO
+  // function descartarOne(data: any, index: number) {
+  //   const successDiagramDeleteOne = succesDiagrams.filter(
+  //     (d) => d.day != data.day && d.month != data.month && d.year != data.year
+  //   );
+  //   const errorDiagramDeletdOne = errorsDiagrams.filter(
+  //     (d) => d.day != data.day && d.month != data.month && d.year != data.year
+  //   );
+  //   if (successDiagramDeleteOne.length > 0) setSuccesDiagrams(successDiagramDeleteOne);
+  //   if (errorDiagramDeletdOne.length > 0) setErrorsDiagrams(errorDiagramDeletdOne);
+  // }
+
+  function descartarOne(data: any, index: number, from: string) {
+    // Filtrar el elemento específico por índice en succesDiagrams
+    if (from === 's') {
+      const successDiagramDeleteOne = succesDiagrams.filter((_, i) => i !== index);
+      // Actualizar los estados solo si hay cambios
+      if (successDiagramDeleteOne.length !== succesDiagrams.length) {
+        setSuccesDiagrams(successDiagramDeleteOne);
+      }
+    }
+
+    if (from === 'e') {
+      // Filtrar el elemento específico por índice en errorsDiagrams
+      const errorDiagramDeleteOne = errorsDiagrams.filter((_, i) => i !== index);
+
+      if (errorDiagramDeleteOne.length !== errorsDiagrams.length) {
+        setErrorsDiagrams(errorDiagramDeleteOne);
+      }
+    }
+  }
 
   async function onSubmit2(values: Diagram) {
     const data = values;
@@ -380,7 +422,11 @@ export function DiagramForm({
                         <Button variant={'default'} onClick={() => updateDiagram(d)}>
                           Actualizar
                         </Button>
-                        <Button variant={'link'} className="font-bold text-red-600">
+                        <Button
+                          variant={'link'}
+                          className="font-bold text-red-600"
+                          onClick={() => descartarOne(d, index, 'e')}
+                        >
                           Descartar
                         </Button>
                       </TableCell>
@@ -391,7 +437,9 @@ export function DiagramForm({
             </CardContent>
             {errorsDiagrams.length > 1 && (
               <CardFooter className="flex justify-around">
-                <Button variant={'default'}>Actualizar Todos</Button>
+                <Button variant={'default'} onClick={() => updateAll(errorsDiagrams)}>
+                  Actualizar Todos
+                </Button>
                 <Button variant={'link'} className="font-bold text-red-600">
                   Descartar Todos
                 </Button>
@@ -424,7 +472,11 @@ export function DiagramForm({
                         <Button variant={'success'} onClick={() => createDiagram(d)}>
                           Crear
                         </Button>
-                        <Button variant={'link'} className="font-bold text-red-600">
+                        <Button
+                          variant={'link'}
+                          className="font-bold text-red-600"
+                          onClick={() => descartarOne(d, index, 's')}
+                        >
                           Descartar
                         </Button>
                       </TableCell>

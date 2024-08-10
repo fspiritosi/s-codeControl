@@ -58,7 +58,6 @@ export async function POST(request: NextRequest){
 export async function PUT(request:NextRequest) {
   const supabase = supabaseServer();
   const bodyData = await request.json()
-  console.log(bodyData)
   try {
     const { data, error } = await supabase
     .from('employees_diagram')
