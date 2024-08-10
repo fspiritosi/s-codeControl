@@ -197,6 +197,16 @@ export function DiagramForm({
     }
   }
 
+  function descartarAll(from: string) {
+    if (from === 's') {
+      setSuccesDiagrams([]);
+    }
+
+    if (from === 'e') {
+      setErrorsDiagrams([]);
+    }
+  }
+
   async function onSubmit2(values: Diagram) {
     const data = values;
     const tipoDeDiagrama: any = diagrams_types.find((d: any) => d.id === data.event_diagram);
@@ -440,7 +450,7 @@ export function DiagramForm({
                 <Button variant={'default'} onClick={() => updateAll(errorsDiagrams)}>
                   Actualizar Todos
                 </Button>
-                <Button variant={'link'} className="font-bold text-red-600">
+                <Button variant={'link'} className="font-bold text-red-600" onClick={() => descartarAll('e')}>
                   Descartar Todos
                 </Button>
               </CardFooter>
@@ -490,7 +500,7 @@ export function DiagramForm({
                 <Button variant={'success'} onClick={() => createAll(succesDiagrams)}>
                   Crear Todos
                 </Button>
-                <Button variant={'link'} className="font-bold text-red-600">
+                <Button variant={'link'} className="font-bold text-red-600" onClick={() => descartarAll('s')}>
                   Descartar Todos
                 </Button>
               </CardFooter>
