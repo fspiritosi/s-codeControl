@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-
+import { z } from 'zod';
 
 type Service = {
     id: string;
@@ -32,6 +32,18 @@ type ServiceTableProps = {
     customers: Customer[];
 };
 
+const dateSchema = z.object({
+    service_start: z.string().refine((date) => !isNaN(Date.parse(date)), {
+        message: 'Fecha de inicio no válida',
+    }),
+    service_validity: z.string().refine((date) => !isNaN(Date.parse(date)), {
+        message: 'Fecha de validez no válida',
+    }),
+}).refine((data) => new Date(data.service_start) < new Date(data.service_validity), {
+    message: 'La fecha de inicio debe ser menor que la fecha de validez del servicio',
+    path: ['service_validity'],
+});
+
 const ServiceTable = ({ services, customers }: ServiceTableProps) => {
     const supabase = supabaseBrowser();
     const [filteredServices, setFilteredServices] = useState<Service[]>(services);
@@ -39,6 +51,7 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
     const [editingService, setEditingService] = useState<Service | null>(null);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [isActiveFilter, setIsActiveFilter] = useState(true);
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
     console.log(customers)
     useEffect(() => {
@@ -61,11 +74,22 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
         setEditingService(service);
         setIsModalOpen(true);
     };
+    const closeModal = () => {
+        setErrors({});
+        setIsModalOpen(false);
+    };
 
     const handleSave = async () => {
         if (editingService) {
             console.log('editingService', editingService);
             try {
+                dateSchema.parse({
+                    service_start: editingService.service_start,
+                    service_validity: editingService.service_validity,
+                });
+
+                setErrors({});
+
                 const response = await fetch(`/api/services/?id=${modified_editing_service_id}`, {
                     method: 'PUT',
                     headers: {
@@ -88,8 +112,17 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
                     console.error('Error al actualizar el servicio');
                     toast.error('Error al actualizar el servicio');
                 }
-            } catch (error) {
-                console.error('Error al actualizar el servicio:', error);
+            } catch (e) {
+                if (e instanceof z.ZodError) {
+                    const newErrors: { [key: string]: string } = {};
+                    e.errors.forEach(error => {
+                        newErrors[error.path[0]] = error.message;
+                    });
+                    setErrors(newErrors);
+                } else {
+                    console.error('Error inesperado:', e);
+                    toast.error('Error inesperado al actualizar el servicio');
+                }
             }
         }
     };
@@ -224,18 +257,20 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
                         />
                         <label htmlFor="service_start" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de inicio del Servicio</label>
                         <Input
-                            type="text"
+                            type="date"
                             value={editingService.service_start}
                             onChange={(e: any) => setEditingService({ ...editingService, service_start: e.target.value })}
                             className="w-full p-2 mb-2 border border-gray-300 dark:border-gray-700 rounded"
                         />
+                        {errors.service_start && <span className='text-red-600 text-xs'>{errors.service_start}</span>}
                         <label htmlFor="service_validity" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Validez del precio del Servicio</label>
                         <Input
-                            type="text"
+                            type="date"
                             value={editingService.service_validity}
                             onChange={(e: any) => setEditingService({ ...editingService, service_validity: e.target.value })}
                             className="w-full p-2 mb-2 border border-gray-300 dark:border-gray-700 rounded"
                         />
+                        {errors.service_validity && <span className='text-red-600 text-xs'>{errors.service_validity}</span>}
                         <label htmlFor="customer" className="block mt-4">Cliente</label>
                         <select
                             id="customer"
@@ -256,7 +291,7 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
                         </select>
                         <div className="flex justify-end space-x-2 mt-4">
                             <Button onClick={handleSave}   >Guardar</Button>
-                            <Button onClick={() => setIsModalOpen(false)} >Cancelar</Button>
+                            <Button onClick={closeModal} >Cancelar</Button>
                             <Button onClick={handleDeactivate} variant={editingService.is_active ? 'destructive' : 'success'}>
                                 {editingService.is_active ? 'Dar de Baja' : 'Dar de Alta'}
                             </Button>
