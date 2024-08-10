@@ -165,18 +165,6 @@ export function DiagramForm({
     });
   }
 
-  //FUNCION DESCARTAR UNO
-  // function descartarOne(data: any, index: number) {
-  //   const successDiagramDeleteOne = succesDiagrams.filter(
-  //     (d) => d.day != data.day && d.month != data.month && d.year != data.year
-  //   );
-  //   const errorDiagramDeletdOne = errorsDiagrams.filter(
-  //     (d) => d.day != data.day && d.month != data.month && d.year != data.year
-  //   );
-  //   if (successDiagramDeleteOne.length > 0) setSuccesDiagrams(successDiagramDeleteOne);
-  //   if (errorDiagramDeletdOne.length > 0) setErrorsDiagrams(errorDiagramDeletdOne);
-  // }
-
   function descartarOne(data: any, index: number, from: string) {
     // Filtrar el elemento específico por índice en succesDiagrams
     if (from === 's') {
