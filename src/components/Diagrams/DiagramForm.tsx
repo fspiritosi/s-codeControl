@@ -46,12 +46,23 @@ export function DiagramForm({
     }
   }, [fromDate && toDate]);
 
-  const Diagram = z.object({
-    employee: z.string().min(1, { message: 'Debe selecciónar un empleado' }),
-    event_diagram: z.string().min(1, { message: 'Debe selecciónar un tipo de novedad' }),
-    initial_date: z.date(),
-    finaly_date: z.date(),
-  });
+  // const Diagram = z.object({
+  //   employee: z.string().min(1, { message: 'Debe selecciónar un empleado' }),
+  //   event_diagram: z.string().min(1, { message: 'Debe selecciónar un tipo de novedad' }),
+  //   initial_date: z.date(),
+  //   finaly_date: z.date()
+  // });
+  const Diagram = z
+    .object({
+      employee: z.string().min(1, { message: 'Debe seleccionar un empleado' }),
+      event_diagram: z.string().min(1, { message: 'Debe seleccionar un tipo de novedad' }),
+      initial_date: z.date(),
+      finaly_date: z.date(),
+    })
+    .refine((data) => data.finaly_date >= data.initial_date, {
+      message: 'La fecha final no puede ser menor que la fecha inicial',
+      path: ['finaly_date'], // Indica que el error está en el campo finaly_date
+    });
 
   type Diagram = z.infer<typeof Diagram>;
 
@@ -164,7 +175,7 @@ export function DiagramForm({
       }
     });
   }
-
+  //DESCARTAR UN SOLO REGISTRO DEL ARRAY CORRESPONDIENTE
   function descartarOne(data: any, index: number, from: string) {
     // Filtrar el elemento específico por índice en succesDiagrams
     if (from === 's') {
@@ -184,7 +195,7 @@ export function DiagramForm({
       }
     }
   }
-
+  //DESCARTAR TODOS LOS REGISTROS DEL ARRAY CORRESPONDIENTE
   function descartarAll(from: string) {
     if (from === 's') {
       setSuccesDiagrams([]);
