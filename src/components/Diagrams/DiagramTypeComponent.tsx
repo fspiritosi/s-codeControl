@@ -11,11 +11,8 @@ function DiagramTypeComponent({ diagrams_types }: { diagrams_types: [] }) {
   const [selectDiagramType, setSelectDiagramType] = useState<{}>({});
 
   function setDiagram(data: any) {
-    console.log('click me');
     setSelectDiagramType(data);
   }
-
-  //console.log(selectDiagramType)
 
   useEffect(() => {
     setSelectDiagramType({});
@@ -57,19 +54,14 @@ function DiagramTypeComponent({ diagrams_types }: { diagrams_types: [] }) {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex gap-2 justify-center">
-                    <Button
-                      size={'sm'}
-                      variant={'link'}
-                      className="hover:text-blue-400"
-                      onClick={() => setDiagram(diagramType)}
-                    >
-                      Editar
-                    </Button>
-                    <Button size={'sm'} variant={'link'} className="hover:text-red-500">
-                      Eliminar
-                    </Button>
-                  </div>
+                  <Button
+                    size={'sm'}
+                    variant={'link'}
+                    className="hover:text-blue-400"
+                    onClick={() => setDiagram(diagramType)}
+                  >
+                    Editar
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

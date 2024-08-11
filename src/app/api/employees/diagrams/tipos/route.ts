@@ -50,3 +50,25 @@ export async function POST(request: NextRequest){
     
 
 }
+
+
+export async function PUT(request: NextRequest){
+    const supabase = supabaseServer();
+    const { id, name, color, short_description } = await request.json();
+    const searchParams = request.nextUrl.searchParams;
+    
+    try {
+        const { data, error } = await supabase
+            .from('diagram_type')
+            .update({ name, color, short_description })
+            .eq('id', id)
+            
+        
+        if (!error) {
+            return Response.json(data);
+        }
+        console.log(error);
+    } catch (error) {
+        console.log(error);
+    }
+}

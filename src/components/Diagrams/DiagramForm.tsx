@@ -122,6 +122,7 @@ export function DiagramForm({
           diagram.day !== data.day
       )
     );
+    router.refresh();
   }
   //CREA TODOS LOS REGISTROS EN LA BASE DE DATOS
   function createAll(data: DiagramaToCreate[]) {
@@ -134,6 +135,7 @@ export function DiagramForm({
         console.log(error);
       }
     });
+    router.refresh();
   }
 
   //ACTUALIZA UN REGISTRO EN LA BASE DE DATOS
@@ -162,6 +164,7 @@ export function DiagramForm({
           diagram.day !== data.day
       )
     );
+    router.refresh();
   }
 
   //ACTUALIZA TODOS LOS REGISTROS EN LA BASE DE DATOS
@@ -174,6 +177,7 @@ export function DiagramForm({
         console.log(error);
       }
     });
+    router.refresh();
   }
   //DESCARTAR UN SOLO REGISTRO DEL ARRAY CORRESPONDIENTE
   function descartarOne(data: any, index: number, from: string) {
