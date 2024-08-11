@@ -29,10 +29,6 @@ export function DiagramNewTypeForm({ selectedDiagram }: { selectedDiagram?: any 
   });
 
   async function onSubmit(values: NewDiagramType) {
-    // selectedDiagram
-    // ?
-    // console.log('aca llego',values)
-    // :
     toast.promise(
       async () => {
         const data = JSON.stringify(values);
@@ -59,7 +55,11 @@ export function DiagramNewTypeForm({ selectedDiagram }: { selectedDiagram?: any 
           render={({ field }) => (
             <FormItem>
               <FormLabel>Nombre de la novedad</FormLabel>
-              <Input placeholder="Ingresa un nombre para la novedad" {...field} value={selectedDiagram?.name} />
+              <Input
+                placeholder="Ingresa un nombre para la novedad"
+                {...field}
+                value={selectedDiagram ? selectedDiagram?.name : ''}
+              />
               <FormMessage />
             </FormItem>
           )}
@@ -73,7 +73,7 @@ export function DiagramNewTypeForm({ selectedDiagram }: { selectedDiagram?: any 
               <Input
                 placeholder="Ingresa una descripción corta, ej: TD"
                 {...field}
-                value={selectedDiagram?.short_description}
+                value={selectedDiagram ? selectedDiagram?.short_description : ''}
               />
               <FormMessage />
             </FormItem>
@@ -90,7 +90,7 @@ export function DiagramNewTypeForm({ selectedDiagram }: { selectedDiagram?: any 
                 placeholder="Elige un color"
                 type="color"
                 {...field}
-                value={selectedDiagram?.color}
+                value={selectedDiagram ? selectedDiagram?.color : ''}
               />
               <FormMessage />
             </FormItem>
