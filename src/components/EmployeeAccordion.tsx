@@ -102,7 +102,7 @@ export default function EmployeeAccordion({
 }: {
   role: string | null;
   user: any;
-  diagrams: diagram[] | [];
+  diagrams: diagram[];
 }) {
   const profile = useLoggedUserStore((state) => state);
   const share = useLoggedUserStore((state) => state.sharedCompanies);
