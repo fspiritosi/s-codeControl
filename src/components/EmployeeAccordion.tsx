@@ -1385,7 +1385,7 @@ export default function EmployeeAccordion({ role, user }: { role: string | null;
                     control={form.control}
                     name="guild"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col min-w-[250px] ">
+                      <FormItem className="flex flex-col min-w-[250px] overflow-x-hidden">
                         <FormLabel>Asosiacion gremial</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
@@ -1397,11 +1397,13 @@ export default function EmployeeAccordion({ role, user }: { role: string | null;
                                 value={field.value}
                                 className={cn('w-[300px] justify-between', !field.value && 'text-muted-foreground')}
                               >
+                                
                                 {typeof field.value === 'string'
                                   ? field.value
                                   : field.value
                                     ? getFieldName(field.value)
                                     : 'Seleccionar Asosiacion gremial'}
+                                
                                 <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </FormControl>
@@ -1465,7 +1467,7 @@ export default function EmployeeAccordion({ role, user }: { role: string | null;
                     control={form.control}
                     name="covenants"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col min-w-[250px] ">
+                      <FormItem className="flex flex-col min-w-[250px] overflow-x-hidden">
                         <FormLabel>Convenio</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
@@ -1551,7 +1553,7 @@ export default function EmployeeAccordion({ role, user }: { role: string | null;
                     control={form.control}
                     name="category"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col min-w-[250px]">
+                      <FormItem className="flex flex-col min-w-[250px] overflow-x-hidden">
                         <FormLabel>Categoría</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>

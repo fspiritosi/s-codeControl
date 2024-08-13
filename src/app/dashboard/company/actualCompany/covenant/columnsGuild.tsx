@@ -85,10 +85,11 @@ export const columnsGuild: ColumnDef<Colum>[] = [
       const [showGuildModal, setShowGuildModal] = useState(false);
       const [integerModal, setIntegerModal] = useState(false);
       const [id, setId] = useState('');
-    
+      
       
       const guild = row.original;
-      
+      const [guildName, setGuildName] = useState(guild.name);
+      console.log(guild);
       const handleOpenModal = (id: string) => {
         setId(id);
         
@@ -97,7 +98,7 @@ export const columnsGuild: ColumnDef<Colum>[] = [
 
       const handleOpenGuildModal = (id: string) => {
         setId(id);
-        
+        setGuildName(guild.name);
         setShowGuildModal(!showGuildModal);
       };
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
@@ -414,7 +415,7 @@ export const columnsGuild: ColumnDef<Colum>[] = [
                             <FormItem>
                               <FormLabel>Nombre</FormLabel>
                               <FormControl>
-                                <Input placeholder="Nombre del sindicato" {...field} />
+                                <Input placeholder="Nombre del sindicato" {...field} value={guildName} onChange={(e) => {setGuildName(e.target.value); field.onChange(e)}} />
                               </FormControl>
                               <FormDescription>Nombre del sindicato</FormDescription>
                               <FormMessage />

@@ -20,9 +20,9 @@ interface Item {
     item_price: number;
     is_active: boolean;
     customer_id: { id: string, name: string };
-    customer_service_id: {customer_id: { id: string, name: string } };
+    customer_service_id: { customer_id: { id: string, name: string } };
     company_id: string;
-    
+
 }
 interface UpdatedFields {
     item_name?: string;
@@ -38,8 +38,9 @@ interface MeasureUnits {
     tipo: string;
 }
 
+
 const ServiceItemsPage = ({ params }: { params: any }) => {
-    const supabase= supabaseBrowser();
+    const supabase = supabaseBrowser();
     const URL = process.env.NEXT_PUBLIC_BASE_URL;
     const [items, setItems] = useState<Item[]>([]);
     const [loading, setLoading] = useState(true);
@@ -54,7 +55,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
     const [filteredItems, setFilteredItems] = useState<Item[]>([]);
     const [isActiveFilter, setIsActiveFilter] = useState(true);
     const [measure_unit, setMeasureUnit] = useState<MeasureUnits[] | null>(null);
-   console.log(params.id);
+    console.log(params.id);
     useEffect(() => {
         filterServices();
     }, [isActiveFilter, items]);
@@ -63,7 +64,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
         const filtered = items?.filter(item => item.is_active === isActiveFilter);
         setFilteredItems(filtered);
     };
-    
+
     useEffect(() => {
         const fetchItems = async () => {
             try {
@@ -75,7 +76,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
                 const responseData = await itemsResponse.json();
                 const items = Array.isArray(responseData) ? responseData : responseData.items;
                 setItems(items);
-                
+
                 // Obtener measure units
                 const measureUnitsResponse = await fetch(`${URL}/api/meassure`);
                 if (!measureUnitsResponse.ok) {
@@ -108,11 +109,11 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
             supabase.removeChannel(channel);
         };
     }, []);
-    
+
     if (loading) {
         return <div className='center-screen'>Cargando...</div>;
     }
-    
+
     const modified_editing_item_service_id = editingService?.id.toString().replace(/"/g, '');
     const handleEditClick = (service_items: Item) => {
         setEditingService(service_items);
@@ -293,18 +294,32 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
                             className="w-full p-2 mb-2 border border-gray-300 dark:border-gray-700 rounded"
                         />
                         <label htmlFor="unit_of_measure" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Unidad de Medida</label>
-                        <select
-                            id="unit_of_measure"
-                            value={editingService.item_measure_units.id}
-                            onChange={(e) => setEditingService({ ...editingService, item_measure_units: { ...editingService.item_measure_units, id: e.target.value } })}
-                            className="block w-full mt-2 p-2 mb-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-black dark:text-white"
-                        >
-                            {measure_unit?.map((unit) => (
-                                <option key={unit.id} value={unit.id}>
-                                    {unit.unit}
-                                </option>
-                            ))}
-                        </select>
+                        <Select onValueChange={(value) => {
+                            setEditingService({
+                                ...editingService,
+                                item_measure_units: {
+                                    ...editingService.item_measure_units,
+                                    id: value,
+                                },
+                            });
+                            console.log('Valor seleccionado:', value); // Verifica el valor seleccionado
+                        }}
+                            value={String(editingService.item_measure_units.id)}>
+
+                            <SelectTrigger className="">
+                                <SelectValue placeholder="Elegir unidad de medida" />
+                            </SelectTrigger>
+
+                            <SelectContent>
+                                {measure_unit?.map((measure: MeasureUnits) => (
+                                    <SelectItem value={measure.id.toString()} key={measure.id}>
+                                        {measure.unit}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+
+
+                        </Select>
                         <div className="flex justify-end space-x-2 mt-4">
                             <Button onClick={handleSave}   >Guardar</Button>
                             <Button onClick={() => setIsModalOpen(false)} >Cancelar</Button>

@@ -1,6 +1,14 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { Table, TableHead, TableRow, TableCell, TableBody } from '@/components/ui/table'; // Asegúrate de importar los componentes necesarios
 import { Button } from '@/components/ui/button';
 import EditModal from '@/components/EditModal';
@@ -10,6 +18,15 @@ import { supabaseBrowser } from '@/lib/supabase/browser';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { z } from 'zod';
+import { CalendarIcon } from "@radix-ui/react-icons"
+import { format } from "date-fns"
+import { cn } from "@/lib/utils"
+import { Calendar } from "@/components/ui/calendar"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
 
 type Service = {
     id: string;
@@ -52,7 +69,10 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [isActiveFilter, setIsActiveFilter] = useState(true);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [selectedDate1, setSelectedDate1] = useState<Date | null>(null);
+    const [date, setDate] = React.useState<Date>()
+    const [date1, setDate1] = React.useState<Date>()
     console.log(customers)
     useEffect(() => {
         filterServices();
@@ -76,6 +96,8 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
     };
     const closeModal = () => {
         setErrors({});
+        setSelectedDate(null);
+        setSelectedDate1(null);
         setIsModalOpen(false);
     };
 
@@ -84,6 +106,7 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
             console.log('editingService', editingService);
             try {
                 dateSchema.parse({
+                    // service_start: editingService.service_start,
                     service_start: editingService.service_start,
                     service_validity: editingService.service_validity,
                 });
@@ -125,6 +148,8 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
                 }
             }
         }
+        setSelectedDate(null);
+        setSelectedDate1(null);
     };
     const handleDeactivate = async () => {
         if (editingService) {
@@ -231,7 +256,7 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
                                             {service.is_active ? 'Activo' : 'Inactivo'}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell>{service.service_start}</TableCell>
+                                    <TableCell>{service.service_start?.toString()}</TableCell>
                                     <TableCell>{service.service_validity}</TableCell>
                                     <TableCell>{customers.find(customer => customer.id.toString() === service.customer_id?.toString())?.name}</TableCell>
                                     <TableCell>
@@ -255,40 +280,84 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
                             onChange={(e: any) => setEditingService({ ...editingService, service_name: e.target.value })}
                             className="w-full p-2 mb-2 border border-gray-300 dark:border-gray-700 rounded"
                         />
-                        <label htmlFor="service_start" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de inicio del Servicio</label>
-                        <Input
-                            type="date"
-                            value={editingService.service_start}
-                            onChange={(e: any) => setEditingService({ ...editingService, service_start: e.target.value })}
-                            className="w-full p-2 mb-2 border border-gray-300 dark:border-gray-700 rounded"
-                        />
+
+                        <label htmlFor="service_start" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Fecha de inicio del Servicio
+                        </label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-[240px] pl-3 text-left font-normal",
+                                        !selectedDate && "text-muted-foreground"
+                                    )}
+                                >
+                                    {editingService.service_start ? editingService.service_start : "Elegir fecha"}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar
+                                    mode="single"
+                                    selected={selectedDate || date}
+                                    onSelect={(date) => {
+                                        setSelectedDate(date || null);
+                                        const formattedDate = date ? date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+                                        setEditingService({ ...editingService, service_start: formattedDate });
+                                        console.log(editingService)
+                                    }}
+                                    initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
                         {errors.service_start && <span className='text-red-600 text-xs'>{errors.service_start}</span>}
                         <label htmlFor="service_validity" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Validez del precio del Servicio</label>
-                        <Input
-                            type="date"
-                            value={editingService.service_validity}
-                            onChange={(e: any) => setEditingService({ ...editingService, service_validity: e.target.value })}
-                            className="w-full p-2 mb-2 border border-gray-300 dark:border-gray-700 rounded"
-                        />
+
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-[240px] pl-3 text-left font-normal",
+                                        !selectedDate1 && "text-muted-foreground"
+                                    )}
+                                >
+                                    {editingService.service_validity ? editingService.service_validity : "Elegir fecha"}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar
+                                    mode="single"
+                                    selected={selectedDate1 || date1}
+                                    onSelect={(date1) => {
+                                        setSelectedDate1(date || null);
+                                        const formattedDate1 = date1 ? date1.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+                                        setEditingService({ ...editingService, service_validity: formattedDate1 });
+                                        console.log(editingService)
+                                    }}
+                                    initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
                         {errors.service_validity && <span className='text-red-600 text-xs'>{errors.service_validity}</span>}
                         <label htmlFor="customer" className="block mt-4">Cliente</label>
-                        <select
-                            id="customer"
-                            value={String(editingService.customer_id)}
-                            onChange={(e) =>
-                                setEditingService({
-                                    ...editingService,
-                                    customer_id: e.target.value,
-                                })
-                            }
-                            className="block w-full mt-2 p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-black dark:text-white"
-                        >
-                            {customers.map((customer) => (
-                                <option key={customer.id} value={customer.id}>
-                                    {customer.name}
-                                </option>
-                            ))}
-                        </select>
+                        <Select onValueChange={(value) =>
+                            setEditingService({
+                                ...editingService,
+                                customer_id: value,
+                            })
+                        } value={String(editingService.customer_id)} defaultValue=''>
+                            <SelectTrigger className="">
+                                <SelectValue placeholder="Elegir cliente" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {customers.map((customer: any) => (
+                                    <SelectItem value={customer.id} key={customer.id}>{customer.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                         <div className="flex justify-end space-x-2 mt-4">
                             <Button onClick={handleSave}   >Guardar</Button>
                             <Button onClick={closeModal} >Cancelar</Button>
