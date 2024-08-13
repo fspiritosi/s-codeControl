@@ -136,9 +136,9 @@ const setEmployeesToShow = (employees: any) => {
   const employee = employees?.map((employees: any) => {
     console.log(employees);
     return {
-      full_name: `${employees?.lastname?.charAt(0).toUpperCase()}${employees?.lastname?.slice(1)} ${employees?.firstname
+      full_name: `${employees?.lastname?.charAt(0)?.toUpperCase()}${employees?.lastname?.slice(1)} ${employees?.firstname
         ?.charAt(0)
-        .toUpperCase()}${employees?.firstname?.slice(1)}`,
+        ?.toUpperCase()}${employees?.firstname?.slice(1)}`,
       id: employees?.id,
       email: employees?.email,
       cuil: employees?.cuil,
@@ -621,13 +621,24 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
     if (dataEmployes?.length === 1000) {
       const { data: data2, error: error2 } = await supabase
-        .from('documents_employees')
-        .select(`*, employees:employees(*,contractor_employee(customers(*))), document_types:document_types(*)`)
+      .from('documents_employees')
+      .select(
+        `
+    *,
+    employees:employees(*,contractor_employee(
+      customers(
+        *
+      )
+    )),
+    document_types:document_types(*)
+`
+      )
+      .not('employees', 'is', null)
+      .eq('employees.company_id', get()?.actualCompany?.id)
         .range(1000, 2000);
 
       if (data2) data = data ? [...data, ...data2] : data2;
     }
-
     let { data: documents_company, error: documents_company_error } = await supabase
       .from('documents_company')
       .select('*,id_document_types(*),user_id(*)')
@@ -705,12 +716,12 @@ export const useLoggedUserStore = create<State>((set, get) => {
           validity: formattedDate,
           mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
           id: doc.id,
-          resource: `${doc.employees?.lastname?.charAt(0)?.toUpperCase()}${doc?.employees.lastname.slice(
+          resource: `${doc.employees?.lastname?.charAt(0)?.toUpperCase()}${doc?.employees?.lastname.slice(
             1
-          )} ${doc.employees?.firstname?.charAt(0)?.toUpperCase()}${doc?.employees.firstname.slice(1)}`,
-          document_number: doc.employees.document_number,
+          )} ${doc.employees?.firstname?.charAt(0)?.toUpperCase()}${doc?.employees?.firstname.slice(1)}`,
+          document_number: doc.employees?.document_number,
           document_url: doc.document_path,
-          is_active: doc.employees.is_active,
+          is_active: doc.employees?.is_active,
           period: doc.period,
           applies: doc.document_types.applies,
           id_document_types: doc.document_types.id,
@@ -745,8 +756,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
           filteredData
             ?.filter(
               (e) =>
-                (!e.employees.termination_date && !e.document_types.down_document) ||
-                (e.employees.termination_date && e.document_types.down_document)
+                (!e.employees?.termination_date && !e.document_types.down_document) ||
+                (e.employees?.termination_date && e.document_types.down_document)
             )
             ?.filter((doc: any) => {
               if (!doc.validity || doc.validity === 'No vence') return false;
@@ -766,13 +777,17 @@ export const useLoggedUserStore = create<State>((set, get) => {
             })
             ?.map(mapVehicle) || [],
       };
+      console.log(
+        'lastMonthValues',
+        data?.find((e) => e.id === 'ab7e2558-dcb0-4c47-8172-d2472e3bccad')
+      );
 
       const pendingDocuments = {
         employees:
           employeesData
             ?.filter(
               (e) =>
-                (!e.employees.termination_date && !e.document_types.down_document) ||
+                (!e.employees?.termination_date && !e.document_types.down_document) ||
                 (e.employees.termination_date && e.document_types.down_document)
             )
             .filter((doc: any) => doc.state === 'presentado')
@@ -793,8 +808,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
           employeesData
             ?.filter(
               (e) =>
-                (!e.employees.termination_date && !e.document_types.down_document) ||
-                (e.employees.termination_date && e.document_types.down_document)
+                (!e.employees?.termination_date && !e.document_types.down_document) ||
+                (e.employees?.termination_date && e.document_types.down_document)
             )
             ?.filter((doc: any) => {
               if (!doc.validity || doc.validity === 'No vence') return false;
@@ -824,8 +839,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
           employeesData
             ?.filter(
               (e) =>
-                (!e.employees.termination_date && !e.document_types.down_document) ||
-                (e.employees.termination_date && e.document_types.down_document)
+                (!e.employees?.termination_date && !e.document_types.down_document) ||
+                (e.employees?.termination_date && e.document_types.down_document)
             )
             .map(mapDocument) || [],
         vehicles:
