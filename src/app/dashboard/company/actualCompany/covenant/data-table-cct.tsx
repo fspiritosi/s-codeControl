@@ -36,26 +36,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useLoggedUserStore } from '@/store/loggedUser';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { supabaseBrowser } from '@/lib/supabase/browser';
 
 interface DataCctProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any;
   data: TData[];
-  // allCompany: any[];
-  // showInactive: boolean;
   localStorageName: string;
-  // setShowInactive: (showInactive: boolean) => void;
+  
 }
 
 export function DataCct<TData, TValue>({
   columns,
   data,
-  // showInactive,
-  // setShowInactive,
-  // allCompany,
   localStorageName,
 }: DataCctProps<TData, TValue>) {
+  const supabase = supabaseBrowser();
   const [sorting, setSorting] = useState<SortingState>([]);
-  const defaultVisibleColumns = ['name', 'id', 'company_id'];
+  const defaultVisibleColumns = ['name', 'guild_id'];
   const [showInactive, setShowInactive] = useState(false);
   const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -81,6 +78,8 @@ export function DataCct<TData, TValue>({
         }, {})
       );
     }
+
+
   }, [columns]);
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
@@ -95,6 +94,7 @@ export function DataCct<TData, TValue>({
  
   const allOptions = {
     name: createOptions('name'),
+    guild_id: createOptions('guild_id'),
   };
   function createOptions(key: string) {
     const values = data?.flatMap((item: any) => item?.[key]);
@@ -102,11 +102,13 @@ export function DataCct<TData, TValue>({
   }
 
   const selectHeader = {
-    // name: {
-    //   name: 'name',
-    //   option: name,
-    //   label: 'Nombre',
-    // },
+    
+    guild_id: {
+      name: 'guild_id',
+      option: allOptions.guild_id,
+      label: 'Gremio',
+    },
+    
   };
 
   let table = useReactTable({
@@ -125,10 +127,7 @@ export function DataCct<TData, TValue>({
       columnFilters,
     },
   });
-  // const setActivesVehicles = useLoggedUserStore(
-  //   state => state.setActivesVehicles,
-  // )
-  //const router = useRouter()
+ 
 
   const handleColumnVisibilityChange = (columnId: string, isVisible: boolean) => {
     setColumnVisibility((prev) => ({
@@ -149,24 +148,14 @@ export function DataCct<TData, TValue>({
 
     setSelectValues({
       name: 'Todos',
-      //is_active: 'todos',
-      //   domain: 'Todos',
-      //   chassis: 'Todos',
-      //   engine: 'Todos',
-      //   serie: 'Todos',
-      //   intern_number: 'Todos',
-      //   year: 'Todos',
-      //   brand: 'Todos',
-      //   model: 'Todos',
-      //   status: 'Todos',
+      guild_id: 'Todos',
+     
     });
-    //setActivesVehicles()
+    
   };
   const maxRows = ['20', '40', '60', '80', '100'];
   const [selectValues, setSelectValues] = useState<{ [key: string]: string }>({});
-  // const handleToggleInactive = () => {
-  //   setShowInactive(!showInactive)
-  // }
+  
 
   return (
     <div>
@@ -218,11 +207,8 @@ export function DataCct<TData, TValue>({
                           key={column.id}
                           className="capitalize  text-red-400"
                           checked={showInactive}
-                          //onChange={() => setShowInactive(!showInactive)}
                           onClick={() => setShowInactive(!showInactive)}
-                          // onCheckedChange={value =>
-                          //   column.toggleVisibility(!true)
-                          // }
+                          
                         >
                           {column.columnDef.header}
                         </DropdownMenuCheckboxItem>
@@ -292,13 +278,13 @@ export function DataCct<TData, TValue>({
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectGroup>
-                                        {/* {selectHeader[header.id as keyof typeof selectHeader]?.option?.map(
+                                        {selectHeader[header.id as keyof typeof selectHeader]?.option?.map(
                                           (option: string) => (
                                             <SelectItem key={option} value={option}>
                                               {option}
                                             </SelectItem>
                                           )
-                                        )} */}
+                                        )}
                                       </SelectGroup>
                                     </SelectContent>
                                   </Select>

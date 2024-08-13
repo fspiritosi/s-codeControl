@@ -5,6 +5,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import ServiceForm from './ServicesForm';
 import ServiceTable from './ServiceTable';
 import ServiceItemsForm from './ServiceItemsForm';
+
+interface measure_unit {
+  id: number;
+  unit: string;
+  simbol: string;
+  tipo: string;
+}
+
 export default async function ServiceComponent() {
   
     const URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -47,7 +55,7 @@ export default async function ServiceComponent() {
       <ServiceForm customers={customers} company_id={String(company_id)}/>
     </TabsContent>
     <TabsContent value="servicesItems">
-      <ServiceItemsForm measure_units={measure_units as string[]} customers={customers} services={services} company_id={String(company_id)}/>
+      <ServiceItemsForm measure_units={measure_units as measure_unit[]} customers={customers} services={services} company_id={String(company_id)}/>
     </TabsContent>
     <TabsContent value="servicesTable">
       <h1>Servicios Cargados</h1>

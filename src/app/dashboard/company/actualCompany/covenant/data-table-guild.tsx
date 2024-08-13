@@ -40,18 +40,13 @@ import { useEffect, useState } from 'react';
 interface DataCctProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any;
   data: TData[];
-  // allCompany: any[];
-  // showInactive: boolean;
   localStorageName: string;
-  // setShowInactive: (showInactive: boolean) => void;
+  
 }
 
 export function DataGuild<TData, TValue>({
   columns,
   data,
-  // showInactive,
-  // setShowInactive,
-  // allCompany,
   localStorageName,
 }: DataCctProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -148,25 +143,13 @@ export function DataGuild<TData, TValue>({
 
     setSelectValues({
       name: 'Todos',
-      //is_active: 'todos',
-      //   domain: 'Todos',
-      //   chassis: 'Todos',
-      //   engine: 'Todos',
-      //   serie: 'Todos',
-      //   intern_number: 'Todos',
-      //   year: 'Todos',
-      //   brand: 'Todos',
-      //   model: 'Todos',
-      //   status: 'Todos',
+      
     });
-    //setActivesVehicles()
+    
   };
   const maxRows = ['20', '40', '60', '80', '100'];
   const [selectValues, setSelectValues] = useState<{ [key: string]: string }>({});
-  // const handleToggleInactive = () => {
-  //   setShowInactive(!showInactive)
-  // }
-
+ 
   return (
     <div>
       <div className="flex items-center py-4 flex-wrap gap-y-2 overflow-auto">
@@ -217,11 +200,8 @@ export function DataGuild<TData, TValue>({
                           key={column.id}
                           className="capitalize  text-red-400"
                           checked={showInactive}
-                          //onChange={() => setShowInactive(!showInactive)}
                           onClick={() => setShowInactive(!showInactive)}
-                          // onCheckedChange={value =>
-                          //   column.toggleVisibility(!true)
-                          // }
+                          
                         >
                           {column.columnDef.header}
                         </DropdownMenuCheckboxItem>
@@ -266,7 +246,8 @@ export function DataGuild<TData, TValue>({
                                     className="max-w-sm"
                                   />
                                 </div>
-                              ) : (
+                              ) 
+                              : (
                                 <div className="flex justify-center">
                                   <Select
                                     value={selectValues[header.id]}
@@ -333,17 +314,19 @@ export function DataGuild<TData, TValue>({
                           ) : (
                             'No disponible'
                           )
-                        ) : cell.column.id === 'status' ? (
-                          <Badge variant={cell.getValue() === 'No avalado' ? 'destructive' : 'success'}>
-                            {cell.getValue() as React.ReactNode}
-                          </Badge>
-                        ) : cell.column.id === 'domain' ? (
-                          !cell.getValue() ? (
-                            'No posee'
-                          ) : (
-                            (cell.getValue() as React.ReactNode)
-                          )
-                        ) : (
+                        ) 
+                        // : cell.column.id === 'status' ? (
+                        //   <Badge variant={cell.getValue() === 'No avalado' ? 'destructive' : 'success'}>
+                        //     {cell.getValue() as React.ReactNode}
+                        //   </Badge>
+                        // ) : cell.column.id === 'domain' ? (
+                        //   !cell.getValue() ? (
+                        //     'No posee'
+                        //   ) : (
+                        //     (cell.getValue() as React.ReactNode)
+                        //   )
+                        // ) 
+                        : (
                           flexRender(cell.column.columnDef.cell, cell.getContext())
                         )}
                       </TableCell>

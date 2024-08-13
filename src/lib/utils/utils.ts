@@ -204,9 +204,9 @@ export const DOCUMENTS_TABLE: DocumentsTableOptions = {
 export const setVehiclesToShow = (vehicles: Vehicle) => {
   return vehicles?.map((item) => ({
     ...item,
-    types_of_vehicles: item.types_of_vehicles.name,
-    brand: item.brand_vehicles.name,
-    model: item.model_vehicles.name,
+    types_of_vehicles: item.types_of_vehicles?.name,
+    brand: item.brand_vehicles?.name,
+    model: item.model_vehicles?.name,
   }));
 };
 // export const stylesPDF = StyleSheet.create({
