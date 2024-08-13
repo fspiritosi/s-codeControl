@@ -54,7 +54,7 @@ function DiagramTypeComponent({ diagrams_types }: { diagrams_types: [] }) {
                     {diagramType.short_description}
                   </div>
                 </TableCell>
-                <TableCell>Si/No</TableCell>
+                <TableCell>{diagramType.work_active ? 'Si' : 'No'}</TableCell>
                 <TableCell>
                   <Button
                     size={'sm'}

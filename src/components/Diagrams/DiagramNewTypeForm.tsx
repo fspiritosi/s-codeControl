@@ -1,6 +1,8 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { zodResolver } from '@hookform/resolvers/zod';
 import cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
@@ -18,6 +20,7 @@ export function DiagramNewTypeForm({ selectedDiagram }: { selectedDiagram?: any 
     short_description: z.string().min(1, { message: 'La descripción dorta no puede estar vacía' }),
     color: z.string().min(1, { message: 'Por favor selecciona un color para la novedad' }),
     id: z.string().optional(),
+    work_active: z.boolean().optional(),
   });
   const [buttonToShow, setButtonToShow] = useState(true);
   const [diagramToEdit, setDiagramToEdit] = useState(false);
@@ -31,6 +34,7 @@ export function DiagramNewTypeForm({ selectedDiagram }: { selectedDiagram?: any 
       short_description: '',
       color: '',
       id: '',
+      work_active: false,
     },
   });
 
@@ -74,7 +78,6 @@ export function DiagramNewTypeForm({ selectedDiagram }: { selectedDiagram?: any 
   }
 
   useEffect(() => {
-    console.log(selectedDiagram);
     form.reset({
       name: selectedDiagram ? selectedDiagram?.name : '',
       short_description: selectedDiagram ? selectedDiagram?.short_description : '',
@@ -110,17 +113,33 @@ export function DiagramNewTypeForm({ selectedDiagram }: { selectedDiagram?: any 
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="color"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Color</FormLabel>
-              <Input className=" max-w-20" placeholder="Elige un color" type="color" {...field} />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="flex justify-between">
+          <FormField
+            control={form.control}
+            name="color"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Color</FormLabel>
+                <Input className=" w-20" placeholder="Elige un color" type="color" {...field} />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="work_active"
+            render={({ field }) => (
+              <FormItem className="">
+                <FormLabel></FormLabel>
+                <div className="flex items-center space-x-2">
+                  <Switch id="airplane-mode" checked={field.value} onCheckedChange={field.onChange} />
+                  <Label htmlFor="airplane-mode">Laboralmente Activo</Label>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         {buttonToShow && !diagramToEdit ? (
           <Button className="mt-4" type="submit">
             Cargar novedad
