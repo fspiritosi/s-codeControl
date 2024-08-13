@@ -82,7 +82,14 @@ type diagram = {
   id: string;
   created_at: string;
   employee_id: string;
-  diagram_type: {};
+  diagram_type: {
+    id: string;
+    name: string;
+    color: string;
+    company_id: string;
+    created_at: string;
+    short_description: string;
+  };
   day: number;
   month: number;
   year: number;
@@ -1418,13 +1425,12 @@ export default function EmployeeAccordion({
                                 value={field.value}
                                 className={cn('w-[300px] justify-between', !field.value && 'text-muted-foreground')}
                               >
-                                
                                 {typeof field.value === 'string'
                                   ? field.value
                                   : field.value
                                     ? getFieldName(field.value)
                                     : 'Seleccionar Asosiacion gremial'}
-                                
+
                                 <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </FormControl>
