@@ -21,13 +21,16 @@ import {
 } from "@/components/ui/popover";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import {Input} from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { toast } from 'sonner';
 const ServiceSchema = z.object({
     customer_id: z.string().min(1, { message: "Debe seleccionar un cliente" }),
     service_name: z.string().min(1, { message: "Debe ingresar el nombre del servicio" }),
     service_start: z.date(),
     service_validity: z.date(),
+}).refine(data => data.service_validity > data.service_start, {
+    message: "La validez del servicio debe ser mayor que el inicio del servicio",
+    path: ["service_validity"],
 });
 
 type Service = z.infer<typeof ServiceSchema>;
@@ -43,12 +46,12 @@ export default function ServicesForm({ customers, company_id }: { customers: Ser
             service_validity: new Date(),
         },
     });
-    const { reset} = form;
+    const { reset } = form;
     const [fromDate, setFromDate] = useState<Date | null>(null);
     const [fromDate1, setFromDate1] = useState<Date | null>(null);
 
     const onSubmit = async (values: Service) => {
-        
+
         const { customer_id } = values;
 
         const modified_company_id = company_id.replace(/"/g, '');
@@ -196,7 +199,7 @@ export default function ServicesForm({ customers, company_id }: { customers: Ser
                         </FormItem>
                     )}
                 />
-                
+
                 <Button className="mt-4" type="submit">Cargar Servicio</Button>
             </form>
         </Form>

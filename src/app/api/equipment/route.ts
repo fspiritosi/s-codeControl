@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       .eq('company_id', company_id);
 
     const data = equipments;
-
+    
     if (error) {
       throw new Error(JSON.stringify(error));
     }

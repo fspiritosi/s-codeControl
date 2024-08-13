@@ -20,8 +20,9 @@ interface Item {
     item_price: number;
     is_active: boolean;
     customer_id: { id: string, name: string };
-    customer_service_id: string;
+    customer_service_id: { customer_id: { id: string, name: string } };
     company_id: string;
+
 }
 interface UpdatedFields {
     item_name?: string;
@@ -30,80 +31,89 @@ interface UpdatedFields {
     item_measure_units?: number;
     is_active?: boolean;
 }
+interface MeasureUnits {
+    id: string;
+    unit: string;
+    simbol: string;
+    tipo: string;
+}
+
 
 const ServiceItemsPage = ({ params }: { params: any }) => {
-
+    const supabase = supabaseBrowser();
+    const URL = process.env.NEXT_PUBLIC_BASE_URL;
     const [items, setItems] = useState<Item[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingService, setEditingService] = useState<Item | null>(null);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const [customers, setCustomers] = useState<any[]>([]);
-    const [customers_services, setCustomerServices] = useState<any[]>([]);
-    const [selectedClient, setSelectedClient] = useState('');
+    // const [customers, setCustomers] = useState<any[]>([]);
+    // const [customers_services, setCustomerServices] = useState<any[]>([]);
+    // const [selectedClient, setSelectedClient] = useState('');
     const company_id = cookies.get('actualComp');
     const modified_company_id = company_id?.replace(/"/g, '');
-    const modified_editing_service_id = params.id?.replace(/"/g, '');
+    // const modified_editing_service_id = params.id?.replace(/"/g, '');
     const [filteredItems, setFilteredItems] = useState<Item[]>([]);
     const [isActiveFilter, setIsActiveFilter] = useState(true);
-
-
+    const [measure_unit, setMeasureUnit] = useState<MeasureUnits[] | null>(null);
+    console.log(params.id);
     useEffect(() => {
         filterServices();
     }, [isActiveFilter, items]);
 
     const filterServices = () => {
-        const filtered = items.filter(item => item.is_active === isActiveFilter);
+        const filtered = items?.filter(item => item.is_active === isActiveFilter);
         setFilteredItems(filtered);
     };
+
     useEffect(() => {
-        const fetchItemsAndCustomers = async () => {
-            const supabase = supabaseBrowser();
-
-            // Obtener items
-            const { data: items, error: itemsError } = await supabase
-                .from('service_items')
-                .select('*,item_measure_units(id, unit),customer_id(id,name)')
-                .eq('customer_service_id', params.id);
-
-            if (itemsError) {
-                console.error(itemsError);
-            } else {
+        const fetchItems = async () => {
+            try {
+                // Obtener items
+                const itemsResponse = await fetch(`${URL}/api/services/items?actual=${modified_company_id}&service=${params.id}`);
+                if (!itemsResponse.ok) {
+                    throw new Error('Error al obtener los items');
+                }
+                const responseData = await itemsResponse.json();
+                const items = Array.isArray(responseData) ? responseData : responseData.items;
                 setItems(items);
+
+                // Obtener measure units
+                const measureUnitsResponse = await fetch(`${URL}/api/meassure`);
+                if (!measureUnitsResponse.ok) {
+                    throw new Error('Error al obtener las unidades de medida');
+                }
+                const responseMeasureUnits = await measureUnitsResponse.json();
+                const measureUnits = Array.isArray(responseMeasureUnits) ? responseMeasureUnits : responseMeasureUnits.data;
+                setMeasureUnit(measureUnits);
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoading(false);
             }
-
-            // Obtener customers
-            const { data: customers, error: customersError } = await supabase
-                .from('customers')
-                .select('*')
-                .eq('company_id', modified_company_id);
-            if (customersError) {
-                console.error(customersError);
-            } else {
-                setCustomers(customers);
-            }
-
-            // Obtener servicios asociados a un cliente
-            const { data: customerServices, error: customerServicesError } = await supabase
-                .from('customer_services')
-                .select('*')
-                .eq('customer_id', selectedClient); // Asegúrate de usar el ID del cliente adecuado
-
-            if (customerServicesError) {
-                console.error(customerServicesError);
-            } else {
-                setCustomerServices(customerServices);
-            }
-
-            setLoading(false);
         };
+        fetchItems();
 
-        fetchItemsAndCustomers();
-    }, [params.id]);
+        const channel = supabase.channel('custom-all-channel')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'service_items' },
+                async (payload) => {
+                    console.log('Cambio detectado:', payload);
+                    fetchItems(); // Vuelve a cargar los datos cuando hay un cambio
+                }
+            )
+            .subscribe();
+
+        // Cleanup de la suscripción cuando el componente se desmonta
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
     if (loading) {
-        return <div>Cargando...</div>;
+        return <div className='center-screen'>Cargando...</div>;
     }
-    const filteredServices = items.filter(service => service?.customer_id.id === selectedClient.toString());
+
     const modified_editing_item_service_id = editingService?.id.toString().replace(/"/g, '');
     const handleEditClick = (service_items: Item) => {
         setEditingService(service_items);
@@ -150,7 +160,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
             }
         }
     };
-
+    console.log(items)
     const handleDeactivateItem = async () => {
         if (editingService) {
             try {
@@ -200,7 +210,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
                 </CardHeader>
                 <CardContent className="py-4 px-4 ">
                     <div className="flex space-x-4 p-4">
-                        <Select onValueChange={(value) => setIsActiveFilter(value === 'true')} value={String(isActiveFilter)} defaultValue='true'>
+                        <Select onValueChange={(value) => setIsActiveFilter(!isActiveFilter)}  >
                             <SelectTrigger className="w-[400px]">
                                 <SelectValue placeholder="Filtrar por estado" />
                             </SelectTrigger>
@@ -218,16 +228,16 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
                                         Nombre
                                     </TableCell>
                                     <TableCell className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                        Estado
+                                    </TableCell>
+                                    <TableCell className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                         Descripción
                                     </TableCell>
                                     <TableCell className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                        Unidades
+                                        Unidad de medida
                                     </TableCell>
                                     <TableCell className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                         Precio
-                                    </TableCell>
-                                    <TableCell className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                        Estado
                                     </TableCell>
                                     <TableCell className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                         Cliente
@@ -238,14 +248,14 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
                                 </TableRow>
 
                                 <TableBody className="bg-background divide-y ">
-                                    {filteredItems.map((item) => (
+                                    {filteredItems?.map((item) => (
                                         <TableRow key={item.id}>
                                             <TableCell className="px-6 py-4 whitespace-nowrap text-sm font-medium text-muted-foreground">{item.item_name}</TableCell>
+                                            <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground"><Badge variant={item.is_active ? 'success' : 'default'}>{item.is_active ? 'Activo' : 'Inactivo'}</Badge></TableCell>
                                             <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{item.item_description}</TableCell>
                                             <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{item.item_measure_units?.unit}</TableCell>
                                             <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">${item.item_price}</TableCell>
-                                            <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground"><Badge variant={item.is_active ? 'success' : 'default'}>{item.is_active ? 'Activo' : 'Inactivo'}</Badge></TableCell>
-                                            <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{item.customer_id.name}</TableCell>
+                                            <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{item.customer_service_id?.customer_id?.name}</TableCell>
                                             <TableCell>
                                                 <Button onClick={() => handleEditClick(item)}>Editar</Button>
                                             </TableCell>
@@ -283,52 +293,33 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
                             onChange={(e: any) => setEditingService({ ...editingService, item_price: e.target.value })}
                             className="w-full p-2 mb-2 border border-gray-300 dark:border-gray-700 rounded"
                         />
+                        <label htmlFor="unit_of_measure" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Unidad de Medida</label>
+                        <Select onValueChange={(value) => {
+                            setEditingService({
+                                ...editingService,
+                                item_measure_units: {
+                                    ...editingService.item_measure_units,
+                                    id: value,
+                                },
+                            });
+                            console.log('Valor seleccionado:', value); // Verifica el valor seleccionado
+                        }}
+                            value={String(editingService.item_measure_units.id)}>
 
+                            <SelectTrigger className="">
+                                <SelectValue placeholder="Elegir unidad de medida" />
+                            </SelectTrigger>
 
-                        <label htmlFor="customer" className="block mt-4">Cliente</label>
-                        <select
-                            id="customer_id"
-                            onChange={(e) => {
-                                const value = e.target.value;
-                                setSelectedClient(value);
-                                setEditingService({
-                                    ...editingService,
-                                    customer_id: { id: value, name: '' },
-                                });
-                            }}
-                            value={editingService.customer_id?.id || ''}
-                            defaultValue=''
-                            className="block w-full mt-2 p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-black dark:text-white"
-                        >
-                            {customers?.map((customer) => (
-                                <option key={customer.id} value={customer.id}>
-                                    {customer.name}
-                                </option>
-                            ))}
-                        </select>
-
-                        <label htmlFor="customer_service_id" className="block mt-4">Servicio</label>
-                        <select
-                            id="customer_service_id"
-                            onChange={(e) => {
-                                const value = e.target.value;
-                                setEditingService({
-                                    ...editingService,
-                                    customer_service_id: value,
-                                });
-                            }}
-                            value={editingService.customer_service_id || ''}
-                            defaultValue=''
-                            className="block w-full mt-2 p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-black dark:text-white"
-                        >
-                            {items
-                                ?.filter((service) => service.customer_id.id === selectedClient)
-                                .map((service) => (
-                                    <option key={service.id} value={service.id}>
-                                        {service.item_name}
-                                    </option>
+                            <SelectContent>
+                                {measure_unit?.map((measure: MeasureUnits) => (
+                                    <SelectItem value={measure.id.toString()} key={measure.id}>
+                                        {measure.unit}
+                                    </SelectItem>
                                 ))}
-                        </select>
+                            </SelectContent>
+
+
+                        </Select>
                         <div className="flex justify-end space-x-2 mt-4">
                             <Button onClick={handleSave}   >Guardar</Button>
                             <Button onClick={() => setIsModalOpen(false)} >Cancelar</Button>
