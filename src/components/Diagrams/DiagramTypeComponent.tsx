@@ -33,6 +33,7 @@ function DiagramTypeComponent({ diagrams_types }: { diagrams_types: [] }) {
               <TableHead className="w-[100px]">Color</TableHead>
               <TableHead>Descripción Corta</TableHead>
               <TableHead>Vista Previa</TableHead>
+              <TableHead>Lab. Activa</TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
@@ -53,6 +54,7 @@ function DiagramTypeComponent({ diagrams_types }: { diagrams_types: [] }) {
                     {diagramType.short_description}
                   </div>
                 </TableCell>
+                <TableCell>Si/No</TableCell>
                 <TableCell>
                   <Button
                     size={'sm'}

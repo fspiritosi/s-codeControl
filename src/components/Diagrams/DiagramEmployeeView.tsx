@@ -43,6 +43,8 @@ function DiagramEmployeeView({
   const [filteredResources, setFilteredResources] = useState(activeEmployees);
   const [inputValue, setInputValue] = useState<string>('');
 
+  console.log('diagrams', diagrams);
+
   /*---------------------INICIO ESQUEMA EMPLEADOS---------------------------*/
   const formSchema = z.object({
     resources: z

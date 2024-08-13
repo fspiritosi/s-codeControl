@@ -6,11 +6,32 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
   const user_id = searchParams.get('user');
-  //console.log(user_id); //AQUI ME QUEDE
+  const employee_id = searchParams.get('employee_id'); 
+  if(employee_id){
+    try {
+      let { data: employees_diagram, error } = await supabase
+      .from('employees_diagram')
+      .select(`*, diagram_type(
+        *)`)  // Filters
+      .eq('employee_id', employee_id)
+      
+
+      const data = employees_diagram;
+      console.log(data)
+
+      if (error) {
+        throw new Error(JSON.stringify(error));
+      }
+
+      return Response.json({ data });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   try {
     let { data: employees_diagram, error } = await supabase
     .from('employees_diagram')
-    // .select('*')
     .select(`*,
         employee_id,
         employees (
@@ -19,7 +40,8 @@ export async function GET(request: NextRequest) {
         diagram_type(
         *)
       `)  // Filters
-        
+
+   
 
     const data = employees_diagram;
 
