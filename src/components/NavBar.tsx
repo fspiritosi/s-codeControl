@@ -294,7 +294,7 @@ export default function NavBar() {
                                         .join(' ') || '(no disponible)'
                                     : notification?.document?.resource
                                         .split(' ')
-                                        ?.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toUpperCase())
+                                        ?.map((word) => word.charAt(0)?.toUpperCase() + word.slice(1)?.toUpperCase())
                                         .join(' ') || '(no disponible)'
                                 } ha sido rechazado`}
                               {notification?.category === 'vencimiento' &&
@@ -303,7 +303,7 @@ export default function NavBar() {
                                 } ${
                                   notification?.document?.resource
                                     .split(' ')
-                                    ?.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                                    ?.map((word) => word.charAt(0)?.toUpperCase() + word.slice(1).toLowerCase())
                                     .join(' ') || '(no disponible)'
                                 } ha vencido`}
                             </p>
