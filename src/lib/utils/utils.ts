@@ -1,13 +1,14 @@
 import {
+  Campo,
   CompaniesTableOptions,
   DocumentsTableOptions,
   EmployeesTableOptions,
   VehiclesTableOptions,
+  types,
 } from '@/types/types';
 import { Vehicle } from '@/zodSchemas/schemas';
 import { format } from 'date-fns';
 import { supabaseServer } from '../supabase/server';
-
 export const formatDate = (dateString: string) => {
   if (!dateString) return 'No vence';
   const [day, month, year] = dateString.split('/');
@@ -149,7 +150,6 @@ export const EMPLOYEES_TABLE: EmployeesTableOptions = {
   date_of_admission: 'Fecha de admision',
   affiliate_status: 'Estado de afiliacion',
   company_position: 'Posicion en la compañia',
-  city: 'Ciudad',
   hierarchical_position: 'Posicion Jerarquica',
   workflow_diagram: 'Diagrama de trabajo',
   type_of_contract: 'Tipo de contrato',
@@ -193,14 +193,13 @@ export const DOCUMENTS_TABLE: DocumentsTableOptions = {
   applies: 'Aplica a',
   description: 'Descripción',
   down_document: 'Descargar documento',
-  explired:'Vencimiento',
-  is_it_montlhy:'Mensual',
-  mandatory:'Mandatorio',
-  multiresource:'Multirecursos',
-  name:'Nombre',
-  private:'Privados',
-  special:'Especiales'
-
+  explired: 'Vencimiento',
+  is_it_montlhy: 'Mensual',
+  mandatory: 'Mandatorio',
+  multiresource: 'Multirecursos',
+  name: 'Nombre',
+  private: 'Privados',
+  special: 'Especiales',
 };
 export const setVehiclesToShow = (vehicles: Vehicle) => {
   return vehicles?.map((item) => ({
@@ -210,3 +209,45 @@ export const setVehiclesToShow = (vehicles: Vehicle) => {
     model: item.model_vehicles.name,
   }));
 };
+// export const stylesPDF = StyleSheet.create({
+//   page: {
+//     flexDirection: 'column',
+//     padding: 20,
+//   },
+//   section: {
+//     marginBottom: 10,
+//   },
+//   label: {
+//     fontSize: 12,
+//     fontWeight: 'bold',
+//   },
+//   value: {
+//     fontSize: 12,
+//     marginTop: 4,
+//   },
+//   checkboxContainer: {
+//     flexDirection: 'row',
+//     alignItems: 'center',
+//   },
+//   checkbox: {
+//     width: 12,
+//     height: 12,
+//     borderWidth: 1,
+//     marginRight: 8,
+//   },
+//   radioButton: {
+//     flexDirection: 'row',
+//     alignItems: 'center',
+//     marginBottom: 4,
+//   },
+//   radioLabel: {
+//     fontSize: 12,
+//     marginRight: 4,
+//   },
+//   text: {
+//     marginRight: 20,
+//   },
+//   text2: {
+//   },
+// });
+

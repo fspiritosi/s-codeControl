@@ -2,6 +2,15 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardTitle } from '@/components/ui/card';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { Table, TableBody, TableCaption, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { supabaseBrowser } from '@/lib/supabase/browser';
@@ -11,10 +20,12 @@ import { useEffect, useState } from 'react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { types } from '@/types/types';
 import cookie from 'js-cookie';
+import jsPDF from 'jspdf';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import DisplayCreatedForms from './DisplayCreatedForms';
 import FormCard from './FormCard';
 import { FormDisplay } from './FormDisplay';
+import { FormPDF, renderizarCampoPDF } from './Inputs';
 const generateChartConfig = (data: any, category: string) => {
   const categoryConfig: any = {};
   data[category]?.forEach((item: any, index: number) => {
@@ -52,7 +63,6 @@ const generateChartData = (categoryConfig: any, forms: any[]) => {
     // Sumar todas las respuestas de los formularios filtrados
 
     // Obtener el color correspondiente del mes
-    const item = categoryConfig[month.replace(/_/g, ' ')] || { color: 'defaultColor' };
 
     return {
       month: month,
@@ -97,10 +107,8 @@ function CreatedForm() {
   const formId = params.get('form_id');
 
   const fetchAnswers = async () => {
-    let { data: form_answers, error } = await supabase
-      .from('form_answers')
-      .select('*,form_id(*)')
-      .eq('form_id', formId);
+    let { data: form_answers } = await supabase.from('form_answers').select('*,form_id(*)').eq('form_id', formId);
+
     setForms(form_answers);
   };
 
@@ -109,90 +117,180 @@ function CreatedForm() {
   }, [formId]);
 
   const formKeys = Object.keys(JSON.parse(forms?.[0]?.answer || '{}'));
+
   const handleAnswersDelete = () => {
     params.delete('form_id');
     replace(`${pathname}?${params.toString()}`);
   };
+
   console.log(forms);
 
-  const chartConfig = generateChartConfig(forms, 'company');
-  console.log(chartConfig);
-  const chartData = generateChartData(chartConfig || {}, forms || []);
-  console.log(chartData);
+  const createdFormCurrent = createdFormsState?.find((e) => e.id === formId);
 
+  console.log(createdFormCurrent);
+
+  const chartConfig = generateChartConfig(forms, 'company');
+  const chartData = generateChartData(chartConfig || {}, forms || []);
+
+  const [printEmpty, setPrintEmpty] = useState(false);
+
+  const [pdfUrl, setPdfUrl] = useState('');
+
+  const generarPDF = (formItem: any) => {
+    const doc = new jsPDF();
+
+    // Estilo de fuente y color
+    doc.setFont('Helvetica');
+    doc.setTextColor(40, 40, 40);
+
+    // Título del formulario
+    doc.setFontSize(22);
+    doc.text(formItem.form_id.name, 20, 20);
+
+    // Dibujar una línea debajo del título
+    doc.setDrawColor(0, 0, 0);
+    doc.line(20, 25, 190, 25);
+
+    // Espaciado
+    let yOffset = 35;
+
+    formItem.form_id.form.forEach((section: any) => {
+      console.log(section);
+      if (section.tipo === 'Nombre del formulario') return;
+      // Título de la sección
+      doc.setFontSize(18);
+      doc.text(section.title, 20, yOffset).setFontSize(5);
+      yOffset += 3;
+
+      // Separar secciones
+      doc.setDrawColor(200, 200, 200);
+      doc.line(20, yOffset, 190, yOffset);
+      yOffset += 10;
+
+      // Campos de la sección
+      section.sectionCampos?.forEach((field: any) => {
+        yOffset = renderizarCampoPDF(doc, field, yOffset, formItem.answer);
+
+        // Verifica si hay espacio suficiente en la página
+        if (yOffset > 270) {
+          doc.addPage();
+          yOffset = 20; // Reinicia el yOffset para la nueva página
+        }
+      });
+
+      // Espacio entre secciones
+      yOffset += 10;
+    });
+
+    const pdfData = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfData);
+    setPdfUrl(pdfUrl);
+  };
   return (
     <div>
       {formId ? (
-        <Card className="p-4 flex flex-col">
-          <div className="flex gap-4 justify-end">
-            <Button variant={'outline'} className="self-end" onClick={() => handleAnswersDelete()}>
-              Volver
-            </Button>
-            <Button className="self-end">Imprimir vacio</Button>
+        <Card className="p-4 flex flex-col w-full">
+          <div className="flex items-center justify-between mb-4">
+            <Badge className="w-fit">
+              <CardTitle className="text-xl ">
+                {forms?.[0]?.form_id?.form.find((e: any) => e.id === '1').value ?? createdFormCurrent?.name}
+              </CardTitle>
+            </Badge>
+            <div className="flex gap-4 justify-end">
+              <Button variant={'outline'} className="self-end" onClick={() => handleAnswersDelete()}>
+                Volver
+              </Button>
+              <Button className="self-end" onClick={() => setPrintEmpty(false)}>
+                Imprimir vacio
+              </Button>
+            </div>
           </div>
-          {forms?.length === 0 ? (
-            <>No hay respuestas</>
-          ) : (
-            <>
-              {' '}
-              <Badge className="w-fit mb-3">
-                <CardTitle className="text-xl ">
-                  {forms?.[0]?.form_id?.form.find((e: any) => e.id === '1').value}
-                </CardTitle>
-              </Badge>
-              <div className="flex ">
-                <div className="min-w-[25%]">
-                  <FormCard
-                    fetchAnswers={fetchAnswers}
-                    chartConfig={chartConfig}
-                    chartData={chartData}
-                    key={0}
-                    form={forms?.[0]?.form_id}
-                  />
-                </div>
-                <Table>
-                  <TableCaption>Lista de respuestas del formulario</TableCaption>
-                  <TableHeader>
-                    <TableRow>
-                      {formKeys.map((key, index) => {
-                        return <TableCell key={index}>{key.replaceAll('_', ' ')}</TableCell>;
-                      })}
-                      <TableCell>Imprimir</TableCell>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {forms?.map((formItem: any, formIndex) => (
-                      <TableRow key={formIndex}>
-                        {formKeys.map((key, index) => {
-                          const value = JSON.parse(formItem.answer)[key];
-                          // Comprobar si el valor parece una fecha
-                          const isDate =
-                            typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(value);
-                          const formattedValue = isDate ? new Date(value).toLocaleDateString() : value;
-                          return (
-                            <TableCell key={index}>
-                              {Array.isArray(formattedValue) ? (
-                                <div className="gap-2 flex flex-col">
-                                  {formattedValue.map((item, itemIndex) => (
-                                    <Badge key={itemIndex}>{item}</Badge>
-                                  ))}
-                                </div>
-                              ) : (
-                                formattedValue
-                              )}
-                            </TableCell>
-                          );
-                        })}
+          <>
+            {' '}
+            <div className="grid grid-cols-1 place lg:grid-cols-[300px_1fr] gap-4">
+              <div className="min-w-[250px]">
+                <FormCard
+                  fetchAnswers={fetchAnswers}
+                  chartConfig={chartConfig}
+                  chartData={chartData}
+                  key={0}
+                  form={forms?.[0]?.form_id ?? createdFormCurrent}
+                />
+              </div>
+              <div className="overflow-x-auto">
+                <div className="min-w-[600px]">
+                  <Table>
+                    <TableCaption>Lista de respuestas del formulario</TableCaption>
+                    <TableHeader>
+                      <TableRow className="border-b-2">
+                        {formKeys.map((key, index) => (
+                          <TableCell className="text-[16px]" key={index}>
+                            <CardTitle>{key.replaceAll('_', ' ')}</CardTitle>
+                          </TableCell>
+                        ))}
                         <TableCell>
-                          <Button>Imprimir</Button>
+                          <CardTitle>Imprimir</CardTitle>
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody className="">
+                      {forms?.map((formItem: any, formIndex) => (
+                        <TableRow key={formIndex}>
+                          {formKeys.map((key, index) => {
+                            const value = JSON.parse(formItem.answer)[key];
+                            const isDate =
+                              typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(value);
+                            const formattedValue = isDate ? new Date(value).toLocaleDateString() : value;
+                            return (
+                              <TableCell key={index}>
+                                {Array.isArray(formattedValue) ? (
+                                  <div className="gap-2 flex flex-col">
+                                    {formattedValue.map((item, itemIndex) => (
+                                      <Badge key={itemIndex}>{item}</Badge>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  formattedValue
+                                )}
+                              </TableCell>
+                            );
+                          })}
+                          <TableCell>
+                            <Drawer>
+                              <DrawerTrigger asChild>
+                                <Button onClick={() => generarPDF(formItem)}>Imprimir</Button>
+                              </DrawerTrigger>
+                              <DrawerContent>
+                                <div className="grid grid-cols-1 place lg:grid-cols-[500px_1fr] gap-4">
+                                  <DrawerHeader className="flex flex-col">
+                                    <div>
+                                      <DrawerTitle className="text-2xl">Preview del PDF</DrawerTitle>
+                                      <DrawerDescription className="text-lg">
+                                        Asi es como se vera el pdf
+                                      </DrawerDescription>
+                                    </div>
+                                    <div className="space-x-4">
+                                      <DrawerClose>
+                                        <Button variant="outline">Cancel</Button>
+                                      </DrawerClose>
+                                      <Button onClick={() => setPrintEmpty(false)}>Descargar</Button>
+                                    </div>
+                                  </DrawerHeader>
+                                  <div>
+                                    <FormPDF pdfUrl={pdfUrl} />
+                                  </div>
+                                </div>
+                              </DrawerContent>
+                            </Drawer>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
-            </>
-          )}
+            </div>
+          </>
         </Card>
       ) : (
         <TooltipProvider delayDuration={0}>

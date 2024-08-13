@@ -16,10 +16,6 @@ function FormCard({
   chartData: any;
   fetchAnswers?: () => Promise<void>;
 }) {
-  const pathname = usePathname();
-  const { replace } = useRouter();
-  const searchParams = useSearchParams();
-  const params = new URLSearchParams(searchParams);
 
   // Encuentra el índice del formulario actual en el chartData
   console.log(form);
@@ -47,10 +43,10 @@ function FormCard({
           </DrawerContent>
         </Drawer>
         <CardDescription className="text-center">
-          {form.form?.length - 1} {form.form?.length - 1 > 1 ? 'secciones' : 'sección'}
+          {form?.form?.length - 1} {form?.form?.length - 1 > 1 ? 'secciones' : 'sección'}
         </CardDescription>
       </CardHeader>
-      <FormUseChart chartConfig={chartConfig} formName={form.name} chartData={chartData} />
+      <FormUseChart chartConfig={chartConfig} formName={form?.name} chartData={chartData} />
     </Card>
   );
 }

@@ -590,7 +590,6 @@ export type EmployeesTableOptions = {
   date_of_admission: string;
   affiliate_status: string;
   company_position: string;
-  city: string;
   hierarchical_position: string;
   workflow_diagram: string;
   type_of_contract: string;

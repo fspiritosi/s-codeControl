@@ -34,7 +34,7 @@ export default async function Viewcomponent({ viewData }: { viewData: ViewDataOb
           {viewData.tabsValues.map((tab, index) => {
             if (tab.restricted.includes(role)) return;
             return (
-              <TabsTrigger key={index} value={tab.value}>
+              <TabsTrigger key={index} value={tab.value} id={tab.value}>
                 {tab.name}
               </TabsTrigger>
             );

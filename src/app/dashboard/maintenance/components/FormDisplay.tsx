@@ -26,7 +26,7 @@ import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { Campo, FormField, types } from '@/types/types';
 import { useRouter } from 'next/navigation';
-import { Dispatch, SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import FieldRenderer from '../formUtils/fieldRenderer';
 import { buildFormData } from '../formUtils/formUtils';
@@ -51,13 +51,11 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
   })[0];
   const documenttypes = useCountriesStore((state) => state.companyDocumentTypes);
 
-
   const router = useRouter();
 
   const applies = campos.find((e) => e.tipo === types.NombreFormulario)?.apply;
 
   function getColumnValues<T>(table: string, column: any) {
-
     if (table === 'employees') return Array.from(new Set(employees.map((e: any) => e[column])));
     if (table === 'vehicles') return Array.from(new Set(vehicles.map((e: any) => e[column])));
     if (table === 'company') return Array.from(new Set([currentCompany?.[column]]));
@@ -65,9 +63,34 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
 
     return ['Selecciona a que aplica el formulario'];
   }
+  const [options, setOptions] = useState([]);
+  const shouldShowAllOptions = [
+    'document_type',
+    'gender',
+    'marital_status',
+    'level_of_education',
+    'province',
+    'affiliate_status',
+    'company_position',
+  ];
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      // Aquí deberías reemplazar 'campo.opciones' con la lógica específica para determinar si necesitas hacer la petición
+      const shouldFetch = campos.some(campo => shouldShowAllOptions.includes(campo.tipo));
+      if (shouldFetch) {
+        // Realiza tu petición aquí, ajusta la URL y la lógica según sea necesario
+        const response = await fetch('URL_A_TU_API');
+        const data = await response.json();
+        setOptions(data); // Asume que la respuesta es el array de opciones
+      }
+    };
+
+    fetchOptions();
+  }, [campos]); 
+
   // Mapea el valor de 'applies' a la tabla correspondiente
   const getValuesForField = (applies: string, column: string) => {
-
     switch (applies) {
       case 'employees':
         return getColumnValues('employees', column);
@@ -239,22 +262,21 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
                 <SelectValue placeholder="Seleccionar opcion" />
               </SelectTrigger>
               <SelectContent>
-                {campo.opciones?.map((opcion, i) => {
+                {campo.opciones?.map(async (opcion, i) => {
                   const label =
                     EMPLOYEES_TABLE[opcion as 'lastname'] ||
                     VEHICLES_TABLE[opcion as 'domain'] ||
                     COMPANIES_TABLE[opcion as 'city'] ||
                     DOCUMENTS_TABLE[opcion as 'special'];
 
-
-                  if (label === 'Afectaciones') {
-                    values = Array.from(new Set(employees.map((e: any) => e.contractor_name)));
-                  }
+                  // if (label === 'Afectaciones') {
+                  //   values = Array.from(new Set(employees.map((e: any) => e.contractor_name)));
+                  // }
 
                   return (
                     <SelectGroup key={i}>
                       <SelectLabel>{label}</SelectLabel>
-                      {values.map((value: string, j) => (
+                      {options.map((value: string, j) => (
                         <SelectItem key={j} value={value}>
                           {value}
                         </SelectItem>
@@ -279,6 +301,7 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
           </div>
         );
       case 'Subtitulo':
+        console.log(campo);
         return (
           <div className="col-span-3" key={index}>
             <CardTitle className="mb-2 mt-1">{campo.title ? campo.title : 'Titulo del campo'}</CardTitle>
