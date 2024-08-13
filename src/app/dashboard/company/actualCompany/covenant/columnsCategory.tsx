@@ -86,7 +86,7 @@ export const columnsCategory: ColumnDef<Colum>[] = [
       const [showCategoryModal, setShowCategoryModal] = useState(false);
       const [integerModal, setIntegerModal] = useState(false);
       const [id, setId] = useState('');
-     
+      const [categoryName, setCategoryName] = useState('');
       const category = row.original;
       const handleOpenModal = (id: string) => {
         setId(id);
@@ -95,7 +95,7 @@ export const columnsCategory: ColumnDef<Colum>[] = [
 
       const handleOpenCategoryModal = (id: string) => {
         setId(id);
-        
+        setCategoryName(category.name);
         setShowCategoryModal(!showCategoryModal);
       };
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
@@ -360,7 +360,15 @@ export const columnsCategory: ColumnDef<Colum>[] = [
                             <FormItem>
                               <FormLabel>Nombre</FormLabel>
                               <FormControl>
-                                <Input placeholder="Nombre de la categoría" {...field} />
+                              <Input
+                              placeholder="Nombre de la categoría"
+                              {...field}
+                              value={categoryName}
+                              onChange={(e) => {
+                                setCategoryName(e.target.value);
+                                field.onChange(e);
+                              }}
+                            />
                               </FormControl>
                               <FormDescription>Nombre de la categoría</FormDescription>
                               <FormMessage />

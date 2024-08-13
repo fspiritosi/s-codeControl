@@ -36,8 +36,14 @@ type customer = {
     id: string;
     name: string;
 }
+interface measure_unit {
+    id: number;
+    unit: string;
+    simbol: string;
+    tipo: string;
+}
 type Service = z.infer<typeof ItemsSchema>;
-export default function ServiceItemsForm({ measure_units, customers, services, company_id }: { measure_units: string[], customers: customer[], services: Service[], company_id: string }) {
+export default function ServiceItemsForm({ measure_units, customers, services, company_id }: { measure_units: measure_unit[], customers: customer[], services: Service[], company_id: string }) {
     const form = useForm<Service>({
         resolver: zodResolver(ItemsSchema),
         defaultValues: {
@@ -51,20 +57,19 @@ export default function ServiceItemsForm({ measure_units, customers, services, c
     });
     const { reset } = form;
     const [selectedClient, setSelectedClient] = useState('');
-   
-    const filteredServices = services.filter(service => service.customer_id === selectedClient);
-   
 
+    const filteredServices = services.filter(service => service.customer_id === selectedClient);
+    
     const onSubmit = async (values: Service) => {
 
         const { customer_id } = values;
 
         const modified_company_id = company_id.replace(/"/g, '');
         const modified_editing_service_id = values.customer_service_id.replace(/"/g, '');
-        
-        const updatedValues = { ...values, customer_service_id: modified_editing_service_id, customer_id: customer_id };
+
+        const updatedValues = { ...values, customer_service_id: modified_editing_service_id };
         const data = JSON.stringify(updatedValues);
-        
+
         try {
             const response = await fetch(`/api/services/items?actual=${modified_company_id}`, {
                 method: 'POST',
@@ -82,7 +87,7 @@ export default function ServiceItemsForm({ measure_units, customers, services, c
             console.error('Error al crear el item:', error);
             toast.error('Error al crear el item');
         }
-        
+
         reset();
     };
 
@@ -193,25 +198,37 @@ export default function ServiceItemsForm({ measure_units, customers, services, c
                 <FormField
                     control={form.control}
                     name='item_measure_units'
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Unidad de Medida</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} defaultValue=''>
-                                <FormControl>
-                                    <SelectTrigger className="w-[400px]">
-                                        <SelectValue placeholder="Elegir unidad de medida" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {measure_units?.map((measure: any) => (
-                                        <SelectItem value={measure.id} key={measure.id}>{measure.unit}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
+                    render={({ field }) => {
+                        return (
+                            <FormItem>
+                                <FormLabel>Unidad de Medida</FormLabel>
+                                <Select onValueChange={(value) => {
+                                    field.onChange(value); // Actualiza el valor en el formulario
+                                   
+                                }} value={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger className="w-[400px]">
+                                            <SelectValue placeholder="Elegir unidad de medida" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {measure_units.map((measure: measure_unit) => (
+                                            <SelectItem value={measure.id.toString()} key={measure.id}>
+                                                {measure.unit}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+
+
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        );
+                    }}
                 />
+
+
+
                 <Button className="mt-4" type="submit">Cargar Item</Button>
             </form>
         </Form>

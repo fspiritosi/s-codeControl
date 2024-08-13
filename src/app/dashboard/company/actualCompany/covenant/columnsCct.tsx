@@ -86,7 +86,7 @@ export const columns: ColumnDef<Colum>[] = [
       const [showCovenantModal, setShowCovenantModal] = useState(false);
       const [integerModal, setIntegerModal] = useState(false);
       const [id, setId] = useState('');
-      
+      const [covenantName, setCovenantName] = useState('');
       const covenant = row.original;
 
       const handleOpenModal = (id: string) => {
@@ -96,11 +96,11 @@ export const columns: ColumnDef<Colum>[] = [
 
       const handleOpenCovenantModal = (id: string) => {
         setId(id);
-        
+        setCovenantName(covenant.name);
         setShowCovenantModal(!showCovenantModal);
       };
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
-
+      
       const fetchCovenant = async () => {
         try {
           const { data, error } = await supabase
@@ -395,7 +395,8 @@ export const columns: ColumnDef<Colum>[] = [
                             <FormItem>
                               <FormLabel>Nombre</FormLabel>
                               <FormControl>
-                                <Input placeholder="Nombre del sindicato" {...field} />
+                                <Input placeholder="Nombre del sindicato" {...field} value={covenantName} onChange={(c)=>{setCovenantName(c.target.value);
+                                field.onChange(c);}}  />
                               </FormControl>
                               <FormDescription>Nombre del convenio</FormDescription>
                               <FormMessage />
