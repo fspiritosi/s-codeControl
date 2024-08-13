@@ -204,7 +204,7 @@ export default function ServiceItemsForm({ measure_units, customers, services, c
                                 <FormLabel>Unidad de Medida</FormLabel>
                                 <Select onValueChange={(value) => {
                                     field.onChange(value); // Actualiza el valor en el formulario
-                                    console.log('Valor seleccionado:', value); // Verifica el valor seleccionado
+                                   
                                 }} value={field.value}>
                                     <FormControl>
                                         <SelectTrigger className="w-[400px]">

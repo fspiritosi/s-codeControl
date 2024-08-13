@@ -73,7 +73,7 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
     const [selectedDate1, setSelectedDate1] = useState<Date | null>(null);
     const [date, setDate] = React.useState<Date>()
     const [date1, setDate1] = React.useState<Date>()
-    console.log(customers)
+    
     useEffect(() => {
         filterServices();
     }, [selectedCustomer, isActiveFilter, services]);
@@ -103,7 +103,7 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
 
     const handleSave = async () => {
         if (editingService) {
-            console.log('editingService', editingService);
+            
             try {
                 dateSchema.parse({
                     // service_start: editingService.service_start,
@@ -305,7 +305,7 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
                                         setSelectedDate(date || null);
                                         const formattedDate = date ? date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
                                         setEditingService({ ...editingService, service_start: formattedDate });
-                                        console.log(editingService)
+                                        
                                     }}
                                     initialFocus
                                 />
@@ -335,7 +335,7 @@ const ServiceTable = ({ services, customers }: ServiceTableProps) => {
                                         setSelectedDate1(date || null);
                                         const formattedDate1 = date1 ? date1.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
                                         setEditingService({ ...editingService, service_validity: formattedDate1 });
-                                        console.log(editingService)
+                                       
                                     }}
                                     initialFocus
                                 />

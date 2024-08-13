@@ -89,7 +89,7 @@ export const columnsGuild: ColumnDef<Colum>[] = [
       
       const guild = row.original;
       const [guildName, setGuildName] = useState(guild.name);
-      console.log(guild);
+      
       const handleOpenModal = (id: string) => {
         setId(id);
         
