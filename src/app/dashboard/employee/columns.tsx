@@ -44,9 +44,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
 import { addMonths, format } from 'date-fns';
-import { es, ro } from 'date-fns/locale';
+import { es } from 'date-fns/locale';
 import { ArrowUpDown, CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Fragment, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -94,7 +95,10 @@ type Colum = {
   workflow_diagram: string;
   birthplace: string;
   status: string;
-
+  is_active: boolean;
+  guild: string;
+  covenants: string;
+  category: string;
 };
 
 const allocatedToRangeFilter: FilterFn<Colum> = (
@@ -126,7 +130,7 @@ const allocatedToRangeFilter: FilterFn<Colum> = (
   return found as boolean;
 };
 
-export const columns: ColumnDef<Colum>[] = [
+export const EmployeesListColumns: ColumnDef<Colum>[] = [
   {
     id: 'actions',
     cell: ({ row }: { row: any }) => {
@@ -135,22 +139,21 @@ export const columns: ColumnDef<Colum>[] = [
       const owner = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
       const users = useLoggedUserStore((state) => state);
       const company = useLoggedUserStore((state) => state.actualCompany?.id);
-      
+
       let role = '';
       if (owner === profile) {
         role = users?.actualCompany?.owner_id?.role as string;
-        
       } else {
         // const roleRaw = share?.filter((item: any) => Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))).map((item: any) => item.role);
         const roleRaw = share
-          .filter((item: any) =>
-            item.company_id.id === company &&
-            Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))
+          ?.filter(
+            (item: any) =>
+              item.company_id.id === company &&
+              Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))
           )
           .map((item: any) => item.role);
         role = roleRaw?.join('');
         // role = users?.actualCompany?.share_company_users?.[0]?.role as string;
-        
       }
 
       const [showModal, setShowModal] = useState(false);
@@ -162,7 +165,7 @@ export const columns: ColumnDef<Colum>[] = [
         setDocument(id);
         setShowModal(!showModal);
       };
-
+      const fetchDocuments = useLoggedUserStore((state) => state.documetsFetch);
       const setInactiveEmployees = useLoggedUserStore((state) => state.setInactiveEmployees);
       const setActivesEmployees = useLoggedUserStore((state) => state.setActivesEmployees);
       const setShowDeletedEmployees = useLoggedUserStore((state) => state.setShowDeletedEmployees);
@@ -181,8 +184,15 @@ export const columns: ColumnDef<Colum>[] = [
           reason_for_termination: undefined,
         },
       });
+      const router = useRouter();
 
       async function reintegerEmployee() {
+        const documentToUpdate = useLoggedUserStore
+          ?.getState()
+          ?.active_and_inactive_employees.find((e: any) => e.document_number === document)
+          .documents_employees?.filter((e: any) => e.id_document_types.down_document)
+          ?.map((e: any) => e.id);
+
         try {
           await supabase
             .from('employees')
@@ -191,12 +201,23 @@ export const columns: ColumnDef<Colum>[] = [
               termination_date: null,
               reason_for_termination: null,
             })
-            .eq('document_number', document)
-            .select();
+            .eq('document_number', document);
+
+          documentToUpdate.forEach(async (element: string) => {
+            const { data, error } = await supabase
+              .from('documents_employees')
+              .update({
+                document_path: null,
+                state: 'pendiente',
+              })
+              .eq('id', element);
+          });
 
           setIntegerModal(!integerModal);
-          setInactiveEmployees();
+          setActivesEmployees();
           setShowDeletedEmployees(false);
+          router.refresh();
+          fetchDocuments();
           toast('Empleado reintegrado', { description: `El empleado ${user.full_name} ha sido reintegrado` });
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
@@ -224,6 +245,9 @@ export const columns: ColumnDef<Colum>[] = [
           setShowModal(!showModal);
 
           toast('Empleado eliminado', { description: `El empleado ${user.full_name} ha sido eliminado` });
+          setActivesEmployees();
+          router.refresh();
+          fetchDocuments();
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
           toast('Error al dar de baja al empleado', { description: message });
@@ -386,10 +410,10 @@ export const columns: ColumnDef<Colum>[] = [
 
           <DropdownMenuTrigger asChild>
             {/* {role === "Invitado" ? null : ( */}
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Abrir menu</span>
-                <DotsVerticalIcon className="h-4 w-4" />
-              </Button>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Abrir menu</span>
+              <DotsVerticalIcon className="h-4 w-4" />
+            </Button>
             {/* )} */}
           </DropdownMenuTrigger>
 
@@ -400,15 +424,11 @@ export const columns: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              <Link href={`/dashboard/employee/action?action=view&document=${user?.document_number}`}>
-                Ver empleado
-              </Link>
+              <Link href={`/dashboard/employee/action?action=view&employee_id=${user?.id}`}>Ver empleado</Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               {role !== 'Invitado' && (
-                <Link href={`/dashboard/employee/action?action=edit&document=${user?.document_number}`}>
-                  Editar empleado
-                </Link>
+                <Link href={`/dashboard/employee/action?action=edit&employee_id=${user?.id}`}>Editar empleado</Link>
               )}
             </DropdownMenuItem>
             <DropdownMenuItem>
@@ -436,10 +456,10 @@ export const columns: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
       );
     },
   },
+
   {
     accessorKey: 'full_name',
     header: ({ column }: { column: any }) => {
@@ -450,10 +470,21 @@ export const columns: ColumnDef<Colum>[] = [
         </Button>
       );
     },
+    cell: ({ row }: { row: any }) => {
+      return (
+        <Link
+          href={`/dashboard/employee/action?action=view&employee_id=${row.original.id}`}
+          className="hover:underline"
+        >
+          {row.original.full_name}
+        </Link>
+      );
+    },
   },
+
   {
     accessorKey: 'status',
-    header: 'Estado',
+    header: 'Legajo',
   },
   {
     accessorKey: 'picture',
@@ -536,8 +567,8 @@ export const columns: ColumnDef<Colum>[] = [
     header: 'Afectado a',
     cell: ({ row }) => {
       const values = row.original.allocated_to;
-      
-      if (!values) return <Badge variant={'destructive'}>Sin afectar</Badge>;
+
+      if (!values) return <Badge variant={'outline'}>Sin afectar</Badge>;
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
       const contractorCompanies = Array.isArray(values)
@@ -580,7 +611,18 @@ export const columns: ColumnDef<Colum>[] = [
     accessorKey: 'phone',
     header: 'Teléfono',
   },
-
+  {
+    accessorKey: 'guild',
+    header: 'Asosiación gremial',
+  },
+  {
+    accessorKey: 'covenants',
+    header: 'Convenio',
+  },
+  {
+    accessorKey: 'category',
+    header: 'Categoría',
+  },
   // {
   //   accessorKey: 'affiliate_status',
   //   header: 'Estado de afiliado',

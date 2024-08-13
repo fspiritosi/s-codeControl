@@ -1,23 +1,27 @@
-
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { formatDate } from 'date-fns';
-import { es, id } from 'date-fns/locale';
-import Cookies from 'js-cookie';
 import BackButton from '@/components/BackButton';
+import DeleteDocument from '@/components/DeleteDocument';
+import ReplaceDocument from '@/components/ReplaceDocument';
 import UpdateDocuments from '@/components/UpdateDocuments';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
-import { revalidatePath } from 'next/cache';
-import { Suspense } from 'react';
-// import { supabase } from '../../../../../supabase/supabase';
-import DownloadButton from '../documentComponents/DownloadButton';
 import { supabaseServer } from '@/lib/supabase/server';
-export default async function page({ params }: { params: { id: string } }) {
+import { cn } from '@/lib/utils';
+import { formatDate } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { Suspense } from 'react';
+import DownloadButton from '../documentComponents/DownloadButton';
+export default async function page({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { resource: string };
+}) {
   let documents_employees: any[] | null = [];
   let resource = '';
   let documentName = '';
@@ -25,8 +29,12 @@ export default async function page({ params }: { params: { id: string } }) {
   let document: any[] | null = [];
   let documentType: string | null = null;
   let resourceType: string | null = null;
-  // revalidatePath('/dashboard/document/[id]', 'page');
   const supabase = supabaseServer();
+  const URL = process.env.NEXT_PUBLIC_BASE_URL;
+
+  const { response } = await fetch(`${URL}/api/document/${params.id}?resource=${searchParams.resource}`, {
+    cache: 'no-store',
+  }).then((e) => e.json());
 
   const {
     data: { session },
@@ -37,22 +45,15 @@ export default async function page({ params }: { params: { id: string } }) {
   let { data: share, error: sharedError } = await supabase
     .from('share_company_users')
     .select(`*`)
-    .eq('profile_id', usuario?.id)
-
+    .eq('profile_id', usuario?.id);
 
   let role = '';
 
-
-  const roleRaw = share?.filter(
-    (item: any) =>
-      company?.some((comp: any) => comp.id === item.company_id) &&
-      item.profile_id === usuario.id
-  )
+  const roleRaw = share
+    ?.filter((item: any) => company?.some((comp: any) => comp.id === item.company_id) && item.profile_id === usuario.id)
     .map((item: any) => item.role);
 
   role = roleRaw?.join('') as string;
-
-
 
   let { data: documents_employee } = await supabase
     .from('documents_employees')
@@ -114,6 +115,7 @@ export default async function page({ params }: { params: { id: string } }) {
 
   const { data: url } = supabase.storage.from('document_files').getPublicUrl(document?.[0]?.document_path);
 
+
   documentName = document?.[0]?.document_path;
   documentUrl = url.publicUrl;
   documents_employees = document;
@@ -137,7 +139,7 @@ export default async function page({ params }: { params: { id: string } }) {
       <Card className="p-4">
         <div className="grid lg:grid-cols-3 grid-cols-1 gap-col-3 ">
           <div className="lg:max-w-[30vw] col-span-1">
-            <div className="flex justify-between items-center">
+            <div className="flex  flex-col ">
               <div>
                 <CardHeader>
                   <CardTitle className=" text-2xl">{documents_employees?.[0]?.document_types?.name}</CardTitle>
@@ -177,7 +179,7 @@ export default async function page({ params }: { params: { id: string } }) {
                   )}
                 </CardHeader>
               </div>
-              <div className="flex gap-10">
+              <div className="flex justify-between mb-5 px-2">
                 <DownloadButton
                   fileName={documents_employees?.[0]?.document_types?.name}
                   path={documents_employees?.[0]?.document_path}
@@ -196,36 +198,34 @@ export default async function page({ params }: { params: { id: string } }) {
                 <TabsTrigger className="hover:bg-white/30" value="Documento">
                   Documento
                 </TabsTrigger>
-                {role === "Invitado" ? null : (
-                  documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth() ? (
-                    <TooltipProvider delayDuration={100}>
-                      <Tooltip>
-                        <TooltipTrigger disabled asChild>
-                          <div>
-                            <TabsTrigger
-                              className="hover:bg-white/30"
-                              disabled={documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth()}
-                              value="Auditar"
-                            >
-                              Actualizar
-                            </TabsTrigger>
-                          </div>
-                        </TooltipTrigger>
-                        {documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth() ? (
-                          <TooltipContent>
-                            <p>
-                              Este documento no puede ser modificado ya que se encuentra aprobado y su vencimiento es
-                              mayor a 30 días
-                            </p>
-                          </TooltipContent>
-                        ) : null}
-                      </Tooltip>
-                    </TooltipProvider>
-                  ) : (
-                    <TabsTrigger className="hover:bg-white/30" value="Auditar">
-                      Actualizar
-                    </TabsTrigger>
-                  )
+                {role === 'Invitado' ? null : documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth() ? (
+                  <TooltipProvider delayDuration={100}>
+                    <Tooltip>
+                      <TooltipTrigger disabled asChild>
+                        <div>
+                          <TabsTrigger
+                            className="hover:bg-white/30"
+                            disabled={documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth()}
+                            value="Auditar"
+                          >
+                            Actualizar
+                          </TabsTrigger>
+                        </div>
+                      </TooltipTrigger>
+                      {documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth() ? (
+                        <TooltipContent>
+                          <p>
+                            Este documento no puede ser modificado ya que se encuentra aprobado y su vencimiento es
+                            mayor a 30 días
+                          </p>
+                        </TooltipContent>
+                      ) : null}
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  <TabsTrigger className="hover:bg-white/30" value="Auditar">
+                    Actualizar
+                  </TabsTrigger>
                 )}
               </TabsList>
               <TabsContent value="Empresa">
@@ -357,10 +357,10 @@ export default async function page({ params }: { params: { id: string } }) {
                                 <CardTitle className="font-bold text-lg">
                                   {resource === 'employee'
                                     ? documents_employees?.[0]?.applies.lastname +
-                                    ' ' +
-                                    documents_employees?.[0]?.applies.firstname
+                                      ' ' +
+                                      documents_employees?.[0]?.applies.firstname
                                     : documents_employees?.[0]?.applies.domain ||
-                                    documents_employees?.[0]?.applies.intern_number}
+                                      documents_employees?.[0]?.applies.intern_number}
                                 </CardTitle>
                               </TableCell>
                             </TableRow>
@@ -627,8 +627,23 @@ export default async function page({ params }: { params: { id: string } }) {
                       Si el documento es rechazado, vencido o necesita ser actualizado puedes hacerlo desde aquí, una
                       vez aprobado el documento no podrá ser modificado
                     </CardDescription>
-                    <div className="w-full flex justify-evenly">
+                    <div className="w-full flex justify-evenly flex-wrap">
                       <UpdateDocuments
+                        id={params.id}
+                        resource={resource}
+                        documentName={documentName}
+                        expires={documents_employees?.[0]?.document_types?.explired}
+                        montly={documents_employees?.[0]?.document_types?.is_it_montlhy}
+                      />
+                      <ReplaceDocument
+                        id={params.id}
+                        resource={resource}
+                        documentName={documentName}
+                        expires={documents_employees?.[0]?.validity}
+                        montly={documents_employees?.[0]?.period}
+                        appliesId={document?.[0]?.id}
+                      />
+                      <DeleteDocument
                         id={params.id}
                         resource={resource}
                         documentName={documentName}

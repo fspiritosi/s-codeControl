@@ -34,25 +34,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any;
   data: TData[];
-  setInactiveEmployees: () => void;
-  setActivesEmployees: () => void;
-  showDeletedEmployees: boolean;
-  setShowDeletedEmployees: (showDeletedEmployees: boolean) => void;
 }
 
-export function DataTable<TData, TValue>({
-  columns,
-  data,
-  setActivesEmployees,
-  setInactiveEmployees,
-  showDeletedEmployees,
-  setShowDeletedEmployees,
-}: DataTableProps<TData, TValue>) {
+export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const defaultVisibleColumns = [
     'full_name',
@@ -66,6 +56,8 @@ export function DataTable<TData, TValue>({
     'type_of_contract',
     'allocated_to',
   ];
+
+  // const data = setEmployeesToShow(employees) as TData[];
 
   const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -131,6 +123,9 @@ export function DataTable<TData, TValue>({
     hierrical_position: createOptions('hierrical_position'),
     workflow_diagram: createOptions('workflow_diagram'),
     status: createOptions('status'),
+    guild: createOptions('guild'),
+    covenants: createOptions('covenants'),
+    category: createOptions('category'),
   };
 
   function createOptions(key: string) {
@@ -214,6 +209,21 @@ export function DataTable<TData, TValue>({
       option: allOptions.status,
       label: 'Estado',
     },
+    guild: {
+      name: 'guild',
+      option: allOptions.guild,
+      label: 'Gremio',
+    },
+    covenants: {
+      name: 'covenants',
+      option: allOptions.covenants,
+      label: 'Convenios',
+    },
+    category: {
+      name: 'category',
+      option: allOptions.category,
+      label: 'Categoria',
+    },
   };
 
   let table = useReactTable({
@@ -253,6 +263,9 @@ export function DataTable<TData, TValue>({
       city: 'Todos',
       hierrical_position: 'Todos',
       status: 'Todos',
+      guild: 'Todos',
+      covenants: 'Todos',
+      category: 'Todos',
     });
   };
 
@@ -308,10 +321,10 @@ export function DataTable<TData, TValue>({
                       <DropdownMenuCheckboxItem
                         key={column.id}
                         className="capitalize text-red-400"
-                        checked={showDeletedEmployees}
+                        // checked={showDeletedEmployees}
                         onCheckedChange={(value) => {
-                          setShowDeletedEmployees(!!value);
-                          value ? setInactiveEmployees() : setActivesEmployees();
+                          // setShowDeletedEmployees(!!value);
+                          // value ? setInactiveEmployees() : setActivesEmployees();
                         }}
                       >
                         {column.columnDef.header}
@@ -351,10 +364,9 @@ export function DataTable<TData, TValue>({
                                   <Input
                                     placeholder="Buscar por afectación"
                                     value={table.getColumn('allocated_to')?.getFilterValue() as string}
-                                    onChange={(event) =>
-                                      {
-                                      table.getColumn('allocated_to')?.setFilterValue(event.target.value)}
-                                    }
+                                    onChange={(event) => {
+                                      table.getColumn('allocated_to')?.setFilterValue(event.target.value);
+                                    }}
                                     className="max-w-sm"
                                   />
                                 </div>
@@ -410,7 +422,11 @@ export function DataTable<TData, TValue>({
             {table?.getRowModel().rows?.length ? (
               table.getRowModel().rows?.map((row) => {
                 return (
-                  <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                  <TableRow
+                    className={cn(!(row.original as any).is_active && 'opacity-40')}
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                  >
                     {row.getVisibleCells()?.map((cell) => {
                       let is_active = (cell.row.original as any).is_active;
                       return (
@@ -425,14 +441,23 @@ export function DataTable<TData, TValue>({
                               className="size-10 rounded-full object-cover"
                             />
                           ) : cell.column.id === 'status' ? (
-                            <Badge variant={cell.getValue() === 'No avalado' ? 'destructive' : 'success'}>
-                              {cell.getValue() as React.ReactNode}
-                            </Badge>
+                            <Badge
+                            variant={
+                              cell.getValue() === 'Completo'
+                                ? 'success'
+                                : cell.getValue() === 'Completo con doc vencida'
+                                  ? 'yellow'
+                                  : 'destructive'
+                            }
+                          >
+                            {cell.getValue() as React.ReactNode}
+                          </Badge>
                           ) : (
                             (flexRender(cell.column.columnDef.cell, cell.getContext()) as React.ReactNode)
                           )}
                         </TableCell>
                       );
+                    
                     })}
                   </TableRow>
                 );
@@ -461,8 +486,6 @@ export function DataTable<TData, TValue>({
                         <Skeleton className="h-7 w-[13%]" />
                       </div>
                     </div>
-                  ) : showDeletedEmployees ? (
-                    'No hay empleados inactivos'
                   ) : (
                     'No hay empleados activos'
                   )}

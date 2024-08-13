@@ -33,6 +33,7 @@ interface State {
   actualCompany: Company[0] | null;
   setActualCompany: (company: Company[0]) => void;
   employees: any;
+  active_and_inactive_employees: any;
   setEmployees: (employees: any) => void;
   isLoading: boolean;
   employeesToShow: any;
@@ -133,6 +134,7 @@ interface Iddocumenttypes {
 
 const setEmployeesToShow = (employees: any) => {
   const employee = employees?.map((employees: any) => {
+    console.log(employees);
     return {
       full_name: `${employees?.lastname?.charAt(0)?.toUpperCase()}${employees?.lastname?.slice(1)} ${employees?.firstname
         ?.charAt(0)
@@ -166,11 +168,16 @@ const setEmployeesToShow = (employees: any) => {
       city: employees?.city?.name?.trim(),
       hierrl_position: employees?.hierarchical_position?.name,
       workflow_diagram: employees?.workflow_diagram?.name,
-      contractor_employee: employees?.contractor_employee?.map(({ contractors }: any) => contractors?.id),
+      contractor_employee: employees?.contractor_employee?.map(({ customers }: any) => customers?.id),
+      contractor_name: employees?.contractor_employee?.map(({ customers }: any) => customers?.name),
       is_active: employees?.is_active,
       reason_for_termination: employees?.reason_for_termination,
       termination_date: employees?.termination_date,
       status: employees?.status,
+      guild: employees?.guild,
+      covenants: employees?.covenants,
+      category: employees?.category,
+      documents_employees: employees.documents_employees,
     };
   });
 
@@ -427,7 +434,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
           )`
       )
       .eq('company_id', get()?.actualCompany?.id)
-      .eq('status', 'No avalado');
+      .eq('status', 'Incompleto');
 
     if (error) {
       console.error('Error al obtener los empleados no avalados:', error);
@@ -546,12 +553,12 @@ export const useLoggedUserStore = create<State>((set, get) => {
     set({ vehiclesToShow: setVehiclesToShow(activesVehicles) });
   };
   const endorsedVehicles = () => {
-    const endorsedVehicles = get()?.vehicles.filter((vehicle) => vehicle.status === 'Avalado');
+    const endorsedVehicles = get()?.vehicles.filter((vehicle) => vehicle.status === 'Completo');
 
     set({ vehiclesToShow: setVehiclesToShow(endorsedVehicles) });
   };
   const noEndorsedVehicles = () => {
-    const noEndorsedVehicles = get()?.vehicles.filter((vehicle) => vehicle.status === 'No avalado');
+    const noEndorsedVehicles = get()?.vehicles.filter((vehicle) => vehicle.status !== 'Completo');
     set({ vehiclesToShow: setVehiclesToShow(noEndorsedVehicles) });
   };
   const documentDrawerEmployees = async (document: string) => {
@@ -929,17 +936,51 @@ export const useLoggedUserStore = create<State>((set, get) => {
           birthplace(
             name
           ),
+           documents_employees(
+            *,id_document_types(*)
+          ),
+          guild(id,name),
+          covenants(id,name),
+          category(id,name),
           contractor_employee(
             customers(
               *
             )
           )`
       )
-      .eq('company_id', get()?.actualCompany?.id)
-      .eq('is_active', active);
+      .eq('company_id', get()?.actualCompany?.id);
+    // .eq('is_active', active);
+    set({ active_and_inactive_employees: setEmployeesToShow(employees) });
 
-    const employeesToShow = setEmployeesToShow(employees);
-    return employeesToShow;
+    // Filtrar empleados activos
+    const activeEmployees = employees?.filter((e) => {
+      if (e.is_active) {
+        return true;
+      } else {
+        // Verificar si todos los documentos de baja están en estado "pendiente"
+        return e.documents_employees
+          ?.filter((e: any) => e.id_document_types.down_document)
+          ?.some((doc: any) => doc.state === 'pendiente');
+      }
+    });
+
+    // Filtrar empleados inactivos con todos los documentos de baja presentados
+    const inactiveEmployees = employees?.filter((e) => {
+      return (
+        !e.is_active &&
+        e.documents_employees
+          .filter((e: any) => e.id_document_types.down_document)
+          .every((doc: any) => doc.state === 'presentado')
+      );
+    });
+
+    if (active) {
+      const employeesToShow = setEmployeesToShow(activeEmployees);
+      return employeesToShow;
+    } else {
+      const employeesToShow = setEmployeesToShow(inactiveEmployees);
+      return employeesToShow;
+    }
   };
   const realTimeSharedUsers = supabase
     .channel('custom-all-channel')
@@ -968,11 +1009,13 @@ export const useLoggedUserStore = create<State>((set, get) => {
       howManyCompanies(get()?.profile?.[0]?.id || '');
     })
     .subscribe();
+
   const setActivesEmployees = async () => {
     const employeesToShow = await getEmployees(true);
     set({ employeesToShow });
     set({ employees: employeesToShow });
   };
+
   const resetDefectCompanies = async (company: Company[0]) => {
     const { data, error } = await supabase
       .from('company')
@@ -1058,5 +1101,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
     companyDocuments: get()?.companyDocuments,
     codeControlRole: get()?.codeControlRole,
     roleActualCompany: get()?.roleActualCompany,
+    active_and_inactive_employees: get()?.active_and_inactive_employees,
   };
 });

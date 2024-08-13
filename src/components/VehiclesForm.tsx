@@ -9,7 +9,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CaretSortIcon, CheckIcon, PlusCircledIcon } from '@radix-ui/react-icons';
 import { ChangeEvent, useEffect, useState } from 'react';
 require('dotenv').config();
-
 import { CheckboxDefaultValues } from '@/components/CheckboxDefValues';
 import { useImageUpload } from '@/hooks/useUploadImage';
 import { handleSupabaseError } from '@/lib/errorHandler';
@@ -28,6 +27,8 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { CardDescription, CardHeader, CardTitle } from './ui/card';
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
 import { Input } from './ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import DocumentEquipmentComponent from '@/components/DocumentEquipmentComponent' 
 // import { useToast } from './ui/use-toast'
 
 type VehicleType = {
@@ -74,32 +75,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
   // const id = params
   const [accion, setAccion] = useState(searchParams.get('action'));
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
-  const profile = useLoggedUserStore((state) => state);
-  // let role = '';
-  // if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
-  //   role = profile?.actualCompany?.owner_id?.role as string;
-  // } else {
-  //   role = profile?.actualCompany?.share_company_users?.[0]?.role as string;
-  // }
-  const share = useLoggedUserStore((state) => state.sharedCompanies);
-  const profile2 = useLoggedUserStore((state) => state.credentialUser?.id);
-  const owner2 = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
-  const users = useLoggedUserStore((state) => state);
-  const company = useLoggedUserStore((state) => state.actualCompany?.id);
-  
-  let role = '';
-  if (owner2 === profile2) {
-    role = users?.actualCompany?.owner_id?.role as string;
-  } else {
-    
-    const roleRaw = share
-      .filter((item: any) =>
-        item.company_id.id === company &&
-        Object.values(item).some((value) => typeof value === 'string' && value.includes(profile2 as string))
-      )
-      .map((item: any) => item.role);
-    role = roleRaw?.join('');
-  }
+  const role = useLoggedUserStore((state) => state.roleActualCompany);
 
   const [vehicle, setVehicle] = useState<VehicleType | null>(null);
   const pathname = usePathname();
@@ -133,7 +109,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
       setHideInput(true);
     }
     if (vehicle && vehicle.type_of_vehicle === 'Otros') {
-      setHideInput(false)
+      setHideInput(false);
     }
     if (!vehicle) {
       setHideInput(false);
@@ -217,110 +193,110 @@ export default function VehiclesForm2({ id }: { id: string }) {
     type_of_vehicle: z.string({ required_error: 'El tipo es requerido' }),
     chassis: hideInput
       ? z
-          .string({
-            required_error: 'El chasis es requerido',
-          })
-          .min(2, {
-            message: 'El chasis debe tener al menos 2 caracteres.',
-          })
-          .max(30, { message: 'El chasis debe tener menos de 30 caracteres.' })
+        .string({
+          required_error: 'El chasis es requerido',
+        })
+        .min(2, {
+          message: 'El chasis debe tener al menos 2 caracteres.',
+        })
+        .max(30, { message: 'El chasis debe tener menos de 30 caracteres.' })
       : z.string().optional(),
     domain: hideInput
       ? z
-          .string({
-            required_error: 'El dominio es requerido',
-          })
-          .min(6, {
-            message: 'El dominio debe tener al menos 6 caracteres.',
-          })
-          .max(7, { message: 'El dominio debe tener menos de 7 caracteres.' })
-          .refine(
-            (e) => {
-              //old regex para validar dominio AAA000 (3 letras y 3 numeros)
-              const year = Number(form.getValues('year'));
+        .string({
+          required_error: 'El dominio es requerido',
+        })
+        .min(6, {
+          message: 'El dominio debe tener al menos 6 caracteres.',
+        })
+        .max(7, { message: 'El dominio debe tener menos de 7 caracteres.' })
+        .refine(
+          (e) => {
+            //old regex para validar dominio AAA000 (3 letras y 3 numeros)
+            const year = Number(form.getValues('year'));
 
-              const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/;
-              if (year !== undefined) {
-                if (year <= 2015) {
-                  return oldRegex.test(e);
-                } else {
-                  return true;
-                }
-              } else {
-                return 0;
-              }
-            },
-            {
-              message: 'El dominio debe tener el formato AAA000.',
-            }
-          )
-          .refine(
-            (e) => {
-              const year = Number(form.getValues('year'));
-
-              const newRegex = /^[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$/;
-              if (year !== undefined) {
-                if (year >= 2017) {
-                  return newRegex.test(e);
-                } else {
-                  return true;
-                }
-              } else {
-                return 0;
-              }
-            },
-            {
-              message: 'El dominio debe tener el formato AA000AA.',
-            }
-          )
-          .refine(
-            (e) => {
-              const year = Number(form.getValues('year'));
-
-              const newRegex = /^[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$/;
-              const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/;
-              if (year !== undefined) {
-                if (year === 2016 || year === 2015) {
-                  const result = newRegex.test(e) || oldRegex.test(e);
-                  return result;
-                } else {
-                  return true;
-                }
-              } else {
-                return 0;
-              }
-            },
-            {
-              message: 'El dominio debe tener uno de los siguientes formatos AA000AA o AAA000',
-            }
-          )
-          .refine(
-            async (domain: string) => {
-              let { data: vehicles, error } = await supabase
-                .from('vehicles')
-                .select('*')
-                .eq('domain', domain?.toUpperCase())
-                .eq('company_id', actualCompany?.id);
-
-              if (vehicles?.[0] && pathname === '/dashboard/equipment/action?action=new') {
-                return false;
+            const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/;
+            if (year !== undefined) {
+              if (year <= 2015) {
+                return oldRegex.test(e);
               } else {
                 return true;
               }
-            },
-            { message: 'El dominio ya existe' }
-          )
+            } else {
+              return 0;
+            }
+          },
+          {
+            message: 'El dominio debe tener el formato AAA000.',
+          }
+        )
+        .refine(
+          (e) => {
+            const year = Number(form.getValues('year'));
+
+            const newRegex = /^[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$/;
+            if (year !== undefined) {
+              if (year >= 2017) {
+                return newRegex.test(e);
+              } else {
+                return true;
+              }
+            } else {
+              return 0;
+            }
+          },
+          {
+            message: 'El dominio debe tener el formato AA000AA.',
+          }
+        )
+        .refine(
+          (e) => {
+            const year = Number(form.getValues('year'));
+
+            const newRegex = /^[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$/;
+            const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/;
+            if (year !== undefined) {
+              if (year === 2016 || year === 2015) {
+                const result = newRegex.test(e) || oldRegex.test(e);
+                return result;
+              } else {
+                return true;
+              }
+            } else {
+              return 0;
+            }
+          },
+          {
+            message: 'El dominio debe tener uno de los siguientes formatos AA000AA o AAA000',
+          }
+        )
+        .refine(
+          async (domain: string) => {
+            let { data: vehicles, error } = await supabase
+              .from('vehicles')
+              .select('*')
+              .eq('domain', domain.toUpperCase())
+              .eq('company_id', actualCompany?.id);
+
+            if (vehicles?.[0] && pathname === '/dashboard/equipment/action?action=new') {
+              return false;
+            } else {
+              return true;
+            }
+          },
+          { message: 'El dominio ya existe' }
+        )
       : z.string().optional().nullable(),
     serie: hideInput
       ? z.string().optional()
       : z
-          .string({
-            required_error: 'La serie es requerida',
-          })
-          .min(2, {
-            message: 'La serie debe tener al menos 2 caracteres.',
-          })
-          .max(30, { message: 'La serie debe tener menos de 3- caracteres.' }),
+        .string({
+          required_error: 'La serie es requerida',
+        })
+        .min(2, {
+          message: 'La serie debe tener al menos 2 caracteres.',
+        })
+        .max(30, { message: 'La serie debe tener menos de 3- caracteres.' }),
     intern_number: z
       .string({
         required_error: 'El número interno es requerido',
@@ -370,25 +346,27 @@ export default function VehiclesForm2({ id }: { id: string }) {
     .subscribe();
 
   useEffect(() => {
-    fetchData()
-  }, [])
-  const fetchContractors = useCountriesStore(state => state.fetchContractors)
-  const subscribeToCustomersChanges = useCountriesStore(state => state.subscribeToCustomersChanges)
+    fetchData();
+  }, []);
+  const fetchContractors = useCountriesStore((state) => state.fetchContractors);
+  const subscribeToCustomersChanges = useCountriesStore((state) => state.subscribeToCustomersChanges);
   useEffect(() => {
-    fetchContractors()
+    fetchContractors();
 
-    const unsubscribe = subscribeToCustomersChanges()
+    const unsubscribe = subscribeToCustomersChanges();
 
     return () => {
-      unsubscribe()
-    }
-  }, [fetchContractors, subscribeToCustomersChanges])
-  
-  const contractorCompanies = useCountriesStore(state => state.customers?.filter((company:any) => company.company_id.toString() === actualCompany?.id && company.is_active))
-  const vehicleBrands = data.brand
-  const types = data.tipe_of_vehicles?.map(e => e.name)
-  const vehicleModels = data.models
-  const types_vehicles = data.types?.map(e => e.name)
+      unsubscribe();
+    };
+  }, [fetchContractors, subscribeToCustomersChanges]);
+
+  const contractorCompanies = useCountriesStore((state) =>
+    state.customers?.filter((company: any) => company.company_id.toString() === actualCompany?.id && company.is_active)
+  );
+  const vehicleBrands = data.brand;
+  const types = data.tipe_of_vehicles?.map((e) => e.name);
+  const vehicleModels = data.models;
+  const types_vehicles = data.types?.map((e) => e.name);
 
   const form = useForm<z.infer<typeof vehicleSchema>>({
     resolver: zodResolver(vehicleSchema),
@@ -485,7 +463,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   .update({ picture: vehicleImage })
                   .eq('id', id)
                   .eq('company_id', actualCompany?.id);
-              } catch (error) {}
+              } catch (error) { }
             } catch (error: any) {
               throw new Error(handleSupabaseError(error.message));
             }
@@ -525,10 +503,49 @@ export default function VehiclesForm2({ id }: { id: string }) {
     }
   };
 
-
   async function onUpdate(values: z.infer<typeof vehicleSchema>) {
+    function compareContractorEmployees(originalObj: VehicleType | null, modifiedObj: z.infer<typeof vehicleSchema>) {
+      const originalSet = new Set(originalObj?.allocated_to);
+      const modifiedSet = new Set(modifiedObj?.allocated_to);
+      // Valores a eliminar
+      const valuesToRemove = [...originalSet].filter((value) => !modifiedSet.has(value));
+
+      // Valores a agregar
+      const valuesToAdd = [...modifiedSet].filter((value) => !originalSet.has(value));
+
+      // Valores que se mantienen
+      const valuesToKeep = [...originalSet].filter((value) => modifiedSet.has(value));
+
+      return {
+        valuesToRemove,
+        valuesToAdd,
+        valuesToKeep,
+      };
+    }
     toast.promise(
       async () => {
+        const result = compareContractorEmployees(vehicle, values);
+
+        result.valuesToRemove.forEach(async (e) => {
+          const { error } = await supabase
+            .from('contractor_equipment')
+            .delete()
+            .eq('equipment_id', vehicle?.id)
+            .eq('contractor_id', e);
+          if (error) return handleSupabaseError(error.message);
+        });
+
+        const error2 = await Promise.all(
+          result.valuesToAdd.map(async (e) => {
+            if (!result.valuesToKeep.includes(e)) {
+              const { error } = await supabase
+                .from('contractor_equipment')
+                .insert({ equipment_id: vehicle?.id, contractor_id: e });
+              if (error) return handleSupabaseError(error.message);
+            }
+          })
+        );
+
         const { type_of_vehicle, brand, model, year, engine, chassis, serie, domain, intern_number, picture, type } =
           values;
 
@@ -552,7 +569,6 @@ export default function VehiclesForm2({ id }: { id: string }) {
             .eq('company_id', actualCompany?.id)
             .select();
 
-
           const id = vehicle?.id;
           const fileExtension = imageFile?.name.split('.').pop();
           if (imageFile) {
@@ -571,7 +587,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                   .update({ picture: vehicleImage })
                   .eq('id', id)
                   .eq('company_id', actualCompany?.id);
-              } catch (error) {}
+              } catch (error) { }
             } catch (error: any) {
               throw new Error('Error al subir la imagen');
             }
@@ -596,8 +612,8 @@ export default function VehiclesForm2({ id }: { id: string }) {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <section>
-        <header className="flex justify-between gap-4">
-          <div className="mb-8 flex justify-between w-full">
+        <header className="flex justify-between gap-4 flex-wrap">
+          <div className="mb-4 flex justify-between w-full">
             <CardHeader className="h-[152px] flex flex-row gap-4 justify-between items-center flex-wrap w-full bg-muted dark:bg-muted/50 border-b-2">
               {accion === 'edit' || accion === 'view' ? (
                 <div className="flex gap-3 items-center">
@@ -636,11 +652,11 @@ export default function VehiclesForm2({ id }: { id: string }) {
                 </div>
               )}
 
-              <div className="mt-4">
+              <div className="mt-4 flex flex-row gap-2">
                 {role !== 'Invitado' && readOnly && accion === 'view' && (
-                  <div className="flex flex-grap gap-2">
+                  <div className="flex flex-row gap-2">
                     <Button
-                      variant="primary"
+                      variant='default'
                       onClick={() => {
                         setReadOnly(false);
                       }}
@@ -648,17 +664,25 @@ export default function VehiclesForm2({ id }: { id: string }) {
                       Habilitar edición
                     </Button>
 
-                    <BackButton />
                   </div>
                 )}
+                <div className="flex flex-row gap-2">
+                <BackButton />
+                </div>
               </div>
             </CardHeader>
           </div>
         </header>
-        <Form {...form}>
+        <Tabs defaultValue="equipment" className="w-full ml-4 mt-0 m-2">
+          <TabsList>
+            <TabsTrigger value="equipment">Equipo</TabsTrigger>
+           {accion !== "new" && <TabsTrigger value="documents">Documentos</TabsTrigger>}
+          </TabsList>
+          <TabsContent value="equipment" className="px-2 py-2">
+          <Form {...form}>
           <form
             onSubmit={form.handleSubmit(accion === 'edit' || accion === 'view' ? onUpdate : onCreate)}
-            className="space-y-8 w-full px-6 pb-3"
+            className="w-full"
           >
             <div className=" flex gap-[2vw] flex-wrap items-center">
               <FormField
@@ -690,7 +714,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
                             disabled={readOnly}
                             placeholder="Buscar tipo de vehículo..."
                             className="h-9"
-                            //value={field.value}
+                          //value={field.value}
                           />
                           <CommandEmpty>No se encontro ningun resultado</CommandEmpty>
                           <CommandGroup>
@@ -1129,6 +1153,13 @@ export default function VehiclesForm2({ id }: { id: string }) {
             )}
           </form>
         </Form>
+          </TabsContent>
+          <TabsContent value="documents" className="-ml-6 py-2">
+          <DocumentEquipmentComponent id={id}/>
+          </TabsContent>
+        </Tabs>
+
+        
       </section>
     </Suspense>
   );

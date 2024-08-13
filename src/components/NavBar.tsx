@@ -52,7 +52,6 @@ import {
 } from './ui/command';
 import { FormControl, FormField, FormItem, FormMessage } from './ui/form';
 import { Separator } from './ui/separator';
-import { useToast } from './ui/use-toast';
 export default function NavBar() {
   const sharedCompanies = useLoggedUserStore((state) => state.sharedCompanies);
   const allCompanies = useLoggedUserStore((state) => state.allCompanies);

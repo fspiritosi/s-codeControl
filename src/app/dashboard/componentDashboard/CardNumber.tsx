@@ -12,11 +12,15 @@ function CardNumber({
   const user = useLoggedUserStore();
   const employees = user.employees;
   const equipment = user.vehicles;
+
   const eNoAvalados =
     employees?.length > 0 ? employees?.filter((employee: any) => employee.status === 'No avalado') : [];
+
   const eAvalados = employees?.length > 0 ? employees?.filter((employee: any) => employee.status === 'Avalado') : [];
+
   const equiNoAvalados =
     equipment?.length > 0 ? equipment?.filter((vehicle: any) => vehicle.status === 'No avalado') : [];
+
   const equiAvalados = equipment?.length > 0 ? equipment?.filter((vehicle: any) => vehicle.status === 'Avalado') : [];
 
   return (

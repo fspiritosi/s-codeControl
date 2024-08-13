@@ -256,20 +256,17 @@ export const RegisterWithRole = () => {
 
   return (
     <div className="flex items-center justify-between space-y-2">
-      <CardHeader className="w-full flex flex-row justify-between items-start bg-muted dark:bg-muted/50 border-b-2">
+      
         <div>
-          <CardTitle className="text-2xl font-bold tracking-tight">Compartir acceso</CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Comparte el acceso a tu empresa con otros usuarios.
-          </CardDescription>
+          
         </div>
         <div>
           <AlertDialog open={open} onOpenChange={() => setOpen(!open)}>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" className='mr-2' onClick={() => handleOpen('Usuario')}>Agregar Usuario</Button>
+              <Button variant='default' className='mr-2' onClick={() => handleOpen('Usuario')}>Agregar Usuario</Button>
             </AlertDialogTrigger>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" className='ml-2' onClick={() => handleOpen('Invitado')}>Agregar Invitado</Button>
+              <Button variant='default' className='ml-2' onClick={() => handleOpen('Invitado')}>Agregar Invitado</Button>
             </AlertDialogTrigger>
             <AlertDialogContent className="max-h-[90vh] overflow-y-auto">
               <AlertDialogTitle>Compartir acceso a la empresa</AlertDialogTitle>
@@ -563,7 +560,6 @@ export const RegisterWithRole = () => {
             </AlertDialogContent>
           </AlertDialog>
         </div>
-      </CardHeader>
     </div>
   );
 };

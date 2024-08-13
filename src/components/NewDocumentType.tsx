@@ -9,15 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { cn } from '@/lib/utils';
 import { useCountriesStore } from '@/store/countries';
@@ -55,15 +47,28 @@ const defaultValues = [
     label: 'Es privado?',
     tooltip: 'Si el documento es privado no sera visible para los usuarios con el rol invitado',
   },
+  {
+    id: 'down_document',
+    label: 'Es un documento de baja?',
+    tooltip: 'Si el documento es de baja solo se pedira cuando el empleado este dado de baja',
+  },
 ];
 
-export default function NewDocumentType({ codeControlClient }: { codeControlClient?: boolean }) {
+export default function NewDocumentType({
+  codeControlClient,
+  optionChildrenProp,
+}: {
+  codeControlClient?: boolean;
+  optionChildrenProp: string;
+}) {
   const [special, setSpecial] = useState(false);
   const router = useRouter();
   const fetchDocumentTypes = useCountriesStore((state) => state.documentTypes);
   const documentTypes = useCountriesStore((state) => state.companyDocumentTypes);
   const fetchDocuments = useLoggedUserStore((state) => state.documetsFetch);
   const [items, setItems] = useState(defaultValues);
+
+  const selectOptions = optionChildrenProp === 'all' ? 'Personas, Equipos o Empresa' : optionChildrenProp;
 
   const isOptional = items.length < 5;
   const FormSchema = z.object({
@@ -89,6 +94,7 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
         : z.string().optional(),
     is_it_montlhy: z.boolean({ required_error: 'Este campo es requerido' }),
     private: z.boolean({ required_error: 'Este campo es requerido' }),
+    down_document: z.boolean({ required_error: 'Este campo es requerido' }),
   });
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -102,6 +108,7 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
     },
   });
 
+  console.log(form.formState.errors);
   async function onSubmit(values: z.infer<typeof FormSchema>) {
     const formattedValues = {
       ...values,
@@ -111,6 +118,7 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
       multiresource: isOptional ? false : values.multiresource,
       mandatory: isOptional ? true : values.mandatory,
       special: isOptional ? false : values.special,
+      down_document: isOptional ? false : values.down_document,
       private: values.private,
     };
 
@@ -155,31 +163,8 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
     }
     return description;
   }
-  const EMPLOYEES_TABLE: any = {
-    nationality: 'Nacionalidad',
-    lastname: 'Apellido',
-    firstname: 'Nombre',
-    cuil: 'CUIL',
-    document_type: 'Tipo de documento',
-    document_number: 'Numero de documento',
-    birthplace: 'Lugar de nacimiento',
-    gender: 'Genero',
-    marital_status: 'Estado civil',
-    level_of_education: 'Nivel de educacion',
-    province: 'Provincia',
-    file: 'Legajo',
-    normal_hours: 'Horas normales',
-    date_of_admission: 'Fecha de admision',
-    affiliate_status: 'Estado de afiliacion',
-    company_position: 'Posicion en la compañia',
-    city: 'Ciudad',
-    hierarchical_position: 'Posicion Jerarquica',
-    workflow_diagram: 'Diagrama de trabajo',
-    type_of_contract: 'Tipo de contrato',
-    allocated_to: 'Afectaciones',
-    status: 'Estado',
-  };
 
+  const [down, setDown] = useState(false);
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -211,6 +196,14 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
                           (e) => e.id === 'explired' || e.id === 'is_it_montlhy' || e.id === 'private'
                         )
                       );
+                      if (down) {
+                        setDown(false);
+                        const name = form.getValues('name');
+                        form.reset({ name });
+                        form.setValue('applies', 'Empresa');
+                      } else {
+                        form.setValue('down_document', false);
+                      }
                     } else {
                       setItems(defaultValues);
                     }
@@ -221,14 +214,20 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Personas, Equipos o Empresa" />
+                      <SelectValue placeholder={selectOptions} />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Persona">Persona</SelectItem>
-                    <SelectItem value="Equipos">Equipos</SelectItem>
-                    <SelectItem value="Empresa">Empresa</SelectItem>
-                  </SelectContent>
+                  {optionChildrenProp === 'all' ? (
+                    <SelectContent>
+                      <SelectItem value="Persona">Persona</SelectItem>
+                      <SelectItem value="Equipos">Equipos</SelectItem>
+                      <SelectItem value="Empresa">Empresa</SelectItem>
+                    </SelectContent>
+                  ) : (
+                    <SelectContent>
+                      <SelectItem value={optionChildrenProp || 'All'}>{optionChildrenProp}</SelectItem>
+                    </SelectContent>
+                  )}
                 </Select>
               </div>
               <FormMessage />
@@ -264,6 +263,14 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
                               <div className="flex items-center gap-2">
                                 <Checkbox
                                   checked={field.value === true}
+                                  disabled={
+                                    down &&
+                                    (item.id === 'is_it_montlhy' ||
+                                      item.id === 'mandatory' ||
+                                      item.id === 'explired' ||
+                                      item.id === 'special' ||
+                                      item.id === 'multiresource')
+                                  }
                                   onCheckedChange={(value) => {
                                     if (item.id === 'special') {
                                       setSpecial(true);
@@ -274,6 +281,14 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
                                     if (item.id === 'explired') {
                                       form.setValue('is_it_montlhy', value ? false : true);
                                     }
+                                    if (item.id === 'down_document') {
+                                      form.setValue('is_it_montlhy', false);
+                                      form.setValue('mandatory', true);
+                                      form.setValue('explired', false);
+                                      form.setValue('special', false);
+                                      form.setValue('multiresource', false);
+                                      setDown(true);
+                                    }
                                     field.onChange(value ? true : false);
                                   }}
                                 />
@@ -282,6 +297,14 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
                               <div className="flex items-center gap-2">
                                 <Checkbox
                                   checked={field.value === false}
+                                  disabled={
+                                    down &&
+                                    (item.id === 'is_it_montlhy' ||
+                                      item.id === 'mandatory' ||
+                                      item.id === 'explired' ||
+                                      item.id === 'special' ||
+                                      item.id === 'multiresource')
+                                  }
                                   onCheckedChange={(value) => {
                                     field.onChange(value ? false : true);
                                     if (item.id === 'special') {
@@ -292,6 +315,9 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
                                     }
                                     if (item.id === 'explired') {
                                       form.setValue('is_it_montlhy', false);
+                                    }
+                                    if (item.id === 'down_document') {
+                                      setDown(false);
                                     }
                                   }}
                                 />
@@ -327,14 +353,14 @@ export default function NewDocumentType({ codeControlClient }: { codeControlClie
                     <SelectContent>
                       <SelectItem value="Maneja">Maneja</SelectItem>
                       <SelectItem value="Habilitacion especial">Habilitacion especial</SelectItem>
-                      <SelectGroup>
+                      {/* <SelectGroup>
                         <SelectLabel>Siguientes Opciones</SelectLabel>
                         {Object.keys(EMPLOYEES_TABLE).map((e) => (
                           <SelectItem key={EMPLOYEES_TABLE[e]} value={EMPLOYEES_TABLE[e]}>
                             {EMPLOYEES_TABLE[e]}
                           </SelectItem>
                         ))}
-                      </SelectGroup>
+                      </SelectGroup> */}
                     </SelectContent>
                   </Select>
                 </div>
