@@ -43,8 +43,7 @@ function DiagramEmployeeView({
   const [filteredResources, setFilteredResources] = useState(activeEmployees);
   const [inputValue, setInputValue] = useState<string>('');
 
-  const fechaInicio = date?.from;
-  const fechaFin = date?.to;
+  console.log('diagrams', diagrams);
 
   /*---------------------INICIO ESQUEMA EMPLEADOS---------------------------*/
   const formSchema = z.object({
@@ -72,17 +71,32 @@ function DiagramEmployeeView({
 
   /*---------------------FIN ESQUEMA EMPLEADOS------------------------------*/
 
+  /*---------------------FILTROS DE FECHA --------------------------------- */
+
+  const fechaInicio = date?.from;
+  const fechaFin = date?.to;
+
   function generarDiasEntreFechas({ fechaInicio, fechaFin }: { fechaInicio?: Date; fechaFin?: Date }) {
     const dias = [];
     let fechaActual = new Date(fechaInicio!);
+    const fechaFinalMaxima = new Date(fechaInicio!);
+    fechaFinalMaxima.setDate(fechaFinalMaxima.getDate() + 30);
 
-    while (fechaActual <= new Date(fechaFin!)) {
+    // Usar la fecha final proporcionada o la fecha final máxima, la que sea menor
+    const fechaFinal = fechaFin ? new Date(fechaFin) : fechaFinalMaxima;
+    const fechaFinalReal = fechaFinal <= fechaFinalMaxima ? fechaFinal : fechaFinalMaxima;
+
+    while (fechaActual <= fechaFinalReal) {
       dias.push(new Date(fechaActual));
       fechaActual.setDate(fechaActual.getDate() + 1);
     }
 
     return dias;
   }
+
+  const mes = generarDiasEntreFechas({ fechaInicio, fechaFin });
+
+  /*---------------------FIN FILTROS DE FECHA --------------------------------- */
 
   const groupedDiagrams = diagrams.reduce((acc: any, diagram: any) => {
     if (!acc[diagram.employee_id]) {
@@ -91,8 +105,6 @@ function DiagramEmployeeView({
     acc[diagram.employee_id].push(diagram);
     return acc;
   }, {});
-
-  const mes = generarDiasEntreFechas({ fechaInicio, fechaFin });
 
   useEffect(() => {
     form.reset();
@@ -214,7 +226,7 @@ function DiagramEmployeeView({
                     format(date.from, 'dd/MM/yyyyy', { locale: es })
                   )
                 ) : (
-                  <span>Pick a date</span>
+                  <span>Seleccionar fecha</span>
                 )}
               </Button>
             </PopoverTrigger>
@@ -229,6 +241,7 @@ function DiagramEmployeeView({
               />
             </PopoverContent>
           </Popover>
+          <span className="text-[0.8rem] text-muted-foreground">La selección maxima es de 30 días</span>
         </div>
       </div>
       <Table>
