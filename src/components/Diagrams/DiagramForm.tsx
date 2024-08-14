@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -33,7 +34,7 @@ export function DiagramForm({
   const [succesDiagrams, setSuccesDiagrams] = useState<DiagramaToCreate[]>([]);
   const [errorsDiagrams, setErrorsDiagrams] = useState<ErrorToCreate[]>([]);
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
-
+  const router = useRouter();
   useEffect(() => {
     if (fromDate && toDate) {
       const diferenciaMilisegundos = toDate.getTime() - fromDate.getTime();
@@ -45,12 +46,23 @@ export function DiagramForm({
     }
   }, [fromDate && toDate]);
 
-  const Diagram = z.object({
-    employee: z.string().min(1, { message: 'Debe selecciónar un empleado' }),
-    event_diagram: z.string().min(1, { message: 'Debe selecciónar un tipo de novedad' }),
-    initial_date: z.date(),
-    finaly_date: z.date(),
-  });
+  // const Diagram = z.object({
+  //   employee: z.string().min(1, { message: 'Debe selecciónar un empleado' }),
+  //   event_diagram: z.string().min(1, { message: 'Debe selecciónar un tipo de novedad' }),
+  //   initial_date: z.date(),
+  //   finaly_date: z.date()
+  // });
+  const Diagram = z
+    .object({
+      employee: z.string().min(1, { message: 'Debe seleccionar un empleado' }),
+      event_diagram: z.string().min(1, { message: 'Debe seleccionar un tipo de novedad' }),
+      initial_date: z.date(),
+      finaly_date: z.date(),
+    })
+    .refine((data) => data.finaly_date >= data.initial_date, {
+      message: 'La fecha final no puede ser menor que la fecha inicial',
+      path: ['finaly_date'], // Indica que el error está en el campo finaly_date
+    });
 
   type Diagram = z.infer<typeof Diagram>;
 
@@ -110,6 +122,7 @@ export function DiagramForm({
           diagram.day !== data.day
       )
     );
+    router.refresh();
   }
   //CREA TODOS LOS REGISTROS EN LA BASE DE DATOS
   function createAll(data: DiagramaToCreate[]) {
@@ -122,6 +135,7 @@ export function DiagramForm({
         console.log(error);
       }
     });
+    router.refresh();
   }
 
   //ACTUALIZA UN REGISTRO EN LA BASE DE DATOS
@@ -150,10 +164,51 @@ export function DiagramForm({
           diagram.day !== data.day
       )
     );
+    router.refresh();
   }
 
   //ACTUALIZA TODOS LOS REGISTROS EN LA BASE DE DATOS
-  async function updateAll(data: ErrorToCreate[]) {}
+  async function updateAll(data: ErrorToCreate[]) {
+    data.map((novedad) => {
+      try {
+        updateDiagram(novedad);
+        setErrorsDiagrams([]);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+    router.refresh();
+  }
+  //DESCARTAR UN SOLO REGISTRO DEL ARRAY CORRESPONDIENTE
+  function descartarOne(data: any, index: number, from: string) {
+    // Filtrar el elemento específico por índice en succesDiagrams
+    if (from === 's') {
+      const successDiagramDeleteOne = succesDiagrams.filter((_, i) => i !== index);
+      // Actualizar los estados solo si hay cambios
+      if (successDiagramDeleteOne.length !== succesDiagrams.length) {
+        setSuccesDiagrams(successDiagramDeleteOne);
+      }
+    }
+
+    if (from === 'e') {
+      // Filtrar el elemento específico por índice en errorsDiagrams
+      const errorDiagramDeleteOne = errorsDiagrams.filter((_, i) => i !== index);
+
+      if (errorDiagramDeleteOne.length !== errorsDiagrams.length) {
+        setErrorsDiagrams(errorDiagramDeleteOne);
+      }
+    }
+  }
+  //DESCARTAR TODOS LOS REGISTROS DEL ARRAY CORRESPONDIENTE
+  function descartarAll(from: string) {
+    if (from === 's') {
+      setSuccesDiagrams([]);
+    }
+
+    if (from === 'e') {
+      setErrorsDiagrams([]);
+    }
+  }
 
   async function onSubmit2(values: Diagram) {
     const data = values;
@@ -380,7 +435,11 @@ export function DiagramForm({
                         <Button variant={'default'} onClick={() => updateDiagram(d)}>
                           Actualizar
                         </Button>
-                        <Button variant={'link'} className="font-bold text-red-600">
+                        <Button
+                          variant={'link'}
+                          className="font-bold text-red-600"
+                          onClick={() => descartarOne(d, index, 'e')}
+                        >
                           Descartar
                         </Button>
                       </TableCell>
@@ -391,8 +450,10 @@ export function DiagramForm({
             </CardContent>
             {errorsDiagrams.length > 1 && (
               <CardFooter className="flex justify-around">
-                <Button variant={'default'}>Actualizar Todos</Button>
-                <Button variant={'link'} className="font-bold text-red-600">
+                <Button variant={'default'} onClick={() => updateAll(errorsDiagrams)}>
+                  Actualizar Todos
+                </Button>
+                <Button variant={'link'} className="font-bold text-red-600" onClick={() => descartarAll('e')}>
                   Descartar Todos
                 </Button>
               </CardFooter>
@@ -424,7 +485,11 @@ export function DiagramForm({
                         <Button variant={'success'} onClick={() => createDiagram(d)}>
                           Crear
                         </Button>
-                        <Button variant={'link'} className="font-bold text-red-600">
+                        <Button
+                          variant={'link'}
+                          className="font-bold text-red-600"
+                          onClick={() => descartarOne(d, index, 's')}
+                        >
                           Descartar
                         </Button>
                       </TableCell>
@@ -438,7 +503,7 @@ export function DiagramForm({
                 <Button variant={'success'} onClick={() => createAll(succesDiagrams)}>
                   Crear Todos
                 </Button>
-                <Button variant={'link'} className="font-bold text-red-600">
+                <Button variant={'link'} className="font-bold text-red-600" onClick={() => descartarAll('s')}>
                   Descartar Todos
                 </Button>
               </CardFooter>

@@ -13,7 +13,6 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
   //   .eq('applies.document_number', searchParams.document)
   //   .not('applies', 'is', null)
 
-
   const supabase = supabaseServer();
   const user = await supabase.auth.getUser();
 
@@ -28,6 +27,9 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
 
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
+  const { data: diagrams } = await fetch(`${URL}/api/employees/diagrams?employee_id=${searchParams.employee_id}`).then(
+    (e) => e.json()
+  );
 
   let formattedEmployee;
   if (searchParams.employee_id) {
@@ -38,7 +40,6 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
     formattedEmployee = setEmployeesToShow(employee)?.[0];
   }
 
-
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">
       <Card
@@ -47,7 +48,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
           // searchParams.action === 'new' && 'col-span-8'
         )}
       >
-        <EmployeeAccordion user={formattedEmployee} role={role} />
+        <EmployeeAccordion user={formattedEmployee} role={role} diagrams={diagrams} />
         <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
       </Card>
     </section>

@@ -41,6 +41,8 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../supabase/supabase';
 import BackButton from './BackButton';
+
+import { DiagramDetailEmployeeView } from './Diagrams/DiagramDetailEmployeeView';
 import { ImageHander } from './ImageHandler';
 import { ModalCct } from './ModalCct';
 import { AlertDialogFooter } from './ui/alert-dialog';
@@ -76,7 +78,32 @@ type dataType = {
   }[];
 };
 
-export default function EmployeeAccordion({ role, user }: { role: string | null; user: any }) {
+type diagram = {
+  id: string;
+  created_at: string;
+  employee_id: string;
+  diagram_type: {
+    id: string;
+    name: string;
+    color: string;
+    company_id: string;
+    created_at: string;
+    short_description: string;
+  };
+  day: number;
+  month: number;
+  year: number;
+};
+
+export default function EmployeeAccordion({
+  role,
+  user,
+  diagrams,
+}: {
+  role: string | null;
+  user: any;
+  diagrams: diagram[];
+}) {
   const profile = useLoggedUserStore((state) => state);
   const share = useLoggedUserStore((state) => state.sharedCompanies);
   const profile2 = useLoggedUserStore((state) => state.credentialUser?.id);
@@ -1006,6 +1033,7 @@ export default function EmployeeAccordion({ role, user }: { role: string | null;
                   Datos Laborales
                 </TabsTrigger>
                 {user && <TabsTrigger value="documents">Documentación</TabsTrigger>}
+                {user && <TabsTrigger value="diagrams">Diagramas</TabsTrigger>}
               </TabsList>
               <TabsContent value="personalData" className="px-2 py-2">
                 {accordion1Errors && (
@@ -1397,13 +1425,12 @@ export default function EmployeeAccordion({ role, user }: { role: string | null;
                                 value={field.value}
                                 className={cn('w-[300px] justify-between', !field.value && 'text-muted-foreground')}
                               >
-                                
                                 {typeof field.value === 'string'
                                   ? field.value
                                   : field.value
                                     ? getFieldName(field.value)
                                     : 'Seleccionar Asosiacion gremial'}
-                                
+
                                 <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </FormControl>
@@ -1653,6 +1680,9 @@ export default function EmployeeAccordion({ role, user }: { role: string | null;
               </TabsContent>
               <TabsContent value="documents" className="px-2 py-2">
                 <DocumentTable document={user?.document_number || ''} />
+              </TabsContent>
+              <TabsContent value="diagrams" className="px-2 py-2">
+                <DiagramDetailEmployeeView diagrams={diagrams} />
               </TabsContent>
               <TooltipProvider delayDuration={100}>
                 <Tooltip>

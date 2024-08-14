@@ -61,7 +61,7 @@ export default function AddModelModal({
       .from('model_vehicles')
       .insert([
         {
-          name: name.slice(0, 1).toUpperCase() + name.slice(1),
+          name: name.slice(0, 1)?.toUpperCase() + name.slice(1),
           brand: brand_id,
         },
       ])
