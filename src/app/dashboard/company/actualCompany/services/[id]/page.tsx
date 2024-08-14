@@ -55,7 +55,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
     const [filteredItems, setFilteredItems] = useState<Item[]>([]);
     const [isActiveFilter, setIsActiveFilter] = useState(true);
     const [measure_unit, setMeasureUnit] = useState<MeasureUnits[] | null>(null);
-    console.log(params.id);
+   
     useEffect(() => {
         filterServices();
     }, [isActiveFilter, items]);
@@ -98,13 +98,13 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'service_items' },
                 async (payload) => {
-                    console.log('Cambio detectado:', payload);
-                    fetchItems(); // Vuelve a cargar los datos cuando hay un cambio
+                    
+                    fetchItems(); 
                 }
             )
             .subscribe();
 
-        // Cleanup de la suscripción cuando el componente se desmonta
+        
         return () => {
             supabase.removeChannel(channel);
         };
@@ -160,7 +160,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
             }
         }
     };
-    console.log(items)
+    
     const handleDeactivateItem = async () => {
         if (editingService) {
             try {
@@ -196,9 +196,8 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
     };
 
     return (
-        <div>
-
-            <Card className="overflow-hidden">
+        <div className="flex flex-col gap-6 py-4 px-6">
+            <Card className="overflow-hidden gap-4">
                 <CardHeader className="w-full flex bg-muted dark:bg-muted/50 border-b-2 flex-row justify-between">
                     <div className="w-fit">
                         <CardTitle className="text-2xl font-bold tracking-tight w-fit">Items del Servicio </CardTitle>
@@ -302,7 +301,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
                                     id: value,
                                 },
                             });
-                            console.log('Valor seleccionado:', value); // Verifica el valor seleccionado
+                           
                         }}
                             value={String(editingService.item_measure_units.id)}>
 

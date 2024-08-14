@@ -316,8 +316,8 @@ export const CovenantRegister = () => {
                                                                         placeholder="Buscar  Asosiacion gremial..."
                                                                         value={searchText}
                                                                         onValueChange={(value: any) => setSearchText(value)}
-                                                                        className="h-9" />
-                                                                    <CommandEmpty className="py-2 px-2">
+                                                                        className="h-9 overflow-hidden" />
+                                                                    <CommandEmpty className="py-2 px-2 overflow-hidden">
                                                                         <ModalCct modal="addGuild"
                                                                             fetchGuild={fetchGuild}
                                                                             searchText={searchText}
@@ -326,7 +326,7 @@ export const CovenantRegister = () => {
                                                                                 disabled={readOnly}
                                                                                 variant="outline"
                                                                                 role="combobox"
-                                                                                className={cn('w-full justify-between', !field.value && 'text-muted-foreground')}
+                                                                                className={cn('w-full justify-between overflow-hidden', !field.value && 'text-muted-foreground')}
                                                                             >
                                                                                 Agregar Asosiacion gremial
                                                                                 <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
