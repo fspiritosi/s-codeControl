@@ -527,7 +527,7 @@ export default function EmployeeAccordion({
         const { guild_id, covenants_id, category_id, full_name, ...rest } = values;
         const fileExtension = imageFile?.name.split('.').pop();
         const finalValues = {
-          ...values,
+          ...rest,
           date_of_admission:
             values.date_of_admission instanceof Date
               ? values.date_of_admission.toISOString()
