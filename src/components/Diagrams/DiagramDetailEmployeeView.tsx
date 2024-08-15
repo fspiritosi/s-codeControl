@@ -43,6 +43,7 @@ export function DiagramDetailEmployeeView({ diagrams }: { diagrams: diagram[] | 
   });
   const [diagramType, setDiagramType] = useState<{ id: string; name: string } | undefined>(undefined);
 
+  //saca todos los tipos de diagramas que hay en la lista de diagramas del empleado en particular
   function getUniqueDiagramTypes(diagrams: diagram[]) {
     const uniqueTypes: { id: string; name: string }[] = [];
     diagrams.forEach((diagram) => {

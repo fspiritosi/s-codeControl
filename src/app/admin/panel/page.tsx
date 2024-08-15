@@ -18,9 +18,13 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabase } from '../../../../supabase/supabase';
+import { CompanieChart } from '../components/Graficos/CompaniesChart';
 import CreateUser from '../components/createUser';
 
-export default function Dashboard() {
+export default async function Dashboard() {
+  let { data: company, error } = await supabase.from('company').select('*');
+
   return (
     <div className="min-h-screen w-full bg-muted/40">
       <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
@@ -34,7 +38,7 @@ export default function Dashboard() {
                   <CardTitle className="text-4xl">$1,329</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-xs text-muted-foreground">+25% from last week</div>
+                  <CompanieChart data={company} />
                 </CardContent>
                 <CardFooter>
                   <Progress value={25} aria-label="25% increase" />
