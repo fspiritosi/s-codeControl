@@ -76,8 +76,8 @@ export async function PUT(request: NextRequest) {
     const id = searchParams.get('id');
     const body = await request.json();
     const { service_name,customer_id, service_start, service_validity, is_active } = body;
-    const [day, month, year] = service_validity.split('/');
-    const serviceValidityDate = new Date(`${year}-${month}-${day}`);
+    // const [day, month, year] = service_validity.split('/');
+    // const serviceValidityDate = new Date(`${year}-${month}-${day}`);
     try {
         let { data: services, error } = await supabase
             .from('customer_services')
@@ -85,7 +85,7 @@ export async function PUT(request: NextRequest) {
                 customer_id: customer_id,
                 service_name: service_name,
                 service_start: service_start,
-                service_validity: serviceValidityDate,
+                service_validity: service_validity,
                 is_active: is_active
                 
             })

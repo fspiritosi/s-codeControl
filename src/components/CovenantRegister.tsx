@@ -302,7 +302,7 @@ export const CovenantRegister = () => {
                                                                         variant="outline"
                                                                         role="combobox"
                                                                         value={field.value}
-                                                                        className={cn('w-[400px] justify-between', !field.value && 'text-muted-foreground')}
+                                                                        className={cn('w-[400px] justify-between overflow-hidden', !field.value && 'text-muted-foreground')}
                                                                     >
                                                                         {field.value || 'Seleccionar  Asosiacion gremial'}
                                                                         <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -316,8 +316,8 @@ export const CovenantRegister = () => {
                                                                         placeholder="Buscar  Asosiacion gremial..."
                                                                         value={searchText}
                                                                         onValueChange={(value: any) => setSearchText(value)}
-                                                                        className="h-9" />
-                                                                    <CommandEmpty className="py-2 px-2">
+                                                                        className="h-9 overflow-hidden" />
+                                                                    <CommandEmpty className="py-2 px-2 overflow-hidden">
                                                                         <ModalCct modal="addGuild"
                                                                             fetchGuild={fetchGuild}
                                                                             searchText={searchText}
@@ -326,7 +326,7 @@ export const CovenantRegister = () => {
                                                                                 disabled={readOnly}
                                                                                 variant="outline"
                                                                                 role="combobox"
-                                                                                className={cn('w-full justify-between', !field.value && 'text-muted-foreground')}
+                                                                                className={cn('w-full justify-between overflow-hidden', !field.value && 'text-muted-foreground')}
                                                                             >
                                                                                 Agregar Asosiacion gremial
                                                                                 <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -370,10 +370,10 @@ export const CovenantRegister = () => {
                                             {showButton && (
                                                 <Button
                                                     onClick={() => {
-                                                        setShowCovenants(true); // Suponiendo que esta función hace algo más en tu aplicación
-                                                        setShowButton(false); // Esto hará que el botón desaparezca después de ser clickeado
+                                                        setShowCovenants(true); 
+                                                        setShowButton(false); 
                                                     }}
-                                                // Otras propiedades del botón
+                                                
                                                 >
                                                     Agregar Convenio
                                                 </Button>
@@ -395,7 +395,7 @@ export const CovenantRegister = () => {
                                                                             variant="outline"
                                                                             role="combobox"
                                                                             value={field.value || ""}
-                                                                            className={cn('w-[400px] justify-between', !field.value && 'text-muted-foreground')}
+                                                                            className={cn('w-[400px] justify-between overflow-hidden', !field.value && 'text-muted-foreground')}
                                                                         >
                                                                             {field.value || 'Seleccionar Convenio'}
                                                                             <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -419,7 +419,7 @@ export const CovenantRegister = () => {
                                                                                     disabled={readOnly}
                                                                                     variant="outline"
                                                                                     role="combobox"
-                                                                                    className={cn('w-full justify-between', !field.value && 'text-muted-foreground')}
+                                                                                    className={cn('w-full justify-between overflow-hidden', !field.value && 'text-muted-foreground')}
                                                                                 >
                                                                                     Agregar Convenio
                                                                                     <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -489,7 +489,7 @@ export const CovenantRegister = () => {
                                                                             disabled={readOnly}
                                                                             variant="outline"
                                                                             role="combobox"
-                                                                            className={cn('w-[300px] justify-between', !field.value && 'text-muted-foreground')}
+                                                                            className={cn('w-[300px] justify-between overflow-hidden', !field.value && 'text-muted-foreground')}
                                                                         >
                                                                             {field.value || 'Seleccionar Categoría'}
                                                                             <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -514,7 +514,7 @@ export const CovenantRegister = () => {
                                                                                     disabled={readOnly}
                                                                                     variant="outline"
                                                                                     role="combobox"
-                                                                                    className={cn('w-full justify-between', !field.value && 'text-muted-foreground')}
+                                                                                    className={cn('w-full justify-between overflow-hidden', !field.value && 'text-muted-foreground')}
                                                                                 >
                                                                                     Agregar Categoría
                                                                                     <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -550,7 +550,7 @@ export const CovenantRegister = () => {
                                                                                         disabled={readOnly}
                                                                                         variant="outline"
                                                                                         role="combobox"
-                                                                                        className={cn('w-full justify-between', !field.value && 'text-muted-foreground')}
+                                                                                        className={cn('w-full justify-between overflow-hidden', !field.value && 'text-muted-foreground')}
                                                                                     >
                                                                                         Agregar Categoría
                                                                                         <PlusCircledIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />

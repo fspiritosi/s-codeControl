@@ -2,10 +2,8 @@ import React from 'react'
 import { supabaseServer } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import ServiceForm from './ServicesForm';
 import ServiceTable from './ServiceTable';
-import ServiceItemsForm from './ServiceItemsForm';
-
+import ServiceItemsTable from './ServiceItemsTable';
 interface measure_unit {
   id: number;
   unit: string;
@@ -22,7 +20,6 @@ export default async function ServiceComponent() {
     const {data: { user }, error} = await supabase.auth.getUser();
     const cookiesStore = cookies();
     const company_id = cookiesStore.get('actualComp')?.value || '';
-    
     const { customers } = await fetch(`${URL}/api/company/customers?actual=${company_id}`).then((e) => e.json());
     const { services } = await fetch(`${URL}/api/services?actual=${company_id}`).then((e) => e.json());
     // const {measure_units}= await fetch(`${URL}/api/meassure`).then((e) => e.json());
@@ -37,7 +34,7 @@ export default async function ServiceComponent() {
   { event: '*', schema: 'public', table: 'customer_services' },
   async (payload) => {
    
-    // Actualizar la lista de servicios con el servicio editado
+   
     const { services } = await fetch(`${URL}/api/services?actual=${company_id}`).then((e) => e.json());
   }
 )
@@ -49,17 +46,12 @@ export default async function ServiceComponent() {
     <TabsList >
       <TabsTrigger value="services">Cargar Servicio</TabsTrigger>
       <TabsTrigger value="servicesItems">Cargar Items</TabsTrigger>
-      <TabsTrigger value="servicesTable">Servicios Cargados</TabsTrigger>
     </TabsList>
     <TabsContent value="services">
-      <ServiceForm customers={customers} company_id={String(company_id)}/>
+      <ServiceTable services={services} customers={customers} company_id={company_id} />
     </TabsContent>
     <TabsContent value="servicesItems">
-      <ServiceItemsForm measure_units={measure_units as measure_unit[]} customers={customers} services={services} company_id={String(company_id)}/>
-    </TabsContent>
-    <TabsContent value="servicesTable">
-      <h1>Servicios Cargados</h1>
-      <ServiceTable services={services} customers={customers} />
+      <ServiceItemsTable params={'31db0eeb-9159-4d0b-b051-66e6350e685f'} measure_units={measure_units as any} customers={customers} services={services} company_id={company_id}/>
     </TabsContent>
   </Tabs>
   );
