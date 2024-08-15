@@ -87,7 +87,7 @@ import {
               <FormItem>
                 <FormLabel>Nombre de la Agregar Asosiacion Gremial</FormLabel>
                 <FormControl>
-                  <Input
+                  <Input className='overflow-hidden'
                     placeholder="Ingrese el Nombre de la Agregar Asosiacion Gremial"
                     value={name}
 
