@@ -1061,54 +1061,6 @@ export const SeccionObservaciones: React.FC<FieldComponentProps> = ({ campo, for
 //       return null;
 //   }
 // };
-
-export const renderizarCampoPDF = (doc: jsPDF, field: any, yOffset: number, respuestas: any): number => {
-  const lineHeight = 10;
-  let newY = yOffset;
-
-  // Título del campo
-  doc.setFontSize(14);
-  doc.setTextColor(60, 60, 60);
-  doc.text(field.title, 30, newY);
-  newY += 8;
-
-  // Respuesta o espacio en blanco según el tipo de campo
-  doc.setFontSize(12);
-  const respuesta = JSON.parse(respuestas)[field.title.replace(/\s+/g, '_')];
-  console.log(respuesta);
-
-  switch (field.tipo) {
-    case 'Texto':
-    case 'Área de texto':
-    case 'Fecha':
-      doc.text(respuesta || 'No respuesta', 30, newY);
-      break;
-
-    case 'Radio':
-    case 'Seleccion multiple':
-    case 'Seleccion':
-    case 'Seleccion Predefinida':
-      field.opciones?.forEach((opcion: string) => {
-        const checked = respuesta === opcion ? '☑' : '☐';
-        doc.text(`${checked} ${opcion}`, 30, newY);
-        newY += lineHeight;
-      });
-      break;
-    case 'Si-No':
-      respuesta === 'No' ? doc.text(`- No`, 30, newY,{}) : doc.text(`- Sí`, 30, newY);
-      break;
-    case 'Archivo':
-      doc.text(respuesta || 'Archivo: [enlace o nombre del archivo]', 30, newY);
-      break;
-
-    default:
-      doc.text(respuesta || 'No respuesta', 30, newY);
-      break;
-  }
-
-  newY += lineHeight;
-  return newY;
-};
 export const FormPDF = ({ pdfUrl }: { pdfUrl: string }) => {
   return (
     <div>

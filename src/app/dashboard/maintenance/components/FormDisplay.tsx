@@ -26,7 +26,7 @@ import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { Campo, FormField, types } from '@/types/types';
 import { useRouter } from 'next/navigation';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import FieldRenderer from '../formUtils/fieldRenderer';
 import { buildFormData } from '../formUtils/formUtils';
@@ -60,40 +60,38 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
     if (table === 'vehicles') return Array.from(new Set(vehicles.map((e: any) => e[column])));
     if (table === 'company') return Array.from(new Set([currentCompany?.[column]]));
     if (table === 'document_types') return Array.from(new Set(documenttypes.map((e: any) => e[column])));
-
+  
     return ['Selecciona a que aplica el formulario'];
   }
-  const [options, setOptions] = useState([]);
-  const shouldShowAllOptions = [
-    'document_type',
-    'gender',
-    'marital_status',
-    'level_of_education',
-    'province',
-    'affiliate_status',
-    'company_position',
-  ];
-
-  useEffect(() => {
-    const fetchOptions = async () => {
-      // Aquí deberías reemplazar 'campo.opciones' con la lógica específica para determinar si necesitas hacer la petición
-      const shouldFetch = campos.some(campo => shouldShowAllOptions.includes(campo.tipo));
-      if (shouldFetch) {
-        // Realiza tu petición aquí, ajusta la URL y la lógica según sea necesario
-        const response = await fetch('URL_A_TU_API');
-        const data = await response.json();
-        setOptions(data); // Asume que la respuesta es el array de opciones
-      }
-    };
-
-    fetchOptions();
-  }, [campos]); 
+  const shouldShowAllOptions = {
+    employees: [
+      'document_type',
+      'gender',
+      'marital_status',
+      'level_of_education',
+      'province',
+      'affiliate_status',
+      'company_position',
+    ],
+  };
+  
+  const fetchOptions = async (selectedOption: string, column: string) => {
+    // Implementa la lógica para obtener opciones aquí
+    // Ejemplo:
+    return []; // Devuelve las opciones obtenidas
+  };
+  
 
   // Mapea el valor de 'applies' a la tabla correspondiente
   const getValuesForField = (applies: string, column: string) => {
     switch (applies) {
       case 'employees':
-        return getColumnValues('employees', column);
+        const shouldFetch = shouldShowAllOptions.employees.includes(column);
+        if (shouldFetch) {
+          return fetchOptions(applies, column);
+        } else {
+          return getColumnValues('employees', column);
+        }
       case 'documents':
         return getColumnValues('document_types', column);
       case 'equipment':
@@ -104,6 +102,9 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
         return [];
     }
   };
+  const [options, setOptions] = useState<any>([]);
+
+
   const renderizarCampo = (campo: Campo, index: number) => {
     switch (campo.tipo) {
       case 'Nombre del formulario':
@@ -251,9 +252,13 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
           </div>
         );
       case 'Seleccion Predefinida':
-        const data = (campo.opciones as any) || [];
-        const column = data?.[0];
-        let values = getValuesForField(applies || '', column);
+        const loadOptions = useCallback(async () => {
+          if (campo.tipo === 'Seleccion Predefinida') {
+            const values = await getValuesForField(applies|| "", campo.opciones[0]);
+            setOptions(values);
+          }
+        }, [campo]);
+      
         return (
           <div className="w-full" key={index}>
             <CardDescription className="mb-2"> {campo.title ? campo.title : 'Titulo del campo'}</CardDescription>
@@ -262,21 +267,17 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
                 <SelectValue placeholder="Seleccionar opcion" />
               </SelectTrigger>
               <SelectContent>
-                {campo.opciones?.map(async (opcion, i) => {
+                {campo.opciones?.map((opcion, i) => {
                   const label =
                     EMPLOYEES_TABLE[opcion as 'lastname'] ||
                     VEHICLES_TABLE[opcion as 'domain'] ||
                     COMPANIES_TABLE[opcion as 'city'] ||
                     DOCUMENTS_TABLE[opcion as 'special'];
 
-                  // if (label === 'Afectaciones') {
-                  //   values = Array.from(new Set(employees.map((e: any) => e.contractor_name)));
-                  // }
-
                   return (
                     <SelectGroup key={i}>
                       <SelectLabel>{label}</SelectLabel>
-                      {options.map((value: string, j) => (
+                      {options.map((value: string, j: any) => (
                         <SelectItem key={j} value={value}>
                           {value}
                         </SelectItem>

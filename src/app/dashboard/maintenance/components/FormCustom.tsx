@@ -1030,7 +1030,6 @@ export function FormCustom({
       return item;
     });
 
-
     // Asignar el nuevo valor al campo `apply`
     updatedCampos[index].apply = value;
 

@@ -18,14 +18,17 @@ import { Campo } from '@/types/types';
 import { useEffect, useState } from 'react';
 
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { useLoggedUserStore } from '@/store/loggedUser';
 import { types } from '@/types/types';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import cookie from 'js-cookie';
 import jsPDF from 'jspdf';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import DisplayCreatedForms from './DisplayCreatedForms';
 import FormCard from './FormCard';
 import { FormDisplay } from './FormDisplay';
-import { FormPDF, renderizarCampoPDF } from './Inputs';
+import { FormPDF } from './Inputs';
 const generateChartConfig = (data: any, category: string) => {
   const categoryConfig: any = {};
   data[category]?.forEach((item: any, index: number) => {
@@ -132,60 +135,289 @@ function CreatedForm() {
   const chartConfig = generateChartConfig(forms, 'company');
   const chartData = generateChartData(chartConfig || {}, forms || []);
 
-  const [printEmpty, setPrintEmpty] = useState(false);
-
   const [pdfUrl, setPdfUrl] = useState('');
+  const companyInfo = useLoggedUserStore((state) => state.actualCompany);
+  // Función para formatear fechas
+  const formatDate = (date: string) => {
+    try {
+      return format(new Date(date), 'dd MMMM yyyy', { locale: es });
+    } catch (error) {
+      return date; // Retornar la fecha original si ocurre un error
+    }
+  };
+  const renderFieldValue = (field: any, respuesta: any) => {
+    let responseText = 'No respuesta';
 
-  const generarPDF = (formItem: any) => {
-    const doc = new jsPDF();
+    // Formatear la respuesta dependiendo del tipo de campo
+    switch (field.tipo) {
+      case 'Fecha':
+        if (respuesta) {
+          responseText = formatDate(respuesta); // Asegúrate de tener la función formatDate implementada
+        }
+        break;
+      case 'Texto':
+      case 'Área de texto':
+      case 'Seleccion':
+      case 'Seleccion multiple':
+      case 'Radio':
+      // case 'Subtitulo':
+      // case 'Titulo':
+      case 'Si-No':
+      case 'Seleccion Predefinida':
+        if (respuesta) {
+          responseText = respuesta;
+        }
+        break;
+      case 'Archivo':
+        // Suponiendo que los archivos se manejan de manera especial, puedes ajustar aquí
+        responseText = 'Archivo adjunto'; // O cualquier texto que represente un archivo
+        break;
+      case 'Seccion':
+        // Si necesitas manejar secciones de manera especial, lo puedes ajustar aquí
+        responseText = 'Sección'; // O cualquier texto que represente una sección
+        break;
+      default:
+        responseText = '';
+        break;
+    }
 
-    // Estilo de fuente y color
-    doc.setFont('Helvetica');
-    doc.setTextColor(40, 40, 40);
+    return responseText;
+  };
+  const [logoDimensions, setLogoDimensions] = useState({ width: 0, height: 0 });
 
-    // Título del formulario
-    doc.setFontSize(22);
-    doc.text(formItem.form_id.name, 20, 20);
+  useEffect(() => {
+    if (companyInfo?.company_logo) {
+      const image = new Image();
+      image.src = companyInfo.company_logo;
 
-    // Dibujar una línea debajo del título
-    doc.setDrawColor(0, 0, 0);
-    doc.line(20, 25, 190, 25);
+      image.onload = () => {
+        // Obtener las dimensiones originales de la imagen
+        setLogoDimensions({
+          width: image.width,
+          height: image.height,
+        });
+      };
+    }
+  }, [companyInfo]);
 
-    // Espaciado
-    let yOffset = 35;
+  const generarPDF = (formItem: any, printEmpty: boolean) => {
+    const doc = new jsPDF(); // Crear una nueva instancia de jsPDF
+    const pageHeight = doc.internal.pageSize.height; // Obtener la altura de la página
+    const pageWidth = doc.internal.pageSize.width; // Obtener el ancho de la página
+    const marginTop = 60; // Margen superior
+    const marginBottom = 30; // Margen inferior
+    const lineHeight = 10; // Altura de cada línea de texto
+    const gridColumns = 4; // Número de columnas en el grid
+    const spaceWidth = pageWidth - 50; // Espacio para las respuestas, todo el ancho menos márgenes
+    const maxLogoHeight = 13; // Altura máxima deseada para el logo
+    let yOffset = 48; // Offset inicial en el eje Y
+    let pageCount = 1; // Contador de páginas
+    let totalPages = 1; // Total de páginas
+    const logoMargin = 20; // Margen desde el borde izquierdo
+    // Función para agregar el encabezado
+    function addHeader() {
+      if (companyInfo?.company_logo) {
+        const { width: imgWidth, height: imgHeight } = logoDimensions;
 
-    formItem.form_id.form.forEach((section: any) => {
-      console.log(section);
-      if (section.tipo === 'Nombre del formulario') return;
-      // Título de la sección
-      doc.setFontSize(18);
-      doc.text(section.title, 20, yOffset).setFontSize(5);
-      yOffset += 3;
+        // Calcular la relación de aspecto
+        const aspectRatio = imgWidth / imgHeight;
 
-      // Separar secciones
+        // Ajustar la altura y calcular el ancho para mantener la relación de aspecto
+        let logoHeight = maxLogoHeight;
+        let logoWidth = logoHeight * aspectRatio; //!revisar el tamaño del logo
+
+        // Asegurarse de que el logo no exceda el ancho de la página
+        const maxLogoWidth = doc.internal.pageSize.width - 2 * logoMargin; // Ancho máximo disponible para el logo
+        if (logoWidth > maxLogoWidth) {
+          logoWidth = maxLogoWidth;
+          logoHeight = logoWidth / aspectRatio;
+        }
+
+        // Agregar el logo al PDF con el tamaño ajustado
+        doc.addImage(companyInfo.company_logo, 'PNG', logoMargin, 10, logoWidth, logoHeight);
+      }
+      // Agregar la información de la empresa en el extremo derecho
+      doc.setFontSize(10); // Tamaño de fuente para el encabezado
+      doc.setTextColor(40, 40, 40); // Color del texto
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const infoXPosition = pageWidth - 60; // Ajusta esta posición según sea necesario
+
+      doc.text(companyInfo?.company_name || '', infoXPosition, 15);
+      doc.text(companyInfo?.address?.trim() || '', infoXPosition, 20);
+      doc.text(companyInfo?.city?.name?.trim() || '', infoXPosition, 25);
+      doc.text(companyInfo?.province_id.name.trim() || '', infoXPosition, 30);
+    }
+
+    // Función para agregar el pie de página
+    const addFooter = (pageNumber: number, totalPages: number) => {
+      const footerText = `${companyInfo?.company_name || 'No disponible'} | ${companyInfo?.website || 'No disponible'}`;
+      const contactText = `Tel: ${companyInfo?.contact_phone || 'No disponible'} | Email: ${companyInfo?.contact_email || 'No disponible'}`;
+
+      doc.setFontSize(10); // Tamaño de fuente para el pie de página
+      doc.setTextColor(40, 40, 40); // Color del texto
+
+      doc.text(footerText, 20, pageHeight - marginBottom + 10);
+      doc.text(contactText, 20, pageHeight - marginBottom + 15);
+
+      const pageText = `${pageNumber} / ${totalPages}`;
+      const pageTextWidth = doc.getStringUnitWidth(pageText) * doc.internal.scaleFactor;
+      doc.text(pageText, pageWidth - pageTextWidth - 20, pageHeight - marginBottom + 10);
+    };
+
+    // Función para calcular el número total de páginas
+    const calculateTotalPages = () => {
+      let yOffset = marginTop;
+      let pages = 1;
+
+      formItem.form_id.form.forEach((section: any) => {
+        if (section.id === '1') return;
+        if (yOffset + lineHeight > pageHeight - marginBottom) {
+          pages++;
+          yOffset = marginTop;
+        }
+        yOffset += lineHeight * (section.sectionCampos?.length || 1) + 20;
+      });
+
+      return pages;
+    };
+
+    totalPages = calculateTotalPages();
+    addHeader();
+
+    // Función para aplicar estilos según el tipo de campo
+    const applyFieldStyle = (field: any) => {
+      switch (field.tipo) {
+        case 'Titulo':
+          doc.setFontSize(16); // Tamaño de fuente para el título
+          doc.setFont('helvetica', 'bold'); // Fuente negrita
+          doc.setTextColor(0, 0, 0); // Color del texto
+          break;
+        case 'Subtitulo':
+          doc.setFontSize(14); // Tamaño de fuente para el subtítulo
+          doc.setFont('helvetica', 'italic'); // Fuente cursiva
+          doc.setTextColor(50, 50, 50); // Color del texto
+          break;
+        default:
+          doc.setFontSize(12); // Tamaño de fuente predeterminado
+          doc.setFont('helvetica', 'normal'); // Fuente normal
+          doc.setTextColor(60, 60, 60); // Color del texto
+          break;
+      }
+    };
+
+    const drawOptionsGrid = (options: string[], startY: number) => {
+      const optionWidth = (pageWidth - 50) / gridColumns; // Ancho de cada opción
+      const optionHeight = 10; // Altura de cada opción
+      const spaceBetween = 5; // Espacio entre opciones
+      const shapeSize = 5; // Tamaño del cuadrado
+
+      let xOffset = 30; // Offset inicial en el eje X
+      let yOffset = startY;
+
+      options.forEach((option: string, index: number) => {
+        if (index % gridColumns === 0 && index !== 0) {
+          xOffset = 30; // Reiniciar el offset X
+          yOffset += optionHeight + spaceBetween; // Mover hacia abajo para la siguiente fila
+        }
+
+        // Dibuja el cuadrado
+        if (printEmpty) {
+          const shapeX = xOffset + 2; // Ajustar para que no se superponga con el texto
+          const shapeY = yOffset - optionHeight / 3 + (optionHeight - shapeSize) / 2; // Ajustar verticalmente para centrar
+
+          doc.setDrawColor(0, 0, 0); // Color del cuadrado
+          doc.rect(shapeX, shapeY, shapeSize, shapeSize); // Dibuja un cuadrado vacío
+        }
+
+        // Agregar el texto de la opción
+        doc.setFontSize(10);
+        doc.text(option, xOffset + shapeSize * 2, yOffset + optionHeight / 2 - 2);
+
+        xOffset += optionWidth; // Mover hacia la derecha para la siguiente opción
+      });
+
+      return yOffset + optionHeight + spaceBetween; // Retornar el nuevo offset Y después de mostrar todas las opciones
+    };
+
+    // Función para crear un espacio en blanco largo
+    const drawLongBlankSpace = (x: number, y: number) => {
+      doc.setFontSize(10);
+      doc.setDrawColor(0, 0, 0); // Color de la línea
+      doc.line(25, y, x + spaceWidth, y); // Línea para el espacio en blanco
+    };
+
+    formItem.form_id.form.forEach((section: any, sectionIndex: number) => {
+      if (section.id === '1') return;
+      if (yOffset + lineHeight > pageHeight - marginBottom) {
+        addFooter(pageCount, totalPages);
+        doc.addPage();
+        addHeader();
+        yOffset = marginTop;
+        pageCount++;
+      }
+
+      doc.setFontSize(16);
+      doc.setTextColor(40, 40, 40);
+      doc.text(section.title, 20, yOffset);
+      yOffset += 4;
+
       doc.setDrawColor(200, 200, 200);
-      doc.line(20, yOffset, 190, yOffset);
-      yOffset += 10;
+      doc.line(20, yOffset, pageWidth - 20, yOffset);
+      yOffset += 8;
 
-      // Campos de la sección
       section.sectionCampos?.forEach((field: any) => {
-        yOffset = renderizarCampoPDF(doc, field, yOffset, formItem.answer);
-
-        // Verifica si hay espacio suficiente en la página
-        if (yOffset > 270) {
+        if (yOffset + lineHeight > pageHeight - marginBottom) {
+          addFooter(pageCount, totalPages);
           doc.addPage();
-          yOffset = 20; // Reinicia el yOffset para la nueva página
+          addHeader();
+          yOffset = marginTop;
+          pageCount++;
+        }
+
+        applyFieldStyle(field); // Aplicar estilo al campo actual
+
+        doc.text(field.title, 25, yOffset);
+        yOffset += 8;
+
+        const respuesta = JSON.parse(formItem.answer)[field.title.replace(/\s+/g, '_')];
+
+        if (field.opciones && field.opciones.length > 0) {
+          if (printEmpty) {
+            // Si printEmpty es true, mostrar todas las opciones en un grid
+            yOffset = drawOptionsGrid(field.opciones, yOffset);
+          } else {
+            // Si printEmpty es false, mostrar solo la opción seleccionada
+            const selectedOption = respuesta || '';
+            doc.setFontSize(10);
+            doc.text(selectedOption, 30, yOffset);
+            yOffset += 12;
+          }
+        } else {
+          // Para campos sin opciones y si printEmpty es true
+          if (printEmpty && field.tipo !== 'Titulo' && field.tipo !== 'Subtitulo') {
+            drawLongBlankSpace(30, yOffset); // Dibuja el espacio en blanco largo
+            yOffset += 12;
+          } else {
+            const responseText = renderFieldValue(field, respuesta);
+            doc.setFontSize(10);
+            doc.text(responseText, 30, yOffset);
+
+            if (field.tipo !== 'Titulo' && field.tipo !== 'Subtitulo') yOffset += 12;
+          }
         }
       });
 
-      // Espacio entre secciones
-      yOffset += 10;
+      yOffset += 5;
     });
+
+    addFooter(pageCount, totalPages);
 
     const pdfData = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfData);
     setPdfUrl(pdfUrl);
   };
+
   return (
     <div>
       {formId ? (
@@ -200,9 +432,29 @@ function CreatedForm() {
               <Button variant={'outline'} className="self-end" onClick={() => handleAnswersDelete()}>
                 Volver
               </Button>
-              <Button className="self-end" onClick={() => setPrintEmpty(false)}>
-                Imprimir vacio
-              </Button>
+              <Drawer>
+                <DrawerTrigger asChild>
+                  <Button onClick={() => generarPDF(forms?.[0] || [], true)}>Imprimir vacio</Button>
+                </DrawerTrigger>
+                <DrawerContent>
+                  <div className="grid grid-cols-1 place lg:grid-cols-[500px_1fr] gap-4">
+                    <DrawerHeader className="flex flex-col">
+                      <div>
+                        <DrawerTitle className="text-2xl">Preview del PDF</DrawerTitle>
+                        <DrawerDescription className="text-lg">Asi es como se vera el pdf</DrawerDescription>
+                      </div>
+                      <div className="space-x-4">
+                        <DrawerClose>
+                          <Button variant="outline">Cancel</Button>
+                        </DrawerClose>
+                      </div>
+                    </DrawerHeader>
+                    <div>
+                      <FormPDF pdfUrl={pdfUrl} />
+                    </div>
+                  </div>
+                </DrawerContent>
+              </Drawer>
             </div>
           </div>
           <>
@@ -258,7 +510,7 @@ function CreatedForm() {
                           <TableCell>
                             <Drawer>
                               <DrawerTrigger asChild>
-                                <Button onClick={() => generarPDF(formItem)}>Imprimir</Button>
+                                <Button onClick={() => generarPDF(formItem, false)}>Imprimir</Button>
                               </DrawerTrigger>
                               <DrawerContent>
                                 <div className="grid grid-cols-1 place lg:grid-cols-[500px_1fr] gap-4">
@@ -273,7 +525,6 @@ function CreatedForm() {
                                       <DrawerClose>
                                         <Button variant="outline">Cancel</Button>
                                       </DrawerClose>
-                                      <Button onClick={() => setPrintEmpty(false)}>Descargar</Button>
                                     </div>
                                   </DrawerHeader>
                                   <div>
