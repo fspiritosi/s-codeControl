@@ -51,7 +51,7 @@ export default async function ServiceComponent() {
       <ServiceTable services={services} customers={customers} company_id={company_id} />
     </TabsContent>
     <TabsContent value="servicesItems">
-      <ServiceItemsTable params={'31db0eeb-9159-4d0b-b051-66e6350e685f'} measure_units={measure_units as any} customers={customers} services={services} company_id={company_id}/>
+      <ServiceItemsTable measure_units={measure_units as any} customers={customers} services={services} company_id={company_id}/>
     </TabsContent>
   </Tabs>
   );

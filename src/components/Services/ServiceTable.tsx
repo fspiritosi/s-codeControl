@@ -58,7 +58,7 @@ const dateSchema = z.object({
 });
 
 const ServiceTable = ({ services, customers, company_id }: ServiceTableProps) => {
-    
+
     const supabase = supabaseBrowser();
     const URL = process.env.NEXT_PUBLIC_BASE_URL;
     const [servicesData, setServicesData] = useState<Service[]>([]);
@@ -90,7 +90,7 @@ const ServiceTable = ({ services, customers, company_id }: ServiceTableProps) =>
     useEffect(() => {
         const fetchServices = async () => {
             try {
-              
+
                 const servicesResponse = await fetch(`${URL}/api/services?actual=${modified_company_id}`);
 
                 if (!servicesResponse.ok) {
@@ -112,24 +112,24 @@ const ServiceTable = ({ services, customers, company_id }: ServiceTableProps) =>
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'customer_services' },
                 async (payload) => {
-                    
-                    fetchServices(); 
+
+                    fetchServices();
                 }
             )
             .subscribe();
 
-        
+
         return () => {
             supabase.removeChannel(channel);
         };
     }, []);
     return (
-        <ResizablePanelGroup direction="horizontal">
+        <ResizablePanelGroup className="pl-6 flex flex-col gap-2" direction="horizontal">
             <ResizablePanel>
                 <ServicesForm customers={customers as any} editingService={editingService as any} company_id={company_id} />
             </ResizablePanel>
             <ResizableHandle withHandle />
-            <ResizablePanel>
+            <ResizablePanel className="pl-6 min-w-[500px] flex flex-col gap-2" defaultSize={70}>
                 <div>
 
                     <div className="flex space-x-4">
@@ -172,9 +172,9 @@ const ServiceTable = ({ services, customers, company_id }: ServiceTableProps) =>
                                 <TableBody>
                                     {filteredServices.map((service: Service) => (
                                         <TableRow key={service.id}>
-                                            <Link href={`/dashboard/company/actualCompany/services/${service.id}`}>
-                                                <TableCell>{service.service_name}</TableCell>
-                                            </Link>
+                                            {/* <Link href={`/dashboard/company/actualCompany/services/${service.id}`}> */}
+                                            <TableCell>{service.service_name}</TableCell>
+                                            {/* </Link> */}
                                             {/* <TableCell>${service.service_price}</TableCell> */}
                                             <TableCell>
                                                 <Badge variant={service.is_active ? 'success' : 'default'}>
@@ -202,7 +202,7 @@ const ServiceTable = ({ services, customers, company_id }: ServiceTableProps) =>
                         </Table>
                     </div>
 
-                    
+
                 </div>
             </ResizablePanel>
         </ResizablePanelGroup>
