@@ -42,7 +42,7 @@ export default async function Equipment() {
           buttonActioRestricted: [''],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
-              <DocumentNav />
+              <DocumentNav equipment />
             </div>
           ),
           component: <EquipmentTabs />,
