@@ -37,7 +37,7 @@ export function CheckboxDefaultValues({ options, field, placeholder, disabled, r
   return (
     <>
       <Label className="ml-2" htmlFor="Allocated_to">
-        Afectado A <span style={{ color: 'red' }}>{required ? '*' : ''}</span>
+        Afectado A
       </Label>
       <Select onValueChange={field?.onChange} defaultValue={field?.value?.[0]}>
         <FormControl>
