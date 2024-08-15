@@ -95,18 +95,18 @@ export default async function page() {
           component: <TypesDocumentsView equipos empresa personas />,
         },
       },
-      {
-        value: 'forms',
-        name: 'Formularios',
-        restricted: [],
-        content: {
-          title: 'Formularios',
-          description: 'Formularios de documentos',
-          buttonActioRestricted: [''],
-          // buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
-          component: <CreatedForm />,
-        },
-      },
+      // {
+      //   value: 'forms',
+      //   name: 'Formularios',
+      //   restricted: [],
+      //   content: {
+      //     title: 'Formularios',
+      //     description: 'Formularios de documentos',
+      //     buttonActioRestricted: [''],
+      //     // buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
+      //     component: <CreatedForm />,
+      //   },
+      // },
     ],
   };
 

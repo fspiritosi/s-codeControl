@@ -117,18 +117,18 @@ export default async function CompanyPage() {
           component: <Cct />,
         },
       },
-      {
-        value: 'forms',
-        name: 'Formularios',
-        restricted: [],
-        content: {
-          title: 'Formularios',
-          description: 'Formularios de empresa',
-          buttonActioRestricted: [''],
-          // buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
-          component: <CreatedForm />,
-        },
-      },
+      // {
+      //   value: 'forms',
+      //   name: 'Formularios',
+      //   restricted: [],
+      //   content: {
+      //     title: 'Formularios',
+      //     description: 'Formularios de empresa',
+      //     buttonActioRestricted: [''],
+      //     // buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
+      //     component: <CreatedForm />,
+      //   },
+      // },
       {
         value:"service",
         name:"Servicios",

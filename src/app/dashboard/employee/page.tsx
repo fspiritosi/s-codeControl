@@ -74,17 +74,17 @@ const EmployeePage = async () => {
           component: <TypesDocumentsView personas />,
         },
       },
-      {
-        value: 'forms',
-        name: 'Formularios',
-        restricted: [],
-        content: {
-          title: 'Formularios',
-          description: 'Formularios de empleados',
-          buttonActioRestricted: [''],
-          component: <CreatedForm />,
-        },
-      },
+      // {
+      //   value: 'forms',
+      //   name: 'Formularios',
+      //   restricted: [],
+      //   content: {
+      //     title: 'Formularios',
+      //     description: 'Formularios de empleados',
+      //     buttonActioRestricted: [''],
+      //     component: <CreatedForm />,
+      //   },
+      // },
     ],
   };
 
