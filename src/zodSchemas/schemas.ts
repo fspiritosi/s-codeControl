@@ -415,6 +415,7 @@ export const accordionSchema = z
     guild: z.string()
       .trim()
       .optional()
+      .nullable()
       .refine((value) => !value || (value.length >= 2 && value.length <= 100), {
         message: 'El nombre debe tener entre 2 y 100 caracteres.',
       }),

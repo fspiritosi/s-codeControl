@@ -28,17 +28,17 @@ export default async function ServiceComponent() {
         .from('measure_units')
         .select('*');
     
-    const channels = supabase.channel('custom-all-channel')
-.on(
-  'postgres_changes',
-  { event: '*', schema: 'public', table: 'customer_services' },
-  async (payload) => {
+//     const channels = supabase.channel('custom-all-channel')
+// .on(
+//   'postgres_changes',
+//   { event: '*', schema: 'public', table: 'customer_services' },
+//   async (payload) => {
    
    
-    const { services } = await fetch(`${URL}/api/services?actual=${company_id}`).then((e) => e.json());
-  }
-)
-.subscribe()
+//     const { services } = await fetch(`${URL}/api/services?actual=${company_id}`).then((e) => e.json());
+//   }
+// )
+// .subscribe()
 
    
   return (
@@ -51,7 +51,7 @@ export default async function ServiceComponent() {
       <ServiceTable services={services} customers={customers} company_id={company_id} />
     </TabsContent>
     <TabsContent value="servicesItems">
-      <ServiceItemsTable measure_units={measure_units as any} customers={customers} services={services} company_id={company_id}/>
+      <ServiceItemsTable params={company_id} measure_units={measure_units as any} customers={customers} services={services} company_id={company_id}/>
     </TabsContent>
   </Tabs>
   );

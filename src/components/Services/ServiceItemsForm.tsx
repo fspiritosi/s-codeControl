@@ -14,12 +14,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { any, z } from 'zod';
 import { Input } from "@/components/ui/input";
 import { toast } from 'sonner';
 import { Item } from '@radix-ui/react-dropdown-menu';
 import { useRouter } from 'next/navigation';
-
+import {supabaseBrowser} from '@/lib/supabase/browser';
 const ItemsSchema = z.object({
     customer_id: z.string().nonempty(),
     customer_service_id: z.string().nonempty(),
@@ -76,6 +76,11 @@ export default function ServiceItemsForm({ measure_units, customers, services, c
     const [selectedClient, setSelectedClient] = useState<string | undefined>(editingService?.customer_id?.id);
     const [isEditing, setIsEditing] = useState(!!editingService);
     const [filteredItems, setFilteredItems] = useState<Item[]>([]);
+    const [servicesData, setServicesData] = useState<Service[]>([]);
+    const [loading, setLoading] = useState(true);
+    const modified_company_id = company_id?.replace(/"/g, '');
+    const supabase = supabaseBrowser();
+    // const { services } = await fetch(`${URL}/api/services?actual=${company_id}`).then((e) => e.json());
     const form = useForm<Service>({
         resolver: zodResolver(isEditing ? EditItemSchema : ItemsSchema),
         defaultValues: {
@@ -89,6 +94,34 @@ export default function ServiceItemsForm({ measure_units, customers, services, c
     });
     const { reset } = form;
     const router = useRouter();
+    const fetchServices = async () => {
+        try {
+
+            // const servicesResponse = await fetch(`${URL}/api/services?actual=${modified_company_id}`);
+                
+            // if (!servicesResponse.ok) {
+            //     throw new Error('Error al obtener los servicios');
+            // }
+            const {data, error}= await supabase
+            .from('customer_services')
+            .select('*')
+            .eq('company_id', company_id); 
+            // const responseData = await servicesResponse.json();
+            const services = Array.isArray(data);
+            setServicesData(data as any);
+            console.log(data);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    } 
+        //  fetchServices();
+
+        useEffect(() => {
+            fetchServices();
+        }, [servicesData]);
+    console.log(servicesData);
 
     useEffect(() => {
         if (editingService) {
@@ -272,7 +305,7 @@ export default function ServiceItemsForm({ measure_units, customers, services, c
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {services?.filter(service => service.customer_id === selectedClient).map((service: any) => (
+                                        {servicesData?.filter(service => service.customer_id === selectedClient).map((service: any) => (
                                             <SelectItem value={service.id} key={service.id}>{service.service_name}</SelectItem>
                                         ))}
                                     </SelectContent>

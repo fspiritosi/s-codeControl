@@ -87,7 +87,7 @@ const ServiceTable = ({ services, customers, company_id }: ServiceTableProps) =>
         setFilteredServices(filtered);
     };
 
-    useEffect(() => {
+    // useEffect(() => {
         const fetchServices = async () => {
             try {
 
@@ -105,24 +105,28 @@ const ServiceTable = ({ services, customers, company_id }: ServiceTableProps) =>
                 setLoading(false);
             }
         };
-        fetchServices();
+        useEffect(() => {
 
-        const channel = supabase.channel('custom-all-channel')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'customer_services' },
-                async (payload) => {
+            fetchServices();
 
-                    fetchServices();
-                }
-            )
-            .subscribe();
+        }, [servicesData]);
+
+    //     const channel = supabase.channel('custom-all-channel')
+    //         .on(
+    //             'postgres_changes',
+    //             { event: '*', schema: 'public', table: 'customer_services' },
+    //             async (payload) => {
+
+    //                 fetchServices();
+    //             }
+    //         )
+    //         .subscribe();
 
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, []);
+    //     return () => {
+    //         supabase.removeChannel(channel);
+    //     };
+    // }, []);
     return (
         <ResizablePanelGroup className="pl-6 flex flex-col gap-2" direction="horizontal">
             <ResizablePanel>
