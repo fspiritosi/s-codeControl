@@ -1,7 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExpiredDataTable } from "../../data-table";
-import DocumentNav from "@/components/DocumentNav";
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { ExpiredColums } from '../../colums';
 import { ColumnsMonthly } from '../../columsMonthly';

@@ -42,7 +42,7 @@ export default async function Equipment() {
           buttonActioRestricted: [''],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
-              <DocumentNav />
+              <DocumentNav equipment />
             </div>
           ),
           component: <EquipmentTabs />,
@@ -60,18 +60,18 @@ export default async function Equipment() {
           component: <TypesDocumentsView equipos />,
         },
       },
-      {
-        value: 'forms',
-        name: 'Formularios',
-        restricted: [],
-        content: {
-          title: 'Formularios',
-          description: 'Formularios de equipos',
-          buttonActioRestricted: [''],
-          // buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
-          component: <CreatedForm />,
-        },
-      },
+      // {
+      //   value: 'forms',
+      //   name: 'Formularios',
+      //   restricted: [],
+      //   content: {
+      //     title: 'Formularios',
+      //     description: 'Formularios de equipos',
+      //     buttonActioRestricted: [''],
+      //     // buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
+      //     component: <CreatedForm />,
+      //   },
+      // },
     ],
   };
 

@@ -79,6 +79,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
 
   const [vehicle, setVehicle] = useState<VehicleType | null>(null);
   const pathname = usePathname();
+  console.log(pathname);
   const [data, setData] = useState<dataType>({
     tipe_of_vehicles: [],
     brand: [],
@@ -227,7 +228,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
             }
           },
           {
-            message: 'El dominio debe tener el formato AAA000.',
+            message: 'El dominio debe tener el formato AAA000. (verificar año)',
           }
         )
         .refine(
@@ -246,7 +247,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
             }
           },
           {
-            message: 'El dominio debe tener el formato AA000AA.',
+            message: 'El dominio debe tener el formato AA000AA. (verificar año)',
           }
         )
         .refine(
@@ -276,9 +277,8 @@ export default function VehiclesForm2({ id }: { id: string }) {
               .from('vehicles')
               .select('*')
               .eq('domain', domain.toUpperCase())
-              .eq('company_id', actualCompany?.id);
 
-            if (vehicles?.[0] && pathname === '/dashboard/equipment/action?action=new') {
+            if (vehicles?.[0] && window.location.href.includes('/dashboard/equipment/action?action=new')) {
               return false;
             } else {
               return true;
@@ -393,6 +393,7 @@ export default function VehiclesForm2({ id }: { id: string }) {
   const url = process.env.NEXT_PUBLIC_PROJECT_URL;
   const mandatoryDocuments = useCountriesStore((state) => state.mandatoryDocuments);
   const loggedUser = useLoggedUserStore((state) => state.credentialUser?.id);
+
 
   async function onCreate(values: z.infer<typeof vehicleSchema>) {
     toast.promise(

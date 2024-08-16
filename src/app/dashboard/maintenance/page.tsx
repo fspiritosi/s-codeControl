@@ -1,13 +1,12 @@
 import Viewcomponent from '@/components/ViewComponent';
 import CreatedForm from './components/CreatedForm';
 import NewForm from './components/NewForm';
-
-function MandenimientoPage() {
+function MantenimientoPage() {
   const viewData = {
-    defaultValue: 'Creados',
+    defaultValue: 'show_created_forms',
     tabsValues: [
       {
-        value: 'Creados',
+        value: 'show_created_forms',
         name: 'Creados',
         restricted: [''],
         content: {
@@ -18,12 +17,12 @@ function MandenimientoPage() {
         },
       },
       {
-        value: 'Nuevos',
+        value: 'create_new_form',
         name: 'Crear nuevo formulario',
         restricted: [''],
         content: {
           title: 'Crear nuevo formulario',
-          description: 'Aquí podras crear un nuevo formulario',
+          description: 'Aquí podrás crear un nuevo formulario',
           buttonActioRestricted: [''],
           component: <NewForm />,
         },
@@ -49,4 +48,4 @@ function MandenimientoPage() {
   );
 }
 
-export default MandenimientoPage;
+export default MantenimientoPage;

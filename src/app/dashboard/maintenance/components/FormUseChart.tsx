@@ -64,7 +64,7 @@ export function FormUseChart({
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent className="fill-black bg-muted" hideLabel />} />
             <Bar dataKey="respuestas" className="fill-muted-foreground" radius={8}>
-              <LabelList position="top" offset={12} className="fill-white" fontSize={12} />
+              <LabelList position="top" offset={10} className=" dark:fill-white" fontSize={12} />
             </Bar>
           </BarChart>
         </ChartContainer>
