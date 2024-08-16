@@ -64,7 +64,7 @@ interface measure_unit {
     simbol: string;
     tipo: string;
 }
-export default function ServiceItemsTable({ params, measure_units, customers, services, company_id }: {params: any, measure_units: measure_unit[], customers: customer[], services: Service[], company_id: string }) {
+export default function ServiceItemsTable({ measure_units, customers, services, company_id }: { measure_units: measure_unit[], customers: customer[], services: Service[], company_id: string }) {
     const supabase = supabaseBrowser();
     const URL = process.env.NEXT_PUBLIC_BASE_URL;
     const [items, setItems] = useState<Item[]>([]);
@@ -78,10 +78,9 @@ export default function ServiceItemsTable({ params, measure_units, customers, se
     const [filteredItems, setFilteredItems] = useState<Item[]>([]);
     const [isActiveFilter, setIsActiveFilter] = useState(true);
     const [measure_unit, setMeasureUnit] = useState<MeasureUnits[] | null>(null);
-   
+    
     useEffect(() => {
         filterItems();
-        
     }, [selectedCustomer, isActiveFilter, items]);
     
     const filterItems = () => {
@@ -96,11 +95,7 @@ export default function ServiceItemsTable({ params, measure_units, customers, se
 
         setFilteredItems(filtered as any );
     };
-
-   
-
-        
-
+    
     // useEffect(() => {
         const fetchItems = async () => {
             try {
@@ -130,38 +125,32 @@ export default function ServiceItemsTable({ params, measure_units, customers, se
                 setLoading(false);
             }
         };
+        useEffect(() => {
 
-        fetchItems();
+            fetchItems();
+
+        }, []);
         
-        // const channel = supabase.channel('custom-all-channel')
-        //     .on(
-        //         'postgres_changes',
-        //         { event: '*', schema: 'public', table: 'service_items' },
-        //         async (payload) => {
+    //     const channel = supabase.channel('custom-all-channel')
+    //         .on(
+    //             'postgres_changes',
+    //             { event: '*', schema: 'public', table: 'service_items' },
+    //             async (payload) => {
                    
-        //             fetchItems(); 
-        //         }
-        //     )
-        //      .on(
-        //         'postgres_changes',
-        //         { event: '*', schema: 'public', table: 'customer_services' },
-        //         async (payload) => {
-                   
-        //             fetchItems(); 
-        //         }
-        //     )
-        //     .subscribe();
-           
+    //                 fetchItems(); 
+    //             }
+    //         )
+    //         .subscribe();
 
        
-        // return () => {
-        //     supabase.removeChannel(channel);
-        // };
+    //     return () => {
+    //         supabase.removeChannel(channel);
+    //     };
     // }, []);
 
-    // if (loading) {
-    //     return <div className='center-screen'>Cargando...</div>;
-    // }
+    if (loading) {
+        return <div className='center-screen'>Cargando...</div>;
+    }
 
     const modified_editing_item_service_id = editingService?.id.toString().replace(/"/g, '');
     

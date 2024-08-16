@@ -24,7 +24,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Input } from "@/components/ui/input";
 import { toast } from 'sonner';
-
+import { useRouter } from 'next/navigation';
 const ServiceSchema = z.object({
     id: z.string().optional(),
     customer_id: z.string().min(1, { message: "Debe seleccionar un cliente" }),
@@ -62,7 +62,7 @@ export default function ServicesForm({  customers, company_id, editingService }:
         },
     });
     const { reset } = form;
-
+    const router = useRouter();
     const [isEditing, setIsEditing] = useState(!!editingService);
     // Remove the filteredServices state variable
     const [filteredServices, setFilteredServices] = useState<Service[] | undefined>(editingService ? [editingService] : undefined);
@@ -111,6 +111,7 @@ export default function ServicesForm({  customers, company_id, editingService }:
             }
             const result = await response.json();
             toast.success('Servicio creado correctamente');
+            router.refresh()
             resetForm();
         } catch (error) {
             console.error('Error al crear el servicio:', error);
@@ -146,6 +147,7 @@ export default function ServicesForm({  customers, company_id, editingService }:
             const result = await response.json();
             toast.success('Servicio actualizado correctamente');
             resetForm();
+            router.refresh();
         } catch (error) {
             console.error('Error al actualizar el servicio:', error);
             toast.error('Error al actualizar el servicio');
@@ -174,6 +176,7 @@ export default function ServicesForm({  customers, company_id, editingService }:
                     );
                     toast.success(`Servicio ${newActiveState ? 'activado' : 'desactivado'} correctamente`);
                     // setIsModalOpen(false);
+                    router.refresh();
                 } else {
                     console.error('Error al desactivar el servicio');
                     toast.error('Error al desactivar el servicio');

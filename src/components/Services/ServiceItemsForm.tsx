@@ -97,31 +97,30 @@ export default function ServiceItemsForm({ measure_units, customers, services, c
     const fetchServices = async () => {
         try {
 
-            // const servicesResponse = await fetch(`${URL}/api/services?actual=${modified_company_id}`);
+            const servicesResponse = await fetch(`${URL}/api/services?actual=${modified_company_id}`);
                 
-            // if (!servicesResponse.ok) {
-            //     throw new Error('Error al obtener los servicios');
-            // }
-            const {data, error}= await supabase
-            .from('customer_services')
-            .select('*')
-            .eq('company_id', company_id); 
-            // const responseData = await servicesResponse.json();
-            const services = Array.isArray(data);
-            setServicesData(data as any);
-            console.log(data);
+            if (!servicesResponse.ok) {
+                throw new Error('Error al obtener los servicios');
+            }
+            // const {data, error}= await supabase
+            // .from('customer_services')
+            // .select('*')
+            // .eq('company_id', company_id); 
+            const responseData = await servicesResponse.json();
+            const services = Array.isArray(responseData) ? responseData : responseData.services;
+            setServicesData(services as any);
+            
         } catch (error) {
             console.error(error);
         } finally {
             setLoading(false);
         }
     } 
-        //  fetchServices();
-
+        
         useEffect(() => {
             fetchServices();
-        }, [servicesData]);
-    console.log(servicesData);
+        }, []);
+    
 
     useEffect(() => {
         if (editingService) {
@@ -167,11 +166,11 @@ export default function ServiceItemsForm({ measure_units, customers, services, c
             const result = await response.json();
             toast.success('Item creado correctamente');
             resetForm();
-            router.refresh();
         } catch (error) {
             console.error('Error al crear el item:', error);
             toast.error('Error al crear el item');
         }
+        router.refresh();
     };
     
     const onUpdate = async (values: Service) => {
@@ -194,11 +193,11 @@ export default function ServiceItemsForm({ measure_units, customers, services, c
             const result = await response.json();
             toast.success('Item actualizado correctamente');
             resetForm();
-            router.refresh();
         } catch (error) {
             console.error('Error al actualizar el item:', error);
             toast.error('Error al actualizar el item');
         }
+        router.refresh();
     };
 
 
@@ -225,7 +224,6 @@ export default function ServiceItemsForm({ measure_units, customers, services, c
                     );
                     toast.success(`Item ${newActiveState ? 'activado' : 'desactivado'} correctamente`);
                     // setIsModalOpen(false);
-                    router.refresh();
                 } else {
                     console.error('Error al desactivar el item');
                     toast.error('Error al desactivar el item');
@@ -235,6 +233,7 @@ export default function ServiceItemsForm({ measure_units, customers, services, c
                 toast.error('Error al desactivar el item');
             }
         }
+        router.refresh();
     };
 
     const handleSubmit1 = (values: any) => {

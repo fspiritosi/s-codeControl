@@ -75,7 +75,7 @@ const ServiceTable = ({ services, customers, company_id }: ServiceTableProps) =>
         filterServices();
     }, [selectedCustomer, isActiveFilter, servicesData]);
 
-    const filterServices = (servicesToFilter = servicesData) => {
+    const filterServices = (servicesToFilter = services) => {
         let filtered = servicesToFilter;
 
         if (selectedCustomer !== 'all') {
@@ -101,15 +101,16 @@ const ServiceTable = ({ services, customers, company_id }: ServiceTableProps) =>
                 setServicesData(services);
             } catch (error) {
                 console.error(error);
-            } finally {
-                setLoading(false);
-            }
+            } 
+            // finally {
+            //     setLoading(false);
+            // }
         };
         useEffect(() => {
 
             fetchServices();
 
-        }, [servicesData]);
+        }, []);
 
     //     const channel = supabase.channel('custom-all-channel')
     //         .on(

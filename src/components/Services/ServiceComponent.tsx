@@ -23,7 +23,7 @@ export default async function ServiceComponent() {
     const { customers } = await fetch(`${URL}/api/company/customers?actual=${company_id}`).then((e) => e.json());
     const { services } = await fetch(`${URL}/api/services?actual=${company_id}`).then((e) => e.json());
     // const {measure_units}= await fetch(`${URL}/api/meassure`).then((e) => e.json());
-    ;
+    
     const {data: measure_units} = await supabase
         .from('measure_units')
         .select('*');
@@ -51,7 +51,7 @@ export default async function ServiceComponent() {
       <ServiceTable services={services} customers={customers} company_id={company_id} />
     </TabsContent>
     <TabsContent value="servicesItems">
-      <ServiceItemsTable params={company_id} measure_units={measure_units as any} customers={customers} services={services} company_id={company_id}/>
+      <ServiceItemsTable  measure_units={measure_units as any} customers={customers} services={services} company_id={company_id}/>
     </TabsContent>
   </Tabs>
   );
