@@ -401,7 +401,7 @@ export const accordionSchema = z
       .min(3, {
         message: 'El cargo debe tener al menos 3 caracteres.',
       })
-      .max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),
+      .max(50, { message: 'La compañia debe tener menos de 50 caracteres.' }),
     workflow_diagram: z.string({
       required_error: 'El diagrama de trabajo es requerido',
     }),

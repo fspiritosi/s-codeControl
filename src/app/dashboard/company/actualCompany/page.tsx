@@ -14,6 +14,7 @@ import Contacts from '../contact/Contact';
 import Customers from '../customers/Customers';
 import Cct from './covenant/CctComponent';
 import ServiceComponent from '@/components/Services/ServiceComponent'
+import TypesDocumentAction from '../../document/documentComponents/TypesDocumentAction';
 export default async function CompanyPage() {
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
@@ -48,9 +49,7 @@ export default async function CompanyPage() {
           buttonActioRestricted: [''],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
-              <Link href={'/dashboard/document'} className={buttonVariants({ variant: 'default' })}>
-                Nuevo Documento
-              </Link>
+            <TypesDocumentAction optionChildrenProp='Empresa' />
             </div>
           ),
           component: <DocumentTabComponent />,
@@ -118,18 +117,18 @@ export default async function CompanyPage() {
           component: <Cct />,
         },
       },
-      {
-        value: 'forms',
-        name: 'Formularios',
-        restricted: [],
-        content: {
-          title: 'Formularios',
-          description: 'Formularios de empresa',
-          buttonActioRestricted: [''],
-          // buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
-          component: <CreatedForm />,
-        },
-      },
+      // {
+      //   value: 'forms',
+      //   name: 'Formularios',
+      //   restricted: [],
+      //   content: {
+      //     title: 'Formularios',
+      //     description: 'Formularios de empresa',
+      //     buttonActioRestricted: [''],
+      //     // buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
+      //     component: <CreatedForm />,
+      //   },
+      // },
       {
         value:"service",
         name:"Servicios",

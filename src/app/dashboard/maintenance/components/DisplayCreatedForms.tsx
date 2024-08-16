@@ -16,6 +16,9 @@ export default function DisplayCreatedForms({
   const handleSelectForm = (index: number) => {
     setSelectedForm(createdForms?.[index].form as Campo[]);
   };
+  const handleEditForm = (form: any) => {
+    document.getElementById('create_new_form')?.click();
+  };
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const params = new URLSearchParams(searchParams);
@@ -43,10 +46,14 @@ export default function DisplayCreatedForms({
                   </CardTitle>
                 </Button>
               </div>
-
-              <Button variant={'ghost'} onClick={() => handleSelectForm(index)}>
-                Vista previa
-              </Button>
+              <div>
+                <Button variant={'ghost'} onClick={() => handleEditForm(form)}>
+                  Editar
+                </Button>
+                <Button variant={'ghost'} onClick={() => handleSelectForm(index)}>
+                  Vista previa
+                </Button>
+              </div>
             </Card>
           );
         })}

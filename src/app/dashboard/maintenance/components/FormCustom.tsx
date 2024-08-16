@@ -599,7 +599,7 @@ export function FormCustom({
             <Input
               placeholder="Ingresar titulo"
               onChange={(e) => handleTitleChange(e.target.value, index, campo_id, sectionIndex)}
-              value={campo.value || ''}
+              value={campo.title || ''}
             />
           </div>
         );
@@ -1029,7 +1029,6 @@ export function FormCustom({
       }
       return item;
     });
-
 
     // Asignar el nuevo valor al campo `apply`
     updatedCampos[index].apply = value;

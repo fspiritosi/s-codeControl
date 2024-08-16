@@ -16,7 +16,7 @@ import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../supabase/supabase';
 
@@ -105,10 +105,16 @@ export default function NewDocumentType({
       mandatory: undefined,
       explired: undefined,
       special: undefined,
+      applies: selectOptions === 'all' ? undefined : selectOptions as "Empresa" | "Persona" | "Equipos" | undefined,
     },
   });
 
-  console.log(form.formState.errors);
+  useEffect(() => {
+    if (selectOptions === 'Empresa') {
+      setItems(defaultValues.filter((e) => e.id === 'explired' || e.id === 'is_it_montlhy' || e.id === 'private'));
+    }
+  }, [selectOptions]);
+
   async function onSubmit(values: z.infer<typeof FormSchema>) {
     const formattedValues = {
       ...values,
