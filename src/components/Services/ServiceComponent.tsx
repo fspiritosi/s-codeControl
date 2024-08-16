@@ -1,9 +1,8 @@
-import React from 'react'
 import { supabaseServer } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import ServiceTable from './ServiceTable';
 import ServiceItemsTable from './ServiceItemsTable';
+import ServiceTable from './ServiceTable';
 interface measure_unit {
   id: number;
   unit: string;
@@ -40,6 +39,7 @@ export default async function ServiceComponent() {
 // )
 // .subscribe()
 
+console.log(services);
    
   return (
     <Tabs defaultValue="services">
