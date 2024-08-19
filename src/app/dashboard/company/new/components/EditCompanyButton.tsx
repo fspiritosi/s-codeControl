@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useImageUpload } from '@/hooks/useUploadImage';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseBrowser } from '@/lib/supabase/browser';
+import { useLoggedUserStore } from '@/store/loggedUser';
 import { companySchema } from '@/zodSchemas/schemas';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, useRef, useState } from 'react';
@@ -26,6 +27,7 @@ export default function EditCompanyButton({ defaultImage = null }: EditCompanyBu
   const disabled = false;
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [base64Image, setBase64Image] = useState<string>('');
+  const currentCompany = useLoggedUserStore((state) => state.actualCompany);
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -55,20 +57,31 @@ export default function EditCompanyButton({ defaultImage = null }: EditCompanyBu
 
         // Verificar si se ha seleccionado un archivo de imagen
         if (imageFile) {
-          const fileExtension = imageFile?.name.split('.').pop();
-          const logoUrl = `${url}/logo/${cuit}.${fileExtension}`;
-
-          // Subir la imagen si se ha seleccionado un archivo
-          const { data, error } = await EditCompany(formData, defaultImage as string);
-
-          if (data && data?.length > 0) {
-            // Subir la imagen al almacenamiento
-            const fileExtension = imageFile?.name.split('.').pop();
-            const renamedFile = new File([imageFile], `${cuit}.${fileExtension}`, {
-              type: `image/${fileExtension?.replace(/\s/g, '')}`,
+          const { data } = await supabase.storage.from('logo').list('', { search: cuit });
+          if (data?.length) {
+            data.forEach(async (element: any) => {
+              const extension = element.name.split('.').pop();
+              const { data, error } = await supabase.storage.from('logo').remove([cuit + '.' + extension]);
             });
-
-            await uploadImage(renamedFile, 'logo');
+          }
+          //subir nueva imagen
+          const fileExtension = imageFile?.name.split('.').pop();
+          const renamedFile = new File([imageFile], `${cuit}.${fileExtension}`, {
+            type: `image/${fileExtension?.replace(/\s/g, '')}`,
+          });
+          const { error, data: createdLogo } = await supabase.storage
+            .from('logo')
+            .upload(cuit + '.' + fileExtension, renamedFile);
+          if (error) {
+            throw new Error(handleSupabaseError(error.message));
+          }
+          const { data: fullUrl } = supabase.storage.from('logo').getPublicUrl(createdLogo?.path || '');
+          const { data: newLogo, error: dataerror } = await supabase
+            .from('company')
+            .update({ company_logo: fullUrl.publicUrl })
+            .eq('company_cuit', cuit);
+          if (dataerror) {
+            throw new Error(handleSupabaseError(dataerror.message));
           }
         } else {
           // Si no se ha seleccionado un archivo de imagen, solo actualizar la compañía sin URL de imagen
@@ -78,17 +91,16 @@ export default function EditCompanyButton({ defaultImage = null }: EditCompanyBu
           }
         }
 
-        // Resto del código para obtener la compañía actualizada y redirigir al dashboard...
       },
       {
-        loading: 'Registrando Compañía',
-        success: 'Compañía Registrada',
+        loading: 'Actualiazando Compañía',
+        success: 'Actualización exitosa, algunos cambios pueden tardar unos minutos en reflejarse',
         error: (error) => {
           return error;
         },
       }
     );
-    router.push('/dashboard');
+    // router.push('/dashboard');
   };
 
   return (

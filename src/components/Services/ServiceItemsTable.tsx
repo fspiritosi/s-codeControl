@@ -64,7 +64,7 @@ interface measure_unit {
     simbol: string;
     tipo: string;
 }
-export default function ServiceItemsTable({ params, measure_units, customers, services, company_id }: { params: any, measure_units: measure_unit[], customers: customer[], services: Service[], company_id: string }) {
+export default function ServiceItemsTable({ measure_units, customers, services, company_id }: { measure_units: measure_unit[], customers: customer[], services: Service[], company_id: string }) {
     const supabase = supabaseBrowser();
     const URL = process.env.NEXT_PUBLIC_BASE_URL;
     const [items, setItems] = useState<Item[]>([]);
@@ -152,12 +152,12 @@ export default function ServiceItemsTable({ params, measure_units, customers, se
     
 
     return (
-        <ResizablePanelGroup direction="horizontal">
+        <ResizablePanelGroup className="pl-3 flex flex-col gap-2" direction="horizontal">
             <ResizablePanel>
                 <ServiceItemsForm measure_units={measure_units as any} customers={customers} services={services as any} company_id={modified_company_id} editingService={editingService as any} />
             </ResizablePanel>
             <ResizableHandle withHandle />
-            <ResizablePanel>
+            <ResizablePanel className="pl-3 min-w-[500px] flex flex-col gap-2" defaultSize={70}>
                 <div className="flex flex-col gap-6 py-4 px-6">
                     
                     <div className="flex space-x-4">
@@ -183,7 +183,7 @@ export default function ServiceItemsTable({ params, measure_units, customers, se
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="flex space-x-4 max-h-96 overflow-y-auto">
+                    <div className="overflow-x-auto max-h-96 overflow-y-auto">
                         <Table className="min-w-full divide-y divide-gray-200">
                             <TableHead className="bg-header-background">
                                 <TableRow>
@@ -197,7 +197,7 @@ export default function ServiceItemsTable({ params, measure_units, customers, se
                                         Descripción
                                     </TableCell>
                                     <TableCell className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                        Unidad de medida
+                                        UDM
                                     </TableCell>
                                     <TableCell className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                         Precio

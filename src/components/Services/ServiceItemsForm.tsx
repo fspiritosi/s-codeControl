@@ -18,6 +18,7 @@ import { z } from 'zod';
 import { Input } from "@/components/ui/input";
 import { toast } from 'sonner';
 import { Item } from '@radix-ui/react-dropdown-menu';
+import { useRouter } from 'next/navigation';
 
 const ItemsSchema = z.object({
     customer_id: z.string().nonempty(),
@@ -87,7 +88,7 @@ export default function ServiceItemsForm({ measure_units, customers, services, c
         },
     });
     const { reset } = form;
-
+    const router = useRouter();
 
     useEffect(() => {
         if (editingService) {
@@ -133,6 +134,7 @@ export default function ServiceItemsForm({ measure_units, customers, services, c
             const result = await response.json();
             toast.success('Item creado correctamente');
             resetForm();
+            router.refresh();
         } catch (error) {
             console.error('Error al crear el item:', error);
             toast.error('Error al crear el item');
@@ -159,6 +161,7 @@ export default function ServiceItemsForm({ measure_units, customers, services, c
             const result = await response.json();
             toast.success('Item actualizado correctamente');
             resetForm();
+            router.refresh();
         } catch (error) {
             console.error('Error al actualizar el item:', error);
             toast.error('Error al actualizar el item');
@@ -189,6 +192,7 @@ export default function ServiceItemsForm({ measure_units, customers, services, c
                     );
                     toast.success(`Item ${newActiveState ? 'activado' : 'desactivado'} correctamente`);
                     // setIsModalOpen(false);
+                    router.refresh();
                 } else {
                     console.error('Error al desactivar el item');
                     toast.error('Error al desactivar el item');

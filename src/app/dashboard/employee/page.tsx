@@ -45,7 +45,7 @@ const EmployeePage = async () => {
           buttonActioRestricted: [''],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
-              <DocumentNav />
+               <DocumentNav empleados />
             </div>
           ),
           component: <EmployeeDocumentsTabs />,
@@ -59,7 +59,7 @@ const EmployeePage = async () => {
           title: 'Diagramas de personal',
           description: 'Carga de novedades de trabajo del personal',
           buttonActioRestricted: [''],
-          buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
+          buttonAction: <TypesDocumentAction optionChildrenProp="Persona" />,
           component: <EmployesDiagram />,
         },
       },
@@ -71,21 +71,21 @@ const EmployeePage = async () => {
           title: 'Tipos de documentos',
           description: 'Tipos de documentos auditables',
           buttonActioRestricted: [''],
-          buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
+          buttonAction: <TypesDocumentAction optionChildrenProp="Persona" />,
           component: <TypesDocumentsView personas />,
         },
       },
-      {
-        value: 'forms',
-        name: 'Formularios',
-        restricted: [],
-        content: {
-          title: 'Formularios',
-          description: 'Formularios de empleados',
-          buttonActioRestricted: [''],
-          component: <CreatedForm />,
-        },
-      },
+      // {
+      //   value: 'forms',
+      //   name: 'Formularios',
+      //   restricted: [],
+      //   content: {
+      //     title: 'Formularios',
+      //     description: 'Formularios de empleados',
+      //     buttonActioRestricted: [''],
+      //     component: <CreatedForm />,
+      //   },
+      // },
     ],
   };
 

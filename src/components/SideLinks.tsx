@@ -1,7 +1,6 @@
 'use client';
 
 import { useLoggedUserStore } from '@/store/loggedUser';
-import { ArchiveIcon } from '@radix-ui/react-icons';
 import cookies from 'js-cookie';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -52,11 +51,11 @@ const Allinks = [
     href: '/dashboard/document',
     icon: <MdListAlt size={sizeIcons} />,
   },
-  {
-    name: 'Formularios',
-    href: '/dashboard/maintenance',
-    icon: <ArchiveIcon className="size-5" />,
-  },
+  // {
+  //   name: 'Formularios',
+  //   href: '/dashboard/maintenance',
+  //   icon: <ArchiveIcon className="size-5" />,
+  // },
   {
     name: 'Ayuda',
     href: '/dashboard/help',
@@ -90,7 +89,7 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
     const roleRaw = share
       ?.filter(
         (item: any) =>
-          item.company_id.id === company &&
+          item.company_id?.id === company &&
           Object.values(item).some((value) => typeof value === 'string' && value.includes(profile2 as string))
       )
       .map((item: any) => item.role);

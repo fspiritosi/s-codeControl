@@ -1,19 +1,13 @@
 'use client';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { CardDescription, CardTitle } from '@/components/ui/card';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-
-import { CalendarIcon } from '@radix-ui/react-icons';
-import { format } from 'date-fns';
-
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
-
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -26,9 +20,13 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { FieldComponentProps, FieldComponentPropsDecorative } from '@/types/types';
+import { CalendarIcon } from '@radix-ui/react-icons';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import jsPDF from 'jspdf';
 import React, { useState } from 'react';
 import FieldRenderer from '../formUtils/fieldRenderer';
 
@@ -844,6 +842,231 @@ export const SeccionObservaciones: React.FC<FieldComponentProps> = ({ campo, for
           </FormItem>
         )}
       />
+    </div>
+  );
+};
+
+// export const renderizarCampo = (campo: Campo, index: number) => {
+//   switch (campo.tipo) {
+//     case 'Nombre del formulario':
+//       return (
+//         <View key={index} style={{ marginVertical: 10 }}>
+//           <Text style={{ fontSize: 18, fontWeight: 'bold', textDecoration: 'underline' }}>
+//             {campo.value ?? 'Nombre del formulario'}
+//           </Text>
+//         </View>
+//       );
+//     case 'Texto':
+//       return (
+//         <View key={index} style={{ marginBottom: 10 }}>
+//           <Text style={{ marginBottom: 5 }}>{campo.title ? campo.title : 'Titulo del campo'}</Text>
+//           <Text> {campo.value}</Text>
+//           {campo.date && (
+//             <View style={{ marginTop: 10 }}>
+//               <Text>Fecha</Text>
+//               <Text>{/* Aquí puedes añadir la fecha si tienes el valor */}</Text>
+//             </View>
+//           )}
+//           {campo.observation && (
+//             <View style={{ marginTop: 10 }}>
+//               <Text>Observaciones</Text>
+//               <Text>{/* Aquí puedes añadir la observación si tienes el valor */}</Text>
+//             </View>
+//           )}
+//         </View>
+//       );
+//     case 'Área de texto':
+//       return (
+//         <View key={index} style={{ marginBottom: 10 }}>
+//           <Text style={{ marginBottom: 5 }}>{campo.title ? campo.title : 'Titulo del campo'}</Text>
+//           <Text>{campo.value}</Text>
+//           {campo.date && (
+//             <View style={{ marginTop: 10 }}>
+//               <Text>Fecha</Text>
+//               <Text>{/* Aquí puedes añadir la fecha si tienes el valor */}</Text>
+//             </View>
+//           )}
+//           {campo.observation && (
+//             <View style={{ marginTop: 10 }}>
+//               <Text>Observaciones</Text>
+//               <Text>{/* Aquí puedes añadir la observación si tienes el valor */}</Text>
+//             </View>
+//           )}
+//         </View>
+//       );
+//     case 'Separador':
+//       return (
+//         <View key={index} style={{ marginVertical: 20 }}>
+//           <Text>{campo.value}</Text>
+//         </View>
+//       );
+//     case 'Radio':
+//       return (
+//         <View key={index} style={{ marginBottom: 10 }}>
+//           <Text>{campo.title ? campo.title : 'Titulo del campo'}</Text>
+//           <View>
+//             {campo.opciones?.map((opcion, i) => (
+//               <Text key={i} style={{ marginVertical: 5 }}>
+//                 {opcion ? opcion : `Opcion ${i + 1}`}
+//               </Text>
+//             ))}
+//           </View>
+//           {campo.date && (
+//             <View style={{ marginTop: 10 }}>
+//               <Text>Fecha</Text>
+//               <Text>{/* Aquí puedes añadir la fecha si tienes el valor */}</Text>
+//             </View>
+//           )}
+//           {campo.observation && (
+//             <View style={{ marginTop: 10 }}>
+//               <Text>Observaciones</Text>
+//               <Text>{/* Aquí puedes añadir la observación si tienes el valor */}</Text>
+//             </View>
+//           )}
+//         </View>
+//       );
+//     case 'Seleccion multiple':
+//       return (
+//         <View key={index} style={{ marginBottom: 10 }}>
+//           <Text>{campo.title ? campo.title : 'Titulo del campo'}</Text>
+//           <View>
+//             {campo.opciones?.map((opcion, i) => (
+//               <Text key={i} style={{ marginVertical: 5 }}>
+//                 {opcion}
+//               </Text>
+//             ))}
+//           </View>
+//           {campo.date && (
+//             <View style={{ marginTop: 10 }}>
+//               <Text>Fecha</Text>
+//               <Text>{/* Aquí puedes añadir la fecha si tienes el valor */}</Text>
+//             </View>
+//           )}
+//           {campo.observation && (
+//             <View style={{ marginTop: 10 }}>
+//               <Text>Observaciones</Text>
+//               <Text>{/* Aquí puedes añadir la observación si tienes el valor */}</Text>
+//             </View>
+//           )}
+//         </View>
+//       );
+//     case 'Fecha':
+//       return (
+//         <View key={index} style={{ marginBottom: 10 }}>
+//           <Text>{campo.title ? campo.title : 'Titulo del campo'}</Text>
+//           <Text>{campo.value}</Text>
+//         </View>
+//       );
+//     case 'Seleccion':
+//       return (
+//         <View key={index} style={{ marginBottom: 10 }}>
+//           <Text>{campo.title ? campo.title : 'Titulo del campo'}</Text>
+//           <Text>{campo.value}</Text>
+//           {campo.date && (
+//             <View style={{ marginTop: 10 }}>
+//               <Text>Fecha</Text>
+//               <Text>{/* Aquí puedes añadir la fecha si tienes el valor */}</Text>
+//             </View>
+//           )}
+//           {campo.observation && (
+//             <View style={{ marginTop: 10 }}>
+//               <Text>Observaciones</Text>
+//               <Text>{/* Aquí puedes añadir la observación si tienes el valor */}</Text>
+//             </View>
+//           )}
+//         </View>
+//       );
+//     case 'Subtitulo':
+//       return (
+//         <View key={index} style={{ marginBottom: 10 }}>
+//           <Text style={{ fontSize: 16, fontWeight: 'bold' }}>{campo.title ? campo.title : 'Titulo del campo'}</Text>
+//         </View>
+//       );
+//     case 'Si-No':
+//       return (
+//         <View key={index} style={{ marginBottom: 10 }}>
+//           <Text>{campo.title ? campo.title : 'Titulo del campo'}</Text>
+//           <View style={{ display: 'flex', backgroundColor: 'blue', justifyContent: 'space-between' }}>
+//             {/* {campo.opciones?.map((opcion, i) => (
+//               <Text key={i} style={stylesPDF.text}>
+//                 {opcion ? opcion : `Opcion ${i + 1}`}
+//               </Text>
+//             ))} */}
+//             <Text style={stylesPDF.text}>ola</Text>
+//             <Text style={stylesPDF.text}>Hola</Text>
+//           </View>
+//           {campo.date && (
+//             <View style={{ marginTop: 10 }}>
+//               <Text>Fecha</Text>
+//               <Text>{/* Aquí puedes añadir la fecha si tienes el valor */}</Text>
+//             </View>
+//           )}
+//           {campo.observation && (
+//             <View style={{ marginTop: 10 }}>
+//               <Text>Observaciones</Text>
+//               <Text>{/* Aquí puedes añadir la observación si tienes el valor */}</Text>
+//             </View>
+//           )}
+//         </View>
+//       );
+//     case 'Titulo':
+//       return (
+//         <View key={index} style={{ marginBottom: 10 }}>
+//           <Text style={{ fontSize: 20, fontWeight: 'bold' }}>{campo.title ? campo.title : 'Titulo del campo'}</Text>
+//         </View>
+//       );
+//     case 'Seccion':
+//       return (
+//         <View key={index} style={{ marginBottom: 10 }}>
+//           <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{campo.title ? campo.title : 'Titulo del campo'}</Text>
+//           <View>
+//             {campo.sectionCampos?.map((opcion, i) => {
+//               return renderizarCampo(opcion, i);
+//             })}
+//           </View>
+//           {campo.date && (
+//             <View style={{ marginTop: 10 }}>
+//               <Text>Fecha</Text>
+//               <Text>{/* Aquí puedes añadir la fecha si tienes el valor */}</Text>
+//             </View>
+//           )}
+//           {campo.observation && (
+//             <View style={{ marginTop: 10 }}>
+//               <Text>Observaciones</Text>
+//               <Text>{/* Aquí puedes añadir la observación si tienes el valor */}</Text>
+//             </View>
+//           )}
+//         </View>
+//       );
+//     case 'Archivo':
+//       return (
+//         <View key={index} style={{ marginBottom: 10 }}>
+//           <Text>{campo.title ? campo.title : 'Titulo del campo'}</Text>
+//           <Text>{/* Aquí podrías indicar un enlace o el nombre del archivo */}</Text>
+//           {campo.date && (
+//             <View style={{ marginTop: 10 }}>
+//               <Text>Fecha</Text>
+//               <Text>{/* Aquí puedes añadir la fecha si tienes el valor */}</Text>
+//             </View>
+//           )}
+//           {campo.observation && (
+//             <View style={{ marginTop: 10 }}>
+//               <Text>Observaciones</Text>
+//               <Text>{/* Aquí puedes añadir la observación si tienes el valor */}</Text>
+//             </View>
+//           )}
+//         </View>
+//       );
+//     default:
+//       return null;
+//   }
+// };
+export const FormPDF = ({ pdfUrl }: { pdfUrl: string }) => {
+  return (
+    <div>
+      {pdfUrl && (
+        <iframe src={pdfUrl} width="100%" style={{ height: '95vh' }} title="Previsualización del PDF"></iframe>
+      )}
     </div>
   );
 };
