@@ -96,7 +96,7 @@ export default function ServiceItemsTable({ measure_units, customers, services, 
         setFilteredItems(filtered as any );
     };
     
-    useEffect(() => {
+    // useEffect(() => {
         const fetchItems = async () => {
             try {
                
@@ -125,24 +125,28 @@ export default function ServiceItemsTable({ measure_units, customers, services, 
                 setLoading(false);
             }
         };
-        fetchItems();
+        useEffect(() => {
 
-        const channel = supabase.channel('custom-all-channel')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'service_items' },
-                async (payload) => {
+            fetchItems();
+
+        }, []);
+        
+    //     const channel = supabase.channel('custom-all-channel')
+    //         .on(
+    //             'postgres_changes',
+    //             { event: '*', schema: 'public', table: 'service_items' },
+    //             async (payload) => {
                    
-                    fetchItems(); 
-                }
-            )
-            .subscribe();
+    //                 fetchItems(); 
+    //             }
+    //         )
+    //         .subscribe();
 
        
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, []);
+    //     return () => {
+    //         supabase.removeChannel(channel);
+    //     };
+    // }, []);
 
     if (loading) {
         return <div className='center-screen'>Cargando...</div>;

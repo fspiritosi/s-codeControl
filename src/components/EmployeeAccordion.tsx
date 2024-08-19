@@ -152,7 +152,8 @@ export default function EmployeeAccordion({
   const { updateEmployee, createEmployee } = useEmployeesData();
   const getEmployees = useLoggedUserStore((state: any) => state.getEmployees);
   const router = useRouter();
-  // const { toast } = useToast()
+  
+ // const { toast } = useToast()
   const url = process.env.NEXT_PUBLIC_PROJECT_URL;
   const mandatoryDocuments = useCountriesStore((state) => state.mandatoryDocuments);
 
@@ -197,6 +198,7 @@ export default function EmployeeAccordion({
           category: null,
         },
   });
+  
   const [accordion1Errors, setAccordion1Errors] = useState(false);
   const [accordion2Errors, setAccordion2Errors] = useState(false);
   const [accordion3Errors, setAccordion3Errors] = useState(false);
@@ -525,14 +527,15 @@ export default function EmployeeAccordion({
     toast.promise(
       async () => {
         const { guild_id, covenants_id, category_id, full_name, ...rest } = values;
+        
         const fileExtension = imageFile?.name.split('.').pop();
         const finalValues = {
-          ...rest,
+          ...values,
           date_of_admission:
             values.date_of_admission instanceof Date
               ? values.date_of_admission.toISOString()
               : values.date_of_admission,
-          guild: form.getValues('guild') === '' ? undefined : (form.getValues('guild_id') as string),
+          guild: form.getValues('guild') === '' ? undefined : (form.getValues('guild_id') as string | null),
           covenants:
             form.getValues('covenants') === null
               ? null
@@ -636,7 +639,7 @@ export default function EmployeeAccordion({
             values.date_of_admission instanceof Date
               ? values.date_of_admission.toISOString()
               : values.date_of_admission,
-          guild: form.getValues('guild') === '' ? null : (form.getValues('guild_id') as string),
+          guild: form.getValues('guild') === '' ? null : (form.getValues('guild_id') as string | null),
           covenants:
             form.getValues('covenants') === null
               ? null
@@ -656,7 +659,7 @@ export default function EmployeeAccordion({
           workflow_diagram: String(workDiagramOptions.find((e) => e.name === values.workflow_diagram)?.id),
         };
         const result = compareContractorEmployees(user, finalValues as any);
-
+        console.log(finalValues);
         result.valuesToRemove.forEach(async (e) => {
           const { error } = await supabase
             .from('contractor_employee')
@@ -1422,7 +1425,7 @@ export default function EmployeeAccordion({
                                 disabled={readOnly}
                                 variant="outline"
                                 role="combobox"
-                                value={field.value}
+                                value={field.value || ''}
                                 className={cn('w-[300px] justify-between', !field.value && 'text-muted-foreground')}
                               >
                                 {typeof field.value === 'string'
