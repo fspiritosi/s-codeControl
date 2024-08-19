@@ -15,12 +15,12 @@ export default async function Home() {
         {false && <CardsGrid />}
         {/* <CardTitle className="text-[2vw]">Bienvenido a tu dashboard</CardTitle> */}
       </section>
-      <section className="md:mx-7 grid grid-cols-1 mt-6 xl:grid-cols-3 gap-3 mb-4">
+      <section className="md:mx-7 grid grid-cols-1 mt-6 xl:grid-cols-4 gap-3 mb-4">
         <section className="flex flex-col gap-4">
           <ResoursesChart data={employees} />
           <MissingDocumentList />
         </section>
-        <Card className="col-span-2 flex flex-col justify-between overflow-hidden">
+        <Card className="col-span-3 flex flex-col justify-between overflow-hidden">
           <div>
             <CardHeader className="flex flex-row items-start bg-muted dark:bg-muted/50 border-b-2">
               <div className="grid gap-1">

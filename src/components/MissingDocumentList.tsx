@@ -54,6 +54,8 @@ export const MissingDocumentList = () => {
     }
   );
 
+  console.log(allValuesToShow.employees[0]);
+
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-start bg-muted dark:bg-muted/50 border-b-2">
@@ -90,6 +92,7 @@ export const MissingDocumentList = () => {
               <AccordionContent className="h-fit bg-muted dark:bg-muted/50 max-h-[60vh] overflow-y-auto">
                 {allValuesToShow?.employees?.length > 0 &&
                   allValuesToShow.employees?.map((item: any, index) => {
+                    // console.log(item[0].resource);
                     return (
                       <Accordion key={index} type="single" className="" collapsible>
                         <AccordionItem value="item-1">
@@ -107,7 +110,7 @@ export const MissingDocumentList = () => {
                                   .join(' ')}
                               </Badge>
                               <Link
-                                href={`/dashboard/employee/action?action=view&employee_id=${item?.[0].id}`}
+                                href={`/dashboard/employee/action?action=view&employee_id=${item?.[0].employee_id}`}
                                 className={buttonVariants({
                                   variant: 'default',
                                 })}
