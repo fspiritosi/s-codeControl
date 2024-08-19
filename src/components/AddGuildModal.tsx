@@ -17,6 +17,7 @@ import {
   import { useToast } from './ui/use-toast';
   import { useLoggedUserStore } from '@/store/loggedUser';
   import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
   const schema = z
     .string()
     .min(3, {
@@ -35,6 +36,7 @@ import {
     fetchGuild: () => Promise<void>;
     searchText:string;
   }) {
+    const router = useRouter()
     const [name, setName] = useState('');
     const { toast } = useToast();
     const company = useLoggedUserStore((state) => state.actualCompany?.id);
@@ -70,6 +72,7 @@ import {
       });
       setName('');
       fetchGuild();
+      router.refresh()
     }
   
     return (
