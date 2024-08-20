@@ -720,6 +720,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
             1
           )} ${doc.employees?.firstname?.charAt(0)?.toUpperCase()}${doc?.employees?.firstname.slice(1)}`,
           document_number: doc.employees?.document_number,
+          employee_id: doc.employees?.id,
           document_url: doc.document_path,
           is_active: doc.employees?.is_active,
           period: doc.period,

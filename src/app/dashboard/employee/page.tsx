@@ -2,6 +2,7 @@ import EmployesDiagram from '@/components/Diagrams/EmployesDiagram';
 import DocumentNav from '@/components/DocumentNav';
 import Viewcomponent from '@/components/ViewComponent';
 import { buttonVariants } from '@/components/ui/button';
+
 import Link from 'next/link';
 import EmployeeDocumentsTabs from '../document/documentComponents/EmployeeDocumentsTabs';
 import EmployeeListTabs from '../document/documentComponents/EmployeeListTabs';
