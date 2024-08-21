@@ -147,6 +147,7 @@ export const columns: ColumnDef<SharedUser>[] = [
       return value.includes(row.getValue(id));
     },
   },
+
   {
     id: 'actions',
     cell: ({ row }) => {

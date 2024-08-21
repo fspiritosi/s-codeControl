@@ -40,23 +40,17 @@ import { useEffect, useState } from 'react';
 interface DataContactsProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any;
   data: TData[];
-  allCompany: any[];
-  showInactive: boolean;
   localStorageName: string;
-  setShowInactive: (showInactive: boolean) => void;
 }
 
 export function DataContacts<TData, TValue>({
   columns,
   data,
-  showInactive,
-  setShowInactive,
-  allCompany,
   localStorageName,
 }: DataContactsProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const defaultVisibleColumns = ['contact_name', 'constact_email', 'contact_phone', 'contact_charge', 'customers.name'];
-
+  const [showInactive, setShowInactive] = useState(false);
   const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
     if (typeof window !== 'undefined') {
       const valorGuardado = JSON.parse(localStorage.getItem(localStorageName) || '[]');
@@ -126,10 +120,7 @@ export function DataContacts<TData, TValue>({
       columnFilters,
     },
   });
-  // const setActivesVehicles = useLoggedUserStore(
-  //   state => state.setActivesVehicles,
-  // )
-  //const router = useRouter()
+  
 
   const handleColumnVisibilityChange = (columnId: string, isVisible: boolean) => {
     setColumnVisibility((prev) => ({
@@ -151,23 +142,13 @@ export function DataContacts<TData, TValue>({
     setSelectValues({
       customers_id: 'Todos',
       //is_active: 'todos',
-      //   domain: 'Todos',
-      //   chassis: 'Todos',
-      //   engine: 'Todos',
-      //   serie: 'Todos',
-      //   intern_number: 'Todos',
-      //   year: 'Todos',
-      //   brand: 'Todos',
-      //   model: 'Todos',
-      //   status: 'Todos',
+      
     });
-    //setActivesVehicles()
+    
   };
   const maxRows = ['20', '40', '60', '80', '100'];
   const [selectValues, setSelectValues] = useState<{ [key: string]: string }>({});
-  // const handleToggleInactive = () => {
-  //   setShowInactive(!showInactive)
-  // }
+  
 
   return (
     <div>
@@ -218,12 +199,7 @@ export function DataContacts<TData, TValue>({
                         <DropdownMenuCheckboxItem
                           key={column.id}
                           className="capitalize  text-red-400"
-                          checked={showInactive}
-                          //onChange={() => setShowInactive(!showInactive)}
-                          onClick={() => setShowInactive(!showInactive)}
-                          // onCheckedChange={value =>
-                          //   column.toggleVisibility(!true)
-                          // }
+                         
                         >
                           {column.columnDef.header}
                         </DropdownMenuCheckboxItem>
@@ -336,7 +312,15 @@ export function DataContacts<TData, TValue>({
                             'No disponible'
                           )
                         ) : cell.column.id === 'status' ? (
-                          <Badge variant={cell.getValue() === 'No avalado' ? 'destructive' : 'success'}>
+                          <Badge
+                            variant={
+                              cell.getValue() === 'Completo'
+                                ? 'success'
+                                : cell.getValue() === 'Completo con doc vencida'
+                                  ? 'yellow'
+                                  : 'destructive'
+                            }
+                          >
                             {cell.getValue() as React.ReactNode}
                           </Badge>
                         ) : cell.column.id === 'domain' ? (

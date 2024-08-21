@@ -10,10 +10,14 @@ export default function NewDocumentModal({
   setIsOpen,
   isOpen,
   multiresource,
+  empleados,
+  equipment,
 }: {
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   isOpen: boolean;
   multiresource: boolean | undefined;
+  empleados?: boolean;
+  equipment?: boolean;
 }) {
   const handleOpen = () => {
     setIsOpen(!isOpen);
@@ -23,10 +27,10 @@ export default function NewDocumentModal({
     <>
       <AlertDialog open={isOpen} onOpenChange={handleOpen}>
         <AlertDialogContent className="max-h-[90dvh] overflow-y-auto dark:bg-slate-950">
-          <Tabs defaultValue="Empleados" className="p-2">
-            <TabsList className="grid w-full grid-cols-2 ">
-              <TabsTrigger value="Empleados">Empleados</TabsTrigger>
-              <TabsTrigger value="Equipos">Equipos</TabsTrigger>
+          <Tabs defaultValue={empleados ? 'Empleados' : 'Equipos'} className="p-2">
+            <TabsList className="">
+              {empleados && <TabsTrigger value="Empleados">Empleados</TabsTrigger>}
+              {equipment && <TabsTrigger value="Equipos">Equipos</TabsTrigger>}
             </TabsList>
             <TabsContent value="Empleados" className="space-y-2 dark:bg-slate-950">
               {!multiresource && (

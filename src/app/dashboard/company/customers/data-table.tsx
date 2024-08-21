@@ -39,23 +39,23 @@ import { useEffect, useState } from 'react';
 interface DataCustomersProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any;
   data: TData[];
-  allCompany: any[];
-  showInactive: boolean;
+  // allCompany: any[];
+  // showInactive: boolean;
   localStorageName: string;
-  setShowInactive: (showInactive: boolean) => void;
+  // setShowInactive: (showInactive: boolean) => void;
 }
 
 export function DataCustomers<TData, TValue>({
   columns,
   data,
-  showInactive,
-  setShowInactive,
-  allCompany,
+  // showInactive,
+  // setShowInactive,
+  // allCompany,
   localStorageName,
 }: DataCustomersProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const defaultVisibleColumns = ['cuit', 'name', 'client_email', 'client_phone', 'address'];
-
+  const [showInactive, setShowInactive] = useState(false);
   const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
     if (typeof window !== 'undefined') {
       const valorGuardado = JSON.parse(localStorage.getItem(localStorageName) || '[]');
@@ -245,7 +245,7 @@ export function DataCustomers<TData, TValue>({
                 table.getRowModel().rows?.map((row) => (
                   <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                     {row.getVisibleCells()?.map((cell) => {
-                      let is_active = (cell.row.original as any).is_active;
+                      let is_active = (cell.row.original as any)?.is_active;
                       return (showInactive && !is_active) || (!showInactive && is_active) ? (
                         <TableCell
                           key={cell.id}
@@ -260,9 +260,17 @@ export function DataCustomers<TData, TValue>({
                               'No disponible'
                             )
                           ) : cell.column.id === 'status' ? (
-                            <Badge variant={cell.getValue() === 'No avalado' ? 'destructive' : 'success'}>
-                              {cell.getValue() as React.ReactNode}
-                            </Badge>
+                            <Badge
+                            variant={
+                              cell.getValue() === 'Completo'
+                                ? 'success'
+                                : cell.getValue() === 'Completo con doc vencida'
+                                  ? 'yellow'
+                                  : 'destructive'
+                            }
+                          >
+                            {cell.getValue() as React.ReactNode}
+                          </Badge>
                           ) : cell.column.id === 'domain' ? (
                             !cell.getValue() ? (
                               'No posee'

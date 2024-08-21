@@ -33,7 +33,7 @@ function DownloadButton({ path, fileName }: { path: string; fileName: string }) 
   };
 
   return (
-    <Button onClick={() => handleDownload(path, fileName)}>
+    <Button  onClick={() => handleDownload(path, fileName)}>
       <DownloadIcon className="size-5 mr-2" />
       Descargar
     </Button>

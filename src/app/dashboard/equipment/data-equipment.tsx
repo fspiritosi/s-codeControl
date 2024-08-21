@@ -41,19 +41,21 @@ import { useEffect, useState } from 'react';
 interface DataEquipmentProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any;
   data: TData[];
-  allCompany: any[];
-  showInactive: boolean;
-  setShowInactive: (showInactive: boolean) => void;
+  // allCompany: any[];
+  // showInactive: boolean;
+  // setShowInactive?: (showInactive: boolean) => void;
 }
 
-export function DataEquipment<TData, TValue>({
+export function EquipmentTable<TData, TValue>({
   columns,
   data,
-  showInactive,
-  setShowInactive,
-  allCompany,
+  // showInactive,
+  // setShowInactive,
+  // allCompany,
 }: DataEquipmentProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [showInactive, setShowInactive] = useState(false);
+ 
 
   const defaultVisibleColumns = [
     'domain',
@@ -113,7 +115,7 @@ export function DataEquipment<TData, TValue>({
 
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const loader = useLoggedUserStore((state) => state.isLoading);
-  const filteredData = showInactive ? data?.filter((item: any) => item.is_active === false) : data;
+  //const filteredData = showInactive ? data?.filter((item: any) => item.is_active === false) : data;
   const allOptions = {
     type_of_vehicle: createOptions('type_of_vehicle'),
     types_of_vehicles: createOptions('types_of_vehicles'),
@@ -273,27 +275,26 @@ export function DataEquipment<TData, TValue>({
             <DropdownMenuContent align="end" className="max-h-[50dvh] overflow-y-auto">
               {table
                 .getAllColumns()
-                ?.filter((column) => column.getCanHide())
+                ?.filter((column) => column.getCanHide()&& column.id !== 'intern_number'&& column.id !== 'domain')
                 ?.map((column: any) => {
                   if (column.id === 'actions') {
                     return null;
                   }
-                  if (typeof column.columnDef.header !== 'string') {
-                    const name = `${column.columnDef.accessorKey}`;
+                  // if (typeof column.columnDef.header !== 'string') {
+                  //   const name = `${column.columnDef.accessorKey}`;
+                    if (column.id === 'showUnavaliableEquipment') {
                     return (
                       <DropdownMenuCheckboxItem
                         key={column.id}
-                        className="capitalize"
-                        checked={column.getIsVisible()}
-                        onCheckedChange={(value) => {
-                          handleColumnVisibilityChange(column.id, !!value);
-                        }}
+                        className="capitalize text-red-400"
+                        checked={showInactive}
+                            onClick={() => setShowInactive(!showInactive)}
                       >
-                        {specialValues[name]}
+                        {column.columnDef.header}
                       </DropdownMenuCheckboxItem>
                     );
                   }
-                  if (column.id === 'is_active') {
+                  if (column.id === 'is_active' ) {
                     return (
                       <>
                         <DropdownMenuCheckboxItem
@@ -301,7 +302,7 @@ export function DataEquipment<TData, TValue>({
                           className="capitalize  text-red-400"
                           checked={showInactive}
                           onClick={() => setShowInactive(!showInactive)}
-                          onCheckedChange={(value) => handleColumnVisibilityChange(column.id, true)}
+                          // onCheckedChange={(value) => handleColumnVisibilityChange(column.id, true)}
                         >
                           {column.columnDef.header}
                         </DropdownMenuCheckboxItem>
@@ -412,6 +413,7 @@ export function DataEquipment<TData, TValue>({
                   {row.getVisibleCells()?.map((cell) => {
                     let is_active = (cell.row.original as any).is_active;
                     return (showInactive && !is_active) || (!showInactive && is_active) ? (
+
                       <TableCell
                         key={cell.id}
                         className={`text-center whitespace-nowrap ${is_active ? '' : 'text-red-500'}`}
@@ -432,9 +434,17 @@ export function DataEquipment<TData, TValue>({
                             'No disponible'
                           )
                         ) : cell.column.id === 'status' ? (
-                          <Badge variant={cell.getValue() === 'No avalado' ? 'destructive' : 'success'}>
-                            {cell.getValue() as React.ReactNode}
-                          </Badge>
+                          <Badge
+                          variant={
+                            cell.getValue() === 'Completo'
+                              ? 'success'
+                              : cell.getValue() === 'Completo con doc vencida'
+                                ? 'yellow'
+                                : 'destructive'
+                          }
+                        >
+                          {cell.getValue() as React.ReactNode}
+                        </Badge>
                         ) : cell.column.id === 'domain' ? (
                           !cell.getValue() ? (
                             'No posee'
@@ -445,6 +455,7 @@ export function DataEquipment<TData, TValue>({
                           flexRender(cell.column.columnDef.cell, cell.getContext())
                         )}
                       </TableCell>
+
                     ) : null;
                   })}
                 </TableRow>

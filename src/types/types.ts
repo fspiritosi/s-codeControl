@@ -1,4 +1,5 @@
 import React from 'react';
+import { UseFormReturn } from 'react-hook-form';
 
 export type LoggedUser = {
   session: null | string;
@@ -147,6 +148,9 @@ export type Employee = {
   reason_for_termination?: string | undefined;
   termination_date?: Date | undefined | string;
   status?: 'Avalado' | 'No avalado';
+  guild?: string | null;
+  covenant?: string | null;
+  category?: string | null;
 };
 
 export type Documents = {
@@ -238,7 +242,7 @@ type DocumentType = {
   created_at: string;
 };
 
-type Document = {
+type Document2 = {
   id: string;
   created_at: string;
   id_storage: string;
@@ -251,7 +255,7 @@ type Document = {
   document_url: string;
 };
 
-export const AllDocuments: Document[] = [
+export const AllDocuments: Document2[] = [
   {
     id: '1',
     created_at: '2022-01-01',
@@ -407,6 +411,25 @@ export type Type = {
   name: string;
   created_at: Date;
 };
+export enum types {
+  Texto = 'Texto',
+  AreaTexto = 'Área de texto',
+  Separador = 'Separador',
+  NombreFormulario = 'Nombre del formulario',
+  Radio = 'Radio',
+  SeleccionMultiple = 'Seleccion multiple',
+  Date = 'Fecha',
+  Seleccion = 'Seleccion',
+  SeleccionPredefinida = 'Seleccion Predefinida',
+  Subtitulo = 'Subtitulo',
+  SiNo = 'Si-No',
+  Titulo = 'Titulo',
+  Seccion = 'Seccion',
+  Archivo = 'Archivo',
+  Observaciones = 'Observaciones',
+  SectionDate = 'SectionDate',
+  SectionObservaciones = 'SectionObservaciones',
+}
 
 export type DocumentTypes = {
   id: string;
@@ -437,6 +460,50 @@ export type DocumentsTable = {
   document_types: DocumentTypes;
   domain: string;
 };
+export interface Campo {
+  tipo: types;
+  placeholder?: string;
+  opciones: string[];
+  value?: string;
+  id: string;
+  title: string;
+  observation?: boolean;
+  date?: boolean;
+  sectionCampos?: Campo[];
+  formName?: string;
+  required?: boolean;
+  apply?: string;
+}
+export interface FormField {
+  formName?: string;
+  title: string;
+  value?: string;
+  tipo: string;
+  opciones?: string[];
+  date?: boolean;
+  id: string;
+  placeholder?: string;
+  Observaciones?: boolean;
+  observation?: boolean;
+  required?: boolean;
+}
+
+export interface Document {
+  date: string;
+  allocated_to: string;
+  documentName: string;
+  multiresource: string;
+  validity: string;
+  id: string;
+  resource: string;
+  state: string;
+  document_path?: string;
+  is_active: boolean;
+  isItMonthly: boolean;
+  applies: string;
+  mandatory: string;
+  id_document_types?: string;
+}
 
 export type DocumentTypesTable = {
   id: string;
@@ -459,4 +526,120 @@ export type AllDocumentsValues = {
   id_storage: null;
   is_active: boolean;
   user_id: string;
+};
+
+export interface FieldComponentProps {
+  campo: FormField;
+  form: UseFormReturn<any> | null;
+  index: number;
+  completObjet: FormField[] | null;
+}
+
+export interface FieldComponentPropsDecorative {
+  campo: FormField;
+  index: number;
+}
+
+export interface SectionCampo {
+  id: string;
+  date: boolean;
+  tipo: string;
+  title: string;
+  opciones: string[];
+  required: boolean;
+  observation: boolean;
+  placeholder: string;
+  value?: string; // opcional ya que algunos campos no tienen 'value'
+}
+
+export interface FormField {
+  id: string;
+  tipo: string;
+  title: string;
+  value?: string; // opcional ya que algunos campos no tienen 'value'
+  opciones?: string[];
+  placeholder?: string;
+  required?: boolean; // opcional ya que algunos campos no tienen 'required'
+  observation?: boolean; // opcional ya que algunos campos no tienen 'observation'
+  date?: boolean; // opcional ya que algunos campos no tienen 'date'
+  sectionCampos?: SectionCampo[]; // opcional ya que algunos campos no tienen 'sectionCampos'
+}
+
+export interface FormData {
+  id: string;
+  created_at: string;
+  company_id: string;
+  form: FormField[];
+  name: string;
+}
+
+export type EmployeesTableOptions = {
+  nationality: string;
+  lastname: string;
+  firstname: string;
+  cuil: string;
+  document_type: string;
+  document_number: string;
+  birthplace: string;
+  gender: string;
+  marital_status: string;
+  level_of_education: string;
+  province: string;
+  file: string;
+  normal_hours: string;
+  date_of_admission: string;
+  affiliate_status: string;
+  company_position: string;
+  hierarchical_position: string;
+  workflow_diagram: string;
+  type_of_contract: string;
+  allocated_to: string;
+  status: string;
+  created_at: string;
+  is_active: string;
+};
+
+export type VehiclesTableOptions = {
+  created_at: string;
+  type_of_vehicle: string;
+  domain: string;
+  chassis: string;
+  engine: string;
+  serie: string;
+  intern_number: string;
+  year: string;
+  brand: string;
+  model: string;
+  is_active: string;
+  termination_date: string;
+  reason_for_termination: string;
+  type: string;
+  status: string;
+  allocated_to: string;
+};
+
+export type CompaniesTableOptions = {
+  company_name: string;
+  contact_email: string;
+  contact_phone: string;
+  address: string;
+  city: string;
+  country: string;
+  industry: string;
+  company_logo: string;
+  company_cuit: string;
+};
+
+export type DocumentsTableOptions = {
+  created_at: string,
+  name: string,
+  applies: string,
+  multiresource: string,
+  mandatory: string,
+  explired: string,
+  special: string,
+  description: string,
+  is_it_montlhy: string,
+  private: string,
+  down_document: string
 };

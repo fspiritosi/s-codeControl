@@ -10,8 +10,6 @@ import {
   MdHelpOutline,
   MdListAlt,
   MdOutlineCorporateFare,
-  MdOutlineKeyboardArrowDown,
-  MdOutlineKeyboardArrowUp,
   MdOutlinePersonAddAlt,
   MdOutlineSpaceDashboard,
 } from 'react-icons/md';
@@ -47,7 +45,6 @@ const Allinks = [
     name: 'Equipos',
     href: '/dashboard/equipment',
     icon: <FiTruck size={sizeIcons} />,
-
   },
   {
     name: 'Documentación',
@@ -55,7 +52,7 @@ const Allinks = [
     icon: <MdListAlt size={sizeIcons} />,
   },
   // {
-  //   name: 'Mantenimiento',
+  //   name: 'Formularios',
   //   href: '/dashboard/maintenance',
   //   icon: <ArchiveIcon className="size-5" />,
   // },
@@ -89,17 +86,25 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
   if (owner2 === profile2) {
     role = users?.actualCompany?.owner_id?.role as string;
   } else {
-
-    const roleRaw = share?.filter((item: any) => item.company_id.id === company && Object.values(item).some((value) => typeof value === 'string' && value.includes(profile2 as string))).map((item: any) => item.role);
+    const roleRaw = share
+      ?.filter(
+        (item: any) =>
+          item.company_id?.id === company &&
+          Object.values(item).some((value) => typeof value === 'string' && value.includes(profile2 as string))
+      )
+      .map((item: any) => item.role);
     role = roleRaw?.join('');
-
   }
 
   // const links =
   //   !administrador && owner_id !== actualCompany ? Allinks?.filter((link) => link.name !== 'Empresa') : Allinks;
-  const links = !administrador && owner_id !== actualCompany
-  ? Allinks.filter((link) => link.name !== 'Empresa' && (role !== 'Invitado' || (link.name !== 'Dashboard' && link.name !== 'Ayuda')))
-  : Allinks.filter((link) => role !== 'Invitado' || (link.name !== 'Dashboard' && link.name !== 'Ayuda'));
+  const links =
+    !administrador && owner_id !== actualCompany
+      ? Allinks.filter(
+          (link) =>
+            link.name !== 'Empresa' && (role !== 'Invitado' || (link.name !== 'Dashboard' && link.name !== 'Ayuda'))
+        )
+      : Allinks.filter((link) => role !== 'Invitado' || (link.name !== 'Dashboard' && link.name !== 'Ayuda'));
 
   if (isAuditor) {
     return null;
@@ -122,10 +127,11 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
         <div key={link.name}>
           <Link
             href={link.href}
-            className={`flex h-[48px] grow items-center justify-center gap-1 rounded-md p-3 text-black font-medium md:flex-none md:justify-start md:p-2 md:px-3 ${pathname === link.href
+            className={`flex h-[48px] grow items-center justify-center gap-1 rounded-md p-3 text-black font-medium md:flex-none md:justify-start md:p-2 md:px-3 ${
+              pathname === link.href
                 ? 'bg-white text-black'
                 : ' dark:text-neutral-100 text--neutral-950 hover:bg-blue-500 hover:shadow-[0px_0px_05px_05px_rgb(255,255,255,0.40)] hover:text-white'
-              }`}
+            }`}
             onClick={() => handleSubMenuClick(index)}
             title={!expanded ? link.name : undefined}
           >
@@ -134,13 +140,11 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
                 {link.icon}
 
                 <p className="hidden md:block">{link.name}</p>
-
               </>
             ) : (
               link.icon
             )}
           </Link>
-
         </div>
       ))}
     </>
