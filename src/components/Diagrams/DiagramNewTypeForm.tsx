@@ -55,10 +55,10 @@ export function DiagramNewTypeForm({ selectedDiagram }: { selectedDiagram?: any 
       },
       {
         loading: 'Cargando...',
-        success: selectedDiagram
+        success: diagramToEdit
           ? `Novedad ${values.name} editada con éxito`
           : `Novedad ${values.name} cargada con éxito`,
-        error: selectedDiagram ? 'No se pudo editar la novedad' : 'No se pudo crear la novedad',
+        error: diagramToEdit ? 'No se pudo editar la novedad' : 'No se pudo crear la novedad',
       }
     );
 
@@ -73,8 +73,8 @@ export function DiagramNewTypeForm({ selectedDiagram }: { selectedDiagram?: any 
       color: '',
       id: '',
     });
-    setDiagramToEdit(!diagramToEdit);
-    setButtonToShow(!buttonToShow);
+    setDiagramToEdit(false);
+    setButtonToShow(true);
   }
 
   useEffect(() => {
@@ -84,8 +84,8 @@ export function DiagramNewTypeForm({ selectedDiagram }: { selectedDiagram?: any 
       color: selectedDiagram ? selectedDiagram?.color : '',
       id: selectedDiagram ? selectedDiagram?.id : '',
     });
-    setDiagramToEdit(!diagramToEdit);
-    setButtonToShow(!buttonToShow);
+    setDiagramToEdit(true);
+    setButtonToShow(false);
   }, [selectedDiagram]);
 
   return (
