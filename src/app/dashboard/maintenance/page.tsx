@@ -12,7 +12,7 @@ function MantenimientoPage() {
           title: 'Crear nuevo formulario',
           description: 'Aquí podrás crear un nuevo formulario',
           buttonActioRestricted: [''],
-          component: <NewForm />,
+          // component: <NewForm />,
         },
       },
     
@@ -21,7 +21,7 @@ function MantenimientoPage() {
 
   return (
     <div className="h-full">
-      <Viewcomponent viewData={viewData} />
+      {/* <Viewcomponent viewData={viewData} /> */}
     </div>
   );
 }
