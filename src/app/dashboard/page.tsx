@@ -2,13 +2,11 @@ import { ResoursesChart } from '@/components/Graficos/ResousrsesChart';
 import { MissingDocumentList } from '@/components/MissingDocumentList';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getTotalResourses } from '@/lib/utils/geters';
 import CardsGrid from './componentDashboard/CardsGrid';
 import DocumentsTable from './componentDashboard/DocumentsTable';
 import EmployeesTable from './componentDashboard/EmployeesTable';
 
 export default async function Home() {
-  const employees = await getTotalResourses();
   return (
     <div className="">
       <section className="grid sm:grid-cols-2 grid-cols-1 gap-6 mx-7">
@@ -17,7 +15,7 @@ export default async function Home() {
       </section>
       <section className="md:mx-7 grid grid-cols-1 mt-6 xl:grid-cols-4 gap-3 mb-4">
         <section className="flex flex-col gap-4">
-          <ResoursesChart data={employees} />
+          <ResoursesChart />
           <MissingDocumentList />
         </section>
         <Card className="col-span-3 flex flex-col justify-between overflow-hidden">

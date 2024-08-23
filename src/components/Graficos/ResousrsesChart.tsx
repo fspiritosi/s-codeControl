@@ -1,9 +1,10 @@
 'use client';
-
 import { Label, Pie, PieChart } from 'recharts';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import cookie from 'js-cookie';
+import { useEffect, useState } from 'react';
 
 const chartData = [
   { browser: 'chrome', visitors: 275, fill: 'var(--color-chrome)' },
@@ -12,32 +13,6 @@ const chartData = [
   { browser: 'edge', visitors: 173, fill: 'var(--color-edge)' },
   { browser: 'other', visitors: 190, fill: 'var(--color-other)' },
 ];
-
-// const chartConfig = {
-//   visitors: {
-//     label: 'Visitors',
-//   },
-//   chrome: {
-//     label: 'Chrome',
-//     color: 'hsl(var(--chart-1))',
-//   },
-//   safari: {
-//     label: 'Safari',
-//     color: 'hsl(var(--chart-2))',
-//   },
-//   firefox: {
-//     label: 'Firefox',
-//     color: 'hsl(var(--chart-3))',
-//   },
-//   edge: {
-//     label: 'Edge',
-//     color: 'hsl(var(--chart-4))',
-//   },
-//   other: {
-//     label: 'Other',
-//     color: 'hsl(var(--chart-5))',
-//   },
-// } satisfies ChartConfig;
 
 const chartConfig = {
   visitors: {
@@ -53,23 +28,46 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function ResoursesChart(data: any) {
-  console.log(data.data);
+type ChartData = {
+  totalResourses: any;
+  employees: any;
+  vehicles: any;
+};
+
+export function ResoursesChart() {
+  const URL = process.env.NEXT_PUBLIC_BASE_URL;
+  const [data, setData] = useState<ChartData>();
+
+  const company_id = cookie.get('actualComp');
 
   const dataChart = [
     {
       browser: 'empleados',
-      visitors: data.data.employees,
+      visitors: data?.employees,
       fill: '#8DB9D7',
     },
     {
       browser: 'equipos',
-      visitors: data.data.vehicles,
+      visitors: data?.vehicles,
       fill: '#1F4A67',
     },
   ];
 
   const today = new Date().toLocaleDateString();
+
+  useEffect(() => {
+    async function getResources() {
+      const { employees } = await fetch(`${URL}/api/employees?actual=${company_id}`).then((e) => e.json());
+      const { data: equipments } = await fetch(`${URL}/api/equipment?actual=${company_id}`).then((e) => e.json());
+
+      setData({
+        totalResourses: employees.length + equipments.length,
+        employees: employees.length,
+        vehicles: equipments.length,
+      });
+    }
+    getResources();
+  }, [company_id]);
 
   return (
     <Card className="flex flex-col">
@@ -88,7 +86,7 @@ export function ResoursesChart(data: any) {
                     return (
                       <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
                         <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-3xl font-bold">
-                          {data.data.totalResourses}
+                          {data?.totalResourses}
                         </tspan>
                         <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 24} className="fill-muted-foreground">
                           Recursos Totales
@@ -102,12 +100,6 @@ export function ResoursesChart(data: any) {
           </PieChart>
         </ChartContainer>
       </CardContent>
-      {/* <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="leading-none text-muted-foreground">Showing total visitors for the last 6 months</div>
-      </CardFooter> */}
     </Card>
   );
 }

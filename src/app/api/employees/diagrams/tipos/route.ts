@@ -29,7 +29,7 @@ export async function GET(request: NextRequest){
 
 export async function POST(request: NextRequest){
     const supabase = supabaseServer();
-    const {name, color, short_description} = await request.json()
+    const {name, color, short_description, work_active} = await request.json()
     const searchParams = request.nextUrl.searchParams;
     const company_id = searchParams.get('actual');
 
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest){
         const { data, error } = await supabase
     .from('diagram_type')
     .insert([
-    { name, company_id, color, short_description  },
+    { name, company_id, color, short_description, work_active  },
     ])
     
     if(!error){ return Response.json(data)}
