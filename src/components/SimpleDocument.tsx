@@ -275,6 +275,7 @@ export default function SimpleDocument({
       .from('document_types')
       .select('*')
       .eq('applies', applies)
+      .eq('is_active', true)
       .or(`company_id.eq.${useLoggedUserStore?.getState?.()?.actualCompany?.id},company_id.is.null`);
 
     setDocumentTypes(document_types);
