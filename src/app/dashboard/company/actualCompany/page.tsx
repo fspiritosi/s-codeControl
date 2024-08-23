@@ -4,17 +4,16 @@ import DangerZoneComponent from '@/components/DangerZoneComponent';
 import DocumentTabComponent from '@/components/DocumentTabComponent';
 import EditCompanyButton from '@/components/EditCompanyButton';
 import { RegisterWithRole } from '@/components/RegisterWithRole';
+import ServiceComponent from '@/components/Services/ServiceComponent';
 import UsersTabComponent from '@/components/UsersTabComponent';
 import Viewcomponent from '@/components/ViewComponent';
 import { buttonVariants } from '@/components/ui/button';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
-import CreatedForm from '../../maintenance/components/CreatedForm';
+import TypesDocumentAction from '../../document/documentComponents/TypesDocumentAction';
 import Contacts from '../contact/Contact';
 import Customers from '../customers/Customers';
 import Cct from './covenant/CctComponent';
-import ServiceComponent from '@/components/Services/ServiceComponent'
-import TypesDocumentAction from '../../document/documentComponents/TypesDocumentAction';
 export default async function CompanyPage() {
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
@@ -49,7 +48,7 @@ export default async function CompanyPage() {
           buttonActioRestricted: [''],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
-            <TypesDocumentAction optionChildrenProp='Empresa' />
+              <TypesDocumentAction optionChildrenProp="Empresa" />
             </div>
           ),
           component: <DocumentTabComponent />,
@@ -130,18 +129,16 @@ export default async function CompanyPage() {
       //   },
       // },
       {
-        value:"service",
-        name:"Servicios",
-        restricted:[""],
-        content:{
-          title:"Servicios de la empresa",
-          description:"Crear y ver servicios de la empresa",
+        value: 'service',
+        name: 'Servicios',
+        restricted: [''],
+        content: {
+          title: 'Servicios de la empresa',
+          description: 'Crear y ver servicios de la empresa',
           buttonActioRestricted: [''],
-          buttonAction:(
-          ''
-        ),
-          component:<ServiceComponent/>
-        }
+          buttonAction: '',
+          component: <ServiceComponent />,
+        },
       },
       // {
       //   value:"modules",
