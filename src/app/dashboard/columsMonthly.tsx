@@ -129,6 +129,7 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
       const supabase = supabaseBrowser()
 
       const handleDownload = async (path: string, fileName: string, resourceName: string) => {
+
         toast.promise(
           async () => {
             const { data, error } = await supabase.storage.from('document_files').download(path);
@@ -472,6 +473,7 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleOpenViewModal(domain)}>Historial de Modificaciones</DropdownMenuItem>
             <DropdownMenuItem
+            disabled={row.original.state === 'pendiente'}
               onClick={() =>
                 handleDownload(row.original.document_url, row.original.documentName, row.original.resource)
               }

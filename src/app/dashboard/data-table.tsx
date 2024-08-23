@@ -256,6 +256,7 @@ export function ExpiredDataTable<TData, TValue>({
   };
   const supabase = supabaseBrowser();
   const handleDownloadAll = async () => {
+    
     toast.promise(
       async () => {
         const zip = new JSZip();
