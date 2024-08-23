@@ -1,11 +1,11 @@
 import DocumentNav from '@/components/DocumentNav';
+import RepairTypes from '@/components/Tipos_de_reparaciones/RepairTypes';
 import Viewcomponent from '@/components/ViewComponent';
 import { buttonVariants } from '@/components/ui/button';
 import Link from 'next/link';
 import EquipmentTabs from '../document/documentComponents/EquipmentTabs';
 import TypesDocumentAction from '../document/documentComponents/TypesDocumentAction';
 import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
-import CreatedForm from '../maintenance/components/CreatedForm';
 import EquipmentListTabs from './equipmentComponentes/EquipmentListTabs';
 export default async function Equipment() {
   const viewData = {
@@ -58,6 +58,17 @@ export default async function Equipment() {
           description: 'Tipos de documentos auditables',
           buttonAction: <TypesDocumentAction optionChildrenProp="Equipos" />,
           component: <TypesDocumentsView equipos />,
+        },
+      },
+      {
+        value: 'type_of_repairs',
+        name: 'Tipos de reparaciones',
+        restricted: [],
+        content: {
+          title: 'Tipos de reparaciones',
+          description: 'Crea y edita los tipos de reparaciones de tus equipos',
+          buttonActioRestricted: [''],
+          component: <RepairTypes />,
         },
       },
       // {
