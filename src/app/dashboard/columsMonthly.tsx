@@ -1,5 +1,5 @@
 'use client';
-
+import { saveAs } from 'file-saver';
 import SimpleDocument from '@/components/SimpleDocument';
 import {
   AlertDialog,
@@ -125,6 +125,35 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
 
       const equipment = row.original;
       const document = row.original;
+
+      const supabase = supabaseBrowser()
+
+      const handleDownload = async (path: string, fileName: string, resourceName: string) => {
+        toast.promise(
+          async () => {
+            const { data, error } = await supabase.storage.from('document_files').download(path);
+
+            if (error) {
+              throw new Error(handleSupabaseError(error.message));
+            }
+
+            // Extrae la extensión del archivo del path
+            const extension = path.split('.').pop();
+
+            const blob = new Blob([data], { type: 'application/octet-stream' });
+            // Usa la extensión del archivo al guardar el archivo
+            saveAs(blob, `${resourceName} ${fileName}.${extension}`);
+          },
+          {
+            loading: 'Descargando documento...',
+            success: 'Documento descargado',
+            error: (error) => {
+              return error;
+            },
+          }
+        );
+      };
+
 
       const handleOpenModal = (id: string) => {
         setDomain(id);
@@ -442,6 +471,13 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
               {row.original.allocated_to === 'Vehículos' ? 'Copiar Patente' : 'Copiar Documento'}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleOpenViewModal(domain)}>Historial de Modificaciones</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() =>
+                handleDownload(row.original.document_url, row.original.documentName, row.original.resource)
+              }
+            >
+              Descargar documento
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

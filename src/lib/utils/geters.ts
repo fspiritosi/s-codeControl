@@ -18,7 +18,7 @@ export async function getTotalResourses(){
 
   async function getResources(){
       const { employees } = await fetch(`${URL}/api/employees?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
-      const {data: equipments} = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
+      const {equipments} = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
 
        return {
     totalResourses: employees.length + equipments.length,

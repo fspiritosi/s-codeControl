@@ -15,7 +15,7 @@ async function EquipmentTabs() {
   const company_id = cookiesStore.get('actualComp')?.value;
 
 
-  const { data: equipments } = await fetch(`${URL}/api/equipment/documents?actual=${company_id}`).then((e) => e.json());
+  const { equipments } = await fetch(`${URL}/api/equipment/documents?actual=${company_id}`).then((e) => e.json());
 
   
 

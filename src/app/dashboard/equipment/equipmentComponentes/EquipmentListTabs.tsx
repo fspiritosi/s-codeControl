@@ -18,18 +18,18 @@ async function EquipmentListTabs({ inactives, actives }: { inactives?: boolean; 
 
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
-  const { data: equipment } = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) =>
+  const { equipments } = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) =>
     e.json()
   );
   // const { data } = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
- console.log(equipment);
+ console.log(equipments);
   const onlyVehicles = setVehiclesToShow(
-    equipment?.filter((v: { type_of_vehicle: number }) => v.type_of_vehicle === 1)
+    equipments?.filter((v: { type_of_vehicle: number }) => v.type_of_vehicle === 1)
   );
   const onlyNoVehicles = setVehiclesToShow(
-    equipment?.filter((v: { type_of_vehicle: number }) => v.type_of_vehicle === 2)
+    equipments?.filter((v: { type_of_vehicle: number }) => v.type_of_vehicle === 2)
   );
-  const data = setVehiclesToShow(equipment);
+  const data = setVehiclesToShow(equipments);
 
   return (
     <Tabs defaultValue="all">
