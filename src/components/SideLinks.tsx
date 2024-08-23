@@ -12,6 +12,7 @@ import {
   MdOutlineCorporateFare,
   MdOutlinePersonAddAlt,
   MdOutlineSpaceDashboard,
+  MdCalendarMonth,
 } from 'react-icons/md';
 export async function getServerSideProps(context: any) {
   const { params } = context;
@@ -50,6 +51,11 @@ const Allinks = [
     name: 'Documentación',
     href: '/dashboard/document',
     icon: <MdListAlt size={sizeIcons} />,
+  },
+  {
+    name: 'Operaciones',
+    href: '/dashboard/operations',
+    icon: <MdCalendarMonth size={sizeIcons} />,
   },
   // {
   //   name: 'Formularios',
