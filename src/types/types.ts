@@ -631,15 +631,26 @@ export type CompaniesTableOptions = {
 };
 
 export type DocumentsTableOptions = {
-  created_at: string,
-  name: string,
-  applies: string,
-  multiresource: string,
-  mandatory: string,
-  explired: string,
-  special: string,
-  description: string,
-  is_it_montlhy: string,
-  private: string,
-  down_document: string
+  created_at: string;
+  name: string;
+  applies: string;
+  multiresource: string;
+  mandatory: string;
+  explired: string;
+  special: string;
+  description: string;
+  is_it_montlhy: string;
+  private: string;
+  down_document: string;
 };
+
+export type TypeOfRepair = {
+  id: string;
+  created_at: string;
+  name: string;
+  description: string;
+  criticity: 'Alta' | 'Media' | 'Baja';
+  is_active: boolean;
+  company_id: string;
+  type_of_maintenance: 'Preventivo'| 'Correctivo';
+}[]
