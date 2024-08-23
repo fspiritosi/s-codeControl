@@ -60,17 +60,17 @@ export default async function Equipment() {
           component: <TypesDocumentsView equipos />,
         },
       },
-      {
-        value: 'type_of_repairs',
-        name: 'Tipos de reparaciones',
-        restricted: [],
-        content: {
-          title: 'Tipos de reparaciones',
-          description: 'Crea y edita los tipos de reparaciones de tus equipos',
-          buttonActioRestricted: [''],
-          component: <RepairTypes />,
-        },
-      },
+      // {
+      //   value: 'type_of_repairs',
+      //   name: 'Tipos de reparaciones',
+      //   restricted: [],
+      //   content: {
+      //     title: 'Tipos de reparaciones',
+      //     description: 'Crea y edita los tipos de reparaciones de tus equipos',
+      //     buttonActioRestricted: [''],
+      //     component: <RepairTypes />,
+      //   },
+      // },
       // {
       //   value: 'forms',
       //   name: 'Formularios',
