@@ -9,8 +9,6 @@ export async function GET(request: NextRequest) {
   try {
     let { data: services, error } = await supabase.from('customer_services').select('*').eq('company_id', company_id);
 
-    console.log(services);
-    console.log(error);
 
     if (error) {
       throw new Error(JSON.stringify(error));

@@ -28,7 +28,6 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function CompanieChart(data: any) {
-  console.log(data.data);
 
   const dataChart = [
     {

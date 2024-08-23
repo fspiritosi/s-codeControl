@@ -86,8 +86,6 @@ export function RepairTypeForm({ types_of_repairs }: { types_of_repairs: TypeOfR
     setFilteredRepairs(data);
   }, [filterText, filterCriticidad, types_of_repairs]);
 
-  console.log(form.formState.errors);
-
   const handleModify = (id: string) => {};
 
   const handleFilterCriticidadChange = (value: string) => {

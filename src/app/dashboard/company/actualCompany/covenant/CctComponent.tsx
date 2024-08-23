@@ -24,7 +24,6 @@ export default async function Cct() {
 
   let { data: covenants } = await supabase.from('covenant').select('*, guild_id(name)').eq('company_id', company_id);
   const covenantsId = covenants?.map((e) => e.id);
-  console.log(covenantsId);
 
   const convenantsData = {
     ...covenants,

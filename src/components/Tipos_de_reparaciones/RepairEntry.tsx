@@ -54,7 +54,6 @@ export default function RepairNewEntry({
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
     //Agregar la reparacion al otro formulario
-    console.log(data);
     setAllRepairs((prev) => [...prev, data]);
 
     clearForm();
@@ -169,7 +168,6 @@ export default function RepairNewEntry({
                   control={form.control}
                   name="repair"
                   render={({ field }) => {
-                    console.log('este si', field.value);
                     return (
                       <FormItem>
                         <FormLabel>Selecciona un tipo de reparacion</FormLabel>

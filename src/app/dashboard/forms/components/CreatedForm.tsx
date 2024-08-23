@@ -126,11 +126,7 @@ function CreatedForm() {
     replace(`${pathname}?${params.toString()}`);
   };
 
-  console.log(forms);
-
   const createdFormCurrent = createdFormsState?.find((e) => e.id === formId);
-
-  console.log(createdFormCurrent);
 
   const chartConfig = generateChartConfig(forms, 'company');
   const chartData = generateChartData(chartConfig || {}, forms || []);

@@ -12,8 +12,6 @@ export async function GET(request: NextRequest) {
       .select('*')
       .eq('company_id', company_id);
 
-    console.log(types_of_repairs);
-    console.log(error);
 
     if (error) {
       throw new Error(JSON.stringify(error));

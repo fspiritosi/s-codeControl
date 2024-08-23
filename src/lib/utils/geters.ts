@@ -14,7 +14,6 @@ export async function getTotalResourses(){
 
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
-  console.log(company_id);
 
   async function getResources(){
       const { employees } = await fetch(`${URL}/api/employees?actual=${company_id}&user=${user?.id}`).then((e) => e.json());

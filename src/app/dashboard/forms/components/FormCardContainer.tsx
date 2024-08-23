@@ -82,7 +82,6 @@ function FormCardContainer({
   showAnswers?: boolean;
 }) {
   const [formData, setFormData] = useState<FormData[]>(form);
-  console.log(formData);
   const searchParams = useSearchParams();
   const params = new URLSearchParams(searchParams);
   const formId = params.get('form_id');
