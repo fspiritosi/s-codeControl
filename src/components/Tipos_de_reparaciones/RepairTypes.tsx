@@ -15,10 +15,10 @@ async function RepairTypes() {
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
   const { types_of_repairs } = await fetch(`${URL}/api/repairs?actual=${company_id}`).then((res) => res.json());
-  const { vehicles: equipment } = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) =>
+  const { equipments } = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) =>
     e.json()
   );
-  const vehiclesFormatted = setVehiclesToShow(equipment);
+  const vehiclesFormatted = setVehiclesToShow(equipments);
   return (
     <Tabs defaultValue="type_of_repair">
       <TabsList>
@@ -39,6 +39,7 @@ async function RepairTypes() {
             (e) => e.type_of_maintenance === 'Preventivo'
           )}
           equipment={vehiclesFormatted}
+          limittedEquipment
         />
       </TabsContent>
       <TabsContent value="type_of_repair_new_entry3">
