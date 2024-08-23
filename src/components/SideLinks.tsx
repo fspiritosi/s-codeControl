@@ -51,9 +51,14 @@ const Allinks = [
     href: '/dashboard/document',
     icon: <MdListAlt size={sizeIcons} />,
   },
+  {
+    name: 'Mantenimiento',
+    href: '/dashboard/document',
+    icon: <MdListAlt size={sizeIcons} />,
+  },
   // {
   //   name: 'Formularios',
-  //   href: '/dashboard/maintenance',
+  //   href: '/dashboard/forms',
   //   icon: <ArchiveIcon className="size-5" />,
   // },
   {

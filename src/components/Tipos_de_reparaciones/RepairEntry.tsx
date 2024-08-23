@@ -21,14 +21,17 @@ type FormValues = {
   description: string;
   repair: string;
   provicionalId: string;
+  domain: string;
 }[];
 
 export default function RepairNewEntry({
   tipo_de_mantenimiento,
   equipment,
+  limittedEquipment,
 }: {
   tipo_de_mantenimiento: TypeOfRepair;
   equipment: ReturnType<typeof setVehiclesToShow>;
+  limittedEquipment?: boolean;
 }) {
   const FormSchema = z.object({
     provicionalId: z.string().default(crypto.randomUUID()),
@@ -45,6 +48,7 @@ export default function RepairNewEntry({
         required_error: 'Por favor selecciona una reparacion',
       })
       .min(1, { message: 'Debe seleccionar un tipo de reparacion' }),
+    domain: z.string(),
   });
   const [allRepairs, setAllRepairs] = useState<FormValues>([]);
 
@@ -116,7 +120,7 @@ export default function RepairNewEntry({
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
-                              disabled={allRepairs.length > 0}
+                              disabled={limittedEquipment ? false : allRepairs.length > 0}
                               variant="outline"
                               role="combobox"
                               className={cn('justify-between', !field.value && 'text-muted-foreground')}
@@ -134,12 +138,13 @@ export default function RepairNewEntry({
                             <CommandList>
                               <CommandEmpty>No se encontro el equipo</CommandEmpty>
                               <CommandGroup>
-                                {equipment.map((equip) => (
+                                {equipment?.map((equip) => (
                                   <CommandItem
                                     value={equip.domain}
                                     key={equip.intern_number}
                                     onSelect={() => {
                                       form.setValue('vehicle_id', equip.id);
+                                      form.setValue('domain', equip.domain);
                                     }}
                                   >
                                     <Check
@@ -227,6 +232,7 @@ export default function RepairNewEntry({
               <TableRow>
                 <TableHead className="w-[300px]">Nombre</TableHead>
                 <TableHead className="w-[300px]">Descripcion</TableHead>
+                <TableHead className="w-[300px]">Dominio</TableHead>
                 <TableHead className="flex justify-end pr-14">Eliminar</TableHead>
               </TableRow>
             </TableHeader>
@@ -236,6 +242,7 @@ export default function RepairNewEntry({
                   <TableRow key={field.provicionalId}>
                     <TableCell>{field.repair}</TableCell>
                     <TableCell>{field.description}</TableCell>
+                    <TableCell>{field.domain}</TableCell>
                     <TableCell align="right" className="pr-10">
                       <Button variant={'destructive'} onClick={() => handleDeleteRepair(field.provicionalId)}>
                         Eliminar

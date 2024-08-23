@@ -3,7 +3,6 @@ import Viewcomponent from '@/components/ViewComponent';
 import { supabaseServer } from '@/lib/supabase/server';
 import { CompanyDocumentsType } from '@/store/loggedUser';
 import { cookies } from 'next/headers';
-import CreatedForm from '../maintenance/components/CreatedForm';
 import CompanyTabs from './documentComponents/CompanyTabs';
 import EmployeeDocumentsTabs from './documentComponents/EmployeeDocumentsTabs';
 import EquipmentTabs from './documentComponents/EquipmentTabs';
