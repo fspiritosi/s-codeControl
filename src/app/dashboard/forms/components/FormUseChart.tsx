@@ -22,8 +22,6 @@ export function FormUseChart({
     return monthNames[month - 1];
   };
 
-  console.log(chartData);
-
   const porcentajeCambio = chartData[5].respuestas - chartData[4].respuestas;
   let porcentajeTexto;
 

@@ -211,7 +211,6 @@ export function ExpiredDataTable<TData, TValue>({
   } else {
     allOptions.resource = createOptions('resource');
   }
-  console.log(data);
   const maxRows = ['20', '40', '60', '80', '100'];
   const handleClearFilters = () => {
     table.getAllColumns().forEach((column) => {
@@ -265,9 +264,10 @@ export function ExpiredDataTable<TData, TValue>({
           .rows.map((row) => row.original)
           .filter((row: any) => row.state !== 'pendiente') as any;
 
+
         const files = await Promise.all(
           documentToDownload?.map(async (doc: any) => {
-            const { data, error } = await supabase.storage.from('document_files').download(doc.document_path);
+            const { data, error } = await supabase.storage.from('document_files').download(doc.document_url);
 
             if (error) {
               console.log('Salio este error', error);
@@ -275,7 +275,7 @@ export function ExpiredDataTable<TData, TValue>({
             }
 
             // Extrae la extensión del archivo del document_path
-            const extension = doc.document_path.split('.').pop();
+            const extension = doc.document_url.split('.').pop();
 
             return {
               data,
@@ -301,7 +301,6 @@ export function ExpiredDataTable<TData, TValue>({
     );
   };
 
-  console.log('andamo ruleta en una camioneta');
   return (
     <div className="mb-10  px-4 rounded-lg max-w-[100vw] overflow-x-auto">
       <div className="flex justify-between items-end">

@@ -18,7 +18,6 @@ function FormCard({
 }) {
 
   // Encuentra el índice del formulario actual en el chartData
-  console.log(form);
 
   return (
     <Card className="max-w-xs" x-chunk="charts-01-chunk-3">

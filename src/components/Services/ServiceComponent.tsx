@@ -39,7 +39,6 @@ export default async function ServiceComponent() {
   // )
   // .subscribe()
 
-  console.log(items);
 
   return (
     <Tabs defaultValue="services">

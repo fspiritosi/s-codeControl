@@ -388,7 +388,6 @@ export const DateField: React.FC<FieldComponentProps> = ({ campo, form, index })
   if (campo.formName === 'Fecha') return null;
   const [date, setDate] = useState<Date>();
 
-  console.log(campo);
 
   return (
     <div className="col-span-3 md:col-span-1" key={index}>
@@ -397,7 +396,6 @@ export const DateField: React.FC<FieldComponentProps> = ({ campo, form, index })
         control={form.control}
         name={campo.formName!}
         render={({ field }) => {
-          console.log(field.value);
           return (
             <FormItem className="space-y-3">
               <FormLabel>{campo.title.replaceAll('_', ' ')}</FormLabel>

@@ -302,7 +302,6 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
           </div>
         );
       case 'Subtitulo':
-        console.log(campo);
         return (
           <div className="col-span-3" key={index}>
             <CardTitle className="mb-2 mt-1">{campo.title ? campo.title : 'Titulo del campo'}</CardTitle>

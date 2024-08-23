@@ -72,8 +72,6 @@ const ServiceTable = ({ services, customers, company_id }: ServiceTableProps) =>
 
     filtered = filtered.filter((service) => service.is_active === isActiveFilter);
 
-    console.log(services);
-
     setFilteredServices(filtered);
   };
 
@@ -91,7 +89,6 @@ const ServiceTable = ({ services, customers, company_id }: ServiceTableProps) =>
     } catch (error) {
       console.error(error);
     }
-    console.log(services);
   };
   useEffect(() => {
     fetchServices();

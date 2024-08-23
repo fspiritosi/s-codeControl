@@ -5,7 +5,6 @@ export async function GET(request: NextRequest) {
   const supabase = supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
-  console.log(company_id);
   try {
     let { data: equipments, error } = await supabase
       .from('vehicles')

@@ -22,7 +22,6 @@ export function ModalCct({
   searchText?: string;
   guildId?: string;
 }) {
-  console.log(covenant_id);
   return (
     <>
       {modal === 'addGuild' && fetchGuild && (
