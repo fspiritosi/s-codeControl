@@ -283,12 +283,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
       const supabase = supabaseBrowser();
       const handleDownload = async (path: string, fileName: string, resourceName: string) => {
 
-        console.log('path',path);
-        console.log('fileName',fileName);
-        console.log('resourceName',resourceName);
-
-        return
-
+ 
         toast.promise(
           async () => {
             const { data, error } = await supabase.storage.from('document_files').download(path);
@@ -520,7 +515,9 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleOpenViewModal(domain)}>Historial de Modificaciones</DropdownMenuItem>
             <DropdownMenuItem
+             disabled={row.original.state === 'pendiente'}
               onClick={() =>
+                
                 // console.log('Andamo ruleta en una camioneta',row)
                 handleDownload(row.original.document_url, row.original.documentName, row.original.resource)
               }
