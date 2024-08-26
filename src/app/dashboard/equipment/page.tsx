@@ -60,17 +60,17 @@ export default async function Equipment() {
           component: <TypesDocumentsView equipos />,
         },
       },
-      // {
-      //   value: 'type_of_repairs',
-      //   name: 'Tipos de reparaciones',
-      //   restricted: [],
-      //   content: {
-      //     title: 'Tipos de reparaciones',
-      //     description: 'Crea y edita los tipos de reparaciones de tus equipos',
-      //     buttonActioRestricted: [''],
-      //     component: <RepairTypes />,
-      //   },
-      // },
+      {
+        value: 'type_of_repairs',
+        name: 'Mantenimiento',
+        restricted: [],
+        content: {
+          title: 'Mantenimiento de unidades',
+          description: 'Genera solicitudes de mantenimiento para tus equipos',
+          buttonActioRestricted: [''],
+          component: <RepairTypes type_of_repair_new_entry created_solicitudes defaultValue="type_of_repair_new_entry" />,
+        },
+      },
       // {
       //   value: 'forms',
       //   name: 'Formularios',

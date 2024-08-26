@@ -4,9 +4,24 @@ import { TypeOfRepair } from '@/types/types';
 import { cookies } from 'next/headers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import RepairNewEntry from './RepairEntry';
+import RepairSolicitudes from './RepairSolicitudesTable/RepairSolicitudes';
 import { RepairTypeForm } from './RepairTypeForm';
 
-async function RepairTypes() {
+async function RepairTypes({
+  type_of_repair_new_entry,
+  type_of_repair_new_entry2,
+  type_of_repair_new_entry3,
+  created_solicitudes,
+  type_of_repair,
+  defaultValue,
+}: {
+  type_of_repair_new_entry?: boolean;
+  type_of_repair_new_entry2?: boolean;
+  type_of_repair_new_entry3?: boolean;
+  created_solicitudes?: boolean;
+  type_of_repair?: boolean;
+  defaultValue?: string;
+}) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const supabase = supabaseServer();
   const {
@@ -20,12 +35,19 @@ async function RepairTypes() {
   );
   const vehiclesFormatted = setVehiclesToShow(equipments);
   return (
-    <Tabs defaultValue="type_of_repair">
+    <Tabs defaultValue={defaultValue || 'type_of_repair'}>
       <TabsList>
-        <TabsTrigger value="type_of_repair">Tipos de reparaciones creados</TabsTrigger>
-        <TabsTrigger value="type_of_repair_new_entry">Solicitud de mantenimiento</TabsTrigger>
-        <TabsTrigger value="type_of_repair_new_entry2">Solicitud de mantenimiento preventivo</TabsTrigger>
-        <TabsTrigger value="type_of_repair_new_entry3">Solicitud de mantenimiento correctivo</TabsTrigger>
+        {type_of_repair && <TabsTrigger value="type_of_repair">Tipos de reparaciones creados</TabsTrigger>}
+        {type_of_repair_new_entry && (
+          <TabsTrigger value="type_of_repair_new_entry">Solicitud de mantenimiento</TabsTrigger>
+        )}
+        {type_of_repair_new_entry2 && (
+          <TabsTrigger value="type_of_repair_new_entry2">Solicitud de mantenimiento preventivo</TabsTrigger>
+        )}
+        {type_of_repair_new_entry3 && (
+          <TabsTrigger value="type_of_repair_new_entry3">Solicitud de mantenimiento correctivo</TabsTrigger>
+        )}
+        {created_solicitudes && <TabsTrigger value="created_solicitudes">Solicitudes de mantenimiento</TabsTrigger>}
       </TabsList>
       <TabsContent value="type_of_repair">
         <RepairTypeForm types_of_repairs={types_of_repairs} />
@@ -49,6 +71,9 @@ async function RepairTypes() {
           )}
           equipment={vehiclesFormatted}
         />
+      </TabsContent>
+      <TabsContent value="created_solicitudes">
+        <RepairSolicitudes />
       </TabsContent>
     </Tabs>
   );
