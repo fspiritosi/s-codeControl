@@ -101,7 +101,20 @@ interface DailyReportItem {
 }
 interface DailyReportFormProps {
     selectedDate: Date | null;
+    row: {
+        id: number;
+        fecha: string;
+        cliente: string;
+        servicio: string;
+        item: string;
+        empleados: string;
+        equipos: string;
+        horaInicio: string;
+        horaFin: string;
+    };
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
 }
+
 export default function DailyReportForm({ selectedDate }: DailyReportFormProps) {
     const [date, setDate] = useState<Date>()
     const [employees, setEmployees] = useState<Employee[]>([]);

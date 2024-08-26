@@ -7,16 +7,52 @@ interface FormTableProps {
     selectedDate: Date | null;
 
 }
+interface RowData {
+    id: number;
+    fecha: string;
+    cliente: string;
+    servicio: string;
+    item: string;
+    empleados: string;
+    equipos: string;
+    horaInicio: string;
+    horaFin: string;
+}
 const FormTable: React.FC<FormTableProps> = ({ selectedDate }) => {
-    const [rows, setRows] = useState<number[]>([1]);
+    const [rows, setRows] = useState<RowData[]>([]);
+    const [savedData, setSavedData] = useState<RowData[]>([]); // Estado para almacenar los datos guardados
 
     const addRow = () => {
-        setRows([...rows, rows.length + 1]);
+        const newRow: RowData = {
+            id: rows.length + 1,
+            fecha: '',
+            cliente: '',
+            servicio: '',
+            item: '',
+            empleados: '',
+            equipos: '',
+            horaInicio: '',
+            horaFin: ''
+        };
+        setRows([...rows, newRow]);
     };
 
     const deleteRow = (id: number) => {
-        setRows(rows.filter(row => row !== id));
+        setRows(rows.filter(row => row.id !== id));
     };
+
+    const updateRow = (id: number, updatedRow: RowData) => {
+        setRows(rows.map(row => (row.id === id ? updatedRow : row)));
+    };
+
+    const handleSave = () => {
+        setSavedData(rows); // 
+        console.log('Datos guardados:', rows);
+      //aqui va ña lógica para guardar los datos
+    };
+
+
+    console.log(savedData);
 
     return (
         <div className=' align-middle'>
@@ -39,13 +75,16 @@ const FormTable: React.FC<FormTableProps> = ({ selectedDate }) => {
                         </TableRow>
                         </TableHead>
                     <TableBody className='w-full border-collapse border'>
-                        {rows.map(id => (
-                                <FormRow key={id} id={id} onDelete={deleteRow} selectedDate={selectedDate} />
+                        {rows.map(row => (
+                                <FormRow key={row.id} row={row} onDelete={deleteRow} onUpdate={updateRow} selectedDate={selectedDate} />
                         ))}
                     </TableBody>
                 </Table>
                 <div className="w-full mt-4 flex justify-center">
                     <Button variant="default" onClick={addRow}>+</Button>
+                </div>
+                <div className="w-full mt-4 flex justify-center">
+                    <Button variant="default" onClick={handleSave}>Guardar</Button>
                 </div>
 
             </div>
