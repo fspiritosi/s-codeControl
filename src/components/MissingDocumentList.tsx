@@ -54,8 +54,6 @@ export const MissingDocumentList = () => {
     }
   );
 
-  console.log(allValuesToShow.employees[0]);
-
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-start bg-muted dark:bg-muted/50 border-b-2">

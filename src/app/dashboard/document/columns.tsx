@@ -32,11 +32,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { saveAs } from 'file-saver';
+
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
+import { handleSupabaseError } from '@/lib/errorHandler';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
@@ -91,6 +94,32 @@ export const columns: ColumnDef<Colum>[] = [
       const [showDeletedEquipment, setShowDeletedEquipment] = useState(false);
       const equipment = row.original;
       const document = row.original;
+      const handleDownload = async (path: string, fileName: string, resourceName: string) => {
+ 
+        toast.promise(
+          async () => {
+            const { data, error } = await supabase.storage.from('document_files').download(path);
+
+            if (error) {
+              throw new Error(handleSupabaseError(error.message));
+            }
+
+            // Extrae la extensión del archivo del path
+            const extension = path.split('.').pop();
+
+            const blob = new Blob([data], { type: 'application/octet-stream' });
+            // Usa la extensión del archivo al guardar el archivo
+            saveAs(blob, `${resourceName} ${fileName}.${extension}`);
+          },
+          {
+            loading: 'Descargando documento...',
+            success: 'Documento descargado',
+            error: (error) => {
+              return error;
+            },
+          }
+        );
+      };
 
       const handleOpenModal = (id: string) => {
         setDomain(id);
@@ -345,13 +374,14 @@ export const columns: ColumnDef<Colum>[] = [
             <DropdownMenuItem onClick={() => handleOpenViewModal(domain)}>
               Ver historial de modificaciones
             </DropdownMenuItem>
-            {/* <DropdownMenuItem>
-              <Link
-                href={`/dashboard/equipment/action?action=edit&id=${equipment?.id}`}
-              >
-                Editar equipo
-              </Link>
-            </DropdownMenuItem> */}
+            <DropdownMenuItem
+             disabled={row.original.state === 'pendiente'}
+              onClick={() =>
+                handleDownload(row.original.document_url, row.original.documentName, row.original.resource)
+              }
+            >
+              Descargar documento
+            </DropdownMenuItem>
             <DropdownMenuItem>
               {document.is_active ? (
                 <Button variant="destructive" onClick={() => handleOpenModal(equipment?.id)} className="text-sm">

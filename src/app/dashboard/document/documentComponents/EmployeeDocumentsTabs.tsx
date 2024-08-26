@@ -19,7 +19,6 @@ async function EmployeeDocumentsTabs() {
   const { documents } = await fetch(`${URL}/api/employees/documents?actual=${company_id}`).then((e) => e.json());
   const data = documents?.map(mapDocument) as Document[];
 
-
   return (
     <Tabs defaultValue="permanentes">
       <CardContent>

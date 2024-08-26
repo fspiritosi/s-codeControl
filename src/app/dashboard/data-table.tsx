@@ -1,5 +1,17 @@
 'use client';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -12,8 +24,10 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import { saveAs } from 'file-saver';
 
 import { Button } from '@/components/ui/button';
+import { Card, CardDescription } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -33,10 +47,14 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { handleSupabaseError } from '@/lib/errorHandler';
+import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
-import { ArrowUpDown } from 'lucide-react';
+import JSZip from 'jszip';
+import { ArrowUpDown, DownloadIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -193,7 +211,6 @@ export function ExpiredDataTable<TData, TValue>({
   } else {
     allOptions.resource = createOptions('resource');
   }
-
   const maxRows = ['20', '40', '60', '80', '100'];
   const handleClearFilters = () => {
     table.getAllColumns().forEach((column) => {
@@ -219,7 +236,7 @@ export function ExpiredDataTable<TData, TValue>({
   const getColorForRow = (row: any) => {
     const isNoPresented = row.getValue('state') === 'pendiente';
     if (isNoPresented) {
-      return ; // Clase por defecto si no está vencido
+      return; // Clase por defecto si no está vencido
     } else {
       const validityDateStr = row.original.validity; // Obtener la fecha en formato "dd/mm/yyyy"
       const parts = validityDateStr.split('/'); // Separar la fecha en partes
@@ -233,51 +250,115 @@ export function ExpiredDataTable<TData, TValue>({
       } else if (differenceInDays <= 7) {
         return 'bg-yellow-100 dark:bg-yellow-100/30 hover:bg-yellow-100/30'; // Próximo a vencer en los próximos 7 días
       } else {
-        return
+        return;
       }
     }
   };
+  const supabase = supabaseBrowser();
+  const handleDownloadAll = async () => {
+    
+    toast.promise(
+      async () => {
+        const zip = new JSZip();
+        const documentToDownload = table
+          .getFilteredRowModel()
+          .rows.map((row) => row.original)
+          .filter((row: any) => row.state !== 'pendiente') as any;
+
+
+        const files = await Promise.all(
+          documentToDownload?.map(async (doc: any) => {
+            const { data, error } = await supabase.storage.from('document_files').download(doc.document_url);
+
+            if (error) {
+              console.log('Salio este error', error);
+              throw new Error(handleSupabaseError(error.message));
+            }
+
+            // Extrae la extensión del archivo del document_path
+            const extension = doc.document_url.split('.').pop();
+
+            return {
+              data,
+              name: `${doc.resource}-(${doc?.documentName}).${extension}`,
+            };
+          }) || []
+        );
+
+        files.forEach((file) => {
+          zip.file(file.name, file.data);
+        });
+
+        const content = await zip.generateAsync({ type: 'blob' });
+        saveAs(content, 'documents.zip');
+      },
+      {
+        loading: 'Descargando documentos...',
+        success: 'Documentos descargados',
+        error: (error) => {
+          return error;
+        },
+      }
+    );
+  };
+
   return (
     <div className="mb-10  px-4 rounded-lg max-w-[100vw] overflow-x-auto">
-      <div className="flex flex-wrap items-end pb-4 gap-y-4 overflow-x-auto">
-        <Input
-          placeholder={vehicles ? 'Buscar por dominio o numero interno' : 'Buscar por nombre de empleado'}
-          value={(table.getColumn('resource')?.getFilterValue() as string) ?? ''}
-          onChange={(event) => table.getColumn('resource')?.setFilterValue(event.target.value)}
-          className="max-w-sm ml-2"
-        />
-        <div className="flex items-start  flex-wrap gap-y-2 justify-start">
-          <Button variant="outline" size="default" className="ml-2 self-end" onClick={handleClearFilters}>
-            Limpiar filtros
-          </Button>
+      <div className="flex justify-between items-end">
+        <div className="flex flex-wrap items-end pb-4 gap-y-4 overflow-x-auto w-full">
+          <Input
+            placeholder={vehicles ? 'Buscar por dominio o numero interno' : 'Buscar por nombre de empleado'}
+            value={(table.getColumn('resource')?.getFilterValue() as string) ?? ''}
+            onChange={(event) => table.getColumn('resource')?.setFilterValue(event.target.value)}
+            className="max-w-sm ml-2"
+          />
+          <div className="flex items-start  flex-wrap gap-y-2 justify-start">
+            <Button variant="outline" size="default" className="ml-2 self-end" onClick={handleClearFilters}>
+              Limpiar filtros
+            </Button>
 
-          <div className=" flex gap-2 ml-2 flex-wrap">
-            <Select onValueChange={(e) => table.setPageSize(Number(e))}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Cantidad de filas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Filas por página</SelectLabel>
-                  {maxRows?.map((option: string) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <div className=" flex gap-2 ml-2 flex-wrap">
+              <Select onValueChange={(e) => table.setPageSize(Number(e))}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Cantidad de filas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Filas por página</SelectLabel>
+                    {maxRows?.map((option: string) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">Columnas</Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="max-h-[50dvh] overflow-y-auto">
-                {table
-                  .getAllColumns()
-                  ?.filter((column) => column.getCanHide())
-                  ?.map((column) => {
-                    if (column.id === 'intern_number') {
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">Columnas</Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="max-h-[50dvh] overflow-y-auto">
+                  {table
+                    .getAllColumns()
+                    ?.filter((column) => column.getCanHide())
+                    ?.map((column) => {
+                      if (column.id === 'intern_number') {
+                        return (
+                          <DropdownMenuCheckboxItem
+                            key={column.id}
+                            className="capitalize"
+                            checked={column.getIsVisible()}
+                            onCheckedChange={(value) => handleColumnVisibilityChange(column.id, !!value)}
+                          >
+                            Numero interno
+                          </DropdownMenuCheckboxItem>
+                        );
+                      }
+                      if (column.id === 'actions' || typeof column.columnDef.header !== 'string') {
+                        return null;
+                      }
+
                       return (
                         <DropdownMenuCheckboxItem
                           key={column.id}
@@ -285,83 +366,160 @@ export function ExpiredDataTable<TData, TValue>({
                           checked={column.getIsVisible()}
                           onCheckedChange={(value) => handleColumnVisibilityChange(column.id, !!value)}
                         >
-                          Numero interno
+                          {column.columnDef.header}
                         </DropdownMenuCheckboxItem>
                       );
-                    }
-                    if (column.id === 'actions' || typeof column.columnDef.header !== 'string') {
-                      return null;
-                    }
-
-                    return (
-                      <DropdownMenuCheckboxItem
-                        key={column.id}
-                        className="capitalize"
-                        checked={column.getIsVisible()}
-                        onCheckedChange={(value) => handleColumnVisibilityChange(column.id, !!value)}
-                      >
-                        {column.columnDef.header}
-                      </DropdownMenuCheckboxItem>
-                    );
-                  })}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
-          {/* {!pending && (
-            <Button variant="outline" size="default" className="ml-2" onClick={showLastMonth}>
-              Ver todos los vencimientos
-            </Button>
-          )} */}
+
+          {monthly && (
+            <div className="flex gap-4 flex-wrap">
+              <div className="flex flex-col">
+                <Label className="ml-4 mb-2">Desde</Label>
+                <Input
+                  placeholder={vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'}
+                  onChange={(event) => table.getColumn('validity')?.setFilterValue(event.target.value)}
+                  className="max-w-sm ml-2"
+                  type="month"
+                  id="date-from"
+                />
+              </div>
+              <div className="flex flex-col self-start">
+                <Label className="ml-4 mb-2">Hasta</Label>
+
+                <Input
+                  placeholder={vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'}
+                  onChange={(event) => table.getColumn('validity')?.setFilterValue(event.target.value)}
+                  className="max-w-sm ml-2"
+                  type="month"
+                  id="date-limit"
+                />
+              </div>
+            </div>
+          )}
+          {permanent && (
+            <div className="flex gap-4 flex-wrap">
+              <div className="flex flex-col">
+                <Label className="ml-4 mb-2">Desde (vencimiento)</Label>
+                <Input
+                  placeholder={vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'}
+                  onChange={(event) => table.getColumn('validity')?.setFilterValue(event.target.value)}
+                  className="max-w-sm ml-2"
+                  type="date"
+                  id="date-from-full"
+                />
+              </div>
+              <div className="flex flex-col self-start">
+                <Label className="ml-4 mb-2">Hasta (vencimiento)</Label>
+                <Input
+                  placeholder={vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'}
+                  onChange={(event) => table.getColumn('validity')?.setFilterValue(event.target.value)}
+                  className="max-w-sm ml-2"
+                  type="date"
+                  id="date-limit-full"
+                />
+              </div>
+            </div>
+          )}
         </div>
-        {monthly && (
-          <div className="flex gap-4 flex-wrap">
-            <div className="flex flex-col">
-              <Label className="ml-4 mb-2">Desde</Label>
-              <Input
-                placeholder={vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'}
-                onChange={(event) => table.getColumn('validity')?.setFilterValue(event.target.value)}
-                className="max-w-sm ml-2"
-                type="month"
-                id="date-from"
-              />
-            </div>
-            <div className="flex flex-col self-start">
-              <Label className="ml-4 mb-2">Hasta</Label>
-
-              <Input
-                placeholder={vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'}
-                onChange={(event) => table.getColumn('validity')?.setFilterValue(event.target.value)}
-                className="max-w-sm ml-2"
-                type="month"
-                id="date-limit"
-              />
-            </div>
-          </div>
-        )}
-        {permanent && (
-          <div className="flex gap-4 flex-wrap">
-            <div className="flex flex-col">
-              <Label className="ml-4 mb-2">Desde (vencimiento)</Label>
-              <Input
-                placeholder={vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'}
-                onChange={(event) => table.getColumn('validity')?.setFilterValue(event.target.value)}
-                className="max-w-sm ml-2"
-                type="date"
-                id="date-from-full"
-              />
-            </div>
-            <div className="flex flex-col self-start">
-              <Label className="ml-4 mb-2">Hasta (vencimiento)</Label>
-              <Input
-                placeholder={vehicles ? 'Buscar por dominio' : 'Buscar por nombre de empleado'}
-                onChange={(event) => table.getColumn('validity')?.setFilterValue(event.target.value)}
-                className="max-w-sm ml-2"
-                type="date"
-                id="date-limit-full"
-              />
-            </div>
-          </div>
-        )}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              disabled={
+                table.getFilteredRowModel().rows.filter((row: any) => row.original.state !== 'pendiente').length === 0
+              }
+              className="ml-6 mb-4"
+              variant={'outline'}
+            >
+              <DownloadIcon className="size-5 mr-2" />
+              Descargar Documentos
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Estas a punto de descargar{' '}
+                {table.getFilteredRowModel().rows.filter((row: any) => row.original.state !== 'pendiente').length}{' '}
+                documentos
+              </AlertDialogTitle>
+              <AlertDialogDescription className="max-h-[65vh] overflow-y-auto">
+                {table.getFilteredRowModel().rows.filter((row: any) => row.original.state === 'pendiente').length >
+                  0 && (
+                  <div>
+                    <CardDescription className="underline">
+                      Alerta: Hay documentos que estan pendientes y no se descargarán
+                    </CardDescription>
+                    <Accordion type="single" collapsible>
+                      <AccordionItem value="item-1">
+                        <AccordionTrigger className="text-red-600">
+                          {
+                            table.getFilteredRowModel().rows.filter((row: any) => row.original.state === 'pendiente')
+                              .length
+                          }{' '}
+                          Documentos pendientes
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="flex flex-col gap-2">
+                            {table
+                              .getFilteredRowModel()
+                              .rows.filter((row: any) => row.original.state === 'pendiente')
+                              .map((row) => (
+                                <Card className="p-2 border-red-300" key={row.id}>
+                                  <CardDescription>
+                                    {(row.original as any).resource} ({(row.original as any).documentName})
+                                  </CardDescription>
+                                </Card>
+                              ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  </div>
+                )}
+                <Accordion type="single" collapsible>
+                  <AccordionItem value="item-1">
+                    <AccordionTrigger className="text-green-600">
+                      {' '}
+                      {
+                        table.getFilteredRowModel().rows.filter((row: any) => row.original.state !== 'pendiente').length
+                      }{' '}
+                      Documentos presentados
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className=" flex flex-col gap-2 mt-2">
+                        {table
+                          .getFilteredRowModel()
+                          .rows.filter((row: any) => row.original.state !== 'pendiente')
+                          .map((row) => {
+                            return (
+                              <Card className="p-2 border-green-600" key={row.id}>
+                                <CardDescription>
+                                  {(row.original as any).resource} ({(row.original as any).documentName})
+                                </CardDescription>
+                              </Card>
+                            );
+                          })}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  handleDownloadAll();
+                }}
+              >
+                Descargar documentos
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
       <div className="rounded-md border mb-6 overflow-x-auto">
         <Table>

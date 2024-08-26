@@ -134,7 +134,6 @@ interface Iddocumenttypes {
 
 const setEmployeesToShow = (employees: any) => {
   const employee = employees?.map((employees: any) => {
-    console.log(employees);
     return {
       full_name: `${employees?.lastname?.charAt(0)?.toUpperCase()}${employees?.lastname?.slice(1)} ${employees?.firstname
         ?.charAt(0)
@@ -778,10 +777,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
             })
             ?.map(mapVehicle) || [],
       };
-      console.log(
-        'lastMonthValues',
-        data?.find((e) => e.id === 'ab7e2558-dcb0-4c47-8172-d2472e3bccad')
-      );
 
       const pendingDocuments = {
         employees:

@@ -16,7 +16,6 @@ async function EmployeeListTabs({ inactives, actives }: { inactives?: boolean; a
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
   const { employees } = await fetch(`${URL}/api/employees/table?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
-  console.log(employees);
   const activeEmploees = setEmployeesToShow(employees?.filter((e: any) => e.is_active));
   const inactiveEmploees = setEmployeesToShow(employees?.filter((e: any) => !e.is_active));
   return (

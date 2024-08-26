@@ -58,8 +58,13 @@ const Allinks = [
     icon: <MdCalendarMonth size={sizeIcons} />,
   },
   // {
-  //   name: 'Formularios',
+  //   name: 'Mantenimiento',
   //   href: '/dashboard/maintenance',
+  //   icon: <MdListAlt size={sizeIcons} />,
+  // },
+  // {
+  //   name: 'Formularios',
+  //   href: '/dashboard/forms',
   //   icon: <ArchiveIcon className="size-5" />,
   // },
   {

@@ -38,6 +38,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { cn } from '@/lib/utils';
+import { saveAs } from 'file-saver';
+
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { ColumnDef } from '@tanstack/react-table';
@@ -49,6 +51,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../../../supabase/supabase';
+import { handleSupabaseError } from '@/lib/errorHandler';
 
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -91,6 +94,32 @@ export const columEmp: ColumnDef<Colum>[] = [
       const [showDeletedEquipment, setShowDeletedEquipment] = useState(false);
       const equipment = row.original;
       const document = row.original;
+      const handleDownload = async (path: string, fileName: string, resourceName: string) => {
+
+        toast.promise(
+          async () => {
+            const { data, error } = await supabase.storage.from('document_files').download(path);
+
+            if (error) {
+              throw new Error(handleSupabaseError(error.message));
+            }
+
+            // Extrae la extensión del archivo del path
+            const extension = path.split('.').pop();
+
+            const blob = new Blob([data], { type: 'application/octet-stream' });
+            // Usa la extensión del archivo al guardar el archivo
+            saveAs(blob, `${resourceName} ${fileName}.${extension}`);
+          },
+          {
+            loading: 'Descargando documento...',
+            success: 'Documento descargado',
+            error: (error) => {
+              return error;
+            },
+          }
+        );
+      };
 
       const handleOpenModal = (id: string) => {
         setDomain(id);
@@ -346,7 +375,14 @@ export const columEmp: ColumnDef<Colum>[] = [
               Copiar DNI
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleOpenViewModal(domain)}>Historial de modificaciones</DropdownMenuItem>
-
+            <DropdownMenuItem
+             disabled={row.original.state === 'pendiente'}
+              onClick={() =>
+                handleDownload(row.original.document_url, row.original.documentName, row.original.resource)
+              }
+            >
+              Descargar documento
+            </DropdownMenuItem>
             <DropdownMenuItem>
               {document.is_active ? (
                 <Button variant="destructive" onClick={() => handleOpenModal(equipment?.id)} className="text-sm">

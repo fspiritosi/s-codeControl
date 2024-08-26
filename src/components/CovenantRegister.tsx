@@ -241,7 +241,6 @@ export const CovenantRegister = () => {
     });
     setSearchText('');
   };
-  console.log(covenantId);
   return (
     <div className="flex items-center justify-between space-y-0">
       <AlertDialog open={open} onOpenChange={() => setOpen(!open)}>

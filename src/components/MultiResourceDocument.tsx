@@ -69,6 +69,7 @@ export default function MultiResourceDocument({
       .from('document_types')
       .select('*')
       .eq('applies', applies)
+      .eq('is_active', true)
       .eq('multiresource', true)
       .or(`company_id.eq.${useLoggedUserStore?.getState?.()?.actualCompany?.id},company_id.is.null`);
 

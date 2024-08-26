@@ -186,8 +186,6 @@ export const RegisterWithRole = () => {
             email: values.email,
             password: values.password!,
           });
-          console.log(data);
-          console.log(error);
           if (error) {
             throw new Error(handleSupabaseError(error.message));
           }
@@ -205,20 +203,13 @@ export const RegisterWithRole = () => {
                 },
               ])
               .select();
-            console.log(user);
-            console.log(error);
 
             if (error) {
               throw new Error(handleSupabaseError(error.message));
             }
 
             if (user) {
-              console.log({
-                company_id: company?.id,
-                profile_id: user?.[0].id,
-                role: values?.role,
-                customer_id: values?.customer,
-              });
+           
               const { data, error } = await supabase.from('share_company_users').insert([
                 {
                   company_id: company?.id,
@@ -227,8 +218,6 @@ export const RegisterWithRole = () => {
                   customer_id: values?.customer ? values?.customer : null,
                 },
               ]);
-              console.log(data);
-              console.log(error);
               if (error) {
                 throw new Error(handleSupabaseError(error.message));
               }

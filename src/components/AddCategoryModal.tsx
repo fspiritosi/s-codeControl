@@ -42,7 +42,6 @@ export default function AddCategoryModal({
   const [name, setName] = useState('');
   // const [covenant, setCovenant] = useState('');
   const { toast } = useToast();
-  console.log(covenant_id);
 
   useEffect(() => {
     setName(searchText);
