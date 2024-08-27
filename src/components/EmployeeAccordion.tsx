@@ -659,7 +659,6 @@ export default function EmployeeAccordion({
           workflow_diagram: String(workDiagramOptions.find((e) => e.name === values.workflow_diagram)?.id),
         };
         const result = compareContractorEmployees(user, finalValues as any);
-        console.log(finalValues);
         result.valuesToRemove.forEach(async (e) => {
           const { error } = await supabase
             .from('contractor_employee')

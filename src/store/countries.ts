@@ -105,6 +105,7 @@ export const useCountriesStore = create<State>((set, get) => {
     let { data: document_types } = await supabase
       .from('document_types')
       .select('*')
+      .eq('is_active', true)
       // ?.filter('mandatory', 'eq', true)
       .or(`company_id.eq.${company_id},company_id.is.null`);
 

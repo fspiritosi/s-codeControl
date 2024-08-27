@@ -108,7 +108,6 @@ export default function ServiceItemsForm({
       const servicesResponse = await fetch(`${URL}/api/services?actual=${company_id}`);
 
       if (!servicesResponse.ok) {
-        console.log(servicesResponse);
         throw new Error('Error al obtener los servicios');
       }
       // const {data, error}= await supabase

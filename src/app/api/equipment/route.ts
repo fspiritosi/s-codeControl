@@ -5,7 +5,6 @@ export async function GET(request: NextRequest) {
   const supabase = supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
-  console.log(company_id);
   try {
     let { data: equipments, error } = await supabase
       .from('vehicles')
@@ -17,11 +16,11 @@ export async function GET(request: NextRequest) {
       )
       .eq('company_id', company_id);
 
-    const data = equipments;
+
     
     if (error) {
       throw new Error(JSON.stringify(error));
     }
-    return Response.json({ data });
+    return Response.json({ equipments });
   } catch (error) {}
 }

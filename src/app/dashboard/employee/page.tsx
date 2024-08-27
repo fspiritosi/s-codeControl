@@ -2,13 +2,11 @@ import EmployesDiagram from '@/components/Diagrams/EmployesDiagram';
 import DocumentNav from '@/components/DocumentNav';
 import Viewcomponent from '@/components/ViewComponent';
 import { buttonVariants } from '@/components/ui/button';
-
 import Link from 'next/link';
 import EmployeeDocumentsTabs from '../document/documentComponents/EmployeeDocumentsTabs';
 import EmployeeListTabs from '../document/documentComponents/EmployeeListTabs';
 import TypesDocumentAction from '../document/documentComponents/TypesDocumentAction';
 import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
-import CreatedForm from '../maintenance/components/CreatedForm';
 
 const EmployeePage = async () => {
   const viewData = {
@@ -45,7 +43,7 @@ const EmployeePage = async () => {
           buttonActioRestricted: [''],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
-               <DocumentNav empleados />
+              <DocumentNav empleados />
             </div>
           ),
           component: <EmployeeDocumentsTabs />,
