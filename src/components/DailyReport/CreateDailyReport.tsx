@@ -13,6 +13,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import DynamicTableWithForm from './Daily';
 
 const dateSchema = z.date().nullable().refine(date => date !== null, {
     message: "Debe ingresar una fecha",
@@ -21,12 +22,18 @@ const dateSchema = z.date().nullable().refine(date => date !== null, {
 import DailyReportForm from './DailyReportForm';
 import FormTable from './FormTable';
 
-export default function CreateDailyReport() {
+interface DynamicTableWithFormProps {
+
+    selectedDate: Date | null;
+  
+  }
+
+export default function CreateDailyReport(selectedDate: DynamicTableWithFormProps) {1
     const [openModal, setOpenModal] = useState(false)
     const [openModal1, setOpenModal1] = useState(false)
     const [date, setDate] = useState<Date | null>(null)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
-    const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+    // const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
 
     const handleOpenModal = () => {
@@ -103,7 +110,8 @@ export default function CreateDailyReport() {
                         </button>
                         <div className='w-full h-auto max-h-[87vh] overflow-y-auto'>
                         {/* <DailyReportForm selectedDate={date} /> */}
-                        <FormTable  selectedDate={date || null} />
+                        {/* <FormTable  selectedDate={date || null} /> */}
+                        <DynamicTableWithForm selectedDate={date || null} />
                         </div>
                     </div>
                     <div className='flex justify-end'>
