@@ -365,7 +365,7 @@ export default function RepairNewEntry({
                             <CardContent className="flex aspect-square items-center justify-center p-1">
                               {images[index] ? (
                                 <img
-                                  src={images[index]}
+                                  src={images[index] ||''}
                                   alt={`Imagen ${index + 1}`}
                                   className="w-full h-full object-cover rounded-lg"
                                 />
