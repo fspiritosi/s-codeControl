@@ -53,7 +53,11 @@ async function RepairTypes({
         <RepairTypeForm types_of_repairs={types_of_repairs} />
       </TabsContent>
       <TabsContent value="type_of_repair_new_entry">
-        <RepairNewEntry equipment={vehiclesFormatted} tipo_de_mantenimiento={types_of_repairs as TypeOfRepair} />
+        <RepairNewEntry
+          user_id={user?.id}
+          equipment={vehiclesFormatted}
+          tipo_de_mantenimiento={types_of_repairs as TypeOfRepair}
+        />
       </TabsContent>
       <TabsContent value="type_of_repair_new_entry2">
         <RepairNewEntry
@@ -62,10 +66,12 @@ async function RepairTypes({
           )}
           equipment={vehiclesFormatted}
           limittedEquipment
+          user_id={user?.id}
         />
       </TabsContent>
       <TabsContent value="type_of_repair_new_entry3">
         <RepairNewEntry
+          user_id={user?.id}
           tipo_de_mantenimiento={(types_of_repairs as TypeOfRepair).filter(
             (e) => e.type_of_maintenance === 'Correctivo'
           )}

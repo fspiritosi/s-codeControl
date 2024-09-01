@@ -30,9 +30,9 @@ export function DataTableToolbar<TData>({
           }
           className="h-8 w-[150px] lg:w-[250px]"
         />
-        {table.getColumn("status") && (
+        {table.getColumn("state") && (
           <DataTableFacetedFilter
-            column={table.getColumn("status")}
+            column={table.getColumn("state")}
             title="Estado"
             options={statuses}
           />
@@ -55,7 +55,7 @@ export function DataTableToolbar<TData>({
           </Button>
         )}
       </div>
-      <DataTableViewOptions table={table} />
+      {/* <DataTableViewOptions table={table} /> */}
     </div>
   )
 }

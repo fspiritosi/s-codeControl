@@ -652,5 +652,28 @@ export type TypeOfRepair = {
   criticity: 'Alta' | 'Media' | 'Baja';
   is_active: boolean;
   company_id: string;
-  type_of_maintenance: 'Preventivo'| 'Correctivo';
-}[]
+  type_of_maintenance: 'Preventivo' | 'Correctivo';
+}[];
+
+export type RepairsSolicituds = {
+  id: string;
+  created_at: string;
+  state: 'Pendiente' | 'Esperando repuestos' | 'En reparación' | 'Finalizado' | 'Rechazado' | 'Cancelado';
+  user_description: string;
+  mechanic_description: null | string;
+  end_date: null | Date;
+  user_id: string;
+  mechanic_id: null | string;
+  reparation_type: TypeOfRepair[0];
+  equipment_id: Vechicle;
+}[];
+
+export type FormattedSolicitudesRepair = {
+  id: string;
+  title: string;
+  state: 'Pendiente' | 'Esperando repuestos' | 'En reparación' | 'Finalizado' | 'Rechazado' | 'Cancelado';
+  label: string;
+  priority: 'Alta' | 'Media' | 'Baja';
+  created_at: string;
+  equipment: string;
+}[];

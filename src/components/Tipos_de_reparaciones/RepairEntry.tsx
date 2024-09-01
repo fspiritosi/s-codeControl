@@ -17,6 +17,8 @@ import { Form } from '../ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '../ui/resizable';
 import { Textarea } from '../ui/textarea';
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 type FormValues = {
   description: string;
   repair: string;
@@ -28,11 +30,15 @@ export default function RepairNewEntry({
   tipo_de_mantenimiento,
   equipment,
   limittedEquipment,
+  user_id,
 }: {
   tipo_de_mantenimiento: TypeOfRepair;
   equipment: ReturnType<typeof setVehiclesToShow>;
   limittedEquipment?: boolean;
+  user_id: string | undefined;
 }) {
+  const URL = process.env.NEXT_PUBLIC_BASE_URL;
+  const router = useRouter()
   const FormSchema = z.object({
     provicionalId: z.string().default(crypto.randomUUID()),
     vehicle_id: z.string({
@@ -59,6 +65,41 @@ export default function RepairNewEntry({
     clearForm();
   }
 
+  const createRepair = () => {
+    toast.promise(
+      async () => {
+        try {
+          const data = allRepairs.map((e) => {
+            return {
+              reparation_type: e.repair,
+              equipment_id: equipment.find((equip) => equip.domain === e.domain)?.id,
+              user_description: e.description,
+              user_id,
+            };
+          });
+
+          await fetch(`${URL}/api/repair_solicitud`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          });
+          router.refresh();
+          clearForm()
+          setAllRepairs([])
+        } catch (error) {
+          console.error(error);
+        }
+      },
+      {
+        loading: 'Creando tipo de reparación...',
+        success: 'Tipo de reparación creado con éxito',
+        error: 'Hubo un error al crear el tipo de reparación',
+      }
+    );
+  };
+
   const clearForm = () => {
     form.setValue('description', '');
     form.setValue('repair', '');
@@ -79,36 +120,6 @@ export default function RepairNewEntry({
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <div className="space-y-3 p-3">
-                {/* <FormField
-                  control={form.control}
-                  name="vehicle_id"
-                  render={({ field }) => {
-                    return (
-                      <FormItem>
-                        <FormLabel>Seleccionar equipo</FormLabel>
-                        <Select
-                          key={field.value || ''}
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          defaultValue={field.value}
-                          disabled={allRepairs.length > 0}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Buscar equipos" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="m@example.com">m@example.com</SelectItem>
-                            <SelectItem value="m@google.com">m@google.com</SelectItem>
-                            <SelectItem value="m@support.com">m@support.com</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
-                /> */}
                 <FormField
                   control={form.control}
                   name="vehicle_id"
@@ -180,7 +191,7 @@ export default function RepairNewEntry({
                           <SelectContent>
                             {tipo_de_mantenimiento?.map((field) => {
                               return (
-                                <SelectItem key={field.id} value={field.name}>
+                                <SelectItem key={field.id} value={field.id}>
                                   {field.name}
                                 </SelectItem>
                               );
@@ -236,10 +247,13 @@ export default function RepairNewEntry({
             </TableHeader>
             <TableBody>
               {allRepairs.map((field) => {
+                const repair = tipo_de_mantenimiento.find((e) => e.id === field.repair);
+                console.log('repair', repair);
+                console.log('field', field);
                 return (
                   <TableRow key={field.provicionalId}>
-                    <TableCell>{field.repair}</TableCell>
-                    <TableCell>{field.description}</TableCell>
+                    <TableCell>{repair?.name}</TableCell>
+                    <TableCell>{repair?.description}</TableCell>
                     <TableCell>{field.domain}</TableCell>
                     <TableCell align="right" className="pr-10">
                       <Button variant={'destructive'} onClick={() => handleDeleteRepair(field.provicionalId)}>
@@ -251,7 +265,16 @@ export default function RepairNewEntry({
               })}
             </TableBody>
           </Table>
-          {allRepairs.length > 0 && <Button className="w-1/3 self-center mt-3">Registrar solicitudes</Button>}
+          {allRepairs.length > 0 && (
+            <Button
+              onClick={() => {
+                createRepair();
+              }}
+              className="w-1/3 self-center mt-3"
+            >
+              Registrar solicitudes
+            </Button>
+          )}
         </div>
       </ResizablePanel>
     </ResizablePanelGroup>

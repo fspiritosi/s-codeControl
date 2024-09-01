@@ -17,17 +17,19 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { labels, taskSchema } from '../data'
+import { labels,  } from '../data'
+import { FormattedSolicitudesRepair } from '@/types/types'
 
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>
+  repairs: FormattedSolicitudesRepair[0]
 }
 
 export function DataTableRowActions<TData>({
   row,
+  repairs,
 }: DataTableRowActionsProps<TData>) {
-  const task = taskSchema.parse(row.original)
 
   return (
     <DropdownMenu>
@@ -48,7 +50,7 @@ export function DataTableRowActions<TData>({
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>Labels</DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
-            <DropdownMenuRadioGroup value={task.label}>
+            <DropdownMenuRadioGroup value={repairs.label}>
               {labels.map((label) => (
                 <DropdownMenuRadioItem key={label.value} value={label.value}>
                   {label.label}
