@@ -1,27 +1,35 @@
+import RepairTypes from '@/components/Tipos_de_reparaciones/RepairTypes';
 import Viewcomponent from '@/components/ViewComponent';
 function MantenimientoPage() {
   const viewData = {
-    defaultValue: 'show_created_forms',
+    defaultValue: 'type_of_repairs',
     tabsValues: [
-    
       {
-        value: 'create_new_form',
-        name: 'Crear nuevo formulario',
-        restricted: [''],
+        value: 'type_of_repairs',
+        name: 'Solicitudes de mantenimiento',
+        restricted: [],
         content: {
-          title: 'Crear nuevo formulario',
-          description: 'Aquí podrás crear un nuevo formulario',
+          title: 'Mantenimiento de unidades',
+          description: 'Genera solicitudes de mantenimiento para tus equipos',
           buttonActioRestricted: [''],
-          // component: <NewForm />,
+          component: (
+            <RepairTypes
+              created_solicitudes
+              type_of_repair
+              type_of_repair_new_entry
+              type_of_repair_new_entry2
+              type_of_repair_new_entry3
+              mechanic
+            />
+          ),
         },
       },
-    
     ],
   };
 
   return (
     <div className="h-full">
-      {/* <Viewcomponent viewData={viewData} /> */}
+      <Viewcomponent viewData={viewData} />
     </div>
   );
 }
