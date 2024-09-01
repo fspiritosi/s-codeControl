@@ -14,6 +14,7 @@ async function RepairTypes({
   created_solicitudes,
   type_of_repair,
   defaultValue,
+  mechanic,
 }: {
   type_of_repair_new_entry?: boolean;
   type_of_repair_new_entry2?: boolean;
@@ -21,6 +22,7 @@ async function RepairTypes({
   created_solicitudes?: boolean;
   type_of_repair?: boolean;
   defaultValue?: string;
+  mechanic?: boolean;
 }) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const supabase = supabaseServer();
@@ -35,19 +37,23 @@ async function RepairTypes({
   );
   const vehiclesFormatted = setVehiclesToShow(equipments);
   return (
-    <Tabs defaultValue={defaultValue || 'type_of_repair'}>
+    <Tabs defaultValue={defaultValue || 'created_solicitudes'}>
       <TabsList>
-        {type_of_repair && <TabsTrigger value="type_of_repair">Tipos de reparaciones creados</TabsTrigger>}
+        {created_solicitudes && (
+          <TabsTrigger value="created_solicitudes">
+            {mechanic ? 'Solicitudes activas' : 'Solicitudes de mantenimiento'}
+          </TabsTrigger>
+        )}
         {type_of_repair_new_entry && (
           <TabsTrigger value="type_of_repair_new_entry">Solicitud de mantenimiento</TabsTrigger>
         )}
-        {type_of_repair_new_entry2 && (
+        {/* {type_of_repair_new_entry2 && (
           <TabsTrigger value="type_of_repair_new_entry2">Solicitud de mantenimiento preventivo</TabsTrigger>
         )}
         {type_of_repair_new_entry3 && (
           <TabsTrigger value="type_of_repair_new_entry3">Solicitud de mantenimiento correctivo</TabsTrigger>
-        )}
-        {created_solicitudes && <TabsTrigger value="created_solicitudes">Solicitudes de mantenimiento</TabsTrigger>}
+        )} */}
+        {type_of_repair && <TabsTrigger value="type_of_repair">Tipos de reparaciones creados</TabsTrigger>}
       </TabsList>
       <TabsContent value="type_of_repair">
         <RepairTypeForm types_of_repairs={types_of_repairs} />
@@ -79,7 +85,7 @@ async function RepairTypes({
         />
       </TabsContent>
       <TabsContent value="created_solicitudes">
-        <RepairSolicitudes />
+        <RepairSolicitudes mechanic={mechanic} />
       </TabsContent>
     </Tabs>
   );

@@ -1,68 +1,23 @@
 'use client';
-
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@/components/ui/drawer';
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { supabaseBrowser } from '@/lib/supabase/browser';
+import { cn } from '@/lib/utils';
 import { FormattedSolicitudesRepair } from '@/types/types';
 import { ColumnDef } from '@tanstack/react-table';
-import { Minus, Plus } from 'lucide-react';
-import { useState } from 'react';
-import { Bar, BarChart, ResponsiveContainer } from 'recharts';
+import moment from 'moment';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { criticidad, labels, statuses } from '../data';
 import { DataTableColumnHeader } from './data-table-column-header';
-const data = [
-  {
-    goal: 400,
-  },
-  {
-    goal: 300,
-  },
-  {
-    goal: 200,
-  },
-  {
-    goal: 300,
-  },
-  {
-    goal: 200,
-  },
-  {
-    goal: 278,
-  },
-  {
-    goal: 189,
-  },
-  {
-    goal: 239,
-  },
-  {
-    goal: 300,
-  },
-  {
-    goal: 200,
-  },
-  {
-    goal: 278,
-  },
-  {
-    goal: 189,
-  },
-  {
-    goal: 349,
-  },
-];
 
-export const columns: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
+export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
   {
     accessorKey: 'title',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Titulo" className="ml-2" />,
@@ -87,7 +42,7 @@ export const columns: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
     cell: ({ row }) => {
       return (
         <div className="flex space-x-2">
-          <span className="max-w-[400px] truncate font-medium">{row.getValue('title')}</span>
+          <span className="max-w-[400px] truncate font-medium">{row.original.user_description}</span>
         </div>
       );
     },
@@ -144,76 +99,261 @@ export const columns: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
     },
   },
   {
+    accessorKey: 'domain',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Equipo" />,
+    cell: ({ row }) => {
+      return <div className="flex items-center">{row.original.domain}</div>;
+    },
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+  {
+    accessorKey: 'fecha',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Fecha" />,
+    cell: ({ row }) => {
+      return <div className="flex items-center">{moment(row.original.created_at).format('DD/MM/YYYY')}</div>;
+    },
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+  {
     id: 'actions',
     cell: ({ row }) => {
-      const [goal, setGoal] = useState(350);
+      const state = statuses.find((status) => status.value === row.original.state);
+      const supabase = supabaseBrowser();
+      const [imageUrl, setImageUrl] = useState<string[]>([]);
+      const [imagesMechanic, setImagesMechanic] = useState<(string | null)[]>([null, null, null]);
+      useEffect(() => {
+        const fetchImageUrls = async () => {
+          const modifiedStrings = await Promise.all(
+            row.original.user_images.map(async (str) => {
+              const { data } = supabase.storage.from('repair_images').getPublicUrl(str);
+              return data.publicUrl;
+            })
+          );
+          setImageUrl(modifiedStrings);
+        };
 
-      function onClick(adjustment: number) {
-        setGoal(Math.max(200, Math.min(400, goal + adjustment)));
-      }
+        fetchImageUrls();
+        const modifiedStringsMechanic = row.original.mechanic_images
+          ?.filter((e) => e)
+          .map((str) => {
+            const { data } = supabase.storage.from('repair_images').getPublicUrl(str?.slice(1));
+            return data.publicUrl;
+          });
+        setImagesMechanic(modifiedStringsMechanic);
+      }, [row.original.user_images]);
+
+      console.log('imageUrl', imageUrl);
+
+      //!Darle funcionalidad a este boton de cancelar, actualizar el estado y puede que un modal con una descripcion de la razon
+      // const saveNewStatus = async () => {
+      //   console.log(status, 'status');
+      //   console.log(row.original.id, 'row.original.id');
+
+      //   const { data, error } = await supabase
+      //     .from('repair_solicitudes')
+      //     .update({ state: status, mechanic_description })
+      //     .eq('id', row.original.id);
+
+      //   if (error) {
+      //     console.log(error);
+      //     throw new Error(handleSupabaseError(error.message));
+      //   }
+      // };
+
       return (
-        <Drawer>
-          <DrawerTrigger asChild>
-            <Button variant="outline">Ver detalle</Button>
-          </DrawerTrigger>
-          <DrawerContent>
-            <div className="mx-auto w-full max-w-sm">
-              <DrawerHeader>
-                <DrawerTitle>Move Goal</DrawerTitle>
-                <DrawerDescription>Set your daily activity goal.</DrawerDescription>
-              </DrawerHeader>
-              <div className="p-4 pb-0">
-                <div className="flex items-center justify-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 shrink-0 rounded-full"
-                    onClick={() => onClick(-10)}
-                    disabled={goal <= 200}
-                  >
-                    <Minus className="h-4 w-4" />
-                    <span className="sr-only">Decrease</span>
-                  </Button>
-                  <div className="flex-1 text-center">
-                    <div className="text-7xl font-bold tracking-tighter">{goal}</div>
-                    <div className="text-[0.70rem] uppercase text-muted-foreground">Calories/day</div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 shrink-0 rounded-full"
-                    onClick={() => onClick(10)}
-                    disabled={goal >= 400}
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span className="sr-only">Increase</span>
-                  </Button>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline">Ver detalles de reparación</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Detalles de reparación</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-6 py-4">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="grid gap-2">
+                  <Label>Tipo de reparación</Label>
+                  <div className="font-medium">{row.original.title}</div>
                 </div>
-                <div className="mt-3 h-[120px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data}>
-                      <Bar
-                        dataKey="goal"
-                        style={
-                          {
-                            fill: 'hsl(var(--foreground))',
-                            opacity: 0.9,
-                          } as React.CSSProperties
-                        }
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                <div className="grid gap-2">
+                  <Label>Criticidad</Label>
+                  <Badge
+                    variant={
+                      row.original.priority === 'Alta'
+                        ? 'destructive'
+                        : row.original.priority === 'Media'
+                          ? 'yellow'
+                          : 'outline'
+                    }
+                    className="w-fit"
+                  >
+                    {row.original.priority}
+                  </Badge>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Estado de la solicitud</Label>
+                  <Badge variant="outline" className="w-fit">
+                    {state?.icon && <state.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
+                    <span>{state?.label}</span>
+                  </Badge>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Tipo de mantenimiento</Label>
+                  <Badge className="font-medium w-fit" variant={'outline'}>
+                    {row.original.type_of_maintenance}
+                  </Badge>
                 </div>
               </div>
-              <DrawerFooter>
-                <Button>Submit</Button>
-                <DrawerClose asChild>
-                  <Button variant="outline">Cancel</Button>
-                </DrawerClose>
-              </DrawerFooter>
+              <div className="grid gap-2">
+                <Label>Descripción</Label>
+                <div>{row.original.user_description}</div>
+              </div>
+              <Separator />
+              <div className="grid grid-cols-2 gap-6">
+                <div className="grid gap-2">
+                  <Label>Tipo de equipo</Label>
+                  <div className="font-medium">{row.original.type_of_equipment}</div>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Año</Label>
+                  <div className="font-medium">{row.original.year}</div>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Marca</Label>
+                  <div className="font-medium">{row.original.brand}</div>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Modelo</Label>
+                  <div className="font-medium">{row.original.model}</div>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Dominio</Label>
+                  <div className="font-medium">{row.original.domain}</div>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Motor</Label>
+                  <div className="font-medium">{row.original.engine}</div>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Estado</Label>
+                  <Badge className="w-fit">{row.original.status}</Badge>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Chasis</Label>
+                  <div className="font-medium">{row.original.chassis}</div>
+                </div>
+              </div>
+              <div className="mx-auto w-[90%]">
+                <Badge className="text-sm mb-2"> Imagenes del vehiculo a reparar</Badge>
+                <Carousel className="w-full">
+                  <CarouselContent>
+                    {imageUrl.map((image, index) => (
+                      <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+                        <Card>
+                          <Link target="_blank" href={image || ''}>
+                            <CardContent className="flex aspect-square items-center justify-center p-1">
+                              <img
+                                src={image}
+                                alt={`Imagen ${index + 1}`}
+                                className="w-full h-full object-cover rounded-lg"
+                              />
+                            </CardContent>
+                          </Link>
+                        </Card>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious />
+                  <CarouselNext />
+                </Carousel>
+              </div>
+              {imagesMechanic?.length && (
+                <div className="mx-auto w-[90%]">
+                  <Badge className="text-sm mb-2">Imagenes al finalizar la solicitud</Badge>
+                  <Carousel className="w-full">
+                    <CarouselContent className="p-2">
+                      {imagesMechanic?.length
+                        ? imagesMechanic?.map((image, index) => (
+                            <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3  overflow-hidden">
+                              <Card className="">
+                                <Link target="_blank" href={image || ''}>
+                                  <CardContent className="flex aspect-square items-center justify-center p-1">
+                                    <img
+                                      src={image || ''}
+                                      alt={`Imagen ${index + 1}`}
+                                      className="w-full h-full object-cover rounded-lg"
+                                    />
+                                  </CardContent>
+                                </Link>
+                              </Card>
+                            </CarouselItem>
+                          ))
+                        : null}
+                    </CarouselContent>
+                    <CarouselPrevious />
+                    <CarouselNext />
+                  </Carousel>
+                </div>
+              )}
+
+              <div className="grid gap-2">
+                <CardTitle>Eventos de la reparacion</CardTitle>
+              </div>
+              <div className="relative flex flex-col gap-4 justify-start  w-full">
+                <div className="absolute left-[19px] top-0 bottom-0 w-px bg-muted-foreground/20 " />
+                {row.original.repairlogs.map((log, index) => {
+                  const state = statuses.find((status) => status.value === log.title);
+
+                  return (
+                    <>
+                      <div className="relative flex items-start gap-4">
+                        <div
+                          className={cn(
+                            'relative  flex max-h-[40px] max-w-[40px] size-10 items-center justify-center rounded-full  text-primary-foreground aspect-square flex-shrink-0',
+                            index + 1 === row.original.repairlogs.length ? 'bg-primary' : 'bg-muted-foreground'
+                          )}
+                        >
+                          {index + 1}
+                        </div>
+                        <div className="flex flex-col gap-1  w-full">
+                          <div className="flex items-center justify-between w-full">
+                            <div className="font-medium flex items-center">
+                              {state?.icon && <state.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
+                              <span>{state?.label}</span>
+                            </div>
+                            <div className="text-muted-foreground text-sm">
+                              {moment(log.created_at).format('[Hoy,] h:mm A')}
+                            </div>
+                          </div>
+                          <CardDescription>{log.description}</CardDescription>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })}
+              </div>
             </div>
-          </DrawerContent>
-        </Drawer>
+            <DialogClose id="close-modal-mechanic-colum2" />
+            {row.original.state === 'Pendiente' ? (
+              <Button type="submit" variant={'destructive'}>
+                Cancelar solicitud
+              </Button>
+            ) : (
+              <Button
+                onClick={() => {
+                  document.getElementById('close-modal-mechanic-colum2')?.click();
+                }}
+                type="submit"
+              >
+                Cerrar
+              </Button>
+            )}
+          </DialogContent>
+        </Dialog>
       );
     },
   },

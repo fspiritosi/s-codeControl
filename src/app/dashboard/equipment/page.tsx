@@ -68,7 +68,7 @@ export default async function Equipment() {
           title: 'Mantenimiento de unidades',
           description: 'Genera solicitudes de mantenimiento para tus equipos',
           buttonActioRestricted: [''],
-          component: <RepairTypes type_of_repair_new_entry created_solicitudes defaultValue="type_of_repair_new_entry" />,
+          component: <RepairTypes type_of_repair_new_entry created_solicitudes defaultValue="created_solicitudes" />,
         },
       },
       // {

@@ -1,9 +1,10 @@
 import { RepairsSolicituds } from '@/types/types';
 import { cookies } from 'next/headers';
-import { columns } from './components/columns';
+import { repairSolicitudesColums } from './components/columns';
 import { DataTable } from './components/data-table';
+import { mechanicColums } from './components/mechanicColumns';
 
-export default async function RepairSolicitudes() {
+export default async function RepairSolicitudes({ mechanic }: { mechanic?: boolean }) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
@@ -11,7 +12,6 @@ export default async function RepairSolicitudes() {
     res.json()
   );
 
-  console.log('repair_solicitudes', repair_solicitudes);
 
   const repairsFormatted = (repair_solicitudes as RepairsSolicituds).map((repair) => {
     return {
@@ -21,10 +21,28 @@ export default async function RepairSolicitudes() {
       label: '',
       priority: repair.reparation_type.criticity,
       created_at: repair.created_at,
-      equipment: `${repair.equipment_id.domain} - ${repair.equipment_id.intern_number}`,
-      //description
+      equipment: `${repair.equipment_id?.domain} - ${repair.equipment_id?.intern_number}`,
+      description: repair.user_description,
+      user_description: repair.user_description,
+      year: repair.equipment_id.year,
+      brand: repair.equipment_id.brand.name,
+      model: repair.equipment_id.model.name,
+      domain: repair.equipment_id.domain,
+      engine: repair.equipment_id.engine,
+      status: repair.equipment_id.status,
+      chassis: repair.equipment_id.chassis,
+      picture: repair.equipment_id.picture,
+      type_of_equipment: repair.equipment_id.type.name,
+      solicitud_status: repair.state,
+      type_of_maintenance: repair.reparation_type.type_of_maintenance,
+      user_images:repair.user_images,
+      mechanic_images:repair.mechanic_images,
+      repairlogs: repair.repairlogs,
+      mechanic_description:repair.mechanic_description,
+      vehicle_id: repair.equipment_id.id,
+      vehicle_condition: repair.equipment_id.condition,
     };
   });
 
-  return <DataTable data={repairsFormatted} columns={columns} />;
+  return <DataTable data={repairsFormatted} columns={mechanic ? mechanicColums : repairSolicitudesColums} />;
 }

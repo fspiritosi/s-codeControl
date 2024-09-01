@@ -6,13 +6,22 @@ function MantenimientoPage() {
     tabsValues: [
       {
         value: 'type_of_repairs',
-        name: 'Tipos de reparaciones',
+        name: 'Solicitudes de mantenimiento',
         restricted: [],
         content: {
-          title: 'Tipos de reparaciones',
-          description: 'Crea y edita los tipos de reparaciones de tus equipos',
+          title: 'Mantenimiento de unidades',
+          description: 'Genera solicitudes de mantenimiento para tus equipos',
           buttonActioRestricted: [''],
-          component: <RepairTypes type_of_repair type_of_repair_new_entry type_of_repair_new_entry2 type_of_repair_new_entry3  />,
+          component: (
+            <RepairTypes
+              created_solicitudes
+              type_of_repair
+              type_of_repair_new_entry
+              type_of_repair_new_entry2
+              type_of_repair_new_entry3
+              mechanic
+            />
+          ),
         },
       },
     ],

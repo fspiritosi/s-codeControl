@@ -303,7 +303,7 @@ export function ExpiredDataTable<TData, TValue>({
   };
 
   return (
-    <div className="mb-10  px-4 rounded-lg max-w-[100vw] overflow-x-auto">
+    <div className="mb-10 grid px-4 rounded-lg max-w-[100vw] overflow-x-auto">
       <div className="flex justify-between items-end">
         <div className="flex flex-wrap items-end pb-4 gap-y-4 overflow-x-auto w-full">
           <Input
@@ -312,12 +312,12 @@ export function ExpiredDataTable<TData, TValue>({
             onChange={(event) => table.getColumn('resource')?.setFilterValue(event.target.value)}
             className="max-w-sm ml-2"
           />
-          <div className="flex items-start  flex-wrap gap-y-2 justify-start">
+          <div className="flex items-start gap-2 flex-wrap gap-y-2 justify-start">
             <Button variant="outline" size="default" className="ml-2 self-end" onClick={handleClearFilters}>
               Limpiar filtros
             </Button>
 
-            <div className=" flex gap-2 ml-2 flex-wrap">
+            <div className=" flex gap-2 flex-wrap">
               <Select onValueChange={(e) => table.setPageSize(Number(e))}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Cantidad de filas" />

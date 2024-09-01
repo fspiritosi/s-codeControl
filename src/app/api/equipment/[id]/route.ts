@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '../../../../../supabase/supabase';
+import { supabaseServer } from '@/lib/supabase/server';
 
 
 export async function GET(request: NextRequest, context: any) {
@@ -20,3 +21,4 @@ export async function GET(request: NextRequest, context: any) {
         throw new Error('No hay respuesta')
     }
 }
+
