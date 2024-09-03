@@ -137,8 +137,8 @@ export default function RepairNewEntry({
       async () => {
         try {
           const selectedRepair = tipo_de_mantenimiento.find((e) => e.id === allRepairs[0].repair);
-          const vehicle_id = equipment.find(
-            (equip) => equip.domain.toLowerCase() === allRepairs[0].domain.toLowerCase()
+          const vehicle_id = equipment?.find(
+            (equip) => equip?.domain?.toLowerCase() === allRepairs[0]?.domain?.toLowerCase()
           ); //! OJO si se permiten mas de 1 vehiculo
           const condition = vehicle_id?.condition;
           console.log('vehicle_id', vehicle_id);
@@ -265,7 +265,7 @@ export default function RepairNewEntry({
                               className={cn('justify-between', !field.value && 'text-muted-foreground')}
                             >
                               {field.value
-                                ? equipment.find((equip) => equip.id === field.value)?.domain
+                                ? equipment?.find((equip) => equip.id === field.value)?.domain
                                 : 'Selecciona un equipo'}
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>

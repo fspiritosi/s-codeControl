@@ -35,7 +35,7 @@ async function RepairTypes({
   const { equipments } = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) =>
     e.json()
   );
-  const vehiclesFormatted = setVehiclesToShow(equipments);
+  const vehiclesFormatted = setVehiclesToShow(equipments) ||[];
   return (
     <Tabs defaultValue={defaultValue || 'created_solicitudes'}>
       <TabsList>
