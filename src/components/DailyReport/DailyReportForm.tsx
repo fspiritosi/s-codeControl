@@ -280,6 +280,8 @@ export default function DailyReportForm({ selectedDate }: DailyReportFormProps) 
     // contodos los datos de el formulario quiero ir armando un array de objetos que se llame dailyReport y que se vaya llenando con los datos que se van seleccionando 
     // cada vez que seleccione un grupo de datos quiero tener un boton agregar que me permita agregarlos al array de dailyReport y  cuando termine de seleccionar todos los datos
     // quiero tener un boton guardar que me permita guardar el array de dailyReport en la base de datos. como lo puedo hacer?
+    
+
 
     return (
 

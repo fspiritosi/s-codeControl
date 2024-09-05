@@ -104,7 +104,7 @@ export default function DailyReport() {
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [customers, setCustomers] = useState<Customers[]>([]);
     const { control, formState: { errors } } = useForm();
-    const [selectedCustomer, setSelectedCustomerustomer] = useState<Customers | null>(null);
+    const [selectedCustomer, setSelectedCustomer] = useState<Customers | null>(null);
     const [customerEmployees, setCustomerEmployees] = useState<Employee[]>([]);
     const [startTime, setStartTime] = useState<string>("");
     const [endTime, setEndTime] = useState<string>("");

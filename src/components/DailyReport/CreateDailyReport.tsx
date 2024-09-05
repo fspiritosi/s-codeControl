@@ -109,8 +109,7 @@ export default function CreateDailyReport(selectedDate: DynamicTableWithFormProp
                             &times;
                         </button>
                         <div className='w-full h-auto max-h-[87vh] overflow-y-auto'>
-                        {/* <DailyReportForm selectedDate={date} /> */}
-                        {/* <FormTable  selectedDate={date || null} /> */}
+                        
                         <DynamicTableWithForm selectedDate={date || null} />
                         </div>
                     </div>
