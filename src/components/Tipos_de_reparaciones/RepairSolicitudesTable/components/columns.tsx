@@ -13,6 +13,7 @@ import { FormattedSolicitudesRepair } from '@/types/types';
 import { ColumnDef } from '@tanstack/react-table';
 import moment from 'moment';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { criticidad, labels, statuses } from '../data';
 import { DataTableColumnHeader } from './data-table-column-header';
@@ -22,16 +23,9 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
     accessorKey: 'title',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Titulo" className="ml-2" />,
     cell: ({ row }) => {
-      const label = labels.find((label) => label.value === row.original.priority);
-
       return (
         <div className="flex space-x-2">
-          {label && (
-            <Badge variant={label.value === 'Baja' ? 'outline' : label.value === 'Media' ? 'yellow' : 'destructive'}>
-              {label.label}
-            </Badge>
-          )}
-          <span className="max-w-[300px] truncate font-medium">{row.getValue('title')}</span>
+          <CardTitle className="max-w-[300px] truncate font-medium">{row.getValue('title')}</CardTitle>
         </div>
       );
     },
@@ -60,15 +54,13 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
     cell: ({ row }) => {
       const state = statuses.find((status) => status.value === row.original.state);
 
-      console.log(row.original.state, 'status');
-
       if (!state) {
         return null;
       }
 
       return (
-        <div className="flex w-[100px] items-center">
-          {state.icon && <state.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
+        <div className={`flex  items-center ${state.color}`}>
+          {state.icon && <state.icon className={`mr-2 h-4 w-4 ${state.color}`} />}
           <span>{state.label}</span>
         </div>
       );
@@ -82,16 +74,19 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
     header: ({ column }) => <DataTableColumnHeader column={column} title="Criticidad" />,
     cell: ({ row }) => {
       const priority = criticidad.find((priority) => priority.value === row.getValue('priority'));
-
+      const label = labels.find((label) => label.value === row.original.priority);
       if (!priority) {
         return null;
       }
 
       return (
-        <div className="flex items-center">
-          {priority.icon && <priority.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
+        <Badge
+          variant={label?.value === 'Baja' ? 'success' : label?.value === 'Media' ? 'yellow' : 'destructive'}
+          className="flex items-center w-fit"
+        >
+          {priority.icon && <priority.icon className="mr-2 h-4 w-4" />}
           <span>{priority.label}</span>
-        </div>
+        </Badge>
       );
     },
     filterFn: (row, id, value) => {
@@ -146,9 +141,25 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
         setImagesMechanic(modifiedStringsMechanic);
       }, [row.original.user_images]);
 
+      const router = useRouter();
       console.log('imageUrl', imageUrl);
 
       //!Darle funcionalidad a este boton de cancelar, actualizar el estado y puede que un modal con una descripcion de la razon
+
+      const handleCancelSolicitud = async () => {
+        const { data, error } = await supabase
+          .from('repair_solicitudes')
+          .update({ state: 'Cancelado' })
+          .eq('id', row.original.id);
+
+        if (error) {
+          console.log(error);
+          throw new Error(error.message);
+        }
+        document.getElementById('close-modal-mechanic-colum2')?.click();
+        router.refresh();
+      };
+
       // const saveNewStatus = async () => {
       //   console.log(status, 'status');
       //   console.log(row.original.id, 'row.original.id');
@@ -339,7 +350,7 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
             </div>
             <DialogClose id="close-modal-mechanic-colum2" />
             {row.original.state === 'Pendiente' ? (
-              <Button type="submit" variant={'destructive'}>
+              <Button variant={'destructive'} onClick={() => handleCancelSolicitud()}>
                 Cancelar solicitud
               </Button>
             ) : (

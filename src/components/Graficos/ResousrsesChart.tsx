@@ -61,9 +61,9 @@ export function ResoursesChart() {
       const {equipments} = await fetch(`${URL}/api/equipment?actual=${company_id}`).then((e) => e.json());
 
       setData({
-        totalResourses: employees.length + equipments.length,
-        employees: employees.length,
-        vehicles: equipments.length,
+        totalResourses: employees?.length + equipments?.length,
+        employees: employees?.length,
+        vehicles: equipments?.length,
       });
     }
     getResources();

@@ -18,7 +18,7 @@ export default function DocumentEquipmentComponent({ id }: { id: string }) {
         </TabsList>
       </CardContent>
       <TabsContent value="permanentes">
-        <div className="grid p-2">
+        <div className="grid ">
           <ExpiredDataTable
             data={allDocumentsToShow?.vehicles.filter((e) => !e.isItMonthly && (e as any).vehicle_id === id) || []}
             columns={ExpiredColums}
@@ -31,7 +31,7 @@ export default function DocumentEquipmentComponent({ id }: { id: string }) {
         </div>
       </TabsContent>
       <TabsContent value="mensuales">
-        <div className="grid  p-2">
+        <div className="grid  ">
           <ExpiredDataTable
             data={
               allDocumentsToShow?.vehicles.filter(

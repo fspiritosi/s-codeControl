@@ -37,11 +37,13 @@ export default function RepairNewEntry({
   equipment,
   limittedEquipment,
   user_id,
+  default_equipment_id,
 }: {
   tipo_de_mantenimiento: TypeOfRepair;
   equipment: ReturnType<typeof setVehiclesToShow>;
   limittedEquipment?: boolean;
   user_id: string | undefined;
+  default_equipment_id?: string;
 }) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const router = useRouter();
@@ -236,6 +238,9 @@ export default function RepairNewEntry({
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
+    defaultValues: {
+      vehicle_id: default_equipment_id || '',
+    }
   });
 
   const handleDeleteRepair = (provicionalId: string) => {

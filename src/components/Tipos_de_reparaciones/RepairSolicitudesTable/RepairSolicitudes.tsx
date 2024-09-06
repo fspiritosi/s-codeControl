@@ -4,7 +4,13 @@ import { repairSolicitudesColums } from './components/columns';
 import { DataTable } from './components/data-table';
 import { mechanicColums } from './components/mechanicColumns';
 
-export default async function RepairSolicitudes({ mechanic }: { mechanic?: boolean }) {
+export default async function RepairSolicitudes({
+  mechanic,
+  default_equipment_id,
+}: {
+  mechanic?: boolean;
+  default_equipment_id?: string;
+}) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
@@ -12,8 +18,11 @@ export default async function RepairSolicitudes({ mechanic }: { mechanic?: boole
     res.json()
   );
 
+  const Allrepairs = default_equipment_id
+    ? (repair_solicitudes as RepairsSolicituds).filter((repair) => repair.equipment_id.id === default_equipment_id)
+    : (repair_solicitudes as RepairsSolicituds);
 
-  const repairsFormatted = (repair_solicitudes as RepairsSolicituds).map((repair) => {
+  const repairsFormatted = Allrepairs.map((repair) => {
     return {
       id: repair.id,
       title: repair.reparation_type.name,
@@ -35,10 +44,10 @@ export default async function RepairSolicitudes({ mechanic }: { mechanic?: boole
       type_of_equipment: repair.equipment_id.type.name,
       solicitud_status: repair.state,
       type_of_maintenance: repair.reparation_type.type_of_maintenance,
-      user_images:repair.user_images,
-      mechanic_images:repair.mechanic_images,
+      user_images: repair.user_images,
+      mechanic_images: repair.mechanic_images,
       repairlogs: repair.repairlogs,
-      mechanic_description:repair.mechanic_description,
+      mechanic_description: repair.mechanic_description,
       vehicle_id: repair.equipment_id.id,
       vehicle_condition: repair.equipment_id.condition,
     };
