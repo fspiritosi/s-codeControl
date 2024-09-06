@@ -24,7 +24,7 @@ async function RepairTypes({
   type_of_repair?: boolean;
   defaultValue?: string;
   mechanic?: boolean;
-  equipment_id: string;
+  equipment_id?: string;
 }) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const supabase = supabaseServer();
