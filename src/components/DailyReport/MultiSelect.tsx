@@ -39,10 +39,10 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
 }) => {
   const [internalSelectedItems, setInternalSelectedItems] = useState<string[]>(selectedItems);
 console.log(internalSelectedItems);
-  // useEffect(() => {
-  //   // Resetear internalSelectedItems cuando multiEmp cambie
-  //   setInternalSelectedItems([]);
-  // }, [multiEmp]);
+  useEffect(() => {
+    // Resetear internalSelectedItems cuando multiEmp cambie
+    setInternalSelectedItems([]);
+  }, [selectedItems]);
 
   useEffect(() => {
     // Actualizar internalSelectedItems cuando selectedItems cambie

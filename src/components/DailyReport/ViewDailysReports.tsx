@@ -36,6 +36,7 @@ export default function ViewDailysReports() {
     setSelectedReport(report);
     setOpenModal1(true);
   };
+  console.log(selectedReport)
 
   return (
     <div>
