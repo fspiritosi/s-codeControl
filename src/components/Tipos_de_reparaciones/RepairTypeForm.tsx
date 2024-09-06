@@ -26,6 +26,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
+import { criticidad } from './RepairSolicitudesTable/data';
 export function RepairTypeForm({ types_of_repairs }: { types_of_repairs: TypeOfRepair }) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const company_id = useLoggedUserStore((state) => state.actualCompany)?.id;
@@ -97,7 +98,6 @@ export function RepairTypeForm({ types_of_repairs }: { types_of_repairs: TypeOfR
           router.refresh();
           setSelectedRepair(null);
           form.reset();
-          
         } catch (error) {
           console.error(error);
         }
@@ -296,9 +296,7 @@ export function RepairTypeForm({ types_of_repairs }: { types_of_repairs: TypeOfR
               <SelectItem value="Baja">Baja</SelectItem>
             </SelectContent>
           </Select>
-          <Select 
-            onValueChange={handleFilterMaintenanceChange}
-          >
+          <Select onValueChange={handleFilterMaintenanceChange}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filtrar mantenimiento" />
             </SelectTrigger>
@@ -323,9 +321,10 @@ export function RepairTypeForm({ types_of_repairs }: { types_of_repairs: TypeOfR
           <TableBody>
             {filteredRepairs.map((repair) => {
               const { criticity } = repair;
+              const priority = criticidad.find((priority) => priority.value === criticity);
               const badgeVariant =
                 criticity === 'Baja'
-                  ? 'outline'
+                  ? 'success'
                   : criticity === 'Media'
                     ? 'yellow'
                     : ('destructive' as
@@ -343,7 +342,11 @@ export function RepairTypeForm({ types_of_repairs }: { types_of_repairs: TypeOfR
                   <TableCell>{repair.name}</TableCell>
                   <TableCell>{repair.type_of_maintenance}</TableCell>
                   <TableCell className="font-medium">
-                    <Badge variant={badgeVariant}>{repair.criticity}</Badge>
+                    <Badge variant={badgeVariant} className='font-bold'>
+                      {' '}
+                      {priority?.icon && <priority.icon className="mr-2 h-4 w-4 font-bold" />}
+                      {repair.criticity}
+                    </Badge>
                   </TableCell>
                   <TableCell>{repair.description}</TableCell>
                   <TableCell>

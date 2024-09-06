@@ -9,12 +9,13 @@ import { RepairTypeForm } from './RepairTypeForm';
 
 async function RepairTypes({
   type_of_repair_new_entry,
-  type_of_repair_new_entry2,
-  type_of_repair_new_entry3,
+  // type_of_repair_new_entry2,
+  // type_of_repair_new_entry3,
   created_solicitudes,
   type_of_repair,
   defaultValue,
   mechanic,
+  equipment_id,
 }: {
   type_of_repair_new_entry?: boolean;
   type_of_repair_new_entry2?: boolean;
@@ -23,6 +24,7 @@ async function RepairTypes({
   type_of_repair?: boolean;
   defaultValue?: string;
   mechanic?: boolean;
+  equipment_id?: string;
 }) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const supabase = supabaseServer();
@@ -35,7 +37,9 @@ async function RepairTypes({
   const { equipments } = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) =>
     e.json()
   );
-  const vehiclesFormatted = setVehiclesToShow(equipments);
+  const vehiclesFormatted = equipment_id
+    ? setVehiclesToShow(equipments.filter((e: any) => e.id === equipment_id)) || []
+    : setVehiclesToShow(equipments) || [];
   return (
     <Tabs defaultValue={defaultValue || 'created_solicitudes'}>
       <TabsList>
@@ -63,6 +67,7 @@ async function RepairTypes({
           user_id={user?.id}
           equipment={vehiclesFormatted}
           tipo_de_mantenimiento={types_of_repairs as TypeOfRepair}
+          default_equipment_id={equipment_id}
         />
       </TabsContent>
       <TabsContent value="type_of_repair_new_entry2">
@@ -85,7 +90,7 @@ async function RepairTypes({
         />
       </TabsContent>
       <TabsContent value="created_solicitudes">
-        <RepairSolicitudes mechanic={mechanic} />
+        <RepairSolicitudes mechanic={mechanic} default_equipment_id={equipment_id} />
       </TabsContent>
     </Tabs>
   );

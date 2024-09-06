@@ -32,16 +32,9 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
     accessorKey: 'title',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Titulo" className="ml-2" />,
     cell: ({ row }) => {
-      const label = labels.find((label) => label.value === row.original.priority);
-
       return (
         <div className="flex space-x-2">
-          {label && (
-            <Badge variant={label.value === 'Baja' ? 'outline' : label.value === 'Media' ? 'yellow' : 'destructive'}>
-              {label.label}
-            </Badge>
-          )}
-          <span className="max-w-[300px] truncate font-medium">{row.getValue('title')}</span>
+          <CardTitle className="max-w-[300px] truncate font-medium">{row.getValue('title')}</CardTitle>
         </div>
       );
     },
@@ -75,8 +68,8 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
       }
 
       return (
-        <div className="flex w-[200px] items-center">
-          {state.icon && <state.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
+        <div className={`flex  items-center ${state.color}`}>
+          {state.icon && <state.icon className={`mr-2 h-4 w-4 ${state.color}`} />}
           <span>{state.label}</span>
         </div>
       );
@@ -90,16 +83,19 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Criticidad" />,
     cell: ({ row }) => {
       const priority = criticidad.find((priority) => priority.value === row.getValue('priority'));
-
+      const label = labels.find((label) => label.value === row.original.priority);
       if (!priority) {
         return null;
       }
 
       return (
-        <div className="flex items-center">
-          {priority.icon && <priority.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
+        <Badge
+          variant={label?.value === 'Baja' ? 'success' : label?.value === 'Media' ? 'yellow' : 'destructive'}
+          className="flex items-center w-fit"
+        >
+          {priority.icon && <priority.icon className="mr-2 h-4 w-4" />}
           <span>{priority.label}</span>
-        </div>
+        </Badge>
       );
     },
     filterFn: (row, id, value) => {
@@ -282,7 +278,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
               console.log('1 operativo (Es un estado de cierre y no hay más reparaciones pendientes)');
             } else {
               // Si hay otras reparaciones pendientes, calcular el estado basado en ellas
-              if (pendingRepairs.some((e: any) => e.state === 'Esperando repuestos' || e.state === 'En reparación')) {
+              if (pendingRepairs.some((e: any) => e.state === 'En reparación')) {
                 console.log(
                   '2 en reparacion (Es un estado de cierre y hay más reparaciones pendientes (en estado de repuestos o en reparacion))'
                 );
@@ -311,7 +307,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
               { state: status, reparation_type: { criticity: row.original.priority } },
             ];
             console.log(allPendingRepairs, 'allPendingRepairs');
-            if (allPendingRepairs.some((e: any) => e.state === 'Esperando repuestos' || e.state === 'En reparación')) {
+            if (allPendingRepairs.some((e: any) => e.state === 'En reparación')) {
               console.log(
                 '6 en reparacion (No es un estado de cierre y hay más reparaciones pendientes (en estado de repuestos o en reparacion))'
               );
@@ -374,7 +370,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
             console.log('1 operativo (Es un estado de cierre y no hay más reparaciones pendientes)');
           } else {
             // Si hay otras reparaciones pendientes, calcular el estado basado en ellas
-            if (pendingRepairs.some((e: any) => e.state === 'Esperando repuestos' || e.state === 'En reparación')) {
+            if (pendingRepairs.some((e: any) => e.state === 'En reparación')) {
               console.log(
                 '2 en reparacion (Es un estado de cierre y hay más reparaciones pendientes (en estado de repuestos o en reparacion))'
               );
@@ -403,7 +399,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
             { state: status, reparation_type: { criticity: row.original.priority } },
           ];
           console.log(allPendingRepairs, 'allPendingRepairs');
-          if (allPendingRepairs.some((e: any) => e.state === 'Esperando repuestos' || e.state === 'En reparación')) {
+          if (allPendingRepairs.some((e: any) => e.state === 'En reparación')) {
             console.log(
               '6 en reparacion (No es un estado de cierre y hay más reparaciones pendientes (en estado de repuestos o en reparacion))'
             );
