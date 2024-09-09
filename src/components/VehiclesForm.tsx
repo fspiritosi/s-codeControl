@@ -14,9 +14,11 @@ import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CaretSortIcon, CheckIcon, PlusCircledIcon } from '@radix-ui/react-icons';
+import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { ChangeEvent, ReactNode, useEffect, useState } from 'react';
+import React, { ChangeEvent, ReactNode, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { RiToolsFill } from 'react-icons/ri';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../supabase/supabase';
@@ -24,6 +26,7 @@ import BackButton from './BackButton';
 import { ImageHander } from './ImageHandler';
 import { Modal } from './Modal';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Badge } from './ui/badge';
 import { CardDescription, CardHeader, CardTitle } from './ui/card';
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
 import { Input } from './ui/input';
@@ -47,6 +50,7 @@ type VehicleType = {
   type: { name: string };
   id: string;
   allocated_to: string[];
+  condition: 'operativo' | 'no operativo' | 'en reparación' | 'operativo condicionado';
 };
 type generic = {
   name: string;
@@ -606,6 +610,20 @@ export default function VehiclesForm2({ id, children }: { id: string; children: 
       }
     );
   }
+  const variants = {
+    operativo: 'success',
+    'no operativo': 'destructive',
+    'en reparación': 'yellow',
+    'operativo condicionado': 'info',
+    default: 'default',
+  };
+
+  const conditionConfig = {
+    'operativo condicionado': { color: 'bg-blue-500', icon: AlertTriangle },
+    operativo: { color: 'bg-green-500', icon: CheckCircle },
+    'no operativo': { color: 'bg-red-500', icon: XCircle },
+    'en reparación': { color: 'bg-yellow-500', icon: RiToolsFill },
+  };
 
   return (
     <section className="grid max-w-full ">
@@ -627,10 +645,22 @@ export default function VehiclesForm2({ id, children }: { id: string; children: 
                     <AvatarFallback>CC</AvatarFallback>
                   </Avatar>
                 </CardTitle>
-                <CardDescription className="text-muted-foreground text-2xl">
-                  Tipo de equipo: {vehicle?.type.name} <br />
-                  Numero interno: {vehicle?.intern_number}
-                </CardDescription>
+                <div className="text-muted-foreground text-2xl flex flex-col">
+                  <div>Tipo de equipo: {vehicle?.type.name}</div>
+
+                  <div>Numero interno: {vehicle?.intern_number}</div>
+                  <Badge
+                    className="w-fit mt-2 capitalize"
+                    variant={variants[vehicle?.condition || 'default'] as 'default'}
+                  >
+                    {vehicle?.condition && (
+                      <>
+                        {React.createElement(conditionConfig[vehicle.condition].icon, { className: 'mr-2 size-4' })}
+                        {vehicle.condition}
+                      </>
+                    )}
+                  </Badge>
+                </div>
               </div>
             ) : (
               <div>

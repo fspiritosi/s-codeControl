@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/c
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 import { FormattedSolicitudesRepair } from '@/types/types';
@@ -120,6 +121,19 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
       const supabase = supabaseBrowser();
       const [imageUrl, setImageUrl] = useState<string[]>([]);
       const [imagesMechanic, setImagesMechanic] = useState<(string | null)[]>([null, null, null]);
+      const [repairSolicitudes, setRepairSolicitudes] = useState<any>([]);
+      const fetchRepairsLogs = async () => {
+        const { data, error } = await supabase
+          .from('repair_solicitudes')
+          .select('*,reparation_type(*)')
+          .eq('equipment_id', row.original.vehicle_id);
+
+        if (error) {
+          throw new Error(handleSupabaseError(error.message));
+        }
+
+        setRepairSolicitudes(data);
+      };
       useEffect(() => {
         const fetchImageUrls = async () => {
           const modifiedStrings = await Promise.all(
@@ -140,6 +154,10 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
           });
         setImagesMechanic(modifiedStringsMechanic);
       }, [row.original.user_images]);
+      useEffect(() => {
+        fetchRepairsLogs();
+      }, [row.original.repairlogs]);
+      const endingStates = ['Finalizado', 'Cancelado', 'Rechazado'];
 
       const router = useRouter();
       console.log('imageUrl', imageUrl);
@@ -152,6 +170,51 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
           .update({ state: 'Cancelado' })
           .eq('id', row.original.id);
 
+        const vehicle_id = row.original.vehicle_id;
+
+        const pendingRepairs = repairSolicitudes
+          .filter((e: any) => !endingStates.includes(e.state))
+          .filter((e: any) => e.id !== row.original.id);
+
+        let newStatus = '';
+
+        // Si la reparación actualizada es un estado de cierre
+        if (endingStates.includes('Cancelado')) {
+          // Si no hay más reparaciones pendientes, el vehículo está operativo
+          if (pendingRepairs.length === 0) {
+            newStatus = 'operativo';
+            console.log('1 operativo (Es un estado de cierre y no hay más reparaciones pendientes)');
+          } else {
+            // Si hay otras reparaciones pendientes, calcular el estado basado en ellas
+            if (pendingRepairs.some((e: any) => e.state === 'En reparación')) {
+              console.log(
+                '2 en reparacion (Es un estado de cierre y hay más reparaciones pendientes (en estado de repuestos o en reparacion))'
+              );
+              newStatus = 'en reparación';
+            } else if (pendingRepairs.some((e: any) => e.reparation_type.criticity === 'Alta')) {
+              newStatus = 'no operativo';
+              console.log('3 no operativo (Hay otra reparación pendiente de criticidad alta)');
+              console.log(
+                pendingRepairs.find((e: any) => e.reparation_type.criticity === 'Alta'),
+                'reparacion pendiente de criticidad alta'
+              );
+              console.log(row.original, 'row.origilal');
+              console.log(status, 'newState');
+            } else if (pendingRepairs.some((e: any) => e.reparation_type.criticity === 'Media')) {
+              newStatus = 'operativo condicionado';
+              console.log('4 operativo condicionado (Hay otra reparación pendiente de criticidad media)');
+            } else {
+              newStatus = 'operativo';
+              console.log('5 operativo (Hay otra reparación pendiente de criticidad baja)');
+            }
+          }
+        }
+
+        const { data: vehicles, error: vehicleerror } = await supabase
+          .from('vehicles')
+          .update({ condition: newStatus })
+          .eq('id', vehicle_id);
+
         if (error) {
           console.log(error);
           throw new Error(error.message);
@@ -159,21 +222,6 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
         document.getElementById('close-modal-mechanic-colum2')?.click();
         router.refresh();
       };
-
-      // const saveNewStatus = async () => {
-      //   console.log(status, 'status');
-      //   console.log(row.original.id, 'row.original.id');
-
-      //   const { data, error } = await supabase
-      //     .from('repair_solicitudes')
-      //     .update({ state: status, mechanic_description })
-      //     .eq('id', row.original.id);
-
-      //   if (error) {
-      //     console.log(error);
-      //     throw new Error(handleSupabaseError(error.message));
-      //   }
-      // };
 
       return (
         <Dialog>
@@ -259,7 +307,7 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
                 </div>
               </div>
               <div className="mx-auto w-[90%]">
-                <Badge className="text-sm mb-2"> Imagenes del vehiculo a reparar</Badge>
+                {imageUrl.length && <Badge className="text-sm mb-2"> Imagenes del vehiculo a reparar</Badge>}
                 <Carousel className="w-full">
                   <CarouselContent>
                     {imageUrl.map((image, index) => (
@@ -350,9 +398,19 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
             </div>
             <DialogClose id="close-modal-mechanic-colum2" />
             {row.original.state === 'Pendiente' ? (
-              <Button variant={'destructive'} onClick={() => handleCancelSolicitud()}>
-                Cancelar solicitud
-              </Button>
+              <div className="grid grid-cols-2 gap-4">
+                <Button variant={'destructive'} onClick={() => handleCancelSolicitud()}>
+                  Cancelar solicitud
+                </Button>
+                <Button
+                  onClick={() => {
+                    document.getElementById('close-modal-mechanic-colum2')?.click();
+                  }}
+                  type="submit"
+                >
+                  Cerrar
+                </Button>
+              </div>
             ) : (
               <Button
                 onClick={() => {

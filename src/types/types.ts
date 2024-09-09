@@ -616,3 +616,59 @@ export type FormattedSolicitudesRepair = {
   mechanic_description: string | null;
   vehicle_condition: 'operativo' | 'no operativo' | 'en reparación' | 'operativo condicionado';
 }[];
+
+// Tipo para las categorías dentro de un convenio
+export type Category = {
+  id: string;
+  name: string;
+  is_active: boolean;
+  created_at: string;
+  covenant_id: string;
+};
+
+// Tipo para los convenios dentro de un sindicato
+export type Covenant = {
+  id: string;
+  name: string;
+  category: Category[];
+  guild_id: string;
+  is_active: boolean;
+  company_id: string;
+  created_at: string;
+};
+
+// Tipo para el objeto de entrada que representa un sindicato
+export type Guild = {
+  id: string;
+  created_at: string;
+  name: string;
+  company_id: string;
+  is_active: boolean;
+  covenant: Covenant[];
+};
+
+// Tipo para una categoría formateada en el objeto de salida
+export type FormattedCategory = {
+  name: string;
+  type: 'categoria';
+  id: string;
+};
+
+// Tipo para un convenio formateado en el objeto de salida
+export type FormattedCovenant = {
+  name: string;
+  type: 'convenio';
+  id: string;
+  children: FormattedCategory[];
+};
+
+// Tipo para un sindicato formateado en el objeto de salida
+export type FormattedGuild = {
+  name: string;
+  type: 'sindicato';
+  id: string;
+  children: FormattedCovenant[];
+};
+
+// Tipo para la función de salida completa
+export type FormattedOutput = FormattedGuild[]|undefined;

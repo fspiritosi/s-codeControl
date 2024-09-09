@@ -426,8 +426,8 @@ export const accordionSchema = z
       .trim()
       .optional()
       .nullable()
-      .refine((value) => !value || (value.length >= 2 && value.length <= 30), {
-        message: 'El convenio debe tener entre 2 y 30 caracteres.',
+      .refine((value) => !value || (value.length >= 2 && value.length <= 60), {
+        message: 'El convenio debe tener entre 2 y 60 caracteres.',
       }),
     covenants_id: z.string().optional(),
     // .regex(/^[a-zA-Z ]+$/, {

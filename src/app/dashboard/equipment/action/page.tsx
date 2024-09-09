@@ -27,7 +27,7 @@ export default async function EquipmentFormAction({ searchParams, params }: { se
             created_solicitudes
             defaultValue="created_solicitudes"
           />
-          ,
+          
         </VehiclesForm>
         <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
       </Card>

@@ -55,7 +55,6 @@ export function EquipmentTable<TData, TValue>({
 }: DataEquipmentProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [showInactive, setShowInactive] = useState(false);
- 
 
   const defaultVisibleColumns = [
     'domain',
@@ -66,6 +65,7 @@ export function EquipmentTable<TData, TValue>({
     'picture',
     'status',
     'intern_number',
+    'condition',
   ];
 
   const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
@@ -124,6 +124,7 @@ export function EquipmentTable<TData, TValue>({
     model: createOptions('model_vehicles'),
     status: createOptions('status'),
     allocated_to: createOptions('allocated_to'),
+    condition: createOptions('condition'),
   };
 
   function createOptions(key: string) {
@@ -167,6 +168,11 @@ export function EquipmentTable<TData, TValue>({
       name: 'allocated_to',
       option: allOptions.allocated_to,
       label: 'Afectado a',
+    },
+    condition: {
+      name: 'condition',
+      option: allOptions.condition,
+      label: 'Condición',
     },
   };
 
@@ -223,19 +229,12 @@ export function EquipmentTable<TData, TValue>({
       brand: 'Todos',
       model: 'Todos',
       status: 'Todos',
+      condition: 'Todos',
     });
     setActivesVehicles();
   };
   const maxRows = ['20', '40', '60', '80', '100'];
   const [selectValues, setSelectValues] = useState<{ [key: string]: string }>({});
-  // const handleToggleInactive = () => {
-  //   setShowInactive(!showInactive)
-  // }
-
-  const specialValues: any = {
-    domain: 'Dominio',
-    intern_number: 'Numero Interno',
-  };
 
   return (
     <div>
@@ -275,26 +274,26 @@ export function EquipmentTable<TData, TValue>({
             <DropdownMenuContent align="end" className="max-h-[50dvh] overflow-y-auto">
               {table
                 .getAllColumns()
-                ?.filter((column) => column.getCanHide()&& column.id !== 'intern_number'&& column.id !== 'domain')
+                ?.filter((column) => column.getCanHide() && column.id !== 'intern_number' && column.id !== 'domain')
                 ?.map((column: any) => {
                   if (column.id === 'actions') {
                     return null;
                   }
                   // if (typeof column.columnDef.header !== 'string') {
                   //   const name = `${column.columnDef.accessorKey}`;
-                    if (column.id === 'showUnavaliableEquipment') {
+                  if (column.id === 'showUnavaliableEquipment') {
                     return (
                       <DropdownMenuCheckboxItem
                         key={column.id}
                         className="capitalize text-red-400"
                         checked={showInactive}
-                            onClick={() => setShowInactive(!showInactive)}
+                        onClick={() => setShowInactive(!showInactive)}
                       >
                         {column.columnDef.header}
                       </DropdownMenuCheckboxItem>
                     );
                   }
-                  if (column.id === 'is_active' ) {
+                  if (column.id === 'is_active') {
                     return (
                       <>
                         <DropdownMenuCheckboxItem
@@ -413,7 +412,6 @@ export function EquipmentTable<TData, TValue>({
                   {row.getVisibleCells()?.map((cell) => {
                     let is_active = (cell.row.original as any).is_active;
                     return (showInactive && !is_active) || (!showInactive && is_active) ? (
-
                       <TableCell
                         key={cell.id}
                         className={`text-center whitespace-nowrap ${is_active ? '' : 'text-red-500'}`}
@@ -435,16 +433,16 @@ export function EquipmentTable<TData, TValue>({
                           )
                         ) : cell.column.id === 'status' ? (
                           <Badge
-                          variant={
-                            cell.getValue() === 'Completo'
-                              ? 'success'
-                              : cell.getValue() === 'Completo con doc vencida'
-                                ? 'yellow'
-                                : 'destructive'
-                          }
-                        >
-                          {cell.getValue() as React.ReactNode}
-                        </Badge>
+                            variant={
+                              cell.getValue() === 'Completo'
+                                ? 'success'
+                                : cell.getValue() === 'Completo con doc vencida'
+                                  ? 'yellow'
+                                  : 'destructive'
+                            }
+                          >
+                            {cell.getValue() as React.ReactNode}
+                          </Badge>
                         ) : cell.column.id === 'domain' ? (
                           !cell.getValue() ? (
                             'No posee'
@@ -455,7 +453,6 @@ export function EquipmentTable<TData, TValue>({
                           flexRender(cell.column.columnDef.cell, cell.getContext())
                         )}
                       </TableCell>
-
                     ) : null;
                   })}
                 </TableRow>
