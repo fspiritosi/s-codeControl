@@ -15,8 +15,6 @@ export async function GET(request: NextRequest) {
 
     const repair_solicitudes = data ?? [{}];
 
-    console.log('repair_solicitudes', repair_solicitudes);
-
     if (error) {
       throw new Error(JSON.stringify(error));
     }
@@ -29,8 +27,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const supabase = supabaseServer();
   const body = await request.json();
-
-  console.log('repair_solicitudes', body);
 
   try {
     const { data: repair_solicitudes, error } = await supabase.from('repair_solicitudes').insert(body).select();
