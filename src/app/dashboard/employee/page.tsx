@@ -1,4 +1,3 @@
-import { CovenantRegister } from '@/components/CovenantRegister';
 import EmployesDiagram from '@/components/Diagrams/EmployesDiagram';
 import DocumentNav from '@/components/DocumentNav';
 import Viewcomponent from '@/components/ViewComponent';

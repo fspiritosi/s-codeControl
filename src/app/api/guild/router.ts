@@ -36,11 +36,7 @@ export async function GET(request: NextRequest) {
     }
 
 
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
 
-    return NextResponse.json({ guild });
   } catch (error) {
     console.error('Error fetching guild:', error);
     return NextResponse.json({ error: (error as any).message }, { status: 500 });
