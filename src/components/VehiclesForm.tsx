@@ -73,41 +73,37 @@ type dataType = {
   }[];
 };
 
-export default function VehiclesForm2({ id, children }: { id: string; children: ReactNode }) {
+export default function VehiclesForm2({ vehicle, children }: { vehicle: any | null; children: ReactNode }) {
   const searchParams = useSearchParams();
   // const id = params
   const [accion, setAccion] = useState(searchParams.get('action'));
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   const role = useLoggedUserStore((state) => state.roleActualCompany);
 
-  const [vehicle, setVehicle] = useState<VehicleType | null>(null);
-  const pathname = usePathname();
+  // const [vehicle, setVehicle] = useState<VehicleType | null>(null);
   const [data, setData] = useState<dataType>({
     tipe_of_vehicles: [],
     brand: [],
     models: [],
     types: [],
   });
-
-  const preloadFormData = (vehicleData: VehicleType) => {
-    form.setValue('type_of_vehicle', vehicleData.type_of_vehicle.toString());
-    form.setValue('brand', vehicle?.brand);
-    form.setValue('model', vehicle?.model);
-    form.setValue('year', vehicleData.year);
-    form.setValue('engine', vehicleData.engine);
-    form.setValue('chassis', vehicleData.chassis);
-    form.setValue('serie', vehicleData.serie);
-    form.setValue('domain', vehicleData.domain);
-    form.setValue('intern_number', vehicleData.intern_number);
-    form.setValue('picture', vehicleData.picture);
-    form.setValue('type', vehicleData.type.name);
-    form.setValue('allocated_to', vehicleData.allocated_to);
-  };
+console.log('vehicle',vehicle);
+  // const preloadFormData = (vehicleData: VehicleType) => {
+  //   form.setValue('type_of_vehicle', vehicleData.type_of_vehicle.toString());
+  //   form.setValue('brand', vehicle?.brand);
+  //   form.setValue('model', vehicle?.model);
+  //   form.setValue('year', vehicleData.year);
+  //   form.setValue('engine', vehicleData.engine);
+  //   form.setValue('chassis', vehicleData.chassis);
+  //   form.setValue('serie', vehicleData.serie);
+  //   form.setValue('domain', vehicleData.domain);
+  //   form.setValue('intern_number', vehicleData.intern_number);
+  //   form.setValue('picture', vehicleData.picture);
+  //   form.setValue('type', vehicleData.type.name);
+  //   form.setValue('allocated_to', vehicleData.allocated_to);
+  // };
 
   useEffect(() => {
-    if (vehicle) {
-      preloadFormData(vehicle);
-    }
     if (vehicle && vehicle.type_of_vehicle === 'Vehículos') {
       setHideInput(true);
     }
@@ -119,38 +115,9 @@ export default function VehiclesForm2({ id, children }: { id: string; children: 
     }
   }, [vehicle]);
 
-  const fetchVehicleData = async () => {
-    if (!id || !actualCompany?.id) return;
-    try {
-      const { data: vehicleData, error } = await supabase
-        .from('vehicles')
-        .select('*, brand_vehicles(name), model_vehicles(name),types_of_vehicles(name),type(name)')
-        .eq('id', id)
-        .eq('company_id', actualCompany?.id);
-
-      //.single()
-
-      if (error) {
-        console.error('Error al obtener los datos del vehículo:', error);
-      } else {
-        const transformedData = vehicleData?.map((item: VehicleType) => ({
-          ...item,
-          type_of_vehicle: item.types_of_vehicles.name,
-          brand: item.brand_vehicles.name,
-          model: item.model_vehicles.name,
-          type: item.type,
-        }));
-
-        setVehicle(transformedData[0]);
-      }
-    } catch (error) {
-      console.error('Error al obtener los datos del vehículo:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchVehicleData();
-  }, [id, actualCompany]);
+  // useEffect(() => {
+  //   fetchVehicleData();
+  // }, [id, actualCompany]);
 
   const router = useRouter();
   const [hideInput, setHideInput] = useState(false);
@@ -381,6 +348,10 @@ export default function VehiclesForm2({ id, children }: { id: string; children: 
       intern_number: vehicle?.intern_number || '',
       picture: vehicle?.picture || '',
       allocated_to: [],
+      brand: vehicle?.brand || '',
+      model: vehicle?.model || '',
+      type_of_vehicle: vehicle?.type_of_vehicle || '',
+      type: vehicle?.type?.name || '',
     },
   });
 
@@ -610,7 +581,7 @@ export default function VehiclesForm2({ id, children }: { id: string; children: 
       }
     );
   }
-  const variants = {
+  const variants:any = {
     operativo: 'success',
     'no operativo': 'destructive',
     'en reparación': 'yellow',
@@ -618,7 +589,7 @@ export default function VehiclesForm2({ id, children }: { id: string; children: 
     default: 'default',
   };
 
-  const conditionConfig = {
+  const conditionConfig :any = {
     'operativo condicionado': { color: 'bg-blue-500', icon: AlertTriangle },
     operativo: { color: 'bg-green-500', icon: CheckCircle },
     'no operativo': { color: 'bg-red-500', icon: XCircle },
@@ -646,16 +617,19 @@ export default function VehiclesForm2({ id, children }: { id: string; children: 
                   </Avatar>
                 </CardTitle>
                 <div className="text-muted-foreground text-2xl flex flex-col">
-                  <div>Tipo de equipo: {vehicle?.type.name}</div>
+                  <div>Tipo de equipo: {vehicle?.type?.name}</div>
 
                   <div>Numero interno: {vehicle?.intern_number}</div>
                   <Badge
                     className="w-fit mt-2 capitalize"
-                    variant={variants[vehicle?.condition || 'default'] as 'default'}
+                    variant={variants[(vehicle?.condition as any) || 'default'] as any}
                   >
                     {vehicle?.condition && (
                       <>
-                        {React.createElement(conditionConfig[vehicle.condition].icon, { className: 'mr-2 size-4' })}
+                        {React.createElement(
+                          conditionConfig[vehicle?.condition || ('default' as keyof typeof conditionConfig)]?.icon,
+                          { className: 'mr-2 size-4' }
+                        )}
                         {vehicle.condition}
                       </>
                     )}
@@ -1182,7 +1156,7 @@ export default function VehiclesForm2({ id, children }: { id: string; children: 
           </Form>
         </TabsContent>
         <TabsContent value="documents">
-          <DocumentEquipmentComponent id={id} />
+          <DocumentEquipmentComponent id={vehicle?.id} />
         </TabsContent>
         <TabsContent value="repairs" className="px-3 py-2">
           {children}
