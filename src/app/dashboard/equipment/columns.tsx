@@ -44,10 +44,11 @@ import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ArrowUpDown, CalendarIcon } from 'lucide-react';
+import { AlertTriangle, ArrowUpDown, CalendarIcon, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
-import { Fragment, useState } from 'react';
+import React, { Fragment, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { RiToolsFill } from 'react-icons/ri';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../../../supabase/supabase';
@@ -76,6 +77,7 @@ type Colum = {
   showInactive: boolean;
   status: string;
   allocated_to: string;
+  condition: 'operativo' | 'no operativo' | 'en reparación' | 'operativo condicionado';
 };
 
 const allocatedToRangeFilter: FilterFn<Colum> = (
@@ -100,58 +102,56 @@ const allocatedToRangeFilter: FilterFn<Colum> = (
 };
 
 export const EquipmentColums: ColumnDef<Colum>[] = [
-   {
-     id: 'actions',
-     cell: ({ row }: { row: any }) => {
+  {
+    id: 'actions',
+    cell: ({ row }: { row: any }) => {
+      const share = useLoggedUserStore((state) => state.sharedCompanies);
+      const profile = useLoggedUserStore((state) => state.credentialUser?.id);
+      const owner = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
+      const users = useLoggedUserStore((state) => state);
+      const company = useLoggedUserStore((state) => state.actualCompany?.id);
 
-       const share = useLoggedUserStore((state) => state.sharedCompanies);
-       const profile = useLoggedUserStore((state) => state.credentialUser?.id);
-       const owner = useLoggedUserStore((state) => state.actualCompany?.owner_id.id);
-       const users = useLoggedUserStore((state) => state);
-       const company = useLoggedUserStore((state) => state.actualCompany?.id);
-      
-       let role = '';
-       if (owner === profile) {
+      let role = '';
+      if (owner === profile) {
         role = users?.actualCompany?.owner_id?.role as string;
-        
-       } else {
-        
-         const roleRaw = share?.filter((item: any) =>
-             item.company_id.id === company &&
-             Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))
-           )
-           .map((item: any) => item.role);
-         role = roleRaw?.join('');
-       }
-       const [showModal, setShowModal] = useState(false);
-       const [integerModal, setIntegerModal] = useState(false);
-       const [domain, setDomain] = useState('');
-  //     //const user = row.original
-       const [showInactive, setShowInactive] = useState<boolean>(false);
-       const [showDeletedEquipment, setShowDeletedEquipment] = useState(false);
-       const equipment = row.original;
+      } else {
+        const roleRaw = share
+          ?.filter(
+            (item: any) =>
+              item.company_id.id === company &&
+              Object.values(item).some((value) => typeof value === 'string' && value.includes(profile as string))
+          )
+          .map((item: any) => item.role);
+        role = roleRaw?.join('');
+      }
+      const [showModal, setShowModal] = useState(false);
+      const [integerModal, setIntegerModal] = useState(false);
+      const [domain, setDomain] = useState('');
+      //     //const user = row.original
+      const [showInactive, setShowInactive] = useState<boolean>(false);
+      const [showDeletedEquipment, setShowDeletedEquipment] = useState(false);
+      const equipment = row.original;
 
-       const handleOpenModal = (id: string) => {
-         setDomain(id);
-         setShowModal(!showModal);
-       };
-       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
+      const handleOpenModal = (id: string) => {
+        setDomain(id);
+        setShowModal(!showModal);
+      };
+      const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
-      
-       const handleOpenIntegerModal = (id: string) => {
-         setDomain(id);
-         setIntegerModal(!integerModal);
-       };
+      const handleOpenIntegerModal = (id: string) => {
+        setDomain(id);
+        setIntegerModal(!integerModal);
+      };
 
-       const { errorTranslate } = useEdgeFunctions();
-       const form = useForm<z.infer<typeof formSchema>>({
-          resolver: zodResolver(formSchema),
-         defaultValues: {
-           reason_for_termination: undefined,
-         },
-       });
+      const { errorTranslate } = useEdgeFunctions();
+      const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+          reason_for_termination: undefined,
+        },
+      });
 
-       async function reintegerEquipment() {
+      async function reintegerEquipment() {
         try {
           const { data, error } = await supabase
             .from('vehicles')
@@ -165,7 +165,7 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
             .select();
 
           setIntegerModal(!integerModal);
-      
+
           setShowDeletedEquipment(false);
           toast.success('Equipo reintegrado', {
             description: `El equipo ${equipment?.engine} ha sido reintegrado`,
@@ -174,9 +174,9 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
           const message = await errorTranslate(error?.message);
           toast.error('Error al reintegrar el equipo', { description: message });
         }
-       }
+      }
 
-       async function onSubmit(values: z.infer<typeof formSchema>) {
+      async function onSubmit(values: z.infer<typeof formSchema>) {
         const data = {
           ...values,
           termination_date: format(values.termination_date, 'yyyy-MM-dd'),
@@ -201,170 +201,170 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
           const message = await errorTranslate(error?.message);
           toast.error('Error al dar de baja el equipo', { description: message });
         }
-       }
+      }
 
-       const handleToggleInactive = () => {
-         setShowInactive(!showInactive);
-       };
+      const handleToggleInactive = () => {
+        setShowInactive(!showInactive);
+      };
 
-       return (
-         <DropdownMenu>
-           {integerModal && (
-             <AlertDialog defaultOpen onOpenChange={() => setIntegerModal(!integerModal)}>
-               <AlertDialogContent>
-                 <AlertDialogHeader>
-                   <AlertDialogTitle>¿Estás completamente seguro?</AlertDialogTitle>
-                   <AlertDialogDescription>
-                     {`Estás a punto de reintegrar al equipo ${equipment.id}, quien fue dado de baja por ${equipment.reason_for_termination} el día ${equipment.termination_date}. Al reintegrar al equipo, se borrarán estas razones. Si estás seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
-                   </AlertDialogDescription>
-                 </AlertDialogHeader>
-                 <AlertDialogFooter>
-                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                   <AlertDialogAction onClick={() => reintegerEquipment()}>Continuar</AlertDialogAction>
-                 </AlertDialogFooter>
-               </AlertDialogContent>
-             </AlertDialog>
-           )}
-           {showModal && (
-             <Dialog defaultOpen onOpenChange={() => setShowModal(!showModal)}>
-               <DialogContent className="dark:bg-slate-950">
-                 <DialogTitle>Dar de baja Equipo</DialogTitle>
-                 <DialogDescription>
-                   ¿Estás seguro de que deseas dar de baja este equipo?, completa los campos para continuar.
-                 </DialogDescription>
-                 <DialogFooter>
-                   <div className="w-full">
-                     <Form {...form}>
-                       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                         <FormField
-                           control={form.control}
-                           name="reason_for_termination"
-                           render={({ field }) => (
-                             <FormItem>
-                               <FormLabel>Motivo de Baja</FormLabel>
-                               <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                 <FormControl>
-                                   <SelectTrigger>
-                                     <SelectValue placeholder="Selecciona la razón" />
-                                   </SelectTrigger>
-                                 </FormControl>
-                                 <SelectContent>
-                                   <SelectItem value="Venta del vehículo">Venta del vehículo</SelectItem>
-                                   <SelectItem value="Destrucción Total">Destrucción Total</SelectItem>
-                                   <SelectItem value="Fundido">Fundido</SelectItem>
-                                 </SelectContent>
-                               </Select>
-                               <FormDescription>Elige la razón por la que deseas dar de baja el equipo</FormDescription>
-                               <FormMessage />
-                             </FormItem>
-                           )}
-                         />
-                         <FormField
-                           control={form.control}
-                           name="termination_date"
-                           render={({ field }) => (
-                             <FormItem className="flex flex-col">
-                               <FormLabel>Fecha de Baja</FormLabel>
-                               <Popover>
-                                 <PopoverTrigger asChild>
-                                   <FormControl>
-                                     <Button
-                                       variant={'outline'}
-                                       className={cn(
-                                         ' pl-3 text-left font-normal',
-  //                                       !field.value && 'text-muted-foreground'
-                                       )}
-                                     >
-                                       {field.value ? (
-                                         format(field.value, 'P', {
-                                           locale: es,
-                                         })
-                                       ) : (
-                                         <span>Elegir fecha</span>
-                                       )}
-                                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                     </Button>
-                                   </FormControl>
-                                 </PopoverTrigger>
-                                 <PopoverContent className="w-auto p-0" align="start">
-                                   <Calendar
-                                     mode="single"
-                                     selected={field.value}
-                                     onSelect={field.onChange}
-                                     disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
-                                     initialFocus
-                                     locale={es}
-                                   />
-                                 </PopoverContent>
-                               </Popover>
-                               <FormDescription>Fecha en la que se dio de baja</FormDescription>
-                               <FormMessage />
-                             </FormItem>
-                           )}
-                         />
-                         <div className="flex gap-4 justify-end">
-                           <Button variant="destructive" type="submit">
-                             Dar de Baja
-                           </Button>
-                           <DialogClose>Cancelar</DialogClose>
-                         </div>
-                       </form>
-                     </Form>
-                     {/* <Button variant="destructive" onClick={() => handleDelete()}>
+      return (
+        <DropdownMenu>
+          {integerModal && (
+            <AlertDialog defaultOpen onOpenChange={() => setIntegerModal(!integerModal)}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Estás completamente seguro?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {`Estás a punto de reintegrar al equipo ${equipment.id}, quien fue dado de baja por ${equipment.reason_for_termination} el día ${equipment.termination_date}. Al reintegrar al equipo, se borrarán estas razones. Si estás seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => reintegerEquipment()}>Continuar</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          {showModal && (
+            <Dialog defaultOpen onOpenChange={() => setShowModal(!showModal)}>
+              <DialogContent className="dark:bg-slate-950">
+                <DialogTitle>Dar de baja Equipo</DialogTitle>
+                <DialogDescription>
+                  ¿Estás seguro de que deseas dar de baja este equipo?, completa los campos para continuar.
+                </DialogDescription>
+                <DialogFooter>
+                  <div className="w-full">
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                        <FormField
+                          control={form.control}
+                          name="reason_for_termination"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Motivo de Baja</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona la razón" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="Venta del vehículo">Venta del vehículo</SelectItem>
+                                  <SelectItem value="Destrucción Total">Destrucción Total</SelectItem>
+                                  <SelectItem value="Fundido">Fundido</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormDescription>Elige la razón por la que deseas dar de baja el equipo</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="termination_date"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                              <FormLabel>Fecha de Baja</FormLabel>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <FormControl>
+                                    <Button
+                                      variant={'outline'}
+                                      className={cn(
+                                        ' pl-3 text-left font-normal'
+                                        //                                       !field.value && 'text-muted-foreground'
+                                      )}
+                                    >
+                                      {field.value ? (
+                                        format(field.value, 'P', {
+                                          locale: es,
+                                        })
+                                      ) : (
+                                        <span>Elegir fecha</span>
+                                      )}
+                                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                  </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
+                                    initialFocus
+                                    locale={es}
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                              <FormDescription>Fecha en la que se dio de baja</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="flex gap-4 justify-end">
+                          <Button variant="destructive" type="submit">
+                            Dar de Baja
+                          </Button>
+                          <DialogClose>Cancelar</DialogClose>
+                        </div>
+                      </form>
+                    </Form>
+                    {/* <Button variant="destructive" onClick={() => handleDelete()}>
                      Eliminar
                    </Button> */}
-                   </div>
-                 </DialogFooter>
-               </DialogContent>
-             </Dialog>
-           )}
-           <DropdownMenuTrigger asChild>
-             {/* {role === "Invitado" ? null :( */}
-             <Button variant="ghost" className="h-8 w-8 p-0">
-               <span className="sr-only">Open menu</span>
-               <DotsVerticalIcon className="h-4 w-4" />
-             </Button>
-             {/* )} */}
-           </DropdownMenuTrigger>
-           <DropdownMenuContent align="end">
-             <DropdownMenuLabel>Opciones</DropdownMenuLabel>
-             <DropdownMenuSeparator />
-             <DropdownMenuItem onClick={() => navigator.clipboard.writeText(equipment.domain)}>
-               Copiar Dominio
+                  </div>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+          <DropdownMenuTrigger asChild>
+            {/* {role === "Invitado" ? null :( */}
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <DotsVerticalIcon className="h-4 w-4" />
+            </Button>
+            {/* )} */}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Opciones</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(equipment.domain)}>
+              Copiar Dominio
             </DropdownMenuItem>
-             <DropdownMenuItem>
-               <Link className="w-full" href={`/dashboard/equipment/action?action=view&id=${equipment?.id}`}>
-                 Ver equipo
-               </Link>
-             </DropdownMenuItem>
-             <DropdownMenuItem>
-               {role !== 'Invitado' && (
-                 <Link className="w-full" href={`/dashboard/equipment/action?action=edit&id=${equipment?.id}`}>
-                   Editar equipo
-                 </Link>
-               )}
-           </DropdownMenuItem>
-             <DropdownMenuItem>
-               {role !== 'Invitado' && (
-                 <Fragment>
-                   {equipment.is_active ? (
-                     <Button variant="destructive" onClick={() => handleOpenModal(equipment?.id)} className="text-sm">
+            <DropdownMenuItem>
+              <Link className="w-full" href={`/dashboard/equipment/action?action=view&id=${equipment?.id}`}>
+                Ver equipo
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              {role !== 'Invitado' && (
+                <Link className="w-full" href={`/dashboard/equipment/action?action=edit&id=${equipment?.id}`}>
+                  Editar equipo
+                </Link>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              {role !== 'Invitado' && (
+                <Fragment>
+                  {equipment.is_active ? (
+                    <Button variant="destructive" onClick={() => handleOpenModal(equipment?.id)} className="text-sm">
                       Dar de baja equipo
-                     </Button>
-                   ) : (
-                     <Button variant="primary" onClick={() => handleOpenIntegerModal(equipment.id)} className="text-sm">
-                       Reintegrar Equipo
-                     </Button>
-                   )}
-                 </Fragment>
-               )}
-             </DropdownMenuItem>
-           </DropdownMenuContent>
-         </DropdownMenu>
-       );
-     },
-   },
-   {
+                    </Button>
+                  ) : (
+                    <Button variant="primary" onClick={() => handleOpenIntegerModal(equipment.id)} className="text-sm">
+                      Reintegrar Equipo
+                    </Button>
+                  )}
+                </Fragment>
+              )}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
+  },
+  {
     accessorKey: 'intern_number',
     header: ({ column }: { column: any }) => {
       return (
@@ -421,12 +421,12 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
       return <Badge>Proximamente..</Badge>;
       const values = row.original.allocated_to;
       if (!values) return <Badge variant={'destructive'}>Revisando...</Badge>;
-      
+
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
       const contractorCompanies = useCountriesStore((state) =>
         state.customers?.filter((company: any) => company.company_id.toString() === actualCompany?.id)
       );
-      
+
       if (contractorCompanies.some((e) => e.name.includes(row.original.allocated_to))) return true;
 
       // const name = contractorCompanies.find()
@@ -435,10 +435,36 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
     },
     filterFn: allocatedToRangeFilter,
   },
-  
+
   {
     accessorKey: 'year',
     header: 'Año',
+  },
+  {
+    accessorKey: 'condition',
+    header: 'Condición',
+    cell: ({ row }) => {
+      const variants = {
+        operativo: 'success',
+        'no operativo': 'destructive',
+        'en reparación': 'yellow',
+        'operativo condicionado': 'info',
+      };
+
+      const conditionConfig = {
+        'operativo condicionado': { color: 'bg-blue-500', icon: AlertTriangle },
+        operativo: { color: 'bg-green-500', icon: CheckCircle },
+        'no operativo': { color: 'bg-red-500', icon: XCircle },
+        'en reparación': { color: 'bg-yellow-500', icon: RiToolsFill },
+      };
+
+      return (
+        <Badge variant={variants[row.original.condition] as 'default'}>
+          {React.createElement(conditionConfig[row.original.condition].icon, { className: 'mr-2 size-4' })}
+          {row.original.condition}
+        </Badge>
+      );
+    },
   },
   {
     accessorKey: 'brand',

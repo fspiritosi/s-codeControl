@@ -412,7 +412,8 @@ export const accordionSchema = z
       required_error: 'El tipo de contrato es requerido',
     }),
     allocated_to: z.array(z.string()).optional(),
-    guild: z.string()
+    guild: z
+      .string()
       .trim()
       .optional()
       .nullable()
@@ -420,19 +421,21 @@ export const accordionSchema = z
         message: 'El nombre debe tener entre 2 y 100 caracteres.',
       }),
     guild_id: z.string().optional(),
-    covenants: z.string()
+    covenants: z
+      .string()
       .trim()
       .optional()
       .nullable()
-      .refine((value) => !value || (value.length >= 2 && value.length <= 30), {
-        message: 'El convenio debe tener entre 2 y 30 caracteres.',
+      .refine((value) => !value || (value.length >= 2 && value.length <= 60), {
+        message: 'El convenio debe tener entre 2 y 60 caracteres.',
       }),
     covenants_id: z.string().optional(),
     // .regex(/^[a-zA-Z ]+$/, {
     //     message: 'El apellido solo puede contener letras.',
     // })
 
-    category: z.string()
+    category: z
+      .string()
       .trim()
       .optional()
       .nullable()
@@ -576,7 +579,7 @@ export const SharedUser = z.object({
   alta: z.date().or(z.string()),
   id: z.string(),
   img: z.string(),
-  customerName: z.string().optional()
+  customerName: z.string().optional(),
 });
 
 export type SharedUser = z.infer<typeof SharedUser>;
@@ -611,6 +614,7 @@ export const VehicleSchema =
       types_of_vehicles: BrandVehiclesClassSchema,
       brand_vehicles: BrandVehiclesClassSchema,
       model_vehicles: BrandVehiclesClassSchema,
+      condition: z.enum(['operativo', 'no operativo', 'en reparación', 'operativo condicionado']),
     })
   ) || [];
 

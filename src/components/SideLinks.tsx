@@ -5,7 +5,7 @@ import cookies from 'js-cookie';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { FiTruck } from 'react-icons/fi';
+import { FiTool, FiTruck } from 'react-icons/fi';
 import {
   MdHelpOutline,
   MdListAlt,
@@ -57,11 +57,11 @@ const Allinks = [
     href: '/dashboard/operations',
     icon: <MdCalendarMonth size={sizeIcons} />,
   },
-  // {
-  //   name: 'Mantenimiento',
-  //   href: '/dashboard/maintenance',
-  //   icon: <MdListAlt size={sizeIcons} />,
-  // },
+  {
+    name: 'Mantenimiento',
+    href: '/dashboard/maintenance',
+    icon: <FiTool size={sizeIcons} />,
+  },
   // {
   //   name: 'Formularios',
   //   href: '/dashboard/forms',

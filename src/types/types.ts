@@ -225,6 +225,7 @@ export type Vechicle = {
   user_id: string;
   status: 'Avalado' | 'No avalado';
   type: Model;
+  condition: 'operativo' | 'no operativo' | 'en reparación' | 'operativo condicionado';
 };
 
 type Resource = Vechicle | Employee;
@@ -254,108 +255,6 @@ type Document2 = {
   applies: Resource;
   document_url: string;
 };
-
-export const AllDocuments: Document2[] = [
-  {
-    id: '1',
-    created_at: '2022-01-01',
-    id_storage: 'abc123',
-    id_document_types: {
-      id: '1',
-      name: 'Passport',
-      description: 'Travel document',
-      applies: 'Persona',
-      multiresource: false,
-      mandatory: true,
-      expired: true,
-      special: false,
-      is_active: true,
-      created_at: '2022-01-01',
-    },
-    validity: '2023-01-01',
-    state: 'presentado',
-    is_active: true,
-    user_id: '123',
-    applies: {
-      id: '1',
-      lastname: 'Doe',
-      firstname: 'John',
-      nationality: 'USA',
-      cuil: '123456789',
-      document_type: 'Passport',
-      document_number: 'ABC123',
-      birthplace: 'New York',
-      gender: 'Male',
-      marital_status: 'Single',
-      level_of_education: "Bachelor's Degree",
-      picture: 'https://example.com/johndoe.jpg',
-      street: '123 Main St',
-      street_number: '123',
-      province: 'New York',
-      city: 'New York City',
-      postal_code: '12345',
-      phone: '123-456-7890',
-      email: 'johndoe@example.com',
-      file: null,
-      hierarchical_position: 'Manager',
-      company_position: 'Software Engineer',
-      workflow_diagram: 'Diagram 1',
-      normal_hours: '40',
-      type_of_contract: 'Full-time',
-      allocated_to: ['Project A', 'Project B'],
-      date_of_admission: '2022-01-01',
-      is_active: true,
-      reason_for_termination: 'Resigned',
-      termination_date: '2023-01-01',
-      status: 'Avalado',
-    },
-    document_url: 'https://example.com/document.pdf',
-  },
-  {
-    id: '2',
-    created_at: '2022-02-01',
-    id_storage: 'def456',
-    id_document_types: {
-      id: '2',
-      name: "Driver's License",
-      description: 'Driving document',
-      applies: 'Persona',
-      multiresource: false,
-      mandatory: true,
-      expired: true,
-      special: false,
-      is_active: true,
-      created_at: '2022-02-01',
-    },
-    validity: '2023-02-01',
-    state: 'rechazado',
-    is_active: true,
-    user_id: '456',
-    applies: {
-      id: '2',
-      created_at: '2022-02-01',
-      picture: 'https://example.com/vehicle.jpg',
-      type_of_vehicle: { name: 'Car', id: '1', created_at: '2022-02-01' },
-      domain: 'ABC123',
-      chassis: '123456789',
-      engine: 'ABC123',
-      serie: 'ABC123',
-      intern_number: '123',
-      year: '2022',
-      brand: { name: 'Toyota', id: '1', created_at: '2022-02-01' },
-      model: { name: 'Corolla', id: '1', created_at: '2022-02-01' },
-      company_id: '123',
-      is_active: true,
-      termination_date: '2023-02-01',
-      reason_for_termination: 'Sold',
-      user_id: '456',
-      status: 'Avalado',
-      type: { name: 'Corolla', id: '1', created_at: '2022-02-01' },
-    },
-    document_url: 'https://example.com/document.pdf',
-  },
-  // Add more examples here...
-];
 
 export type AuditorDocument = {
   date: string;
@@ -652,5 +551,124 @@ export type TypeOfRepair = {
   criticity: 'Alta' | 'Media' | 'Baja';
   is_active: boolean;
   company_id: string;
-  type_of_maintenance: 'Preventivo'| 'Correctivo';
-}[]
+  type_of_maintenance: 'Preventivo' | 'Correctivo';
+}[];
+
+export type RepairsSolicituds = {
+  id: string;
+  created_at: string;
+  state: 'Pendiente' | 'Esperando repuestos' | 'En reparación' | 'Finalizado' | 'Rechazado' | 'Cancelado';
+  user_description: string;
+  mechanic_description: null | string;
+  end_date: null | Date;
+  user_id: string;
+  mechanic_id: null | string;
+  reparation_type: TypeOfRepair[0];
+  equipment_id: Vechicle;
+  user_images: string[];
+  mechanic_images: string[];
+  vehicle_id: string;
+  vehicle_condition: 'operativo' | 'no operativo' | 'en reparación' | 'operativo condicionado';
+
+  repairlogs:
+    | {
+        id: string;
+        title: string;
+        repair_id: string;
+        created_at: string;
+        description: string;
+      }[]
+    | [];
+}[];
+
+export type FormattedSolicitudesRepair = {
+  id: string;
+  title: string;
+  state: 'Pendiente' | 'Esperando repuestos' | 'En reparación' | 'Finalizado' | 'Rechazado' | 'Cancelado';
+  label: string;
+  priority: 'Alta' | 'Media' | 'Baja';
+  created_at: string;
+  equipment: string;
+  user_description: string;
+  year: string;
+  brand: string;
+  model: string;
+  domain: string;
+  engine: string;
+  status: string;
+  chassis: string;
+  picture: string;
+  solicitud_status: string;
+  type_of_maintenance: string;
+  type_of_equipment: string;
+  user_images: string[];
+  vehicle_id: string;
+  mechanic_images: string[];
+  repairlogs:
+    | {
+        id: string;
+        title: string;
+        repair_id: string;
+        created_at: string;
+        description: string;
+      }[]
+    | [];
+  mechanic_description: string | null;
+  vehicle_condition: 'operativo' | 'no operativo' | 'en reparación' | 'operativo condicionado';
+}[];
+
+// Tipo para las categorías dentro de un convenio
+export type Category = {
+  id: string;
+  name: string;
+  is_active: boolean;
+  created_at: string;
+  covenant_id: string;
+};
+
+// Tipo para los convenios dentro de un sindicato
+export type Covenant = {
+  id: string;
+  name: string;
+  category: Category[];
+  guild_id: string;
+  is_active: boolean;
+  company_id: string;
+  created_at: string;
+};
+
+// Tipo para el objeto de entrada que representa un sindicato
+export type Guild = {
+  id: string;
+  created_at: string;
+  name: string;
+  company_id: string;
+  is_active: boolean;
+  covenant: Covenant[];
+};
+
+// Tipo para una categoría formateada en el objeto de salida
+export type FormattedCategory = {
+  name: string;
+  type: 'categoria';
+  id: string;
+};
+
+// Tipo para un convenio formateado en el objeto de salida
+export type FormattedCovenant = {
+  name: string;
+  type: 'convenio';
+  id: string;
+  children: FormattedCategory[];
+};
+
+// Tipo para un sindicato formateado en el objeto de salida
+export type FormattedGuild = {
+  name: string;
+  type: 'sindicato';
+  id: string;
+  children: FormattedCovenant[];
+};
+
+// Tipo para la función de salida completa
+export type FormattedOutput = FormattedGuild[]|undefined;
