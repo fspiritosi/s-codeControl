@@ -624,15 +624,13 @@ console.log('vehicle',vehicle);
                     className="w-fit mt-2 capitalize"
                     variant={variants[(vehicle?.condition as any) || 'default'] as any}
                   >
-                    {vehicle?.condition && (
-                      <>
-                        {React.createElement(
-                          conditionConfig[vehicle?.condition || ('default' as keyof typeof conditionConfig)]?.icon,
-                          { className: 'mr-2 size-4' }
-                        )}
-                        {vehicle.condition}
-                      </>
-                    )}
+                    <>
+                      {React.createElement(
+                        conditionConfig[vehicle?.condition || ('default' as keyof typeof conditionConfig)]?.icon,
+                        { className: 'mr-2 size-4' }
+                      )}
+                      {vehicle?.condition}
+                    </>
                   </Badge>
                 </div>
               </div>
