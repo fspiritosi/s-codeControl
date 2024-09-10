@@ -38,6 +38,7 @@ export default async function RepairSolicitudes({
       model: repair.equipment_id.model.name,
       domain: repair.equipment_id.domain,
       engine: repair.equipment_id.engine,
+      serie: repair.equipment_id.serie,
       status: repair.equipment_id.status,
       chassis: repair.equipment_id.chassis,
       picture: repair.equipment_id.picture,

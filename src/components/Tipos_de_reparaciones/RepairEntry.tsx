@@ -70,10 +70,10 @@ export default function RepairNewEntry({
   const [images, setImages] = useState<(string | null)[]>([null, null, null]);
   const [files, setFiles] = useState<(File | undefined)[]>([undefined, undefined, undefined]);
 
+  console.log();
+
   function onSubmit(data: z.infer<typeof FormSchema>) {
     //Agregar la reparacion al otro formulario
-
-    console.log(files, 'files');
 
     const dataWithImages = {
       ...data,
@@ -140,7 +140,9 @@ export default function RepairNewEntry({
         try {
           const selectedRepair = tipo_de_mantenimiento.find((e) => e.id === allRepairs[0].repair);
           const vehicle_id = equipment?.find(
-            (equip) => equip?.domain?.toLowerCase() === allRepairs[0]?.domain?.toLowerCase()
+            (equip) =>
+              equip?.domain?.toLowerCase() === allRepairs[0]?.domain?.toLowerCase() ||
+              equip?.serie?.toLowerCase() === allRepairs[0]?.domain?.toLowerCase()
           ); //! OJO si se permiten mas de 1 vehiculo
           const condition = vehicle_id?.condition;
           console.log('vehicle_id', vehicle_id);
@@ -159,7 +161,9 @@ export default function RepairNewEntry({
 
               return {
                 reparation_type: e.repair,
-                equipment_id: equipment.find((equip) => equip.domain === e.domain)?.id,
+                equipment_id:
+                  equipment.find((equip) => equip.domain === e.domain)?.id ||
+                  equipment.find((equip) => equip.serie === e.domain)?.id,
                 user_description: e.description,
                 user_id,
                 user_images,
@@ -184,7 +188,7 @@ export default function RepairNewEntry({
               .from('vehicles')
               .update({ condition: 'no operativo' })
               .eq('id', vehicle_id?.id);
-  
+
             console.log('error alta', error);
             console.log('vehicle_id alta', vehicle_id?.id);
           } else if (hasMediumCriticity && condition !== 'no operativo') {
@@ -195,7 +199,6 @@ export default function RepairNewEntry({
             console.log('error media', error);
             console.log('vehicle_id media', vehicle_id?.id);
           }
-  
 
           await fetch(`${URL}/api/repair_solicitud`, {
             method: 'POST',
@@ -235,13 +238,16 @@ export default function RepairNewEntry({
     setImages([null, null, null]);
     setFiles([undefined, undefined, undefined]);
   };
-
+  console.log(default_equipment_id, 'default_equipment_id');
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       vehicle_id: default_equipment_id || '',
-    }
+      domain: equipment?.find((equip) => equip.id === default_equipment_id)?.domain || '',
+    },
   });
+
+  console.log(form.formState.errors);
 
   const handleDeleteRepair = (provicionalId: string) => {
     setAllRepairs((prev) => prev.filter((e) => e.provicionalId !== provicionalId));
@@ -270,7 +276,8 @@ export default function RepairNewEntry({
                               className={cn('justify-between', !field.value && 'text-muted-foreground')}
                             >
                               {field.value
-                                ? equipment?.find((equip) => equip.id === field.value)?.domain
+                                ? equipment?.find((equip) => equip.id === field.value)?.domain ||
+                                  equipment?.find((equip) => equip.id === field.value)?.serie
                                 : 'Selecciona un equipo'}
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
@@ -282,24 +289,28 @@ export default function RepairNewEntry({
                             <CommandList>
                               <CommandEmpty>No se encontro el equipo</CommandEmpty>
                               <CommandGroup>
-                                {equipment?.map((equip) => (
-                                  <CommandItem
-                                    value={equip.domain}
-                                    key={equip.intern_number}
-                                    onSelect={() => {
-                                      form.setValue('vehicle_id', equip.id);
-                                      form.setValue('domain', equip.domain);
-                                    }}
-                                  >
-                                    <Check
-                                      className={cn(
-                                        'mr-2 h-4 w-4',
-                                        equip.id === field.value ? 'opacity-100' : 'opacity-0'
-                                      )}
-                                    />
-                                    {`${equip.domain} (Nº${equip.intern_number})`}
-                                  </CommandItem>
-                                ))}
+                                {equipment?.map((equip) => {
+                                  console.log('equip', equip);
+
+                                  return (
+                                    <CommandItem
+                                      value={equip.domain ?? equip.serie}
+                                      key={equip.intern_number}
+                                      onSelect={() => {
+                                        form.setValue('vehicle_id', equip.id);
+                                        form.setValue('domain', equip.domain ?? equip.serie);
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          'mr-2 h-4 w-4',
+                                          equip.id === field.value ? 'opacity-100' : 'opacity-0'
+                                        )}
+                                      />
+                                      {`${equip.domain ?? equip.serie} (Nº${equip.intern_number})`}
+                                    </CommandItem>
+                                  );
+                                })}
                               </CommandGroup>
                             </CommandList>
                           </Command>
@@ -370,7 +381,7 @@ export default function RepairNewEntry({
                             <CardContent className="flex aspect-square items-center justify-center p-1">
                               {images[index] ? (
                                 <img
-                                  src={images[index] ||''}
+                                  src={images[index] || ''}
                                   alt={`Imagen ${index + 1}`}
                                   className="w-full h-full object-cover rounded-lg"
                                 />
@@ -406,7 +417,7 @@ export default function RepairNewEntry({
               <TableRow>
                 <TableHead className="w-[300px]">Nombre</TableHead>
                 <TableHead className="w-[300px]">Descripcion</TableHead>
-                <TableHead className="w-[300px]">Dominio</TableHead>
+                <TableHead className="w-[300px]">Dominio o Serie</TableHead>
                 <TableHead className="flex justify-end pr-14">Eliminar</TableHead>
               </TableRow>
             </TableHeader>

@@ -626,7 +626,7 @@ console.log('vehicle',vehicle);
                   >
                     <>
                       {React.createElement(
-                        conditionConfig[vehicle?.condition || ('default' as keyof typeof conditionConfig)]?.icon,
+                        conditionConfig[vehicle?.condition || ('default' as keyof typeof conditionConfig)]?.icon ||'s',
                         { className: 'mr-2 size-4' }
                       )}
                       {vehicle?.condition}

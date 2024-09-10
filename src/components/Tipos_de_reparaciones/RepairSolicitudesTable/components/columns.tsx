@@ -98,7 +98,7 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
     accessorKey: 'domain',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Equipo" />,
     cell: ({ row }) => {
-      return <div className="flex items-center">{row.original.domain}</div>;
+      return <div className="flex items-center">{row.original.domain ?? row.original.serie}</div>;
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
@@ -290,8 +290,8 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
                   <div className="font-medium">{row.original.model}</div>
                 </div>
                 <div className="grid gap-2">
-                  <Label>Dominio</Label>
-                  <div className="font-medium">{row.original.domain}</div>
+                  <Label>{row.original.domain ? 'Dominio' : 'Serie'}</Label>
+                  <div className="font-medium">{row.original.domain ?? row.original.serie}</div>
                 </div>
                 <div className="grid gap-2">
                   <Label>Motor</Label>
@@ -307,28 +307,30 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
                 </div>
               </div>
               <div className="mx-auto w-[90%]">
-                {imageUrl.length && <Badge className="text-sm mb-2"> Imagenes del vehiculo a reparar</Badge>}
-                <Carousel className="w-full">
-                  <CarouselContent>
-                    {imageUrl.map((image, index) => (
-                      <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
-                        <Card>
-                          <Link target="_blank" href={image || ''}>
-                            <CardContent className="flex aspect-square items-center justify-center p-1">
-                              <img
-                                src={image}
-                                alt={`Imagen ${index + 1}`}
-                                className="w-full h-full object-cover rounded-lg"
-                              />
-                            </CardContent>
-                          </Link>
-                        </Card>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious />
-                  <CarouselNext />
-                </Carousel>
+                {imageUrl.length > 0 && <Badge className="text-sm mb-2"> Imagenes del vehiculo a reparar</Badge>}
+                {imageUrl.length > 0 && (
+                  <Carousel className="w-full">
+                    <CarouselContent>
+                      {imageUrl.map((image, index) => (
+                        <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+                          <Card>
+                            <Link target="_blank" href={image || ''}>
+                              <CardContent className="flex aspect-square items-center justify-center p-1">
+                                <img
+                                  src={image}
+                                  alt={`Imagen ${index + 1}`}
+                                  className="w-full h-full object-cover rounded-lg"
+                                />
+                              </CardContent>
+                            </Link>
+                          </Card>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious />
+                    <CarouselNext />
+                  </Carousel>
+                )}
               </div>
               {imagesMechanic?.length && (
                 <div className="mx-auto w-[90%]">

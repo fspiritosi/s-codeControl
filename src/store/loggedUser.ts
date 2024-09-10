@@ -22,6 +22,7 @@ interface Document {
   isItMonthly: boolean;
   applies: string;
   mandatory: string;
+  serie?: string | null;
 }
 
 interface State {
@@ -748,6 +749,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
           resource_id: doc.applies?.id,
           id_document_types: doc.document_types.id,
           intern_number: `${doc.applies?.intern_number}`,
+          serie: doc.applies?.serie,
         };
       };
 
@@ -936,7 +938,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
             *,id_document_types(*)
           ),
           guild(id,name),
-          covenants(id,name),
+          covenant(id,name),
           category(id,name),
           contractor_employee(
             customers(

@@ -1,3 +1,4 @@
+import { CovenantRegister } from '@/components/CovenantRegister';
 import EmployesDiagram from '@/components/Diagrams/EmployesDiagram';
 import DocumentNav from '@/components/DocumentNav';
 import Viewcomponent from '@/components/ViewComponent';
@@ -7,6 +8,7 @@ import EmployeeDocumentsTabs from '../document/documentComponents/EmployeeDocume
 import EmployeeListTabs from '../document/documentComponents/EmployeeListTabs';
 import TypesDocumentAction from '../document/documentComponents/TypesDocumentAction';
 import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
+import CovenantTreeFile from '../company/actualCompany/covenant/CovenantTreeFile';
 
 const EmployeePage = async () => {
   const viewData = {
@@ -71,6 +73,17 @@ const EmployeePage = async () => {
           buttonActioRestricted: [''],
           buttonAction: <TypesDocumentAction optionChildrenProp="Persona" />,
           component: <TypesDocumentsView personas />,
+        },
+      },
+      {
+        value: 'covenant',
+        name: 'Convenios colectivos de trabajo',
+        restricted: [''],
+        content: {
+          title: 'Convenios colectivos de trabajo',
+          description: 'Lista de Convenios colectivos de trabajo',
+          buttonActioRestricted: [''],
+          component: <CovenantTreeFile />, 
         },
       },
       // {

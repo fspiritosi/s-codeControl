@@ -71,6 +71,7 @@ type Colum = {
   mandatory?: string;
   id_document_types?: string;
   intern_number?: string;
+  serie?: string | undefined | null;
 };
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -282,8 +283,6 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
       const [years, setYear] = useState(today.getFullYear().toString());
       const supabase = supabaseBrowser();
       const handleDownload = async (path: string, fileName: string, resourceName: string) => {
-
- 
         toast.promise(
           async () => {
             const { data, error } = await supabase.storage.from('document_files').download(path);
@@ -515,9 +514,8 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleOpenViewModal(domain)}>Historial de Modificaciones</DropdownMenuItem>
             <DropdownMenuItem
-             disabled={row.original.state === 'pendiente'}
+              disabled={row.original.state === 'pendiente'}
               onClick={() =>
-                
                 // console.log('Andamo ruleta en una camioneta',row)
                 handleDownload(row.original.document_url, row.original.documentName, row.original.resource)
               }
@@ -532,6 +530,10 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
   {
     accessorKey: 'resource',
     header: 'Empleado',
+    cell: ({ row, table }) => {
+      console.log(row.original);
+      return <p>{row.original.resource === 'null' ? row.original.serie : row.original.resource}</p>;
+    },
     filterFn: domainAndInternNumber,
   },
   {

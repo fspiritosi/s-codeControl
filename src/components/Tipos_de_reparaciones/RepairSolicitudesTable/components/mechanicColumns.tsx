@@ -106,7 +106,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
     accessorKey: 'domain',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Equipo" />,
     cell: ({ row }) => {
-      return <div className="flex items-center">{row.original.domain}</div>;
+      return <div className="flex items-center">{row.original.domain ?? row.original.serie}</div>;
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
@@ -235,7 +235,9 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
         const shouldUpdateFiles = files.some((e) => e !== undefined);
 
         if (shouldUpdateStatus || shouldUpdateFiles) {
-          let mechanic_imagesData = files.map((file, index) => formatImages(file, row.original.domain, index));
+          let mechanic_imagesData = files.map((file, index) =>
+            formatImages(file, row.original.domain ?? row.original.serie, index)
+          );
 
           const mechanic_images = mechanic_imagesData.map((e) => e?.url);
           const vehicle_id = row.original.vehicle_id;
@@ -428,7 +430,9 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
       };
 
       const updateRepair = async () => {
-        let mechanic_imagesData = files.map((file, index) => formatImages(file, row.original.domain, index));
+        let mechanic_imagesData = files.map((file, index) =>
+          formatImages(file, row.original.domain ?? row.original.serie, index)
+        );
 
         const mechanic_images = mechanic_imagesData.map((e) => e?.url);
 
@@ -596,8 +600,8 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                   <div className="font-medium">{row.original.model}</div>
                 </div>
                 <div className="grid gap-2">
-                  <Label>Dominio</Label>
-                  <div className="font-medium">{row.original.domain}</div>
+                  <Label>{row.original.domain ? 'Dominio' : 'Serie'}</Label>
+                  <div className="font-medium">{row.original.domain ?? row.original.serie}</div>
                 </div>
                 <div className="grid gap-2">
                   <Label>Motor</Label>
@@ -615,29 +619,32 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                 </div>
               </div>
               <div className="mx-auto w-[90%]">
-                <Badge className="text-sm mb-2"> Imagenes del equipo a reparar</Badge>
-                <Carousel className="w-full">
-                  <CarouselContent className="p-2">
-                    {imageUrl.map((image, index) => (
-                      <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3  overflow-hidden">
-                        <Card className="">
-                          <Link target="_blank" href={image || ''}>
-                            <CardContent className="flex aspect-square items-center justify-center p-1">
-                              <img
-                                src={image}
-                                alt={`Imagen ${index + 1}`}
-                                className="w-full h-full object-cover rounded-lg"
-                              />
-                            </CardContent>
-                          </Link>
-                        </Card>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious />
-                  <CarouselNext />
-                </Carousel>
+                {imageUrl.length > 0 && <Badge className="text-sm mb-2"> Imagenes del equipo a reparar</Badge>}
+                {imageUrl.length > 0 && (
+                  <Carousel className="w-full">
+                    <CarouselContent className="p-2">
+                      {imageUrl.map((image, index) => (
+                        <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3  overflow-hidden">
+                          <Card className="">
+                            <Link target="_blank" href={image || ''}>
+                              <CardContent className="flex aspect-square items-center justify-center p-1">
+                                <img
+                                  src={image}
+                                  alt={`Imagen ${index + 1}`}
+                                  className="w-full h-full object-cover rounded-lg"
+                                />
+                              </CardContent>
+                            </Link>
+                          </Card>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious />
+                    <CarouselNext />
+                  </Carousel>
+                )}
               </div>
+              
               {(imagesMechanic?.length || (status !== row.original.state && endingStates.includes(status))) && (
                 <div className="mx-auto w-[90%]">
                   <Badge className="text-sm mb-2 block w-fit"> Adjuntar imagenes</Badge>
