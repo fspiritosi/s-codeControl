@@ -653,12 +653,13 @@ export default function VehiclesForm2({ id, children }: { id: string; children: 
                     className="w-fit mt-2 capitalize"
                     variant={variants[vehicle?.condition || 'default'] as 'default'}
                   >
-                    {vehicle?.condition && (
-                      <>
-                        {React.createElement(conditionConfig[vehicle.condition].icon, { className: 'mr-2 size-4' })}
-                        {vehicle.condition}
-                      </>
-                    )}
+                    <>
+                      {React.createElement(
+                        conditionConfig[vehicle?.condition || ('default' as keyof typeof conditionConfig)]?.icon,
+                        { className: 'mr-2 size-4' }
+                      )}
+                      {vehicle?.condition}
+                    </>
                   </Badge>
                 </div>
               </div>
