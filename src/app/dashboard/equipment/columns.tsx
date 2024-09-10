@@ -449,6 +449,7 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
         'no operativo': 'destructive',
         'en reparación': 'yellow',
         'operativo condicionado': 'info',
+        default: 'default',
       };
 
       const conditionConfig = {
@@ -459,8 +460,8 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
       };
 
       return (
-        <Badge variant={variants[row.original.condition] as 'default'}>
-          {React.createElement(conditionConfig[row.original.condition].icon, { className: 'mr-2 size-4' })}
+        <Badge variant={variants[row.original?.condition] as 'default'}>
+          {React.createElement(conditionConfig[row.original?.condition]?.icon, { className: 'mr-2 size-4' })}
           {row.original.condition}
         </Badge>
       );
