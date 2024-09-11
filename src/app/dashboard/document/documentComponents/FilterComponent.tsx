@@ -1,6 +1,6 @@
 // FilterHeader.tsx
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TableHead } from '@/components/ui/table';
 
 interface FilterHeaderProps {
@@ -36,8 +36,12 @@ const FilterHeader = ({ filters, docOptions, onFilterChange }: FilterHeaderProps
       />
     </TableHead>
     <TableHead className="w-[100px] text-center" align="center">
-      <Select key={filters.multiresource} value={filters.multiresource} onValueChange={(value) => onFilterChange('multiresource', value)}>
-        <SelectTrigger className='w-[150px]'>
+      <Select
+        key={filters.multiresource}
+        value={filters.multiresource}
+        onValueChange={(value) => onFilterChange('multiresource', value)}
+      >
+        <SelectTrigger className="w-[150px]">
           <SelectValue placeholder="Multirecurso" />
         </SelectTrigger>
         <SelectContent>
@@ -52,7 +56,7 @@ const FilterHeader = ({ filters, docOptions, onFilterChange }: FilterHeaderProps
     </TableHead>
     <TableHead className="w-[130px] text-center" align="center">
       <Select key={filters.special} value={filters.special} onValueChange={(value) => onFilterChange('special', value)}>
-        <SelectTrigger className='w-[150px]'>
+        <SelectTrigger className="w-[150px]">
           <SelectValue placeholder="Es especial?" />
         </SelectTrigger>
         <SelectContent>
@@ -67,7 +71,7 @@ const FilterHeader = ({ filters, docOptions, onFilterChange }: FilterHeaderProps
     </TableHead>
     <TableHead className="w-[130px] text-center" align="center">
       <Select value={filters.monthly} onValueChange={(value) => onFilterChange('monthly', value)}>
-        <SelectTrigger className='w-[150px]'>
+        <SelectTrigger className="w-[150px]">
           <SelectValue placeholder="Es mensual?" />
         </SelectTrigger>
         <SelectContent>
@@ -82,7 +86,7 @@ const FilterHeader = ({ filters, docOptions, onFilterChange }: FilterHeaderProps
     </TableHead>
     <TableHead className="w-[100px] text-center" align="center">
       <Select value={filters.expired} onValueChange={(value) => onFilterChange('expired', value)}>
-        <SelectTrigger className='w-[150px]'>
+        <SelectTrigger className="w-[150px]">
           <SelectValue placeholder="Vence" />
         </SelectTrigger>
         <SelectContent>
@@ -97,7 +101,7 @@ const FilterHeader = ({ filters, docOptions, onFilterChange }: FilterHeaderProps
     </TableHead>
     <TableHead className="w-[100px] text-center" align="center">
       <Select value={filters.mandatory} onValueChange={(value) => onFilterChange('mandatory', value)}>
-        <SelectTrigger className='w-[150px]'>
+        <SelectTrigger className="w-[150px]">
           <SelectValue placeholder="Mandatorio" />
         </SelectTrigger>
         <SelectContent>
@@ -112,7 +116,7 @@ const FilterHeader = ({ filters, docOptions, onFilterChange }: FilterHeaderProps
     </TableHead>
     <TableHead className="w-[100px] text-center" align="center">
       <Select value={filters.private} onValueChange={(value) => onFilterChange('private', value)}>
-        <SelectTrigger className='w-[150px]'>
+        <SelectTrigger className="w-[150px]">
           <SelectValue placeholder="Privado" />
         </SelectTrigger>
         <SelectContent>
@@ -124,6 +128,9 @@ const FilterHeader = ({ filters, docOptions, onFilterChange }: FilterHeaderProps
           {filters.private && <SelectItem value="clear">Limpiar filtro</SelectItem>}
         </SelectContent>
       </Select>
+    </TableHead>
+    <TableHead className="w-[100px] text-center" align="center">
+      Editar
     </TableHead>
   </>
 );

@@ -1,6 +1,5 @@
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -9,112 +8,122 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { FormItem, FormLabel } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { supabaseBrowser } from '@/lib/supabase/browser';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { ZodError, z } from 'zod';
-import { supabase } from '../../supabase/supabase';
-import { useToast } from './ui/use-toast';
-const schema = z
-  .string()
-  .min(1, {
-    message: 'El nombre del convenio debe tener al menos 1 caracteres',
-  })
-  .max(100, {
-    message: 'El nombre del convenio debe tener menos de 100 caracteres',
-  });
+import { FormEvent } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
+import { Button } from './ui/button';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
+import { Input } from './ui/input';
 
 export default function AddCategoryModal({
-  children,
-  fetchCategory,
-  covenantOptions,
-  covenant_id,
-  searchText,
+  covenantInfo,
+  fromEmployee,
 }: {
-  children: React.ReactNode;
-  fetchCategory?: (covenant_id: string) => Promise<void>;
-  covenantOptions?: { name: string; id: string }[];
-  covenant_id?: string;
-  searchText: string;
+  covenantInfo: { name: string; id: string };
+  fromEmployee?: boolean;
 }) {
   const router = useRouter();
-  const [name, setName] = useState('');
-  // const [covenant, setCovenant] = useState('');
-  const { toast } = useToast();
 
-  useEffect(() => {
-    setName(searchText);
-  }, [searchText]);
-
-  async function onSubmit() {
-    if (!covenant_id)
-      toast({
-        title: 'Error al agregar la categoria',
-        description: 'Converson no encontrado',
-      });
-    try {
-      schema.parse(name);
-    } catch (error: ZodError | any) {
-      toast({
-        variant: 'destructive',
-        title: 'Error al agregar la categoria',
-        description: error.errors[0].message,
-      });
-      return;
-    }
-    // const covenant_id = covenantOptions?.find((covenantOption) => covenantOption.name === covenant)?.id;
-
-    const { data, error } = await supabase
-      .from('category')
-      .insert([
-        {
-          name: name.slice(0, 1).toUpperCase() + name.slice(1),
-          covenant_id: covenant_id,
-        },
-      ])
-      .select();
-    if (error) {
-      toast({
-        title: 'Error al agregar la categoria',
-        description: error.message,
-      });
-      return;
-    }
-    toast({
-      title: 'la categoria agregada correctamente',
-      description: 'la categoria ha sido agregada correctamente',
-    });
-    if (fetchCategory) {
-      fetchCategory(covenant_id || '');
-    }
-    router.refresh();
+  const supabase = supabaseBrowser();
+  const formSchema = z.object({
+    name: z.string({ required_error: 'El nombre es requerido' }).min(2, {
+      message: 'El nombre de la categoria debe tener al menos 2 caracteres',
+    }),
+    covenant_id: z
+      .string()
+      .default(covenantInfo.id || '')
+      .optional(),
+  });
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: '',
+      covenant_id: covenantInfo.id,
+    },
+  });
+  async function onSubmit({ name, covenant_id }: z.infer<typeof formSchema>) {
+    toast.promise(
+      async () => {
+        const { data, error } = await supabase
+          .from('category')
+          .insert([
+            {
+              name: name.slice(0, 1).toUpperCase() + name.slice(1),
+              covenant_id,
+            },
+          ])
+          .select();
+        if (error) throw new Error(error.message);
+        document.getElementById('close-category-modal')?.click();
+        router.refresh();
+      },
+      {
+        loading: 'Creando categoria...',
+        success: 'Categoria creada exitosamente',
+        error: 'Ocurrio un error al crear la categoria',
+      }
+    );
   }
-
+  const handleNestedFormSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    form.handleSubmit(onSubmit)(event);
+  };
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+      <AlertDialogTrigger asChild>
+        {fromEmployee ? (
+          <Button className="w-full">
+            {' '}
+            <Plus className="h-4 w-4" />
+            Nueva categoria
+          </Button>
+        ) : (
+          <Button variant={'link'}>
+            {' '}
+            <Plus className="h-4 w-4" />
+            Nueva categoria
+          </Button>
+        )}
+      </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Agregar una nueva categoria</AlertDialogTitle>
+          <AlertDialogTitle>
+            Agregar categoria al convenio <span className="font-bold">{covenantInfo.name}</span>
+          </AlertDialogTitle>
           <AlertDialogDescription>
             Por favor complete los siguientes campos para agregar una nueva categoria.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <div className="flex flex-col justify-center w-full space-y-5">
-            <FormItem>
-              <FormLabel>Nombre de la categoria</FormLabel>
-              <Input
-                placeholder="Ingrese el nombre de la categoria"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </FormItem>
-            <div className="flex gap-2">
-              <AlertDialogAction onClick={onSubmit}>Agregar Categoria</AlertDialogAction>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            </div>
+          <div className="flex flex-col justify-center w-full">
+            <Form {...form}>
+              <form onSubmit={handleNestedFormSubmit} className="space-y-8">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Categoria</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nombre de la categoria" {...field} />
+                      </FormControl>
+                      <FormDescription>Ingrese el nombre de la categoria que desea agregar</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end gap-4">
+                  <AlertDialogCancel id="close-category-modal">Cancelar</AlertDialogCancel>
+                  <Button type="submit">Crear categoria</Button>
+                </div>
+              </form>
+            </Form>
           </div>
         </AlertDialogFooter>
       </AlertDialogContent>

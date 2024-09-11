@@ -3,6 +3,7 @@
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseServer } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export async function login(formData: FormData) {
@@ -34,6 +35,8 @@ export async function login(formData: FormData) {
 export async function logout() {
   const supabase = supabaseServer();
   await supabase.auth.signOut();
+  const cookiesStore = cookies();
+  cookiesStore.delete('actualComp');
   revalidatePath('/', 'layout');
   redirect('/login');
 }

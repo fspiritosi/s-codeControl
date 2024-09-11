@@ -1,4 +1,4 @@
-import EmployeeAccordion from '@/components/EmployeeAccordion';
+import EmployeeComponent from '@/components/EmployeeComponent';
 import { Card, CardFooter } from '@/components/ui/card';
 import { supabaseServer } from '@/lib/supabase/server';
 import { cn } from '@/lib/utils';
@@ -32,23 +32,91 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
   );
 
   let formattedEmployee;
+  let guild:
+    | {
+        value: string;
+        label: string;
+      }[]
+    | undefined = undefined;
+  let covenants:
+    | {
+        id: string;
+        name: string;
+        guild_id: string;
+      }[]
+    | undefined = undefined;
+  let categories:
+    | {
+        id: string;
+        name: string;
+        covenant_id: string;
+      }[]
+    | undefined = undefined;
   if (searchParams.employee_id) {
     const { employee } = await fetch(
       `${URL}/api/employees/${searchParams.employee_id}?actual=${company_id}&user=${user?.data?.user?.id}`
     ).then((e) => e.json());
-
+console.log('employee',employee);
     formattedEmployee = setEmployeesToShow(employee)?.[0];
+
+    let { data: guilds, error } = await supabase
+      .from('guild')
+      .select('*')
+      .eq('company_id', company_id)
+      .eq('is_active', true);
+
+    const guildIds = guilds?.map((guild: any) => guild.id);
+
+    let { data: covenantsData, error: covenantserror } = await supabase
+      .from('covenant')
+      .select('*')
+      .in('guild_id', guildIds || []);
+
+    const covenantsIds = covenantsData?.map((covenant) => covenant.id);
+
+    let { data: categoriesData, error: categorieserror } = await supabase
+      .from('category')
+      .select('*')
+      .in('covenant_id', covenantsIds || []);
+
+    guild = guilds?.map((guild) => {
+      return {
+        value: guild.id as string,
+        label: guild.name as string,
+      };
+    });
+    covenants = covenantsData?.map((covenant) => {
+      return {
+        id: covenant.id as string,
+        name: covenant.name as string,
+        guild_id: covenant.guild_id as string,
+      };
+    });
+    categories = categoriesData?.map((category) => {
+      return {
+        id: category.id as string,
+        name: category.name as string,
+        covenant_id: category.covenant_id as string,
+      };
+    });
   }
 
+  console.log(formattedEmployee,'formattedEmployee');
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">
       <Card
         className={cn(
           'col-span-8 flex flex-col justify-between overflow-hidden'
-          // searchParams.action === 'new' && 'col-span-8'
         )}
       >
-        <EmployeeAccordion user={formattedEmployee} role={role} diagrams={diagrams} />
+        <EmployeeComponent
+          guild={guild}
+          covenants={covenants}
+          categories={categories}
+          user={formattedEmployee}
+          role={role}
+          diagrams={diagrams}
+        />
         <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
       </Card>
     </section>

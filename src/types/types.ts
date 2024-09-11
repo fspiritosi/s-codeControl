@@ -113,7 +113,10 @@ export type names =
   | 'gender'
   | 'marital_status'
   | 'level_of_education'
-  | 'picture';
+  | 'picture'
+  | 'covenants_id'
+  | 'category_id'
+  | 'guild_id';
 
 export type Employee = {
   id?: string;
@@ -141,7 +144,7 @@ export type Employee = {
   workflow_diagram: string;
   normal_hours: string; //!si
   type_of_contract: string | undefined; //!si
-  allocated_to?: string | undefined | string[] | null; //!si
+  allocated_to?: any //!si
   date_of_admission: Date | undefined | string;
   full_name?: string; //!si
   is_active?: boolean;
@@ -569,7 +572,6 @@ export type RepairsSolicituds = {
   mechanic_images: string[];
   vehicle_id: string;
   vehicle_condition: 'operativo' | 'no operativo' | 'en reparación' | 'operativo condicionado';
-
   repairlogs:
     | {
         id: string;
@@ -593,9 +595,10 @@ export type FormattedSolicitudesRepair = {
   year: string;
   brand: string;
   model: string;
-  domain: string;
+  domain: string | null;
   engine: string;
   status: string;
+  serie: string ;
   chassis: string;
   picture: string;
   solicitud_status: string;
