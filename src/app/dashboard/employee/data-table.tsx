@@ -23,6 +23,7 @@ import {
 } from '@tanstack/react-table';
 import { useEffect, useState } from 'react';
 
+import BtnXlsDownload from '@/components/BtnXlsDownload';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -345,6 +346,7 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
+          <BtnXlsDownload fn={(data: any) => data} dataToDownload={data} nameFile={'Empleados'} />
         </div>
       </div>
       <div className="rounded-md border">
@@ -442,22 +444,21 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
                             />
                           ) : cell.column.id === 'status' ? (
                             <Badge
-                            variant={
-                              cell.getValue() === 'Completo'
-                                ? 'success'
-                                : cell.getValue() === 'Completo con doc vencida'
-                                  ? 'yellow'
-                                  : 'destructive'
-                            }
-                          >
-                            {cell.getValue() as React.ReactNode}
-                          </Badge>
+                              variant={
+                                cell.getValue() === 'Completo'
+                                  ? 'success'
+                                  : cell.getValue() === 'Completo con doc vencida'
+                                    ? 'yellow'
+                                    : 'destructive'
+                              }
+                            >
+                              {cell.getValue() as React.ReactNode}
+                            </Badge>
                           ) : (
                             (flexRender(cell.column.columnDef.cell, cell.getContext()) as React.ReactNode)
                           )}
                         </TableCell>
                       );
-                    
                     })}
                   </TableRow>
                 );
@@ -506,3 +507,5 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
     </div>
   );
 }
+
+//armar la funcion de parseo de dato para la descarga

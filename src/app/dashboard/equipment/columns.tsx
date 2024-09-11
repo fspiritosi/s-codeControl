@@ -460,7 +460,7 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
 
       return (
         <Badge variant={variants[row.original.condition] as 'default'}>
-          {React.createElement(conditionConfig[row.original.condition].icon, { className: 'mr-2 size-4' })}
+          {React.createElement(conditionConfig[row.original.condition]?.icon, { className: 'mr-2 size-4' })}
           {row.original.condition}
         </Badge>
       );

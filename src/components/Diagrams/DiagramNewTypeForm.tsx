@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { zodResolver } from '@hookform/resolvers/zod';
 import cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -14,6 +14,7 @@ import { Input } from '../ui/input';
 
 export function DiagramNewTypeForm({ selectedDiagram }: { selectedDiagram?: any }) {
   const company_id = cookies.get('actualComp');
+  const isMounted = useRef(true);
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const NewDiagramType = z.object({
     name: z.string().min(1, { message: 'El nombre de la novedad no puede estar vacío' }),
@@ -76,16 +77,34 @@ export function DiagramNewTypeForm({ selectedDiagram }: { selectedDiagram?: any 
     setDiagramToEdit(false);
     setButtonToShow(true);
   }
+  console.log('selectedDiagram', selectedDiagram);
+  console.log('Diagram', diagramToEdit);
+  console.log('button', buttonToShow);
+  // useEffect(() => {
+
+  //     form.reset({
+  //       name: selectedDiagram ? selectedDiagram?.name : '',
+  //       short_description: selectedDiagram ? selectedDiagram?.short_description : '',
+  //       color: selectedDiagram ? selectedDiagram?.color : '',
+  //       id: selectedDiagram ? selectedDiagram?.id : '',
+  //     });
+  //   setDiagramToEdit(true);
+  //   setButtonToShow(false);
+  // }, [selectedDiagram]);
 
   useEffect(() => {
-    form.reset({
-      name: selectedDiagram ? selectedDiagram?.name : '',
-      short_description: selectedDiagram ? selectedDiagram?.short_description : '',
-      color: selectedDiagram ? selectedDiagram?.color : '',
-      id: selectedDiagram ? selectedDiagram?.id : '',
-    });
-    setDiagramToEdit(true);
-    setButtonToShow(false);
+    if (isMounted.current) {
+      form.reset({
+        name: selectedDiagram ? selectedDiagram?.name : '',
+        short_description: selectedDiagram ? selectedDiagram?.short_description : '',
+        color: selectedDiagram ? selectedDiagram?.color : '',
+        id: selectedDiagram ? selectedDiagram?.id : '',
+      });
+      setDiagramToEdit(true);
+      setButtonToShow(false);
+    } else {
+      isMounted.current = true;
+    }
   }, [selectedDiagram]);
 
   return (
@@ -140,7 +159,7 @@ export function DiagramNewTypeForm({ selectedDiagram }: { selectedDiagram?: any 
             )}
           />
         </div>
-        {buttonToShow && !diagramToEdit ? (
+        {!diagramToEdit ? (
           <Button className="mt-4" type="submit">
             Cargar novedad
           </Button>
