@@ -8,7 +8,6 @@ import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/ca
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabaseServer } from '@/lib/supabase/server';
 import { cn } from '@/lib/utils';
 import { formatDate } from 'date-fns';
@@ -115,7 +114,6 @@ export default async function page({
 
   const { data: url } = supabase.storage.from('document_files').getPublicUrl(document?.[0]?.document_path);
 
-
   documentName = document?.[0]?.document_path;
   documentUrl = url.publicUrl;
   documents_employees = document;
@@ -133,6 +131,8 @@ export default async function page({
 
     return validityDate <= oneMonthFromNow;
   }
+
+  console.log(role,'aadsjdbnajhsdgiashgdui')
 
   return (
     <section className="md:mx-7">
@@ -198,31 +198,7 @@ export default async function page({
                 <TabsTrigger className="hover:bg-white/30" value="Documento">
                   Documento
                 </TabsTrigger>
-                {role === 'Invitado' ? null : documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth() ? (
-                  <TooltipProvider delayDuration={100}>
-                    <Tooltip>
-                      <TooltipTrigger disabled asChild>
-                        <div>
-                          <TabsTrigger
-                            className="hover:bg-white/30"
-                            disabled={documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth()}
-                            value="Auditar"
-                          >
-                            Actualizar
-                          </TabsTrigger>
-                        </div>
-                      </TooltipTrigger>
-                      {documents_employees?.[0]?.state === 'aprobado' && !expireInLastMonth() ? (
-                        <TooltipContent>
-                          <p>
-                            Este documento no puede ser modificado ya que se encuentra aprobado y su vencimiento es
-                            mayor a 30 días
-                          </p>
-                        </TooltipContent>
-                      ) : null}
-                    </Tooltip>
-                  </TooltipProvider>
-                ) : (
+                {role === 'Invitado' ? null : (
                   <TabsTrigger className="hover:bg-white/30" value="Auditar">
                     Actualizar
                   </TabsTrigger>

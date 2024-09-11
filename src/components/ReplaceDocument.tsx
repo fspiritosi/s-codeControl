@@ -97,7 +97,6 @@ export default function ReplaceDocument({
           newDocumentName = newDocumentName + `.${newExtension}`;
         }
 
-
         const { error, data: response } = await supabase.storage.from('document_files').remove([documentName]);
 
         const { data: respons2e } = await supabase.storage
@@ -106,7 +105,10 @@ export default function ReplaceDocument({
             search: `/${documentName?.split('/')?.slice(3).join('/').split('.')[0]}`,
           });
 
-        if (error) throw new Error(handleSupabaseError(error.message));
+        if (error) {
+          console.log(error);
+          throw new Error(handleSupabaseError(error.message));
+        }
 
         const { error: finalerror, data: finalDocument } = await supabase.storage
           .from('document_files')
@@ -115,20 +117,24 @@ export default function ReplaceDocument({
             upsert: false,
           });
 
+        console.log('filename.validity', filename.validity ? format(filename.validity as Date, 'dd/MM/yyyy') : null);
+
         const { error: updateError } = await supabase
           .from(tableName)
           .update({
             document_path: finalDocument?.path,
-            validity: filename.validity,
-            created_at: format(new Date(), 'dd/MM/yyyy'),
+            validity: filename.validity ? format(filename.validity as Date, 'dd/MM/yyyy') : null,
+            created_at: new Date().toISOString(),
           })
           .eq('id', appliesId);
 
         if (updateError) {
+          console.log(updateError);
           throw new Error(handleSupabaseError(updateError?.message));
         }
 
         if (finalerror) {
+          console.log(finalerror);
           throw new Error(handleSupabaseError(finalerror?.message));
         }
 
