@@ -11,7 +11,7 @@ export const useEmployeesData = () => {
     createEmployee: async (employee: Employee) => {
       const { data, error } = await supabase
         .from('employees')
-        .insert({ ...employee, company_id: company?.id })
+        .insert({ ...employee, company_id: company?.id, allocated_to: employee.allocated_to ?? [] })
         .select();
 
       if (error) {
