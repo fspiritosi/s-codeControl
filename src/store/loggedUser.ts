@@ -293,6 +293,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
     set({ sharedCompanies: share_company_users as SharedCompanies });
     // const router = useRouter()
+    console.log('manyCompanies user si');
     if (error) {
       console.error('Error al obtener el perfil:', error);
     } else {
@@ -306,18 +307,29 @@ export const useLoggedUserStore = create<State>((set, get) => {
       }
 
       set({ allCompanies: data });
-      const savedCompany = localStorage.getItem('company_id') || '';
+
+
+      const savedCompany = localStorage.getItem('company_id') || ''; //! una empresa te comparte
+
+      console.log('savedCompany', savedCompany);
+
+
       if (savedCompany) {
         const company = share_company_users?.find(
           (company) => company.company_id.id === JSON.parse(savedCompany)
         )?.company_id;
 
+        console.log('savedCompany', company);
+
         if (company) {
+          console.log('setSavedCompany', company);
           setActualCompany(company);
           return;
         }
       }
+
       selectedCompany = get()?.allCompanies.filter((company) => company.by_defect);
+      console.log('selectedCompany', selectedCompany);
 
       if (data.length > 1) {
         if (selectedCompany) {
@@ -327,13 +339,18 @@ export const useLoggedUserStore = create<State>((set, get) => {
           set({ showMultiplesCompaniesAlert: true });
         }
       }
+
+
+
       if (data.length === 1) {
         set({ showMultiplesCompaniesAlert: false });
         setActualCompany(data[0]);
       }
+
       if (data.length === 0 && share_company_users?.length! > 0) {
         setActualCompany(share_company_users?.[0]?.company_id);
       }
+
       if (data.length === 0 && share_company_users?.length === 0) {
         const actualPath = window.location.pathname;
 
@@ -345,6 +362,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
         set({ showNoCompanyAlert: true });
       }
+
     }
   };
 
@@ -357,6 +375,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
     } else {
       set({ profile: data || [] });
       set({ codeControlRole: data?.[0].role });
+
+      console.log('profile user si');
 
       howManyCompanies(data[0]?.id);
     }
@@ -377,13 +397,17 @@ export const useLoggedUserStore = create<State>((set, get) => {
   };
 
   if (typeof window !== 'undefined') {
-    loggedUser();
+    // loggedUser();
+    console.log('loggedUser user si');
   }
 
   let selectedCompany: Company;
 
   const setActualCompany = (company: Company[0]) => {
     set({ actualCompany: company });
+
+    console.log('company to set', company);
+
     cookies.set('actualComp', company.id);
     useCountriesStore.getState().documentTypes(company?.id);
     setActivesEmployees();

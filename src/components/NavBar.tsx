@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { supabaseBrowser } from '@/lib/supabase/browser';
-import { revalidate } from '@/lib/useServer';
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { Company } from '@/zodSchemas/schemas';
@@ -79,10 +78,11 @@ export default function NavBar() {
   const setActualCompany = useLoggedUserStore((state) => state.setActualCompany);
 
   const handleNewCompany = async (company: Company[0]) => {
+    Cookies.set('actualComp', company.id);
     setNewDefectCompany(company);
     setActualCompany(company);
     setIsOpen(false);
-    Cookies.set('actualComp', company.id);
+    router.refresh();
     router.push('/dashboard');
   };
   const { control, formState, setValue } = useForm();
