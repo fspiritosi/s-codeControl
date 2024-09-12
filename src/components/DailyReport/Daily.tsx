@@ -697,13 +697,29 @@ interface DailyReportItem {
   end_time: string;
 }
 
+const mapReportDataToDailyReportItem = (reportData: any[]): DailyReportItem[] => {
+  return reportData?.map(data => ({
+    date: "", // Asignar la fecha correspondiente si está disponible
+    customer: data.customer_id.id,
+    employee: data.dailyreportemployeerelations.map((relation: any) => relation.employee_id.id),
+    equipment: data.dailyreportequipmentrelations.map((relation: any) => relation.equipment_id.id),
+    service: data.service_id.id,
+    item: data.item_id.id,
+    start_time: data.start_time,
+    end_time: data.end_time,
+  }));
+};
+
 interface DynamicTableWithFormProps {
   selectedDate: Date | null;
   reportData?: DailyReportItem[];
 }
 
+
+
+
 const DynamicTableWithForm: React.FC<DynamicTableWithFormProps> = ({ selectedDate, reportData }) => {
-  const [rows, setRows] = useState<DailyReportItem[]>(reportData || [
+  const [rows, setRows] = useState<DailyReportItem[]>(mapReportDataToDailyReportItem(reportData) || [
     {
       date: "",
       customer: "",
@@ -926,7 +942,7 @@ console.log(rows)
     <div>
       <h1 className="align-middle text-center">
         Parte diario del día: {formatter}
-      </h1>
+      </h1>         
       <Table>
         <TableHeader>
           <TableRow>

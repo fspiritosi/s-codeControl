@@ -121,10 +121,23 @@ const TableRowWithForm: React.FC<TableRowWithFormProps> = ({
   const [customerEquipment, setCustomerEquipment] = useState<Equipment[]>([]);
   const [customerServices, setCustomerServices] = useState<Services[]>([]);
   const [customerItems, setCustomerItems] = useState<Items[]>([]);
-
+  console.log(row)
+  const transformarArray = (arrayOriginal:any) => {
+    return arrayOriginal.map((item:any) => ({
+      date: item.date || '',
+      customer: item.customer || '',
+      employee: item.employee || [''],
+      equipment: item.equipment || [''],
+      service: item.service || '',
+      item: item.item || '',
+      start_time: item.start_time || '',
+      end_time: item.end_time || ''
+    }));
+  };
   // Seleccionar el objeto específico dentro del array row
-  const currentRow = row[index];
-
+  const currentRow = transformarArray(row as any) [index];
+  console.log(currentRow)
+  
   console.log(employees);
   console.log(customers);
   console.log(currentRow);
@@ -139,7 +152,10 @@ const TableRowWithForm: React.FC<TableRowWithFormProps> = ({
   }, [currentRow.customer]);
 
   const handleSelectCustomer = (customerId: string) => {
+    console.log(customerId);
     const customer = customers.find((c: Customers) => c.id.toString() === customerId);
+    
+    console.log(customer);
     if (customer) {
       setSelectedCustomer(customer);
 
@@ -184,7 +200,7 @@ const TableRowWithForm: React.FC<TableRowWithFormProps> = ({
   const handleSelectChange = (field: keyof DailyReportItem, value: string | string[]) => {
     handleInputChange(index, field, value);
   };
-
+  console.log(customerEmployees);
   // Filtrar servicios según el cliente seleccionado
   const filteredServices = customerServices.length > 0 ? customerServices : services.filter(service => service.customer_id === customers.find(customer => customer.name === currentRow.customer)?.id);
 
@@ -195,7 +211,7 @@ const TableRowWithForm: React.FC<TableRowWithFormProps> = ({
     id: employee.id,
     name: `${employee.firstname} ${employee.lastname}`
   }));
-
+  console.log(employeeNames);
   return (
     <TableRow key={index} className="w-full">
       {/* Cliente */}

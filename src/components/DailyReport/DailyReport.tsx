@@ -1,16 +1,15 @@
-"use client";
-import React from 'react'
-import { useState, useEffect } from 'react'
-import { CalendarIcon } from "@radix-ui/react-icons"
-import { differenceInHours, format, set } from "date-fns"
+'use client';
 
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
-import { Button } from '../ui/button'
-import { Calendar } from '@/components/ui/calendar'
-import { cn } from "@/lib/utils"
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
-import { useForm } from 'react-hook-form'
-import cookies from 'js-cookie'
+import React, { useState, useEffect } from 'react';
+import { CalendarIcon } from "@radix-ui/react-icons";
+import { format } from "date-fns";
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Button } from '../ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from "@/lib/utils";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { useForm, SubmitHandler, FormProvider } from 'react-hook-form';
+import cookies from 'js-cookie';
 import {
     Select,
     SelectContent,
@@ -19,9 +18,8 @@ import {
     SelectLabel,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import { Input } from '../ui/input';
-import { Label } from '../ui/label';
 import {
     Table,
     TableBody,
@@ -30,23 +28,20 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
     Form,
-    FormControl,
     FormField,
     FormItem,
     FormLabel,
-    FormMessage,
 } from "@/components/ui/form";
-
-
+import MultiSelect from './MultiSelect';
 interface Customers {
     id: string;
     name: string;
     is_active: boolean;
-
 }
+
 interface Employee {
     id: string;
     firstname: string;
@@ -54,91 +49,81 @@ interface Employee {
     allocated_to: string[];
     is_active: boolean;
 }
+
 interface Equipment {
     id: string;
     name: string;
-    description: string;
-    serial_number: string;
-    model: string;
-    brand: string;
-    status: string;
-    company_id: string;
-    created_at: string;
-    updated_at: string;
-    domain: string;
     intern_number: number;
     allocated_to: string[];
     is_active: boolean;
 }
+
 interface Services {
     id: string;
     customer_id: string;
     service_name: string;
-    service_start: Date;
-    service_validity: Date;
-    company_id: string;
     is_active: boolean;
 }
+
 interface Items {
     id: string;
-    service_id: string;
     item_name: string;
-    item_description: string;
-    item_price: number;
-    company_id: string;
-    is_active: boolean;
-    customer_service_id: { id: string, customer_id: { id: string, name: string } };
+    customer_service_id: { id: string };
 }
+
 interface DailyReportItem {
-    date: Date | undefined;
-    customer: Customers | null;
-    employees: Employee[];
-    equipment: Equipment[];
-    services: Services[];
-    items: Items[];
-    start_time: Date | undefined;
-    end_time: Date | undefined;
+    id: string;
+    date: string;
+    customer: string | undefined;
+    employees: string[];
+    equipment: string[];
+    services: string;
+    item: string;
+    start_time: string;
+    end_time: string;
 }
+
 export default function DailyReport() {
-    const [date, setDate] = useState<Date>()
+    const [date, setDate] = useState<Date>();
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [customers, setCustomers] = useState<Customers[]>([]);
-    const { control, formState: { errors } } = useForm();
     const [selectedCustomer, setSelectedCustomer] = useState<Customers | null>(null);
     const [customerEmployees, setCustomerEmployees] = useState<Employee[]>([]);
     const [startTime, setStartTime] = useState<string>("");
     const [endTime, setEndTime] = useState<string>("");
-    const [equipment, setEquipment] = useState([]);
+    const [equipment, setEquipment] = useState<Equipment[]>([]);
     const [customerEquipment, setCustomerEquipment] = useState<Equipment[]>([]);
-    const [services, setServices] = useState([]);
+    const [services, setServices] = useState<Services[]>([]);
     const [customerServices, setCustomerServices] = useState<Services[]>([]);
     const [selectedService, setSelectedService] = useState<Services | null>(null);
-    const [items, setItems] = useState([]);
+    const [items, setItems] = useState<Items[]>([]);
     const [customerItems, setCustomerItems] = useState<Items[]>([]);
     const [dailyReport, setDailyReport] = useState<DailyReportItem[]>([]);
     const [isMultipleEmployeesAllowed, setIsMultipleEmployeesAllowed] = useState<boolean>(false);
-    const { handleSubmit, setValue } = useForm();
-
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     const URL = process.env.NEXT_PUBLIC_BASE_URL;
 
-    const form = useForm({
+    const formMethods = useForm<DailyReportItem>({
         defaultValues: {
-            date: "",
-            customer: "",
-            employee: "",
-            equipment: "",
-            service: "",
-            item: "",
-            start_time: "",
-            end_time: "",
+            id: '',
+            date: '',
+            customer: undefined,
+            employees: [],
+            equipment: [],
+            services: '',
+            item: '',
+            start_time: '',
+            end_time: '',
         }
-    })
-    const company_id = cookies.get('actualComp');
-    console.log(company_id)
-    const modifiedCompany = company_id?.replace(/['"]/g, '').trim();
-    async function fetchEmployees() {
+    });
+    const { handleSubmit, control, setValue, watch, reset } = formMethods;
 
+    const company_id = cookies.get('actualComp');
+    console.log(company_id);
+    const modifiedCompany = company_id?.replace(/['"]/g, '').trim();
+
+    async function fetchEmployees() {
         const { employees } = await fetch(`${URL}/api/employees/?actual=${company_id}`).then((e) => e.json());
         setEmployees(employees);
         return employees;
@@ -151,23 +136,31 @@ export default function DailyReport() {
     }
 
     async function fetchEquipment() {
-        const { data: equipment } = await fetch(`${URL}/api/equipment/?actual=${company_id}`).then((e) => e.json());
-        setEquipment(equipment);
-        return equipment
+        try {
+            const response = await fetch(`${URL}/api/equipment/?actual=${company_id}`);
+            if (!response.ok) {
+                throw new Error(`Error en la solicitud: ${response.statusText}`);
+            }
+            const data = await response.json();
+            const equipment = data.equipments;
+            setEquipment(equipment);
+            return equipment;
+        } catch (error) {
+            console.error('Error fetching equipment:', error);
+        }
     }
+
     async function fetchServices() {
         const { services } = await fetch(`${URL}/api/services?actual=${company_id}`).then((e) => e.json());
         setServices(services);
-        return services
+        return services;
     }
 
     async function fetchItems() {
         const { items } = await fetch(`${URL}/api/services/items/report?actual=${company_id}`).then((e) => e.json());
         setItems(items);
-        return items
+        return items;
     }
-
-
 
     useEffect(() => {
         fetchEmployees();
@@ -175,23 +168,17 @@ export default function DailyReport() {
         fetchEquipment();
         fetchServices();
         fetchItems();
-    }, [])
+    }, []);
 
     useEffect(() => {
         if (startTime && endTime) {
             const start = new Date(`1970-01-01T${startTime}:00`);
             const end = new Date(`1970-01-01T${endTime}:00`);
             const diffInHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-            console.log(diffInHours)
-
+            console.log(diffInHours);
             setIsMultipleEmployeesAllowed(diffInHours > 12);
         }
     }, [startTime, endTime]);
-    console.log(employees);
-    console.log(customers);
-    console.log(equipment)
-    console.log(services)
-    console.log(items)
 
     const handleSelectCustomer = (customerId: string) => {
         console.log(customerId);
@@ -199,303 +186,397 @@ export default function DailyReport() {
         console.log(customer);
         if (customer) {
             setSelectedCustomer(customer);
+
             const filteredEmployees = employees.filter((employee: Employee) =>
                 employee.allocated_to.includes(customer.id)
             );
             setCustomerEmployees(filteredEmployees);
-            const filteredEquipment = equipment.filter((equipment: Equipment) =>
-                equipment.allocated_to?.includes(customer.id))
-            setCustomerEquipment(filteredEquipment);
-            const filteredServices = services.filter((service: Services) =>
-                service.customer_id === customer.id)
-            setCustomerServices(filteredServices)
-            console.log(selectedService)
 
+            const filteredEquipment = equipment.filter((equipment: Equipment) =>
+                equipment.allocated_to.includes(customer.id)
+            );
+            setCustomerEquipment(filteredEquipment);
+
+            const filteredServices = services.filter((service: Services) =>
+                service.customer_id === customerId
+            );
+            setCustomerServices(filteredServices);
+
+            // Reset dependent selects
+            setValue('services', '');
+            setValue('item', '');
+            setValue('employees', []);
+            setValue('equipment', []);
+            setCustomerItems([]);
+            setSelectedService(null);
         }
     };
 
     const handleSelectService = (serviceId: string) => {
-        console.log(serviceId);
-        console.log(services)
         const service = services.find((s: Services) => s.id === serviceId);
+        console.log(service);
         if (service) {
             setSelectedService(service);
 
             const filteredItems = items.filter((item: Items) =>
+                item.customer_service_id.id === serviceId
+            );
+            setCustomerItems(filteredItems);
+            console.log(filteredItems);
 
-                item.customer_service_id.id === selectedService?.id)
-            console.log(filteredItems)
-            setCustomerItems(filteredItems)
+            // Reset dependent selects
+            setValue('item', '');
         }
-        console.log(selectedService)
-    }
-    console.log(selectedCustomer)
-    console.log(customerEmployees)
-    console.log(customerEquipment)
-    console.log(customerServices)
-    console.log(customerItems)
+    };
 
-    const handleAdd = (data: DailyReportItem) => {
-        const startDateTime = startTime ? new Date(`${format(data.start_time as Date, 'dd-MM-yyyy')}T${startTime}:00`) : undefined;
-    const endDateTime = endTime ? new Date(`${format(data.end_time as Date, 'dd-MM-yyyy')}T${endTime}:00`) : undefined;
+    const handleAdd: SubmitHandler<DailyReportItem> = (data) => {
+        console.log(data);
+        const startDateTime = startTime ? new Date(`1970-01-01T${startTime}:00`) : undefined;
+        const endDateTime = endTime ? new Date(`1970-01-01T${endTime}:00`) : undefined;
         const newReportItem: DailyReportItem = {
-            date,
-            customer: selectedCustomer,
-            employees: customerEmployees, // aqui va el empleado seleccionado
-            equipment: customerEquipment, // aqui va el equipo seleccionado
-            services: customerServices, // aqui va el servicio seleccionado
-            items: customerItems, // aqui va el item seleccionado
-            start_time: startDateTime, // aqui va la hora de inicio
-            end_time: endDateTime,// aqui va la hora de finalizacion
+            id: editingId || Date.now().toString(),
+            date: date ? format(date, "yyyy-MM-dd") : '',
+            customer: selectedCustomer?.id,
+            employees: data.employees,
+            equipment: data.equipment,
+            services: data.services,
+            item: data.item,
+            start_time: startDateTime?.toISOString() || '',
+            end_time: endDateTime?.toISOString() || '',
         };
-        setDailyReport([...dailyReport, newReportItem]);
-    }
-    console.log(dailyReport)
 
+        if (editingId) {
+            setDailyReport(dailyReport.map(item => item.id === editingId ? newReportItem : item));
+            setEditingId(null);
+        } else {
+            setDailyReport([...dailyReport, newReportItem]);
+        }
 
+        resetForm();
+    };
 
-    // contodos los datos de el formulario quiero ir armando un array de objetos que se llame dailyReport y que se vaya llenando con los datos que se van seleccionando 
-    // cada vez que seleccione un grupo de datos quiero tener un boton agregar que me permita agregarlos al array de dailyReport y  cuando termine de seleccionar todos los datos
-    // quiero tener un boton guardar que me permita guardar el array de dailyReport en la base de datos. como lo puedo hacer?
+    const resetForm = () => {
+        reset();
+        setStartTime('');
+        setEndTime('');
+        setSelectedCustomer(null);
+        setCustomerEmployees([]);
+        setCustomerEquipment([]);
+        setCustomerServices([]);
+        setCustomerItems([]);
+        setSelectedService(null);
+        setDate(undefined);
+    };
+
+    const handleEdit = (id: string) => {
+        const itemToEdit = dailyReport.find(item => item.id === id);
+        if (itemToEdit) {
+            setEditingId(id);
+            setDate(new Date(itemToEdit.date));
+            handleSelectCustomer(itemToEdit.customer || '');
+            setValue('customer', itemToEdit.customer);
+            setValue('employees', itemToEdit.employees);
+            setValue('equipment', itemToEdit.equipment);
+            setValue('services', itemToEdit.services);
+            handleSelectService(itemToEdit.services);
+            setValue('item', itemToEdit.item);
+            setStartTime(new Date(itemToEdit.start_time).toTimeString().slice(0, 5));
+            setEndTime(new Date(itemToEdit.end_time).toTimeString().slice(0, 5));
+        }
+    };
+
+    const handleDelete = (id: string) => {
+        setDailyReport(dailyReport.filter(item => item.id !== id));
+    };
+
+    const selectedEmployees = watch('employees');
+    const selectedEquipment = watch('equipment');
+
+    const getEmployeeNames = (employeeIds: string[]) => {
+        return employeeIds.map(id => {
+            const employee = employees.find(emp => emp.id === id);
+            return employee ? `${employee.firstname} ${employee.lastname}` : 'Unknown';
+        }).join(', ');
+    };
+
+    const getEquipmentNames = (equipmentIds: string[]) => {
+        return equipmentIds.map(id => {
+            const eq = equipment.find(e => e.id === id);
+            return eq ? eq.intern_number.toString() : 'Unknown';
+        }).join(', ');
+    };
+
+    const getServiceName = (serviceId: string) => {
+        const service = services.find(s => s.id === serviceId);
+        return service ? service.service_name : 'Unknown';
+    };
+
+    const getCustomerName = (customerId: string) => {
+        const customer = customers.find(c => c.id === customerId);
+        return customer ? customer.name : 'Unknown';
+    };
+
+    const getItemName = (itemId: string) => {
+        const item = items.find(i => i.id === itemId);
+        return item ? item.item_name : 'Unknown';
+    };
 
     return (
         <div>
             <ResizablePanelGroup direction="horizontal">
                 <ResizablePanel>
                     <h1>DailyReport</h1>
-                    <Form {...form} >
-                        <form onSubmit={handleAdd} className="space-y-6">
-                            <div>
-                                <FormField
-                                    control={form.control}
-                                    name='date'
-                                    render={({ field }) => (
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                        "w-[240px] justify-start text-left font-normal",
-                                                        !date && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {date ? format(date, "dd/MM/yyyy") : <span>Seleccione una fecha</span>}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={date}
-                                                    onSelect={setDate}
-                                                    initialFocus
+                    <FormProvider {...formMethods}>
+                        <Form {...formMethods}>
+                            <form onSubmit={handleSubmit(handleAdd)} className="space-y-6">
+                                <div>
+                                    <FormField
+                                        control={control}
+                                        name='date'
+                                        render={({ field }) => (
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <Button
+                                                        variant={"outline"}
+                                                        className={cn(
+                                                            "w-[240px] justify-start text-left font-normal",
+                                                            !date && "text-muted-foreground"
+                                                        )}
+                                                    >
+                                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                                        {date ? format(date, "dd/MM/yyyy") : <span>Seleccione una fecha</span>}
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                    <Calendar
+                                                        mode="single"
+                                                        selected={date}
+                                                        onSelect={(newDate) => {
+                                                            setDate(newDate);
+                                                            field.onChange(newDate ? format(newDate, "yyyy-MM-dd") : '');
+                                                        }}
+                                                        initialFocus
+                                                    />
+                                                </PopoverContent>
+                                            </Popover>
+                                        )}
+                                    />
+                                </div>
+                                <div>
+                                    <FormField
+                                        control={control}
+                                        name='customer'
+                                        render={({ field }) => (
+                                            <Select 
+                                                value={field.value} 
+                                                onValueChange={(value) => {
+                                                    field.onChange(value);
+                                                    handleSelectCustomer(value);
+                                                }}
+                                            >
+                                                <SelectTrigger className="w-[250px]">
+                                                    <SelectValue placeholder="Seleccione un cliente" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectGroup>
+                                                        {customers?.map((customer: Customers) => (
+                                                            <SelectItem key={customer.id} value={customer.id}>
+                                                                {customer.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectGroup>
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    />
+                                </div>
+                                <div>
+                                    <FormField
+                                        control={control}
+                                        name='start_time'
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Hora de inicio</FormLabel>
+                                                <Input
+                                                    type="time"
+                                                    name="start_time"
+                                                    className="w-[200px]"
+                                                    value={startTime}
+                                                    onChange={(e) => {
+                                                        setStartTime(e.target.value);
+                                                        field.onChange(e.target.value);
+                                                    }}
                                                 />
-                                            </PopoverContent>
-                                        </Popover>
-                                    )}
-                                />
-                            </div>
-                            <div>
-                                <FormField
-                                    control={form.control}
-                                    name='customer'
-                                    render={({ field }) => (
-                                        < Select onValueChange={handleSelectCustomer}>
-                                            <SelectTrigger className="w-[250px]">
-                                                <SelectValue placeholder="Seleccione un cliente" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectGroup>
-                                                    {customers?.map((customer: Customers) => (
-                                                        <SelectItem key={customer.id} value={customer.id}>
-                                                            {customer.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectGroup>
-                                            </SelectContent>
-                                        </Select>
-                                    )}
-                                />
-                            </div>
-
-                            <div>
-                                <FormField
-                                    control={form.control}
-                                    name='start_time'
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Hora de inicio</FormLabel>
-                                            <Input
-                                                type="time"
-                                                name="start_time"
-                                                className="w-[200px]"
-                                                value={startTime}
-                                                onChange={(e) => setStartTime(e.target.value)}
-                                            />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name='end_time'
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Hora de finalización</FormLabel>
-
-                                            <Input
-                                                type="time"
-                                                name="end_time"
-                                                className="w-[200px]"
-                                                value={endTime}
-                                                onChange={(e) => setEndTime(e.target.value)}
-                                            />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                            <div>
-                                <FormField
-                                    control={form.control}
-                                    name='employee'
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Empleados</FormLabel>
-                                            <Select>
-                                                <SelectTrigger className="w-[250px]">
-                                                    <SelectValue placeholder="Seleccione un empleado" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectGroup>
-                                                        <SelectLabel>empleados</SelectLabel>
-                                                        {customerEmployees?.map((employee: Employee) => (
-                                                            <SelectItem key={employee.id} value={employee.id}>
-                                                                {employee.firstname} {employee.lastname}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectGroup>
-                                                </SelectContent>
-                                            </Select>
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                            <div>
-                                <FormField
-                                    control={form.control}
-                                    name='equipment'
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Equipos</FormLabel>
-                                            <Select>
-                                                <SelectTrigger className="w-[250px]">
-                                                    <SelectValue placeholder="Seleccione un equipo" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectGroup>
-                                                        <SelectLabel>equipos</SelectLabel>
-                                                        {customerEquipment?.map((equipment: Equipment) => (
-                                                            <SelectItem key={equipment.id} value={equipment.id}>
-                                                                {equipment.intern_number}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectGroup>
-                                                </SelectContent>
-                                            </Select>
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                            <div>
-                                <FormField
-                                    control={form.control}
-                                    name='service'
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Servicios</FormLabel>
-                                            <Select onValueChange={handleSelectService}>
-                                                <SelectTrigger className="w-[250px]">
-                                                    <SelectValue placeholder="Seleccione el servicio" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectGroup>
-                                                        <SelectLabel>servicios</SelectLabel>
-                                                        {customerServices?.map((services: Services) => (
-                                                            <SelectItem key={services.id} value={services.id}>
-                                                                {services.service_name}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectGroup>
-                                                </SelectContent>
-                                            </Select>
-                                        </FormItem>
-                                    )}
-                                />
-
-                            </div>
-                            <div>
-                                <FormField
-                                    control={form.control}
-                                    name='item'
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Items</FormLabel>
-                                            <Select>
-                                                <SelectTrigger className="w-[250px]">
-                                                    <SelectValue placeholder="Seleccione un item" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectGroup>
-                                                        <SelectLabel>Items</SelectLabel>
-                                                        {customerItems?.map((item: Items) => (
-                                                            <SelectItem key={item.id} value={item.id}>
-                                                                {item.item_name}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectGroup>
-                                                </SelectContent>
-                                            </Select>
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                            <Button type="button" onClick={handleAdd}>Agregar</Button>
-                        </form>
-                    </Form>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={control}
+                                        name='end_time'
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Hora de finalización</FormLabel>
+                                                <Input
+                                                    type="time"
+                                                    name="end_time"
+                                                    className="w-[200px]"
+                                                    value={endTime}
+                                                    onChange={(e) => {
+                                                        setEndTime(e.target.value);
+                                                        field.onChange(e.target.value);
+                                                    }}
+                                                />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div>
+                                    <FormField
+                                        control={control}
+                                        name='employees'
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Empleados</FormLabel>
+                                                <MultiSelect
+                                                    multiEmp={customerEmployees.map((employee: Employee) => ({
+                                                        id: employee.id,
+                                                        name: `${employee.firstname} ${employee.lastname}`
+                                                    }))}
+                                                    placeholder="Seleccione empleados"
+                                                    selectedItems={field.value}
+                                                    onChange={(selected:any) => field.onChange(selected)}
+                                                />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div>
+                                    <FormField
+                                        control={control}
+                                        name='equipment'
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Equipos</FormLabel>
+                                                <MultiSelect
+                                                    multiEmp={customerEquipment.map((eq: Equipment) => ({
+                                                        id: eq.id,
+                                                        intern_number: eq.intern_number.toString()
+                                                    }))}
+                                                    placeholder="Seleccione equipos"
+                                                    selectedItems={field.value}
+                                                    onChange={(selected:any) => field.onChange(selected)}
+                                                />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div>
+                                    <FormField
+                                        control={control}
+                                        name='services'
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Servicios</FormLabel>
+                                                <Select 
+                                                    value={field.value}
+                                                    onValueChange={(value) => {
+                                                        field.onChange(value);
+                                                        handleSelectService(value);
+                                                    }}
+                                                >
+                                                    <SelectTrigger className="w-[250px]">
+                                                        <SelectValue placeholder="Seleccione el servicio" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectGroup>
+                                                            <SelectLabel>Servicios</SelectLabel>
+                                                            {customerServices?.map((service: Services) => (
+                                                                <SelectItem key={service.id} value={service.id}>
+                                                                    {service.service_name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectGroup>
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div>
+                                    <FormField
+                                        control={control}
+                                        name='item'
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Items</FormLabel>
+                                                <Select 
+                                                    value={field.value}
+                                                    onValueChange={field.onChange}
+                                                >
+                                                    <SelectTrigger className="w-[250px]">
+                                                        <SelectValue placeholder="Seleccione un item" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectGroup>
+                                                            <SelectLabel>Items</SelectLabel>
+                                                            {customerItems?.map((item: Items) => (
+                                                                <SelectItem key={item.id} value={item.id}>
+                                                                    {item.item_name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectGroup>
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <Button type="submit">{editingId ? 'Editar' : 'Agregar'}</Button>
+                            </form>
+                        </Form>
+                    </FormProvider>
                 </ResizablePanel>
                 <ResizableHandle />
-                <ResizablePanel >
+                <ResizablePanel>
                     <div className="ml-6">
                         <span>AQUI SE IRA VIENDO EL PARTE DIARIO QUE SE ESTÁ ARMANDO</span>
                         <Table>
-                            <TableCaption>Parte diario del día</TableCaption>
+                            <TableCaption>
+                                Parte diario del día: {date ? format(date, "dd/MM/yyyy") : 'Fecha no seleccionada'}
+                            </TableCaption>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[100px]">Fecha</TableHead>
                                     <TableHead>Cliente</TableHead>
                                     <TableHead>Servicio</TableHead>
+                                    <TableHead>Item</TableHead>
                                     <TableHead>Empleados</TableHead>
                                     <TableHead>Equipos</TableHead>
                                     <TableHead>Hora de Inicio</TableHead>
                                     <TableHead>Hora de Finalización</TableHead>
+                                    <TableHead>Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {dailyReport.map((report: DailyReportItem, index: number) => (
-                                    <TableRow key={index}>
-                                        <TableCell>{report.date ? format(report.date, "dd/MM/yyyy") : null}</TableCell>
-                                        <TableCell>{report.customer?.name || null}</TableCell>
-                                        <TableCell>{report.services.map(service => service.service_name).join(", ") || null}</TableCell>
-                                        <TableCell>{report.employees.map(employee => `${employee.firstname} ${employee.lastname}`).join(", ") || null}</TableCell>
-                                        <TableCell>{report.equipment.map(equipment => equipment.name).join(", ") || null}</TableCell>
-                                        <TableCell>{report.start_time ? report.start_time.toString() : null}</TableCell>
-                                        <TableCell>{report.end_time ? report.end_time.toString() : null}</TableCell>
-                                    </TableRow>
-                                ))}
+                            {dailyReport.map((report: DailyReportItem) => (
+                                <TableRow key={report.id}>
+                                    <TableCell>{report.customer ? getCustomerName(report.customer) : 'N/A'}</TableCell>
+                                    <TableCell>{report.services ? getServiceName(report.services) : 'N/A'}</TableCell>
+                                    <TableCell>{report.item ? getItemName(report.item) : 'N/A'}</TableCell>
+                                    <TableCell>{Array.isArray(report.employees) ? getEmployeeNames(report.employees) : 'N/A'}</TableCell>
+                                    <TableCell>{Array.isArray(report.equipment) ? getEquipmentNames(report.equipment) : 'N/A'}</TableCell>
+                                    <TableCell>{report.start_time ? new Date(report.start_time).toLocaleTimeString() : 'N/A'}</TableCell>
+                                    <TableCell>{report.end_time ? new Date(report.end_time).toLocaleTimeString() : 'N/A'}</TableCell>
+                                    <TableCell>
+                                        <Button onClick={() => handleEdit(report.id)} className="mr-2">Editar</Button>
+                                        <Button onClick={() => handleDelete(report.id)} variant="destructive">Eliminar</Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
                             </TableBody>
                         </Table>
                     </div>
                 </ResizablePanel>
             </ResizablePanelGroup>
         </div>
-    )
+    );
 }
