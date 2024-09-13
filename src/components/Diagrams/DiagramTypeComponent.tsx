@@ -7,11 +7,23 @@ import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { DiagramNewTypeForm } from './DiagramNewTypeForm';
 
+import BtnXlsDownload from '../BtnXlsDownload';
+
 function DiagramTypeComponent({ diagrams_types }: { diagrams_types: [] }) {
   const [selectDiagramType, setSelectDiagramType] = useState<{}>({});
 
   function setDiagram(data: any) {
     setSelectDiagramType(data);
+  }
+
+  function createDataToDownload(data: any) {
+    const dataToDownload = data.map((dato: any) => ({
+      nombre: dato.name,
+      color: dato.color,
+      descCorta: dato.short_description,
+      labActivo: dato.work_active ? 'Trabajando' : 'No trabajando',
+    }));
+    return dataToDownload;
   }
 
   useEffect(() => {
@@ -69,6 +81,7 @@ function DiagramTypeComponent({ diagrams_types }: { diagrams_types: [] }) {
             ))}
           </TableBody>
         </Table>
+        <BtnXlsDownload fn={createDataToDownload} dataToDownload={diagrams_types} nameFile={'Tipos_de_Diagrama'} />
       </ResizablePanel>
     </ResizablePanelGroup>
   );
