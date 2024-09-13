@@ -189,7 +189,7 @@ export default function EmployeeComponent({
           company_position: '',
           workflow_diagram: undefined,
           type_of_contract: undefined,
-          allocated_to: [''],
+          allocated_to: [],
           date_of_admission: undefined,
           guild: null,
           covenants: null,
@@ -930,7 +930,7 @@ export default function EmployeeComponent({
                 {PERSONALDATA?.map((data, index) => {
                   if (data.type === 'file') {
                     return (
-                      <div key={index} className="w-[300px] flex  gap-2">
+                      <div key={crypto.randomUUID()} className="w-[300px] flex  gap-2">
                         <FormField
                           control={form.control}
                           name={data.name as names}
@@ -960,7 +960,7 @@ export default function EmployeeComponent({
                   }
                   if (data.type === 'select') {
                     return (
-                      <div key={index} className="w-[300px] flex flex-col gap-2">
+                      <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
                         <FormField
                           control={form.control}
                           name={data.name as names}
@@ -991,7 +991,7 @@ export default function EmployeeComponent({
                     );
                   } else {
                     return (
-                      <div key={index} className="w-[300px] flex flex-col gap-2 ">
+                      <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2 ">
                         <FormField
                           control={form.control}
                           name={data.name as names}
@@ -1031,7 +1031,7 @@ export default function EmployeeComponent({
                 {CONTACTDATA?.map((data, index) => {
                   if (data.type === 'select') {
                     return (
-                      <div key={index} className="w-[300px] flex flex-col gap-2">
+                      <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
                         <FormField
                           control={form.control}
                           name={data.name as names}
@@ -1069,7 +1069,7 @@ export default function EmployeeComponent({
                     );
                   } else {
                     return (
-                      <div key={index} className="w-[300px] flex flex-col gap-2">
+                      <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
                         <FormField
                           control={form.control}
                           name={data.name as names}
@@ -1109,7 +1109,7 @@ export default function EmployeeComponent({
                 {LABORALDATA?.map((data, index) => {
                   if (data.name === 'date_of_admission') {
                     return (
-                      <div key={index} className="w-[300px] flex flex-col gap-2">
+                      <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
                         <FormField
                           control={form.control}
                           name="date_of_admission"
@@ -1207,7 +1207,7 @@ export default function EmployeeComponent({
 
                     if (isMultiple) {
                       return (
-                        <div key={index}>
+                        <div key={crypto.randomUUID()}>
                           {role === 'Invitado' ? null : (
                             <div className="w-[300px] flex flex-col gap-2 justify-center">
                               <FormField
@@ -1229,7 +1229,7 @@ export default function EmployeeComponent({
                       );
                     }
                     return (
-                      <div key={index} className="w-[300px] flex flex-col gap-2">
+                      <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
                         <FormField
                           control={form.control}
                           name={data.name as names}
@@ -1371,7 +1371,7 @@ export default function EmployeeComponent({
                     );
                   } else {
                     return (
-                      <div key={index} className="w-[300px] flex flex-col gap-2">
+                      <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
                         <FormField
                           control={form.control}
                           name={data.name as names}
