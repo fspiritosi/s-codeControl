@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     if (error) {
       throw new Error(JSON.stringify(error));
     }
-    
+
     return NextResponse.json({ equipments });
   } catch (error) {
     console.error('Error fetching equipments:', error);
@@ -35,8 +35,6 @@ export async function PATCH(request: NextRequest, context: any) {
   const supabase = supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   // const { params } = context
-
-  console.log('KKASDASD');
 
   const body = await request.json();
 
