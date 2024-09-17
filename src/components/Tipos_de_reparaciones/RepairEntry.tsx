@@ -58,7 +58,7 @@ export default function RepairNewEntry({
   user_id?: string | undefined;
   default_equipment_id?: string;
   employee_id?: string | undefined; 
-  onReturn: () => void;
+  onReturn?: () => void;
 }) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const router = useRouter();
@@ -268,7 +268,7 @@ export default function RepairNewEntry({
           router.refresh();
           clearForm();
           setAllRepairs([]);
-          if(employee_id){
+          if(employee_id && onReturn){
             onReturn()
           }
         } catch (error) {
