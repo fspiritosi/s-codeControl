@@ -422,6 +422,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     allNotifications();
     FetchSharedUsers();
     handleActualCompanyRole();
+
     
   };
 
