@@ -1,3 +1,4 @@
+import { RepairsChart } from '@/components/Graficos/RepairsChart';
 import { ResoursesChart } from '@/components/Graficos/ResousrsesChart';
 import { MissingDocumentList } from '@/components/MissingDocumentList';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,12 +14,17 @@ export default async function Home() {
         {false && <CardsGrid />}
         {/* <CardTitle className="text-[2vw]">Bienvenido a tu dashboard</CardTitle> */}
       </section>
-      <section className="md:mx-7 grid grid-cols-1 mt-6 xl:grid-cols-4 gap-3 mb-4">
-        <section className="flex flex-col gap-4">
+      <section className="grid grid-cols-1  mt-6 md:mx-7 xl:grid-cols-4 gap-3 mb-4">
+        <div className="col-span-1">
           <ResoursesChart />
+        </div>
+        <div className="col-span-1">
+          <RepairsChart />
+        </div>
+        <div className="col-span-2">
           <MissingDocumentList />
-        </section>
-        <Card className="col-span-3 flex flex-col justify-between overflow-hidden">
+        </div>
+        <Card className="col-span-4 flex flex-col justify-between overflow-hidden">
           <div>
             <CardHeader className="flex flex-row items-start bg-muted dark:bg-muted/50 border-b-2">
               <div className="grid gap-1">
