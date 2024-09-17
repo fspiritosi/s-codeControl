@@ -33,7 +33,6 @@ import { formatRelative } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { default as Cookies, default as cookie } from 'js-cookie';
 import { Check, CheckIcon, Loader } from 'lucide-react';
-import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -84,8 +83,7 @@ export default function NavBar() {
     setNewDefectCompany(company);
     setActualCompany(company);
     setIsOpen(false);
-    router.refresh();
-    router.push('/dashboard');
+    location.replace('/dashboard');
   };
   const { control, formState, setValue } = useForm();
 

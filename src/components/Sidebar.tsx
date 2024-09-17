@@ -28,16 +28,6 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
   useEffect(() => {
     console.log('rol', role);
   }, [role]);
-
-  const activeLink = Allinks.reduce(
-    (bestMatch: any, link: any) => {
-      const match = pathName.match(link.regex);
-      const matchLength = match ? match[0].length : 0;
-      return matchLength > bestMatch.matchLength ? { link, matchLength } : bestMatch;
-    },
-    { link: null, matchLength: 0 }
-  ).link;
-
   const sizeIcons = 20;
 
   const Allinks33 = [
@@ -85,6 +75,16 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
     },
   ];
 
+  const activeLink = Allinks33.reduce(
+    (bestMatch: any, link: any) => {
+      const match = pathName.match(link.regex);
+      const matchLength = match ? match[0].length : 0;
+      return matchLength > bestMatch.matchLength ? { link, matchLength } : bestMatch;
+    },
+    { link: null, matchLength: 0 }
+  ).link.name;
+
+
   return (
     <div
       key={role}
@@ -103,7 +103,7 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
             href={link.href}
             className={cn(
               'flex items-center p-4 cursor-pointer transition-all duration-500 rounded-s-full lisidebar relative',
-              link === activeLink
+              link.name === activeLink
                 ? 'bg-muted activesidebar before:shadow-custom-white after:shadow-custom-white-inverted'
                 : 'hover:bg-muted/80',
               isActive ? 'ml-0' : 'ml-4'

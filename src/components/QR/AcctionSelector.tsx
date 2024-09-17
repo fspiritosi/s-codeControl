@@ -87,7 +87,7 @@ export default function QrActionSelector({
               Solicitar Mantenimiento
             </Button>
           )}
-          <Button className="w-full py-6 text-lg" variant="outline" onClick={() => handleOptionSelect('checklist')}>
+          <Button disabled className="w-full py-6 text-lg" variant="outline" onClick={() => handleOptionSelect('checklist')}>
             <ClipboardList className="mr-2 h-6 w-6" />
             Completar Checklist
           </Button>
