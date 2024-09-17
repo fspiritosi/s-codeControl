@@ -1,5 +1,6 @@
 'use client';
-import { Card, CardContent } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -7,22 +8,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
+
 import { formatDocumentTypeName, setVehiclesToShow } from '@/lib/utils/utils';
 import { TypeOfRepair } from '@/types/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, ChevronsUpDown } from 'lucide-react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+
+import { ReaderIcon } from '@radix-ui/react-icons';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { FiTool } from 'react-icons/fi';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { CardTitle } from '../ui/card';
 import { Form } from '../ui/form';
+import { Input } from '../ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '../ui/resizable';
+import { Separator } from '../ui/separator';
 import { Textarea } from '../ui/textarea';
+import { criticidad } from './RepairSolicitudesTable/data';
 type FormValues = {
   description: string;
   repair: string;
@@ -30,6 +40,7 @@ type FormValues = {
   domain: string;
   user_images: (string | null)[];
   files: (File | undefined)[];
+  kilometer: string | undefined;
 }[];
 
 export default function RepairNewEntry({
@@ -38,20 +49,48 @@ export default function RepairNewEntry({
   limittedEquipment,
   user_id,
   default_equipment_id,
+  employee_id,
 }: {
   tipo_de_mantenimiento: TypeOfRepair;
   equipment: ReturnType<typeof setVehiclesToShow>;
   limittedEquipment?: boolean;
-  user_id: string | undefined;
+  user_id?: string | undefined;
   default_equipment_id?: string;
+  employee_id?: string | undefined; //!IMPLEMENTAR ESTO
 }) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const router = useRouter();
+  const [allRepairs, setAllRepairs] = useState<FormValues>([]);
+  const [typeOfEquipment, setTypeOfEquipment] = useState<string | undefined>(
+    equipment?.find((equip) => equip.id === default_equipment_id)?.types_of_vehicles
+  );
+  const [selectedEquipment, setSelectedEquipment] = useState<ReturnType<typeof setVehiclesToShow>[0] | undefined>(
+    equipment?.find((equip) => equip.id === default_equipment_id)
+  );
   const FormSchema = z.object({
     provicionalId: z.string().default(crypto.randomUUID()),
     vehicle_id: z.string({
       required_error: 'Por favor selecciona un vehiculo',
     }),
+    kilometer: z
+      .string()
+      .optional()
+      .refine(
+        (value) => {
+          if (value) {
+            console.log('value', value);
+            console.log('Number(value) > Number(selectedEquipment?.kilometer)', selectedEquipment?.kilometer);
+            console.log(
+              'Number(value) > Number(selectedEquipment?.kilometer)',
+              Number(value) > Number(selectedEquipment?.kilometer)
+            );
+            return Number(value) >= Number(selectedEquipment?.kilometer);
+          }
+        },
+        {
+          message: `El kilometraje no puede ser menor al actual (${selectedEquipment?.kilometer})`,
+        }
+      ),
     description: z
       .string({
         required_error: 'Por favor escribe una descripcion',
@@ -66,11 +105,16 @@ export default function RepairNewEntry({
     user_images: z.array(z.string().default('')).default([]),
     files: z.array(z.any()).optional(),
   });
-  const [allRepairs, setAllRepairs] = useState<FormValues>([]);
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      vehicle_id: default_equipment_id || '',
+      domain: equipment?.find((equip) => equip.id === default_equipment_id)?.domain || '',
+      kilometer: selectedEquipment?.kilometer || '0',
+    },
+  });
   const [images, setImages] = useState<(string | null)[]>([null, null, null]);
   const [files, setFiles] = useState<(File | undefined)[]>([undefined, undefined, undefined]);
-
-  console.log();
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
     //Agregar la reparacion al otro formulario
@@ -79,6 +123,7 @@ export default function RepairNewEntry({
       ...data,
       user_images: images,
       files,
+      kilometer: data.kilometer,
     };
 
     setAllRepairs((prev) => [...prev, dataWithImages]);
@@ -145,9 +190,8 @@ export default function RepairNewEntry({
               equip?.serie?.toLowerCase() === allRepairs[0]?.domain?.toLowerCase()
           ); //! OJO si se permiten mas de 1 vehiculo
           const condition = vehicle_id?.condition;
+
           console.log('vehicle_id', vehicle_id);
-          console.log('equipment', equipment);
-          console.log('allRepairs[0].domain.', allRepairs[0].domain);
 
           const data = await Promise.all(
             allRepairs.map(async (e) => {
@@ -168,6 +212,7 @@ export default function RepairNewEntry({
                 user_id,
                 user_images,
                 state: 'Pendiente',
+                employee_id,
               };
             })
           );
@@ -183,21 +228,46 @@ export default function RepairNewEntry({
             return repair?.criticity === 'Media';
           });
 
-          if (hasHighCriticity && condition !== 'no operativo') {
-            const { data: vehicles, error } = await supabase
-              .from('vehicles')
-              .update({ condition: 'no operativo' })
-              .eq('id', vehicle_id?.id);
+          // const hasCriticity = () => {
+          //   if (hasHighCriticity) {
+          //     return 'no operativo';
+          //   } else if (hasMediumCriticity) {
+          //     return 'operativo condicionado';
+          //   } else {
+          //     return 'operativo';
+          //   }
+          // };
+          // const repair = tipo_de_mantenimiento.find((repair) => repair.id === e.repair);
+          // return repair?.criticity === 'Media';
 
-            console.log('error alta', error);
-            console.log('vehicle_id alta', vehicle_id?.id);
-          } else if (hasMediumCriticity && condition !== 'no operativo') {
+          // console.log('vehicle_id', vehicle_id);
+
+          // const dataToUpdate = () => {};
+
+          // const { data: vehicles, error } = await supabase
+          //   .from('vehicles')
+          //   .update(() => {
+          //     return { condition: hasCriticity(), kilometer: allRepairs[0].kilometer };
+          //   })
+          //   .eq('id', vehicle_id?.id);
+
+          if (hasHighCriticity && condition !== 'no operativo' && condition !== 'en reparación') {
             const { data: vehicles, error } = await supabase
               .from('vehicles')
-              .update({ condition: 'operativo condicionado' })
+              .update(() => {
+                return { condition: 'no operativo', kilometer: allRepairs[0].kilometer };
+              })
               .eq('id', vehicle_id?.id);
-            console.log('error media', error);
-            console.log('vehicle_id media', vehicle_id?.id);
+          } else if (hasMediumCriticity && condition !== 'no operativo' && condition !== 'en reparación') {
+            const { data: vehicles, error } = await supabase
+              .from('vehicles')
+              .update({ condition: 'operativo condicionado', kilometer: allRepairs[0].kilometer })
+              .eq('id', vehicle_id?.id);
+          } else {
+            const { data: vehicles, error } = await supabase
+              .from('vehicles')
+              .update({ kilometer: allRepairs[0].kilometer })
+              .eq('id', vehicle_id?.id);
           }
 
           await fetch(`${URL}/api/repair_solicitud`, {
@@ -238,28 +308,22 @@ export default function RepairNewEntry({
     setImages([null, null, null]);
     setFiles([undefined, undefined, undefined]);
   };
-  console.log(default_equipment_id, 'default_equipment_id');
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: {
-      vehicle_id: default_equipment_id || '',
-      domain: equipment?.find((equip) => equip.id === default_equipment_id)?.domain || '',
-    },
-  });
 
-  console.log(form.formState.errors);
+  console.log(typeOfEquipment,'typeOfEquipmenttypeOfEquipment');
 
   const handleDeleteRepair = (provicionalId: string) => {
     setAllRepairs((prev) => prev.filter((e) => e.provicionalId !== provicionalId));
   };
-
+  const vehicle = equipment.find(
+    (equip) => equip.domain === form.getValues('domain') || equip.serie === form.getValues('domain')
+  );
   return (
-    <ResizablePanelGroup direction="horizontal" className="pt-6">
-      <ResizablePanel>
+    <ResizablePanelGroup direction="horizontal" className="pt-6 flex flex-wrap sm:flex-nowrap w-full">
+      <ResizablePanel className="sm:min-w-[280px] min-w-full">
         <div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
-              <div className="space-y-3 p-3">
+              <div className="space-y-3 p-3 w-full">
                 <FormField
                   control={form.control}
                   name="vehicle_id"
@@ -290,8 +354,6 @@ export default function RepairNewEntry({
                               <CommandEmpty>No se encontro el equipo</CommandEmpty>
                               <CommandGroup>
                                 {equipment?.map((equip) => {
-                                  console.log('equip', equip);
-
                                   return (
                                     <CommandItem
                                       value={equip.domain ?? equip.serie}
@@ -299,6 +361,10 @@ export default function RepairNewEntry({
                                       onSelect={() => {
                                         form.setValue('vehicle_id', equip.id);
                                         form.setValue('domain', equip.domain ?? equip.serie);
+                                        form.setValue('kilometer', equip.kilometer);
+
+                                        setTypeOfEquipment(equip.types_of_vehicles);
+                                        setSelectedEquipment(equip);
                                       }}
                                     >
                                       <Check
@@ -316,6 +382,33 @@ export default function RepairNewEntry({
                           </Command>
                         </PopoverContent>
                       </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="kilometer"
+                  // disabled={limittedEquipment ? false : allRepairs.length > 0}
+                  render={({ field }) => (
+                    <FormItem className={cn(typeOfEquipment === 'Vehículos' ? '' : 'hidden')}>
+                      <FormLabel>Kilometraje</FormLabel>
+                      <FormControl>
+                        <Input
+                          disabled={limittedEquipment ? false : allRepairs.length > 0}
+                          {...field}
+                          placeholder="Kilometraje"
+                          value={field.value === undefined || field.value === null ? '' : field.value.toString()}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (isNaN(Number(value)) || value === ' ') {
+                              return;
+                            }
+
+                            form.setValue('kilometer', value);
+                          }}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -366,6 +459,7 @@ export default function RepairNewEntry({
                     </FormItem>
                   )}
                 />
+
                 <Carousel
                   opts={{
                     align: 'start',
@@ -375,7 +469,7 @@ export default function RepairNewEntry({
                   Imagenes de la reparacion
                   <CarouselContent>
                     {Array.from({ length: 3 }).map((_, index) => (
-                      <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3 ">
+                      <CarouselItem key={crypto.randomUUID()} className="basis-1/3 ">
                         <div className="p-1">
                           <Card className="hover:cursor-pointer" onClick={() => handleCardClick(index)}>
                             <CardContent className="flex aspect-square items-center justify-center p-1">
@@ -408,9 +502,9 @@ export default function RepairNewEntry({
           </Form>
         </div>
       </ResizablePanel>
-      <ResizableHandle withHandle />
-      <ResizablePanel className="pl-6 min-w-[600px]" defaultSize={70}>
-        <div className="flex flex-col gap-4">
+      <ResizableHandle withHandle className="hidden sm:flex" />
+      <ResizablePanel className="pl-6 min-w-[600px] hidden sm:flex w-full" defaultSize={70}>
+        <div className="flex flex-col gap-4 w-full ">
           <CardTitle>Se registraran las siguientes reparaciones</CardTitle>
           <Table>
             <TableHeader>
@@ -421,11 +515,9 @@ export default function RepairNewEntry({
                 <TableHead className="flex justify-end pr-14">Eliminar</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="overflow-x-auto">
               {allRepairs.map((field) => {
                 const repair = tipo_de_mantenimiento.find((e) => e.id === field.repair);
-                console.log('repair', repair);
-                console.log('field', field.user_images);
                 return (
                   <TableRow key={field.provicionalId}>
                     <TableCell>
@@ -461,6 +553,125 @@ export default function RepairNewEntry({
                 createRepair();
               }}
               className="w-1/3 self-center mt-3"
+            >
+              Registrar solicitudes
+            </Button>
+          )}
+        </div>
+      </ResizablePanel>
+      <ResizablePanel className=" min-w-[250px] sm:hidden" defaultSize={70}>
+        <div className="">
+          <Separator></Separator>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              {/* <CardTitle className="text-2xl font-bold">{repair?.name}</CardTitle> */}
+              {/* <Badge variant="outline" className="text-sm">
+                {repair?.criticity}
+              </Badge> */}
+            </CardHeader>
+            <CardContent className="grid p-0 gap-4 overflow-x-auto w-full">
+              <div className="flex p-2  gap-3 flex-wrap">
+                {vehicle?.picture && (
+                  <div className="relative w-24 h-24 rounded-md overflow-hidden">
+                    <Image src={vehicle?.picture} alt={`Vehicle ${vehicle?.domain}`} layout="fill" objectFit="cover" />
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-medium">Vehiculo: {vehicle?.domain}</p>
+                  <p className="text-sm text-muted-foreground">Numero interno: {vehicle?.intern_number}</p>
+                  <p className="text-sm text-muted-foreground">Año: {vehicle?.year}</p>
+                  <p className="text-sm text-muted-foreground">Condicion: {vehicle?.condition}</p>
+                </div>
+                <ul className="w-full">
+                  {allRepairs.map((field, index) => {
+                    const repair = tipo_de_mantenimiento.find((e) => e.id === field.repair);
+                    const maintenance = tipo_de_mantenimiento.find((e) => e.id === field.repair);
+                    const priority = criticidad.find((priority) => priority.value === repair?.criticity);
+                    const badgeVariant =
+                      repair?.criticity === 'Baja'
+                        ? 'success'
+                        : repair?.criticity === 'Media'
+                          ? 'yellow'
+                          : ('destructive' as
+                              | 'success'
+                              | 'default'
+                              | 'destructive'
+                              | 'outline'
+                              | 'secondary'
+                              | 'yellow'
+                              | 'red'
+                              | null
+                              | undefined);
+                    return (
+                      <Accordion type="single" collapsible key={field.provicionalId}>
+                        <AccordionItem value="item-1">
+                          <AccordionTrigger className="active:no-underline focus:no-underline">
+                            {' '}
+                            <div className="flex flex-row items-center w-full justify-between space-y-0 pb-2 mr-2">
+                              <div className="flex gap-2">
+                                <CardDescription>{repair?.name}</CardDescription>
+                                <Badge variant={badgeVariant} className="font-bold">
+                                  {' '}
+                                  {priority?.icon && <priority.icon className="mr-2 h-4 w-4 font-bold" />}
+                                  {repair?.criticity}
+                                </Badge>
+                              </div>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <li key={field.provicionalId} className="">
+                              <CardContent className="grid p-0 gap-4 overflow-x-auto w-full">
+                                <div className="flex flex-col ">
+                                  <div className="flex items-center">
+                                    <FiTool className="mr-2 h-4 w-4" />
+                                    <span className="text-sm">
+                                      Tipo de mantenimiento: {maintenance?.type_of_maintenance}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <FiTool className="mr-2 h-4 w-4" />
+                                    <span className="text-sm">Nombre: {maintenance?.name}</span>
+                                  </div>
+                                  <div className="flex -space-x-2 mt-2">
+                                    {field.user_images
+                                      .filter((url) => url)
+                                      .map((url) => (
+                                        <Avatar key={url} className="border-black border size-8 ">
+                                          <AvatarImage src={url || ''} alt="Preview de la reparacion" />
+                                          <AvatarFallback>CN</AvatarFallback>
+                                        </Avatar>
+                                      ))}
+                                  </div>
+                                </div>
+                                <div className="flex items-center">
+                                  <ReaderIcon className="mr-2 h-4 w-4" />
+                                  <span className="text-sm text-muted-foreground">{maintenance?.description}</span>
+                                </div>
+                                <Button
+                                  variant={'destructive'}
+                                  size={'sm'}
+                                  onClick={() => handleDeleteRepair(field.provicionalId)}
+                                >
+                                  Eliminar
+                                </Button>
+                              </CardContent>
+                            </li>
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    );
+                  })}
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+
+          {allRepairs.length > 0 && (
+            <Button
+              onClick={() => {
+                createRepair();
+              }}
+              className="w-full mt-4"
             >
               Registrar solicitudes
             </Button>

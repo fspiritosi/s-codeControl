@@ -423,7 +423,7 @@ export function DiagramForm({
                   <TableHead></TableHead>
                 </TableHeader>
                 {errorsDiagrams.map((d: ErrorToCreate, index: number) => (
-                  <TableBody key={index}>
+                  <TableBody key={crypto.randomUUID()}>
                     <TableRow>
                       <TableCell>{d.employee_name}</TableCell>
                       <TableCell>
@@ -474,7 +474,7 @@ export function DiagramForm({
                   <TableHead></TableHead>
                 </TableHeader>
                 {succesDiagrams.map((d: DiagramaToCreate, index: number) => (
-                  <TableBody key={index}>
+                  <TableBody key={crypto.randomUUID()}>
                     <TableRow>
                       <TableCell>{d.employee_name}</TableCell>
                       <TableCell>{d.event_diagram_name}</TableCell>

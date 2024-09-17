@@ -26,14 +26,13 @@ import { FieldComponentProps, FieldComponentPropsDecorative } from '@/types/type
 import { CalendarIcon } from '@radix-ui/react-icons';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import jsPDF from 'jspdf';
 import React, { useState } from 'react';
 import FieldRenderer from '../formUtils/fieldRenderer';
 
 export const SectionField: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
-      <div key={index}>
+      <div key={crypto.randomUUID()}>
         <CardTitle className="mb-2 mt-1 text-xl">
           {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo de la seccion'}
         </CardTitle>
@@ -61,7 +60,7 @@ export const SectionField: React.FC<FieldComponentProps> = ({ campo, form, index
   const observationInputSection = completObjet?.find((e) => e.title.includes(`${campo.title}_observaciones`));
 
   return (
-    <div key={index}>
+    <div key={crypto.randomUUID()}>
       <CardTitle className="mb-2 mt-1 text-xl">{campo.title}</CardTitle>
       {completObjet?.map((sectionCampo, sectionIndex) => (
         <React.Fragment key={sectionIndex}>
@@ -82,7 +81,7 @@ export const SectionField: React.FC<FieldComponentProps> = ({ campo, form, index
 export const RadioField: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
-      <div className="col-span-3 md:col-span-1" key={index}>
+      <div className="col-span-3 md:col-span-1" key={crypto.randomUUID()}>
         <CardDescription className="mb-2">
           {' '}
           {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
@@ -115,7 +114,7 @@ export const RadioField: React.FC<FieldComponentProps> = ({ campo, form, index, 
   const observationInput = completObjet?.find((e) => e.title.includes(`${campo.title}_observaciones`));
 
   return (
-    <div className="col-span-3 md:col-span-1" key={index}>
+    <div className="col-span-3 md:col-span-1" key={crypto.randomUUID()}>
       <FormField
         key={campo.id}
         control={form.control}
@@ -148,7 +147,7 @@ export const RadioField: React.FC<FieldComponentProps> = ({ campo, form, index, 
 export const TextField: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
-      <div className="col-span-3 md:col-span-1" key={index}>
+      <div className="col-span-3 md:col-span-1" key={crypto.randomUUID()}>
         <CardDescription className="mb-2">
           {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
@@ -173,7 +172,7 @@ export const TextField: React.FC<FieldComponentProps> = ({ campo, form, index, c
   const observationInput = completObjet?.find((e) => e.title.includes(`${campo.title}_observaciones`));
 
   return (
-    <div className="col-span-3 md:col-span-1" key={index}>
+    <div className="col-span-3 md:col-span-1" key={crypto.randomUUID()}>
       <FormField
         key={campo.id || index}
         control={form.control}
@@ -197,7 +196,7 @@ export const TextField: React.FC<FieldComponentProps> = ({ campo, form, index, c
 export const TextAreaField: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
-      <div className="col-span-3 md:col-span-1" key={index}>
+      <div className="col-span-3 md:col-span-1" key={crypto.randomUUID()}>
         <CardDescription className="mb-2">
           {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
@@ -222,7 +221,7 @@ export const TextAreaField: React.FC<FieldComponentProps> = ({ campo, form, inde
   const observationInput = completObjet?.find((e) => e.title.includes(`${campo.title}_observaciones`));
 
   return (
-    <div className="col-span-3 md:col-span-1" key={index}>
+    <div className="col-span-3 md:col-span-1" key={crypto.randomUUID()}>
       <FormField
         key={campo.id || index}
         control={form.control}
@@ -246,7 +245,7 @@ export const TextAreaField: React.FC<FieldComponentProps> = ({ campo, form, inde
 export const RadioGroupField: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
-      <div className="w-full" key={index}>
+      <div className="w-full" key={crypto.randomUUID()}>
         <CardDescription className="mb-2">
           {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
@@ -278,7 +277,7 @@ export const RadioGroupField: React.FC<FieldComponentProps> = ({ campo, form, in
   const observationInput = completObjet?.find((e) => e.title.includes(`${campo.title}_observaciones`));
 
   return (
-    <div className="col-span-3 md:col-span-1" key={index}>
+    <div className="col-span-3 md:col-span-1" key={crypto.randomUUID()}>
       <FormField
         key={campo.id || index}
         control={form.control}
@@ -311,7 +310,7 @@ export const RadioGroupField: React.FC<FieldComponentProps> = ({ campo, form, in
 export const MultiSelectField: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
-      <div className="w-full" key={index}>
+      <div className="w-full" key={crypto.randomUUID()}>
         <CardDescription className="mb-2">
           {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
@@ -340,7 +339,7 @@ export const MultiSelectField: React.FC<FieldComponentProps> = ({ campo, form, i
   const dateInput = completObjet?.find((e) => e.title.includes(`${campo.title}_fecha`));
   const observationInput = completObjet?.find((e) => e.title.includes(`${campo.title}_observaciones`));
   return (
-    <div className="col-span-3 md:col-span-1" key={index}>
+    <div className="col-span-3 md:col-span-1" key={crypto.randomUUID()}>
       <FormField
         key={campo.id || index}
         control={form.control}
@@ -376,7 +375,7 @@ export const DateField: React.FC<FieldComponentProps> = ({ campo, form, index })
   if (!form) {
     if (campo.formName !== 'Fecha') return null;
     return (
-      <div className="col-span-3 md:col-span-1" key={index}>
+      <div className="col-span-3 md:col-span-1" key={crypto.randomUUID()}>
         <CardDescription className="mb-2">
           {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
@@ -388,9 +387,8 @@ export const DateField: React.FC<FieldComponentProps> = ({ campo, form, index })
   if (campo.formName === 'Fecha') return null;
   const [date, setDate] = useState<Date>();
 
-
   return (
-    <div className="col-span-3 md:col-span-1" key={index}>
+    <div className="col-span-3 md:col-span-1" key={crypto.randomUUID()}>
       <FormField
         key={campo.id}
         control={form.control}
@@ -434,7 +432,7 @@ export const DateField: React.FC<FieldComponentProps> = ({ campo, form, index })
 export const FileField: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
-      <div className="col-span-3 md:col-span-1" key={index}>
+      <div className="col-span-3 md:col-span-1" key={crypto.randomUUID()}>
         <CardDescription className="mb-2">
           {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
@@ -459,7 +457,7 @@ export const FileField: React.FC<FieldComponentProps> = ({ campo, form, index, c
   const observationInput = completObjet?.find((e) => e.title.includes(`${campo.title}_observaciones`));
 
   return (
-    <div className="col-span-3 md:col-span-1" key={index}>
+    <div className="col-span-3 md:col-span-1" key={crypto.randomUUID()}>
       <FormField
         key={campo.id || index}
         control={form.control}
@@ -483,7 +481,7 @@ export const FileField: React.FC<FieldComponentProps> = ({ campo, form, index, c
 export const SelectField: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
-      <div className="col-span-3 md:col-span-1" key={index}>
+      <div className="col-span-3 md:col-span-1" key={crypto.randomUUID()}>
         <CardDescription className="mb-2">
           {' '}
           {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
@@ -518,7 +516,7 @@ export const SelectField: React.FC<FieldComponentProps> = ({ campo, form, index,
   const dateInput = completObjet?.find((e) => e.title.includes(`${campo.title}_fecha`));
   const observationInput = completObjet?.find((e) => e.title.includes(`${campo.title}_observaciones`));
   return (
-    <div className="col-span-3 md:col-span-1 space-y-8" key={index}>
+    <div className="col-span-3 md:col-span-1 space-y-8" key={crypto.randomUUID()}>
       <FormField
         key={campo.id || index}
         control={form.control}
@@ -554,7 +552,7 @@ export const PredefinedSelectField: React.FC<FieldComponentProps> = ({ campo, fo
   if (!form) {
     const vehicles = useLoggedUserStore((state) => state.vehicles);
     return (
-      <div className="w-full" key={index}>
+      <div className="w-full" key={crypto.randomUUID()}>
         <CardDescription className="mb-2">
           {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
@@ -634,7 +632,7 @@ export const PredefinedSelectField: React.FC<FieldComponentProps> = ({ campo, fo
   const dateInput = completObjet?.find((e) => e.title.includes(`${campo.title}_fecha`));
   const observationInput = completObjet?.find((e) => e.title.includes(`${campo.title}_observaciones`));
   return (
-    <div className="col-span-3 md:col-span-1 space-y-8" key={index}>
+    <div className="col-span-3 md:col-span-1 space-y-8" key={crypto.randomUUID()}>
       <FormItem className="space-y-3">
         <FormLabel>{campo.title.replaceAll('_', ' ')}</FormLabel>
         <FormField
@@ -670,7 +668,7 @@ export const PredefinedSelectField: React.FC<FieldComponentProps> = ({ campo, fo
 
 export const FormNameField: React.FC<FieldComponentPropsDecorative> = ({ campo, index }) => {
   return (
-    <div className="my-5 col-span-3" key={index}>
+    <div className="my-5 col-span-3" key={crypto.randomUUID()}>
       <Label>
         <Badge className="text-xl text-balance text-center"> {campo.value ?? 'Nombre del formulario'}</Badge>
       </Label>
@@ -680,7 +678,7 @@ export const FormNameField: React.FC<FieldComponentPropsDecorative> = ({ campo, 
 
 export const TitleField: React.FC<FieldComponentPropsDecorative> = ({ campo, index }) => {
   return (
-    <div className="col-span-3" key={index}>
+    <div className="col-span-3" key={crypto.randomUUID()}>
       <CardTitle className="mb-2 mt-1 text-xl">
         {campo.title ? campo?.title?.replaceAll('_', ' ') : campo?.value?.replaceAll('_', ' ')}
       </CardTitle>
@@ -690,7 +688,7 @@ export const TitleField: React.FC<FieldComponentPropsDecorative> = ({ campo, ind
 
 export const SubtitleField: React.FC<FieldComponentPropsDecorative> = ({ campo, index }) => {
   return (
-    <div className="col-span-3" key={index}>
+    <div className="col-span-3" key={crypto.randomUUID()}>
       <CardTitle className="mb-2 mt-1">{campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}</CardTitle>
     </div>
   );
@@ -699,13 +697,13 @@ export const SubtitleField: React.FC<FieldComponentPropsDecorative> = ({ campo, 
 export const SeparatorField: React.FC<FieldComponentPropsDecorative> = ({ campo, index }) => {
   if (campo.formName) {
     return (
-      <div className="col-span-3 w-full " key={index}>
+      <div className="col-span-3 w-full " key={crypto.randomUUID()}>
         <Separator>{campo.value}</Separator>
       </div>
     );
   }
   return (
-    <div className="col-span-3 w-full px-[20%]" key={index}>
+    <div className="col-span-3 w-full px-[20%]" key={crypto.randomUUID()}>
       <Separator>{campo.value}</Separator>
     </div>
   );
@@ -714,7 +712,7 @@ export const SeparatorField: React.FC<FieldComponentPropsDecorative> = ({ campo,
 export const DateInput: React.FC<FieldComponentProps> = ({ campo, form, index }) => {
   if (!form)
     return (
-      <div className="col-span-3 md:col-span-1 space-y-8 w-full" key={index}>
+      <div className="col-span-3 md:col-span-1 space-y-8 w-full" key={crypto.randomUUID()}>
         <CardDescription className="mb-2">
           {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
@@ -723,7 +721,7 @@ export const DateInput: React.FC<FieldComponentProps> = ({ campo, form, index })
     );
 
   return (
-    <div className="col-span-3 md:col-span-1 space-y-8 w-full" key={index}>
+    <div className="col-span-3 md:col-span-1 space-y-8 w-full" key={crypto.randomUUID()}>
       <FormField
         key={`${campo.formName}_fecha`}
         control={form.control}
@@ -751,7 +749,7 @@ export const DateInput: React.FC<FieldComponentProps> = ({ campo, form, index })
 export const ObservationInput: React.FC<FieldComponentProps> = ({ campo, form, index }) => {
   if (!form) {
     return (
-      <div className="col-span-3 md:col-span-1 space-y-8 w-full" key={index}>
+      <div className="col-span-3 md:col-span-1 space-y-8 w-full" key={crypto.randomUUID()}>
         <CardDescription className="mb-2">
           {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
@@ -780,7 +778,7 @@ export const ObservationInput: React.FC<FieldComponentProps> = ({ campo, form, i
 export const SeccionDate: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
-      <div className="col-span-3" key={index}>
+      <div className="col-span-3" key={crypto.randomUUID()}>
         <CardDescription className="mb-2">
           {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
@@ -789,7 +787,7 @@ export const SeccionDate: React.FC<FieldComponentProps> = ({ campo, form, index,
     );
   }
   return (
-    <div className="col-span-3" key={index}>
+    <div className="col-span-3" key={crypto.randomUUID()}>
       <FormField
         key={campo.id}
         control={form.control}
@@ -816,7 +814,7 @@ export const SeccionDate: React.FC<FieldComponentProps> = ({ campo, form, index,
 export const SeccionObservaciones: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
     return (
-      <div className="col-span-3" key={index}>
+      <div className="col-span-3" key={crypto.randomUUID()}>
         <CardDescription className="mb-2">
           {campo.title ? campo.title.replaceAll('_', ' ') : 'Titulo del campo'}
         </CardDescription>
@@ -825,7 +823,7 @@ export const SeccionObservaciones: React.FC<FieldComponentProps> = ({ campo, for
     );
   }
   return (
-    <div className="col-span-3" key={index}>
+    <div className="col-span-3" key={crypto.randomUUID()}>
       <FormField
         key={campo.id}
         control={form.control}
@@ -848,7 +846,7 @@ export const SeccionObservaciones: React.FC<FieldComponentProps> = ({ campo, for
 //   switch (campo.tipo) {
 //     case 'Nombre del formulario':
 //       return (
-//         <View key={index} style={{ marginVertical: 10 }}>
+//         <View key={crypto.randomUUID()} style={{ marginVertical: 10 }}>
 //           <Text style={{ fontSize: 18, fontWeight: 'bold', textDecoration: 'underline' }}>
 //             {campo.value ?? 'Nombre del formulario'}
 //           </Text>
@@ -856,7 +854,7 @@ export const SeccionObservaciones: React.FC<FieldComponentProps> = ({ campo, for
 //       );
 //     case 'Texto':
 //       return (
-//         <View key={index} style={{ marginBottom: 10 }}>
+//         <View key={crypto.randomUUID()} style={{ marginBottom: 10 }}>
 //           <Text style={{ marginBottom: 5 }}>{campo.title ? campo.title : 'Titulo del campo'}</Text>
 //           <Text> {campo.value}</Text>
 //           {campo.date && (
@@ -875,7 +873,7 @@ export const SeccionObservaciones: React.FC<FieldComponentProps> = ({ campo, for
 //       );
 //     case 'Área de texto':
 //       return (
-//         <View key={index} style={{ marginBottom: 10 }}>
+//         <View key={crypto.randomUUID()} style={{ marginBottom: 10 }}>
 //           <Text style={{ marginBottom: 5 }}>{campo.title ? campo.title : 'Titulo del campo'}</Text>
 //           <Text>{campo.value}</Text>
 //           {campo.date && (
@@ -894,13 +892,13 @@ export const SeccionObservaciones: React.FC<FieldComponentProps> = ({ campo, for
 //       );
 //     case 'Separador':
 //       return (
-//         <View key={index} style={{ marginVertical: 20 }}>
+//         <View key={crypto.randomUUID()} style={{ marginVertical: 20 }}>
 //           <Text>{campo.value}</Text>
 //         </View>
 //       );
 //     case 'Radio':
 //       return (
-//         <View key={index} style={{ marginBottom: 10 }}>
+//         <View key={crypto.randomUUID()} style={{ marginBottom: 10 }}>
 //           <Text>{campo.title ? campo.title : 'Titulo del campo'}</Text>
 //           <View>
 //             {campo.opciones?.map((opcion, i) => (
@@ -925,7 +923,7 @@ export const SeccionObservaciones: React.FC<FieldComponentProps> = ({ campo, for
 //       );
 //     case 'Seleccion multiple':
 //       return (
-//         <View key={index} style={{ marginBottom: 10 }}>
+//         <View key={crypto.randomUUID()} style={{ marginBottom: 10 }}>
 //           <Text>{campo.title ? campo.title : 'Titulo del campo'}</Text>
 //           <View>
 //             {campo.opciones?.map((opcion, i) => (
@@ -950,14 +948,14 @@ export const SeccionObservaciones: React.FC<FieldComponentProps> = ({ campo, for
 //       );
 //     case 'Fecha':
 //       return (
-//         <View key={index} style={{ marginBottom: 10 }}>
+//         <View key={crypto.randomUUID()} style={{ marginBottom: 10 }}>
 //           <Text>{campo.title ? campo.title : 'Titulo del campo'}</Text>
 //           <Text>{campo.value}</Text>
 //         </View>
 //       );
 //     case 'Seleccion':
 //       return (
-//         <View key={index} style={{ marginBottom: 10 }}>
+//         <View key={crypto.randomUUID()} style={{ marginBottom: 10 }}>
 //           <Text>{campo.title ? campo.title : 'Titulo del campo'}</Text>
 //           <Text>{campo.value}</Text>
 //           {campo.date && (
@@ -976,13 +974,13 @@ export const SeccionObservaciones: React.FC<FieldComponentProps> = ({ campo, for
 //       );
 //     case 'Subtitulo':
 //       return (
-//         <View key={index} style={{ marginBottom: 10 }}>
+//         <View key={crypto.randomUUID()} style={{ marginBottom: 10 }}>
 //           <Text style={{ fontSize: 16, fontWeight: 'bold' }}>{campo.title ? campo.title : 'Titulo del campo'}</Text>
 //         </View>
 //       );
 //     case 'Si-No':
 //       return (
-//         <View key={index} style={{ marginBottom: 10 }}>
+//         <View key={crypto.randomUUID()} style={{ marginBottom: 10 }}>
 //           <Text>{campo.title ? campo.title : 'Titulo del campo'}</Text>
 //           <View style={{ display: 'flex', backgroundColor: 'blue', justifyContent: 'space-between' }}>
 //             {/* {campo.opciones?.map((opcion, i) => (
@@ -1009,13 +1007,13 @@ export const SeccionObservaciones: React.FC<FieldComponentProps> = ({ campo, for
 //       );
 //     case 'Titulo':
 //       return (
-//         <View key={index} style={{ marginBottom: 10 }}>
+//         <View key={crypto.randomUUID()} style={{ marginBottom: 10 }}>
 //           <Text style={{ fontSize: 20, fontWeight: 'bold' }}>{campo.title ? campo.title : 'Titulo del campo'}</Text>
 //         </View>
 //       );
 //     case 'Seccion':
 //       return (
-//         <View key={index} style={{ marginBottom: 10 }}>
+//         <View key={crypto.randomUUID()} style={{ marginBottom: 10 }}>
 //           <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{campo.title ? campo.title : 'Titulo del campo'}</Text>
 //           <View>
 //             {campo.sectionCampos?.map((opcion, i) => {
@@ -1038,7 +1036,7 @@ export const SeccionObservaciones: React.FC<FieldComponentProps> = ({ campo, for
 //       );
 //     case 'Archivo':
 //       return (
-//         <View key={index} style={{ marginBottom: 10 }}>
+//         <View key={crypto.randomUUID()} style={{ marginBottom: 10 }}>
 //           <Text>{campo.title ? campo.title : 'Titulo del campo'}</Text>
 //           <Text>{/* Aquí podrías indicar un enlace o el nombre del archivo */}</Text>
 //           {campo.date && (

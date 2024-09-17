@@ -37,7 +37,7 @@ export default function DisplayCreatedForms({
       <div className="space-y-3">
         {createdForms?.map((form, index) => {
           return (
-            <Card className="p-2 flex items-center justify-between" key={index}>
+            <Card className="p-2 flex items-center justify-between" key={crypto.randomUUID()}>
               <div className="flex gap-4">
                 <Button className="w-full hover:underline" onClick={() => handleAnswersChange(form.id)}>
                   <CardTitle className="capitalize flex items-center w-full">

@@ -132,8 +132,6 @@ export default async function page({
     return validityDate <= oneMonthFromNow;
   }
 
-  console.log(role,'aadsjdbnajhsdgiashgdui')
-
   return (
     <section className="md:mx-7">
       <Card className="p-4">

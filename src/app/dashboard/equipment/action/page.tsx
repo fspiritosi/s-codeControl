@@ -6,7 +6,7 @@ import { cookies } from 'next/headers';
 import { supabase } from '../../../../../supabase/supabase';
 import VehiclesForm from '../../../../components/VehiclesForm';
 
-export default async function EquipmentFormAction({ searchParams, params }: { searchParams: any; params: any }) {
+export default async function EquipmentFormAction({ searchParams  }: { searchParams: any; }) {
   const { data } = await supabase
     .from('documents_equipment')
     .select('*,id_document_types(*)')
@@ -15,7 +15,6 @@ export default async function EquipmentFormAction({ searchParams, params }: { se
   revalidatePath('/dashboard/equipment/action');
 
   const cookiesStore = cookies();
-  const actualCompany = cookiesStore.get('actualComp');
 
   let vehicle;
 

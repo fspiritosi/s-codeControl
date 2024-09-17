@@ -92,11 +92,11 @@ export const MissingDocumentList = () => {
                   allValuesToShow.employees?.map((item: any, index) => {
                     // console.log(item[0].resource);
                     return (
-                      <Accordion key={index} type="single" className="" collapsible>
+                      <Accordion key={crypto.randomUUID()} type="single" className="" collapsible>
                         <AccordionItem value="item-1">
                           <AccordionTrigger className="px-2">
                             <div
-                              key={index}
+                              key={crypto.randomUUID()}
                               className="flex justify-between items-center h-14 px-2 w-full dark:text-white font-semibold "
                             >
                               <Badge variant={'outline'} className="text-md">
@@ -119,7 +119,11 @@ export const MissingDocumentList = () => {
                           </AccordionTrigger>
                           <AccordionContent className="flex flex-col gap-4 ">
                             {item?.map((document: any, index: number) => (
-                              <Badge key={index} className="text-white h-8 mx-2 w-fit" variant={'destructive'}>
+                              <Badge
+                                key={crypto.randomUUID()}
+                                className="text-white h-8 mx-2 w-fit"
+                                variant={'destructive'}
+                              >
                                 <FileTextIcon className="inline mr-2 text-white size-5" />
                                 {document.documentName}
                               </Badge>
@@ -152,11 +156,11 @@ export const MissingDocumentList = () => {
                 {allValuesToShow?.vehicles?.length > 0 &&
                   allValuesToShow.vehicles?.map((item: any, index) => {
                     return (
-                      <Accordion key={index} type="single" collapsible>
+                      <Accordion key={crypto.randomUUID()} type="single" collapsible>
                         <AccordionItem value="item-1">
                           <AccordionTrigger className="px-2">
                             <div
-                              key={index}
+                              key={crypto.randomUUID()}
                               className="flex justify-between items-center h-14 px-2 w-full dark:text-white font-semibold capitalize"
                             >
                               <Badge variant={'outline'} className="text-md">
@@ -174,7 +178,11 @@ export const MissingDocumentList = () => {
                           </AccordionTrigger>
                           <AccordionContent className="flex flex-col gap-4 ">
                             {item?.map((document: any, index: number) => (
-                              <Badge key={index} className="text-white h-8 mx-2 w-fit" variant={'destructive'}>
+                              <Badge
+                                key={crypto.randomUUID()}
+                                className="text-white h-8 mx-2 w-fit"
+                                variant={'destructive'}
+                              >
                                 <ExclamationTriangleIcon className="inline mr-2 text-white-500/70 size-5" />
                                 {document.documentName}
                               </Badge>

@@ -46,7 +46,7 @@ const FilterHeader = ({ filters, docOptions, onFilterChange }: FilterHeaderProps
         </SelectTrigger>
         <SelectContent>
           {docOptions.multiresource.map((option, index) => (
-            <SelectItem key={index} value={option}>
+            <SelectItem key={crypto.randomUUID()} value={option}>
               {option}
             </SelectItem>
           ))}
@@ -61,7 +61,7 @@ const FilterHeader = ({ filters, docOptions, onFilterChange }: FilterHeaderProps
         </SelectTrigger>
         <SelectContent>
           {docOptions.special.map((option, index) => (
-            <SelectItem key={index} value={option}>
+            <SelectItem key={crypto.randomUUID()} value={option}>
               {option}
             </SelectItem>
           ))}
@@ -76,7 +76,7 @@ const FilterHeader = ({ filters, docOptions, onFilterChange }: FilterHeaderProps
         </SelectTrigger>
         <SelectContent>
           {docOptions.monthly.map((option, index) => (
-            <SelectItem key={index} value={option}>
+            <SelectItem key={crypto.randomUUID()} value={option}>
               {option}
             </SelectItem>
           ))}
@@ -91,7 +91,7 @@ const FilterHeader = ({ filters, docOptions, onFilterChange }: FilterHeaderProps
         </SelectTrigger>
         <SelectContent>
           {docOptions.expired.map((option, index) => (
-            <SelectItem key={index} value={option}>
+            <SelectItem key={crypto.randomUUID()} value={option}>
               {option}
             </SelectItem>
           ))}
@@ -106,7 +106,7 @@ const FilterHeader = ({ filters, docOptions, onFilterChange }: FilterHeaderProps
         </SelectTrigger>
         <SelectContent>
           {docOptions.mandatory.map((option, index) => (
-            <SelectItem key={index} value={option}>
+            <SelectItem key={crypto.randomUUID()} value={option}>
               {option}
             </SelectItem>
           ))}
@@ -121,7 +121,7 @@ const FilterHeader = ({ filters, docOptions, onFilterChange }: FilterHeaderProps
         </SelectTrigger>
         <SelectContent>
           {docOptions.private.map((option, index) => (
-            <SelectItem key={index} value={option}>
+            <SelectItem key={crypto.randomUUID()} value={option}>
               {option}
             </SelectItem>
           ))}

@@ -14,6 +14,14 @@ const config = {
       },
     },
     extend: {
+      boxShadow: {
+        'custom-white': '10px 10px 0px 10px hsl(var(--muted))',
+        'custom-white-inverted': '10px -10px 0 10px hsl(var(--muted))',
+      },
+      width: {
+        'sidebar-open': '16rem', // w-64
+        'sidebar-close': '6rem', // w-24
+      },
       screens: {
         cardMedia: '1227px',
       },

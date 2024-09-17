@@ -1,55 +1,48 @@
-"use client"
+'use client';
 
-import { Cross2Icon } from "@radix-ui/react-icons"
-import { Table } from "@tanstack/react-table"
+import { Cross2Icon } from '@radix-ui/react-icons';
+import { Table } from '@tanstack/react-table';
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
-import { DataTableFacetedFilter } from "./data-table-faceted-filter"
-import { criticidad, statuses } from '../data'
-import { DataTableViewOptions } from './data-table-view-options'
+import { criticidad, statuses } from '../data';
+import { DataTableFacetedFilter } from './data-table-faceted-filter';
 
 interface DataTableToolbarProps<TData> {
-  table: Table<TData>
+  table: Table<TData>;
 }
 
-export function DataTableToolbar<TData>({
-  table,
-}: DataTableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0
+export function DataTableToolbar<TData>({ table }: DataTableToolbarProps<TData>) {
+  const isFiltered = table.getState().columnFilters.length > 0;
+  const equipment = table.getColumn('domain')?.getFacetedUniqueValues();
+  const formattedEquipment = equipment
+    ? Array.from(equipment.keys()).map((key) => ({
+        label: key,
+        value: key,
+      }))
+    : [];
 
   return (
     <div className="flex items-center justify-between">
       <div className="flex flex-1 items-center space-x-2">
         <Input
-          placeholder="Buscar tarea por titulo..."
-          value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("title")?.setFilterValue(event.target.value)
-          }
+          placeholder="Filtrar por numero interno..."
+          value={(table.getColumn('intern_number')?.getFilterValue() as string) ?? ''}
+          onChange={(event) => table.getColumn('intern_number')?.setFilterValue(event.target.value)}
           className="h-8 w-[150px] lg:w-[250px]"
         />
-        {table.getColumn("state") && (
-          <DataTableFacetedFilter
-            column={table.getColumn("state")}
-            title="Estado"
-            options={statuses}
-          />
+        {table.getColumn('state') && (
+          <DataTableFacetedFilter column={table.getColumn('state')} title="Estado" options={statuses} />
         )}
-        {table.getColumn("priority") && (
-          <DataTableFacetedFilter
-            column={table.getColumn("priority")}
-            title="Criticidad"
-            options={criticidad}
-          />
+        {table.getColumn('priority') && (
+          <DataTableFacetedFilter column={table.getColumn('priority')} title="Criticidad" options={criticidad} />
+        )}
+        {table.getColumn('domain') && (
+          <DataTableFacetedFilter column={table.getColumn('domain')} title="Equipo" options={formattedEquipment} />
         )}
         {isFiltered && (
-          <Button
-            variant="ghost"
-            onClick={() => table.resetColumnFilters()}
-            className="h-8 px-2 lg:px-3"
-          >
+          <Button variant="ghost" onClick={() => table.resetColumnFilters()} className="h-8 px-2 lg:px-3">
             Limpiar filtros
             <Cross2Icon className="ml-2 h-4 w-4" />
           </Button>
@@ -57,5 +50,5 @@ export function DataTableToolbar<TData>({
       </div>
       {/* <DataTableViewOptions table={table} /> */}
     </div>
-  )
+  );
 }

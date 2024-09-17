@@ -57,7 +57,13 @@ export function SubmitCustomForm({ campos, fetchAnswers }: Props) {
         <form onSubmit={form.handleSubmit(handleCustomFormSubmit)}>
           <div className="w-full space-y-6 grid grid-cols-3 gap-x-10">
             {formObject?.map((campo: FormField, index: number) => (
-              <FieldRenderer key={index} campo={campo} form={form} index={index} completObjet={formObject} />
+              <FieldRenderer
+                key={crypto.randomUUID()}
+                campo={campo}
+                form={form}
+                index={index}
+                completObjet={formObject}
+              />
             ))}
           </div>
           <Button type="submit">Submit</Button>
