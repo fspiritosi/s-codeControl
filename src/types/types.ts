@@ -144,7 +144,7 @@ export type Employee = {
   workflow_diagram: string;
   normal_hours: string; //!si
   type_of_contract: string | undefined; //!si
-  allocated_to?: any //!si
+  allocated_to?: any; //!si
   date_of_admission: Date | undefined | string;
   full_name?: string; //!si
   is_active?: boolean;
@@ -227,6 +227,7 @@ export type Vechicle = {
   reason_for_termination: string;
   user_id: string;
   status: 'Avalado' | 'No avalado';
+  kilometer: string;
   type: Model;
   condition: 'operativo' | 'no operativo' | 'en reparación' | 'operativo condicionado';
 };
@@ -573,6 +574,7 @@ export type RepairsSolicituds = {
   vehicle_id: string;
   vehicle_condition: 'operativo' | 'no operativo' | 'en reparación' | 'operativo condicionado';
   intern_number: string;
+  kilometer: string | null;
   repairlogs:
     | {
         id: string;
@@ -580,6 +582,16 @@ export type RepairsSolicituds = {
         repair_id: string;
         created_at: string;
         description: string;
+        employee_id?: Employee;
+        user_id?: {
+          id: string;
+          role: string;
+          email: string;
+          avatar: null | string;
+          fullname: string;
+          created_at: string;
+          credential_id: string;
+        };
       }[]
     | [];
 }[];
@@ -599,7 +611,8 @@ export type FormattedSolicitudesRepair = {
   domain: string | null;
   engine: string;
   status: string;
-  serie: string ;
+  kilometer: string | null;
+  serie: string;
   chassis: string;
   picture: string;
   solicitud_status: string;
@@ -616,6 +629,16 @@ export type FormattedSolicitudesRepair = {
         repair_id: string;
         created_at: string;
         description: string;
+        modified_by_employee?: Employee;
+        modified_by_user?: {
+          id: string;
+          role: string;
+          email: string;
+          avatar: null | string;
+          fullname: string;
+          created_at: string;
+          credential_id: string;
+        };
       }[]
     | [];
   mechanic_description: string | null;
@@ -676,4 +699,4 @@ export type FormattedGuild = {
 };
 
 // Tipo para la función de salida completa
-export type FormattedOutput = FormattedGuild[]|undefined;
+export type FormattedOutput = FormattedGuild[] | undefined;

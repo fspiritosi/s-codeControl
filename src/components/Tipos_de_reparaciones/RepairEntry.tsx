@@ -50,13 +50,15 @@ export default function RepairNewEntry({
   user_id,
   default_equipment_id,
   employee_id,
+  onReturn
 }: {
   tipo_de_mantenimiento: TypeOfRepair;
   equipment: ReturnType<typeof setVehiclesToShow>;
   limittedEquipment?: boolean;
   user_id?: string | undefined;
   default_equipment_id?: string;
-  employee_id?: string | undefined; //!IMPLEMENTAR ESTO
+  employee_id?: string | undefined; 
+  onReturn: () => void;
 }) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const router = useRouter();
@@ -213,6 +215,7 @@ export default function RepairNewEntry({
                 user_images,
                 state: 'Pendiente',
                 employee_id,
+                kilometer: e.kilometer,
               };
             })
           );
@@ -228,35 +231,10 @@ export default function RepairNewEntry({
             return repair?.criticity === 'Media';
           });
 
-          // const hasCriticity = () => {
-          //   if (hasHighCriticity) {
-          //     return 'no operativo';
-          //   } else if (hasMediumCriticity) {
-          //     return 'operativo condicionado';
-          //   } else {
-          //     return 'operativo';
-          //   }
-          // };
-          // const repair = tipo_de_mantenimiento.find((repair) => repair.id === e.repair);
-          // return repair?.criticity === 'Media';
-
-          // console.log('vehicle_id', vehicle_id);
-
-          // const dataToUpdate = () => {};
-
-          // const { data: vehicles, error } = await supabase
-          //   .from('vehicles')
-          //   .update(() => {
-          //     return { condition: hasCriticity(), kilometer: allRepairs[0].kilometer };
-          //   })
-          //   .eq('id', vehicle_id?.id);
-
           if (hasHighCriticity && condition !== 'no operativo' && condition !== 'en reparación') {
             const { data: vehicles, error } = await supabase
               .from('vehicles')
-              .update(() => {
-                return { condition: 'no operativo', kilometer: allRepairs[0].kilometer };
-              })
+              .update({ condition: 'no operativo', kilometer: allRepairs[0].kilometer })
               .eq('id', vehicle_id?.id);
           } else if (hasMediumCriticity && condition !== 'no operativo' && condition !== 'en reparación') {
             const { data: vehicles, error } = await supabase
@@ -290,6 +268,9 @@ export default function RepairNewEntry({
           router.refresh();
           clearForm();
           setAllRepairs([]);
+          if(employee_id){
+            onReturn()
+          }
         } catch (error) {
           console.error(error);
         }

@@ -2,6 +2,7 @@ import { setVehiclesToShow } from '@/lib/utils/utils';
 import { TypeOfRepair } from '@/types/types';
 import { User } from '@supabase/supabase-js';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { FiArrowLeft } from 'react-icons/fi';
 import RepairNewEntry from '../Tipos_de_reparaciones/RepairEntry';
 import { Button } from '../ui/button';
@@ -22,6 +23,10 @@ function SolicitarMantenimiento({
   employee_id: string | undefined;
   user: User | null;
 }) {
+  const router = useRouter();
+  if (!employee_id && !user?.id) {
+    router.push('/maintenance');
+  }
   return (
     <Card className="p-4 m-4 bg-white">
       <CardHeader className="space-y-1">
@@ -35,11 +40,12 @@ function SolicitarMantenimiento({
       <div className="flex justify-between items-center">
         <CardTitle>Solicitar Mantenimiento</CardTitle>
         <Button onClick={onReturn} variant={'ghost'}>
-          <FiArrowLeft  className="mr-2 h-6 w-6" />
+          <FiArrowLeft className="mr-2 h-6 w-6" />
           Regresar
         </Button>
       </div>
       <RepairNewEntry
+        onReturn={onReturn}
         user_id={user?.id}
         employee_id={employee_id}
         equipment={equipment}
