@@ -12,7 +12,6 @@ import { useEffect, useState } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DropdownMenuCheckboxItemProps } from '@radix-ui/react-dropdown-menu';
-import { FileDown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '../ui/button';
@@ -261,9 +260,6 @@ function DiagramEmployeeView({
           </Popover>
           <span className="text-[0.8rem] text-muted-foreground">La selección maxima es de 30 días</span>
         </div>
-        <Button variant={'outline'} size={'icon'} onClick={() => createAndDownloadFile(groupedDiagrams)}>
-          <FileDown />
-        </Button>
       </div>
       <Table>
         <TableHeader>
