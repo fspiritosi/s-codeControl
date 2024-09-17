@@ -23,7 +23,6 @@ import {
 } from '@tanstack/react-table';
 import { useEffect, useState } from 'react';
 
-import BtnXlsDownload from '@/components/BtnXlsDownload';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -346,7 +345,7 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
-          <BtnXlsDownload fn={(data: any) => data} dataToDownload={data} nameFile={'Empleados'} />
+          {/* <BtnXlsDownload fn={(data: any) => data} dataToDownload={data} nameFile={'Empleados'} /> */}
         </div>
       </div>
       <div className="rounded-md border">
