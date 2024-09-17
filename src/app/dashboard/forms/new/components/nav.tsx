@@ -22,7 +22,7 @@ export function Nav({ links, isCollapsed }: NavProps) {
       <nav className="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
         {links.map((link, index) =>
           isCollapsed ? (
-            <Tooltip key={index} delayDuration={0}>
+            <Tooltip key={crypto.randomUUID()} delayDuration={0}>
               <TooltipTrigger asChild>
                 <Link
                   href="#"
@@ -44,7 +44,7 @@ export function Nav({ links, isCollapsed }: NavProps) {
             </Tooltip>
           ) : (
             <Link
-              key={index}
+              key={crypto.randomUUID()}
               href="#"
               className={cn(
                 buttonVariants({ variant: link.variant, size: 'sm' }),

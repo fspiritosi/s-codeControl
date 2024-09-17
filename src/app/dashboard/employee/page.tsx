@@ -3,11 +3,13 @@ import DocumentNav from '@/components/DocumentNav';
 import Viewcomponent from '@/components/ViewComponent';
 import { buttonVariants } from '@/components/ui/button';
 import Link from 'next/link';
+import { Suspense } from 'react';
+import CovenantTreeFile from '../company/actualCompany/covenant/CovenantTreeFile';
 import EmployeeDocumentsTabs from '../document/documentComponents/EmployeeDocumentsTabs';
 import EmployeeListTabs from '../document/documentComponents/EmployeeListTabs';
 import TypesDocumentAction from '../document/documentComponents/TypesDocumentAction';
 import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
-import CovenantTreeFile from '../company/actualCompany/covenant/CovenantTreeFile';
+import PageTableSkeleton from '@/components/Skeletons/PageTableSkeleton';
 
 const EmployeePage = async () => {
   const viewData = {
@@ -82,7 +84,7 @@ const EmployeePage = async () => {
           title: 'Convenios colectivos de trabajo',
           description: 'Lista de Convenios colectivos de trabajo',
           buttonActioRestricted: [''],
-          component: <CovenantTreeFile />, 
+          component: <CovenantTreeFile />,
         },
       },
       // {
@@ -99,7 +101,11 @@ const EmployeePage = async () => {
     ],
   };
 
-  return <Viewcomponent viewData={viewData} />;
+  return (
+    <Suspense fallback={<PageTableSkeleton />}>
+      <Viewcomponent viewData={viewData} />
+    </Suspense>
+  );
 };
 
 export default EmployeePage;

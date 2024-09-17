@@ -78,6 +78,7 @@ type Colum = {
   status: string;
   allocated_to: string;
   condition: 'operativo' | 'no operativo' | 'en reparación' | 'operativo condicionado';
+  kilometer:string
 };
 
 const allocatedToRangeFilter: FilterFn<Colum> = (
@@ -410,6 +411,7 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
     accessorKey: 'engine',
     header: 'Motor',
   },
+
   {
     accessorKey: 'serie',
     header: 'Serie',
@@ -471,6 +473,13 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
   {
     accessorKey: 'brand',
     header: 'Marca',
+  },
+  {
+    accessorKey: 'kilometer',
+    header: 'Kilometros',
+    cell: ({ row }) => {
+      return <Badge variant={'outline'}>{row.original.kilometer} km</Badge>;
+    },
   },
   {
     accessorKey: 'model',

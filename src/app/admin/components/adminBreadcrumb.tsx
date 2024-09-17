@@ -19,7 +19,7 @@ export default function AdminBreadcrumb() {
     <Breadcrumb className="hidden md:flex">
       <BreadcrumbList>
         {pasos.map((paso, index) => (
-          <BreadcrumbItem key={index}>
+          <BreadcrumbItem key={crypto.randomUUID()}>
             <BreadcrumbLink asChild>
               <Link href={`/admin/${paso}`}>{paso}</Link>
             </BreadcrumbLink>

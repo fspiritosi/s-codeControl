@@ -1,8 +1,10 @@
 import DocumentNav from '@/components/DocumentNav';
+import PageTableSkeleton from '@/components/Skeletons/PageTableSkeleton';
 import Viewcomponent from '@/components/ViewComponent';
 import { supabaseServer } from '@/lib/supabase/server';
 import { CompanyDocumentsType } from '@/store/loggedUser';
 import { cookies } from 'next/headers';
+import { Suspense } from 'react';
 import CompanyTabs from './documentComponents/CompanyTabs';
 import EmployeeDocumentsTabs from './documentComponents/EmployeeDocumentsTabs';
 import EquipmentTabs from './documentComponents/EquipmentTabs';
@@ -110,8 +112,8 @@ export default async function page() {
   };
 
   return (
-    <>
+    <Suspense fallback={<PageTableSkeleton />}>
       <Viewcomponent viewData={viewData} />
-    </>
+    </Suspense>
   );
 }

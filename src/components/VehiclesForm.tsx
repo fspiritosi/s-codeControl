@@ -14,9 +14,10 @@ import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CaretSortIcon, CheckIcon, PlusCircledIcon } from '@radix-ui/react-icons';
-import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { ChangeEvent, ReactNode, useEffect, useState } from 'react';
+import { toPng } from 'html-to-image';
+import { AlertTriangle, CheckCircle, Download, Info, Printer, XCircle } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import React, { ChangeEvent, ReactNode, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiToolsFill } from 'react-icons/ri';
 import { toast } from 'sonner';
@@ -32,7 +33,7 @@ import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessa
 import { Input } from './ui/input';
 require('dotenv').config();
 // import { useToast } from './ui/use-toast'
-
+import QRCode from 'react-qr-code';
 type VehicleType = {
   year: string;
   engine: string;
@@ -80,28 +81,13 @@ export default function VehiclesForm2({ vehicle, children }: { vehicle: any | nu
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   const role = useLoggedUserStore((state) => state.roleActualCompany);
 
-  // const [vehicle, setVehicle] = useState<VehicleType | null>(null);
   const [data, setData] = useState<dataType>({
     tipe_of_vehicles: [],
     brand: [],
     models: [],
     types: [],
   });
-console.log('vehicle',vehicle);
-  // const preloadFormData = (vehicleData: VehicleType) => {
-  //   form.setValue('type_of_vehicle', vehicleData.type_of_vehicle.toString());
-  //   form.setValue('brand', vehicle?.brand);
-  //   form.setValue('model', vehicle?.model);
-  //   form.setValue('year', vehicleData.year);
-  //   form.setValue('engine', vehicleData.engine);
-  //   form.setValue('chassis', vehicleData.chassis);
-  //   form.setValue('serie', vehicleData.serie);
-  //   form.setValue('domain', vehicleData.domain);
-  //   form.setValue('intern_number', vehicleData.intern_number);
-  //   form.setValue('picture', vehicleData.picture);
-  //   form.setValue('type', vehicleData.type.name);
-  //   form.setValue('allocated_to', vehicleData.allocated_to);
-  // };
+  console.log('vehicle', vehicle);
 
   useEffect(() => {
     if (vehicle && vehicle.type_of_vehicle === 'Vehículos') {
@@ -114,10 +100,6 @@ console.log('vehicle',vehicle);
       setHideInput(false);
     }
   }, [vehicle]);
-
-  // useEffect(() => {
-  //   fetchVehicleData();
-  // }, [id, actualCompany]);
 
   const router = useRouter();
   const [hideInput, setHideInput] = useState(false);
@@ -171,6 +153,7 @@ console.log('vehicle',vehicle);
           })
           .max(30, { message: 'El chasis debe tener menos de 30 caracteres.' })
       : z.string().optional(),
+    kilometer: z.string().optional(),
     domain: hideInput
       ? z
           .string({
@@ -352,6 +335,7 @@ console.log('vehicle',vehicle);
       model: vehicle?.model || '',
       type_of_vehicle: vehicle?.type_of_vehicle || '',
       type: vehicle?.type?.name || '',
+      kilometer: vehicle?.kilometer || '',
     },
   });
 
@@ -364,6 +348,7 @@ console.log('vehicle',vehicle);
     });
   };
   const url = process.env.NEXT_PUBLIC_PROJECT_URL;
+  const URLQR = process.env.NEXT_PUBLIC_BASE_URL;
   const mandatoryDocuments = useCountriesStore((state) => state.mandatoryDocuments);
   const loggedUser = useLoggedUserStore((state) => state.credentialUser?.id);
 
@@ -384,6 +369,8 @@ console.log('vehicle',vehicle);
                 model: data.models.find((e) => e.name === model)?.id,
                 type: data.types.find((e) => e.name === values.type)?.id,
                 company_id: actualCompany?.id,
+                condition: 'operativo',
+                kilometer: values.kilometer || 0,
               },
             ])
             .select();
@@ -537,6 +524,7 @@ console.log('vehicle',vehicle);
               intern_number: intern_number,
               picture: picture,
               allocated_to: values.allocated_to,
+              kilometer: values.kilometer,
             })
             .eq('id', vehicle?.id)
             .eq('company_id', actualCompany?.id)
@@ -581,7 +569,7 @@ console.log('vehicle',vehicle);
       }
     );
   }
-  const variants:any = {
+  const variants: any = {
     operativo: 'success',
     'no operativo': 'destructive',
     'en reparación': 'yellow',
@@ -589,13 +577,56 @@ console.log('vehicle',vehicle);
     default: 'default',
   };
 
-  const conditionConfig :any = {
+  const conditionConfig: any = {
     'operativo condicionado': { color: 'bg-blue-500', icon: AlertTriangle },
     operativo: { color: 'bg-green-500', icon: CheckCircle },
     'no operativo': { color: 'bg-red-500', icon: XCircle },
     'en reparación': { color: 'bg-yellow-500', icon: RiToolsFill },
   };
 
+  const qrUrl = `${URLQR}maintenance?equipment=${vehicle?.id}`;
+  const qrCodeRef = useRef<HTMLDivElement>(null);
+
+  const downloadQR = async () => {
+    if (!qrCodeRef.current) return;
+
+    try {
+      const dataUrl = await toPng(qrCodeRef.current);
+
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `qr-code${vehicle.domain || vehicle.serie}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error generating image:', error);
+    }
+  };
+
+  const printQR = () => {
+    if (!qrCodeRef.current) return;
+
+    const qrCodeElement = qrCodeRef.current;
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+
+    const iframeDoc = iframe.contentWindow?.document;
+    if (iframeDoc) {
+      iframeDoc.write('<html><head><title>Print QR Code</title></head><body>');
+      iframeDoc.write(qrCodeElement.innerHTML);
+      iframeDoc.write('</body></html>');
+      iframeDoc.close();
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+    }
+
+    document.body.removeChild(iframe);
+  };
   return (
     <section className="grid max-w-full ">
       <header className="flex justify-between gap-4 flex-wrap">
@@ -626,7 +657,7 @@ console.log('vehicle',vehicle);
                   >
                     <>
                       {React.createElement(
-                        conditionConfig[vehicle?.condition || ('default' as keyof typeof conditionConfig)]?.icon ||'s',
+                        conditionConfig[vehicle?.condition || ('default' as keyof typeof conditionConfig)]?.icon || 's',
                         { className: 'mr-2 size-4' }
                       )}
                       {vehicle?.condition}
@@ -676,6 +707,7 @@ console.log('vehicle',vehicle);
           <TabsTrigger value="equipment">Equipo</TabsTrigger>
           {accion !== 'new' && <TabsTrigger value="documents">Documentos</TabsTrigger>}
           {accion !== 'new' && <TabsTrigger value="repairs">Reparaciones</TabsTrigger>}
+          <TabsTrigger value="QR">QR</TabsTrigger>
         </TabsList>
         <TabsContent value="equipment" className="px-3 py-2">
           <Form {...form}>
@@ -925,6 +957,32 @@ console.log('vehicle',vehicle);
                 />
                 <FormField
                   control={form.control}
+                  name="kilometer"
+                  render={({ field }) => (
+                    <FormItem className={cn('flex flex-col min-w-[250px]', !hideInput && 'hidden')}>
+                      <FormLabel>Kilometraje</FormLabel>
+                      <Input
+                        {...field}
+                        disabled={readOnly}
+                        className="input w-[250px]"
+                        placeholder="Kilometraje"
+                        defaultValue={0}
+                        value={field.value !== undefined ? field.value : vehicle?.kilometer || ''}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (isNaN(Number(value)) || value === ' ') {
+                            return;
+                          }
+                          form.setValue('kilometer', value);
+                        }}
+                      />
+                      <FormDescription>Ingrese el kilometraje del vehículo</FormDescription>
+                      <FormMessage className="max-w-[250px]" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="engine"
                   render={({ field }) => (
                     <FormItem className="flex flex-col min-w-[250px]">
@@ -1158,6 +1216,49 @@ console.log('vehicle',vehicle);
         </TabsContent>
         <TabsContent value="repairs" className="px-3 py-2">
           {children}
+        </TabsContent>
+        <TabsContent value="QR" className="px-3 py-2 pt-5">
+          <div className="flex w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-col items-center space-y-4">
+                <>
+                  <div ref={qrCodeRef}>
+                    <QRCode id="vehicle-qr-code" value={qrUrl} size={300} level="H" />
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button onClick={downloadQR} size="sm">
+                      <Download className="w-4 h-4 mr-2" />
+                      Descargar
+                    </Button>
+                    <Button onClick={printQR} size="sm">
+                      <Printer className="w-4 h-4 mr-2" />
+                      Imprimir
+                    </Button>
+                  </div>
+                </>
+              </div>
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Información del QR</h3>
+                <p className="text-sm text-gray-600">
+                  Este código QR contiene un enlace único a la información de este vehículo. Al escanearlo, se puede
+                  acceder rápidamente a:
+                </p>
+                <ul className="list-disc list-inside text-sm text-gray-600 space-y-2">
+                  <li>Especificaciones técnicas del vehículo</li>
+                  <li>Historial de mantenimiento y reparaciones</li>
+                  <li>Registrar mantenimientos y reparaciones futuras</li>
+                  <li>Documentación y certificados</li>
+                </ul>
+                <div className="bg-green-50 p-4 rounded-md flex items-start space-x-3">
+                  <Info className="w-5 h-5 text-green-500 mt-0.5" />
+                  <p className="text-sm text-green-700">
+                    Asegurate de escanear este código QR con la camara de tu dispositivo o con una aplicación de lectura
+                    de QR como Google Lens o QR Code Reader.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </section>

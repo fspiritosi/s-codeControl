@@ -478,7 +478,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
                   </TableHeader>
                   <TableBody>
                     {documentHistory?.map((entry: any, index: number) => (
-                      <TableRow key={index}>
+                      <TableRow key={crypto.randomUUID()}>
                         <TableCell className="text-center">{entry.documents_employees.user_id.email}</TableCell>
 
                         <TableCell className="text-center">
@@ -531,7 +531,6 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
     accessorKey: 'resource',
     header: 'Empleado',
     cell: ({ row, table }) => {
-      console.log(row.original);
       return <p>{row.original.resource === 'null' ? row.original.serie : row.original.resource}</p>;
     },
     filterFn: domainAndInternNumber,

@@ -1,5 +1,4 @@
 'use client';
-import { saveAs } from 'file-saver';
 import SimpleDocument from '@/components/SimpleDocument';
 import {
   AlertDialog,
@@ -47,6 +46,7 @@ import { CalendarIcon, DotsVerticalIcon, Pencil2Icon } from '@radix-ui/react-ico
 import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
 import { addMonths, format, formatRelative } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { saveAs } from 'file-saver';
 import { ArrowUpDown, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -126,10 +126,9 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
       const equipment = row.original;
       const document = row.original;
 
-      const supabase = supabaseBrowser()
+      const supabase = supabaseBrowser();
 
       const handleDownload = async (path: string, fileName: string, resourceName: string) => {
-
         toast.promise(
           async () => {
             const { data, error } = await supabase.storage.from('document_files').download(path);
@@ -154,7 +153,6 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
           }
         );
       };
-
 
       const handleOpenModal = (id: string) => {
         setDomain(id);
@@ -437,7 +435,7 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
                   </TableHeader>
                   <TableBody>
                     {documentHistory?.map((entry: any, index: number) => (
-                      <TableRow key={index}>
+                      <TableRow key={crypto.randomUUID()}>
                         <TableCell className="text-center">{entry.documents_employees.user_id.email}</TableCell>
 
                         <TableCell className="text-center">
@@ -473,7 +471,7 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleOpenViewModal(domain)}>Historial de Modificaciones</DropdownMenuItem>
             <DropdownMenuItem
-            disabled={row.original.state === 'pendiente'}
+              disabled={row.original.state === 'pendiente'}
               onClick={() =>
                 handleDownload(row.original.document_url, row.original.documentName, row.original.resource)
               }

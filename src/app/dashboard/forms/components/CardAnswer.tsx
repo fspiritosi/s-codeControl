@@ -25,7 +25,7 @@ function AnswerCard({ data }: { data: any }) {
         }
 
         return (
-          <div key={index} className="mb-2">
+          <div key={crypto.randomUUID()} className="mb-2">
             <strong>{key.replace(/_/g, ' ')}:</strong> {value}
           </div>
         );

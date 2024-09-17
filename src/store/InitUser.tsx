@@ -1,6 +1,7 @@
 'use client';
 import { Company, SharedCompanies } from '@/zodSchemas/schemas';
 import { User } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import { useLoggedUserStore } from './loggedUser';
 
@@ -9,13 +10,20 @@ export default function InitState({
   companies,
   share_company_users,
   credentialUser,
+  role,
 }: {
   user: User | null;
   companies: any;
   share_company_users: any;
   credentialUser: any;
+  role: string;
 }) {
   const initState = useRef(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    router.refresh();
+  }, [role]);
   //   const profileUser = useLoggedUserStore(state => state.profileUser)
   let selectedCompany: Company;
   useEffect(() => {

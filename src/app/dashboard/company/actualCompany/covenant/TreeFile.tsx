@@ -56,7 +56,7 @@ export const TreeNode: React.FC<TreeNodeProps> = ({ node, level }) => {
       {isOpen && node.children && (
         <div>
           {node.children.map((child, index) => (
-            <TreeNode key={index} node={child} level={level + 1} />
+            <TreeNode key={crypto.randomUUID()} node={child} level={level + 1} />
           ))}
         </div>
       )}

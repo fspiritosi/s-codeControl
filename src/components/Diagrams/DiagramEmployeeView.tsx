@@ -269,7 +269,7 @@ function DiagramEmployeeView({
         <TableHeader>
           <TableHead>Empleado</TableHead>
           {mes.map((d, index) => (
-            <TableHead key={index} className="text-center">
+            <TableHead key={crypto.randomUUID()} className="text-center">
               {d.getDate() + '/' + (d.getMonth() + 1)}
             </TableHead>
           ))}
@@ -283,7 +283,7 @@ function DiagramEmployeeView({
                 const employeeDiagrams = groupedDiagrams[employeeId];
                 const employee = employeeDiagrams[0].employees; // Asumimos que todos los diagramas tienen el mismo empleado
                 return (
-                  <TableRow key={index}>
+                  <TableRow key={crypto.randomUUID()}>
                     <TableCell>
                       {employee.lastname}, {employee.firstname}
                     </TableCell>

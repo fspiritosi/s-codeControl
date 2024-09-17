@@ -4,11 +4,13 @@ import DocumentTabComponent from '@/components/DocumentTabComponent';
 import EditCompanyButton from '@/components/EditCompanyButton';
 import { RegisterWithRole } from '@/components/RegisterWithRole';
 import ServiceComponent from '@/components/Services/ServiceComponent';
+import CompanySkeleton from '@/components/Skeletons/CompanySkeleton';
 import UsersTabComponent from '@/components/UsersTabComponent';
 import Viewcomponent from '@/components/ViewComponent';
 import { buttonVariants } from '@/components/ui/button';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import TypesDocumentAction from '../../document/documentComponents/TypesDocumentAction';
 import Contacts from '../contact/Contact';
 import Customers from '../customers/Customers';
@@ -156,5 +158,9 @@ export default async function CompanyPage() {
     ],
   };
 
-  return <Viewcomponent viewData={viewData} />;
+  return (
+    <Suspense fallback={<CompanySkeleton />}>
+      <Viewcomponent viewData={viewData} />
+    </Suspense>
+  );
 }
