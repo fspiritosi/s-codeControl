@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { formatDocumentTypeName } from '@/lib/utils/utils';
 import { FormattedSolicitudesRepair } from '@/types/types';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { PersonIcon } from '@radix-ui/react-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import moment from 'moment';
 import Link from 'next/link';
@@ -159,6 +160,9 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                 })
             : z.string().optional(),
       });
+
+      console.log(row.original.repairlogs, 'row.original.repairlogs');
+
       useEffect(() => {
         setRepairLogs(row.original.repairlogs);
         fetchRepairsLogs();
@@ -167,13 +171,14 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
       const fetchRepairsLogs = async () => {
         const { data, error } = await supabase
           .from('repair_solicitudes')
-          .select('*,reparation_type(*)')
+          .select('*,reparation_type(*),user_id(*),employee_id(*)')
           .eq('equipment_id', row.original.vehicle_id);
 
         if (error) {
           throw new Error(handleSupabaseError(error.message));
         }
 
+        console.log(data, 'data');
         setRepairSolicitudes(data);
       };
 
@@ -253,9 +258,11 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
           const vehicle_id = row.original.vehicle_id;
           const mechanic_description = form.getValues('mechanic_description');
 
+          console.log(row.original.kilometer, 'row.original.kilometer');
+
           const { data, error } = await supabase
             .from('repair_solicitudes')
-            .update({ state: status, mechanic_description, mechanic_images })
+            .update({ state: status, mechanic_description, mechanic_images, kilometer: row.original.kilometer })
             .eq('id', row.original.id);
 
           mechanic_imagesData
@@ -717,12 +724,18 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                 </div>
               )}
               <div className="grid gap-2">
-                <CardTitle>Eventos de la reparacion</CardTitle>
+                <CardTitle>
+                  Eventos de la reparacion ({row.original.kilometer && `${row.original.kilometer} KM`})
+                </CardTitle>
               </div>
               <div className="relative flex flex-col gap-4 justify-start  w-full">
                 <div className="absolute left-[19px] top-0 bottom-0 w-px bg-muted-foreground/20 " />
                 {repairLogs.map((log, index) => {
                   const state = statuses.find((status) => status.value === log.title);
+                  const fullName =
+                    log.modified_by_user?.fullname ??
+                    `${log.modified_by_employee?.firstname} ${log.modified_by_employee?.lastname}`;
+
 
                   return (
                     <>
@@ -737,15 +750,23 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                         </div>
                         <div className="flex flex-col gap-1  w-full">
                           <div className="flex items-center justify-between w-full">
-                            <div className="font-medium flex items-center">
-                              {state?.icon && <state.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
-                              <span>{state?.label}</span>
+                            <div className='flex gap-2 items-center'>
+                              <div className="font-medium flex items-center">
+                                {state?.icon && <state.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
+                                <span>{state?.label}</span>
+                              </div>
+                              <CardDescription className="m-0 flex gap-2 items-center">
+                                <PersonIcon />
+                                {fullName}
+                              </CardDescription>
                             </div>
                             <div className="text-muted-foreground text-sm">
                               {moment(log.created_at).format('[Hoy,] h:mm A')}
                             </div>
                           </div>
-                          <CardDescription>{log.description}</CardDescription>
+                          <CardDescription>
+                            {log.description} <br></br>
+                          </CardDescription>
                         </div>
                       </div>
                     </>

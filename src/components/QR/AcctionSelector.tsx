@@ -10,7 +10,8 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { FiTool } from 'react-icons/fi';
-import { Card, CardDescription, CardFooter, CardHeader } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import CompletarChecklist from './CompletarChecklist';
 import SolicitarMantenimiento from './SolicitarMantenimiento';
 
@@ -32,6 +33,10 @@ export default function QrActionSelector({
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const supabase = supabaseBrowser();
   const router = useRouter();
+  
+  if (!employee_id && !user?.id) {
+    router.push('/maintenance');
+  }
 
   const handleBack = async () => {
     await supabase.auth.signOut();
@@ -66,16 +71,22 @@ export default function QrActionSelector({
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 p-2">
-      <Card className="w-full max-w-md space-y-8 rounded-xl bg-white p-6 shadow-lg">
-        <CardHeader className="space-y-1">
+      <Card className="w-full max-w-md space-y-6 rounded-xl bg-white p-6 py-0 shadow-lg">
+        <CardHeader>
           <div className="flex items-center justify-center mb-4">
             <Image src="/logoLetrasNegras.png" alt="CodeControl Logo" width={240} height={60} className="h-15" />
           </div>
           <CardDescription className="text-center text-gray-600">
             Sistema de Checklist y Mantenimiento de Equipos
           </CardDescription>
+          <Card className="p-3 flex justify-center flex-col items-center">
+            <CardDescription className="underline mt-2">Informacion del equipo</CardDescription>
+            <Badge className="text-center flex justify-center w-fit mt-3">
+              {equipment[0].domain ? 'Dominio: ' + equipment[0].domain : 'Serie: ' + equipment[0].serie}
+            </Badge>
+          </Card>
         </CardHeader>
-        <h1 className="text-center text-3xl font-bold text-gray-900">Seleccione una opción</h1>
+        <CardTitle className="text-center text-3xl font-bold text-gray-900 mt-0">Seleccione una opción</CardTitle>
         <div className="space-y-4">
           {!user?.id && (
             <Button
@@ -87,14 +98,19 @@ export default function QrActionSelector({
               Solicitar Mantenimiento
             </Button>
           )}
-          <Button disabled className="w-full py-6 text-lg" variant="outline" onClick={() => handleOptionSelect('checklist')}>
+          <Button
+            disabled
+            className="w-full py-6 text-lg"
+            variant="outline"
+            onClick={() => handleOptionSelect('checklist')}
+          >
             <ClipboardList className="mr-2 h-6 w-6" />
             Completar Checklist
           </Button>
-          <CardFooter>
+          <CardFooter className="px-0 mx-0">
             <Button
               variant="outline"
-              className="w-full border-[#3BB3E3] text-[#3BB3E3] hover:bg-[#E6F7FF]"
+              className="w-full border-[#3BB3E3] text-[#3BB3E3] hover:bg-[#E6F7FF] text-lg"
               onClick={handleBack}
             >
               <ArrowLeft className="mr-2 h-4 w-4" /> Salir
