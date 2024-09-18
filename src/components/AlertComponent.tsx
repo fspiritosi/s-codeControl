@@ -58,8 +58,12 @@ export const AlertComponent = () => {
               Para poder administrar tu empresa debes seleccionar una compañía. ¿Deseas seleccionar una?
             </AlertDialogDescription>
             {allCompanies?.map((company, index) => (
-              <div key={index}>
-                <AlertDialogAction onClick={() => handleAlertClose(company)} key={index} className="w-full">
+              <div key={crypto.randomUUID()}>
+                <AlertDialogAction
+                  onClick={() => handleAlertClose(company)}
+                  key={crypto.randomUUID()}
+                  className="w-full"
+                >
                   {company.company_name}
                 </AlertDialogAction>
               </div>

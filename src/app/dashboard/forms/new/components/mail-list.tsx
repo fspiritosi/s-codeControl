@@ -471,7 +471,7 @@ export function FormDisplay({ campos }: MailDisplayProps) {
     switch (campo.tipo) {
       case 'Nombre del formulario':
         return (
-          <div className="w-full my-5" key={index}>
+          <div className="w-full my-5" key={crypto.randomUUID()}>
             <Label>
               <Badge className="text-xl"> {campo.value ?? 'Nombre del formulario'}</Badge>
             </Label>
@@ -479,27 +479,27 @@ export function FormDisplay({ campos }: MailDisplayProps) {
         );
       case 'Texto':
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full" key={crypto.randomUUID()}>
             <CardDescription className="mb-2">{campo.title ? campo.title : 'Titulo del campo'}</CardDescription>
             <Input placeholder={campo.value} />
           </div>
         );
       case 'Área de texto':
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full" key={crypto.randomUUID()}>
             <CardDescription className="mb-2">{campo.title ? campo.title : 'Titulo del campo'}</CardDescription>
             <Textarea placeholder={campo.value} />
           </div>
         );
       case 'Separador':
         return (
-          <div className="w-full my-2" key={index}>
+          <div className="w-full my-2" key={crypto.randomUUID()}>
             <Separator>{campo.value}</Separator>
           </div>
         );
       case 'Radio':
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full" key={crypto.randomUUID()}>
             <CardDescription className="mb-2"> {campo.title ? campo.title : 'Titulo del campo'}</CardDescription>
             <RadioGroup className="flex gap-2 flex-col mt-2">
               {campo.opciones?.map((opcion, i) => (
@@ -513,7 +513,7 @@ export function FormDisplay({ campos }: MailDisplayProps) {
         );
       case 'Seleccion multiple':
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full" key={crypto.randomUUID()}>
             <CardDescription className="mb-2"> {campo.title ? campo.title : 'Titulo del campo'}</CardDescription>
             <ToggleGroup type="multiple" className="flex w-full justify-start flex-wrap">
               {campo.opciones?.map((opcion, i) => {
@@ -529,14 +529,14 @@ export function FormDisplay({ campos }: MailDisplayProps) {
         );
       case 'Fecha':
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full" key={crypto.randomUUID()}>
             <CardDescription className="mb-2">{campo.title ? campo.title : 'Titulo del campo'}</CardDescription>
             <Input type="date" value={campo.value} placeholder={campo.placeholder} />
           </div>
         );
       case 'Seleccion':
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full" key={crypto.randomUUID()}>
             <CardDescription className="mb-2"> {campo.title ? campo.title : 'Titulo del campo'}</CardDescription>
             <Select>
               <SelectTrigger>
@@ -556,7 +556,7 @@ export function FormDisplay({ campos }: MailDisplayProps) {
         );
       case 'Seleccion Predefinida':
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full" key={crypto.randomUUID()}>
             <CardDescription className="mb-2"> {campo.title ? campo.title : 'Titulo del campo'}</CardDescription>
             <Select>
               <SelectTrigger>
@@ -620,7 +620,7 @@ export function FormDisplay({ campos }: MailDisplayProps) {
         );
       case 'Subtitulo':
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full" key={crypto.randomUUID()}>
             <CardTitle className="mb-2 mt-1">{campo.title ? campo.title : 'Titulo del campo'}</CardTitle>
           </div>
         );
@@ -645,7 +645,7 @@ export function FormDisplay({ campos }: MailDisplayProps) {
       </div>
       <div className="space-y-3">
         {campos.map((campo, index) => (
-          <div key={index}>{renderizarCampo(campo, index)}</div>
+          <div key={crypto.randomUUID()}>{renderizarCampo(campo, index)}</div>
         ))}
         <Button disabled={campos.length < 2}>Crear formulario</Button>
       </div>

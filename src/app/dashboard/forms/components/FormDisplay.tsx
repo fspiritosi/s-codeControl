@@ -60,7 +60,7 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
     if (table === 'vehicles') return Array.from(new Set(vehicles.map((e: any) => e[column])));
     if (table === 'company') return Array.from(new Set([currentCompany?.[column]]));
     if (table === 'document_types') return Array.from(new Set(documenttypes.map((e: any) => e[column])));
-  
+
     return ['Selecciona a que aplica el formulario'];
   }
   const shouldShowAllOptions = {
@@ -74,13 +74,12 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
       'company_position',
     ],
   };
-  
+
   const fetchOptions = async (selectedOption: string, column: string) => {
     // Implementa la lógica para obtener opciones aquí
     // Ejemplo:
     return []; // Devuelve las opciones obtenidas
   };
-  
 
   // Mapea el valor de 'applies' a la tabla correspondiente
   const getValuesForField = (applies: string, column: string) => {
@@ -104,12 +103,11 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
   };
   const [options, setOptions] = useState<any>([]);
 
-
   const renderizarCampo = (campo: Campo, index: number) => {
     switch (campo.tipo) {
       case 'Nombre del formulario':
         return (
-          <div className="w-full my-5" key={index}>
+          <div className="w-full my-5" key={crypto.randomUUID()}>
             <Label>
               <Badge className="text-xl"> {campo.value ?? 'Nombre del formulario'}</Badge>
             </Label>
@@ -117,7 +115,7 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
         );
       case 'Texto':
         return (
-          <div className="col-span-3" key={index}>
+          <div className="col-span-3" key={crypto.randomUUID()}>
             <CardDescription className="mb-2">{campo.title ? campo.title : 'Titulo del campo'}</CardDescription>
             <Input placeholder={campo.value} />
             {campo.date && (
@@ -136,7 +134,7 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
         );
       case 'Área de texto':
         return (
-          <div className="col-span-3" key={index}>
+          <div className="col-span-3" key={crypto.randomUUID()}>
             <CardDescription className="mb-2">{campo.title ? campo.title : 'Titulo del campo'}</CardDescription>
             <Textarea placeholder={campo.value} />
             {campo.date && (
@@ -155,13 +153,13 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
         );
       case 'Separador':
         return (
-          <div className="col-span-3 w-full px-[20%]" key={index}>
+          <div className="col-span-3 w-full px-[20%]" key={crypto.randomUUID()}>
             <Separator>{campo.value}</Separator>
           </div>
         );
       case 'Radio':
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full" key={crypto.randomUUID()}>
             <CardDescription className="mb-2"> {campo.title ? campo.title : 'Titulo del campo'}</CardDescription>
             <RadioGroup className="flex gap-2 flex-col mt-2">
               {campo.opciones?.map((opcion, i) => (
@@ -187,7 +185,7 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
         );
       case 'Seleccion multiple':
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full" key={crypto.randomUUID()}>
             <CardDescription className="mb-2"> {campo.title ? campo.title : 'Titulo del campo'}</CardDescription>
             <ToggleGroup type="multiple" className="flex w-full justify-start flex-wrap">
               {campo.opciones?.map((opcion, i) => {
@@ -214,14 +212,14 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
         );
       case 'Fecha':
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full" key={crypto.randomUUID()}>
             <CardDescription className="mb-2">{campo.title ? campo.title : 'Titulo del campo'}</CardDescription>
             <Input type="date" value={campo.value} placeholder={campo.placeholder} />
           </div>
         );
       case 'Seleccion':
         return (
-          <div className="col-span-2" key={index}>
+          <div className="col-span-2" key={crypto.randomUUID()}>
             <CardDescription className="mb-2"> {campo.title ? campo.title : 'Titulo del campo'}</CardDescription>
             <Select>
               <SelectTrigger>
@@ -254,13 +252,13 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
       case 'Seleccion Predefinida':
         const loadOptions = useCallback(async () => {
           if (campo.tipo === 'Seleccion Predefinida') {
-            const values = await getValuesForField(applies|| "", campo.opciones[0]);
+            const values = await getValuesForField(applies || '', campo.opciones[0]);
             setOptions(values);
           }
         }, [campo]);
-      
+
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full" key={crypto.randomUUID()}>
             <CardDescription className="mb-2"> {campo.title ? campo.title : 'Titulo del campo'}</CardDescription>
             <Select>
               <SelectTrigger>
@@ -303,13 +301,13 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
         );
       case 'Subtitulo':
         return (
-          <div className="col-span-3" key={index}>
+          <div className="col-span-3" key={crypto.randomUUID()}>
             <CardTitle className="mb-2 mt-1">{campo.title ? campo.title : 'Titulo del campo'}</CardTitle>
           </div>
         );
       case 'Si-No':
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full" key={crypto.randomUUID()}>
             <CardDescription className="mb-2"> {campo.title ? campo.title : 'Titulo del campo'}</CardDescription>
             <RadioGroup className="flex gap-2  mt-2">
               {campo.opciones?.map((opcion, i) => (
@@ -335,13 +333,13 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
         );
       case 'Titulo':
         return (
-          <div className="col-span-3" key={index}>
+          <div className="col-span-3" key={crypto.randomUUID()}>
             <CardTitle className="mb-2 mt-1 text-xl">{campo.title ? campo.title : 'Titulo del campo'}</CardTitle>
           </div>
         );
       case 'Seccion':
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full" key={crypto.randomUUID()}>
             <CardTitle className="mb-2 mt-1 text-xl">{campo.title ? campo.title : 'Titulo del campo'}</CardTitle>
             <div className="grid grid-cols-3 gap-y-4 gap-x-4">
               {campo.sectionCampos?.map((opcion, i) => {
@@ -370,7 +368,7 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
         );
       case 'Archivo':
         return (
-          <div className="w-full" key={index}>
+          <div className="w-full" key={crypto.randomUUID()}>
             <CardDescription className="mb-2"> {campo.title ? campo.title : 'Titulo del campo'}</CardDescription>
             <Input type="file" />
             {campo.date && (
@@ -473,11 +471,17 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
         {selectedForm ? (
           <div className="grid grid-cols-3 gap-y-4 gap-x-4">
             {formObject?.map((campo: FormField, index: number) => (
-              <FieldRenderer key={index} campo={campo} form={null} index={index} completObjet={formObject} />
+              <FieldRenderer
+                key={crypto.randomUUID()}
+                campo={campo}
+                form={null}
+                index={index}
+                completObjet={formObject}
+              />
             ))}
           </div>
         ) : (
-          campos.map((campo, index) => <div key={index}>{renderizarCampo(campo, index)}</div>)
+          campos.map((campo, index) => <div key={crypto.randomUUID()}>{renderizarCampo(campo, index)}</div>)
         )}
         <div className="flex w-full justify-center">
           <Button disabled={campos.length < 2 || created} onClick={handleCreateCheckList}>

@@ -543,7 +543,7 @@ export default function MultiResourceDocument({
                 });
                 return (
                   <Badge
-                    key={index}
+                    key={crypto.randomUUID()}
                     variant="outline"
                     onClick={() => {
                       const updatedResources = selectedResources?.filter((res) => res !== resource);

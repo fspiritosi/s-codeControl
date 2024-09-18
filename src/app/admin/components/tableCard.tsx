@@ -55,7 +55,7 @@ export default function CardTable({ title, data, dbName }: Props) {
           </TableHeader>
           <TableBody>
             {data?.map((dataType, index) => (
-              <TableRow key={index}>
+              <TableRow key={crypto.randomUUID()}>
                 <TableCell className="hidden sm:table-cell">{index + 1}</TableCell>
                 <TableCell className="font-medium">{dataType.name}</TableCell>
                 <TableCell>

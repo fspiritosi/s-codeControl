@@ -167,7 +167,7 @@ function FormCardContainer({
             <TableHeader>
               <TableRow>
                 {formKeys.map((key, index) => {
-                  return <TableCell key={index}>{key.replaceAll('_', ' ')}</TableCell>;
+                  return <TableCell key={crypto.randomUUID()}>{key.replaceAll('_', ' ')}</TableCell>;
                 })}
                 <TableCell>Imprimir</TableCell>
               </TableRow>
@@ -182,7 +182,7 @@ function FormCardContainer({
                       typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(value);
                     const formattedValue = isDate ? new Date(value).toLocaleDateString() : value;
                     return (
-                      <TableCell key={index}>
+                      <TableCell key={crypto.randomUUID()}>
                         {Array.isArray(formattedValue) ? (
                           <div className="gap-2 flex flex-col">
                             {formattedValue.map((item, itemIndex) => (
@@ -218,7 +218,7 @@ function FormCardContainer({
                   <FormCard
                     chartConfig={chartConfigForEmployees}
                     chartData={chartDataForEmployees}
-                    key={index}
+                    key={crypto.randomUUID()}
                     form={form}
                   />
                 ))}
@@ -232,7 +232,7 @@ function FormCardContainer({
                   <FormCard
                     chartConfig={chartConfigForEquipment}
                     chartData={chartDataForEquipment}
-                    key={index}
+                    key={crypto.randomUUID()}
                     form={form}
                   />
                 ))}
@@ -246,7 +246,7 @@ function FormCardContainer({
                   <FormCard
                     chartConfig={chartConfigForCompany}
                     chartData={chartDataForCompany}
-                    key={index}
+                    key={crypto.randomUUID()}
                     form={form}
                   />
                 ))}
@@ -260,7 +260,7 @@ function FormCardContainer({
                   <FormCard
                     chartConfig={chartConfigForDocuments}
                     chartData={chartDataForDocuments}
-                    key={index}
+                    key={crypto.randomUUID()}
                     form={form}
                   />
                 ))}

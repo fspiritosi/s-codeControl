@@ -25,6 +25,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { criticidad, labels, statuses } from '../data';
+import RepairModal from './RepairModal';
 import { DataTableColumnHeader } from './data-table-column-header';
 
 export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
@@ -33,9 +34,17 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Titulo" className="ml-2" />,
     cell: ({ row }) => {
       return (
-        <div className="flex space-x-2">
-          <CardTitle className="max-w-[300px] truncate font-medium">{row.getValue('title')}</CardTitle>
-        </div>
+        <RepairModal
+          row={row}
+          onlyView
+          action={
+            <div className="flex space-x-2">
+              <CardTitle className="max-w-[300px] truncate font-medium hover:underline">
+                {row.getValue('title')}
+              </CardTitle>
+            </div>
+          }
+        />
       );
     },
   },
@@ -50,13 +59,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
       );
     },
   },
-  // {
-  //   accessorKey: 'id',
-  //   header: ({ column }) => <DataTableColumnHeader column={column} title="Task" />,
-  //   cell: ({ row }) => <div className="w-[80px]">{row.getValue('id')}</div>,
-  //   enableSorting: false,
-  //   enableHiding: false,
-  // },
+
   {
     accessorKey: 'state',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Estado" />,
@@ -103,10 +106,17 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
     },
   },
   {
+    accessorKey: 'intern_number',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Numero interno" />,
+    cell: ({ row }) => {
+      return <div className="flex items-center">{row.original.intern_number}</div>;
+    },
+  },
+  {
     accessorKey: 'domain',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Equipo" />,
     cell: ({ row }) => {
-      return <div className="flex items-center">{row.original.domain ?? row.original.serie}</div>;
+      return <div className="flex items-center">{row.original.domain}</div>;
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
@@ -535,7 +545,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                   </SelectTrigger>
                   <SelectContent>
                     {statuses.map((status) => (
-                      <SelectItem key={status.value} value={status.value}>
+                      <SelectItem key={crypto.randomUUID()} value={status.value}>
                         <div className="flex items-center">
                           {status.icon && <status.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
                           <span>{status.label}</span>
@@ -624,7 +634,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                   <Carousel className="w-full">
                     <CarouselContent className="p-2">
                       {imageUrl.map((image, index) => (
-                        <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3  overflow-hidden">
+                        <CarouselItem key={crypto.randomUUID()} className="md:basis-1/2 lg:basis-1/3  overflow-hidden">
                           <Card className="">
                             <Link target="_blank" href={image || ''}>
                               <CardContent className="flex aspect-square items-center justify-center p-1">
@@ -644,7 +654,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                   </Carousel>
                 )}
               </div>
-              
+
               {(imagesMechanic?.length || (status !== row.original.state && endingStates.includes(status))) && (
                 <div className="mx-auto w-[90%]">
                   <Badge className="text-sm mb-2 block w-fit"> Adjuntar imagenes</Badge>
@@ -663,7 +673,10 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                     <CarouselContent className="p-2">
                       {imagesMechanic?.length
                         ? imagesMechanic?.map((image, index) => (
-                            <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3  overflow-hidden">
+                            <CarouselItem
+                              key={crypto.randomUUID()}
+                              className="md:basis-1/2 lg:basis-1/3  overflow-hidden"
+                            >
                               <Card className="">
                                 <Link target="_blank" href={image || ''}>
                                   <CardContent className="flex aspect-square items-center justify-center p-1">
@@ -679,7 +692,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                           ))
                         : status !== row.original.state &&
                           Array.from({ length: 3 }).map((_, index) => (
-                            <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3 ">
+                            <CarouselItem key={crypto.randomUUID()} className="md:basis-1/2 lg:basis-1/3 ">
                               <div className="p-1">
                                 <Card className="hover:cursor-pointer" onClick={() => handleCardClick(index)}>
                                   <CardContent className="flex aspect-square items-center justify-center p-1">

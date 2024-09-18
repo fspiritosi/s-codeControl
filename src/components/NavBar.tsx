@@ -25,6 +25,7 @@ import {
   DotFilledIcon,
   EnvelopeOpenIcon,
   ExclamationTriangleIcon,
+  HamburgerMenuIcon,
   LapTimerIcon,
   PlusCircledIcon,
 } from '@radix-ui/react-icons';
@@ -82,8 +83,7 @@ export default function NavBar() {
     setNewDefectCompany(company);
     setActualCompany(company);
     setIsOpen(false);
-    router.refresh();
-    router.push('/dashboard');
+    location.replace('/dashboard');
   };
   const { control, formState, setValue } = useForm();
 
@@ -140,10 +140,16 @@ export default function NavBar() {
     },
   ];
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const handleCloseSidebar = () => {
+    useLoggedUserStore.getState().toggleSidebar();
+  };
 
   return (
-    <nav className=" flex flex-shrink items-center justify-end sm:justify-between  text-white p-4 mb-2">
-      <div className=" items-center hidden sm:flex">
+    <nav className=" flex flex-shrink items-center justify-end sm:justify-between  text-white pr-4 py-4 mb-2">
+      <div className=" items-center hidden sm:flex gap-6">
+        <button onClick={handleCloseSidebar} className="text-white relative w-fit ml-7 ">
+          <HamburgerMenuIcon className="size-8 text-black font-bold" />
+        </button>
         <Dialog open={showNewTeamDialog} onOpenChange={setShowNewTeamDialog}>
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild className="text-black dark:text-white">
@@ -176,7 +182,7 @@ export default function NavBar() {
                     <CommandGroup key={group.label} heading={group.label}>
                       {group?.teams?.map((team, index) => (
                         <CommandItem
-                          key={index}
+                          key={crypto.randomUUID()}
                           onSelect={() => {
                             const company = totalCompanies.find((companyItem) => companyItem?.id === team?.value);
                             if (company) {
@@ -258,7 +264,7 @@ export default function NavBar() {
                   <div>
                     {notifications?.map((notification, index) => (
                       <div
-                        key={index}
+                        key={crypto.randomUUID()}
                         className="mb-4 grid grid-cols-[25px_1fr] pb-4 last:mb-0 last:pb-0 items-center  gap-2"
                       >
                         {notification?.category === 'rechazado' && (

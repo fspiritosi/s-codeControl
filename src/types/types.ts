@@ -572,6 +572,7 @@ export type RepairsSolicituds = {
   mechanic_images: string[];
   vehicle_id: string;
   vehicle_condition: 'operativo' | 'no operativo' | 'en reparación' | 'operativo condicionado';
+  intern_number: string;
   repairlogs:
     | {
         id: string;
@@ -605,6 +606,7 @@ export type FormattedSolicitudesRepair = {
   type_of_maintenance: string;
   type_of_equipment: string;
   user_images: string[];
+  intern_number: string;
   vehicle_id: string;
   mechanic_images: string[];
   repairlogs:

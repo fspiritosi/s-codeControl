@@ -36,7 +36,7 @@ export default async function RepairSolicitudes({
       year: repair.equipment_id.year,
       brand: repair.equipment_id.brand.name,
       model: repair.equipment_id.model.name,
-      domain: repair.equipment_id.domain,
+      domain: repair.equipment_id.domain ?? repair.equipment_id.serie,
       engine: repair.equipment_id.engine,
       serie: repair.equipment_id.serie,
       status: repair.equipment_id.status,
@@ -51,6 +51,7 @@ export default async function RepairSolicitudes({
       mechanic_description: repair.mechanic_description,
       vehicle_id: repair.equipment_id.id,
       vehicle_condition: repair.equipment_id.condition,
+      intern_number: repair.equipment_id.intern_number,
     };
   });
 

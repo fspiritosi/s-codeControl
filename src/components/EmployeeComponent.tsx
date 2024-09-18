@@ -519,6 +519,7 @@ export default function EmployeeComponent({
             throw new Error(handleSupabaseError(error.message));
           }
           getEmployees(true);
+          router.refresh();
           router.push('/dashboard/employee');
         } catch (error: PostgrestError | any) {
           throw new Error(handleSupabaseError(error.message));
