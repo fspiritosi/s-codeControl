@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   try {
     let { data, error } = await supabase
       .from('repair_solicitudes')
-      .select('*,equipment_id(*,type(*),brand(*),model(*)),reparation_type(*),repairlogs(*)')
+      .select('*,user_id(*),employee_id(*),equipment_id(*,type(*),brand(*),model(*)),reparation_type(*),repairlogs(*,modified_by_employee(*),modified_by_user(*))')
       .eq('equipment_id.company_id', company_id)
       .not('equipment_id', 'is', null);
 

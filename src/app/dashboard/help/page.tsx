@@ -1,7 +1,6 @@
-'use client'
 import { ReportAnIssue } from '@/components/ReportAnIssue';
 
-export default async function page() {
+export default function page() {
  return <ReportAnIssue />;
   // return (
   //   <Viewcomponent 

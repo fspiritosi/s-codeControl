@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { statuses } from '../data';
+import { PersonIcon } from '@radix-ui/react-icons';
 
 function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; action?: React.ReactNode }) {
   const state = statuses.find((status) => status.value === row.original.state);
@@ -252,6 +253,9 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
             <div className="absolute left-[19px] top-0 bottom-0 w-px bg-muted-foreground/20 " />
             {row.original.repairlogs.map((log: any, index: any) => {
               const state = statuses.find((status) => status.value === log.title);
+              const fullName =
+              log.modified_by_user?.fullname ??
+              `${log.modified_by_employee?.firstname} ${log.modified_by_employee?.lastname}`;
 
               return (
                 <>
@@ -265,17 +269,25 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
                       {index + 1}
                     </div>
                     <div className="flex flex-col gap-1  w-full">
-                      <div className="flex items-center justify-between w-full">
-                        <div className="font-medium flex items-center">
-                          {state?.icon && <state.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
-                          <span>{state?.label}</span>
+                          <div className="flex items-center justify-between w-full">
+                            <div className='flex gap-2 items-center'>
+                              <div className="font-medium flex items-center">
+                                {state?.icon && <state.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
+                                <span>{state?.label}</span>
+                              </div>
+                              <CardDescription className="m-0 flex gap-2 items-center">
+                                <PersonIcon />
+                                {fullName}
+                              </CardDescription>
+                            </div>
+                            <div className="text-muted-foreground text-sm">
+                              {moment(log.created_at).format('[Hoy,] h:mm A')}
+                            </div>
+                          </div>
+                          <CardDescription>
+                            {log.description} <br></br>
+                          </CardDescription>
                         </div>
-                        <div className="text-muted-foreground text-sm">
-                          {moment(log.created_at).format('[Hoy,] h:mm A')}
-                        </div>
-                      </div>
-                      <CardDescription>{log.description}</CardDescription>
-                    </div>
                   </div>
                 </>
               );

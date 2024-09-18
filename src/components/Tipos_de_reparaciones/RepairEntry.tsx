@@ -50,13 +50,15 @@ export default function RepairNewEntry({
   user_id,
   default_equipment_id,
   employee_id,
+  onReturn,
 }: {
   tipo_de_mantenimiento: TypeOfRepair;
   equipment: ReturnType<typeof setVehiclesToShow>;
   limittedEquipment?: boolean;
   user_id?: string | undefined;
   default_equipment_id?: string;
-  employee_id?: string | undefined; //!IMPLEMENTAR ESTO
+  employee_id?: string | undefined;
+  onReturn?: () => void;
 }) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const router = useRouter();
@@ -115,10 +117,46 @@ export default function RepairNewEntry({
   });
   const [images, setImages] = useState<(string | null)[]>([null, null, null]);
   const [files, setFiles] = useState<(File | undefined)[]>([undefined, undefined, undefined]);
+  const [vehiclePendingRepairs, setVehiclePendingRepairs] = useState<any[] | null>([]);
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
+  const verifyIfExistOpenRepairSolicitud = async (repairTypeId: string) => {
+    const vehicle_id = equipment?.find(
+      (equip) => equip.domain === form.getValues('domain') || equip.serie === form.getValues('domain')
+    );
+
+    if (vehicle_id?.id) {
+      const { data: repair_solicitudes, error } = await supabase
+        .from('repair_solicitudes')
+        .select('*')
+        .eq('equipment_id', vehicle_id?.id)
+        .eq('reparation_type', repairTypeId)
+        .neq('state', 'Cancelado')
+        .neq('state', 'Finalizado')
+        .neq('state', 'Rechazado');
+
+      if (repair_solicitudes?.length ?? 0 > 0) {
+        toast.error(
+          `Ya existe una solicitud de reparacion con los mismos datos en estado ${repair_solicitudes?.[0].state} para este vehiculo`
+        );
+        return true; // Indica que se encontró una solicitud abierta
+      }
+    } else {
+      toast.error('No se encontro el vehiculo');
+      return true; // Indica que no se encontró el vehículo
+    }
+
+    return false; // Indica que no se encontró una solicitud abierta
+  };
+
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
     //Agregar la reparacion al otro formulario
+    const hasOpenRepair = await verifyIfExistOpenRepairSolicitud(data.repair);
 
+    // Si se encontró una reparación abierta, detener la ejecución
+    if (hasOpenRepair) {
+      return;
+    }
+  
     const dataWithImages = {
       ...data,
       user_images: images,
@@ -183,15 +221,12 @@ export default function RepairNewEntry({
     toast.promise(
       async () => {
         try {
-          const selectedRepair = tipo_de_mantenimiento.find((e) => e.id === allRepairs[0].repair);
           const vehicle_id = equipment?.find(
             (equip) =>
               equip?.domain?.toLowerCase() === allRepairs[0]?.domain?.toLowerCase() ||
               equip?.serie?.toLowerCase() === allRepairs[0]?.domain?.toLowerCase()
           ); //! OJO si se permiten mas de 1 vehiculo
           const condition = vehicle_id?.condition;
-
-          console.log('vehicle_id', vehicle_id);
 
           const data = await Promise.all(
             allRepairs.map(async (e) => {
@@ -213,6 +248,7 @@ export default function RepairNewEntry({
                 user_images,
                 state: 'Pendiente',
                 employee_id,
+                kilometer: e.kilometer,
               };
             })
           );
@@ -228,35 +264,10 @@ export default function RepairNewEntry({
             return repair?.criticity === 'Media';
           });
 
-          // const hasCriticity = () => {
-          //   if (hasHighCriticity) {
-          //     return 'no operativo';
-          //   } else if (hasMediumCriticity) {
-          //     return 'operativo condicionado';
-          //   } else {
-          //     return 'operativo';
-          //   }
-          // };
-          // const repair = tipo_de_mantenimiento.find((repair) => repair.id === e.repair);
-          // return repair?.criticity === 'Media';
-
-          // console.log('vehicle_id', vehicle_id);
-
-          // const dataToUpdate = () => {};
-
-          // const { data: vehicles, error } = await supabase
-          //   .from('vehicles')
-          //   .update(() => {
-          //     return { condition: hasCriticity(), kilometer: allRepairs[0].kilometer };
-          //   })
-          //   .eq('id', vehicle_id?.id);
-
           if (hasHighCriticity && condition !== 'no operativo' && condition !== 'en reparación') {
             const { data: vehicles, error } = await supabase
               .from('vehicles')
-              .update(() => {
-                return { condition: 'no operativo', kilometer: allRepairs[0].kilometer };
-              })
+              .update({ condition: 'no operativo', kilometer: allRepairs[0].kilometer })
               .eq('id', vehicle_id?.id);
           } else if (hasMediumCriticity && condition !== 'no operativo' && condition !== 'en reparación') {
             const { data: vehicles, error } = await supabase
@@ -290,6 +301,9 @@ export default function RepairNewEntry({
           router.refresh();
           clearForm();
           setAllRepairs([]);
+          if (employee_id && onReturn) {
+            onReturn();
+          }
         } catch (error) {
           console.error(error);
         }
@@ -309,7 +323,7 @@ export default function RepairNewEntry({
     setFiles([undefined, undefined, undefined]);
   };
 
-  console.log(typeOfEquipment,'typeOfEquipmenttypeOfEquipment');
+  console.log(typeOfEquipment, 'typeOfEquipmenttypeOfEquipment');
 
   const handleDeleteRepair = (provicionalId: string) => {
     setAllRepairs((prev) => prev.filter((e) => e.provicionalId !== provicionalId));
