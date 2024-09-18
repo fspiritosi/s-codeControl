@@ -22,7 +22,6 @@ export default async function RepairSolicitudes({
     ? (repair_solicitudes as RepairsSolicituds).filter((repair) => repair.equipment_id.id === default_equipment_id)
     : (repair_solicitudes as RepairsSolicituds);
 
-  console.log(Allrepairs[0].repairlogs, 'Allrepairs');
 
   const repairsFormatted = Allrepairs.map((repair) => {
     return {
