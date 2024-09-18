@@ -13,7 +13,7 @@ export async function GET(request: NextRequest){
         .eq('company_id', company_id)
         
         const data = diagram_type;
-        // console.log(data)
+        
         if (error) {
           throw new Error(JSON.stringify(error));
         }

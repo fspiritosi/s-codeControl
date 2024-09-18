@@ -472,7 +472,7 @@ function CreatedForm() {
                     <TableHeader>
                       <TableRow className="border-b-2">
                         {formKeys.map((key, index) => (
-                          <TableCell className="text-[16px]" key={index}>
+                          <TableCell className="text-[16px]" key={crypto.randomUUID()}>
                             <CardTitle>{key.replaceAll('_', ' ')}</CardTitle>
                           </TableCell>
                         ))}
@@ -490,7 +490,7 @@ function CreatedForm() {
                               typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(value);
                             const formattedValue = isDate ? new Date(value).toLocaleDateString() : value;
                             return (
-                              <TableCell key={index}>
+                              <TableCell key={crypto.randomUUID()}>
                                 {Array.isArray(formattedValue) ? (
                                   <div className="gap-2 flex flex-col">
                                     {formattedValue.map((item, itemIndex) => (

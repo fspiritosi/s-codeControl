@@ -90,6 +90,8 @@ interface State {
   companyDocuments: CompanyDocumentsType[];
   codeControlRole: string;
   roleActualCompany: string;
+  active_sidebar: boolean;
+  toggleSidebar: () => void;
 }
 
 export interface CompanyDocumentsType {
@@ -196,6 +198,11 @@ const setVehiclesToShow = (vehicles: Vehicle) => {
 export const useLoggedUserStore = create<State>((set, get) => {
   // set({ isLoading: true })
   set({ showDeletedEmployees: false });
+
+  const toggleSidebar = () => {
+    set({ active_sidebar: !get().active_sidebar });
+
+  }
 
   const howManyCompanies = async (id: string) => {
     if (!id) return;
@@ -406,7 +413,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
   const setActualCompany = (company: Company[0]) => {
     set({ actualCompany: company });
 
-    console.log('company to set', company);
 
     cookies.set('actualComp', company.id);
     useCountriesStore.getState().documentTypes(company?.id);
@@ -416,6 +422,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
     allNotifications();
     FetchSharedUsers();
     handleActualCompanyRole();
+
+    
   };
 
   const handleActualCompanyRole = async () => {
@@ -1124,5 +1132,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     codeControlRole: get()?.codeControlRole,
     roleActualCompany: get()?.roleActualCompany,
     active_and_inactive_employees: get()?.active_and_inactive_employees,
+    toggleSidebar,
+    active_sidebar: get()?.active_sidebar,
   };
 });

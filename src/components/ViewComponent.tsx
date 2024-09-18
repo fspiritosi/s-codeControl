@@ -28,20 +28,20 @@ export default async function Viewcomponent({ viewData }: { viewData: ViewDataOb
   const role = await getActualRole(actualCompany as string, user?.data?.user?.id as string);
 
   return (
-    <div className="flex flex-col gap-6 py-4 px-6">
+    <div className="flex flex-col gap-6 py-4 px-6 h-full">
       <Tabs defaultValue={viewData.defaultValue}>
         <TabsList className="flex gap-1 justify-start w-fit">
           {viewData.tabsValues.map((tab, index) => {
             if (tab.restricted.includes(role)) return;
             return (
-              <TabsTrigger key={index} value={tab.value} id={tab.value}>
+              <TabsTrigger key={crypto.randomUUID()} value={tab.value} id={tab.value}>
                 {tab.name}
               </TabsTrigger>
             );
           })}
         </TabsList>
         {viewData.tabsValues.map((tab, index) => (
-          <TabsContent key={index} value={tab.value}>
+          <TabsContent key={crypto.randomUUID()} value={tab.value}>
             <Card className="overflow-hidden">
               <CardHeader className="w-full flex bg-muted dark:bg-muted/50 border-b-2 flex-row justify-between">
                 <div className="w-fit">

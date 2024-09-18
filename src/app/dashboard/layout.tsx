@@ -14,7 +14,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <div className="bg-muted/40 border-r border-b border-muted/50">
         <NavBar />
       </div>
-      <div className="overflow-y-auto bg-muted/40">{children}</div>
+      <div className="bg-muted/40">{children}</div>
     </div>
   );
 }

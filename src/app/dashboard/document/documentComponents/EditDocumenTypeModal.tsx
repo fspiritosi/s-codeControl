@@ -43,7 +43,6 @@ type Props = {
 };
 export function EditModal({ Equipo }: Props) {
   const supabase = supabaseBrowser();
-  console.log(Equipo);
   const [special, setSpecial] = useState(false);
   const router = useRouter();
   const fetchDocumentTypes = useCountriesStore((state) => state.documentTypes);
