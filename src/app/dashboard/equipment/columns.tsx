@@ -78,7 +78,7 @@ type Colum = {
   status: string;
   allocated_to: string;
   condition: 'operativo' | 'no operativo' | 'en reparación' | 'operativo condicionado';
-  kilometer:string
+  kilometer: string;
 };
 
 const allocatedToRangeFilter: FilterFn<Colum> = (
@@ -100,6 +100,17 @@ const allocatedToRangeFilter: FilterFn<Colum> = (
   const sinAfectar = 'sin afectar';
   if (sinAfectar.includes(filterValue.toLocaleLowerCase()) && !row.original.allocated_to) return true;
   return false;
+};
+const conditionFilter: FilterFn<Colum> = (
+  row: Row<Colum>,
+  columnId: string,
+  filterValue: any,
+  addMeta: (meta: any) => void
+) => {
+  if (filterValue === 'Todos') {
+    return true;
+  }
+  return row.original.condition === filterValue;
 };
 
 export const EquipmentColums: ColumnDef<Colum>[] = [
@@ -469,6 +480,7 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
         </Badge>
       );
     },
+    filterFn: conditionFilter,
   },
   {
     accessorKey: 'brand',
