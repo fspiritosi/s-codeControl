@@ -624,7 +624,7 @@ export type FormattedSolicitudesRepair = {
   mechanic_images: string[];
   repairlogs:
     | {
-        kilometer: any;
+        kilometer?: any;
         id: string;
         title: string;
         repair_id: string;
