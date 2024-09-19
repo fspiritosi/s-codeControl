@@ -27,7 +27,7 @@ const EmployeePage = async () => {
             <div className="flex gap-4 flex-wrap pl-6">
               <Link
                 href="/dashboard/employee/action?action=new"
-                className={[' py-2 px-4 rounded', buttonVariants({ variant: 'default' })].join(' ')}
+                className={['py-2 px-4 rounded', buttonVariants({ variant: 'default' })].join(' ')}
               >
                 Agregar nuevo empleado
               </Link>
