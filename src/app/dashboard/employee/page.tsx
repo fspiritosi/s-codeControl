@@ -1,5 +1,6 @@
 import EmployesDiagram from '@/components/Diagrams/EmployesDiagram';
 import DocumentNav from '@/components/DocumentNav';
+import PageTableSkeleton from '@/components/Skeletons/PageTableSkeleton';
 import Viewcomponent from '@/components/ViewComponent';
 import { buttonVariants } from '@/components/ui/button';
 import Link from 'next/link';
@@ -9,7 +10,6 @@ import EmployeeDocumentsTabs from '../document/documentComponents/EmployeeDocume
 import EmployeeListTabs from '../document/documentComponents/EmployeeListTabs';
 import TypesDocumentAction from '../document/documentComponents/TypesDocumentAction';
 import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
-import PageTableSkeleton from '@/components/Skeletons/PageTableSkeleton';
 
 const EmployeePage = async () => {
   const viewData = {
@@ -27,7 +27,7 @@ const EmployeePage = async () => {
             <div className="flex gap-4 flex-wrap pl-6">
               <Link
                 href="/dashboard/employee/action?action=new"
-                className={[' py-2 px-4 rounded', buttonVariants({ variant: 'default' })].join(' ')}
+                className={['py-2 px-4 rounded', buttonVariants({ variant: 'default' })].join(' ')}
               >
                 Agregar nuevo empleado
               </Link>
