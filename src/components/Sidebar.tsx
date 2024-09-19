@@ -23,11 +23,6 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
   const isActive = useLoggedUserStore((state) => state.active_sidebar);
   const pathName = usePathname();
 
-  console.log('Allinks', Allinks);
-
-  useEffect(() => {
-    console.log('rol', role);
-  }, [role]);
   const sizeIcons = 20;
 
   const Allinks33 = [

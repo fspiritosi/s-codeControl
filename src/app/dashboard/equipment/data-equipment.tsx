@@ -125,6 +125,7 @@ export function EquipmentTable<TData, TValue>({
     status: createOptions('status'),
     allocated_to: createOptions('allocated_to'),
     condition: createOptions('condition'),
+    type: createOptions('type'),
   };
 
   function createOptions(key: string) {
@@ -174,6 +175,11 @@ export function EquipmentTable<TData, TValue>({
       option: allOptions.condition,
       label: 'Condición',
     },
+    type: {
+      name: 'type',
+      option: allOptions.type,
+      label: 'Tipo',
+    }
   };
 
   let table = useReactTable({
@@ -230,6 +236,7 @@ export function EquipmentTable<TData, TValue>({
       model: 'Todos',
       status: 'Todos',
       condition: 'Todos',
+      type: 'Todos',
     });
     setActivesVehicles();
   };
@@ -240,7 +247,7 @@ export function EquipmentTable<TData, TValue>({
     <div>
       <div className="flex items-center py-4 flex-wrap gap-y-2 overflow-auto">
         <Input
-          placeholder="Buscar por Dominio"
+          placeholder="Buscar por Dominio o Número de interno"
           value={(table.getColumn('domain')?.getFilterValue() as string) ?? ''}
           onChange={(event) => table.getColumn('domain')?.setFilterValue(event.target.value)}
           className="max-w-sm"

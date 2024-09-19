@@ -404,6 +404,17 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
         </Button>
       );
     },
+    filterFn: (row, columnId, filterValue) => {
+      //Filtrar por numero intenro o dominio
+      if (
+        row.original.intern_number?.toLowerCase().includes(filterValue.toLowerCase()) ||
+        row.original.domain?.toLowerCase()?.includes(filterValue.toLowerCase())
+      ) {
+        return true;
+      } else {
+        return false;
+      }
+    },
   },
   {
     accessorKey: 'chassis',
@@ -412,6 +423,10 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
   {
     accessorKey: 'status',
     header: 'Estado',
+  },
+  {
+    accessorKey: 'type',
+    header: 'Tipo',
   },
   {
     accessorKey: 'types_of_vehicles',

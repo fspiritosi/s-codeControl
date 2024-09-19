@@ -1,7 +1,9 @@
+import VehicleInspectionForm from '@/components/CheckList/VehicleInspectionForm';
 import { ReportAnIssue } from '@/components/ReportAnIssue';
 
 export default function page() {
- return <ReportAnIssue />;
+ return <VehicleInspectionForm />;
+//  return <ReportAnIssue />;
   // return (
   //   <Viewcomponent 
   //     viewData={

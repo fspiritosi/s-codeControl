@@ -20,18 +20,30 @@ export default async function Home({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  
+
   if (!employee && !user?.id) {
     redirect('/maintenance');
   }
 
+  let role;
   const { equipments } = await fetch(`${URL}/api/equipment/${params.id}`).then((e) => e.json());
 
+  if (user?.id) {
+    const { shared_user } = await fetch(
+      `${URL}/api/shared_company_role?company_id=${equipments[0].company_id}&profile_id=${user?.id}`
+    ).then((e) => e.json());
+
+    role = shared_user?.[0]?.role;
+
+    console.log(shared_user, 'role');
+  }
   const { types_of_repairs } = await fetch(`${URL}/api/repairs?actual=${equipments[0].company_id}`).then((res) =>
     res.json()
   );
 
   const vehiclesFormatted = setVehiclesToShow(equipments || []) || [];
+
+  console.log(role, 'role');
 
   return (
     <QrActionSelector
@@ -41,6 +53,7 @@ export default async function Home({
       equipment={vehiclesFormatted}
       tipo_de_mantenimiento={types_of_repairs as TypeOfRepair}
       default_equipment_id={params.id}
+      role = {role}
     />
   );
 }
