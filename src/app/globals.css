@@ -128,3 +128,25 @@ summary::-webkit-details-marker {
     --chart-5: 340 75% 55%;
   }
 }
+
+.lisidebar.activesidebar::before, .lisidebar.activesidebar::after{
+  --border-radius:1rem;
+content: '';
+position: absolute;
+width: var(--border-radius);
+height: var(--border-radius);
+right: 0;
+background:transparent;
+border-radius: 100vw;
+}
+.lisidebar.activesidebar::before{
+  top:  calc(var(--border-radius) * -1);
+  /* box-shadow: 10px 10px 0 10px; */
+  border-radius: 0 0 100vw 0 ;
+}
+.lisidebar.activesidebar::after{
+  bottom: calc(var(--border-radius) * -1);
+  border-radius: 0 100vw 0  0 ;
+}
+
+

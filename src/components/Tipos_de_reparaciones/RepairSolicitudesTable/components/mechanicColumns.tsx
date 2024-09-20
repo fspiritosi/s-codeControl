@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { formatDocumentTypeName } from '@/lib/utils/utils';
 import { FormattedSolicitudesRepair } from '@/types/types';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { PersonIcon } from '@radix-ui/react-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import moment from 'moment';
 import Link from 'next/link';
@@ -25,6 +26,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { criticidad, labels, statuses } from '../data';
+import RepairModal from './RepairModal';
 import { DataTableColumnHeader } from './data-table-column-header';
 
 export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
@@ -33,9 +35,17 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Titulo" className="ml-2" />,
     cell: ({ row }) => {
       return (
-        <div className="flex space-x-2">
-          <CardTitle className="max-w-[300px] truncate font-medium">{row.getValue('title')}</CardTitle>
-        </div>
+        <RepairModal
+          row={row}
+          onlyView
+          action={
+            <div className="flex space-x-2">
+              <CardTitle className="max-w-[300px] truncate font-medium hover:underline">
+                {row.getValue('title')}
+              </CardTitle>
+            </div>
+          }
+        />
       );
     },
   },
@@ -50,13 +60,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
       );
     },
   },
-  // {
-  //   accessorKey: 'id',
-  //   header: ({ column }) => <DataTableColumnHeader column={column} title="Task" />,
-  //   cell: ({ row }) => <div className="w-[80px]">{row.getValue('id')}</div>,
-  //   enableSorting: false,
-  //   enableHiding: false,
-  // },
+
   {
     accessorKey: 'state',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Estado" />,
@@ -100,6 +104,13 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
+    },
+  },
+  {
+    accessorKey: 'intern_number',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Numero interno" />,
+    cell: ({ row }) => {
+      return <div className="flex items-center">{row.original.intern_number}</div>;
     },
   },
   {
@@ -149,6 +160,9 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                 })
             : z.string().optional(),
       });
+
+      console.log(row.original.repairlogs, 'row.original.repairlogs');
+
       useEffect(() => {
         setRepairLogs(row.original.repairlogs);
         fetchRepairsLogs();
@@ -157,13 +171,14 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
       const fetchRepairsLogs = async () => {
         const { data, error } = await supabase
           .from('repair_solicitudes')
-          .select('*,reparation_type(*)')
+          .select('*,reparation_type(*),user_id(*),employee_id(*)')
           .eq('equipment_id', row.original.vehicle_id);
 
         if (error) {
           throw new Error(handleSupabaseError(error.message));
         }
 
+        console.log(data, 'data');
         setRepairSolicitudes(data);
       };
 
@@ -235,15 +250,19 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
         const shouldUpdateFiles = files.some((e) => e !== undefined);
 
         if (shouldUpdateStatus || shouldUpdateFiles) {
-          let mechanic_imagesData = files.map((file, index) => formatImages(file, row.original.domain, index));
+          let mechanic_imagesData = files.map((file, index) =>
+            formatImages(file, row.original.domain ?? row.original.serie, index)
+          );
 
           const mechanic_images = mechanic_imagesData.map((e) => e?.url);
           const vehicle_id = row.original.vehicle_id;
           const mechanic_description = form.getValues('mechanic_description');
 
+          console.log(row.original.kilometer, 'row.original.kilometer');
+
           const { data, error } = await supabase
             .from('repair_solicitudes')
-            .update({ state: status, mechanic_description, mechanic_images })
+            .update({ state: status, mechanic_description, mechanic_images, kilometer: row.original.kilometer })
             .eq('id', row.original.id);
 
           mechanic_imagesData
@@ -428,7 +447,9 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
       };
 
       const updateRepair = async () => {
-        let mechanic_imagesData = files.map((file, index) => formatImages(file, row.original.domain, index));
+        let mechanic_imagesData = files.map((file, index) =>
+          formatImages(file, row.original.domain ?? row.original.serie, index)
+        );
 
         const mechanic_images = mechanic_imagesData.map((e) => e?.url);
 
@@ -531,7 +552,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                   </SelectTrigger>
                   <SelectContent>
                     {statuses.map((status) => (
-                      <SelectItem key={status.value} value={status.value}>
+                      <SelectItem key={crypto.randomUUID()} value={status.value}>
                         <div className="flex items-center">
                           {status.icon && <status.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
                           <span>{status.label}</span>
@@ -596,8 +617,8 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                   <div className="font-medium">{row.original.model}</div>
                 </div>
                 <div className="grid gap-2">
-                  <Label>Dominio</Label>
-                  <div className="font-medium">{row.original.domain}</div>
+                  <Label>{row.original.domain ? 'Dominio' : 'Serie'}</Label>
+                  <div className="font-medium">{row.original.domain ?? row.original.serie}</div>
                 </div>
                 <div className="grid gap-2">
                   <Label>Motor</Label>
@@ -615,29 +636,32 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                 </div>
               </div>
               <div className="mx-auto w-[90%]">
-                <Badge className="text-sm mb-2"> Imagenes del equipo a reparar</Badge>
-                <Carousel className="w-full">
-                  <CarouselContent className="p-2">
-                    {imageUrl.map((image, index) => (
-                      <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3  overflow-hidden">
-                        <Card className="">
-                          <Link target="_blank" href={image || ''}>
-                            <CardContent className="flex aspect-square items-center justify-center p-1">
-                              <img
-                                src={image}
-                                alt={`Imagen ${index + 1}`}
-                                className="w-full h-full object-cover rounded-lg"
-                              />
-                            </CardContent>
-                          </Link>
-                        </Card>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious />
-                  <CarouselNext />
-                </Carousel>
+                {imageUrl.length > 0 && <Badge className="text-sm mb-2"> Imagenes del equipo a reparar</Badge>}
+                {imageUrl.length > 0 && (
+                  <Carousel className="w-full">
+                    <CarouselContent className="p-2">
+                      {imageUrl.map((image, index) => (
+                        <CarouselItem key={crypto.randomUUID()} className="md:basis-1/2 lg:basis-1/3  overflow-hidden">
+                          <Card className="">
+                            <Link target="_blank" href={image || ''}>
+                              <CardContent className="flex aspect-square items-center justify-center p-1">
+                                <img
+                                  src={image}
+                                  alt={`Imagen ${index + 1}`}
+                                  className="w-full h-full object-cover rounded-lg"
+                                />
+                              </CardContent>
+                            </Link>
+                          </Card>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious />
+                    <CarouselNext />
+                  </Carousel>
+                )}
               </div>
+
               {(imagesMechanic?.length || (status !== row.original.state && endingStates.includes(status))) && (
                 <div className="mx-auto w-[90%]">
                   <Badge className="text-sm mb-2 block w-fit"> Adjuntar imagenes</Badge>
@@ -656,7 +680,10 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                     <CarouselContent className="p-2">
                       {imagesMechanic?.length
                         ? imagesMechanic?.map((image, index) => (
-                            <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3  overflow-hidden">
+                            <CarouselItem
+                              key={crypto.randomUUID()}
+                              className="md:basis-1/2 lg:basis-1/3  overflow-hidden"
+                            >
                               <Card className="">
                                 <Link target="_blank" href={image || ''}>
                                   <CardContent className="flex aspect-square items-center justify-center p-1">
@@ -672,7 +699,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                           ))
                         : status !== row.original.state &&
                           Array.from({ length: 3 }).map((_, index) => (
-                            <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3 ">
+                            <CarouselItem key={crypto.randomUUID()} className="md:basis-1/2 lg:basis-1/3 ">
                               <div className="p-1">
                                 <Card className="hover:cursor-pointer" onClick={() => handleCardClick(index)}>
                                   <CardContent className="flex aspect-square items-center justify-center p-1">
@@ -697,12 +724,18 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                 </div>
               )}
               <div className="grid gap-2">
-                <CardTitle>Eventos de la reparacion</CardTitle>
+                <CardTitle>
+                  Eventos de la reparacion ({row.original.kilometer && `${row.original.kilometer} KM`})
+                </CardTitle>
               </div>
               <div className="relative flex flex-col gap-4 justify-start  w-full">
                 <div className="absolute left-[19px] top-0 bottom-0 w-px bg-muted-foreground/20 " />
                 {repairLogs.map((log, index) => {
                   const state = statuses.find((status) => status.value === log.title);
+                  const fullName =
+                    log.modified_by_user?.fullname ??
+                    `${log.modified_by_employee?.firstname} ${log.modified_by_employee?.lastname}`;
+
 
                   return (
                     <>
@@ -717,15 +750,23 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                         </div>
                         <div className="flex flex-col gap-1  w-full">
                           <div className="flex items-center justify-between w-full">
-                            <div className="font-medium flex items-center">
-                              {state?.icon && <state.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
-                              <span>{state?.label}</span>
+                            <div className='flex gap-2 items-center'>
+                              <div className="font-medium flex items-center">
+                                {state?.icon && <state.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
+                                <span>{state?.label}</span>
+                              </div>
+                              <CardDescription className="m-0 flex gap-2 items-center">
+                                <PersonIcon />
+                                {fullName}
+                              </CardDescription>
                             </div>
                             <div className="text-muted-foreground text-sm">
                               {moment(log.created_at).format('[Hoy,] h:mm A')}
                             </div>
                           </div>
-                          <CardDescription>{log.description}</CardDescription>
+                          <CardDescription>
+                            {log.description} <br></br>
+                          </CardDescription>
                         </div>
                       </div>
                     </>

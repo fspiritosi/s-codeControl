@@ -1,4 +1,5 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { EditModal } from './EditDocumenTypeModal';
 
 interface DocumentsTableProps {
   data: any[];
@@ -31,6 +32,8 @@ const DocumentsTable = ({ data, filters,children }: DocumentsTableProps) => (
           <TableCell className="text-center">{doc.explired ? 'Si' : 'No'}</TableCell>
           <TableCell className="text-center">{doc.mandatory ? 'Si' : 'No'}</TableCell>
           <TableCell className="text-center">{doc.private ? 'Si' : 'No'}</TableCell>
+          <TableCell className="text-center"><EditModal Equipo={doc}  /></TableCell>
+          
         </TableRow>
       ))}
     </TableBody>

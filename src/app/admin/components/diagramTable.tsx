@@ -43,7 +43,7 @@ export default async function DiagramTable() {
           </TableHeader>
           <TableBody>
             {diagrams?.map((diagramType, index) => (
-              <TableRow key={index}>
+              <TableRow key={crypto.randomUUID()}>
                 <TableCell className="hidden sm:table-cell">{index + 1}</TableCell>
                 <TableCell className="font-medium">{diagramType.name}</TableCell>
                 <TableCell>

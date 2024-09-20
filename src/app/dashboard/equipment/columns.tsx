@@ -78,6 +78,7 @@ type Colum = {
   status: string;
   allocated_to: string;
   condition: 'operativo' | 'no operativo' | 'en reparación' | 'operativo condicionado';
+  kilometer: string;
 };
 
 const allocatedToRangeFilter: FilterFn<Colum> = (
@@ -99,6 +100,17 @@ const allocatedToRangeFilter: FilterFn<Colum> = (
   const sinAfectar = 'sin afectar';
   if (sinAfectar.includes(filterValue.toLocaleLowerCase()) && !row.original.allocated_to) return true;
   return false;
+};
+const conditionFilter: FilterFn<Colum> = (
+  row: Row<Colum>,
+  columnId: string,
+  filterValue: any,
+  addMeta: (meta: any) => void
+) => {
+  if (filterValue === 'Todos') {
+    return true;
+  }
+  return row.original.condition === filterValue;
 };
 
 export const EquipmentColums: ColumnDef<Colum>[] = [
@@ -410,6 +422,7 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
     accessorKey: 'engine',
     header: 'Motor',
   },
+
   {
     accessorKey: 'serie',
     header: 'Serie',
@@ -449,6 +462,7 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
         'no operativo': 'destructive',
         'en reparación': 'yellow',
         'operativo condicionado': 'info',
+        default: 'default',
       };
 
       const conditionConfig = {
@@ -459,16 +473,25 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
       };
 
       return (
-        <Badge variant={variants[row.original.condition] as 'default'}>
-          {row.original?.condition && React.createElement(conditionConfig[row.original.condition].icon, { className: 'mr-2 size-4' })}
+        <Badge variant={variants[row.original?.condition] as 'default'}>
+          {row.original?.condition &&
+            React.createElement(conditionConfig[row.original?.condition]?.icon, { className: 'mr-2 size-4' })}
           {row.original.condition}
         </Badge>
       );
     },
+    filterFn: conditionFilter,
   },
   {
     accessorKey: 'brand',
     header: 'Marca',
+  },
+  {
+    accessorKey: 'kilometer',
+    header: 'Kilometros',
+    cell: ({ row }) => {
+      return <Badge variant={'outline'}>{row.original.kilometer} km</Badge>;
+    },
   },
   {
     accessorKey: 'model',

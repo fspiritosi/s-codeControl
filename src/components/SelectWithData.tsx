@@ -103,7 +103,7 @@ export const SelectWithData = ({
         </FormControl>
         <SelectContent>
           {dataToRender?.map((option: Province, index: number) => (
-            <SelectItem disabled={disabled} key={index} value={String(option)}>
+            <SelectItem disabled={disabled} key={crypto.randomUUID()} value={String(option)}>
               {String(option)}
             </SelectItem>
           ))}

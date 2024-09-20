@@ -1,19 +1,20 @@
 import CompanyComponent from '@/components/CompanyComponent';
-import { CovenantRegister } from '@/components/CovenantRegister';
 import DangerZoneComponent from '@/components/DangerZoneComponent';
 import DocumentTabComponent from '@/components/DocumentTabComponent';
 import EditCompanyButton from '@/components/EditCompanyButton';
 import { RegisterWithRole } from '@/components/RegisterWithRole';
 import ServiceComponent from '@/components/Services/ServiceComponent';
+import CompanySkeleton from '@/components/Skeletons/CompanySkeleton';
 import UsersTabComponent from '@/components/UsersTabComponent';
 import Viewcomponent from '@/components/ViewComponent';
 import { buttonVariants } from '@/components/ui/button';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import TypesDocumentAction from '../../document/documentComponents/TypesDocumentAction';
 import Contacts from '../contact/Contact';
 import Customers from '../customers/Customers';
-import Cct from './covenant/CctComponent';
+import CovenantTreeFile from './covenant/CovenantTreeFile';
 export default async function CompanyPage() {
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
@@ -106,14 +107,14 @@ export default async function CompanyPage() {
       },
       {
         value: 'covenant',
-        name: 'CCT',
+        name: 'Convenios colectivos de trabajo',
         restricted: [''],
         content: {
           title: 'Convenios colectivos de trabajo',
           description: 'Lista de Convenios colectivos de trabajo',
           buttonActioRestricted: [''],
-          buttonAction: <CovenantRegister />,
-          component: <Cct />,
+          // buttonAction: <CovenantRegister />,
+          component: <CovenantTreeFile />,
         },
       },
       // {
@@ -157,5 +158,9 @@ export default async function CompanyPage() {
     ],
   };
 
-  return <Viewcomponent viewData={viewData} />;
+  return (
+    <Suspense fallback={<CompanySkeleton />}>
+      <Viewcomponent viewData={viewData} />
+    </Suspense>
+  );
 }

@@ -1,5 +1,7 @@
+import RepairsSkeleton from '@/components/Skeletons/RepairsSkeleton';
 import RepairTypes from '@/components/Tipos_de_reparaciones/RepairTypes';
 import Viewcomponent from '@/components/ViewComponent';
+import { Suspense } from 'react';
 function MantenimientoPage() {
   const viewData = {
     defaultValue: 'type_of_repairs',
@@ -28,9 +30,11 @@ function MantenimientoPage() {
   };
 
   return (
-    <div className="h-full">
-      <Viewcomponent viewData={viewData} />
-    </div>
+    <Suspense fallback={<RepairsSkeleton />}>
+      <div className="h-full">
+        <Viewcomponent viewData={viewData} />
+      </div>
+    </Suspense>
   );
 }
 

@@ -152,7 +152,7 @@ export const DocumentationDrawer = ({ resource, document, id }: Props) => {
                 <div>
                   <div className="flex flex-col gap-3 max-h-[80vh] overflow-y-auto">
                     {documentToDownload?.map((doc, index) => (
-                      <p className="text-lg" key={index}>
+                      <p className="text-lg" key={crypto.randomUUID()}>
                         <FileTextIcon className="inline mr-2 size-5" />
                         {doc?.id_document_types?.name}
                       </p>
@@ -178,7 +178,7 @@ export const DocumentationDrawer = ({ resource, document, id }: Props) => {
           {' '}
           <div className=" flex flex-col gap-5 p-4">
             {props?.map((doc, index) => (
-              <div key={index} className="flex justify-between items-center h-14 px-2 text-nowrap">
+              <div key={crypto.randomUUID()} className="flex justify-between items-center h-14 px-2 text-nowrap">
                 <div className="flex  w-[75%]">
                   <div className="">
                     {doc.state === 'pendiente' && (
@@ -242,7 +242,7 @@ export const DocumentationDrawer = ({ resource, document, id }: Props) => {
       {!props?.length && (
         <div className=" flex flex-col gap-5 p-4 justify-evenly min-h-full overflow-hidden">
           {Array.from({ length: 8 }).map((_, index) => {
-            return <Skeleton key={index} className="w-full h-8" style={{ borderRadius: '8px' }} />;
+            return <Skeleton key={crypto.randomUUID()} className="w-full h-8" style={{ borderRadius: '8px' }} />;
           })}
         </div>
       )}

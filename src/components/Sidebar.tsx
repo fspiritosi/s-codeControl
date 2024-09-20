@@ -1,98 +1,121 @@
 'use client';
 
-import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
-import { useTheme } from 'next-themes';
-import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
-import { TbLayoutSidebarLeftExpand, TbLayoutSidebarRightExpand } from 'react-icons/tb';
-import Logo1 from '../../public/logo-azul.png';
-import LogoBlanco from '../../public/logoLetrasBlancas.png';
-import LogoNegro from '../../public/logoLetrasNegras.png';
-import SideLinks from './SideLinks';
-import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
+import { FiTool, FiTruck } from 'react-icons/fi';
+import {
+  MdHelpOutline,
+  MdListAlt,
+  MdOutlineCorporateFare,
+  MdOutlinePersonAddAlt,
+  MdOutlineSpaceDashboard,
+} from 'react-icons/md';
+import { CardTitle } from './ui/card';
 
-export default function SideBar() {
-  const [expanded, setExpanded] = useState(true);
-  const { theme } = useTheme();
-  const toggleSidebar = () => {
-    setExpanded(!expanded);
-  };
+export default function SideBar({ Allinks, role }: { Allinks: any; role: string }) {
+  const isAuditor = role === 'Auditor';
+  if (isAuditor) {
+    return null;
+  }
+  const isActive = useLoggedUserStore((state) => state.active_sidebar);
+  const pathName = usePathname();
 
-  const documetsFetch = useLoggedUserStore((state) => state.documetsFetch);
-  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
-  const supabase = supabaseBrowser();
-  const router = useRouter()
+  console.log('Allinks', Allinks);
 
-  supabase
-    .channel('custom-all-channel1')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'documents_employees' }, async (payload) => {
-      let { data: employees, error } = await supabase
-        .from('employees')
-        .select('*,company_id(*)')
-        .eq('id', (payload.new as { [key: string]: any }).applies);
+  useEffect(() => {
+    console.log('rol', role);
+  }, [role]);
+  const sizeIcons = 20;
 
-      if (employees?.[0]?.company_id?.id === actualCompany?.id) {
-        documetsFetch();
-        router.refresh()
-      } else {
-        return;
-      }
-    })
-    .subscribe();
+  const Allinks33 = [
+    {
+      name: 'Dashboard',
+      href: '/dashboard',
+      icon: <MdOutlineSpaceDashboard size={sizeIcons} />,
+      regex: /^\/dashboard(\/|$)/,
+    },
+    {
+      name: 'Empresa',
+      href: '/dashboard/company/actualCompany',
+      icon: <MdOutlineCorporateFare size={sizeIcons} />,
+      regex: /^\/dashboard\/company\/actualCompany(\/|$)/,
+    },
+    {
+      name: 'Empleados',
+      href: '/dashboard/employee',
+      icon: <MdOutlinePersonAddAlt size={sizeIcons} />,
+      regex: /^\/dashboard\/employee(\/|$)/,
+    },
+    {
+      name: 'Equipos',
+      href: '/dashboard/equipment',
+      icon: <FiTruck size={sizeIcons} />,
+      regex: /^\/dashboard\/equipment(\/|$)/,
+    },
+    {
+      name: 'Documentación',
+      href: '/dashboard/document',
+      icon: <MdListAlt size={sizeIcons} />,
+      regex: /^\/dashboard\/document(\/|$)/,
+    },
+    {
+      name: 'Mantenimiento',
+      href: '/dashboard/maintenance',
+      icon: <FiTool size={sizeIcons} />,
+      regex: /^\/dashboard\/maintenance(\/|$)/,
+    },
+    {
+      name: 'Ayuda',
+      href: '/dashboard/help',
+      icon: <MdHelpOutline size={sizeIcons} />,
+      regex: /^\/dashboard\/help(\/|$)/,
+    },
+  ];
 
-  supabase
-    .channel('custom-all-channel2')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'documents_equipment' }, async (payload) => {
-      let { data: vehicle, error } = await supabase
-        .from('vehicles')
-        .select('*,company_id(*)')
-        .eq('id', (payload.new as { [key: string]: any }).applies);
+  const activeLink = Allinks33.reduce(
+    (bestMatch: any, link: any) => {
+      const match = pathName.match(link.regex);
+      const matchLength = match ? match[0].length : 0;
+      return matchLength > bestMatch.matchLength ? { link, matchLength } : bestMatch;
+    },
+    { link: null, matchLength: 0 }
+  ).link.name;
 
-      if (vehicle?.[0]?.company_id?.id !== actualCompany?.id) return;
-
-      documetsFetch();
-      router.refresh()
-    })
-    .subscribe();
 
   return (
     <div
-      className={cn(
-        'flex-col  px-3 py-0 md:px-2 bg-muted dark:bg-muted/50 border-r-2 h-screen w-[68px] sticky left-0 top-0 hidden md:flex',
-        expanded ? 'w-[200px]' : 'w-[68px] '
-      )}
+      key={role}
+      className={`relative top-0 left-0 h-full bg-white dark:bg-muted/50 transition-width duration-500 ${isActive ? 'w-16' : 'w-56'}`}
     >
-      <Link
-        className={`flex h-20 items-center justify-center rounded-md  p-4${expanded ? '40' : '40'}`}
-        href="/dashboard"
-      >
-        <div className={`flex items-center justify-center `}>
-          {expanded ? (
-            <Image
-              placeholder="blur"
-              priority={true}
-              src={theme == 'dark' ? LogoBlanco : LogoNegro}
-              alt="Logo code control"
-              width={150}
-            />
-          ) : (
-            <Image src={Logo1} alt="Logo code control" />
-          )}
-        </div>
-      </Link>
-
-      <div className="flex flex-col mt-2 space-y-2">
-        <button
-          className="px-3 py-1 dark:text-neutral-100 text-neutral-950  ml-auto rounded-md hover:text-blue-600 focus:outline-none justify-rigth"
-          onClick={toggleSidebar}
-        >
-          {expanded ? <TbLayoutSidebarRightExpand size={20} /> : <TbLayoutSidebarLeftExpand size={20} />}
-        </button>
-        <SideLinks expanded={expanded} />
+      <div className={cn('flex items-center p-2 justify-center')}>
+        <span className="text-white text-xl flex items-center gap-2 relative overflow-hidden">
+          <img src="/logo-azul.png" alt="codeControl logo" className="size-11 relative block" />
+          <CardTitle className="relative block text-black">CodeControl</CardTitle>
+        </span>
       </div>
+      <ul className="mt-6">
+        {Allinks.map((link: any) => (
+          <Link
+            key={link.name}
+            href={link.href}
+            className={cn(
+              'flex items-center p-4 cursor-pointer transition-all duration-500 rounded-s-full lisidebar relative',
+              link.name === activeLink
+                ? 'bg-muted activesidebar before:shadow-custom-white after:shadow-custom-white-inverted'
+                : 'hover:bg-muted/80',
+              isActive ? 'ml-0' : 'ml-4'
+            )}
+          >
+            <div className="flex items-center overflow-hidden">
+              <span className="relative">{Allinks33.find((link2) => link2.name === link.name)?.icon}</span>
+              <span className="ml-6 text-black relative block">{link.name}</span>
+            </div>
+          </Link>
+        ))}
+      </ul>
     </div>
   );
 }

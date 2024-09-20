@@ -5,7 +5,6 @@ import { addDays, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
 
-import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -15,8 +14,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { DropdownMenuCheckboxItemProps } from '@radix-ui/react-dropdown-menu';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { Button } from '../ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../ui/command';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from '../ui/form';
+
+import * as XLSX from 'xlsx';
 
 type Checked = DropdownMenuCheckboxItemProps['checked'];
 type DiamgramParsed = {
@@ -42,7 +44,6 @@ function DiagramEmployeeView({
   const [selectedResources, setSelectedResources] = useState<string[]>([]);
   const [filteredResources, setFilteredResources] = useState(activeEmployees);
   const [inputValue, setInputValue] = useState<string>('');
-
 
   /*---------------------INICIO ESQUEMA EMPLEADOS---------------------------*/
   const formSchema = z.object({
@@ -104,6 +105,23 @@ function DiagramEmployeeView({
     acc[diagram.employee_id].push(diagram);
     return acc;
   }, {});
+
+  /*---------------------INICIO DESCARGA DE ARCHIVO ---------------------------*/
+
+  function createAndDownloadFile(data: any) {
+    const mes = generarDiasEntreFechas({ fechaInicio, fechaFin });
+    // const dataToDownload = mes.map((dato: any) => ({
+    //   Empleado: '',
+    //   fecha: dato,
+    // }));
+    const dataToDownload = [{ Empleado: mes.map((dato: any) => dato) }];
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToDownload);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Dates');
+
+    XLSX.writeFile(workbook, 'Diagramas.xlsx', { compression: true });
+  }
 
   useEffect(() => {
     form.reset();
@@ -247,7 +265,7 @@ function DiagramEmployeeView({
         <TableHeader>
           <TableHead>Empleado</TableHead>
           {mes.map((d, index) => (
-            <TableHead key={index} className="text-center">
+            <TableHead key={crypto.randomUUID()} className="text-center">
               {d.getDate() + '/' + (d.getMonth() + 1)}
             </TableHead>
           ))}
@@ -261,7 +279,7 @@ function DiagramEmployeeView({
                 const employeeDiagrams = groupedDiagrams[employeeId];
                 const employee = employeeDiagrams[0].employees; // Asumimos que todos los diagramas tienen el mismo empleado
                 return (
-                  <TableRow key={index}>
+                  <TableRow key={crypto.randomUUID()}>
                     <TableCell>
                       {employee.lastname}, {employee.firstname}
                     </TableCell>
