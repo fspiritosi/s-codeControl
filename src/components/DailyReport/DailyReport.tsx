@@ -39,7 +39,9 @@ import MultiSelect from './MultiSelect'
 import { toast } from '@/components/ui/use-toast'
 import { Textarea } from "@/components/ui/textarea"
 import { any } from 'zod'
-
+import { Check, PencilIcon } from 'lucide-react';
+import { FilePenLine } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 interface Customers {
     id: string
     name: string
@@ -272,7 +274,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         // resetForm()
         setIsEditing(true)
     }
-  
+
     const handleAdd: SubmitHandler<DailyReportItem> = (data) => {
         const startDateTime = startTime ? new Date(`1970-01-01T${startTime}:00`) : undefined
         const endDateTime = endTime ? new Date(`1970-01-01T${endTime}:00`) : undefined
@@ -569,7 +571,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
     //             equipment: data.equipment,
     //             description: data.description,
     //         };
-    
+
     //         console.log(rowsData);
     //         const effectiveDate = date || reportData?.date;
     //         // Crear el cuerpo de la solicitud
@@ -591,23 +593,23 @@ export default function DailyReport({ reportData }: DailyReportProps) {
     //             },
     //             body: JSON.stringify(requestBody),
     //         });
-    
+
     //         if (!response.ok) {
     //             throw new Error("Error al procesar el parte diario.");
     //         }
-    
+
     //         const responseData = await response.json();
-    
+
     //         toast({
     //             title: "Éxito",
     //             description: data.editingId
     //                 ? "Parte diario editado correctamente."
     //                 : "Parte diario creado correctamente.",
     //         });
-    
+
     //         // Limpiar el formulario si es necesario
     //         resetForm();
-    
+
     //     } catch (error) {
     //         console.error("Error al procesar el parte diario:", error);
     //         toast({
@@ -619,64 +621,81 @@ export default function DailyReport({ reportData }: DailyReportProps) {
     // };
 
     const saveDailyReport = async (data: any) => {
-        console.log(data);
         try {
-            // Formatear horas
+            // Validation
+            if (!date) {
+                throw new Error("La fecha es requerida.");
+            }
+            if (!data.customer || !data.services || !data.item || !data.start_time || !data.end_time || !data.status) {
+                throw new Error("Por favor, complete todos los campos obligatorios.");
+            }
+
             const formattedStartTime = formatTime(data.start_time);
             const formattedEndTime = formatTime(data.end_time);
-    
+
             let dailyReportId = editingId;
-    
+
             if (!dailyReportId) {
-                // Si no hay un parte diario abierto, crear uno nuevo
                 const dailyReportResponse = await fetch('/api/daily-report', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        date: data.date, // Fecha del parte diario
-                        company_id: company_id, // ID de la empresa
-                        status: true, // Estatus del parte diario
+                        date: format(date, "yyyy-MM-dd"),
+                        company_id: company_id,
+                        status: true,
                     }),
                 });
-    
+
                 if (!dailyReportResponse.ok) {
-                    throw new Error("Error al crear el parte diario.");
+                    const errorText = await dailyReportResponse.text();
+                    throw new Error(`Error al crear el parte diario: ${errorText}`);
                 }
-    
+
                 const { data: dailyReport } = await dailyReportResponse.json();
-                dailyReportId = dailyReport[0].id; // Obtener el ID del parte diario
+                dailyReportId = dailyReport[0].id;
                 setEditingId(dailyReportId);
             }
-    
-            // Insertar la fila en dailyreportrows
+
+            // Log the data being sent to the API
+            console.log('Data being sent to API:', {
+                daily_report_id: dailyReportId,
+                customer_id: data.customer,
+                service_id: data.services,
+                item_id: data.item,
+                start_time: formattedStartTime,
+                end_time: formattedEndTime,
+                description: data.description,
+                status: data.status,
+            });
+
             const rowResponse = await fetch('/api/daily-report/daily-report-row', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    daily_report_id: dailyReportId, // ID del parte diario
+                    daily_report_id: dailyReportId,
                     customer_id: data.customer,
                     service_id: data.services,
                     item_id: data.item,
                     start_time: formattedStartTime,
                     end_time: formattedEndTime,
                     description: data.description,
+                    status: data.status,
                 }),
             });
-    
+
             if (!rowResponse.ok) {
-                throw new Error("Error al insertar la fila en dailyreportrow.");
+                const errorText = await rowResponse.text();
+                throw new Error(`Error al insertar la fila en dailyreportrow: ${errorText}`);
             }
-    
+
             const { data: rowData } = await rowResponse.json();
-            console.log("Fila insertada:", rowData);
-    
-            // Insertar empleados relacionados
+
             if (data.employees && data.employees.length > 0) {
-                const employeeResponse = await fetch('/api/daily-report/dailyreportemployeerelations', {
+                await fetch('/api/daily-report/dailyreportemployeerelations', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -686,21 +705,12 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                             daily_report_row_id: rowData[0].id,
                             employee_id: employee_id,
                         }))
-                        
                     ),
                 });
-    
-                if (!employeeResponse.ok) {
-                    throw new Error("Error al insertar los empleados en dailyreportrow.");
-                }
-    
-                const { data: employeeData } = await employeeResponse.json();
-                console.log("Empleados insertados:", employeeData);
             }
-    
-            // Insertar equipos relacionados
+
             if (data.equipment && data.equipment.length > 0) {
-                const equipmentResponse = await fetch('/api/daily-report/dailyreportequipmentrelations', {
+                await fetch('/api/daily-report/dailyreportequipmentrelations', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -710,26 +720,33 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                             daily_report_row_id: rowData[0].id,
                             equipment_id: equipment_id,
                         }))
-                        
                     ),
                 });
-    
-                if (!equipmentResponse.ok) {
-                    throw new Error("Error al insertar los equipos en dailyreportrow.");
-                }
-    
-                const { data: equipmentData } = await equipmentResponse.json();
-                console.log("Equipos insertados:", equipmentData);
             }
-    
-            // Limpiar el formulario si es necesario
+
+            // Add the new row to the local state
+            setDailyReport(prevReport => [...prevReport, {
+                id: rowData[0].id,
+                date: format(date, "yyyy-MM-dd"),
+                customer: data.customer,
+                employees: data.employees,
+                equipment: data.equipment,
+                services: data.services,
+                item: data.item,
+                start_time: formattedStartTime,
+                end_time: formattedEndTime,
+                status: data.status,
+                description: data.description,
+            }]);
+
+            // Reset form fields except for the date
             resetForm();
-    
+
             toast({
                 title: "Éxito",
-                description: "Parte diario procesado correctamente.",
+                description: "Fila agregada correctamente al parte diario.",
             });
-    
+            handleAdd(data)
         } catch (error) {
             console.error("Error al procesar el parte diario:", error);
             toast({
@@ -768,11 +785,12 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                 <FormProvider {...formMethods}>
                                     <Form {...formMethods}>
                                         <form onSubmit={handleSubmit(saveDailyReport)} className="space-y-6">
-                                            <div>
-                                                <FormField
-                                                    control={control}
-                                                    name='date'
-                                                    render={({ field }) => (
+                                            <FormField
+                                                control={control}
+                                                name='date'
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Fecha</FormLabel>
                                                         <Popover>
                                                             <PopoverTrigger asChild>
                                                                 <Button
@@ -798,14 +816,16 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                                 />
                                                             </PopoverContent>
                                                         </Popover>
-                                                    )}
-                                                />
-                                            </div>
-                                            <div>
-                                                <FormField
-                                                    control={control}
-                                                    name='customer'
-                                                    render={({ field }) => (
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={control}
+                                                name='customer'
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Cliente</FormLabel>
                                                         <Select
                                                             value={field.value}
                                                             onValueChange={(value) => {
@@ -826,188 +846,183 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                                 </SelectGroup>
                                                             </SelectContent>
                                                         </Select>
-                                                    )}
-                                                />
-                                            </div>
-                                            <div className="flex space-x-4">
-                                                <FormField
-                                                    control={control}
-                                                    name='start_time'
-                                                    render={({ field }) => (
-                                                        <FormItem className="flex-1">
-                                                            <FormLabel>Hora de inicio</FormLabel>
-                                                            <Input
-                                                                type="time"
-                                                                name="start_time"
-                                                                value={startTime}
-                                                                onChange={(e) => {
-                                                                    setStartTime(e.target.value)
-                                                                    field.onChange(e.target.value)
-                                                                }}
-                                                            />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                                <FormField
-                                                    control={control}
-                                                    name='end_time'
-                                                    render={({ field }) => (
-                                                        <FormItem className="flex-1">
-                                                            <FormLabel>Hora de finalización</FormLabel>
-                                                            <Input
-                                                                type="time"
-                                                                name="end_time"
-                                                                value={endTime}
-                                                                onChange={(e) => {
-                                                                    setEndTime(e.target.value)
-                                                                    field.onChange(e.target.value)
-                                                                }}
-                                                            />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </div>
-                                            <div>
-                                                <FormField
-                                                    control={control}
-                                                    name='employees'
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel>Empleados</FormLabel>
-                                                            <MultiSelect
-                                                                multiEmp={customerEmployees.map((employee: Employee) => ({
-                                                                    id: employee.id,
-                                                                    name: `${employee.firstname} ${employee.lastname}`
-                                                                }))}
-                                                                placeholder="Seleccione empleados"
-                                                                selectedItems={field.value}
-                                                                onChange={(selected: any) => field.onChange(selected)}
-                                                            />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </div>
-                                            <div>
-                                                <FormField
-                                                    control={control}
-                                                    name='equipment'
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel>Equipos</FormLabel>
-                                                            <MultiSelect
-                                                                multiEmp={customerEquipment.map((eq: Equipment) => ({
-                                                                    id: eq.id,
-                                                                    intern_number: eq.intern_number.toString()
-                                                                }))}
-                                                                placeholder="Seleccione equipos"
-                                                                selectedItems={field.value}
-                                                                onChange={(selected: any) => field.onChange(selected)}
-                                                            />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </div>
-                                            <div>
-                                                <FormField
-                                                    control={control}
-                                                    name='services'
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel>Servicios</FormLabel>
-                                                            <Select
-                                                                value={field.value}
-                                                                onValueChange={(value) => {
-                                                                    field.onChange(value)
-                                                                    handleSelectService(value)
-                                                                }}
-                                                            >
-                                                                <SelectTrigger className="w-full">
-                                                                    <SelectValue placeholder="Seleccione el servicio" />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    <SelectGroup>
-                                                                        <SelectLabel>Servicios</SelectLabel>
-                                                                        {customerServices?.map((service: Services) => (
-                                                                            <SelectItem key={service.id} value={service.id}>
-                                                                                {service.service_name}
-                                                                            </SelectItem>
-                                                                        ))}
-                                                                    </SelectGroup>
-                                                                </SelectContent>
-                                                            </Select>
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </div>
-                                            <div>
-                                                <FormField
-                                                    control={control}
-                                                    name='item'
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel>Items</FormLabel>
-                                                            <Select
-                                                                value={field.value}
-                                                                onValueChange={field.onChange}
-                                                            >
-                                                                <SelectTrigger className="w-full">
-                                                                    <SelectValue placeholder="Seleccione un item" />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    <SelectGroup>
-                                                                        <SelectLabel>Items</SelectLabel>
-                                                                        {customerItems?.map((item: Items) => (
-                                                                            <SelectItem key={item.id} value={item.id}>
-                                                                                {item.item_name}
-                                                                            </SelectItem>
-                                                                        ))}
-                                                                    </SelectGroup>
-                                                                </SelectContent>
-                                                            </Select>
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </div>
-                                            <div>
-                                                <FormField
-                                                    control={control}
-                                                    name='status'
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel>Estado</FormLabel>
-                                                            <Select
-                                                                value={field.value}
-                                                                onValueChange={field.onChange}
-                                                            >
-                                                                <SelectTrigger className="w-full">
-                                                                    <SelectValue placeholder="Seleccione un estado" />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    <SelectItem value="ejecutado">Ejecutado</SelectItem>
-                                                                    <SelectItem value="cancelado">Cancelado</SelectItem>
-                                                                    <SelectItem value="reprogramado">Reprogramado</SelectItem>
-                                                                </SelectContent>
-                                                            </Select>
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </div>
-                                            <div>
-                                                <FormField
-                                                    control={control}
-                                                    name='description'
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel>Descripción</FormLabel>
-                                                            <Textarea
-                                                                placeholder="Ingrese una breve descripción"
-                                                                className="resize-none"
-                                                                {...field}
-                                                            />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </div>
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={control}
+                                                name='start_time'
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Hora de inicio</FormLabel>
+                                                        <Input
+                                                            type="time"
+                                                            name="start_time"
+                                                            value={startTime}
+                                                            onChange={(e) => {
+                                                                setStartTime(e.target.value)
+                                                                field.onChange(e.target.value)
+                                                            }}
+                                                        />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={control}
+                                                name='end_time'
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Hora de finalización</FormLabel>
+                                                        <Input
+                                                            type="time"
+                                                            name="end_time"
+                                                            value={endTime}
+                                                            onChange={(e) => {
+                                                                setEndTime(e.target.value)
+                                                                field.onChange(e.target.value)
+                                                            }}
+                                                        />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={control}
+                                                name='employees'
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Empleados</FormLabel>
+                                                        <MultiSelect
+                                                            multiEmp={customerEmployees.map((employee: Employee) => ({
+                                                                id: employee.id,
+                                                                name: `${employee.firstname} ${employee.lastname}`
+                                                            }))}
+                                                            placeholder="Seleccione empleados"
+                                                            selectedItems={field.value}
+                                                            onChange={(selected: any) => field.onChange(selected)}
+                                                        />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={control}
+                                                name='equipment'
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Equipos</FormLabel>
+                                                        <MultiSelect
+                                                            multiEmp={customerEquipment.map((eq: Equipment) => ({
+                                                                id: eq.id,
+                                                                intern_number: eq.intern_number.toString()
+                                                            }))}
+                                                            placeholder="Seleccione equipos"
+                                                            selectedItems={field.value}
+                                                            onChange={(selected: any) => field.onChange(selected)}
+                                                        />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={control}
+                                                name='services'
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Servicios</FormLabel>
+                                                        <Select
+                                                            value={field.value}
+                                                            onValueChange={(value) => {
+                                                                field.onChange(value)
+                                                                handleSelectService(value)
+                                                            }}
+                                                        >
+                                                            <SelectTrigger className="w-full">
+                                                                <SelectValue placeholder="Seleccione el servicio" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectGroup>
+                                                                    <SelectLabel>Servicios</SelectLabel>
+                                                                    {customerServices?.map((service: Services) => (
+                                                                        <SelectItem key={service.id} value={service.id}>
+                                                                            {service.service_name}
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectGroup>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={control}
+                                                name='item'
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Items</FormLabel>
+                                                        <Select
+                                                            value={field.value}
+                                                            onValueChange={field.onChange}
+                                                        >
+                                                            <SelectTrigger className="w-full">
+                                                                <SelectValue placeholder="Seleccione un item" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectGroup>
+                                                                    <SelectLabel>Items</SelectLabel>
+                                                                    {customerItems?.map((item: Items) => (
+                                                                        <SelectItem key={item.id} value={item.id}>
+                                                                            {item.item_name}
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectGroup>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={control}
+                                                name='status'
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Estado</FormLabel>
+                                                        <Select
+                                                            value={field.value}
+                                                            onValueChange={field.onChange}
+                                                        >
+                                                            <SelectTrigger className="w-full">
+                                                                <SelectValue placeholder="Seleccione un estado" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="ejecutado">Ejecutado</SelectItem>
+                                                                <SelectItem value="cancelado">Cancelado</SelectItem>
+                                                                <SelectItem value="reprogramado">Reprogramado</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={control}
+                                                name='description'
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Descripción</FormLabel>
+                                                        <Textarea
+                                                            placeholder="Ingrese una breve descripción"
+                                                            className="resize-none"
+                                                            {...field}
+                                                        />
+                                                    </FormItem>
+                                                )}
+                                            />
+
                                             <Button type="submit" className="w-full">
                                                 {editingId ? 'Guardar Cambios' : 'Agregar Fila'}
                                             </Button>
@@ -1065,8 +1080,12 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                         <TableCell>{report.status}</TableCell>
                                         <TableCell>{report.description}</TableCell>
                                         <TableCell>
-                                            <Button onClick={() => handleEdit(report.id)} className="mr-2">Editar</Button>
-                                            <Button onClick={() => handleDelete(report.id)} variant="destructive">Eliminar</Button>
+                                            <Button onClick={() => handleEdit(report.id)} className="mr-2">
+                                                <FilePenLine className="h-4 w-4" />
+                                            </Button>
+                                            <Button onClick={() => handleDelete(report.id)} variant="destructive">
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
                                         </TableCell>
                                     </TableRow>
                                 ))}
