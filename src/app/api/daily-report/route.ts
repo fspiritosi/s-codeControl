@@ -1,4 +1,4 @@
-import { Select } from '@/components/ui/select';
+
 import { supabaseServer } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -67,14 +67,16 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   const supabase = supabaseServer();
   const searchParams = request.nextUrl.searchParams;
-  const companyId = searchParams.get('actual'); 
-  const { id, date } = await request.json();
-
+  // const companyId = searchParams.get('actual');
+  const id = searchParams.get('id'); 
+  console.log('id', id);
+  const { date, status } = await request.json();
+  const statusPayload = status === 'cerrado' ? false : status;
   try {
     
     let { data, error } = await supabase
       .from('dailyreport')
-      .update({ date })
+      .update({ status: statusPayload })
       .eq('id', id);
 
     if (error) {

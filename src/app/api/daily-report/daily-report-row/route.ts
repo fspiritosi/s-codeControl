@@ -61,7 +61,7 @@ export async function PUT(request: NextRequest) {
   try {
     const { data, error } = await supabase
       .from('dailyreportrows')
-      .update(updateData)
+      .upsert(updateData)
       .eq('id', id);
     if (error) {
       console.error('Error from Supabase:', error);

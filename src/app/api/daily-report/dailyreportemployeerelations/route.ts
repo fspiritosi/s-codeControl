@@ -1,5 +1,5 @@
 import { supabaseServer } from '@/lib/supabase/server';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const supabase = supabaseServer();
@@ -60,16 +60,24 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
     const supabase = supabaseServer();
     const searchParams = request.nextUrl.searchParams;
-    const companyId = searchParams.get('actual');
-    const { id } = await request.json();
+    // const companyId = searchParams.get('actual');
+    const { id, daily_report_row_id, employee_id } = await request.json();
+    console.log('id', id);
+    console.log('employee_id', employee_id);
     try {
       let { data, error } = await supabase
         .from('dailyreportemployeerelations')
         .delete()
-        .eq('id', id);
+        .eq('daily_report_row_id',id)
+        .eq('employee_id', employee_id);
+
+        // .eq('id', id);
       if (error) {
         throw new Error(JSON.stringify(error));
       }
-      return Response.json({ data });
-    } catch (error) {}
+      return NextResponse.json({ data });
+    } catch (error) {
+        console.error('Error al eliminar la relación:', error);
+        return NextResponse.json({ error: 'Error al eliminar la relación' }, { status: 500 });
+    }
   }

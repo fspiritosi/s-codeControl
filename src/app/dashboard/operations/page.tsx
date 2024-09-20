@@ -15,13 +15,13 @@ import CreateDailyReport from '@/components/DailyReport/CreateDailyReport';
               title: 'Ver partes diarios',
               description: 'Aquí encontrarás todos los partes diarios diarios',
               buttonActioRestricted: [''],
-              buttonAction: (<CreateDailyReport />),
+              buttonAction: (''),
               component: <ViewDailyReports />,
             },
           },
           {
             value: 'dailyReports',
-            name: 'Reportes diarios',
+            name: 'Crear parte diario',
             restricted: [''],
             content: {
               title: 'Crear parte diario',
