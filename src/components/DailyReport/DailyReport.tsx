@@ -42,6 +42,7 @@ import { any } from 'zod'
 import { Check, PencilIcon } from 'lucide-react';
 import { FilePenLine } from 'lucide-react';
 import { Trash2 } from 'lucide-react';
+
 interface Customers {
     id: string
     name: string
@@ -94,7 +95,7 @@ interface DailyReportItem {
 interface DailyReportData {
     id: string
     date: string
-    status: 'abierto' | 'cerrado'
+    status: boolean
     dailyreportrows: DailyReportItem[]
 }
 
@@ -120,9 +121,9 @@ export default function DailyReport({ reportData }: DailyReportProps) {
     const [dailyReport, setDailyReport] = useState<DailyReportItem[]>(reportData?.dailyreportrows || [])
     const [isMultipleEmployeesAllowed, setIsMultipleEmployeesAllowed] = useState<boolean>(false)
     const [editingId, setEditingId] = useState<string | null>(null)
-    const [reportStatus, setReportStatus] = useState<'abierto' | 'cerrado'>(reportData?.status || 'abierto')
+    const [reportStatus, setReportStatus] = useState<boolean>(reportData?.status || false)
     const [isEditing, setIsEditing] = useState(false)
-
+    
     const URL = process.env.NEXT_PUBLIC_BASE_URL
     const formMethods = useForm<DailyReportItem>({
         defaultValues: {
@@ -1047,6 +1048,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                 Agregar Fila
                             </Button>
                         </div>
+                        
                         <Table>
                             <TableCaption>
 
@@ -1096,9 +1098,9 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             </div>
             <div className="mt-6 flex justify-center space-x-4">
                 <Select
-                    value={reportStatus}
-                    onValueChange={(value: 'abierto' | 'cerrado') => setReportStatus(value)}
-                    disabled={reportStatus === 'cerrado'}
+                    value={reportStatus ? 'abierto' : 'cerrado'}
+                    onValueChange={(value: 'abierto' | 'cerrado') => setReportStatus(value === 'abierto')}
+                    disabled={reportStatus === false}
                 >
                     <SelectTrigger className="w-[200px]">
                         <SelectValue placeholder="Estado del reporte" />
