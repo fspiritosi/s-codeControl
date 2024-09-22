@@ -60,8 +60,8 @@ export default function ViewDailysReports() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [warningDialogOpen, setWarningDialogOpen] = useState(false);
-  const [pendingStatusChange, setPendingStatusChange] = useState<{ id: string, status: 'abierto' | 'cerrado' } | null>(null);
-  // const itemsPerPage = 31;
+  const [pendingStatusChange, setPendingStatusChange] = useState<{ id: string, status: boolean } | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'abierto' | 'cerrado' | 'todos'>('todos');
 
   useEffect(() => {
     const now = new Date();
@@ -72,9 +72,16 @@ export default function ViewDailysReports() {
   const handleSortChange = () => {
     setSortOrder((prevOrder) => (prevOrder === 'asc' ? 'desc' : 'asc'));
   };
+  // const filteredReports = dailyReports.filter((report: any) => {
+  //   const reportDate = new Date(report.date);
+  //   return (!startDate || reportDate >= startDate) && (!endDate || reportDate <= endDate);
+  // });
   const filteredReports = dailyReports.filter((report: any) => {
+    console.log(report.status);
     const reportDate = new Date(report.date);
-    return (!startDate || reportDate >= startDate) && (!endDate || reportDate <= endDate);
+    const matchesDateRange = (!startDate || reportDate >= startDate) && (!endDate || reportDate <= endDate);
+    const matchesStatus = statusFilter === 'todos' || (statusFilter === 'abierto' && report.status) || (statusFilter === 'cerrado' && !report.status);
+    return matchesDateRange && matchesStatus;
   });
 
   const sortedReports = filteredReports.sort((a, b) => {
@@ -126,7 +133,7 @@ export default function ViewDailysReports() {
     return reports.map(report => ({
       id: report.id,
       date: report.date,
-      status: true, // Asumiendo que todos los reportes están abiertos por defecto
+      status: report.status, // Asumiendo que todos los reportes están abiertos por defecto
       dailyreportrows: report.dailyreportrows.map((row: any) => ({
         id: row.id,
         date: report.date,
@@ -137,22 +144,23 @@ export default function ViewDailysReports() {
         item: row.item_id.id,
         start_time: row.start_time,
         end_time: row.end_time,
-        status: 'pendiente', // Asumiendo que todos los items están ejecutados por defecto
-        description: '', // Asumiendo que no hay descripción disponible
+        status: row.status, // Asumiendo que todos los items están ejecutados por defecto
+        description: row.description || '', // Asumiendo que no hay descripción disponible
       })),
     }));
   };
   const transformedReports = transformDailyReports(dailyReports);
   console.log(transformedReports);
 
-  const handleStatusChangeWithWarning = (id: string, status: 'abierto' | 'cerrado') => {
-    if (status === 'cerrado') {
+  const handleStatusChangeWithWarning = (id: string, status: boolean) => {
+    if (!status) { // Si el nuevo estado es 'cerrado' (false)
       setPendingStatusChange({ id, status });
       setWarningDialogOpen(true);
     } else {
       handleStatusChange(id, status);
     }
   };
+
   const confirmStatusChange = () => {
     if (pendingStatusChange) {
       handleStatusChange(pendingStatusChange.id, pendingStatusChange.status);
@@ -160,17 +168,14 @@ export default function ViewDailysReports() {
     }
     setWarningDialogOpen(false);
   };
-
-  const handleStatusChange = async (reportId: string, newStatus: 'abierto' | 'cerrado') => {
+  const handleStatusChange = async (reportId: string, newStatus: boolean) => {
     try {
-      const statusPayload = newStatus === 'cerrado' ? false : true;
-
       const response = await fetch(`${URL}/api/daily-report/?id=${reportId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status: statusPayload }),
+        body: JSON.stringify({ status: newStatus }),
       });
 
       if (!response.ok) {
@@ -179,7 +184,7 @@ export default function ViewDailysReports() {
 
       setDailyReports(prevReports =>
         prevReports.map(report =>
-          report.id === reportId ? { ...report, status: statusPayload } : report
+          report.id === reportId ? { ...report, status: newStatus } : report
         )
       );
 
@@ -282,9 +287,26 @@ export default function ViewDailysReports() {
     }
   };
   console.log(dailyReports);
+  console.log(currentReports)
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Todos los Partes Diarios</h1>
+      <div className="mb-4 flex items-center gap-2">
+        <span className="mr-4">Filtrar por estado:</span>
+        <Select
+          value={statusFilter}
+          onValueChange={(value: 'abierto' | 'cerrado' | 'todos') => setStatusFilter(value)}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue>{statusFilter}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos</SelectItem>
+            <SelectItem value="abierto">Abierto</SelectItem>
+            <SelectItem value="cerrado">Cerrado</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <div className="mb-4 flex items-center gap-2">
         <span className="mr-4">Filtrar por fecha:</span>
         <DatePicker date={startDate} setDate={setStartDate} label="Fecha de Inicio" />
@@ -309,6 +331,7 @@ export default function ViewDailysReports() {
           </SelectContent>
         </Select>
       </div>
+
       {isLoading ? (
         <div className="text-center">Cargando...</div>
       ) : (
@@ -335,16 +358,16 @@ export default function ViewDailysReports() {
                   <TableCell>{report.date}</TableCell>
                   <TableCell>
                     <Select
-                      value={report.status ? 'cerrado' : 'abierto'}
-                      onValueChange={(value: 'cerrado' | 'abierto') => handleStatusChangeWithWarning(report.id, value)}
-                      disabled={report.status===false}
+                      value={report.status ? 'true' : 'false'}
+                      onValueChange={(value: 'true' | 'false') => handleStatusChangeWithWarning(report.id, value === 'true')}
+                      disabled={report.status === false}
                     >
                       <SelectTrigger className="w-[200px]">
-                        <SelectValue>{report.status ? 'cerrado' : 'abierto'}</SelectValue>
+                      <SelectValue>{report.status ? 'abierto' : 'cerrado'}</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="abierto">abierto</SelectItem>
-                        <SelectItem value="cerrado">cerrado</SelectItem>
+                        <SelectItem value="true">abierto</SelectItem>
+                        <SelectItem value="false">cerrado</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>

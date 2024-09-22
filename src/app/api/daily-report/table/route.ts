@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
         id,
         date,
         company_id,
+        status,
         dailyreportrows (
           id,
           item_id(id,item_name),
