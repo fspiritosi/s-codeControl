@@ -62,7 +62,7 @@ export default function ViewDailysReports() {
   const [warningDialogOpen, setWarningDialogOpen] = useState(false);
   const [pendingStatusChange, setPendingStatusChange] = useState<{ id: string, status: boolean } | null>(null);
   const [statusFilter, setStatusFilter] = useState<'abierto' | 'cerrado' | 'todos'>('todos');
-
+  const [isEditing, setIsEditing] = useState(false);
   useEffect(() => {
     const now = new Date();
     setStartDate(startOfMonth(now));
@@ -226,6 +226,7 @@ export default function ViewDailysReports() {
   // };
   const handleViewReport = (report: DailyReportData) => {
     setIsLoading(true);
+    setIsEditing(true);
     try {
       const fullReportData = transformedReports.find(r => r.id === report.id);
       if (!fullReportData) {

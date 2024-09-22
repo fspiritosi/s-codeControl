@@ -42,6 +42,7 @@ import { any } from 'zod'
 import { Check, PencilIcon } from 'lucide-react';
 import { FilePenLine } from 'lucide-react';
 import { Trash2 } from 'lucide-react';
+import { parseISO } from 'date-fns';
 
 interface Customers {
     id: string
@@ -123,7 +124,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
     const [editingId, setEditingId] = useState<string | null>(null)
     const [reportStatus, setReportStatus] = useState<boolean>(reportData?.status || false)
     const [isEditing, setIsEditing] = useState(false)
-    
+
     const URL = process.env.NEXT_PUBLIC_BASE_URL
     const formMethods = useForm<DailyReportItem>({
         defaultValues: {
@@ -321,7 +322,11 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         const itemToEdit = dailyReport.find(item => item.id === id)
         if (itemToEdit) {
             setEditingId(id)
-            setDate(new Date(itemToEdit.date))
+            // setDate(new Date(itemToEdit.date))
+            const date = parseISO(itemToEdit.date);
+            const adjustedDate = new Date(date);
+            adjustedDate.setDate(adjustedDate.getDate() + 1);
+            setDate(adjustedDate);
             handleSelectCustomer(itemToEdit.customer || '')
             setValue('customer', itemToEdit.customer)
             setValue('employees', itemToEdit.employees)
@@ -627,9 +632,9 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             if (!date) {
                 throw new Error("La fecha es requerida.");
             }
-            if (!data.customer || !data.services || !data.item || !data.start_time || !data.end_time || !data.status) {
-                throw new Error("Por favor, complete todos los campos obligatorios.");
-            }
+            // if (!data.customer || !data.services || !data.item || !data.start_time || !data.end_time || !data.status) {
+            //     throw new Error("Por favor, complete todos los campos obligatorios.");
+            // }
 
             const formattedStartTime = formatTime(data.start_time);
             const formattedEndTime = formatTime(data.end_time);
@@ -694,19 +699,23 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             }
 
             const { data: rowData } = await rowResponse.json();
-
+            const rowId = rowData[0].id;
+            console.log(rowId);
+            console.log(data.employees)
             if (data.employees && data.employees.length > 0) {
+                const employeeRelations = data.employees.map((employee_id: string) => ({
+                    daily_report_row_id: rowId.toString(),
+                    employee_id: employee_id.toString(),
+                }));
+            
+                console.log('Datos enviados al endpoint:', JSON.stringify(employeeRelations)); // Aquí se muestra lo que se enviará
+            
                 await fetch('/api/daily-report/dailyreportemployeerelations', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(
-                        data.employees.map((employee_id: string) => ({
-                            daily_report_row_id: rowData[0].id,
-                            employee_id: employee_id,
-                        }))
-                    ),
+                    body: JSON.stringify(employeeRelations),
                 });
             }
 
@@ -718,7 +727,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                     },
                     body: JSON.stringify(
                         data.equipment.map((equipment_id: string) => ({
-                            daily_report_row_id: rowData[0].id,
+                            daily_report_row_id: rowId,
                             equipment_id: equipment_id,
                         }))
                     ),
@@ -796,6 +805,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                             <PopoverTrigger asChild>
                                                                 <Button
                                                                     variant={"outline"}
+                                                                    disabled={(isEditing && !date) ? false : true}
                                                                     className={cn(
                                                                         "w-full justify-start text-left font-normal",
                                                                         !date && "text-muted-foreground"
@@ -1027,7 +1037,10 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                             <Button type="submit" className="w-full">
                                                 {editingId ? 'Guardar Cambios' : 'Agregar Fila'}
                                             </Button>
-                                            <Button type="button" onClick={() => setIsEditing(false)} variant="outline" className="w-full">
+                                            <Button type="button" onClick={() => {
+                                                setIsEditing(false);
+                                                resetForm();
+                                            }} variant="outline" className="w-full">
                                                 Cancelar
                                             </Button>
                                         </form>
@@ -1048,7 +1061,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                 Agregar Fila
                             </Button>
                         </div>
-                        
+
                         <Table>
                             <TableCaption>
 
