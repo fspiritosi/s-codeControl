@@ -83,7 +83,7 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
   return (
     <div
       key={role}
-      className={`relative top-0 left-0 h-full bg-white dark:bg-muted/50 transition-width duration-500 ${isActive ? 'w-16' : 'w-56'}`}
+      className={`relative top-0 left-0 h-full bg-white dark:bg-muted/50 transition-width duration-500 ${isActive ? 'w-16' : 'w-56'} sticky top-0 h-screen`}
     >
       <div className={cn('flex items-center p-2 justify-center')}>
         <span className="text-white text-xl flex items-center gap-2 relative overflow-hidden">
