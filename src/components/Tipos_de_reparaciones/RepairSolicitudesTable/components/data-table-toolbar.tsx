@@ -22,6 +22,13 @@ export function DataTableToolbar<TData>({ table }: DataTableToolbarProps<TData>)
         value: key,
       }))
     : [];
+  const titles = table.getColumn('title')?.getFacetedUniqueValues();
+  const formattedTitles = titles
+    ? Array.from(titles.keys()).map((key) => ({
+        label: key,
+        value: key,
+      }))
+    : [];
 
   return (
     <div className="flex items-center justify-between">
@@ -34,6 +41,9 @@ export function DataTableToolbar<TData>({ table }: DataTableToolbarProps<TData>)
         />
         {table.getColumn('state') && (
           <DataTableFacetedFilter column={table.getColumn('state')} title="Estado" options={statuses} />
+        )}
+        {table.getColumn('title') && (
+          <DataTableFacetedFilter column={table.getColumn('title')} title="Titulo" options={formattedTitles} />
         )}
         {table.getColumn('priority') && (
           <DataTableFacetedFilter column={table.getColumn('priority')} title="Criticidad" options={criticidad} />
