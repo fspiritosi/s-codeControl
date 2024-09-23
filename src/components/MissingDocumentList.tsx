@@ -90,7 +90,6 @@ export const MissingDocumentList = () => {
               <AccordionContent className="h-fit bg-muted dark:bg-muted/50 max-h-[60vh] overflow-y-auto">
                 {allValuesToShow?.employees?.length > 0 &&
                   allValuesToShow.employees?.map((item: any, index) => {
-                    // console.log(item[0].resource);
                     return (
                       <Accordion key={crypto.randomUUID()} type="single" className="" collapsible>
                         <AccordionItem value="item-1">
@@ -164,7 +163,7 @@ export const MissingDocumentList = () => {
                               className="flex justify-between items-center h-14 px-2 w-full dark:text-white font-semibold capitalize"
                             >
                               <Badge variant={'outline'} className="text-md">
-                                {item[0].resource}
+                                {item[0].resource|| item[0].intern_number}
                               </Badge>
                               <Link
                                 href={`/dashboard/equipment/action?action=view&id=${item?.[0].vehicle_id}`}
