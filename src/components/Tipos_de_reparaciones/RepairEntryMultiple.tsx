@@ -42,7 +42,7 @@ type FormValues = {
   kilometer: string | undefined;
 }[];
 
-export default function RepairNewEntry({
+export default function RepairNewEntryMultiple({
   tipo_de_mantenimiento,
   equipment,
   limittedEquipment,
@@ -123,15 +123,6 @@ export default function RepairNewEntry({
     );
 
     if (vehicle_id?.id) {
-      //Primero verificar el array de reparaciones
-      const hasOpenRepair = allRepairs.some((e) => e.repair === repairTypeId);
-      if (hasOpenRepair) {
-        toast.error(
-          'Ya existe una solicitud de reparacion con los mismos datos en estado pendiente para este vehiculo'
-        );
-        return true;
-      }
-
       const { data: repair_solicitudes, error } = await supabase
         .from('repair_solicitudes')
         .select('*')
@@ -351,7 +342,7 @@ export default function RepairNewEntry({
                   name="vehicle_id"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Seleccionar equipo</FormLabel>
+                      <FormLabel>Seleccionar equipos</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
