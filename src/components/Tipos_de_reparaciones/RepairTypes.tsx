@@ -67,7 +67,7 @@ async function RepairTypes({
         <Tabs defaultValue="carga_simple" className="">
           <TabsList>
             <TabsTrigger value="carga_simple">Carga individual</TabsTrigger>
-            <TabsTrigger value="carga_multiple">Carga multiple</TabsTrigger>
+            {/* <TabsTrigger value="carga_multiple">Carga multiple</TabsTrigger> */}
           </TabsList>
           <TabsContent value="carga_simple">
             {' '}
