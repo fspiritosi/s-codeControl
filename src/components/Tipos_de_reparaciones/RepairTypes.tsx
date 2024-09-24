@@ -4,6 +4,7 @@ import { TypeOfRepair } from '@/types/types';
 import { cookies } from 'next/headers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import RepairNewEntry from './RepairEntry';
+import RepairNewEntryMultiple from './RepairEntryMultiple';
 import RepairSolicitudes from './RepairSolicitudesTable/RepairSolicitudes';
 import { RepairTypeForm } from './RepairTypeForm';
 
@@ -63,12 +64,30 @@ async function RepairTypes({
         <RepairTypeForm types_of_repairs={types_of_repairs} />
       </TabsContent>
       <TabsContent value="type_of_repair_new_entry">
-        <RepairNewEntry
-          user_id={user?.id}
-          equipment={vehiclesFormatted}
-          tipo_de_mantenimiento={types_of_repairs as TypeOfRepair}
-          default_equipment_id={equipment_id}
-        />
+        <Tabs defaultValue="carga_simple" className="">
+          <TabsList>
+            <TabsTrigger value="carga_simple">Carga individual</TabsTrigger>
+            <TabsTrigger value="carga_multiple">Carga multiple</TabsTrigger>
+          </TabsList>
+          <TabsContent value="carga_simple">
+            {' '}
+            <RepairNewEntry
+              user_id={user?.id}
+              equipment={vehiclesFormatted}
+              tipo_de_mantenimiento={types_of_repairs as TypeOfRepair}
+              default_equipment_id={equipment_id}
+            />
+          </TabsContent>
+          <TabsContent value="carga_multiple">
+            {' '}
+            <RepairNewEntryMultiple
+              user_id={user?.id}
+              equipment={vehiclesFormatted}
+              tipo_de_mantenimiento={types_of_repairs as TypeOfRepair}
+              default_equipment_id={equipment_id}
+            />
+          </TabsContent>
+        </Tabs>
       </TabsContent>
       <TabsContent value="type_of_repair_new_entry2">
         <RepairNewEntry

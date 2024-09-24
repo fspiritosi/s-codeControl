@@ -42,7 +42,7 @@ type FormValues = {
   kilometer: string | undefined;
 }[];
 
-export default function RepairNewEntry({
+export default function RepairNewEntryMultiple({
   tipo_de_mantenimiento,
   equipment,
   limittedEquipment,
@@ -342,7 +342,7 @@ export default function RepairNewEntry({
                   name="vehicle_id"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Seleccionar equipo</FormLabel>
+                      <FormLabel>Seleccionar equipos</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
