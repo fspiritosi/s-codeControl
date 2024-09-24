@@ -123,6 +123,15 @@ export default function RepairNewEntry({
     );
 
     if (vehicle_id?.id) {
+      //Primero verificar el array de reparaciones
+      const hasOpenRepair = allRepairs.some((e) => e.repair === repairTypeId);
+      if (hasOpenRepair) {
+        toast.error(
+          'Ya existe una solicitud de reparacion con los mismos datos en estado pendiente para este vehiculo'
+        );
+        return true;
+      }
+
       const { data: repair_solicitudes, error } = await supabase
         .from('repair_solicitudes')
         .select('*')
