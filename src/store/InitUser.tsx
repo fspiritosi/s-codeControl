@@ -28,7 +28,6 @@ export default function InitState({
   let selectedCompany: Company;
   useEffect(() => {
     if (!initState.current) {
-      console.log('AQUI LO SETEARIA');
       //Setear los siguientes estados
       //1 credentialUser
       useLoggedUserStore.setState({ credentialUser: user });

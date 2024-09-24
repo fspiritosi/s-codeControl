@@ -48,6 +48,15 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
         />
       );
     },
+    filterFn: (row, columnId, filterValue) => {
+      const cellValue = row.getValue(columnId);
+
+      if (typeof cellValue === 'string' && Array.isArray(filterValue)) {
+        return filterValue.some((value) => cellValue.toLowerCase().includes(value.toLowerCase()));
+      }
+
+      return false;
+    },
   },
   {
     accessorKey: 'id',
@@ -159,6 +168,22 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                   message: 'La descripción debe tener menos de 200 caracteres.',
                 })
             : z.string().optional(),
+        kilometer: z.string().refine(
+          (value) => {
+            if (value) {
+              console.log('value', value);
+              console.log('Number(value) > Number(selectedEquipment?.kilometer)', row.original.kilometer);
+              console.log(
+                'Number(value) > Number(row.original.kilometer)',
+                Number(value) > Number(row.original.kilometer)
+              );
+              return Number(value) >= Number(row.original.kilometer);
+            }
+          },
+          {
+            message: `El kilometraje no puede ser menor al actual (${row.original.kilometer})`,
+          }
+        ),
       });
 
       console.log(row.original.repairlogs, 'row.original.repairlogs');
@@ -262,7 +287,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
 
           const { data, error } = await supabase
             .from('repair_solicitudes')
-            .update({ state: status, mechanic_description, mechanic_images, kilometer: row.original.kilometer })
+            .update({ state: status, mechanic_description, mechanic_images, kilometer: form.getValues('kilometer') })
             .eq('id', row.original.id);
 
           mechanic_imagesData
@@ -365,7 +390,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
 
         const { data, error } = await supabase
           .from('repair_solicitudes')
-          .update({ state: status, mechanic_description })
+          .update({ state: status, mechanic_description, kilometer: form.getValues('kilometer') })
           .eq('id', row.original.id);
 
         if (error) {
@@ -446,6 +471,8 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
         console.log('error', vehicleerror);
       };
 
+      console.log('repairLogs', repairLogs);
+
       const updateRepair = async () => {
         let mechanic_imagesData = files.map((file, index) =>
           formatImages(file, row.original.domain ?? row.original.serie, index)
@@ -455,7 +482,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
 
         const { data, error } = await supabase
           .from('repair_solicitudes')
-          .update({ mechanic_images })
+          .update({ mechanic_images, kilometer: form.getValues('kilometer') })
           .eq('id', row.original.id);
 
         mechanic_imagesData
@@ -489,6 +516,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
         resolver: zodResolver(FormSchema),
         defaultValues: {
           mechanic_description: '',
+          kilometer: row.original.kilometer ?? '0',
         },
       });
 
@@ -589,6 +617,20 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                                 />
                               </FormControl>
                               <FormDescription>Descripción del nuevo estado de la solicitud</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="kilometer"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Kilometraje</FormLabel>
+                              <FormControl>
+                                <Textarea placeholder="Kilometraje" className="resize-none" {...field} />
+                              </FormControl>
+                              <FormDescription>Kilometraje del vehículo al momento de la reparación</FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -725,17 +767,17 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
               )}
               <div className="grid gap-2">
                 <CardTitle>
-                  Eventos de la reparacion ({row.original.kilometer && `${row.original.kilometer} KM`})
+                  Kilometros totales de la reparacion:{' '}
+                  {repairLogs[repairLogs.length - 1].kilometer - repairLogs[0].kilometer} kms
                 </CardTitle>
               </div>
               <div className="relative flex flex-col gap-4 justify-start  w-full">
                 <div className="absolute left-[19px] top-0 bottom-0 w-px bg-muted-foreground/20 " />
-                {repairLogs.map((log, index) => {
+                {repairLogs.map((log: any, index) => {
                   const state = statuses.find((status) => status.value === log.title);
                   const fullName =
                     log.modified_by_user?.fullname ??
                     `${log.modified_by_employee?.firstname} ${log.modified_by_employee?.lastname}`;
-
 
                   return (
                     <>
@@ -750,7 +792,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                         </div>
                         <div className="flex flex-col gap-1  w-full">
                           <div className="flex items-center justify-between w-full">
-                            <div className='flex gap-2 items-center'>
+                            <div className="flex gap-2 items-center">
                               <div className="font-medium flex items-center">
                                 {state?.icon && <state.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
                                 <span>{state?.label}</span>
@@ -760,8 +802,11 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                                 {fullName}
                               </CardDescription>
                             </div>
-                            <div className="text-muted-foreground text-sm">
-                              {moment(log.created_at).format('[Hoy,] h:mm A')}
+                            <div className="text-muted-foreground text-sm flex gap-2 items-center">
+                              <Badge variant={'outline'} className="m-0 flex items-center p-1">
+                                {log.kilometer} kms
+                              </Badge>
+                              <CardDescription>{moment(log.created_at).format('[Hoy,] h:mm A')}</CardDescription>
                             </div>
                           </div>
                           <CardDescription>

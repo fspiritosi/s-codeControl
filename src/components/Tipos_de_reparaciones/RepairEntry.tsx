@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
@@ -156,7 +155,7 @@ export default function RepairNewEntry({
     if (hasOpenRepair) {
       return;
     }
-  
+
     const dataWithImages = {
       ...data,
       user_images: images,
@@ -331,6 +330,7 @@ export default function RepairNewEntry({
   const vehicle = equipment.find(
     (equip) => equip.domain === form.getValues('domain') || equip.serie === form.getValues('domain')
   );
+  const [open, setOpen] = useState(false);
   return (
     <ResizablePanelGroup direction="horizontal" className="pt-6 flex flex-wrap sm:flex-nowrap w-full">
       <ResizablePanel className="sm:min-w-[280px] min-w-full">
@@ -430,31 +430,58 @@ export default function RepairNewEntry({
                 <FormField
                   control={form.control}
                   name="repair"
-                  render={({ field }) => {
-                    return (
-                      <FormItem>
-                        <FormLabel>Selecciona un tipo de reparacion</FormLabel>
-                        <Select key={field.value || ''} value={field.value} onValueChange={field.onChange}>
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Selecciona un tipo de reparación</FormLabel>
+                      <Popover open={open} onOpenChange={setOpen}>
+                        <PopoverTrigger asChild>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Tipos de reparaciones" />
-                            </SelectTrigger>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn('justify-between', !field.value && 'text-muted-foreground')}
+                            >
+                              {field.value
+                                ? tipo_de_mantenimiento.find((item) => item.id === field.value)?.name
+                                : 'Tipos de reparaciones'}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
                           </FormControl>
-                          <SelectContent>
-                            {tipo_de_mantenimiento?.map((field) => {
-                              return (
-                                <SelectItem key={field.id} value={field.id}>
-                                  {field.name}
-                                </SelectItem>
-                              );
-                            })}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0">
+                          <Command>
+                            <CommandInput placeholder="Buscar tipo de reparación..." />
+                            <CommandList>
+                              <CommandEmpty>No se encontró ningún tipo de reparación.</CommandEmpty>
+                              <CommandGroup>
+                                {tipo_de_mantenimiento.map((item) => (
+                                  <CommandItem
+                                    value={item.name}
+                                    key={item.id}
+                                    onSelect={() => {
+                                      form.setValue('repair', item.id);
+                                      setOpen(false); // Cierra el Popover
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        'mr-2 h-4 w-4',
+                                        item.id === field.value ? 'opacity-100' : 'opacity-0'
+                                      )}
+                                    />
+                                    {item.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
+
                 <FormField
                   control={form.control}
                   name="description"

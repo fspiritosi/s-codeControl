@@ -207,6 +207,7 @@ export const setVehiclesToShow = (vehicles: Vehicle) => {
     types_of_vehicles: item.types_of_vehicles?.name,
     brand: item.brand_vehicles?.name,
     model: item.model_vehicles?.name,
+    type: item.type?.name,
   }));
 };
 // export const stylesPDF = StyleSheet.create({

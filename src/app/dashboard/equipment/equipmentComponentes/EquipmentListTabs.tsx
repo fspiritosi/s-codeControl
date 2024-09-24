@@ -30,25 +30,29 @@ async function EquipmentListTabs({ inactives, actives }: { inactives?: boolean; 
   );
   const data = setVehiclesToShow(equipments);
 
+  console.log('data', data);
+
   return (
-    <Tabs defaultValue="all">
-      <CardContent>
-        <TabsList>
-          <TabsTrigger value="all">Todos los equipos</TabsTrigger>
-          <TabsTrigger value="vehicles">Solo vehículos</TabsTrigger>
-          <TabsTrigger value="others">Otros</TabsTrigger>
-        </TabsList>
-      </CardContent>
-      <TabsContent value="all">
-        <EquipmentTable columns={EquipmentColums || []} data={data || []} />
-      </TabsContent>
-      <TabsContent value="vehicles">
-        <EquipmentTable columns={EquipmentColums || []} data={onlyVehicles || []} />
-      </TabsContent>
-      <TabsContent value="others">
-        <EquipmentTable columns={EquipmentColums || []} data={onlyNoVehicles || []} />
-      </TabsContent>
-    </Tabs>
+    <div className='overflow-x-auto max-w-full'>
+      <Tabs defaultValue="all">
+        <CardContent>
+          <TabsList>
+            <TabsTrigger value="all">Todos los equipos</TabsTrigger>
+            <TabsTrigger value="vehicles">Solo vehículos</TabsTrigger>
+            <TabsTrigger value="others">Otros</TabsTrigger>
+          </TabsList>
+        </CardContent>
+        <TabsContent value="all">
+          <EquipmentTable columns={EquipmentColums || []} data={data || []} />
+        </TabsContent>
+        <TabsContent value="vehicles">
+          <EquipmentTable columns={EquipmentColums || []} data={onlyVehicles || []} />
+        </TabsContent>
+        <TabsContent value="others">
+          <EquipmentTable columns={EquipmentColums || []} data={onlyNoVehicles || []} />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
 

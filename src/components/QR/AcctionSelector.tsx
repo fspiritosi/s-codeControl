@@ -22,6 +22,7 @@ export default function QrActionSelector({
   equipment,
   default_equipment_id,
   employee_id,
+  role,
 }: {
   employee: string | undefined;
   user: User | null;
@@ -29,11 +30,12 @@ export default function QrActionSelector({
   tipo_de_mantenimiento: TypeOfRepair;
   equipment: ReturnType<typeof setVehiclesToShow>;
   default_equipment_id?: string;
+  role: string | undefined;
 }) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const supabase = supabaseBrowser();
   const router = useRouter();
-  
+
   if (!employee_id && !user?.id) {
     router.push('/maintenance');
   }
@@ -69,6 +71,9 @@ export default function QrActionSelector({
     return <CompletarChecklist onReturn={handleReturn} />;
   }
 
+  console.log('role', role);
+  console.log('user.id', user?.id);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 p-2">
       <Card className="w-full max-w-md space-y-6 rounded-xl bg-white p-6 py-0 shadow-lg">
@@ -88,7 +93,7 @@ export default function QrActionSelector({
         </CardHeader>
         <CardTitle className="text-center text-3xl font-bold text-gray-900 mt-0">Seleccione una opción</CardTitle>
         <div className="space-y-4">
-          {!user?.id && (
+          {(!user?.id || role !== 'Invitado') && (
             <Button
               className="w-full py-6 text-lg"
               variant="default"
