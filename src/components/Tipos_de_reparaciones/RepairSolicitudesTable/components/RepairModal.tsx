@@ -38,13 +38,15 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
   };
   useEffect(() => {
     const fetchImageUrls = async () => {
-      const modifiedStrings = await Promise.all(
-        row.original.user_images.map(async (str: any) => {
-          const { data } = supabase.storage.from('repair_images').getPublicUrl(str);
-          return data.publicUrl;
-        })
-      );
-      setImageUrl(modifiedStrings);
+      if (row.original.user_images) {
+        const modifiedStrings = await Promise?.all(
+          row.original.user_images?.map(async (str: any) => {
+            const { data } = supabase.storage.from('repair_images').getPublicUrl(str);
+            return data.publicUrl;
+          })
+        );
+        setImageUrl(modifiedStrings);
+      }
     };
 
     fetchImageUrls();

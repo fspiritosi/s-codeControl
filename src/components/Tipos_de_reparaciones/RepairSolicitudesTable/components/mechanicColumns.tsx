@@ -210,7 +210,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
       useEffect(() => {
         const fetchImageUrls = async () => {
           const modifiedStrings = row.original.user_images
-            .map((str) => {
+            ?.map((str) => {
               const { data } = supabase.storage.from('repair_images').getPublicUrl(str.slice(1));
               return data.publicUrl;
             })
@@ -678,8 +678,8 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                 </div>
               </div>
               <div className="mx-auto w-[90%]">
-                {imageUrl.length > 0 && <Badge className="text-sm mb-2"> Imagenes del equipo a reparar</Badge>}
-                {imageUrl.length > 0 && (
+                {imageUrl?.length > 0 && <Badge className="text-sm mb-2"> Imagenes del equipo a reparar</Badge>}
+                {imageUrl?.length > 0 && (
                   <Carousel className="w-full">
                     <CarouselContent className="p-2">
                       {imageUrl.map((image, index) => (
