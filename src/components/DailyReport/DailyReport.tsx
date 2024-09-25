@@ -39,6 +39,15 @@ import MultiSelect from './MultiSelect'
 import { toast } from '@/components/ui/use-toast'
 import { Textarea } from "@/components/ui/textarea"
 import { FilePenLine, Trash2 } from 'lucide-react'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+  } from "@/components/ui/dialog";
+import { id } from 'date-fns/locale'
 
 interface Customers {
     id: string
@@ -120,6 +129,8 @@ export default function DailyReport({ reportData }: DailyReportProps) {
     const [editingId, setEditingId] = useState<string | null>(null)
     const [reportStatus, setReportStatus] = useState<boolean>(reportData?.status || false)
     const [isEditing, setIsEditing] = useState(false)
+    const [confirmDelete, setConfirmDelete] = useState(false)
+    const [selectRow, setSelectRow] = useState<string | null>(null)
     const [date, setDate] = useState<Date | undefined>(() => {
         if (reportData && reportData.date) {
             return new Date(reportData.date);
@@ -303,15 +314,23 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             setValue('services', itemToEdit.services)
             handleSelectService(itemToEdit.services)
             setValue('item', itemToEdit.item)
-            setStartTime(itemToEdit.start_time.slice(0, 5))
-            setEndTime(itemToEdit.end_time.slice(0, 5))
+            setValue('start_time',itemToEdit.start_time.slice(0, 5))
+            setValue('end_time',itemToEdit.end_time.slice(0, 5))
             setValue('status', itemToEdit.status)
             setValue('description', itemToEdit.description)
             setIsEditing(true)
         }
     }
 
+    const handleConfirmOpen = (id:string) => {
+        setSelectRow(id)
 
+        setConfirmDelete(true)
+    }
+
+    const handleConfirmClose = () => {
+        setConfirmDelete(false)
+    }
     const handleDelete = async (id: string) => {
         try {
             const response = await fetch(`/api/daily-report/daily-report-row?id=${id}`, {
@@ -410,15 +429,15 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00`;
     };
 
-   
+
 
     const saveDailyReport = async (data: any) => {
         try {
-           
+
             const formattedStartTime = formatTime(data.start_time);
             const formattedEndTime = formatTime(data.end_time);
 
-            
+
             console.log(reportData)
             const rowResponse = await fetch('/api/daily-report/daily-report-row', {
                 method: 'POST',
@@ -480,7 +499,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                 if (!Array.isArray(prevReport)) {
                     prevReport = [];
                 }
-    
+
                 return [...prevReport, {
                     id: rowId,
                     customer: data.customer,
@@ -510,7 +529,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             });
         }
     };
-    
+
 
     const updateDailyReport = async (data: any, rowId: string) => {
         console.log('Updating row:', rowId);
@@ -518,7 +537,8 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         try {
             const formattedStartTime = formatTime(data.start_time);
             const formattedEndTime = formatTime(data.end_time);
-
+            console.log('Formatted start time:', formattedStartTime);
+            console.log('Formatted end time:', formattedEndTime);
             // Actualizar la fila existente
             const rowResponse = await fetch(`/api/daily-report/daily-report-row?id=${rowId}`, {
                 method: 'PUT',
@@ -673,7 +693,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         setIsEditing(false);
         setEditingId(null);
     };
-
+    console.log(dailyReport)
     return (
         <div className="container mx-auto p-4">
             <div className="relative w-full h-full overflow-hidden">
@@ -697,7 +717,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                 <FormProvider {...formMethods}>
                                     <Form {...formMethods}>
                                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                                           
+
                                             <FormField
                                                 control={control}
                                                 name='customer'
@@ -737,7 +757,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                         <Input
                                                             type="time"
                                                             name="start_time"
-                                                            value={startTime}
+                                                            value={startTime? startTime : field.value}
                                                             onChange={(e) => {
                                                                 setStartTime(e.target.value)
                                                                 field.onChange(e.target.value)
@@ -756,7 +776,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                         <Input
                                                             type="time"
                                                             name="end_time"
-                                                            value={endTime}
+                                                            value={field.value || endTime}
                                                             onChange={(e) => {
                                                                 setEndTime(e.target.value)
                                                                 field.onChange(e.target.value)
@@ -963,7 +983,12 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                             <Button onClick={() => handleEdit(report.id)} className="mr-2">
                                                 <FilePenLine className="h-4 w-4" />
                                             </Button>
-                                            <Button onClick={() => handleDelete(report.id)} variant="destructive">
+                                            <Button onClick={() => {
+                                                handleConfirmOpen(report.id);
+
+                                                // handleDelete(report.id);
+
+                                            }} variant="destructive">
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
                                         </TableCell>
@@ -973,8 +998,38 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                         </Table>
                     </motion.div>
                 </motion.div>
+
             </div>
-            
+            {confirmDelete &&
+                <div>
+                    <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+                        <DialogContent className="max-w-[30vw] h-[30vh] flex flex-col">
+                            <DialogTitle className="text-xl font-semibold mb-4">Confirmar Eliminación</DialogTitle>
+                            <DialogDescription>
+                                ¿Estás seguro de que deseas eliminar esta fila?
+                            </DialogDescription>
+                            <div className="flex justify-end mt-4">
+                                <Button onClick={handleConfirmClose} className="mr-2">Cancelar</Button>
+                                <Button
+                                    onClick={() => {
+                                        handleDelete(selectRow as any);
+                                        handleConfirmClose();
+                                    }}
+                                    variant="destructive"
+                                >
+                                    Eliminar
+                                </Button>
+                            </div>
+                        </DialogContent>
+                        <DialogFooter>
+                            <Button onClick={handleConfirmClose} variant="outline">
+                                Cerrar
+                            </Button>
+                        </DialogFooter>
+                    </Dialog>
+                </div>
+            }
         </div>
+
     )
 }

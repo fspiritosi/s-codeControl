@@ -20,18 +20,18 @@ import Create from '@/components/DailyReport/Create';
               component: <ViewDailyReports />,
             },
           },
-          {
-            value: 'dailyReports',
-            name: 'Crear parte diario',
-            restricted: [''],
-            content: {
-              title: 'Crear parte diario',
-              description: 'Aquí se crean los partes diarios',
-              buttonActioRestricted: [''],
-              buttonAction: (''),
-              component: <DailyReport />,
-            },
-          },
+          // {
+          //   value: 'dailyReports',
+          //   name: 'Crear parte diario',
+          //   restricted: [''],
+          //   content: {
+          //     title: 'Crear parte diario',
+          //     description: 'Aquí se crean los partes diarios',
+          //     buttonActioRestricted: [''],
+          //     buttonAction: (''),
+          //     component: <DailyReport />,
+          //   },
+          // },
         ],
         
       };
