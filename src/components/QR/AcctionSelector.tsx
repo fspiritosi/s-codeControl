@@ -2,7 +2,8 @@
 import { Button } from '@/components/ui/button';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { setVehiclesToShow } from '@/lib/utils/utils';
-import { TypeOfRepair } from '@/types/types';
+import { RepairsSolicituds, TypeOfRepair } from '@/types/types';
+import { LapTimerIcon } from '@radix-ui/react-icons';
 import { User } from '@supabase/supabase-js';
 import cookies from 'js-cookie';
 import { ArrowLeft, ClipboardList } from 'lucide-react';
@@ -14,6 +15,7 @@ import { Badge } from '../ui/badge';
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import CompletarChecklist from './CompletarChecklist';
 import SolicitarMantenimiento from './SolicitarMantenimiento';
+import VehicleRepairRequests from './VehicleRepairRequests';
 
 export default function QrActionSelector({
   employee,
@@ -23,6 +25,7 @@ export default function QrActionSelector({
   default_equipment_id,
   employee_id,
   role,
+  pendingRequests
 }: {
   employee: string | undefined;
   user: User | null;
@@ -31,6 +34,7 @@ export default function QrActionSelector({
   equipment: ReturnType<typeof setVehiclesToShow>;
   default_equipment_id?: string;
   role: string | undefined;
+  pendingRequests: RepairsSolicituds
 }) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const supabase = supabaseBrowser();
@@ -70,6 +74,9 @@ export default function QrActionSelector({
   if (selectedOption === 'checklist') {
     return <CompletarChecklist onReturn={handleReturn} />;
   }
+  if (selectedOption === 'VehicleRepairRequests') {
+    return <VehicleRepairRequests pendingRequests={pendingRequests} onReturn={handleReturn} />;
+  }
 
   console.log('role', role);
   console.log('user.id', user?.id);
@@ -103,6 +110,15 @@ export default function QrActionSelector({
               Solicitar Mantenimiento
             </Button>
           )}
+
+          <Button
+            className="w-full py-6 text-lg"
+            variant="outline"
+            onClick={() => handleOptionSelect('VehicleRepairRequests')}
+          >
+            <LapTimerIcon className="mr-2 h-6 w-6" />
+            Ver Solicitudes Pendientes
+          </Button>
           <Button
             disabled
             className="w-full py-6 text-lg"
