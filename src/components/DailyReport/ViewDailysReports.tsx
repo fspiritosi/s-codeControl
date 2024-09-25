@@ -202,28 +202,7 @@ export default function ViewDailysReports() {
     }
   };
 
-  // const handleViewReport = async (report: DailyReportData) => {
-  //   setIsLoading(true);
-  //   try {
-  //     const response = await fetch(`${URL}/api/daily-report/${report.id}?actual=${company_id}`);
-  //     if (!response.ok) {
-  //       throw new Error(`HTTP error! status: ${response.status}`);
-  //     }
-  //     const fullReportData = await response.json();
-  //     console.log("Fetched report data:", fullReportData);
-  //     setSelectedReport(fullReportData);
-  //     setOpenModal(true);
-  //   } catch (error) {
-  //     console.error("Error fetching report details:", error);
-  //     toast({
-  //       title: "Error",
-  //       description: "No se pudieron cargar los detalles del reporte.",
-  //       variant: "destructive",
-  //     });
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
+  
   const handleViewReport = (report: DailyReportData) => {
     setIsLoading(true);
     setIsEditing(true);
@@ -423,7 +402,7 @@ export default function ViewDailysReports() {
           <DialogHeader>
             <DialogTitle>Advertencia</DialogTitle>
             <DialogDescription>
-              Si cambias el estado a "cerrado", no podrás editar este reporte ni cambiar su estado nuevamente a "abierto". ¿Deseas continuar?
+              Si cambias el estado a cerrado, no podrás editar este reporte ni cambiar su estado nuevamente a abierto. ¿Deseas continuar?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -1,8 +1,9 @@
+
 import React from 'react'
 import Viewcomponent from '@/components/ViewComponent';
 import DailyReport from '@/components/DailyReport/DailyReport';
 import ViewDailyReports from '@/components/DailyReport/ViewDailysReports';
-import CreateDailyReport from '@/components/DailyReport/CreateDailyReport';
+import Create from '@/components/DailyReport/Create';
  function OperationsPage() {
     const viewData = {
         defaultValue: 'dailyReportsTable',
@@ -15,7 +16,7 @@ import CreateDailyReport from '@/components/DailyReport/CreateDailyReport';
               title: 'Ver partes diarios',
               description: 'Aquí encontrarás todos los partes diarios diarios',
               buttonActioRestricted: [''],
-              buttonAction: (''),
+              buttonAction: (<Create />),
               component: <ViewDailyReports />,
             },
           },

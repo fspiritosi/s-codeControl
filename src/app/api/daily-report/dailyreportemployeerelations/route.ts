@@ -56,44 +56,70 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-    const supabase = supabaseServer();
-    const searchParams = request.nextUrl.searchParams;
-    const companyId = searchParams.get('actual');
-    const { id, ...updateData } = await request.json(); 
-  
-    try {
-      let { data, error } = await supabase
-        .from('dailyreportemployeerelations')
-        .update(updateData)
-        .eq('id', id);
-      if (error) {
-        throw new Error(JSON.stringify(error));
-      }
-      return Response.json({ data });
-    } catch (error) {}
+  const supabase = supabaseServer();
+  const searchParams = request.nextUrl.searchParams;
+  const companyId = searchParams.get('actual');
+  const { id, ...updateData } = await request.json();
+
+  if (!id) {
+    return new Response(JSON.stringify({ error: 'ID is required for updating the daily report row.' }), { status: 400 });
   }
+
+  if (Object.keys(updateData).length === 0) {
+    return new Response(JSON.stringify({ error: 'No data provided for update.' }), { status: 400 });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('dailyreportemployeerelations')
+      .update(updateData)
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error from Supabase:', error);
+      return new Response(JSON.stringify({ 
+        error: error.message || 'Error desconocido',
+        details: error.details || null,
+        hint: error.hint || null
+      }), { status: 500 });
+    }
+
+    return new Response(JSON.stringify({ data }), { status: 200 });
+  } catch (error) {
+    console.error('Error inesperado al actualizar la fila de reporte diario:', error);
+    return new Response(JSON.stringify({ error: (error as any).message || 'Unexpected error occurred.' }), { status: 500 });
+  }
+}
 
 export async function DELETE(request: NextRequest) {
-    const supabase = supabaseServer();
-    const searchParams = request.nextUrl.searchParams;
-    // const companyId = searchParams.get('actual');
-    const { id, daily_report_row_id, employee_id } = await request.json();
-    console.log('id', id);
-    console.log('employee_id', employee_id);
-    try {
-      let { data, error } = await supabase
-        .from('dailyreportemployeerelations')
-        .delete()
-        .eq('daily_report_row_id',id)
-        .eq('employee_id', employee_id);
+  const supabase = supabaseServer();
+  try {
+      const body = await request.json();
+      const { daily_report_row_id, employees } = body;
 
-        // .eq('id', id);
-      if (error) {
-        throw new Error(JSON.stringify(error));
+      if (!Array.isArray(employees)) {
+          throw new Error('El cuerpo de la solicitud debe contener un array de empleados');
       }
-      return NextResponse.json({ data });
-    } catch (error) {
-        console.error('Error al eliminar la relación:', error);
-        return NextResponse.json({ error: 'Error al eliminar la relación' }, { status: 500 });
-    }
+
+      const deletePromises = employees.map(async (employee: any) => {
+          const { id, employee_id } = employee;
+          return supabase
+              .from('dailyreportemployeerelations')
+              .delete()
+              .eq('daily_report_row_id', daily_report_row_id)
+              .eq('employee_id', employee_id);
+      });
+
+      const results = await Promise.all(deletePromises);
+
+      const errors = results.filter(result => result.error);
+      if (errors.length > 0) {
+          throw new Error(JSON.stringify(errors.map(error => error.error)));
+      }
+
+      return NextResponse.json({ data: 'Relaciones eliminadas correctamente' });
+  } catch (error) {
+      console.error('Error al eliminar las relaciones:', error);
+      return NextResponse.json({ error: 'Error al eliminar las relaciones' }, { status: 500 });
   }
+}

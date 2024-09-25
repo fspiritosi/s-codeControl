@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from 'react'
 import { CalendarIcon, PlusCircledIcon } from "@radix-ui/react-icons"
-import { format, parse } from "date-fns"
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+// import { format } from "date-fns"
+// import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
-import { Calendar } from '@/components/ui/calendar'
-import { cn } from "@/lib/utils"
+// import { Calendar } from '@/components/ui/calendar'
+// import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
-import { useForm, SubmitHandler, FormProvider } from 'react-hook-form'
+import { useForm, FormProvider } from 'react-hook-form'
 import cookies from 'js-cookie'
 import {
     Select,
@@ -38,11 +38,7 @@ import {
 import MultiSelect from './MultiSelect'
 import { toast } from '@/components/ui/use-toast'
 import { Textarea } from "@/components/ui/textarea"
-import { any } from 'zod'
-import { Check, PencilIcon } from 'lucide-react';
-import { FilePenLine } from 'lucide-react';
-import { Trash2 } from 'lucide-react';
-import { parseISO } from 'date-fns';
+import { FilePenLine, Trash2 } from 'lucide-react'
 
 interface Customers {
     id: string
@@ -81,7 +77,7 @@ interface Items {
 
 interface DailyReportItem {
     id: string
-    date: string
+    // date: string
     customer: string | undefined
     employees: string[]
     equipment: string[]
@@ -101,11 +97,11 @@ interface DailyReportData {
 }
 
 interface DailyReportProps {
-    reportData?: DailyReportData
+    reportData?: DailyReportData | undefined
 }
 
 export default function DailyReport({ reportData }: DailyReportProps) {
-    // const [date, setDate] = useState<Date | undefined>(reportData ? new Date(reportData.date) : undefined)
+    console.log('Report data:', reportData)
     const [employees, setEmployees] = useState<Employee[]>([])
     const [customers, setCustomers] = useState<Customers[]>([])
     const [selectedCustomer, setSelectedCustomer] = useState<Customers | null>(null)
@@ -124,12 +120,18 @@ export default function DailyReport({ reportData }: DailyReportProps) {
     const [editingId, setEditingId] = useState<string | null>(null)
     const [reportStatus, setReportStatus] = useState<boolean>(reportData?.status || false)
     const [isEditing, setIsEditing] = useState(false)
+    const [date, setDate] = useState<Date | undefined>(() => {
+        if (reportData && reportData.date) {
+            return new Date(reportData.date);
+        }
+        return undefined;
+    });
+    const [existingReportId, setExistingReportId] = useState<string | null>(null)
 
     const URL = process.env.NEXT_PUBLIC_BASE_URL
     const formMethods = useForm<DailyReportItem>({
         defaultValues: {
-            // id: '',
-            date: '',
+            // date: '',
             customer: undefined,
             employees: [],
             equipment: [],
@@ -142,18 +144,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         }
     })
     const { handleSubmit, control, setValue, watch, reset } = formMethods
-    const [date, setDate] = useState<Date | undefined>(() => {
-        if (reportData && reportData.date) {
-            return new Date(reportData.date);
-        }
-        return undefined;
-    });
 
-    useEffect(() => {
-        if (reportData && reportData.date) {
-            setDate(new Date(reportData.date));
-        }
-    }, [reportData]);
     const company_id = cookies.get('actualComp')
     const modifiedCompany = company_id?.replace(/['"]/g, '').trim()
 
@@ -208,15 +199,16 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         if (reportData) {
             setDate(new Date(reportData.date))
             setEditingId(reportData.id);
-            setDailyReport(reportData.dailyreportrows.map(row => ({
+            setDailyReport(reportData.dailyreportrows?.map(row => ({
                 ...row,
-                date: format(new Date(row.date), "yyyy-MM-dd"),
+                // date: format(new Date(row.date), "yyyy-MM-dd"),
                 daily_report_id: reportData.id
             })))
             setReportStatus(reportData.status)
+            setExistingReportId(reportData.id)
         }
     }, [reportData])
-    console.log(reportData)
+
     useEffect(() => {
         if (startTime && endTime) {
             const start = new Date(`1970-01-01T${startTime}:00`)
@@ -272,41 +264,23 @@ export default function DailyReport({ reportData }: DailyReportProps) {
     }
 
     const handleAddNewRow = () => {
-        // setEditingId(null)
-        // resetForm()
+        setEditingId(null)
+        resetForm()
         setIsEditing(true)
     }
 
-    const handleAdd: SubmitHandler<DailyReportItem> = (data) => {
-        const startDateTime = startTime ? new Date(`1970-01-01T${startTime}:00`) : undefined
-        const endDateTime = endTime ? new Date(`1970-01-01T${endTime}:00`) : undefined
-        const newReportItem: DailyReportItem = {
-            id: editingId || '',
-            date: date ? format(date, "yyyy-MM-dd") : '',
-            customer: selectedCustomer?.id,
-            employees: data.employees,
-            equipment: data.equipment,
-            // services: data.services,
-            services: selectedService?.id || '',
-            item: data.item,
-            start_time: startDateTime ? format(startDateTime, "HH:mm:ss") : '',
-            end_time: endDateTime ? format(endDateTime, "HH:mm:ss") : '',
-            status: data.status,
-            description: data.description,
-        }
-
-        if (editingId) {
-            setDailyReport(dailyReport.map(item => item.id === editingId ? newReportItem : item))
-        } else {
-            setDailyReport([...dailyReport, newReportItem])
-        }
-
-        resetForm()
-        setIsEditing(false)
-    }
-
     const resetForm = () => {
-        reset()
+        reset({
+            customer: undefined,
+            services: '',
+            item: '',
+            start_time: '',
+            end_time: '',
+            employees: [],
+            equipment: [],
+            status: 'pendiente',
+            description: '',
+        })
         setStartTime('')
         setEndTime('')
         setSelectedCustomer(null)
@@ -315,18 +289,13 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         setCustomerServices([])
         setCustomerItems([])
         setSelectedService(null)
-        // setDate(undefined)
     }
-
+    console.log('Daily Report:', dailyReport)
     const handleEdit = (id: string) => {
         const itemToEdit = dailyReport.find(item => item.id === id)
         if (itemToEdit) {
             setEditingId(id)
             // setDate(new Date(itemToEdit.date))
-            const date = parseISO(itemToEdit.date);
-            const adjustedDate = new Date(date);
-            adjustedDate.setDate(adjustedDate.getDate() + 1);
-            setDate(adjustedDate);
             handleSelectCustomer(itemToEdit.customer || '')
             setValue('customer', itemToEdit.customer)
             setValue('employees', itemToEdit.employees)
@@ -342,9 +311,66 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         }
     }
 
-    const handleDelete = (id: string) => {
-        setDailyReport(dailyReport.filter(item => item.id !== id))
-    }
+
+    const handleDelete = async (id: string) => {
+        try {
+            const response = await fetch(`/api/daily-report/daily-report-row?id=${id}`, {
+                method: 'GET',
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Error al obtener el estado de la fila: ${errorText}`);
+            }
+
+            const rowData = await response.json();
+            console.log('Row data:', rowData);
+            const { dailyreportrows } = rowData;
+            const row = dailyreportrows.find((item: any) => item.id === id);
+
+            if (!row) {
+                throw new Error('Fila no encontrada');
+            }
+
+            const { status } = row;
+
+            if (status !== 'pendiente') {
+                toast({
+                    title: "Error",
+                    description: "Solo se pueden eliminar filas con estado 'pendiente'.",
+                    variant: "destructive",
+                });
+                return;
+            }
+
+            const deleteResponse = await fetch(`/api/daily-report/daily-report-row`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id }),
+            });
+
+            if (!deleteResponse.ok) {
+                const errorText = await deleteResponse.text();
+                throw new Error(`Error al eliminar la fila: ${errorText}`);
+            }
+
+            setDailyReport(dailyReport.filter(item => item.id !== id));
+
+            toast({
+                title: "Éxito",
+                description: "Fila eliminada correctamente.",
+            });
+        } catch (error) {
+            console.error("Error al eliminar la fila:", error);
+            toast({
+                title: "Error",
+                description: `Hubo un problema al eliminar la fila: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                variant: "destructive",
+            });
+        }
+    };
 
     const selectedEmployees = watch('employees')
     const selectedEquipment = watch('equipment')
@@ -384,305 +410,23 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00`;
     };
 
-    // const saveDailyReport: SubmitHandler<DailyReportItem> = async (data) => {
-    //     try {
-    //         const {
-    //             date,
-    //             status,
-    //             customer,
-    //             services,
-    //             item,
-    //             start_time,
-    //             end_time,
-    //             employees,
-    //             equipment,
-    //             description,
-    //         } = data;
-
-    //         // Verificar que los datos se están obteniendo correctamente
-    //         console.log('Form Data:', {
-    //             date,
-    //             status,
-    //             customer,
-    //             services,
-    //             item,
-    //             start_time,
-    //             end_time,
-    //             employees,
-    //             equipment,
-    //             description,
-    //             company_id: modifiedCompany,
-    //         });
-
-    //         // Asegurarse de que todos los campos requeridos están presentes
-    //         if (!status || !modifiedCompany) {
-    //             throw new Error('Los campos status y company_id son requeridos.');
-    //         }
-
-    //         // Construir las filas (rows) para enviar al endpoint
-    //         const rows = [{
-    //             customer_id: customer,
-    //             service_id: services,
-    //             item_id: item,
-    //             start_time,
-    //             end_time,
-    //             employees,
-    //             equipment,
-    //             description,
-    //         }];
-
-    //         // Extraer la fecha del objeto dailyReport cuando se está editando
-    //         let requestBody: {
-    //             status: boolean;
-    //             company_id: string;
-    //             rows: {
-    //                 customer_id: string | undefined;
-    //                 service_id: string;
-    //                 item_id: string;
-    //                 start_time: string;
-    //                 end_time: string;
-    //                 employees: string[];
-    //                 equipment: string[];
-    //                 description: string;
-    //             }[];
-    //             date?: string; // Propiedad opcional
-    //         } = {
-    //             status: true,
-    //             company_id: modifiedCompany,
-    //             rows,
-    //         };
-
-    //         // Incluir la fecha solo si no se está editando
-    //         if (!editingId) {
-    //             if (!date) {
-    //                 throw new Error('El campo date es requerido.');
-    //             }
-    //             requestBody.date = date;
-    //         } else {
-    //             // Extraer la fecha del objeto dailyReport
-    //             const existingReport = dailyReport.find(report => report.id === editingId);
-    //             if (existingReport) {
-    //                 requestBody.date = existingReport.date;
-    //             } else {
-    //                 throw new Error('No se encontró el parte diario existente.');
-    //             }
-    //         }
-
-    //         console.log('Request Body:', requestBody);
-
-    //         const rowResponse = await fetch('/api/daily-report/create-all', {
-    //             method: "POST",
-    //             headers: {
-    //                 "Content-Type": "application/json",
-    //             },
-    //             body: JSON.stringify(requestBody),
-    //         });
-
-    //         if (!rowResponse.ok) {
-    //             throw new Error("Error al guardar el parte diario.");
-    //         }
-
-    //         const responseData = await rowResponse.json();
-
-    //         toast({
-    //             title: "Éxito",
-    //             description: "Parte diario guardado correctamente.",
-    //         });
-
-    //         // Limpiar el formulario
-    //         reset();
-
-    //         // Aquí no hacemos ninguna redirección
-
-    //     } catch (error) {
-    //         console.error("Error al guardar los datos:", error);
-    //         toast({
-    //             title: "Error",
-    //             description: "Hubo un problema al guardar el parte diario. Intente nuevamente.",
-    //             variant: "destructive",
-    //         });
-    //     }
-    // };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // const updateDailyReport = async (dailyReport: any) => {
-    //     try {
-    //       // Asumimos que todas las filas tienen el mismo daily_report_id
-    //       const daily_report_id = dailyReport[0].daily_report_id;
-
-    //       const response = await fetch('/api/daily-report/update-all', {
-    //         method: 'PUT',
-    //         headers: { 'Content-Type': 'application/json' },
-    //         body: JSON.stringify({ 
-    //           rows: dailyReport,
-    //           daily_report_id: daily_report_id
-    //         })
-    //       });
-
-    //       const data = await response.json();
-
-    //       if (response.ok) {
-    //         console.log('Reporte diario actualizado exitosamente');
-    //         toast({
-    //           title: "Éxito",
-    //           description: "El reporte diario se ha actualizado correctamente.",
-    //         });
-    //       } else {
-    //         console.error('Error al actualizar el reporte diario:', data.error);
-    //         toast({
-    //           title: "Error",
-    //           description: data.error || "Hubo un problema al actualizar el reporte diario.",
-    //           variant: "destructive",
-    //         });
-    //       }
-    //     } catch (error) {
-    //       console.error('Error:', error);
-    //       toast({
-    //         title: "Error",
-    //         description: "Ocurrió un error inesperado. Por favor, intente de nuevo.",
-    //         variant: "destructive",
-    //       });
-    //     }
-    //   };
-
-
-    // const saveDailyReport = async (data: any) => {
-    //     console.log(data);
-    //     try {
-    //         // Organizar los datos de las filas
-    //         const formattedStartTime = formatTime(data.start_time);
-    //         const formattedEndTime = formatTime(data.end_time);
-    //         const rowsData = {
-    //             customer_id: data.customer,
-    //             service_id: data.services,
-    //             item_id: data.item,
-    //             start_time: formattedStartTime,
-    //             end_time: formattedEndTime,
-    //             employees: data.employees,
-    //             equipment: data.equipment,
-    //             description: data.description,
-    //         };
-
-    //         console.log(rowsData);
-    //         const effectiveDate = date || reportData?.date;
-    //         // Crear el cuerpo de la solicitud
-    //         const requestBody = {
-    //             date: effectiveDate, // Solo si estás creando
-    //             company_id: company_id,
-    //             status: true,
-    //             editingId: data.editingId, // Incluir si estás editando
-    //             rows: rowsData, // Las filas que deseas agregar
-    //             employees: data.employees, // Los empleados seleccionados
-    //             equipment: data.equipment, // El equipo seleccionado
-    //         };
-    //         console.log(requestBody);
-    //         // Enviar la solicitud al backend
-    //         const response = await fetch(`/api/daily-report/create-all`, {
-    //             method: "POST",
-    //             headers: {
-    //                 "Content-Type": "application/json",
-    //             },
-    //             body: JSON.stringify(requestBody),
-    //         });
-
-    //         if (!response.ok) {
-    //             throw new Error("Error al procesar el parte diario.");
-    //         }
-
-    //         const responseData = await response.json();
-
-    //         toast({
-    //             title: "Éxito",
-    //             description: data.editingId
-    //                 ? "Parte diario editado correctamente."
-    //                 : "Parte diario creado correctamente.",
-    //         });
-
-    //         // Limpiar el formulario si es necesario
-    //         resetForm();
-
-    //     } catch (error) {
-    //         console.error("Error al procesar el parte diario:", error);
-    //         toast({
-    //             title: "Error",
-    //             description: "Hubo un problema al procesar el parte diario. Intente nuevamente.",
-    //             variant: "destructive",
-    //         });
-    //     }
-    // };
+   
 
     const saveDailyReport = async (data: any) => {
         try {
-            // Validation
-            if (!date) {
-                throw new Error("La fecha es requerida.");
-            }
-            // if (!data.customer || !data.services || !data.item || !data.start_time || !data.end_time || !data.status) {
-            //     throw new Error("Por favor, complete todos los campos obligatorios.");
-            // }
-
+           
             const formattedStartTime = formatTime(data.start_time);
             const formattedEndTime = formatTime(data.end_time);
 
-            let dailyReportId = editingId;
-
-            if (!dailyReportId) {
-                const dailyReportResponse = await fetch('/api/daily-report', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        date: format(date, "yyyy-MM-dd"),
-                        company_id: company_id,
-                        status: true,
-                    }),
-                });
-
-                if (!dailyReportResponse.ok) {
-                    const errorText = await dailyReportResponse.text();
-                    throw new Error(`Error al crear el parte diario: ${errorText}`);
-                }
-
-                const { data: dailyReport } = await dailyReportResponse.json();
-                dailyReportId = dailyReport[0].id;
-                setEditingId(dailyReportId);
-            }
-
-            // Log the data being sent to the API
-            console.log('Data being sent to API:', {
-                daily_report_id: dailyReportId,
-                customer_id: data.customer,
-                service_id: data.services,
-                item_id: data.item,
-                start_time: formattedStartTime,
-                end_time: formattedEndTime,
-                description: data.description,
-                status: data.status,
-            });
-
+            
+            console.log(reportData)
             const rowResponse = await fetch('/api/daily-report/daily-report-row', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    daily_report_id: dailyReportId,
+                    daily_report_id: reportData?.id,
                     customer_id: data.customer,
                     service_id: data.services,
                     item_id: data.item,
@@ -699,23 +443,20 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             }
 
             const { data: rowData } = await rowResponse.json();
-            const rowId = rowData[0].id;
-            console.log(rowId);
-            console.log(data.employees)
+            const rowId = rowData[0].id; // Asegúrate de que esto sea correcto
+            console.log('Row ID:', rowId);
             if (data.employees && data.employees.length > 0) {
-                const employeeRelations = data.employees.map((employee_id: string) => ({
-                    daily_report_row_id: rowId.toString(),
-                    employee_id: employee_id.toString(),
-                }));
-            
-                console.log('Datos enviados al endpoint:', JSON.stringify(employeeRelations)); // Aquí se muestra lo que se enviará
-            
                 await fetch('/api/daily-report/dailyreportemployeerelations', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(employeeRelations),
+                    body: JSON.stringify(
+                        data.employees.map((employee_id: string) => ({
+                            daily_report_row_id: rowId,
+                            employee_id: employee_id,
+                        }))
+                    ),
                 });
             }
 
@@ -734,29 +475,32 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                 });
             }
 
-            // Add the new row to the local state
-            setDailyReport(prevReport => [...prevReport, {
-                id: rowData[0].id,
-                date: format(date, "yyyy-MM-dd"),
-                customer: data.customer,
-                employees: data.employees,
-                equipment: data.equipment,
-                services: data.services,
-                item: data.item,
-                start_time: formattedStartTime,
-                end_time: formattedEndTime,
-                status: data.status,
-                description: data.description,
-            }]);
+            setDailyReport(prevReport => {
+                // Verificar que prevReport sea un array
+                if (!Array.isArray(prevReport)) {
+                    prevReport = [];
+                }
+    
+                return [...prevReport, {
+                    id: rowId,
+                    customer: data.customer,
+                    employees: data.employees,
+                    equipment: data.equipment,
+                    services: data.services,
+                    item: data.item,
+                    start_time: formattedStartTime,
+                    end_time: formattedEndTime,
+                    status: data.status,
+                    description: data.description,
+                }];
+            });
 
-            // Reset form fields except for the date
             resetForm();
 
             toast({
                 title: "Éxito",
                 description: "Fila agregada correctamente al parte diario.",
             });
-            handleAdd(data)
         } catch (error) {
             console.error("Error al procesar el parte diario:", error);
             toast({
@@ -766,12 +510,170 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             });
         }
     };
+    
 
-    console.log(reportData)
-    console.log(dailyReport);
-    console.log(isEditing)
-    console.log(date)
-    console.log(editingId)
+    const updateDailyReport = async (data: any, rowId: string) => {
+        console.log('Updating row:', rowId);
+        console.log('Data:', data);
+        try {
+            const formattedStartTime = formatTime(data.start_time);
+            const formattedEndTime = formatTime(data.end_time);
+
+            // Actualizar la fila existente
+            const rowResponse = await fetch(`/api/daily-report/daily-report-row?id=${rowId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    daily_report_id: existingReportId,
+                    customer_id: data.customer,
+                    service_id: data.services,
+                    item_id: data.item,
+                    start_time: formattedStartTime,
+                    end_time: formattedEndTime,
+                    description: data.description,
+                    status: data.status,
+                }),
+            });
+
+            if (!rowResponse.ok) {
+                const errorText = await rowResponse.text();
+                throw new Error(`Error al actualizar la fila en dailyreportrow: ${errorText}`);
+            }
+
+            const { data: rowData } = await rowResponse.json();
+
+            // Obtener relaciones actuales de empleados
+            const employeeRelationsResponse = await fetch(`/api/daily-report/dailyreportemployeerelations?row_id=${rowId}`);
+            if (!employeeRelationsResponse.ok) {
+                const errorText = await employeeRelationsResponse.text();
+                throw new Error(`Error al obtener relaciones de empleados: ${errorText}`);
+            }
+            const employeeRelationsData = await employeeRelationsResponse.json();
+            console.log('employeeRelationsData:', employeeRelationsData);
+            const currentEmployees = employeeRelationsData.dailyreportemployeerelations.map((rel: any) => ({
+                id: rel.id,
+                employee_id: rel.employee_id
+            }));
+
+            // Obtener relaciones actuales de equipos
+            const equipmentRelationsResponse = await fetch(`/api/daily-report/dailyreportequipmentrelations?row_id=${rowId}`);
+            if (!equipmentRelationsResponse.ok) {
+                const errorText = await equipmentRelationsResponse.text();
+                throw new Error(`Error al obtener relaciones de equipos: ${errorText}`);
+            }
+            const equipmentRelationsData = await equipmentRelationsResponse.json();
+            console.log('equipmentRelationsData:', equipmentRelationsData);
+            const currentEquipment = equipmentRelationsData.dailyreportequipmentrelations.map((rel: any) => ({
+                id: rel.id,
+                equipment_id: rel.equipment_id
+            }));
+
+            // Determinar relaciones a eliminar
+            const employeesToRemove = currentEmployees.filter((rel: any) => !data.employees.includes(rel.employee_id));
+            const equipmentToRemove = currentEquipment.filter((rel: any) => !data.equipment.includes(rel.equipment_id));
+
+            console.log('employeesToRemove:', employeesToRemove);
+            console.log('equipmentToRemove:', equipmentToRemove);
+
+            // Eliminar relaciones no utilizadas
+            if (employeesToRemove.length > 0) {
+                await fetch('/api/daily-report/dailyreportemployeerelations', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        daily_report_row_id: rowId,
+                        employees: employeesToRemove.map((rel: any) => ({ id: rel.id, employee_id: rel.employee_id })),
+                    }),
+                });
+            }
+
+            if (equipmentToRemove.length > 0) {
+                await fetch('/api/daily-report/dailyreportequipmentrelations', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        daily_report_row_id: rowId,
+                        equipment: equipmentToRemove.map((rel: any) => ({ id: rel.id, equipment_id: rel.equipment_id })),
+                    }),
+                });
+            }
+
+            // Actualizar relaciones con nuevos datos
+            if (data.employees && data.employees.length > 0) {
+                await fetch('/api/daily-report/dailyreportemployeerelations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(
+                        data.employees.map((employee_id: string) => ({
+                            daily_report_row_id: rowId,
+                            employee_id: employee_id,
+                        }))
+                    ),
+                });
+            }
+
+            if (data.equipment && data.equipment.length > 0) {
+                await fetch('/api/daily-report/dailyreportequipmentrelations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(
+                        data.equipment.map((equipment_id: string) => ({
+                            daily_report_row_id: rowId,
+                            equipment_id: equipment_id,
+                        }))
+                    ),
+                });
+            }
+
+            setDailyReport(prevReport => prevReport.map(report =>
+                report.id === rowId ? {
+                    ...report,
+                    customer: data.customer,
+                    employees: data.employees,
+                    equipment: data.equipment,
+                    services: data.services,
+                    item: data.item,
+                    start_time: formattedStartTime,
+                    end_time: formattedEndTime,
+                    status: data.status,
+                    description: data.description,
+                } : report
+            ));
+
+            toast({
+                title: "Éxito",
+                description: "Fila actualizada correctamente en el parte diario.",
+            });
+        } catch (error) {
+            console.error("Error al actualizar el parte diario:", error);
+            toast({
+                title: "Error",
+                description: `Hubo un problema al actualizar el parte diario: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                variant: "destructive",
+            });
+        }
+    };
+
+    const onSubmit = async (data: any) => {
+        if (editingId) {
+            await updateDailyReport(data, editingId);
+        } else {
+            await saveDailyReport(data);
+        }
+        setIsEditing(false);
+        setEditingId(null);
+    };
+
     return (
         <div className="container mx-auto p-4">
             <div className="relative w-full h-full overflow-hidden">
@@ -790,47 +692,12 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                 className="pr-4 overflow-hidden"
                             >
                                 <h1 className="text-2xl font-bold mb-4">
-                                    {editingId ? 'Editar Reporte Diario' : 'Agregar Nueva Fila'}
+                                    {editingId ? 'Editar Fila' : 'Agregar Nueva Fila'}
                                 </h1>
                                 <FormProvider {...formMethods}>
                                     <Form {...formMethods}>
-                                        <form onSubmit={handleSubmit(saveDailyReport)} className="space-y-6">
-                                            <FormField
-                                                control={control}
-                                                name='date'
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Fecha</FormLabel>
-                                                        <Popover>
-                                                            <PopoverTrigger asChild>
-                                                                <Button
-                                                                    variant={"outline"}
-                                                                    disabled={(isEditing && !date) ? false : true}
-                                                                    className={cn(
-                                                                        "w-full justify-start text-left font-normal",
-                                                                        !date && "text-muted-foreground"
-                                                                    )}
-                                                                >
-                                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                                    {date ? format(date, "dd/MM/yyyy") : <span>Seleccione una fecha</span>}
-                                                                </Button>
-                                                            </PopoverTrigger>
-                                                            <PopoverContent className="w-auto p-0" align="start">
-                                                                <Calendar
-                                                                    mode="single"
-                                                                    selected={date}
-                                                                    onSelect={(newDate) => {
-                                                                        setDate(newDate);
-                                                                        field.onChange(newDate ? format(newDate, "yyyy-MM-dd") : '');
-                                                                    }}
-                                                                    initialFocus
-                                                                />
-                                                            </PopoverContent>
-                                                        </Popover>
-                                                    </FormItem>
-                                                )}
-                                            />
-
+                                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                                           
                                             <FormField
                                                 control={control}
                                                 name='customer'
@@ -1038,8 +905,8 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                 {editingId ? 'Guardar Cambios' : 'Agregar Fila'}
                                             </Button>
                                             <Button type="button" onClick={() => {
-                                                setIsEditing(false);
-                                                resetForm();
+                                                setIsEditing(false)
+                                                resetForm()
                                             }} variant="outline" className="w-full">
                                                 Cancelar
                                             </Button>
@@ -1068,7 +935,6 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                             </TableCaption>
                             <TableHeader>
                                 <TableRow>
-                                    {/* <TableHead>Fecha</TableHead> */}
                                     <TableHead>Cliente</TableHead>
                                     <TableHead>Servicio</TableHead>
                                     <TableHead>Item</TableHead>
@@ -1082,9 +948,8 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {dailyReport.map((report: DailyReportItem) => (
+                                {dailyReport?.map((report: DailyReportItem) => (
                                     <TableRow key={report.id}>
-                                        {/* <TableCell>{format(new Date(report.date), "dd/MM/yyyy")}</TableCell> */}
                                         <TableCell>{report.customer ? getCustomerName(report.customer) : 'N/A'}</TableCell>
                                         <TableCell>{report.services ? getServiceName(report.services) : 'N/A'}</TableCell>
                                         <TableCell>{report.item ? getItemName(report.item) : 'N/A'}</TableCell>
@@ -1109,40 +974,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                     </motion.div>
                 </motion.div>
             </div>
-            <div className="mt-6 flex justify-center space-x-4">
-                <Select
-                    value={reportStatus ? 'abierto' : 'cerrado'}
-                    onValueChange={(value: 'abierto' | 'cerrado') => setReportStatus(value === 'abierto')}
-                    disabled={reportStatus === false}
-                >
-                    <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Estado del reporte" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="abierto">Abierto</SelectItem>
-                        <SelectItem value="cerrado">Cerrado</SelectItem>
-                    </SelectContent>
-                </Select>
-                {/* {reportData ? (
-                    <Button 
-                    onClick={async () => {
-                        await updateDailyReport(dailyReport);
-                    }} 
-                        className="px-6 py-3 text-lg font-semibold"
-                        disabled={dailyReport.length === 0 || !reportData?.id}
-                    >
-                        Actualizar Reporte Diario
-                    </Button>
-                ) : (
-                    <Button 
-                        onClick={saveDailyReport} 
-                        className="px-6 py-3 text-lg font-semibold"
-                        disabled={dailyReport.length === 0}
-                    >
-                        Guardar Reporte Diario
-                    </Button>
-                )} */}
-            </div>
+            
         </div>
     )
 }
