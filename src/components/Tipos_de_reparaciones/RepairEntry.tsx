@@ -466,6 +466,7 @@ export default function RepairNewEntry({
                                   <CommandItem
                                     value={item.name}
                                     key={item.id}
+                                    disabled={allRepairs.some((e) => e.repair === item.id)}
                                     onSelect={() => {
                                       form.setValue('repair', item.id);
                                       setOpen(false); // Cierra el Popover

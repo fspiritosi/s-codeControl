@@ -15,7 +15,7 @@ import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CaretSortIcon, CheckIcon, PlusCircledIcon } from '@radix-ui/react-icons';
 import { toPng } from 'html-to-image';
-import { AlertTriangle, CheckCircle, Download, Info, Printer, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Copy, Download, Info, Printer, XCircle } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { ChangeEvent, ReactNode, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -72,7 +72,7 @@ export default function VehiclesForm2({
   vehicle,
   children,
   types: vehicleType,
-  brand_vehicles
+  brand_vehicles,
 }: {
   vehicle: any | null;
   children: ReactNode;
@@ -1226,6 +1226,16 @@ export default function VehiclesForm2({
                     <Button onClick={printQR} size="sm">
                       <Printer className="w-4 h-4 mr-2" />
                       Imprimir
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(qrUrl);
+                        toast.success('URL copiada al portapapeles');
+                      }}
+                    >
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copiar url
                     </Button>
                   </div>
                 </>
