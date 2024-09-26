@@ -14,6 +14,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RepairsSolicituds } from '@/types/types';
+import moment from 'moment';
 import Image from 'next/image';
 import { useState } from 'react';
 import { FiArrowLeft } from 'react-icons/fi';
@@ -55,7 +56,7 @@ export default function VehicleRepairRequests({
             <Card key={request.id}>
               <CardHeader>
                 <CardTitle className="flex justify-between items-center">
-                  <span className='text-xl'>{request.reparation_type.name}</span>
+                  <span className="text-xl">{request.reparation_type.name}</span>
                   <Badge
                     variant={
                       request.reparation_type.criticity === 'Alta'
@@ -72,13 +73,14 @@ export default function VehicleRepairRequests({
               <CardContent>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
-                    <strong>Estado:</strong> {request.equipment_id.status}
+                    <strong>Dominio:</strong> {request.equipment_id.domain}
                   </div>
                   <div>
                     <strong>Equipo:</strong> {request.equipment_id.brand.name} {request.equipment_id.model.name}
                   </div>
                   <div>
-                    <strong>Tipo:</strong> {request.equipment_id.type.name}
+                    <strong>Fecha:</strong>{' '}
+                    {moment(request.created_at, 'YYYY-MM-DD').format('DD/MM/YYYY')}
                   </div>
                   <div>
                     <strong>Estado de la solicitud:</strong> <Badge variant={'outline'}>{request.state}</Badge>
@@ -98,7 +100,7 @@ export default function VehicleRepairRequests({
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-[90vw] w-full max-h-[90vh] overflow-y-auto rounded-lg">
           <DialogHeader>
-            <DialogTitle className='text-xl'>{selectedRequest?.reparation_type.name}</DialogTitle>
+            <DialogTitle className="text-xl">{selectedRequest?.reparation_type.name}</DialogTitle>
             <DialogDescription>Detalles de la reparación y del vehículo</DialogDescription>
           </DialogHeader>
           <Tabs defaultValue="vehicle" className="w-full">

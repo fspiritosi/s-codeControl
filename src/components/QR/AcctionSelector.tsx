@@ -25,7 +25,7 @@ export default function QrActionSelector({
   default_equipment_id,
   employee_id,
   role,
-  pendingRequests
+  pendingRequests,
 }: {
   employee: string | undefined;
   user: User | null;
@@ -34,7 +34,7 @@ export default function QrActionSelector({
   equipment: ReturnType<typeof setVehiclesToShow>;
   default_equipment_id?: string;
   role: string | undefined;
-  pendingRequests: RepairsSolicituds
+  pendingRequests: RepairsSolicituds;
 }) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const supabase = supabaseBrowser();
@@ -91,12 +91,15 @@ export default function QrActionSelector({
           <CardDescription className="text-center text-gray-600">
             Sistema de Checklist y Mantenimiento de Equipos
           </CardDescription>
-          <Card className="p-3 flex justify-center flex-col items-center">
-            <CardDescription className="underline mt-2">Informacion del equipo</CardDescription>
-            <Badge className="text-center flex justify-center w-fit mt-3">
+          <div className="p-3 flex justify-center flex-col items-center">
+            <CardDescription className="underline mt-2 text-lg">Informacion del equipo</CardDescription>
+            <Badge className="text-center flex justify-center w-fit mt-3 text-lg">
               {equipment[0].domain ? 'Dominio: ' + equipment[0].domain : 'Serie: ' + equipment[0].serie}
             </Badge>
-          </Card>
+            <Badge className="text-center flex justify-center w-fit mt-3 text-lg">
+              {'Numero Interno: ' + equipment[0].intern_number}
+            </Badge>
+          </div>
         </CardHeader>
         <CardTitle className="text-center text-3xl font-bold text-gray-900 mt-0">Seleccione una opción</CardTitle>
         <div className="space-y-4">
