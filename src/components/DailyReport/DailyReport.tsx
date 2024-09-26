@@ -623,9 +623,31 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                     }),
                 });
             }
+            //Antes de actuaslizar las relaciones se debe verificar que no existan relaciones con el mismo empleado y el mismo rowId
+
+            const existingRelationEmployeeResponse = await fetch(`/api/daily-report/dailyreportemployeerelations/check-employee`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    rowId: rowId,
+                    employees: data.employees,
+                }),
+            });
+            const existingEmployee = await existingRelationEmployeeResponse.json();
+    
+            // if (existingEmployee.exists) {
+            //     toast({
+            //         title: "Error",
+            //         description: "Ya existe una relación entre esa fila y ese empleado.",
+            //         variant: "destructive",
+            //     });
+            //     // return; // Salir de la función si ya existe una relación
+            // }
 
             // Actualizar relaciones con nuevos datos
-            if (data.employees && data.employees.length > 0) {
+            if (data.employees && !existingEmployee.exists && data.employees.length > 0) {
                 await fetch('/api/daily-report/dailyreportemployeerelations', {
                     method: 'POST',
                     headers: {
@@ -640,7 +662,30 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                 });
             }
 
-            if (data.equipment && data.equipment.length > 0) {
+            //Antes de actuaslizar las relaciones se debe verificar que no existan relaciones con el mismo empleado y el mismo rowId
+
+            const existingRelationEquipmentResponse = await fetch(`/api/daily-report/dailyreportequipmentrelations/check-equipment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    rowId: rowId,
+                    equipment: data.equipment,
+                }),
+            });
+            const existingEquipment = await existingRelationEquipmentResponse.json();
+    
+            // if (existingEquipment.exists) {
+            //     toast({
+            //         title: "Error",
+            //         description: "Ya existe una relación entre esa fila y ese equipo.",
+            //         variant: "destructive",
+            //     });
+            //     // return; // Salir de la función si ya existe una relación
+            // }
+
+            if (data.equipment && !existingEquipment.exists && data.equipment.length > 0) {
                 await fetch('/api/daily-report/dailyreportequipmentrelations', {
                     method: 'POST',
                     headers: {
@@ -762,6 +807,8 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                                 setStartTime(e.target.value)
                                                                 field.onChange(e.target.value)
                                                             }}
+                                                            step={900}
+                                                            
                                                         />
                                                     </FormItem>
                                                 )}
