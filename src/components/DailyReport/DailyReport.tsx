@@ -46,7 +46,7 @@ import {
     DialogTitle,
     DialogDescription,
     DialogFooter,
-  } from "@/components/ui/dialog";
+} from "@/components/ui/dialog";
 import { id } from 'date-fns/locale'
 
 interface Customers {
@@ -314,15 +314,15 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             setValue('services', itemToEdit.services)
             handleSelectService(itemToEdit.services)
             setValue('item', itemToEdit.item)
-            setValue('start_time',itemToEdit.start_time.slice(0, 5))
-            setValue('end_time',itemToEdit.end_time.slice(0, 5))
+            setValue('start_time', itemToEdit.start_time.slice(0, 5))
+            setValue('end_time', itemToEdit.end_time.slice(0, 5))
             setValue('status', itemToEdit.status)
             setValue('description', itemToEdit.description)
             setIsEditing(true)
         }
     }
 
-    const handleConfirmOpen = (id:string) => {
+    const handleConfirmOpen = (id: string) => {
         setSelectRow(id)
 
         setConfirmDelete(true)
@@ -437,6 +437,31 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             const formattedStartTime = formatTime(data.start_time);
             const formattedEndTime = formatTime(data.end_time);
 
+            // Obtener el array de filas existentes
+            const existingRows = dailyReport;
+            console.log('Existing rows:', existingRows);
+            // Verificar si ya existe una fila exactamente igual
+            const isDuplicate = existingRows.some(row =>
+                row.customer === data.customer &&
+                row.services === data.services &&
+                row.item === data.item &&
+                row.start_time === formattedStartTime &&
+                row.end_time === formattedEndTime &&
+                row.description === data.description &&
+                row.status === data.status &&
+                JSON.stringify(row.employees) === JSON.stringify(data.employees) &&
+                JSON.stringify(row.equipment) === JSON.stringify(data.equipment)
+            );
+            console.log('Is duplicate:', isDuplicate);
+            if (isDuplicate) {
+                toast({
+                    title: "Error",
+                    description: "Ya existe una fila con los mismos datos.",
+                    variant: "destructive",
+                });
+                return; // Salir de la función si ya existe una fila igual
+            }
+
 
             console.log(reportData)
             const rowResponse = await fetch('/api/daily-report/daily-report-row', {
@@ -539,6 +564,8 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             const formattedEndTime = formatTime(data.end_time);
             console.log('Formatted start time:', formattedStartTime);
             console.log('Formatted end time:', formattedEndTime);
+
+
             // Actualizar la fila existente
             const rowResponse = await fetch(`/api/daily-report/daily-report-row?id=${rowId}`, {
                 method: 'PUT',
@@ -636,7 +663,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                 }),
             });
             const existingEmployee = await existingRelationEmployeeResponse.json();
-    
+
             // if (existingEmployee.exists) {
             //     toast({
             //         title: "Error",
@@ -675,7 +702,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                 }),
             });
             const existingEquipment = await existingRelationEquipmentResponse.json();
-    
+
             // if (existingEquipment.exists) {
             //     toast({
             //         title: "Error",
@@ -738,6 +765,18 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         setIsEditing(false);
         setEditingId(null);
     };
+
+    // Obtener la fecha actual
+    const currentDate = new Date();
+
+    // Función para calcular la diferencia de días
+    const calculateDateDifference = (dateString: string) => {
+        const reportDate = new Date(dateString);
+        const timeDifference = currentDate.getTime() - reportDate.getTime();
+        const dayDifference = timeDifference / (1000 * 3600 * 24);
+        return dayDifference;
+    };
+
     console.log(dailyReport)
     return (
         <div className="container mx-auto p-4">
@@ -802,13 +841,13 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                         <Input
                                                             type="time"
                                                             name="start_time"
-                                                            value={startTime? startTime : field.value}
+                                                            value={startTime ? startTime : field.value}
                                                             onChange={(e) => {
                                                                 setStartTime(e.target.value)
                                                                 field.onChange(e.target.value)
                                                             }}
                                                             step={900}
-                                                            
+
                                                         />
                                                     </FormItem>
                                                 )}
@@ -1015,32 +1054,37 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {dailyReport?.map((report: DailyReportItem) => (
-                                    <TableRow key={report.id}>
-                                        <TableCell>{report.customer ? getCustomerName(report.customer) : 'N/A'}</TableCell>
-                                        <TableCell>{report.services ? getServiceName(report.services) : 'N/A'}</TableCell>
-                                        <TableCell>{report.item ? getItemName(report.item) : 'N/A'}</TableCell>
-                                        <TableCell>{Array.isArray(report.employees) ? getEmployeeNames(report.employees) : 'N/A'}</TableCell>
-                                        <TableCell>{Array.isArray(report.equipment) ? getEquipmentNames(report.equipment) : 'N/A'}</TableCell>
-                                        <TableCell>{report.start_time}</TableCell>
-                                        <TableCell>{report.end_time}</TableCell>
-                                        <TableCell>{report.status}</TableCell>
-                                        <TableCell>{report.description}</TableCell>
-                                        <TableCell>
-                                            <Button onClick={() => handleEdit(report.id)} className="mr-2">
-                                                <FilePenLine className="h-4 w-4" />
-                                            </Button>
-                                            <Button onClick={() => {
-                                                handleConfirmOpen(report.id);
+                                {dailyReport?.map((report: DailyReportItem) => {
+                                    const dayDifference = calculateDateDifference(reportData?.date || '');
+                                    console.log('Day difference:', dayDifference);
+                                    const canEdit = dayDifference <= 2;
 
-                                                // handleDelete(report.id);
-
-                                            }} variant="destructive">
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                    return (
+                                        <TableRow key={report.id}>
+                                            <TableCell>{report.customer ? getCustomerName(report.customer) : 'N/A'}</TableCell>
+                                            <TableCell>{report.services ? getServiceName(report.services) : 'N/A'}</TableCell>
+                                            <TableCell>{report.item ? getItemName(report.item) : 'N/A'}</TableCell>
+                                            <TableCell>{Array.isArray(report.employees) ? getEmployeeNames(report.employees) : 'N/A'}</TableCell>
+                                            <TableCell>{Array.isArray(report.equipment) ? getEquipmentNames(report.equipment) : 'N/A'}</TableCell>
+                                            <TableCell>{report.start_time}</TableCell>
+                                            <TableCell>{report.end_time}</TableCell>
+                                            <TableCell>{report.status}</TableCell>
+                                            <TableCell>{report.description}</TableCell>
+                                            <TableCell>
+                                                {canEdit && (
+                                                    <>
+                                                        <Button onClick={() => handleEdit(report.id)} className="mr-2">
+                                                            <FilePenLine className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button onClick={() => handleConfirmOpen(report.id)} variant="destructive">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
                             </TableBody>
                         </Table>
                     </motion.div>

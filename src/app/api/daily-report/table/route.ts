@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
           service_id(id,service_name),
           start_time,
           end_time,
+          status,
           dailyreportemployeerelations (employee_id(id,firstname,lastname)),
           dailyreportequipmentrelations (equipment_id(id,intern_number))
           )
