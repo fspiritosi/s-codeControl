@@ -338,7 +338,7 @@ export function EditModal({ Equipo }: Props) {
           Editar
         </Button>
       </SheetTrigger>
-      <SheetContent className="border-l-4 border-l-muted flex flex-col justify-between">
+      <SheetContent className="border-l-4 border-l-muted flex flex-col justify-between overflow-y-auto">
         <div>
           <SheetHeader>
             <SheetTitle>Editar tipo de documento</SheetTitle>
