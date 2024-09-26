@@ -16,12 +16,11 @@ export async function GET(request: NextRequest) {
     )
     .eq('applies.company_id', company_id)
     .not('applies', 'is', null);
-    const data = documents;
     
     if (equipmentError) {
       throw new Error(JSON.stringify(equipmentError));
     }
-    return Response.json({ data });
+    return Response.json({ equipmentDocuments: documents });
   } catch (error) {
     console.log(error);
   }

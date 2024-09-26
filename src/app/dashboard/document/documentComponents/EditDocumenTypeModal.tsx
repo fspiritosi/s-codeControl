@@ -11,6 +11,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -44,6 +45,7 @@ type Props = {
 export function EditModal({ Equipo }: Props) {
   const supabase = supabaseBrowser();
   const [special, setSpecial] = useState(false);
+  const [allResources, setAllResources] = useState<any[]>([]);
   const router = useRouter();
   const fetchDocumentTypes = useCountriesStore((state) => state.documentTypes);
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
@@ -189,6 +191,106 @@ export function EditModal({ Equipo }: Props) {
     );
   }
 
+  async function fetchallResources() {
+    if (Equipo.applies === 'Persona') {
+      const { data, error } = await supabase
+        .from('employees')
+        .select('firstname,lastname, cuil,id')
+        .eq('company_id', actualCompany?.id);
+
+      if (error) {
+        console.error('Error al obtener datos adicionales:', error);
+      } else {
+        setAllResources(data);
+      }
+    } else if (Equipo.applies === 'Equipos') {
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select('domain, serie, intern_number,id')
+        .eq('company_id', actualCompany?.id);
+
+      if (error) {
+        console.error('Error al obtener datos adicionales:', error);
+      } else {
+        setAllResources(data);
+      }
+    }
+  }
+  const [existingEntries, setExistingEntries] = useState<any[]>([]);
+
+  async function fettchExistingEntries() {
+    const tableNames = {
+      Equipos: 'documents_equipment',
+      Persona: 'documents_employees',
+    };
+    const table = tableNames[Equipo.applies as 'Equipos' | 'Persona'];
+
+    const { data: existingEntries, error: existingEntriesError } = await supabase
+      .from(table)
+      .select('applies(*),id')
+      .eq('id_document_types', Equipo.id)
+      .eq('applies.company_id', actualCompany?.id)
+      .not('applies', 'is', null);
+
+    if (existingEntriesError) {
+      console.error('Error al obtener los recursos con documentos:', existingEntriesError);
+      return;
+    }
+    setExistingEntries(existingEntries);
+  }
+  // Filtrar los recursos que no tienen una entrada en la tabla correspondiente
+  const existingResourceIds = existingEntries.map((entry: any) => entry.applies.id);
+  const resourcesToInsert = allResources.filter(
+    (resource: { id: string }) => !existingResourceIds.includes(resource.id)
+  );
+
+  async function handleGenerateAlerts() {
+    toast.promise(
+      async () => {
+        // Generar alerta de pendiente de documento en la tabla correspondiente y solo a los recursos que no tengan el documento subido
+        const tableNames = {
+          Equipos: 'documents_equipment',
+          Persona: 'documents_employees',
+        };
+        const table = tableNames[Equipo.applies as 'Equipos' | 'Persona'];
+
+        if (resourcesToInsert.length > 0) {
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+
+          if (!user) {
+            return;
+          }
+
+          const alerts = resourcesToInsert.map((resource: { id: string }) => ({
+            id_document_types: Equipo.id,
+            user_id: user.id,
+            applies: resource.id,
+          }));
+
+          const { error: insertError } = await supabase.from(table).insert(alerts);
+
+          if (insertError) {
+            throw new Error(handleSupabaseError(insertError.message));
+          }
+        } else {
+          throw new Error('No hay recursos a los que se les deba generar una alerta');
+        }
+      },
+      {
+        loading: 'Generando alertas...',
+        success: (data) => {
+          fetchDocumentTypes(actualCompany?.id);
+          return 'Se han generado las alertas!';
+        },
+        error: (error) => {
+          return error;
+        },
+      }
+    );
+    router.refresh();
+  }
   async function handleDeleteAlerts() {
     const tableNames = {
       Equipo: 'documents_equipment',
@@ -225,7 +327,14 @@ export function EditModal({ Equipo }: Props) {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button id="close-edit-modal-documentypes" variant="outline">
+        <Button
+          onClick={async () => {
+            await fetchallResources();
+            await fettchExistingEntries();
+          }}
+          id="close-edit-modal-documentypes"
+          variant="outline"
+        >
           Editar
         </Button>
       </SheetTrigger>
@@ -401,6 +510,53 @@ export function EditModal({ Equipo }: Props) {
             </Form>
           </div>
         </div>
+
+        <AlertDialog>
+          <AlertDialogTrigger disabled={!(resourcesToInsert.length > 0) || Equipo.applies === 'Empresa'} asChild>
+            <Button className="self-end">Generar Alertas de documento</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Estas totalmente seguro?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción generara una alerta en todos los recursos que no las tengan generadas.
+              </AlertDialogDescription>
+              <AlertDialogDescription>
+                {resourcesToInsert.length > 0 ? (
+                  <>
+                    <CardTitle className="text-md underline mb-1">
+                      Los siguientes recursos no tienen la alerta generada:
+                    </CardTitle>
+                    {resourcesToInsert.map((resource) => {
+                      if (Equipo.applies === 'Equipos') {
+                        return (
+                          <div key={resource.id}>
+                            {resource.domain} {resource.serie} - {resource.intern_number}
+                          </div>
+                        );
+                      }
+                      if (Equipo.applies === 'Persona') {
+                        return (
+                          <div key={resource.id}>
+                            {resource.lastname} {resource.firstname} - {resource.cuil}
+                          </div>
+                        );
+                      }
+                    })}
+                  </>
+                ) : (
+                  <CardTitle className="text-md underline mb-1">Todos los recursos tienen la alerta generada</CardTitle>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction className={buttonVariants({ variant: 'destructive' })} asChild>
+                <Button onClick={() => handleGenerateAlerts()}>Generar alertas</Button>
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <AlertDialog>
           <AlertDialogTrigger asChild>
