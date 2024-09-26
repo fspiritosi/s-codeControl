@@ -2,8 +2,10 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { setVehiclesToShow } from '@/lib/utils/utils';
 import { TypeOfRepair } from '@/types/types';
 import { cookies } from 'next/headers';
+import InfoComponent from '../InfoComponent';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import RepairNewEntry from './RepairEntry';
+import RepairNewEntryMultiple from './RepairEntryMultiple';
 import RepairSolicitudes from './RepairSolicitudesTable/RepairSolicitudes';
 import { RepairTypeForm } from './RepairTypeForm';
 
@@ -40,6 +42,9 @@ async function RepairTypes({
   const vehiclesFormatted = equipment_id
     ? setVehiclesToShow(equipments.filter((e: any) => e.id === equipment_id)) || []
     : setVehiclesToShow(equipments) || [];
+
+  const message =
+    'El kilometraje de las unidades seleccionadas no se podran modificar durante la carga multiple, si desea cargar el kilometraje de las unidades seleccionadas, por favor haga la carga individual de cada una de ellas.';
   return (
     <Tabs defaultValue={defaultValue || 'created_solicitudes'}>
       <TabsList>
@@ -51,24 +56,38 @@ async function RepairTypes({
         {type_of_repair_new_entry && (
           <TabsTrigger value="type_of_repair_new_entry">Solicitud de mantenimiento</TabsTrigger>
         )}
-        {/* {type_of_repair_new_entry2 && (
-          <TabsTrigger value="type_of_repair_new_entry2">Solicitud de mantenimiento preventivo</TabsTrigger>
-        )}
-        {type_of_repair_new_entry3 && (
-          <TabsTrigger value="type_of_repair_new_entry3">Solicitud de mantenimiento correctivo</TabsTrigger>
-        )} */}
+
         {type_of_repair && <TabsTrigger value="type_of_repair">Tipos de reparaciones creados</TabsTrigger>}
       </TabsList>
       <TabsContent value="type_of_repair">
         <RepairTypeForm types_of_repairs={types_of_repairs} />
       </TabsContent>
       <TabsContent value="type_of_repair_new_entry">
-        <RepairNewEntry
-          user_id={user?.id}
-          equipment={vehiclesFormatted}
-          tipo_de_mantenimiento={types_of_repairs as TypeOfRepair}
-          default_equipment_id={equipment_id}
-        />
+        <Tabs defaultValue="carga_simple" className="">
+          <TabsList>
+            <TabsTrigger value="carga_simple">Carga individual</TabsTrigger>
+            <TabsTrigger value="carga_multiple">Carga multiple</TabsTrigger>
+          </TabsList>
+          <TabsContent value="carga_simple">
+            {' '}
+            <RepairNewEntry
+              user_id={user?.id}
+              equipment={vehiclesFormatted}
+              tipo_de_mantenimiento={types_of_repairs as TypeOfRepair}
+              default_equipment_id={equipment_id}
+            />
+          </TabsContent>
+          <TabsContent value="carga_multiple">
+            {' '}
+            <InfoComponent size='lg' message={message} />
+            <RepairNewEntryMultiple
+              user_id={user?.id}
+              equipment={vehiclesFormatted}
+              tipo_de_mantenimiento={types_of_repairs as TypeOfRepair}
+              default_equipment_id={equipment_id}
+            />
+          </TabsContent>
+        </Tabs>
       </TabsContent>
       <TabsContent value="type_of_repair_new_entry2">
         <RepairNewEntry

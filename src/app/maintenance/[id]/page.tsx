@@ -1,7 +1,7 @@
 import QrActionSelector from '@/components/QR/AcctionSelector';
 import { supabaseServer } from '@/lib/supabase/server';
 import { setVehiclesToShow } from '@/lib/utils/utils';
-import { TypeOfRepair } from '@/types/types';
+import { RepairsSolicituds, TypeOfRepair } from '@/types/types';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
@@ -41,6 +41,15 @@ export default async function Home({
     res.json()
   );
 
+  const {data,error} = await supabase
+    .from('repair_solicitudes')
+    .select('*,user_id(*),employee_id(*),equipment_id(*,type(*),brand(*),model(*)),reparation_type(*),repairlogs(*,modified_by_employee(*),modified_by_user(*))')
+    .eq('equipment_id', params.id)
+    .in('state', ['Pendiente', 'Esperando repuestos', 'En reparación']);
+
+    console.log(data, 'data');
+    console.log(error, 'error');
+
   const vehiclesFormatted = setVehiclesToShow(equipments || []) || [];
 
   console.log(role, 'role');
@@ -53,7 +62,8 @@ export default async function Home({
       equipment={vehiclesFormatted}
       tipo_de_mantenimiento={types_of_repairs as TypeOfRepair}
       default_equipment_id={params.id}
-      role = {role}
+      role={role} 
+      pendingRequests={data as  RepairsSolicituds??[]}
     />
   );
 }

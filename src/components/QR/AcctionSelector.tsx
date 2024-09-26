@@ -2,7 +2,8 @@
 import { Button } from '@/components/ui/button';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { setVehiclesToShow } from '@/lib/utils/utils';
-import { TypeOfRepair } from '@/types/types';
+import { RepairsSolicituds, TypeOfRepair } from '@/types/types';
+import { LapTimerIcon } from '@radix-ui/react-icons';
 import { User } from '@supabase/supabase-js';
 import cookies from 'js-cookie';
 import { ArrowLeft, ClipboardList } from 'lucide-react';
@@ -14,6 +15,7 @@ import { Badge } from '../ui/badge';
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import CompletarChecklist from './CompletarChecklist';
 import SolicitarMantenimiento from './SolicitarMantenimiento';
+import VehicleRepairRequests from './VehicleRepairRequests';
 
 export default function QrActionSelector({
   employee,
@@ -23,6 +25,7 @@ export default function QrActionSelector({
   default_equipment_id,
   employee_id,
   role,
+  pendingRequests,
 }: {
   employee: string | undefined;
   user: User | null;
@@ -31,6 +34,7 @@ export default function QrActionSelector({
   equipment: ReturnType<typeof setVehiclesToShow>;
   default_equipment_id?: string;
   role: string | undefined;
+  pendingRequests: RepairsSolicituds;
 }) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const supabase = supabaseBrowser();
@@ -70,6 +74,9 @@ export default function QrActionSelector({
   if (selectedOption === 'checklist') {
     return <CompletarChecklist onReturn={handleReturn} />;
   }
+  if (selectedOption === 'VehicleRepairRequests') {
+    return <VehicleRepairRequests pendingRequests={pendingRequests} onReturn={handleReturn} />;
+  }
 
   console.log('role', role);
   console.log('user.id', user?.id);
@@ -84,12 +91,15 @@ export default function QrActionSelector({
           <CardDescription className="text-center text-gray-600">
             Sistema de Checklist y Mantenimiento de Equipos
           </CardDescription>
-          <Card className="p-3 flex justify-center flex-col items-center">
-            <CardDescription className="underline mt-2">Informacion del equipo</CardDescription>
-            <Badge className="text-center flex justify-center w-fit mt-3">
+          <div className="p-3 flex justify-center flex-col items-center">
+            <CardDescription className="underline mt-2 text-lg">Informacion del equipo</CardDescription>
+            <Badge className="text-center flex justify-center w-fit mt-3 text-lg">
               {equipment[0].domain ? 'Dominio: ' + equipment[0].domain : 'Serie: ' + equipment[0].serie}
             </Badge>
-          </Card>
+            <Badge className="text-center flex justify-center w-fit mt-3 text-lg">
+              {'Numero Interno: ' + equipment[0].intern_number}
+            </Badge>
+          </div>
         </CardHeader>
         <CardTitle className="text-center text-3xl font-bold text-gray-900 mt-0">Seleccione una opción</CardTitle>
         <div className="space-y-4">
@@ -103,6 +113,15 @@ export default function QrActionSelector({
               Solicitar Mantenimiento
             </Button>
           )}
+
+          <Button
+            className="w-full py-6 text-lg"
+            variant="outline"
+            onClick={() => handleOptionSelect('VehicleRepairRequests')}
+          >
+            <LapTimerIcon className="mr-2 h-6 w-6" />
+            Ver Solicitudes Pendientes
+          </Button>
           <Button
             disabled
             className="w-full py-6 text-lg"

@@ -5,17 +5,19 @@ import { ExpiredDataTable } from '@/app/dashboard/data-table';
 import { CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLoggedUserStore } from '@/store/loggedUser';
+import DocumentNav from './DocumentNav';
 
 export default function DocumentEquipmentComponent({ id }: { id: string }) {
   const { allDocumentsToShow } = useLoggedUserStore();
 
   return (
     <Tabs defaultValue="permanentes">
-      <CardContent>
+      <CardContent className="flex justify-between">
         <TabsList>
           <TabsTrigger value="permanentes">Documentos permanentes</TabsTrigger>
           <TabsTrigger value="mensuales">Documentos mensuales</TabsTrigger>
         </TabsList>
+        <DocumentNav documentNumber={id} equipment onlyNoMultiresource  />
       </CardContent>
       <TabsContent value="permanentes">
         <div className="grid ">

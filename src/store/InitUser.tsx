@@ -37,7 +37,6 @@ export default function InitState({
       //companies
       useLoggedUserStore.setState({ sharedCompanies: share_company_users as SharedCompanies });
       const role = share_company_users?.find((e: any) => e.profile_id === user?.id);
-      console.log('role', role);
       if (role?.role) {
         useLoggedUserStore.setState({ roleActualCompany: user?.role });
         // await documetsFetch();
@@ -54,34 +53,31 @@ export default function InitState({
           (company: any) => company.company_id.id === JSON.parse(savedCompany)
         )?.company_id;
 
-        console.log('savedCompany', company);
 
         if (company) {
-          console.log('setSavedCompany', company);
           useLoggedUserStore.getState().setActualCompany(company);
           return;
         }
       }
 
-      selectedCompany = useLoggedUserStore.getState()?.allCompanies.filter((company) => company.by_defect);
-      console.log('selectedCompany', selectedCompany);
+      const defaultCompany = useLoggedUserStore.getState()?.allCompanies.filter((company) => company.by_defect);
+
+      selectedCompany = defaultCompany.length ? defaultCompany : useLoggedUserStore.getState()?.allCompanies;
+
       if (companies.length > 1) {
         if (selectedCompany) {
-          console.log('setSavedCompany', companies);
           useLoggedUserStore.getState()?.setActualCompany(selectedCompany[0]);
         }
       }
+
       if (companies.length === 1) {
-        console.log('setSavedCompany', companies);
         useLoggedUserStore.getState()?.setActualCompany(companies[0]);
       }
+
       if (companies.length === 0 && share_company_users?.length! > 0) {
-        console.log('setSavedCompany', companies);
         useLoggedUserStore.getState()?.setActualCompany(share_company_users?.[0]?.company_id);
       }
     }
-
-    console.log('final del estado', useLoggedUserStore.getState());
 
     initState.current = true;
   }, []);

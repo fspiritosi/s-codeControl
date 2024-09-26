@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { FormControl, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { ZodError, z } from 'zod';
@@ -33,6 +34,7 @@ export default function AddBrandModal({
   fetchData: () => Promise<void>;
 }) {
   const [name, setName] = useState('');
+  const router = useRouter();
 
   async function onSubmit() {
     try {
@@ -53,6 +55,7 @@ export default function AddBrandModal({
     toast('Marca agregada', { description: 'La marca ha sido agregada correctamente' });
     setName('');
     fetchData();
+    router.refresh();
   }
 
   return (
