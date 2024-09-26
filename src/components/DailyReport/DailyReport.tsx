@@ -776,6 +776,10 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         const dayDifference = timeDifference / (1000 * 3600 * 24);
         return dayDifference;
     };
+    const dayDifference = calculateDateDifference(reportData?.date || '');
+                                    console.log('Day difference:', dayDifference);
+                                    const canEdit = dayDifference <= 2;
+
 
     console.log(dailyReport)
     return (
@@ -1029,10 +1033,16 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                     >
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold">Parte Diario en Construcción</h2>
-                            <Button onClick={handleAddNewRow} className="flex items-center">
+                            {/* <Button onClick={handleAddNewRow} className="flex items-center">
                                 <PlusCircledIcon className="mr-2 h-4 w-4" />
                                 Agregar Fila
-                            </Button>
+                            </Button> */}
+                            {canEdit && (
+                        <Button onClick={handleAddNewRow} className="flex items-center">
+                            <PlusCircledIcon className="mr-2 h-4 w-4" />
+                            Agregar Fila
+                        </Button>
+                    )}
                         </div>
 
                         <Table>
@@ -1055,10 +1065,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                             </TableHeader>
                             <TableBody>
                                 {dailyReport?.map((report: DailyReportItem) => {
-                                    const dayDifference = calculateDateDifference(reportData?.date || '');
-                                    console.log('Day difference:', dayDifference);
-                                    const canEdit = dayDifference <= 2;
-
+                                    
                                     return (
                                         <TableRow key={report.id}>
                                             <TableCell>{report.customer ? getCustomerName(report.customer) : 'N/A'}</TableCell>
