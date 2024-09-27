@@ -17,7 +17,11 @@ async function EmployeeDocumentsTabs() {
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value; //Al momento de crear una company debemos setear esta cookie
   const { documents } = await fetch(`${URL}/api/employees/documents?actual=${company_id}`).then((e) => e.json());
+  // console.log(documents.filter(e=>e.validity),'documents');
+
   const data = documents?.map(mapDocument) as Document[];
+
+
 
   return (
     <Tabs defaultValue="permanentes">

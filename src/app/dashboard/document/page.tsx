@@ -10,6 +10,7 @@ import EmployeeDocumentsTabs from './documentComponents/EmployeeDocumentsTabs';
 import EquipmentTabs from './documentComponents/EquipmentTabs';
 import TypesDocumentAction from './documentComponents/TypesDocumentAction';
 import TypesDocumentsView from './documentComponents/TypesDocumentsView';
+import NewDocumentNoMulti from '@/components/Documents/NewDocumentNoMulti';
 
 export default async function page() {
   const supabase = supabaseServer();
@@ -79,6 +80,8 @@ export default async function page() {
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
               <DocumentNav />
+              <NewDocumentNoMulti />
+
             </div>
           ),
           component: <CompanyTabs companyData={companyData} />,

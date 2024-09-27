@@ -73,17 +73,17 @@ async function RepairTypes({
             <RepairNewEntry
               user_id={user?.id}
               equipment={vehiclesFormatted}
-              tipo_de_mantenimiento={types_of_repairs as TypeOfRepair}
+              tipo_de_mantenimiento={types_of_repairs.filter((e: any) => !e.multi_equipment) as TypeOfRepair}
               default_equipment_id={equipment_id}
             />
           </TabsContent>
           <TabsContent value="carga_multiple">
             {' '}
-            <InfoComponent size='lg' message={message} />
+            <InfoComponent size="lg" message={message} />
             <RepairNewEntryMultiple
               user_id={user?.id}
               equipment={vehiclesFormatted}
-              tipo_de_mantenimiento={types_of_repairs as TypeOfRepair}
+              tipo_de_mantenimiento={types_of_repairs.filter((e: any) => e.multi_equipment) as TypeOfRepair}
               default_equipment_id={equipment_id}
             />
           </TabsContent>

@@ -49,7 +49,7 @@ function SolicitarMantenimiento({
         user_id={user?.id}
         employee_id={employee_id}
         equipment={equipment}
-        tipo_de_mantenimiento={tipo_de_mantenimiento}
+        tipo_de_mantenimiento={tipo_de_mantenimiento.filter((e: any) => !e.multi_equipment)}
         default_equipment_id={default_equipment_id}
       />
     </Card>

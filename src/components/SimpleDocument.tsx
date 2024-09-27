@@ -207,11 +207,19 @@ export default function SimpleDocument({
               state: 'presentado',
               period: updateEntries[index].period || null,
             };
+
+
+
+
             const { error, data: userupdated } = await supabase
               .from(tableName)
               .update(data)
               .eq('applies', idApplies || updateEntries[index].applies)
               .eq('id_document_types', updateEntries[index].id_document_types);
+
+
+
+              
 
             if (error) {
               setLoading(false);

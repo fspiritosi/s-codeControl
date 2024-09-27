@@ -42,7 +42,6 @@ import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 import { useCountriesStore } from '@/store/countries';
-import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarIcon, DotsVerticalIcon } from '@radix-ui/react-icons';
 import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
@@ -648,6 +647,8 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
     cell: ({ row }) => {
       const isNoPresented = row.getValue('state') === 'pendiente';
 
+      console.log(row.original.validity);
+
       if (isNoPresented) {
         return 'No disponible';
       } else {
@@ -683,7 +684,8 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
     header: 'Revisar documento',
     cell: ({ row }) => {
       const isNoPresented = row.getValue('state') === 'pendiente';
-      const role = useLoggedUserStore?.getState?.().roleActualCompany;
+      // const role = useLoggedUserStore?.getState?.().roleActualCompany;
+      //TODO REEMPLAZAR ESTE ROLE
 
       const [open, setOpen] = useState(false);
 
@@ -694,7 +696,8 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
         return (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              {role !== 'Invitado' && <Button variant="link">Falta subir documento</Button>}
+              {/* {role !== 'Invitado' && <Button variant="link">Falta subir documento</Button>} //TODO REEMPLAZAR */}
+              <Button variant="link">Falta subir documento</Button>
             </AlertDialogTrigger>
             <AlertDialogContent asChild>
               <AlertDialogHeader>

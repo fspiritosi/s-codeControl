@@ -78,9 +78,9 @@ export function EditModal({ Equipo }: Props) {
       special: Equipo.special,
       applies: Equipo.applies as 'Persona' | 'Equipos' | 'Empresa' | undefined,
       description: Equipo.description || '',
-      is_it_montlhy: Equipo.is_it_montlhy as boolean,
-      private: Equipo.private as boolean,
-      down_document: Equipo.down_document as boolean,
+      is_it_montlhy: Equipo.is_it_montlhy ?? false,
+      private: Equipo.private ?? false,
+      down_document: Equipo.down_document ?? false,
     },
   });
 
@@ -130,9 +130,25 @@ export function EditModal({ Equipo }: Props) {
       description: formatDescription(values.description),
     };
 
+    console.log('formattedValues', formattedValues);
+    console.log('Equipo', Equipo);
+
+    // Crear un objeto solo con las propiedades que han cambiado
+    const changes = Object.keys(formattedValues).reduce((acc: any, key: any) => {
+      if (((formattedValues as any)[key] as any) !== (Equipo as any)[key]) {
+        acc[key] = (formattedValues as any)[key];
+      }
+      return acc;
+    }, {});
+
+    if (Object.keys(changes).length === 0) {
+      console.log('No hay cambios para actualizar');
+      return;
+    }
+
     toast.promise(
       async () => {
-        const { error } = await supabase.from('document_types').update(formattedValues).eq('id', Equipo.id);
+        const { error } = await supabase.from('document_types').update(changes).eq('id', Equipo.id);
 
         if (error) {
           throw new Error(handleSupabaseError(error.message));
@@ -153,9 +169,7 @@ export function EditModal({ Equipo }: Props) {
     fetchDocumentTypes(actualCompany?.id);
     router.refresh();
   }
-
   function formatName(name: string): string {
-    // Capitalize first letter and convert the rest to lowercase
     return name.charAt(0)?.toUpperCase() + name.slice(1).toLowerCase();
   }
 
@@ -170,9 +184,30 @@ export function EditModal({ Equipo }: Props) {
   async function handleDeleteDocumentType() {
     toast.promise(
       async () => {
-        const { error } = await supabase.from('document_types').update({ is_active: false }).eq('id', Equipo.id);
+        const tableNames = {
+          Equipos: 'documents_equipment',
+          Persona: 'documents_employees',
+          Empresa: 'documents_company',
+        };
+        const table = tableNames[Equipo.applies as 'Equipos' | 'Persona' | 'Empresa'];
 
+        console.log('table', table);
+    
+        const { data, error:tableError } = await supabase
+        .from(table)
+        .delete()
+        .eq('id_document_types', Equipo.id)
+        .is('document_path', null);
+
+        if (tableError) {
+          console.log('Error al eliminar los documentos:', tableError);
+          throw new Error(handleSupabaseError(tableError.message));
+        }
+
+        const { error } = await supabase.from('document_types').update({ is_active: false }).eq('id', Equipo.id);
+        // await handleDeleteAlerts();
         if (error) {
+          console.log('Error al eliminar el tipo de documento:', error);
           throw new Error(handleSupabaseError(error.message));
         }
       },
@@ -293,11 +328,11 @@ export function EditModal({ Equipo }: Props) {
   }
   async function handleDeleteAlerts() {
     const tableNames = {
-      Equipo: 'documents_equipment',
+      Equipos: 'documents_equipment',
       Persona: 'documents_employees',
       Empresa: 'documents_company',
     };
-    const table = tableNames[Equipo.applies as 'Equipo' | 'Persona' | 'Empresa'];
+    const table = tableNames[Equipo.applies as 'Equipos' | 'Persona' | 'Empresa'];
 
     toast.promise(
       async () => {
@@ -322,6 +357,7 @@ export function EditModal({ Equipo }: Props) {
         },
       }
     );
+    router.refresh();
   }
 
   return (
@@ -488,7 +524,7 @@ export function EditModal({ Equipo }: Props) {
                           Estas seguro que deseas eliminar el tipo de documento {Equipo.name}?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                          Esta accion no puede revertirse, y eliminara todos los documentos asociados a este tipo.
+                          Esta accion no puede revertirse, y eliminara todos los documentos asociados a este tipo. Los documentos ya subidos y vinculados a este tipo de documento permaneceran intactos.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -523,8 +559,8 @@ export function EditModal({ Equipo }: Props) {
               </AlertDialogDescription>
               <AlertDialogDescription>
                 {resourcesToInsert.length > 0 ? (
-                  <>
-                    <CardTitle className="text-md underline mb-1">
+                  <div className="overflow-y-auto max-h-[60vh]">
+                    <CardTitle className="text-md underline mb-1 ">
                       Los siguientes recursos no tienen la alerta generada:
                     </CardTitle>
                     {resourcesToInsert.map((resource) => {
@@ -543,7 +579,7 @@ export function EditModal({ Equipo }: Props) {
                         );
                       }
                     })}
-                  </>
+                  </div>
                 ) : (
                   <CardTitle className="text-md underline mb-1">Todos los recursos tienen la alerta generada</CardTitle>
                 )}

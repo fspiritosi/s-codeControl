@@ -556,6 +556,8 @@ export type TypeOfRepair = {
   is_active: boolean;
   company_id: string;
   type_of_maintenance: 'Preventivo' | 'Correctivo';
+  multi_equipment: boolean;
+  qr_close: boolean;
 }[];
 
 export type RepairsSolicituds = {

@@ -6,6 +6,9 @@ import { ExpiredDataTable } from '../data-table';
 function EmployeesTable() {
   const documentsToShow = useLoggedUserStore((state) => state.documentsToShow);
   const setShowLastMonthDocuments = useLoggedUserStore((state) => state.setShowLastMonthDocuments);
+
+  //! hacer componente del servidor
+
   return (
     <ExpiredDataTable
       data={documentsToShow?.employees || []}

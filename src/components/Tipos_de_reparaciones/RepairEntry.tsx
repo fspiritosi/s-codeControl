@@ -330,8 +330,6 @@ export default function RepairNewEntry({
     setFiles([undefined, undefined, undefined]);
   };
 
-  console.log(typeOfEquipment, 'typeOfEquipmenttypeOfEquipment');
-
   const handleDeleteRepair = (provicionalId: string) => {
     setAllRepairs((prev) => prev.filter((e) => e.provicionalId !== provicionalId));
   };
@@ -697,6 +695,7 @@ export default function RepairNewEntry({
                                   <ReaderIcon className="mr-2 h-4 w-4" />
                                   <span className="text-sm text-muted-foreground">{maintenance?.description}</span>
                                 </div>
+                              
                                 <Button
                                   variant={'destructive'}
                                   size={'sm'}

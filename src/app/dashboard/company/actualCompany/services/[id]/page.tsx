@@ -131,6 +131,8 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
                 if (editingService.item_measure_units) updatedFields.item_measure_units = Number(editingService.item_measure_units.id);
                 if (editingService.is_active !== undefined) updatedFields.is_active = editingService.is_active;
 
+
+                
                 const response = await fetch(`/api/services/items?id=${editingService.id}`, {
                     method: 'PUT',
                     headers: {
@@ -138,6 +140,8 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
                     },
                     body: JSON.stringify(updatedFields),
                 });
+
+
 
                 if (response.ok) {
                     // Actualizar la lista de items con el item editado

@@ -1,5 +1,6 @@
 'use client';
 import DocumentNav from '@/components/DocumentNav';
+import NewDocumentNoMulti from '@/components/Documents/NewDocumentNoMulti';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CompanyDocumentsType, useLoggedUserStore } from '@/store/loggedUser';
@@ -11,8 +12,8 @@ import { ColumnsMonthly } from '../../columsMonthly';
 import { DataTable } from '../../company/actualCompany/components/data-table';
 import { columnsDocuments } from '../../company/actualCompany/components/document-colums';
 import { ExpiredDataTable } from '../../data-table';
-import TypesDocumentsView from './TypesDocumentsView';
 import EquipmentDocumentsTable from './EquipmentDocumentsTable';
+import TypesDocumentsView from './TypesDocumentsView';
 
 interface Document {
   date: string;
@@ -191,6 +192,7 @@ function TabsDocuments({
               </div>
               <div className="flex gap-4 flex-wrap pl-6">
                 <DocumentNav />
+                <NewDocumentNoMulti />
               </div>
             </div>
           </CardHeader>
@@ -233,7 +235,6 @@ function TabsDocuments({
         </Card>
       </TabsContent>
       <TabsContent value="Documentos de equipos">
-        
         <Card>
           <CardHeader className=" mb-4  w-full bg-muted dark:bg-muted/50 border-b-2">
             <div className="flex flex-row gap-4 justify-between items-center flex-wrap">
@@ -246,45 +247,7 @@ function TabsDocuments({
               <div className="flex gap-4 flex-wrap pl-6">{role !== 'Invitado' && <DocumentNav />}</div>
             </div>
           </CardHeader>
-          <EquipmentDocumentsTable AllvaluesToShow={AllvaluesToShow} clientData={clientData}/>
-          {/* <Tabs defaultValue="permanentes">
-            <CardContent>
-              <TabsList>
-                <TabsTrigger value="permanentes">Documentos permanentes</TabsTrigger>
-                <TabsTrigger value="mensuales">Documentos mensuales</TabsTrigger>
-              </TabsList>
-            </CardContent>
-            <TabsContent value="permanentes">
-              <ExpiredDataTable
-                data={
-                  role === 'Invitado'
-                    ? filteredCustomersEquipment
-                    : AllvaluesToShow?.vehicles.filter((e) => !e.isItMonthly) || []
-                }
-                columns={ExpiredColums}
-                pending={true}
-                vehicles
-                defaultVisibleColumnsCustom={['resource', 'documentName', 'validity', 'id', 'mandatory', 'state']}
-                localStorageName={'dashboardVehiculosPermanentes'}
-                permanent
-              />
-            </TabsContent>
-            <TabsContent value="mensuales">
-              <ExpiredDataTable
-                data={
-                  role === 'Invitado'
-                    ? filteredCustomersEquipmentMonthly
-                    : AllvaluesToShow?.vehicles.filter((e) => e.isItMonthly) || []
-                }
-                columns={ColumnsMonthly}
-                pending={true}
-                vehicles
-                defaultVisibleColumnsCustom={['resource', 'documentName', 'validity', 'id', 'mandatory', 'state']}
-                localStorageName={'dashboardVehiculosMensuales'}
-                monthly
-              />
-            </TabsContent>
-          </Tabs> */}
+          <EquipmentDocumentsTable AllvaluesToShow={AllvaluesToShow} clientData={clientData} />
         </Card>
       </TabsContent>
       <TabsContent value="Documentos de empresa">

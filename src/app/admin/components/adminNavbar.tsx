@@ -11,11 +11,8 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import AdminAvatar from './adminAvatar';
 import AdminBreadcrumb from './adminBreadcrumb';
 
-//import { useLoggedUserStore } from "@/store/loggedUser"
-
 export default function AdminNavbar() {
-  // const actualUser = useLoggedUserStore(state => state.profile)
-  // const avatarUrl = actualUser && actualUser.length > 0 ? actualUser[0] : ''
+
 
   return (
     <div className="w-full bg-muted/40">

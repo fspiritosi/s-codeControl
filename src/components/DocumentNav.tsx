@@ -3,6 +3,7 @@ import NewDocumentModal from '@/components/NewDocumentModal';
 import { Button } from '@/components/ui/button';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { useState } from 'react';
+import NewDocumentNoMulti from './Documents/NewDocumentNoMulti';
 export default function DocumentNav({
   empleados,
   onlyNoMultiresource,

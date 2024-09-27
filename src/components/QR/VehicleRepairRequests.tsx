@@ -79,8 +79,7 @@ export default function VehicleRepairRequests({
                     <strong>Equipo:</strong> {request.equipment_id.brand.name} {request.equipment_id.model.name}
                   </div>
                   <div>
-                    <strong>Fecha:</strong>{' '}
-                    {moment(request.created_at, 'YYYY-MM-DD').format('DD/MM/YYYY')}
+                    <strong>Fecha:</strong> {moment(request.created_at, 'YYYY-MM-DD').format('DD/MM/YYYY')}
                   </div>
                   <div>
                     <strong>Estado de la solicitud:</strong> <Badge variant={'outline'}>{request.state}</Badge>
@@ -201,6 +200,14 @@ export default function VehicleRepairRequests({
           </Tabs>
           <DialogFooter>
             <Button onClick={() => setIsModalOpen(false)}>Cerrar</Button>
+            {
+              //Si qr_close se encuentra definido, se muestra el botón
+              selectedRequest?.reparation_type.qr_close && (
+                <Button variant="destructive" onClick={() => console.log('Cerrar solicitud')}>
+                  Cerrar solicitud
+                </Button>
+              )
+            }
           </DialogFooter>
         </DialogContent>
       </Dialog>

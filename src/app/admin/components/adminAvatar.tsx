@@ -1,5 +1,3 @@
-'use client';
-
 import { logout } from '@/app/login/actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -12,10 +10,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { useLoggedUserStore } from '@/store/loggedUser';
 export default function AdminAvatar() {
-  const actualUser = useLoggedUserStore((state) => state.profile);
-  const avatarUrl = actualUser && actualUser.length > 0 ? actualUser[0] : '';
+  // const actualUser = useLoggedUserStore((state) => state.profile);
+  // const avatarUrl = actualUser && actualUser.length > 0 ? actualUser[0] : '';
 
   const handleLogout = async () => {
     try {
@@ -30,7 +27,7 @@ export default function AdminAvatar() {
       <DropdownMenuTrigger className="cursor-pointer" asChild>
         <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
           <Avatar className="size-9">
-            <AvatarImage src={typeof avatarUrl === 'object' ? avatarUrl.avatar : ''} />
+            <AvatarImage src={''} />
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
         </Button>

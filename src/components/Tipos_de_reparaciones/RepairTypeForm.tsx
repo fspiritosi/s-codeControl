@@ -22,9 +22,10 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Switch } from '../ui/switch';
 import { Textarea } from '../ui/textarea';
 import { criticidad } from './RepairSolicitudesTable/data';
 export function RepairTypeForm({ types_of_repairs }: { types_of_repairs: TypeOfRepair }) {
@@ -49,6 +50,8 @@ export function RepairTypeForm({ types_of_repairs }: { types_of_repairs: TypeOfR
       .default(company_id || '')
       .optional(),
     type_of_maintenance: z.enum(['Correctivo', 'Preventivo']),
+    multi_equipment: z.boolean().default(false).optional(),
+    qr_close: z.boolean().default(false).optional(),
   });
 
   type Repair = z.infer<typeof typeOfRepair>;
@@ -171,7 +174,7 @@ export function RepairTypeForm({ types_of_repairs }: { types_of_repairs: TypeOfR
     <ResizablePanelGroup direction="horizontal" className="pt-6">
       <ResizablePanel>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(selectedRepair ? onUpdate : onSubmit)} className="space-y-8 p-3">
+          <form onSubmit={form.handleSubmit(selectedRepair ? onUpdate : onSubmit)} className="space-y-5 p-3">
             <FormField
               control={form.control}
               name="name"
@@ -238,6 +241,38 @@ export function RepairTypeForm({ types_of_repairs }: { types_of_repairs: TypeOfR
                     </Select>
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="multi_equipment"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel >Multi equipo</FormLabel>
+                    <FormDescription>
+                      Permite seleccionar varios equipos en una misma solicitud de reparación.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="qr_close"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel >Cierre por QR</FormLabel>
+                    <FormDescription>Permite cerrar una solicitud de reparación mediante un código QR.</FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
                 </FormItem>
               )}
             />
@@ -315,6 +350,8 @@ export function RepairTypeForm({ types_of_repairs }: { types_of_repairs: TypeOfR
               <TableHead>Tipo de mantenimiento</TableHead>
               <TableHead>Criticidad</TableHead>
               <TableHead>Descripción</TableHead>
+              <TableHead>Multi Equipo</TableHead>
+              <TableHead>Cierre por QR</TableHead>
               <TableHead>Editar</TableHead>
             </TableRow>
           </TableHeader>
@@ -342,13 +379,15 @@ export function RepairTypeForm({ types_of_repairs }: { types_of_repairs: TypeOfR
                   <TableCell>{repair.name}</TableCell>
                   <TableCell>{repair.type_of_maintenance}</TableCell>
                   <TableCell className="font-medium">
-                    <Badge variant={badgeVariant} className='font-bold'>
+                    <Badge variant={badgeVariant} className="font-bold">
                       {' '}
                       {priority?.icon && <priority.icon className="mr-2 h-4 w-4 font-bold" />}
                       {repair.criticity}
                     </Badge>
                   </TableCell>
                   <TableCell>{repair.description}</TableCell>
+                  <TableCell>{repair.multi_equipment ? 'Si' : 'No'}</TableCell>
+                  <TableCell>{repair.qr_close ? 'Si' : 'No'}</TableCell>
                   <TableCell>
                     <Button onClick={() => handleModify(repair)}>Modificar</Button>
                   </TableCell>

@@ -45,14 +45,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
-import { useLoggedUserStore } from '@/store/loggedUser';
 import JSZip from 'jszip';
 import { ArrowUpDown, DownloadIcon } from 'lucide-react';
+import moment from 'moment';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -80,7 +79,6 @@ export function ExpiredDataTable<TData, TValue>({
   permanent,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
-  const loader = useLoggedUserStore((state) => state.isLoading);
   const defaultVisibleColumns = defaultVisibleColumnsCustom || ['date', 'resource', 'documentName', 'validity', 'id'];
 
   const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
@@ -239,11 +237,9 @@ export function ExpiredDataTable<TData, TValue>({
       return; // Clase por defecto si no está vencido
     } else {
       const validityDateStr = row.original.validity; // Obtener la fecha en formato "dd/mm/yyyy"
-      const parts = validityDateStr.split('/'); // Separar la fecha en partes
-
-      const validityDate = new Date(`${parts[1]}/${parts[0]}/${parts[2]}`).getTime();
-      const currentDate = new Date().getTime();
-      const differenceInDays = Math.ceil((validityDate - currentDate) / (1000 * 60 * 60 * 24));
+      const validityDate = moment(validityDateStr).format('DD/MM/YYYY');
+      const currentDate = moment().format('DD/MM/YYYY');
+      const differenceInDays = moment(validityDate, 'DD/MM/YYYY').diff(moment(currentDate, 'DD/MM/YYYY'), 'days');
 
       if (differenceInDays < 0) {
         return 'bg-red-100 dark:bg-red-100/30 hover:bg-red-100/30'; // Vencido
@@ -256,7 +252,6 @@ export function ExpiredDataTable<TData, TValue>({
   };
   const supabase = supabaseBrowser();
   const handleDownloadAll = async () => {
-    
     toast.promise(
       async () => {
         const zip = new JSZip();
@@ -264,7 +259,6 @@ export function ExpiredDataTable<TData, TValue>({
           .getFilteredRowModel()
           .rows.map((row) => row.original)
           .filter((row: any) => row.state !== 'pendiente') as any;
-
 
         const files = await Promise.all(
           documentToDownload?.map(async (doc: any) => {
@@ -635,32 +629,7 @@ export function ExpiredDataTable<TData, TValue>({
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  {loader ? (
-                    <div className="flex flex-col gap-3">
-                      <div className="flex justify-between">
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                      </div>
-                      <div className="flex justify-between">
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                        <Skeleton className="h-7 w-[13%]" />
-                      </div>
-                    </div>
-                  ) : pending ? (
-                    'No hay documentos pendientes'
-                  ) : (
-                    'No hay documentos a vencer'
-                  )}
+                  Sin resultados
                 </TableCell>
               </TableRow>
             )}
