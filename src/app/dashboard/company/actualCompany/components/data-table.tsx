@@ -55,8 +55,6 @@ export function DataTable<TData, TValue>({ columns, data, isDocuments }: DataTab
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
-  console.log(data);
-
   return (
     <div className="space-y-4">
       <DataTableToolbar table={table} />
