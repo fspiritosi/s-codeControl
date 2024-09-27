@@ -26,6 +26,16 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
         />
       );
     },
+    filterFn: (row, columnId, filterValue) => {
+      console.log(filterValue, 'filterValue');
+      const cellValue = row.getValue(columnId);
+
+      if (typeof cellValue === 'string' && Array.isArray(filterValue)) {
+        return filterValue.some((value) => cellValue.toLowerCase().includes(value.toLowerCase()));
+      }
+
+      return false;
+    },
   },
   {
     accessorKey: 'id',
@@ -88,6 +98,13 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
+    },
+  },
+  {
+    accessorKey: 'intern_number',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Numero interno" />,
+    cell: ({ row }) => {
+      return <div className="flex items-center">{row.original.intern_number}</div>;
     },
   },
   {

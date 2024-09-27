@@ -10,12 +10,12 @@ import { Separator } from '@/components/ui/separator';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
+import { PersonIcon } from '@radix-ui/react-icons';
 import moment from 'moment';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { statuses } from '../data';
-import { PersonIcon } from '@radix-ui/react-icons';
 
 function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; action?: React.ReactNode }) {
   const state = statuses.find((status) => status.value === row.original.state);
@@ -23,6 +23,7 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
   const [imageUrl, setImageUrl] = useState<string[]>([]);
   const [imagesMechanic, setImagesMechanic] = useState<(string | null)[]>([null, null, null]);
   const [repairSolicitudes, setRepairSolicitudes] = useState<any>([]);
+  const [repairLogs, setRepairLogs] = useState(row.original.repairlogs);
   const fetchRepairsLogs = async () => {
     const { data, error } = await supabase
       .from('repair_solicitudes')
@@ -37,13 +38,15 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
   };
   useEffect(() => {
     const fetchImageUrls = async () => {
-      const modifiedStrings = await Promise.all(
-        row.original.user_images.map(async (str: any) => {
-          const { data } = supabase.storage.from('repair_images').getPublicUrl(str);
-          return data.publicUrl;
-        })
-      );
-      setImageUrl(modifiedStrings);
+      if (row.original.user_images) {
+        const modifiedStrings = await Promise?.all(
+          row.original.user_images?.map(async (str: any) => {
+            const { data } = supabase.storage.from('repair_images').getPublicUrl(str);
+            return data.publicUrl;
+          })
+        );
+        setImageUrl(modifiedStrings);
+      }
     };
 
     fetchImageUrls();
@@ -56,6 +59,7 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
     setImagesMechanic(modifiedStringsMechanic);
   }, [row.original.user_images]);
   useEffect(() => {
+    setRepairLogs(row.original.repairlogs);
     fetchRepairsLogs();
   }, [row.original.repairlogs]);
   const endingStates = ['Finalizado', 'Cancelado', 'Rechazado'];
@@ -107,6 +111,8 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
     document.getElementById('close-modal-mechanic-colum2')?.click();
     router.refresh();
   };
+
+  console.log('repairLogs', repairLogs);
 
   return (
     <Dialog>
@@ -217,7 +223,7 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
               </Carousel>
             )}
           </div>
-          {imagesMechanic?.length && (
+          {imagesMechanic?.length > 0 && (
             <div className="mx-auto w-[90%]">
               <Badge className="text-sm mb-2">Imagenes al finalizar la solicitud</Badge>
               <Carousel className="w-full">
@@ -254,8 +260,8 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
             {row.original.repairlogs.map((log: any, index: any) => {
               const state = statuses.find((status) => status.value === log.title);
               const fullName =
-              log.modified_by_user?.fullname ??
-              `${log.modified_by_employee?.firstname} ${log.modified_by_employee?.lastname}`;
+                log.modified_by_user?.fullname ??
+                `${log.modified_by_employee?.firstname} ${log.modified_by_employee?.lastname}`;
 
               return (
                 <>
@@ -269,25 +275,28 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
                       {index + 1}
                     </div>
                     <div className="flex flex-col gap-1  w-full">
-                          <div className="flex items-center justify-between w-full">
-                            <div className='flex gap-2 items-center'>
-                              <div className="font-medium flex items-center">
-                                {state?.icon && <state.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
-                                <span>{state?.label}</span>
-                              </div>
-                              <CardDescription className="m-0 flex gap-2 items-center">
-                                <PersonIcon />
-                                {fullName}
-                              </CardDescription>
-                            </div>
-                            <div className="text-muted-foreground text-sm">
-                              {moment(log.created_at).format('[Hoy,] h:mm A')}
-                            </div>
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex gap-2 items-center">
+                          <div className="font-medium flex items-center">
+                            {state?.icon && <state.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
+                            <span>{state?.label}</span>
                           </div>
-                          <CardDescription>
-                            {log.description} <br></br>
-                          </CardDescription>
+                          <Badge variant={'outline'} className="m-0 flex items-center p-1">
+                            {log.kilometer} kms
+                          </Badge>
                         </div>
+                        <div className="text-muted-foreground text-sm">
+                          {moment(log.created_at).format('[Hoy,] h:mm A')}
+                        </div>
+                      </div>
+                      <CardDescription>
+                        {log.description} <br></br>
+                      </CardDescription>
+                      <CardDescription className="m-0 flex gap-2 items-center">
+                        <PersonIcon />
+                        {fullName}
+                      </CardDescription>
+                    </div>
                   </div>
                 </>
               );

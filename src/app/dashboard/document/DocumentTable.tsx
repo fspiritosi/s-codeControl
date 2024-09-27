@@ -1,5 +1,6 @@
 'use client';
 
+import DocumentNav from '@/components/DocumentNav';
 import { CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLoggedUserStore } from '@/store/loggedUser';
@@ -16,11 +17,12 @@ export default function DocumentTable({ document }: Props) {
   // console.log(allDocumentsToShow.employees.filter((e) => e.document_number === document));
   return (
     <Tabs defaultValue="permanentes">
-      <CardContent>
+      <CardContent className="flex justify-between">
         <TabsList>
           <TabsTrigger value="permanentes">Documentos permanentes</TabsTrigger>
           <TabsTrigger value="mensuales">Documentos mensuales</TabsTrigger>
         </TabsList>
+        <DocumentNav documentNumber={document} empleados onlyNoMultiresource mandatoryLabel={'Nuevo documento'} />
       </CardContent>
       <TabsContent value="permanentes">
         <ExpiredDataTable

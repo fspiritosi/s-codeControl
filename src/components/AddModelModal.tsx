@@ -24,6 +24,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { ZodError, z } from 'zod';
 import { supabase } from '../../supabase/supabase';
+import { generic } from './VehiclesForm';
 
 const schema = z
   .string()
@@ -41,7 +42,7 @@ export default function AddModelModal({
 }: {
   children: React.ReactNode;
   fetchModels?: (brand_id: string) => Promise<void>;
-  brandOptions?: { label: string; id: string }[];
+  brandOptions?: generic[]
 }) {
   const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
@@ -55,7 +56,7 @@ export default function AddModelModal({
       });
       return;
     }
-    const brand_id = brandOptions?.find((brandOption) => brandOption.label === brand)?.id;
+    const brand_id = brandOptions?.find((brandOption) => brandOption.name === brand)?.id;
 
     const { data, error } = await supabase
       .from('model_vehicles')
@@ -108,8 +109,8 @@ export default function AddModelModal({
                   <SelectGroup>
                     <SelectLabel>Marcas registradas</SelectLabel>
                     {brandOptions?.map((option) => (
-                      <SelectItem key={option.id} value={option.label}>
-                        {option.label}
+                      <SelectItem key={option.id} value={option.name}>
+                        {option.name}
                       </SelectItem>
                     ))}
                   </SelectGroup>

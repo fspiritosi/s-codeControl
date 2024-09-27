@@ -4,9 +4,9 @@ import { cn } from '@/lib/utils';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { supabase } from '../../../../../supabase/supabase';
-import VehiclesForm from '../../../../components/VehiclesForm';
+import VehiclesForm, { generic } from '../../../../components/VehiclesForm';
 
-export default async function EquipmentFormAction({ searchParams  }: { searchParams: any; }) {
+export default async function EquipmentFormAction({ searchParams }: { searchParams: any }) {
   const { data } = await supabase
     .from('documents_equipment')
     .select('*,id_document_types(*)')
@@ -15,20 +15,20 @@ export default async function EquipmentFormAction({ searchParams  }: { searchPar
   revalidatePath('/dashboard/equipment/action');
 
   const cookiesStore = cookies();
+  const company_id = cookiesStore.get('actualComp');
 
   let vehicle;
 
-  console.log(searchParams.id,'searchParams.id');
+  console.log(searchParams.id, 'searchParams.id');
 
   if (searchParams.id) {
     const { data: vehicleData, error } = await supabase
       .from('vehicles')
       .select('*, brand_vehicles(name), model_vehicles(name),types_of_vehicles(name),type(name)')
-      .eq('id', searchParams.id)
-      // .eq('company_id', actualCompany?.value);
+      .eq('id', searchParams.id);
+    // .eq('company_id', actualCompany?.value);
 
     if (error) console.log('eroor', error);
-
 
     vehicle = vehicleData?.map((item: any) => ({
       ...item,
@@ -38,6 +38,18 @@ export default async function EquipmentFormAction({ searchParams  }: { searchPar
       type: item.type,
     }));
   }
+  let { data: types, error } = await supabase
+    .from('type')
+    .select('*')
+    .or(`company_id.eq.${company_id?.value},company_id.is.null`);
+
+  let { data: brand_vehicles, error: errorError } = await supabase
+    .from('brand_vehicles')
+    .select('*')
+    .or(`company_id.eq.${company_id?.value},company_id.is.null`);
+
+  console.log('brand_vehicles', brand_vehicles);
+  console.log('errorError', errorError);
 
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">
@@ -47,7 +59,7 @@ export default async function EquipmentFormAction({ searchParams  }: { searchPar
           searchParams.action === 'new' && 'col-span-8'
         )}
       >
-        <VehiclesForm vehicle={vehicle?.[0]}>
+        <VehiclesForm vehicle={vehicle?.[0]} types={types as generic[]} brand_vehicles={brand_vehicles as generic[]}>
           <RepairTypes
             equipment_id={searchParams.id}
             type_of_repair_new_entry

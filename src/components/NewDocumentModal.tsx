@@ -12,17 +12,20 @@ export default function NewDocumentModal({
   multiresource,
   empleados,
   equipment,
+  documentNumber,
 }: {
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   isOpen: boolean;
   multiresource: boolean | undefined;
   empleados?: boolean;
   equipment?: boolean;
+  documentNumber?: string;
 }) {
   const handleOpen = () => {
     setIsOpen(!isOpen);
     return;
   };
+
   return (
     <>
       <AlertDialog open={isOpen} onOpenChange={handleOpen}>
@@ -51,7 +54,7 @@ export default function NewDocumentModal({
                     handleOpen={handleOpen} //funcion para abrir/cerrar
                   />
                 ) : (
-                  <SimpleDocument resource="empleado" handleOpen={handleOpen} />
+                  <SimpleDocument numberDocument={documentNumber} resource="empleado" handleOpen={handleOpen} />
                 )}
               </div>
             </TabsContent>
@@ -74,7 +77,7 @@ export default function NewDocumentModal({
                     handleOpen={handleOpen} //funcion para abrir/cerrar
                   />
                 ) : (
-                  <SimpleDocument resource="equipo" handleOpen={handleOpen} />
+                  <SimpleDocument numberDocument={documentNumber} resource="equipo" handleOpen={handleOpen} />
                 )}
               </div>
             </TabsContent>

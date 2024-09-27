@@ -15,11 +15,12 @@ import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CaretSortIcon, CheckIcon, PlusCircledIcon } from '@radix-ui/react-icons';
 import { toPng } from 'html-to-image';
-import { AlertTriangle, CheckCircle, Download, Info, Printer, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Copy, Download, Info, Printer, XCircle } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { ChangeEvent, ReactNode, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiToolsFill } from 'react-icons/ri';
+
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../supabase/supabase';
@@ -34,6 +35,7 @@ import { Input } from './ui/input';
 require('dotenv').config();
 // import { useToast } from './ui/use-toast'
 import QRCode from 'react-qr-code';
+import AddTypeModal from './AddTypeModal';
 type VehicleType = {
   year: string;
   engine: string;
@@ -53,41 +55,41 @@ type VehicleType = {
   allocated_to: string[];
   condition: 'operativo' | 'no operativo' | 'en reparación' | 'operativo condicionado';
 };
-type generic = {
+export type generic = {
   name: string;
   id: string;
 };
 
 type dataType = {
   tipe_of_vehicles: generic[];
-  brand: {
-    label: string;
-    id: string;
-  }[];
   models: {
-    name: string;
-    id: string;
-  }[];
-  types: {
     name: string;
     id: string;
   }[];
 };
 
-export default function VehiclesForm2({ vehicle, children }: { vehicle: any | null; children: ReactNode }) {
+export default function VehiclesForm2({
+  vehicle,
+  children,
+  types: vehicleType,
+  brand_vehicles,
+}: {
+  vehicle: any | null;
+  children: ReactNode;
+  types: generic[];
+  brand_vehicles: generic[];
+}) {
   const searchParams = useSearchParams();
   // const id = params
   const [accion, setAccion] = useState(searchParams.get('action'));
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   const role = useLoggedUserStore((state) => state.roleActualCompany);
+  const [type, setType] = useState('');
 
   const [data, setData] = useState<dataType>({
     tipe_of_vehicles: [],
-    brand: [],
     models: [],
-    types: [],
   });
-  console.log('vehicle', vehicle);
 
   useEffect(() => {
     if (vehicle && vehicle.type_of_vehicle === 'Vehículos') {
@@ -140,7 +142,8 @@ export default function VehiclesForm2({ vehicle, children }: { vehicle: any | nu
       .min(2, {
         message: 'El motor debe tener al menos 2 caracteres.',
       })
-      .max(30, { message: 'El motor debe tener menos de 30 caracteres.' }),
+      .max(30, { message: 'El motor debe tener menos de 30 caracteres.' })
+      .optional(),
 
     type_of_vehicle: z.string({ required_error: 'El tipo es requerido' }),
     chassis: hideInput
@@ -268,16 +271,9 @@ export default function VehiclesForm2({ vehicle, children }: { vehicle: any | nu
   const fetchData = async () => {
     let { data: types_of_vehicles } = await supabase.from('types_of_vehicles').select('*');
 
-    let { data: brand_vehicles } = await supabase.from('brand_vehicles').select('*');
-
-    let { data: type, error } = await supabase.from('type').select('*');
     setData({
       ...data,
       tipe_of_vehicles: types_of_vehicles as generic[],
-      brand: (brand_vehicles || [])?.map((e) => {
-        return { label: e.name as string, id: e.id as string };
-      }),
-      types: type as generic[],
     });
   };
 
@@ -285,15 +281,6 @@ export default function VehiclesForm2({ vehicle, children }: { vehicle: any | nu
     .channel('custom-all-channel')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'brand_vehicles' }, () => {
       fetchData();
-    })
-    .subscribe();
-
-  supabase
-    .channel('custom-all-channel')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'model_vehicles' }, () => {
-      const brand = form.getValues('brand');
-      const brand_id = data.brand.find((e) => e.label === brand)?.id as string;
-      fetchModels(brand_id || '');
     })
     .subscribe();
 
@@ -315,10 +302,9 @@ export default function VehiclesForm2({ vehicle, children }: { vehicle: any | nu
   const contractorCompanies = useCountriesStore((state) =>
     state.customers?.filter((company: any) => company.company_id.toString() === actualCompany?.id && company.is_active)
   );
-  const vehicleBrands = data.brand;
+
   const types = data.tipe_of_vehicles?.map((e) => e.name);
   const vehicleModels = data.models;
-  const types_vehicles = data.types?.map((e) => e.name);
 
   const form = useForm<z.infer<typeof vehicleSchema>>({
     resolver: zodResolver(vehicleSchema),
@@ -365,9 +351,9 @@ export default function VehiclesForm2({ vehicle, children }: { vehicle: any | nu
                 ...values,
                 domain: domain?.toUpperCase() || null,
                 type_of_vehicle: data.tipe_of_vehicles.find((e) => e.name === type_of_vehicle)?.id,
-                brand: data.brand.find((e) => e.label === brand)?.id,
+                brand: brand_vehicles.find((e) => e.name === brand)?.id,
                 model: data.models.find((e) => e.name === model)?.id,
-                type: data.types.find((e) => e.name === values.type)?.id,
+                type: vehicleType.find((e) => e.name === values.type)?.id,
                 company_id: actualCompany?.id,
                 condition: 'operativo',
                 kilometer: values.kilometer || 0,
@@ -514,7 +500,7 @@ export default function VehiclesForm2({ vehicle, children }: { vehicle: any | nu
             .from('vehicles')
             .update({
               type_of_vehicle: data.tipe_of_vehicles.find((e) => e.name === type_of_vehicle)?.id,
-              brand: data.brand.find((e) => e.label === brand)?.id,
+              brand: brand_vehicles.find((e) => e.name === brand)?.id,
               model: data.models.find((e) => e.name === model)?.id,
               year: year,
               engine: engine,
@@ -707,7 +693,7 @@ export default function VehiclesForm2({ vehicle, children }: { vehicle: any | nu
           <TabsTrigger value="equipment">Equipo</TabsTrigger>
           {accion !== 'new' && <TabsTrigger value="documents">Documentos</TabsTrigger>}
           {accion !== 'new' && <TabsTrigger value="repairs">Reparaciones</TabsTrigger>}
-          <TabsTrigger value="QR">QR</TabsTrigger>
+          {accion !== 'new' && <TabsTrigger value="QR">QR</TabsTrigger>}
         </TabsList>
         <TabsContent value="equipment" className="px-3 py-2">
           <Form {...form}>
@@ -822,21 +808,20 @@ export default function VehiclesForm2({ vehicle, children }: { vehicle: any | nu
                               </Modal>
                             </CommandEmpty>
                             <CommandGroup>
-                              {vehicleBrands?.map((option) => (
+                              {brand_vehicles?.map((option) => (
                                 <CommandItem
-                                  value={option.label}
-                                  key={option.label}
+                                  value={option.name}
+                                  key={option.name}
                                   onSelect={() => {
-                                    form.setValue('brand', option.label);
-                                    const brand_id = data.brand.find((e) => e.label === option.label)?.id;
-                                    fetchModels(brand_id as string);
+                                    form.setValue('brand', option.name);
+                                    fetchModels(option.id as string);
                                   }}
                                 >
-                                  {option.label}
+                                  {option.name}
                                   <CheckIcon
                                     className={cn(
                                       'ml-auto h-4 w-4',
-                                      option.label === field.value ? 'opacity-100' : 'opacity-0'
+                                      option.name === field.value ? 'opacity-100' : 'opacity-0'
                                     )}
                                   />
                                 </CommandItem>
@@ -877,7 +862,7 @@ export default function VehiclesForm2({ vehicle, children }: { vehicle: any | nu
                           <Command>
                             <CommandInput disabled={readOnly} placeholder="Buscar modelo..." className="h-9" />
                             <CommandEmpty className="py-2 px-2">
-                              <Modal modal="addModel" fetchModels={fetchModels} brandOptions={data.brand}>
+                              <Modal modal="addModel" fetchModels={fetchModels} brandOptions={brand_vehicles}>
                                 <Button
                                   disabled={readOnly}
                                   variant="outline"
@@ -910,7 +895,7 @@ export default function VehiclesForm2({ vehicle, children }: { vehicle: any | nu
                                 ))}
                               </>
                               <>
-                                <Modal modal="addModel" fetchModels={fetchModels} brandOptions={data.brand}>
+                                <Modal modal="addModel" fetchModels={fetchModels} brandOptions={brand_vehicles}>
                                   <Button
                                     disabled={readOnly}
                                     variant="outline"
@@ -1024,22 +1009,30 @@ export default function VehiclesForm2({ vehicle, children }: { vehicle: any | nu
                         </PopoverTrigger>
                         <PopoverContent className="w-[250px] p-0">
                           <Command>
-                            <CommandInput placeholder="Buscar tipo..." className="h-9" />
-                            <CommandEmpty>No se encontro ningun resultado</CommandEmpty>
+                            <CommandInput
+                              onValueChange={(e) => {
+                                setType(e);
+                              }}
+                              placeholder="Buscar tipo..."
+                              className="h-9"
+                            />
+                            <CommandEmpty className="p-1">
+                              <AddTypeModal company_id={actualCompany?.id ?? ''} value={type ?? ''} />
+                            </CommandEmpty>
                             <CommandGroup>
-                              {types_vehicles?.map((option) => (
+                              {vehicleType?.map((option) => (
                                 <CommandItem
-                                  value={option}
-                                  key={option}
+                                  value={option.name}
+                                  key={option.name}
                                   onSelect={() => {
-                                    form.setValue('type', option);
+                                    form.setValue('type', option.name);
                                   }}
                                 >
-                                  {option}
+                                  {option.name}
                                   <CheckIcon
                                     className={cn(
                                       'ml-auto h-4 w-4',
-                                      option === field.value ? 'opacity-100' : 'opacity-0'
+                                      option.name === field.value ? 'opacity-100' : 'opacity-0'
                                     )}
                                   />
                                 </CommandItem>
@@ -1233,6 +1226,16 @@ export default function VehiclesForm2({ vehicle, children }: { vehicle: any | nu
                     <Button onClick={printQR} size="sm">
                       <Printer className="w-4 h-4 mr-2" />
                       Imprimir
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(qrUrl);
+                        toast.success('URL copiada al portapapeles');
+                      }}
+                    >
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copiar url
                     </Button>
                   </div>
                 </>

@@ -581,7 +581,9 @@ export const VehicleSchema =
       user_id: z.string(),
       company_id: z.string(),
       id: z.string(),
-      type: z.string(),
+      type: z.object({
+        name: z.string(),
+      }),
       status: z.string(),
       types_of_vehicles: BrandVehiclesClassSchema,
       brand_vehicles: BrandVehiclesClassSchema,
@@ -642,6 +644,9 @@ export const EquipoSchema = z
       is_it_montlhy: z.boolean().optional().nullable(),
       private: z.boolean().optional().nullable(),
       down_document: z.boolean().optional().nullable(),
+      type: z.object({
+        name: z.string(),
+      }),
     })
   )
   .default([]);

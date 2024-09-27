@@ -73,7 +73,7 @@ interface State {
   markAllAsRead: () => void;
   resetDefectCompanies: (company: Company[0]) => void;
   sharedUsers: SharedUser[];
-  vehiclesToShow: VehiclesFormattedElement;
+  vehiclesToShow: any;
   setActivesVehicles: () => void;
   endorsedVehicles: () => void;
   noEndorsedVehicles: () => void;
@@ -201,8 +201,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
   const toggleSidebar = () => {
     set({ active_sidebar: !get().active_sidebar });
-
-  }
+  };
 
   const howManyCompanies = async (id: string) => {
     if (!id) return;
@@ -315,11 +314,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
       set({ allCompanies: data });
 
-
       const savedCompany = localStorage.getItem('company_id') || ''; //! una empresa te comparte
 
       console.log('savedCompany', savedCompany);
-
 
       if (savedCompany) {
         const company = share_company_users?.find(
@@ -347,8 +344,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
         }
       }
 
-
-
       if (data.length === 1) {
         set({ showMultiplesCompaniesAlert: false });
         setActualCompany(data[0]);
@@ -369,7 +364,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
         set({ showNoCompanyAlert: true });
       }
-
     }
   };
 
@@ -413,7 +407,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
   const setActualCompany = (company: Company[0]) => {
     set({ actualCompany: company });
 
-
     cookies.set('actualComp', company.id);
     useCountriesStore.getState().documentTypes(company?.id);
     setActivesEmployees();
@@ -422,8 +415,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
     allNotifications();
     FetchSharedUsers();
     handleActualCompanyRole();
-
-    
   };
 
   const handleActualCompanyRole = async () => {
@@ -653,9 +644,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
     if (dataEmployes?.length === 1000) {
       const { data: data2, error: error2 } = await supabase
-      .from('documents_employees')
-      .select(
-        `
+        .from('documents_employees')
+        .select(
+          `
     *,
     employees:employees(*,contractor_employee(
       customers(
@@ -664,9 +655,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
     )),
     document_types:document_types(*)
 `
-      )
-      .not('employees', 'is', null)
-      .eq('employees.company_id', get()?.actualCompany?.id)
+        )
+        .not('employees', 'is', null)
+        .eq('employees.company_id', get()?.actualCompany?.id)
         .range(1000, 2000);
 
       if (data2) data = data ? [...data, ...data2] : data2;
