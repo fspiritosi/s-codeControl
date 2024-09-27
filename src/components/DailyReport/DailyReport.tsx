@@ -86,7 +86,7 @@ interface Items {
 
 interface DailyReportItem {
     id: string
-    // date: string
+    working_day: string
     customer: string | undefined
     employees: string[]
     equipment: string[]
@@ -131,6 +131,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
     const [isEditing, setIsEditing] = useState(false)
     const [confirmDelete, setConfirmDelete] = useState(false)
     const [selectRow, setSelectRow] = useState<string | null>(null)
+    const [workingDay, setWorkingDay] = useState<string>('');
     const [date, setDate] = useState<Date | undefined>(() => {
         if (reportData && reportData.date) {
             return new Date(reportData.date);
@@ -146,6 +147,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             customer: undefined,
             employees: [],
             equipment: [],
+            working_day: '',
             services: '',
             item: '',
             start_time: '',
@@ -219,7 +221,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             setExistingReportId(reportData.id)
         }
     }, [reportData])
-
+    console.log(reportData)
     useEffect(() => {
         if (startTime && endTime) {
             const start = new Date(`1970-01-01T${startTime}:00`)
@@ -284,6 +286,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         reset({
             customer: undefined,
             services: '',
+            working_day: '',
             item: '',
             start_time: '',
             end_time: '',
@@ -309,13 +312,14 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             // setDate(new Date(itemToEdit.date))
             handleSelectCustomer(itemToEdit.customer || '')
             setValue('customer', itemToEdit.customer)
+            setValue('working_day', itemToEdit.working_day)
             setValue('employees', itemToEdit.employees)
             setValue('equipment', itemToEdit.equipment)
             setValue('services', itemToEdit.services)
             handleSelectService(itemToEdit.services)
             setValue('item', itemToEdit.item)
-            setValue('start_time', itemToEdit.start_time.slice(0, 5))
-            setValue('end_time', itemToEdit.end_time.slice(0, 5))
+            setValue('start_time', itemToEdit.start_time?.slice(0, 5))
+            setValue('end_time', itemToEdit.end_time?.slice(0, 5))
             setValue('status', itemToEdit.status)
             setValue('description', itemToEdit.description)
             setIsEditing(true)
@@ -391,6 +395,10 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         }
     };
 
+    const handleWorkingDayChange = (value: string) => {
+        setWorkingDay(value);
+    };
+
     const selectedEmployees = watch('employees')
     const selectedEquipment = watch('equipment')
 
@@ -445,6 +453,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                 row.customer === data.customer &&
                 row.services === data.services &&
                 row.item === data.item &&
+                row.working_day === data.working_day &&
                 row.start_time === formattedStartTime &&
                 row.end_time === formattedEndTime &&
                 row.description === data.description &&
@@ -527,6 +536,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
 
                 return [...prevReport, {
                     id: rowId,
+                    working_day: data.working_day,
                     customer: data.customer,
                     employees: data.employees,
                     equipment: data.equipment,
@@ -577,6 +587,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                     customer_id: data.customer,
                     service_id: data.services,
                     item_id: data.item,
+                    working_day: data.working_day,
                     start_time: formattedStartTime,
                     end_time: formattedEndTime,
                     description: data.description,
@@ -735,6 +746,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                     equipment: data.equipment,
                     services: data.services,
                     item: data.item,
+                    working_day: data.working_day,
                     start_time: formattedStartTime,
                     end_time: formattedEndTime,
                     status: data.status,
@@ -777,8 +789,8 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         return dayDifference;
     };
     const dayDifference = calculateDateDifference(reportData?.date || '');
-                                    console.log('Day difference:', dayDifference);
-                                    const canEdit = dayDifference <= 2;
+    console.log('Day difference:', dayDifference);
+    const canEdit = dayDifference <= 6;
 
 
     console.log(dailyReport)
@@ -835,7 +847,35 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                     </FormItem>
                                                 )}
                                             />
-
+                                            <FormField
+                                                control={control}
+                                                name='working_day'
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Jornada</FormLabel>
+                                                        <Select
+                                                            value={field.value || workingDay}
+                                                            onValueChange={(value) => {
+                                                                field.onChange(value);
+                                                                handleWorkingDayChange(value);
+                                                            }}
+                                                        >
+                                                            <SelectTrigger className="w-full">
+                                                                <SelectValue placeholder="Tipo de jornada" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectGroup>
+                                                                    <SelectItem value="jornada 8 horas">Jornada 8 horas</SelectItem>
+                                                                    <SelectItem value="jornada 12 horas">Jornada 12 horas</SelectItem>
+                                                                    <SelectItem value="por horario">Por horario</SelectItem>
+                                                                </SelectGroup>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            {workingDay === 'por horario' && (
+                                            <>    
                                             <FormField
                                                 control={control}
                                                 name='start_time'
@@ -875,13 +915,15 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                     </FormItem>
                                                 )}
                                             />
+                                            </>
+                                        )}
 
                                             <FormField
                                                 control={control}
                                                 name='employees'
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Empleados</FormLabel>
+                                                        <FormLabel className='block'>Empleados</FormLabel>
                                                         <MultiSelect
                                                             multiEmp={customerEmployees.map((employee: Employee) => ({
                                                                 id: employee.id,
@@ -900,7 +942,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                 name='equipment'
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Equipos</FormLabel>
+                                                        <FormLabel className='block'>Equipos</FormLabel>
                                                         <MultiSelect
                                                             multiEmp={customerEquipment.map((eq: Equipment) => ({
                                                                 id: eq.id,
@@ -1038,11 +1080,11 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                 Agregar Fila
                             </Button> */}
                             {canEdit && (
-                        <Button onClick={handleAddNewRow} className="flex items-center">
-                            <PlusCircledIcon className="mr-2 h-4 w-4" />
-                            Agregar Fila
-                        </Button>
-                    )}
+                                <Button onClick={handleAddNewRow} className="flex items-center">
+                                    <PlusCircledIcon className="mr-2 h-4 w-4" />
+                                    Agregar Fila
+                                </Button>
+                            )}
                         </div>
 
                         <Table>
@@ -1056,8 +1098,9 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                     <TableHead>Item</TableHead>
                                     <TableHead>Empleados</TableHead>
                                     <TableHead>Equipos</TableHead>
-                                    <TableHead>Hora de Inicio</TableHead>
-                                    <TableHead>Hora de Finalización</TableHead>
+                                    <TableHead>Jornada</TableHead>
+                                    <TableHead>H.Inicio</TableHead>
+                                    <TableHead>H.Fin</TableHead>
                                     <TableHead>Estado</TableHead>
                                     <TableHead>Descripción</TableHead>
                                     <TableHead>Acciones</TableHead>
@@ -1065,7 +1108,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                             </TableHeader>
                             <TableBody>
                                 {dailyReport?.map((report: DailyReportItem) => {
-                                    
+
                                     return (
                                         <TableRow key={report.id}>
                                             <TableCell>{report.customer ? getCustomerName(report.customer) : 'N/A'}</TableCell>
@@ -1073,6 +1116,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                             <TableCell>{report.item ? getItemName(report.item) : 'N/A'}</TableCell>
                                             <TableCell>{Array.isArray(report.employees) ? getEmployeeNames(report.employees) : 'N/A'}</TableCell>
                                             <TableCell>{Array.isArray(report.equipment) ? getEquipmentNames(report.equipment) : 'N/A'}</TableCell>
+                                            <TableCell>{report.working_day}</TableCell>
                                             <TableCell>{report.start_time}</TableCell>
                                             <TableCell>{report.end_time}</TableCell>
                                             <TableCell>{report.status}</TableCell>

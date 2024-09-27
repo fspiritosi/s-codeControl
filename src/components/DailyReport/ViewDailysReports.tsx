@@ -39,6 +39,7 @@ interface DailyReportItem {
   start_time: string;
   end_time: string;
   status: 'pendiente' | 'ejecutado' | 'cancelado' | 'reprogramado';
+  working_day: string;
   description: string;
 }
 
@@ -145,6 +146,7 @@ export default function ViewDailysReports() {
         start_time: row.start_time,
         end_time: row.end_time,
         status: row.status, // Asumiendo que todos los items están ejecutados por defecto
+        working_day: row.working_day,
         description: row.description || '', // Asumiendo que no hay descripción disponible
       })),
     }));

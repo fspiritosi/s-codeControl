@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
           start_time,
           end_time,
           status,
+          working_day,
           dailyreportemployeerelations (employee_id(id,firstname,lastname)),
           dailyreportequipmentrelations (equipment_id(id,intern_number))
           )
