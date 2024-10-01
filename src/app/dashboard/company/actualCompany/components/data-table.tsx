@@ -24,10 +24,10 @@ import { DataTableToolbar } from './data-table-toolbar';
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  isDocuments?:boolean
+  isDocuments?: boolean;
 }
 
-export function DataTable<TData, TValue>({ columns, data,isDocuments }: DataTableProps<TData, TValue>) {
+export function DataTable<TData, TValue>({ columns, data, isDocuments }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);

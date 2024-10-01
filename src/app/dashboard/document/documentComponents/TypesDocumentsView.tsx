@@ -85,9 +85,9 @@ function TypesDocumentsView({
     <CardContent>
       <Tabs defaultValue={optionValue} className="w-full">
         <TabsList>
-          {personas && <TabsTrigger value="Personas">Personas ({filteredDocPersonas.length})</TabsTrigger>}
-          {equipos && <TabsTrigger value="Equipos">Equipos ({filteredDocEquipos.length})</TabsTrigger>}
-          {empresa && <TabsTrigger value="Empresa">Empresa ({filteredDocEmpresa.length})</TabsTrigger>}
+          {personas && <TabsTrigger value="Personas">Personas ({filteredDocPersonas?.length})</TabsTrigger>}
+          {equipos && <TabsTrigger value="Equipos">Equipos ({filteredDocEquipos?.length})</TabsTrigger>}
+          {empresa && <TabsTrigger value="Empresa">Empresa ({filteredDocEmpresa?.length})</TabsTrigger>}
         </TabsList>
         {personas && (
           <TabsContent value="Personas">

@@ -19,6 +19,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '
 import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from '../ui/form';
 
 import * as XLSX from 'xlsx';
+import InfoComponent from '../InfoComponent';
 
 type Checked = DropdownMenuCheckboxItemProps['checked'];
 type DiamgramParsed = {
@@ -215,7 +216,9 @@ function DiagramEmployeeView({
                           </Command>
                         </PopoverContent>
                       </Popover>
-                      <FormDescription>{` Selecciona al menos 1 recurso para ver su diagrama.`}</FormDescription>
+                      <FormDescription>
+                        <InfoComponent size='sm' message={'Selecciona al menos 1 recurso para ver su diagrama.'} />
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect } from 'react';
 import { FiTool, FiTruck } from 'react-icons/fi';
 import {
   MdHelpOutline,
@@ -24,11 +23,6 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
   const isActive = useLoggedUserStore((state) => state.active_sidebar);
   const pathName = usePathname();
 
-  console.log('Allinks', Allinks);
-
-  useEffect(() => {
-    console.log('rol', role);
-  }, [role]);
   const sizeIcons = 20;
 
   const Allinks33 = [
@@ -91,11 +85,10 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
     { link: null, matchLength: 0 }
   ).link.name;
 
-
   return (
     <div
       key={role}
-      className={`relative top-0 left-0 h-full bg-white dark:bg-muted/50 transition-width duration-500 ${isActive ? 'w-16' : 'w-56'}`}
+      className={`relative top-0 left-0 h-full bg-white dark:bg-muted/50 transition-width duration-500 ${isActive ? 'w-16' : 'w-56'} sticky top-0 h-screen`}
     >
       <div className={cn('flex items-center p-2 justify-center')}>
         <span className="text-white text-xl flex items-center gap-2 relative overflow-hidden">

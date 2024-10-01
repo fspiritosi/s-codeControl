@@ -1,16 +1,17 @@
 import { ReportAnIssue } from '@/components/ReportAnIssue';
 
 export default function page() {
- return <ReportAnIssue />;
+  //  return <VehicleInspectionForm />;
+  return <ReportAnIssue />;
   // return (
-  //   <Viewcomponent 
+  //   <Viewcomponent
   //     viewData={
   //       {
   //         defaulValue: "general",
   //         tabsValues:[
   //           {
   //             value: "general",
-  //             name:"General", 
+  //             name:"General",
   //             restricted: ["usuario"],
   //             content:{
   //               title: "Empresa",
@@ -21,7 +22,7 @@ export default function page() {
   //           {
   //             value: "documents",
   //             name:"Documentacion",
-  //             restricted: [] , 
+  //             restricted: [] ,
   //             content:{
   //             title: "Documentación",
   //             description: "Documentos generales de la compañía",
@@ -30,7 +31,7 @@ export default function page() {
   //           {
   //             value: "clients",
   //             name:"Clientes",
-  //             restricted: [] , 
+  //             restricted: [] ,
   //             content:{
   //             title: "Clientes",
   //             description: "Documentos generales de la Clientes",
@@ -42,5 +43,4 @@ export default function page() {
   //     }
   //   />
   // )
-
 }

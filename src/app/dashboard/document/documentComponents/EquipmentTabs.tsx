@@ -15,11 +15,9 @@ async function EquipmentTabs() {
   const company_id = cookiesStore.get('actualComp')?.value;
 
 
-  const { equipments } = await fetch(`${URL}/api/equipment/documents?actual=${company_id}`).then((e) => e.json());
+  const { equipmentDocuments } = await fetch(`${URL}/api/equipment/documents?actual=${company_id}`).then((e) => e.json());
 
-  
-
-  const vehicles = equipments?.map(mapVehicle) as Document[];
+  const vehicles = equipmentDocuments?.map(mapVehicle) as Document[];
   return (
     <Tabs defaultValue="permanentes">
       <CardContent>

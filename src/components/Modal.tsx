@@ -1,5 +1,6 @@
 import AddBrandModal from './AddBrandModal';
 import AddModelModal from './AddModelModal';
+import { generic } from './VehiclesForm';
 
 export function Modal({
   children,
@@ -11,7 +12,7 @@ export function Modal({
   children: React.ReactNode;
   modal: string;
   fetchData?: () => Promise<void>;
-  brandOptions?: { label: string; id: string }[];
+  brandOptions?: generic[]
   fetchModels?: (brand_id: string) => Promise<void>;
 }) {
   return (

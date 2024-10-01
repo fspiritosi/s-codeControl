@@ -4,7 +4,7 @@ import { CaretSortIcon, PlusCircledIcon } from '@radix-ui/react-icons';
 import { addMonths, format } from 'date-fns';
 import { Calendar as CalendarIcon, CheckIcon } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, { FormEvent, useEffect, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { Button } from './ui/button';
 import { CardDescription } from './ui/card';
@@ -73,6 +73,8 @@ export default function SimpleDocument({
     (employees?.find(
       (employee: any) => employee.document === documentResource || employee.document === numberDocument
     ) as string) || (vehicles?.find((vehicle: any) => vehicle.id === numberDocument) as string);
+
+    console.log('numberDocument',numberDocument)
 
   const {
     control,
@@ -317,8 +319,20 @@ export default function SimpleDocument({
     if (value === 'Permanentes') setDocumentTypes(allTypesDocuments?.filter((e) => !e.is_it_montlhy) || []);
     if (value === 'Mensuales') setDocumentTypes(allTypesDocuments?.filter((e) => e.is_it_montlhy) || []);
   };
+
+  const handleNestedFormSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    toast.promise(onSubmit(getValues()), {
+      loading: 'Subiendo...',
+      success: 'Documento(s) subidos correctamente',
+      error: (error) => error,
+    });
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={handleNestedFormSubmit}>
       <ul className="flex flex-col gap-2">
         <div className="space-y-3">
           {fields?.map((item, index) => {
@@ -334,7 +348,7 @@ export default function SimpleDocument({
                     Documento {index + 1}
                   </summary>
                   <li className="space-y-4 ">
-                    {!id && !documentResource && (
+                    {!documentResource && (
                       <div className="space-y-2 py-3 ">
                         <Label className="block">{resource === 'equipo' ? 'Equipos' : 'Empleados'}</Label>
                         <Controller
@@ -350,7 +364,7 @@ export default function SimpleDocument({
                                   setOpenResourceSelector(!openResourceSelector);
                                 }}
                               >
-                                <PopoverTrigger asChild>
+                                <PopoverTrigger disabled={numberDocument || id ? true : false} asChild>
                                   <Button
                                     variant="outline"
                                     role="combobox"

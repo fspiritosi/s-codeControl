@@ -20,6 +20,7 @@ import { SharedUser } from '@/zodSchemas/schemas';
 import { ColumnDef } from '@tanstack/react-table';
 import { formatRelative } from 'date-fns';
 import { es } from 'date-fns/locale';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../../../../../supabase/supabase';
@@ -29,7 +30,13 @@ export const columns: ColumnDef<SharedUser>[] = [
   {
     accessorKey: 'fullname',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nombre" />,
-    cell: ({ row }) => <div className="">{row.getValue('fullname')}</div>,
+    cell: ({ row }: { row: any }) => {
+      return (
+        <Link href={`/dashboard/company/actualCompany/user/${row.getValue('id')}`} className="hover:underline">
+          {row.getValue('fullname')}
+        </Link>
+      );
+    },
     enableSorting: false,
     enableHiding: false,
   },
@@ -67,7 +74,11 @@ export const columns: ColumnDef<SharedUser>[] = [
       const [roles, setRoles] = useState<any[] | null>([]);
 
       const getRoles = async () => {
-        let { data: roles, error } = await supabase.from('roles').select('*').eq('intern', false).neq('name', 'Invitado');
+        let { data: roles, error } = await supabase
+          .from('roles')
+          .select('*')
+          .eq('intern', false)
+          .neq('name', 'Invitado');
         setRoles(roles);
       };
 

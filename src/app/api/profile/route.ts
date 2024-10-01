@@ -13,10 +13,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Obtener el perfil del usuario
-    const { data: ownerUser, error: profileError } = await supabase
-      .from('profile')
-      .select('*')
-      .eq('id', userId);
+    const { data: ownerUser, error: profileError } = await supabase.from('profile').select('*').eq('id', userId);
 
     if (profileError) {
       throw new Error(JSON.stringify(profileError));
