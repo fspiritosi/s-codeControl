@@ -193,11 +193,13 @@ async function SideBarContainer() {
       liksToShow = Allinks;
       return;
     }
-    credentialUser?.[0].modulos.map((mod: string) => {
-      Allinks.filter((link) => {
-        link.name.toLowerCase() === mod.toLowerCase() && liksToShow.push(link);
-      });
-    });
+    credentialUser?.[0].modulos === null
+      ? (liksToShow = Allinks) // TODO esta linea se tiene que sacar porque por defecto tiene que tener todos los modulos activos
+      : credentialUser?.[0].modulos.map((mod: string) => {
+          Allinks.filter((link) => {
+            link.name.toLowerCase() === mod.toLowerCase() && liksToShow.push(link);
+          });
+        });
   };
 
   const sortedLinks = () => {
