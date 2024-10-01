@@ -1,9 +1,8 @@
 import BackButton from '@/components/BackButton';
+import EditButton from '@/components/EditButton';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+import UserForm from '@/components/users/UserForm';
 import { cn } from '@/lib/utils';
 
 async function User({ params }: { params: { id: string } }) {
@@ -33,42 +32,13 @@ async function User({ params }: { params: { id: string } }) {
             </CardDescription>
           </div>
           <div className="flex flex-grap gap-2">
-            <Button variant="default">Habilitar edición</Button>
+            <EditButton />
             <BackButton />
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-8 p-6">
           <CardTitle className="text-lg">Modulos habilitados para el usuario</CardTitle>
-          <div className="flex justify-between">
-            <div className="flex items-center space-x-2">
-              <Checkbox id="terms" />
-              <Label htmlFor="terms">Modulo Dashboard</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox id="terms" />
-              <Label htmlFor="terms">Modulo Empresa</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox id="terms" />
-              <Label htmlFor="terms">Modulo Empleados</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox id="terms" />
-              <Label htmlFor="terms">Modulo Equipos</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox id="terms" />
-              <Label htmlFor="terms">Modulo Documentación</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox id="terms" />
-              <Label htmlFor="terms">Modulo Mantenimiento</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox id="terms" />
-              <Label htmlFor="terms">Modulo Ayuda</Label>
-            </div>
-          </div>
+          <UserForm userData={data[0]} />
           <CardDescription>* Destildar para quitar permisos al usuario</CardDescription>
         </CardContent>
 
