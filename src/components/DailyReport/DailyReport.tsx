@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/dialog";
 import { id } from 'date-fns/locale'
 
+
 interface Customers {
     id: string
     name: string
@@ -72,6 +73,8 @@ interface Equipment {
 }
 
 interface Services {
+    service_validity: string | number | Date
+    service_start: string | number | Date
     id: string
     customer_id: string
     service_name: string
@@ -109,6 +112,106 @@ interface DailyReportProps {
     reportData?: DailyReportData | undefined
 }
 
+interface Diagram {
+    id: string;
+    created_at: string;
+    employee_id: string;
+    diagram_type: {
+        id: string;
+        name: string;
+        color: string;
+        company_id: string;
+        created_at: string;
+        short_description: string;
+        work_active: boolean;
+    };
+    day: number;
+    month: number;
+    year: number;
+};
+interface RepairsSolicituds {
+    id: string;
+    created_at: string;
+    reparation_type: {
+        id: string;
+        name: string;
+        criticity: string;
+        is_active: boolean;
+        company_id: string;
+        created_at: string;
+        description: string;
+        type_of_maintenance: string;
+    };
+    equipment_id: {
+        id: string;
+        type: {
+            id: string;
+            name: string;
+            is_active: boolean;
+            created_at: string;
+        };
+        year: string;
+        brand: {
+            id: number;
+            name: string;
+            is_active: boolean;
+            created_at: string;
+        };
+        model: {
+            id: number;
+            name: string;
+            brand: number;
+            is_active: boolean;
+            created_at: string;
+        };
+        serie: string;
+        domain: string;
+        engine: string;
+        status: string;
+        chassis: string;
+        picture: string;
+        user_id: string;
+        condition: string;
+        is_active: boolean;
+        kilometer: string;
+        company_id: string;
+        created_at: string;
+        allocated_to: string[];
+        intern_number: string;
+        type_of_vehicle: number;
+        termination_date: string | null;
+        reason_for_termination: string | null;
+    };
+    state: string;
+    user_description: string;
+    mechanic_description: string;
+    end_date: string | null;
+    user_id: {
+        id: string;
+        role: string;
+        email: string;
+        avatar: string | null;
+        fullname: string;
+        created_at: string;
+        credential_id: string;
+    };
+    mechanic_id: string | null;
+    mechanic_images: (string | null)[];
+    user_images: string[];
+    employee_id: string | null;
+    kilometer: string | null;
+    repairlogs: {
+        id: string;
+        title: string;
+        kilometer: string | null;
+        repair_id: string;
+        created_at: string;
+        description: string;
+        modified_by_user: string | null;
+        modified_by_employee: string | null;
+    }[];
+}
+
 export default function DailyReport({ reportData }: DailyReportProps) {
     console.log('Report data:', reportData)
     const [employees, setEmployees] = useState<Employee[]>([])
@@ -132,6 +235,8 @@ export default function DailyReport({ reportData }: DailyReportProps) {
     const [confirmDelete, setConfirmDelete] = useState(false)
     const [selectRow, setSelectRow] = useState<string | null>(null)
     const [workingDay, setWorkingDay] = useState<string>('');
+    const [diagram, setDiagram] = useState<Diagram[]>([]);
+    const [repairOrders, setRepairOrders] = useState<RepairsSolicituds[]>([]);
     const [date, setDate] = useState<Date | undefined>(() => {
         if (reportData && reportData.date) {
             return new Date(reportData.date);
@@ -191,6 +296,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
     async function fetchServices() {
         const { services } = await fetch(`${URL}/api/services?actual=${company_id}`).then((e) => e.json())
         setServices(services)
+        console.log(services)
         return services
     }
 
@@ -200,14 +306,33 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         return items
     }
 
+    async function fetchDiagrams() {
+        const { data: diagrams } = await fetch(`${URL}/api/employees/diagrams`).then((e) => e.json());
+        setDiagram(diagrams)
+        return diagrams;
+    }
+
+    async function fetchRepairOrders() {
+        const { repair_solicitudes } = await fetch(`${URL}/api/repair_solicitud?actual=${company_id}`).then((res) =>
+            res.json()
+        );
+        setRepairOrders(repair_solicitudes)
+        console.log(repair_solicitudes)
+        return repair_solicitudes
+    }
+
     useEffect(() => {
         fetchEmployees()
         fetchCustomers()
         fetchEquipment()
         fetchServices()
         fetchItems()
+        fetchDiagrams()
+        fetchRepairOrders()
     }, [])
 
+    console.log(diagram ? diagram[0] : null)
+    console.log(repairOrders)
     useEffect(() => {
         if (reportData) {
             setDate(new Date(reportData.date))
@@ -221,7 +346,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             setExistingReportId(reportData.id)
         }
     }, [reportData])
-    console.log(reportData)
+    console.log(employees)
     useEffect(() => {
         if (startTime && endTime) {
             const start = new Date(`1970-01-01T${startTime}:00`)
@@ -231,35 +356,88 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         }
     }, [startTime, endTime])
 
-    const handleSelectCustomer = (customerId: string) => {
-        const customer = customers.find((c: Customers) => c.id.toString() === customerId)
+    // const handleSelectCustomer = (customerId: string) => {
+    //     const customer = customers.find((c: Customers) => c.id.toString() === customerId)
+    //     if (customer) {
+    //         setSelectedCustomer(customer)
+
+    //         const filteredEmployees = employees.filter((employee: Employee) =>
+    //             employee.allocated_to.includes(customer.id)
+    //         )
+    //         setCustomerEmployees(filteredEmployees)
+
+    //         const filteredEquipment = equipment.filter((equipment: Equipment) =>
+    //             equipment.allocated_to.includes(customer.id)
+    //         )
+    //         setCustomerEquipment(filteredEquipment)
+
+    //         const filteredServices = services.filter((service: Services) =>
+    //             service.customer_id === customerId
+    //         )
+    //         setCustomerServices(filteredServices)
+
+    //         // Reset dependent selects
+    //         setValue('services', '')
+    //         setValue('item', '')
+    //         setValue('employees', [])
+    //         setValue('equipment', [])
+    //         setCustomerItems([])
+    //         setSelectedService(null)
+    //     }
+    // }
+
+    const handleSelectCustomer = (customerId: string, reportDate: Date) => {
+        const customer = customers.find((c: Customers) => c.id.toString() === customerId);
         if (customer) {
-            setSelectedCustomer(customer)
+            setSelectedCustomer(customer);
 
-            const filteredEmployees = employees.filter((employee: Employee) =>
-                employee.allocated_to.includes(customer.id)
-            )
-            setCustomerEmployees(filteredEmployees)
+            const filteredEmployees = employees.filter((employee: Employee) => {
+                const isAllocatedToCustomer = employee.allocated_to.includes(customer.id);
+                const isActiveOnReportDate = diagram.some(diagram => {
+                    const diagramDate = new Date(diagram.year, diagram.month - 1, diagram.day);
+                    return (
+                        diagramDate.getFullYear() === reportDate.getFullYear() &&
+                        diagramDate.getMonth() === reportDate.getMonth() &&
+                        diagramDate.getDate() === reportDate.getDate() &&
+                        diagram.diagram_type.work_active &&
+                        diagram.employee_id === employee.id
+                    );
+                });
+                return isAllocatedToCustomer && isActiveOnReportDate;
+            });
+            setCustomerEmployees(filteredEmployees);
 
-            const filteredEquipment = equipment.filter((equipment: Equipment) =>
-                equipment.allocated_to.includes(customer.id)
-            )
-            setCustomerEquipment(filteredEquipment)
+            const filteredEquipment = equipment.filter((equipment: Equipment) => {
+                const isAllocatedToCustomer = equipment.allocated_to.includes(customer.id);
+                const isNotUnderRepair = !repairOrders.some((order: RepairsSolicituds) =>
+                    order.equipment_id.id === equipment.id && order.state === 'En reparación'
+                );
+                return isAllocatedToCustomer && isNotUnderRepair;
+            });
+            setCustomerEquipment(filteredEquipment);
 
-            const filteredServices = services.filter((service: Services) =>
-                service.customer_id === customerId
-            )
-            setCustomerServices(filteredServices)
+            const filteredServices = services.filter((service: Services) => {
+                const serviceStartDate = new Date(service.service_start);
+                const serviceValidityDate = new Date(service.service_validity);
+                return (
+                    service.customer_id === customerId &&
+                    service.is_active &&
+                    reportDate >= serviceStartDate &&
+                    reportDate <= serviceValidityDate
+                );
+            });
+
+            setCustomerServices(filteredServices);
 
             // Reset dependent selects
-            setValue('services', '')
-            setValue('item', '')
-            setValue('employees', [])
-            setValue('equipment', [])
-            setCustomerItems([])
-            setSelectedService(null)
+            setValue('services', '');
+            setValue('item', '');
+            setValue('employees', []);
+            setValue('equipment', []);
+            setCustomerItems([]);
+            setSelectedService(null);
         }
-    }
+    };
 
     const handleSelectService = (serviceId: string) => {
         const service = services.find((s: Services) => s.id === serviceId)
@@ -310,7 +488,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         if (itemToEdit) {
             setEditingId(id)
             // setDate(new Date(itemToEdit.date))
-            handleSelectCustomer(itemToEdit.customer || '')
+            handleSelectCustomer(itemToEdit.customer || '', reportData ? new Date(reportData.date) : new Date())
             setValue('customer', itemToEdit.customer)
             setValue('working_day', itemToEdit.working_day)
             setValue('employees', itemToEdit.employees)
@@ -318,8 +496,19 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             setValue('services', itemToEdit.services)
             handleSelectService(itemToEdit.services)
             setValue('item', itemToEdit.item)
-            setValue('start_time', itemToEdit.start_time?.slice(0, 5))
-            setValue('end_time', itemToEdit.end_time?.slice(0, 5))
+            // Normalizar el valor de working_day
+            const normalizedWorkingDay = itemToEdit.working_day.trim().toLowerCase();
+            console.log('Normalized Working Day:', normalizedWorkingDay);
+
+            // Verificar si la jornada es de 8 o 12 horas y poner en vacío la hora de inicio y fin
+            if ((normalizedWorkingDay === "jornada 8 horas") || (normalizedWorkingDay === "jornada 12 horas")) {
+                console.log('Setting start_time and end_time to empty');
+                setValue('start_time', '');
+                setValue('end_time', '');
+            } else {
+                setValue('start_time', itemToEdit.start_time?.slice(0, 5));
+                setValue('end_time', itemToEdit.end_time?.slice(0, 5));
+            }
             setValue('status', itemToEdit.status)
             setValue('description', itemToEdit.description)
             setIsEditing(true)
@@ -806,7 +995,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                         {isEditing && (
                             <motion.div
                                 initial={{ width: 0, opacity: 0 }}
-                                animate={{ width: "30%", opacity: 1 }}
+                                animate={{ width: "23%", opacity: 1 }}
                                 exit={{ width: 0, opacity: 0 }}
                                 transition={{ duration: 0.3 }}
                                 className="pr-4 overflow-hidden"
@@ -828,10 +1017,10 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                             value={field.value}
                                                             onValueChange={(value) => {
                                                                 field.onChange(value)
-                                                                handleSelectCustomer(value)
+                                                                handleSelectCustomer(value, reportData?.date ? new Date(reportData.date) : new Date())
                                                             }}
                                                         >
-                                                            <SelectTrigger className="w-full">
+                                                            <SelectTrigger className="w-[250px]">
                                                                 <SelectValue placeholder="Seleccione un cliente" />
                                                             </SelectTrigger>
                                                             <SelectContent>
@@ -849,115 +1038,6 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                             />
                                             <FormField
                                                 control={control}
-                                                name='working_day'
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Jornada</FormLabel>
-                                                        <Select
-                                                            value={field.value || workingDay}
-                                                            onValueChange={(value) => {
-                                                                field.onChange(value);
-                                                                handleWorkingDayChange(value);
-                                                            }}
-                                                        >
-                                                            <SelectTrigger className="w-full">
-                                                                <SelectValue placeholder="Tipo de jornada" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectGroup>
-                                                                    <SelectItem value="jornada 8 horas">Jornada 8 horas</SelectItem>
-                                                                    <SelectItem value="jornada 12 horas">Jornada 12 horas</SelectItem>
-                                                                    <SelectItem value="por horario">Por horario</SelectItem>
-                                                                </SelectGroup>
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            {workingDay === 'por horario' && (
-                                            <>    
-                                            <FormField
-                                                control={control}
-                                                name='start_time'
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Hora de inicio</FormLabel>
-                                                        <Input
-                                                            type="time"
-                                                            name="start_time"
-                                                            value={startTime ? startTime : field.value}
-                                                            onChange={(e) => {
-                                                                setStartTime(e.target.value)
-                                                                field.onChange(e.target.value)
-                                                            }}
-                                                            step={900}
-
-                                                        />
-                                                    </FormItem>
-                                                )}
-                                            />
-
-                                            <FormField
-                                                control={control}
-                                                name='end_time'
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Hora de finalización</FormLabel>
-                                                        <Input
-                                                            type="time"
-                                                            name="end_time"
-                                                            value={field.value || endTime}
-                                                            onChange={(e) => {
-                                                                setEndTime(e.target.value)
-                                                                field.onChange(e.target.value)
-                                                            }}
-                                                        />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            </>
-                                        )}
-
-                                            <FormField
-                                                control={control}
-                                                name='employees'
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className='block'>Empleados</FormLabel>
-                                                        <MultiSelect
-                                                            multiEmp={customerEmployees.map((employee: Employee) => ({
-                                                                id: employee.id,
-                                                                name: `${employee.firstname} ${employee.lastname}`
-                                                            }))}
-                                                            placeholder="Seleccione empleados"
-                                                            selectedItems={field.value}
-                                                            onChange={(selected: any) => field.onChange(selected)}
-                                                        />
-                                                    </FormItem>
-                                                )}
-                                            />
-
-                                            <FormField
-                                                control={control}
-                                                name='equipment'
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className='block'>Equipos</FormLabel>
-                                                        <MultiSelect
-                                                            multiEmp={customerEquipment.map((eq: Equipment) => ({
-                                                                id: eq.id,
-                                                                intern_number: eq.intern_number.toString()
-                                                            }))}
-                                                            placeholder="Seleccione equipos"
-                                                            selectedItems={field.value}
-                                                            onChange={(selected: any) => field.onChange(selected)}
-                                                        />
-                                                    </FormItem>
-                                                )}
-                                            />
-
-                                            <FormField
-                                                control={control}
                                                 name='services'
                                                 render={({ field }) => (
                                                     <FormItem>
@@ -969,7 +1049,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                                 handleSelectService(value)
                                                             }}
                                                         >
-                                                            <SelectTrigger className="w-full">
+                                                            <SelectTrigger className="w-[250px]">
                                                                 <SelectValue placeholder="Seleccione el servicio" />
                                                             </SelectTrigger>
                                                             <SelectContent>
@@ -997,7 +1077,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                             value={field.value}
                                                             onValueChange={field.onChange}
                                                         >
-                                                            <SelectTrigger className="w-full">
+                                                            <SelectTrigger className="w-[250px]">
                                                                 <SelectValue placeholder="Seleccione un item" />
                                                             </SelectTrigger>
                                                             <SelectContent>
@@ -1015,28 +1095,142 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                 )}
                                             />
 
+
                                             <FormField
                                                 control={control}
-                                                name='status'
+                                                name='employees'
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Estado</FormLabel>
+                                                        <FormLabel className='block w-[250px]'>Empleados</FormLabel>
+                                                        <MultiSelect
+                                                            multiEmp={customerEmployees.map((employee: Employee) => ({
+                                                                id: employee.id,
+                                                                name: `${employee.firstname} ${employee.lastname}`
+                                                            }))}
+                                                            placeholder="Seleccione empleados"
+                                                            selectedItems={field.value}
+                                                            onChange={(selected: any) => field.onChange(selected)}
+                                                        />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={control}
+                                                name='equipment'
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className='block w-[250px]'>Equipos</FormLabel>
+                                                        <MultiSelect
+                                                            multiEmp={customerEquipment.map((eq: Equipment) => ({
+                                                                id: eq.id,
+                                                                intern_number: eq.intern_number.toString()
+                                                            }))}
+                                                            placeholder="Seleccione equipos"
+                                                            selectedItems={field.value}
+                                                            onChange={(selected: any) => field.onChange(selected)}
+                                                        />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={control}
+                                                name='working_day'
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Jornada</FormLabel>
                                                         <Select
-                                                            value={field.value}
-                                                            onValueChange={field.onChange}
+                                                            value={field.value || workingDay}
+                                                            onValueChange={(value) => {
+                                                                field.onChange(value);
+                                                                handleWorkingDayChange(value);
+                                                            }}
                                                         >
-                                                            <SelectTrigger className="w-full">
-                                                                <SelectValue placeholder="Seleccione un estado" />
+                                                            <SelectTrigger className="w-[250px]">
+                                                                <SelectValue placeholder="Tipo de jornada" />
                                                             </SelectTrigger>
                                                             <SelectContent>
-                                                                <SelectItem value="ejecutado">Ejecutado</SelectItem>
-                                                                <SelectItem value="cancelado">Cancelado</SelectItem>
-                                                                <SelectItem value="reprogramado">Reprogramado</SelectItem>
+                                                                <SelectGroup>
+                                                                    <SelectItem value="jornada 8 horas">Jornada 8 horas</SelectItem>
+                                                                    <SelectItem value="jornada 12 horas">Jornada 12 horas</SelectItem>
+                                                                    <SelectItem value="por horario">Por horario</SelectItem>
+                                                                </SelectGroup>
                                                             </SelectContent>
                                                         </Select>
                                                     </FormItem>
                                                 )}
                                             />
+                                            {workingDay === 'por horario' && (
+                                                <>
+                                                    <FormField
+                                                        control={control}
+                                                        name='start_time'
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>Hora de inicio</FormLabel>
+                                                                <Input
+                                                                    type="time"
+                                                                    name="start_time"
+                                                                    value={startTime ? startTime : field.value}
+                                                                    onChange={(e) => {
+                                                                        setStartTime(e.target.value)
+                                                                        field.onChange(e.target.value)
+                                                                    }}
+                                                                    className='w-[250px]'
+
+                                                                />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+
+                                                    <FormField
+                                                        control={control}
+                                                        name='end_time'
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>Hora de finalización</FormLabel>
+                                                                <Input
+                                                                    type="time"
+                                                                    name="end_time"
+                                                                    value={field.value || endTime}
+                                                                    onChange={(e) => {
+                                                                        setEndTime(e.target.value)
+                                                                        field.onChange(e.target.value)
+                                                                    }}
+                                                                    className='w-[250px]'
+                                                                />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </>
+                                            )}
+
+                                            {editingId && (
+                                                <FormField
+                                                    control={control}
+                                                    name='status'
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Estado</FormLabel>
+                                                            <Select
+                                                                value={field.value}
+                                                                onValueChange={field.onChange}
+                                                            >
+                                                                <SelectTrigger className="w-[250px]">
+                                                                    <SelectValue placeholder="Seleccione un estado" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="pendiente">Pendiente</SelectItem>
+                                                                    <SelectItem value="ejecutado">Ejecutado</SelectItem>
+                                                                    <SelectItem value="cancelado">Cancelado</SelectItem>
+                                                                    <SelectItem value="reprogramado">Reprogramado</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            )}
 
                                             <FormField
                                                 control={control}
@@ -1053,7 +1247,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                 )}
                                             />
 
-                                            <Button type="submit" className="w-full">
+                                            <Button type="submit" className="w-[250px]">
                                                 {editingId ? 'Guardar Cambios' : 'Agregar Fila'}
                                             </Button>
                                             <Button type="button" onClick={() => {
@@ -1069,7 +1263,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                         )}
                     </AnimatePresence>
                     <motion.div
-                        animate={{ width: isEditing ? "70%" : "100%" }}
+                        animate={{ width: isEditing ? "77%" : "100%" }}
                         transition={{ duration: 0.3 }}
                         className="overflow-x-auto"
                     >

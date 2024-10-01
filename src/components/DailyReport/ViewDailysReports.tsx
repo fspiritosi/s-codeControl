@@ -154,15 +154,34 @@ export default function ViewDailysReports() {
   const transformedReports = transformDailyReports(dailyReports);
   console.log(transformedReports);
 
+  // const handleStatusChangeWithWarning = (id: string, status: boolean) => {
+  //   if (!status) { // Si el nuevo estado es 'cerrado' (false)
+  //     setPendingStatusChange({ id, status });
+  //     setWarningDialogOpen(true);
+  //   } else {
+  //     handleStatusChange(id, status);
+  //   }
+  // };
+
   const handleStatusChangeWithWarning = (id: string, status: boolean) => {
+    const report = dailyReports.find(r => r.id === id);
+    if (!report) return;
+  
     if (!status) { // Si el nuevo estado es 'cerrado' (false)
+      // Verificar si alguna fila tiene el estado "pendiente"
+      const hasPendingRows = report.dailyreportrows.some(row => row.status === 'pendiente');
+      if (hasPendingRows) {
+        alert('No se puede cerrar el parte diario porque algunas filas están en estado "pendiente".');
+        return;
+      }
+      // Mostrar mensaje de advertencia antes de cerrar
       setPendingStatusChange({ id, status });
       setWarningDialogOpen(true);
     } else {
       handleStatusChange(id, status);
     }
   };
-
+  
   const confirmStatusChange = () => {
     if (pendingStatusChange) {
       handleStatusChange(pendingStatusChange.id, pendingStatusChange.status);
