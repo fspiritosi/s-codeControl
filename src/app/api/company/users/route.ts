@@ -4,16 +4,17 @@ export async function GET(request: NextRequest) {
   const supabase = supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
-  const user_id = searchParams.get('user');
-  try {
-    let { data: companies, error } = await supabase.from('company').select('*,city(name)').eq('id', company_id);
 
-    const data = companies;
+  try {
+    let { data: company_users, error } = await supabase
+      .from('share_company_users')
+      .select('*,  profile_id(*)')
+      .eq('company_id', company_id);
 
     if (error) {
       throw new Error(JSON.stringify(error));
     }
-    return Response.json({ data });
+    return Response.json({ company_users });
   } catch (error) {
     console.log(error);
   }

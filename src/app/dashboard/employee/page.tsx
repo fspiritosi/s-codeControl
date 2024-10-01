@@ -18,7 +18,7 @@ const EmployeePage = async () => {
       {
         value: 'employees',
         name: 'Empleados',
-        restricted: [''],
+        restricted: [],
         content: {
           title: 'Empleados',
           description: 'Aquí encontrarás todos empleados',

@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect } from 'react';
 import { FiTool, FiTruck } from 'react-icons/fi';
 import {
   MdHelpOutline,
@@ -78,7 +77,6 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
     },
     { link: null, matchLength: 0 }
   ).link.name;
-
 
   return (
     <div

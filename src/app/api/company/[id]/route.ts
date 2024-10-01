@@ -7,11 +7,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   const company_id = searchParams.get('actual');
   const id = params.id;
   try {
-    let { data: companies, error } = await supabase
-      .from('company')
-      .select('*,city(name)')
-      .eq('id', company_id)
-      
+    let { data: companies, error } = await supabase.from('company').select('*,city(name)').eq('id', company_id);
 
     const data = companies;
 

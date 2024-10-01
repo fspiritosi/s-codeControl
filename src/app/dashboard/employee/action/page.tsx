@@ -56,7 +56,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
     const { employee } = await fetch(
       `${URL}/api/employees/${searchParams.employee_id}?actual=${company_id}&user=${user?.data?.user?.id}`
     ).then((e) => e.json());
-console.log('employee',employee);
+
     formattedEmployee = setEmployeesToShow(employee)?.[0];
 
     let { data: guilds, error } = await supabase
@@ -101,14 +101,10 @@ console.log('employee',employee);
     });
   }
 
-  console.log(formattedEmployee,'formattedEmployee');
+  console.log(formattedEmployee, 'formattedEmployee');
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">
-      <Card
-        className={cn(
-          'col-span-8 flex flex-col justify-between overflow-hidden'
-        )}
-      >
+      <Card className={cn('col-span-8 flex flex-col justify-between overflow-hidden')}>
         <EmployeeComponent
           guild={guild}
           covenants={covenants}
