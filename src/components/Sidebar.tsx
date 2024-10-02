@@ -11,6 +11,7 @@ import {
   MdOutlineCorporateFare,
   MdOutlinePersonAddAlt,
   MdOutlineSpaceDashboard,
+  MdCalendarMonth,
 } from 'react-icons/md';
 import { CardTitle } from './ui/card';
 
@@ -54,6 +55,12 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
       href: '/dashboard/document',
       icon: <MdListAlt size={sizeIcons} />,
       regex: /^\/dashboard\/document(\/|$)/,
+    },
+    {
+      name: 'Operaciones',
+      href: '/dashboard/operations',
+      icon: <MdCalendarMonth size={sizeIcons} />,
+      regex: /^\/dashboard\/operations(\/|$)/,
     },
     {
       name: 'Mantenimiento',

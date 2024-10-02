@@ -8,6 +8,7 @@ import {
   MdOutlineCorporateFare,
   MdOutlinePersonAddAlt,
   MdOutlineSpaceDashboard,
+  MdCalendarMonth,
 } from 'react-icons/md';
 import SideBar from './Sidebar';
 
@@ -167,6 +168,11 @@ async function SideBarContainer() {
       icon: <MdListAlt size={sizeIcons} />,
       position: 5,
       // regex: /^\/dashboard\/document(\/|$)/,
+    },
+    {
+      name: 'Operaciones',
+      href: '/dashboard/operations',
+      icon: <MdCalendarMonth size={sizeIcons} />,
     },
     {
       name: 'Mantenimiento',
