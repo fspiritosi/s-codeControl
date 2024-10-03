@@ -25,7 +25,8 @@ import { format } from 'date-fns'
 import { toast } from '@/components/ui/use-toast'
 import cookies from 'js-cookie'
 import DailyReport from './DailyReport';
-
+import { usePathname, useRouter } from 'next/navigation';
+import InfoComponent from '../InfoComponent';
 interface FormData {
     date: string;
 }
@@ -34,9 +35,10 @@ interface FormData {
 
 
 export default function Create() {
+    const router = useRouter()
     const company_id = cookies.get('actualComp')
     const [openModal, setOpenModal] = useState(false);
-    const [openModal1, setOpenModal1]= useState(false)
+    const [openModal1, setOpenModal1] = useState(false)
     const [date, setDate] = useState<Date | null>(null);
     const [existingReportId, setExistingReportId] = useState<string | null>(null)
     const formMethods = useForm<FormData>();
@@ -44,61 +46,62 @@ export default function Create() {
     const handleOpenModal = () => {
         setOpenModal(true);
     }
-    const handleOpenModal1= () =>{
+    const handleOpenModal1 = () => {
         setOpenModal1(true)
     }
 
     const handleCloseModal = () => {
         setOpenModal(false);
     }
-    
-    const handleCloseModal1=() =>{
+
+    const handleCloseModal1 = () => {
         setOpenModal1(false)
+        router.refresh();
     }
-    const  saveDate = async (date: string) => {
-        
+    const saveDate = async (date: string) => {
+
         const existingReportResponse = await fetch(`/api/daily-report/check-date/?date=${date}&company_id=${company_id}`);
-            const existingReportData = await existingReportResponse.json();
+        const existingReportData = await existingReportResponse.json();
 
-            if (existingReportData.exists) {
-                toast({
-                    title: "Error",
-                    description: "Ya existe un parte diario para esta fecha.",
-                    variant: "destructive",
-                });
-                return; // Exit the function if a report already exists
-            }
-
-            // Create a new daily report if it doesn't exist
-            const dailyReportResponse = await fetch('/api/daily-report', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    date: date,
-                    company_id: company_id,
-                    status: true,
-                }),
+        if (existingReportData.exists) {
+            toast({
+                title: "Error",
+                description: "Ya existe un parte diario para esta fecha.",
+                variant: "destructive",
             });
+            return; // Exit the function if a report already exists
+        }
 
-            if (!dailyReportResponse.ok) {
-                const errorText = await dailyReportResponse.text();
-                throw new Error(`Error al crear el parte diario: ${errorText}`);
-            }
-            const { data: newDailyReport } = await dailyReportResponse.json();
-            
-            const dailyReportId = newDailyReport; // Asegúrate de que esto sea correcto
-            console.log(dailyReportId[0].id);
-            setExistingReportId(dailyReportId);
+        // Create a new daily report if it doesn't exist
+        const dailyReportResponse = await fetch('/api/daily-report', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                date: date,
+                company_id: company_id,
+                status: true,
+            }),
+        });
 
-            setOpenModal(false);
-            handleOpenModal1();
+        if (!dailyReportResponse.ok) {
+            const errorText = await dailyReportResponse.text();
+            throw new Error(`Error al crear el parte diario: ${errorText}`);
+        }
+        const { data: newDailyReport } = await dailyReportResponse.json();
+
+        const dailyReportId = newDailyReport[0]; // Asegúrate de que esto sea correcto
+        
+        setExistingReportId(dailyReportId);
+
+        setOpenModal(false);
+        handleOpenModal1();
     }
     const onSubmit: SubmitHandler<FormData> = (data) => {
         saveDate(data.date);
     }
-    console.log(date);
+    
     return (
         <div>
             <Button onClick={handleOpenModal}>Crear Parte Diario</Button>
@@ -107,7 +110,7 @@ export default function Create() {
                     <DialogContent className="max-w-[30vw] h-[40vh] flex flex-col">
                         <DialogHeader>
                             <DialogTitle>Parte Diario</DialogTitle>
-                            <DialogDescription>
+                            <DialogDescription >
                                 Seleccione la Fecha del nuevo parte diario
                             </DialogDescription>
                         </DialogHeader>
@@ -170,13 +173,17 @@ export default function Create() {
                 <Dialog open={openModal1} onOpenChange={setOpenModal1}>
                     <DialogContent className="max-w-[95vw] h-[90vh] flex flex-col">
                         <DialogHeader>
-                            <DialogTitle>Parte Diario</DialogTitle>
-                            <DialogDescription>
-                               fecha: {date ? format(date, "dd/MM/yyyy") : ""}
+                            <DialogTitle>Parte Diario Modal</DialogTitle>
+                            <DialogDescription className="flex items-center space-x-4">
+                                <span>fecha: {date ? format(date, "dd/MM/yyyy") : ""}</span>
+                                <InfoComponent
+                                    size='sm'
+                                    message={`- Corroborar la afectación de los recursos al cliente en caso de que no aparezcan.\n- Los empleados deben tener un diagrama activo para que aparezcan en el parte diario.\n- Los equipos que se encuentren "En Reparación" o "No Operativos" no se podrán seleccionar.`}
+                                />
                             </DialogDescription>
                         </DialogHeader>
                         <div className="flex-grow overflow-auto">
-                            <DailyReport reportData={existingReportId as any}/>
+                            <DailyReport reportData={existingReportId as any} />
                         </div>
                         <DialogFooter>
                             <Button variant="outline" onClick={handleCloseModal1}>Cerrar</Button>
