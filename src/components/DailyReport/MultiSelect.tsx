@@ -38,7 +38,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   onChange,
 }) => {
   const [internalSelectedItems, setInternalSelectedItems] = useState<string[]>(selectedItems);
-console.log(internalSelectedItems);
+  console.log(internalSelectedItems);
   useEffect(() => {
     // Resetear internalSelectedItems cuando multiEmp cambie
     setInternalSelectedItems([]);
@@ -50,7 +50,7 @@ console.log(internalSelectedItems);
   }, [selectedItems]);
 
   const handleSelectChange = (value: string) => {
-    setInternalSelectedItems((prev=[]) => {
+    setInternalSelectedItems((prev = []) => {
       const newSelectedItems = prev?.includes(value) ? prev.filter((item) => item !== value) : [...prev, value];
       onChange(newSelectedItems); // Llama a la función onChange con las nuevas selecciones
       return newSelectedItems;
@@ -59,9 +59,9 @@ console.log(internalSelectedItems);
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button variant={'outline'} disabled={disabled}>
-          {internalSelectedItems?.length > 0 ? `${internalSelectedItems.length} ${placeholder}` : placeholder}
+      <PopoverTrigger asChild className='w-full max-w-xs'>
+        <Button variant={'outline'} disabled={disabled} className="flex justify-between items-center w-full">
+          <span>{internalSelectedItems?.length > 0 ? `${internalSelectedItems.length} ${placeholder}` : placeholder}</span>
           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
