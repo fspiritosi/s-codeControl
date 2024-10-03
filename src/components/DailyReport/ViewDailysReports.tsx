@@ -30,6 +30,7 @@ import {
 import { startOfMonth, endOfMonth } from 'date-fns';
 import moment, { Moment } from 'moment';
 import InfoComponent from '../InfoComponent';
+import { useRouter } from 'next/navigation';
 interface DailyReportItem {
   id: string;
   date: string;
@@ -66,6 +67,7 @@ export default function ViewDailysReports() {
   const [pendingStatusChange, setPendingStatusChange] = useState<{ id: string, status: boolean } | null>(null);
   const [statusFilter, setStatusFilter] = useState<'abierto' | 'cerrado' | 'todos'>('todos');
   const [isEditing, setIsEditing] = useState(false);
+  const router = useRouter();
   useEffect(() => {
     const now = new Date();
     setStartDate(startOfMonth(now));
@@ -131,7 +133,7 @@ export default function ViewDailysReports() {
 
   useEffect(() => {
     fetchReports();
-  }, [company_id]);
+  }, [company_id,openModal]);
   
   const transformDailyReports = (reports: any[]): DailyReportData[] => {
     return reports.map(report => ({
@@ -254,6 +256,7 @@ export default function ViewDailysReports() {
   const handleCloseModal = () => {
     setOpenModal(false);
     setSelectedReport(null);
+    router.refresh();
   };
 
   const handleSaveReport = async (updatedReport: DailyReportData) => {

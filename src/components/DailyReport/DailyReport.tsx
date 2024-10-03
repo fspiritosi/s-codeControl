@@ -505,7 +505,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             handleSelectService(itemToEdit.services)
             setValue('item', itemToEdit.item)
             // Normalizar el valor de working_day
-            const normalizedWorkingDay = itemToEdit.working_day.trim().toLowerCase();
+            const normalizedWorkingDay = itemToEdit.working_day?.trim().toLowerCase();
             
 
             // Verificar si la jornada es de 8 o 12 horas y poner en vacío la hora de inicio y fin
