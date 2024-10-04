@@ -411,7 +411,15 @@ export default function ViewDailysReports() {
               <span>Fecha: {selectedReport?.date ? moment(selectedReport.date).format('DD/MM/YYYY') : ''}</span>
               <InfoComponent
                 size='sm'
-                message={`- Corroborar la afectación de los recursos al cliente en caso de que no aparezcan.\n- Los empleados deben tener un diagrama activo para que aparezcan en el parte diario.\n- Los equipos que se encuentren "En Reparación" o "No Operativos" no se podrán seleccionar.`}
+                message={`Los empleados no afectados y sin diagrama no se muestran.`}
+              />
+              <InfoComponent
+                size='sm'
+                message={`Los clientes dados de baja no se muestran.`}
+              />
+              <InfoComponent
+                size='sm'
+                message={`Los servicios vencidos o de baja no se muestran.`}
               />
             </DialogDescription>
           </DialogHeader>
