@@ -993,7 +993,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
 
     
     return (
-        <div className="container mx-auto p-4">
+        <div className="mx-auto p-4">
             <div className="relative w-full h-full overflow-hidden">
                 <motion.div
                     className="flex w-full"
