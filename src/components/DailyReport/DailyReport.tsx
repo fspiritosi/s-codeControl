@@ -49,7 +49,8 @@ import {
 } from "@/components/ui/dialog";
 import { id } from 'date-fns/locale'
 import moment, { Moment } from 'moment';
-
+import { zodResolver } from '@hookform/resolvers/zod'
+import { dailyReportSchema } from '@/zodSchemas/schemas'
 
 interface Customers {
     id: string
@@ -249,8 +250,9 @@ export default function DailyReport({ reportData }: DailyReportProps) {
 
     const URL = process.env.NEXT_PUBLIC_BASE_URL
     const formMethods = useForm<DailyReportItem>({
+        resolver: zodResolver(dailyReportSchema),
         defaultValues: {
-            // date: '',
+            
             customer: undefined,
             employees: [],
             equipment: [],
@@ -1058,7 +1060,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                             <FormField
                                                 control={control}
                                                 name='customer'
-                                                render={({ field }) => (
+                                                render={({ field, fieldState }) => (
                                                     <FormItem>
                                                         <FormLabel>Cliente</FormLabel>
                                                         <Select
@@ -1081,13 +1083,14 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                                 </SelectGroup>
                                                             </SelectContent>
                                                         </Select>
+                                                        {fieldState.error && <p className="text-red-500">{fieldState.error.message}</p>}
                                                     </FormItem>
                                                 )}
                                             />
                                             <FormField
                                                 control={control}
                                                 name='services'
-                                                render={({ field }) => (
+                                                render={({ field, fieldState }) => (
                                                     <FormItem>
                                                         <FormLabel>Servicios</FormLabel>
                                                         <Select
@@ -1111,6 +1114,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                                 </SelectGroup>
                                                             </SelectContent>
                                                         </Select>
+                                                        {fieldState.error && <p className="text-red-500">{fieldState.error.message}</p>}
                                                     </FormItem>
                                                 )}
                                             />
@@ -1118,7 +1122,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                             <FormField
                                                 control={control}
                                                 name='item'
-                                                render={({ field }) => (
+                                                render={({ field, fieldState }) => (
                                                     <FormItem>
                                                         <FormLabel>Items</FormLabel>
                                                         <Select
@@ -1139,6 +1143,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                                 </SelectGroup>
                                                             </SelectContent>
                                                         </Select>
+                                                        {fieldState.error && <p className="text-red-500">{fieldState.error.message}</p>}
                                                     </FormItem>
                                                 )}
                                             />
