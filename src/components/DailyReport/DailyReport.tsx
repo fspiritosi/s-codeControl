@@ -48,6 +48,7 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import { id } from 'date-fns/locale'
+import moment, { Moment } from 'moment';
 
 
 interface Customers {
@@ -332,10 +333,48 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         fetchServices()
         fetchItems()
         fetchDiagrams()
+        
         // fetchRepairOrders()
     }, [])
+    console.log()
+    // useEffect(() => {
+    //     // Filtrar clientes que tienen servicios
+    //     const customersWithServices = customers.filter((customer) =>
+    //         services.some((service) => service.customer_id === customer.id)
+    //     );
+    //     if (customersWithServices.length !== customers.length) {
+    //         setCustomers(customersWithServices);
+    //     }
+    // }, [customers, services]);
 
+    useEffect(() => {
+        // Filtrar servicios válidos en la fecha del parte diario
+        const validServices = services.filter((service) => {
+            const serviceStartDate = moment(service.service_start).toDate();
+            const serviceValidityDate = moment(service.service_validity).toDate();
+            const reportDate = moment(reportData?.date).toDate();
+            console.log(serviceStartDate, serviceValidityDate);
+            return (
+                service.is_active &&
+                reportDate >= serviceStartDate &&
+                reportDate <= serviceValidityDate
+            );
+        });
+        console.log(validServices);
     
+        // Filtrar clientes que tienen servicios válidos
+        const customersWithServices = customers.filter((customer) =>
+            validServices.some((service) => service.customer_id === customer.id)
+        );
+    
+        console.log(customersWithServices);
+    
+        // Solo actualizar el estado si la lista filtrada es diferente
+        if (customersWithServices.length !== customers.length) {
+            setCustomers(customersWithServices);
+        }
+    }, [customers, services, reportData]);
+
     useEffect(() => {
         if (reportData) {
             setDate(new Date(reportData.date))
