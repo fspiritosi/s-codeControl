@@ -87,7 +87,10 @@ export default function CodeControlLogin() {
           }
           router.push(`/maintenance/${equipment_id}`);
         } else {
-          const { data, error } = await supabase.from('employees').select().eq('cuil', cuil);
+          const { data, error } = await supabase
+            .from('employees')
+            .select()
+            .eq('cuil', cuil || '');
 
           console.log(data, error);
 

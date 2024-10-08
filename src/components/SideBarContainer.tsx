@@ -3,12 +3,12 @@ import InitState from '@/store/InitUser';
 import { cookies } from 'next/headers';
 import { FiTool, FiTruck } from 'react-icons/fi';
 import {
+  MdCalendarMonth,
   MdHelpOutline,
   MdListAlt,
   MdOutlineCorporateFare,
   MdOutlinePersonAddAlt,
   MdOutlineSpaceDashboard,
-  MdCalendarMonth,
 } from 'react-icons/md';
 import SideBar from './Sidebar';
 
@@ -21,7 +21,7 @@ async function SideBarContainer() {
   const { data: credentialUser, error: profileError } = await supabase
     .from('profile')
     .select('*')
-    .eq('credential_id', user?.id);
+    .eq('credential_id', user?.id || '');
 
   if (profileError) console.log(profileError);
 
@@ -69,7 +69,7 @@ async function SideBarContainer() {
     )
   `
     )
-    .eq('owner_id', user?.id);
+    .eq('owner_id', user?.id || '');
   if (error) console.log(error);
   let { data: share_company_users, error: sharedError } = await supabase
     .from('share_company_users')
@@ -114,7 +114,7 @@ async function SideBarContainer() {
     )
   )`
     )
-    .eq('profile_id', user?.id);
+    .eq('profile_id', user?.id || '');
 
   if (sharedError) console.log(sharedError);
 
@@ -124,10 +124,10 @@ async function SideBarContainer() {
   const actualCompany = cookiesStore?.get('actualComp')?.value;
 
   if (actualCompany) {
-    const is_owner = companies?.find((company) => company.id === actualCompany)?.owner_id.id === user?.id;
+    const is_owner = (companies?.find((company) => company.id === actualCompany) as any)?.owner_id.id === user?.id;
     // console.log(is_owner, 'is_owner', share_company_users);
     const is_shared = share_company_users?.find(
-      (company) => company.company_id.id === actualCompany && company.profile_id === user?.id
+      (company: any) => company.company_id.id === actualCompany && company.profile_id === user?.id
     );
     role = is_owner ? 'owner' : is_shared?.role;
   }

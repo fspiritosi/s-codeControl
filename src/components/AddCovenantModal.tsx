@@ -57,7 +57,7 @@ export default function AddCovenantModal({
       async () => {
         const { data, error } = await supabase
           .from('covenant')
-          .insert([{ name: name, company_id, guild_id }])
+          .insert([{ name: name, company_id, guild_id }] as any)
           .select();
         if (error) throw new Error(error.message);
         document.getElementById('close-covenant-modal')?.click();

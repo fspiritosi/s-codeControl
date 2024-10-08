@@ -196,7 +196,7 @@ export function EditModal({ Equipo }: Props) {
       const { data, error } = await supabase
         .from('employees')
         .select('firstname,lastname, cuil,id')
-        .eq('company_id', actualCompany?.id);
+        .eq('company_id', actualCompany?.id || '');
 
       if (error) {
         console.error('Error al obtener datos adicionales:', error);
@@ -207,7 +207,7 @@ export function EditModal({ Equipo }: Props) {
       const { data, error } = await supabase
         .from('vehicles')
         .select('domain, serie, intern_number,id')
-        .eq('company_id', actualCompany?.id);
+        .eq('company_id', actualCompany?.id || '');
 
       if (error) {
         console.error('Error al obtener datos adicionales:', error);
@@ -226,10 +226,10 @@ export function EditModal({ Equipo }: Props) {
     const table = tableNames[Equipo.applies as 'Equipos' | 'Persona'];
 
     const { data: existingEntries, error: existingEntriesError } = await supabase
-      .from(table)
+      .from(table as 'documents_equipment' | 'documents_employees')
       .select('applies(*),id')
       .eq('id_document_types', Equipo.id)
-      .eq('applies.company_id', actualCompany?.id)
+      .eq('applies.company_id', actualCompany?.id || '')
       .not('applies', 'is', null);
 
     if (existingEntriesError) {
@@ -269,7 +269,7 @@ export function EditModal({ Equipo }: Props) {
             applies: resource.id,
           }));
 
-          const { error: insertError } = await supabase.from(table).insert(alerts);
+          const { error: insertError } = await supabase.from(table as any).insert(alerts);
 
           if (insertError) {
             throw new Error(handleSupabaseError(insertError.message));
@@ -302,7 +302,7 @@ export function EditModal({ Equipo }: Props) {
     toast.promise(
       async () => {
         const { data, error } = await supabase
-          .from(table)
+          .from(table as any)
           .delete()
           .eq('id_document_types', Equipo.id)
           .is('document_path', null);

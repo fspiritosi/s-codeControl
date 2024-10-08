@@ -13,7 +13,11 @@ export default async function Cct() {
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
 
-  let { data: guild } = await supabase.from('guild').select('*').eq('company_id', company_id).select();
+  let { data: guild } = await supabase
+    .from('guild')
+    .select('*')
+    .eq('company_id', company_id || '')
+    .select();
 
   const guildData = {
     ...guild,
@@ -22,7 +26,10 @@ export default async function Cct() {
     }),
   };
 
-  let { data: covenants } = await supabase.from('covenant').select('*, guild_id(name)').eq('company_id', company_id);
+  let { data: covenants } = await supabase
+    .from('covenant')
+    .select('*, guild_id(name)')
+    .eq('company_id', company_id || '');
   const covenantsId = covenants?.map((e) => e.id);
 
   const convenantsData = {

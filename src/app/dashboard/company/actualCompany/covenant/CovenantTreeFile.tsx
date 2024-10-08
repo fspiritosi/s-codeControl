@@ -11,7 +11,7 @@ export default async function CovenantTreeFile() {
   const { data: guild, error } = await supabase
     .from('guild')
     .select('*,covenant(*,category(*))')
-    .eq('company_id', company_id);
+    .eq('company_id', company_id || '');
 
   function formatData(input: Guild[] | null): FormattedOutput {
     return input?.map((guild) => ({
@@ -36,7 +36,7 @@ export default async function CovenantTreeFile() {
     name: 'Sindicatos',
     type: 'sindicatoPadre',
     id: '0',
-    children: formatData(guild),
+    children: formatData(guild as Guild[]),
   };
 
   return (

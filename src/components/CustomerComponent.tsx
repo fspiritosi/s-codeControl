@@ -3,7 +3,8 @@
 import { columnsGuests } from '@/app/dashboard/company/actualCompany/components/columnsGuests';
 import { DataTable as DataTableInvited } from '@/app/dashboard/company/actualCompany/components/data-table';
 import { createdCustomer, updateCustomer } from '@/app/dashboard/company/customers/action/create';
-import { DataTable } from '@/app/dashboard/company/customers/action/data-table';
+import { EmployeesListColumns } from '@/app/dashboard/employee/columns';
+import { EmployeesTable } from '@/app/dashboard/employee/data-table';
 import { EquipmentTable } from '@/app/dashboard/equipment/data-equipment';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
@@ -21,10 +22,7 @@ import { useForm } from 'react-hook-form';
 import { Toaster, toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../supabase/supabase';
-import { columns } from '../app/dashboard/company/customers/action/columnsCustomers';
 import { EquipmentColums as columns1 } from '../app/dashboard/equipment/columns';
-import { EmployeesTable } from '@/app/dashboard/employee/data-table';
-import { EmployeesListColumns } from '@/app/dashboard/employee/columns';
 
 export default function ClientRegister({ id }: { id: string }) {
   const router = useRouter();
@@ -42,17 +40,16 @@ export default function ClientRegister({ id }: { id: string }) {
   //   (customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id)
   // );
   const filteredCustomersEmployees = employees
-  ?.filter((customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id))
-  .map((customer: any) => ({
-    ...customer,
-    guild: customer.guild?.name
-  }));
-
+    ?.filter((customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id))
+    .map((customer: any) => ({
+      ...customer,
+      guild: customer.guild?.name,
+    }));
 
   const filteredCustomersEquipment = equipment?.filter(
     (customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id)
   );
- 
+
   // const setActivesEmployees = useLoggedUserStore((state) => state.setActivesEmployees);
   // const setInactiveEmployees = useLoggedUserStore((state) => state.setInactiveEmployees);
   // const showDeletedEmployees = useLoggedUserStore((state) => state.showDeletedEmployees);
@@ -86,7 +83,11 @@ export default function ClientRegister({ id }: { id: string }) {
 
     const id = searchParams.get('id');
     const fetchCustomerData = async () => {
-      const { data, error } = await supabase.from('customers').select('*').eq('id', id).single();
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', id || '')
+        .single();
 
       if (error) {
         console.error('Error fetching customer data:', error);
@@ -301,9 +302,8 @@ export default function ClientRegister({ id }: { id: string }) {
                       // allCompany={allCompany}
                       // showInactive={showInactive}
                       // setShowInactive={setShowInactive}
-                      />
+                    />
                   </CardContent>
-
                 </Card>
               </div>
             </TabsContent>
@@ -311,7 +311,7 @@ export default function ClientRegister({ id }: { id: string }) {
               <Card>
                 <CardContent>
                   <EquipmentTable
-                    columns={columns1||[]}
+                    columns={columns1 || []}
                     data={filteredCustomersEquipment || []}
                     // allCompany={allCompany}
                     // showInactive={showInactive}
@@ -321,12 +321,11 @@ export default function ClientRegister({ id }: { id: string }) {
               </Card>
             </TabsContent>
             <TabsContent value="invitados">
-                <Card>
-                  <CardContent className='p-4'>
-                    <DataTableInvited data={guestsData || []} columns={columnsGuests} />
-                  </CardContent>
-                </Card>
-              
+              <Card>
+                <CardContent className="p-4">
+                  <DataTableInvited data={guestsData || []} columns={columnsGuests} />
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </section>

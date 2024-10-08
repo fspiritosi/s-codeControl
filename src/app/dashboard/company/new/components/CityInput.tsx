@@ -25,7 +25,7 @@ export default function CityInput({ provinces, defaultProvince, defaultCity }: P
       .select('*')
       .eq('province_id', parseInt(id));
 
-    const filteredCities = cities?.filter((city) => city?.province_id == id);
+    const filteredCities = cities?.filter((city) => city?.province_id == parseInt(id));
 
     setCities(cities);
     return filteredCities;

@@ -19,7 +19,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
   const { data: userShared } = await supabase
     .from('share_company_users')
     .select('*')
-    .eq('profile_id', user?.data?.user?.id);
+    .eq('profile_id', user?.data?.user?.id || '');
 
   const role: string | null = userShared?.[0]?.role || null;
 
@@ -62,7 +62,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
     let { data: guilds, error } = await supabase
       .from('guild')
       .select('*')
-      .eq('company_id', company_id)
+      .eq('company_id', company_id || '')
       .eq('is_active', true);
 
     const guildIds = guilds?.map((guild: any) => guild.id);

@@ -45,20 +45,17 @@ import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { addMonths, format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ArrowUpDown, CalendarIcon } from 'lucide-react';
-import Link from 'next/link';
+import { CalendarIcon } from 'lucide-react';
 import { Fragment, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../../../../../supabase/supabase';
 
-
 const editCovenantSchema = z.object({
   covenant: z.string().nonempty('El nombre del convenio es requerido.'),
-}); 
+});
 const formSchema = z.object({
-  
   termination_date: z.date({
     required_error: 'La fecha de baja es requerida.',
   }),
@@ -66,8 +63,8 @@ const formSchema = z.object({
 
 type Colum = {
   name: string;
-  created_at:Date;
-  is_active:boolean;
+  created_at: Date;
+  is_active: boolean;
 };
 
 export const columns: ColumnDef<Colum>[] = [
@@ -100,7 +97,7 @@ export const columns: ColumnDef<Colum>[] = [
         setShowCovenantModal(!showCovenantModal);
       };
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
-      
+
       const fetchCovenant = async () => {
         try {
           const { data, error } = await supabase
@@ -130,14 +127,14 @@ export const columns: ColumnDef<Colum>[] = [
       const formEditCovenant = useForm<z.infer<typeof editCovenantSchema>>({
         resolver: zodResolver(editCovenantSchema),
         defaultValues: {
-          covenant: '', 
+          covenant: '',
         },
       });
 
       const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-        //   reason_for_termination: undefined,
+          //   reason_for_termination: undefined,
         },
       });
 
@@ -150,14 +147,12 @@ export const columns: ColumnDef<Colum>[] = [
               .from('covenant')
               .update({
                 is_active: true,
-                
               })
               .eq('id', covenant.id)
               //.eq('company_id', actualCompany?.id)
               .select();
 
             setIntegerModal(!integerModal);
-            
 
             if (error) {
               throw new Error(handleSupabaseError(error.message));
@@ -186,20 +181,18 @@ export const columns: ColumnDef<Colum>[] = [
               .from('covenant')
               .update({
                 is_active: false,
-                
               })
               .eq('id', covenant.id)
-              .eq('company_id', actualCompany?.id)
+              .eq('company_id', actualCompany?.id || '')
               .select();
 
-
-              const { error: categoryError } = await supabase
+            const { error: categoryError } = await supabase
               .from('category')
               .update({
                 is_active: false,
               })
-              .eq('covenant_id', covenant.id)
-              // .eq('company_id', actualCompany?.id);
+              .eq('covenant_id', covenant.id);
+            // .eq('company_id', actualCompany?.id);
 
             if (categoryError) {
               throw new Error(handleSupabaseError(categoryError.message));
@@ -228,10 +221,10 @@ export const columns: ColumnDef<Colum>[] = [
             const { data, error } = await supabase
               .from('covenant')
               .update({
-                name: values.covenant, 
+                name: values.covenant,
               })
               .eq('id', covenant.id)
-              .eq('company_id', actualCompany?.id)
+              .eq('company_id', actualCompany?.id || '')
               .select();
 
             setShowCovenantModal(!showCovenantModal);
@@ -286,7 +279,6 @@ export const columns: ColumnDef<Colum>[] = [
                   <div className="w-full">
                     <Form {...form}>
                       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                        
                         <FormField
                           control={form.control}
                           name="termination_date"
@@ -315,7 +307,6 @@ export const columns: ColumnDef<Colum>[] = [
                                   </FormControl>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
-                                  
                                   <Select
                                     onValueChange={(e) => {
                                       setMonth(new Date(e));
@@ -395,8 +386,15 @@ export const columns: ColumnDef<Colum>[] = [
                             <FormItem>
                               <FormLabel>Nombre</FormLabel>
                               <FormControl>
-                                <Input placeholder="Nombre del sindicato" {...field} value={covenantName} onChange={(c)=>{setCovenantName(c.target.value);
-                                field.onChange(c);}}  />
+                                <Input
+                                  placeholder="Nombre del sindicato"
+                                  {...field}
+                                  value={covenantName}
+                                  onChange={(c) => {
+                                    setCovenantName(c.target.value);
+                                    field.onChange(c);
+                                  }}
+                                />
                               </FormControl>
                               <FormDescription>Nombre del convenio</FormDescription>
                               <FormMessage />
@@ -428,15 +426,17 @@ export const columns: ColumnDef<Colum>[] = [
             <DropdownMenuItem>
               {role !== 'Invitado' && (
                 <Fragment>
-
-                  <Button variant="destructive" onClick={() => handleOpenCovenantModal(covenant?.id)} className="text-sm">
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleOpenCovenantModal(covenant?.id)}
+                    className="text-sm"
+                  >
                     Editar Convenio
                   </Button>
-
                 </Fragment>
               )}
             </DropdownMenuItem>
-            
+
             <DropdownMenuItem>
               {role !== 'Invitado' && (
                 <Fragment>
@@ -457,7 +457,7 @@ export const columns: ColumnDef<Colum>[] = [
       );
     },
   },
-  
+
   {
     accessorKey: 'name',
     header: 'Nombre',
@@ -467,7 +467,7 @@ export const columns: ColumnDef<Colum>[] = [
     accessorKey: 'guild_id',
     header: 'Sindicato',
   },
-  
+
   {
     accessorKey: 'showUnavaliableCovenant',
     header: 'Ver convenios dados de baja',

@@ -106,11 +106,14 @@ function CreatedForm() {
   const pathname = usePathname();
   const { replace } = useRouter();
   const searchParams = useSearchParams();
-  const params = new URLSearchParams(searchParams);
+  const params = new URLSearchParams(searchParams as any);
   const formId = params.get('form_id');
 
   const fetchAnswers = async () => {
-    let { data: form_answers } = await supabase.from('form_answers').select('*,form_id(*)').eq('form_id', formId);
+    let { data: form_answers } = await supabase
+      .from('form_answers')
+      .select('*,form_id(*)')
+      .eq('form_id', formId || '');
 
     setForms(form_answers);
   };
