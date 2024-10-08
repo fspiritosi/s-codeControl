@@ -11,13 +11,14 @@ export async function GET(request: NextRequest) {
 
   try {
     let { data: existingReport, error } = await supabase
-      .from('dailyreport')
+      .from('dailyreport' as any)
       .select('*')
       .eq('date', date)
       .eq('company_id', company_id)
       .single(); // Asumimos que solo debería haber un reporte diario por fecha y compañía
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 es el código de error para "no rows found"
+    if (error && error.code !== 'PGRST116') {
+      // PGRST116 es el código de error para "no rows found"
       throw new Error(JSON.stringify(error));
     }
 

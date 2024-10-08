@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
 
   try {
     let { data: dailyreportequipmentrelations, error } = await supabase
-      .from('dailyreportequipmentrelations')
+      .from('dailyreportequipmentrelations' as any)
       .select(`*`)
       .eq('daily_report_row_id', rowId)
       .in('equipment_id', equipment);

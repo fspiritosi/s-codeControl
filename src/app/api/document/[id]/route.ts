@@ -24,7 +24,7 @@ export async function GET(request: NextRequest, context: any) {
     if (resource === 'Persona') {
       const employeeDocument = await getEmployeeDocument(documentId);
       response = {
-        document: employeeDocument,
+        document: employeeDocument as any,
         resourceType: 'documentos-empleados',
         resource: 'employee',
       };
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest, context: any) {
     if (resource === 'Equipos') {
       const equipmentDocument = await getEquipmentDocument(documentId);
       response = {
-        document: equipmentDocument,
+        document: equipmentDocument as any,
         resourceType: 'documentos-equipos',
         resource: 'vehicle',
       };
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest, context: any) {
     if (resource === 'Empresa') {
       const companyDocument = await getCompanyDocument(documentId);
       response = {
-        document: companyDocument,
+        document: companyDocument as any,
         resourceType: 'documentos-company',
         resource: 'company',
       };

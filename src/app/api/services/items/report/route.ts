@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   try {
     let { data: items, error } = await supabase
       .from('service_items')
-      .select('*,item_measure_units(id,unit),customer_service_id(customer_id(id,name))')
+      .select('*,item_measure_units(id,unit),customer_service_id(id,customer_id(id,name))')
       // Filters
       // .eq('customer_service_id', customer_service_id)
       .eq('company_id', company_id || '');

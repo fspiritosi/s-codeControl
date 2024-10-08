@@ -7,8 +7,10 @@ export async function GET(request: NextRequest) {
   const user_id = searchParams.get('user');
 
   try {
-    let { data: services, error } = await supabase.from('customer_services').select('*').eq('company_id', company_id);
-
+    let { data: services, error } = await supabase
+      .from('customer_services')
+      .select('*')
+      .eq('company_id', company_id || '');
 
     if (error) {
       throw new Error(JSON.stringify(error));
@@ -78,7 +80,7 @@ export async function PUT(request: NextRequest) {
         service_validity: service_validity,
         is_active: is_active,
       })
-      .eq('id', id);
+      .eq('id', id || '');
 
     if (error) {
       throw new Error(JSON.stringify(error));
