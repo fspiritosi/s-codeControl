@@ -23,7 +23,7 @@ import { Label } from '../ui/label';
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
 import { YearMonthPicker } from '../ui/year-month-picker';
 
-function UploadDocumentEquipment({
+function UploadDocumentMultiEquipment({
   equipments,
   allDocumentTypes,
   currentCompany,
@@ -427,4 +427,4 @@ function UploadDocumentEquipment({
   );
 }
 
-export default UploadDocumentEquipment;
+export default UploadDocumentMultiEquipment;

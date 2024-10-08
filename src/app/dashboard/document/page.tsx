@@ -1,16 +1,26 @@
 import DocumentNav from '@/components/DocumentNav';
+import NewDocumentNoMulti from '@/components/Documents/NewDocumentNoMulti';
 import PageTableSkeleton from '@/components/Skeletons/PageTableSkeleton';
 import Viewcomponent from '@/components/ViewComponent';
 import { supabaseServer } from '@/lib/supabase/server';
 import { CompanyDocumentsType } from '@/store/loggedUser';
 import { cookies } from 'next/headers';
 import { Suspense } from 'react';
+import { Database } from '../../../../database.types';
 import CompanyTabs from './documentComponents/CompanyTabs';
 import EmployeeDocumentsTabs from './documentComponents/EmployeeDocumentsTabs';
 import EquipmentTabs from './documentComponents/EquipmentTabs';
 import TypesDocumentAction from './documentComponents/TypesDocumentAction';
 import TypesDocumentsView from './documentComponents/TypesDocumentsView';
-import NewDocumentNoMulti from '@/components/Documents/NewDocumentNoMulti';
+
+type DocumentCompany = Database['public']['Tables']['documents_company']['Row'];
+type DocumentType = Database['public']['Tables']['document_types']['Row'];
+type User = Database['public']['Tables']['profile']['Row'];
+
+type DocumentCompanyWithRelations = DocumentCompany & {
+  id_document_types: DocumentType;
+  user_id: User;
+};
 
 export default async function page() {
   const supabase = supabaseServer();
@@ -20,14 +30,14 @@ export default async function page() {
   const { data: userShared } = await supabase
     .from('share_company_users')
     .select('*')
-    .eq('profile_id', user?.data?.user?.id);
+    .eq('profile_id', user?.data?.user?.id || '');
   const role: string | null = userShared?.[0]?.role || null;
   const actualCompany = cookiesStore.get('actualComp')?.value;
 
   let { data: documents_company, error: documents_company_error } = await supabase
     .from('documents_company')
     .select('*,id_document_types(*),user_id(*)')
-    .eq('applies', actualCompany);
+    .eq('applies', actualCompany || '');
 
   const typedDataCompany: CompanyDocumentsType[] | null = documents_company as CompanyDocumentsType[];
 
@@ -64,6 +74,7 @@ export default async function page() {
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
               <DocumentNav />
+              <NewDocumentNoMulti />
             </div>
           ),
           component: <EquipmentTabs />,
@@ -81,7 +92,6 @@ export default async function page() {
             <div className="flex gap-4 flex-wrap pl-6">
               <DocumentNav />
               <NewDocumentNoMulti />
-
             </div>
           ),
           component: <CompanyTabs companyData={companyData} />,

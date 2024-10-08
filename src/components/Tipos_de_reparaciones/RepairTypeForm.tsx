@@ -268,7 +268,7 @@ export function RepairTypeForm({ types_of_repairs }: { types_of_repairs: TypeOfR
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <FormLabel >Cierre por QR</FormLabel>
-                    <FormDescription>Permite cerrar una solicitud de reparación mediante un código QR.</FormDescription>
+                    <FormDescription>Permite que un usuario de QR cierre una solicitud.</FormDescription>
                   </div>
                   <FormControl>
                     <Switch checked={field.value} onCheckedChange={field.onChange} />

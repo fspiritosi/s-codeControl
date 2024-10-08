@@ -217,7 +217,7 @@ function DiagramEmployeeView({
                         </PopoverContent>
                       </Popover>
                       <FormDescription>
-                        <InfoComponent size='sm' message={'Selecciona al menos 1 recurso para ver su diagrama.'} />
+                        <InfoComponent size="sm" message={'Selecciona al menos 1 recurso para ver su diagrama.'} />
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -261,7 +261,7 @@ function DiagramEmployeeView({
               />
             </PopoverContent>
           </Popover>
-          <span className="text-[0.8rem] text-muted-foreground">La selección maxima es de 30 días</span>
+          <InfoComponent size="sm" message={'La selección maxima es de 30 días'} />
         </div>
       </div>
       <Table>

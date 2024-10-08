@@ -154,11 +154,14 @@ export default function SimpleDocument({
           const formatedDocumentTypeName = formatDocumentTypeName(documetType?.name);
           const formatedAppliesPath = documetType.applies.toLowerCase().replace(/ /g, '-');
 
+
+          
           const { data } = await supabase.storage
             .from('document_files')
             .list(`${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/`, {
               search: `${formatedAppliesName}/${formatedDocumentTypeName}`,
             });
+
 
           if (data?.length && data?.length > 0) {
             setError(`documents.${index}.id_document_types`, {

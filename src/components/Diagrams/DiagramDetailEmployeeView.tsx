@@ -11,6 +11,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import InfoComponent from '../InfoComponent';
 
 type diagram = {
   id: string;
@@ -120,7 +121,8 @@ export function DiagramDetailEmployeeView({ diagrams }: { diagrams: diagram[] | 
               />
             </PopoverContent>
           </Popover>
-          <span className="text-[0.8rem] text-muted-foreground">La selección maxima es de 30 días</span>
+          {/* <span className="text-[0.8rem] text-muted-foreground"></span> */}
+          <InfoComponent size='sm' message={'La selección maxima es de 30 días'} />
         </div>
         <select value={diagramType?.id} onChange={handleDiagramTypeChange} className="mb-4">
           <option value="">Todos los tipos de diagrama</option>

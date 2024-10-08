@@ -60,9 +60,9 @@ export default function InitState({
         }
       }
 
-      const defaultCompany = useLoggedUserStore.getState()?.allCompanies.filter((company) => company.by_defect);
+      const defaultCompany = useLoggedUserStore.getState()?.allCompanies?.filter((company) => company.by_defect);
 
-      selectedCompany = defaultCompany.length ? defaultCompany : useLoggedUserStore.getState()?.allCompanies;
+      selectedCompany = defaultCompany?.length ? defaultCompany : useLoggedUserStore.getState()?.allCompanies;
 
       if (companies.length > 1) {
         if (selectedCompany) {

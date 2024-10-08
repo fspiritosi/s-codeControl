@@ -34,7 +34,7 @@ function AddCompanyDocumentForm({
   redirectId: string;
   documentIsUploaded: boolean;
 }) {
-  const companyDocumentTypes = useCountriesStore((state) => state.companyDocumentTypes).filter(
+  const companyDocumentTypes = useCountriesStore((state) => state.companyDocumentTypes)?.filter(
     (e) => e.applies === 'Empresa'
   );
   const user = useLoggedUserStore((state) => state.credentialUser?.id);
