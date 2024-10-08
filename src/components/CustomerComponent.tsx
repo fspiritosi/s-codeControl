@@ -21,44 +21,132 @@ import { useForm } from 'react-hook-form';
 import { Toaster, toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../supabase/supabase';
-import { columns } from '../app/dashboard/company/customers/action/columnsCustomers';
+// import { columns } from '../app/dashboard/company/customers/action/columnsCustomers';
 import { EquipmentColums as columns1 } from '../app/dashboard/equipment/columns';
 import { EmployeesTable } from '@/app/dashboard/employee/data-table';
 import { EmployeesListColumns } from '@/app/dashboard/employee/columns';
+// import { Employee } from '@/types/types';
+import { setEmployeesToShow } from '@/lib/utils/utils';
+import cookie from 'js-cookie';
+import { Table, TableBody, TableCell, TableHead, TableRow, TableHeader } from '@/components/ui/table';
+import { Badge } from './ui/badge';
+import moment from 'moment';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+
 
 export default function ClientRegister({ id }: { id: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const functionAction = id ? updateCustomer : createdCustomer;
   const [errors, setErrors] = useState<any>({});
-  const actualCompany = useLoggedUserStore((state) => state.actualCompany?.id);
+  // const actualCompany = useLoggedUserStore((state) => state.actualCompany?.id);
   const [action, setAction] = useState(searchParams.get('action'));
   const [readOnly, setReadOnly] = useState(action === 'edit' ? false : true);
   const [clientData, setClientData] = useState<any>(null);
   const [contactData, setContactData] = useState<any>(null);
-  const employees = useLoggedUserStore((state) => state.employeesToShow);
+  const [userId, setUserId] = useState<any>(null);
+  const [employ, setEmploy] = useState<any>(null);
+  const [servicesData, setServicesData] = useState<any>(null);
+  const [openModal, setOpenModal] = useState(false);
+  interface Service {
+    id: string;
+    service_name: string;
+    is_active: boolean;
+    service_start: string;
+    service_validity: string;
+
+  }
+
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [items, setItems] = useState<any>(null);
+  const actualCompany = cookie.get('actualComp');
+  const URL = process.env.NEXT_PUBLIC_BASE_URL;
+
+  const fetchItems = async () => {
+    const { items } = await fetch(`${URL}/api/services/items?actual=${actualCompany}`).then((e) => e.json());
+    setItems(items);
+  }
+
+  const handleCloseModal = () => {
+    setSelectedService(null);
+    setOpenModal(false);
+
+  };
+  const handleOpenModal = (service: any) => {
+    console.log("SERVICE: ", service)
+    setSelectedService(service);
+
+    setOpenModal(true);
+    fetchItems();
+  }
+  console.log("ITEMS: ", items)
+  const filteredItems = items?.filter((item: any) => item.customer_service_id?.id === selectedService?.id);
+
+
+  const fetchUser = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    setUserId(user);
+
+  }
+  const fetchemploy = async () => {
+    const { employees } = await fetch(`${URL}/api/employees/table?actual=${actualCompany}&user=${userId}`).then((e) =>
+      e.json()
+    );
+    setEmploy(employees);
+
+  }
+
+  const fetchServices = async () => {
+    const { services } = await fetch(`${URL}/api/services?actual=${actualCompany}`).then((e) => e.json());
+    const filteredServices = services.filter((service: any) => service.customer_id.toString() === id);
+    setServicesData(filteredServices);
+  }
+
+
+
+  const activeEmploees = setEmployeesToShow(employ?.filter((e: any) => e.is_active));
+  const inactiveEmploees = setEmployeesToShow(employ?.filter((e: any) => !e.is_active));
   const equipment = useLoggedUserStore((state) => state.vehiclesToShow);
-  // const filteredCustomersEmployees = employees?.filter(
-  //   (customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id)
-  // );
-  const filteredCustomersEmployees = employees
-  ?.filter((customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id))
-  .map((customer: any) => ({
-    ...customer,
-    guild: customer.guild?.name
-  }));
+
+
+  useEffect(() => {
+    fetchUser();
+    fetchemploy();
+    fetchServices();
+  }, []);
+
+  const filteredCustomersActiveEmployees = activeEmploees
+    ?.filter((customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id))
+    .map((customer: any) => ({
+      ...customer,
+      guild: customer.guild?.name
+    }));
+
+  const filteredCustomersInActiveEmployees = inactiveEmploees
+    ?.filter((customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id))
+    .map((customer: any) => ({
+      ...customer,
+      guild: customer.guild?.name
+    }));
 
 
   const filteredCustomersEquipment = equipment?.filter(
     (customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id)
   );
- 
-  // const setActivesEmployees = useLoggedUserStore((state) => state.setActivesEmployees);
-  // const setInactiveEmployees = useLoggedUserStore((state) => state.setInactiveEmployees);
-  // const showDeletedEmployees = useLoggedUserStore((state) => state.showDeletedEmployees);
-  // const setShowDeletedEmployees = useLoggedUserStore((state) => state.setShowDeletedEmployees);
-  // const allCompany = useLoggedUserStore((state) => state.allCompanies);
-  // const [showInactive, setShowInactive] = useState(false);
+
+  console.log(filteredCustomersEquipment);
+
+
   const form = useForm<z.infer<typeof customersSchema>>({
     resolver: zodResolver(customersSchema),
     defaultValues: {
@@ -134,6 +222,8 @@ export default function ClientRegister({ id }: { id: string }) {
     }
   };
 
+  console.log("SELECTEDSERVICE: ", selectedService)
+
   const renderCard = () => (
     // <Card className="mt-6 p-8"></Card>
     <Card className="mt-6 p-8">
@@ -142,8 +232,8 @@ export default function ClientRegister({ id }: { id: string }) {
         {action === 'view' ? (
           <div className="flex flex-grap gap-2 ">
             <Button
-              className="px-4 py-2 bg-blue-500 text-white rounded-md min-w-[100px]"
-              variant="primary"
+
+              variant="default"
               onClick={() => {
                 setReadOnly(!readOnly);
               }}
@@ -160,85 +250,87 @@ export default function ClientRegister({ id }: { id: string }) {
             ? 'Edita este formulario con los datos de tu Cliente'
             : 'Completa este formulario con los datos de tu nuevo Cliente'}
       </CardDescription>
-      <div className="mt-6 rounded-xl flex w-full">
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <input type="hidden" name="id" value={id} />
-          <div className="flex flex-wrap gap-3 items-center w-full">
-            <div>
-              <Label htmlFor="company_name">Nombre de la compañía</Label>
-              <Input
-                id="company_name"
-                {...register('company_name')}
-                className="max-w-[350px] w-[300px]"
-                placeholder="nombre de la compañía"
-                readOnly={readOnly}
-              />
-              {formErrors.company_name && (
-                <CardDescription className="text-red-500">{formErrors.company_name.message}</CardDescription>
-              )}
-            </div>
-            <div>
-              <Label htmlFor="client_cuit">CUIT de la compañía</Label>
-              <Input
-                id="client_cuit"
-                {...register('client_cuit')}
-                className="max-w-[350px] w-[300px]"
-                placeholder="número de cuit"
-                readOnly={readOnly}
-              />
-              {formErrors.client_cuit && (
-                <CardDescription className="text-red-500">{formErrors.client_cuit.message}</CardDescription>
-              )}
-            </div>
-            <div>
-              <Label htmlFor="client_email">Email</Label>
-              <Input
-                id="client_email"
-                {...register('client_email')}
-                className="max-w-[350px] w-[300px]"
-                placeholder="email"
-                readOnly={readOnly}
-              />
-              {formErrors.client_email && (
-                <CardDescription className="text-red-500">{formErrors.client_email.message}</CardDescription>
-              )}
-            </div>
-            <div>
-              <Label htmlFor="client_phone">Número de teléfono</Label>
-              <Input
-                id="client_phone"
-                {...register('client_phone')}
-                className="max-w-[350px] w-[300px]"
-                placeholder="teléfono"
-                readOnly={readOnly}
-              />
-              {formErrors.client_phone && (
-                <CardDescription className="text-red-500">{formErrors.client_phone.message}</CardDescription>
-              )}
-            </div>
-            <div>
-              <Label htmlFor="address">Dirección</Label>
-              <Input
-                id="address"
-                {...register('address')}
-                className="max-w-[350px] w-[300px]"
-                placeholder="dirección"
-                readOnly={readOnly}
-              />
-              {formErrors.address && (
-                <CardDescription className="text-red-500">{formErrors.address.message}</CardDescription>
-              )}
-            </div>
-          </div>
-          <br />
-          {action === 'view' && readOnly === true ? null : (
-            <Button type="submit" className="mt-5">
-              {id ? 'Guardar' : 'Registrar'}
-            </Button>
-          )}
-          <Toaster />
-        </form>
+      <div className="mt-6 w-full">
+  <form onSubmit={handleSubmit(onSubmit)}>
+    <input type="hidden" name="id" value={id} />
+    <div className="grid grid-cols-3 gap-4 w-full">
+      <div>
+        <Label htmlFor="company_name">Nombre de la compañía</Label>
+        <Input
+          id="company_name"
+          {...register('company_name')}
+          className="w-full"
+          placeholder="nombre de la compañía"
+          readOnly={readOnly}
+        />
+        {formErrors.company_name && (
+          <CardDescription className="text-red-500">{formErrors.company_name.message}</CardDescription>
+        )}
       </div>
+      <div>
+        <Label htmlFor="client_cuit">CUIT de la compañía</Label>
+        <Input
+          id="client_cuit"
+          {...register('client_cuit')}
+          className="w-full"
+          placeholder="número de cuit"
+          readOnly={readOnly}
+        />
+        {formErrors.client_cuit && (
+          <CardDescription className="text-red-500">{formErrors.client_cuit.message}</CardDescription>
+        )}
+      </div>
+      <div>
+        <Label htmlFor="client_email">Email</Label>
+        <Input
+          id="client_email"
+          {...register('client_email')}
+          className="w-full"
+          placeholder="email"
+          readOnly={readOnly}
+        />
+        {formErrors.client_email && (
+          <CardDescription className="text-red-500">{formErrors.client_email.message}</CardDescription>
+        )}
+      </div>
+      <div>
+        <Label htmlFor="client_phone">Número de teléfono</Label>
+        <Input
+          id="client_phone"
+          {...register('client_phone')}
+          className="w-full"
+          placeholder="teléfono"
+          readOnly={readOnly}
+        />
+        {formErrors.client_phone && (
+          <CardDescription className="text-red-500">{formErrors.client_phone.message}</CardDescription>
+        )}
+      </div>
+      <div>
+        <Label htmlFor="address">Dirección</Label>
+        <Input
+          id="address"
+          {...register('address')}
+          className="w-full"
+          placeholder="dirección"
+          readOnly={readOnly}
+        />
+        {formErrors.address && (
+          <CardDescription className="text-red-500">{formErrors.address.message}</CardDescription>
+        )}
+      </div>
+    </div>
+
+    <br />
+    {action === 'view' && readOnly === true ? null : (
+      <Button type="submit" className="mt-5">
+        {id ? 'Guardar' : 'Registrar'}
+      </Button>
+    )}
+    <Toaster />
+  </form>
+</div>
+
     </Card>
   );
   const sharedUsersAll = useLoggedUserStore((state) => state.sharedUsers)?.filter((e) => e.customer_id?.id === id);
@@ -263,6 +355,8 @@ export default function ClientRegister({ id }: { id: string }) {
         ...user,
         fullname: user.fullname || '',
       })) || [];
+  console.log(servicesData)
+  console.log(filteredItems)
 
   return (
     <section className={cn('md:mx-7 max-w-full')}>
@@ -277,31 +371,36 @@ export default function ClientRegister({ id }: { id: string }) {
             </AccordionItem>
           </Accordion>
 
-          <Tabs defaultValue="empleados" className="h-full flex-1 flex-col mt-6">
+          <Tabs defaultValue="empleados activos" className="h-full flex-1 flex-col mt-6">
             <TabsList>
-              <TabsTrigger value="empleados">Empleados</TabsTrigger>
+              <TabsTrigger value="empleados activos">Empleados Activos</TabsTrigger>
+              <TabsTrigger value="empleados inactivos">Empleados Inactivos</TabsTrigger>
               <TabsTrigger value="equipos">Equipos</TabsTrigger>
+              <TabsTrigger value="servicios">Servicios</TabsTrigger>
               <TabsTrigger value="invitados">invitados</TabsTrigger>
             </TabsList>
-            <TabsContent value="empleados">
+            <TabsContent value="empleados activos">
               <div className="h-full flex-1 flex-col space-y-8 md:flex">
                 <Card>
                   <CardContent>
-                    {/* <DataTable
-                      columns={columns}                      
-                      data={filteredCustomersEmployees || []}
-                      setActivesEmployees={setActivesEmployees}
-                      setInactiveEmployees={setInactiveEmployees}
-                      showDeletedEmployees={showDeletedEmployees}
-                      setShowDeletedEmployees={setShowDeletedEmployees}
-                    /> */}
                     <EmployeesTable
                       columns={EmployeesListColumns}
-                      data={filteredCustomersEmployees || []}
-                      // allCompany={allCompany}
-                      // showInactive={showInactive}
-                      // setShowInactive={setShowInactive}
-                      />
+                      data={filteredCustomersActiveEmployees || []}
+
+                    />
+                  </CardContent>
+
+                </Card>
+              </div>
+            </TabsContent>
+            <TabsContent value="empleados inactivos">
+              <div className="h-full flex-1 flex-col space-y-8 md:flex">
+                <Card>
+                  <CardContent>
+                    <EmployeesTable
+                      columns={EmployeesListColumns}
+                      data={filteredCustomersInActiveEmployees || []}
+                    />
                   </CardContent>
 
                 </Card>
@@ -311,28 +410,130 @@ export default function ClientRegister({ id }: { id: string }) {
               <Card>
                 <CardContent>
                   <EquipmentTable
-                    columns={columns1||[]}
+                    columns={columns1 || []}
                     data={filteredCustomersEquipment || []}
-                    // allCompany={allCompany}
-                    // showInactive={showInactive}
-                    // setShowInactive={setShowInactive}
+                  // allCompany={allCompany}
+                  // showInactive={showInactive}
+                  // setShowInactive={setShowInactive}
                   />
                 </CardContent>
               </Card>
             </TabsContent>
+            <TabsContent value="servicios">
+              <Card className="w-full">
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[25%]">Nombre del Servicio</TableHead>
+                          <TableHead className="w-[25%]">Estado</TableHead>
+                          <TableHead className="w-[25%]">Inicio del Servicio</TableHead>
+                          <TableHead className="w-[25%]">Validez del Servicio</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {servicesData?.map((service: any) => (
+                          <TableRow key={service.id} onClick={() => handleOpenModal((service))} className="cursor-pointer">
+                            <TableCell className="font-medium">{service.service_name}</TableCell>
+                            <TableCell>
+                              <Badge variant={service.is_active ? 'success' : 'default'}>
+                                {service.is_active ? 'Activo' : 'Inactivo'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{moment(service.service_start).format('DD/MM/YYYY')}</TableCell>
+                            <TableCell>{moment(service.service_validity).format('DD/MM/YYYY')}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
             <TabsContent value="invitados">
-                <Card>
-                  <CardContent className='p-4'>
-                    <DataTableInvited data={guestsData || []} columns={columnsGuests} />
-                  </CardContent>
-                </Card>
-              
+              <Card>
+                <CardContent className='p-4'>
+                  <DataTableInvited data={guestsData || []} columns={columnsGuests} />
+
+                </CardContent>
+              </Card>
+
             </TabsContent>
           </Tabs>
         </section>
       ) : (
         renderCard()
       )}
+      <Dialog open={openModal} onOpenChange={setOpenModal}>
+        <DialogContent className="max-w-5xl w-full flex flex-col"> {/* Limitar el ancho máximo del modal */}
+          <DialogHeader>
+            <DialogTitle>Items del servicio: {selectedService?.service_name}</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-x-auto w-full max-h-[500px]"> {/* max-h para limitar la altura del contenido */}
+            <Table className="w-full table-auto"> {/* Asegurar que la tabla ocupe el ancho máximo posible */}
+              <TableHeader className="bg-header-background">
+                <TableRow>
+                  <TableCell className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Nombre
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Estado
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Descripción
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    UDM
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Precio
+                  </TableCell>
+                  {/* <TableCell className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Cliente
+            </TableCell> */}
+                </TableRow>
+              </TableHeader>
+              <TableBody className="bg-background divide-y">
+                {filteredItems?.map((item: any) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="px-4 py-2 whitespace-nowrap text-sm font-medium text-muted-foreground">
+                      {item.item_name}
+                    </TableCell>
+                    <TableCell className="px-4 py-2 whitespace-nowrap text-sm text-muted-foreground">
+                      <Badge variant={item.is_active ? 'success' : 'default'}>
+                        {item.is_active ? 'Activo' : 'Inactivo'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="px-4 py-2 whitespace-nowrap text-sm text-muted-foreground">
+                      {item.item_description}
+                    </TableCell>
+                    <TableCell className="px-4 py-2 whitespace-nowrap text-sm text-muted-foreground">
+                      {item.item_measure_units?.unit}
+                    </TableCell>
+                    <TableCell className="px-4 py-2 whitespace-nowrap text-sm text-muted-foreground">
+                      ${item.item_price}
+                    </TableCell>
+                    {/* <TableCell className="px-4 py-2 whitespace-nowrap text-sm text-muted-foreground">
+                {item.customer_service_id?.customer_id?.name}
+              </TableCell> */}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseModal}>Cerrar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
+
+
     </section>
   );
 }
+
+

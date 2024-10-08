@@ -487,7 +487,7 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
                       </div>
                     </div>
                   ) : (
-                    'No hay empleados activos'
+                    'No hay empleados'
                   )}
                 </TableCell>
               </TableRow>
