@@ -93,7 +93,7 @@ export const FetchSharedUsers = async (companyId: string) => {
 
 export async function getActualRole(companyId: string, profile: string) {
   const sharedUsers = await FetchSharedUsers(companyId);
-  const user = sharedUsers?.find((e) => e.profile_id.id === profile);
+  const user = sharedUsers?.find((e: any) => e.profile_id.id === profile);
 
   if (user?.role) {
     return user?.role;
