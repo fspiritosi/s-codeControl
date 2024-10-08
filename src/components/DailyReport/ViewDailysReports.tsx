@@ -174,7 +174,7 @@ export default function ViewDailysReports() {
 
     if (!status) { // Si el nuevo estado es 'cerrado' (false)
       // Verificar si alguna fila tiene el estado "pendiente"
-      const hasPendingRows = report.dailyreportrows.some(row => row.status === 'pendiente');
+      const hasPendingRows = report.dailyreportrows?.some(row => row.status === 'pendiente');
       if (hasPendingRows) {
         alert('No se puede cerrar el parte diario porque algunas filas están en estado "pendiente".');
         return;
@@ -256,7 +256,7 @@ export default function ViewDailysReports() {
   const handleCloseModal = () => {
     setOpenModal(false);
     setSelectedReport(null);
-    router.refresh();
+    // router.refresh();
   };
 
   const handleSaveReport = async (updatedReport: DailyReportData) => {

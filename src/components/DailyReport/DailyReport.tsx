@@ -679,129 +679,127 @@ export default function DailyReport({ reportData }: DailyReportProps) {
 
     const saveDailyReport = async (data: any) => {
         try {
-
-            const formattedStartTime = formatTime(data.start_time);
-            const formattedEndTime = formatTime(data.end_time);
-
-            // Obtener el array de filas existentes
-            const existingRows = dailyReport;
-            
-            // Verificar si ya existe una fila exactamente igual
-            const isDuplicate = existingRows.some(row =>
-                row.customer === data.customer &&
-                row.services === data.services &&
-                row.item === data.item &&
-                row.working_day === data.working_day &&
-                row.start_time === formattedStartTime &&
-                row.end_time === formattedEndTime &&
-                row.description === data.description &&
-                row.status === data.status &&
-                JSON.stringify(row.employees) === JSON.stringify(data.employees) &&
-                JSON.stringify(row.equipment) === JSON.stringify(data.equipment)
-            );
-            
-            if (isDuplicate) {
-                toast({
-                    title: "Error",
-                    description: "Ya existe una fila con los mismos datos.",
-                    variant: "destructive",
-                });
-                return; // Salir de la función si ya existe una fila igual
-            }
-
-
-            
-            const rowResponse = await fetch('/api/daily-report/daily-report-row', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    daily_report_id: reportData?.id,
-                    customer_id: data.customer,
-                    service_id: data.services,
-                    item_id: data.item,
-                    start_time: formattedStartTime,
-                    end_time: formattedEndTime,
-                    description: data.description,
-                    status: data.status,
-                }),
-            });
-
-            if (!rowResponse.ok) {
-                const errorText = await rowResponse.text();
-                throw new Error(`Error al insertar la fila en dailyreportrow: ${errorText}`);
-            }
-
-            const { data: rowData } = await rowResponse.json();
-            const rowId = rowData[0].id; // Asegúrate de que esto sea correcto
-            
-            if (data.employees && data.employees.length > 0) {
-                await fetch('/api/daily-report/dailyreportemployeerelations', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(
-                        data.employees.map((employee_id: string) => ({
-                            daily_report_row_id: rowId,
-                            employee_id: employee_id,
-                        }))
-                    ),
-                });
-            }
-
-            if (data.equipment && data.equipment.length > 0) {
-                await fetch('/api/daily-report/dailyreportequipmentrelations', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(
-                        data.equipment.map((equipment_id: string) => ({
-                            daily_report_row_id: rowId,
-                            equipment_id: equipment_id,
-                        }))
-                    ),
-                });
-            }
-
-            setDailyReport(prevReport => {
-                // Verificar que prevReport sea un array
-                if (!Array.isArray(prevReport)) {
-                    prevReport = [];
-                }
-
-                return [...prevReport, {
-                    id: rowId,
-                    working_day: data.working_day,
-                    customer: data.customer,
-                    employees: data.employees,
-                    equipment: data.equipment,
-                    services: data.services,
-                    item: data.item,
-                    start_time: formattedStartTime,
-                    end_time: formattedEndTime,
-                    status: data.status,
-                    description: data.description,
-                }];
-            });
-
-            resetForm();
-
+          const formattedStartTime = formatTime(data.start_time);
+          const formattedEndTime = formatTime(data.end_time);
+      
+          // Obtener el array de filas existentes, asegurándonos de que sea un array
+          const existingRows = Array.isArray(dailyReport) ? dailyReport : [];
+      
+          // Verificar si ya existe una fila exactamente igual
+          const isDuplicate = existingRows.some(row =>
+            row.customer === data.customer &&
+            row.services === data.services &&
+            row.item === data.item &&
+            row.working_day === data.working_day &&
+            row.start_time === formattedStartTime &&
+            row.end_time === formattedEndTime &&
+            row.description === data.description &&
+            row.status === data.status &&
+            JSON.stringify(row.employees) === JSON.stringify(data.employees) &&
+            JSON.stringify(row.equipment) === JSON.stringify(data.equipment)
+          );
+      
+          if (isDuplicate) {
             toast({
-                title: "Éxito",
-                description: "Fila agregada correctamente al parte diario.",
+              title: "Error",
+              description: "Ya existe una fila con los mismos datos.",
+              variant: "destructive",
             });
+            return; // Salir de la función si ya existe una fila igual
+          }
+      
+          const rowResponse = await fetch('/api/daily-report/daily-report-row', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              daily_report_id: reportData?.id,
+              customer_id: data.customer,
+              service_id: data.services,
+              item_id: data.item,
+              start_time: formattedStartTime,
+              end_time: formattedEndTime,
+              description: data.description,
+              status: data.status,
+            }),
+          });
+      
+          if (!rowResponse.ok) {
+            const errorText = await rowResponse.text();
+            throw new Error(`Error al insertar la fila en dailyreportrow: ${errorText}`);
+          }
+      
+          const { data: rowData } = await rowResponse.json();
+          const rowId = rowData[0].id; // Asegúrate de que esto sea correcto
+      
+          if (data.employees && data.employees.length > 0) {
+            await fetch('/api/daily-report/dailyreportemployeerelations', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(
+                data.employees.map((employee_id: string) => ({
+                  daily_report_row_id: rowId,
+                  employee_id: employee_id,
+                }))
+              ),
+            });
+          }
+      
+          if (data.equipment && data.equipment.length > 0) {
+            await fetch('/api/daily-report/dailyreportequipmentrelations', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(
+                data.equipment.map((equipment_id: string) => ({
+                  daily_report_row_id: rowId,
+                  equipment_id: equipment_id,
+                }))
+              ),
+            });
+          }
+      
+          setDailyReport(prevReport => {
+            // Verificar que prevReport sea un array
+            if (!Array.isArray(prevReport)) {
+              prevReport = [];
+            }
+      
+            return [...prevReport, {
+              id: rowId,
+              working_day: data.working_day,
+              customer: data.customer,
+              employees: data.employees,
+              equipment: data.equipment,
+              services: data.services,
+              item: data.item,
+              start_time: formattedStartTime,
+              end_time: formattedEndTime,
+              status: data.status,
+              description: data.description,
+            }];
+          });
+      
+          resetForm();
+      
+          toast({
+            title: "Éxito",
+            description: "Fila agregada correctamente al parte diario.",
+          });
         } catch (error) {
-            console.error("Error al procesar el parte diario:", error);
-            toast({
-                title: "Error",
-                description: `Hubo un problema al procesar el parte diario: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                variant: "destructive",
-            });
+          console.error("Error al procesar el parte diario:", error);
+          toast({
+            title: "Error",
+            description: `Hubo un problema al procesar el parte diario: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            variant: "destructive",
+          });
         }
-    };
+      };
+      
 
 
     const updateDailyReport = async (data: any, rowId: string) => {
