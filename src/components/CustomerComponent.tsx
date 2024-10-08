@@ -253,7 +253,7 @@ export default function ClientRegister({ id }: { id: string }) {
       <div className="mt-6 w-full">
   <form onSubmit={handleSubmit(onSubmit)}>
     <input type="hidden" name="id" value={id} />
-    <div className="grid grid-cols-3 gap-4 w-full">
+    <div className="grid grid-cols-4 gap-4 w-full">
       <div>
         <Label htmlFor="company_name">Nombre de la compañía</Label>
         <Input
