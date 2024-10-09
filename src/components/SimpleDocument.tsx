@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import React, { FormEvent, useEffect, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { Button } from './ui/button';
-import { CardDescription } from './ui/card';
+import { CardDescription, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Separator } from './ui/separator';
@@ -346,18 +346,13 @@ export default function SimpleDocument({
     <form onSubmit={handleNestedFormSubmit}>
       <ul className="flex flex-col gap-2">
         <div className="space-y-3">
+          <CardTitle>
+            {resource === 'empleado' ? 'Documentos de empleados' : 'Documentos de equipos'}
+          </CardTitle>
           {fields?.map((item, index) => {
             return (
               <React.Fragment key={item.id}>
-                <details open={index === 0}>
-                  <summary
-                    className={cn(
-                      errors.documents && errors.documents[index] && errors?.documents?.[index] && 'text-red-600',
-                      'text-xl flex justify-between items-center cursor-pointer'
-                    )}
-                  >
-                    Documento {index + 1}
-                  </summary>
+              
                   <li className="space-y-4 ">
                     {!documentResource && (
                       <div className="space-y-2 py-3 ">
@@ -516,6 +511,7 @@ export default function SimpleDocument({
                               <Button
                                 variant="outline"
                                 role="combobox"
+                                disabled={defaultDocumentId ? true : false}
                                 className={cn('justify-between w-full', !field.value && 'text-muted-foreground')}
                               >
                                 {field.value
@@ -739,13 +735,12 @@ export default function SimpleDocument({
                       </Button>
                     )}
                   </li>
-                </details>
                 <Separator />
               </React.Fragment>
             );
           })}
         </div>
-        <div className="w-full flex justify-end">
+        {/* <div className="w-full flex justify-end">
           <Button
             className=" w-8 h-8 bg-blue-400 rounded-full hover:bg-blue-500 transition-colors duration-200 ease-in-out"
             onClick={() =>
@@ -761,7 +756,7 @@ export default function SimpleDocument({
           >
             <PlusCircledIcon className=" h-4 w-4 shrink-0" />
           </Button>
-        </div>
+        </div> */}
       </ul>
       <div className="flex justify-evenly mt-2">
         <AlertDialogCancel className="text-black dark:bg-white hover:text-black/50" asChild>

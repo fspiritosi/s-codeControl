@@ -1671,7 +1671,7 @@ export default function EmployeeComponent({
               </div>
             </TabsContent>
             <TabsContent value="documents" className="px-2 py-2">
-              <DocumentTable document={user?.document_number || ''} />
+              <DocumentTable id={user.id} />
             </TabsContent>
             <TabsContent value="diagrams" className="px-2 py-2">
               <DiagramDetailEmployeeView diagrams={diagrams} />

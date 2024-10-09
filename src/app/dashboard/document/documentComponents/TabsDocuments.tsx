@@ -192,7 +192,6 @@ function TabsDocuments({
               </div>
               <div className="flex gap-4 flex-wrap pl-6">
                 <DocumentNav />
-                <NewDocumentNoMulti />
               </div>
             </div>
           </CardHeader>

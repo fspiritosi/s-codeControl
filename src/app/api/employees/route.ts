@@ -1,5 +1,5 @@
 import { supabaseServer } from '@/lib/supabase/server';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   const supabase = supabaseServer();
   const searchParams = request.nextUrl.searchParams;
@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const user_id = searchParams.get('user');
   // console.log(user_id); //AQUI ME QUEDE
   if (!company_id) {
-    return Response.json({ error: 'company_id is required' });
+    return NextResponse.json({ error: 'company_id is required' });
   }
   try {
     let { data: employees, error } = await supabase
@@ -41,9 +41,9 @@ export async function GET(request: NextRequest) {
     if (error) {
       throw new Error(JSON.stringify(error));
     }
-    return Response.json({ employees });
+    return NextResponse.json({ employees });
   } catch (error) {
     console.log(error);
-    return Response.json({ error });
+    return NextResponse.json({ error });
   }
 }

@@ -8,9 +8,9 @@ import { ExpiredColums } from '../colums';
 import { ColumnsMonthly } from '../columsMonthly';
 import { ExpiredDataTable } from '../data-table';
 
-type Props = { document: string };
+type Props = { id: string };
 
-export default function DocumentTable({ document }: Props) {
+export default function DocumentTable({ id }: Props) {
   const { allDocumentsToShow } = useLoggedUserStore();
 
   // console.log(document);
@@ -22,11 +22,11 @@ export default function DocumentTable({ document }: Props) {
           <TabsTrigger value="permanentes">Documentos permanentes</TabsTrigger>
           <TabsTrigger value="mensuales">Documentos mensuales</TabsTrigger>
         </TabsList>
-        <DocumentNav documentNumber={document} empleados onlyNoMultiresource mandatoryLabel={'Nuevo documento'} />
+        <DocumentNav id_user={id} onlyNoMultiresource onlyEmployees />
       </CardContent>
       <TabsContent value="permanentes">
         <ExpiredDataTable
-          data={allDocumentsToShow?.employees.filter((e) => !e.isItMonthly && e.document_number === document) || []}
+          data={allDocumentsToShow?.employees.filter((e) => !e.isItMonthly && e.document_number === id) || []}
           columns={ExpiredColums}
           pending={true}
           defaultVisibleColumnsCustom={['date', 'resource', 'documentName', 'validity', 'id', 'mandatory', 'state']}
@@ -36,7 +36,7 @@ export default function DocumentTable({ document }: Props) {
       </TabsContent>
       <TabsContent value="mensuales">
         <ExpiredDataTable
-          data={allDocumentsToShow?.employees.filter((e) => e.isItMonthly && e.document_number === document) || []}
+          data={allDocumentsToShow?.employees.filter((e) => e.isItMonthly && e.document_number === id) || []}
           columns={ColumnsMonthly}
           pending={true}
           defaultVisibleColumnsCustom={['date', 'resource', 'documentName', 'validity', 'id', 'mandatory', 'state']}

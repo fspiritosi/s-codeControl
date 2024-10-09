@@ -9,7 +9,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { supabaseBrowser } from '@/lib/supabase/browser';
-import { calculateNameOFDocument, cn, uploadDocument, uploadDocumentFile, verifyDuplicatedDocument } from '@/lib/utils';
+import { calculateNameOFDocument, cn, uploadDocument, uploadDocumentFile } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import moment from 'moment';
@@ -28,11 +28,13 @@ function UploadDocumentEquipment({
   allDocumentTypes,
   currentCompany,
   user_id,
+  default_id,
 }: {
   equipments: { label: string; value: string }[];
   allDocumentTypes: TypeOfDocuments[];
   currentCompany: Company[];
   user_id: string | undefined;
+  default_id?: string;
 }) {
   const supabase = supabaseBrowser();
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
@@ -72,6 +74,9 @@ function UploadDocumentEquipment({
 
   const form = useForm<z.infer<typeof uploadDocumentSchema>>({
     resolver: zodResolver(uploadDocumentSchema),
+    defaultValues: {
+      applies: default_id || '',
+    },
   });
   const [documenTypes, setDocumentTypes] = useState<typeof allDocumentTypes>(allDocumentTypes);
 
@@ -85,7 +90,7 @@ function UploadDocumentEquipment({
     if (!selectedFile) return;
     const selectedDocumentType = allDocumentTypes.find((documentType) => documentType.id === data.id_document_types);
     try {
-      await uploadDocument(data, selectedDocumentType?.mandatory!, 'documents_equipment');
+      await uploadDocument(data, selectedDocumentType?.mandatory!, 'documents_equipment', false);
       await uploadDocumentFile(selectedFile, data.document_path);
       form.reset();
       setSelectedFile(undefined);
@@ -118,6 +123,7 @@ function UploadDocumentEquipment({
                     <FormControl>
                       <Button
                         variant="outline"
+                        disabled={default_id ? true : false}
                         role="combobox"
                         className={cn(' justify-between', !field.value && 'text-muted-foreground')}
                       >
@@ -155,7 +161,6 @@ function UploadDocumentEquipment({
                                   .eq('applies', equipment.value)
                                   .neq('document_path', null);
 
-                                console.log('data', data);
                                 if (error) {
                                   console.error('error', error);
                                   return;
@@ -241,29 +246,6 @@ function UploadDocumentEquipment({
                                   : false
                               }
                               onSelect={async () => {
-                                const applies = equipments
-                                  .find((equipment) => equipment.value === form.getValues('applies'))
-                                  ?.label.split(' - ')[0]
-                                  .toLocaleLowerCase();
-                                const documentName = documenTypes.find(
-                                  (documentTypes) => documentTypes.id === documentType.id
-                                )?.name;
-                                if (!applies || !documentName) return;
-
-                                const isDuplicated = await verifyDuplicatedDocument(
-                                  currentCompany[0].company_name,
-                                  currentCompany[0].company_cuit,
-                                  applies,
-                                  'equipos'
-                                );
-
-                                if (isDuplicated) {
-                                  form.setError('id_document_types', {
-                                    type: 'manual',
-                                    message: 'El recurso ya tiene un documento cargado',
-                                  });
-                                }
-
                                 form.setValue('id_document_types', documentType.id);
                                 setSelectedDocumentType(documentType);
                                 form.setValue('validity', undefined);

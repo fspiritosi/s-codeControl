@@ -46,7 +46,7 @@ const EmployeePage = async () => {
           buttonActioRestricted: [''],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
-              <DocumentNav empleados />
+              <DocumentNav onlyEmployees />
             </div>
           ),
           component: <EmployeeDocumentsTabs />,

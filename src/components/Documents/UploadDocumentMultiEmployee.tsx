@@ -1,22 +1,24 @@
 'use client';
-import { z } from 'zod';
-import { CardTitle } from '../ui/card';
-
-import { Check, ChevronsUpDown } from 'lucide-react';
-
-import { getAllDocumentsByIdDocumentType } from '@/app/server/GET/actions';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { supabaseBrowser } from '@/lib/supabase/browser';
-import { calculateNameOFDocument, cn, uploadDocumentFile } from '@/lib/utils';
+import {
+  calculateNameOFDocument,
+  cn,
+  getAllDocumentsByIdDocumentTypeCientSide,
+  uploadDocument,
+  uploadDocumentFile,
+} from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import moment from 'moment';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { CardTitle } from '../ui/card';
 import { EnhancedDatePicker } from '../ui/enhanced-datepicket';
 import { Input } from '../ui/input';
 import { MultiSelectCombobox } from '../ui/multi-select-combobox';
@@ -31,9 +33,8 @@ function UploadDocumentMultiEmployee({
   employees: { label: string; value: string; cuit: string }[];
   allDocumentTypes: TypeOfDocuments[];
   currentCompany: Company[];
-  user_id: string | undefined;
+  user_id?: string;
 }) {
-  const supabase = supabaseBrowser();
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
   const [selectedDocumentType, setSelectedDocumentType] = useState<(typeof allDocumentTypes)[0] | undefined>(undefined);
   const uploadDocumentSchema = z.object({
@@ -44,13 +45,9 @@ function UploadDocumentMultiEmployee({
         })
         .uuid()
     ),
-    document_path: z.array(
-      z
-        .string({
-          required_error: 'Este campo es requerido',
-        })
-        .uuid()
-    ),
+    document_path: z.string({
+      required_error: 'Este campo es requerido',
+    }),
     created_at: z.string().default(() => new Date().toISOString()),
     state: z.enum(['pendiente', 'presentado', 'rechazado', 'aprobado', 'vencido']).default('presentado'),
     validity: selectedDocumentType?.explired
@@ -86,7 +83,7 @@ function UploadDocumentMultiEmployee({
     if (!selectedFile) return;
     const selectedDocumentType = allDocumentTypes.find((documentType) => documentType.id === data.id_document_types);
     try {
-      //! await uploadDocument(data, selectedDocumentType?.mandatory!, 'documents_employees');
+      await uploadDocument(data, selectedDocumentType?.mandatory!, 'documents_employees', true);
       await uploadDocumentFile(selectedFile, data.document_path);
       //Cerrar el modal y resetear el formulario y estados
       form.reset();
@@ -101,7 +98,6 @@ function UploadDocumentMultiEmployee({
   const [selectedFileName, setSelectedFileName] = useState<string>('');
   const [selectedResourceDocuments, setSelectedResourceDocuments] = useState<DocumentEmployees[]>([]);
 
-  console.log('employees', employees);
   return (
     <div>
       <CardTitle className="mb-3">Documento no multirecurso</CardTitle>
@@ -141,7 +137,10 @@ function UploadDocumentMultiEmployee({
                               value={documentType.id}
                               key={documentType.name}
                               onSelect={async (selectedValue) => {
-                                const data = await getAllDocumentsByIdDocumentType(selectedValue);
+                                const data = await getAllDocumentsByIdDocumentTypeCientSide(
+                                  selectedValue,
+                                  documentType.company_id ?? ''
+                                );
                                 setSelectedResourceDocuments(data);
                                 form.setValue('id_document_types', documentType.id);
                                 setSelectedDocumentType(documentType);
@@ -277,19 +276,15 @@ function UploadDocumentMultiEmployee({
                               : null;
                             const hasExpiredDate = expiredDate || period || 'v0';
 
-                            const documentUrl = employeesSelected.map((emploSelect) => {
-                              const formatedAppliesName = calculateNameOFDocument(
-                                currentCompany[0].company_name,
-                                currentCompany[0].company_cuit,
-                                employees?.find((employee) => employee.value === emploSelect)?.label || '',
-                                documentName,
-                                hasExpiredDate,
-                                documenExtension,
-                                'persona'
-                              );
-                              return formatedAppliesName;
-                            });
-
+                            const documentUrl = calculateNameOFDocument(
+                              currentCompany[0].company_name,
+                              currentCompany[0].company_cuit,
+                              'persona',
+                              documentName,
+                              hasExpiredDate,
+                              documenExtension,
+                              'multirecursos'
+                            );
                             // calculateNameOFDocument(
                             //   currentCompany[0].company_name,
                             //   currentCompany[0].company_cuit,

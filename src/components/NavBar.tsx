@@ -90,7 +90,7 @@ export default function NavBar() {
   const updateProfileAvatar = async (imageUrl: string) => {
     try {
       // Realiza la actualización en la tabla profile usando Supabase
-      const { data, error } = await supabase.from('profile').update({ avatar: imageUrl }).eq('id', actualUser[0].id);
+      const { data, error } = await supabase.from('profile').update({ avatar: imageUrl }).eq('id', actualUser[0].id || '');
 
       if (error) {
         throw error;
@@ -350,9 +350,9 @@ export default function NavBar() {
         <div className="flex-shrink justify-center items-center flex">
           <DropdownMenu>
             <DropdownMenuTrigger className="cursor-pointer" asChild>
-              <Avatar className="size-9">
+              <Avatar className="size-9 ">
                 <AvatarImage src={typeof avatarUrl === 'object' ? avatarUrl.avatar : ''} />
-                <AvatarFallback>CN</AvatarFallback>
+                <AvatarFallback className="bg-slate-500">CN</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

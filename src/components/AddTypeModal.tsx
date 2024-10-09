@@ -56,7 +56,6 @@ export default function AddTypeModal({ company_id,value }: { company_id: string,
     if (error) {
       throw new Error(handleSupabaseError(error.message));
     }
-    console.log('data', data);
     router.refresh();
   }
   const handleNestedFormSubmit = (event: FormEvent<HTMLFormElement>) => {

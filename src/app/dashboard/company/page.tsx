@@ -15,7 +15,7 @@
 //   }
 // }
 
-// export default function allCompany() {
+export default function allCompany() {
 //   const router = useRouter();
 //   const { fetchCompanies } = useCompanyData();
 
@@ -73,14 +73,14 @@
 //     );
 //   }
 
-//   return (
-//     <section className="">
-//       <h2 className="text-3xl pb-5 pl-10">Todas las Compañias</h2>
-//       <p className="pl-10 max-w-1/2">Aquí se verán todas las compañías</p>
-//       <div className=" rounded-lg shadow-2xl p-4">
-//         <CardsGrid allCompanies={allCompanies} onCardClick={handleCardClick} />
-//       </div>
-//       {modalIsOpen && <ModalCompany isOpen={modalIsOpen} onClose={handleCloseModal} selectedCard={selectedCard} />}
-//     </section>
-//   );
-// }
+  return (
+    <section className="">
+      <h2 className="text-3xl pb-5 pl-10">Todas las Compañias</h2>
+      <p className="pl-10 max-w-1/2">Aquí se verán todas las compañías</p>
+      <div className=" rounded-lg shadow-2xl p-4">
+        {/* <CardsGrid allCompanies={allCompanies} onCardClick={handleCardClick} /> */}
+      </div>
+      {/* {modalIsOpen && <ModalCompany isOpen={modalIsOpen} onClose={handleCloseModal} selectedCard={selectedCard} />} */}
+    </section>
+  );
+}
