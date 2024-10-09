@@ -18,14 +18,20 @@ export default async function companyRegister() {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const { data } = await supabase.from('profile').select('*').eq('email', session?.user.email);
+  const { data } = await supabase
+    .from('profile')
+    .select('*')
+    .eq('email', session?.user.email || '');
 
-  const { data: Companies, error } = await supabase.from('company').select(`*`).eq('owner_id', data?.[0]?.id);
+  const { data: Companies, error } = await supabase
+    .from('company')
+    .select(`*`)
+    .eq('owner_id', data?.[0]?.id || '');
 
   let { data: share_company_users, error: sharedError } = await supabase
     .from('share_company_users')
     .select(`*`)
-    .eq('profile_id', data?.[0]?.id);
+    .eq('profile_id', data?.[0]?.id || '');
   revalidatePath('/dashboard/company/new');
 
   const showAlert = !Companies?.[0] && !share_company_users?.[0];
@@ -143,7 +149,7 @@ export default async function companyRegister() {
                   </SelectTrigger>
                   <SelectContent>
                     {industry_type?.map((ind) => (
-                      <SelectItem key={ind?.id} value={ind?.name}>
+                      <SelectItem key={ind?.id} value={ind?.name || ''}>
                         {ind?.name}
                       </SelectItem>
                     ))}

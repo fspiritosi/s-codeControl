@@ -180,7 +180,7 @@ export const columns: ColumnDef<Colum>[] = [
                 reason_for_termination: data.reason_for_termination,
               })
               .eq('id', contacts.id)
-              .eq('company_id', actualCompany?.id)
+              .eq('company_id', actualCompany?.id || '')
               .select();
 
             setShowModal(!showModal);

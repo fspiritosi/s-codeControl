@@ -83,7 +83,7 @@ function FormCardContainer({
 }) {
   const [formData, setFormData] = useState<FormData[]>(form);
   const searchParams = useSearchParams();
-  const params = new URLSearchParams(searchParams);
+  const params = new URLSearchParams(searchParams as any);
   const formId = params.get('form_id');
 
   const groupedForms: GroupedForms = formData?.reduce(
@@ -142,7 +142,7 @@ function FormCardContainer({
     let { data: form_answers, error } = await supabase
       .from('form_answers')
       .select('*,form_id(*)')
-      .eq('form_id', formId);
+      .eq('form_id', formId || '');
     setForms(form_answers);
   };
 

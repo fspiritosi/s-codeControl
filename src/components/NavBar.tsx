@@ -90,7 +90,10 @@ export default function NavBar() {
   const updateProfileAvatar = async (imageUrl: string) => {
     try {
       // Realiza la actualización en la tabla profile usando Supabase
-      const { data, error } = await supabase.from('profile').update({ avatar: imageUrl }).eq('id', actualUser[0].id);
+      const { data, error } = await supabase
+        .from('profile')
+        .update({ avatar: imageUrl })
+        .eq('id', actualUser[0].id || '');
 
       if (error) {
         throw error;

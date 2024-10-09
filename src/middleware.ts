@@ -14,14 +14,20 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const { data } = await supabase.from('profile').select('*').eq('email', session?.user.email);
+  const { data } = await supabase
+    .from('profile')
+    .select('*')
+    .eq('email', session?.user.email || '');
 
-  const { data: Companies, error } = await supabase.from('company').select(`*`).eq('owner_id', data?.[0]?.id);
+  const { data: Companies, error } = await supabase
+    .from('company')
+    .select(`*`)
+    .eq('owner_id', data?.[0]?.id || '');
 
   let { data: share_company_users, error: sharedError } = await supabase
     .from('share_company_users')
     .select(`*`)
-    .eq('profile_id', data?.[0]?.id);
+    .eq('profile_id', data?.[0]?.id || '');
 
   const actualNoOwnerValue: string | null = req.cookies.get('actualComp')?.value ?? null;
 
@@ -31,8 +37,8 @@ export async function middleware(req: NextRequest) {
   const { data: guestRole } = await supabase
     .from('share_company_users')
     .select('role')
-    .eq('profile_id ', data?.[0]?.id)
-    .eq('company_id', actualNow);
+    .eq('profile_id ', data?.[0]?.id || '')
+    .eq('company_id', actualNow || '');
 
   //response.cookies.set('guestRole', guestRole?.[0]?.role)
 
@@ -54,11 +60,7 @@ export async function middleware(req: NextRequest) {
     '/dashboard/company/new',
     '/dashboard/company/actualCompany',
   ]; // -> Rol tabla profile
-  const allowedPathsguestUser = [
-    '/dashboard/document',
-    '/dashboard/employees',
-    '/dashboard/equipment',
-  ];
+  const allowedPathsguestUser = ['/dashboard/document', '/dashboard/employees', '/dashboard/equipment'];
   const usuarioUser = ['/dashboard/company/actualCompany', 'admin/auditor'];
 
   const administradorUser = ['admin/auditor'];
@@ -76,7 +78,7 @@ export async function middleware(req: NextRequest) {
     const baseUrl = req.url.includes('?') ? req.url.split('?')[0] : req.url;
     const redirectUrl = new URL(baseUrl);
     redirectUrl.searchParams.set('access_denied', 'true');
-    
+
     if (isAuditor && !req.url.includes('admin/auditor')) {
       redirectUrl.pathname = '/auditor';
       return NextResponse.redirect(redirectUrl.toString());
@@ -94,27 +96,27 @@ export async function middleware(req: NextRequest) {
     //   redirectUrl.pathname = '/dashboard/document';
     //   return NextResponse.redirect(redirectUrl.toString());
     // }
-    
+
     // if (guestRole?.[0]?.role === 'Invitado' && guestUser.some((url) => req.url.includes(url))) {
     //   redirectUrl.pathname = '/dashboard/document/';
     //   return NextResponse.redirect(redirectUrl.toString());
     // }
     if (guestRole?.[0]?.role === 'Invitado') {
-    // Si el usuario está en una ruta permitida, permitir la navegación
-    const isAllowedPath = allowedPathsguestUser.some(path => req.url.startsWith(path));
+      // Si el usuario está en una ruta permitida, permitir la navegación
+      const isAllowedPath = allowedPathsguestUser.some((path) => req.url.startsWith(path));
 
-    if (isAllowedPath) {
-      return NextResponse.next();
+      if (isAllowedPath) {
+        return NextResponse.next();
+      }
+
+      // Si el usuario está en una ruta restringida, redirigir a '/dashboard/document'
+      const isRestrictedPath = guestUser.some((path) => req.url.startsWith(path));
+
+      if (isRestrictedPath) {
+        redirectUrl.pathname = '/dashboard/document';
+        return NextResponse.redirect(redirectUrl);
+      }
     }
-
-    // Si el usuario está en una ruta restringida, redirigir a '/dashboard/document'
-    const isRestrictedPath = guestUser.some(path => req.url.startsWith(path));
-
-    if (isRestrictedPath) {
-      redirectUrl.pathname = '/dashboard/document';
-      return NextResponse.redirect(redirectUrl);
-    }
-  }
 
     if (guestRole?.[0]?.role === 'Administrador' && administradorUser.some((url) => req.url.includes(url))) {
       redirectUrl.pathname = '/dashboard';
@@ -129,8 +131,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/dashboard/:path*',
-    '/admin/:path*',
-  ],
+  matcher: ['/dashboard/:path*', '/admin/:path*'],
 };

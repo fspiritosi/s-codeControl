@@ -126,7 +126,7 @@ export default function ReplaceDocument({
             validity: filename.validity ? format(filename.validity as Date, 'dd/MM/yyyy') : null,
             created_at: new Date().toISOString(),
           })
-          .eq('id', appliesId);
+          .eq('id', appliesId || '');
 
         if (updateError) {
           console.log(updateError);

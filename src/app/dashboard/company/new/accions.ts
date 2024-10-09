@@ -8,7 +8,10 @@ export async function AddCompany(formData: FormData, url: string) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let { data: profile, error } = await supabase.from('profile').select('*').eq('email', user?.email);
+  let { data: profile, error } = await supabase
+    .from('profile')
+    .select('*')
+    .eq('email', user?.email || '');
 
   const formattedData = {
     city: parseInt(formData.get('city') as string),
@@ -40,7 +43,10 @@ export async function EditCompany(formData: FormData, url: string) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let { data: profile, error } = await supabase.from('profile').select('*').eq('email', user?.email);
+  let { data: profile, error } = await supabase
+    .from('profile')
+    .select('*')
+    .eq('email', user?.email || '');
 
   const formattedData = {
     city: parseInt(formData.get('city') as string),
@@ -64,8 +70,7 @@ export async function EditCompany(formData: FormData, url: string) {
     .from('company')
     .update(formattedData)
     //.select()
-
-    .eq('id', companyId?.[0].id)
+    .eq('id', companyId?.[0].id || '')
     .select('*');
 
   revalidatePath('/dashboard', 'layout');

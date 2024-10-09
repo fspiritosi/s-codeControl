@@ -9,8 +9,10 @@ export async function GET(request: NextRequest) {
   try {
     let { data, error } = await supabase
       .from('repair_solicitudes')
-      .select('*,user_id(*),employee_id(*),equipment_id(*,type(*),brand(*),model(*)),reparation_type(*),repairlogs(*,modified_by_employee(*),modified_by_user(*))')
-      .eq('equipment_id.company_id', company_id)
+      .select(
+        '*,user_id(*),employee_id(*),equipment_id(*,type(*),brand(*),model(*)),reparation_type(*),repairlogs(*,modified_by_employee(*),modified_by_user(*))'
+      )
+      .eq('equipment_id.company_id', company_id || '')
       .not('equipment_id', 'is', null);
 
     const repair_solicitudes = data ?? [{}];
@@ -47,7 +49,10 @@ export async function PUT(request: NextRequest) {
   const body = await request.json();
 
   try {
-    const { data: repair_solicitudes, error } = await supabase.from('repair_solicitudes').update(body).eq('id', id);
+    const { data: repair_solicitudes, error } = await supabase
+      .from('repair_solicitudes')
+      .update(body)
+      .eq('id', id || '');
 
     if (error) {
       throw new Error(JSON.stringify(error));
@@ -66,7 +71,10 @@ export async function DELETE(request: NextRequest) {
   console.log('keloke', id);
 
   try {
-    const { data: repair_solicitudes, error } = await supabase.from('repair_solicitudes').delete().eq('id', id);
+    const { data: repair_solicitudes, error } = await supabase
+      .from('repair_solicitudes')
+      .delete()
+      .eq('id', id || '');
 
     if (error) {
       throw new Error(JSON.stringify(error));

@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const profile_id = searchParams.get('profile_id');
 
   console.log('company_id', company_id);
-    console.log('profile_id', profile_id);
+  console.log('profile_id', profile_id);
 
   if (!company_id) {
     return NextResponse.json({ error: ['Company not found'] });
@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
     let { data: shared_user, error } = await supabase
       .from('share_company_users')
       .select('*')
-      .eq('company_id', company_id)
-      .eq('profile_id', profile_id);
+      .eq('company_id', company_id || '')
+      .eq('profile_id', profile_id || '');
 
     if (error) {
       throw new Error(JSON.stringify(error));

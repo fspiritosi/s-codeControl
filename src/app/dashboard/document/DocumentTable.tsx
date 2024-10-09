@@ -22,7 +22,7 @@ export default function DocumentTable({ document }: Props) {
           <TabsTrigger value="permanentes">Documentos permanentes</TabsTrigger>
           <TabsTrigger value="mensuales">Documentos mensuales</TabsTrigger>
         </TabsList>
-        <DocumentNav documentNumber={document} empleados onlyNoMultiresource mandatoryLabel={'Nuevo documento'} />
+        <DocumentNav id_user={document} onlyEmployees onlyNoMultiresource />
       </CardContent>
       <TabsContent value="permanentes">
         <ExpiredDataTable

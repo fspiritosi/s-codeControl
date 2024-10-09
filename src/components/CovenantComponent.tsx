@@ -9,20 +9,19 @@ import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { covenantSchema } from '@/zodSchemas/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Toaster, toast } from 'sonner';
-import { useRouter } from 'next/navigation';
-import { createdContact, updateContact } from "../app/dashboard/company/contact/action/create"
 import { z } from 'zod';
+import { createdContact, updateContact } from '../app/dashboard/company/contact/action/create';
 
 type Action = 'view' | 'edit' | null;
 
 type CovenantFormValues = z.infer<typeof covenantSchema>;
 
 export default function CovenantComponent({ id }: { id: string }) {
-  const router =useRouter()
+  const router = useRouter();
   const functionAction = id ? updateContact : createdContact;
   const searchParams = useSearchParams();
   const actualCompany = useLoggedUserStore((state) => state.actualCompany?.id);
@@ -35,7 +34,7 @@ export default function CovenantComponent({ id }: { id: string }) {
     resolver: zodResolver(covenantSchema),
     defaultValues: {
       name: '',
-      category:'',
+      category: '',
     },
   });
 
@@ -64,7 +63,7 @@ export default function CovenantComponent({ id }: { id: string }) {
         .from('covenant')
         .select('*')
         .eq('is_active', true)
-        .eq('company_id', actualCompany);
+        .eq('company_id', actualCompany || '');
       if (error) {
         console.error('Error fetching covenants:', error);
       } else {
@@ -82,7 +81,7 @@ export default function CovenantComponent({ id }: { id: string }) {
           if (data && data.length > 0) {
             const category = data[0];
             setCategoryData(category);
-            setValue('name', category.name || '')
+            setValue('name', category.name || '');
           } else {
             console.error('No se encontró ningún contacto con el id proporcionado.');
           }
@@ -96,8 +95,6 @@ export default function CovenantComponent({ id }: { id: string }) {
 
   const covenantValue = watch('name');
 
-  
-
   const onSubmit = async (formData: CovenantFormValues) => {
     try {
       if (!formData.name || formData.name === 'undefined') {
@@ -105,31 +102,29 @@ export default function CovenantComponent({ id }: { id: string }) {
       }
 
       const data = new FormData();
-      data.append("id", id);
-      data.append("name", formData.name);
-     
+      data.append('id', id);
+      data.append('name', formData.name);
+
       const company_id = actualCompany;
-      data.append("company_id", company_id as string);
-      toast.loading("Creando contacto")
-      
-        const response = await functionAction(data);
-        
-        
-        if (response.status === 201) {
-            toast.dismiss();
-            toast.success('Contacto creado satisfactoriamente!');
-            router.push("/dashboard/company/actualCompany")
-        } else {
-            toast.dismiss();
-            toast.error(response.body);
-        }
-    } catch (errors) {
-        // console.error('Error submitting form:', error);
+      data.append('company_id', company_id as string);
+      toast.loading('Creando contacto');
+
+      const response = await functionAction(data);
+
+      if (response.status === 201) {
         toast.dismiss();
-        toast.error('Error al crear el cliente')
-        
+        toast.success('Contacto creado satisfactoriamente!');
+        router.push('/dashboard/company/actualCompany');
+      } else {
+        toast.dismiss();
+        toast.error(response.body);
+      }
+    } catch (errors) {
+      // console.error('Error submitting form:', error);
+      toast.dismiss();
+      toast.error('Error al crear el cliente');
     }
-  }
+  };
 
   return (
     <section className={cn('md:mx-7')}>
@@ -165,7 +160,6 @@ export default function CovenantComponent({ id }: { id: string }) {
                   </CardDescription>
                 )}
               </div>
-             
 
               <div>
                 <Label htmlFor="category">Seleccione una Categoria</Label>
@@ -177,7 +171,7 @@ export default function CovenantComponent({ id }: { id: string }) {
                   <SelectTrigger id="category" name="category" className="max-w-[350px] w-[300px]">
                     <SelectValue
                       placeholder={
-                        covenantData?.find((cli: any) => cli.id === covenantValue )?.name || 'Seleccionar un cliente'
+                        covenantData?.find((cli: any) => cli.id === covenantValue)?.name || 'Seleccionar un cliente'
                       }
                     />
                   </SelectTrigger>
@@ -195,7 +189,6 @@ export default function CovenantComponent({ id }: { id: string }) {
                   </CardDescription>
                 )}
               </div>
-              
             </div>
             {action === 'view' ? null : (
               <Button type="submit" className="mt-5">
