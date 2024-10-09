@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
-import { supabase } from '../../../../../../supabase/supabase';
-import BackButton from '../../../../../components/BackButton';
-import CustomerComponent from '../../../../../components/CustomerComponent';
+import { supabase } from '../../../../../../../supabase/supabase';
+import BackButton from '../../../../../../components/BackButton';
+import CustomerComponent from '../../../../../../components/CustomerComponent';
 import { revalidatePath } from 'next/cache';
 
 export default async function CustomerFormAction({

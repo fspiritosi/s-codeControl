@@ -2,8 +2,8 @@
 
 import { columnsGuests } from '@/app/dashboard/company/actualCompany/components/columnsGuests';
 import { DataTable as DataTableInvited } from '@/app/dashboard/company/actualCompany/components/data-table';
-import { createdCustomer, updateCustomer } from '@/app/dashboard/company/customers/action/create';
-import { DataTable } from '@/app/dashboard/company/customers/action/data-table';
+import { createdCustomer, updateCustomer } from '@/app/dashboard/company/actualCompany/customers/action/create';
+import { DataTable } from '@/app/dashboard/company/actualCompany/customers/action/data-table';
 import { EquipmentTable } from '@/app/dashboard/equipment/data-equipment';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
@@ -40,7 +40,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+interface Service {
+  id: string;
+  service_name: string;
+  is_active: boolean;
+  service_start: string;
+  service_validity: string;
 
+}
 
 export default function ClientRegister({ id }: { id: string }) {
   const router = useRouter();
@@ -56,14 +64,9 @@ export default function ClientRegister({ id }: { id: string }) {
   const [employ, setEmploy] = useState<any>(null);
   const [servicesData, setServicesData] = useState<any>(null);
   const [openModal, setOpenModal] = useState(false);
-  interface Service {
-    id: string;
-    service_name: string;
-    is_active: boolean;
-    service_start: string;
-    service_validity: string;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
-  }
 
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [items, setItems] = useState<any>(null);
@@ -81,13 +84,13 @@ export default function ClientRegister({ id }: { id: string }) {
 
   };
   const handleOpenModal = (service: any) => {
-    console.log("SERVICE: ", service)
+   
     setSelectedService(service);
 
     setOpenModal(true);
     fetchItems();
   }
-  console.log("ITEMS: ", items)
+ 
   const filteredItems = items?.filter((item: any) => item.customer_service_id?.id === selectedService?.id);
 
 
@@ -108,7 +111,7 @@ export default function ClientRegister({ id }: { id: string }) {
 
   const fetchServices = async () => {
     const { services } = await fetch(`${URL}/api/services?actual=${actualCompany}`).then((e) => e.json());
-    const filteredServices = services.filter((service: any) => service.customer_id.toString() === id);
+    const filteredServices = services.filter((service: any) => (service.customer_id.toString() === id) && (service.is_active === true));
     setServicesData(filteredServices);
   }
 
@@ -143,9 +146,6 @@ export default function ClientRegister({ id }: { id: string }) {
   const filteredCustomersEquipment = equipment?.filter(
     (customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id)
   );
-
-  console.log(filteredCustomersEquipment);
-
 
   const form = useForm<z.infer<typeof customersSchema>>({
     resolver: zodResolver(customersSchema),
@@ -222,8 +222,6 @@ export default function ClientRegister({ id }: { id: string }) {
     }
   };
 
-  console.log("SELECTEDSERVICE: ", selectedService)
-
   const renderCard = () => (
     // <Card className="mt-6 p-8"></Card>
     <Card className="mt-6 p-8">
@@ -251,85 +249,85 @@ export default function ClientRegister({ id }: { id: string }) {
             : 'Completa este formulario con los datos de tu nuevo Cliente'}
       </CardDescription>
       <div className="mt-6 w-full">
-  <form onSubmit={handleSubmit(onSubmit)}>
-    <input type="hidden" name="id" value={id} />
-    <div className="grid grid-cols-4 gap-4 w-full">
-      <div>
-        <Label htmlFor="company_name">Nombre de la compañía</Label>
-        <Input
-          id="company_name"
-          {...register('company_name')}
-          className="w-full"
-          placeholder="nombre de la compañía"
-          readOnly={readOnly}
-        />
-        {formErrors.company_name && (
-          <CardDescription className="text-red-500">{formErrors.company_name.message}</CardDescription>
-        )}
-      </div>
-      <div>
-        <Label htmlFor="client_cuit">CUIT de la compañía</Label>
-        <Input
-          id="client_cuit"
-          {...register('client_cuit')}
-          className="w-full"
-          placeholder="número de cuit"
-          readOnly={readOnly}
-        />
-        {formErrors.client_cuit && (
-          <CardDescription className="text-red-500">{formErrors.client_cuit.message}</CardDescription>
-        )}
-      </div>
-      <div>
-        <Label htmlFor="client_email">Email</Label>
-        <Input
-          id="client_email"
-          {...register('client_email')}
-          className="w-full"
-          placeholder="email"
-          readOnly={readOnly}
-        />
-        {formErrors.client_email && (
-          <CardDescription className="text-red-500">{formErrors.client_email.message}</CardDescription>
-        )}
-      </div>
-      <div>
-        <Label htmlFor="client_phone">Número de teléfono</Label>
-        <Input
-          id="client_phone"
-          {...register('client_phone')}
-          className="w-full"
-          placeholder="teléfono"
-          readOnly={readOnly}
-        />
-        {formErrors.client_phone && (
-          <CardDescription className="text-red-500">{formErrors.client_phone.message}</CardDescription>
-        )}
-      </div>
-      <div>
-        <Label htmlFor="address">Dirección</Label>
-        <Input
-          id="address"
-          {...register('address')}
-          className="w-full"
-          placeholder="dirección"
-          readOnly={readOnly}
-        />
-        {formErrors.address && (
-          <CardDescription className="text-red-500">{formErrors.address.message}</CardDescription>
-        )}
-      </div>
-    </div>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <input type="hidden" name="id" value={id} />
+          <div className="grid grid-cols-4 gap-4 w-full">
+            <div>
+              <Label htmlFor="company_name">Nombre de la compañía</Label>
+              <Input
+                id="company_name"
+                {...register('company_name')}
+                className="w-full"
+                placeholder="nombre de la compañía"
+                readOnly={readOnly}
+              />
+              {formErrors.company_name && (
+                <CardDescription className="text-red-500">{formErrors.company_name.message}</CardDescription>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="client_cuit">CUIT de la compañía</Label>
+              <Input
+                id="client_cuit"
+                {...register('client_cuit')}
+                className="w-full"
+                placeholder="número de cuit"
+                readOnly={readOnly}
+              />
+              {formErrors.client_cuit && (
+                <CardDescription className="text-red-500">{formErrors.client_cuit.message}</CardDescription>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="client_email">Email</Label>
+              <Input
+                id="client_email"
+                {...register('client_email')}
+                className="w-full"
+                placeholder="email"
+                readOnly={readOnly}
+              />
+              {formErrors.client_email && (
+                <CardDescription className="text-red-500">{formErrors.client_email.message}</CardDescription>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="client_phone">Número de teléfono</Label>
+              <Input
+                id="client_phone"
+                {...register('client_phone')}
+                className="w-full"
+                placeholder="teléfono"
+                readOnly={readOnly}
+              />
+              {formErrors.client_phone && (
+                <CardDescription className="text-red-500">{formErrors.client_phone.message}</CardDescription>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="address">Dirección</Label>
+              <Input
+                id="address"
+                {...register('address')}
+                className="w-full"
+                placeholder="dirección"
+                readOnly={readOnly}
+              />
+              {formErrors.address && (
+                <CardDescription className="text-red-500">{formErrors.address.message}</CardDescription>
+              )}
+            </div>
+          </div>
 
-    <br />
-    {action === 'view' && readOnly === true ? null : (
-      <Button type="submit" className="mt-5">
-        {id ? 'Guardar' : 'Registrar'}
-      </Button>
-    )}
-    <Toaster />
-  </form>
-</div>
+          <br />
+          {action === 'view' && readOnly === true ? null : (
+            <Button type="submit" className="mt-5">
+              {id ? 'Guardar' : 'Registrar'}
+            </Button>
+          )}
+          <Toaster />
+        </form>
+      </div>
 
     </Card>
   );
@@ -355,9 +353,17 @@ export default function ClientRegister({ id }: { id: string }) {
         ...user,
         fullname: user.fullname || '',
       })) || [];
-  console.log(servicesData)
-  console.log(filteredItems)
-
+  
+  const totalPages = Math.ceil(servicesData?.length / itemsPerPage);
+  const currentReports = servicesData?.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
+    setCurrentPage(1); // Reset to first page when items per page changes
+  };
   return (
     <section className={cn('md:mx-7 max-w-full')}>
       {action === 'view' ? (
@@ -422,6 +428,28 @@ export default function ClientRegister({ id }: { id: string }) {
             <TabsContent value="servicios">
               <Card className="w-full">
                 <CardContent className="p-0">
+                  <div className='flex gap-2 justify-center m-2 ml-auto'>
+                    <span className='mt-1 text-lg'>Filas por página: </span>
+                   
+                    <Select
+                      value={itemsPerPage.toString()}
+                      onValueChange={(value) => handleItemsPerPageChange(parseInt(value))}
+                    >
+                      <SelectTrigger className="w-[70px]">
+                        <SelectValue placeholder="Seleccionar cantidad" />
+                      </SelectTrigger>
+                      <SelectContent className="w-auto min-w-[70px] absolute">
+                        <SelectItem value="5">5</SelectItem>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="30">30</SelectItem>
+                        <SelectItem value="40">40</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="60">60</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -433,7 +461,7 @@ export default function ClientRegister({ id }: { id: string }) {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {servicesData?.map((service: any) => (
+                        {currentReports?.map((service: any) => (
                           <TableRow key={service.id} onClick={() => handleOpenModal((service))} className="cursor-pointer">
                             <TableCell className="font-medium">{service.service_name}</TableCell>
                             <TableCell>
@@ -447,6 +475,18 @@ export default function ClientRegister({ id }: { id: string }) {
                         ))}
                       </TableBody>
                     </Table>
+                  </div>
+                  <div className="flex justify-center mt-4">
+                    {Array.from({ length: totalPages }, (_, index) => (
+                      <Button
+                        key={index}
+                        onClick={() => handlePageChange(index + 1)}
+                        variant={currentPage === index + 1 ? 'default' : 'outline'}
+                        className="mx-1"
+                      >
+                        {index + 1}
+                      </Button>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -487,9 +527,9 @@ export default function ClientRegister({ id }: { id: string }) {
                   <TableCell className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     UDM
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  {/* <TableCell className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Precio
-                  </TableCell>
+                  </TableCell> */}
                   {/* <TableCell className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Cliente
             </TableCell> */}
@@ -512,9 +552,9 @@ export default function ClientRegister({ id }: { id: string }) {
                     <TableCell className="px-4 py-2 whitespace-nowrap text-sm text-muted-foreground">
                       {item.item_measure_units?.unit}
                     </TableCell>
-                    <TableCell className="px-4 py-2 whitespace-nowrap text-sm text-muted-foreground">
+                    {/* <TableCell className="px-4 py-2 whitespace-nowrap text-sm text-muted-foreground">
                       ${item.item_price}
-                    </TableCell>
+                    </TableCell> */}
                     {/* <TableCell className="px-4 py-2 whitespace-nowrap text-sm text-muted-foreground">
                 {item.customer_service_id?.customer_id?.name}
               </TableCell> */}
