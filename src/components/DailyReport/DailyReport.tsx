@@ -70,6 +70,7 @@ interface Equipment {
     intern_number: number
     allocated_to: string[]
     is_active: boolean
+    condition: 'operativo' | 'no operativo' | 'en reparación' | 'operativo condicionado'
 }
 
 interface Services {
@@ -213,7 +214,7 @@ interface RepairsSolicituds {
 }
 
 export default function DailyReport({ reportData }: DailyReportProps) {
-    console.log('Report data:', reportData)
+    
     const [employees, setEmployees] = useState<Employee[]>([])
     const [customers, setCustomers] = useState<Customers[]>([])
     const [selectedCustomer, setSelectedCustomer] = useState<Customers | null>(null)
@@ -274,8 +275,9 @@ export default function DailyReport({ reportData }: DailyReportProps) {
 
     async function fetchCustomers() {
         const { customers, error } = await fetch(`${URL}/api/company/customers/?actual=${company_id}`).then((e) => e.json())
-        console.log(error)
-        setCustomers(customers)
+        const activeCustomers = customers.filter((customer: Customers) => customer.is_active)
+        
+        setCustomers(activeCustomers)
     }
 
     async function fetchEquipment() {
@@ -286,7 +288,8 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             }
             const data = await response.json()
             const equipment = data.equipments
-            setEquipment(equipment)
+            const activeEquipment = equipment.filter((eq: Equipment) => eq.is_active)
+            setEquipment(activeEquipment)
             return equipment
         } catch (error) {
             console.error('Error fetching equipment:', error)
@@ -295,8 +298,9 @@ export default function DailyReport({ reportData }: DailyReportProps) {
 
     async function fetchServices() {
         const { services } = await fetch(`${URL}/api/services?actual=${company_id}`).then((e) => e.json())
-        setServices(services)
-        console.log(services)
+        const activeServices = services.filter((service: Services) => service.is_active)
+        setServices(activeServices)
+        
         return services
     }
 
@@ -312,14 +316,14 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         return diagrams;
     }
 
-    async function fetchRepairOrders() {
-        const { repair_solicitudes } = await fetch(`${URL}/api/repair_solicitud?actual=${company_id}`).then((res) =>
-            res.json()
-        );
-        setRepairOrders(repair_solicitudes)
-        console.log(repair_solicitudes)
-        return repair_solicitudes
-    }
+    // async function fetchRepairOrders() {
+    //     const { repair_solicitudes } = await fetch(`${URL}/api/repair_solicitud?actual=${company_id}`).then((res) =>
+    //         res.json()
+    //     );
+    //     setRepairOrders(repair_solicitudes)
+    //     console.log(repair_solicitudes)
+    //     return repair_solicitudes
+    // }
 
     useEffect(() => {
         fetchEmployees()
@@ -328,11 +332,10 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         fetchServices()
         fetchItems()
         fetchDiagrams()
-        fetchRepairOrders()
+        // fetchRepairOrders()
     }, [])
 
-    console.log(diagram ? diagram[0] : null)
-    console.log(repairOrders)
+    
     useEffect(() => {
         if (reportData) {
             setDate(new Date(reportData.date))
@@ -346,7 +349,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             setExistingReportId(reportData.id)
         }
     }, [reportData])
-    console.log(employees)
+    
     useEffect(() => {
         if (startTime && endTime) {
             const start = new Date(`1970-01-01T${startTime}:00`)
@@ -406,12 +409,17 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                 return isAllocatedToCustomer && isActiveOnReportDate;
             });
             setCustomerEmployees(filteredEmployees);
-
+            
+            // const filteredEquipment = equipment.filter((equipment: Equipment) => {
+            //     const isAllocatedToCustomer = equipment.allocated_to.includes(customer.id);
+            //     const isNotUnderRepair = !repairOrders.some((order: RepairsSolicituds) =>
+            //         order.equipment_id.id === equipment.id && (order.state === 'En reparación' || order.state === 'no operativo')
+            //     );
+            //     return isAllocatedToCustomer && isNotUnderRepair;
+            // });
             const filteredEquipment = equipment.filter((equipment: Equipment) => {
                 const isAllocatedToCustomer = equipment.allocated_to.includes(customer.id);
-                const isNotUnderRepair = !repairOrders.some((order: RepairsSolicituds) =>
-                    order.equipment_id.id === equipment.id && order.state === 'En reparación'
-                );
+                const isNotUnderRepair = !(equipment.condition === 'en reparación' || equipment.condition === 'no operativo');
                 return isAllocatedToCustomer && isNotUnderRepair;
             });
             setCustomerEquipment(filteredEquipment);
@@ -482,7 +490,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         setCustomerItems([])
         setSelectedService(null)
     }
-    console.log('Daily Report:', dailyReport)
+   
     const handleEdit = (id: string) => {
         const itemToEdit = dailyReport.find(item => item.id === id)
         if (itemToEdit) {
@@ -497,12 +505,12 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             handleSelectService(itemToEdit.services)
             setValue('item', itemToEdit.item)
             // Normalizar el valor de working_day
-            const normalizedWorkingDay = itemToEdit.working_day.trim().toLowerCase();
-            console.log('Normalized Working Day:', normalizedWorkingDay);
+            const normalizedWorkingDay = itemToEdit.working_day?.trim().toLowerCase();
+            
 
             // Verificar si la jornada es de 8 o 12 horas y poner en vacío la hora de inicio y fin
             if ((normalizedWorkingDay === "jornada 8 horas") || (normalizedWorkingDay === "jornada 12 horas")) {
-                console.log('Setting start_time and end_time to empty');
+                
                 setValue('start_time', '');
                 setValue('end_time', '');
             } else {
@@ -536,7 +544,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             }
 
             const rowData = await response.json();
-            console.log('Row data:', rowData);
+           
             const { dailyreportrows } = rowData;
             const row = dailyreportrows.find((item: any) => item.id === id);
 
@@ -636,7 +644,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
 
             // Obtener el array de filas existentes
             const existingRows = dailyReport;
-            console.log('Existing rows:', existingRows);
+            
             // Verificar si ya existe una fila exactamente igual
             const isDuplicate = existingRows.some(row =>
                 row.customer === data.customer &&
@@ -650,7 +658,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                 JSON.stringify(row.employees) === JSON.stringify(data.employees) &&
                 JSON.stringify(row.equipment) === JSON.stringify(data.equipment)
             );
-            console.log('Is duplicate:', isDuplicate);
+            
             if (isDuplicate) {
                 toast({
                     title: "Error",
@@ -661,7 +669,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             }
 
 
-            console.log(reportData)
+            
             const rowResponse = await fetch('/api/daily-report/daily-report-row', {
                 method: 'POST',
                 headers: {
@@ -686,7 +694,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
 
             const { data: rowData } = await rowResponse.json();
             const rowId = rowData[0].id; // Asegúrate de que esto sea correcto
-            console.log('Row ID:', rowId);
+            
             if (data.employees && data.employees.length > 0) {
                 await fetch('/api/daily-report/dailyreportemployeerelations', {
                     method: 'POST',
@@ -756,13 +764,11 @@ export default function DailyReport({ reportData }: DailyReportProps) {
 
 
     const updateDailyReport = async (data: any, rowId: string) => {
-        console.log('Updating row:', rowId);
-        console.log('Data:', data);
+        
         try {
             const formattedStartTime = formatTime(data.start_time);
             const formattedEndTime = formatTime(data.end_time);
-            console.log('Formatted start time:', formattedStartTime);
-            console.log('Formatted end time:', formattedEndTime);
+            
 
 
             // Actualizar la fila existente
@@ -798,7 +804,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                 throw new Error(`Error al obtener relaciones de empleados: ${errorText}`);
             }
             const employeeRelationsData = await employeeRelationsResponse.json();
-            console.log('employeeRelationsData:', employeeRelationsData);
+            
             const currentEmployees = employeeRelationsData.dailyreportemployeerelations.map((rel: any) => ({
                 id: rel.id,
                 employee_id: rel.employee_id
@@ -811,7 +817,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                 throw new Error(`Error al obtener relaciones de equipos: ${errorText}`);
             }
             const equipmentRelationsData = await equipmentRelationsResponse.json();
-            console.log('equipmentRelationsData:', equipmentRelationsData);
+            
             const currentEquipment = equipmentRelationsData.dailyreportequipmentrelations.map((rel: any) => ({
                 id: rel.id,
                 equipment_id: rel.equipment_id
@@ -821,8 +827,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             const employeesToRemove = currentEmployees.filter((rel: any) => !data.employees.includes(rel.employee_id));
             const equipmentToRemove = currentEquipment.filter((rel: any) => !data.equipment.includes(rel.equipment_id));
 
-            console.log('employeesToRemove:', employeesToRemove);
-            console.log('equipmentToRemove:', equipmentToRemove);
+            
 
             // Eliminar relaciones no utilizadas
             if (employeesToRemove.length > 0) {
@@ -972,19 +977,23 @@ export default function DailyReport({ reportData }: DailyReportProps) {
 
     // Función para calcular la diferencia de días
     const calculateDateDifference = (dateString: string) => {
+        
         const reportDate = new Date(dateString);
+        
         const timeDifference = currentDate.getTime() - reportDate.getTime();
+        
         const dayDifference = timeDifference / (1000 * 3600 * 24);
         return dayDifference;
     };
+    
     const dayDifference = calculateDateDifference(reportData?.date || '');
-    console.log('Day difference:', dayDifference);
+    
     const canEdit = dayDifference <= 6;
 
 
-    console.log(dailyReport)
+    
     return (
-        <div className="container mx-auto p-4">
+        <div className="mx-auto p-4">
             <div className="relative w-full h-full overflow-hidden">
                 <motion.div
                     className="flex w-full"
@@ -1020,7 +1029,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                                 handleSelectCustomer(value, reportData?.date ? new Date(reportData.date) : new Date())
                                                             }}
                                                         >
-                                                            <SelectTrigger className="w-[250px]">
+                                                            <SelectTrigger className="w-full max-w-xs">
                                                                 <SelectValue placeholder="Seleccione un cliente" />
                                                             </SelectTrigger>
                                                             <SelectContent>
@@ -1049,7 +1058,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                                 handleSelectService(value)
                                                             }}
                                                         >
-                                                            <SelectTrigger className="w-[250px]">
+                                                            <SelectTrigger className="w-full max-w-xs">
                                                                 <SelectValue placeholder="Seleccione el servicio" />
                                                             </SelectTrigger>
                                                             <SelectContent>
@@ -1077,7 +1086,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                             value={field.value}
                                                             onValueChange={field.onChange}
                                                         >
-                                                            <SelectTrigger className="w-[250px]">
+                                                            <SelectTrigger className="w-full max-w-xs">
                                                                 <SelectValue placeholder="Seleccione un item" />
                                                             </SelectTrigger>
                                                             <SelectContent>
@@ -1101,16 +1110,19 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                 name='employees'
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className='block w-[250px]'>Empleados</FormLabel>
-                                                        <MultiSelect
-                                                            multiEmp={customerEmployees.map((employee: Employee) => ({
-                                                                id: employee.id,
-                                                                name: `${employee.firstname} ${employee.lastname}`
-                                                            }))}
-                                                            placeholder="Seleccione empleados"
-                                                            selectedItems={field.value}
-                                                            onChange={(selected: any) => field.onChange(selected)}
-                                                        />
+                                                        <FormLabel className='block w-full max-w-xs'>Empleados</FormLabel>
+                                                        <div className="w-full max-w-xs"> {/* Contenedor con clases de Tailwind */}
+                                                            <MultiSelect
+                                                                multiEmp={customerEmployees.map((employee: Employee) => ({
+                                                                    id: employee.id,
+                                                                    name: `${employee.firstname} ${employee.lastname}`
+                                                                }))}
+                                                                placeholder="Seleccione empleados"
+                                                                selectedItems={field.value}
+                                                                onChange={(selected: any) => field.onChange(selected)}
+                                                                
+                                                            />
+                                                        </div>
                                                     </FormItem>
                                                 )}
                                             />
@@ -1120,7 +1132,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                 name='equipment'
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className='block w-[250px]'>Equipos</FormLabel>
+                                                        <FormLabel className='block w-full max-w-xs'>Equipos</FormLabel>
                                                         <MultiSelect
                                                             multiEmp={customerEquipment.map((eq: Equipment) => ({
                                                                 id: eq.id,
@@ -1147,7 +1159,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                                 handleWorkingDayChange(value);
                                                             }}
                                                         >
-                                                            <SelectTrigger className="w-[250px]">
+                                                            <SelectTrigger className="w-full max-w-xs">
                                                                 <SelectValue placeholder="Tipo de jornada" />
                                                             </SelectTrigger>
                                                             <SelectContent>
@@ -1177,7 +1189,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                                         setStartTime(e.target.value)
                                                                         field.onChange(e.target.value)
                                                                     }}
-                                                                    className='w-[250px]'
+                                                                    className='w-full max-w-xs'
 
                                                                 />
                                                             </FormItem>
@@ -1198,7 +1210,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                                         setEndTime(e.target.value)
                                                                         field.onChange(e.target.value)
                                                                     }}
-                                                                    className='w-[250px]'
+                                                                    className='w-full max-w-xs'
                                                                 />
                                                             </FormItem>
                                                         )}
@@ -1217,7 +1229,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                                 value={field.value}
                                                                 onValueChange={field.onChange}
                                                             >
-                                                                <SelectTrigger className="w-[250px]">
+                                                                <SelectTrigger className="w-full max-w-xs">
                                                                     <SelectValue placeholder="Seleccione un estado" />
                                                                 </SelectTrigger>
                                                                 <SelectContent>
@@ -1237,7 +1249,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                 name='description'
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Descripción</FormLabel>
+                                                        <FormLabel className='w-full max-w-xs'>Descripción</FormLabel>
                                                         <Textarea
                                                             placeholder="Ingrese una breve descripción"
                                                             className="resize-none"
@@ -1247,13 +1259,13 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                 )}
                                             />
 
-                                            <Button type="submit" className="w-[250px]">
+                                            <Button type="submit" className="w-full max-w-xs">
                                                 {editingId ? 'Guardar Cambios' : 'Agregar Fila'}
                                             </Button>
                                             <Button type="button" onClick={() => {
                                                 setIsEditing(false)
                                                 resetForm()
-                                            }} variant="outline" className="w-full">
+                                            }} variant="outline" className="w-full max-w-xs">
                                                 Cancelar
                                             </Button>
                                         </form>
@@ -1339,12 +1351,12 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             {confirmDelete &&
                 <div>
                     <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-                        <DialogContent className="max-w-[30vw] h-[30vh] flex flex-col">
+                        <DialogContent className="w-full max-w-fit mx-auto p-2 flex flex-col items-center">
                             <DialogTitle className="text-xl font-semibold mb-4">Confirmar Eliminación</DialogTitle>
-                            <DialogDescription>
+                            <DialogDescription className="text-center mb-4">
                                 ¿Estás seguro de que deseas eliminar esta fila?
                             </DialogDescription>
-                            <div className="flex justify-end mt-4">
+                            <div className="flex justify-center mt-2 space-x-2">
                                 <Button onClick={handleConfirmClose} className="mr-2">Cancelar</Button>
                                 <Button
                                     onClick={() => {
@@ -1357,7 +1369,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                 </Button>
                             </div>
                         </DialogContent>
-                        <DialogFooter>
+                        <DialogFooter className="flex justify-center">
                             <Button onClick={handleConfirmClose} variant="outline">
                                 Cerrar
                             </Button>

@@ -28,6 +28,9 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { startOfMonth, endOfMonth } from 'date-fns';
+import moment, { Moment } from 'moment';
+import InfoComponent from '../InfoComponent';
+import { useRouter } from 'next/navigation';
 interface DailyReportItem {
   id: string;
   date: string;
@@ -64,6 +67,7 @@ export default function ViewDailysReports() {
   const [pendingStatusChange, setPendingStatusChange] = useState<{ id: string, status: boolean } | null>(null);
   const [statusFilter, setStatusFilter] = useState<'abierto' | 'cerrado' | 'todos'>('todos');
   const [isEditing, setIsEditing] = useState(false);
+  const router = useRouter();
   useEffect(() => {
     const now = new Date();
     setStartDate(startOfMonth(now));
@@ -78,9 +82,10 @@ export default function ViewDailysReports() {
   //   return (!startDate || reportDate >= startDate) && (!endDate || reportDate <= endDate);
   // });
   const filteredReports = dailyReports.filter((report: any) => {
-    console.log(report.status);
-    const reportDate = new Date(report.date);
-    const matchesDateRange = (!startDate || reportDate >= startDate) && (!endDate || reportDate <= endDate);
+    
+    const reportDate = moment(report.date).startOf('day');
+    const matchesDateRange = (!startDate || reportDate.isSameOrAfter(moment(startDate).startOf('day'))) &&
+      (!endDate || reportDate.isSameOrBefore(moment(endDate).startOf('day')));
     const matchesStatus = statusFilter === 'todos' || (statusFilter === 'abierto' && report.status) || (statusFilter === 'cerrado' && !report.status);
     return matchesDateRange && matchesStatus;
   });
@@ -112,7 +117,7 @@ export default function ViewDailysReports() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      console.log(data)
+      
       setDailyReports(data.dailyReports);
     } catch (error) {
       console.error("Error fetching reports:", error);
@@ -128,8 +133,8 @@ export default function ViewDailysReports() {
 
   useEffect(() => {
     fetchReports();
-  }, [company_id]);
-  console.log(dailyReports);
+  }, [company_id,openModal]);
+  
   const transformDailyReports = (reports: any[]): DailyReportData[] => {
     return reports.map(report => ({
       id: report.id,
@@ -152,7 +157,7 @@ export default function ViewDailysReports() {
     }));
   };
   const transformedReports = transformDailyReports(dailyReports);
-  console.log(transformedReports);
+  
 
   // const handleStatusChangeWithWarning = (id: string, status: boolean) => {
   //   if (!status) { // Si el nuevo estado es 'cerrado' (false)
@@ -166,7 +171,7 @@ export default function ViewDailysReports() {
   const handleStatusChangeWithWarning = (id: string, status: boolean) => {
     const report = dailyReports.find(r => r.id === id);
     if (!report) return;
-  
+
     if (!status) { // Si el nuevo estado es 'cerrado' (false)
       // Verificar si alguna fila tiene el estado "pendiente"
       const hasPendingRows = report.dailyreportrows.some(row => row.status === 'pendiente');
@@ -181,7 +186,7 @@ export default function ViewDailysReports() {
       handleStatusChange(id, status);
     }
   };
-  
+
   const confirmStatusChange = () => {
     if (pendingStatusChange) {
       handleStatusChange(pendingStatusChange.id, pendingStatusChange.status);
@@ -223,7 +228,7 @@ export default function ViewDailysReports() {
     }
   };
 
-  
+
   const handleViewReport = (report: DailyReportData) => {
     setIsLoading(true);
     setIsEditing(true);
@@ -232,7 +237,7 @@ export default function ViewDailysReports() {
       if (!fullReportData) {
         throw new Error("Report not found in the array");
       }
-      console.log("Fetched report data:", fullReportData);
+      
       setSelectedReport(fullReportData);
       setOpenModal(true);
     } catch (error) {
@@ -246,11 +251,12 @@ export default function ViewDailysReports() {
       setIsLoading(false);
     }
   };
-  console.log(selectedReport);
+  
 
   const handleCloseModal = () => {
     setOpenModal(false);
     setSelectedReport(null);
+    router.refresh();
   };
 
   const handleSaveReport = async (updatedReport: DailyReportData) => {
@@ -287,8 +293,8 @@ export default function ViewDailysReports() {
       });
     }
   };
-  console.log(dailyReports);
-  console.log(currentReports)
+  
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Todos los Partes Diarios</h1>
@@ -356,7 +362,7 @@ export default function ViewDailysReports() {
             <TableBody>
               {currentReports.map((report) => (
                 <TableRow key={report.id}>
-                  <TableCell>{report.date}</TableCell>
+                  <TableCell>{moment(report.date).format("DD/MM/YYYY")}</TableCell>
                   <TableCell>
                     <Select
                       value={report.status ? 'true' : 'false'}
@@ -364,7 +370,7 @@ export default function ViewDailysReports() {
                       disabled={report.status === false}
                     >
                       <SelectTrigger className="w-[200px]">
-                      <SelectValue>{report.status ? 'abierto' : 'cerrado'}</SelectValue>
+                        <SelectValue>{report.status ? 'abierto' : 'cerrado'}</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="true">abierto</SelectItem>
@@ -400,8 +406,21 @@ export default function ViewDailysReports() {
         <DialogContent className="max-w-[95vw] h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Reporte Diario</DialogTitle>
-            <DialogDescription>
-              Fecha: {selectedReport?.date}
+            <DialogDescription className="flex items-center space-x-4">
+              {/* Fecha: {selectedReport?.date} */}
+              <span>Fecha: {selectedReport?.date ? moment(selectedReport.date).format('DD/MM/YYYY') : ''}</span>
+              <InfoComponent
+                size='sm'
+                message={`Los empleados no afectados y sin diagrama no se muestran.`}
+              />
+              <InfoComponent
+                size='sm'
+                message={`Los clientes dados de baja no se muestran.`}
+              />
+              <InfoComponent
+                size='sm'
+                message={`Los servicios vencidos o de baja no se muestran.`}
+              />
             </DialogDescription>
           </DialogHeader>
           <div className="flex-grow overflow-auto">
