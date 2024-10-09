@@ -287,7 +287,12 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
 
           const { data, error } = await supabase
             .from('repair_solicitudes')
-            .update({ state: status, mechanic_description, mechanic_images, kilometer: form.getValues('kilometer') })
+            .update({
+              state: status,
+              mechanic_description,
+              mechanic_images,
+              kilometer: form.getValues('kilometer'),
+            } as any)
             .eq('id', row.original.id);
 
           mechanic_imagesData
@@ -374,7 +379,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
 
           const { data: vehicles, error: vehicleerror } = await supabase
             .from('vehicles')
-            .update({ condition: newStatus })
+            .update({ condition: newStatus } as any)
             .eq('id', vehicle_id);
         } else if (shouldUpdateStatus) {
           await saveNewStatus();
@@ -390,7 +395,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
 
         const { data, error } = await supabase
           .from('repair_solicitudes')
-          .update({ state: status, mechanic_description, kilometer: form.getValues('kilometer') })
+          .update({ state: status, mechanic_description, kilometer: form.getValues('kilometer') } as any)
           .eq('id', row.original.id);
 
         if (error) {
@@ -466,7 +471,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
 
         const { data: vehicles, error: vehicleerror } = await supabase
           .from('vehicles')
-          .update({ condition: newStatus })
+          .update({ condition: newStatus } as any)
           .eq('id', vehicle_id);
         console.log('error', vehicleerror);
       };
@@ -482,7 +487,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
 
         const { data, error } = await supabase
           .from('repair_solicitudes')
-          .update({ mechanic_images, kilometer: form.getValues('kilometer') })
+          .update({ mechanic_images, kilometer: form.getValues('kilometer') } as any)
           .eq('id', row.original.id);
 
         mechanic_imagesData
