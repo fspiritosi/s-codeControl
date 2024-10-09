@@ -33,7 +33,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         )
       )`
       )
-      .eq('company_id', company_id)
+      .eq('company_id', company_id || '')
       .eq('id', id);
 
     if (error) {

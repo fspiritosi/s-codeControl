@@ -21,7 +21,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: profile, error: profileError } = await supabase
     .from('profile')
     .select('*')
-    .eq('credential_id', user?.id);
+    .eq('credential_id', user?.id || '');
 
   const { data: company, error: companyError } = await supabase
     .from('company')
@@ -67,7 +67,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         )
       `
     )
-    .eq('owner_id', profile?.[0]?.id);
+    .eq('owner_id', profile?.[0]?.id || '');
 
   let { data: share_company_users, error: sharedError } = await supabase
     .from('share_company_users')
@@ -112,7 +112,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         )
       )`
     )
-    .eq('profile_id', profile?.[0]?.id);
+    .eq('profile_id', profile?.[0]?.id || '');
 
   //   let { data: document, error } = await supabase
   //     .from('documents_employees')
@@ -143,7 +143,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
   //     .not('applies', 'is', null)
 
   //   revalidatePath('/dashboard/document')
-
 
   return (
     <div>

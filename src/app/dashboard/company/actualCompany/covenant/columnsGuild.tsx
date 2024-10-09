@@ -45,8 +45,7 @@ import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { addMonths, format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ArrowUpDown, CalendarIcon } from 'lucide-react';
-import Link from 'next/link';
+import { CalendarIcon } from 'lucide-react';
 import { Fragment, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -56,7 +55,6 @@ import { supabase } from '../../../../../../supabase/supabase';
 const editGuildSchema = z.object({
   guild: z.string().nonempty('El nombre del sindicato es requerido.'),
 });
-
 
 const terminationSchema = z.object({
   termination_date: z.date({
@@ -85,14 +83,13 @@ export const columnsGuild: ColumnDef<Colum>[] = [
       const [showGuildModal, setShowGuildModal] = useState(false);
       const [integerModal, setIntegerModal] = useState(false);
       const [id, setId] = useState('');
-      
-      
+
       const guild = row.original;
       const [guildName, setGuildName] = useState(guild.name);
-      
+
       const handleOpenModal = (id: string) => {
         setId(id);
-        
+
         setShowModal(!showModal);
       };
 
@@ -132,13 +129,13 @@ export const columnsGuild: ColumnDef<Colum>[] = [
       const formEditGuild = useForm<z.infer<typeof editGuildSchema>>({
         resolver: zodResolver(editGuildSchema),
         defaultValues: {
-          guild: '', 
+          guild: '',
         },
       });
       const formBaja = useForm<z.infer<typeof terminationSchema>>({
         resolver: zodResolver(terminationSchema),
         defaultValues: {
-          termination_date: new Date(), 
+          termination_date: new Date(),
         },
       });
 
@@ -151,14 +148,13 @@ export const columnsGuild: ColumnDef<Colum>[] = [
               .from('guild')
               .update({
                 is_active: true,
-
               })
               .eq('id', guild.id)
-              .eq('company_id', actualCompany?.id)
+              .eq('company_id', actualCompany?.id || '')
               .select();
 
             setIntegerModal(!integerModal);
-           
+
             if (error) {
               throw new Error(handleSupabaseError(error.message));
             }
@@ -186,37 +182,34 @@ export const columnsGuild: ColumnDef<Colum>[] = [
               .from('guild')
               .update({
                 is_active: false,
-
               })
               .eq('id', guild.id)
-              .eq('company_id', actualCompany?.id)
+              .eq('company_id', actualCompany?.id || '');
 
-              const{data: covenant , error: covenantError}= await supabase
+            const { data: covenant, error: covenantError } = await supabase
               .from('covenant')
               .select('*')
               .eq('guild_id', guild.id)
               // .eq('company_id', actualCompany?.id)
-              .select();  
-              const covenantIds = covenant?.map((covenant) => covenant.id);
+              .select();
+            const covenantIds = covenant?.map((covenant) => covenant.id);
 
-              const { error:coveError } = await supabase
+            const { error: coveError } = await supabase
               .from('covenant')
               .update({
                 is_active: false,
-                
               })
               .eq('guild_id', guild.id)
               // .eq('company_id', actualCompany?.id)
               .select();
-              
 
-              const { error: categoryError } = await supabase
+            const { error: categoryError } = await supabase
               .from('category')
               .update({
                 is_active: false,
               })
-              .in('covenant_id', covenantIds || [])
-              // .eq('company_id', actualCompany?.id);
+              .in('covenant_id', covenantIds || []);
+            // .eq('company_id', actualCompany?.id);
 
             if (categoryError) {
               throw new Error(handleSupabaseError(categoryError.message));
@@ -226,10 +219,8 @@ export const columnsGuild: ColumnDef<Colum>[] = [
             if (error) {
               throw new Error(handleSupabaseError(error.message));
             }
-          },  
+          },
 
-            
-            
           {
             loading: 'Eliminando...',
             success: 'Sindicato eliminado, convenio y categorías eliminados',
@@ -248,10 +239,10 @@ export const columnsGuild: ColumnDef<Colum>[] = [
             const { data, error } = await supabase
               .from('guild')
               .update({
-                name: values.guild, 
+                name: values.guild,
               })
               .eq('id', guild.id)
-              .eq('company_id', actualCompany?.id)
+              .eq('company_id', actualCompany?.id || '')
               .select();
 
             setShowGuildModal(!showGuildModal);
@@ -306,7 +297,6 @@ export const columnsGuild: ColumnDef<Colum>[] = [
                   <div className="w-full">
                     <Form {...formBaja}>
                       <form onSubmit={formBaja.handleSubmit(onSubmit)} className="space-y-8">
-
                         <FormField
                           control={formBaja.control}
                           name="termination_date"
@@ -335,7 +325,6 @@ export const columnsGuild: ColumnDef<Colum>[] = [
                                   </FormControl>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
-
                                   <Select
                                     onValueChange={(e) => {
                                       setMonth(new Date(e));
@@ -415,7 +404,15 @@ export const columnsGuild: ColumnDef<Colum>[] = [
                             <FormItem>
                               <FormLabel>Nombre</FormLabel>
                               <FormControl>
-                                <Input placeholder="Nombre del sindicato" {...field} value={guildName} onChange={(e) => {setGuildName(e.target.value); field.onChange(e)}} />
+                                <Input
+                                  placeholder="Nombre del sindicato"
+                                  {...field}
+                                  value={guildName}
+                                  onChange={(e) => {
+                                    setGuildName(e.target.value);
+                                    field.onChange(e);
+                                  }}
+                                />
                               </FormControl>
                               <FormDescription>Nombre del sindicato</FormDescription>
                               <FormMessage />
@@ -449,11 +446,9 @@ export const columnsGuild: ColumnDef<Colum>[] = [
             <DropdownMenuItem>
               {role !== 'Invitado' && (
                 <Fragment>
-
                   <Button variant="destructive" onClick={() => handleOpenGuildModal(guild?.id)} className="text-sm">
                     Editar Sindicato
                   </Button>
-
                 </Fragment>
               )}
             </DropdownMenuItem>
@@ -477,7 +472,7 @@ export const columnsGuild: ColumnDef<Colum>[] = [
       );
     },
   },
- 
+
   {
     accessorKey: 'name',
     header: 'Nombre',

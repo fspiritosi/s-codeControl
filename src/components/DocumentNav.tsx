@@ -1,52 +1,26 @@
-'use client';
-import NewDocumentModal from '@/components/NewDocumentModal';
-import { Button } from '@/components/ui/button';
-import { useLoggedUserStore } from '@/store/loggedUser';
-import { useState } from 'react';
+import NewDocumentMulti from './Documents/NewDocumentMulti';
+import NewDocumentNoMulti from './Documents/NewDocumentNoMulti';
 export default function DocumentNav({
-  empleados,
+  onlyEmployees,
   onlyNoMultiresource,
-  equipment,
-  mandatoryLabel,
-  documentNumber,
+  onlyMultiresource,
+  onlyEquipment,
+  id_user,
 }: {
-  empleados?: boolean;
-  equipment?: boolean;
+  onlyEmployees?: boolean;
+  onlyEquipment?: boolean;
   onlyNoMultiresource?: boolean;
-  mandatoryLabel?: string;
-  documentNumber?: string;
+  onlyMultiresource?: boolean;
+  id_user?: string;
 }) {
-  const role = useLoggedUserStore((state) => state.roleActualCompany);
-  const [multiresource, setMultiresource] = useState<boolean | undefined>(undefined);
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-
-  const handleMultiResource = (boolean: boolean) => {
-    setMultiresource(boolean);
-    setIsOpen(true);
-  };
-
-  console.log('documentNumber', documentNumber);
-
+  console.log(onlyEquipment, 'onlyEquipment');
+  console.log(onlyEmployees, 'onlyEmployees');
   return (
-    <>
-      {role !== 'Invitado' && !onlyNoMultiresource && (
-        <Button type="button" onClick={() => handleMultiResource(true)}>
-          Documento multirecurso
-        </Button>
+    <div className="flex gap-2">
+      {!onlyNoMultiresource && <NewDocumentMulti onlyEmployees={onlyEmployees} onlyEquipment={onlyEquipment} />}
+      {!onlyMultiresource && (
+        <NewDocumentNoMulti id_user={id_user} onlyEmployees={onlyEmployees} onlyEquipment={onlyEquipment} />
       )}
-      {role !== 'Invitado' && (
-        <Button type="button" onClick={() => handleMultiResource(false)}>
-          {mandatoryLabel || ' Documento no multirecurso'}
-        </Button>
-      )}
-      <NewDocumentModal
-        empleados={empleados}
-        equipment={equipment}
-        setIsOpen={setIsOpen}
-        isOpen={isOpen}
-        multiresource={multiresource}
-        documentNumber={documentNumber}
-      />
-    </>
+    </div>
   );
 }

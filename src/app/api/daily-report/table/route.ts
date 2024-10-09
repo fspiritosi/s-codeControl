@@ -1,7 +1,5 @@
-import { Select } from '@/components/ui/select';
 import { supabaseServer } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-
 
 export async function GET(request: NextRequest) {
   const supabase = supabaseServer();
@@ -11,7 +9,8 @@ export async function GET(request: NextRequest) {
   try {
     let { data: dailyReports, error } = await supabase
       .from('dailyreport')
-      .select(`
+      .select(
+        `
         id,
         date,
         company_id,
@@ -29,17 +28,16 @@ export async function GET(request: NextRequest) {
           dailyreportemployeerelations (employee_id(id,firstname,lastname)),
           dailyreportequipmentrelations (equipment_id(id,intern_number))
           )
-          `)
-      .eq('company_id', company_id);
+          `
+      )
+      .eq('company_id', company_id || '');
 
     if (error) {
       throw new Error(JSON.stringify(error));
     }
 
-    
     return NextResponse.json({ dailyReports });
   } catch (error) {
-    
     console.error('Error fetching daily reports:', error);
     return NextResponse.json({ error: 'Failed to fetch daily reports' }, { status: 500 });
   }
