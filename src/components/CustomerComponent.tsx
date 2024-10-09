@@ -74,7 +74,7 @@ export default function ClientRegister({ id }: { id: string }) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
 
   const fetchItems = async () => {
-    const { items } = await fetch(`${URL}/api/services/items?actual=${actualCompany}`).then((e) => e.json());
+    const { items } = await fetch(`${URL}/api/services/items/report?actual=${actualCompany}`).then((e) => e.json());
     setItems(items);
   }
 
@@ -364,6 +364,8 @@ export default function ClientRegister({ id }: { id: string }) {
     setItemsPerPage(value);
     setCurrentPage(1); // Reset to first page when items per page changes
   };
+      
+  console.log(filteredItems)
   return (
     <section className={cn('md:mx-7 max-w-full')}>
       {action === 'view' ? (

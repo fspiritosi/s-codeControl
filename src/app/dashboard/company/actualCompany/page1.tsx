@@ -19,7 +19,7 @@ import cookies from 'js-cookie';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import Contact from '../contact/Contact';
+import Contact from './contact/Contact';
 import Customers from './customers/Customers';
 import { columns } from './components/columns';
 import { columnsGuests } from './components/columnsGuests';

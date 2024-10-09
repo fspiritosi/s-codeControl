@@ -12,7 +12,7 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import TypesDocumentAction from '../../document/documentComponents/TypesDocumentAction';
-import Contacts from '../contact/Contact';
+import Contacts from './contact/Contact';
 import Customers from './customers/Customers';
 import CovenantTreeFile from './covenant/CovenantTreeFile';
 export default async function CompanyPage() {

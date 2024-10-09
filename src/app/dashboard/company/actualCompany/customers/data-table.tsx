@@ -255,34 +255,35 @@ export function DataCustomers<TData, TValue>({
                           <Link className="w-full hover:underline" href={`/dashboard/company/actualCompany/customers/action?action=view&id=${(cell.row.original as any)?.id}`}>
                             {cell.getValue() as React.ReactNode}
                           </Link>
-                          ) : cell.column.id === 'picture' ? (
-                          cell.getValue() !== '' ? (
-                            <Link href={cell.getValue() as any} target="_blank">
-                            <img src={cell.getValue() as any} alt="Foto" style={{ width: '50px' }} />
-                            </Link>
-                          ) : (
-                            'No disponible'
-                          )
-                          ) : cell.column.id === 'status' ? (
-                          <Badge
-                            variant={
-                            cell.getValue() === 'Completo'
-                              ? 'success'
-                              : cell.getValue() === 'Completo con doc vencida'
-                              ? 'yellow'
-                              : 'destructive'
-                            }
-                          >
-                            {cell.getValue() as React.ReactNode}
-                          </Badge>
-                          ) : cell.column.id === 'domain' ? (
-                          !cell.getValue() ? (
-                            'No posee'
-                          ) : (
-                            (cell.getValue() as React.ReactNode)
-                          )
-                          ) : (
-                          flexRender(cell.column.columnDef.cell, cell.getContext())
+                          ) : 
+                          // cell.column.id === 'picture' ? (
+                          // cell.getValue() !== '' ? (
+                          //   <Link href={cell.getValue() as any} target="_blank">
+                          //   <img src={cell.getValue() as any} alt="Foto" style={{ width: '50px' }} />
+                          //   </Link>
+                          // ) : (
+                          //   'No disponible'
+                          // )
+                          // ) : cell.column.id === 'status' ? (
+                          // <Badge
+                          //   variant={
+                          //   cell.getValue() === 'Completo'
+                          //     ? 'success'
+                          //     : cell.getValue() === 'Completo con doc vencida'
+                          //     ? 'yellow'
+                          //     : 'destructive'
+                          //   }
+                          // >
+                          //   {cell.getValue() as React.ReactNode}
+                          // </Badge>
+                          // ) : cell.column.id === 'domain' ? (
+                          // !cell.getValue() ? (
+                          //   'No posee'
+                          // ) : (
+                          //   (cell.getValue() as React.ReactNode)
+                          // )
+                          // ) : (
+                          (flexRender(cell.column.columnDef.cell, cell.getContext())
                           )}
                         </TableCell>
                       ) : null;
