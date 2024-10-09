@@ -2,9 +2,8 @@
 
 import { columnsGuests } from '@/app/dashboard/company/actualCompany/components/columnsGuests';
 import { DataTable as DataTableInvited } from '@/app/dashboard/company/actualCompany/components/data-table';
-import { createdCustomer, updateCustomer } from '@/app/dashboard/company/customers/action/create';
-import { EmployeesListColumns } from '@/app/dashboard/employee/columns';
-import { EmployeesTable } from '@/app/dashboard/employee/data-table';
+import { createdCustomer, updateCustomer } from '@/app/dashboard/company/actualCompany/customers/action/create';
+import { DataTable } from '@/app/dashboard/company/actualCompany/customers/action/data-table';
 import { EquipmentTable } from '@/app/dashboard/equipment/data-equipment';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,34 @@ import { useForm } from 'react-hook-form';
 import { Toaster, toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../supabase/supabase';
+// import { columns } from '../app/dashboard/company/customers/action/columnsCustomers';
 import { EquipmentColums as columns1 } from '../app/dashboard/equipment/columns';
+import { EmployeesTable } from '@/app/dashboard/employee/data-table';
+import { EmployeesListColumns } from '@/app/dashboard/employee/columns';
+// import { Employee } from '@/types/types';
+import { setEmployeesToShow } from '@/lib/utils/utils';
+import cookie from 'js-cookie';
+import { Table, TableBody, TableCell, TableHead, TableRow, TableHeader } from '@/components/ui/table';
+import { Badge } from './ui/badge';
+import moment from 'moment';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+interface Service {
+  id: string;
+  service_name: string;
+  is_active: boolean;
+  service_start: string;
+  service_validity: string;
+
+}
 
 export default function ClientRegister({ id }: { id: string }) {
   const router = useRouter();
@@ -94,26 +120,33 @@ export default function ClientRegister({ id }: { id: string }) {
   const activeEmploees = setEmployeesToShow(employ?.filter((e: any) => e.is_active));
   const inactiveEmploees = setEmployeesToShow(employ?.filter((e: any) => !e.is_active));
   const equipment = useLoggedUserStore((state) => state.vehiclesToShow);
-  // const filteredCustomersEmployees = employees?.filter(
-  //   (customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id)
-  // );
-  const filteredCustomersEmployees = employees
+
+
+  useEffect(() => {
+    fetchUser();
+    fetchemploy();
+    fetchServices();
+  }, []);
+
+  const filteredCustomersActiveEmployees = activeEmploees
     ?.filter((customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id))
     .map((customer: any) => ({
       ...customer,
-      guild: customer.guild?.name,
+      guild: customer.guild?.name
     }));
+
+  const filteredCustomersInActiveEmployees = inactiveEmploees
+    ?.filter((customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id))
+    .map((customer: any) => ({
+      ...customer,
+      guild: customer.guild?.name
+    }));
+
 
   const filteredCustomersEquipment = equipment?.filter(
     (customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id)
   );
 
-  // const setActivesEmployees = useLoggedUserStore((state) => state.setActivesEmployees);
-  // const setInactiveEmployees = useLoggedUserStore((state) => state.setInactiveEmployees);
-  // const showDeletedEmployees = useLoggedUserStore((state) => state.showDeletedEmployees);
-  // const setShowDeletedEmployees = useLoggedUserStore((state) => state.setShowDeletedEmployees);
-  // const allCompany = useLoggedUserStore((state) => state.allCompanies);
-  // const [showInactive, setShowInactive] = useState(false);
   const form = useForm<z.infer<typeof customersSchema>>({
     resolver: zodResolver(customersSchema),
     defaultValues: {
@@ -141,11 +174,7 @@ export default function ClientRegister({ id }: { id: string }) {
 
     const id = searchParams.get('id');
     const fetchCustomerData = async () => {
-      const { data, error } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('id', id || '')
-        .single();
+      const { data, error } = await supabase.from('customers').select('*').eq('id', id).single();
 
       if (error) {
         console.error('Error fetching customer data:', error);
@@ -376,12 +405,10 @@ export default function ClientRegister({ id }: { id: string }) {
                   <CardContent>
                     <EmployeesTable
                       columns={EmployeesListColumns}
-                      data={filteredCustomersEmployees || []}
-                      // allCompany={allCompany}
-                      // showInactive={showInactive}
-                      // setShowInactive={setShowInactive}
+                      data={filteredCustomersInActiveEmployees || []}
                     />
                   </CardContent>
+
                 </Card>
               </div>
             </TabsContent>
@@ -467,10 +494,12 @@ export default function ClientRegister({ id }: { id: string }) {
 
             <TabsContent value="invitados">
               <Card>
-                <CardContent className="p-4">
+                <CardContent className='p-4'>
                   <DataTableInvited data={guestsData || []} columns={columnsGuests} />
+
                 </CardContent>
               </Card>
+
             </TabsContent>
           </Tabs>
         </section>
