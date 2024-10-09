@@ -304,7 +304,7 @@ export function DataContacts<TData, TValue>({
                         className={`text-center whitespace-nowrap ${is_active ? '' : 'text-red-500'}`}
                       >
                         {cell.column.id === 'contact_name' ?(
-                          <Link href={`/dashboard/company/actualCompany/contact/action?action=view&id=${(cell.row.original as any)?.id}`}>
+                          <Link className='hover:underline' href={`/dashboard/company/actualCompany/contact/action?action=view&id=${(cell.row.original as any)?.id}`}>
                             {cell.getValue() as React.ReactNode}
                           </Link> 
                         ):
