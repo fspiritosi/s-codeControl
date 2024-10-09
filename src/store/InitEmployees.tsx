@@ -78,7 +78,7 @@ export default function InitEmployees({ active }: { active: boolean }) {
               )
             )`
       )
-      .eq('company_id', actualCompany?.id)
+      .eq('company_id', actualCompany?.id || '')
       .eq('is_active', active);
 
     const employees = formattedEmployees(data);

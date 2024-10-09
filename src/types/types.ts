@@ -472,7 +472,7 @@ export interface FormData {
   id: string;
   created_at: string;
   company_id: string;
-  form: FormField[];
+  form: FormField[] ;
   name: string;
 }
 

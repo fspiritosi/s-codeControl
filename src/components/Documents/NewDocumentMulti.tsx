@@ -1,4 +1,11 @@
 import {
+  getActualCompany,
+  getAllDocumentTypes,
+  getAllEmployees,
+  getAllEquipment,
+  getCurrentUser,
+} from '@/app/server/GET/actions';
+import {
   AlertDialog,
   AlertDialogCancel,
   AlertDialogContent,
@@ -7,10 +14,17 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
+import InfoComponent from '../InfoComponent';
 import UploadDocumentMultiEmployee from './UploadDocumentMultiEmployee';
 import UploadDocumentMultiEquipment from './UploadDocumentMultiEquipment';
-import { getActualCompany, getAllDocumentTypes, getAllEmployees, getAllEquipment, getCurrentUser, } from '@/app/server/GET/actions';
-async function NewDocumentMulti() {
+async function NewDocumentMulti({
+  onlyEmployees,
+  onlyEquipment,
+}: {
+  onlyEmployees?: boolean;
+  onlyEquipment?: boolean;
+}) {
   const employees = (await getAllEmployees()).map((employee) => ({
     label: `${employee.firstname} ${employee.lastname}`,
     value: employee.id,
@@ -27,17 +41,26 @@ async function NewDocumentMulti() {
   const allDocumentTypes = await getAllDocumentTypes();
   const currentCompany = await getActualCompany();
   const user = await getCurrentUser();
-
+  console.log(onlyEmployees, 'onlyEmployees');
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button>Documento Multirecurso</Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="w-full">
-        <Tabs defaultValue="employees" className="">
-          <TabsList className="w-full grid grid-cols-2">
-            <TabsTrigger value="employees">Empleados</TabsTrigger>
-            <TabsTrigger value="equipment">Equipos</TabsTrigger>
+        <InfoComponent
+          iconSize="lg"
+          size="sm"
+          message={
+            'Desde aqui solo podras subir documentos faltantes, si deseas reemplazar o eliminar un documento, dirigete al documento en cuestion y realiza la accion deseada.'
+          }
+        />
+        <Tabs defaultValue={onlyEmployees ? 'employees' : onlyEquipment ? 'equipment' : 'employees'}>
+          <TabsList
+            className={cn('w-full grid grid-cols-2', onlyEmployees && onlyEquipment ? 'grid-cols-2' : 'grid-cols-1')}
+          >
+            {onlyEmployees && <TabsTrigger value="employees">Empleados</TabsTrigger>}
+            {onlyEquipment && <TabsTrigger value="equipment">Equipos</TabsTrigger>}
           </TabsList>
           <TabsContent value="employees">
             <UploadDocumentMultiEmployee

@@ -14,9 +14,19 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
+import InfoComponent from '../InfoComponent';
 import UploadDocumentEmployee from './UploadDocumentEmployee';
 import UploadDocumentEquipment from './UploadDocumentEquipment';
-async function NewDocumentNoMulti() {
+async function NewDocumentNoMulti({
+  onlyEquipment,
+  onlyEmployees,
+  id_user,
+}: {
+  onlyEquipment?: boolean;
+  onlyEmployees?: boolean;
+  id_user?: string;
+}) {
   const employees = (await getAllEmployees()).map((employee) => ({
     label: `${employee.firstname} ${employee.lastname}`,
     value: employee.id,
@@ -38,16 +48,26 @@ async function NewDocumentNoMulti() {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button>Documento No-Multirecurso</Button>
+        <Button>Documento No Multirecurso</Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="w-full">
-        <Tabs defaultValue="employees" className="">
-          <TabsList className="w-full grid grid-cols-2">
-            <TabsTrigger value="employees">Empleados</TabsTrigger>
-            <TabsTrigger value="equipment">Equipos</TabsTrigger>
+        <InfoComponent
+          iconSize="lg"
+          size="sm"
+          message={
+            'Desde aqui solo podras subir documentos faltantes, si deseas reemplazar o eliminar un documento, dirigete al documento en cuestion y realiza la accion deseada.'
+          }
+        />
+        <Tabs defaultValue={onlyEmployees ? 'employees' : onlyEquipment ? 'equipment' : 'employees'} className="">
+          <TabsList
+            className={cn('w-full grid grid-cols-2', onlyEmployees && onlyEquipment ? 'grid-cols-2' : 'grid-cols-1')}
+          >
+            {onlyEmployees && <TabsTrigger value="employees">Empleados</TabsTrigger>}
+            {onlyEquipment && <TabsTrigger value="equipment">Equipos</TabsTrigger>}
           </TabsList>
           <TabsContent value="employees">
             <UploadDocumentEmployee
+              default_id={id_user}
               employees={employees}
               allDocumentTypes={allDocumentTypes?.filter(
                 (document) => document.applies === 'Persona' && !document.multiresource
@@ -58,6 +78,7 @@ async function NewDocumentNoMulti() {
           </TabsContent>
           <TabsContent value="equipment">
             <UploadDocumentEquipment
+              default_id={id_user}
               currentCompany={currentCompany}
               allDocumentTypes={allDocumentTypes?.filter(
                 (document) => document.applies === 'Equipos' && !document.multiresource

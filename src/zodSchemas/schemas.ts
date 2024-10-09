@@ -550,7 +550,7 @@ export const SharedUser = z.object({
   role: z.string(),
   alta: z.date().or(z.string()),
   id: z.string(),
-  img: z.string(),
+  img: z.string().optional().nullable(),
   customerName: z.string().optional(),
 });
 

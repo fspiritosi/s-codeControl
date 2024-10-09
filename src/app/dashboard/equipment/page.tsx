@@ -44,7 +44,7 @@ export default async function Equipment() {
           buttonActioRestricted: [''],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
-              <DocumentNav equipment />
+              {/* <DocumentNav equipment /> */}
             </div>
           ),
           component: <EquipmentTabs />,
@@ -73,18 +73,6 @@ export default async function Equipment() {
           component: <RepairTypes type_of_repair_new_entry created_solicitudes defaultValue="created_solicitudes" />,
         },
       },
-      // {
-      //   value: 'forms',
-      //   name: 'Formularios',
-      //   restricted: [],
-      //   content: {
-      //     title: 'Formularios',
-      //     description: 'Formularios de equipos',
-      //     buttonActioRestricted: [''],
-      //     // buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
-      //     component: <CreatedForm />,
-      //   },
-      // },
     ],
   };
 

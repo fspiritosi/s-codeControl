@@ -6,6 +6,7 @@ import {
 } from '@/types/types';
 import { Vehicle } from '@/zodSchemas/schemas';
 import { format } from 'date-fns';
+import moment from 'moment';
 import { supabaseServer } from '../supabase/server';
 export const formatDate = (dateString: string) => {
   if (!dateString) return 'No vence';
@@ -21,7 +22,7 @@ export const mapDocument = (doc: any) => {
     state: doc.state,
     multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
     isItMonthly: doc.document_types?.is_it_montlhy,
-    validity: doc.validity? new Date(doc.created_at).toLocaleDateString():'No disponible',
+    validity: doc.validity ? new Date(doc.created_at).toLocaleDateString() : 'No disponible',
     mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
     id: doc.id,
     resource: `${doc.employees?.lastname?.charAt(0)?.toUpperCase()}${doc?.employees?.lastname.slice(
@@ -33,6 +34,29 @@ export const mapDocument = (doc: any) => {
     period: doc?.period,
     applies: doc?.document_types?.applies,
     id_document_types: doc?.document_types?.id,
+    intern_number: '',
+  };
+};
+export const formatTableDocument = (doc: any) => {
+  return {
+    date: new Date(doc.created_at).toLocaleDateString(),
+    allocated_to: doc.applies?.contractor_employee?.map((doc: any) => doc.contractors?.name).join(', '),
+    documentName: doc.id_document_types?.name,
+    state: doc.state,
+    multiresource: doc.id_document_types?.multiresource ? 'Si' : 'No',
+    isItMonthly: doc.id_document_types?.is_it_montlhy,
+    validity: doc.validity ? new Date(doc.created_at).toLocaleDateString() : 'No disponible',
+    mandatory: doc.id_document_types?.mandatory ? 'Si' : 'No',
+    id: doc.id,
+    resource: `${doc.applies?.lastname?.charAt(0)?.toUpperCase()}${doc?.applies?.lastname.slice(
+      1
+    )} ${doc.applies?.firstname?.charAt(0)?.toUpperCase()}${doc?.applies?.firstname.slice(1)}`,
+    document_number: doc.applies?.document_number,
+    document_url: doc?.document_path,
+    is_active: doc?.applies?.is_active,
+    period: doc?.period,
+    applies: doc?.id_document_types?.applies,
+    id_document_types: doc?.id_document_types?.id,
     intern_number: '',
   };
 };
@@ -54,6 +78,26 @@ export const mapVehicle = (doc: any) => {
     period: doc.period,
     applies: doc.document_types.applies,
     id_document_types: doc.document_types.id,
+    intern_number: `${doc.applies?.intern_number}`,
+  };
+};
+export const formatTableDocumentVehicle = (doc: any) => {
+  return {
+    date: moment(doc.created_at).format('DD/MM/YYYY'),
+    allocated_to: doc.applies?.allocated_to,
+    documentName: doc.id_document_types?.name,
+    state: doc.state,
+    multiresource: doc.id_document_types?.multiresource ? 'Si' : 'No',
+    isItMonthly: doc.id_document_types?.is_it_montlhy,
+    validity: moment(doc.validity).format('DD/MM/YYYY'),
+    mandatory: doc.id_document_types?.mandatory ? 'Si' : 'No',
+    id: doc.id,
+    resource: `${doc.applies?.domain || doc.applies.serie}`,
+    vehicle_id: doc.applies?.id,
+    is_active: doc.applies?.is_active,
+    period: doc.period,
+    applies: doc.id_document_types?.applies,
+    id_document_types: doc.id_document_types?.id,
     intern_number: `${doc.applies?.intern_number}`,
   };
 };
@@ -98,6 +142,55 @@ export const setEmployeesToShow = (employees: any) => {
       termination_date: employees?.termination_date,
       status: employees?.status,
       documents_employees: employees.documents_employees,
+      guild_id: employees?.guild_id,
+      covenants_id: employees?.covenants_id,
+      category_id: employees?.category_id,
+    };
+  });
+
+  return employee;
+};
+export const FormatEmployeeRelationData = (employees: any[]) => {
+  const employee = employees?.map((employees) => {
+    return {
+      full_name: `${employees?.lastname?.charAt(0).toUpperCase()}${employees?.lastname?.slice(1)} ${employees?.firstname
+        ?.charAt(0)
+        .toUpperCase()}${employees?.firstname?.slice(1)}`,
+      id: employees?.id,
+      email: employees?.email,
+      cuil: employees?.cuil,
+      document_number: employees?.document_number,
+      hierarchical_position: employees?.hierarchical_position?.name,
+      company_position: employees?.company_position,
+      normal_hours: employees?.normal_hours,
+      type_of_contract: employees?.type_of_contract,
+      allocated_to: employees?.allocated_to,
+      picture: employees?.picture,
+      nationality: employees?.nationality,
+      lastname: `${employees?.lastname?.charAt(0)?.toUpperCase()}${employees?.lastname.slice(1)}`,
+      firstname: `${employees?.firstname?.charAt(0)?.toUpperCase()}${employees?.firstname.slice(1)}`,
+      document_type: employees?.document_type,
+      birthplace: employees?.birthplace?.name?.trim(),
+      gender: employees?.gender,
+      marital_status: employees?.marital_status,
+      level_of_education: employees?.level_of_education,
+      street: employees?.street,
+      street_number: employees?.street_number,
+      province: employees?.province?.name?.trim(),
+      postal_code: employees?.postal_code,
+      phone: employees?.phone,
+      file: employees?.file,
+      date_of_admission: employees?.date_of_admission,
+      affiliate_status: employees?.affiliate_status,
+      city: employees?.city?.name?.trim(),
+      hierrl_position: employees?.hierarchical_position?.name,
+      workflow_diagram: employees?.workflow_diagram?.name,
+      contractor_employee: employees?.contractor_employee?.map(({ contractors }: any) => contractors?.id),
+      is_active: employees?.is_active,
+      reason_for_termination: employees?.reason_for_termination,
+      termination_date: employees?.termination_date,
+      status: employees?.status,
+      // documents_employees: employees.documents_employees,
       guild_id: employees?.guild_id,
       covenants_id: employees?.covenants_id,
       category_id: employees?.category_id,
@@ -207,44 +300,12 @@ export const setVehiclesToShow = (vehicles: Vehicle) => {
     type: item.type?.name,
   }));
 };
-// export const stylesPDF = StyleSheet.create({
-//   page: {
-//     flexDirection: 'column',
-//     padding: 20,
-//   },
-//   section: {
-//     marginBottom: 10,
-//   },
-//   label: {
-//     fontSize: 12,
-//     fontWeight: 'bold',
-//   },
-//   value: {
-//     fontSize: 12,
-//     marginTop: 4,
-//   },
-//   checkboxContainer: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//   },
-//   checkbox: {
-//     width: 12,
-//     height: 12,
-//     borderWidth: 1,
-//     marginRight: 8,
-//   },
-//   radioButton: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     marginBottom: 4,
-//   },
-//   radioLabel: {
-//     fontSize: 12,
-//     marginRight: 4,
-//   },
-//   text: {
-//     marginRight: 20,
-//   },
-//   text2: {
-//   },
-// });
+export const FormatVehiclesToShow = (vehicles: any[]) => {
+  return vehicles?.map((item) => ({
+    ...item,
+    types_of_vehicles: item.type_of_vehicle?.name,
+    brand: item.brand?.name,
+    model: item.model?.name,
+    type: item.type?.name,
+  }));
+};
