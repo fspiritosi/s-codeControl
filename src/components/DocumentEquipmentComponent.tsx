@@ -8,7 +8,7 @@ import { useLoggedUserStore } from '@/store/loggedUser';
 import DocumentNav from './DocumentNav';
 
 export default function DocumentEquipmentComponent({ id }: { id: string }) {
-  const { allDocumentsToShow } = useLoggedUserStore();
+  const { allDocumentsToShow, actualCompany } = useLoggedUserStore();
 
   return (
     <Tabs defaultValue="permanentes">
@@ -17,7 +17,7 @@ export default function DocumentEquipmentComponent({ id }: { id: string }) {
           <TabsTrigger value="permanentes">Documentos permanentes</TabsTrigger>
           <TabsTrigger value="mensuales">Documentos mensuales</TabsTrigger>
         </TabsList>
-        <DocumentNav documentNumber={id} equipment onlyNoMultiresource  />
+        <DocumentNav  id_user={id} onlyEquipment onlyNoMultiresource />
       </CardContent>
       <TabsContent value="permanentes">
         <div className="grid ">
