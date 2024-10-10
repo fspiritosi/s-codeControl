@@ -191,9 +191,9 @@ export function DataCustomers<TData, TValue>({
                             className="capitalize  text-red-400"
                             checked={showInactive}
                             onClick={() => setShowInactive(!showInactive)}
-                            // onCheckedChange={value =>
-                            //     column.toggleVisibility(true)
-                            // }
+                          // onCheckedChange={value =>
+                          //     column.toggleVisibility(true)
+                          // }
                           >
                             {column.columnDef.header}
                           </DropdownMenuCheckboxItem>
@@ -251,34 +251,39 @@ export function DataCustomers<TData, TValue>({
                           key={cell.id}
                           className={`text-center whitespace-nowrap ${is_active ? '' : 'text-red-500'}`}
                         >
-                          {cell.column.id === 'picture' ? (
-                            cell.getValue() !== '' ? (
-                              <Link href={cell.getValue() as any} target="_blank">
-                                <img src={cell.getValue() as any} alt="Foto" style={{ width: '50px' }} />
-                              </Link>
-                            ) : (
-                              'No disponible'
-                            )
-                          ) : cell.column.id === 'status' ? (
-                            <Badge
-                            variant={
-                              cell.getValue() === 'Completo'
-                                ? 'success'
-                                : cell.getValue() === 'Completo con doc vencida'
-                                  ? 'yellow'
-                                  : 'destructive'
-                            }
-                          >
+                          {cell.column.id === 'cuit' ? (
+                          <Link className="w-full hover:underline" href={`/dashboard/company/actualCompany/customers/action?action=view&id=${(cell.row.original as any)?.id}`}>
                             {cell.getValue() as React.ReactNode}
-                          </Badge>
-                          ) : cell.column.id === 'domain' ? (
-                            !cell.getValue() ? (
-                              'No posee'
-                            ) : (
-                              (cell.getValue() as React.ReactNode)
-                            )
-                          ) : (
-                            flexRender(cell.column.columnDef.cell, cell.getContext())
+                          </Link>
+                          ) : 
+                          // cell.column.id === 'picture' ? (
+                          // cell.getValue() !== '' ? (
+                          //   <Link href={cell.getValue() as any} target="_blank">
+                          //   <img src={cell.getValue() as any} alt="Foto" style={{ width: '50px' }} />
+                          //   </Link>
+                          // ) : (
+                          //   'No disponible'
+                          // )
+                          // ) : cell.column.id === 'status' ? (
+                          // <Badge
+                          //   variant={
+                          //   cell.getValue() === 'Completo'
+                          //     ? 'success'
+                          //     : cell.getValue() === 'Completo con doc vencida'
+                          //     ? 'yellow'
+                          //     : 'destructive'
+                          //   }
+                          // >
+                          //   {cell.getValue() as React.ReactNode}
+                          // </Badge>
+                          // ) : cell.column.id === 'domain' ? (
+                          // !cell.getValue() ? (
+                          //   'No posee'
+                          // ) : (
+                          //   (cell.getValue() as React.ReactNode)
+                          // )
+                          // ) : (
+                          (flexRender(cell.column.columnDef.cell, cell.getContext())
                           )}
                         </TableCell>
                       ) : null;

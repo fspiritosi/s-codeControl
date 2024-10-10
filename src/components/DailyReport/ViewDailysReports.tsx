@@ -407,21 +407,28 @@ export default function ViewDailysReports() {
           <DialogHeader>
             <DialogTitle>Reporte Diario</DialogTitle>
             <DialogDescription className="flex items-center space-x-4">
-              {/* Fecha: {selectedReport?.date} */}
-              <span>Fecha: {selectedReport?.date ? moment(selectedReport.date).format('DD/MM/YYYY') : ''}</span>
-              <InfoComponent
-                size='sm'
-                message={`Los empleados no afectados y sin diagrama no se muestran.`}
-              />
-              <InfoComponent
-                size='sm'
-                message={`Los clientes dados de baja no se muestran.`}
-              />
-              <InfoComponent
-                size='sm'
-                message={`Los servicios vencidos o de baja no se muestran.`}
-              />
-            </DialogDescription>
+  <span>Fecha: {selectedReport?.date ? moment(selectedReport.date).format('DD/MM/YYYY') : ''}</span>
+  <div className="grid grid-cols-3 y gap-4 w-full">
+    <div className="col-span-1 flex">
+      <InfoComponent
+        size='sm'
+        message={`Los empleados no afectados y sin diagrama no se muestran.`}
+      />
+    </div>
+    <div className="col-span-1 flex">
+      <InfoComponent
+        size='sm'
+        message={`Los clientes dados de baja no se muestran.`}
+      />
+    </div>
+    <div className="col-span-1 flex">
+      <InfoComponent
+        size='sm'
+        message={`Los servicios vencidos o de baja no se muestran.`}
+      />
+    </div>
+  </div>
+</DialogDescription>
           </DialogHeader>
           <div className="flex-grow overflow-auto">
             {selectedReport ? (
