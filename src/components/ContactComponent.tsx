@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Toaster, toast } from 'sonner';
 import { z } from 'zod';
-import { createdContact, updateContact } from '../app/dashboard/company/contact/action/create';
+import { createdContact, updateContact } from '../app/dashboard/company/actualCompany/contact/action/create';
 
 type Action = 'view' | 'edit' | null;
 

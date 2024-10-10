@@ -48,7 +48,7 @@ import { Fragment, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { supabase } from '../../../../../supabase/supabase';
+import { supabase } from '../../../../../../supabase/supabase';
 const formSchema = z.object({
   reason_for_termination: z.string({
     required_error: 'La razón de la baja es requerida.',
@@ -387,13 +387,13 @@ export const columns: ColumnDef<Colum>[] = [
               Copiar cuit
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Link className="w-full" href={`/dashboard/company/customers/action?action=view&id=${customers?.id}`}>
+              <Link className="w-full" href={`/dashboard/company/actualCompany/customers/action?action=view&id=${customers?.id}`}>
                 Ver Cliente
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               {role !== 'Invitado' && (
-                <Link className="w-full" href={`/dashboard/company/customers/action?action=edit&id=${customers?.id}`}>
+                <Link className="w-full" href={`/dashboard/company/actualCompany/customers/action?action=edit&id=${customers?.id}`}>
                   Editar Cliente
                 </Link>
               )}

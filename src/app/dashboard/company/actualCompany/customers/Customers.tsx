@@ -1,5 +1,5 @@
 
-import { supabase } from '../../../../../supabase/supabase';
+import { supabase } from '../../../../../../supabase/supabase';
 import { columns } from './columns';
 import { DataCustomers } from './data-table';
 import { cookies } from 'next/headers';
