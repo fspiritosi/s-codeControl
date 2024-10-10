@@ -194,6 +194,7 @@ declare global {
   // Enums
   type RepairStatusEnum = DB['public']['Enums']['repair_state']; // Anteriormente: EnumOfRepairStatus
   type VehicleConditionEnum = DB['public']['Enums']['condition_enum']; // Anteriormente: EnumVehicleCondition
+  type ModulosEnum = DB['public']['Enums']['modulos'];
 
   //! EXPORTAR TIPOS CON RELACIONES
 

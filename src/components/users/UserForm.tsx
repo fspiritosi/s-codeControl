@@ -5,18 +5,25 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+import { updateModulesSharedUser } from '@/app/server/UPDATE/actions';
 import { useEditButton } from '@/store/editState';
 import { useForm } from 'react-hook-form';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
-import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 
-const modulos = ['dashboard', 'empresa', 'empleados', 'equipos', 'documentacion', 'mantenimiento', 'ayuda'];
+const modulos = [
+  'dashboard',
+  'empresa',
+  'empleados',
+  'equipos',
+  'operaciones',
+  'documentacion',
+  'mantenimiento',
+  'ayuda',
+];
 
 const UserFormSchema = z.object({
-  fullname: z.string(),
-  email: z.string(),
   modulos: z.array(z.string()),
 });
 
@@ -25,7 +32,9 @@ function UserForm({ userData }: { userData: any }) {
 
   const form = useForm<z.infer<typeof UserFormSchema>>({
     resolver: zodResolver(UserFormSchema),
-    defaultValues: { fullname: userData.fullname, email: userData.email, modulos: userData.modulos || [] },
+    defaultValues: {
+      modulos: userData.modules || [],
+    },
   });
 
   const handleCheckboxChange = (modulo: string) => {
@@ -38,41 +47,20 @@ function UserForm({ userData }: { userData: any }) {
       form.setValue('modulos', newValue);
     }
   };
-
-  const onsubmit = () => {
+  const onsubmit = async () => {
     event?.preventDefault();
     console.log('form.getValues():', form.getValues());
+    const updateUser = await updateModulesSharedUser({
+      id: userData.id,
+      modules: form.getValues('modulos') as ModulosEnum[],
+    });
+    // hay que colocar una Toast para indicar que se guardo correctamente
+    // hacer un refesh y desabilitar la edición.
   };
 
   return (
     <Form {...form}>
       <form className="grid grid-cols-2 gap-x-4 gap-y-6" onSubmit={onsubmit}>
-        <FormField
-          control={form.control}
-          name="fullname"
-          disabled={readOnly}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nombre completo del usuario</FormLabel>
-              <FormControl>
-                <Input placeholder="usuario" {...field} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="email"
-          disabled={readOnly}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Mail del usuario</FormLabel>
-              <FormControl>
-                <Input placeholder="email" {...field} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
         <FormField
           control={form.control}
           name="modulos"

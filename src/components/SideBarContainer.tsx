@@ -1,3 +1,4 @@
+import { fetchCurrentUser } from '@/app/server/GET/actions';
 import { supabaseServer } from '@/lib/supabase/server';
 import InitState from '@/store/InitUser';
 import { cookies } from 'next/headers';
@@ -14,9 +15,11 @@ import SideBar from './Sidebar';
 
 async function SideBarContainer() {
   const supabase = supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // const {
+  //   data: { user },
+  // } = await supabase.auth.getUser();
+
+  const user = await fetchCurrentUser();
 
   const { data: credentialUser, error: profileError } = await supabase
     .from('profile')

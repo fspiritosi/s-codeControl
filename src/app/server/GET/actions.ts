@@ -139,10 +139,7 @@ export const fetchAllEquipment = async () => {
   const company_id = cookiesStore.get('actualComp')?.value;
   if (!company_id) return [];
 
-  const { data, error } = await supabase
-    .from('vehicles')
-    .select('*,brand(*)')
-    .eq('company_id', company_id);
+  const { data, error } = await supabase.from('vehicles').select('*,brand(*)').eq('company_id', company_id);
 
   if (error) {
     console.error('Error fetching equipment:', error);
@@ -233,6 +230,60 @@ export const fetchRepairRequestsByEquipmentId = async (equipmentId: string) => {
 
   if (error) {
     console.error('Error fetching repair requests by equipment ID:', error);
+    return [];
+  }
+  return data;
+};
+
+// Users-related actions
+
+export const getAllUsers = async () => {
+  const supabase = supabaseServer();
+  const cookiesStore = cookies();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+  const { data, error } = await supabase
+    .from('share_company_users')
+    .select('*,  profile_id(*)')
+    .eq('company_id', company_id || '');
+
+  if (error) {
+    console.error('Error fetching users:', error);
+    return [];
+  }
+  return data;
+};
+
+export const getUsersbyId = async ({ id }: { id: string }) => {
+  const supabase = supabaseServer();
+  const cookiesStore = cookies();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+  const { data, error } = await supabase
+    .from('share_company_users')
+    .select('*,  profile_id(*)')
+    .eq('company_id', company_id || '')
+    .eq('id', id || '');
+
+  if (error) {
+    console.error('Error fetching users:', error);
+    return [];
+  }
+  return data;
+};
+
+export const getOwnerUser = async () => {
+  const supabase = supabaseServer();
+  const curretUser = await fetchCurrentCompany();
+  if (!curretUser) return [];
+
+  const { data, error } = await supabase
+    .from('profile')
+    .select('*')
+    .eq('id', curretUser[0]?.owner_id || '');
+
+  if (error) {
+    console.error('Error fetching owner user:', error);
     return [];
   }
   return data;
