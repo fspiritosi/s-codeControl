@@ -51,6 +51,7 @@ import { id } from 'date-fns/locale'
 import moment, { Moment } from 'moment';
 import { zodResolver } from '@hookform/resolvers/zod'
 import { dailyReportSchema } from '@/zodSchemas/schemas'
+import { Badge } from '../ui/badge'
 
 interface Customers {
     id: string
@@ -1261,6 +1262,8 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                             )}
 
                                             {editingId && (
+                                                
+                                                
                                                 <FormField
                                                     control={control}
                                                     name='status'
@@ -1367,17 +1370,45 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                             <TableCell>{report.working_day}</TableCell>
                                             <TableCell>{report.start_time}</TableCell>
                                             <TableCell>{report.end_time}</TableCell>
-                                            <TableCell>{report.status}</TableCell>
+                                            <TableCell>
+                                                <Badge
+                                                    variant={
+                                                        report.status === 'ejecutado'
+                                                            ? 'success'
+                                                            : report.status === 'cancelado'
+                                                            ? 'destructive'
+                                                            : report.status === 'reprogramado'
+                                                            ? 'yellow'
+                                                            : 'default'
+                                                    }
+                                                >
+                                                    {report.status}
+                                                </Badge>
+                                            </TableCell>
+                                            {/* <TableCell>{report.status}</TableCell> */}
                                             <TableCell>{report.description}</TableCell>
                                             <TableCell>
                                                 {canEdit && (
                                                     <>
-                                                        <Button onClick={() => handleEdit(report.id)} className="mr-2">
-                                                            <FilePenLine className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button onClick={() => handleConfirmOpen(report.id)} variant="destructive">
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
+                                                        {report.status !== 'cancelado' && report.status !== 'reprogramado'  && (
+                                                            <>
+                                                                {report.status !== 'ejecutado' ? (
+                                                                    <>
+                                                                        <Button onClick={() => handleEdit(report.id)} className="mr-2">
+                                                                            <FilePenLine className="h-4 w-4" />
+                                                                        </Button>
+                                                                        <Button onClick={() => handleConfirmOpen(report.id)} variant="destructive">
+                                                                            <Trash2 className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </>
+                                                                ) : (
+                                                                    <Button onClick={() => console.log('Subir documento', report.id)} className="mr-2">
+                                                                        Subir Documento
+                                                                    </Button>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                        
                                                     </>
                                                 )}
                                             </TableCell>
