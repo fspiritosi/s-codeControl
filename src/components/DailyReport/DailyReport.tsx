@@ -52,7 +52,11 @@ import moment, { Moment } from 'moment';
 import { zodResolver } from '@hookform/resolvers/zod'
 import { dailyReportSchema } from '@/zodSchemas/schemas'
 import { Badge } from '../ui/badge'
-
+import GenericDialog from './GenericDialog';
+import UploadDocument from './UploadDocument'
+import { supabaseBrowser } from '@/lib/supabase/browser'
+import { set } from 'date-fns'
+import { string } from 'zod'
 interface Customers {
     id: string
     name: string
@@ -93,6 +97,7 @@ interface Items {
 
 interface DailyReportItem {
     id: string
+    date?: string
     working_day: string
     customer: string | undefined
     employees: string[]
@@ -103,6 +108,7 @@ interface DailyReportItem {
     end_time: string
     status: 'pendiente' | 'ejecutado' | 'cancelado' | 'reprogramado'
     description: string
+    document_path?: string
 }
 
 interface DailyReportData {
@@ -114,6 +120,7 @@ interface DailyReportData {
 
 interface DailyReportProps {
     reportData?: DailyReportData | undefined
+    allReport?: DailyReportData[]
 }
 
 interface Diagram {
@@ -216,8 +223,10 @@ interface RepairsSolicituds {
     }[];
 }
 
-export default function DailyReport({ reportData }: DailyReportProps) {
-    
+
+
+export default function DailyReport({ reportData, allReport }: DailyReportProps) {
+
     const [employees, setEmployees] = useState<Employee[]>([])
     const [customers, setCustomers] = useState<Customers[]>([])
     const [selectedCustomer, setSelectedCustomer] = useState<Customers | null>(null)
@@ -248,12 +257,17 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         return undefined;
     });
     const [existingReportId, setExistingReportId] = useState<string | null>(null)
-
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [futureReports, setFutureReports] = useState<DailyReportData[]>([]);
+    const [selectedReport, setSelectedReport] = useState<DailyReportData | null>(null);
+    const [documentUrl, setDocumentUrl] = useState<string | null>(null);
+    const [selectedDate, setSelectedDate] = useState<String | null>(null);
+    const supabase = supabaseBrowser();
     const URL = process.env.NEXT_PUBLIC_BASE_URL
     const formMethods = useForm<DailyReportItem>({
         resolver: zodResolver(dailyReportSchema),
         defaultValues: {
-            
+
             customer: undefined,
             employees: [],
             equipment: [],
@@ -280,7 +294,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
     async function fetchCustomers() {
         const { customers, error } = await fetch(`${URL}/api/company/customers/?actual=${company_id}`).then((e) => e.json())
         const activeCustomers = customers.filter((customer: Customers) => customer.is_active)
-        
+
         setCustomers(activeCustomers)
     }
 
@@ -304,7 +318,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         const { services } = await fetch(`${URL}/api/services?actual=${company_id}`).then((e) => e.json())
         const activeServices = services.filter((service: Services) => service.is_active)
         setServices(activeServices)
-        
+
         return services
     }
 
@@ -318,6 +332,12 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         const { data: diagrams } = await fetch(`${URL}/api/employees/diagrams`).then((e) => e.json());
         setDiagram(diagrams)
         return diagrams;
+    }
+
+    async function fetchDocument(document_path: string) {
+        const { data: url } = supabase.storage.from('daily_reports').getPublicUrl(document_path);
+        setDocumentUrl(url.publicUrl);
+        return url;
     }
 
     // async function fetchRepairOrders() {
@@ -336,7 +356,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         fetchServices()
         fetchItems()
         fetchDiagrams()
-        
+
         // fetchRepairOrders()
     }, [])
     console.log()
@@ -364,14 +384,14 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             );
         });
         console.log(validServices);
-    
+
         // Filtrar clientes que tienen servicios válidos
         const customersWithServices = customers.filter((customer) =>
             validServices.some((service) => service.customer_id === customer.id)
         );
-    
+
         console.log(customersWithServices);
-    
+
         // Solo actualizar el estado si la lista filtrada es diferente
         if (customersWithServices.length !== customers.length) {
             setCustomers(customersWithServices);
@@ -391,7 +411,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             setExistingReportId(reportData.id)
         }
     }, [reportData])
-    
+
     useEffect(() => {
         if (startTime && endTime) {
             const start = new Date(`1970-01-01T${startTime}:00`)
@@ -451,7 +471,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                 return isAllocatedToCustomer && isActiveOnReportDate;
             });
             setCustomerEmployees(filteredEmployees);
-            
+
             // const filteredEquipment = equipment.filter((equipment: Equipment) => {
             //     const isAllocatedToCustomer = equipment.allocated_to.includes(customer.id);
             //     const isNotUnderRepair = !repairOrders.some((order: RepairsSolicituds) =>
@@ -532,7 +552,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
         setCustomerItems([])
         setSelectedService(null)
     }
-   
+
     const handleEdit = (id: string) => {
         const itemToEdit = dailyReport.find(item => item.id === id)
         if (itemToEdit) {
@@ -548,11 +568,11 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             setValue('item', itemToEdit.item)
             // Normalizar el valor de working_day
             const normalizedWorkingDay = itemToEdit.working_day?.trim().toLowerCase();
-            
+
 
             // Verificar si la jornada es de 8 o 12 horas y poner en vacío la hora de inicio y fin
             if ((normalizedWorkingDay === "jornada 8 horas") || (normalizedWorkingDay === "jornada 12 horas")) {
-                
+
                 setValue('start_time', '');
                 setValue('end_time', '');
             } else {
@@ -586,7 +606,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             }
 
             const rowData = await response.json();
-           
+
             const { dailyreportrows } = rowData;
             const row = dailyreportrows.find((item: any) => item.id === id);
 
@@ -680,137 +700,137 @@ export default function DailyReport({ reportData }: DailyReportProps) {
 
     const saveDailyReport = async (data: any) => {
         try {
-          const formattedStartTime = formatTime(data.start_time);
-          const formattedEndTime = formatTime(data.end_time);
-      
-          // Obtener el array de filas existentes, asegurándonos de que sea un array
-          const existingRows = Array.isArray(dailyReport) ? dailyReport : [];
-      
-          // Verificar si ya existe una fila exactamente igual
-          const isDuplicate = existingRows.some(row =>
-            row.customer === data.customer &&
-            row.services === data.services &&
-            row.item === data.item &&
-            row.working_day === data.working_day &&
-            row.start_time === formattedStartTime &&
-            row.end_time === formattedEndTime &&
-            row.description === data.description &&
-            row.status === data.status &&
-            JSON.stringify(row.employees) === JSON.stringify(data.employees) &&
-            JSON.stringify(row.equipment) === JSON.stringify(data.equipment)
-          );
-      
-          if (isDuplicate) {
-            toast({
-              title: "Error",
-              description: "Ya existe una fila con los mismos datos.",
-              variant: "destructive",
-            });
-            return; // Salir de la función si ya existe una fila igual
-          }
-      
-          const rowResponse = await fetch('/api/daily-report/daily-report-row', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              daily_report_id: reportData?.id,
-              customer_id: data.customer,
-              service_id: data.services,
-              item_id: data.item,
-              start_time: formattedStartTime,
-              end_time: formattedEndTime,
-              description: data.description,
-              status: data.status,
-            }),
-          });
-      
-          if (!rowResponse.ok) {
-            const errorText = await rowResponse.text();
-            throw new Error(`Error al insertar la fila en dailyreportrow: ${errorText}`);
-          }
-      
-          const { data: rowData } = await rowResponse.json();
-          const rowId = rowData[0].id; // Asegúrate de que esto sea correcto
-      
-          if (data.employees && data.employees.length > 0) {
-            await fetch('/api/daily-report/dailyreportemployeerelations', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(
-                data.employees.map((employee_id: string) => ({
-                  daily_report_row_id: rowId,
-                  employee_id: employee_id,
-                }))
-              ),
-            });
-          }
-      
-          if (data.equipment && data.equipment.length > 0) {
-            await fetch('/api/daily-report/dailyreportequipmentrelations', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(
-                data.equipment.map((equipment_id: string) => ({
-                  daily_report_row_id: rowId,
-                  equipment_id: equipment_id,
-                }))
-              ),
-            });
-          }
-      
-          setDailyReport(prevReport => {
-            // Verificar que prevReport sea un array
-            if (!Array.isArray(prevReport)) {
-              prevReport = [];
+            const formattedStartTime = formatTime(data.start_time);
+            const formattedEndTime = formatTime(data.end_time);
+
+            // Obtener el array de filas existentes, asegurándonos de que sea un array
+            const existingRows = Array.isArray(dailyReport) ? dailyReport : [];
+
+            // Verificar si ya existe una fila exactamente igual
+            const isDuplicate = existingRows.some(row =>
+                row.customer === data.customer &&
+                row.services === data.services &&
+                row.item === data.item &&
+                row.working_day === data.working_day &&
+                row.start_time === formattedStartTime &&
+                row.end_time === formattedEndTime &&
+                row.description === data.description &&
+                row.status === data.status &&
+                JSON.stringify(row.employees) === JSON.stringify(data.employees) &&
+                JSON.stringify(row.equipment) === JSON.stringify(data.equipment)
+            );
+
+            if (isDuplicate) {
+                toast({
+                    title: "Error",
+                    description: "Ya existe una fila con los mismos datos.",
+                    variant: "destructive",
+                });
+                return; // Salir de la función si ya existe una fila igual
             }
-      
-            return [...prevReport, {
-              id: rowId,
-              working_day: data.working_day,
-              customer: data.customer,
-              employees: data.employees,
-              equipment: data.equipment,
-              services: data.services,
-              item: data.item,
-              start_time: formattedStartTime,
-              end_time: formattedEndTime,
-              status: data.status,
-              description: data.description,
-            }];
-          });
-      
-          resetForm();
-      
-          toast({
-            title: "Éxito",
-            description: "Fila agregada correctamente al parte diario.",
-          });
+
+            const rowResponse = await fetch('/api/daily-report/daily-report-row', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    daily_report_id: reportData?.id,
+                    customer_id: data.customer,
+                    service_id: data.services,
+                    item_id: data.item,
+                    start_time: formattedStartTime,
+                    end_time: formattedEndTime,
+                    description: data.description,
+                    status: data.status,
+                }),
+            });
+
+            if (!rowResponse.ok) {
+                const errorText = await rowResponse.text();
+                throw new Error(`Error al insertar la fila en dailyreportrow: ${errorText}`);
+            }
+
+            const { data: rowData } = await rowResponse.json();
+            const rowId = rowData[0].id; // Asegúrate de que esto sea correcto
+
+            if (data.employees && data.employees.length > 0) {
+                await fetch('/api/daily-report/dailyreportemployeerelations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(
+                        data.employees.map((employee_id: string) => ({
+                            daily_report_row_id: rowId,
+                            employee_id: employee_id,
+                        }))
+                    ),
+                });
+            }
+
+            if (data.equipment && data.equipment.length > 0) {
+                await fetch('/api/daily-report/dailyreportequipmentrelations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(
+                        data.equipment.map((equipment_id: string) => ({
+                            daily_report_row_id: rowId,
+                            equipment_id: equipment_id,
+                        }))
+                    ),
+                });
+            }
+
+            setDailyReport(prevReport => {
+                // Verificar que prevReport sea un array
+                if (!Array.isArray(prevReport)) {
+                    prevReport = [];
+                }
+
+                return [...prevReport, {
+                    id: rowId,
+                    working_day: data.working_day,
+                    customer: data.customer,
+                    employees: data.employees,
+                    equipment: data.equipment,
+                    services: data.services,
+                    item: data.item,
+                    start_time: formattedStartTime,
+                    end_time: formattedEndTime,
+                    status: data.status,
+                    description: data.description,
+                    document_path: data.document_path,
+                }];
+            });
+
+            resetForm();
+
+            toast({
+                title: "Éxito",
+                description: "Fila agregada correctamente al parte diario.",
+            });
         } catch (error) {
-          console.error("Error al procesar el parte diario:", error);
-          toast({
-            title: "Error",
-            description: `Hubo un problema al procesar el parte diario: ${error instanceof Error ? error.message : 'Unknown error'}`,
-            variant: "destructive",
-          });
+            console.error("Error al procesar el parte diario:", error);
+            toast({
+                title: "Error",
+                description: `Hubo un problema al procesar el parte diario: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                variant: "destructive",
+            });
         }
-      };
-      
+    };
+
 
 
     const updateDailyReport = async (data: any, rowId: string) => {
-        
+
         try {
             const formattedStartTime = formatTime(data.start_time);
             const formattedEndTime = formatTime(data.end_time);
+
             
-
-
             // Actualizar la fila existente
             const rowResponse = await fetch(`/api/daily-report/daily-report-row?id=${rowId}`, {
                 method: 'PUT',
@@ -844,7 +864,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                 throw new Error(`Error al obtener relaciones de empleados: ${errorText}`);
             }
             const employeeRelationsData = await employeeRelationsResponse.json();
-            
+
             const currentEmployees = employeeRelationsData.dailyreportemployeerelations.map((rel: any) => ({
                 id: rel.id,
                 employee_id: rel.employee_id
@@ -857,7 +877,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                 throw new Error(`Error al obtener relaciones de equipos: ${errorText}`);
             }
             const equipmentRelationsData = await equipmentRelationsResponse.json();
-            
+
             const currentEquipment = equipmentRelationsData.dailyreportequipmentrelations.map((rel: any) => ({
                 id: rel.id,
                 equipment_id: rel.equipment_id
@@ -867,7 +887,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
             const employeesToRemove = currentEmployees.filter((rel: any) => !data.employees.includes(rel.employee_id));
             const equipmentToRemove = currentEquipment.filter((rel: any) => !data.equipment.includes(rel.equipment_id));
 
-            
+
 
             // Eliminar relaciones no utilizadas
             if (employeesToRemove.length > 0) {
@@ -985,6 +1005,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                     end_time: formattedEndTime,
                     status: data.status,
                     description: data.description,
+                    document_path: data.document_path,
                 } : report
             ));
 
@@ -1017,21 +1038,197 @@ export default function DailyReport({ reportData }: DailyReportProps) {
 
     // Función para calcular la diferencia de días
     const calculateDateDifference = (dateString: string) => {
-        
+
         const reportDate = new Date(dateString);
-        
+
         const timeDifference = currentDate.getTime() - reportDate.getTime();
-        
+
         const dayDifference = timeDifference / (1000 * 3600 * 24);
         return dayDifference;
     };
-    
+
     const dayDifference = calculateDateDifference(reportData?.date || '');
-    
+
     const canEdit = dayDifference <= 6;
+    console.log('allReport: ', allReport);
+    console.log('daily Report: ', dailyReport);
+    console.log('editingId: ', editingId);
+    const handleValueChange = (value: string) => {
+        if (value === 'reprogramado' && editingId) {
+            const currentReport = dailyReport.find(report => report.id === editingId);
+            console.log(currentReport)
+            if (currentReport) {
+                const futureReports = allReport?.filter(report => (moment(report.date)).isAfter(moment(currentReport?.date)));
+                console.log(futureReports)
+                setFutureReports(futureReports as any);
+                setSelectedReport(currentReport as any);
+                setIsDialogOpen(true);
+            }
+        }
+    };
 
+    const handleCloseDialog = () => {
+        setIsDialogOpen(false);
+        setFutureReports([]);
+        setSelectedReport(null);
+        setSelectedDate(null);
+      };
 
-    
+    const handleSaveToDailyReport = async () => {
+        if (selectedDate && selectedReport) {
+          try {
+            // Llama a la función updateDailyReport con los parámetros necesarios
+            console.log(selectedDate)
+            console.log(selectedReport)
+            const updatedReport = {
+                ...selectedReport,
+                id:null,
+                daily_report_id: selectedDate,
+                description: `Reprogramado desde ${selectedReport.date}`
+              };
+              console.log(updatedReport)
+            await reprogramarReporte(updatedReport,existingReportId as string, selectedDate as string );
+            console.log(`Reporte ${selectedReport.id} guardado en el parte diario ${selectedDate}`);
+            setIsDialogOpen(false);
+          } catch (error) {
+            console.error('Error al guardar el reporte:', error);
+          }
+        }
+      };
+////////////////////////////////////////////////////////////
+
+const reprogramarReporte = async (data: any, rowId: string, newDailyReportId: string) => {
+    try {
+        const formattedStartTime = formatTime(data.start_time);
+        const formattedEndTime = formatTime(data.end_time);
+
+        // Crear una nueva fila en el nuevo parte diario
+        const newRowResponse = await fetch(`/api/daily-report/daily-report-row`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                daily_report_id: newDailyReportId,
+                customer_id: data.customer,
+                service_id: data.services,
+                item_id: data.item,
+                working_day: data.working_day,
+                start_time: formattedStartTime,
+                end_time: formattedEndTime,
+                description: `Reprogramado desde ${data.date}`,
+                status: 'pendiente',
+            }),
+        });
+
+        if (!newRowResponse.ok) {
+            const errorText = await newRowResponse.text();
+            throw new Error(`Error al crear la nueva fila en dailyreportrow: ${errorText}`);
+        }
+
+        const { data: newRowData } = await newRowResponse.json();
+        const newRowId = newRowData.id;
+
+        // Actualizar el estado de la fila original a "reprogramado"
+        const updateRowResponse = await fetch(`/api/daily-report/daily-report-row?id=${rowId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                status: 'reprogramado',
+                description: `Reprogramado a ${data.date}`,
+            }),
+        });
+
+        if (!updateRowResponse.ok) {
+            const errorText = await updateRowResponse.text();
+            throw new Error(`Error al actualizar la fila original en dailyreportrow: ${errorText}`);
+        }
+
+        // Obtener relaciones actuales de empleados
+        const employeeRelationsResponse = await fetch(`/api/daily-report/dailyreportemployeerelations?row_id=${rowId}`);
+        if (!employeeRelationsResponse.ok) {
+            const errorText = await employeeRelationsResponse.text();
+            throw new Error(`Error al obtener relaciones de empleados: ${errorText}`);
+        }
+        const employeeRelationsData = await employeeRelationsResponse.json();
+
+        const currentEmployees = employeeRelationsData.dailyreportemployeerelations.map((rel: any) => ({
+            id: rel.id,
+            employee_id: rel.employee_id
+        }));
+
+        // Obtener relaciones actuales de equipos
+        const equipmentRelationsResponse = await fetch(`/api/daily-report/dailyreportequipmentrelations?row_id=${rowId}`);
+        if (!equipmentRelationsResponse.ok) {
+            const errorText = await equipmentRelationsResponse.text();
+            throw new Error(`Error al obtener relaciones de equipos: ${errorText}`);
+        }
+        const equipmentRelationsData = await equipmentRelationsResponse.json();
+
+        const currentEquipment = equipmentRelationsData.dailyreportequipmentrelations.map((rel: any) => ({
+            id: rel.id,
+            equipment_id: rel.equipment_id
+        }));
+
+        // Crear nuevas relaciones de empleados para la nueva fila
+        if (currentEmployees.length > 0) {
+            await fetch('/api/daily-report/dailyreportemployeerelations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(
+                    currentEmployees.map((employee: any) => ({
+                        daily_report_row_id: newRowId,
+                        employee_id: employee.employee_id,
+                    }))
+                ),
+            });
+        }
+
+        // Crear nuevas relaciones de equipos para la nueva fila
+        if (currentEquipment.length > 0) {
+            await fetch('/api/daily-report/dailyreportequipmentrelations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(
+                    currentEquipment.map((equipment: any) => ({
+                        daily_report_row_id: newRowId,
+                        equipment_id: equipment.equipment_id,
+                    }))
+                ),
+            });
+        }
+
+        // Actualizar el estado del componente si es necesario
+        setDailyReport(prevReport => prevReport.map(report =>
+            report.id === rowId ? {
+                ...report,
+                status: 'reprogramado',
+                description: `Reprogramado a ${data.date}`,
+            } : report
+        ));
+
+        toast({
+            title: "Éxito",
+            description: "Fila reprogramada correctamente al nuevo parte diario.",
+        });
+    } catch (error) {
+        console.error("Error al reprogramar la fila al nuevo parte diario:", error);
+        toast({
+            title: "Error",
+            description: `Hubo un problema al reprogramar la fila al nuevo parte diario: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            variant: "destructive",
+        });
+    }
+};
+
+console.log('dailyReport: ', dailyReport);
+
     return (
         <div className="mx-auto p-4">
             <div className="relative w-full h-full overflow-hidden">
@@ -1163,7 +1360,7 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                                 placeholder="Seleccione empleados"
                                                                 selectedItems={field.value}
                                                                 onChange={(selected: any) => field.onChange(selected)}
-                                                                
+
                                                             />
                                                         </div>
                                                     </FormItem>
@@ -1216,6 +1413,39 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                     </FormItem>
                                                 )}
                                             />
+                                            {isDialogOpen && (
+                                                <GenericDialog
+                                                title="Reprogramar Reporte"
+                                                description="Selecciona un parte diario para reprogramar este reporte."
+                                                isOpen={isDialogOpen}
+                                                onClose={handleCloseDialog}
+                                              >
+                                                <div>
+                                                  <Select onValueChange={(value) => setSelectedDate(value)}>
+                                                    <SelectTrigger className="w-full max-w-xs">
+                                                      <SelectValue placeholder="Seleccione un parte diario" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                      <SelectGroup>
+                                                        {futureReports.map((futureReport) => (
+                                                          <SelectItem key={futureReport.id} value={futureReport.id}>
+                                                            {moment(futureReport.date).format('DD/MM/YYYY')}
+                                                          </SelectItem>
+                                                        ))}
+                                                      </SelectGroup>
+                                                    </SelectContent>
+                                                  </Select>
+                                                </div>
+                                                <div className="mt-4 flex justify-end">
+                                                  <Button variant="outline" onClick={handleCloseDialog} className="mr-2">
+                                                    Cerrar
+                                                  </Button>
+                                                  <Button onClick={handleSaveToDailyReport} disabled={!selectedDate}>
+                                                    Guardar
+                                                  </Button>
+                                                </div>
+                                              </GenericDialog>
+                                            )}
                                             {workingDay === 'por horario' && (
                                                 <>
                                                     <FormField
@@ -1262,8 +1492,8 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                             )}
 
                                             {editingId && (
-                                                
-                                                
+
+
                                                 <FormField
                                                     control={control}
                                                     name='status'
@@ -1272,7 +1502,10 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                             <FormLabel>Estado</FormLabel>
                                                             <Select
                                                                 value={field.value}
-                                                                onValueChange={field.onChange}
+                                                                onValueChange={(value) => {
+                                                                    field.onChange(value);
+                                                                    handleValueChange(value);
+                                                                }}
                                                             >
                                                                 <SelectTrigger className="w-full max-w-xs">
                                                                     <SelectValue placeholder="Seleccione un estado" />
@@ -1376,10 +1609,10 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                                         report.status === 'ejecutado'
                                                             ? 'success'
                                                             : report.status === 'cancelado'
-                                                            ? 'destructive'
-                                                            : report.status === 'reprogramado'
-                                                            ? 'yellow'
-                                                            : 'default'
+                                                                ? 'destructive'
+                                                                : report.status === 'reprogramado'
+                                                                    ? 'yellow'
+                                                                    : 'default'
                                                     }
                                                 >
                                                     {report.status}
@@ -1388,28 +1621,43 @@ export default function DailyReport({ reportData }: DailyReportProps) {
                                             {/* <TableCell>{report.status}</TableCell> */}
                                             <TableCell>{report.description}</TableCell>
                                             <TableCell>
-                                                {canEdit && (
-                                                    <>
-                                                        {report.status !== 'cancelado' && report.status !== 'reprogramado'  && (
-                                                            <>
-                                                                {report.status !== 'ejecutado' ? (
-                                                                    <>
-                                                                        <Button onClick={() => handleEdit(report.id)} className="mr-2">
-                                                                            <FilePenLine className="h-4 w-4" />
-                                                                        </Button>
-                                                                        <Button onClick={() => handleConfirmOpen(report.id)} variant="destructive">
-                                                                            <Trash2 className="h-4 w-4" />
-                                                                        </Button>
-                                                                    </>
-                                                                ) : (
-                                                                    <Button onClick={() => console.log('Subir documento', report.id)} className="mr-2">
-                                                                        Subir Documento
-                                                                    </Button>
-                                                                )}
-                                                            </>
-                                                        )}
-                                                        
-                                                    </>
+                                                {report.document_path ? (
+                                                    <Button onClick={async () => {
+                                                        if (report.document_path) {
+                                                            await fetchDocument(report.document_path);
+                                                            if (documentUrl) {
+                                                                window.open(documentUrl, '_blank');
+                                                            }
+                                                        }
+                                                    }}>
+                                                        Ver Documento
+                                                    </Button>
+                                                ) : (
+                                                    canEdit && (
+                                                        <>
+                                                            {report.status !== 'cancelado' && report.status !== 'reprogramado' && (
+                                                                <>
+                                                                    {report.status !== 'ejecutado' ? (
+                                                                        <>
+                                                                            <Button onClick={() => handleEdit(report.id)} className="mr-2">
+                                                                                <FilePenLine className="h-4 w-4" />
+                                                                            </Button>
+                                                                            <Button onClick={() => handleConfirmOpen(report.id)} variant="destructive">
+                                                                                <Trash2 className="h-4 w-4" />
+                                                                            </Button>
+                                                                        </>
+                                                                    ) : (
+                                                                        <UploadDocument 
+                                                                            rowId={report.id || ''} 
+                                                                            customerName={getCustomerName(report.customer || '')} 
+                                                                            companyName={company_id || ''} 
+                                                                            serviceName={getServiceName(report.services)}
+                                                                        />   
+                                                                    )}
+                                                                </>
+                                                            )}
+                                                        </>
+                                                    )
                                                 )}
                                             </TableCell>
                                         </TableRow>

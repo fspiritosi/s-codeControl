@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
           status,
           working_day,
           description,
+          document_path,
           dailyreportemployeerelations (employee_id(id,firstname,lastname)),
           dailyreportequipmentrelations (equipment_id(id,intern_number))
           )

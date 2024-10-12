@@ -784,5 +784,6 @@ export const dailyReportSchema = z.object({
   end_time: z.string().optional(),
   status: z.string().optional(),
   description: z.string().optional(),
+  document_path: z.string().optional(),
 });
 export type SharedCompanies = z.infer<typeof SharedCompaniesSchema>;

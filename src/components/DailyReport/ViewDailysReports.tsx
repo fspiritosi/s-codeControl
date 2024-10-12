@@ -44,6 +44,7 @@ interface DailyReportItem {
   status: 'pendiente' | 'ejecutado' | 'cancelado' | 'reprogramado';
   working_day: string;
   description: string;
+  document_path?: string;
 }
 
 interface DailyReportData {
@@ -152,12 +153,13 @@ export default function ViewDailysReports() {
         end_time: row.end_time,
         status: row.status, // Asumiendo que todos los items están ejecutados por defecto
         working_day: row.working_day,
-        description: row.description || '', // Asumiendo que no hay descripción disponible
+        description: row.description || '',
+        document_path:row.document_path // Asumiendo que no hay descripción disponible
       })),
     }));
   };
   const transformedReports = transformDailyReports(dailyReports);
-  
+  console.log(transformedReports)
 
   // const handleStatusChangeWithWarning = (id: string, status: boolean) => {
   //   if (!status) { // Si el nuevo estado es 'cerrado' (false)
@@ -228,7 +230,7 @@ export default function ViewDailysReports() {
     }
   };
 
-
+const [allReport, setAllreport] = useState<DailyReportData[]>([]);
   const handleViewReport = (report: DailyReportData) => {
     setIsLoading(true);
     setIsEditing(true);
@@ -237,7 +239,7 @@ export default function ViewDailysReports() {
       if (!fullReportData) {
         throw new Error("Report not found in the array");
       }
-      
+      setAllreport(transformedReports)
       setSelectedReport(fullReportData);
       setOpenModal(true);
     } catch (error) {
@@ -293,7 +295,8 @@ export default function ViewDailysReports() {
       });
     }
   };
-  
+  console.log(allReport)
+  console.log(selectedReport)
 
   return (
     <div className="container mx-auto p-4">
@@ -432,7 +435,7 @@ export default function ViewDailysReports() {
           </DialogHeader>
           <div className="flex-grow overflow-auto">
             {selectedReport ? (
-              <DailyReport reportData={selectedReport} />
+              <DailyReport reportData={selectedReport} allReport={allReport} />
             ) : (
               <div className="text-center">Cargando detalles del reporte...</div>
             )}
