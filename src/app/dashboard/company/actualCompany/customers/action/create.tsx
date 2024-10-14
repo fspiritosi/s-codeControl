@@ -13,14 +13,20 @@ export async function createdCustomer(formData: FormData) {
       data: { session },
     } = await supabase.auth.getSession();
 
-    const { data } = await supabase.from('profile').select('*').eq('email', session?.user.email);
+    const { data } = await supabase
+      .from('profile')
+      .select('*')
+      .eq('email', session?.user.email || '');
 
-    const { data: Companies, error } = await supabase.from('company').select(`*`).eq('owner_id', data?.[0]?.id);
+    const { data: Companies, error } = await supabase
+      .from('company')
+      .select(`*`)
+      .eq('owner_id', data?.[0]?.id || '');
 
     let { data: share_company_users, error: sharedError } = await supabase
       .from('share_company_users')
       .select(`*`)
-      .eq('profile_id', data?.[0]?.id);
+      .eq('profile_id', data?.[0]?.id || '');
 
     revalidatePath('/dashboard/company/customers');
 
@@ -43,10 +49,10 @@ export async function createdCustomer(formData: FormData) {
       .select('*')
       .eq('name', clientData.name)
       .eq('cuit', clientData.cuit)
-      .eq('client_email', clientData.client_email)
-      .eq('client_phone', clientData.client_phone)
-      .eq('address', clientData.address)
-      .eq('company_id', clientData.company_id)
+      .eq('client_email', clientData.client_email || '')
+      .eq('client_phone', clientData.client_phone || '')
+      .eq('address', clientData.address || '')
+      .eq('company_id', clientData.company_id || '')
       .single();
 
     if (existingClient) {
@@ -54,7 +60,10 @@ export async function createdCustomer(formData: FormData) {
     }
 
     // Guardar datos en la tabla 'customer'
-    const newClient = await supabase.from('customers').insert(clientData).select();
+    const newClient = await supabase
+      .from('customers')
+      .insert(clientData as any)
+      .select();
     if (newClient) {
       return { status: 201, body: 'Cliente creado satisfactoriamente.' };
     }
@@ -75,14 +84,20 @@ export async function updateCustomer(formData: FormData) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const { data } = await supabase.from('profile').select('*').eq('email', session?.user.email);
+  const { data } = await supabase
+    .from('profile')
+    .select('*')
+    .eq('email', session?.user.email || '');
 
-  const { data: Companies, error } = await supabase.from('company').select(`*`).eq('owner_id', data?.[0]?.id);
+  const { data: Companies, error } = await supabase
+    .from('company')
+    .select(`*`)
+    .eq('owner_id', data?.[0]?.id || '');
 
   let { data: share_company_users, error: sharedError } = await supabase
     .from('share_company_users')
     .select(`*`)
-    .eq('profile_id', data?.[0]?.id);
+    .eq('profile_id', data?.[0]?.id || '');
 
   revalidatePath('/dashboard/company/actualCompany');
 
@@ -100,7 +115,11 @@ export async function updateCustomer(formData: FormData) {
   try {
     // Guardar datos en la tabla 'customer'
 
-    const editClient = await supabase.from('customers').update([clientData]).eq('id', id).select();
+    const editClient = await supabase
+      .from('customers')
+      .update([clientData] as any)
+      .eq('id', id || '')
+      .select();
 
     return { status: 200, body: 'Cliente actualizado satisfactoriamente' };
   } catch (error) {

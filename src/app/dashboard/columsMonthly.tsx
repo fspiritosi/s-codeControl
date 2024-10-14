@@ -598,7 +598,7 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
                 .update({
                   period: value,
                 })
-                .eq('id', id);
+                .eq('id', id || '');
               if (error) {
                 throw new Error(handleSupabaseError(error.message));
               }
@@ -609,7 +609,7 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
                 .update({
                   period: value,
                 })
-                .eq('id', id);
+                .eq('id', id || '');
               if (error) {
                 throw new Error(handleSupabaseError(error.message));
               }

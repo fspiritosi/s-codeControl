@@ -39,17 +39,23 @@ export default async function page({
     data: { session },
   } = await supabase.auth.getSession();
 
-  const { data: usuario } = await supabase.from('profile').select('*').eq('email', session?.user.email).single();
+  const { data: usuario } = await supabase
+    .from('profile')
+    .select('*')
+    .eq('email', session?.user.email || '')
+    .single();
   const { data: company, error } = await supabase.from('company').select(`id`);
   let { data: share, error: sharedError } = await supabase
     .from('share_company_users')
     .select(`*`)
-    .eq('profile_id', usuario?.id);
+    .eq('profile_id', usuario?.id || '');
 
   let role = '';
 
   const roleRaw = share
-    ?.filter((item: any) => company?.some((comp: any) => comp.id === item.company_id) && item.profile_id === usuario.id)
+    ?.filter(
+      (item: any) => company?.some((comp: any) => comp.id === item.company_id) && item.profile_id === usuario?.id
+    )
     .map((item: any) => item.role);
 
   role = roleRaw?.join('') as string;

@@ -303,34 +303,12 @@ export function DataContacts<TData, TValue>({
                         key={cell.id}
                         className={`text-center whitespace-nowrap ${is_active ? '' : 'text-red-500'}`}
                       >
-                        {cell.column.id === 'picture' ? (
-                          cell.getValue() !== '' ? (
-                            <Link href={cell.getValue() as any} target="_blank">
-                              <img src={cell.getValue() as any} alt="Foto" style={{ width: '50px' }} />
-                            </Link>
-                          ) : (
-                            'No disponible'
-                          )
-                        ) : cell.column.id === 'status' ? (
-                          <Badge
-                            variant={
-                              cell.getValue() === 'Completo'
-                                ? 'success'
-                                : cell.getValue() === 'Completo con doc vencida'
-                                  ? 'yellow'
-                                  : 'destructive'
-                            }
-                          >
+                        {cell.column.id === 'contact_name' ?(
+                          <Link className='hover:underline' href={`/dashboard/company/actualCompany/contact/action?action=view&id=${(cell.row.original as any)?.id}`}>
                             {cell.getValue() as React.ReactNode}
-                          </Badge>
-                        ) : cell.column.id === 'domain' ? (
-                          !cell.getValue() ? (
-                            'No posee'
-                          ) : (
-                            (cell.getValue() as React.ReactNode)
-                          )
-                        ) : (
-                          flexRender(cell.column.columnDef.cell, cell.getContext())
+                          </Link> 
+                        ):
+                          (flexRender(cell.column.columnDef.cell, cell.getContext())
                         )}
                       </TableCell>
                     ) : null;

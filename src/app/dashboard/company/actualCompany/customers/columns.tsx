@@ -34,16 +34,13 @@ import {
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
-import { handleSupabaseError } from '@/lib/errorHandler';
-import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { ColumnDef } from '@tanstack/react-table';
-import { addMonths, format } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ArrowUpDown, CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
@@ -51,7 +48,7 @@ import { Fragment, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { supabase } from '../../../../../supabase/supabase';
+import { supabase } from '../../../../../../supabase/supabase';
 const formSchema = z.object({
   reason_for_termination: z.string({
     required_error: 'La razón de la baja es requerida.',
@@ -62,11 +59,12 @@ const formSchema = z.object({
 });
 
 type Colum = {
-  contact_name: string;
-  constact_email: string;
-  contact_phone: number;
-  contact_charge: string;
-  customer_id: { id: string; name: string };
+  name: string;
+  cuit: number;
+  client_email: string;
+  client_phone: number;
+  address: string;
+  is_active: boolean;
   showInactive: boolean;
   status: string;
 };
@@ -76,6 +74,9 @@ export const columns: ColumnDef<Colum>[] = [
     id: 'actions',
     cell: ({ row }: { row: any }) => {
       const profile = useLoggedUserStore((state) => state);
+      const employ = useLoggedUserStore((state) => state.employeesToShow);
+      const equip = useLoggedUserStore((state) => state.vehiclesToShow);
+
       let role = '';
       if (profile?.actualCompany?.owner_id.id === profile?.credentialUser?.id) {
         role = profile?.actualCompany?.owner_id?.role as string;
@@ -85,38 +86,38 @@ export const columns: ColumnDef<Colum>[] = [
 
       const [showModal, setShowModal] = useState(false);
       const [integerModal, setIntegerModal] = useState(false);
-      const [id, setId] = useState('');
-      const [showInactive, setShowInactive] = useState('');
-      const [showDeletedContact, setShowDeletedContact] = useState(false);
-      const contacts = row.original;
+      const [cuit, setCuit] = useState('');
+      //const user = row.original
+      const [showInactive, setShowInactive] = useState<boolean>(false);
+      const [showDeletedCustomer, setShowDeletedCustomer] = useState(false);
+      const customers = row.original;
 
       const handleOpenModal = (id: string) => {
-        setId(id);
+        setCuit(cuit);
         setShowModal(!showModal);
       };
       const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
-      const fetchInactiveContacts = async () => {
+      const fetchInactiveCustomer = async () => {
         try {
           const { data, error } = await supabase
-            .from('contacts')
+            .from('customers')
             .select('*')
             //.eq('is_active', false)
-            .eq('company_id', actualCompany?.id)
-            .select();
+            .eq('company_id', actualCompany?.id);
 
           if (error) {
-            toast.error(`${handleSupabaseError(error.message)}`);
+            console.error(error);
           }
         } catch (error) {
-          toast.error(handleSupabaseError(`${error}`));
+          console.error(error);
         }
       };
       useEffect(() => {
-        fetchInactiveContacts();
+        fetchInactiveCustomer();
       }, []);
       const handleOpenIntegerModal = (id: string) => {
-        setId(id);
+        setCuit(cuit);
         setIntegerModal(!integerModal);
       };
 
@@ -129,83 +130,119 @@ export const columns: ColumnDef<Colum>[] = [
         },
       });
 
-      async function reintegerContact() {
-        toast.promise(
-          async () => {
-            const supabase = supabaseBrowser();
+      async function reintegerCustomer() {
+        try {
+          const { data, error } = await supabase
+            .from('customers')
+            .update({
+              is_active: true,
+              // termination_date: null,
+              // reason_for_termination: null,
+            })
+            .eq('id', customers.id)
+            .eq('company_id', actualCompany?.id)
+            .select();
 
-            const { data, error } = await supabase
-              .from('contacts')
-              .update({
-                is_active: true,
-                termination_date: null,
-                reason_for_termination: null,
-              })
-              .eq('id', contacts.id)
-              //.eq('company_id', actualCompany?.id)
-              .select();
+          setIntegerModal(!integerModal);
+          //setInactive(data as any)
+          setShowDeletedCustomer(false);
+          toast('Cliente reintegrado', { description: `El cliente ${customers?.name} ha sido reintegrado` });
+        } catch (error: any) {
+          const message = await errorTranslate(error?.message);
+          toast('Error al reintegrar el cliente', { description: message });
+        }
 
-            setIntegerModal(!integerModal);
-            //setInactive(data as any)
-            setShowDeletedContact(false);
+        try {
+          const { data, error } = await supabase
+            .from('contacts')
+            .update({
+              is_active: true,
+              // termination_date: null,
+              // reason_for_termination: null,
+            })
+            .eq('customer_id', customers.id)
+            .eq('company_id', actualCompany?.id)
+            .select();
 
-            if (error) {
-              throw new Error(handleSupabaseError(error.message));
-            }
-          },
-          {
-            loading: 'Reintegrando...',
-            success: `Contacto reintegrado`,
-            error: (error) => {
-              return error;
-            },
-          }
-        );
+          setIntegerModal(!integerModal);
+          //setInactive(data as any)
+          setShowDeletedCustomer(false);
+          toast('Contacto reintegrado');
+        } catch (error: any) {
+          const message = await errorTranslate(error?.message);
+          toast('Error al reintegrar el contacto', { description: message });
+        }
       }
 
       async function onSubmit(values: z.infer<typeof formSchema>) {
-        toast.promise(
-          async () => {
-            const data = {
-              ...values,
-              termination_date: format(values.termination_date, 'yyyy-MM-dd'),
-            };
+        const data = {
+          ...values,
+          termination_date: format(values.termination_date, 'yyyy-MM-dd'),
+        };
 
-            const supabase = supabaseBrowser();
-            const { error } = await supabase
-              .from('contacts')
-              .update({
-                is_active: false,
-                termination_date: data.termination_date,
-                reason_for_termination: data.reason_for_termination,
-              })
-              .eq('id', contacts.id)
-              .eq('company_id', actualCompany?.id)
-              .select();
+        try {
+          await supabase
+            .from('customers')
+            .update({
+              is_active: false,
+              termination_date: data.termination_date,
+              reason_for_termination: data.reason_for_termination,
+            })
+            .eq('id', customers.id)
+            .eq('company_id', actualCompany?.id)
+            .select();
 
-            setShowModal(!showModal);
-            if (error) {
-              throw new Error(handleSupabaseError(error.message));
-            }
-          },
-          {
-            loading: 'Eliminando...',
-            success: 'Contacto eliminado',
-            error: (error) => {
-              return error;
-            },
-          }
-        );
+          setShowModal(!showModal);
+
+          toast('Cliente eliminado');
+        } catch (error: any) {
+          const message = await errorTranslate(error?.message);
+          toast('Error al dar de baja el cliente', { description: message });
+        }
+
+        try {
+          await supabase
+            .from('contacts')
+            .update({
+              is_active: false,
+              // termination_date: data.termination_date,
+              // reason_for_termination: data.reason_for_termination,
+            })
+            .eq('customer_id', customers.id)
+            .eq('company_id', actualCompany?.id)
+            .select();
+
+          setShowModal(!showModal);
+
+          toast('Contacto eliminado');
+        } catch (error: any) {
+          const message = await errorTranslate(error?.message);
+          toast('Error al dar de baja el contacto', { description: message });
+        }
+        const updatedEmployeesPromises = employ.map((employee: any) => {
+          const updatedAllocatedTo = employee.allocated_to?.filter((clientId: string) => clientId !== customers.id);
+          return supabase.from('employees').update({ allocated_to: updatedAllocatedTo }).eq('id', employee.id);
+        });
+
+        // Esperar a que todas las actualizaciones de empleados se completen
+        await Promise.all(updatedEmployeesPromises);
+
+        toast('Empleados actualizados', { description: `Los empleados afectados han sido actualizados` });
+
+        const updatedEquipmentPromises = equip.map((equipment: any) => {
+          const updatedAllocatedTo = equipment.allocated_to?.filter((clientId: string) => clientId !== customers.id);
+          return supabase.from('vehicles').update({ allocated_to: updatedAllocatedTo }).eq('id', equipment.id);
+        });
+
+        // Esperar a que todas las actualizaciones de empleados se completen
+        await Promise.all(updatedEquipmentPromises);
+
+        toast('Equipos actualizados', { description: `Los equipos afectados han sido actualizados` });
       }
-      const today = new Date();
-      const nextMonth = addMonths(new Date(), 1);
-      const [month, setMonth] = useState<Date>(nextMonth);
 
-      const yearsAhead = Array.from({ length: 20 }, (_, index) => {
-        const year = today.getFullYear() - index - 1;
-        return year;
-      });
-      const [years, setYear] = useState(today.getFullYear().toString());
+      const handleToggleInactive = () => {
+        setShowInactive(!showInactive);
+      };
 
       return (
         <DropdownMenu>
@@ -215,12 +252,12 @@ export const columns: ColumnDef<Colum>[] = [
                 <AlertDialogHeader>
                   <AlertDialogTitle>¿Estás completamente seguro?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    {`Estás a punto de reintegrar el contacto ${contacts.name}, quien fue dado de baja por ${contacts.reason_for_termination} el día ${contacts.termination_date}. Al reintegrar al contacto, se borrarán estas razones. Si estás seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
+                    {`Estás a punto de reintegrar al equipo ${customers.name}, quien fue dado de baja por ${customers.reason_for_termination} el día ${customers.termination_date}. Al reintegrar al cliente, se borrarán estas razones. Si estás seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => reintegerContact()}>Continuar</AlertDialogAction>
+                  <AlertDialogAction onClick={() => reintegerCustomer()}>Continuar</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -228,9 +265,9 @@ export const columns: ColumnDef<Colum>[] = [
           {showModal && (
             <Dialog defaultOpen onOpenChange={() => setShowModal(!showModal)}>
               <DialogContent className="dark:bg-slate-950">
-                <DialogTitle>Dar de baja Contacto</DialogTitle>
+                <DialogTitle>Dar de baja Cliente</DialogTitle>
                 <DialogDescription>
-                  ¿Estás seguro de que deseas dar de baja este contacto?, completa los campos para continuar.
+                  ¿Estás seguro de que deseas dar de baja este cliente?, completa los campos para continuar.
                 </DialogDescription>
                 <DialogFooter>
                   <div className="w-full">
@@ -242,6 +279,11 @@ export const columns: ColumnDef<Colum>[] = [
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Motivo de Baja</FormLabel>
+                              {/* <Controller
+                                name="reason_for_termination"
+                                control={form.control}
+                                defaultValue=""
+                                render={({ field.value }) => ( */}
                               <Input
                                 className="input w-[250px]"
                                 placeholder="Escribe el motivo"
@@ -251,6 +293,8 @@ export const columns: ColumnDef<Colum>[] = [
                                   field.onChange(e.target.value);
                                 }}
                               />
+                              {/* )}
+                              /> */}
                               {/* <Select
                                 onValueChange={field.onChange}
                                 defaultValue={field.value}
@@ -266,11 +310,8 @@ export const columns: ColumnDef<Colum>[] = [
                                   <SelectItem value="Otro">Otro</SelectItem>
                                 </SelectContent>
                               </Select> */}
-                              {/* <FormDescription>
-                                Elige la razón por la que deseas dar de baja el
-                                contacto
-                              </FormDescription>
-                              <FormMessage /> */}
+                              <FormDescription>Elige la razón por la que deseas dar de baja el equipo</FormDescription>
+                              <FormMessage />
                             </FormItem>
                           )}
                         />
@@ -302,57 +343,13 @@ export const columns: ColumnDef<Colum>[] = [
                                   </FormControl>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
-                                  {/* <Calendar
+                                  <Calendar
                                     mode="single"
                                     selected={field.value}
                                     onSelect={field.onChange}
-                                    disabled={date =>
-                                      date > new Date() ||
-                                      date < new Date('1900-01-01')
-                                    }
+                                    disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
                                     initialFocus
                                     locale={es}
-                                  /> */}
-                                  <Select
-                                    onValueChange={(e) => {
-                                      setMonth(new Date(e));
-                                      setYear(e);
-                                      const newYear = parseInt(e, 10);
-                                      const dateWithNewYear = new Date(field.value);
-                                      dateWithNewYear.setFullYear(newYear);
-                                      field.onChange(dateWithNewYear);
-                                      setMonth(dateWithNewYear);
-                                    }}
-                                    value={years || today.getFullYear().toString()}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Elegir año" />
-                                    </SelectTrigger>
-                                    <SelectContent position="popper">
-                                      <SelectItem
-                                        value={today.getFullYear().toString()}
-                                        disabled={years === today.getFullYear().toString()}
-                                      >
-                                        {today.getFullYear().toString()}
-                                      </SelectItem>
-                                      {yearsAhead?.map((year) => (
-                                        <SelectItem key={year} value={`${year}`}>
-                                          {year}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <Calendar
-                                    month={month}
-                                    onMonthChange={setMonth}
-                                    toDate={today}
-                                    locale={es}
-                                    mode="single"
-                                    disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
-                                    selected={new Date(field.value) || today}
-                                    onSelect={(e) => {
-                                      field.onChange(e);
-                                    }}
                                   />
                                 </PopoverContent>
                               </Popover>
@@ -369,6 +366,9 @@ export const columns: ColumnDef<Colum>[] = [
                         </div>
                       </form>
                     </Form>
+                    {/* <Button variant="destructive" onClick={() => handleDelete()}>
+                    Eliminar
+                  </Button> */}
                   </div>
                 </DialogFooter>
               </DialogContent>
@@ -383,31 +383,31 @@ export const columns: ColumnDef<Colum>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Opciones</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(contacts.constact_email)}>
-              Copiar email
+            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(customers.cuit)}>
+              Copiar cuit
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Link className="w-full" href={`/dashboard/company/contact/action?action=view&id=${contacts?.id}`}>
-                Ver Contacto
+              <Link className="w-full" href={`/dashboard/company/actualCompany/customers/action?action=view&id=${customers?.id}`}>
+                Ver Cliente
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               {role !== 'Invitado' && (
-                <Link className="w-full" href={`/dashboard/company/contact/action?action=edit&id=${contacts?.id}`}>
-                  Editar Contacto
+                <Link className="w-full" href={`/dashboard/company/actualCompany/customers/action?action=edit&id=${customers?.id}`}>
+                  Editar Cliente
                 </Link>
               )}
             </DropdownMenuItem>
             <DropdownMenuItem>
               {role !== 'Invitado' && (
                 <Fragment>
-                  {contacts.is_active ? (
-                    <Button variant="destructive" onClick={() => handleOpenModal(contacts?.id)} className="text-sm">
-                      Dar de baja Contacto
+                  {customers.is_active ? (
+                    <Button variant="destructive" onClick={() => handleOpenModal(customers?.id)} className="text-sm">
+                      Dar de baja Cliente
                     </Button>
                   ) : (
-                    <Button variant="primary" onClick={() => handleOpenIntegerModal(contacts.id)} className="text-sm">
-                      Reintegrar Contacto
+                    <Button variant="primary" onClick={() => handleOpenIntegerModal(customers.id)} className="text-sm">
+                      Reintegrar Cliente
                     </Button>
                   )}
                 </Fragment>
@@ -419,36 +419,30 @@ export const columns: ColumnDef<Colum>[] = [
     },
   },
   {
-    accessorKey: 'contact_name',
+    accessorKey: 'cuit',
     header: ({ column }: { column: any }) => {
       return (
         <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="p-0">
-          Nombre
+          Cuit
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
   },
-
   {
-    accessorKey: 'constact_email',
+    accessorKey: 'name',
+    header: 'Nombre',
+  },
+  {
+    accessorKey: 'client_email',
     header: 'Email',
   },
   {
-    accessorKey: 'contact_phone',
+    accessorKey: 'client_phone',
     header: 'Teléfono',
   },
   {
-    accessorKey: 'contact_charge',
-    header: 'Cargo',
-  },
-  {
-    accessorKey: 'customers.name',
-    header: 'Cliente',
-  },
-
-  {
     accessorKey: 'showUnavaliableContacts',
-    header: 'Ver contactos dados de baja',
+    header: 'Ver clientes dados de baja',
   },
 ];

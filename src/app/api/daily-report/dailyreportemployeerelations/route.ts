@@ -7,9 +7,8 @@ export async function GET(request: NextRequest) {
   const company_id = searchParams.get('actual');
   try {
     let { data: dailyreportemployeerelations, error } = await supabase
-      .from('dailyreportemployeerelations')
-      .select(`*`)
-      
+      .from('dailyreportemployeerelations' as any)
+      .select(`*`);
 
     if (error) {
       throw new Error(JSON.stringify(error));
@@ -22,7 +21,7 @@ export async function POST(request: NextRequest) {
   const supabase = supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   // const companyId = searchParams.get('actual');
-  
+
   try {
     const body = await request.json();
     console.log('Cuerpo de la solicitud:', body); // Verificar el cuerpo de la solicitud
@@ -35,14 +34,12 @@ export async function POST(request: NextRequest) {
     // Iterar sobre el array y procesar cada objeto
     const insertData = body.map(({ daily_report_row_id, employee_id }) => ({
       daily_report_row_id,
-      employee_id
+      employee_id,
     }));
 
     console.log('Datos a insertar:', insertData);
 
-    let { data, error } = await supabase
-      .from('dailyreportemployeerelations')
-      .insert(insertData);
+    let { data, error } = await supabase.from('dailyreportemployeerelations' as any).insert(insertData);
 
     if (error) {
       throw new Error(JSON.stringify(error));
@@ -62,7 +59,9 @@ export async function PUT(request: NextRequest) {
   const { id, ...updateData } = await request.json();
 
   if (!id) {
-    return new Response(JSON.stringify({ error: 'ID is required for updating the daily report row.' }), { status: 400 });
+    return new Response(JSON.stringify({ error: 'ID is required for updating the daily report row.' }), {
+      status: 400,
+    });
   }
 
   if (Object.keys(updateData).length === 0) {
@@ -71,55 +70,60 @@ export async function PUT(request: NextRequest) {
 
   try {
     const { data, error } = await supabase
-      .from('dailyreportemployeerelations')
+      .from('dailyreportemployeerelations' as any)
       .update(updateData)
       .eq('id', id);
 
     if (error) {
       console.error('Error from Supabase:', error);
-      return new Response(JSON.stringify({ 
-        error: error.message || 'Error desconocido',
-        details: error.details || null,
-        hint: error.hint || null
-      }), { status: 500 });
+      return new Response(
+        JSON.stringify({
+          error: error.message || 'Error desconocido',
+          details: error.details || null,
+          hint: error.hint || null,
+        }),
+        { status: 500 }
+      );
     }
 
     return new Response(JSON.stringify({ data }), { status: 200 });
   } catch (error) {
     console.error('Error inesperado al actualizar la fila de reporte diario:', error);
-    return new Response(JSON.stringify({ error: (error as any).message || 'Unexpected error occurred.' }), { status: 500 });
+    return new Response(JSON.stringify({ error: (error as any).message || 'Unexpected error occurred.' }), {
+      status: 500,
+    });
   }
 }
 
 export async function DELETE(request: NextRequest) {
   const supabase = supabaseServer();
   try {
-      const body = await request.json();
-      const { daily_report_row_id, employees } = body;
+    const body = await request.json();
+    const { daily_report_row_id, employees } = body;
 
-      if (!Array.isArray(employees)) {
-          throw new Error('El cuerpo de la solicitud debe contener un array de empleados');
-      }
+    if (!Array.isArray(employees)) {
+      throw new Error('El cuerpo de la solicitud debe contener un array de empleados');
+    }
 
-      const deletePromises = employees.map(async (employee: any) => {
-          const { id, employee_id } = employee;
-          return supabase
-              .from('dailyreportemployeerelations')
-              .delete()
-              .eq('daily_report_row_id', daily_report_row_id)
-              .eq('employee_id', employee_id);
-      });
+    const deletePromises = employees.map(async (employee: any) => {
+      const { id, employee_id } = employee;
+      return supabase
+        .from('dailyreportemployeerelations' as any)
+        .delete()
+        .eq('daily_report_row_id', daily_report_row_id)
+        .eq('employee_id', employee_id);
+    });
 
-      const results = await Promise.all(deletePromises);
+    const results = await Promise.all(deletePromises);
 
-      const errors = results.filter(result => result.error);
-      if (errors.length > 0) {
-          throw new Error(JSON.stringify(errors.map(error => error.error)));
-      }
+    const errors = results.filter((result) => result.error);
+    if (errors.length > 0) {
+      throw new Error(JSON.stringify(errors.map((error) => error.error)));
+    }
 
-      return NextResponse.json({ data: 'Relaciones eliminadas correctamente' });
+    return NextResponse.json({ data: 'Relaciones eliminadas correctamente' });
   } catch (error) {
-      console.error('Error al eliminar las relaciones:', error);
-      return NextResponse.json({ error: 'Error al eliminar las relaciones' }, { status: 500 });
+    console.error('Error al eliminar las relaciones:', error);
+    return NextResponse.json({ error: 'Error al eliminar las relaciones' }, { status: 500 });
   }
 }

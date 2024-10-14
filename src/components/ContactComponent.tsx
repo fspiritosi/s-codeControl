@@ -9,20 +9,19 @@ import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { contactSchema } from '@/zodSchemas/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Toaster, toast } from 'sonner';
-import { useRouter } from 'next/navigation';
-import { createdContact, updateContact } from "../app/dashboard/company/contact/action/create"
 import { z } from 'zod';
+import { createdContact, updateContact } from '../app/dashboard/company/actualCompany/contact/action/create';
 
 type Action = 'view' | 'edit' | null;
 
 type ContactFormValues = z.infer<typeof contactSchema>;
 
 export default function ContactRegister({ id }: { id: string }) {
-  const router =useRouter()
+  const router = useRouter();
   const functionAction = id ? updateContact : createdContact;
   const searchParams = useSearchParams();
   const actualCompany = useLoggedUserStore((state) => state.actualCompany?.id);
@@ -67,7 +66,7 @@ export default function ContactRegister({ id }: { id: string }) {
         .from('customers')
         .select('*')
         .eq('is_active', true)
-        .eq('company_id', actualCompany);
+        .eq('company_id', actualCompany || '');
       if (error) {
         console.error('Error fetching customers:', error);
       } else {
@@ -87,7 +86,7 @@ export default function ContactRegister({ id }: { id: string }) {
             setContactData(contact);
             setValue('contact_name', contact.contact_name || '');
             setValue('contact_email', contact.constact_email || '');
-            setValue('contact_phone', contact.contact_phone.toString() || '');
+            setValue('contact_phone', contact.contact_phone?.toString() || '');
             setValue('contact_charge', contact.contact_charge || '');
             setValue('customer', contact.customer_id || '');
           } else {
@@ -103,8 +102,6 @@ export default function ContactRegister({ id }: { id: string }) {
 
   const customerValue = watch('customer');
 
-  
-
   const onSubmit = async (formData: ContactFormValues) => {
     try {
       if (!formData.customer || formData.customer === 'undefined') {
@@ -112,34 +109,32 @@ export default function ContactRegister({ id }: { id: string }) {
       }
 
       const data = new FormData();
-      data.append("id", id);
-      data.append("contact_name", formData.contact_name);
-      data.append("contact_email", formData.contact_email || "");
-      data.append("contact_phone", formData.contact_phone);
-      data.append("contact_charge", formData.contact_charge);
-      data.append("customer", formData.customer);
+      data.append('id', id);
+      data.append('contact_name', formData.contact_name);
+      data.append('contact_email', formData.contact_email || '');
+      data.append('contact_phone', formData.contact_phone);
+      data.append('contact_charge', formData.contact_charge);
+      data.append('customer', formData.customer);
       const company_id = actualCompany;
-      data.append("company_id", company_id as string);
-      toast.loading("Creando contacto")
-      
-        const response = await functionAction(data);
-        
-        
-        if (response.status === 201) {
-            toast.dismiss();
-            toast.success('Contacto creado satisfactoriamente!');
-            router.push("/dashboard/company/actualCompany")
-        } else {
-            toast.dismiss();
-            toast.error(response.body);
-        }
-    } catch (errors) {
-        // console.error('Error submitting form:', error);
+      data.append('company_id', company_id as string);
+      toast.loading('Creando contacto');
+
+      const response = await functionAction(data);
+
+      if (response.status === 201) {
         toast.dismiss();
-        toast.error('Error al crear el cliente')
-        
+        toast.success('Contacto creado satisfactoriamente!');
+        router.push('/dashboard/company/actualCompany');
+      } else {
+        toast.dismiss();
+        toast.error(response.body);
+      }
+    } catch (errors) {
+      // console.error('Error submitting form:', error);
+      toast.dismiss();
+      toast.error('Error al crear el cliente');
     }
-  }
+  };
 
   return (
     <section className={cn('md:mx-7')}>

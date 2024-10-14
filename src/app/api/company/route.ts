@@ -6,7 +6,10 @@ export async function GET(request: NextRequest) {
   const company_id = searchParams.get('actual');
   const user_id = searchParams.get('user');
   try {
-    let { data: companies, error } = await supabase.from('company').select('*,city(name)').eq('id', company_id);
+    let { data: companies, error } = await supabase
+      .from('company')
+      .select('*,city(name)')
+      .eq('id', company_id || '');
 
     const data = companies;
 

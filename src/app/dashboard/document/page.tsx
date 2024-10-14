@@ -19,16 +19,16 @@ export default async function page() {
   const { data: userShared } = await supabase
     .from('share_company_users')
     .select('*')
-    .eq('profile_id', user?.data?.user?.id);
+    .eq('profile_id', user?.data?.user?.id || '');
   const role: string | null = userShared?.[0]?.role || null;
   const actualCompany = cookiesStore.get('actualComp')?.value;
 
   let { data: documents_company, error: documents_company_error } = await supabase
     .from('documents_company')
     .select('*,id_document_types(*),user_id(*)')
-    .eq('applies', actualCompany);
+    .eq('applies', actualCompany || '');
 
-  const typedDataCompany: CompanyDocumentsType[] | null = documents_company as CompanyDocumentsType[];
+  const typedDataCompany: CompanyDocumentsType[] | null = documents_company as CompanyDocumentsType[] | null;
 
   const companyData =
     role === 'Invitado' ? typedDataCompany?.filter((e) => !e.id_document_types.private) : typedDataCompany;
@@ -46,7 +46,7 @@ export default async function page() {
           buttonActioRestricted: [''],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
-              <DocumentNav empleados equipment />
+              <DocumentNav onlyEmployees onlyEquipment />
             </div>
           ),
           component: <EmployeeDocumentsTabs />,
@@ -81,7 +81,7 @@ export default async function page() {
               <DocumentNav />
             </div>
           ),
-          component: <CompanyTabs companyData={companyData} />,
+          component: <CompanyTabs companyData={companyData as any} />,
         },
       },
       {

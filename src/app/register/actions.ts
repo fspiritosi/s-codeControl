@@ -35,7 +35,7 @@ export async function signup(formData: FormData, url: string) {
       email: formData.get('email') as string,
       role: 'CodeControlClient',
       fullname: `${firstname} ${lastname}`,
-    })
+    } as any)
     .select();
 
   if (error2) {

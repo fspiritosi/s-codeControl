@@ -101,9 +101,9 @@ export const setEmployeesToShow = (employees: any) => {
       termination_date: employees?.termination_date,
       status: employees?.status,
       documents_employees: employees.documents_employees,
-      guild_id: employees?.guild_id,
-      covenants_id: employees?.covenants_id,
-      category_id: employees?.category_id,
+      guild_id: employees?.guild?.name,
+      covenants_id: employees?.covenant?.name,
+      category_id: employees?.category?.name,
     };
   });
 

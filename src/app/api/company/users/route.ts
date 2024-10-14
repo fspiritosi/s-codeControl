@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     let { data: company_users, error } = await supabase
       .from('share_company_users')
       .select('*,  profile_id(*)')
-      .eq('company_id', company_id);
+      .eq('company_id', company_id || '');
 
     if (error) {
       throw new Error(JSON.stringify(error));

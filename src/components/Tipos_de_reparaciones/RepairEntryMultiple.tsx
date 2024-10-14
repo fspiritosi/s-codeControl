@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 
-import { formatDocumentTypeName, setVehiclesToShow } from '@/lib/utils/utils';
+import { setVehiclesToShow } from '@/lib/utils/utils';
 import { TypeOfRepair } from '@/types/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, ChevronsUpDown } from 'lucide-react';
@@ -117,11 +117,10 @@ export default function RepairNewEntryMultiple({
     }
 
     if (data?.length ?? 0 > 0) {
-
-      console.log('dadadad',data);
+      console.log('dadadad', data);
       toast.error(
         `
-        El equipo con dominio o serie "${data?.[0].equipment_id.domain||data?.[0].equipment_id.serie}" ya tiene una solicitud de reparacion con los mismos datos en estado ${data?.[0].state}`
+        El equipo con dominio o serie "${(data?.[0].equipment_id as any).domain || (data?.[0].equipment_id as any).serie}" ya tiene una solicitud de reparacion con los mismos datos en estado ${data?.[0].state}`
       );
       return true; // Indica que se encontró una solicitud abierta
     }

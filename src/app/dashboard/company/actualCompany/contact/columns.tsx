@@ -3,7 +3,6 @@
  */
 
 'use client';
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,25 +32,26 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
+import { handleSupabaseError } from '@/lib/errorHandler';
+import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
-import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
-import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
+import { ColumnDef } from '@tanstack/react-table';
 import { addMonths, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ArrowUpDown, CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../../../../../supabase/supabase';
-
 const formSchema = z.object({
   reason_for_termination: z.string({
     required_error: 'La razón de la baja es requerida.',
@@ -62,66 +62,13 @@ const formSchema = z.object({
 });
 
 type Colum = {
-  full_name: string;
-  email: string;
-  cuil: string;
-  document_number: string;
-  hierarchical_position: string;
-  company_position: string;
-  normal_hours: string;
-  type_of_contract: string;
-  allocated_to: string;
-  picture: string;
-  nationality: string;
-  lastname: string;
-  firstname: string;
-  bitrhplace: string;
-  document_type: undefined; //Este header debe ser un select a partir de un arreglo de opciones
-  gender: string;
-  marital_status: string;
-  level_of_education: string;
-  street: string;
-  street_number: string;
-  province: string;
-  postal_code: string;
-  phone: string;
-  file: string;
-  date_of_admission: string;
-  affiliate_status: string;
-  city: string;
-  hierrical_position: string;
-  workflow_diagram: string;
-  birthplace: string;
+  contact_name: string;
+  constact_email: string;
+  contact_phone: number;
+  contact_charge: string;
+  customer_id: { id: string; name: string };
+  showInactive: boolean;
   status: string;
-};
-
-const allocatedToRangeFilter: FilterFn<Colum> = (
-  row: Row<Colum>,
-  columnId: string,
-  filterValue: any,
-  addMeta: (meta: any) => void
-) => {
-  const values = row.original.allocated_to;
-  if (!values) return false; // No hay valores, no se muestra
-
-  const actualCompany = useLoggedUserStore?.getState?.()?.actualCompany;
-  const contractorCompanies = Array.isArray(values)
-    ? values
-        .map(
-          (allocatedToId) =>
-            useCountriesStore
-              ?.getState?.()
-              ?.customers.find((company: any) => String(company.id) === String(allocatedToId))?.name
-        )
-        .join(', ')
-    : useCountriesStore?.getState?.()?.customers.find((company: any) => String(company.id) === String(values))?.name;
-
-  // Realizar la búsqueda sin distinguir mayúsculas ni minúsculas
-  const searchTerm = filterValue?.toLowerCase();
-  const found = contractorCompanies?.toLowerCase().includes(searchTerm);
-
-  // Si encontramos el término, mostrar el valor completo; de lo contrario, no se muestra
-  return found as boolean;
 };
 
 export const columns: ColumnDef<Colum>[] = [
@@ -138,21 +85,38 @@ export const columns: ColumnDef<Colum>[] = [
 
       const [showModal, setShowModal] = useState(false);
       const [integerModal, setIntegerModal] = useState(false);
-      const [document, setDocument] = useState('');
-      const user = row.original;
+      const [id, setId] = useState('');
+      const [showInactive, setShowInactive] = useState('');
+      const [showDeletedContact, setShowDeletedContact] = useState(false);
+      const contacts = row.original;
 
       const handleOpenModal = (id: string) => {
-        setDocument(id);
+        setId(id);
         setShowModal(!showModal);
       };
+      const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
-      const setInactiveEmployees = useLoggedUserStore((state) => state.setInactiveEmployees);
-      const setActivesEmployees = useLoggedUserStore((state) => state.setActivesEmployees);
-      const setShowDeletedEmployees = useLoggedUserStore((state) => state.setShowDeletedEmployees);
-      const employees = useLoggedUserStore((state) => state.employeesToShow);
+      const fetchInactiveContacts = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('contacts')
+            .select('*')
+            //.eq('is_active', false)
+            .eq('company_id', actualCompany?.id)
+            .select();
 
+          if (error) {
+            toast.error(`${handleSupabaseError(error.message)}`);
+          }
+        } catch (error) {
+          toast.error(handleSupabaseError(`${error}`));
+        }
+      };
+      useEffect(() => {
+        fetchInactiveContacts();
+      }, []);
       const handleOpenIntegerModal = (id: string) => {
-        setDocument(id);
+        setId(id);
         setIntegerModal(!integerModal);
       };
 
@@ -165,52 +129,73 @@ export const columns: ColumnDef<Colum>[] = [
         },
       });
 
-      async function reintegerEmployee() {
-        try {
-          await supabase
-            .from('employees')
-            .update({
-              is_active: true,
-              termination_date: null,
-              reason_for_termination: null,
-            })
-            .eq('document_number', document)
-            .select();
+      async function reintegerContact() {
+        toast.promise(
+          async () => {
+            const supabase = supabaseBrowser();
 
-          setIntegerModal(!integerModal);
-          setInactiveEmployees();
-          setShowDeletedEmployees(false);
-          toast('Empleado reintegrado', { description: `El empleado ${user.full_name} ha sido reintegrado` });
-        } catch (error: any) {
-          const message = await errorTranslate(error?.message);
-          toast('Error al reintegrar al empleado', { description: message });
-        }
+            const { data, error } = await supabase
+              .from('contacts')
+              .update({
+                is_active: true,
+                termination_date: null,
+                reason_for_termination: null,
+              })
+              .eq('id', contacts.id)
+              //.eq('company_id', actualCompany?.id)
+              .select();
+
+            setIntegerModal(!integerModal);
+            //setInactive(data as any)
+            setShowDeletedContact(false);
+
+            if (error) {
+              throw new Error(handleSupabaseError(error.message));
+            }
+          },
+          {
+            loading: 'Reintegrando...',
+            success: `Contacto reintegrado`,
+            error: (error) => {
+              return error;
+            },
+          }
+        );
       }
 
       async function onSubmit(values: z.infer<typeof formSchema>) {
-        const data = {
-          ...values,
-          termination_date: format(values.termination_date, 'yyyy-MM-dd'),
-        };
+        toast.promise(
+          async () => {
+            const data = {
+              ...values,
+              termination_date: format(values.termination_date, 'yyyy-MM-dd'),
+            };
 
-        try {
-          await supabase
-            .from('employees')
-            .update({
-              is_active: false,
-              termination_date: data.termination_date,
-              reason_for_termination: data.reason_for_termination,
-            })
-            .eq('document_number', document)
-            .select();
+            const supabase = supabaseBrowser();
+            const { error } = await supabase
+              .from('contacts')
+              .update({
+                is_active: false,
+                termination_date: data.termination_date,
+                reason_for_termination: data.reason_for_termination,
+              })
+              .eq('id', contacts.id)
+              .eq('company_id', actualCompany?.id || '')
+              .select();
 
-          setShowModal(!showModal);
-
-          toast('Empleado eliminado', { description: `El empleado ${user.full_name} ha sido eliminado` });
-        } catch (error: any) {
-          const message = await errorTranslate(error?.message);
-          toast('Error al dar de baja al empleado', { description: message });
-        }
+            setShowModal(!showModal);
+            if (error) {
+              throw new Error(handleSupabaseError(error.message));
+            }
+          },
+          {
+            loading: 'Eliminando...',
+            success: 'Contacto eliminado',
+            error: (error) => {
+              return error;
+            },
+          }
+        );
       }
       const today = new Date();
       const nextMonth = addMonths(new Date(), 1);
@@ -230,12 +215,12 @@ export const columns: ColumnDef<Colum>[] = [
                 <AlertDialogHeader>
                   <AlertDialogTitle>¿Estás completamente seguro?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    {`Estás a punto de reintegrar al empleado ${user.full_name}, quien fue dado de baja por ${user.reason_for_termination} el día ${user.termination_date}. Al reintegrar al empleado, se borrarán estas razones. Si estás seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
+                    {`Estás a punto de reintegrar el contacto ${contacts.name}, quien fue dado de baja por ${contacts.reason_for_termination} el día ${contacts.termination_date}. Al reintegrar al contacto, se borrarán estas razones. Si estás seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => reintegerEmployee()}>Continuar</AlertDialogAction>
+                  <AlertDialogAction onClick={() => reintegerContact()}>Continuar</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -243,10 +228,9 @@ export const columns: ColumnDef<Colum>[] = [
           {showModal && (
             <Dialog defaultOpen onOpenChange={() => setShowModal(!showModal)}>
               <DialogContent className="dark:bg-slate-950">
-                <DialogTitle>Dar de baja</DialogTitle>
+                <DialogTitle>Dar de baja Contacto</DialogTitle>
                 <DialogDescription>
-                  ¿Estás seguro de que deseas eliminar este empleado?
-                  <br /> Completa los campos para continuar.
+                  ¿Estás seguro de que deseas dar de baja este contacto?, completa los campos para continuar.
                 </DialogDescription>
                 <DialogFooter>
                   <div className="w-full">
@@ -257,23 +241,36 @@ export const columns: ColumnDef<Colum>[] = [
                           name="reason_for_termination"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Motivo de baja</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormLabel>Motivo de Baja</FormLabel>
+                              <Input
+                                className="input w-[250px]"
+                                placeholder="Escribe el motivo"
+                                maxLength={80} // Limitar a 80 caracteres
+                                value={field.value}
+                                onChange={(e: any) => {
+                                  field.onChange(e.target.value);
+                                }}
+                              />
+                              {/* <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Selecciona la razón" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="Despido sin causa">Despido sin causa</SelectItem>
-                                  <SelectItem value="Renuncia">Renuncia</SelectItem>
-                                  <SelectItem value="Despido con causa">Despido con causa</SelectItem>
-                                  <SelectItem value="Acuerdo de partes">Acuerdo de partes</SelectItem>
-                                  <SelectItem value="Fin de contrato">Fin de contrato</SelectItem>
+                                  <SelectItem value="Fin del contrato">Fin del Contrato</SelectItem>
+                                  <SelectItem value="Cerro la empresa">Cerro la Empresa</SelectItem>
+                                  <SelectItem value="Otro">Otro</SelectItem>
                                 </SelectContent>
-                              </Select>
-                              <FormDescription>Elige la razón por la que deseas eliminar al empleado</FormDescription>
-                              <FormMessage />
+                              </Select> */}
+                              {/* <FormDescription>
+                                Elige la razón por la que deseas dar de baja el
+                                contacto
+                              </FormDescription>
+                              <FormMessage /> */}
                             </FormItem>
                           )}
                         />
@@ -282,7 +279,7 @@ export const columns: ColumnDef<Colum>[] = [
                           name="termination_date"
                           render={({ field }) => (
                             <FormItem className="flex flex-col">
-                              <FormLabel>Fecha de baja</FormLabel>
+                              <FormLabel>Fecha de Baja</FormLabel>
                               <Popover>
                                 <PopoverTrigger asChild>
                                   <FormControl>
@@ -294,7 +291,7 @@ export const columns: ColumnDef<Colum>[] = [
                                       )}
                                     >
                                       {field.value ? (
-                                        format(field.value, 'PPP', {
+                                        format(field.value, 'P', {
                                           locale: es,
                                         })
                                       ) : (
@@ -304,7 +301,18 @@ export const columns: ColumnDef<Colum>[] = [
                                     </Button>
                                   </FormControl>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-auto p-2" align="start">
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  {/* <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={date =>
+                                      date > new Date() ||
+                                      date < new Date('1900-01-01')
+                                    }
+                                    initialFocus
+                                    locale={es}
+                                  /> */}
                                   <Select
                                     onValueChange={(e) => {
                                       setMonth(new Date(e));
@@ -348,14 +356,14 @@ export const columns: ColumnDef<Colum>[] = [
                                   />
                                 </PopoverContent>
                               </Popover>
-                              <FormDescription>Fecha en la que se terminó el contrato</FormDescription>
+                              <FormDescription>Fecha en la que se dio de baja</FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                         <div className="flex gap-4 justify-end">
                           <Button variant="destructive" type="submit">
-                            Eliminar
+                            Dar de Baja
                           </Button>
                           <DialogClose>Cancelar</DialogClose>
                         </div>
@@ -374,40 +382,32 @@ export const columns: ColumnDef<Colum>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Opciones</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(user.document_number)}>
-              Copiar DNI
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(contacts.constact_email)}>
+              Copiar email
+            </DropdownMenuItem>
             <DropdownMenuItem>
-              <Link href={`/dashboard/employee/action?action=view&employee_id=${user?.id}`}>
-                Ver empleado
+              <Link className="w-full" href={`/dashboard/company/actualCompany/contact/action?action=view&id=${contacts?.id}`}>
+                Ver Contacto
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               {role !== 'Invitado' && (
-                <Link href={`/dashboard/employee/action?action=edit&employee_id=${user?.id}`}>
-                  Editar empleado
+                <Link className="w-full" href={`/dashboard/company/actualCompany/contact/action?action=edit&id=${contacts?.id}`}>
+                  Editar Contacto
                 </Link>
               )}
             </DropdownMenuItem>
             <DropdownMenuItem>
               {role !== 'Invitado' && (
                 <Fragment>
-                  {user.is_active ? (
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleOpenModal(user?.document_number)}
-                      className="text-sm"
-                    >
-                      Dar de baja
+                  {contacts.is_active ? (
+                    <Button variant="destructive" onClick={() => handleOpenModal(contacts?.id)} className="text-sm">
+                      Dar de baja Contacto
                     </Button>
                   ) : (
-                    <Button
-                      variant="primary"
-                      onClick={() => handleOpenIntegerModal(user?.document_number)}
-                      className="text-sm"
-                    >
-                      Reintegrar Empleado
+                    <Button variant="primary" onClick={() => handleOpenIntegerModal(contacts.id)} className="text-sm">
+                      Reintegrar Contacto
                     </Button>
                   )}
                 </Fragment>
@@ -419,155 +419,36 @@ export const columns: ColumnDef<Colum>[] = [
     },
   },
   {
-    accessorKey: 'full_name',
+    accessorKey: 'contact_name',
     header: ({ column }: { column: any }) => {
       return (
         <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="p-0">
-          Nombre completo
+          Nombre
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
   },
+
   {
-    accessorKey: 'status',
-    header: 'Estado',
-  },
-  {
-    accessorKey: 'email',
+    accessorKey: 'constact_email',
     header: 'Email',
   },
   {
-    accessorKey: 'cuil',
-    header: 'Cuil',
-  },
-  {
-    accessorKey: 'document_number',
-    header: 'Numero de documento',
-  },
-  {
-    accessorKey: 'hierarchical_position',
-    header: 'Posición jerárquica',
-  },
-  {
-    accessorKey: 'company_position',
-    header: 'Posición en la empresa',
-  },
-  {
-    accessorKey: 'normal_hours',
-    header: 'Horas normales',
-  },
-  {
-    accessorKey: 'type_of_contract',
-    header: 'Tipo de contrato',
-  },
-  // {
-  //   accessorKey: 'allocated_to',
-  //   header: 'Afectado a',
-  //   cell: ({ row }) => {
-  //     const values = row.original.allocated_to;
-  //     console.log(values);
-  //     if (!values) return <Badge variant={'destructive'}>Sin afectar</Badge>;
-  //     const actualCompany = useLoggedUserStore((state) => state.actualCompany);
-
-  //     const contractorCompanies = Array.isArray(values)
-  //       ? values
-  //           .map((allocatedToId) =>
-  //             useCountriesStore(
-  //               (state) => state.customers?.find((company: any) => String(company.id) === String(allocatedToId))?.name
-  //             )
-  //           )
-  //           .join(', ')
-  //       : useCountriesStore(
-  //           (state) => state.customers?.find((company: any) => String(company.id) === String(values))?.name
-  //         );
-
-  //     return <p>{contractorCompanies}</p>;
-  //   },
-  //   filterFn: allocatedToRangeFilter,
-  // },
-  {
-    accessorKey: 'picture',
-    header: 'Foto',
-  },
-  {
-    accessorKey: 'nationality',
-    header: 'Nacionalidad',
-  },
-  {
-    accessorKey: 'lastname',
-    header: 'Apellido',
-  },
-  {
-    accessorKey: 'firstname',
-    header: 'Nombre',
-  },
-  {
-    accessorKey: 'birthplace',
-    header: 'Lugar de nacimiento',
-  },
-  {
-    accessorKey: 'document_type',
-    header: 'Tipo de documento',
-  },
-  {
-    accessorKey: 'gender',
-    header: 'Género',
-  },
-  {
-    accessorKey: 'marital_status',
-    header: 'Estado civil',
-  },
-  {
-    accessorKey: 'level_of_education',
-    header: 'Nivel de estudios',
-  },
-  {
-    accessorKey: 'street',
-    header: 'Calle',
-  },
-  {
-    accessorKey: 'street_number',
-    header: 'Numero de calle',
-  },
-  {
-    accessorKey: 'province',
-    header: 'Provincia',
-  },
-  {
-    accessorKey: 'postal_code',
-    header: 'Codigo postal',
-  },
-  {
-    accessorKey: 'phone',
+    accessorKey: 'contact_phone',
     header: 'Teléfono',
   },
   {
-    accessorKey: 'file',
-    header: 'Legajo',
+    accessorKey: 'contact_charge',
+    header: 'Cargo',
   },
   {
-    accessorKey: 'date_of_admission',
-    header: 'Fecha de ingreso',
+    accessorKey: 'customers.name',
+    header: 'Cliente',
   },
+
   {
-    accessorKey: 'affiliate_status',
-    header: 'Estado de afiliado',
-  },
-  {
-    accessorKey: 'city',
-    header: 'Ciudad',
-  },
-  {
-    accessorKey: 'hierrical_position',
-    header: 'Posición jerárquica',
-  },
-  {
-    accessorKey: 'workflow_diagram',
-    header: 'Diagrama de trabajo',
-  },
-  {
-    accessorKey: 'showUnavaliableEmployees',
-    header: 'Ver empleados dados de baja',
+    accessorKey: 'showUnavaliableContacts',
+    header: 'Ver contactos dados de baja',
   },
 ];

@@ -101,7 +101,7 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
 
     const { data: vehicles, error: vehicleerror } = await supabase
       .from('vehicles')
-      .update({ condition: newStatus })
+      .update({ condition: newStatus } as any)
       .eq('id', vehicle_id);
 
     if (error) {

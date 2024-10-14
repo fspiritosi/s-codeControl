@@ -1,7 +1,9 @@
 'use strict';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { supabaseBrowser } from './supabase/browser';
 import { supabaseServer } from './supabase/server';
+import { formatDocumentTypeName } from './utils/utils';
 // eslint-disable-next-line react-hooks/rules-of-hooks
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -92,8 +94,8 @@ export const FetchSharedUsers = async (companyId: string) => {
 };
 
 export async function getActualRole(companyId: string, profile: string) {
-  const sharedUsers = await FetchSharedUsers(companyId);
-  const user = sharedUsers?.find((e) => e.profile_id.id === profile);
+  const sharedUsers = (await FetchSharedUsers(companyId)) as any;
+  const user = sharedUsers?.find((e: any) => e.profile_id.id === profile);
 
   if (user?.role) {
     return user?.role;
@@ -101,3 +103,195 @@ export async function getActualRole(companyId: string, profile: string) {
     return 'Owner';
   }
 }
+
+export function calculateNameOFDocument(
+  company_name: string,
+  company_cuit: string,
+  applies: string,
+  document_name: string,
+  version: string,
+  file_extension: string,
+  resource: string
+) {
+  const formatedCompanyName = company_name.toLowerCase().replace(/ /g, '-');
+  const formatedAppliesName = applies.toLowerCase().replace(/ /g, '-');
+  const formatedDocumentTypeName = formatDocumentTypeName(document_name).replace(/ /g, '-');
+  const formatedVersion = version.replace(/\./g, '-');
+  const formatedFileExtension = file_extension.replace(/\./g, '-');
+
+  console.log('alokofe');
+  return `${formatedCompanyName}(${company_cuit})/${resource}/${formatedAppliesName}/${formatedDocumentTypeName}-(${formatedVersion}).${formatedFileExtension}`;
+}
+export async function verifyDuplicatedDocument(
+  company_name: string,
+  company_cuit: any,
+  formatedAppliesPath: string,
+  resource: string,
+  formatedAppliesNames: string
+) {
+  const formatedCompanyName = company_name.toLowerCase().replace(/ /g, '-');
+  const formatedAppliesName = formatedAppliesNames.toLowerCase().replace(/ /g, '-');
+  const supabase = supabaseBrowser();
+  const path = `${formatedCompanyName}(${company_cuit})/${resource}/${formatedAppliesPath}`;
+
+  console.log(path, 'Ruta completa');
+
+  const { data, error } = await supabase.storage.from('document_files').list(path);
+  //     transporte-sp-srl-(30714153974)/persona/franco-ivan-andres-paratore
+
+  console.log(data, 'Archivos listados');
+
+  if (error) {
+    console.error('error', error);
+    return true;
+  }
+
+  // Filtrar los resultados en el lado del cliente
+  const fileExists = data?.some((file) => file.name.includes(formatedAppliesName));
+
+  if (fileExists) {
+    console.error('El documento ya existe');
+    return true;
+  }
+
+  return false;
+}
+export const uploadDocumentFile = async (file: File, path: string) => {
+  const supabase = supabaseBrowser();
+  console.log('file', file);
+  const { data, error } = await supabase.storage.from('document_files').upload(path, file, {
+    cacheControl: '3600',
+    upsert: false,
+    contentType: file.type,
+  });
+  if (error) {
+    console.error('error', error);
+    return [];
+  }
+  return data;
+};
+export const uploadDocument = async (
+  dataToUpdate: {
+    created_at: string;
+    applies: any;
+    document_path: string;
+    id_document_types: string;
+    state: 'presentado' | 'rechazado' | 'aprobado' | 'vencido' | 'pendiente';
+    user_id: string;
+    period?: string | undefined;
+    validity?: string | undefined;
+  },
+  mandatory: boolean,
+  tableName: 'documents_equipment' | 'documents_employees',
+  multipleResources: boolean
+) => {
+  const supabase = supabaseBrowser();
+  if (mandatory) {
+    console.log('es mandatorio');
+    if (multipleResources) {
+      //Hacer un update de todos los registros donde coincida el algun elemento del array de applies y el valor de id_document_types
+      const { applies, ...rest } = dataToUpdate;
+      console.log('es multiple', rest);
+      const { data, error } = await supabase
+        .from(tableName)
+        .update(rest)
+        .in('applies', applies)
+        .eq('id_document_types', dataToUpdate.id_document_types);
+      if (error) {
+        console.error('error', error);
+        return [];
+      }
+    } else {
+      const { applies, ...rest } = dataToUpdate;
+      console.log('no es multiple', rest);
+      const { data, error } = await supabase
+        .from(tableName)
+        .update(rest)
+        .eq('applies', applies)
+        .eq('id_document_types', dataToUpdate.id_document_types);
+
+      if (error) {
+        console.error('error', error);
+        return [];
+      }
+    }
+
+    // await uploadDocumentFile(file, dataToUpdate.document_path);
+  } else {
+    // Crear el documento
+    console.log('no es mandatorio');
+
+    if (multipleResources) {
+      //Insertar un nuevo registro por cada elemento del array de applies sin hacer un bucle, formatear y luego hacer un insert del array de objetos
+      const { applies, ...rest } = dataToUpdate;
+      console.log('es multiple', rest);
+      const dataToInsert = applies.map((apply: any) => ({
+        ...rest,
+        applies: apply,
+      }));
+      const { data, error } = await supabase.from(tableName).insert(dataToInsert);
+      if (error) {
+        console.error('error', error);
+        return [];
+      }
+    } else {
+      const { applies, ...rest } = dataToUpdate;
+      console.log('no es multiple', rest);
+      const { data, error } = await supabase
+        .from(tableName)
+        .insert({
+          ...dataToUpdate,
+          state: 'presentado',
+        })
+        .select('*');
+      if (error) {
+        console.error('error', error);
+        return [];
+      }
+    }
+    // await uploadDocumentFile(file, dataToUpdate.document_path);
+  }
+};
+
+export const getAllDocumentsByIdDocumentTypeCientSide = async (selectedValue: string, company_id: string) => {
+  if (!company_id) return [];
+  const supabase = supabaseBrowser();
+  const { data, error } = await supabase
+    .from('documents_employees')
+    .select('*')
+    .eq('id_document_types', selectedValue)
+    .neq('document_path', null);
+
+  if (error) {
+    console.error('error', error);
+    return [];
+  }
+  return data;
+};
+
+export const getOpenRepairsSolicitudesByArrayClientSide = async (
+  vehiclesIds: string[],
+  repairTypeId: string,
+  company_id: string
+) => {
+  if (!company_id) return [];
+  const supabase = supabaseBrowser();
+  let { data, error } = await supabase
+    .from('repair_solicitudes')
+    .select('*,equipment_id(*)')
+    .in('equipment_id', vehiclesIds)
+    .eq('reparation_type', repairTypeId)
+    .in('state', ['Pendiente', 'Esperando repuestos', 'En reparación'])
+    .returns<RepairRequestWithVehicle[]>();
+
+  if (error || !data) {
+    console.error('error', error);
+    return [];
+  }
+  return data;
+};
+
+export const createRepairSolicitud = async (data: any) => {
+  const supabase = supabaseBrowser();
+  const { data: repair_solicitudes, error } = await supabase.from('repair_solicitudes').insert(data).select();
+};

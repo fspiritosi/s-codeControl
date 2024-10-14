@@ -1,14 +1,13 @@
 import { supabaseServer } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
-
 export async function POST(request: NextRequest) {
   const supabase = supabaseServer();
   const { rowId, employees } = await request.json();
 
   try {
     let { data: dailyreportemployeerelations, error } = await supabase
-      .from('dailyreportemployeerelations')
+      .from('dailyreportemployeerelations' as any)
       .select(`*`)
       .eq('daily_report_row_id', rowId)
       .in('employee_id', employees);
