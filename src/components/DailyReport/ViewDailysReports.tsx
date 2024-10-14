@@ -159,16 +159,7 @@ export default function ViewDailysReports() {
     }));
   };
   const transformedReports = transformDailyReports(dailyReports);
-  console.log(transformedReports)
-
-  // const handleStatusChangeWithWarning = (id: string, status: boolean) => {
-  //   if (!status) { // Si el nuevo estado es 'cerrado' (false)
-  //     setPendingStatusChange({ id, status });
-  //     setWarningDialogOpen(true);
-  //   } else {
-  //     handleStatusChange(id, status);
-  //   }
-  // };
+  
 
   const handleStatusChangeWithWarning = (id: string, status: boolean) => {
     const report = dailyReports.find(r => r.id === id);
@@ -295,8 +286,7 @@ const [allReport, setAllreport] = useState<DailyReportData[]>([]);
       });
     }
   };
-  console.log(allReport)
-  console.log(selectedReport)
+ 
 
   return (
     <div className="container mx-auto p-4">

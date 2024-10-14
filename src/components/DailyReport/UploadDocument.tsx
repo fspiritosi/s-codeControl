@@ -3,6 +3,8 @@ import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogAction,
 import { supabaseBrowser } from '@/lib/supabase/browser'; 
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
+import { Input } from '../ui/input';
 
 interface UploadDocumentProps {
     rowId: string;
@@ -16,6 +18,7 @@ const UploadDocument: React.FC<UploadDocumentProps> = ({ rowId, companyName, cus
     const supabase = supabaseBrowser();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const route = useRouter()
     console.log(rowId)
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
@@ -55,6 +58,7 @@ const UploadDocument: React.FC<UploadDocumentProps> = ({ rowId, companyName, cus
             toast.error('Error al actualizar la ruta del documento');
             return;
         }
+        route.refresh
         console.log('Archivo subido con éxito:', data);
         toast.success('Archivo subido con éxito');
         setIsDialogOpen(false);
@@ -65,12 +69,15 @@ const UploadDocument: React.FC<UploadDocumentProps> = ({ rowId, companyName, cus
             <Button variant={'default'} onClick={() => setIsDialogOpen(true)}>Subir Documento</Button>
 
             <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                {/* <AlertDialogTrigger asChild>
-                    <button>Subir Documento</button>
-                </AlertDialogTrigger> */}
+                
                 <AlertDialogContent>
-                    <h2>Seleccionar Documento</h2>
-                    <input type="file" onChange={handleFileChange} />
+                   
+                    <Input
+                    type="file"
+                    id="file-upload"
+                    onChange={handleFileChange}
+                    className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+                />
                     <AlertDialogAction onClick={handleUpload}>Subir</AlertDialogAction>
                     <AlertDialogCancel onClick={() => setIsDialogOpen(false)}>Cancelar</AlertDialogCancel>
                 </AlertDialogContent>

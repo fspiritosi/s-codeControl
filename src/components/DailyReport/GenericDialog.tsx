@@ -13,14 +13,14 @@ interface GenericDialogProps {
 const GenericDialog: React.FC<GenericDialogProps> = ({ title, description, isOpen, onClose, children }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent >
         <DialogTitle>{title}</DialogTitle>
         <DialogDescription>{description}</DialogDescription>
         {children}
         <DialogClose asChild>
-          <Button variant="outline" onClick={onClose}>
+          {/* <Button variant="outline" onClick={onClose}>
             Cerrar
-          </Button>
+          </Button> */}
         </DialogClose>
       </DialogContent>
     </Dialog>

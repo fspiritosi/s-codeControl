@@ -2,11 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { CalendarIcon, PlusCircledIcon } from "@radix-ui/react-icons"
-// import { format } from "date-fns"
-// import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
-// import { Calendar } from '@/components/ui/calendar'
-// import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { useForm, FormProvider } from 'react-hook-form'
 import cookies from 'js-cookie'
@@ -57,6 +53,8 @@ import UploadDocument from './UploadDocument'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import { set } from 'date-fns'
 import { string } from 'zod'
+import { Card, CardDescription } from '../ui/card'
+import { cn } from '@/lib/utils'
 interface Customers {
     id: string
     name: string
@@ -97,7 +95,7 @@ interface Items {
 
 interface DailyReportItem {
     id: string
-    date?: string
+    date: string
     working_day: string
     customer: string | undefined
     employees: string[]
@@ -334,20 +332,26 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
         return diagrams;
     }
 
+    const [isDialogOpen2, setIsDialogOpen2] = useState(false);
+
     async function fetchDocument(document_path: string) {
         const { data: url } = supabase.storage.from('daily_reports').getPublicUrl(document_path);
         setDocumentUrl(url.publicUrl);
-        return url;
+        return url.publicUrl;
     }
 
-    // async function fetchRepairOrders() {
-    //     const { repair_solicitudes } = await fetch(`${URL}/api/repair_solicitud?actual=${company_id}`).then((res) =>
-    //         res.json()
-    //     );
-    //     setRepairOrders(repair_solicitudes)
-    //     console.log(repair_solicitudes)
-    //     return repair_solicitudes
-    // }
+    const handleViewDocument = async (documentPath: string) => {
+        const url = await fetchDocument(documentPath); // Asume que fetchDocumentUrl es una función que obtiene la URL del documento
+        setDocumentUrl(url);
+        // window.open(url, '_blank');
+        setIsDialogOpen2(true);
+    };
+    const closeDialog2 = () => {
+        setIsDialogOpen2(false);
+        setDocumentUrl(null);
+    };
+
+    
 
     useEffect(() => {
         fetchEmployees()
@@ -357,18 +361,10 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
         fetchItems()
         fetchDiagrams()
 
-        // fetchRepairOrders()
+       
     }, [])
-    console.log()
-    // useEffect(() => {
-    //     // Filtrar clientes que tienen servicios
-    //     const customersWithServices = customers.filter((customer) =>
-    //         services.some((service) => service.customer_id === customer.id)
-    //     );
-    //     if (customersWithServices.length !== customers.length) {
-    //         setCustomers(customersWithServices);
-    //     }
-    // }, [customers, services]);
+   
+    
 
     useEffect(() => {
         // Filtrar servicios válidos en la fecha del parte diario
@@ -376,21 +372,20 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
             const serviceStartDate = moment(service.service_start).toDate();
             const serviceValidityDate = moment(service.service_validity).toDate();
             const reportDate = moment(reportData?.date).toDate();
-            console.log(serviceStartDate, serviceValidityDate);
+            
             return (
                 service.is_active &&
                 reportDate >= serviceStartDate &&
                 reportDate <= serviceValidityDate
             );
         });
-        console.log(validServices);
+        
 
         // Filtrar clientes que tienen servicios válidos
         const customersWithServices = customers.filter((customer) =>
             validServices.some((service) => service.customer_id === customer.id)
         );
 
-        console.log(customersWithServices);
 
         // Solo actualizar el estado si la lista filtrada es diferente
         if (customersWithServices.length !== customers.length) {
@@ -421,35 +416,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
         }
     }, [startTime, endTime])
 
-    // const handleSelectCustomer = (customerId: string) => {
-    //     const customer = customers.find((c: Customers) => c.id.toString() === customerId)
-    //     if (customer) {
-    //         setSelectedCustomer(customer)
-
-    //         const filteredEmployees = employees.filter((employee: Employee) =>
-    //             employee.allocated_to.includes(customer.id)
-    //         )
-    //         setCustomerEmployees(filteredEmployees)
-
-    //         const filteredEquipment = equipment.filter((equipment: Equipment) =>
-    //             equipment.allocated_to.includes(customer.id)
-    //         )
-    //         setCustomerEquipment(filteredEquipment)
-
-    //         const filteredServices = services.filter((service: Services) =>
-    //             service.customer_id === customerId
-    //         )
-    //         setCustomerServices(filteredServices)
-
-    //         // Reset dependent selects
-    //         setValue('services', '')
-    //         setValue('item', '')
-    //         setValue('employees', [])
-    //         setValue('equipment', [])
-    //         setCustomerItems([])
-    //         setSelectedService(null)
-    //     }
-    // }
+    
 
     const handleSelectCustomer = (customerId: string, reportDate: Date) => {
         const customer = customers.find((c: Customers) => c.id.toString() === customerId);
@@ -472,13 +439,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
             });
             setCustomerEmployees(filteredEmployees);
 
-            // const filteredEquipment = equipment.filter((equipment: Equipment) => {
-            //     const isAllocatedToCustomer = equipment.allocated_to.includes(customer.id);
-            //     const isNotUnderRepair = !repairOrders.some((order: RepairsSolicituds) =>
-            //         order.equipment_id.id === equipment.id && (order.state === 'En reparación' || order.state === 'no operativo')
-            //     );
-            //     return isAllocatedToCustomer && isNotUnderRepair;
-            // });
+           
             const filteredEquipment = equipment.filter((equipment: Equipment) => {
                 const isAllocatedToCustomer = equipment.allocated_to.includes(customer.id);
                 const isNotUnderRepair = !(equipment.condition === 'en reparación' || equipment.condition === 'no operativo');
@@ -792,6 +753,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
 
                 return [...prevReport, {
                     id: rowId,
+                    date: reportData?.date || '',
                     working_day: data.working_day,
                     customer: data.customer,
                     employees: data.employees,
@@ -830,7 +792,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
             const formattedStartTime = formatTime(data.start_time);
             const formattedEndTime = formatTime(data.end_time);
 
-            
+
             // Actualizar la fila existente
             const rowResponse = await fetch(`/api/daily-report/daily-report-row?id=${rowId}`, {
                 method: 'PUT',
@@ -929,15 +891,6 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
             });
             const existingEmployee = await existingRelationEmployeeResponse.json();
 
-            // if (existingEmployee.exists) {
-            //     toast({
-            //         title: "Error",
-            //         description: "Ya existe una relación entre esa fila y ese empleado.",
-            //         variant: "destructive",
-            //     });
-            //     // return; // Salir de la función si ya existe una relación
-            // }
-
             // Actualizar relaciones con nuevos datos
             if (data.employees && !existingEmployee.exists && data.employees.length > 0) {
                 await fetch('/api/daily-report/dailyreportemployeerelations', {
@@ -968,14 +921,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
             });
             const existingEquipment = await existingRelationEquipmentResponse.json();
 
-            // if (existingEquipment.exists) {
-            //     toast({
-            //         title: "Error",
-            //         description: "Ya existe una relación entre esa fila y ese equipo.",
-            //         variant: "destructive",
-            //     });
-            //     // return; // Salir de la función si ya existe una relación
-            // }
+           
 
             if (data.equipment && !existingEquipment.exists && data.equipment.length > 0) {
                 await fetch('/api/daily-report/dailyreportequipmentrelations', {
@@ -1050,16 +996,14 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     const dayDifference = calculateDateDifference(reportData?.date || '');
 
     const canEdit = dayDifference <= 6;
-    console.log('allReport: ', allReport);
-    console.log('daily Report: ', dailyReport);
-    console.log('editingId: ', editingId);
+   
     const handleValueChange = (value: string) => {
         if (value === 'reprogramado' && editingId) {
-            const currentReport = dailyReport.find(report => report.id === editingId);
-            console.log(currentReport)
+            const currentReport = dailyReport.find((report: DailyReportItem) => report.id === editingId);
+          
             if (currentReport) {
                 const futureReports = allReport?.filter(report => (moment(report.date)).isAfter(moment(currentReport?.date)));
-                console.log(futureReports)
+               
                 setFutureReports(futureReports as any);
                 setSelectedReport(currentReport as any);
                 setIsDialogOpen(true);
@@ -1072,162 +1016,160 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
         setFutureReports([]);
         setSelectedReport(null);
         setSelectedDate(null);
-      };
+    };
 
     const handleSaveToDailyReport = async () => {
         if (selectedDate && selectedReport) {
-          try {
-            // Llama a la función updateDailyReport con los parámetros necesarios
-            console.log(selectedDate)
-            console.log(selectedReport)
-            const updatedReport = {
-                ...selectedReport,
-                id:null,
-                daily_report_id: selectedDate,
-                description: `Reprogramado desde ${selectedReport.date}`
-              };
-              console.log(updatedReport)
-            await reprogramarReporte(updatedReport,existingReportId as string, selectedDate as string );
-            console.log(`Reporte ${selectedReport.id} guardado en el parte diario ${selectedDate}`);
-            setIsDialogOpen(false);
-          } catch (error) {
-            console.error('Error al guardar el reporte:', error);
-          }
+            try {
+               
+                const updatedReport = {
+                    ...selectedReport,
+                    id: null,
+                    daily_report_id: selectedDate,
+                    description: `Reprogramado desde ${selectedReport.date}`
+                };
+              
+                await reprogramarReporte(updatedReport, existingReportId as string, selectedDate as string);
+                
+                setIsDialogOpen(false);
+            } catch (error) {
+                console.error('Error al guardar el reporte:', error);
+            }
         }
-      };
-////////////////////////////////////////////////////////////
+    };
+    ////////////////////////////////////////////////////////////
 
-const reprogramarReporte = async (data: any, rowId: string, newDailyReportId: string) => {
-    try {
-        const formattedStartTime = formatTime(data.start_time);
-        const formattedEndTime = formatTime(data.end_time);
+    const reprogramarReporte = async (data: any, rowId: string, newDailyReportId: string) => {
+        
+        try {
+            const formattedStartTime = formatTime(data.start_time);
+            const formattedEndTime = formatTime(data.end_time);
 
-        // Crear una nueva fila en el nuevo parte diario
-        const newRowResponse = await fetch(`/api/daily-report/daily-report-row`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                daily_report_id: newDailyReportId,
-                customer_id: data.customer,
-                service_id: data.services,
-                item_id: data.item,
-                working_day: data.working_day,
-                start_time: formattedStartTime,
-                end_time: formattedEndTime,
-                description: `Reprogramado desde ${data.date}`,
-                status: 'pendiente',
-            }),
-        });
-
-        if (!newRowResponse.ok) {
-            const errorText = await newRowResponse.text();
-            throw new Error(`Error al crear la nueva fila en dailyreportrow: ${errorText}`);
-        }
-
-        const { data: newRowData } = await newRowResponse.json();
-        const newRowId = newRowData.id;
-
-        // Actualizar el estado de la fila original a "reprogramado"
-        const updateRowResponse = await fetch(`/api/daily-report/daily-report-row?id=${rowId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                status: 'reprogramado',
-                description: `Reprogramado a ${data.date}`,
-            }),
-        });
-
-        if (!updateRowResponse.ok) {
-            const errorText = await updateRowResponse.text();
-            throw new Error(`Error al actualizar la fila original en dailyreportrow: ${errorText}`);
-        }
-
-        // Obtener relaciones actuales de empleados
-        const employeeRelationsResponse = await fetch(`/api/daily-report/dailyreportemployeerelations?row_id=${rowId}`);
-        if (!employeeRelationsResponse.ok) {
-            const errorText = await employeeRelationsResponse.text();
-            throw new Error(`Error al obtener relaciones de empleados: ${errorText}`);
-        }
-        const employeeRelationsData = await employeeRelationsResponse.json();
-
-        const currentEmployees = employeeRelationsData.dailyreportemployeerelations.map((rel: any) => ({
-            id: rel.id,
-            employee_id: rel.employee_id
-        }));
-
-        // Obtener relaciones actuales de equipos
-        const equipmentRelationsResponse = await fetch(`/api/daily-report/dailyreportequipmentrelations?row_id=${rowId}`);
-        if (!equipmentRelationsResponse.ok) {
-            const errorText = await equipmentRelationsResponse.text();
-            throw new Error(`Error al obtener relaciones de equipos: ${errorText}`);
-        }
-        const equipmentRelationsData = await equipmentRelationsResponse.json();
-
-        const currentEquipment = equipmentRelationsData.dailyreportequipmentrelations.map((rel: any) => ({
-            id: rel.id,
-            equipment_id: rel.equipment_id
-        }));
-
-        // Crear nuevas relaciones de empleados para la nueva fila
-        if (currentEmployees.length > 0) {
-            await fetch('/api/daily-report/dailyreportemployeerelations', {
+            // Crear una nueva fila en el nuevo parte diario
+            const newRowResponse = await fetch(`/api/daily-report/daily-report-row`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(
-                    currentEmployees.map((employee: any) => ({
-                        daily_report_row_id: newRowId,
-                        employee_id: employee.employee_id,
-                    }))
-                ),
+                body: JSON.stringify({
+                    daily_report_id: newDailyReportId,
+                    customer_id: data.customer,
+                    service_id: data.services,
+                    item_id: data.item,
+                    working_day: data.working_day,
+                    start_time: formattedStartTime,
+                    end_time: formattedEndTime,
+                    description: `Reprogramado desde ${data.date}`,
+                    status: 'pendiente',
+                }),
             });
-        }
 
-        // Crear nuevas relaciones de equipos para la nueva fila
-        if (currentEquipment.length > 0) {
-            await fetch('/api/daily-report/dailyreportequipmentrelations', {
-                method: 'POST',
+            if (!newRowResponse.ok) {
+                const errorText = await newRowResponse.text();
+                throw new Error(`Error al crear la nueva fila en dailyreportrow: ${errorText}`);
+            }
+
+            const { data: newRowData } = await newRowResponse.json();
+            const newRowId = newRowData.id;
+
+            // Actualizar el estado de la fila original a "reprogramado"
+            const updateRowResponse = await fetch(`/api/daily-report/daily-report-row?id=${rowId}`, {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(
-                    currentEquipment.map((equipment: any) => ({
-                        daily_report_row_id: newRowId,
-                        equipment_id: equipment.equipment_id,
-                    }))
-                ),
+                body: JSON.stringify({
+                    status: 'reprogramado',
+                    description: `Reprogramado a ${data.date}`,
+                }),
+            });
+
+            if (!updateRowResponse.ok) {
+                const errorText = await updateRowResponse.text();
+                throw new Error(`Error al actualizar la fila original en dailyreportrow: ${errorText}`);
+            }
+
+            // Obtener relaciones actuales de empleados
+            const employeeRelationsResponse = await fetch(`/api/daily-report/dailyreportemployeerelations?row_id=${rowId}`);
+            if (!employeeRelationsResponse.ok) {
+                const errorText = await employeeRelationsResponse.text();
+                throw new Error(`Error al obtener relaciones de empleados: ${errorText}`);
+            }
+            const employeeRelationsData = await employeeRelationsResponse.json();
+
+            const currentEmployees = employeeRelationsData.dailyreportemployeerelations.map((rel: any) => ({
+                id: rel.id,
+                employee_id: rel.employee_id
+            }));
+
+            // Obtener relaciones actuales de equipos
+            const equipmentRelationsResponse = await fetch(`/api/daily-report/dailyreportequipmentrelations?row_id=${rowId}`);
+            if (!equipmentRelationsResponse.ok) {
+                const errorText = await equipmentRelationsResponse.text();
+                throw new Error(`Error al obtener relaciones de equipos: ${errorText}`);
+            }
+            const equipmentRelationsData = await equipmentRelationsResponse.json();
+
+            const currentEquipment = equipmentRelationsData.dailyreportequipmentrelations.map((rel: any) => ({
+                id: rel.id,
+                equipment_id: rel.equipment_id
+            }));
+
+            // Crear nuevas relaciones de empleados para la nueva fila
+            if (currentEmployees.length > 0) {
+                await fetch('/api/daily-report/dailyreportemployeerelations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(
+                        currentEmployees.map((employee: any) => ({
+                            daily_report_row_id: newRowId,
+                            employee_id: employee.employee_id,
+                        }))
+                    ),
+                });
+            }
+
+            // Crear nuevas relaciones de equipos para la nueva fila
+            if (currentEquipment.length > 0) {
+                await fetch('/api/daily-report/dailyreportequipmentrelations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(
+                        currentEquipment.map((equipment: any) => ({
+                            daily_report_row_id: newRowId,
+                            equipment_id: equipment.equipment_id,
+                        }))
+                    ),
+                });
+            }
+
+            // Actualizar el estado del componente si es necesario
+            setDailyReport(prevReport => prevReport.map(report =>
+                report.id === rowId ? {
+                    ...report,
+                    status: 'reprogramado',
+                    description: `Reprogramado a ${data.date}`,
+                } : report
+            ));
+
+            toast({
+                title: "Éxito",
+                description: "Fila reprogramada correctamente al nuevo parte diario.",
+            });
+        } catch (error) {
+            console.error("Error al reprogramar la fila al nuevo parte diario:", error);
+            toast({
+                title: "Error",
+                description: `Hubo un problema al reprogramar la fila al nuevo parte diario: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                variant: "destructive",
             });
         }
+    };
 
-        // Actualizar el estado del componente si es necesario
-        setDailyReport(prevReport => prevReport.map(report =>
-            report.id === rowId ? {
-                ...report,
-                status: 'reprogramado',
-                description: `Reprogramado a ${data.date}`,
-            } : report
-        ));
-
-        toast({
-            title: "Éxito",
-            description: "Fila reprogramada correctamente al nuevo parte diario.",
-        });
-    } catch (error) {
-        console.error("Error al reprogramar la fila al nuevo parte diario:", error);
-        toast({
-            title: "Error",
-            description: `Hubo un problema al reprogramar la fila al nuevo parte diario: ${error instanceof Error ? error.message : 'Unknown error'}`,
-            variant: "destructive",
-        });
-    }
-};
-
-console.log('dailyReport: ', dailyReport);
 
     return (
         <div className="mx-auto p-4">
@@ -1415,36 +1357,36 @@ console.log('dailyReport: ', dailyReport);
                                             />
                                             {isDialogOpen && (
                                                 <GenericDialog
-                                                title="Reprogramar Reporte"
-                                                description="Selecciona un parte diario para reprogramar este reporte."
-                                                isOpen={isDialogOpen}
-                                                onClose={handleCloseDialog}
-                                              >
-                                                <div>
-                                                  <Select onValueChange={(value) => setSelectedDate(value)}>
-                                                    <SelectTrigger className="w-full max-w-xs">
-                                                      <SelectValue placeholder="Seleccione un parte diario" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                      <SelectGroup>
-                                                        {futureReports.map((futureReport) => (
-                                                          <SelectItem key={futureReport.id} value={futureReport.id}>
-                                                            {moment(futureReport.date).format('DD/MM/YYYY')}
-                                                          </SelectItem>
-                                                        ))}
-                                                      </SelectGroup>
-                                                    </SelectContent>
-                                                  </Select>
-                                                </div>
-                                                <div className="mt-4 flex justify-end">
-                                                  <Button variant="outline" onClick={handleCloseDialog} className="mr-2">
-                                                    Cerrar
-                                                  </Button>
-                                                  <Button onClick={handleSaveToDailyReport} disabled={!selectedDate}>
-                                                    Guardar
-                                                  </Button>
-                                                </div>
-                                              </GenericDialog>
+                                                    title="Reprogramar Reporte"
+                                                    description="Selecciona un parte diario para reprogramar este reporte."
+                                                    isOpen={isDialogOpen}
+                                                    onClose={handleCloseDialog}
+                                                >
+                                                    <div>
+                                                        <Select onValueChange={(value) => setSelectedDate(value)}>
+                                                            <SelectTrigger className="w-full max-w-xs">
+                                                                <SelectValue placeholder="Seleccione un parte diario" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectGroup>
+                                                                    {futureReports.map((futureReport) => (
+                                                                        <SelectItem key={futureReport.id} value={futureReport.id}>
+                                                                            {moment(futureReport.date).format('DD/MM/YYYY')}
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectGroup>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div className="mt-4 flex justify-end">
+                                                        <Button variant="outline" onClick={handleCloseDialog} className="mr-2">
+                                                            Cerrar
+                                                        </Button>
+                                                        <Button onClick={handleSaveToDailyReport} disabled={!selectedDate}>
+                                                            Guardar
+                                                        </Button>
+                                                    </div>
+                                                </GenericDialog>
                                             )}
                                             {workingDay === 'por horario' && (
                                                 <>
@@ -1559,10 +1501,7 @@ console.log('dailyReport: ', dailyReport);
                     >
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold">Parte Diario en Construcción</h2>
-                            {/* <Button onClick={handleAddNewRow} className="flex items-center">
-                                <PlusCircledIcon className="mr-2 h-4 w-4" />
-                                Agregar Fila
-                            </Button> */}
+                           
                             {canEdit && (
                                 <Button onClick={handleAddNewRow} className="flex items-center">
                                     <PlusCircledIcon className="mr-2 h-4 w-4" />
@@ -1618,18 +1557,11 @@ console.log('dailyReport: ', dailyReport);
                                                     {report.status}
                                                 </Badge>
                                             </TableCell>
-                                            {/* <TableCell>{report.status}</TableCell> */}
+                                           
                                             <TableCell>{report.description}</TableCell>
                                             <TableCell>
                                                 {report.document_path ? (
-                                                    <Button onClick={async () => {
-                                                        if (report.document_path) {
-                                                            await fetchDocument(report.document_path);
-                                                            if (documentUrl) {
-                                                                window.open(documentUrl, '_blank');
-                                                            }
-                                                        }
-                                                    }}>
+                                                    <Button onClick={() => handleViewDocument(report.document_path || '')}>
                                                         Ver Documento
                                                     </Button>
                                                 ) : (
@@ -1647,12 +1579,12 @@ console.log('dailyReport: ', dailyReport);
                                                                             </Button>
                                                                         </>
                                                                     ) : (
-                                                                        <UploadDocument 
-                                                                            rowId={report.id || ''} 
-                                                                            customerName={getCustomerName(report.customer || '')} 
-                                                                            companyName={company_id || ''} 
+                                                                        <UploadDocument
+                                                                            rowId={report.id || ''}
+                                                                            customerName={getCustomerName(report.customer || '')}
+                                                                            companyName={company_id || ''}
                                                                             serviceName={getServiceName(report.services)}
-                                                                        />   
+                                                                        />
                                                                     )}
                                                                 </>
                                                             )}
@@ -1669,6 +1601,19 @@ console.log('dailyReport: ', dailyReport);
                 </motion.div>
 
             </div>
+            <GenericDialog isOpen={isDialogOpen2} onClose={closeDialog2} title='' description=''>
+                <Card className="mt-4">
+                    <CardDescription className="p-3 flex justify-center">
+                        <embed
+                            src={`${documentUrl}#&navpanes=0&scrollbar=0&zoom=110`}
+                            className={cn(
+                                'w-full h-auto max-h-[80vh] rounded-xl aspect-auto',
+                                documentUrl?.split('.').pop()?.toLocaleLowerCase() === 'pdf' ? 'min-h-[80vh] ' : ''
+                            )}
+                        />
+                    </CardDescription>
+                </Card>
+            </GenericDialog>
             {confirmDelete &&
                 <div>
                     <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>

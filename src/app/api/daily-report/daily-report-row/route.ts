@@ -1,3 +1,4 @@
+// import { description } from '@/components/Graficos/RepairsChart';
 import { supabaseServer } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const supabase = supabaseServer();
   try {
-    const { daily_report_id, customer_id, service_id, item_id, working_day, start_time, end_time } = await request.json();
+    const { daily_report_id, customer_id, service_id, item_id, working_day, start_time, end_time, description } = await request.json();
     console.log(start_time, end_time);
 
     // Crear el objeto de inserción, omitiendo start_time y end_time si están vacíos
@@ -35,7 +36,8 @@ export async function POST(request: NextRequest) {
       customer_id,
       service_id,
       item_id,
-      working_day
+      working_day,
+      description
     };
 
     if (start_time) {
@@ -118,7 +120,7 @@ export async function PUT(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('dailyreportrows')
-      .upsert(updateFields)
+      .update(updateFields)
       .eq('id', id);
 
     if (error) {
