@@ -55,6 +55,8 @@ import { set } from 'date-fns'
 import { string } from 'zod'
 import { Card, CardDescription } from '../ui/card'
 import { cn } from '@/lib/utils'
+import DailyReportSkeleton from '../Skeletons/DayliReportSkeleton'
+
 interface Customers {
     id: string
     name: string
@@ -224,7 +226,7 @@ interface RepairsSolicituds {
 
 
 export default function DailyReport({ reportData, allReport }: DailyReportProps) {
-
+    const [isLoading, setIsLoading] = useState(true);
     const [employees, setEmployees] = useState<Employee[]>([])
     const [customers, setCustomers] = useState<Customers[]>([])
     const [selectedCustomer, setSelectedCustomer] = useState<Customers | null>(null)
@@ -416,7 +418,12 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
         }
     }, [startTime, endTime])
 
-    
+    useEffect(() => {
+        // Simula una carga de datos
+        setTimeout(() => {
+            setIsLoading(false);
+        }, 4000);
+    }, []);
 
     const handleSelectCustomer = (customerId: string, reportDate: Date) => {
         const customer = customers.find((c: Customers) => c.id.toString() === customerId);
@@ -1169,7 +1176,9 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
             });
         }
     };
-
+    if (isLoading) {
+        return <DailyReportSkeleton />;
+    }
 
     return (
         <div className="mx-auto p-4">
