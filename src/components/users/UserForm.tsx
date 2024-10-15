@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
@@ -8,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { updateModulesSharedUser } from '@/app/server/UPDATE/actions';
 import { useEditButton } from '@/store/editState';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
@@ -29,6 +31,7 @@ const UserFormSchema = z.object({
 
 function UserForm({ userData }: { userData: any }) {
   const readOnly = useEditButton((state) => state.readonly);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof UserFormSchema>>({
     resolver: zodResolver(UserFormSchema),
@@ -47,15 +50,20 @@ function UserForm({ userData }: { userData: any }) {
       form.setValue('modulos', newValue);
     }
   };
-  const onsubmit = async () => {
-    event?.preventDefault();
-    console.log('form.getValues():', form.getValues());
-    const updateUser = await updateModulesSharedUser({
-      id: userData.id,
-      modules: form.getValues('modulos') as ModulosEnum[],
-    });
-    // hay que colocar una Toast para indicar que se guardo correctamente
-    // hacer un refesh y desabilitar la edición.
+  const onsubmit = () => {
+    toast.promise(
+      async () => {
+        const updateUser = await updateModulesSharedUser({
+          id: userData.id,
+          modules: form.getValues('modulos') as ModulosEnum[],
+        });
+      },
+      {
+        loading: 'Editando usurioa...',
+        success: 'Usuario Editado correctamente!',
+        error: 'Error al editar el usuario',
+      }
+    );
   };
 
   return (

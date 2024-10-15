@@ -317,5 +317,5 @@ export const verifyUserRoleInCompany = async () => {
     return '';
   }
 
-  return data[0]?.role || '';
+  return { rol: data[0]?.role || '', modulos: data[0]?.modules || [] };
 };

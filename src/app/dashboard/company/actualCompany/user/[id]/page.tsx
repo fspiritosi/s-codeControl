@@ -8,10 +8,8 @@ import { cn } from '@/lib/utils';
 
 async function User({ params }: { params: { id: string } }) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
-  // traerme los datos del usuario desde shared_company_users
-  //const { data } = await fetch(`${URL}/api/profile?user=${params.id}`).then((e) => e.json());
+
   const data: any = await getUsersbyId({ id: params.id });
-  console.log('userData', data);
 
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">
