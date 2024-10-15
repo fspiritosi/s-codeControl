@@ -122,7 +122,7 @@ export async function PUT(request: NextRequest) {
       .from('dailyreportrows' as any)
       .update(updateFields)
       .eq('id', id);
-
+      
     if (error) {
       console.error('Error from Supabase:', error);
       return new NextResponse(

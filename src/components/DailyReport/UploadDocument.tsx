@@ -50,7 +50,7 @@ const UploadDocument: React.FC<UploadDocumentProps> = ({ rowId, companyName, cus
 
         const { data, error } = await supabase.storage
             .from('daily_reports')
-            .upload(`${filePath}/${fileName}`, selectedFile);
+            .upload(`${filePath}/${fileName}`, selectedFile, { cacheControl: '10', upsert: true});
 
         if (error) {
             console.error('Error al subir el archivo:', error);

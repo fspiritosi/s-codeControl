@@ -43,7 +43,7 @@ import {
     DialogDescription,
     DialogFooter,
 } from "@/components/ui/dialog";
-import { id } from 'date-fns/locale'
+// import { id } from 'date-fns/locale'
 import moment, { Moment } from 'moment';
 import { zodResolver } from '@hookform/resolvers/zod'
 import { dailyReportSchema } from '@/zodSchemas/schemas'
@@ -51,11 +51,14 @@ import { Badge } from '../ui/badge'
 import GenericDialog from './GenericDialog';
 import UploadDocument from './UploadDocument'
 import { supabaseBrowser } from '@/lib/supabase/browser'
-import { set } from 'date-fns'
-import { string } from 'zod'
+// import { set } from 'date-fns'
+// import { string } from 'zod'
 import { Card, CardDescription } from '../ui/card'
-import { cn } from '@/lib/utils'
+// import { cn } from '@/lib/utils'
+
+import DocumentView from './DocumentView'
 import DailyReportSkeleton from '../Skeletons/DayliReportSkeleton'
+
 
 interface Customers {
     id: string
@@ -226,7 +229,8 @@ interface RepairsSolicituds {
 
 
 export default function DailyReport({ reportData, allReport }: DailyReportProps) {
-    const [isLoading, setIsLoading] = useState(true);
+    
+    const [companyName, setCompanyName] = useState<string | null>(null);
     const [employees, setEmployees] = useState<Employee[]>([])
     const [customers, setCustomers] = useState<Customers[]>([])
     const [selectedCustomer, setSelectedCustomer] = useState<Customers | null>(null)
@@ -262,7 +266,10 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     const [selectedReport, setSelectedReport] = useState<DailyReportData | null>(null);
     const [documentUrl, setDocumentUrl] = useState<string | null>(null);
     const [selectedDate, setSelectedDate] = useState<String | null>(null);
+    const [companyData, setCompanyData] = useState<any>(null);
+    const [filaId, setFilaId] = useState<string | null>(null);
     const supabase = supabaseBrowser();
+    const [isLoading, setIsLoading] = useState<boolean>(true);
     const URL = process.env.NEXT_PUBLIC_BASE_URL
     const formMethods = useForm<DailyReportItem>({
         resolver: zodResolver(dailyReportSchema),
@@ -285,6 +292,18 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     const company_id = cookies.get('actualComp')
     const modifiedCompany = company_id?.replace(/['"]/g, '').trim()
 
+    const fetchCompanyName = async () => {
+        const response = await fetch(`${URL}/api/company?actual=${company_id}`)
+        const data = await response.json()
+        const companyName=data.data[0].company_name
+        const companyData=data.data[0]
+        setCompanyData(companyData)
+        console.log(companyName)
+        setCompanyName(companyName)
+        return companyName
+    }
+    
+
     async function fetchEmployees() {
         const { employees } = await fetch(`${URL}/api/employees/?actual=${company_id}`).then((e) => e.json())
         setEmployees(employees)
@@ -294,7 +313,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     async function fetchCustomers() {
         const { customers, error } = await fetch(`${URL}/api/company/customers/?actual=${company_id}`).then((e) => e.json())
         const activeCustomers = customers.filter((customer: Customers) => customer.is_active)
-
+        setIsLoading(false)
         setCustomers(activeCustomers)
     }
 
@@ -342,9 +361,10 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
         return url.publicUrl;
     }
 
-    const handleViewDocument = async (documentPath: string) => {
+    const handleViewDocument = async (documentPath: string, row_id?: string) => {
         const url = await fetchDocument(documentPath); // Asume que fetchDocumentUrl es una función que obtiene la URL del documento
         setDocumentUrl(url);
+        setFilaId(row_id || null);
         // window.open(url, '_blank');
         setIsDialogOpen2(true);
     };
@@ -356,16 +376,17 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     
 
     useEffect(() => {
+        fetchCompanyName()
         fetchEmployees()
         fetchCustomers()
         fetchEquipment()
         fetchServices()
         fetchItems()
         fetchDiagrams()
-
+        
        
     }, [])
-   
+   console.log(companyName)
     
 
     useEffect(() => {
@@ -418,12 +439,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
         }
     }, [startTime, endTime])
 
-    useEffect(() => {
-        // Simula una carga de datos
-        setTimeout(() => {
-            setIsLoading(false);
-        }, 4000);
-    }, []);
+   
 
     const handleSelectCustomer = (customerId: string, reportDate: Date) => {
         const customer = customers.find((c: Customers) => c.id.toString() === customerId);
@@ -626,8 +642,12 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
         setWorkingDay(value);
     };
 
+   
     const selectedEmployees = watch('employees')
     const selectedEquipment = watch('equipment')
+   
+   
+    
 
     const getEmployeeNames = (employeeIds: string[]) => {
         return employeeIds.map(id => {
@@ -1365,13 +1385,13 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                                 )}
                                             />
                                             {isDialogOpen && (
-                                                <GenericDialog
+                                                <GenericDialog 
                                                     title="Reprogramar Reporte"
                                                     description="Selecciona un parte diario para reprogramar este reporte."
                                                     isOpen={isDialogOpen}
                                                     onClose={handleCloseDialog}
                                                 >
-                                                    <div>
+                                                    <div className='max-w-[45vw] mx-auto'>
                                                         <Select onValueChange={(value) => setSelectedDate(value)}>
                                                             <SelectTrigger className="w-full max-w-xs">
                                                                 <SelectValue placeholder="Seleccione un parte diario" />
@@ -1386,14 +1406,14 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                                                 </SelectGroup>
                                                             </SelectContent>
                                                         </Select>
-                                                    </div>
-                                                    <div className="mt-4 flex justify-end">
-                                                        <Button variant="outline" onClick={handleCloseDialog} className="mr-2">
-                                                            Cerrar
-                                                        </Button>
-                                                        <Button onClick={handleSaveToDailyReport} disabled={!selectedDate}>
-                                                            Guardar
-                                                        </Button>
+                                                        <div className="mt-4 flex justify-center w-full">
+                                                            <Button variant="outline" onClick={handleCloseDialog} className="mr-2">
+                                                                Cerrar
+                                                            </Button>
+                                                            <Button onClick={handleSaveToDailyReport} disabled={!selectedDate}>
+                                                                Guardar
+                                                            </Button>
+                                                        </div>
                                                     </div>
                                                 </GenericDialog>
                                             )}
@@ -1570,7 +1590,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                             <TableCell>{report.description}</TableCell>
                                             <TableCell>
                                                 {report.document_path ? (
-                                                    <Button onClick={() => handleViewDocument(report.document_path || '')}>
+                                                    <Button onClick={() => handleViewDocument(report.document_path || '', report.id || '')}>
                                                         Ver Documento
                                                     </Button>
                                                 ) : (
@@ -1591,8 +1611,9 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                                                         <UploadDocument
                                                                             rowId={report.id || ''}
                                                                             customerName={getCustomerName(report.customer || '')}
-                                                                            companyName={company_id || ''}
+                                                                            companyName={companyName || ''}
                                                                             serviceName={getServiceName(report.services)}
+                                                                            itemNames={getItemName(report.item)}
                                                                         />
                                                                     )}
                                                                 </>
@@ -1611,14 +1632,24 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
 
             </div>
             <GenericDialog isOpen={isDialogOpen2} onClose={closeDialog2} title='' description=''>
-                <Card className="mt-4">
+                <Card className="mt-4 w-full max-w-5xl mx-auto">
                     <CardDescription className="p-3 flex justify-center">
-                        <embed
+                        {/* <embed
                             src={`${documentUrl}#&navpanes=0&scrollbar=0&zoom=110`}
                             className={cn(
                                 'w-full h-auto max-h-[80vh] rounded-xl aspect-auto',
                                 documentUrl?.split('.').pop()?.toLocaleLowerCase() === 'pdf' ? 'min-h-[80vh] ' : ''
                             )}
+                        /> */}
+                        
+                        <DocumentView 
+                            rowId={filaId || ''} 
+                            companyData={companyData || ''} 
+                            documentUrl={documentUrl || ''} 
+                            customerName={getCustomerName(selectedCustomer?.id || '')}
+                            companyName={companyName || ''}
+                            serviceName={getServiceName(selectedService?.id || '')}
+                            itemNames={getItemName(selectedService?.item_id as any || '')}
                         />
                     </CardDescription>
                 </Card>

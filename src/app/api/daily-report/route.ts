@@ -68,6 +68,7 @@ export async function PUT(request: NextRequest) {
       .from('dailyreport')
       .update({ status: statusPayload })
       .eq('id', id || '');
+      {upsert: true};
 
     if (error) {
       throw new Error(JSON.stringify(error));
