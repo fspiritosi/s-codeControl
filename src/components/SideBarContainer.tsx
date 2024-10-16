@@ -1,3 +1,4 @@
+import { fetchCurrentCompany, fetchCurrentUser, verifyUserRoleInCompany } from '@/app/server/GET/actions';
 import { supabaseServer } from '@/lib/supabase/server';
 import InitState from '@/store/InitUser';
 import { cookies } from 'next/headers';
@@ -14,16 +15,14 @@ import SideBar from './Sidebar';
 
 async function SideBarContainer() {
   const supabase = supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await fetchCurrentUser();
+  const company = await fetchCurrentCompany();
+  const userData: any = await verifyUserRoleInCompany();
+  console.log(userData, 'userData');
   const { data: credentialUser, error: profileError } = await supabase
     .from('profile')
     .select('*')
     .eq('credential_id', user?.id || '');
-
-  if (profileError) console.log(profileError);
 
   const { data: companies, error } = await supabase
     .from('company')
@@ -199,9 +198,9 @@ async function SideBarContainer() {
       liksToShow = Allinks;
       return;
     }
-    credentialUser?.[0].modulos === null
+    userData?.modulos.lenght === 0
       ? (liksToShow = Allinks) // TODO esta linea se tiene que sacar porque por defecto tiene que tener todos los modulos activos
-      : credentialUser?.[0].modulos?.map((mod: string) => {
+      : userData?.modulos?.map((mod: string) => {
           Allinks.filter((link) => {
             link.name.toLowerCase() === mod.toLowerCase() && liksToShow.push(link);
           });
