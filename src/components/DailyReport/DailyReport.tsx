@@ -1559,15 +1559,202 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                             </TableCaption>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Cliente</TableHead>
-                                    <TableHead>Servicio</TableHead>
-                                    <TableHead>Item</TableHead>
-                                    <TableHead>Empleados</TableHead>
-                                    <TableHead>Equipos</TableHead>
-                                    <TableHead>Jornada</TableHead>
+                                    <TableHead>
+                                        <Select
+                                            onValueChange={(value) => {
+                                                if (value === 'all') {
+                                                    setDailyReport(reportData?.dailyreportrows || []);
+                                                } else {
+                                                    const filteredReports = dailyReport.filter(report => report.customer === value);
+                                                    setDailyReport(filteredReports);
+                                                }
+                                            }}
+                                        >
+                                            <SelectTrigger className="w-full max-w-xs">
+                                                <SelectValue placeholder="cliente" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    <SelectItem value="all">Todos</SelectItem>
+                                                    {customers.map((customer: Customers) => (
+                                                        <SelectItem key={customer.id} value={customer.id}>
+                                                            {customer.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </TableHead>
+                                    <TableHead>
+                                        <Select
+                                            onValueChange={(value) => {
+                                                if (value === 'all') {
+                                                    setDailyReport(reportData?.dailyreportrows || []);
+                                                } else {
+                                                    const filteredReports = dailyReport.filter(report => report.services === value);
+                                                    setDailyReport(filteredReports);
+                                                }
+                                            }}
+                                        >
+                                            <SelectTrigger className="w-full max-w-xs">
+                                                <SelectValue placeholder="Servicio" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    <SelectItem value="all">Todos</SelectItem>
+                                                    {Array.from(new Set(dailyReport.map(report => report.services))).map((serviceId) => {
+                                                        const service = services.find(s => s.id === serviceId);
+                                                        return service ? (
+                                                            <SelectItem key={service.id} value={service.id}>
+                                                                {service.service_name}
+                                                            </SelectItem>
+                                                        ) : null;
+                                                    })}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </TableHead>
+                                    <TableHead>
+                                        <Select
+                                            onValueChange={(value) => {
+                                                if (value === 'all') {
+                                                    setDailyReport(reportData?.dailyreportrows || []);
+                                                } else {
+                                                    const filteredReports = dailyReport.filter(report => report.item === value);
+                                                    setDailyReport(filteredReports);
+                                                }
+                                            }}
+                                        >
+                                            <SelectTrigger className="w-full max-w-xs">
+                                                <SelectValue placeholder="Item" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    <SelectItem value="all">Todos</SelectItem>
+                                                    {Array.from(new Set(dailyReport.map(report => report.item))).map((itemId) => {
+                                                        const item = items.find(i => i.id === itemId);
+                                                        return item ? (
+                                                            <SelectItem key={item.id} value={item.id}>
+                                                                {item.item_name}
+                                                            </SelectItem>
+                                                        ) : null;
+                                                    })}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </TableHead>
+                                    <TableHead>
+                                        <Select
+                                            onValueChange={(value) => {
+                                                if (value === 'all') {
+                                                    setDailyReport(reportData?.dailyreportrows || []);
+                                                } else {
+                                                    const filteredReports = dailyReport.filter(report => report.employees.includes(value));
+                                                    setDailyReport(filteredReports);
+                                                }
+                                            }}
+                                        >
+                                            <SelectTrigger className="w-full max-w-xs">
+                                                <SelectValue placeholder="Empleados" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    <SelectItem value="all">Todos</SelectItem>
+                                                    {Array.from(new Set(dailyReport.flatMap(report => report.employees))).map((employeeId) => {
+                                                        const employee = employees.find(emp => emp.id === employeeId);
+                                                        return employee ? (
+                                                            <SelectItem key={employee.id} value={employee.id}>
+                                                                {`${employee.firstname} ${employee.lastname}`}
+                                                            </SelectItem>
+                                                        ) : null;
+                                                    })}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </TableHead>
+                                    <TableHead>
+                                        <Select
+                                            onValueChange={(value) => {
+                                                if (value === 'all') {
+                                                    setDailyReport(reportData?.dailyreportrows || []);
+                                                } else {
+                                                    const filteredReports = dailyReport.filter(report => report.equipment.includes(value));
+                                                    setDailyReport(filteredReports);
+                                                }
+                                            }}
+                                        >
+                                            <SelectTrigger className="w-full max-w-xs">
+                                                <SelectValue placeholder="Equipos" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    <SelectItem value="all">Todos</SelectItem>
+                                                    {Array.from(new Set(dailyReport.flatMap(report => report.equipment))).map((equipmentId) => {
+                                                        const equipmentItem = equipment.find(eq => eq.id === equipmentId);
+                                                        return equipmentItem ? (
+                                                            <SelectItem key={equipmentItem.id} value={equipmentItem.id}>
+                                                                {equipmentItem.intern_number}
+                                                            </SelectItem>
+                                                        ) : null;
+                                                    })}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </TableHead>
+                                    <TableHead>
+                                        <Select
+                                            onValueChange={(value) => {
+                                                if (value === 'all') {
+                                                    setDailyReport(reportData?.dailyreportrows || []);
+                                                } else {
+                                                    const filteredReports = dailyReport.filter(report => report.working_day === value);
+                                                    setDailyReport(filteredReports);
+                                                }
+                                            }}
+                                        >
+                                            <SelectTrigger className="w-full max-w-xs">
+                                                <SelectValue placeholder="Jornada" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    <SelectItem value="all">Todos</SelectItem>
+                                                    {Array.from(new Set(dailyReport.map(report => report.working_day))).map((workingDay) => (
+                                                        <SelectItem key={workingDay} value={workingDay}>
+                                                            {workingDay.charAt(0).toUpperCase() + workingDay.slice(1)}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </TableHead>
                                     <TableHead>H.Inicio</TableHead>
                                     <TableHead>H.Fin</TableHead>
-                                    <TableHead>Estado</TableHead>
+                                    <TableHead>
+                                        <Select
+                                            onValueChange={(value) => {
+                                                if (value === 'all') {
+                                                    setDailyReport(reportData?.dailyreportrows || []);
+                                                } else {
+                                                    const filteredReports = dailyReport.filter(report => report.status === value);
+                                                    setDailyReport(filteredReports);
+                                                }
+                                            }}
+                                        >
+                                            <SelectTrigger className="w-full max-w-xs">
+                                                <SelectValue placeholder="Estado" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    <SelectItem value="all">Todos</SelectItem>
+                                                    {Array.from(new Set(dailyReport.map(report => report.status))).map((status) => (
+                                                        <SelectItem key={status} value={status}>
+                                                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </TableHead>
                                     <TableHead>Descripción</TableHead>
                                     <TableHead>Acciones</TableHead>
                                 </TableRow>
