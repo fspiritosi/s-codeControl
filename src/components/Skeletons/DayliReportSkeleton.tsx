@@ -105,7 +105,7 @@ export default function DailyReportSkeleton() {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Parte Diario en Construcción</h2>
           <Button>
-            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-6 w-24 bg-gray-300" />
           </Button>
         </div>
         <Table>

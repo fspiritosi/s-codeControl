@@ -90,6 +90,7 @@ interface Services {
     customer_id: string
     service_name: string
     is_active: boolean
+    item_id: string
 }
 
 interface Items {
@@ -229,7 +230,7 @@ interface RepairsSolicituds {
 
 
 export default function DailyReport({ reportData, allReport }: DailyReportProps) {
-    
+
     const [companyName, setCompanyName] = useState<string | null>(null);
     const [employees, setEmployees] = useState<Employee[]>([])
     const [customers, setCustomers] = useState<Customers[]>([])
@@ -268,6 +269,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     const [selectedDate, setSelectedDate] = useState<String | null>(null);
     const [companyData, setCompanyData] = useState<any>(null);
     const [filaId, setFilaId] = useState<string | null>(null);
+    const [filteredRow, setFilteredRow] = useState<DailyReportItem | null>(null);
     const supabase = supabaseBrowser();
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const URL = process.env.NEXT_PUBLIC_BASE_URL
@@ -302,7 +304,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
         setCompanyName(companyName)
         return companyName
     }
-    
+
 
     async function fetchEmployees() {
         const { employees } = await fetch(`${URL}/api/employees/?actual=${company_id}`).then((e) => e.json())
@@ -362,6 +364,9 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     }
 
     const handleViewDocument = async (documentPath: string, row_id?: string) => {
+        const filteredRow = dailyReport.find(row => row.id === row_id);
+        console.log(filteredRow)
+        setFilteredRow(filteredRow as DailyReportItem);
         const url = await fetchDocument(documentPath); // Asume que fetchDocumentUrl es una función que obtiene la URL del documento
         setDocumentUrl(url);
         setFilaId(row_id || null);
@@ -373,7 +378,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
         setDocumentUrl(null);
     };
 
-    
+
 
     useEffect(() => {
         fetchCompanyName()
@@ -383,11 +388,11 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
         fetchServices()
         fetchItems()
         fetchDiagrams()
-        
-       
+
+
     }, [])
    console.log(companyName)
-    
+
 
     useEffect(() => {
         // Filtrar servicios válidos en la fecha del parte diario
@@ -395,14 +400,14 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
             const serviceStartDate = moment(service.service_start).toDate();
             const serviceValidityDate = moment(service.service_validity).toDate();
             const reportDate = moment(reportData?.date).toDate();
-            
+
             return (
                 service.is_active &&
                 reportDate >= serviceStartDate &&
                 reportDate <= serviceValidityDate
             );
         });
-        
+
 
         // Filtrar clientes que tienen servicios válidos
         const customersWithServices = customers.filter((customer) =>
@@ -439,7 +444,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
         }
     }, [startTime, endTime])
 
-   
+
 
     const handleSelectCustomer = (customerId: string, reportDate: Date) => {
         const customer = customers.find((c: Customers) => c.id.toString() === customerId);
@@ -462,7 +467,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
             });
             setCustomerEmployees(filteredEmployees);
 
-           
+
             const filteredEquipment = equipment.filter((equipment: Equipment) => {
                 const isAllocatedToCustomer = equipment.allocated_to.includes(customer.id);
                 const isNotUnderRepair = !(equipment.condition === 'en reparación' || equipment.condition === 'no operativo');
@@ -642,20 +647,27 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
         setWorkingDay(value);
     };
 
-   
+
     const selectedEmployees = watch('employees')
     const selectedEquipment = watch('equipment')
-   
-   
-    
 
+
+    
+    
+    
+    
     const getEmployeeNames = (employeeIds: string[]) => {
         return employeeIds.map(id => {
             const employee = employees.find(emp => emp.id === id)
             return employee ? `${employee.firstname} ${employee.lastname}` : 'Unknown'
         }).join(', ')
     }
-
+    console.log(dailyReport)
+    const employeeNam = dailyReport.map((item) => {
+        return getEmployeeNames(item.employees)
+    })
+    console.log(employeeNam)
+    
     const getEquipmentNames = (equipmentIds: string[]) => {
         return equipmentIds.map(id => {
             const eq = equipment.find(e => e.id === id)
@@ -948,7 +960,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
             });
             const existingEquipment = await existingRelationEquipmentResponse.json();
 
-           
+
 
             if (data.equipment && !existingEquipment.exists && data.equipment.length > 0) {
                 await fetch('/api/daily-report/dailyreportequipmentrelations', {
@@ -1023,14 +1035,14 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     const dayDifference = calculateDateDifference(reportData?.date || '');
 
     const canEdit = dayDifference <= 6;
-   
+
     const handleValueChange = (value: string) => {
         if (value === 'reprogramado' && editingId) {
             const currentReport = dailyReport.find((report: DailyReportItem) => report.id === editingId);
-          
+
             if (currentReport) {
                 const futureReports = allReport?.filter(report => (moment(report.date)).isAfter(moment(currentReport?.date)));
-               
+
                 setFutureReports(futureReports as any);
                 setSelectedReport(currentReport as any);
                 setIsDialogOpen(true);
@@ -1048,16 +1060,16 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     const handleSaveToDailyReport = async () => {
         if (selectedDate && selectedReport) {
             try {
-               
+
                 const updatedReport = {
                     ...selectedReport,
                     id: null,
                     daily_report_id: selectedDate,
                     description: `Reprogramado desde ${selectedReport.date}`
                 };
-              
+
                 await reprogramarReporte(updatedReport, existingReportId as string, selectedDate as string);
-                
+
                 setIsDialogOpen(false);
             } catch (error) {
                 console.error('Error al guardar el reporte:', error);
@@ -1067,7 +1079,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     ////////////////////////////////////////////////////////////
 
     const reprogramarReporte = async (data: any, rowId: string, newDailyReportId: string) => {
-        
+
         try {
             const formattedStartTime = formatTime(data.start_time);
             const formattedEndTime = formatTime(data.end_time);
@@ -1196,6 +1208,8 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
             });
         }
     };
+
+
     if (isLoading) {
         return <DailyReportSkeleton />;
     }
@@ -1530,7 +1544,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                     >
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold">Parte Diario en Construcción</h2>
-                           
+
                             {canEdit && (
                                 <Button onClick={handleAddNewRow} className="flex items-center">
                                     <PlusCircledIcon className="mr-2 h-4 w-4" />
@@ -1586,7 +1600,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                                     {report.status}
                                                 </Badge>
                                             </TableCell>
-                                           
+
                                             <TableCell>{report.description}</TableCell>
                                             <TableCell>
                                                 {report.document_path ? (
@@ -1614,6 +1628,8 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                                                             companyName={companyName || ''}
                                                                             serviceName={getServiceName(report.services)}
                                                                             itemNames={getItemName(report.item)}
+                                                                            isReplacing={false}
+                                                                           
                                                                         />
                                                                     )}
                                                                 </>
@@ -1641,15 +1657,17 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                 documentUrl?.split('.').pop()?.toLocaleLowerCase() === 'pdf' ? 'min-h-[80vh] ' : ''
                             )}
                         /> */}
-                        
+
                         <DocumentView 
                             rowId={filaId || ''} 
-                            companyData={companyData || ''} 
+                            row={filteredRow as DailyReportItem || ''} 
                             documentUrl={documentUrl || ''} 
                             customerName={getCustomerName(selectedCustomer?.id || '')}
                             companyName={companyName || ''}
                             serviceName={getServiceName(selectedService?.id || '')}
-                            itemNames={getItemName(selectedService?.item_id as any || '')}
+                            itemNames={getItemName(selectedService?.item_id || '')}
+                            employeeNames={filteredRow?.employees.map((emp: string) => getEmployeeNames([emp]))}
+                            equipmentNames={filteredRow?.equipment.map((eq: string) => getEquipmentNames([eq]))}
                         />
                     </CardDescription>
                 </Card>
