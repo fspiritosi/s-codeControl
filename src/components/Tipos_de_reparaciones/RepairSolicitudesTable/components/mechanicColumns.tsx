@@ -811,7 +811,17 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                               <Badge variant={'outline'} className="m-0 flex items-center p-1">
                                 {log.kilometer} kms
                               </Badge>
-                              <CardDescription>{moment(log.created_at).format('[Hoy,] h:mm A')}</CardDescription>
+                              <CardDescription>
+                                {' '}
+                                {moment(log.created_at).calendar(null, {
+                                  sameDay: '[Hoy,] h:mm A', // Hoy a las 2:30 PM
+                                  nextDay: '[Mañana,] h:mm A', // Mañana a las 2:30 PM
+                                  nextWeek: 'dddd [a las] h:mm A', // Sábado a las 2:30 PM
+                                  lastDay: '[Ayer,] h:mm A', // Ayer a las 2:30 PM
+                                  lastWeek: '[El] dddd [pasado a las] h:mm A', // El sábado pasado a las 2:30 PM
+                                  sameElse: 'DD/MM/YYYY', // 07/10/2021
+                                })}
+                              </CardDescription>
                             </div>
                           </div>
                           <CardDescription>
