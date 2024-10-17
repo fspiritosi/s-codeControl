@@ -198,7 +198,7 @@ async function SideBarContainer() {
       liksToShow = Allinks;
       return;
     }
-    userData?.modulos.lenght === 0
+    userData?.modulos?.length === 0
       ? (liksToShow = Allinks) // TODO esta linea se tiene que sacar porque por defecto tiene que tener todos los modulos activos
       : userData?.modulos?.map((mod: string) => {
           Allinks.filter((link) => {
