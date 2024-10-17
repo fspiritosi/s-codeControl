@@ -1559,7 +1559,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                             </TableCaption>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>
+                                    <TableHead className="text-center">
                                         <Select
                                             onValueChange={(value) => {
                                                 if (value === 'all') {
@@ -1570,7 +1570,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                                 }
                                             }}
                                         >
-                                            <SelectTrigger className="w-full max-w-xs">
+                                            <SelectTrigger className="w-auto">
                                                 <SelectValue placeholder="cliente" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -1585,7 +1585,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                             </SelectContent>
                                         </Select>
                                     </TableHead>
-                                    <TableHead>
+                                    <TableHead className="text-center">
                                         <Select
                                             onValueChange={(value) => {
                                                 if (value === 'all') {
@@ -1614,7 +1614,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                             </SelectContent>
                                         </Select>
                                     </TableHead>
-                                    <TableHead>
+                                    <TableHead className="text-center">
                                         <Select
                                             onValueChange={(value) => {
                                                 if (value === 'all') {
@@ -1643,7 +1643,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                             </SelectContent>
                                         </Select>
                                     </TableHead>
-                                    <TableHead>
+                                    <TableHead className="text-center">
                                         <Select
                                             onValueChange={(value) => {
                                                 if (value === 'all') {
@@ -1672,7 +1672,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                             </SelectContent>
                                         </Select>
                                     </TableHead>
-                                    <TableHead>
+                                    <TableHead className="text-center">
                                         <Select
                                             onValueChange={(value) => {
                                                 if (value === 'all') {
@@ -1701,7 +1701,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                             </SelectContent>
                                         </Select>
                                     </TableHead>
-                                    <TableHead>
+                                    <TableHead className="text-center">
                                         <Select
                                             onValueChange={(value) => {
                                                 if (value === 'all') {
@@ -1720,16 +1720,16 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                                     <SelectItem value="all">Todos</SelectItem>
                                                     {Array.from(new Set(dailyReport.map(report => report.working_day))).map((workingDay) => (
                                                         <SelectItem key={workingDay} value={workingDay}>
-                                                            {workingDay.charAt(0).toUpperCase() + workingDay.slice(1)}
+                                                            {workingDay?.charAt(0).toUpperCase() + workingDay?.slice(1)}
                                                         </SelectItem>
                                                     ))}
                                                 </SelectGroup>
                                             </SelectContent>
                                         </Select>
                                     </TableHead>
-                                    <TableHead>H.Inicio</TableHead>
-                                    <TableHead>H.Fin</TableHead>
-                                    <TableHead>
+                                    <TableHead className="text-center">H.Inicio</TableHead>
+                                    <TableHead className="text-center">H.Fin</TableHead>
+                                    <TableHead className="text-center">
                                         <Select
                                             onValueChange={(value) => {
                                                 if (value === 'all') {
@@ -1755,8 +1755,8 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                             </SelectContent>
                                         </Select>
                                     </TableHead>
-                                    <TableHead>Descripción</TableHead>
-                                    <TableHead>Acciones</TableHead>
+                                    <TableHead className="text-center">Descripción</TableHead>
+                                    <TableHead className="text-center">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -1764,15 +1764,15 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
 
                                     return (
                                         <TableRow key={report.id}>
-                                            <TableCell>{report.customer ? getCustomerName(report.customer) : 'N/A'}</TableCell>
-                                            <TableCell>{report.services ? getServiceName(report.services) : 'N/A'}</TableCell>
-                                            <TableCell>{report.item ? getItemName(report.item) : 'N/A'}</TableCell>
-                                            <TableCell>{Array.isArray(report.employees) ? getEmployeeNames(report.employees) : 'N/A'}</TableCell>
-                                            <TableCell>{Array.isArray(report.equipment) ? getEquipmentNames(report.equipment) : 'N/A'}</TableCell>
-                                            <TableCell>{report.working_day}</TableCell>
-                                            <TableCell>{report.start_time}</TableCell>
-                                            <TableCell>{report.end_time}</TableCell>
-                                            <TableCell>
+                                            <TableCell className="text-center">{report.customer ? getCustomerName(report.customer) : 'N/A'}</TableCell>
+                                            <TableCell className="text-center">{report.services ? getServiceName(report.services) : 'N/A'}</TableCell>
+                                            <TableCell className="text-center">{report.item ? getItemName(report.item) : 'N/A'}</TableCell>
+                                            <TableCell className="text-center">{Array.isArray(report.employees) ? getEmployeeNames(report.employees) : 'N/A'}</TableCell>
+                                            <TableCell className="text-center">{Array.isArray(report.equipment) ? getEquipmentNames(report.equipment) : 'N/A'}</TableCell>
+                                            <TableCell className="text-center">{report.working_day}</TableCell>
+                                            <TableCell className="text-center">{report.start_time}</TableCell>
+                                            <TableCell className="text-center">{report.end_time}</TableCell>
+                                            <TableCell className="text-center">
                                                 <Badge
                                                     variant={
                                                         report.status === 'ejecutado'
@@ -1788,8 +1788,8 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                                 </Badge>
                                             </TableCell>
 
-                                            <TableCell>{report.description}</TableCell>
-                                            <TableCell>
+                                            <TableCell className="text-center">{report.description}</TableCell>
+                                            <TableCell className="text-center">
                                                 {report.document_path ? (
                                                     <Button onClick={() => handleViewDocument(report.document_path || '', report.id || '')}>
                                                         Ver Documento
