@@ -31,7 +31,9 @@ export const columns: ColumnDef<SharedUser>[] = [
     accessorKey: 'fullname',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nombre" />,
     cell: ({ row }: { row: any }) => {
-      return (
+      return row.original?.role === 'Propietario' ? (
+        <span>{row.getValue('fullname')}</span>
+      ) : (
         <Link href={`/dashboard/company/actualCompany/user/${row.getValue('id')}`} className="hover:underline">
           {row.getValue('fullname')}
         </Link>
