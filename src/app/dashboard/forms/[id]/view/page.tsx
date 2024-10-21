@@ -12,6 +12,9 @@ async function page({ params }: { params: { id: string } }) {
     domain: equipment.domain,
     serie: equipment.serie,
     kilometer: equipment.kilometer ?? '0',
+    model: equipment.model.name,
+    brand: equipment.brand.name,
+    intern_number: equipment.intern_number,
   }));
 
   return (
