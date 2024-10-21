@@ -4,7 +4,7 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { cn } from '@/lib/utils';
 import { setEmployeesToShow } from '@/lib/utils/utils';
 import { cookies } from 'next/headers';
-
+import DocumentTable from '@/app/dashboard/document/DocumentTable';
 export default async function EmployeeFormAction({ searchParams }: { searchParams: any }) {
   // const { data } = await supabase
 
@@ -112,7 +112,9 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
           user={formattedEmployee}
           role={role}
           diagrams={diagrams}
-        />
+        >
+          <DocumentTable employee_id={formattedEmployee?.id || ''} />
+        </EmployeeComponent>
         <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
       </Card>
     </section>

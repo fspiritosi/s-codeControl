@@ -1,18 +1,20 @@
-'use client';
+// 'use client';
 
+import { fetchEmployeeMonthlyDocuments, fetchEmployeePermanentDocuments } from '@/app/server/GET/actions';
 import DocumentNav from '@/components/DocumentNav';
 import { CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useLoggedUserStore } from '@/store/loggedUser';
+import { formatEmployeeDocuments } from '@/lib/utils';
 import { ExpiredColums } from '../colums';
 import { ColumnsMonthly } from '../columsMonthly';
 import { ExpiredDataTable } from '../data-table';
 
-type Props = { document: string };
+type Props = { employee_id: string };
 
-export default function DocumentTable({ document }: Props) {
-  const { allDocumentsToShow } = useLoggedUserStore();
-
+export default async function DocumentTable({ employee_id }: Props) {
+  // const { allDocumentsToShow } = useLoggedUserStore();
+  const monthlyDocuments = (await fetchEmployeeMonthlyDocuments(employee_id)).map(formatEmployeeDocuments);
+  const permanentDocuments = (await fetchEmployeePermanentDocuments(employee_id)).map(formatEmployeeDocuments);
   // console.log(document);
   // console.log(allDocumentsToShow.employees.filter((e) => e.document_number === document));
   return (
@@ -22,11 +24,11 @@ export default function DocumentTable({ document }: Props) {
           <TabsTrigger value="permanentes">Documentos permanentes</TabsTrigger>
           <TabsTrigger value="mensuales">Documentos mensuales</TabsTrigger>
         </TabsList>
-        <DocumentNav id_user={document} onlyEmployees onlyNoMultiresource />
+        <DocumentNav id_user={employee_id} onlyEmployees onlyNoMultiresource />
       </CardContent>
       <TabsContent value="permanentes">
         <ExpiredDataTable
-          data={allDocumentsToShow?.employees.filter((e) => !e.isItMonthly && e.document_number === document) || []}
+          data={permanentDocuments}
           columns={ExpiredColums}
           pending={true}
           defaultVisibleColumnsCustom={['date', 'resource', 'documentName', 'validity', 'id', 'mandatory', 'state']}
@@ -36,7 +38,7 @@ export default function DocumentTable({ document }: Props) {
       </TabsContent>
       <TabsContent value="mensuales">
         <ExpiredDataTable
-          data={allDocumentsToShow?.employees.filter((e) => e.isItMonthly && e.document_number === document) || []}
+          data={monthlyDocuments}
           columns={ColumnsMonthly}
           pending={true}
           defaultVisibleColumnsCustom={['date', 'resource', 'documentName', 'validity', 'id', 'mandatory', 'state']}
