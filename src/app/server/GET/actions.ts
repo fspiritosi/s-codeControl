@@ -64,6 +64,7 @@ export const fetchEmployeeMonthlyDocuments = async (employeeId: string) => {
     .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
     .eq('applies', employeeId)
     .eq('id_document_types.is_it_montlhy', true)
+    .not('id_document_types', 'is', null)
     .returns<EmployeeDocumentWithContractors[]>();
 
   if (error) {
@@ -82,8 +83,9 @@ export const fetchEmployeePermanentDocuments = async (employeeId: string) => {
   const { data, error } = await supabase
     .from('documents_employees')
     .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
-    .eq('id_document_types.is_it_montlhy', false)
     .eq('applies', employeeId)
+    .not('id_document_types.is_it_montlhy', 'is', false)
+    .not('id_document_types', 'is', null)
     .returns<EmployeeDocumentWithContractors[]>();
 
   if (error) {
@@ -141,8 +143,9 @@ export const fetchAllEquipment = async () => {
 
   const { data, error } = await supabase
     .from('vehicles')
-    .select('*,brand(*)')
-    .eq('company_id', company_id);
+    .select('*,brand(*),model(*)')
+    .eq('company_id', company_id)
+    .returns<VehicleWithBrand[]>();
 
   if (error) {
     console.error('Error fetching equipment:', error);
@@ -181,9 +184,9 @@ export const fetchPermanentDocumentsByEquipmentId = async (equipmentId: string) 
   const { data, error } = await supabase
     .from('documents_equipment')
     .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
-    .not('id_document_types', 'is', null)
     .not('id_document_types.is_it_montlhy', 'is', true)
     .eq('applies', equipmentId)
+    .not('id_document_types', 'is', null)
     .returns<EquipmentDocumentDetailed[]>();
 
   if (error) {
@@ -246,6 +249,83 @@ export const fetchCurrentUser = async () => {
   } = await supabase.auth.getUser();
 
   return user;
+};
+
+export const fetchCustomForms = async () => {
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+  const { data, error } = await supabase
+    .from('custom_form')
+    .select('*,form_answers(*)')
+    .eq('company_id', company_id || '')
+    .returns<CheckListWithAnswer[]>();
+
+  if (error) {
+    console.error('Error fetching custom forms:', error);
+    return [];
+  }
+  return data;
+};
+
+export const fetchCustomFormById = async (formId: string) => {
+  const supabase = supabaseServer();
+  const { data, error } = await supabase.from('custom_form').select('*').eq('id', formId);
+
+  if (error) {
+    console.error('Error fetching custom form by ID:', error);
+    return [];
+  }
+  return data;
+};
+
+export const fetchFormsAnswersByFormId = async (formId: string) => {
+  const supabase = supabaseServer();
+  const { data, error } = await supabase
+    .from('form_answers')
+    .select('*,form_id(*)')
+    .eq('form_id', formId)
+    .returns<CheckListAnswerWithForm[]>();
+
+  if (error) {
+    console.error('Error fetching form answers:', error);
+    return [];
+  }
+  return data ?? [];
+};
+
+export const fetchAnswerById = async (answerId: string) => {
+  const supabase = supabaseServer();
+  const { data, error } = await supabase
+    .from('form_answers')
+    .select('*,form_id(*)')
+    .eq('id', answerId)
+    .returns<CheckListAnswerWithForm[]>()
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching form answers:', error);
+    return [];
+  }
+  return data ?? [];
+};
+
+export const getCurrentProfile = async () => {
+  const user = await fetchCurrentUser();
+
+  if (!user) return [];
+  const supabase = supabaseServer();
+  const { data, error } = await supabase
+    .from('profile')
+    .select('*')
+    .eq('id', user?.id || '');
+
+  if (error) {
+    console.error('Error fetching current profile:', error);
+    return [];
+  }
+  return data;
 };
 
 export const verifyUserRoleInCompany = async () => {
