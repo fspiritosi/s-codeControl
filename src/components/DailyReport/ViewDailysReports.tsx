@@ -398,7 +398,7 @@ const [allReport, setAllreport] = useState<DailyReportData[]>([]);
       <Dialog open={openModal} onOpenChange={setOpenModal}>
         <DialogContent className="max-w-[95vw] h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Reporte Diario</DialogTitle>
+            <DialogTitle>Parte Diario</DialogTitle>
             <DialogDescription className="flex items-center space-x-4">
   <span>Fecha: {selectedReport?.date ? moment(selectedReport.date).format('DD/MM/YYYY') : ''}</span>
   <div className="grid grid-cols-3 y gap-4 w-full">

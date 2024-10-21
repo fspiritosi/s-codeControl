@@ -51,10 +51,9 @@ import { Badge } from '../ui/badge'
 import GenericDialog from './GenericDialog';
 import UploadDocument from './UploadDocument'
 import { supabaseBrowser } from '@/lib/supabase/browser'
-// import { set } from 'date-fns'
-// import { string } from 'zod'
 import { Card, CardDescription } from '../ui/card'
 // import { cn } from '@/lib/utils'
+import { MultiSelectWithFilters } from '@/components/DailyReport/MultiSelectWithFilters'
 
 import DocumentView from './DocumentView'
 import DailyReportSkeleton from '../Skeletons/DayliReportSkeleton'
@@ -230,7 +229,7 @@ interface RepairsSolicituds {
 
 
 export default function DailyReport({ reportData, allReport }: DailyReportProps) {
-
+console.log(reportData)
     const [companyName, setCompanyName] = useState<string | null>(null);
     const [employees, setEmployees] = useState<Employee[]>([])
     const [customers, setCustomers] = useState<Customers[]>([])
@@ -297,8 +296,8 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     const fetchCompanyName = async () => {
         const response = await fetch(`${URL}/api/company?actual=${company_id}`)
         const data = await response.json()
-        const companyName=data.data[0].company_name
-        const companyData=data.data[0]
+        const companyName = data.data[0].company_name
+        const companyData = data.data[0]
         setCompanyData(companyData)
         console.log(companyName)
         setCompanyName(companyName)
@@ -391,7 +390,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
 
 
     }, [])
-   console.log(companyName)
+    console.log(companyName)
 
 
     useEffect(() => {
@@ -652,10 +651,10 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     const selectedEquipment = watch('equipment')
 
 
-    
-    
-    
-    
+
+
+
+
     const getEmployeeNames = (employeeIds: string[]) => {
         return employeeIds.map(id => {
             const employee = employees.find(emp => emp.id === id)
@@ -667,7 +666,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
         return getEmployeeNames(item.employees)
     })
     console.log(employeeNam)
-    
+
     const getEquipmentNames = (equipmentIds: string[]) => {
         return equipmentIds.map(id => {
             const eq = equipment.find(e => e.id === id)
@@ -1399,7 +1398,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                                 )}
                                             />
                                             {isDialogOpen && (
-                                                <GenericDialog 
+                                                <GenericDialog
                                                     title="Reprogramar Reporte"
                                                     description="Selecciona un parte diario para reprogramar este reporte."
                                                     isOpen={isDialogOpen}
@@ -1543,8 +1542,188 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                         className="overflow-x-auto"
                     >
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold">Parte Diario en Construcción</h2>
+                            <h2 className="text-xl font-semibold">Filtros:</h2>
 
+                            {/* <Select
+                                onValueChange={(value) => {
+                                    if (value === 'all') {
+                                        setDailyReport(reportData?.dailyreportrows || []);
+                                    } else {
+                                        const filteredReports = dailyReport.filter(report => report.customer === value);
+                                        setDailyReport(filteredReports);
+                                    }
+                                }}
+                            >
+                                <SelectTrigger className="h-6 w-24 border-spacing-1 ml-2">
+                                    <span>Cliente</span>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectItem value="all">Todos</SelectItem>
+                                        {Array.from(new Set(dailyReport.map(report => report.customer))).map((customerId) => {
+                                            const customer = customers.find(c => c.id === customerId);
+                                            return customer ? (
+                                                <SelectItem key={customer.id} value={customer.id}>
+                                                    {customer.name}
+                                                </SelectItem>
+                                            ) : null;
+                                        })}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select> */}
+                            <MultiSelectWithFilters
+                                items={customers} // Los clientes disponibles para seleccionar
+                                selectedItems={dailyReport.map(report => report.customer).filter((customer): customer is string => customer !== undefined)} // Selecciona los clientes en base a dailyReport
+                                onChange={(selectedCustomers) => {
+                                    if (selectedCustomers.length === 0 || selectedCustomers.includes('all')) {
+                                        // Mostrar todos los reportes si no hay ningún cliente seleccionado o si se seleccionó "Todos"
+                                        setDailyReport(reportData?.dailyreportrows || []);
+                                    } else {
+                                        // Filtrar los reportes según los clientes seleccionados
+                                        const filteredReports = reportData?.dailyreportrows?.filter(report =>
+                                            report.customer && selectedCustomers.includes(report.customer)
+                                        );
+                                        setDailyReport(filteredReports || []);
+                                    }
+                                }}
+                                placeholder="Cliente"
+                            />
+                            <MultiSelectWithFilters
+                                items={services
+                                    .filter(service => 
+                                        reportData?.dailyreportrows.some(row => row.services === service.id)
+                                    )
+                                    .map(service => ({
+                                        id: service.id,
+                                        name: service.service_name
+                                    }))} // Mostrar solo los servicios que están en reportData
+                                selectedItems={dailyReport.map(report => report.services).filter((service): service is string => service !== undefined)} // Selecciona los servicios en base a dailyReport
+                                onChange={(selectedServices) => {
+                                    if (selectedServices.length === 0 || selectedServices.includes('all')) {
+                                        // Mostrar todos los reportes si no hay ningún servicio seleccionado o si se seleccionó "Todos"
+                                        setDailyReport(reportData?.dailyreportrows || []);
+                                    } else {
+                                        // Filtrar los reportes según los servicios seleccionados
+                                        const filteredReports = reportData?.dailyreportrows?.filter(report =>
+                                            report.services && selectedServices.includes(report.services)
+                                        );
+                                        setDailyReport(filteredReports || []);
+                                    }
+                                }}
+                                placeholder="Servicio"
+                            />
+                            <MultiSelectWithFilters
+                                items={items
+                                    .filter(item => 
+                                        reportData?.dailyreportrows.some(row => row.item === item.id)
+                                    )
+                                    .map(item => ({
+                                        id: item.id,
+                                        name: item.item_name
+                                    }))} // Mostrar solo los items que están en reportData
+                                selectedItems={dailyReport.map(report => report.item).filter((item): item is string => item !== undefined)} // Selecciona los items en base a dailyReport
+                                onChange={(selectedItems) => {
+                                    if (selectedItems.length === 0 || selectedItems.includes('all')) {
+                                        // Mostrar todos los reportes si no hay ningún item seleccionado o si se seleccionó "Todos"
+                                        setDailyReport(reportData?.dailyreportrows || []);
+                                    } else {
+                                        // Filtrar los reportes según los items seleccionados
+                                        const filteredReports = reportData?.dailyreportrows?.filter(report =>
+                                            report.item && selectedItems.includes(report.item)
+                                        );
+                                        setDailyReport(filteredReports || []);
+                                    }
+                                }}
+                                placeholder="Item"
+                            />
+                            <MultiSelectWithFilters
+                                items={employees
+                                    .filter(employee => 
+                                        reportData?.dailyreportrows.some(row => row.employees.includes(employee.id))
+                                    )
+                                    .map(employee => ({
+                                        id: employee.id,
+                                        name: `${employee.firstname} ${employee.lastname}`
+                                    }))} // Mostrar solo los empleados que están en reportData
+                                selectedItems={dailyReport.flatMap(report => report.employees).filter((employee): employee is string => employee !== undefined)} // Selecciona los empleados en base a dailyReport
+                                onChange={(selectedEmployees) => {
+                                    if (selectedEmployees.length === 0 || selectedEmployees.includes('all')) {
+                                        // Mostrar todos los reportes si no hay ningún empleado seleccionado o si se seleccionó "Todos"
+                                        setDailyReport(reportData?.dailyreportrows || []);
+                                    } else {
+                                        // Filtrar los reportes según los empleados seleccionados
+                                        const filteredReports = reportData?.dailyreportrows?.filter(report =>
+                                            report.employees.some(employee => selectedEmployees.includes(employee))
+                                        );
+                                        setDailyReport(filteredReports || []);
+                                    }
+                                }}
+                                placeholder="Empleados"
+                            />
+                            <MultiSelectWithFilters
+                                items={equipment
+                                    .filter(eq => 
+                                        reportData?.dailyreportrows.some(row => row.equipment.includes(eq.id))
+                                    )
+                                    .map(eq => ({
+                                        id: eq.id,
+                                        name: eq.intern_number.toString()
+                                    }))} // Mostrar solo los equipos que están en reportData
+                                selectedItems={dailyReport.flatMap(report => report.equipment).filter((equipment): equipment is string => equipment !== undefined)} // Selecciona los equipos en base a dailyReport
+                                onChange={(selectedEquipment) => {
+                                    if (selectedEquipment.length === 0 || selectedEquipment.includes('all')) {
+                                        // Mostrar todos los reportes si no hay ningún equipo seleccionado o si se seleccionó "Todos"
+                                        setDailyReport(reportData?.dailyreportrows || []);
+                                    } else {
+                                        // Filtrar los reportes según los equipos seleccionados
+                                        const filteredReports = reportData?.dailyreportrows?.filter(report =>
+                                            report.equipment.some(equipment => selectedEquipment.includes(equipment))
+                                        );
+                                        setDailyReport(filteredReports || []);
+                                    }
+                                }}
+                                placeholder="Equipos"
+                            />
+                            <MultiSelectWithFilters
+                                items={Array.from(new Set(reportData?.dailyreportrows.map(report => report.working_day))).map(workingDay => ({
+                                    id: workingDay,
+                                    name: workingDay
+                                }))} // Mostrar todas las jornadas disponibles en reportData
+                                selectedItems={dailyReport.map(report => report.working_day).filter((workingDay): workingDay is string => workingDay !== undefined)} // Selecciona las jornadas en base a dailyReport
+                                onChange={(selectedWorkingDays) => {
+                                    if (selectedWorkingDays.length === 0 || selectedWorkingDays.includes('all')) {
+                                        // Mostrar todos los reportes si no hay ninguna jornada seleccionada o si se seleccionó "Todos"
+                                        setDailyReport(reportData?.dailyreportrows || []);
+                                    } else {
+                                        // Filtrar los reportes según las jornadas seleccionadas
+                                        const filteredReports = reportData?.dailyreportrows?.filter(report =>
+                                            report.working_day && selectedWorkingDays.includes(report.working_day)
+                                        );
+                                        setDailyReport(filteredReports || []);
+                                    }
+                                }}
+                                placeholder="Jornada"
+                            />
+                            <MultiSelectWithFilters
+                                items={Array.from(new Set(reportData?.dailyreportrows.map(report => report.status))).map(status => ({
+                                    id: status,
+                                    name: status
+                                }))} // Mostrar solo los estados que están en reportData
+                                selectedItems={dailyReport.map(report => report.status).filter((status): status is "pendiente" | "ejecutado" | "cancelado" | "reprogramado" => status !== undefined)} // Selecciona los estados en base a dailyReport
+                                onChange={(selectedStatuses) => {
+                                    if (selectedStatuses.length === 0 || selectedStatuses.includes('all')) {
+                                        // Mostrar todos los reportes si no hay ningún estado seleccionado o si se seleccionó "Todos"
+                                        setDailyReport(reportData?.dailyreportrows || []);
+                                    } else {
+                                        // Filtrar los reportes según los estados seleccionados
+                                        const filteredReports = reportData?.dailyreportrows?.filter(report =>
+                                            report.status && selectedStatuses.includes(report.status)
+                                        );
+                                        setDailyReport(filteredReports || []);
+                                    }
+                                }}
+                                placeholder="Estado"
+                            />
                             {canEdit && (
                                 <Button onClick={handleAddNewRow} className="flex items-center">
                                     <PlusCircledIcon className="mr-2 h-4 w-4" />
@@ -1559,202 +1738,15 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                             </TableCaption>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="text-center">
-                                        <Select
-                                            onValueChange={(value) => {
-                                                if (value === 'all') {
-                                                    setDailyReport(reportData?.dailyreportrows || []);
-                                                } else {
-                                                    const filteredReports = dailyReport.filter(report => report.customer === value);
-                                                    setDailyReport(filteredReports);
-                                                }
-                                            }}
-                                        >
-                                            <SelectTrigger className="w-auto">
-                                                <SelectValue placeholder="cliente" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectGroup>
-                                                    <SelectItem value="all">Todos</SelectItem>
-                                                    {customers.map((customer: Customers) => (
-                                                        <SelectItem key={customer.id} value={customer.id}>
-                                                            {customer.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectGroup>
-                                            </SelectContent>
-                                        </Select>
-                                    </TableHead>
-                                    <TableHead className="text-center">
-                                        <Select
-                                            onValueChange={(value) => {
-                                                if (value === 'all') {
-                                                    setDailyReport(reportData?.dailyreportrows || []);
-                                                } else {
-                                                    const filteredReports = dailyReport.filter(report => report.services === value);
-                                                    setDailyReport(filteredReports);
-                                                }
-                                            }}
-                                        >
-                                            <SelectTrigger className="w-full max-w-xs">
-                                                <SelectValue placeholder="Servicio" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectGroup>
-                                                    <SelectItem value="all">Todos</SelectItem>
-                                                    {Array.from(new Set(dailyReport.map(report => report.services))).map((serviceId) => {
-                                                        const service = services.find(s => s.id === serviceId);
-                                                        return service ? (
-                                                            <SelectItem key={service.id} value={service.id}>
-                                                                {service.service_name}
-                                                            </SelectItem>
-                                                        ) : null;
-                                                    })}
-                                                </SelectGroup>
-                                            </SelectContent>
-                                        </Select>
-                                    </TableHead>
-                                    <TableHead className="text-center">
-                                        <Select
-                                            onValueChange={(value) => {
-                                                if (value === 'all') {
-                                                    setDailyReport(reportData?.dailyreportrows || []);
-                                                } else {
-                                                    const filteredReports = dailyReport.filter(report => report.item === value);
-                                                    setDailyReport(filteredReports);
-                                                }
-                                            }}
-                                        >
-                                            <SelectTrigger className="w-full max-w-xs">
-                                                <SelectValue placeholder="Item" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectGroup>
-                                                    <SelectItem value="all">Todos</SelectItem>
-                                                    {Array.from(new Set(dailyReport.map(report => report.item))).map((itemId) => {
-                                                        const item = items.find(i => i.id === itemId);
-                                                        return item ? (
-                                                            <SelectItem key={item.id} value={item.id}>
-                                                                {item.item_name}
-                                                            </SelectItem>
-                                                        ) : null;
-                                                    })}
-                                                </SelectGroup>
-                                            </SelectContent>
-                                        </Select>
-                                    </TableHead>
-                                    <TableHead className="text-center">
-                                        <Select
-                                            onValueChange={(value) => {
-                                                if (value === 'all') {
-                                                    setDailyReport(reportData?.dailyreportrows || []);
-                                                } else {
-                                                    const filteredReports = dailyReport.filter(report => report.employees.includes(value));
-                                                    setDailyReport(filteredReports);
-                                                }
-                                            }}
-                                        >
-                                            <SelectTrigger className="w-full max-w-xs">
-                                                <SelectValue placeholder="Empleados" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectGroup>
-                                                    <SelectItem value="all">Todos</SelectItem>
-                                                    {Array.from(new Set(dailyReport.flatMap(report => report.employees))).map((employeeId) => {
-                                                        const employee = employees.find(emp => emp.id === employeeId);
-                                                        return employee ? (
-                                                            <SelectItem key={employee.id} value={employee.id}>
-                                                                {`${employee.firstname} ${employee.lastname}`}
-                                                            </SelectItem>
-                                                        ) : null;
-                                                    })}
-                                                </SelectGroup>
-                                            </SelectContent>
-                                        </Select>
-                                    </TableHead>
-                                    <TableHead className="text-center">
-                                        <Select
-                                            onValueChange={(value) => {
-                                                if (value === 'all') {
-                                                    setDailyReport(reportData?.dailyreportrows || []);
-                                                } else {
-                                                    const filteredReports = dailyReport.filter(report => report.equipment.includes(value));
-                                                    setDailyReport(filteredReports);
-                                                }
-                                            }}
-                                        >
-                                            <SelectTrigger className="w-full max-w-xs">
-                                                <SelectValue placeholder="Equipos" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectGroup>
-                                                    <SelectItem value="all">Todos</SelectItem>
-                                                    {Array.from(new Set(dailyReport.flatMap(report => report.equipment))).map((equipmentId) => {
-                                                        const equipmentItem = equipment.find(eq => eq.id === equipmentId);
-                                                        return equipmentItem ? (
-                                                            <SelectItem key={equipmentItem.id} value={equipmentItem.id}>
-                                                                {equipmentItem.intern_number}
-                                                            </SelectItem>
-                                                        ) : null;
-                                                    })}
-                                                </SelectGroup>
-                                            </SelectContent>
-                                        </Select>
-                                    </TableHead>
-                                    <TableHead className="text-center">
-                                        <Select
-                                            onValueChange={(value) => {
-                                                if (value === 'all') {
-                                                    setDailyReport(reportData?.dailyreportrows || []);
-                                                } else {
-                                                    const filteredReports = dailyReport.filter(report => report.working_day === value);
-                                                    setDailyReport(filteredReports);
-                                                }
-                                            }}
-                                        >
-                                            <SelectTrigger className="w-full max-w-xs">
-                                                <SelectValue placeholder="Jornada" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectGroup>
-                                                    <SelectItem value="all">Todos</SelectItem>
-                                                    {Array.from(new Set(dailyReport.map(report => report.working_day))).map((workingDay) => (
-                                                        <SelectItem key={workingDay} value={workingDay}>
-                                                            {workingDay?.charAt(0).toUpperCase() + workingDay?.slice(1)}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectGroup>
-                                            </SelectContent>
-                                        </Select>
-                                    </TableHead>
+                                    <TableHead className="text-center">Cliente</TableHead>
+                                    <TableHead className="text-center">Servicio</TableHead>
+                                    <TableHead className="text-center">Item</TableHead>
+                                    <TableHead className="text-center">Empleados</TableHead>
+                                    <TableHead className="text-center">Equipos</TableHead>
+                                    <TableHead className="text-center">Jornada</TableHead>
                                     <TableHead className="text-center">H.Inicio</TableHead>
                                     <TableHead className="text-center">H.Fin</TableHead>
-                                    <TableHead className="text-center">
-                                        <Select
-                                            onValueChange={(value) => {
-                                                if (value === 'all') {
-                                                    setDailyReport(reportData?.dailyreportrows || []);
-                                                } else {
-                                                    const filteredReports = dailyReport.filter(report => report.status === value);
-                                                    setDailyReport(filteredReports);
-                                                }
-                                            }}
-                                        >
-                                            <SelectTrigger className="w-full max-w-xs">
-                                                <SelectValue placeholder="Estado" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectGroup>
-                                                    <SelectItem value="all">Todos</SelectItem>
-                                                    {Array.from(new Set(dailyReport.map(report => report.status))).map((status) => (
-                                                        <SelectItem key={status} value={status}>
-                                                            {status.charAt(0).toUpperCase() + status.slice(1)}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectGroup>
-                                            </SelectContent>
-                                        </Select>
-                                    </TableHead>
+                                    <TableHead className="text-center">Estado</TableHead>
                                     <TableHead className="text-center">Descripción</TableHead>
                                     <TableHead className="text-center">Acciones</TableHead>
                                 </TableRow>
@@ -1816,7 +1808,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                                                             serviceName={getServiceName(report.services)}
                                                                             itemNames={getItemName(report.item)}
                                                                             isReplacing={false}
-                                                                           
+
                                                                         />
                                                                     )}
                                                                 </>
@@ -1835,20 +1827,13 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
 
             </div>
             <GenericDialog isOpen={isDialogOpen2} onClose={closeDialog2} title='' description=''>
-                <Card className="mt-4 w-full max-w-5xl mx-auto">
-                    <CardDescription className="p-3 flex justify-center">
-                        {/* <embed
-                            src={`${documentUrl}#&navpanes=0&scrollbar=0&zoom=110`}
-                            className={cn(
-                                'w-full h-auto max-h-[80vh] rounded-xl aspect-auto',
-                                documentUrl?.split('.').pop()?.toLocaleLowerCase() === 'pdf' ? 'min-h-[80vh] ' : ''
-                            )}
-                        /> */}
+                <Card className="mb-2 w-full max-w-5xl mx-auto h-[85vh]">
+                    <CardDescription className="p-3 flex justify-center items-center h-full">
 
-                        <DocumentView 
-                            rowId={filaId || ''} 
-                            row={filteredRow as DailyReportItem || ''} 
-                            documentUrl={documentUrl || ''} 
+                        <DocumentView
+                            rowId={filaId || ''}
+                            row={filteredRow as DailyReportItem || ''}
+                            documentUrl={documentUrl || ''}
                             customerName={getCustomerName(selectedCustomer?.id || '')}
                             companyName={companyName || ''}
                             serviceName={getServiceName(selectedService?.id || '')}
@@ -1856,6 +1841,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                             employeeNames={filteredRow?.employees.map((emp: string) => getEmployeeNames([emp]))}
                             equipmentNames={filteredRow?.equipment.map((eq: string) => getEquipmentNames([eq]))}
                         />
+
                     </CardDescription>
                 </Card>
             </GenericDialog>
