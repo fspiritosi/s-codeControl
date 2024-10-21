@@ -44,6 +44,7 @@ function DiagramEmployeeView({
   });
   const [selectedResources, setSelectedResources] = useState<string[]>([]);
   const [filteredResources, setFilteredResources] = useState(activeEmployees);
+  const [initialResources, setInitialResources] = useState(activeEmployees);
   const [inputValue, setInputValue] = useState<string>('');
 
   /*---------------------INICIO ESQUEMA EMPLEADOS---------------------------*/
@@ -62,12 +63,11 @@ function DiagramEmployeeView({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const resourceId = selectedResources?.map((resource) => {
-      const employee = activeEmployees.find((element: any) => {
-        return element.document === resource;
-      });
-      return setSelectedResources(employee?.id);
+    const resourceIds = selectedResources.map((resource) => {
+      const employee = activeEmployees.find((element: any) => element.document === resource);
+      return employee?.id;
     });
+    setSelectedResources(resourceIds);
   }
 
   /*---------------------FIN ESQUEMA EMPLEADOS------------------------------*/
@@ -127,7 +127,16 @@ function DiagramEmployeeView({
   useEffect(() => {
     form.reset();
     setSelectedResources([]);
-  }, [activeEmployees]);
+  }, [activeEmployees, form]);
+
+  useEffect(() => {
+    const employeesWithDiagrams = Object.keys(groupedDiagrams).map((employeeId) => {
+      const employeeDiagrams = groupedDiagrams[employeeId];
+      const employee = employeeDiagrams[0].employees;
+      return employee.id;
+    });
+    setSelectedResources(employeesWithDiagrams);
+  }, []);
 
   return (
     <div>
@@ -181,43 +190,40 @@ function DiagramEmployeeView({
                               }}
                             />
                             <CommandEmpty>No se encontraron recursos con ese nombre o documento</CommandEmpty>
-                            <CommandGroup>
-                              {filteredResources?.map((person: any) => {
-                                //const key = /^\d+$/.test(inputValue) ? person.document : person.name;
-                                const key = /^\d+$/.test(inputValue) ? person.id : person.full_name;
-
-                                //const value = /^\d+$/.test(inputValue) ? person.document : person.name;
-                                const value = /^\d+$/.test(inputValue) ? person.id : person.full_name;
-
-                                return (
-                                  <CommandItem
-                                    value={value}
-                                    key={key}
-                                    onSelect={() => {
-                                      const updatedResources = selectedResources.includes(person.id)
-                                        ? selectedResources?.filter((resource) => resource !== person.id)
-                                        : [...selectedResources, person.id];
-
-                                      setSelectedResources(updatedResources);
-                                      form.setValue('resources', updatedResources);
-                                    }}
-                                  >
-                                    {person.full_name}
-                                    <CheckIcon
-                                      className={cn(
-                                        'ml-auto h-4 w-4',
-                                        selectedResources?.includes(person.id) ? 'opacity-100' : 'opacity-0'
-                                      )}
-                                    />
-                                  </CommandItem>
-                                );
-                              })}
+                            <CommandGroup className="overflow-auto max-h-[60vh]">
+                              {filteredResources
+                                ?.sort((a: any, b: any) => a.full_name.localeCompare(b.full_name))
+                                .map((person: any) => {
+                                  const key = /^\d+$/.test(inputValue) ? person.id : person.full_name;
+                                  const value = /^\d+$/.test(inputValue) ? person.id : person.full_name;
+                                  return (
+                                    <CommandItem
+                                      value={value}
+                                      key={key}
+                                      onSelect={() => {
+                                        const updatedResources = selectedResources.includes(person.id)
+                                          ? selectedResources.filter((resource) => resource !== person.id)
+                                          : [...selectedResources, person.id];
+                                        setSelectedResources(updatedResources);
+                                        form.setValue('resources', updatedResources);
+                                      }}
+                                    >
+                                      {person.full_name}
+                                      <CheckIcon
+                                        className={cn(
+                                          'ml-auto h-4 w-4',
+                                          selectedResources.includes(person.id) ? 'opacity-100' : 'opacity-0'
+                                        )}
+                                      />
+                                    </CommandItem>
+                                  );
+                                })}
                             </CommandGroup>
                           </Command>
                         </PopoverContent>
                       </Popover>
                       <FormDescription>
-                        <InfoComponent size='sm' message={'Selecciona al menos 1 recurso para ver su diagrama.'} />
+                        <InfoComponent size="sm" message={'Selecciona al menos 1 recurso para ver su diagrama.'} />
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -275,37 +281,67 @@ function DiagramEmployeeView({
         </TableHeader>
 
         <TableBody>
-          {selectedResources.length > 0 &&
-            Object.keys(groupedDiagrams)
-              .filter((employeeId) => selectedResources.includes(employeeId))
-              .map((employeeId, index) => {
-                const employeeDiagrams = groupedDiagrams[employeeId];
-                const employee = employeeDiagrams[0].employees; // Asumimos que todos los diagramas tienen el mismo empleado
-                return (
-                  <TableRow key={crypto.randomUUID()}>
-                    <TableCell>
-                      {employee.lastname}, {employee.firstname}
-                    </TableCell>
-                    {mes.map((day, dayIndex) => {
-                      const diagram = employeeDiagrams.find(
-                        (diagram: any) =>
-                          diagram.day === day.getDate() &&
-                          diagram.month === day.getMonth() + 1 &&
-                          diagram.year === day.getFullYear()
-                      );
-                      return (
-                        <TableCell
-                          key={dayIndex}
-                          className="text-center border"
-                          style={{ backgroundColor: diagram?.diagram_type.color }}
-                        >
-                          {diagram?.diagram_type.short_description}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                );
-              })}
+          {selectedResources.length > 0
+            ? Object.keys(groupedDiagrams)
+                .filter((employeeId) => selectedResources.includes(employeeId))
+                .map((employeeId, index) => {
+                  const employeeDiagrams = groupedDiagrams[employeeId];
+                  const employee = employeeDiagrams[0].employees; // Asumimos que todos los diagramas tienen el mismo empleado
+                  return (
+                    <TableRow key={crypto.randomUUID()}>
+                      <TableCell>
+                        {employee.lastname}, {employee.firstname}
+                      </TableCell>
+                      {mes.map((day, dayIndex) => {
+                        const diagram = employeeDiagrams.find(
+                          (diagram: any) =>
+                            diagram.day === day.getDate() &&
+                            diagram.month === day.getMonth() + 1 &&
+                            diagram.year === day.getFullYear()
+                        );
+                        return (
+                          <TableCell
+                            key={dayIndex}
+                            className="text-center border"
+                            style={{ backgroundColor: diagram?.diagram_type.color }}
+                          >
+                            {diagram?.diagram_type.short_description}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  );
+                })
+            : Object.keys(groupedDiagrams)
+                .filter((employeeId) => initialResources.includes(employeeId))
+                .map((employeeId, index) => {
+                  const employeeDiagrams = groupedDiagrams[employeeId];
+                  const employee = employeeDiagrams[0].employees; // Asumimos que todos los diagramas tienen el mismo empleado
+                  return (
+                    <TableRow key={crypto.randomUUID()}>
+                      <TableCell>
+                        {employee.lastname}, {employee.firstname}
+                      </TableCell>
+                      {mes.map((day, dayIndex) => {
+                        const diagram = employeeDiagrams.find(
+                          (diagram: any) =>
+                            diagram.day === day.getDate() &&
+                            diagram.month === day.getMonth() + 1 &&
+                            diagram.year === day.getFullYear()
+                        );
+                        return (
+                          <TableCell
+                            key={dayIndex}
+                            className="text-center border"
+                            style={{ backgroundColor: diagram?.diagram_type.color }}
+                          >
+                            {diagram?.diagram_type.short_description}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  );
+                })}
         </TableBody>
       </Table>
     </div>
