@@ -70,7 +70,12 @@ export default async function Home({
     model: equipment.model.name,
     brand: equipment.brand.name,
     intern_number: equipment.intern_number,
+    vehicle_type: equipment.type.name,
   }));
+  const currentEquipment = equipmentsForComboBox.find((equipment) => equipment.value === params.id);
+
+  console.log(checklists, 'checklists');
+  console.log(currentEquipment, 'currentEquipment');
   return (
     <QrActionSelector
       user={user}
@@ -80,7 +85,11 @@ export default async function Home({
       default_equipment_id={params.id}
       role={role}
       pendingRequests={data as any}
-      checkList={checklists}
+      checkList={checklists.filter(
+        (checklist) =>
+          (checklist.form as { vehicle_type: string[] }).vehicle_type.includes(currentEquipment?.vehicle_type || '') ||
+          (checklist.form as { vehicle_type: string[] }).vehicle_type.includes('all')
+      )}
       equipmentsForComboBox={equipmentsForComboBox}
       empleado_name={empleado_name}
     />

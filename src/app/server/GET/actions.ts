@@ -143,7 +143,7 @@ export const fetchAllEquipment = async () => {
 
   const { data, error } = await supabase
     .from('vehicles')
-    .select('*,brand(*),model(*)')
+    .select('*,brand(*),model(*),type(*)')
     .eq('company_id', company_id)
     .returns<VehicleWithBrand[]>();
 

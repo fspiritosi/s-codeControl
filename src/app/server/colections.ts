@@ -15,6 +15,7 @@ declare global {
   type Customer = DB['public']['Tables']['customers']['Row']; // Anteriormente: Customers
   type VehicleModel = DB['public']['Tables']['model_vehicles']['Row']; // Anteriormente: Model
   type VehicleType = DB['public']['Tables']['types_of_vehicles']['Row']; // Anteriormente: type_of_vehicle
+  type TypeOfVehicle = DB['public']['Tables']['type']['Row']; // Anteriormente: type_of_vehicle
   type CompanyDocument = DB['public']['Tables']['documents_company']['Row']; // Anteriormente: DocumentsCompany
   type UserProfile = DB['public']['Tables']['profile']['Row']; // Anteriormente: Profile
   type RepairRequest = DB['public']['Tables']['repair_solicitudes']['Row']; // Anteriormente: RepairsSolicituds
@@ -150,10 +151,11 @@ declare global {
   }
 
   // Relaciones de Vehicle
-  interface VehicleWithBrand extends Omit<Vehicle, 'brand' | 'model'> {
+  interface VehicleWithBrand extends Omit<Vehicle, 'brand' | 'model'|'type'> {
     // Anteriormente: VehiclesWithBrand
     brand: VehicleBrand; // Anteriormente: Brand
-    model: VehicleModel; // Anteriormente: Model
+    model: TypeOfVehicle; // Anteriormente: Model
+    type: VehicleType; // Anteriormente: type_of_vehicle
   }
   interface ContractorEmployeeWithCustomer extends Omit<ContractorEmployee, 'customers'> {
     // Anteriormente: ContractorWithCustomers
