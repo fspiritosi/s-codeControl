@@ -18,7 +18,7 @@ import SolicitarMantenimiento from './SolicitarMantenimiento';
 import VehicleRepairRequests from './VehicleRepairRequests';
 
 export default function QrActionSelector({
-  employee,
+  empleado_name,
   user,
   tipo_de_mantenimiento,
   equipment,
@@ -26,8 +26,10 @@ export default function QrActionSelector({
   employee_id,
   role,
   pendingRequests,
+  checkList,
+  equipmentsForComboBox,
 }: {
-  employee: string | undefined;
+  empleado_name: string | undefined;
   user: User | null;
   employee_id: string | undefined;
   tipo_de_mantenimiento: TypeOfRepair;
@@ -35,6 +37,17 @@ export default function QrActionSelector({
   default_equipment_id?: string;
   role: string | undefined;
   pendingRequests: RepairsSolicituds;
+  checkList: CheckListWithAnswer[];
+  equipmentsForComboBox: {
+    label: string;
+    value: string;
+    domain: string | null;
+    serie: string | null;
+    kilometer: string;
+    model: string | null;
+    brand: string | null;
+    intern_number: string;
+  }[];
 }) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const supabase = supabaseBrowser();
@@ -47,6 +60,7 @@ export default function QrActionSelector({
   const handleBack = async () => {
     await supabase.auth.signOut();
     cookies.remove('empleado_id');
+    cookies.remove('empleado_name');
     router.push('/maintenance/thanks');
   };
 
@@ -72,7 +86,15 @@ export default function QrActionSelector({
   }
 
   if (selectedOption === 'checklist') {
-    return <CompletarChecklist onReturn={handleReturn} />;
+    return (
+      <CompletarChecklist
+        empleado_name={empleado_name}
+        default_equipment_id={default_equipment_id}
+        equipmentsForComboBox={equipmentsForComboBox}
+        checkList={checkList}
+        onReturn={handleReturn}
+      />
+    );
   }
   if (selectedOption === 'VehicleRepairRequests') {
     return <VehicleRepairRequests pendingRequests={pendingRequests} onReturn={handleReturn} />;
@@ -122,12 +144,7 @@ export default function QrActionSelector({
             <LapTimerIcon className="mr-2 h-6 w-6" />
             Ver Solicitudes Pendientes
           </Button>
-          <Button
-            disabled
-            className="w-full py-6 text-lg"
-            variant="outline"
-            onClick={() => handleOptionSelect('checklist')}
-          >
+          <Button className="w-full py-6 text-lg" variant="outline" onClick={() => handleOptionSelect('checklist')}>
             <ClipboardList className="mr-2 h-6 w-6" />
             Completar Checklist
           </Button>

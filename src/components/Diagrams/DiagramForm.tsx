@@ -252,8 +252,8 @@ export function DiagramForm({
         diagramasToCreate.push(element);
       }
     }
-    setSuccesDiagrams(diagramasToCreate);
-    setErrorsDiagrams(errorToCreate);
+    setSuccesDiagrams([...succesDiagrams, ...diagramasToCreate]);
+    setErrorsDiagrams([...errorsDiagrams, ...errorToCreate]);
   }
 
   return (

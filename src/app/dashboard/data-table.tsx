@@ -238,8 +238,10 @@ export function ExpiredDataTable<TData, TValue>({
     if (isNoPresented) {
       return; // Clase por defecto si no está vencido
     } else {
+      if(!row.original.validity) return;
+      
       const validityDateStr = row.original.validity; // Obtener la fecha en formato "dd/mm/yyyy"
-      const parts = validityDateStr.split('/'); // Separar la fecha en partes
+      const parts = validityDateStr?.split('/'); // Separar la fecha en partes
 
       const validityDate = new Date(`${parts[1]}/${parts[0]}/${parts[2]}`).getTime();
       const currentDate = new Date().getTime();

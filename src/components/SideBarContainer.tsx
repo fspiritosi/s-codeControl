@@ -12,6 +12,7 @@ import {
   MdOutlineSpaceDashboard,
 } from 'react-icons/md';
 import SideBar from './Sidebar';
+import { Building2, Calendar, ClipboardList, FileText, HelpCircle, LayoutDashboard, Truck, Users, Wrench } from 'lucide-react';
 
 async function SideBarContainer() {
   const supabase = supabaseServer();
@@ -136,54 +137,60 @@ async function SideBarContainer() {
     {
       name: 'Dashboard',
       href: '/dashboard',
-      icon: <MdOutlineSpaceDashboard size={sizeIcons} />,
+      icon: <LayoutDashboard size={sizeIcons} />,
       position: 1,
       // regex: /^\/dashboard(\/|$)/,
     },
     {
       name: 'Empresa',
       href: '/dashboard/company/actualCompany',
-      icon: <MdOutlineCorporateFare size={sizeIcons} />,
+      icon: <Building2 size={sizeIcons} />,
       position: 2,
       // regex: /^\/dashboard\/company\/actualCompany(\/|$)/,
     },
     {
       name: 'Empleados',
       href: '/dashboard/employee',
-      icon: <MdOutlinePersonAddAlt size={sizeIcons} />,
+      icon: <Users  size={sizeIcons} />,
       position: 3,
       // regex: /^\/dashboard\/employee(\/|$)/,
     },
     {
       name: 'Equipos',
       href: '/dashboard/equipment',
-      icon: <FiTruck size={sizeIcons} />,
+      icon: <Truck size={sizeIcons} />,
       position: 4,
       // regex: /^\/dashboard\/equipment(\/|$)/,
     },
     {
       name: 'Documentación',
       href: '/dashboard/document',
-      icon: <MdListAlt size={sizeIcons} />,
+      icon: <FileText size={sizeIcons} />,
       position: 5,
       // regex: /^\/dashboard\/document(\/|$)/,
     },
     {
       name: 'Operaciones',
       href: '/dashboard/operations',
-      icon: <MdCalendarMonth size={sizeIcons} />,
+      icon: <Calendar  size={sizeIcons} />,
     },
     {
       name: 'Mantenimiento',
       href: '/dashboard/maintenance',
-      icon: <FiTool size={sizeIcons} />,
+      icon: <Wrench size={sizeIcons} />,
       position: 6,
       // regex: /^\/dashboard\/maintenance(\/|$)/,
     },
     {
+      name: 'Formularios',
+      href: '/dashboard/forms',
+      icon: <ClipboardList size={sizeIcons} />,
+      position: 7,
+    },
+    {
       name: 'Ayuda',
       href: '/dashboard/help',
-      icon: <MdHelpOutline size={sizeIcons} />,
+      icon: <HelpCircle size={sizeIcons} />,
       position: 10,
       // regex: /^\/dashboard\/help(\/|$)/,
     },
@@ -198,7 +205,7 @@ async function SideBarContainer() {
       liksToShow = Allinks;
       return;
     }
-    userData?.modulos.lenght === 0
+    userData?.modulos?.length === 0
       ? (liksToShow = Allinks) // TODO esta linea se tiene que sacar porque por defecto tiene que tener todos los modulos activos
       : userData?.modulos?.map((mod: string) => {
           Allinks.filter((link) => {

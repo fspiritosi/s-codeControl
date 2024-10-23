@@ -2,17 +2,19 @@
 
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
+import {
+  Building2,
+  Calendar,
+  ClipboardList,
+  FileText,
+  HelpCircle,
+  LayoutDashboard,
+  Truck,
+  Users,
+  Wrench,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FiTool, FiTruck } from 'react-icons/fi';
-import {
-  MdHelpOutline,
-  MdListAlt,
-  MdOutlineCorporateFare,
-  MdOutlinePersonAddAlt,
-  MdOutlineSpaceDashboard,
-  MdCalendarMonth,
-} from 'react-icons/md';
 import { CardTitle } from './ui/card';
 
 export default function SideBar({ Allinks, role }: { Allinks: any; role: string }) {
@@ -23,55 +25,61 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
   const isActive = useLoggedUserStore((state) => state.active_sidebar);
   const pathName = usePathname();
 
-  const sizeIcons = 20;
+  const sizeIcons = 22;
 
   const Allinks33 = [
     {
       name: 'Dashboard',
       href: '/dashboard',
-      icon: <MdOutlineSpaceDashboard size={sizeIcons} />,
+      icon: <LayoutDashboard size={sizeIcons} />,
       regex: /^\/dashboard(\/|$)/,
     },
     {
       name: 'Empresa',
       href: '/dashboard/company/actualCompany',
-      icon: <MdOutlineCorporateFare size={sizeIcons} />,
+      icon: <Building2 size={sizeIcons} />,
       regex: /^\/dashboard\/company\/actualCompany(\/|$)/,
     },
     {
       name: 'Empleados',
       href: '/dashboard/employee',
-      icon: <MdOutlinePersonAddAlt size={sizeIcons} />,
+      icon: <Users size={sizeIcons} />,
       regex: /^\/dashboard\/employee(\/|$)/,
     },
     {
       name: 'Equipos',
       href: '/dashboard/equipment',
-      icon: <FiTruck size={sizeIcons} />,
+      icon: <Truck size={sizeIcons} />,
       regex: /^\/dashboard\/equipment(\/|$)/,
     },
     {
       name: 'Documentación',
       href: '/dashboard/document',
-      icon: <MdListAlt size={sizeIcons} />,
+      icon: <FileText size={sizeIcons} />,
       regex: /^\/dashboard\/document(\/|$)/,
     },
     {
       name: 'Operaciones',
       href: '/dashboard/operations',
-      icon: <MdCalendarMonth size={sizeIcons} />,
+      icon: <Calendar size={sizeIcons} />,
       regex: /^\/dashboard\/operations(\/|$)/,
     },
     {
       name: 'Mantenimiento',
       href: '/dashboard/maintenance',
-      icon: <FiTool size={sizeIcons} />,
+      icon: <Wrench size={sizeIcons} />,
       regex: /^\/dashboard\/maintenance(\/|$)/,
+    },
+    {
+      name: 'Formularios',
+      href: '/dashboard/forms',
+      icon: <ClipboardList size={sizeIcons} />,
+      regex: /^\/dashboard\/forms(\/|$)/,
     },
     {
       name: 'Ayuda',
       href: '/dashboard/help',
-      icon: <MdHelpOutline size={sizeIcons} />,
+      icon: <HelpCircle size={sizeIcons} />,
       regex: /^\/dashboard\/help(\/|$)/,
     },
   ];

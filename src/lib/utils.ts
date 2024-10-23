@@ -1,5 +1,6 @@
 'use strict';
 import { clsx, type ClassValue } from 'clsx';
+import moment from 'moment';
 import { twMerge } from 'tailwind-merge';
 import { supabaseBrowser } from './supabase/browser';
 import { supabaseServer } from './supabase/server';
@@ -291,7 +292,52 @@ export const getOpenRepairsSolicitudesByArrayClientSide = async (
   return data;
 };
 
-export const createRepairSolicitud = async (data: any) => {
-  const supabase = supabaseBrowser();
-  const { data: repair_solicitudes, error } = await supabase.from('repair_solicitudes').insert(data).select();
+export const formatEmployeeDocuments = (doc: EmployeeDocumentWithContractors) => {
+  return {
+    date: moment(doc.created_at).format('DD/MM/YYYY'),
+    allocated_to: doc.applies?.contractor_employee?.map((doc: any) => doc.contractors?.name).join(', '),
+    documentName: doc.id_document_types?.name,
+    state: doc.state,
+    multiresource: doc.id_document_types?.multiresource ? 'Si' : 'No',
+    isItMonthly: doc.id_document_types?.is_it_montlhy,
+    validity: doc.validity ? moment(doc.validity).format('DD/MM/YYYY') : '',
+    mandatory: doc.id_document_types?.mandatory ? 'Si' : 'No',
+    id: doc.id,
+    resource: `${doc.applies?.lastname?.charAt(0)?.toUpperCase()}${doc?.applies?.lastname.slice(
+      1
+    )} ${doc.applies?.firstname?.charAt(0)?.toUpperCase()}${doc?.applies?.firstname.slice(1)}`,
+    document_number: doc.applies?.document_number,
+    employee_id: doc.applies?.id,
+    document_url: doc.document_path,
+    is_active: doc.applies?.is_active,
+    period: doc.period,
+    applies: doc.id_document_types?.applies,
+    id_document_types: doc.id_document_types?.id,
+    intern_number: null,
+  };
+};
+
+export const formatVehiculesDocuments = (doc: EquipmentDocumentDetailed) => {
+
+  console.log('doc.validity',doc.validity);
+  return {
+    date: moment(doc.created_at).format('DD/MM/YYYY'),
+    allocated_to: doc.applies?.type_of_vehicle?.name,
+    documentName: doc.id_document_types?.name,
+    state: doc.state,
+    multiresource: doc.id_document_types?.multiresource ? 'Si' : 'No',
+    isItMonthly: doc.id_document_types?.is_it_montlhy,
+    validity: doc.validity,
+    mandatory: doc.id_document_types?.mandatory ? 'Si' : 'No',
+    id: doc.id,
+    resource: `${doc.applies?.domain}`,
+    vehicle_id: doc.applies?.id,
+    is_active: doc.applies?.is_active,
+    period: doc.period,
+    applies: doc.id_document_types?.applies,
+    resource_id: doc.applies?.id,
+    id_document_types: doc.id_document_types.id,
+    intern_number: `${doc.applies?.intern_number}`,
+    serie: doc.applies?.serie,
+  };
 };
