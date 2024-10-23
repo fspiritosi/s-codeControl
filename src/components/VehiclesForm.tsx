@@ -541,7 +541,7 @@ export default function VehiclesForm2({
           }
 
           setReadOnly(true);
-          router.push('/dashboard/equipment');
+          router.refresh();
         } catch (error) {
           throw new Error('Error al editar el vehículo');
         }
@@ -1204,12 +1204,12 @@ export default function VehiclesForm2({
             </form>
           </Form>
         </TabsContent>
-        <TabsContent value="documents">
-          <DocumentEquipmentComponent id={vehicle?.id} />
-        </TabsContent>
-        <TabsContent value="repairs" className="px-3 py-2">
+        {/* <TabsContent value="documents"> */}
+          {/* <DocumentEquipmentComponent id={vehicle?.id} /> */}
+        {/* </TabsContent> */}
+        {/* <TabsContent value="repairs" className="px-3 py-2"> */}
           {children}
-        </TabsContent>
+        {/* </TabsContent> */}
         <TabsContent value="QR" className="px-3 py-2 pt-5">
           <div className="flex w-full">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

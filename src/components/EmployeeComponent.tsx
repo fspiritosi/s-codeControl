@@ -1,7 +1,6 @@
 'use client';
 require('dotenv').config();
 
-import DocumentTable from '@/app/dashboard/document/DocumentTable';
 import { CheckboxDefaultValues } from '@/components/CheckboxDefValues';
 import { SelectWithData } from '@/components/SelectWithData';
 import { Badge } from '@/components/ui/badge';
@@ -103,6 +102,7 @@ export default function EmployeeComponent({
   diagrams,
   covenants,
   categories,
+  children,
 }: {
   role: string | null;
   user: any;
@@ -127,6 +127,7 @@ export default function EmployeeComponent({
         covenant_id: string;
       }[]
     | undefined;
+  children: React.ReactNode;
 }) {
   const profile = useLoggedUserStore((state) => state);
   const role = useLoggedUserStore((state) => state.roleActualCompany);
@@ -1671,7 +1672,7 @@ export default function EmployeeComponent({
               </div>
             </TabsContent>
             <TabsContent value="documents" className="px-2 py-2">
-              <DocumentTable document={user?.document_number || ''} />
+              {children}
             </TabsContent>
             <TabsContent value="diagrams" className="px-2 py-2">
               <DiagramDetailEmployeeView diagrams={diagrams} />
