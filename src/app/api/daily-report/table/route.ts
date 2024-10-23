@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
       .eq('company_id', company_id || '');
 
     if (error) {
+      console.log('Error fetching daily reports:', error);
       throw new Error(JSON.stringify(error));
     }
 
