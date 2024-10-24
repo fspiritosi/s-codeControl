@@ -104,7 +104,7 @@ export default function DailyReportSkeleton() {
       </CardHeader> */}
       {/* <CardContent> */}
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Fecha: </h2>
+          {/* <h2 className="text-xl font-semibold">Fecha: </h2> */}
           {[1, 2, 3, 4, 5, 6, 7].map((col) => (
           <Select key={col}>
             <Skeleton className="h-6 w-24 bg-gray-300" />
