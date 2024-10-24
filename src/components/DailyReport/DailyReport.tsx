@@ -38,14 +38,15 @@ import DailyReportSkeleton from '../Skeletons/DayliReportSkeleton';
 import DocumentView from './DocumentView';
 import { dailyColumns } from './tables/DailyReportColumns';
 import { TypesOfCheckListTable } from './tables/data-table-dily-report';
+import BtnXlsDownload from '../BtnXlsDownload'
 
-interface Customers {
+export interface Customers {
   id: string;
   name: string;
   is_active: boolean;
 }
 
-interface Employee {
+export interface Employee {
   id: string;
   firstname: string;
   lastname: string;
@@ -53,7 +54,7 @@ interface Employee {
   is_active: boolean;
 }
 
-interface Equipment {
+export interface Equipment {
   id: string;
   name: string;
   intern_number: number;
@@ -62,7 +63,7 @@ interface Equipment {
   condition: 'operativo' | 'no operativo' | 'en reparación' | 'operativo condicionado';
 }
 
-interface Services {
+export interface Services {
   service_validity: string | number | Date;
   service_start: string | number | Date;
   id: string;
@@ -72,7 +73,7 @@ interface Services {
   item_id: string;
 }
 
-interface Items {
+export interface Items {
   id: string;
   item_name: string;
   customer_service_id: { id: string };
@@ -350,11 +351,12 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     // window.open(url, '_blank');
     setIsDialogOpen2(true);
   };
+  
   const closeDialog2 = () => {
     setIsDialogOpen2(false);
     setDocumentUrl(null);
   };
-
+  
   useEffect(() => {
     fetchCompanyName();
     fetchEmployees();
@@ -1172,6 +1174,23 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
       });
     }
   };
+  
+  function createDataToDownload(data: DailyReportItem[]) {
+    const dataToDownload = data.map((report: DailyReportItem) => ({
+        date: report.date,
+        Cliente: report.customer ? getCustomerName(report.customer) : 'N/A',
+        Servicio: report.services ? getServiceName(report.services) : 'N/A',
+        Item: report.item ? getItemName(report.item) : 'N/A',
+        Empleados: Array.isArray(report.employees) ? getEmployeeNames(report.employees) : 'N/A',
+        Equipos: Array.isArray(report.equipment) ? getEquipmentNames(report.equipment) : 'N/A',
+        Jornada: report.working_day,
+        'Hora de Inicio': report.start_time,
+        'Hora de Fin': report.end_time,
+        Estado: report.status,
+        Descripción: report.description,
+    }));
+    return dataToDownload;
+}
 
   if (isLoading) {
     return <DailyReportSkeleton />;
@@ -1493,384 +1512,28 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
             transition={{ duration: 0.3 }}
             className="overflow-x-auto"
           >
-            {/* <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Filtros:</h2>
-
-              <Select
-                                onValueChange={(value) => {
-                                    if (value === 'all') {
-                                        setDailyReport(reportData?.dailyreportrows || []);
-                                    } else {
-                                        const filteredReports = dailyReport.filter(report => report.customer === value);
-                                        setDailyReport(filteredReports);
-                                    }
-                                }}
-                            >
-                                <SelectTrigger className="h-6 w-24 border-spacing-1 ml-2">
-                                    <span>Cliente</span>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        <SelectItem value="all">Todos</SelectItem>
-                                        {Array.from(new Set(dailyReport.map(report => report.customer))).map((customerId) => {
-                                            const customer = customers.find(c => c.id === customerId);
-                                            return customer ? (
-                                                <SelectItem key={customer.id} value={customer.id}>
-                                                    {customer.name}
-                                                </SelectItem>
-                                            ) : null;
-                                        })}
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-              <MultiSelectWithFilters
-                items={customers} // Los clientes disponibles para seleccionar
-                selectedItems={dailyReport
-                  ?.map((report) => report.customer)
-                  .filter((customer): customer is string => customer !== undefined)} // Selecciona los clientes en base a dailyReport
-                onChange={(selectedCustomers) => {
-                  if (selectedCustomers.length === 0 || selectedCustomers.includes('all')) {
-                    // Mostrar todos los reportes si no hay ningún cliente seleccionado o si se seleccionó "Todos"
-                    setDailyReport(reportData?.dailyreportrows || []);
-                  } else {
-                    // Filtrar los reportes según los clientes seleccionados
-                    const filteredReports = reportData?.dailyreportrows?.filter(
-                      (report) => report.customer && selectedCustomers.includes(report.customer)
-                    );
-                    setDailyReport(filteredReports || []);
-                  }
-                }}
-                placeholder="Cliente"
-              />
-              <MultiSelectWithFilters
-                items={services
-                  .filter((service) => reportData?.dailyreportrows.some((row) => row.services === service.id))
-                  .map((service) => ({
-                    id: service.id,
-                    name: service.service_name,
-                  }))} // Mostrar solo los servicios que están en reportData
-                selectedItems={dailyReport
-                  ?.map((report) => report.services)
-                  ?.filter((service): service is string => service !== undefined)} // Selecciona los servicios en base a dailyReport
-                onChange={(selectedServices) => {
-                  if (selectedServices.length === 0 || selectedServices.includes('all')) {
-                    // Mostrar todos los reportes si no hay ningún servicio seleccionado o si se seleccionó "Todos"
-                    setDailyReport(reportData?.dailyreportrows || []);
-                  } else {
-                    // Filtrar los reportes según los servicios seleccionados
-                    const filteredReports = reportData?.dailyreportrows?.filter(
-                      (report) => report.services && selectedServices.includes(report.services)
-                    );
-                    setDailyReport(filteredReports || []);
-                  }
-                }}
-                placeholder="Servicio"
-              />
-              <MultiSelectWithFilters
-                items={items
-                  .filter((item) => reportData?.dailyreportrows.some((row) => row.item === item.id))
-                  .map((item) => ({
-                    id: item.id,
-                    name: item.item_name,
-                  }))} // Mostrar solo los items que están en reportData
-                selectedItems={dailyReport
-                  ?.map((report) => report.item)
-                  ?.filter((item): item is string => item !== undefined)} // Selecciona los items en base a dailyReport
-                onChange={(selectedItems) => {
-                  if (selectedItems.length === 0 || selectedItems.includes('all')) {
-                    // Mostrar todos los reportes si no hay ningún item seleccionado o si se seleccionó "Todos"
-                    setDailyReport(reportData?.dailyreportrows || []);
-                  } else {
-                    // Filtrar los reportes según los items seleccionados
-                    const filteredReports = reportData?.dailyreportrows?.filter(
-                      (report) => report.item && selectedItems.includes(report.item)
-                    );
-                    setDailyReport(filteredReports || []);
-                  }
-                }}
-                placeholder="Item"
-              />
-              <MultiSelectWithFilters
-                items={employees
-                  .filter((employee) => reportData?.dailyreportrows?.some((row) => row.employees.includes(employee.id)))
-                  .map((employee) => ({
-                    id: employee.id,
-                    name: `${employee.firstname} ${employee.lastname}`,
-                  }))} // Mostrar solo los empleados que están en reportData
-                selectedItems={dailyReport
-                  ?.flatMap((report) => report.employees)
-                  ?.filter((employee): employee is string => employee !== undefined)} // Selecciona los empleados en base a dailyReport
-                onChange={(selectedEmployees) => {
-                  if (selectedEmployees.length === 0 || selectedEmployees.includes('all')) {
-                    // Mostrar todos los reportes si no hay ningún empleado seleccionado o si se seleccionó "Todos"
-                    setDailyReport(reportData?.dailyreportrows || []);
-                  } else {
-                    // Filtrar los reportes según los empleados seleccionados
-                    const filteredReports = reportData?.dailyreportrows?.filter((report) =>
-                      report.employees.some((employee) => selectedEmployees.includes(employee))
-                    );
-                    setDailyReport(filteredReports || []);
-                  }
-                }}
-                placeholder="Empleados"
-              />
-              <MultiSelectWithFilters
-                items={equipment
-                  .filter((eq) => reportData?.dailyreportrows.some((row) => row.equipment.includes(eq.id)))
-                  .map((eq) => ({
-                    id: eq.id,
-                    name: eq.intern_number.toString(),
-                  }))} // Mostrar solo los equipos que están en reportData
-                selectedItems={dailyReport
-                  .flatMap((report) => report.equipment)
-                  .filter((equipment): equipment is string => equipment !== undefined)} // Selecciona los equipos en base a dailyReport
-                onChange={(selectedEquipment) => {
-                  if (selectedEquipment.length === 0 || selectedEquipment.includes('all')) {
-                    // Mostrar todos los reportes si no hay ningún equipo seleccionado o si se seleccionó "Todos"
-                    setDailyReport(reportData?.dailyreportrows || []);
-                  } else {
-                    // Filtrar los reportes según los equipos seleccionados
-                    const filteredReports = reportData?.dailyreportrows?.filter((report) =>
-                      report.equipment.some((equipment) => selectedEquipment.includes(equipment))
-                    );
-                    setDailyReport(filteredReports || []);
-                  }
-                }}
-                placeholder="Equipos"
-              />
-              <MultiSelectWithFilters
-                items={Array.from(new Set(reportData?.dailyreportrows.map((report) => report.working_day))).map(
-                  (workingDay) => ({
-                    id: workingDay,
-                    name: workingDay,
-                  })
-                )} // Mostrar todas las jornadas disponibles en reportData
-                selectedItems={dailyReport
-                  .map((report) => report.working_day)
-                  .filter((workingDay): workingDay is string => workingDay !== undefined)} // Selecciona las jornadas en base a dailyReport
-                onChange={(selectedWorkingDays) => {
-                  if (selectedWorkingDays.length === 0 || selectedWorkingDays.includes('all')) {
-                    // Mostrar todos los reportes si no hay ninguna jornada seleccionada o si se seleccionó "Todos"
-                    setDailyReport(reportData?.dailyreportrows || []);
-                  } else {
-                    // Filtrar los reportes según las jornadas seleccionadas
-                    const filteredReports = reportData?.dailyreportrows?.filter(
-                      (report) => report.working_day && selectedWorkingDays.includes(report.working_day)
-                    );
-                    setDailyReport(filteredReports || []);
-                  }
-                }}
-                placeholder="Jornada"
-              />
-              <MultiSelectWithFilters
-                items={Array.from(new Set(reportData?.dailyreportrows.map((report) => report.status))).map(
-                  (status) => ({
-                    id: status,
-                    name: status,
-                  })
-                )} // Mostrar solo los estados que están en reportData
-                selectedItems={dailyReport
-                  .map((report) => report.status)
-                  .filter(
-                    (status): status is 'pendiente' | 'ejecutado' | 'cancelado' | 'reprogramado' => status !== undefined
-                  )} // Selecciona los estados en base a dailyReport
-                onChange={(selectedStatuses) => {
-                  if (selectedStatuses.length === 0 || selectedStatuses.includes('all')) {
-                    // Mostrar todos los reportes si no hay ningún estado seleccionado o si se seleccionó "Todos"
-                    setDailyReport(reportData?.dailyreportrows || []);
-                  } else {
-                    // Filtrar los reportes según los estados seleccionados
-                    const filteredReports = reportData?.dailyreportrows?.filter(
-                      (report) => report.status && selectedStatuses.includes(report.status)
-                    );
-                    setDailyReport(filteredReports || []);
-                  }
-                }}
-                placeholder="Estado"
-              />
-              </div> */}
-            {/* {canEdit && ( */}
+            
+            {canEdit && (
             <Button onClick={handleAddNewRow} className="flex items-center">
               <PlusCircledIcon className="mr-2 h-4 w-4" />
               Agregar Fila
             </Button>
-            {/* )} */}
+             )} 
 
             <TypesOfCheckListTable
-              columns={dailyColumns}
-              data={[
-                {
-                  id: '1',
-                  date: '2023-10-01',
-                  working_day: 'Lunes',
-                  customer: 'Cliente A',
-                  employees: ['Empleado 1', 'Empleado 2'],
-                  equipment: ['Equipo 1', 'Equipo 2'],
-                  services: 'Servicio A',
-                  item: 'Ítem A',
-                  start_time: '08:00',
-                  end_time: '17:00',
-                  status: 'pendiente',
-                  description: 'Descripción del trabajo pendiente',
-                  document_path: '/path/to/document1.pdf',
-                },
-                {
-                  id: '2',
-                  date: '2023-10-02',
-                  working_day: 'Martes',
-                  customer: 'Cliente B',
-                  employees: ['Empleado 3', 'Empleado 4'],
-                  equipment: ['Equipo 3', 'Equipo 4'],
-                  services: 'Servicio B',
-                  item: 'Ítem B',
-                  start_time: '09:00',
-                  end_time: '18:00',
-                  status: 'ejecutado',
-                  description: 'Descripción del trabajo ejecutado',
-                  document_path: '/path/to/document2.pdf',
-                },
-                {
-                  id: '3',
-                  date: '2023-10-03',
-                  working_day: 'Miércoles',
-                  customer: 'Cliente C',
-                  employees: ['Empleado 5', 'Empleado 6'],
-                  equipment: ['Equipo 5', 'Equipo 6'],
-                  services: 'Servicio C',
-                  item: 'Ítem C',
-                  start_time: '07:00',
-                  end_time: '16:00',
-                  status: 'cancelado',
-                  description: 'Descripción del trabajo cancelado',
-                  document_path: '/path/to/document3.pdf',
-                },
-                {
-                  id: '4',
-                  date: '2023-10-04',
-                  working_day: 'Jueves',
-                  customer: 'Cliente D',
-                  employees: ['Empleado 7', 'Empleado 8'],
-                  equipment: ['Equipo 7', 'Equipo 8'],
-                  services: 'Servicio D',
-                  item: 'Ítem D',
-                  start_time: '10:00',
-                  end_time: '19:00',
-                  status: 'reprogramado',
-                  description: 'Descripción del trabajo reprogramado',
-                  document_path: '/path/to/document4.pdf',
-                },
-                {
-                  id: '5',
-                  date: '2023-10-05',
-                  working_day: 'Viernes',
-                  customer: 'Cliente E',
-                  employees: ['Empleado 9', 'Empleado 10'],
-                  equipment: ['Equipo 9', 'Equipo 10'],
-                  services: 'Servicio E',
-                  item: 'Ítem E',
-                  start_time: '06:00',
-                  end_time: '15:00',
-                  status: 'pendiente',
-                  description: 'Descripción del trabajo pendiente',
-                  document_path: '/path/to/document5.pdf',
-                },
-              ]}
-            />
-
-            <Table className="mt-10">
-              <TableCaption></TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-center">Cliente</TableHead>
-                  <TableHead className="text-center">Servicio</TableHead>
-                  <TableHead className="text-center">Item</TableHead>
-                  <TableHead className="text-center">Empleados</TableHead>
-                  <TableHead className="text-center">Equipos</TableHead>
-                  <TableHead className="text-center">Jornada</TableHead>
-                  <TableHead className="text-center">H.Inicio</TableHead>
-                  <TableHead className="text-center">H.Fin</TableHead>
-                  <TableHead className="text-center">Estado</TableHead>
-                  <TableHead className="text-center">Descripción</TableHead>
-                  <TableHead className="text-center">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dailyReport?.map((report: DailyReportItem) => {
-                  return (
-                    <TableRow key={report.id}>
-                      <TableCell className="text-center">
-                        {report.customer ? getCustomerName(report.customer) : 'N/A'}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {report.services ? getServiceName(report.services) : 'N/A'}
-                      </TableCell>
-                      <TableCell className="text-center">{report.item ? getItemName(report.item) : 'N/A'}</TableCell>
-                      <TableCell className="text-center">
-                        {Array.isArray(report.employees) ? getEmployeeNames(report.employees) : 'N/A'}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {Array.isArray(report.equipment) ? getEquipmentNames(report.equipment) : 'N/A'}
-                      </TableCell>
-                      <TableCell className="text-center">{report.working_day}</TableCell>
-                      <TableCell className="text-center">{report.start_time}</TableCell>
-                      <TableCell className="text-center">{report.end_time}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge
-                          variant={
-                            report.status === 'ejecutado'
-                              ? 'success'
-                              : report.status === 'cancelado'
-                                ? 'destructive'
-                                : report.status === 'reprogramado'
-                                  ? 'yellow'
-                                  : 'default'
-                          }
-                        >
-                          {report.status}
-                        </Badge>
-                      </TableCell>
-
-                      <TableCell className="text-center">{report.description}</TableCell>
-                      <TableCell className="text-center">
-                        {report.document_path ? (
-                          <Button onClick={() => handleViewDocument(report.document_path || '', report.id || '')}>
-                            Ver Documento
-                          </Button>
-                        ) : (
-                          canEdit && (
-                            <>
-                              {report.status !== 'cancelado' && report.status !== 'reprogramado' && (
-                                <>
-                                  {report.status !== 'ejecutado' ? (
-                                    <>
-                                      <Button onClick={() => handleEdit(report.id)} className="mr-2">
-                                        <FilePenLine className="h-4 w-4" />
-                                      </Button>
-                                      <Button onClick={() => handleConfirmOpen(report.id)} variant="destructive">
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </>
-                                  ) : (
-                                    <UploadDocument
-                                      rowId={report.id || ''}
-                                      customerName={getCustomerName(report.customer || '')}
-                                      companyName={companyName || ''}
-                                      serviceName={getServiceName(report.services)}
-                                      itemNames={getItemName(report.item)}
-                                      isReplacing={false}
-                                    />
-                                  )}
-                                </>
-                              )}
-                            </>
-                          )
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+              columns={dailyColumns(handleViewDocument, handleEdit, handleConfirmOpen, canEdit as any, customers, services, items, companyName as any)}
+              data={dailyReport}
+              customers={customers}
+              services={services}
+              items={items}
+              employees={employees}
+              equipment={equipment}
+              companyName={companyName || ''}
+              handleViewDocument={function (documentPath: string, row_id?: string): Promise<void> {
+                throw new Error('Function not implemented.');
+              } }            />
+            <BtnXlsDownload fn={createDataToDownload} dataToDownload={dailyReport} nameFile={'Parte_Diario'} />
+            
           </motion.div>
         </motion.div>
       </div>
