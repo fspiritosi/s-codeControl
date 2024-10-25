@@ -92,7 +92,7 @@ export default function Create() {
         const { data: newDailyReport } = await dailyReportResponse.json();
 
         const dailyReportId = newDailyReport[0]; // Asegúrate de que esto sea correcto
-        
+
         setExistingReportId(dailyReportId);
 
         setOpenModal(false);
@@ -101,7 +101,7 @@ export default function Create() {
     const onSubmit: SubmitHandler<FormData> = (data) => {
         saveDate(data.date);
     }
-    
+
     return (
         <div>
             <Button onClick={handleOpenModal}>Crear Parte Diario</Button>
@@ -176,10 +176,26 @@ export default function Create() {
                             <DialogTitle>Parte Diario Modal</DialogTitle>
                             <DialogDescription className="flex items-center space-x-4">
                                 <span>fecha: {date ? format(date, "dd/MM/yyyy") : ""}</span>
-                                <InfoComponent
-                                    size='sm'
-                                    message={`- Corroborar la afectación de los recursos al cliente en caso de que no aparezcan.\n- Los empleados deben tener un diagrama activo para que aparezcan en el parte diario.\n- Los equipos que se encuentren "En Reparación" o "No Operativos" no se podrán seleccionar.`}
-                                />
+                                <div className="grid grid-cols-3 y gap-4 w-full">
+                                    <div className="col-span-1 flex">
+                                        <InfoComponent
+                                            size='sm'
+                                            message={`Los empleados no afectados y sin diagrama no se muestran.`}
+                                        />
+                                    </div>
+                                    <div className="col-span-1 flex">
+                                        <InfoComponent
+                                            size='sm'
+                                            message={`Los clientes dados de baja no se muestran.`}
+                                        />
+                                    </div>
+                                    <div className="col-span-1 flex">
+                                        <InfoComponent
+                                            size='sm'
+                                            message={`Los servicios vencidos o de baja no se muestran.`}
+                                        />
+                                    </div>
+                                </div>
                             </DialogDescription>
                         </DialogHeader>
                         <div className="flex-grow overflow-auto">
