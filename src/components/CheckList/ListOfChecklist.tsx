@@ -4,9 +4,8 @@ import { TypesOfCheckListTable } from './tables/data-table';
 
 export default async function ChecklistTable() {
   const checklists = await fetchCustomForms();
-  
 
-  console.log(checklists);
+  // console.log(checklists);
 
   return (
     <TypesOfCheckListTable

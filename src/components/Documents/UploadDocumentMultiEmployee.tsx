@@ -19,9 +19,9 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { CardTitle } from '../ui/card';
+import { EnhancedDatePicker } from '../ui/enhanced-datepicket';
 import { Input } from '../ui/input';
 import { MultiSelectCombobox } from '../ui/multi-select-combobox';
-import { EnhancedDatePicker } from '../ui/enhanced-datepicket';
 import { YearMonthPicker } from '../ui/year-month-picker';
 
 function UploadDocumentMultiEmployee({
@@ -262,7 +262,7 @@ function UploadDocumentMultiEmployee({
                           const file = (e.target as HTMLInputElement).files?.[0];
                           const employeesSelected = form.getValues('applies');
                           setSelectedFile(file);
-                          console.log('file', file);
+                          // console.log('file', file);
                           if (file) {
                             const documentName = documenTypes.find(
                               (documentType) => documentType.id === form.getValues('id_document_types')
@@ -295,7 +295,7 @@ function UploadDocumentMultiEmployee({
                             //   'persona'
                             // );
 
-                            console.log('documentUrl', documentUrl);
+                            // console.log('documentUrl', documentUrl);
                             // if (documentUrl === 'duplicate') {
                             //   form.setError('document_path', {
                             //     type: 'manual',

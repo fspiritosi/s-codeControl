@@ -93,7 +93,7 @@ export default function CodeControlLogin() {
             .select()
             .eq('cuil', cuil || '');
 
-          console.log(data, error);
+          // console.log(data, error);
 
           if (data && data.length > 0) {
             const empleado = data[0];

@@ -21,7 +21,7 @@ export default async function EquipmentFormAction({ searchParams }: { searchPara
 
   let vehicle;
 
-  console.log(searchParams.id, 'searchParams.id');
+  //console.log(searchParams.id, 'searchParams.id');
 
   if (searchParams.id) {
     const { data: vehicleData, error } = await supabase
@@ -50,8 +50,8 @@ export default async function EquipmentFormAction({ searchParams }: { searchPara
     .select('*')
     .or(`company_id.eq.${company_id?.value},company_id.is.null`);
 
-  console.log('brand_vehicles', brand_vehicles);
-  console.log('errorError', errorError);
+  // console.log('brand_vehicles', brand_vehicles);
+  // console.log('errorError', errorError);
 
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">

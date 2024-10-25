@@ -1,4 +1,3 @@
-import { ClipboardList } from 'lucide-react';
 import moment from 'moment';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -70,7 +69,7 @@ function CompletarChecklist({
           key={checklist.id}
           className="w-full hover:cursor-pointer hover:bg-gray-100"
           onClick={() => {
-            console.log(checklist.name, 'checklist.name');
+            // console.log(checklist.name, 'checklist.name');
             setActiveFormType(checklist.name);
           }}
         >
@@ -83,7 +82,6 @@ function CompletarChecklist({
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-700">{checklist.name}</p>
-         
           </CardContent>
         </Card>
       ))}

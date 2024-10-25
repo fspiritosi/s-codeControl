@@ -79,12 +79,12 @@ export default function RepairNewEntry({
       .refine(
         (value) => {
           if (value) {
-            console.log('value', value);
-            console.log('Number(value) > Number(selectedEquipment?.kilometer)', selectedEquipment?.kilometer);
-            console.log(
-              'Number(value) > Number(selectedEquipment?.kilometer)',
-              Number(value) > Number(selectedEquipment?.kilometer)
-            );
+            // console.log('value', value);
+            // console.log('Number(value) > Number(selectedEquipment?.kilometer)', selectedEquipment?.kilometer);
+            // console.log(
+            //   'Number(value) > Number(selectedEquipment?.kilometer)',
+            //   Number(value) > Number(selectedEquipment?.kilometer)
+            // );
             return Number(value) >= Number(selectedEquipment?.kilometer);
           }
         },
@@ -330,7 +330,7 @@ export default function RepairNewEntry({
     setFiles([undefined, undefined, undefined]);
   };
 
-  console.log(typeOfEquipment, 'typeOfEquipmenttypeOfEquipment');
+  //console.log(typeOfEquipment, 'typeOfEquipmenttypeOfEquipment');
 
   const handleDeleteRepair = (provicionalId: string) => {
     setAllRepairs((prev) => prev.filter((e) => e.provicionalId !== provicionalId));

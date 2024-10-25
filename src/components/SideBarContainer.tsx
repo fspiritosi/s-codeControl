@@ -1,25 +1,26 @@
 import { fetchCurrentCompany, fetchCurrentUser, verifyUserRoleInCompany } from '@/app/server/GET/actions';
 import { supabaseServer } from '@/lib/supabase/server';
 import InitState from '@/store/InitUser';
-import { cookies } from 'next/headers';
-import { FiTool, FiTruck } from 'react-icons/fi';
 import {
-  MdCalendarMonth,
-  MdHelpOutline,
-  MdListAlt,
-  MdOutlineCorporateFare,
-  MdOutlinePersonAddAlt,
-  MdOutlineSpaceDashboard,
-} from 'react-icons/md';
+  Building2,
+  Calendar,
+  ClipboardList,
+  FileText,
+  HelpCircle,
+  LayoutDashboard,
+  Truck,
+  Users,
+  Wrench,
+} from 'lucide-react';
+import { cookies } from 'next/headers';
 import SideBar from './Sidebar';
-import { Building2, Calendar, ClipboardList, FileText, HelpCircle, LayoutDashboard, Truck, Users, Wrench } from 'lucide-react';
 
 async function SideBarContainer() {
   const supabase = supabaseServer();
   const user = await fetchCurrentUser();
   const company = await fetchCurrentCompany();
   const userData: any = await verifyUserRoleInCompany();
-  console.log(userData, 'userData');
+  //console.log(userData, 'userData');
   const { data: credentialUser, error: profileError } = await supabase
     .from('profile')
     .select('*')
@@ -151,7 +152,7 @@ async function SideBarContainer() {
     {
       name: 'Empleados',
       href: '/dashboard/employee',
-      icon: <Users  size={sizeIcons} />,
+      icon: <Users size={sizeIcons} />,
       position: 3,
       // regex: /^\/dashboard\/employee(\/|$)/,
     },
@@ -172,7 +173,7 @@ async function SideBarContainer() {
     {
       name: 'Operaciones',
       href: '/dashboard/operations',
-      icon: <Calendar  size={sizeIcons} />,
+      icon: <Calendar size={sizeIcons} />,
     },
     {
       name: 'Mantenimiento',

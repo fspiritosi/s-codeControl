@@ -21,7 +21,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { Button, buttonVariants } from './ui/button';
 
-export default function AddTypeModal({ company_id,value }: { company_id: string,value:string}) {
+export default function AddTypeModal({ company_id, value }: { company_id: string; value: string }) {
   const formSchema = z.object({
     name: z.string().min(2, {
       message: 'El nombre debe tener al menos 2 caracteres.',
@@ -36,19 +36,18 @@ export default function AddTypeModal({ company_id,value }: { company_id: string,
     },
   });
 
-
   const supabase = supabaseBrowser();
   const router = useRouter();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
-    console.log(values);
+    //console.log(values);
 
     const { data, error } = await supabase
       .from('type')
       .insert({
-        name: values.name??value,
+        name: values.name ?? value,
         company_id: values.company_id,
       })
       .select();
@@ -56,7 +55,7 @@ export default function AddTypeModal({ company_id,value }: { company_id: string,
     if (error) {
       throw new Error(handleSupabaseError(error.message));
     }
-    console.log('data', data);
+    // console.log('data', data);
     router.refresh();
   }
   const handleNestedFormSubmit = (event: FormEvent<HTMLFormElement>) => {

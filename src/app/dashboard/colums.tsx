@@ -648,8 +648,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
     },
     cell: ({ row }) => {
       const isNoPresented = row.getValue('state') === 'pendiente';
-
-      console.log(row.original.validity, 'row.original.validity');
+      //console.log(row.original.validity, 'row.original.validity');
 
       if (isNoPresented) {
         return <Badge variant={'destructive'}>Pendiente</Badge>;

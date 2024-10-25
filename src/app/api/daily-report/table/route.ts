@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   const supabase = supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
-  console.log('company_id', company_id);
+  //console.log('company_id', company_id);
   try {
     let { data: dailyReports, error } = await supabase
       .from('dailyreport')
@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
           status,
           working_day,
           description,
+          document_path,
           dailyreportemployeerelations (employee_id(id,firstname,lastname)),
           dailyreportequipmentrelations (equipment_id(id,intern_number))
           )
@@ -33,6 +34,7 @@ export async function GET(request: NextRequest) {
       .eq('company_id', company_id || '');
 
     if (error) {
+      //console.log('Error fetching daily reports:', error);
       throw new Error(JSON.stringify(error));
     }
 

@@ -119,25 +119,25 @@ export default function UpdateDocuments({
             .eq('document_path', documentName);
 
           if (updateError) {
-            console.log(updateError);
+            //console.log(updateError);
             throw new Error(handleSupabaseError(updateError.message));
           }
 
           if (newDocumentError) {
-            console.log(newDocumentError);
+            // console.log(newDocumentError);
             throw new Error(handleSupabaseError(newDocumentError.message));
           }
           return;
         }
 
-        console.log(documentName);
+        //console.log(documentName);
 
         const { data: fileData, error: downloadError } = await supabase.storage
           .from('document_files')
           .download(documentName);
 
         if (downloadError) {
-          console.log(downloadError);
+          // console.log(downloadError);
           throw new Error(handleSupabaseError(downloadError.message));
         }
 
@@ -146,14 +146,14 @@ export default function UpdateDocuments({
           .upload(documentName, fileData);
 
         if (uploadError) {
-          console.log(uploadError);
+          // console.log(uploadError);
           throw new Error(handleSupabaseError(uploadError.message));
         }
 
         const { error: deleteError } = await supabase.storage.from('document_files').remove([documentName]);
 
         if (deleteError) {
-          console.log(deleteError);
+          //  console.log(deleteError);
           throw new Error(handleSupabaseError(deleteError.message));
         }
 
@@ -171,11 +171,11 @@ export default function UpdateDocuments({
           .eq('document_path', documentName);
 
         if (updateError) {
-          console.log(updateError);
+          //console.log(updateError);
           throw new Error(handleSupabaseError(updateError.message));
         }
         if (newDocumentError) {
-          console.log(newDocumentError);
+          // console.log(newDocumentError);
           throw new Error(handleSupabaseError(newDocumentError.message));
         }
 
