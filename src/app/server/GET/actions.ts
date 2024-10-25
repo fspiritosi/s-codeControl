@@ -305,15 +305,15 @@ export const fetchCurrentUser = async () => {
   return user;
 };
 
-export const fetchCustomForms = async () => {
+export const fetchCustomForms = async (id_company?:string) => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
   const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  if (!company_id&&!id_company) return [];
   const { data, error } = await supabase
     .from('custom_form')
     .select('*,form_answers(*)')
-    .eq('company_id', company_id || '')
+    .eq('company_id', company_id || id_company || '')
     .returns<CheckListWithAnswer[]>();
 
   if (error) {
