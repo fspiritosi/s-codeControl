@@ -68,7 +68,7 @@ export async function DELETE(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const id = searchParams.get('id');
 
-  console.log('keloke', id);
+  //console.log('keloke', id);
 
   try {
     const { data: repair_solicitudes, error } = await supabase

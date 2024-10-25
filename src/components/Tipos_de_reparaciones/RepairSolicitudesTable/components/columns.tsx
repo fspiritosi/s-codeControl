@@ -20,14 +20,16 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
           onlyView
           action={
             <div className="flex space-x-2">
-              <CardTitle className="max-w-[300px] truncate font-medium hover:underline">{row.getValue('title')}</CardTitle>
+              <CardTitle className="max-w-[300px] truncate font-medium hover:underline">
+                {row.getValue('title')}
+              </CardTitle>
             </div>
           }
         />
       );
     },
     filterFn: (row, columnId, filterValue) => {
-      console.log(filterValue, 'filterValue');
+      // console.log(filterValue, 'filterValue');
       const cellValue = row.getValue(columnId);
 
       if (typeof cellValue === 'string' && Array.isArray(filterValue)) {

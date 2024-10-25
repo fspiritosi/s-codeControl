@@ -17,10 +17,10 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Database } from '../../../database.types';
+import { EnhancedDatePicker } from '../ui/enhanced-datepicket';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
-import { EnhancedDatePicker } from '../ui/enhanced-datepicket';
 import { YearMonthPicker } from '../ui/year-month-picker';
 
 function UploadDocumentEquipment({
@@ -106,7 +106,7 @@ function UploadDocumentEquipment({
     Database['public']['Tables']['documents_equipment']['Row'][]
   >([]);
 
-  console.log('error', form.formState.errors);
+  //console.log('error', form.formState.errors);
   return (
     <div>
       <CardTitle className="mb-3">Documento no multirecurso</CardTitle>
@@ -340,7 +340,7 @@ function UploadDocumentEquipment({
                         input.onchange = async (e) => {
                           const file = (e.target as HTMLInputElement).files?.[0];
                           setSelectedFile(file);
-                          console.log('file', file);
+                          // console.log('file', file);
                           if (file) {
                             const applies = equipments
                               .find((equipment) => equipment.value === form.getValues('applies'))
@@ -366,7 +366,7 @@ function UploadDocumentEquipment({
                               documenExtension,
                               'equipos'
                             );
-                            console.log('documentUrl', documentUrl);
+                            //console.log('documentUrl', documentUrl);
                             if (documentUrl === 'duplicate') {
                               form.setError('document_path', {
                                 type: 'manual',

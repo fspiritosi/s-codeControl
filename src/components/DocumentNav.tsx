@@ -13,8 +13,8 @@ export default function DocumentNav({
   onlyMultiresource?: boolean;
   id_user?: string;
 }) {
-  console.log(onlyEquipment, 'onlyEquipment');
-  console.log(onlyEmployees, 'onlyEmployees');
+  // console.log(onlyEquipment, 'onlyEquipment');
+  // console.log(onlyEmployees, 'onlyEmployees');
   return (
     <div className="flex gap-2">
       {!onlyNoMultiresource && <NewDocumentMulti onlyEmployees={onlyEmployees} onlyEquipment={onlyEquipment} />}

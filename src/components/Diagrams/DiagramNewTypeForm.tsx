@@ -77,9 +77,9 @@ export function DiagramNewTypeForm({ selectedDiagram }: { selectedDiagram?: any 
     setDiagramToEdit(false);
     setButtonToShow(true);
   }
-  console.log('selectedDiagram', selectedDiagram);
-  console.log('Diagram', diagramToEdit);
-  console.log('button', buttonToShow);
+  // console.log('selectedDiagram', selectedDiagram);
+  // console.log('Diagram', diagramToEdit);
+  // console.log('button', buttonToShow);
   // useEffect(() => {
 
   //     form.reset({
