@@ -59,7 +59,7 @@ export function DataTableToolbarDailyReport<TData>({ table, customers, services,
   const endTimeOptions = createOptions(uniqueEndTime, ClockIcon);
   const statusOptions = createOptions(uniqueStatus, CheckIcon);
   const descriptionOptions = createOptions(uniqueDescription, FileTextIcon);
- console.log(employees)
+ console.log(clientOptions)
   return (
     <div className="flex items-center justify-between">
       <div className="flex flex-1 items-center space-x-2">

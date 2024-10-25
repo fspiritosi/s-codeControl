@@ -39,7 +39,8 @@ import DocumentView from './DocumentView';
 import { dailyColumns } from './tables/DailyReportColumns';
 import { TypesOfCheckListTable } from './tables/data-table-dily-report';
 import BtnXlsDownload from '../BtnXlsDownload'
-
+// import { Customers, Services, Items, Employee, Equipment} from '@/components/DailyReport/DailyReport';
+import { getCustomerName, getServiceName, getItemName,  getEmployeeNames ,getEquipmentNames  } from '@/components/DailyReport/utils/utils';
 export interface Customers {
   id: string;
   name: string;
@@ -613,43 +614,43 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
   const selectedEmployees = watch('employees');
   const selectedEquipment = watch('equipment');
 
-  const getEmployeeNames = (employeeIds: string[]) => {
-    return employeeIds
-      .map((id) => {
-        const employee = employees.find((emp) => emp.id === id);
-        return employee ? `${employee.firstname} ${employee.lastname}` : 'Unknown';
-      })
-      .join(', ');
-  };
-  console.log(dailyReport);
-  const employeeNam = dailyReport?.map((item) => {
-    return getEmployeeNames(item.employees);
-  });
-  console.log(employeeNam);
+  // const getEmployeeNames = (employeeIds: string[]) => {
+  //   return employeeIds
+  //     .map((id) => {
+  //       const employee = employees.find((emp) => emp.id === id);
+  //       return employee ? `${employee.firstname} ${employee.lastname}` : 'Unknown';
+  //     })
+  //     .join(', ');
+  // };
+  // console.log(dailyReport);
+  // const employeeNam = dailyReport?.map((item) => {
+  //   return getEmployeeNames(item.employees);
+  // });
+  // console.log(employeeNam);
 
-  const getEquipmentNames = (equipmentIds: string[]) => {
-    return equipmentIds
-      .map((id) => {
-        const eq = equipment.find((e) => e.id === id);
-        return eq ? eq.intern_number.toString() : 'Unknown';
-      })
-      .join(', ');
-  };
+  // const getEquipmentNames = (equipmentIds: string[]) => {
+  //   return equipmentIds
+  //     .map((id) => {
+  //       const eq = equipment.find((e) => e.id === id);
+  //       return eq ? eq.intern_number.toString() : 'Unknown';
+  //     })
+  //     .join(', ');
+  // };
 
-  const getServiceName = (serviceId: string) => {
-    const service = services.find((s) => s.id === serviceId);
-    return service ? service.service_name : 'Unknown';
-  };
+  // const getServiceName = (serviceId: string) => {
+  //   const service = services.find((s) => s.id === serviceId);
+  //   return service ? service.service_name : 'Unknown';
+  // };
 
-  const getCustomerName = (customerId: string) => {
-    const customer = customers.find((c) => c.id === customerId);
-    return customer ? customer.name : 'Unknown';
-  };
+  // const getCustomerName = (customerId: string) => {
+  //   const customer = customers.find((c) => c.id === customerId);
+  //   return customer ? customer.name : 'Unknown';
+  // };
 
-  const getItemName = (itemId: string) => {
-    const item = items.find((i) => i.id === itemId);
-    return item ? item.item_name : 'Unknown';
-  };
+  // const getItemName = (itemId: string) => {
+  //   const item = items.find((i) => i.id === itemId);
+  //   return item ? item.item_name : 'Unknown';
+  // };
 
   const formatTime = (time: string): string => {
     if (!time) return '';
@@ -1177,12 +1178,12 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
   
   function createDataToDownload(data: DailyReportItem[]) {
     const dataToDownload = data.map((report: DailyReportItem) => ({
-        date: report.date,
-        Cliente: report.customer ? getCustomerName(report.customer) : 'N/A',
-        Servicio: report.services ? getServiceName(report.services) : 'N/A',
-        Item: report.item ? getItemName(report.item) : 'N/A',
-        Empleados: Array.isArray(report.employees) ? getEmployeeNames(report.employees) : 'N/A',
-        Equipos: Array.isArray(report.equipment) ? getEquipmentNames(report.equipment) : 'N/A',
+        Fecha: report.date,
+        Cliente: report.customer ? getCustomerName(report.customer, customers) : 'N/A',
+        Servicio: report.services ? getServiceName(report.services, services) : 'N/A',
+        Item: report.item ? getItemName(report.item, items) : 'N/A',
+        Empleados: Array.isArray(report.employees) ? getEmployeeNames(report.employees, employees) : 'N/A',
+        Equipos: Array.isArray(report.equipment) ? getEquipmentNames(report.equipment, equipment) : 'N/A',
         Jornada: report.working_day,
         'Hora de Inicio': report.start_time,
         'Hora de Fin': report.end_time,
@@ -1514,15 +1515,17 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
           >
             
             {canEdit && (
-            <Button onClick={handleAddNewRow} className="flex items-center">
+              <div className="flex justify-end items-center mb-4">
+            <Button onClick={handleAddNewRow} className="items-end">
               <PlusCircledIcon className="mr-2 h-4 w-4" />
               Agregar Fila
             </Button>
+          </div>
              )} 
 
             <TypesOfCheckListTable
               columns={dailyColumns(handleViewDocument, handleEdit, handleConfirmOpen, canEdit as any, customers, services, items, companyName as any)}
-              data={dailyReport}
+              data={dailyReport || ''}
               customers={customers}
               services={services}
               items={items}
@@ -1532,7 +1535,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
               handleViewDocument={function (documentPath: string, row_id?: string): Promise<void> {
                 throw new Error('Function not implemented.');
               } }            />
-            <BtnXlsDownload fn={createDataToDownload} dataToDownload={dailyReport} nameFile={'Parte_Diario'} />
+            <BtnXlsDownload fn={createDataToDownload} dataToDownload={dailyReport} nameFile={`'Parte_Diario'${reportData?.date}`} />
             
           </motion.div>
         </motion.div>
@@ -1544,12 +1547,12 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
               rowId={filaId || ''}
               row={(filteredRow as DailyReportItem) || ''}
               documentUrl={documentUrl || ''}
-              customerName={getCustomerName(selectedCustomer?.id || '')}
+              customerName={getCustomerName(selectedCustomer?.id || '', customers)}
               companyName={companyName || ''}
-              serviceName={getServiceName(selectedService?.id || '')}
-              itemNames={getItemName(selectedService?.item_id || '')}
-              employeeNames={filteredRow?.employees.map((emp: string) => getEmployeeNames([emp]))}
-              equipmentNames={filteredRow?.equipment.map((eq: string) => getEquipmentNames([eq]))}
+              serviceName={getServiceName(selectedService?.id || '', services)}
+              itemNames={getItemName(selectedService?.item_id || '', items)}
+              employeeNames={filteredRow?.employees.map((emp: string) => getEmployeeNames([emp],employees))}
+              equipmentNames={filteredRow?.equipment.map((eq: string) => getEquipmentNames([eq], equipment))}
             />
           </CardDescription>
         </Card>
