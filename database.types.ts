@@ -2031,6 +2031,7 @@ export type Database = {
           created_at: string
           customer_id: string | null
           id: string
+          modules: Database["public"]["Enums"]["modulos"][] | null
           profile_id: string | null
           role: string | null
         }
@@ -2039,6 +2040,7 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           id?: string
+          modules?: Database["public"]["Enums"]["modulos"][] | null
           profile_id?: string | null
           role?: string | null
         }
@@ -2047,6 +2049,7 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           id?: string
+          modules?: Database["public"]["Enums"]["modulos"][] | null
           profile_id?: string | null
           role?: string | null
         }
