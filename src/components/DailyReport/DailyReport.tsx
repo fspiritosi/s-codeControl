@@ -13,13 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { PlusCircledIcon } from '@radix-ui/react-icons';
 import { AnimatePresence, motion } from 'framer-motion';
 import cookies from 'js-cookie';
-import { FilePenLine, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import MultiSelect from './MultiSelect';
@@ -28,17 +26,15 @@ import { supabaseBrowser } from '@/lib/supabase/browser';
 import { dailyReportSchema } from '@/zodSchemas/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import moment from 'moment';
-import { Badge } from '../ui/badge';
 import { Card, CardDescription } from '../ui/card';
 import GenericDialog from './GenericDialog';
-import UploadDocument from './UploadDocument';
 // import { cn } from '@/lib/utils'
 
+import BtnXlsDownload from '../BtnXlsDownload';
 import DailyReportSkeleton from '../Skeletons/DayliReportSkeleton';
 import DocumentView from './DocumentView';
 import { dailyColumns } from './tables/DailyReportColumns';
 import { TypesOfCheckListTable } from './tables/data-table-dily-report';
-import BtnXlsDownload from '../BtnXlsDownload'
 
 export interface Customers {
   id: string;
@@ -208,7 +204,7 @@ interface RepairsSolicituds {
 }
 
 export default function DailyReport({ reportData, allReport }: DailyReportProps) {
-  console.log(reportData);
+  // console.log(reportData);
   const [companyName, setCompanyName] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [customers, setCustomers] = useState<Customers[]>([]);
@@ -277,7 +273,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     const companyName = data.data[0].company_name;
     const companyData = data.data[0];
     setCompanyData(companyData);
-    console.log(companyName);
+    // console.log(companyName);
     setCompanyName(companyName);
     return companyName;
   };
@@ -343,7 +339,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
 
   const handleViewDocument = async (documentPath: string, row_id?: string) => {
     const filteredRow = dailyReport.find((row) => row.id === row_id);
-    console.log(filteredRow);
+    //console.log(filteredRow);
     setFilteredRow(filteredRow as DailyReportItem);
     const url = await fetchDocument(documentPath); // Asume que fetchDocumentUrl es una función que obtiene la URL del documento
     setDocumentUrl(url);
@@ -351,12 +347,12 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     // window.open(url, '_blank');
     setIsDialogOpen2(true);
   };
-  
+
   const closeDialog2 = () => {
     setIsDialogOpen2(false);
     setDocumentUrl(null);
   };
-  
+
   useEffect(() => {
     fetchCompanyName();
     fetchEmployees();
@@ -366,7 +362,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     fetchItems();
     fetchDiagrams();
   }, []);
-  console.log(companyName);
+  //console.log(companyName);
 
   useEffect(() => {
     // Filtrar servicios válidos en la fecha del parte diario
@@ -621,11 +617,11 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
       })
       .join(', ');
   };
-  console.log(dailyReport);
+  //console.log(dailyReport);
   const employeeNam = dailyReport?.map((item) => {
     return getEmployeeNames(item.employees);
   });
-  console.log(employeeNam);
+  //console.log(employeeNam);
 
   const getEquipmentNames = (equipmentIds: string[]) => {
     return equipmentIds
@@ -1174,23 +1170,23 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
       });
     }
   };
-  
+
   function createDataToDownload(data: DailyReportItem[]) {
     const dataToDownload = data.map((report: DailyReportItem) => ({
-        date: report.date,
-        Cliente: report.customer ? getCustomerName(report.customer) : 'N/A',
-        Servicio: report.services ? getServiceName(report.services) : 'N/A',
-        Item: report.item ? getItemName(report.item) : 'N/A',
-        Empleados: Array.isArray(report.employees) ? getEmployeeNames(report.employees) : 'N/A',
-        Equipos: Array.isArray(report.equipment) ? getEquipmentNames(report.equipment) : 'N/A',
-        Jornada: report.working_day,
-        'Hora de Inicio': report.start_time,
-        'Hora de Fin': report.end_time,
-        Estado: report.status,
-        Descripción: report.description,
+      date: report.date,
+      Cliente: report.customer ? getCustomerName(report.customer) : 'N/A',
+      Servicio: report.services ? getServiceName(report.services) : 'N/A',
+      Item: report.item ? getItemName(report.item) : 'N/A',
+      Empleados: Array.isArray(report.employees) ? getEmployeeNames(report.employees) : 'N/A',
+      Equipos: Array.isArray(report.equipment) ? getEquipmentNames(report.equipment) : 'N/A',
+      Jornada: report.working_day,
+      'Hora de Inicio': report.start_time,
+      'Hora de Fin': report.end_time,
+      Estado: report.status,
+      Descripción: report.description,
     }));
     return dataToDownload;
-}
+  }
 
   if (isLoading) {
     return <DailyReportSkeleton />;
@@ -1512,16 +1508,24 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
             transition={{ duration: 0.3 }}
             className="overflow-x-auto"
           >
-            
             {canEdit && (
-            <Button onClick={handleAddNewRow} className="flex items-center">
-              <PlusCircledIcon className="mr-2 h-4 w-4" />
-              Agregar Fila
-            </Button>
-             )} 
+              <Button onClick={handleAddNewRow} className="flex items-center">
+                <PlusCircledIcon className="mr-2 h-4 w-4" />
+                Agregar Fila
+              </Button>
+            )}
 
             <TypesOfCheckListTable
-              columns={dailyColumns(handleViewDocument, handleEdit, handleConfirmOpen, canEdit as any, customers, services, items, companyName as any)}
+              columns={dailyColumns(
+                handleViewDocument,
+                handleEdit,
+                handleConfirmOpen,
+                canEdit as any,
+                customers,
+                services,
+                items,
+                companyName as any
+              )}
               data={dailyReport}
               customers={customers}
               services={services}
@@ -1531,9 +1535,9 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
               companyName={companyName || ''}
               handleViewDocument={function (documentPath: string, row_id?: string): Promise<void> {
                 throw new Error('Function not implemented.');
-              } }            />
+              }}
+            />
             <BtnXlsDownload fn={createDataToDownload} dataToDownload={dailyReport} nameFile={'Parte_Diario'} />
-            
           </motion.div>
         </motion.div>
       </div>

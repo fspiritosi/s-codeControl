@@ -117,7 +117,7 @@ export default function RepairNewEntryMultiple({
     }
 
     if (data?.length ?? 0 > 0) {
-      console.log('dadadad', data);
+      //console.log('dadadad', data);
       toast.error(
         `
         El equipo con dominio o serie "${(data?.[0].equipment_id as any).domain || (data?.[0].equipment_id as any).serie}" ya tiene una solicitud de reparacion con los mismos datos en estado ${data?.[0].state}`
@@ -269,7 +269,7 @@ export default function RepairNewEntryMultiple({
   const [selectedEquipmentss, setSelectedEquipmentss] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
 
-  console.log(form.formState.errors);
+  //console.log(form.formState.errors);
 
   return (
     <ResizablePanelGroup direction="horizontal" className="pt-6 flex flex-wrap sm:flex-nowrap w-full">
@@ -478,8 +478,8 @@ export default function RepairNewEntryMultiple({
                       <Button
                         variant={'destructive'}
                         onClick={() => {
-                          console.log('field', field);
-                          console.log('allRepairs', allRepairs);
+                          // console.log('field', field);
+                          // console.log('allRepairs', allRepairs);
                           handleDeleteRepair(field.vehicle_id, field.repair);
                         }}
                       >

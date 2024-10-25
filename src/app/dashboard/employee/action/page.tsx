@@ -1,10 +1,10 @@
+import DocumentTable from '@/app/dashboard/document/DocumentTable';
 import EmployeeComponent from '@/components/EmployeeComponent';
 import { Card, CardFooter } from '@/components/ui/card';
 import { supabaseServer } from '@/lib/supabase/server';
 import { cn } from '@/lib/utils';
 import { setEmployeesToShow } from '@/lib/utils/utils';
 import { cookies } from 'next/headers';
-import DocumentTable from '@/app/dashboard/document/DocumentTable';
 export default async function EmployeeFormAction({ searchParams }: { searchParams: any }) {
   // const { data } = await supabase
 
@@ -101,7 +101,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
     });
   }
 
-  console.log(formattedEmployee, 'formattedEmployee');
+  //console.log(formattedEmployee, 'formattedEmployee');
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">
       <Card className={cn('col-span-8 flex flex-col justify-between overflow-hidden')}>

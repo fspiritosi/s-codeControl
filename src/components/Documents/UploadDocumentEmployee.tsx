@@ -1,7 +1,4 @@
 'use client';
-import { z } from 'zod';
-import { CardTitle } from '../ui/card';
-import { Check, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -10,15 +7,18 @@ import { supabaseBrowser } from '@/lib/supabase/browser';
 import { calculateNameOFDocument, cn, uploadDocument, uploadDocumentFile } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import moment from 'moment';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { Database } from '../../../database.types';
+import { CardTitle } from '../ui/card';
+import { EnhancedDatePicker } from '../ui/enhanced-datepicket';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
-import { EnhancedDatePicker } from '../ui/enhanced-datepicket';
 import { YearMonthPicker } from '../ui/year-month-picker';
 
 function UploadDocumentEmployee({
@@ -29,7 +29,7 @@ function UploadDocumentEmployee({
   user_id,
 }: {
   employees: { label: string; value: string; cuit: string }[];
-  allDocumentTypes: DocumentTypes[]
+  allDocumentTypes: DocumentTypes[];
   currentCompany: Company[];
   default_id?: string;
   user_id?: string;
@@ -105,7 +105,7 @@ function UploadDocumentEmployee({
     Database['public']['Tables']['documents_employees']['Row'][]
   >([]);
 
-  console.log('error', form.formState.errors);
+  //console.log('error', form.formState.errors);
   return (
     <div>
       <CardTitle className="mb-3">Documento no multirecurso</CardTitle>
@@ -330,7 +330,7 @@ function UploadDocumentEmployee({
                         input.onchange = async (e) => {
                           const file = (e.target as HTMLInputElement).files?.[0];
                           setSelectedFile(file);
-                          console.log('file', file);
+                          //console.log('file', file);
                           if (file) {
                             const applies = employees.find(
                               (employee) => employee.value === form.getValues('applies')
@@ -355,7 +355,7 @@ function UploadDocumentEmployee({
                               documenExtension,
                               'persona'
                             );
-                            console.log('documentUrl', documentUrl);
+                            //console.log('documentUrl', documentUrl);
                             if (documentUrl === 'duplicate') {
                               form.setError('document_path', {
                                 type: 'manual',

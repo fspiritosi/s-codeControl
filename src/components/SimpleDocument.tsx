@@ -74,7 +74,7 @@ export default function SimpleDocument({
       (employee: any) => employee.document === documentResource || employee.document === numberDocument
     ) as string) || (vehicles?.find((vehicle: any) => vehicle.id === numberDocument) as string);
 
-    console.log('numberDocument',numberDocument)
+  //console.log('numberDocument',numberDocument)
 
   const {
     control,
@@ -175,7 +175,7 @@ export default function SimpleDocument({
           }
 
           if (hasError) {
-            console.log(hasError);
+            // console.log(hasError);
             return setLoading(false);
           }
 

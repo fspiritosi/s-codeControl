@@ -3,7 +3,6 @@
 import { columnsGuests } from '@/app/dashboard/company/actualCompany/components/columnsGuests';
 import { DataTable as DataTableInvited } from '@/app/dashboard/company/actualCompany/components/data-table';
 import { createdCustomer, updateCustomer } from '@/app/dashboard/company/actualCompany/customers/action/create';
-import { DataTable } from '@/app/dashboard/company/actualCompany/customers/action/data-table';
 import { EquipmentTable } from '@/app/dashboard/equipment/data-equipment';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
@@ -22,32 +21,23 @@ import { Toaster, toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../supabase/supabase';
 // import { columns } from '../app/dashboard/company/customers/action/columnsCustomers';
-import { EquipmentColums as columns1 } from '../app/dashboard/equipment/columns';
-import { EmployeesTable } from '@/app/dashboard/employee/data-table';
 import { EmployeesListColumns } from '@/app/dashboard/employee/columns';
+import { EmployeesTable } from '@/app/dashboard/employee/data-table';
+import { EquipmentColums as columns1 } from '../app/dashboard/equipment/columns';
 // import { Employee } from '@/types/types';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { setEmployeesToShow } from '@/lib/utils/utils';
 import cookie from 'js-cookie';
-import { Table, TableBody, TableCell, TableHead, TableRow, TableHeader } from '@/components/ui/table';
-import { Badge } from './ui/badge';
 import moment from 'moment';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from './ui/badge';
 interface Service {
   id: string;
   service_name: string;
   is_active: boolean;
   service_start: string;
   service_validity: string;
-
 }
 
 export default function ClientRegister({ id }: { id: string }) {
@@ -67,7 +57,6 @@ export default function ClientRegister({ id }: { id: string }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
-
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [items, setItems] = useState<any>(null);
   const actualCompany = cookie.get('actualComp');
@@ -76,51 +65,45 @@ export default function ClientRegister({ id }: { id: string }) {
   const fetchItems = async () => {
     const { items } = await fetch(`${URL}/api/services/items/report?actual=${actualCompany}`).then((e) => e.json());
     setItems(items);
-  }
+  };
 
   const handleCloseModal = () => {
     setSelectedService(null);
     setOpenModal(false);
-
   };
   const handleOpenModal = (service: any) => {
-   
     setSelectedService(service);
 
     setOpenModal(true);
     fetchItems();
-  }
- 
-  const filteredItems = items?.filter((item: any) => item.customer_service_id?.id === selectedService?.id);
+  };
 
+  const filteredItems = items?.filter((item: any) => item.customer_service_id?.id === selectedService?.id);
 
   const fetchUser = async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
     setUserId(user);
-
-  }
+  };
   const fetchemploy = async () => {
     const { employees } = await fetch(`${URL}/api/employees/table?actual=${actualCompany}&user=${userId}`).then((e) =>
       e.json()
     );
     setEmploy(employees);
-
-  }
+  };
 
   const fetchServices = async () => {
     const { services } = await fetch(`${URL}/api/services?actual=${actualCompany}`).then((e) => e.json());
-    const filteredServices = services.filter((service: any) => (service.customer_id.toString() === id) && (service.is_active === true));
+    const filteredServices = services.filter(
+      (service: any) => service.customer_id.toString() === id && service.is_active === true
+    );
     setServicesData(filteredServices);
-  }
-
-
+  };
 
   const activeEmploees = setEmployeesToShow(employ?.filter((e: any) => e.is_active));
   const inactiveEmploees = setEmployeesToShow(employ?.filter((e: any) => !e.is_active));
   const equipment = useLoggedUserStore((state) => state.vehiclesToShow);
-
 
   useEffect(() => {
     fetchUser();
@@ -132,16 +115,15 @@ export default function ClientRegister({ id }: { id: string }) {
     ?.filter((customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id))
     .map((customer: any) => ({
       ...customer,
-      guild: customer.guild?.name
+      guild: customer.guild?.name,
     }));
 
   const filteredCustomersInActiveEmployees = inactiveEmploees
     ?.filter((customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id))
     .map((customer: any) => ({
       ...customer,
-      guild: customer.guild?.name
+      guild: customer.guild?.name,
     }));
-
 
   const filteredCustomersEquipment = equipment?.filter(
     (customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id)
@@ -230,7 +212,6 @@ export default function ClientRegister({ id }: { id: string }) {
         {action === 'view' ? (
           <div className="flex flex-grap gap-2 ">
             <Button
-
               variant="default"
               onClick={() => {
                 setReadOnly(!readOnly);
@@ -328,7 +309,6 @@ export default function ClientRegister({ id }: { id: string }) {
           <Toaster />
         </form>
       </div>
-
     </Card>
   );
   const sharedUsersAll = useLoggedUserStore((state) => state.sharedUsers)?.filter((e) => e.customer_id?.id === id);
@@ -353,10 +333,10 @@ export default function ClientRegister({ id }: { id: string }) {
         ...user,
         fullname: user.fullname || '',
       })) || [];
-  
+
   const totalPages = Math.ceil(servicesData?.length / itemsPerPage);
   const currentReports = servicesData?.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -364,8 +344,8 @@ export default function ClientRegister({ id }: { id: string }) {
     setItemsPerPage(value);
     setCurrentPage(1); // Reset to first page when items per page changes
   };
-      
-  console.log(filteredItems)
+
+  //console.log(filteredItems)
   return (
     <section className={cn('md:mx-7 max-w-full')}>
       {action === 'view' ? (
@@ -391,13 +371,8 @@ export default function ClientRegister({ id }: { id: string }) {
               <div className="h-full flex-1 flex-col space-y-8 md:flex">
                 <Card>
                   <CardContent>
-                    <EmployeesTable
-                      columns={EmployeesListColumns}
-                      data={filteredCustomersActiveEmployees || []}
-
-                    />
+                    <EmployeesTable columns={EmployeesListColumns} data={filteredCustomersActiveEmployees || []} />
                   </CardContent>
-
                 </Card>
               </div>
             </TabsContent>
@@ -405,12 +380,8 @@ export default function ClientRegister({ id }: { id: string }) {
               <div className="h-full flex-1 flex-col space-y-8 md:flex">
                 <Card>
                   <CardContent>
-                    <EmployeesTable
-                      columns={EmployeesListColumns}
-                      data={filteredCustomersInActiveEmployees || []}
-                    />
+                    <EmployeesTable columns={EmployeesListColumns} data={filteredCustomersInActiveEmployees || []} />
                   </CardContent>
-
                 </Card>
               </div>
             </TabsContent>
@@ -420,9 +391,9 @@ export default function ClientRegister({ id }: { id: string }) {
                   <EquipmentTable
                     columns={columns1 || []}
                     data={filteredCustomersEquipment || []}
-                  // allCompany={allCompany}
-                  // showInactive={showInactive}
-                  // setShowInactive={setShowInactive}
+                    // allCompany={allCompany}
+                    // showInactive={showInactive}
+                    // setShowInactive={setShowInactive}
                   />
                 </CardContent>
               </Card>
@@ -430,9 +401,9 @@ export default function ClientRegister({ id }: { id: string }) {
             <TabsContent value="servicios">
               <Card className="w-full">
                 <CardContent className="p-0">
-                  <div className='flex gap-2 justify-center m-2 ml-auto'>
-                    <span className='mt-1 text-lg'>Filas por página: </span>
-                   
+                  <div className="flex gap-2 justify-center m-2 ml-auto">
+                    <span className="mt-1 text-lg">Filas por página: </span>
+
                     <Select
                       value={itemsPerPage.toString()}
                       onValueChange={(value) => handleItemsPerPageChange(parseInt(value))}
@@ -451,7 +422,7 @@ export default function ClientRegister({ id }: { id: string }) {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -464,7 +435,11 @@ export default function ClientRegister({ id }: { id: string }) {
                       </TableHeader>
                       <TableBody>
                         {currentReports?.map((service: any) => (
-                          <TableRow key={service.id} onClick={() => handleOpenModal((service))} className="cursor-pointer">
+                          <TableRow
+                            key={service.id}
+                            onClick={() => handleOpenModal(service)}
+                            className="cursor-pointer"
+                          >
                             <TableCell className="font-medium">{service.service_name}</TableCell>
                             <TableCell>
                               <Badge variant={service.is_active ? 'success' : 'default'}>
@@ -496,12 +471,10 @@ export default function ClientRegister({ id }: { id: string }) {
 
             <TabsContent value="invitados">
               <Card>
-                <CardContent className='p-4'>
+                <CardContent className="p-4">
                   <DataTableInvited data={guestsData || []} columns={columnsGuests} />
-
                 </CardContent>
               </Card>
-
             </TabsContent>
           </Tabs>
         </section>
@@ -509,12 +482,18 @@ export default function ClientRegister({ id }: { id: string }) {
         renderCard()
       )}
       <Dialog open={openModal} onOpenChange={setOpenModal}>
-        <DialogContent className="max-w-5xl w-full flex flex-col"> {/* Limitar el ancho máximo del modal */}
+        <DialogContent className="max-w-5xl w-full flex flex-col">
+          {' '}
+          {/* Limitar el ancho máximo del modal */}
           <DialogHeader>
             <DialogTitle>Items del servicio: {selectedService?.service_name}</DialogTitle>
           </DialogHeader>
-          <div className="overflow-x-auto w-full max-h-[500px]"> {/* max-h para limitar la altura del contenido */}
-            <Table className="w-full table-auto"> {/* Asegurar que la tabla ocupe el ancho máximo posible */}
+          <div className="overflow-x-auto w-full max-h-[500px]">
+            {' '}
+            {/* max-h para limitar la altura del contenido */}
+            <Table className="w-full table-auto">
+              {' '}
+              {/* Asegurar que la tabla ocupe el ancho máximo posible */}
               <TableHeader className="bg-header-background">
                 <TableRow>
                   <TableCell className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -566,16 +545,12 @@ export default function ClientRegister({ id }: { id: string }) {
             </Table>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={handleCloseModal}>Cerrar</Button>
+            <Button variant="outline" onClick={handleCloseModal}>
+              Cerrar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-
-
-
     </section>
   );
 }
-
-

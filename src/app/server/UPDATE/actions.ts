@@ -30,7 +30,7 @@ export const UpdateVehicle = async (vehicleId: string, vehicleData: any) => {
     console.log('error', error);
     // throw error;
   }
-  console.log('data', data);
+  //console.log('data', data);
 };
 export const updateModulesSharedUser = async ({ id, modules }: { id: string; modules: ModulosEnum[] }) => {
   const supabase = supabaseServer();

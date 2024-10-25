@@ -25,7 +25,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const supabase = supabaseServer();
   try {
-    const { daily_report_id, customer_id, service_id, item_id, working_day, start_time, end_time, description } = await request.json();
+    const { daily_report_id, customer_id, service_id, item_id, working_day, start_time, end_time, description } =
+      await request.json();
     console.log(start_time, end_time);
 
     // Crear el objeto de inserción, omitiendo start_time y end_time si están vacíos
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
       service_id,
       item_id,
       working_day,
-      description
+      description,
     };
 
     if (start_time) {
@@ -98,8 +99,8 @@ export async function PUT(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
   const updateData = await request.json();
-  console.log('Update data:', updateData);
-  console.log('ID:', id);
+  // console.log('Update data:', updateData);
+  // console.log('ID:', id);
   if (!id) {
     return new NextResponse(JSON.stringify({ error: 'ID is required for updating the daily report row.' }), {
       status: 400,
@@ -122,7 +123,7 @@ export async function PUT(request: NextRequest) {
       .from('dailyreportrows' as any)
       .update(updateFields)
       .eq('id', id);
-      
+
     if (error) {
       console.error('Error from Supabase:', error);
       return new NextResponse(

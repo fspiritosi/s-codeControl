@@ -1,20 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Command,
-  CommandEmpty,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon, CaretSortIcon, CheckIcon } from '@radix-ui/react-icons';
+import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { CaretSortIcon, CheckIcon } from '@radix-ui/react-icons';
+import { useEffect, useState } from 'react';
 
 interface Equipment {
   id: string;
@@ -32,13 +21,13 @@ interface MultiSelectProps {
 
 const MultiSelect: React.FC<MultiSelectProps> = ({
   multiEmp,
-  placeholder = "Seleccione empleados",
+  placeholder = 'Seleccione empleados',
   disabled = false,
   selectedItems, // Añadir la propiedad selectedItems
   onChange,
 }) => {
   const [internalSelectedItems, setInternalSelectedItems] = useState<string[]>(selectedItems);
-  console.log(internalSelectedItems);
+  //console.log(internalSelectedItems);
   useEffect(() => {
     // Resetear internalSelectedItems cuando multiEmp cambie
     setInternalSelectedItems([]);
@@ -59,9 +48,11 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
 
   return (
     <Popover>
-      <PopoverTrigger asChild className='w-full max-w-xs'>
+      <PopoverTrigger asChild className="w-full max-w-xs">
         <Button variant={'outline'} disabled={disabled} className="flex justify-between items-center w-full">
-          <span>{internalSelectedItems?.length > 0 ? `${internalSelectedItems.length} ${placeholder}` : placeholder}</span>
+          <span>
+            {internalSelectedItems?.length > 0 ? `${internalSelectedItems.length} ${placeholder}` : placeholder}
+          </span>
           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

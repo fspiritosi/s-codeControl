@@ -27,7 +27,7 @@ export const checkListColumns: ColumnDef<{
           <TooltipProvider>
             <Tooltip delayDuration={50}>
               <TooltipTrigger asChild>
-                <div className='relative z-50'>
+                <div className="relative z-50">
                   <Badge variant={'outline'}>
                     <ClipboardList className="size-4 mr-2" />
                     {row.original.total_responses}
@@ -41,9 +41,9 @@ export const checkListColumns: ColumnDef<{
       );
     },
     filterFn: (row, id, value) => {
-      console.log('row', row);
-      console.log('id', id);
-      console.log('value', value);
+      // console.log('row', row);
+      // console.log('id', id);
+      // console.log('value', value);
 
       return (
         row.original.title.toLowerCase().includes(value.toLowerCase()) ||

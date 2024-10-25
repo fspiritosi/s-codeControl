@@ -261,10 +261,10 @@ export async function POST(request: NextRequest) {
 
       dailyReportId = data[0].id;
     }
-    console.log(dailyReportId);
+    //console.log(dailyReportId);
     // 2. Insertar filas en la tabla dailyReportRow
     let dailyReportRowIds: string[] = []; // Inicializar un array para los IDs de las filas
-    console.log(rows);
+    //console.log(rows);
     if (rows) {
       const rowsToInsert = {
         daily_report_id: dailyReportId,
@@ -276,7 +276,7 @@ export async function POST(request: NextRequest) {
         // status: "pendiente",
         // description: rows.description,
       };
-      console.log(rowsToInsert);
+      //console.log(rowsToInsert);
       const { data: rowData, error: rowInsertError } = await supabase
         .from('dailyreportrow' as any)
         .insert(rowsToInsert)

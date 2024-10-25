@@ -238,8 +238,8 @@ export function ExpiredDataTable<TData, TValue>({
     if (isNoPresented) {
       return; // Clase por defecto si no está vencido
     } else {
-      if(!row.original.validity) return;
-      
+      if (!row.original.validity) return;
+
       const validityDateStr = row.original.validity; // Obtener la fecha en formato "dd/mm/yyyy"
       const parts = validityDateStr?.split('/'); // Separar la fecha en partes
 
@@ -258,7 +258,6 @@ export function ExpiredDataTable<TData, TValue>({
   };
   const supabase = supabaseBrowser();
   const handleDownloadAll = async () => {
-    
     toast.promise(
       async () => {
         const zip = new JSZip();
@@ -267,13 +266,12 @@ export function ExpiredDataTable<TData, TValue>({
           .rows.map((row) => row.original)
           .filter((row: any) => row.state !== 'pendiente') as any;
 
-
         const files = await Promise.all(
           documentToDownload?.map(async (doc: any) => {
             const { data, error } = await supabase.storage.from('document_files').download(doc.document_url);
 
             if (error) {
-              console.log('Salio este error', error);
+              // console.log('Salio este error', error);
               throw new Error(handleSupabaseError(error.message));
             }
 

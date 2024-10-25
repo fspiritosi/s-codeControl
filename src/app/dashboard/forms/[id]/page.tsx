@@ -7,7 +7,7 @@ import CheckListAnwersTable from '../components/CheckListAnwersTable';
 
 async function page({ params }: { params: { id: string } }) {
   const answers = await fetchFormsAnswersByFormId(params.id);
-  console.log('answers', answers[0], 'answers');
+  // console.log('answers', answers[0], 'answers');
 
   const viewData = {
     defaultValue: 'anwers',
