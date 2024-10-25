@@ -37,7 +37,7 @@ export default async function EquipmentFormAction({ searchParams }: { searchPara
       type_of_vehicle: item.types_of_vehicles.name,
       brand: item.brand_vehicles.name,
       model: item.model_vehicles.name,
-      type: item.type,
+      type: item.type.name,
     }));
   }
   let { data: types, error } = await supabase

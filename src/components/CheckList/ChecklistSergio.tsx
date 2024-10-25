@@ -109,7 +109,6 @@ const formSchema = z.object({
   hora: z.string().min(1, { message: 'Hora es requerida' }),
   ...createChecklistSchema(checklistItems),
   observaciones: z.string().optional(),
-  firma: z.string().min(1, { message: 'Firma es requerida' }),
 });
 
 export default function VehicleInspectionChecklist({
@@ -167,6 +166,7 @@ export default function VehicleInspectionChecklist({
             chofer: currentUser?.[0].fullname?.toLocaleUpperCase(),
           },
   });
+  console.log('errors', form.formState.errors);
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     const equipment = equipments?.find((equipment) => equipment.value === data.movil);
