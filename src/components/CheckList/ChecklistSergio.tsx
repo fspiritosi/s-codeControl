@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import moment from 'moment';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -20,7 +21,6 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Textarea } from '../ui/textarea';
-import Image from 'next/image';
 
 const checklistItems = {
   //Podemos armar un array de objetos que ya tengan las opciones
@@ -109,7 +109,6 @@ const formSchema = z.object({
   hora: z.string().min(1, { message: 'Hora es requerida' }),
   ...createChecklistSchema(checklistItems),
   observaciones: z.string().optional(),
-  firma: z.string().min(1, { message: 'Firma es requerida' }),
 });
 
 export default function VehicleInspectionChecklist({
@@ -143,10 +142,10 @@ export default function VehicleInspectionChecklist({
   const router = useRouter();
   // const params = new URLSearchParams(searchParams as any);
 
-  console.log(
-    'equipments?.find((equipment) => equipment.value === default_equipment_id)',
-    equipments?.find((equipment) => equipment.value === default_equipment_id)
-  );
+  // console.log(
+  //   'equipments?.find((equipment) => equipment.value === default_equipment_id)',
+  //   equipments?.find((equipment) => equipment.value === default_equipment_id)
+  // );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -167,6 +166,7 @@ export default function VehicleInspectionChecklist({
             chofer: currentUser?.[0].fullname?.toLocaleUpperCase(),
           },
   });
+  console.log('errors', form.formState.errors);
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     const equipment = equipments?.find((equipment) => equipment.value === data.movil);
@@ -178,15 +178,15 @@ export default function VehicleInspectionChecklist({
       });
       return;
     }
-    toast.promise(CreateNewFormAnswer(resetQrSelection ? form_Info[0].id :params.id as string, data), {
+    toast.promise(CreateNewFormAnswer(resetQrSelection ? form_Info[0].id : (params.id as string), data), {
       loading: 'Guardando...',
       success: 'Checklist guardado correctamente',
       error: 'Ocurrió un error al guardar el checklist',
     });
 
     //Comparar el kilometraje con el del equipo y si es mayor actualizarlo
-    console.log('equipment', equipment);
-    console.log(' data.movil', data.movil);
+    // console.log('equipment', equipment);
+    // console.log(' data.movil', data.movil);
     if (equipment && Number(data.kilometraje) > Number(equipment.kilometer)) {
       await UpdateVehicle(equipment.value, { kilometer: data.kilometraje });
     }
@@ -198,12 +198,11 @@ export default function VehicleInspectionChecklist({
     } else {
       router.push(`/dashboard/forms/${params.id}`);
     }
-
   };
 
   return (
     <Card className="w-full mx-auto mb-4">
-        {resetQrSelection&& (
+      {resetQrSelection && (
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">
             <Image src="/logoLetrasNegras.png" alt="CodeControl Logo" width={240} height={60} className="h-15" />
@@ -434,7 +433,6 @@ export default function VehicleInspectionChecklist({
             />
 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-           
               {defaultAnswer?.length ? (
                 false
               ) : (

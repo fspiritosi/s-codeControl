@@ -13,13 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { PlusCircledIcon } from '@radix-ui/react-icons';
 import { AnimatePresence, motion } from 'framer-motion';
 import cookies from 'js-cookie';
-import { FilePenLine, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import MultiSelect from './MultiSelect';
@@ -28,11 +26,10 @@ import { supabaseBrowser } from '@/lib/supabase/browser';
 import { dailyReportSchema } from '@/zodSchemas/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import moment from 'moment';
-import { Badge } from '../ui/badge';
 import { Card, CardDescription } from '../ui/card';
 import GenericDialog from './GenericDialog';
-import UploadDocument from './UploadDocument';
 // import { cn } from '@/lib/utils'
+
 
 import DailyReportSkeleton from '../Skeletons/DayliReportSkeleton';
 import DocumentView from './DocumentView';
@@ -209,7 +206,7 @@ interface RepairsSolicituds {
 }
 
 export default function DailyReport({ reportData, allReport }: DailyReportProps) {
-  console.log(reportData);
+  // console.log(reportData);
   const [companyName, setCompanyName] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [customers, setCustomers] = useState<Customers[]>([]);
@@ -278,7 +275,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     const companyName = data.data[0].company_name;
     const companyData = data.data[0];
     setCompanyData(companyData);
-    console.log(companyName);
+    // console.log(companyName);
     setCompanyName(companyName);
     return companyName;
   };
@@ -344,7 +341,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
 
   const handleViewDocument = async (documentPath: string, row_id?: string) => {
     const filteredRow = dailyReport.find((row) => row.id === row_id);
-    console.log(filteredRow);
+    //console.log(filteredRow);
     setFilteredRow(filteredRow as DailyReportItem);
     const url = await fetchDocument(documentPath); // Asume que fetchDocumentUrl es una función que obtiene la URL del documento
     setDocumentUrl(url);
@@ -352,12 +349,12 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     // window.open(url, '_blank');
     setIsDialogOpen2(true);
   };
-  
+
   const closeDialog2 = () => {
     setIsDialogOpen2(false);
     setDocumentUrl(null);
   };
-  
+
   useEffect(() => {
     fetchCompanyName();
     fetchEmployees();
@@ -367,7 +364,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
     fetchItems();
     fetchDiagrams();
   }, []);
-  console.log(companyName);
+  //console.log(companyName);
 
   useEffect(() => {
     // Filtrar servicios válidos en la fecha del parte diario
@@ -1175,7 +1172,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
       });
     }
   };
-  
+
   function createDataToDownload(data: DailyReportItem[]) {
     const dataToDownload = data.map((report: DailyReportItem) => ({
         Fecha: report.date,
@@ -1191,7 +1188,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
         Descripción: report.description,
     }));
     return dataToDownload;
-}
+  }
 
   if (isLoading) {
     return <DailyReportSkeleton />;
@@ -1513,7 +1510,6 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
             transition={{ duration: 0.3 }}
             className="overflow-x-auto"
           >
-            
             {canEdit && (
               <div className="flex justify-end items-center mb-4">
             <Button onClick={handleAddNewRow} className="items-end">

@@ -1,6 +1,11 @@
-import { CheckIcon, PlusCircledIcon } from '@radix-ui/react-icons';
-import { Column } from '@tanstack/react-table';
-import * as React from 'react';
+import { Customers, Employee, Equipment, Items, Services } from '@/components/DailyReport/DailyReport';
+import {
+  getCustomerName,
+  getEmployeeNames,
+  getEquipmentNames,
+  getItemName,
+  getServiceName,
+} from '@/components/DailyReport/utils/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,8 +20,9 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { Customers, Services, Items, Employee, Equipment} from '@/components/DailyReport/DailyReport';
-import { getCustomerName, getServiceName, getItemName,  getEmployeeNames ,getEquipmentNames  } from '@/components/DailyReport/utils/utils';
+import { CheckIcon, PlusCircledIcon } from '@radix-ui/react-icons';
+import { Column } from '@tanstack/react-table';
+import * as React from 'react';
 
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;
@@ -41,12 +47,12 @@ export function DataTableFacetedFilter<TData, TValue>({
   services,
   items,
   employees,
-  equipment
+  equipment,
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const facets = column?.getFacetedUniqueValues();
   const selectedValues = new Set(column?.getFilterValue() as string[]);
-  console.log(employees)
-  console.log(equipment)
+  // console.log(employees)
+  // console.log(equipment)
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -105,9 +111,9 @@ export function DataTableFacetedFilter<TData, TValue>({
                       } else {
                         selectedValues.add(option.value);
                       }
-                      console.log('selectedValues', selectedValues);
+                      // console.log('selectedValues', selectedValues);
                       const filterValues = Array.from(selectedValues);
-                      console.log('filterValues', filterValues);
+                      // console.log('filterValues', filterValues);
                       column?.setFilterValue(filterValues.length ? filterValues : undefined);
                     }}
                   >
@@ -129,17 +135,18 @@ export function DataTableFacetedFilter<TData, TValue>({
                     {getItemName(option.label, items as any) !== 'Unknown' && (
                       <span>{getItemName(option.label, items as any)}</span>
                     )}
-                    
+
                     {getEmployeeNames([option?.label?.[0]], employees as any) !== 'Unknown' && (
                       <span>{getEmployeeNames([option?.label[0]], employees as any)}</span>
                     )}
-                    
+
                     {getEquipmentNames([option?.label?.[0]], equipment as any) !== 'Unknown' && (
                       <span>{getEquipmentNames([option?.label[0]], equipment as any)}</span>
                     )}
-                    {(option.label?.includes('ejecutado') || option.label?.includes('pendiente') || option.label?.includes('reprogramado') || option.label?.includes('cancelado')) && (
-                      <>{option.value}</>
-                    )}
+                    {(option.label?.includes('ejecutado') ||
+                      option.label?.includes('pendiente') ||
+                      option.label?.includes('reprogramado') ||
+                      option.label?.includes('cancelado')) && <>{option.value}</>}
                     {facets?.get(option.value) && (
                       <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
                         {facets.get(option.value)}

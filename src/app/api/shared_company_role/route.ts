@@ -7,8 +7,8 @@ export async function GET(request: NextRequest) {
   const company_id = searchParams.get('company_id');
   const profile_id = searchParams.get('profile_id');
 
-  console.log('company_id', company_id);
-  console.log('profile_id', profile_id);
+  // console.log('company_id', company_id);
+  // console.log('profile_id', profile_id);
 
   if (!company_id) {
     return NextResponse.json({ error: ['Company not found'] });

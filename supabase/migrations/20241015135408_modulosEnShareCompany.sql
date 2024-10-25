@@ -8,6 +8,6 @@
 
 -- drop type "public"."modulos__old_version_to_be_dropped";
 
-alter table "public"."share_company_users" add column "modules" modulos[];
+-- alter table "public"."share_company_users" add column "modules" modulos[];
 
 

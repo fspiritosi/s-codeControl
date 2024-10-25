@@ -100,8 +100,8 @@ export default function QrActionSelector({
     return <VehicleRepairRequests pendingRequests={pendingRequests} onReturn={handleReturn} />;
   }
 
-  console.log('role', role);
-  console.log('user.id', user?.id);
+  // console.log('role', role);
+  // console.log('user.id', user?.id);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 p-2">

@@ -42,7 +42,7 @@ async function NewDocumentMulti({
   const allDocumentTypes = await fetchAllDocumentTypes();
   const currentCompany = await fetchCurrentCompany();
   const user = await fetchCurrentUser();
-  console.log(onlyEmployees, 'onlyEmployees');
+  //console.log(onlyEmployees, 'onlyEmployees');
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>

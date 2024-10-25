@@ -576,7 +576,7 @@ export default function EmployeeComponent({
           hierarchical_position: String(hierarchyOptions.find((e) => e.name === values.hierarchical_position)?.id),
           workflow_diagram: String(workDiagramOptions.find((e) => e.name === values.workflow_diagram)?.id),
         };
-        console.log(finalValues, 'finalValues');
+        //console.log(finalValues, 'finalValues');
         const result = compareContractorEmployees(user, finalValues as any);
         result.valuesToRemove.forEach(async (e) => {
           const { error } = await supabase
@@ -622,7 +622,7 @@ export default function EmployeeComponent({
       }
     );
   }
-  console.log(form.formState.errors, 'errors');
+  //console.log(form.formState.errors, 'errors');
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
@@ -1139,13 +1139,9 @@ export default function EmployeeComponent({
                                         )}
                                       >
                                         {field.value ? (
-                                          format(
-                                            field?.value,
-                                            'PPP',
-                                            {
-                                              locale: es,
-                                            } || undefined
-                                          )
+                                          format(field?.value, 'PPP', {
+                                            locale: es,
+                                          } as any)
                                         ) : (
                                           <span>Elegir fecha</span>
                                         )}
@@ -1291,7 +1287,7 @@ export default function EmployeeComponent({
                                   id: e.value,
                                 };
                               }) || [];
-                          console.log(selectedGuildInfo, 'selectedGuildInfo');
+                          // console.log(selectedGuildInfo, 'selectedGuildInfo');
                           const selectedCovenantInfo =
                             covenants
                               ?.filter((e) => e.id === covenantsId)
@@ -1302,7 +1298,7 @@ export default function EmployeeComponent({
                                 };
                               }) || [];
 
-                          console.log(selectedCovenantInfo, 'selectedCovenantInfo');
+                          //console.log(selectedCovenantInfo, 'selectedCovenantInfo');
 
                           return (
                             <FormItem className="flex flex-col w-[300px]">

@@ -2,10 +2,18 @@
 
 import { DataTableFacetedFilter } from '@/components/CheckList/tables/data-table-faceted-filter';
 import { DataTableViewOptions } from '@/components/CheckList/tables/data-table-view-options';
+import { Customers, Employee, Equipment, Items, Services } from '@/components/DailyReport/DailyReport';
 import { Button } from '@/components/ui/button';
-import { Cross2Icon, PersonIcon, GearIcon, CalendarIcon, ClockIcon, CheckIcon, FileTextIcon } from '@radix-ui/react-icons';
+import {
+  CalendarIcon,
+  CheckIcon,
+  ClockIcon,
+  Cross2Icon,
+  FileTextIcon,
+  GearIcon,
+  PersonIcon,
+} from '@radix-ui/react-icons';
 import { Table } from '@tanstack/react-table';
-import { Customers, Services, Items, Employee, Equipment } from '@/components/DailyReport/DailyReport';
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -14,10 +22,16 @@ interface DataTableToolbarProps<TData> {
   items: Items[];
   employees: Employee[];
   equipment: Equipment[];
-
 }
 
-export function DataTableToolbarDailyReport<TData>({ table, customers, services, items, employees, equipment }: DataTableToolbarProps<TData>) {
+export function DataTableToolbarDailyReport<TData>({
+  table,
+  customers,
+  services,
+  items,
+  employees,
+  equipment,
+}: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
   const getUniqueValues = (columnId: string) => {
@@ -59,27 +73,52 @@ export function DataTableToolbarDailyReport<TData>({ table, customers, services,
   const endTimeOptions = createOptions(uniqueEndTime, ClockIcon);
   const statusOptions = createOptions(uniqueStatus, CheckIcon);
   const descriptionOptions = createOptions(uniqueDescription, FileTextIcon);
- console.log(clientOptions)
+  //console.log(employees)
   return (
     <div className="flex items-center justify-between">
       <div className="flex flex-1 items-center space-x-2">
         {table.getColumn('Cliente') && (
-          <DataTableFacetedFilter customers={customers} column={table.getColumn('Cliente')} title="Clientes" options={clientOptions} />
+          <DataTableFacetedFilter
+            customers={customers}
+            column={table.getColumn('Cliente')}
+            title="Clientes"
+            options={clientOptions}
+          />
         )}
         {table.getColumn('Servicios') && (
-          <DataTableFacetedFilter services={services} column={table.getColumn('Servicios')} title="Servicios" options={servicesOptions} />
+          <DataTableFacetedFilter
+            services={services}
+            column={table.getColumn('Servicios')}
+            title="Servicios"
+            options={servicesOptions}
+          />
         )}
         {table.getColumn('Item') && (
           <DataTableFacetedFilter items={items} column={table.getColumn('Item')} title="Items" options={itemOptions} />
         )}
         {table.getColumn('Empleados') && (
-          <DataTableFacetedFilter employees={employees} column={table.getColumn('Empleados')} title="Empleados" options={employeesOptions} />
+          <DataTableFacetedFilter
+            employees={employees}
+            column={table.getColumn('Empleados')}
+            title="Empleados"
+            options={employeesOptions}
+          />
         )}
         {table.getColumn('Equipos') && (
-          <DataTableFacetedFilter equipment={equipment} column={table.getColumn('Equipos')} title="Equipos" options={equipmentOptions} />
+          <DataTableFacetedFilter
+            equipment={equipment}
+            column={table.getColumn('Equipos')}
+            title="Equipos"
+            options={equipmentOptions}
+          />
         )}
         {table.getColumn('Jornada') && (
-          <DataTableFacetedFilter customers={customers} column={table.getColumn('Jornada')} title="Jornada" options={workingDayOptions} />
+          <DataTableFacetedFilter
+            customers={customers}
+            column={table.getColumn('Jornada')}
+            title="Jornada"
+            options={workingDayOptions}
+          />
         )}
         {/* {table.getColumn('Hora inicio') && (
           <DataTableFacetedFilter customers={customers} column={table.getColumn('Hora inicio')} title="Hora inicio" options={startTimeOptions} />
@@ -88,7 +127,12 @@ export function DataTableToolbarDailyReport<TData>({ table, customers, services,
           <DataTableFacetedFilter customers={customers} column={table.getColumn('Hora fin')} title="Hora fin" options={endTimeOptions} />
         )} */}
         {table.getColumn('Estado') && (
-          <DataTableFacetedFilter customers={customers} column={table.getColumn('Estado')} title="Estado" options={statusOptions} />
+          <DataTableFacetedFilter
+            customers={customers}
+            column={table.getColumn('Estado')}
+            title="Estado"
+            options={statusOptions}
+          />
         )}
         {/* {table.getColumn('Descripción') && (
           <DataTableFacetedFilter customers={customers} column={table.getColumn('Descripción')} title="Descripción" options={descriptionOptions} />
