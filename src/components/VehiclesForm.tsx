@@ -1,7 +1,6 @@
 'use client';
 
 import { CheckboxDefaultValues } from '@/components/CheckboxDefValues';
-import DocumentEquipmentComponent from '@/components/DocumentEquipmentComponent';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Form } from '@/components/ui/form';
@@ -316,11 +315,12 @@ export default function VehiclesForm2({
       domain: vehicle?.domain || '',
       intern_number: vehicle?.intern_number || '',
       picture: vehicle?.picture || '',
-      allocated_to: [],
+      allocated_to: vehicle?.allocated_to || [],
+      
       brand: vehicle?.brand || '',
       model: vehicle?.model || '',
       type_of_vehicle: vehicle?.type_of_vehicle || '',
-      type: vehicle?.type?.name || '',
+      type: vehicle?.type || '',
       kilometer: vehicle?.kilometer || '',
     },
   });
@@ -455,23 +455,37 @@ export default function VehiclesForm2({
       const modifiedSet = new Set(modifiedObj?.allocated_to);
       // Valores a eliminar
       const valuesToRemove = [...originalSet].filter((value) => !modifiedSet.has(value));
-
+  
       // Valores a agregar
       const valuesToAdd = [...modifiedSet].filter((value) => !originalSet.has(value));
-
+  
       // Valores que se mantienen
       const valuesToKeep = [...originalSet].filter((value) => modifiedSet.has(value));
-
+  
       return {
         valuesToRemove,
         valuesToAdd,
         valuesToKeep,
       };
     }
+  
+    function getUpdatedFields(originalObj: any, modifiedObj: any) {
+      const updatedFields: any = {};
+      for (const key in modifiedObj) {
+        if (modifiedObj[key] !== originalObj[key]) {
+          updatedFields[key] = modifiedObj[key];
+        }
+      }
+      return updatedFields;
+    }
+  
     toast.promise(
       async () => {
-        const result = compareContractorEmployees(vehicle, values);
-
+        const { brand_vehicles:brandd, model_vehicles, types_of_vehicles, ...rest } = vehicle;
+        console.log('formatVehicle', rest, 'formatVehicle');
+        const result = compareContractorEmployees(rest, values);
+        console.log('result', result, 'result');
+  
         result.valuesToRemove.forEach(async (e) => {
           const { error } = await supabase
             .from('contractor_equipment')
@@ -480,7 +494,7 @@ export default function VehiclesForm2({
             .eq('contractor_id', e);
           if (error) return handleSupabaseError(error.message);
         });
-
+  
         const error2 = await Promise.all(
           result.valuesToAdd.map(async (e) => {
             if (!result.valuesToKeep.includes(e)) {
@@ -490,32 +504,36 @@ export default function VehiclesForm2({
               if (error) return handleSupabaseError(error.message);
             }
           })
+
         );
 
-        const { type_of_vehicle, brand, model, year, engine, chassis, serie, domain, intern_number, picture, type } =
-          values;
-
+        console.log(values, 'values');
+  
+        const updatedFields = getUpdatedFields(rest, {
+          type_of_vehicle: data.tipe_of_vehicles.find((e) => e.name === values.type_of_vehicle)?.id,
+          brand: brand_vehicles.find((e: any) => e.name === values.brand)?.id,
+          model: data.models.find((e) => e.name === values.model)?.id,
+          year: values.year,
+          engine: values.engine,
+          chassis: values.chassis,
+          serie: values.serie,
+          domain: values.domain?.toUpperCase(),
+          intern_number: values.intern_number,
+          picture: values.picture,
+          allocated_to: values.allocated_to,
+          kilometer: values.kilometer,
+          type: vehicleType.find((e) => e.name === values.type)?.id,
+        });
+  
         try {
-          const { data: updated, error: updatedERROR } = await supabase
+          const { error: updatedERROR } = await supabase
             .from('vehicles')
-            .update({
-              type_of_vehicle: data.tipe_of_vehicles.find((e) => e.name === type_of_vehicle)?.id,
-              brand: brand_vehicles.find((e) => e.name === brand)?.id,
-              model: data.models.find((e) => e.name === model)?.id,
-              year: year,
-              engine: engine,
-              chassis: chassis,
-              serie: serie,
-              domain: domain?.toUpperCase(),
-              intern_number: intern_number,
-              picture: picture,
-              allocated_to: values.allocated_to,
-              kilometer: values.kilometer,
-            })
+            .update(updatedFields)
             .eq('id', vehicle?.id)
-            .eq('company_id', actualCompany?.id)
-            .select();
-
+            .eq('company_id', actualCompany?.id);
+  
+          console.log(updatedERROR, 'updatedERROR');
+  
           const id = vehicle?.id;
           const fileExtension = imageFile?.name.split('.').pop();
           if (imageFile) {
@@ -524,7 +542,7 @@ export default function VehiclesForm2({
                 type: `image/${fileExtension}`,
               });
               await uploadImage(renamedFile, 'vehicle_photos');
-
+  
               try {
                 const vehicleImage = `${url}/vehicle_photos/${id}.${fileExtension}?timestamp=${Date.now()}`
                   .trim()
@@ -539,10 +557,11 @@ export default function VehiclesForm2({
               throw new Error('Error al subir la imagen');
             }
           }
-
+  
           setReadOnly(true);
           router.refresh();
         } catch (error) {
+          console.log(error);
           throw new Error('Error al editar el vehículo');
         }
       },
@@ -1205,10 +1224,10 @@ export default function VehiclesForm2({
           </Form>
         </TabsContent>
         {/* <TabsContent value="documents"> */}
-          {/* <DocumentEquipmentComponent id={vehicle?.id} /> */}
+        {/* <DocumentEquipmentComponent id={vehicle?.id} /> */}
         {/* </TabsContent> */}
         {/* <TabsContent value="repairs" className="px-3 py-2"> */}
-          {children}
+        {children}
         {/* </TabsContent> */}
         <TabsContent value="QR" className="px-3 py-2 pt-5">
           <div className="flex w-full">
