@@ -44,6 +44,7 @@ interface DailyReportItem {
   status: 'pendiente' | 'ejecutado' | 'cancelado' | 'reprogramado';
   working_day: string;
   description: string;
+  document_path?: string;
 }
 
 interface DailyReportData {
@@ -152,21 +153,13 @@ export default function ViewDailysReports() {
         end_time: row.end_time,
         status: row.status, // Asumiendo que todos los items están ejecutados por defecto
         working_day: row.working_day,
-        description: row.description || '', // Asumiendo que no hay descripción disponible
+        description: row.description || '',
+        document_path:row.document_path // Asumiendo que no hay descripción disponible
       })),
     }));
   };
   const transformedReports = transformDailyReports(dailyReports);
   
-
-  // const handleStatusChangeWithWarning = (id: string, status: boolean) => {
-  //   if (!status) { // Si el nuevo estado es 'cerrado' (false)
-  //     setPendingStatusChange({ id, status });
-  //     setWarningDialogOpen(true);
-  //   } else {
-  //     handleStatusChange(id, status);
-  //   }
-  // };
 
   const handleStatusChangeWithWarning = (id: string, status: boolean) => {
     const report = dailyReports.find(r => r.id === id);
@@ -174,7 +167,7 @@ export default function ViewDailysReports() {
 
     if (!status) { // Si el nuevo estado es 'cerrado' (false)
       // Verificar si alguna fila tiene el estado "pendiente"
-      const hasPendingRows = report.dailyreportrows.some(row => row.status === 'pendiente');
+      const hasPendingRows = report.dailyreportrows?.some(row => row.status === 'pendiente');
       if (hasPendingRows) {
         alert('No se puede cerrar el parte diario porque algunas filas están en estado "pendiente".');
         return;
@@ -228,7 +221,7 @@ export default function ViewDailysReports() {
     }
   };
 
-
+const [allReport, setAllreport] = useState<DailyReportData[]>([]);
   const handleViewReport = (report: DailyReportData) => {
     setIsLoading(true);
     setIsEditing(true);
@@ -237,7 +230,7 @@ export default function ViewDailysReports() {
       if (!fullReportData) {
         throw new Error("Report not found in the array");
       }
-      
+      setAllreport(transformedReports)
       setSelectedReport(fullReportData);
       setOpenModal(true);
     } catch (error) {
@@ -256,7 +249,7 @@ export default function ViewDailysReports() {
   const handleCloseModal = () => {
     setOpenModal(false);
     setSelectedReport(null);
-    router.refresh();
+    // router.refresh();
   };
 
   const handleSaveReport = async (updatedReport: DailyReportData) => {
@@ -293,7 +286,7 @@ export default function ViewDailysReports() {
       });
     }
   };
-  
+ 
 
   return (
     <div className="container mx-auto p-4">
@@ -405,7 +398,7 @@ export default function ViewDailysReports() {
       <Dialog open={openModal} onOpenChange={setOpenModal}>
         <DialogContent className="max-w-[95vw] h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Reporte Diario</DialogTitle>
+            <DialogTitle>Parte Diario</DialogTitle>
             <DialogDescription className="flex items-center space-x-4">
   <span>Fecha: {selectedReport?.date ? moment(selectedReport.date).format('DD/MM/YYYY') : ''}</span>
   <div className="grid grid-cols-3 y gap-4 w-full">
@@ -432,7 +425,7 @@ export default function ViewDailysReports() {
           </DialogHeader>
           <div className="flex-grow overflow-auto">
             {selectedReport ? (
-              <DailyReport reportData={selectedReport} />
+              <DailyReport reportData={selectedReport} allReport={allReport} />
             ) : (
               <div className="text-center">Cargando detalles del reporte...</div>
             )}

@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
           status,
           working_day,
           description,
+          document_path,
           dailyreportemployeerelations (employee_id(id,firstname,lastname)),
           dailyreportequipmentrelations (equipment_id(id,intern_number))
           )
@@ -33,6 +34,7 @@ export async function GET(request: NextRequest) {
       .eq('company_id', company_id || '');
 
     if (error) {
+      console.log('Error fetching daily reports:', error);
       throw new Error(JSON.stringify(error));
     }
 
