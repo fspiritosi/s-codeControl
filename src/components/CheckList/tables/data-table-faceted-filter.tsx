@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { CheckIcon, PlusCircledIcon } from '@radix-ui/react-icons';
 import { Column } from '@tanstack/react-table';
 import * as React from 'react';
+
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;
   title?: string;
@@ -73,9 +74,19 @@ export function DataTableFacetedFilter<TData, TValue>({
                   options
                     .filter((option) => selectedValues.has(option.value))
                     .map((option) => (
-                      <Badge variant="secondary" key={option.value} className="rounded-sm px-1 font-normal">
-                        {option.label}
-                      </Badge>
+                        <Badge variant="secondary" key={option.value} className="rounded-sm px-1 font-normal">
+                          {getCustomerName(option.label, customers as any) !== 'Unknown'
+                          ? getCustomerName(option.label, customers as any)
+                          : getServiceName(option.label, services as any) !== 'Unknown'
+                          ? getServiceName(option.label, services as any)
+                          : getItemName(option.label, items as any) !== 'Unknown'
+                          ? getItemName(option.label, items as any)
+                          : getEmployeeNames([option?.label?.[0]], employees as any) !== 'Unknown'
+                          ? getEmployeeNames([option?.label[0]], employees as any)
+                          : getEquipmentNames([option?.label?.[0]], equipment as any) !== 'Unknown'
+                          ? getEquipmentNames([option?.label[0]], equipment as any)
+                          : option.label}
+                        </Badge>
                     ))
                 )}
               </div>
