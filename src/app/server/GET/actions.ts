@@ -1,5 +1,6 @@
 'use server';
 import { supabaseServer } from '@/lib/supabase/server';
+import moment from 'moment';
 import { cookies } from 'next/headers';
 
 // Company-related actions
@@ -133,6 +134,64 @@ export const fetchDocumentsByDocumentTypeId = async (documentTypeId: string) => 
   }
   return data;
 };
+
+export const getNextMonthExpiringDocumentsEmployees = async () => {
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+
+  const today = moment().startOf('day');
+  const nextMonth = moment().add(1, 'month').endOf('day');
+
+  const { data, error } = await supabase
+    .from('documents_employees')
+    .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
+    .eq('applies.company_id', company_id)
+    // .not('id_document_types.is_it_montlhy', 'is', false)
+    .neq('id_document_types.is_it_montlhy', true) // Solo traer documentos que no sean mensuales
+    .or(`validity.lte.${today.toISOString()},validity.lte.${nextMonth.toISOString()}`)
+    .not('applies', 'is', null)
+    .not('validity', 'is', null)
+    .order('validity', { ascending: true }) // Ordenar por fecha de validez en orden ascendente
+    .returns<EmployeeDocumentWithContractors[]>();
+
+  console.log(data, 'data');
+
+  if (error) {
+    console.error('Error fetching next month expiring documents:', error);
+    return [];
+  }
+  return data;
+};
+
+export const getNextMonthExpiringDocumentsVehicles = async () => {
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+
+  const today = moment().startOf('day');
+  const nextMonth = moment().add(1, 'month').endOf('day');
+
+  const { data, error } = await supabase
+    .from('documents_equipment')
+    .select('*,id_document_types(*),applies(*,type(*),brand(*),model(*))')
+    .eq('applies.company_id', company_id)
+    .not('id_document_types.is_it_montlhy', 'is', true)
+    .not('id_document_types', 'is', null)
+    .or(`validity.lte.${today.toISOString()},validity.lte.${nextMonth.toISOString()}`)
+    .not('applies', 'is', null)
+    .not('validity', 'is', null)
+    .order('validity', { ascending: true }) // Ordenar por fecha de validez en orden ascendente
+    .returns<EquipmentDocumentDetailed[]>();
+
+  if (error) {
+    console.error('Error fetching next month expiring documents:', error);
+    return [];
+  }
+  return data;
+}
 
 // Equipment-related actions
 export const fetchAllEquipment = async () => {
@@ -305,11 +364,11 @@ export const fetchCurrentUser = async () => {
   return user;
 };
 
-export const fetchCustomForms = async (id_company?:string) => {
+export const fetchCustomForms = async (id_company?: string) => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
   const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id&&!id_company) return [];
+  if (!company_id && !id_company) return [];
   const { data, error } = await supabase
     .from('custom_form')
     .select('*,form_answers(*)')
