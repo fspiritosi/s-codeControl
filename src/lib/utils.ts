@@ -293,7 +293,6 @@ export const getOpenRepairsSolicitudesByArrayClientSide = async (
 };
 
 export const formatEmployeeDocuments = (doc: EmployeeDocumentWithContractors) => {
-
   return {
     date: moment(doc.created_at).format('DD/MM/YYYY'),
     allocated_to: doc.applies?.contractor_employee?.map((doc: any) => doc.contractors?.name).join(', '),

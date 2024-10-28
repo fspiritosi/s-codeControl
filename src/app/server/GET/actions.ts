@@ -54,7 +54,27 @@ export const fetchAllEmployees = async () => {
   return data;
 };
 
-export const fetchEmployeeMonthlyDocuments = async (employeeId: string) => {
+export const fetchEmployeeMonthlyDocuments = async () => {
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+
+  const { data, error } = await supabase
+    .from('documents_employees')
+    .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
+    .eq('applies.company_id', company_id)
+    .eq('id_document_types.is_it_montlhy', true)
+    .not('id_document_types', 'is', null)
+    .returns<EmployeeDocumentWithContractors[]>();
+
+  if (error) {
+    console.error('Error fetching employee monthly documents:', error);
+    return [];
+  }
+  return data;
+};
+export const fetchEmployeeMonthlyDocumentsByEmployeeId = async (employeeId: string) => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
   const company_id = cookiesStore.get('actualComp')?.value;
@@ -75,7 +95,7 @@ export const fetchEmployeeMonthlyDocuments = async (employeeId: string) => {
   return data;
 };
 
-export const fetchEmployeePermanentDocuments = async (employeeId: string) => {
+export const fetchEmployeePermanentDocumentsByEmployeeId = async (employeeId: string) => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
   const company_id = cookiesStore.get('actualComp')?.value;
@@ -87,6 +107,27 @@ export const fetchEmployeePermanentDocuments = async (employeeId: string) => {
     .eq('applies', employeeId)
     .not('id_document_types.is_it_montlhy', 'is', false)
     .not('id_document_types', 'is', null)
+    .returns<EmployeeDocumentWithContractors[]>();
+
+  if (error) {
+    console.error('Error fetching employee permanent documents:', error);
+    return [];
+  }
+  return data;
+};
+export const fetchEmployeePermanentDocuments = async () => {
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+
+  const { data, error } = await supabase
+    .from('documents_employees')
+    .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
+    .eq('applies.company_id', company_id)
+    .not('id_document_types.is_it_montlhy', 'is', true)
+    .not('id_document_types', 'is', null)
+    .not('applies', 'is', null)
     .returns<EmployeeDocumentWithContractors[]>();
 
   if (error) {
@@ -233,6 +274,26 @@ export const fetchMonthlyDocumentsByEquipmentId = async (equipmentId: string) =>
   }
   return data;
 };
+export const fetchMonthlyDocumentsEquipment = async () => {
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+
+  const { data, error } = await supabase
+    .from('documents_equipment')
+    .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
+    .eq('id_document_types.is_it_montlhy', true)
+    .eq('applies.company_id', company_id)
+    .not('id_document_types', 'is', null)
+    .returns<EquipmentDocumentDetailed[]>();
+
+  if (error) {
+    console.error('Error fetching equipment monthly documents:', error);
+    return [];
+  }
+  return data;
+};
 
 export const fetchPermanentDocumentsByEquipmentId = async (equipmentId: string) => {
   const cookiesStore = cookies();
@@ -246,6 +307,27 @@ export const fetchPermanentDocumentsByEquipmentId = async (equipmentId: string) 
     .not('id_document_types.is_it_montlhy', 'is', true)
     .eq('applies', equipmentId)
     .not('id_document_types', 'is', null)
+    .returns<EquipmentDocumentDetailed[]>();
+
+  if (error) {
+    console.error('Error fetching equipment permanent documents:', error);
+    return [];
+  }
+  return data;
+};
+export const fetchPermanentDocumentsEquipment = async () => {
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+
+  const { data, error } = await supabase
+    .from('documents_equipment')
+    .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
+    .eq('applies.company_id', company_id)
+    .not('id_document_types.is_it_montlhy', 'is', true)
+    .not('id_document_types', 'is', null)
+    .not('applies', 'is', null)
     .returns<EquipmentDocumentDetailed[]>();
 
   if (error) {

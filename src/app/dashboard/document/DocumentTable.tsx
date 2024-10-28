@@ -1,6 +1,6 @@
 // 'use client';
 
-import { fetchEmployeeMonthlyDocuments, fetchEmployeePermanentDocuments } from '@/app/server/GET/actions';
+import { fetchEmployeeMonthlyDocumentsByEmployeeId, fetchEmployeePermanentDocumentsByEmployeeId } from '@/app/server/GET/actions';
 import DocumentNav from '@/components/DocumentNav';
 import { CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,8 +13,8 @@ type Props = { employee_id: string };
 
 export default async function DocumentTable({ employee_id }: Props) {
   // const { allDocumentsToShow } = useLoggedUserStore();
-  const monthlyDocuments = (await fetchEmployeeMonthlyDocuments(employee_id)).map(formatEmployeeDocuments);
-  const permanentDocuments = (await fetchEmployeePermanentDocuments(employee_id)).map(formatEmployeeDocuments);
+  const monthlyDocuments = (await fetchEmployeeMonthlyDocumentsByEmployeeId(employee_id)).map(formatEmployeeDocuments);
+  const permanentDocuments = (await fetchEmployeePermanentDocumentsByEmployeeId(employee_id)).map(formatEmployeeDocuments);
   // console.log(document);
   // console.log(allDocumentsToShow.employees.filter((e) => e.document_number === document));
   return (
