@@ -13,8 +13,8 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import TypesDocumentAction from '../../document/documentComponents/TypesDocumentAction';
 import Contacts from './contact/Contact';
-import Customers from './customers/Customers';
 import CovenantTreeFile from './covenant/CovenantTreeFile';
+import Customers from './customers/Customers';
 export default async function CompanyPage() {
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
@@ -77,7 +77,7 @@ export default async function CompanyPage() {
           buttonActioRestricted: [''],
           buttonAction: (
             <Link
-              href={'/dashboard/company/customers/action?action=new'}
+              href={'/dashboard/actualCompany/customers/action?action=new'}
               className={buttonVariants({ variant: 'default' })}
             >
               Registrar Cliente
