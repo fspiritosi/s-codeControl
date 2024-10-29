@@ -539,7 +539,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
   },
   {
     accessorKey: 'documentName',
-    header: 'Documento',
+    header: 'Documento'
   },
   {
     accessorKey: 'intern_number',
@@ -653,11 +653,12 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
       if (isNoPresented) {
         return <Badge variant={'destructive'}>Pendiente</Badge>;
       } else {
-        return row.original.validity ? (
-          moment(row.original.validity).format('DD/MM/YYYY')
-        ) : (
-          <Badge variant={'outline'}>No vence</Badge>
-        );
+        if (row.original.validity) {
+          return moment(row.original.validity).format('DD/MM/YYYY');
+        } else {
+          console.log('row.original.validity', row.original.validity);
+          return <Badge variant={'outline'}>No vence</Badge>;
+        }
       }
     },
   },
