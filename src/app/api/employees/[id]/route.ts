@@ -12,7 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     let { data: employee, error } = await supabase
       .from('employees')
       .select(
-        `*, city (
+        `*,guild(name),covenant(name),category(name), city (
         name
       ),
       province(

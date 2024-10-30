@@ -58,6 +58,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
     ).then((e) => e.json());
 
     formattedEmployee = setEmployeesToShow(employee)?.[0];
+   
 
     let { data: guilds, error } = await supabase
       .from('guild')
@@ -101,7 +102,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
     });
   }
 
-  //console.log(formattedEmployee, 'formattedEmployee');
+  console.log(formattedEmployee, 'formattedEmployee');
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">
       <Card className={cn('col-span-8 flex flex-col justify-between overflow-hidden')}>

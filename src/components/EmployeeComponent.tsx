@@ -158,15 +158,7 @@ export default function EmployeeComponent({
 
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accordionSchema),
-    defaultValues: user
-      ? {
-          ...user,
-          allocated_to: user?.allocated_to || [],
-          guild_id: user?.guild_id,
-          covenants_id: user?.covenants_id,
-          category_id: user?.category_id,
-        }
-      : {
+    defaultValues: user || {
           lastname: '',
           firstname: '',
           nationality: undefined,
@@ -192,12 +184,12 @@ export default function EmployeeComponent({
           type_of_contract: undefined,
           allocated_to: [],
           date_of_admission: undefined,
-          guild: null,
-          covenants: null,
-          category: 'n',
+          guild_id: undefined,
+          covenants_id: undefined,
+          category_id: undefined,
         },
   });
-
+  console.log(user, 'user');
   const [accordion1Errors, setAccordion1Errors] = useState(false);
   const [accordion2Errors, setAccordion2Errors] = useState(false);
   const [accordion3Errors, setAccordion3Errors] = useState(false);
@@ -1277,18 +1269,20 @@ export default function EmployeeComponent({
                             // category_id está habilitado solo si covenants_id tiene un valor
                             disabled = readOnly || !covenantsId;
                           }
-
+                          let selectedCovenantInfo=[{name:'',id:''}]
                           const selectedGuildInfo =
                             guild
                               ?.filter((e) => e.value === guildId)
                               ?.map((e) => {
+                                selectedCovenantInfo=[{name:'',id:''}]
                                 return {
                                   name: e.label,
                                   id: e.value,
+                                  
                                 };
                               }) || [];
                           // console.log(selectedGuildInfo, 'selectedGuildInfo');
-                          const selectedCovenantInfo =
+                          selectedCovenantInfo =
                             covenants
                               ?.filter((e) => e.id === covenantsId)
                               .map((e) => {
@@ -1312,14 +1306,15 @@ export default function EmployeeComponent({
                                       disabled={disabled}
                                       value={field.value || ''}
                                       className={cn(
-                                        'w-[300px] justify-between',
+                                        'w-[300px] justify-between truncate',
                                         !field.value && 'text-muted-foreground'
                                       )}
                                     >
-                                      {field.value
-                                        ? (data?.options?.find((option: any) => option.value === field.value) as any)
-                                            ?.label
-                                        : `Seleccionar ${data.label}`}
+                                        {field.value
+                                          ? (data?.options?.find((option: any) => option.value === field.value) as any)
+                                          ?.label || field.value
+                                          : `Seleccionar ${data.label}`
+                                        }
                                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 " />
                                     </Button>
                                   </FormControl>
@@ -1332,11 +1327,15 @@ export default function EmployeeComponent({
                                       <CommandGroup>
                                         {data?.options?.map((option: any) => (
                                           <CommandItem
-                                            value={option.label}
-                                            key={option.value}
-                                            onSelect={() => {
-                                              form.setValue(`${data.name as names}`, option.value);
-                                            }}
+                                          value={option.label}
+                                          key={option.value}
+                                          onSelect={() => {
+                                            form.setValue(`${data.name as names}`, option.value);
+                                            if (field.name === 'guild_id') {
+                                              form.setValue('covenants_id', '');
+                                              form.setValue('category_id', '');
+                                            }
+                                          }}
                                           >
                                             <Check
                                               className={cn(
