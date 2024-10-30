@@ -137,6 +137,20 @@ export const fetchEmployeePermanentDocuments = async () => {
   return data;
 };
 
+export const getDiagramEmployee = async ({ employee_id }: { employee_id: string }) => {
+  const supabase = supabaseServer();
+  console.log('employee_id', employee_id);
+  let { data: employees_diagram, error } = await supabase
+    .from('employees_diagram')
+    .select('*')
+    .eq('employee_id', employee_id);
+  if (error) {
+    console.error('Error fetching document types:', error);
+    return [];
+  }
+  return employees_diagram || [];
+};
+
 // Document-related actions
 export const fetchAllDocumentTypes = async () => {
   const cookiesStore = cookies();
@@ -232,7 +246,7 @@ export const getNextMonthExpiringDocumentsVehicles = async () => {
     return [];
   }
   return data;
-}
+};
 
 // Equipment-related actions
 export const fetchAllEquipment = async () => {

@@ -17,6 +17,7 @@ async function EmployesDiagram() {
   const { employees } = await fetch(`${URL}/api/employees?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
 
   const activeEmploees = setEmployeesToShow(employees?.filter((e: any) => e.is_active));
+
   const { data: diagrams } = await fetch(`${URL}/api/employees/diagrams`).then((e) => e.json());
   const { data: diagrams_types } = await fetch(
     `${URL}/api/employees/diagrams/tipos?actual=${company_id}&user=${user?.id}`
