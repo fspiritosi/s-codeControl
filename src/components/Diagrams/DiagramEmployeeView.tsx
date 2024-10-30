@@ -100,10 +100,13 @@ function DiagramEmployeeView({
   /*---------------------FIN FILTROS DE FECHA --------------------------------- */
 
   const groupedDiagrams = diagrams.reduce((acc: any, diagram: any) => {
-    if (!acc[diagram.employee_id]) {
-      acc[diagram.employee_id] = [];
+    const employee = activeEmployees.find((emp: any) => emp.id === diagram.employee_id);
+    if (employee) {
+      if (!acc[diagram.employee_id]) {
+        acc[diagram.employee_id] = [];
+      }
+      acc[diagram.employee_id].push(diagram);
     }
-    acc[diagram.employee_id].push(diagram);
     return acc;
   }, {});
 
@@ -137,6 +140,8 @@ function DiagramEmployeeView({
     });
     setSelectedResources(employeesWithDiagrams);
   }, []);
+
+  console.log('grupedDiagrams', groupedDiagrams);
 
   return (
     <div>
