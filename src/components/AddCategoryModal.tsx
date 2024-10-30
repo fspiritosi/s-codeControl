@@ -36,14 +36,14 @@ export default function AddCategoryModal({
     }),
     covenant_id: z
       .string()
-      .default(covenantInfo.id || '')
+      .default(covenantInfo?.id || '')
       .optional(),
   });
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      covenant_id: covenantInfo.id,
+      covenant_id: covenantInfo?.id,
     },
   });
   async function onSubmit({ name, covenant_id }: z.infer<typeof formSchema>) {
@@ -94,7 +94,7 @@ export default function AddCategoryModal({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Agregar categoria al convenio <span className="font-bold">{covenantInfo.name}</span>
+            Agregar categoria al convenio <span className="font-bold">{covenantInfo?.name}</span>
           </AlertDialogTitle>
           <AlertDialogDescription>
             Por favor complete los siguientes campos para agregar una nueva categoria.
