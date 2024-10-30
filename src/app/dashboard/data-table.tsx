@@ -55,6 +55,7 @@ import JSZip from 'jszip';
 import { ArrowUpDown, DownloadIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import moment from 'moment';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -232,21 +233,20 @@ export function ExpiredDataTable<TData, TValue>({
       setShowLastMonthDocuments();
     }
   };
-
   const getColorForRow = (row: any) => {
     const isNoPresented = row.getValue('state') === 'pendiente';
     if (isNoPresented) {
       return; // Clase por defecto si no está vencido
     } else {
       if (!row.original.validity) return;
-
+  
       const validityDateStr = row.original.validity; // Obtener la fecha en formato "dd/mm/yyyy"
-      const parts = validityDateStr?.split('/'); // Separar la fecha en partes
 
-      const validityDate = new Date(`${parts[1]}/${parts[0]}/${parts[2]}`).getTime();
-      const currentDate = new Date().getTime();
-      const differenceInDays = Math.ceil((validityDate - currentDate) / (1000 * 60 * 60 * 24));
-
+      console.log(validityDateStr, 'validityDateStr');
+      const validityDate = moment(validityDateStr);
+      const currentDate = moment();
+      const differenceInDays = validityDate.diff(currentDate, 'days');
+  
       if (differenceInDays < 0) {
         return 'bg-red-100 dark:bg-red-100/30 hover:bg-red-100/30'; // Vencido
       } else if (differenceInDays <= 7) {
@@ -256,6 +256,7 @@ export function ExpiredDataTable<TData, TValue>({
       }
     }
   };
+
   const supabase = supabaseBrowser();
   const handleDownloadAll = async () => {
     toast.promise(

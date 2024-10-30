@@ -1,13 +1,10 @@
 import {
-  Campo,
   CompaniesTableOptions,
   DocumentsTableOptions,
   EmployeesTableOptions,
   VehiclesTableOptions,
-  types,
 } from '@/types/types';
 import { Vehicle } from '@/zodSchemas/schemas';
-import { format } from 'date-fns';
 import { supabaseServer } from '../supabase/server';
 export const formatDate = (dateString: string) => {
   if (!dateString) return 'No vence';
@@ -16,15 +13,14 @@ export const formatDate = (dateString: string) => {
   return formattedDate || 'No vence';
 };
 export const mapDocument = (doc: any) => {
-  const formattedDate = formatDate(doc.validity);
   return {
-    date: new Date(doc.created_at).toLocaleDateString(),
+    date: doc.created_at,
     allocated_to: doc.employees?.contractor_employee?.map((doc: any) => doc.contractors?.name).join(', '),
     documentName: doc.document_types?.name,
     state: doc.state,
     multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
     isItMonthly: doc.document_types?.is_it_montlhy,
-    validity: formattedDate,
+    validity: doc.validity,
     mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
     id: doc.id,
     resource: `${doc.employees?.lastname?.charAt(0)?.toUpperCase()}${doc?.employees?.lastname.slice(
@@ -40,15 +36,14 @@ export const mapDocument = (doc: any) => {
   };
 };
 export const mapVehicle = (doc: any) => {
-  const formattedDate = formatDate(doc.validity);
   return {
-    date: doc.created_at ? format(new Date(doc.created_at), 'dd/MM/yyyy') : 'No vence',
+    date: doc.created_at,
     allocated_to: doc.applies?.allocated_to,
     documentName: doc.document_types?.name,
     state: doc.state,
     multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
     isItMonthly: doc.document_types?.is_it_montlhy,
-    validity: formattedDate,
+    validity: doc.validity,
     mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
     id: doc.id,
     resource: `${doc.applies?.domain}`,
@@ -251,4 +246,3 @@ export const setVehiclesToShow = (vehicles: Vehicle) => {
 //   text2: {
 //   },
 // });
-

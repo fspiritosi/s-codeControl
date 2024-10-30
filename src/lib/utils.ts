@@ -300,7 +300,7 @@ export const formatEmployeeDocuments = (doc: EmployeeDocumentWithContractors) =>
     state: doc.state,
     multiresource: doc.id_document_types?.multiresource ? 'Si' : 'No',
     isItMonthly: doc.id_document_types?.is_it_montlhy,
-    validity: doc.validity ? moment(doc.validity).format('DD/MM/YYYY') : '',
+    validity: doc.validity,
     mandatory: doc.id_document_types?.mandatory ? 'Si' : 'No',
     id: doc.id,
     resource: `${doc.applies?.lastname?.charAt(0)?.toUpperCase()}${doc?.applies?.lastname.slice(
@@ -335,7 +335,7 @@ export const formatVehiculesDocuments = (doc: EquipmentDocumentDetailed) => {
     period: doc.period,
     applies: doc.id_document_types?.applies,
     resource_id: doc.applies?.id,
-    id_document_types: doc.id_document_types.id,
+    id_document_types: doc.id_document_types?.id,
     intern_number: `${doc.applies?.intern_number}`,
     serie: doc.applies?.serie,
   };

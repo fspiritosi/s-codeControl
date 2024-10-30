@@ -1,26 +1,14 @@
+import { fetchMonthlyDocumentsEquipment, fetchPermanentDocumentsEquipment } from '@/app/server/GET/actions';
 import { CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabaseServer } from '@/lib/supabase/server';
-import { mapVehicle } from '@/lib/utils/utils';
-import { Document } from '@/types/types';
-import { cookies } from 'next/headers';
+import { formatVehiculesDocuments } from '@/lib/utils';
 import { ExpiredColums } from '../../colums';
 import { ColumnsMonthly } from '../../columsMonthly';
 import { ExpiredDataTable } from '../../data-table';
 
 async function EquipmentTabs() {
-  const URL = process.env.NEXT_PUBLIC_BASE_URL;
-  const supabase = supabaseServer();
-  const cookiesStore = cookies();
-  const company_id = cookiesStore.get('actualComp')?.value;
-
-  const { equipmentDocuments } = await fetch(`${URL}/api/equipment/documents?actual=${company_id}`).then((e) =>
-    e.json()
-  );
-
-  const vehicles = equipmentDocuments?.map(mapVehicle) as Document[];
-
-  //console.log(vehicles);
+  const monthlyDocuments = (await fetchMonthlyDocumentsEquipment()).map(formatVehiculesDocuments);
+  const permanentDocuments = (await fetchPermanentDocumentsEquipment()).map(formatVehiculesDocuments);
   return (
     <Tabs defaultValue="permanentes">
       <CardContent>
@@ -31,7 +19,7 @@ async function EquipmentTabs() {
       </CardContent>
       <TabsContent value="permanentes">
         <ExpiredDataTable
-          data={vehicles?.filter((e) => !e.isItMonthly) || []}
+          data={permanentDocuments || []}
           columns={ExpiredColums}
           pending={true}
           vehicles
@@ -42,7 +30,7 @@ async function EquipmentTabs() {
       </TabsContent>
       <TabsContent value="mensuales">
         <ExpiredDataTable
-          data={vehicles?.filter((e) => e.isItMonthly) || []}
+          data={monthlyDocuments || []}
           columns={ColumnsMonthly}
           pending={true}
           vehicles
