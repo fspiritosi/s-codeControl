@@ -129,6 +129,8 @@ export default function EmployeeComponent({
     | undefined;
   children: React.ReactNode;
 }) {
+
+
   const profile = useLoggedUserStore((state) => state);
   const role = useLoggedUserStore((state) => state.roleActualCompany);
   const searchParams = useSearchParams();
@@ -189,7 +191,7 @@ export default function EmployeeComponent({
           category_id: undefined,
         },
   });
-  console.log(user, 'user');
+  
   const [accordion1Errors, setAccordion1Errors] = useState(false);
   const [accordion2Errors, setAccordion2Errors] = useState(false);
   const [accordion3Errors, setAccordion3Errors] = useState(false);

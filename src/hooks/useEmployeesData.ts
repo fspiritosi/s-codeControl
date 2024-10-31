@@ -31,6 +31,7 @@ export const useEmployeesData = () => {
         const { data, error } = await supabase.from('contractor_employee').insert(allocated_to).select();
       }
 
+      console.log(employee);
       const { data, error } = await supabase
         .from('employees')
         .update(employee)

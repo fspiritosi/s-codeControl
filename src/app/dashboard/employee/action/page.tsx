@@ -56,8 +56,9 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
     const { employee } = await fetch(
       `${URL}/api/employees/${searchParams.employee_id}?actual=${company_id}&user=${user?.data?.user?.id}`
     ).then((e) => e.json());
-
+    
     formattedEmployee = setEmployeesToShow(employee)?.[0];
+    
   }
 
     let { data: guilds, error } = await supabase
