@@ -316,7 +316,7 @@ export default function VehiclesForm2({
       intern_number: vehicle?.intern_number || '',
       picture: vehicle?.picture || '',
       allocated_to: vehicle?.allocated_to || [],
-      
+
       brand: vehicle?.brand || '',
       model: vehicle?.model || '',
       type_of_vehicle: vehicle?.type_of_vehicle || '',
@@ -422,7 +422,7 @@ export default function VehiclesForm2({
       },
       {
         loading: 'Guardando...',
-        success: 'Vehículo registrado',
+        success: 'equipo registrado',
         error: (error) => {
           return error;
         },
@@ -455,20 +455,20 @@ export default function VehiclesForm2({
       const modifiedSet = new Set(modifiedObj?.allocated_to);
       // Valores a eliminar
       const valuesToRemove = [...originalSet].filter((value) => !modifiedSet.has(value));
-  
+
       // Valores a agregar
       const valuesToAdd = [...modifiedSet].filter((value) => !originalSet.has(value));
-  
+
       // Valores que se mantienen
       const valuesToKeep = [...originalSet].filter((value) => modifiedSet.has(value));
-  
+
       return {
         valuesToRemove,
         valuesToAdd,
         valuesToKeep,
       };
     }
-  
+
     function getUpdatedFields(originalObj: any, modifiedObj: any) {
       const updatedFields: any = {};
       for (const key in modifiedObj) {
@@ -478,14 +478,14 @@ export default function VehiclesForm2({
       }
       return updatedFields;
     }
-  
+
     toast.promise(
       async () => {
-        const { brand_vehicles:brandd, model_vehicles, types_of_vehicles, ...rest } = vehicle;
+        const { brand_vehicles: brandd, model_vehicles, types_of_vehicles, ...rest } = vehicle;
         console.log('formatVehicle', rest, 'formatVehicle');
         const result = compareContractorEmployees(rest, values);
         console.log('result', result, 'result');
-  
+
         result.valuesToRemove.forEach(async (e) => {
           const { error } = await supabase
             .from('contractor_equipment')
@@ -494,7 +494,7 @@ export default function VehiclesForm2({
             .eq('contractor_id', e);
           if (error) return handleSupabaseError(error.message);
         });
-  
+
         const error2 = await Promise.all(
           result.valuesToAdd.map(async (e) => {
             if (!result.valuesToKeep.includes(e)) {
@@ -504,11 +504,10 @@ export default function VehiclesForm2({
               if (error) return handleSupabaseError(error.message);
             }
           })
-
         );
 
         console.log(values, 'values');
-  
+
         const updatedFields = getUpdatedFields(rest, {
           type_of_vehicle: data.tipe_of_vehicles.find((e) => e.name === values.type_of_vehicle)?.id,
           brand: brand_vehicles.find((e: any) => e.name === values.brand)?.id,
@@ -524,16 +523,16 @@ export default function VehiclesForm2({
           kilometer: values.kilometer,
           type: vehicleType.find((e) => e.name === values.type)?.id,
         });
-  
+
         try {
           const { error: updatedERROR } = await supabase
             .from('vehicles')
             .update(updatedFields)
             .eq('id', vehicle?.id)
             .eq('company_id', actualCompany?.id);
-  
+
           console.log(updatedERROR, 'updatedERROR');
-  
+
           const id = vehicle?.id;
           const fileExtension = imageFile?.name.split('.').pop();
           if (imageFile) {
@@ -542,7 +541,7 @@ export default function VehiclesForm2({
                 type: `image/${fileExtension}`,
               });
               await uploadImage(renamedFile, 'vehicle_photos');
-  
+
               try {
                 const vehicleImage = `${url}/vehicle_photos/${id}.${fileExtension}?timestamp=${Date.now()}`
                   .trim()
@@ -557,17 +556,17 @@ export default function VehiclesForm2({
               throw new Error('Error al subir la imagen');
             }
           }
-  
+
           setReadOnly(true);
           router.refresh();
         } catch (error) {
           console.log(error);
-          throw new Error('Error al editar el vehículo');
+          throw new Error('Error al editar el equipo');
         }
       },
       {
         loading: 'Guardando...',
-        success: 'Vehículo editado',
+        success: 'equipo editado',
         error: (error) => {
           return error;
         },
@@ -748,7 +747,7 @@ export default function VehiclesForm2({
                           <Command>
                             <CommandInput
                               disabled={readOnly}
-                              placeholder="Buscar tipo de vehículo..."
+                              placeholder="Buscar tipo de equipo..."
                               className="h-9"
                               //value={field.value}
                             />
@@ -782,7 +781,7 @@ export default function VehiclesForm2({
                           </Command>
                         </PopoverContent>
                       </Popover>
-                      <FormDescription>Selecciona el tipo de vehículo</FormDescription>
+                      <FormDescription>Selecciona el tipo de equipo</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -849,7 +848,7 @@ export default function VehiclesForm2({
                           </Command>
                         </PopoverContent>
                       </Popover>
-                      <FormDescription>Selecciona la marca del vehículo</FormDescription>
+                      <FormDescription>Selecciona la marca del Equipo</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -930,7 +929,7 @@ export default function VehiclesForm2({
                           </Command>
                         </PopoverContent>
                       </Popover>
-                      <FormDescription>Selecciona el modelo del vehículo</FormDescription>
+                      <FormDescription>Selecciona el modelo del equipo</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -954,7 +953,7 @@ export default function VehiclesForm2({
                           form.setValue('year', e.target.value);
                         }}
                       />
-                      <FormDescription>Ingrese el año del vehículo</FormDescription>
+                      <FormDescription>Ingrese el año del equipo</FormDescription>
                       <FormMessage className="max-w-[250px]" />
                     </FormItem>
                   )}
@@ -980,7 +979,7 @@ export default function VehiclesForm2({
                           form.setValue('kilometer', value);
                         }}
                       />
-                      <FormDescription>Ingrese el kilometraje del vehículo</FormDescription>
+                      <FormDescription>Ingrese el kilometraje del equipo</FormDescription>
                       <FormMessage className="max-w-[250px]" />
                     </FormItem>
                   )}
@@ -990,7 +989,7 @@ export default function VehiclesForm2({
                   name="engine"
                   render={({ field }) => (
                     <FormItem className="flex flex-col min-w-[250px]">
-                      <FormLabel>Motor del vehículo</FormLabel>
+                      <FormLabel>Motor del equipo</FormLabel>
                       <Input
                         {...field}
                         disabled={readOnly}
@@ -998,7 +997,7 @@ export default function VehiclesForm2({
                         placeholder="Ingrese el tipo de motor"
                         value={field.value}
                       />
-                      <FormDescription>Ingrese el tipo de motor del vehículo</FormDescription>
+                      <FormDescription>Ingrese el tipo de motor del equipo</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1071,7 +1070,7 @@ export default function VehiclesForm2({
                   render={({ field }) => (
                     <FormItem className={cn('flex flex-col min-w-[250px]', !hideInput && 'hidden')}>
                       <FormLabel>
-                        Chasis del vehículo<span style={{ color: 'red' }}>*</span>
+                        Chasis del equipo<span style={{ color: 'red' }}>*</span>
                       </FormLabel>
                       <Input
                         {...field}
@@ -1084,7 +1083,7 @@ export default function VehiclesForm2({
                           form.setValue('chassis', e.target.value);
                         }}
                       />
-                      <FormDescription>Ingrese el chasis del vehículo</FormDescription>
+                      <FormDescription>Ingrese el chasis del equipo</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1100,7 +1099,7 @@ export default function VehiclesForm2({
                       )}
                     >
                       <FormLabel>
-                        Serie del vehículo<span style={{ color: 'red' }}>*</span>
+                        Serie del equipo<span style={{ color: 'red' }}>*</span>
                       </FormLabel>
                       <Input
                         {...field}
@@ -1114,7 +1113,7 @@ export default function VehiclesForm2({
                         defaultValue={vehicle?.serie}
                       />
 
-                      <FormDescription>Ingrese la serie del vehículo</FormDescription>
+                      <FormDescription>Ingrese la serie del equipo</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1125,7 +1124,7 @@ export default function VehiclesForm2({
                   render={({ field }) => (
                     <FormItem className={cn('flex flex-col min-w-[250px]', !hideInput && 'hidden')}>
                       <FormLabel>
-                        Dominio del vehículo
+                        Dominio del equipo
                         <span style={{ color: 'red' }}>*</span>
                       </FormLabel>
                       <Input
@@ -1140,7 +1139,7 @@ export default function VehiclesForm2({
                           form.setValue('domain', e.target.value);
                         }}
                       />
-                      <FormDescription>Ingrese el dominio del vehículo</FormDescription>
+                      <FormDescription>Ingrese el dominio del equipo</FormDescription>
                       <FormMessage className="w-[250px]" />
                     </FormItem>
                   )}
@@ -1151,7 +1150,7 @@ export default function VehiclesForm2({
                   render={({ field }) => (
                     <FormItem className="flex flex-col min-w-[250px]">
                       <FormLabel>
-                        Número interno del vehículo
+                        Número interno del equipo
                         <span style={{ color: 'red' }}>*</span>
                       </FormLabel>
                       <Input
@@ -1165,7 +1164,7 @@ export default function VehiclesForm2({
                           form.setValue('intern_number', e.target.value);
                         }}
                       />
-                      <FormDescription>Ingrese el número interno del vehículo</FormDescription>
+                      <FormDescription>Ingrese el número interno del equipo</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1198,7 +1197,7 @@ export default function VehiclesForm2({
                           <div className="flex lg:items-center flex-wrap  flex-col lg:flex-row gap-8">
                             <ImageHander
                               labelInput="Subir foto"
-                              desciption="Subir foto del vehículo"
+                              desciption="Subir foto del equipo"
                               handleImageChange={handleImageChange}
                               base64Image={base64Image} //nueva
                               disabled={readOnly}
@@ -1262,11 +1261,11 @@ export default function VehiclesForm2({
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Información del QR</h3>
                 <p className="text-sm text-gray-600">
-                  Este código QR contiene un enlace único a la información de este vehículo. Al escanearlo, se puede
+                  Este código QR contiene un enlace único a la información de este equipo. Al escanearlo, se puede
                   acceder rápidamente a:
                 </p>
                 <ul className="list-disc list-inside text-sm text-gray-600 space-y-2">
-                  <li>Especificaciones técnicas del vehículo</li>
+                  <li>Especificaciones técnicas del equipo</li>
                   <li>Historial de mantenimiento y reparaciones</li>
                   <li>Registrar mantenimientos y reparaciones futuras</li>
                   <li>Documentación y certificados</li>

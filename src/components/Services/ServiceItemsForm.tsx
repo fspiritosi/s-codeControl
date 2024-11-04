@@ -85,7 +85,7 @@ export default function ServiceItemsForm({
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [servicesData, setServicesData] = useState<Service[]>([]);
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
-  
+
   const [loading, setLoading] = useState(true);
   const modified_company_id = company_id?.replace(/"/g, '');
   const supabase = supabaseBrowser();
@@ -398,7 +398,7 @@ export default function ServiceItemsForm({
         <Button className="mt-4" type="submit">
           {isEditing ? 'Editar' : 'Cargar'}
         </Button>
-        <Button className="mt-4 ml-2" type="button" onClick={handleCancel}>
+        <Button className="mt-4 ml-2" type="button" variant={'destructive'} onClick={handleCancel}>
           Cancelar
         </Button>
         {isEditing && (
