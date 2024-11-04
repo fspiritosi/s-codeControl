@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     let { data: employees, error } = await supabase
       .from('employees')
       .select(
-        `*,guild(name),covenant(name),category(name), city (
+        `*,guild(id, name),covenant(id, name),category(id, name), city (
         name
       ),
       province(
