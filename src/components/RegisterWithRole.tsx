@@ -15,6 +15,7 @@ import { handleSupabaseError } from '@/lib/errorHandler';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { EyeClosedIcon, EyeOpenIcon } from '@radix-ui/react-icons';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -131,6 +132,7 @@ export const RegisterWithRole = () => {
   }, []);
 
   const FetchSharedUsers = useLoggedUserStore((state) => state.FetchSharedUsers);
+  const router = useRouter();
 
   function onSubmit(values: z.infer<typeof registerSchemaWithRole>) {
     if (values?.email?.trim().toLocaleLowerCase() === ownerUser?.[0].email.toLocaleLowerCase()) {
@@ -167,7 +169,7 @@ export const RegisterWithRole = () => {
               company_id: company?.id,
               profile_id: profile[0].id,
               role: values?.role,
-              customer_id: values?.customer,
+              customer_id: values?.customer ? values?.customer : null,
             },
           ]);
 
@@ -209,7 +211,6 @@ export const RegisterWithRole = () => {
             }
 
             if (user) {
-           
               const { data, error } = await supabase.from('share_company_users').insert([
                 {
                   company_id: company?.id,
@@ -242,6 +243,7 @@ export const RegisterWithRole = () => {
         },
       }
     );
+    router.refresh();
   }
 
   const handleTabChange = (value: string) => {
