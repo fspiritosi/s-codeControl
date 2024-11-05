@@ -18,7 +18,7 @@ const EmployeePage = async () => {
       {
         value: 'employees',
         name: 'Empleados',
-        restricted: [''],
+        restricted: [],
         content: {
           title: 'Empleados',
           description: 'Aquí encontrarás todos empleados',
@@ -46,7 +46,7 @@ const EmployeePage = async () => {
           buttonActioRestricted: [''],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
-              <DocumentNav empleados />
+              <DocumentNav onlyEmployees />
             </div>
           ),
           component: <EmployeeDocumentsTabs />,
@@ -60,7 +60,6 @@ const EmployeePage = async () => {
           title: 'Diagramas de personal',
           description: 'Carga de novedades de trabajo del personal',
           buttonActioRestricted: [''],
-          buttonAction: <TypesDocumentAction optionChildrenProp="Persona" />,
           component: <EmployesDiagram />,
         },
       },

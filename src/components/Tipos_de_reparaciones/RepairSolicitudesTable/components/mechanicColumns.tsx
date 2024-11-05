@@ -171,8 +171,8 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
         kilometer: z.string().refine(
           (value) => {
             if (value) {
-              console.log('value', value);
-              console.log('Number(value) > Number(selectedEquipment?.kilometer)', row.original.kilometer);
+              //console.log('value', value);
+              //console.log('Number(value) > Number(selectedEquipment?.kilometer)', row.original.kilometer);
               console.log(
                 'Number(value) > Number(row.original.kilometer)',
                 Number(value) > Number(row.original.kilometer)
@@ -186,7 +186,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
         ),
       });
 
-      console.log(row.original.repairlogs, 'row.original.repairlogs');
+      //console.log(row.original.repairlogs, 'row.original.repairlogs');
 
       useEffect(() => {
         setRepairLogs(row.original.repairlogs);
@@ -203,7 +203,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
           throw new Error(handleSupabaseError(error.message));
         }
 
-        console.log(data, 'data');
+        //console.log(data, 'data');
         setRepairSolicitudes(data);
       };
 
@@ -283,11 +283,16 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
           const vehicle_id = row.original.vehicle_id;
           const mechanic_description = form.getValues('mechanic_description');
 
-          console.log(row.original.kilometer, 'row.original.kilometer');
+          //console.log(row.original.kilometer, 'row.original.kilometer');
 
           const { data, error } = await supabase
             .from('repair_solicitudes')
-            .update({ state: status, mechanic_description, mechanic_images, kilometer: form.getValues('kilometer') })
+            .update({
+              state: status,
+              mechanic_description,
+              mechanic_images,
+              kilometer: form.getValues('kilometer'),
+            } as any)
             .eq('id', row.original.id);
 
           mechanic_imagesData
@@ -310,7 +315,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
             .filter((e: any) => !endingStates.includes(e.state))
             .filter((e: any) => e.id !== row.original.id);
 
-          console.log(pendingRepairs, 'pendingRepairs');
+          //console.log(pendingRepairs, 'pendingRepairs');
 
           let newStatus = '';
 
@@ -319,29 +324,29 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
             // Si no hay más reparaciones pendientes, el vehículo está operativo
             if (pendingRepairs.length === 0) {
               newStatus = 'operativo';
-              console.log('1 operativo (Es un estado de cierre y no hay más reparaciones pendientes)');
+              //console.log('1 operativo (Es un estado de cierre y no hay más reparaciones pendientes)');
             } else {
               // Si hay otras reparaciones pendientes, calcular el estado basado en ellas
               if (pendingRepairs.some((e: any) => e.state === 'En reparación')) {
-                console.log(
-                  '2 en reparacion (Es un estado de cierre y hay más reparaciones pendientes (en estado de repuestos o en reparacion))'
-                );
+                // console.log(
+                //   '2 en reparacion (Es un estado de cierre y hay más reparaciones pendientes (en estado de repuestos o en reparacion))'
+                // );
                 newStatus = 'en reparación';
               } else if (pendingRepairs.some((e: any) => e.reparation_type.criticity === 'Alta')) {
                 newStatus = 'no operativo';
-                console.log('3 no operativo (Hay otra reparación pendiente de criticidad alta)');
-                console.log(
-                  pendingRepairs.find((e: any) => e.reparation_type.criticity === 'Alta'),
-                  'reparacion pendiente de criticidad alta'
-                );
-                console.log(row.original, 'row.origilal');
-                console.log(status, 'newState');
+                // console.log('3 no operativo (Hay otra reparación pendiente de criticidad alta)');
+                // console.log(
+                //   pendingRepairs.find((e: any) => e.reparation_type.criticity === 'Alta'),
+                //   'reparacion pendiente de criticidad alta'
+                // );
+                // console.log(row.original, 'row.origilal');
+                // console.log(status, 'newState');
               } else if (pendingRepairs.some((e: any) => e.reparation_type.criticity === 'Media')) {
                 newStatus = 'operativo condicionado';
-                console.log('4 operativo condicionado (Hay otra reparación pendiente de criticidad media)');
+                //console.log('4 operativo condicionado (Hay otra reparación pendiente de criticidad media)');
               } else {
                 newStatus = 'operativo';
-                console.log('5 operativo (Hay otra reparación pendiente de criticidad baja)');
+                //console.log('5 operativo (Hay otra reparación pendiente de criticidad baja)');
               }
             }
           } else {
@@ -350,31 +355,31 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
               ...pendingRepairs,
               { state: status, reparation_type: { criticity: row.original.priority } },
             ];
-            console.log(allPendingRepairs, 'allPendingRepairs');
+            //  console.log(allPendingRepairs, 'allPendingRepairs');
             if (allPendingRepairs.some((e: any) => e.state === 'En reparación')) {
-              console.log(
-                '6 en reparacion (No es un estado de cierre y hay más reparaciones pendientes (en estado de repuestos o en reparacion))'
-              );
+              // console.log(
+              //   '6 en reparacion (No es un estado de cierre y hay más reparaciones pendientes (en estado de repuestos o en reparacion))'
+              // );
               newStatus = 'en reparación';
             } else if (allPendingRepairs.some((e: any) => e.reparation_type.criticity === 'Alta')) {
               newStatus = 'no operativo';
-              console.log(
-                '7 no operativo (No es un estado de cierre y hay otra reparación pendiente de criticidad alta)'
-              );
+              // console.log(
+              //   '7 no operativo (No es un estado de cierre y hay otra reparación pendiente de criticidad alta)'
+              // );
             } else if (allPendingRepairs.some((e: any) => e.reparation_type.criticity === 'Media')) {
               newStatus = 'operativo condicionado';
-              console.log(
-                '8 operativo condicionado (No es un estado de cierre y hay otra reparación pendiente de criticidad media)'
-              );
+              // console.log(
+              //   '8 operativo condicionado (No es un estado de cierre y hay otra reparación pendiente de criticidad media)'
+              // );
             } else {
               newStatus = 'operativo';
-              console.log('9 operativo (No es un estado de cierre y hay otra reparación pendiente de criticidad baja)');
+              //console.log('9 operativo (No es un estado de cierre y hay otra reparación pendiente de criticidad baja)');
             }
           }
 
           const { data: vehicles, error: vehicleerror } = await supabase
             .from('vehicles')
-            .update({ condition: newStatus })
+            .update({ condition: newStatus } as any)
             .eq('id', vehicle_id);
         } else if (shouldUpdateStatus) {
           await saveNewStatus();
@@ -390,7 +395,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
 
         const { data, error } = await supabase
           .from('repair_solicitudes')
-          .update({ state: status, mechanic_description, kilometer: form.getValues('kilometer') })
+          .update({ state: status, mechanic_description, kilometer: form.getValues('kilometer') } as any)
           .eq('id', row.original.id);
 
         if (error) {
@@ -402,7 +407,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
           .filter((e: any) => !endingStates.includes(e.state))
           .filter((e: any) => e.id !== row.original.id);
 
-        console.log(pendingRepairs, 'pendingRepairs');
+        //console.log(pendingRepairs, 'pendingRepairs');
 
         let newStatus = '';
 
@@ -411,29 +416,29 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
           // Si no hay más reparaciones pendientes, el vehículo está operativo
           if (pendingRepairs.length === 0) {
             newStatus = 'operativo';
-            console.log('1 operativo (Es un estado de cierre y no hay más reparaciones pendientes)');
+            //console.log('1 operativo (Es un estado de cierre y no hay más reparaciones pendientes)');
           } else {
             // Si hay otras reparaciones pendientes, calcular el estado basado en ellas
             if (pendingRepairs.some((e: any) => e.state === 'En reparación')) {
-              console.log(
-                '2 en reparacion (Es un estado de cierre y hay más reparaciones pendientes (en estado de repuestos o en reparacion))'
-              );
+              // console.log(
+              //   '2 en reparacion (Es un estado de cierre y hay más reparaciones pendientes (en estado de repuestos o en reparacion))'
+              // );
               newStatus = 'en reparación';
             } else if (pendingRepairs.some((e: any) => e.reparation_type.criticity === 'Alta')) {
               newStatus = 'no operativo';
-              console.log('3 no operativo (Hay otra reparación pendiente de criticidad alta)');
-              console.log(
-                pendingRepairs.find((e: any) => e.reparation_type.criticity === 'Alta'),
-                'reparacion pendiente de criticidad alta'
-              );
-              console.log(row.original, 'row.origilal');
-              console.log(status, 'newState');
+              // console.log('3 no operativo (Hay otra reparación pendiente de criticidad alta)');
+              // console.log(
+              //   pendingRepairs.find((e: any) => e.reparation_type.criticity === 'Alta'),
+              //   'reparacion pendiente de criticidad alta'
+              // );
+              // console.log(row.original, 'row.origilal');
+              // console.log(status, 'newState');
             } else if (pendingRepairs.some((e: any) => e.reparation_type.criticity === 'Media')) {
               newStatus = 'operativo condicionado';
-              console.log('4 operativo condicionado (Hay otra reparación pendiente de criticidad media)');
+              //console.log('4 operativo condicionado (Hay otra reparación pendiente de criticidad media)');
             } else {
               newStatus = 'operativo';
-              console.log('5 operativo (Hay otra reparación pendiente de criticidad baja)');
+              //console.log('5 operativo (Hay otra reparación pendiente de criticidad baja)');
             }
           }
         } else {
@@ -442,36 +447,36 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
             ...pendingRepairs,
             { state: status, reparation_type: { criticity: row.original.priority } },
           ];
-          console.log(allPendingRepairs, 'allPendingRepairs');
+          //console.log(allPendingRepairs, 'allPendingRepairs');
           if (allPendingRepairs.some((e: any) => e.state === 'En reparación')) {
-            console.log(
-              '6 en reparacion (No es un estado de cierre y hay más reparaciones pendientes (en estado de repuestos o en reparacion))'
-            );
+            // console.log(
+            //   '6 en reparacion (No es un estado de cierre y hay más reparaciones pendientes (en estado de repuestos o en reparacion))'
+            // );
             newStatus = 'en reparación';
           } else if (allPendingRepairs.some((e: any) => e.reparation_type.criticity === 'Alta')) {
             newStatus = 'no operativo';
-            console.log(
-              '7 no operativo (No es un estado de cierre y hay otra reparación pendiente de criticidad alta)'
-            );
+            // console.log(
+            //   '7 no operativo (No es un estado de cierre y hay otra reparación pendiente de criticidad alta)'
+            // );
           } else if (allPendingRepairs.some((e: any) => e.reparation_type.criticity === 'Media')) {
             newStatus = 'operativo condicionado';
-            console.log(
-              '8 operativo condicionado (No es un estado de cierre y hay otra reparación pendiente de criticidad media)'
-            );
+            // console.log(
+            //   '8 operativo condicionado (No es un estado de cierre y hay otra reparación pendiente de criticidad media)'
+            // );
           } else {
             newStatus = 'operativo';
-            console.log('9 operativo (No es un estado de cierre y hay otra reparación pendiente de criticidad baja)');
+            //console.log('9 operativo (No es un estado de cierre y hay otra reparación pendiente de criticidad baja)');
           }
         }
 
         const { data: vehicles, error: vehicleerror } = await supabase
           .from('vehicles')
-          .update({ condition: newStatus })
+          .update({ condition: newStatus } as any)
           .eq('id', vehicle_id);
-        console.log('error', vehicleerror);
+        //console.log('error', vehicleerror);
       };
 
-      console.log('repairLogs', repairLogs);
+      //console.log('repairLogs', repairLogs);
 
       const updateRepair = async () => {
         let mechanic_imagesData = files.map((file, index) =>
@@ -482,7 +487,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
 
         const { data, error } = await supabase
           .from('repair_solicitudes')
-          .update({ mechanic_images, kilometer: form.getValues('kilometer') })
+          .update({ mechanic_images, kilometer: form.getValues('kilometer') } as any)
           .eq('id', row.original.id);
 
         mechanic_imagesData
@@ -806,7 +811,17 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                               <Badge variant={'outline'} className="m-0 flex items-center p-1">
                                 {log.kilometer} kms
                               </Badge>
-                              <CardDescription>{moment(log.created_at).format('[Hoy,] h:mm A')}</CardDescription>
+                              <CardDescription>
+                                {' '}
+                                {moment(log.created_at).calendar(null, {
+                                  sameDay: '[Hoy,] h:mm A', // Hoy a las 2:30 PM
+                                  nextDay: '[Mañana,] h:mm A', // Mañana a las 2:30 PM
+                                  nextWeek: 'dddd [a las] h:mm A', // Sábado a las 2:30 PM
+                                  lastDay: '[Ayer,] h:mm A', // Ayer a las 2:30 PM
+                                  lastWeek: '[El] dddd [pasado a las] h:mm A', // El sábado pasado a las 2:30 PM
+                                  sameElse: 'DD/MM/YYYY', // 07/10/2021
+                                })}
+                              </CardDescription>
                             </div>
                           </div>
                           <CardDescription>

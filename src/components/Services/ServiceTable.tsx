@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableRow } from '@/components/ui/table'; // Asegúrate de importar los componentes necesarios
+import { Table, TableBody, TableCell, TableHead, TableRow } from '@/components/ui/table'; 
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
@@ -94,21 +94,7 @@ const ServiceTable = ({ services, customers, company_id }: ServiceTableProps) =>
     fetchServices();
   }, []);
 
-  //     const channel = supabase.channel('custom-all-channel')
-  //         .on(
-  //             'postgres_changes',
-  //             { event: '*', schema: 'public', table: 'customer_services' },
-  //             async (payload) => {
-
-  //                 fetchServices();
-  //             }
-  //         )
-  //         .subscribe();
-
-  //     return () => {
-  //         supabase.removeChannel(channel);
-  //     };
-  // }, []);
+ 
   return (
     <ResizablePanelGroup className="pl-6 flex flex-col gap-2" direction="horizontal">
       <ResizablePanel>

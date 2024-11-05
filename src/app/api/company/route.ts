@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     let { data: companies, error } = await supabase
       .from('company')
       .select('*,city(name)')
-      .eq('id', company_id);
+      .eq('id', company_id || '');
 
     const data = companies;
 

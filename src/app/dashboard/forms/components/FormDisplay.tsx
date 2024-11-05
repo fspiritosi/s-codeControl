@@ -414,7 +414,7 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
           company_id: actualCompany?.id,
           form: campos,
           name: campos.find((e) => e.tipo === types.NombreFormulario)?.value,
-        });
+        } as any);
 
         if (error) {
           throw new Error(error.message);

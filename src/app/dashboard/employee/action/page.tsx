@@ -1,10 +1,10 @@
+import DocumentTable from '@/app/dashboard/document/DocumentTable';
 import EmployeeComponent from '@/components/EmployeeComponent';
 import { Card, CardFooter } from '@/components/ui/card';
 import { supabaseServer } from '@/lib/supabase/server';
 import { cn } from '@/lib/utils';
 import { setEmployeesToShow } from '@/lib/utils/utils';
 import { cookies } from 'next/headers';
-
 export default async function EmployeeFormAction({ searchParams }: { searchParams: any }) {
   // const { data } = await supabase
 
@@ -19,7 +19,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
   const { data: userShared } = await supabase
     .from('share_company_users')
     .select('*')
-    .eq('profile_id', user?.data?.user?.id);
+    .eq('profile_id', user?.data?.user?.id || '');
 
   const role: string | null = userShared?.[0]?.role || null;
 
@@ -56,13 +56,15 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
     const { employee } = await fetch(
       `${URL}/api/employees/${searchParams.employee_id}?actual=${company_id}&user=${user?.data?.user?.id}`
     ).then((e) => e.json());
-console.log('employee',employee);
+    
     formattedEmployee = setEmployeesToShow(employee)?.[0];
+    
+  }
 
     let { data: guilds, error } = await supabase
       .from('guild')
       .select('*')
-      .eq('company_id', company_id)
+      .eq('company_id', company_id || '')
       .eq('is_active', true);
 
     const guildIds = guilds?.map((guild: any) => guild.id);
@@ -99,16 +101,12 @@ console.log('employee',employee);
         covenant_id: category.covenant_id as string,
       };
     });
-  }
+ 
 
-  console.log(formattedEmployee,'formattedEmployee');
+   
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">
-      <Card
-        className={cn(
-          'col-span-8 flex flex-col justify-between overflow-hidden'
-        )}
-      >
+      <Card className={cn('col-span-8 flex flex-col justify-between overflow-hidden')}>
         <EmployeeComponent
           guild={guild}
           covenants={covenants}
@@ -116,7 +114,9 @@ console.log('employee',employee);
           user={formattedEmployee}
           role={role}
           diagrams={diagrams}
-        />
+        >
+          <DocumentTable employee_id={formattedEmployee?.id || ''} />
+        </EmployeeComponent>
         <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
       </Card>
     </section>

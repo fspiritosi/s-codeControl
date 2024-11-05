@@ -101,18 +101,18 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
 
     const { data: vehicles, error: vehicleerror } = await supabase
       .from('vehicles')
-      .update({ condition: newStatus })
+      .update({ condition: newStatus } as any)
       .eq('id', vehicle_id);
 
     if (error) {
-      console.log(error);
+      //console.log(error);
       throw new Error(error.message);
     }
     document.getElementById('close-modal-mechanic-colum2')?.click();
     router.refresh();
   };
 
-  console.log('repairLogs', repairLogs);
+  //console.log('repairLogs', repairLogs);
 
   return (
     <Dialog>
@@ -286,7 +286,14 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
                           </Badge>
                         </div>
                         <div className="text-muted-foreground text-sm">
-                          {moment(log.created_at).format('[Hoy,] h:mm A')}
+                          {moment(log.created_at).calendar(null, {
+                            sameDay: '[Hoy,] h:mm A', // Hoy a las 2:30 PM
+                            nextDay: '[Mañana,] h:mm A', // Mañana a las 2:30 PM
+                            nextWeek: 'dddd [a las] h:mm A', // Sábado a las 2:30 PM
+                            lastDay: '[Ayer,] h:mm A', // Ayer a las 2:30 PM
+                            lastWeek: '[El] dddd [pasado a las] h:mm A', // El sábado pasado a las 2:30 PM
+                            sameElse: 'DD/MM/YYYY', // 07/10/2021
+                          })}
                         </div>
                       </div>
                       <CardDescription>

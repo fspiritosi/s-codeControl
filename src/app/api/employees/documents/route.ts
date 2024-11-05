@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   `
       )
       .not('employees', 'is', null)
-      .eq('employees.company_id', company_id);
+      .eq('employees.company_id', company_id || '');
 
     if (error) {
       throw new Error(JSON.stringify(error));

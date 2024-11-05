@@ -18,21 +18,27 @@ export default async function companyRegister({ params }: { params: { id: string
     data: { session },
   } = await supabase.auth.getSession();
 
-  const { data } = await supabase.from('profile').select('*').eq('email', session?.user.email);
+  const { data } = await supabase
+    .from('profile')
+    .select('*')
+    .eq('email', session?.user.email || '');
 
-  const { data: Companies, error } = await supabase.from('company').select(`*`).eq('owner_id', data?.[0]?.id);
+  const { data: Companies, error } = await supabase
+    .from('company')
+    .select(`*`)
+    .eq('owner_id', data?.[0]?.id || '');
 
   const { data: companyData, error: companyError } = await supabase
     .from('company')
     .select('*,city(*),province_id(*)')
-    .eq('owner_id', data?.[0]?.id)
+    .eq('owner_id', data?.[0]?.id || '')
     .eq('id', params.id)
     .single();
 
   let { data: share_company_users, error: sharedError } = await supabase
     .from('share_company_users')
     .select(`*`)
-    .eq('profile_id', data?.[0]?.id);
+    .eq('profile_id', data?.[0]?.id || '');
 
   revalidatePath('/dashboard/company/new');
 
@@ -86,7 +92,7 @@ export default async function companyRegister({ params }: { params: { id: string
               <div>
                 <Label htmlFor="website">Sitio Web</Label>
                 <Input
-                  defaultValue={companyData?.website}
+                  defaultValue={companyData?.website || ''}
                   id="website"
                   name="website"
                   className="max-w-[350px] w-[300px]"
@@ -155,7 +161,7 @@ export default async function companyRegister({ params }: { params: { id: string
                   </SelectTrigger>
                   <SelectContent>
                     {industry_type?.map((ind) => (
-                      <SelectItem key={ind?.id} value={ind?.name}>
+                      <SelectItem key={ind?.id} value={ind?.name || ''}>
                         {ind?.name}
                       </SelectItem>
                     ))}

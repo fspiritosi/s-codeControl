@@ -7,7 +7,7 @@ import { useImageUpload } from '@/hooks/useUploadImage';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { useLoggedUserStore } from '@/store/loggedUser';
-import { Company, companySchema } from '@/zodSchemas/schemas';
+import { companySchema } from '@/zodSchemas/schemas';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -136,7 +136,7 @@ export default function CreateCompanyButton() {
             )
           `
             )
-            .eq('owner_id', data?.[0]?.owner_id);
+            .eq('owner_id', data?.[0]?.owner_id || '');
 
           if (companyError) {
             throw new Error(handleSupabaseError(companyError.message));
@@ -145,9 +145,9 @@ export default function CreateCompanyButton() {
           const actualCompany = company?.filter((company) => company.id === data?.[0]?.id);
 
           useLoggedUserStore.setState({
-            actualCompany: actualCompany?.[0] as Company[0],
+            actualCompany: actualCompany?.[0] as any[0],
           });
-          useLoggedUserStore.setState({ allCompanies: company as Company });
+          useLoggedUserStore.setState({ allCompanies: company as any });
 
           router.push('/dashboard');
         }

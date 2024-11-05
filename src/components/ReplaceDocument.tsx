@@ -117,7 +117,7 @@ export default function ReplaceDocument({
             upsert: false,
           });
 
-        console.log('filename.validity', filename.validity ? format(filename.validity as Date, 'dd/MM/yyyy') : null);
+        // console.log('filename.validity', filename.validity ? format(filename.validity as Date, 'dd/MM/yyyy') : null);
 
         const { error: updateError } = await supabase
           .from(tableName)
@@ -126,15 +126,15 @@ export default function ReplaceDocument({
             validity: filename.validity ? format(filename.validity as Date, 'dd/MM/yyyy') : null,
             created_at: new Date().toISOString(),
           })
-          .eq('id', appliesId);
+          .eq('id', appliesId || '');
 
         if (updateError) {
-          console.log(updateError);
+          //console.log(updateError);
           throw new Error(handleSupabaseError(updateError?.message));
         }
 
         if (finalerror) {
-          console.log(finalerror);
+          //console.log(finalerror);
           throw new Error(handleSupabaseError(finalerror?.message));
         }
 

@@ -56,13 +56,13 @@ import { z } from 'zod';
 
 type Colum = {
   date: string;
-  allocated_to: string;
+  allocated_to: string | null;
   documentName: string;
   multiresource: string;
-  validity: string;
+  validity: string | null;
   id: string;
   resource: string;
-  state: string;
+  state: string | null;
   document_number?: string;
   mandatory?: string;
   id_document_types?: string;
@@ -83,6 +83,7 @@ const periodRangeFilter: FilterFn<Colum> = (
   filterValue: any,
   addMeta: (meta: any) => void
 ) => {
+  
   const startDateInput = document.getElementById('date-from') as HTMLInputElement;
   const endDateInput = document.getElementById('date-limit') as HTMLInputElement;
   const startDateValue = startDateInput?.value ? new Date(startDateInput?.value) : null;
@@ -553,7 +554,7 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
         aprobado: 'success',
         presentado: 'default',
       };
-      return <Badge variant={variants[row.original.state]}>{row.original.state}</Badge>;
+      return <Badge variant={variants[row.original.state || '']}>{row.original.state}</Badge>;
     },
   },
   {
@@ -598,7 +599,7 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
                 .update({
                   period: value,
                 })
-                .eq('id', id);
+                .eq('id', id || '');
               if (error) {
                 throw new Error(handleSupabaseError(error.message));
               }
@@ -609,7 +610,7 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
                 .update({
                   period: value,
                 })
-                .eq('id', id);
+                .eq('id', id || '');
               if (error) {
                 throw new Error(handleSupabaseError(error.message));
               }

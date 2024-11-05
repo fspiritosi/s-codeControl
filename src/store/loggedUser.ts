@@ -1,11 +1,10 @@
 import { Notifications, SharedUser, VehiclesAPI, profileUser } from '@/types/types';
 import { Company, SharedCompanies, Vehicle } from '@/zodSchemas/schemas';
 import { User } from '@supabase/supabase-js';
-import { format } from 'date-fns';
 import cookies from 'js-cookie';
+import moment from 'moment';
 import { create } from 'zustand';
 import { supabase } from '../../supabase/supabase';
-import { VehiclesFormattedElement } from './../zodSchemas/schemas';
 import { useCountriesStore } from './countries';
 interface Document {
   date: string;
@@ -299,7 +298,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
     set({ sharedCompanies: share_company_users as SharedCompanies });
     // const router = useRouter()
-    console.log('manyCompanies user si');
+    //console.log('manyCompanies user si');
     if (error) {
       console.error('Error al obtener el perfil:', error);
     } else {
@@ -316,24 +315,24 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
       const savedCompany = localStorage.getItem('company_id') || ''; //! una empresa te comparte
 
-      console.log('savedCompany', savedCompany);
+      //console.log('savedCompany', savedCompany);
 
       if (savedCompany) {
         const company = share_company_users?.find(
           (company) => company.company_id.id === JSON.parse(savedCompany)
         )?.company_id;
 
-        console.log('savedCompany', company);
+        //console.log('savedCompany', company);
 
         if (company) {
-          console.log('setSavedCompany', company);
+          //console.log('setSavedCompany', company);
           setActualCompany(company);
           return;
         }
       }
 
       selectedCompany = get()?.allCompanies.filter((company) => company.by_defect);
-      console.log('selectedCompany', selectedCompany);
+      //console.log('selectedCompany', selectedCompany);
 
       if (data.length > 1) {
         if (selectedCompany) {
@@ -377,7 +376,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
       set({ profile: data || [] });
       set({ codeControlRole: data?.[0].role });
 
-      console.log('profile user si');
+      //console.log('profile user si');
 
       howManyCompanies(data[0]?.id);
     }
@@ -399,7 +398,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
 
   if (typeof window !== 'undefined') {
     // loggedUser();
-    console.log('loggedUser user si');
+    //console.log('loggedUser user si');
   }
 
   let selectedCompany: Company;
@@ -628,37 +627,45 @@ export const useLoggedUserStore = create<State>((set, get) => {
       .from('documents_employees')
       .select(
         `
-    *,
-    employees:employees(*,contractor_employee(
-      customers(
-        *
-      )
-    )),
-    document_types:document_types(*)
-`
+      *,
+      employees:employees(*,contractor_employee(
+        customers(
+          *
+        )
+      )),
+      document_types:document_types(*)
+  `
       )
       .not('employees', 'is', null)
       .eq('employees.company_id', get()?.actualCompany?.id);
 
     data = dataEmployes;
 
+    if (error) {
+      console.error('Error al obtener los empleados:', error);
+    }
+
     if (dataEmployes?.length === 1000) {
       const { data: data2, error: error2 } = await supabase
         .from('documents_employees')
         .select(
           `
-    *,
-    employees:employees(*,contractor_employee(
-      customers(
-        *
-      )
-    )),
-    document_types:document_types(*)
-`
+      *,
+      employees:employees(*,contractor_employee(
+        customers(
+          *
+        )
+      )),
+      document_types:document_types(*)
+  `
         )
         .not('employees', 'is', null)
         .eq('employees.company_id', get()?.actualCompany?.id)
         .range(1000, 2000);
+
+      if (error2) {
+        console.error('Error al obtener los empleados:', error2);
+      }
 
       if (data2) data = data ? [...data, ...data2] : data2;
     }
@@ -667,16 +674,24 @@ export const useLoggedUserStore = create<State>((set, get) => {
       .select('*,id_document_types(*),user_id(*)')
       .eq('applies', get()?.actualCompany?.id);
 
+    if (documents_company_error) {
+      console.error('Error al obtener los documentos de la empresa:', documents_company_error);
+    }
+
     let { data: equipmentData, error: equipmentError } = await supabase
       .from('documents_equipment')
       .select(
         `*,
-      document_types:document_types(*),
-      applies(*,type(*),type_of_vehicle(*),model(*),brand(*))
-      `
+        document_types:document_types(*),
+        applies(*,type(*),type_of_vehicle(*),model(*),brand(*))
+        `
       )
       .eq('applies.company_id', get()?.actualCompany?.id)
       .not('applies', 'is', null);
+
+    if (equipmentError) {
+      console.error('Error al obtener los equipos:', equipmentError);
+    }
 
     handleActualCompanyRole();
 
@@ -684,7 +699,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     const typedDataCompany: CompanyDocumentsType[] | null = documents_company as CompanyDocumentsType[];
 
     const equipmentData1 =
-      get()?.roleActualCompany === 'Invitado' ? typedData?.filter((e) => !e.document_types.private) : typedData; //! falta agrelar las columnas
+      get()?.roleActualCompany === 'Invitado' ? typedData?.filter((e) => !e.document_types.private) : typedData;
 
     const companyData =
       get()?.roleActualCompany === 'Invitado'
@@ -692,51 +707,40 @@ export const useLoggedUserStore = create<State>((set, get) => {
         : typedDataCompany;
 
     const employeesData =
-      get()?.roleActualCompany === 'Invitado' ? data?.filter((e) => !e.document_types.private) : data; //! falta agrelar las columnas
+      get()?.roleActualCompany === 'Invitado' ? data?.filter((e) => !e.document_types.private) : data;
 
-    set({ companyDocuments: companyData as CompanyDocumentsType[] }); //!Mover para abajo y reemplazar
+    set({ companyDocuments: companyData as CompanyDocumentsType[] });
 
     if (error) {
       return;
     } else {
-      const lastMonth = new Date();
-      lastMonth.setMonth(new Date().getMonth() + 1);
+      const today = moment().startOf('day');
+      const nextMonth = moment().add(1, 'month').endOf('day');
 
       const filteredData = employeesData?.filter((doc: any) => {
         if (!doc.validity) return false;
 
-        const date = new Date(
-          `${doc.validity.split('/')[1]}/${doc.validity.split('/')[0]}/${doc.validity.split('/')[2]}`
-        );
-        const isExpired = date < lastMonth || doc.state === 'Vencido';
+        const date = moment(doc.validity, 'DD/MM/YYYY');
+        const isExpired = date.isBefore(today) || date.isBefore(nextMonth) || doc.state === 'Vencido';
         return isExpired;
       });
 
       const filteredVehiclesData = equipmentData1?.filter((doc: any) => {
         if (!doc.validity) return false;
-        const date = new Date(
-          `${doc.validity.split('/')[1]}/${doc.validity.split('/')[0]}/${doc.validity.split('/')[2]}`
-        );
-        const isExpired = date < lastMonth || doc.state === 'Vencido';
+        const date = moment(doc.validity, 'DD/MM/YYYY');
+        const isExpired = date.isBefore(today) || date.isBefore(nextMonth) || doc.state === 'Vencido';
         return isExpired;
       });
 
-      const formatDate = (dateString: string) => {
-        if (!dateString) return 'No vence';
-        const [day, month, year] = dateString.split('/');
-        const formattedDate = `${day}/${month}/${year}`;
-        return formattedDate || 'No vence';
-      };
       const mapDocument = (doc: any) => {
-        const formattedDate = formatDate(doc.validity);
         return {
-          date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
+          date: moment(doc.created_at).format('DD/MM/YYYY'),
           allocated_to: doc.employees?.contractor_employee?.map((doc: any) => doc.contractors?.name).join(', '),
           documentName: doc.document_types?.name,
           state: doc.state,
           multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
           isItMonthly: doc.document_types?.is_it_montlhy,
-          validity: formattedDate,
+          validity: doc.validity,
           mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
           id: doc.id,
           resource: `${doc.employees?.lastname?.charAt(0)?.toUpperCase()}${doc?.employees?.lastname.slice(
@@ -753,15 +757,14 @@ export const useLoggedUserStore = create<State>((set, get) => {
         };
       };
       const mapVehicle = (doc: any) => {
-        const formattedDate = formatDate(doc.validity);
         return {
-          date: doc.created_at ? format(new Date(doc.created_at), 'dd/MM/yyyy') : 'No vence',
+          date: doc.created_at ? moment(doc.created_at).format('DD/MM/YYYY') : 'No vence',
           allocated_to: doc.applies?.type_of_vehicle?.name,
           documentName: doc.document_types?.name,
           state: doc.state,
           multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
           isItMonthly: doc.document_types?.is_it_montlhy,
-          validity: formattedDate,
+          validity: doc.validity,
           mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
           id: doc.id,
           resource: `${doc.applies?.domain}`,
@@ -785,7 +788,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
                 (e.employees?.termination_date && e.document_types.down_document)
             )
             ?.filter((doc: any) => {
-              if (!doc.validity || doc.validity === 'No vence') return false;
+              if (!doc.validity) return false;
               return doc.state !== 'pendiente' && (doc.validity !== 'No vence' || doc.validity !== null);
             })
             ?.map(mapDocument) || [],
@@ -850,10 +853,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
             })
             ?.map(mapVehicle) || [],
       };
-      // const AllvaluesToShow = {
-      //   employees: employeesData?.map(mapDocument) || [],
-      //   vehicles: equipmentData1?.map(mapVehicle) || [],
-      // };
 
       const AllvaluesToShow = {
         employees:

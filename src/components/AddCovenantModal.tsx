@@ -30,7 +30,7 @@ export default function AddCovenantModal({
 }) {
   const router = useRouter();
 
-  console.log(guildInfo, 'guildInfo');
+  //console.log(guildInfo, 'guildInfo');
 
   const company_id = useLoggedUserStore((state) => state.actualCompany?.id);
   const supabase = supabaseBrowser();
@@ -42,14 +42,14 @@ export default function AddCovenantModal({
       .string()
       .default(company_id || '')
       .optional(),
-    guild_id: z.string().default(guildInfo.id).optional(),
+    guild_id: z.string().default(guildInfo?.id).optional(),
   });
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
       company_id: company_id || '',
-      guild_id: guildInfo.id,
+      guild_id: guildInfo?.id,
     },
   });
   async function onSubmit({ name, company_id, guild_id }: z.infer<typeof formSchema>) {
@@ -57,7 +57,7 @@ export default function AddCovenantModal({
       async () => {
         const { data, error } = await supabase
           .from('covenant')
-          .insert([{ name: name, company_id, guild_id }])
+          .insert([{ name: name, company_id, guild_id }] as any)
           .select();
         if (error) throw new Error(error.message);
         document.getElementById('close-covenant-modal')?.click();
@@ -97,7 +97,7 @@ export default function AddCovenantModal({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Agregar nuevo convenio al sindicato <span className="font-bold">{guildInfo.name}</span>
+            Agregar nuevo convenio al sindicato <span className="font-bold">{guildInfo?.name}</span>
           </AlertDialogTitle>
           <AlertDialogDescription>
             Por favor complete los siguientes campos para agregar un nuevo Convenio.

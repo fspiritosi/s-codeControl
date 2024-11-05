@@ -30,10 +30,10 @@ async function EquipmentListTabs({ inactives, actives }: { inactives?: boolean; 
   );
   const data = setVehiclesToShow(equipments);
 
-  console.log('data', data);
+  // console.log('data', data);
 
   return (
-    <div className='overflow-x-auto max-w-full'>
+    <div className="overflow-x-auto max-w-full">
       <Tabs defaultValue="all">
         <CardContent>
           <TabsList>

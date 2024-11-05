@@ -49,6 +49,7 @@ import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
 import { addMonths, format, formatRelative } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ArrowUpDown } from 'lucide-react';
+import moment from 'moment';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -60,17 +61,17 @@ type Colum = {
   vehicle_id?: string | undefined;
   applies: any;
   date: string;
-  allocated_to: string;
+  allocated_to: string | null;
   documentName: string;
   multiresource: string;
-  validity: string;
+  validity: string | null;
   id: string;
   resource: string;
-  state: string;
+  state: string | null;
   document_number?: string;
   mandatory?: string;
   id_document_types?: string;
-  intern_number?: string;
+  intern_number?: string | undefined | null;
   serie?: string | undefined | null;
 };
 const formSchema = z.object({
@@ -94,11 +95,12 @@ const dateRangeFilter: FilterFn<Colum> = (
   filterValue: any,
   addMeta: (meta: any) => void
 ) => {
+  if (!row.original.validity) return false;
   const startDateInput = document.getElementById('date-from-full') as HTMLInputElement;
   const endDateInput = document.getElementById('date-limit-full') as HTMLInputElement;
   const startDateValue = startDateInput?.value ? new Date(startDateInput?.value) : null;
   const endDateValue = endDateInput?.value ? new Date(endDateInput?.value) : null;
-  const [day, month, year] = row.original.validity.split('/');
+  const [day, month, year] = row.original.validity?.split('/');
   const validityDate = row.original.validity === 'No vence' ? null : new Date(`${year}-${month}-${day}`);
 
   if (row.original.validity === 'No vence') return false;
@@ -537,7 +539,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
   },
   {
     accessorKey: 'documentName',
-    header: 'Documento',
+    header: 'Documento'
   },
   {
     accessorKey: 'intern_number',
@@ -626,10 +628,9 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
         aprobado: 'success',
         presentado: 'default',
       };
-      return <Badge variant={variants[row.original.state]}>{row.original.state}</Badge>;
+      return <Badge variant={variants[row.original.state || '']}>{row.original.state}</Badge>;
     },
   },
-
   {
     accessorKey: 'multiresource',
     header: 'Multirecurso',
@@ -647,11 +648,17 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
     },
     cell: ({ row }) => {
       const isNoPresented = row.getValue('state') === 'pendiente';
+      //console.log(row.original.validity, 'row.original.validity');
 
       if (isNoPresented) {
-        return 'No disponible';
+        return <Badge variant={'destructive'}>Pendiente</Badge>;
       } else {
-        return row.original.validity;
+        if (row.original.validity) {
+          return moment(row.original.validity).format('DD/MM/YYYY');
+        } else {
+          console.log('row.original.validity', row.original.validity);
+          return <Badge variant={'outline'}>No vence</Badge>;
+        }
       }
     },
   },

@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     let { data: types_of_repairs, error } = await supabase
       .from('types_of_repairs')
       .select('*')
-      .eq('company_id', company_id);
+      .eq('company_id', company_id || '');
 
     if (error) {
       throw new Error(JSON.stringify(error));
@@ -47,7 +47,7 @@ export async function PUT(request: NextRequest) {
     const { data: types_of_repairs, error } = await supabase
       .from('types_of_repairs')
       .update(body)
-      .eq('id', id);
+      .eq('id', id || '');
 
     if (error) {
       throw new Error(JSON.stringify(error));
@@ -63,13 +63,13 @@ export async function DELETE(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const id = searchParams.get('id');
 
-  console.log('keloke',id);
+  // console.log('keloke', id);
 
   try {
     const { data: types_of_repairs, error } = await supabase
       .from('types_of_repairs')
       .delete()
-      .eq('id', id);
+      .eq('id', id || '');
 
     if (error) {
       throw new Error(JSON.stringify(error));

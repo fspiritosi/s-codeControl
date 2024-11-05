@@ -10,11 +10,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     let { data: companies, error } = await supabase
       .from('company')
       .select('*,city(name)')
-      .eq('id', company_id)
-      
-
+      .eq('id', company_id || '');
     const data = companies;
-
     if (error) {
       throw new Error(JSON.stringify(error));
     }

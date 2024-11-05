@@ -79,12 +79,12 @@ export default function RepairNewEntry({
       .refine(
         (value) => {
           if (value) {
-            console.log('value', value);
-            console.log('Number(value) > Number(selectedEquipment?.kilometer)', selectedEquipment?.kilometer);
-            console.log(
-              'Number(value) > Number(selectedEquipment?.kilometer)',
-              Number(value) > Number(selectedEquipment?.kilometer)
-            );
+            // console.log('value', value);
+            // console.log('Number(value) > Number(selectedEquipment?.kilometer)', selectedEquipment?.kilometer);
+            // console.log(
+            //   'Number(value) > Number(selectedEquipment?.kilometer)',
+            //   Number(value) > Number(selectedEquipment?.kilometer)
+            // );
             return Number(value) >= Number(selectedEquipment?.kilometer);
           }
         },
@@ -275,17 +275,17 @@ export default function RepairNewEntry({
             const { data: vehicles, error } = await supabase
               .from('vehicles')
               .update({ condition: 'no operativo', kilometer: allRepairs[0].kilometer })
-              .eq('id', vehicle_id?.id);
+              .eq('id', vehicle_id?.id || '');
           } else if (hasMediumCriticity && condition !== 'no operativo' && condition !== 'en reparación') {
             const { data: vehicles, error } = await supabase
               .from('vehicles')
               .update({ condition: 'operativo condicionado', kilometer: allRepairs[0].kilometer })
-              .eq('id', vehicle_id?.id);
+              .eq('id', vehicle_id?.id || '');
           } else {
             const { data: vehicles, error } = await supabase
               .from('vehicles')
               .update({ kilometer: allRepairs[0].kilometer })
-              .eq('id', vehicle_id?.id);
+              .eq('id', vehicle_id?.id || '');
           }
 
           await fetch(`${URL}/api/repair_solicitud`, {
@@ -330,7 +330,7 @@ export default function RepairNewEntry({
     setFiles([undefined, undefined, undefined]);
   };
 
-  console.log(typeOfEquipment, 'typeOfEquipmenttypeOfEquipment');
+  //console.log(typeOfEquipment, 'typeOfEquipmenttypeOfEquipment');
 
   const handleDeleteRepair = (provicionalId: string) => {
     setAllRepairs((prev) => prev.filter((e) => e.provicionalId !== provicionalId));

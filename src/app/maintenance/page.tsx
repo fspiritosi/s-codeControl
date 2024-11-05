@@ -72,6 +72,7 @@ export default function CodeControlLogin() {
   useEffect(() => {
     supabase.auth.signOut();
     cookies.remove('empleado_id');
+    cookies.remove('empleado_name');
   }, []);
 
   async function onSubmit({ cuil, email, password }: z.infer<typeof formSchema>) {
@@ -87,14 +88,18 @@ export default function CodeControlLogin() {
           }
           router.push(`/maintenance/${equipment_id}`);
         } else {
-          const { data, error } = await supabase.from('employees').select().eq('cuil', cuil);
+          const { data, error } = await supabase
+            .from('employees')
+            .select()
+            .eq('cuil', cuil || '');
 
-          console.log(data, error);
+          // console.log(data, error);
 
           if (data && data.length > 0) {
             const empleado = data[0];
             //Setear una cookie con el id del empleado que se borre en 1 hora
             cookies.set('empleado_id', empleado.id, { expires: 1 / 24 });
+            cookies.set('empleado_name', `${empleado.firstname} ${empleado.lastname}`, { expires: 1 / 24 });
             router.push(`/maintenance/${equipment_id}`);
           } else {
             throw new Error('Empleado no encontrado.');

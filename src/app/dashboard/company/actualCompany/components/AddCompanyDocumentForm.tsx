@@ -106,8 +106,8 @@ function AddCompanyDocumentForm({
 
             const { error } = await supabase
               .from('documents_company')
-              .update(allData)
-              .eq('applies', companyId)
+              .update(allData as any)
+              .eq('applies', companyId || '')
               .eq('id_document_types', documentId);
 
             if (error) {

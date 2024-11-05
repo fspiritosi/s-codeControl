@@ -772,4 +772,26 @@ export const covenantSchema = z.object({
     .max(100, { message: 'EL nombre debe tener menos de 100 caracteres.' }),
   category: z.string().optional(),
 });
+
+export const dailyReportSchema = z.object({
+  customer: z.string().nonempty('El cliente es obligatorio'),
+  services: z.string().nonempty('El servicio es obligatorio'),
+  item: z.string().nonempty('El item es obligatorio'),
+  employees: z.array(z.string()).optional(),
+  equipment: z.array(z.string()).optional(),
+  working_day: z.string().optional(),
+  start_time: z.string().optional(),
+  end_time: z.string().optional(),
+  status: z.string().optional(),
+  description: z.string().optional(),
+  document_path: z.string().optional(),
+}).refine((data) => {
+  if (data.working_day === 'por horario') {
+    return data.start_time && data.end_time;
+  }
+  return true;
+}, {
+  message: 'Debe ingresar start_time y end_time si working_day es igual a "por horario".',
+  path: ['start_time', 'end_time'],
+});
 export type SharedCompanies = z.infer<typeof SharedCompaniesSchema>;

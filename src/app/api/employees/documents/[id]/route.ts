@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   `
       )
       .not('employees', 'is', null)
-      .eq('employees.company_id', company_id)
+      .eq('employees.company_id', company_id || '')
       .eq('id', id);
 
     const data = documents;

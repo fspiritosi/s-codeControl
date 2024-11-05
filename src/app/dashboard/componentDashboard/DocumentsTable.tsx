@@ -1,15 +1,20 @@
-'use client';
-import { useLoggedUserStore } from '@/store/loggedUser';
+// 'use client';
+import { getNextMonthExpiringDocumentsVehicles } from '@/app/server/GET/actions';
+import { formatVehiculesDocuments } from '@/lib/utils';
 import { ExpiredColums } from '../colums';
 import { ExpiredDataTable } from '../data-table';
 
-function DocumentsTable() {
-  const documentsToShow = useLoggedUserStore((state) => state.documentsToShow);
-  const setShowLastMonthDocuments = useLoggedUserStore((state) => state.setShowLastMonthDocuments);
+async function DocumentsTable() {
+  // const documentsToShow = useLoggedUserStore((state) => state.documentsToShow);
+  // const setShowLastMonthDocuments = useLoggedUserStore((state) => state.setShowLastMonthDocuments);
+
+  const data = await getNextMonthExpiringDocumentsVehicles();
+  const formatedData = (data ?? []).map(formatVehiculesDocuments).filter((e) => e.validity !== '');
+
   return (
     <ExpiredDataTable
-      data={documentsToShow?.vehicles || []}
-      setShowLastMonthDocuments={setShowLastMonthDocuments}
+      data={formatedData || []}
+      // setShowLastMonthDocuments={setShowLastMonthDocuments}
       columns={ExpiredColums}
       vehicles={true}
       localStorageName="dashboardVehiclesColumns"
