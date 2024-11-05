@@ -785,5 +785,13 @@ export const dailyReportSchema = z.object({
   status: z.string().optional(),
   description: z.string().optional(),
   document_path: z.string().optional(),
+}).refine((data) => {
+  if (data.working_day === 'por horario') {
+    return data.start_time && data.end_time;
+  }
+  return true;
+}, {
+  message: 'Debe ingresar start_time y end_time si working_day es igual a "por horario".',
+  path: ['start_time', 'end_time'],
 });
 export type SharedCompanies = z.infer<typeof SharedCompaniesSchema>;
