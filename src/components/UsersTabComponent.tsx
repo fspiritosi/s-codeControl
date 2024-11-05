@@ -20,6 +20,7 @@ export default async function UsersTabComponent() {
   const ownerUser = await getOwnerUser();
   const company_users = await getAllUsers();
   //console.log('usuarios', company_users);
+  console.log(company_users,'company_users');
   const owner = ownerUser?.map((user: any) => {
     return {
       email: user.email,
@@ -50,6 +51,7 @@ export default async function UsersTabComponent() {
       ?.map((user: any) => ({
         ...user,
         fullname: user.fullname || '',
+        customerName: user.customerName || '',
       })) || []
   );
 
@@ -59,6 +61,7 @@ export default async function UsersTabComponent() {
       ?.map((user: any) => ({
         ...user,
         fullname: user.fullname || '',
+        customerName: user.customerName || '',
       })) || []; // Filtrar usuarios donde el rol no sea "Invitado"
 
   return (

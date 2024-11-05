@@ -405,7 +405,7 @@ export const getAllUsers = async () => {
   if (!company_id) return [];
   const { data, error } = await supabase
     .from('share_company_users')
-    .select('*,  profile_id(*)')
+    .select('*,  profile_id(*),customer_id(*)')
     .eq('company_id', company_id || '');
 
   if (error) {
