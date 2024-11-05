@@ -21,6 +21,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { formatRelative } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../../../../../supabase/supabase';
@@ -164,6 +165,7 @@ export const columns: ColumnDef<SharedUser>[] = [
   {
     id: 'actions',
     cell: ({ row }) => {
+      const router = useRouter();
       const handleDelete = async () => {
         toast.promise(
           async () => {
@@ -188,6 +190,7 @@ export const columns: ColumnDef<SharedUser>[] = [
             },
           }
         );
+        router.refresh()
       };
       return (
         <AlertDialog>
