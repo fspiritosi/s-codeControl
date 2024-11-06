@@ -105,7 +105,7 @@ export const fetchEmployeePermanentDocumentsByEmployeeId = async (employeeId: st
     .from('documents_employees')
     .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
     .eq('applies', employeeId)
-    .not('id_document_types.is_it_montlhy', 'is', false)
+    .eq('id_document_types.is_it_montlhy', false)
     .not('id_document_types', 'is', null)
     .returns<EmployeeDocumentWithContractors[]>();
 
