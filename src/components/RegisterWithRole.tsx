@@ -170,6 +170,7 @@ export const RegisterWithRole = () => {
               customer_id: values?.customer,
             },
           ]);
+          console.log('data', data);
 
           if (error) {
             throw new Error(handleSupabaseError(error.message));
@@ -209,7 +210,6 @@ export const RegisterWithRole = () => {
             }
 
             if (user) {
-           
               const { data, error } = await supabase.from('share_company_users').insert([
                 {
                   company_id: company?.id,
