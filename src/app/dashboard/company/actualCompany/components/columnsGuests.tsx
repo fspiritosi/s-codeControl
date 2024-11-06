@@ -23,6 +23,7 @@ import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { supabase } from '../../../../../../supabase/supabase';
 import { DataTableColumnHeader } from './data-table-column-header';
+import { useRouter } from 'next/navigation';
 
 export const columnsGuests: ColumnDef<SharedUser>[] = [
   {
@@ -53,6 +54,7 @@ export const columnsGuests: ColumnDef<SharedUser>[] = [
     accessorKey: 'customerName',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nombre del cliente" />,
     cell: ({ row }) => {
+      console.log(row.original)
       return <div className="flex space-x-2 items-center">{<Badge>{row.original.customerName}</Badge>}</div>;
     },
   },
@@ -156,6 +158,8 @@ export const columnsGuests: ColumnDef<SharedUser>[] = [
   {
     id: 'actions',
     cell: ({ row }) => {
+      const router = useRouter();
+
       const handleDelete = async () => {
         toast.promise(
           async () => {
@@ -180,6 +184,7 @@ export const columnsGuests: ColumnDef<SharedUser>[] = [
             },
           }
         );
+        router.refresh()
       };
       return (
         <AlertDialog>
