@@ -172,6 +172,7 @@ export const RegisterWithRole = () => {
               customer_id: values?.customer ? values?.customer : null,
             },
           ]);
+          console.log('data', data);
 
           if (error) {
             throw new Error(handleSupabaseError(error.message));
