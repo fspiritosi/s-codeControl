@@ -22,7 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider attribute="class" defaultTheme="ligth" enableSystem disableTransitionOnChange>
           <Toaster />
           <Sonner richColors={true} />
-          <main className="bg-muted/40">{children}</main>
+          <main >{children}</main>
         </ThemeProvider>
       </body>
     </html>

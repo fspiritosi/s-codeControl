@@ -74,19 +74,19 @@ export function DataTableFacetedFilter<TData, TValue>({
                   options
                     .filter((option) => selectedValues.has(option.value))
                     .map((option) => (
-                        <Badge variant="secondary" key={option.value} className="rounded-sm px-1 font-normal">
-                          {getCustomerName(option.label, customers as any) !== 'Unknown'
+                      <Badge variant="secondary" key={option.value} className="rounded-sm px-1 font-normal">
+                        {getCustomerName(option.label, customers as any) !== 'Unknown'
                           ? getCustomerName(option.label, customers as any)
                           : getServiceName(option.label, services as any) !== 'Unknown'
-                          ? getServiceName(option.label, services as any)
-                          : getItemName(option.label, items as any) !== 'Unknown'
-                          ? getItemName(option.label, items as any)
-                          : getEmployeeNames([option?.label?.[0]], employees as any) !== 'Unknown'
-                          ? getEmployeeNames([option?.label[0]], employees as any)
-                          : getEquipmentNames([option?.label?.[0]], equipment as any) !== 'Unknown'
-                          ? getEquipmentNames([option?.label[0]], equipment as any)
-                          : option.label}
-                        </Badge>
+                            ? getServiceName(option.label, services as any)
+                            : getItemName(option.label, items as any) !== 'Unknown'
+                              ? getItemName(option.label, items as any)
+                              : getEmployeeNames([option?.label?.[0]], employees as any) !== 'Unknown'
+                                ? getEmployeeNames([option?.label[0]], employees as any)
+                                : getEquipmentNames([option?.label?.[0]], equipment as any) !== 'Unknown'
+                                  ? getEquipmentNames([option?.label[0]], equipment as any)
+                                  : option.label}
+                      </Badge>
                     ))
                 )}
               </div>

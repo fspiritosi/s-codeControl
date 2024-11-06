@@ -23,6 +23,18 @@ export const labels = [
   },
 ];
 
+export const expiredStatuses = [
+  {
+    value: 'expired',
+    label: 'Expired',
+    icon: CrossCircledIcon,
+  },
+  {
+    value: 'expiring',
+    label: 'Expiring',
+    icon: QuestionMarkCircledIcon,
+  },
+]
 
 
 export const statuses = [

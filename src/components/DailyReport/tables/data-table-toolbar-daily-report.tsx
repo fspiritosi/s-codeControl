@@ -50,10 +50,7 @@ export function DataTableToolbarDailyReport<TData>({
   const uniqueEmployees = getUniqueValues('Empleados');
   const uniqueEquipment = getUniqueValues('Equipos');
   const uniqueWorkingDay = getUniqueValues('Jornada');
-  const uniqueStartTime = getUniqueValues('Hora inicio');
-  const uniqueEndTime = getUniqueValues('Hora fin');
   const uniqueStatus = getUniqueValues('Estado');
-  const uniqueDescription = getUniqueValues('Descripción');
 
   const createOptions = (uniqueValues: string[], icon: any) => {
     return uniqueValues.map((value) => ({
@@ -69,10 +66,7 @@ export function DataTableToolbarDailyReport<TData>({
   const employeesOptions = createOptions(uniqueEmployees, PersonIcon);
   const equipmentOptions = createOptions(uniqueEquipment, GearIcon);
   const workingDayOptions = createOptions(uniqueWorkingDay, CalendarIcon);
-  const startTimeOptions = createOptions(uniqueStartTime, ClockIcon);
-  const endTimeOptions = createOptions(uniqueEndTime, ClockIcon);
   const statusOptions = createOptions(uniqueStatus, CheckIcon);
-  const descriptionOptions = createOptions(uniqueDescription, FileTextIcon);
   //console.log(employees)
   return (
     <div className="flex items-center justify-between">
