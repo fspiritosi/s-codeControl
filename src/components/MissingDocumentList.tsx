@@ -17,14 +17,16 @@ export const MissingDocumentList = () => {
           item.document_path !== null &&
           item.state.toLocaleLowerCase() === 'pendiente' &&
           item.is_active &&
-          item.mandatory === 'Si'
+          item.mandatory === 'Si' &&
+          !item.isItMonthly
       );
       const companyDocuments = current?.vehicles?.filter(
         (item) =>
           item.document_path !== null &&
           item.state.toLocaleLowerCase() === 'pendiente' &&
           item.is_active &&
-          item.mandatory === 'Si'
+          item.mandatory === 'Si' &&
+          !item.isItMonthly
       );
 
       const groupedEmployees: { [key: string]: any[] } = employeesDocuments?.reduce(
@@ -163,7 +165,7 @@ export const MissingDocumentList = () => {
                               className="flex justify-between items-center h-14 px-2 w-full dark:text-white font-semibold capitalize"
                             >
                               <Badge variant={'outline'} className="text-md">
-                                {item[0].resource|| item[0].intern_number}
+                                {item[0].resource || item[0].intern_number}
                               </Badge>
                               <Link
                                 href={`/dashboard/equipment/action?action=view&id=${item?.[0].vehicle_id}`}

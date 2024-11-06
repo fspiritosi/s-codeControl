@@ -30,8 +30,8 @@ export default async function DashboardComponent() {
             <CardContent></CardContent>
             <div>
               <Tabs defaultValue="Empleados">
-                <CardContent>
-                  <TabsList>
+                <CardContent className='pb-0 pl-4' >
+                  <TabsList  >
                     <TabsTrigger value="Empleados">Empleados</TabsTrigger>
                     <TabsTrigger value="Vehiculos">Vehiculos</TabsTrigger>
                   </TabsList>

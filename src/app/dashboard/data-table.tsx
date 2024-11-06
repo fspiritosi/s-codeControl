@@ -242,7 +242,6 @@ export function ExpiredDataTable<TData, TValue>({
   
       const validityDateStr = row.original.validity; // Obtener la fecha en formato "dd/mm/yyyy"
 
-      console.log(validityDateStr, 'validityDateStr');
       const validityDate = moment(validityDateStr);
       const currentDate = moment();
       const differenceInDays = validityDate.diff(currentDate, 'days');
