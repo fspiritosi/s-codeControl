@@ -22,6 +22,7 @@ const modulos = [
   'operaciones',
   'documentacion',
   'mantenimiento',
+  'formularios',
   'ayuda',
 ];
 
