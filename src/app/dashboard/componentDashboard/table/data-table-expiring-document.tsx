@@ -32,6 +32,12 @@ export function ExpiringDocumentTable<TData, TValue>({ columns, data }: DataTabl
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  React.useEffect(() => {
+    if (localStorage.getItem('dashboardEmployeesColumns') || localStorage.getItem('dashboardVehiclesColumns')) {
+      localStorage.removeItem('dashboardEmployeesColumns');
+      localStorage.removeItem('dashboardVehiclesColumns');
+    }
+  }, []);
 
   const table = useReactTable({
     data,
@@ -77,10 +83,7 @@ export function ExpiringDocumentTable<TData, TValue>({ columns, data }: DataTabl
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                >
+                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                   ))}
