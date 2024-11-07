@@ -368,7 +368,7 @@ export default function VehiclesForm2({
             user_id: string | undefined;
           }[] = [];
 
-          mandatoryDocuments?.Equipos.forEach((document) => {
+          mandatoryDocuments?.Equipos?.forEach((document) => {
             documentsMissing.push({
               applies: vehicle?.[0]?.id,
               id_document_types: document.id,
