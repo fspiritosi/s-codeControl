@@ -4,9 +4,11 @@ import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTr
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,6 +20,9 @@ import { FormattedSolicitudesRepair } from '@/types/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PersonIcon } from '@radix-ui/react-icons';
 import { ColumnDef } from '@tanstack/react-table';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { CalendarIcon } from 'lucide-react';
 import moment from 'moment';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -158,7 +163,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
       const [repairSolicitudes, setRepairSolicitudes] = useState<any>([]);
       const FormSchema = z.object({
         mechanic_description:
-          row.original.state !== status
+          row.original.state !== status && status !== 'Programado'
             ? z
                 .string({ required_error: 'La descripción es requerida.' })
                 .min(3, {
@@ -171,12 +176,6 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
         kilometer: z.string().refine(
           (value) => {
             if (value) {
-              //console.log('value', value);
-              //console.log('Number(value) > Number(selectedEquipment?.kilometer)', row.original.kilometer);
-              console.log(
-                'Number(value) > Number(row.original.kilometer)',
-                Number(value) > Number(row.original.kilometer)
-              );
               return Number(value) >= Number(row.original.kilometer);
             }
           },
@@ -184,6 +183,10 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
             message: `El kilometraje no puede ser menor al actual (${row.original.kilometer})`,
           }
         ),
+        scheduled:
+          status === 'Programado'
+            ? z.date({ required_error: 'Ingrese la fecha para la cual esta programada la reparacion' })
+            : z.date().optional(),
       });
 
       //console.log(row.original.repairlogs, 'row.original.repairlogs');
@@ -292,8 +295,12 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
               mechanic_description,
               mechanic_images,
               kilometer: form.getValues('kilometer'),
+              scheduled: form.getValues('scheduled'),
             } as any)
-            .eq('id', row.original.id);
+            .eq('id', row.original.id)
+            .select();
+
+          console.log(data, 'datadatadatadata');
 
           mechanic_imagesData
             .filter((e) => e)
@@ -608,38 +615,86 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                     /> */}
                     <Form {...form}>
                       <form id="miFormulario" onSubmit={form.handleSubmit(onSubmit)}>
-                        <FormField
-                          control={form.control}
-                          name="mechanic_description"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Descripción</FormLabel>
-                              <FormControl>
-                                <Textarea
-                                  placeholder="Informa al usuario acerca del nuevo estado"
-                                  className="resize-none"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormDescription>Descripción del nuevo estado de la solicitud</FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="kilometer"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Kilometraje</FormLabel>
-                              <FormControl>
-                                <Textarea placeholder="Kilometraje" className="resize-none" {...field} />
-                              </FormControl>
-                              <FormDescription>Kilometraje del vehículo al momento de la reparación</FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        {status !== 'Programado' && (
+                          <>
+                            <FormField
+                              control={form.control}
+                              name="mechanic_description"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Descripción</FormLabel>
+                                  <FormControl>
+                                    <Textarea
+                                      placeholder="Informa al usuario acerca del nuevo estado"
+                                      className="resize-none"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormDescription>Descripción del nuevo estado de la solicitud</FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="kilometer"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Kilometraje</FormLabel>
+                                  <FormControl>
+                                    <Textarea placeholder="Kilometraje" className="resize-none" {...field} />
+                                  </FormControl>
+                                  <FormDescription>
+                                    Kilometraje del vehículo al momento de la reparación
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </>
+                        )}
+                        {status === 'Programado' && (
+                          <FormField
+                            control={form.control}
+                            name="scheduled"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-col">
+                                <FormLabel>Fecha programada</FormLabel>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <FormControl>
+                                      <Button
+                                        variant={'outline'}
+                                        className={cn(
+                                          'pl-3 text-left font-normal',
+                                          !field.value && 'text-muted-foreground'
+                                        )}
+                                      >
+                                        {field.value ? (
+                                          format(field.value, 'PPP', { locale: es })
+                                        ) : (
+                                          <span>Seleccionar fecha</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                      </Button>
+                                    </FormControl>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                      mode="single"
+                                      selected={field.value || new Date()}
+                                      onSelect={field.onChange}
+                                      disabled={(date: any) => date < new Date()}
+                                      initialFocus
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                                <FormDescription>Fecha para la cual esta programada la reparacion</FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
                       </form>
                     </Form>
                   </div>

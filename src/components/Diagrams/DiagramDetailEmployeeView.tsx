@@ -1,6 +1,5 @@
 'use client';
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CalendarIcon } from '@radix-ui/react-icons';
 import { addDays, format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -11,6 +10,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import InfoComponent from '../InfoComponent';
+import { DiagramDetailTable } from './table/DiagramDetailTable';
+import { DetailDiagramColums } from './table/diagram-detail-colums';
 
 type diagram = {
   id: string;
@@ -27,13 +29,6 @@ type diagram = {
   day: number;
   month: number;
   year: number;
-};
-
-type DiagramDetailEmployeeViewProps = {
-  fecha: string;
-  description: string;
-  state: string;
-  id: string;
 };
 
 export function DiagramDetailEmployeeView({ diagrams }: { diagrams: diagram[] | [] }) {
@@ -79,14 +74,10 @@ export function DiagramDetailEmployeeView({ diagrams }: { diagrams: diagram[] | 
   const diagramsFilteredByDate = filterDiagramsByDate(diagrams, date);
   const diagramsFilteredByType = filterDiagramsByType(diagramsFilteredByDate, diagramType);
 
-  function handleDiagramTypeChange(event: React.ChangeEvent<HTMLSelectElement>) {
-    setDiagramType(event.target.value.length ? diagramTypes.find((type) => type.id === event.target.value) : undefined);
-  }
-
   return (
     <>
       <div className="px-4 my-2 flex gap-8">
-        <div className={cn('grid gap-2')}>
+        <div className={cn('gap-2 flex')}>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -120,36 +111,22 @@ export function DiagramDetailEmployeeView({ diagrams }: { diagrams: diagram[] | 
               />
             </PopoverContent>
           </Popover>
-          <span className="text-[0.8rem] text-muted-foreground">La selección maxima es de 30 días</span>
+          <InfoComponent message="La selección maxima es de 30 días" size="sm" />
         </div>
-        <select value={diagramType?.id} onChange={handleDiagramTypeChange} className="mb-4">
-          <option value="">Todos los tipos de diagrama</option>
-          {diagramTypes.map((diagram) => (
-            <option key={diagram.id} value={diagram.id}>
-              {diagram.name}
-            </option>
-          ))}
-        </select>{' '}
       </div>
       <div className="px-4">
-        <Table>
-          <TableHeader>
-            <TableHead>Fecha</TableHead>
-            <TableHead>Descripción</TableHead>
-            <TableHead>Estado</TableHead>
-          </TableHeader>
-          <TableBody>
-            {diagramsFilteredByType.map((diagram) => (
-              <TableRow key={diagram.id} style={{ backgroundColor: diagram?.diagram_type.color }}>
-                <TableCell>
-                  {diagram.day}/{diagram.month}/{diagram.year}
-                </TableCell>
-                <TableCell>{diagram.diagram_type.short_description}</TableCell>
-                <TableCell>{diagram.diagram_type.name}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DiagramDetailTable
+          columns={DetailDiagramColums}
+          data={diagramsFilteredByType
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            .map((diagram) => ({
+              ...diagram,
+              ...diagram.diagram_type,
+              diagram_type_id: diagram.diagram_type.id,
+              diagram_type_created_at: diagram.diagram_type.created_at,
+              created_at: `${diagram.year}-${diagram.month}-${diagram.day}`,
+            }))}
+        />
       </div>
     </>
   );
