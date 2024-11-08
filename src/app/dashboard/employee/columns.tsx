@@ -612,15 +612,15 @@ export const EmployeesListColumns: ColumnDef<Colum>[] = [
     header: 'Teléfono',
   },
   {
-    accessorKey: 'guild_id',
+    accessorKey: 'guild',
     header: 'Asosiación gremial',
   },
   {
-    accessorKey: 'covenants_id',
+    accessorKey: 'covenants',
     header: 'Convenio',
   },
   {
-    accessorKey: 'category_id',
+    accessorKey: 'category',
     header: 'Categoría',
   },
   // {
