@@ -1,7 +1,4 @@
 'use client';
-import { z } from 'zod';
-import { CardTitle } from '../ui/card';
-import { Check, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -15,13 +12,16 @@ import {
 } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import moment from 'moment';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { CardTitle } from '../ui/card';
+import { EnhancedDatePicker } from '../ui/enhanced-datepicket';
 import { Input } from '../ui/input';
 import { MultiSelectCombobox } from '../ui/multi-select-combobox';
-import { EnhancedDatePicker } from '../ui/enhanced-datepicket';
 import { YearMonthPicker } from '../ui/year-month-picker';
 
 function UploadDocumentMultiEquipment({
@@ -260,7 +260,7 @@ function UploadDocumentMultiEquipment({
                         input.onchange = async (e) => {
                           const file = (e.target as HTMLInputElement).files?.[0];
                           setSelectedFile(file);
-                          console.log('file', file);
+                          //console.log('file', file);
                           if (file) {
                             const documentName = documenTypes.find(
                               (documentType) => documentType.id === form.getValues('id_document_types')
@@ -284,7 +284,7 @@ function UploadDocumentMultiEquipment({
                               'multirecursos'
                             );
 
-                            console.log('documentUrl', documentUrl);
+                            //console.log('documentUrl', documentUrl);
 
                             field.onChange(documentUrl);
                           }

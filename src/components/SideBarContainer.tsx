@@ -174,6 +174,7 @@ async function SideBarContainer() {
       name: 'Operaciones',
       href: '/dashboard/operations',
       icon: <Calendar size={sizeIcons} />,
+      position: 8,
     },
     {
       name: 'Mantenimiento',

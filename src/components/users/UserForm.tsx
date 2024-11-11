@@ -20,8 +20,9 @@ const modulos = [
   'empleados',
   'equipos',
   'operaciones',
-  'documentacion',
+  'documentación',
   'mantenimiento',
+  'formularios',
   'ayuda',
 ];
 
