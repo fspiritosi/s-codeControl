@@ -8,7 +8,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 
 export function EquipemtTypesChart({ equipments }: { equipments: VehicleWithBrand[] }) {
   // Agregar conteo de empleados por nivel de educación (dinámicamente)
-  const educationData = equipments.reduce((acc:any, employee:any) => {
+  const educationData = equipments.reduce((acc: any, employee: any) => {
     if (employee.type.name) {
       acc[employee.type.name] = (acc[employee.type.name] || 0) + 1;
     }
@@ -35,21 +35,15 @@ export function EquipemtTypesChart({ equipments }: { equipments: VehicleWithBran
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Distribución por Nivel de Educación</CardTitle>
-        <CardDescription>Empleados por Nivel Educativo</CardDescription>
+        <CardTitle>Distribución tipos de equipos</CardTitle>
+        <CardDescription>Equipos segun el tipo</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
           <BarChart accessibilityLayer data={chartData}>
             <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="categoria"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-            />
+            <XAxis dataKey="categoria" tickLine={false} tickMargin={10} axisLine={false} />
             <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dashed" />} />
-            {/* Aquí solo dejamos una barra para mostrar la cantidad */}
             <Bar dataKey="cantidad" fill={chartConfig[chartData[0].categoria].color} radius={4} />
           </BarChart>
         </ChartContainer>
@@ -58,7 +52,9 @@ export function EquipemtTypesChart({ equipments }: { equipments: VehicleWithBran
         <div className="flex gap-2 font-medium leading-none">
           Tendencia al alza del 5.2% este mes <TrendingUp className="h-4 w-4" />
         </div>
-        <div className="leading-none text-muted-foreground">Mostrando la distribución de niveles educativos de los empleados</div>
+        <div className="leading-none text-muted-foreground">
+          Mostrando un total de {equipments.length} equipos
+        </div>
       </CardFooter>
     </Card>
   );
