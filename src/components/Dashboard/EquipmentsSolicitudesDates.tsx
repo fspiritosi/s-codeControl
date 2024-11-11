@@ -33,8 +33,8 @@ export function EquipmentSolicitudesDates({ solicitudes }: { solicitudes: Repair
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Gráfico de Área - Fechas de Ingreso</CardTitle>
-        <CardDescription>Mostrando fechas de ingreso de los empleados</CardDescription>
+        <CardTitle>Gráfico de Área - Solicidudes por mes</CardTitle>
+        <CardDescription>Mostrando las solicitudes segun los ultimos meses</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
