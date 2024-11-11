@@ -39,6 +39,7 @@ async function EmployesDiagram() {
       <TabsContent value="newsTypes">
         <DiagramTypeComponent diagrams_types={diagrams_types} />
       </TabsContent>
+      {/* <DiagramForm activeEmploees={activeEmploees} diagrams={diagrams} diagrams_types={diagrams_types} /> */}
     </Tabs>
   );
 }
