@@ -33,6 +33,7 @@ declare global {
   type Profile = DB['public']['Tables']['profile']['Row']; // Anteriormente: Profile
   type CustomForm = DB['public']['Tables']['custom_form']['Row'];
   type CheckListResponse = DB['public']['Tables']['form_answers']['Row'];
+  type diagrams_logs = DB['public']['Tables']['diagrams_logs']['Row'];
 
   //! Enums
   type RepairStatusEnum = DB['public']['Enums']['repair_state']; // Anteriormente: EnumOfRepairStatus
@@ -43,6 +44,9 @@ declare global {
 
   interface CheckListWithAnswer extends Omit<CustomForm, 'form_answers'> {
     form_answers: CheckListAnswerWithForm[]; // Anteriormente: CheckListResponse[]
+  }
+  interface diagrams_logsWithUser extends Omit<diagrams_logs, 'modified_by'> {
+    modified_by: UserProfile; // Anteriormente: Profile
   }
 
   interface CheckListAnswerWithForm extends Omit<CheckListResponse, 'form_id'> {
@@ -152,7 +156,7 @@ declare global {
   }
 
   // Relaciones de Vehicle
-  interface VehicleWithBrand extends Omit<Vehicle, 'brand' | 'model'|'type'> {
+  interface VehicleWithBrand extends Omit<Vehicle, 'brand' | 'model' | 'type'> {
     // Anteriormente: VehiclesWithBrand
     brand: VehicleBrand; // Anteriormente: Brand
     model: TypeOfVehicle; // Anteriormente: Model
