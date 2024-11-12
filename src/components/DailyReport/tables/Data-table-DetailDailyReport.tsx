@@ -78,8 +78,7 @@ export function DetailTable<TData, TValue>({
   
   const router = useRouter();
   
-  console.log(data);
-  console.log(columns)
+ 
   return (
     <div className="space-y-4 mt-4">
       <DataTableToolbarDetailReport 

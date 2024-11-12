@@ -68,7 +68,7 @@ export function DataTableToolbarDetailReport<TData>({
         return rowDate.isBetween(startDate, endDate, undefined, '[]');
       });
       
-      console.log('Filtered Data:', filteredData);
+     
     }
   };
 
