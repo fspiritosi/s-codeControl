@@ -18,7 +18,6 @@ export const fetchCurrentCompany = async () => {
   }
   return data || [];
 };
-
 export const fetchCompanyDocuments = async () => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
@@ -37,7 +36,6 @@ export const fetchCompanyDocuments = async () => {
   }
   return data;
 };
-
 // Employee-related actions
 export const fetchAllEmployees = async () => {
   const cookiesStore = cookies();
@@ -53,7 +51,48 @@ export const fetchAllEmployees = async () => {
   }
   return data;
 };
+export const fetchAllEmployeesJUSTEXAMPLE = async () => {
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
 
+  const { data, error } = await supabase.from('employees').select('*');
+
+  if (error) {
+    console.error('Error fetching employees:', error);
+    return [];
+  }
+  return data;
+};
+export const fetchAllEquipmentJUSTEXAMPLE = async () => {
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+
+  const { data, error } = await supabase
+    .from('vehicles')
+    .select('*,type(*),brand(*),model(*)')
+    .returns<VehicleWithBrand[]>();
+
+  if (error) {
+    console.error('Error fetching employees:', error);
+    return [];
+  }
+  return data;
+};
+export const fetchAllRepairsJUSTEXAMPLE = async () => {
+  const supabase = supabaseServer();
+
+  const { data, error } = await supabase.from('repair_solicitudes').select('*');
+
+  if (error) {
+    console.error('Error fetching employees:', error);
+    return [];
+  }
+  return data;
+};
 export const fetchEmployeeMonthlyDocuments = async () => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
@@ -66,6 +105,7 @@ export const fetchEmployeeMonthlyDocuments = async () => {
     .eq('applies.company_id', company_id)
     .eq('id_document_types.is_it_montlhy', true)
     .not('id_document_types', 'is', null)
+    .not('applies', 'is', null)
     .returns<EmployeeDocumentWithContractors[]>();
 
   if (error) {
@@ -94,7 +134,6 @@ export const fetchEmployeeMonthlyDocumentsByEmployeeId = async (employeeId: stri
   }
   return data;
 };
-
 export const fetchEmployeePermanentDocumentsByEmployeeId = async (employeeId: string) => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
@@ -136,7 +175,6 @@ export const fetchEmployeePermanentDocuments = async () => {
   }
   return data;
 };
-
 export const getDiagramEmployee = async ({ employee_id }: { employee_id: string }) => {
   const supabase = supabaseServer();
   console.log('employee_id', employee_id);
@@ -170,7 +208,6 @@ export const fetchAllDocumentTypes = async () => {
   }
   return data || [];
 };
-
 export const fetchDocumentsByDocumentTypeId = async (documentTypeId: string) => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
@@ -189,7 +226,6 @@ export const fetchDocumentsByDocumentTypeId = async (documentTypeId: string) => 
   }
   return data;
 };
-
 export const getNextMonthExpiringDocumentsEmployees = async () => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
@@ -219,7 +255,6 @@ export const getNextMonthExpiringDocumentsEmployees = async () => {
   }
   return data;
 };
-
 export const getNextMonthExpiringDocumentsVehicles = async () => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
@@ -247,7 +282,6 @@ export const getNextMonthExpiringDocumentsVehicles = async () => {
   }
   return data;
 };
-
 // Equipment-related actions
 export const fetchAllEquipment = async (company_equipment_id?: string) => {
   const cookiesStore = cookies();
@@ -257,7 +291,7 @@ export const fetchAllEquipment = async (company_equipment_id?: string) => {
 
   const { data, error } = await supabase
     .from('vehicles')
-    .select('*,brand(*),model(*),type(*)')
+    .select('*,brand(*),model(*),type(*),types_of_vehicles(*),contractor_equipment(*,contractor_id(*))')
     .eq('company_id', (company_id ?? company_equipment_id) || '')
     .returns<VehicleWithBrand[]>();
 
@@ -267,7 +301,6 @@ export const fetchAllEquipment = async (company_equipment_id?: string) => {
   }
   return data;
 };
-
 export const fetchMonthlyDocumentsByEquipmentId = async (equipmentId: string) => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
@@ -300,6 +333,7 @@ export const fetchMonthlyDocumentsEquipment = async () => {
     .eq('id_document_types.is_it_montlhy', true)
     .eq('applies.company_id', company_id)
     .not('id_document_types', 'is', null)
+    .not('applies', 'is', null)
     .returns<EquipmentDocumentDetailed[]>();
 
   if (error) {
@@ -308,7 +342,6 @@ export const fetchMonthlyDocumentsEquipment = async () => {
   }
   return data;
 };
-
 export const fetchPermanentDocumentsByEquipmentId = async (equipmentId: string) => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
@@ -350,7 +383,6 @@ export const fetchPermanentDocumentsEquipment = async () => {
   }
   return data;
 };
-
 // Repair-related actions
 export const fetchAllOpenRepairRequests = async () => {
   const cookiesStore = cookies();
@@ -373,7 +405,6 @@ export const fetchAllOpenRepairRequests = async () => {
   }
   return data;
 };
-
 export const fetchRepairRequestsByEquipmentId = async (equipmentId: string) => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
@@ -395,7 +426,6 @@ export const fetchRepairRequestsByEquipmentId = async (equipmentId: string) => {
   }
   return data;
 };
-
 // Users-related actions
 
 export const getAllUsers = async () => {
@@ -414,7 +444,6 @@ export const getAllUsers = async () => {
   }
   return data;
 };
-
 export const getUsersbyId = async ({ id }: { id: string }) => {
   const supabase = supabaseServer();
   const cookiesStore = cookies();
@@ -432,7 +461,6 @@ export const getUsersbyId = async ({ id }: { id: string }) => {
   }
   return data;
 };
-
 export const getOwnerUser = async () => {
   const supabase = supabaseServer();
   const curretUser = await fetchCurrentCompany();
@@ -459,7 +487,6 @@ export const fetchCurrentUser = async () => {
 
   return user;
 };
-
 export const fetchCustomForms = async (id_company?: string) => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
@@ -477,7 +504,6 @@ export const fetchCustomForms = async (id_company?: string) => {
   }
   return data;
 };
-
 export const fetchCustomFormById = async (formId: string) => {
   const supabase = supabaseServer();
   const { data, error } = await supabase.from('custom_form').select('*').eq('id', formId);
@@ -488,7 +514,6 @@ export const fetchCustomFormById = async (formId: string) => {
   }
   return data;
 };
-
 export const fetchFormsAnswersByFormId = async (formId: string) => {
   const supabase = supabaseServer();
   const { data, error } = await supabase
@@ -503,7 +528,6 @@ export const fetchFormsAnswersByFormId = async (formId: string) => {
   }
   return data ?? [];
 };
-
 export const fetchAnswerById = async (answerId: string) => {
   const supabase = supabaseServer();
   const { data, error } = await supabase
@@ -519,7 +543,6 @@ export const fetchAnswerById = async (answerId: string) => {
   }
   return data ?? [];
 };
-
 export const getCurrentProfile = async () => {
   const user = await fetchCurrentUser();
 
@@ -536,7 +559,6 @@ export const getCurrentProfile = async () => {
   }
   return data;
 };
-
 export const verifyUserRoleInCompany = async () => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
@@ -556,4 +578,21 @@ export const verifyUserRoleInCompany = async () => {
   }
 
   return { rol: data[0]?.role || '', modulos: data[0]?.modules || [] };
+};
+
+export const fetchDiagramsHistoryByEmployeeId = async (employeeId: string) => {
+  const supabase = supabaseServer();
+  console.log('employeeId', employeeId);
+  const { data, error } = await supabase
+    .from('diagrams_logs')
+    .select('*,modified_by(*)')
+    .eq('employee_id', employeeId)
+    .order('created_at', { ascending: false })
+    .returns<diagrams_logsWithUser[]>();
+
+  if (error) {
+    console.error('Error fetching diagrams history:', error);
+    return [];
+  }
+  return data;
 };

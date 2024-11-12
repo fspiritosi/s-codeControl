@@ -33,6 +33,10 @@ declare global {
   type Profile = DB['public']['Tables']['profile']['Row']; // Anteriormente: Profile
   type CustomForm = DB['public']['Tables']['custom_form']['Row'];
   type CheckListResponse = DB['public']['Tables']['form_answers']['Row'];
+  type diagrams_logs = DB['public']['Tables']['diagrams_logs']['Row'];
+  type contractor_equipment = DB['public']['Tables']['contractor_equipment']['Row'];
+  type contractor = DB['public']['Tables']['contractors']['Row'];
+  type customers = DB['public']['Tables']['customers']['Row'];
 
   //! Enums
   type RepairStatusEnum = DB['public']['Enums']['repair_state']; // Anteriormente: EnumOfRepairStatus
@@ -43,6 +47,9 @@ declare global {
 
   interface CheckListWithAnswer extends Omit<CustomForm, 'form_answers'> {
     form_answers: CheckListAnswerWithForm[]; // Anteriormente: CheckListResponse[]
+  }
+  interface diagrams_logsWithUser extends Omit<diagrams_logs, 'modified_by'> {
+    modified_by: UserProfile; // Anteriormente: Profile
   }
 
   interface CheckListAnswerWithForm extends Omit<CheckListResponse, 'form_id'> {
@@ -151,12 +158,19 @@ declare global {
     };
   }
 
+interface contractor_equipmentWithContractor extends Omit<contractor_equipment, 'contractor_id'> {
+    // Anteriormente: contractor_equipmentWithContractor
+    contractor_id: customers; // Anteriormente: CompanyWithRelations
+}
+
   // Relaciones de Vehicle
-  interface VehicleWithBrand extends Omit<Vehicle, 'brand' | 'model'|'type'> {
+  interface VehicleWithBrand extends Omit<Vehicle, 'brand' | 'model' | 'type'|'contractor_equipment'> {
     // Anteriormente: VehiclesWithBrand
     brand: VehicleBrand; // Anteriormente: Brand
     model: TypeOfVehicle; // Anteriormente: Model
     type: VehicleType; // Anteriormente: type_of_vehicle
+    types_of_vehicles: TypeOfVehicle; // Anteriormente: type_of_vehicle
+    contractor_equipment: contractor_equipmentWithContractor[]; // Anteriormente: contractor_equipment
   }
   interface ContractorEmployeeWithCustomer extends Omit<ContractorEmployee, 'customers'> {
     // Anteriormente: ContractorWithCustomers
