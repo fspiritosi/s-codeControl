@@ -3,6 +3,7 @@ import React from 'react'
 import Viewcomponent from '@/components/ViewComponent';
 import DailyReport from '@/components/DailyReport/DailyReport';
 import ViewDailyReports from '@/components/DailyReport/ViewDailysReports';
+import DailyReportDetail from '@/components/DailyReport/DailyReportDetail';
 import Create from '@/components/DailyReport/Create';
  function OperationsPage() {
     const viewData = {
@@ -18,6 +19,18 @@ import Create from '@/components/DailyReport/Create';
               buttonActioRestricted: [''],
               buttonAction: (<Create />),
               component: <ViewDailyReports />,
+            },
+          },
+          {
+            value: 'dailyReportsDetailTable',
+            name: 'Detalle de Partes diarios',
+            restricted: [''],
+            content: {
+              title: 'Ver detalle de partes diarios',
+              description: 'Aquí encontrarás todos los detalles de los partes diarios',
+              buttonActioRestricted: [''],
+              buttonAction: (''),
+              component: <DailyReportDetail />,
             },
           },
           // {
