@@ -36,7 +36,10 @@ ColumnDef<any>[] =
       );
     },
     filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
+      const rowDate = moment(row.getValue(id), 'DD/MM/YYYY');
+      const startDate = moment(value[0], 'DD/MM/YYYY');
+      const endDate = moment(value[1], 'DD/MM/YYYY');
+      return rowDate.isBetween(startDate, endDate, undefined, '[]');
     },
   },
   {
