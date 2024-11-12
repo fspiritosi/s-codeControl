@@ -22,6 +22,7 @@ async function EmployeeListTabs({ inactives, actives }: { inactives?: boolean; a
   console.log(JSON.stringify(employees[0]));
   const activeEmploees = setEmployeesToShow(employees?.filter((e: any) => e.is_active));
   const inactiveEmploees = setEmployeesToShow(employees?.filter((e: any) => !e.is_active));
+  console.log(activeEmploees);
   return (
     <Tabs defaultValue="Empleados activos">
       <CardContent>

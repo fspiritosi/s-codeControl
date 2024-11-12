@@ -137,7 +137,10 @@ export default function EmployeeComponent({
   children: React.ReactNode;
 }) {
 
-
+console.log(user)
+console.log(guild)
+console.log(covenants)
+console.log(categories)
   const profile = useLoggedUserStore((state) => state);
   const role = useLoggedUserStore((state) => state.roleActualCompany);
   const searchParams = useSearchParams();
@@ -933,7 +936,8 @@ export default function EmployeeComponent({
                 {PERSONALDATA?.map((data, index) => {
                   if (data.type === 'file') {
                     return (
-                      <div key={crypto.randomUUID()} className="w-[300px] flex  gap-2">
+                      // <div key={crypto.randomUUID()} className="w-[300px] flex  gap-2">
+                      <div key={data.name} className="w-[300px] flex  gap-2">
                         <FormField
                           control={form.control}
                           name={data.name as names}
@@ -963,7 +967,8 @@ export default function EmployeeComponent({
                   }
                   if (data.type === 'select') {
                     return (
-                      <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
+                      // <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
+                      <div key={data.name} className="w-[300px] flex flex-col gap-2">
                         <FormField
                           control={form.control}
                           name={data.name as names}
@@ -994,7 +999,8 @@ export default function EmployeeComponent({
                     );
                   } else {
                     return (
-                      <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2 ">
+                      // <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2 ">
+                      <div key={data.name} className="w-[300px] flex flex-col gap-2 ">
                         <FormField
                           control={form.control}
                           name={data.name as names}
@@ -1034,7 +1040,8 @@ export default function EmployeeComponent({
                 {CONTACTDATA?.map((data, index) => {
                   if (data.type === 'select') {
                     return (
-                      <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
+                      // <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
+                      <div key={data.name} className="w-[300px] flex flex-col gap-2">
                         <FormField
                           control={form.control}
                           name={data.name as names}
@@ -1072,7 +1079,8 @@ export default function EmployeeComponent({
                     );
                   } else {
                     return (
-                      <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
+                      // <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
+                      <div key={data.name} className="w-[300px] flex flex-col gap-2">
                         <FormField
                           control={form.control}
                           name={data.name as names}
@@ -1112,7 +1120,8 @@ export default function EmployeeComponent({
                 {LABORALDATA?.map((data, index) => {
                   if (data.name === 'date_of_admission') {
                     return (
-                      <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
+                      // <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
+                      <div key={data.name} className="w-[300px] flex flex-col gap-2">
                         <FormField
                           control={form.control}
                           name="date_of_admission"
@@ -1206,7 +1215,8 @@ export default function EmployeeComponent({
 
                     if (isMultiple) {
                       return (
-                        <div key={crypto.randomUUID()}>
+                        // <div key={crypto.randomUUID()}>
+                        <div key={data.name}>
                           {role === 'Invitado' ? null : (
                             <div className="w-[300px] flex flex-col gap-2 justify-center">
                               <FormField
@@ -1228,7 +1238,8 @@ export default function EmployeeComponent({
                       );
                     }
                     return (
-                      <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
+                      // <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
+                      <div key={data.name} className="w-[300px] flex flex-col gap-2">
                         <FormField
                           control={form.control}
                           name={data.name as names}
@@ -1262,7 +1273,8 @@ export default function EmployeeComponent({
                   } else if (data.type === 'combobox') {
                     return (
                       <FormField
-                        key={crypto.randomUUID()}
+                        // key={crypto.randomUUID()}
+                        key={data.name}
                         control={form.control}
                         name={data.name as names}
                         render={({ field }) => {
@@ -1377,7 +1389,8 @@ export default function EmployeeComponent({
                     );
                   } else {
                     return (
-                      <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
+                      // <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
+                      <div key={data.name} className="w-[300px] flex flex-col gap-2">
                         <FormField
                           control={form.control}
                           name={data.name as names}
