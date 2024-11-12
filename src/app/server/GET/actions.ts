@@ -85,9 +85,7 @@ export const fetchAllEquipmentJUSTEXAMPLE = async () => {
 export const fetchAllRepairsJUSTEXAMPLE = async () => {
   const supabase = supabaseServer();
 
-  const { data, error } = await supabase
-    .from('repair_solicitudes')
-    .select('*')
+  const { data, error } = await supabase.from('repair_solicitudes').select('*');
 
   if (error) {
     console.error('Error fetching employees:', error);
@@ -107,6 +105,7 @@ export const fetchEmployeeMonthlyDocuments = async () => {
     .eq('applies.company_id', company_id)
     .eq('id_document_types.is_it_montlhy', true)
     .not('id_document_types', 'is', null)
+    .not('applies', 'is', null)
     .returns<EmployeeDocumentWithContractors[]>();
 
   if (error) {
@@ -334,6 +333,7 @@ export const fetchMonthlyDocumentsEquipment = async () => {
     .eq('id_document_types.is_it_montlhy', true)
     .eq('applies.company_id', company_id)
     .not('id_document_types', 'is', null)
+    .not('applies', 'is', null)
     .returns<EquipmentDocumentDetailed[]>();
 
   if (error) {
