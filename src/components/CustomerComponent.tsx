@@ -40,7 +40,7 @@ interface Service {
   service_validity: string;
 }
 
-export default function ClientRegister({ id }: { id: string }) {
+export default function ClientRegister({ id, equipment }: { id: string; equipment: VehicleWithBrand[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const functionAction = id ? updateCustomer : createdCustomer;
@@ -103,7 +103,7 @@ export default function ClientRegister({ id }: { id: string }) {
 
   const activeEmploees = setEmployeesToShow(employ?.filter((e: any) => e.is_active));
   const inactiveEmploees = setEmployeesToShow(employ?.filter((e: any) => !e.is_active));
-  const equipment = useLoggedUserStore((state) => state.vehiclesToShow);
+  // const equipment = useLoggedUserStore((state) => state.vehiclesToShow);
 
   useEffect(() => {
     fetchUser();
@@ -125,8 +125,8 @@ export default function ClientRegister({ id }: { id: string }) {
       guild: customer.guild?.name,
     }));
 
-  const filteredCustomersEquipment = equipment?.filter(
-    (customer: any) => customer.allocated_to && customer.allocated_to.includes(clientData?.id)
+  const filteredCustomersEquipment = equipment?.filter((equipmentItem) =>
+    equipmentItem.contractor_equipment.some((e) => e.contractor_id.id === clientData?.id)
   );
 
   const form = useForm<z.infer<typeof customersSchema>>({

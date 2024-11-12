@@ -1,34 +1,16 @@
 import { CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabaseServer } from '@/lib/supabase/server';
 import { setVehiclesToShow } from '@/lib/utils/utils';
-import { cookies } from 'next/headers';
 
+import { fetchAllEquipment } from '@/app/server/GET/actions';
 import { EquipmentColums } from '../columns';
 import { EquipmentTable } from '../data-equipment';
 
 async function EquipmentListTabs({ inactives, actives }: { inactives?: boolean; actives?: boolean }) {
-  const URL = process.env.NEXT_PUBLIC_BASE_URL;
-
-  const supabase = supabaseServer();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const coockiesStore = cookies();
-  const company_id = coockiesStore.get('actualComp')?.value;
-  const { equipments } = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) =>
-    e.json()
-  );
-  // const { data } = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
-  const onlyVehicles = setVehiclesToShow(
-    equipments?.filter((v: { type_of_vehicle: number }) => v.type_of_vehicle === 1)
-  );
-  const onlyNoVehicles = setVehiclesToShow(
-    equipments?.filter((v: { type_of_vehicle: number }) => v.type_of_vehicle === 2)
-  );
-  const data = setVehiclesToShow(equipments);
+  const equipments = (await fetchAllEquipment()) as any;
+  const onlyVehicles = equipments?.filter((v: any) => v.types_of_vehicles === 1)
+  const onlyNoVehicles = equipments?.filter((v: any) => v.types_of_vehicles === 2)
+  // const data = setVehiclesToShow(equipments);
 
   // console.log('data', data);
 
@@ -43,7 +25,7 @@ async function EquipmentListTabs({ inactives, actives }: { inactives?: boolean; 
           </TabsList>
         </CardContent>
         <TabsContent value="all">
-          <EquipmentTable columns={EquipmentColums || []} data={data || []} />
+          <EquipmentTable columns={EquipmentColums || []} data={equipments || []} />
         </TabsContent>
         <TabsContent value="vehicles">
           <EquipmentTable columns={EquipmentColums || []} data={onlyVehicles || []} />

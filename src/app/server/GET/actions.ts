@@ -292,7 +292,7 @@ export const fetchAllEquipment = async (company_equipment_id?: string) => {
 
   const { data, error } = await supabase
     .from('vehicles')
-    .select('*,brand(*),model(*),type(*)')
+    .select('*,brand(*),model(*),type(*),types_of_vehicles(*),contractor_equipment(*,contractor_id(*))')
     .eq('company_id', (company_id ?? company_equipment_id) || '')
     .returns<VehicleWithBrand[]>();
 
