@@ -1,5 +1,9 @@
 import DocumentTable from '@/app/dashboard/document/DocumentTable';
-import { fetchDiagrams, fetchDiagramsHistoryByEmployeeId, fetchDiagramsTypes } from '@/app/server/GET/actions';
+import {
+  fetchDiagramsByEmployeeId,
+  fetchDiagramsHistoryByEmployeeId,
+  fetchDiagramsTypes,
+} from '@/app/server/GET/actions';
 import EmployeeComponent from '@/components/EmployeeComponent';
 import { Card, CardFooter } from '@/components/ui/card';
 import { supabaseServer } from '@/lib/supabase/server';
@@ -113,7 +117,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
     type: item.prev_state ? 'modified' : 'created',
   }));
 
-  const diagrams2 = await fetchDiagrams();
+  const diagrams2 = await fetchDiagramsByEmployeeId(searchParams.employee_id);
   const diagrams_types2 = await fetchDiagramsTypes();
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">

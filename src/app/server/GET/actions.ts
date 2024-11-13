@@ -608,6 +608,8 @@ export const fetchDiagramsHistoryByEmployeeId = async (employeeId: string) => {
     .order('created_at', { ascending: false })
     .returns<diagrams_logsWithUser[]>();
 
+    console.log(data,'pero ree datata');
+
   if (error) {
     console.error('Error fetching diagrams history:', error);
     return [];
@@ -624,6 +626,24 @@ export const fetchDiagrams= async () => {
     .from('employees_diagram')
     .select('*,diagram_type(*),employee_id(*)')
     .eq('employee_id.company_id', company_id)
+    .returns<EmployeeDiagramWithDiagramType[]>()
+
+  if (error) {
+    console.error('Error fetching diagrams:', error);
+    return []
+  }
+  return data;
+};
+export const fetchDiagramsByEmployeeId= async (employeeId: string) => {
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+
+  const { data, error } = await supabase
+    .from('employees_diagram')
+    .select('*,diagram_type(*),employee_id(*)')
+    .eq('employee_id.id', employeeId)
     .returns<EmployeeDiagramWithDiagramType[]>()
 
   if (error) {
