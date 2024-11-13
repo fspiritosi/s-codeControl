@@ -608,7 +608,7 @@ export const fetchDiagramsHistoryByEmployeeId = async (employeeId: string) => {
     .order('created_at', { ascending: false })
     .returns<diagrams_logsWithUser[]>();
 
-    console.log(data,'pero ree datata');
+  console.log(data, 'pero ree datata');
 
   if (error) {
     console.error('Error fetching diagrams history:', error);
@@ -616,7 +616,7 @@ export const fetchDiagramsHistoryByEmployeeId = async (employeeId: string) => {
   }
   return data;
 };
-export const fetchDiagrams= async () => {
+export const fetchDiagrams = async () => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
   const company_id = cookiesStore.get('actualComp')?.value;
@@ -626,15 +626,15 @@ export const fetchDiagrams= async () => {
     .from('employees_diagram')
     .select('*,diagram_type(*),employee_id(*)')
     .eq('employee_id.company_id', company_id)
-    .returns<EmployeeDiagramWithDiagramType[]>()
+    .returns<EmployeeDiagramWithDiagramType[]>();
 
   if (error) {
     console.error('Error fetching diagrams:', error);
-    return []
+    return [];
   }
   return data;
 };
-export const fetchDiagramsByEmployeeId= async (employeeId: string) => {
+export const fetchDiagramsByEmployeeId = async (employeeId: string) => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
   const company_id = cookiesStore.get('actualComp')?.value;
@@ -644,11 +644,14 @@ export const fetchDiagramsByEmployeeId= async (employeeId: string) => {
     .from('employees_diagram')
     .select('*,diagram_type(*),employee_id(*)')
     .eq('employee_id.id', employeeId)
-    .returns<EmployeeDiagramWithDiagramType[]>()
+    .not('employee_id', 'is', null)
+    .returns<EmployeeDiagramWithDiagramType[]>();
+
+  console.log(data, 'pero ree datata2222');
 
   if (error) {
     console.error('Error fetching diagrams:', error);
-    return []
+    return [];
   }
   return data;
 };
@@ -669,5 +672,3 @@ export const fetchDiagramsTypes = async () => {
   }
   return data;
 };
-
-
