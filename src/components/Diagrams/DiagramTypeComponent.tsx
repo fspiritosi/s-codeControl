@@ -9,7 +9,7 @@ import { DiagramNewTypeForm } from './DiagramNewTypeForm';
 
 import BtnXlsDownload from '../BtnXlsDownload';
 
-function DiagramTypeComponent({ diagrams_types }: { diagrams_types: [] }) {
+function DiagramTypeComponent({ diagrams_types }: { diagrams_types: DiagramType[] }) {
   const [selectDiagramType, setSelectDiagramType] = useState<{}>({});
 
   function setDiagram(data: any) {

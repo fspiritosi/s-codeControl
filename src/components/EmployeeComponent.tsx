@@ -112,7 +112,7 @@ export default function EmployeeComponent({
   role: string | null;
   user: any;
   activeEmploees: any;
-  diagrams: diagram[];
+  diagrams: EmployeeDiagramWithDiagramType[];
   diagrams_types: any;
   guild:
     | {
@@ -1692,7 +1692,7 @@ console.log(categories)
               {children}
             </TabsContent>
             <TabsContent value="diagrams" className="px-2 py-2">
-              <DiagramDetailEmployeeView historyData={historyData} diagrams={diagrams} diagrams_types={diagrams_types} activeEmploees={activeEmploees}  />
+              <DiagramDetailEmployeeView historyData={historyData} diagrams={diagrams as any} diagrams_types={diagrams_types} activeEmploees={activeEmploees}  />
             </TabsContent>
             <TooltipProvider delayDuration={100}>
               <Tooltip>

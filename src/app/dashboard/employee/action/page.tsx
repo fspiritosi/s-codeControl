@@ -1,5 +1,9 @@
 import DocumentTable from '@/app/dashboard/document/DocumentTable';
-import { fetchDiagramsHistoryByEmployeeId } from '@/app/server/GET/actions';
+import {
+  fetchDiagramsByEmployeeId,
+  fetchDiagramsHistoryByEmployeeId,
+  fetchDiagramsTypes,
+} from '@/app/server/GET/actions';
 import EmployeeComponent from '@/components/EmployeeComponent';
 import { Card, CardFooter } from '@/components/ui/card';
 import { supabaseServer } from '@/lib/supabase/server';
@@ -29,9 +33,6 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
 
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
-  const { data: diagrams } = await fetch(`${URL}/api/employees/diagrams?employee_id=${searchParams.employee_id}`).then(
-    (e) => e.json()
-  );
 
   let formattedEmployee;
   let guild:
@@ -103,10 +104,6 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
     };
   });
 
-  const { data: diagrams_types } = await fetch(`${URL}/api/employees/diagrams/tipos?actual=${company_id}`).then((e) =>
-    e.json()
-  );
-
   const historyData = (await fetchDiagramsHistoryByEmployeeId(searchParams.employee_id)).map((item) => ({
     date: moment.utc(item.prev_date).format('DD/MM/YYYY'),
     description: item.description,
@@ -120,6 +117,8 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
     type: item.prev_state ? 'modified' : 'created',
   }));
 
+  const diagrams2 = await fetchDiagramsByEmployeeId(searchParams.employee_id);
+  const diagrams_types2 = await fetchDiagramsTypes();
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">
       <Card className={cn('col-span-8 flex flex-col justify-between overflow-hidden')}>
@@ -129,8 +128,8 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
           categories={categories}
           user={formattedEmployee}
           role={role}
-          diagrams={diagrams}
-          diagrams_types={diagrams_types}
+          diagrams={diagrams2}
+          diagrams_types={diagrams_types2}
           activeEmploees={[formattedEmployee]}
           historyData={historyData}
         >
