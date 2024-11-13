@@ -88,7 +88,7 @@ function DiagramFormUpdated({
     const { employee_id, dateRange, diagram_type } = data;
 
     // Filtrar diagramas del empleado seleccionado
-    const employeeDiagrams = diagrams.filter((diagram) => diagram.employee_id.id === employee_id);
+    const employeeDiagrams = diagrams.filter((diagram) => diagram.employee_id?.id === employee_id);
 
     // Generar todas las fechas entre dateRange.from y dateRange.to
     const startDate = moment(dateRange.from);
@@ -130,29 +130,29 @@ function DiagramFormUpdated({
 
     // Mapear los diagramas existentes y nuevos a los estados correspondientes
     const errors = existing
-      .filter((diagram) => diagram.diagram_type.id !== form.getValues('diagram_type'))
+      .filter((diagram) => diagram.diagram_type?.id !== form.getValues('diagram_type'))
       .map((diagram) => ({
         employee_name:
-          employees.find((e) => e.id === diagram.employee_id.id)?.firstname +
+          employees.find((e) => e?.id === diagram.employee_id?.id)?.firstname +
           ' ' +
-          employees.find((e) => e.id === diagram.employee_id.id)?.lastname,
+          employees.find((e) => e?.id === diagram.employee_id?.id)?.lastname,
         day: diagram.day,
         month: diagram.month,
         year: diagram.year,
-        event_diagram_name: diagrams_types.find((type) => type.id === form.getValues('diagram_type'))?.name || '',
+        event_diagram_name: diagrams_types.find((type) => type?.id === form.getValues('diagram_type'))?.name || '',
         prev_event: diagram.prev_diagram_type || '',
-        prev_diagram_entry_id: diagram.id,
+        prev_diagram_entry_id: diagram?.id,
       }));
 
     const successes = newDates.map((date) => ({
       employee_name:
-        employees.find((e) => e.id === employee_id)?.firstname +
+        employees.find((e) => e?.id === employee_id)?.firstname +
         ' ' +
-        employees.find((e) => e.id === employee_id)?.lastname,
+        employees.find((e) => e?.id === employee_id)?.lastname,
       day: date.day,
       month: date.month,
       year: date.year,
-      event_diagram_name: diagrams_types.find((type) => type.id === diagram_type)?.name || '',
+      event_diagram_name: diagrams_types.find((type) => type?.id === diagram_type)?.name || '',
     }));
 
     setErrorsDiagrams(errors);
@@ -287,7 +287,7 @@ function DiagramFormUpdated({
       const { employee_id, dateRange, diagram_type } = form.getValues();
 
       // Filtrar diagramas del empleado seleccionado
-      const employeeDiagrams = diagrams.filter((diagram) => diagram.employee_id.id === employee_id);
+      const employeeDiagrams = diagrams.filter((diagram) => diagram.employee_id?.id === employee_id);
 
       // Generar todas las fechas entre dateRange.from y dateRange.to
       const startDate = moment(dateRange?.from);
@@ -329,29 +329,29 @@ function DiagramFormUpdated({
 
       // Mapear los diagramas existentes y nuevos a los estados correspondientes
       const errors = existing
-        .filter((diagram) => diagram.diagram_type.id !== diagram_type)
+        .filter((diagram) => diagram.diagram_type?.id !== diagram_type)
         .map((diagram) => ({
           employee_name:
-            employees.find((e) => e.id === diagram.employee_id.id)?.firstname +
+            employees.find((e) => e?.id === diagram.employee_id?.id)?.firstname +
             ' ' +
-            employees.find((e) => e.id === diagram.employee_id.id)?.lastname,
+            employees.find((e) => e?.id === diagram.employee_id?.id)?.lastname,
           day: diagram.day,
           month: diagram.month,
           year: diagram.year,
-          event_diagram_name: diagrams_types.find((type) => type.id === diagram_type)?.name || '',
+          event_diagram_name: diagrams_types.find((type) => type?.id === diagram_type)?.name || '',
           prev_event: diagram.prev_diagram_type || '',
-          prev_diagram_entry_id: diagram.id,
+          prev_diagram_entry_id: diagram?.id,
         }));
 
       const successes = newDates.map((date) => ({
         employee_name:
-          employees.find((e) => e.id === employee_id)?.firstname +
+          employees.find((e) => e?.id === employee_id)?.firstname +
           ' ' +
-          employees.find((e) => e.id === employee_id)?.lastname,
+          employees.find((e) => e?.id === employee_id)?.lastname,
         day: date.day,
         month: date.month,
         year: date.year,
-        event_diagram_name: diagrams_types.find((type) => type.id === diagram_type)?.name || '',
+        event_diagram_name: diagrams_types.find((type) => type?.id === diagram_type)?.name || '',
       }));
 
       setErrorsDiagrams(errors);
@@ -383,7 +383,7 @@ function DiagramFormUpdated({
                       </FormControl>
                       <SelectContent>
                         {employees.map((employee) => (
-                          <SelectItem key={employee.id} value={employee.id.toString()}>
+                          <SelectItem key={employee?.id} value={employee?.id.toString()}>
                             {employee.lastname.charAt(0).toUpperCase() + employee.lastname.slice(1)},{' '}
                             {employee.firstname.charAt(0).toUpperCase() + employee.firstname.slice(1)}
                           </SelectItem>
@@ -408,7 +408,7 @@ function DiagramFormUpdated({
                       </FormControl>
                       <SelectContent>
                         {diagrams_types.map((type) => (
-                          <SelectItem key={type.id} value={type.id.toString()}>
+                          <SelectItem key={type?.id} value={type?.id.toString()}>
                             {type.name}
                           </SelectItem>
                         ))}
@@ -504,12 +504,12 @@ function DiagramFormUpdated({
                   <TableBody key={crypto.randomUUID()}>
                     <TableRow>
                       <TableCell>
-                        {employees.find((e) => e.id === form.getValues('employee_id'))?.firstname +
+                        {employees.find((e) => e?.id === form.getValues('employee_id'))?.firstname +
                           ' ' +
-                          employees.find((e) => e.id === form.getValues('employee_id'))?.lastname}
+                          employees.find((e) => e?.id === form.getValues('employee_id'))?.lastname}
                       </TableCell>
                       <TableCell>
-                        {diagrams_types.find((type) => type.id === form.getValues('diagram_type'))?.name || ''}
+                        {diagrams_types.find((type) => type?.id === form.getValues('diagram_type'))?.name || ''}
                       </TableCell>
                       <TableCell>
                         {d.day}/{d.month}/{d.year}
