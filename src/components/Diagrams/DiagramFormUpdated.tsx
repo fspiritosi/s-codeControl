@@ -130,7 +130,7 @@ function DiagramFormUpdated({
 
     // Mapear los diagramas existentes y nuevos a los estados correspondientes
     const errors = existing
-      .filter((diagram) => diagram.diagram_type?.id !== form.getValues('diagram_type'))
+      // .filter((diagram) => diagram.diagram_type?.id !== form.getValues('diagram_type'))
       .map((diagram) => ({
         employee_name:
           employees.find((e) => e?.id === diagram.employee_id?.id)?.firstname +
@@ -329,7 +329,7 @@ function DiagramFormUpdated({
 
       // Mapear los diagramas existentes y nuevos a los estados correspondientes
       const errors = existing
-        .filter((diagram) => diagram.diagram_type?.id !== diagram_type)
+        // .filter((diagram) => diagram.diagram_type?.id !== diagram_type)
         .map((diagram) => ({
           employee_name:
             employees.find((e) => e?.id === diagram.employee_id?.id)?.firstname +
