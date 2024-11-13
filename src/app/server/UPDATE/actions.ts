@@ -42,3 +42,39 @@ export const updateModulesSharedUser = async ({ id, modules }: { id: string; mod
   }
   return data;
 };
+
+export const UpdateDiagramsById = async (diagramData: { diagram_type: string; diagramId: string }[]) => {
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+
+  const promises = diagramData.map(async ({ diagram_type, diagramId }) => {
+    const { data, error } = await supabase.from('employees_diagram').update({ diagram_type }).eq('id', diagramId);
+    if (error) {
+      console.log('error', error);
+    }
+    return data;
+  });
+
+  const results = await Promise.all(promises);
+  return results;
+};
+
+export const CreateDiagrams = async (diagramData: EmployeeDiagramInsert[]) => {
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+
+  const promises = diagramData.map(async (diagram) => {
+    const { data, error } = await supabase.from('employees_diagram').insert(diagram);
+    if (error) {
+      console.log('error', error);
+    }
+    return data;
+  });
+
+  const results = await Promise.all(promises);
+  return results;
+};

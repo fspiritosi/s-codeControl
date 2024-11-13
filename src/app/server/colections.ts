@@ -22,6 +22,7 @@ declare global {
   type RepairType = DB['public']['Tables']['types_of_repairs']['Row']; // Anteriormente: TypeOfRepair
   type RepairLog = DB['public']['Tables']['repairlogs']['Row']; // Anteriormente: RepairLogs
   type EmployeeDiagram = DB['public']['Tables']['employees_diagram']['Row']; // Anteriormente: DiagramEmployee
+  type EmployeeDiagramInsert = DB['public']['Tables']['employees_diagram']['Insert']; // Anteriormente: DiagramEmployee
   type DiagramType = DB['public']['Tables']['diagram_type']['Row']; // Anteriormente: DiagramType
   type City = DB['public']['Tables']['cities']['Row']; // Anteriormente: City
   type Province = DB['public']['Tables']['provinces']['Row']; // Anteriormente: Province
@@ -50,6 +51,10 @@ declare global {
   }
   interface diagrams_logsWithUser extends Omit<diagrams_logs, 'modified_by'> {
     modified_by: UserProfile; // Anteriormente: Profile
+  }
+  interface EmployeeDiagramWithDiagramType extends Omit<EmployeeDiagram, 'diagram_type'|'employee_id'> {
+    diagram_type: DiagramType; 
+    employee_id: Employee;
   }
 
   interface CheckListAnswerWithForm extends Omit<CheckListResponse, 'form_id'> {
