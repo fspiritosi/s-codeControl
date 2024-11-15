@@ -1,23 +1,17 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from '@radix-ui/react-icons';
 import { addDays, format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, History } from 'lucide-react';
 import { useState } from 'react';
 import { DateRange } from 'react-day-picker';
 import InfoComponent from '../InfoComponent';
 import { Calendar } from '../ui/calendar';
-import { DiagramForm } from './DiagramForm';
+import DiagramFormUpdated from './DiagramFormUpdated';
 import { DiagramDetailTable } from './table/DiagramDetailTable';
 import { DetailDiagramColums } from './table/diagram-detail-colums';
 type diagram = {
@@ -54,18 +48,6 @@ export function DiagramDetailEmployeeView({
   });
   const [diagramType, setDiagramType] = useState<{ id: string; name: string } | undefined>(undefined);
 
-  //saca todos los tipos de diagramas que hay en la lista de diagramas del empleado en particular
-  function getUniqueDiagramTypes(diagrams: diagram[]) {
-    const uniqueTypes: { id: string; name: string }[] = [];
-    diagrams.forEach((diagram) => {
-      const { id, name } = diagram.diagram_type;
-      if (!uniqueTypes.some((type) => type.id === id)) {
-        uniqueTypes.push({ id, name });
-      }
-    });
-    return uniqueTypes;
-  }
-
   function filterDiagramsByDate(diagrams: diagram[], date: DateRange | undefined) {
     if (!date) {
       return diagrams;
@@ -88,25 +70,7 @@ export function DiagramDetailEmployeeView({
   const diagramsFilteredByDate = filterDiagramsByDate(diagrams, date);
   const diagramsFilteredByType = filterDiagramsByType(diagramsFilteredByDate, diagramType);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-
-  const totalPages = Math.ceil(historyData.length / itemsPerPage);
-
-  const handleItemsPerPageChange = (value: string) => {
-    setItemsPerPage(Number(value));
-    setCurrentPage(1); // Resetear a la primera página cuando se cambia la cantidad de elementos por página
-  };
-
-  const handlePreviousPage = () => {
-    setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
-  };
-
-  const handleNextPage = () => {
-    setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages));
-  };
-
-  const paginatedData = historyData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  console.log(historyData, 'historyData');
 
   return (
     <>
@@ -152,11 +116,12 @@ export function DiagramDetailEmployeeView({
             </Popover>
             <InfoComponent message="La selección máxima es de 30 días" size="sm" />
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-10 gap-4 pr-7 ">
-            <div className="col-span-5 mt-3">
+          <div className="gap-4 pr-7 ">
+            <div className=" mt-3">
               <div className=" w-full">
                 <DiagramDetailTable
                   columns={DetailDiagramColums}
+                  historyData={historyData}
                   data={diagramsFilteredByType
                     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                     .map((diagram) => ({
@@ -169,7 +134,7 @@ export function DiagramDetailEmployeeView({
                 />
               </div>
             </div>
-            <div className="col-span-5 mt-3">
+            {/* <div className="col-span-5 mt-3">
               <Card className="w-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                   <div className="flex items-center space-x-2">
@@ -253,13 +218,19 @@ export function DiagramDetailEmployeeView({
                       Página {currentPage} de {totalPages}
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Button variant="outline" size="icon" type='button' onClick={handlePreviousPage} disabled={currentPage === 1}>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        type="button"
+                        onClick={handlePreviousPage}
+                        disabled={currentPage === 1}
+                      >
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
-                        type='button'
+                        type="button"
                         onClick={handleNextPage}
                         disabled={currentPage === totalPages}
                       >
@@ -269,15 +240,15 @@ export function DiagramDetailEmployeeView({
                   </div>
                 </CardContent>
               </Card>
-            </div>
+            </div> */}
           </div>
         </TabsContent>
         <TabsContent value="NuevoDiagrama">
-          <DiagramForm
-            defaultId={activeEmploees[0].id}
-            activeEmploees={activeEmploees}
-            diagrams={diagrams}
+          <DiagramFormUpdated
+            employees={activeEmploees}
+            diagrams={diagrams as EmployeeDiagramWithDiagramType[]}
             diagrams_types={diagrams_types}
+            defaultId={activeEmploees[0].id}
           />
         </TabsContent>
       </Tabs>

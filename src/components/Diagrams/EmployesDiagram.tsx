@@ -1,9 +1,11 @@
+import { fetchAllActivesEmployees, fetchDiagrams, fetchDiagramsTypes } from '@/app/server/GET/actions';
 import { supabaseServer } from '@/lib/supabase/server';
 import { setEmployeesToShow } from '@/lib/utils/utils';
 import { cookies } from 'next/headers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import DiagramEmployeeView from './DiagramEmployeeView';
 import { DiagramForm } from './DiagramForm';
+import DiagramFormUpdated from './DiagramFormUpdated';
 import DiagramTypeComponent from './DiagramTypeComponent';
 
 async function EmployesDiagram() {
@@ -23,6 +25,10 @@ async function EmployesDiagram() {
     `${URL}/api/employees/diagrams/tipos?actual=${company_id}&user=${user?.id}`
   ).then((e) => e.json());
 
+  const employees2 = await fetchAllActivesEmployees();
+  const diagrams2 = await fetchDiagrams();
+  const diagrams_types2 = await fetchDiagramsTypes();
+
   return (
     <Tabs defaultValue="old">
       <TabsList>
@@ -34,7 +40,8 @@ async function EmployesDiagram() {
         <DiagramEmployeeView diagrams={diagrams} activeEmployees={activeEmploees} />
       </TabsContent>
       <TabsContent value="new">
-        <DiagramForm activeEmploees={activeEmploees} diagrams={diagrams} diagrams_types={diagrams_types} />
+        {/* <DiagramForm activeEmploees={activeEmploees} diagrams={diagrams} diagrams_types={diagrams_types} /> */}
+        <DiagramFormUpdated employees={employees2} diagrams={diagrams2} diagrams_types={diagrams_types2} />
       </TabsContent>
       <TabsContent value="newsTypes">
         <DiagramTypeComponent diagrams_types={diagrams_types} />

@@ -149,8 +149,8 @@ export default function SimpleDocument({
           const documetType = documenTypes?.find((e) => e.id === documents[index].id_document_types);
           const formatedCompanyName = actualCompany?.company_name.toLowerCase().replace(/ /g, '-');
           const formatedAppliesName = appliesName
-            ? `${appliesName?.name.toLowerCase().replace(/ /g, '-')}-(${appliesName?.document})`
-            : `${idAppliesUser?.name.toLowerCase().replace(/ /g, '-')}-(${idAppliesUser?.document})`;
+            ? `${appliesName?.name.toLowerCase().replace(/ /g, '-').replace('ñ', 'n')}-(${appliesName?.document})`
+            : `${idAppliesUser?.name.toLowerCase().replace(/ /g, '-').replace('ñ', 'n')}-(${idAppliesUser?.document})`;
           const formatedDocumentTypeName = formatDocumentTypeName(documetType?.name);
           const formatedAppliesPath = documetType.applies.toLowerCase().replace(/ /g, '-');
 

@@ -51,6 +51,24 @@ export const fetchAllEmployees = async () => {
   }
   return data;
 };
+export const fetchAllActivesEmployees = async () => {
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+
+  const { data, error } = await supabase
+    .from('employees')
+    .select('*')
+    .eq('company_id', company_id)
+    .eq('is_active', true);
+
+  if (error) {
+    console.error('Error fetching employees:', error);
+    return [];
+  }
+  return data;
+};
 export const fetchAllEmployeesJUSTEXAMPLE = async () => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
@@ -590,8 +608,66 @@ export const fetchDiagramsHistoryByEmployeeId = async (employeeId: string) => {
     .order('created_at', { ascending: false })
     .returns<diagrams_logsWithUser[]>();
 
+  console.log(data, 'pero ree datata');
+
   if (error) {
     console.error('Error fetching diagrams history:', error);
+    return [];
+  }
+  return data;
+};
+export const fetchDiagrams = async () => {
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+
+  const { data, error } = await supabase
+    .from('employees_diagram')
+    .select('*,diagram_type(*),employee_id(*)')
+    .eq('employee_id.company_id', company_id)
+    .returns<EmployeeDiagramWithDiagramType[]>();
+
+  if (error) {
+    console.error('Error fetching diagrams:', error);
+    return [];
+  }
+  return data;
+};
+export const fetchDiagramsByEmployeeId = async (employeeId: string) => {
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+
+  const { data, error } = await supabase
+    .from('employees_diagram')
+    .select('*,diagram_type(*),employee_id(*)')
+    .eq('employee_id.id', employeeId)
+    .not('employee_id', 'is', null)
+    .returns<EmployeeDiagramWithDiagramType[]>();
+
+  console.log(data, 'pero ree datata2222');
+
+  if (error) {
+    console.error('Error fetching diagrams:', error);
+    return [];
+  }
+  return data;
+};
+
+export const fetchDiagramsTypes = async () => {
+  const supabase = supabaseServer();
+  const cookiesStore = cookies();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+  const { data, error } = await supabase
+    .from('diagram_type')
+    .select('*')
+    .eq('company_id', company_id || '');
+
+  if (error) {
+    console.error('Error fetching diagrams types:', error);
     return [];
   }
   return data;
