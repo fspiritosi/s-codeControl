@@ -10,7 +10,7 @@ async function EmployeesTable() {
   const data = await getNextMonthExpiringDocumentsEmployees();
   const formatedData = data.map(formatEmployeeDocuments).filter((e) => e.validity !== '');
 
-  // console.log(data, 'data');
+  //console.log(data, 'data');
 
   return (
     <div className="px-4 pb-4">
