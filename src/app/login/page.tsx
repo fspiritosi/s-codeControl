@@ -71,7 +71,7 @@ export default async function Login() {
                 </div>
                 <Separator orientation="horizontal" className="my-2 w-[70%] self-center" />
                 <Link href="/reset_password" className="text-md m-auto">
-                  ¿Olvisdaste tu contraseña? <span className="text-blue-400 ml-1 ">restablecela aquí </span>
+                  ¿Olvidaste tu contraseña? <span className="text-blue-400 ml-1 ">restablecela aquí </span>
                 </Link>
                 <GoogleButton />
               </form>
