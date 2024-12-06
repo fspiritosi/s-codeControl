@@ -3,6 +3,7 @@ import { Toaster as Sonner } from '@/components/ui/sonner';
 import { Toaster } from '@/components/ui/toaster';
 import type { Metadata } from 'next';
 import { Inter, Poppins } from 'next/font/google';
+
 import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 const popinsFont = Poppins({
@@ -22,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider attribute="class" defaultTheme="ligth" enableSystem disableTransitionOnChange>
           <Toaster />
           <Sonner richColors={true} />
-          <main >{children}</main>
+          <main>{children}</main>
         </ThemeProvider>
       </body>
     </html>
