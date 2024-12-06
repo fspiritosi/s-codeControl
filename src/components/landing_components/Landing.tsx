@@ -1,9 +1,8 @@
 import Footer from '@/components/landing_components/Footer';
-import { Contact, Video } from 'lucide-react';
+import { Contact } from 'lucide-react';
 import AboutSectionOne from './About/AboutSectionOne';
 import AboutSectionTwo from './About/AboutSectionTwo';
 import Blog from './Blog';
-import Brands from './Brands';
 import ScrollUp from './Common/ScrollUp';
 import Features from './Features';
 import Hero from './Hero';
@@ -23,8 +22,8 @@ export default function Landing() {
         <ScrollUp />
         <Hero />
         <Features />
-        <Video />
-        <Brands />
+        {/* <Video /> */}
+        {/* <Brands /> */}
         <AboutSectionOne />
         <AboutSectionTwo />
         <Testimonials />

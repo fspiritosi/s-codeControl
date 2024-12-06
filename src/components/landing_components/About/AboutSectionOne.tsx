@@ -1,5 +1,8 @@
-import Image from "next/image";
-import SectionTitle from "../Common/SectionTitle";
+import mobile_01 from '@/images/img_mobile_menu.png';
+import notebook_01 from '@/images/notebook_01.png';
+
+import Image from 'next/image';
+import SectionTitle from '../Common/SectionTitle';
 
 const checkIcon = (
   <svg width="16" height="13" viewBox="0 0 16 13" className="fill-current">
@@ -8,9 +11,9 @@ const checkIcon = (
 );
 
 const AboutSectionOne = () => {
-  const List = ({ text }) => (
+  const List = ({ text }: { text: string }) => (
     <p className="mb-5 flex items-center text-lg font-medium text-body-color">
-      <span className="mr-4 flex h-[30px] w-[30px] items-center justify-center rounded-md bg-primary bg-opacity-10 text-primary">
+      <span className="mr-4 flex h-[30px] w-[30px] items-center justify-center rounded-md bg-codecontrol bg-opacity-10 text-primary">
         {checkIcon}
       </span>
       {text}
@@ -24,44 +27,43 @@ const AboutSectionOne = () => {
           <div className="-mx-4 flex flex-wrap items-center">
             <div className="w-full px-4 lg:w-1/2">
               <SectionTitle
-                title="Crafted for Startup, SaaS and Business Sites."
-                paragraph="The main ‘thrust’ is to focus on educating attendees on how to best protect highly vulnerable business applications with interactive panel discussions and roundtables."
+                title="Nuestra Web APP es la solución perfecta para tu empresa"
+                paragraph="Una plataforma integral que centraliza y optimiza la gestión de empleados, equipos y documentación en tu empresa. Simplifica la gestión documental, el mantenimiento de equipos y la planificación de operaciones, garantizando el control, la seguridad y la eficiencia en todos tus procesos."
                 mb="44px"
               />
 
-              <div
-                className="mb-12 max-w-[570px] lg:mb-0"
-                data-wow-delay=".15s"
-              >
+              <div className="mb-12 max-w-[570px] lg:mb-0" data-wow-delay=".15s">
                 <div className="mx-[-12px] flex flex-wrap">
                   <div className="w-full px-3 sm:w-1/2 lg:w-full xl:w-1/2">
-                    <List text="Premium quality" />
-                    <List text="Tailwind CSS" />
-                    <List text="Use for lifetime" />
+                    <List text="Centraliza la información" />
+                    <List text="Información actualizada" />
+                    <List text="Facilita la búsqueda" />
                   </div>
 
                   <div className="w-full px-3 sm:w-1/2 lg:w-full xl:w-1/2">
-                    <List text="Next.js" />
-                    <List text="Rich documentation" />
-                    <List text="Developer friendly" />
+                    <List text="Protege tus datos" />
+                    <List text="Manten tus recursos" />
+                    <List text="Digitaliza tu operación" />
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="w-full px-4 lg:w-1/2">
-              <div className="relative mx-auto aspect-[25/24] max-w-[500px] lg:mr-0">
+            <div className="w-full px-4 lg:w-1/2 gap-2 flex">
+              <div className="relative mx-auto aspect-[24/12] max-w-[400px] min-h-40 lg:mr-0">
                 <Image
-                  src="/images/about/about-image.svg"
-                  alt="about-image"
+                  src={notebook_01}
+                  alt="about-image_1"
                   fill
-                  className="mx-auto max-w-full drop-shadow-three dark:hidden dark:drop-shadow-none lg:mr-0"
+                  className="mx-auto  max-w-full drop-shadow-three  lg:mr-0"
                 />
+              </div>
+              <div className="relative mx-auto aspect-[12/24] max-w-[200px] min-h-40 lg:mr-0">
                 <Image
-                  src="/images/about/about-image-dark.svg"
+                  src={mobile_01}
                   alt="about-image"
                   fill
-                  className="mx-auto hidden max-w-full drop-shadow-three dark:block dark:drop-shadow-none lg:mr-0"
+                  className="mx-auto max-w-full drop-shadow-three  lg:mr-0"
                 />
               </div>
             </div>
