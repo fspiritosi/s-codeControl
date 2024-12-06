@@ -1,19 +1,12 @@
-import AboutAs from '@/components/landing_components/About';
-import Services from '@/components/landing_components/BestBusines';
-import FirstBlock from '@/components/landing_components/first-block';
-import Header from '@/components/landing_components/header';
+import Landing from '@/components/landing_components/Landing';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Free Next.js Template for Startup and SaaS',
+  description: 'This is Home for Startup Nextjs Template',
+  // other metadata
+};
 
 export default function Home() {
-  return (
-    <div className="flex flex-col justify-center">
-      <Header />
-      <FirstBlock />
-      <div id="about">
-        <AboutAs />
-      </div>
-      <div id="services">
-        <Services />
-      </div>
-    </div>
-  );
+  return <Landing />;
 }
