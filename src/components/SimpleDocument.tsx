@@ -93,7 +93,7 @@ export default function SimpleDocument({
           file: '',
           validity: '',
           user_id: user,
-          period: null || '',
+          period: '',
         },
       ],
     },
@@ -122,7 +122,7 @@ export default function SimpleDocument({
           return {
             applies: entry.applies || idApplies,
             id_document_types: entry.id_document_types,
-            validity: entry.validity ? format(entry.validity, 'dd/MM/yyyy') : null,
+            validity: entry.validity ? new Date(entry.validity).toISOString() : null,
             user_id: user,
             created_at: new Date(),
             period: entry.period,
@@ -744,7 +744,7 @@ export default function SimpleDocument({
                 file: '',
                 validity: '',
                 user_id: user,
-                period: null || '',
+                period:  '',
               })
             }
           >

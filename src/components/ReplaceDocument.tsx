@@ -114,7 +114,7 @@ export default function ReplaceDocument({
           .from('document_files')
           .upload(newDocumentName, file, {
             cacheControl: '3600',
-            upsert: false,
+            upsert: true,
           });
 
         // console.log('filename.validity', filename.validity ? format(filename.validity as Date, 'dd/MM/yyyy') : null);
@@ -123,7 +123,7 @@ export default function ReplaceDocument({
           .from(tableName)
           .update({
             document_path: finalDocument?.path,
-            validity: filename.validity ? format(filename.validity as Date, 'dd/MM/yyyy') : null,
+            validity: filename.validity ? new Date(filename.validity).toISOString() : null,
             created_at: new Date().toISOString(),
           })
           .eq('id', appliesId || '');

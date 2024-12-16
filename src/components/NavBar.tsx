@@ -164,7 +164,7 @@ export default function NavBar() {
                 className={'min-w-[200px] justify-between'}
               >
                 <Avatar className="mr-2 size-5 rounded-full">
-                  <AvatarImage src={actualCompany?.company_logo} alt={actualCompany?.company_name} className="size-5" />
+                  <AvatarImage src={actualCompany?.company_logo} alt={actualCompany?.company_name} className="size-5 object-contain" />
                   <AvatarFallback className="uppercase">
                     {!actualCompany && <Loader className="animate-spin" />}
                     {actualCompany &&
@@ -195,8 +195,8 @@ export default function NavBar() {
                           }}
                           className="text-sm"
                         >
-                          <Avatar className="mr-2 h-5 w-5">
-                            <AvatarImage src={team.logo} alt={team.label} className="size-5 rounded-full" />
+                          <Avatar className="mr-2 h-5 w-5 object-contain ">
+                            <AvatarImage src={team.logo} alt={team.label} className="size-5 rounded-full object-contain" />
                             <AvatarFallback>compañia</AvatarFallback>
                           </Avatar>
                           {team.label}
