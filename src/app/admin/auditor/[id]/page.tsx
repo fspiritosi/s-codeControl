@@ -200,7 +200,7 @@ export default async function page({ params }: { params: { id: string } }) {
                               <AvatarImage
                                 src={documents_employees?.[0]?.applies?.company_id?.company_logo}
                                 alt="Logo de la empresa"
-                                className="rounded-full object-cover"
+                                className="rounded-full object-cover contain"
                               />
                               <AvatarFallback>Logo</AvatarFallback>
                             </Avatar>

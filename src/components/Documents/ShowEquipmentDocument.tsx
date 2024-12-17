@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
+import moment from 'moment';
 import { Suspense } from 'react';
 function ShowEquipmentDocument({
   documents_employees,
@@ -349,7 +350,7 @@ function ShowEquipmentDocument({
                           <TableCell>
                             <CardDescription>
                               {documents_employees?.[0]?.id_document_types?.explired
-                                ? `Vence el ${documents_employees?.[0]?.validity}`
+                                ? `Vence el ${moment(documents_employees?.[0]?.validity).format('DD/MM/YYYY')}`
                                 : 'No tiene vencimiento'}
                             </CardDescription>
                           </TableCell>

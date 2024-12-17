@@ -13,6 +13,7 @@ import { useLoggedUserStore } from '@/store/loggedUser';
 import { CalendarIcon, InfoCircledIcon } from '@radix-ui/react-icons';
 import { addMonths, format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import moment from 'moment';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -55,7 +56,6 @@ export default function UpdateDocuments({
   const today = new Date();
   const nextMonth = addMonths(new Date(), 1);
   const [month, setMonth] = useState<Date>(nextMonth);
-  const fetchDocuments = useLoggedUserStore((state) => state.documetsFetch);
 
   const yearsAhead = Array.from({ length: 20 }, (_, index) => {
     const year = today.getFullYear() + index + 1;
@@ -97,7 +97,7 @@ export default function UpdateDocuments({
             newDocumentName = name.replace(versionRegex, `(v${newVersion})`) + `.${newExtension}`;
           }
         } else if (dateRegex.test(documentName)) {
-          const newDate = filename.validity;
+          const newDate = moment(filename.validity).format('DD-MM-YYYY');
           newDocumentName = documentName.replace(dateRegex, `(${newDate})` + `.${newExtension}`);
         } else if (periodRegex.test(documentName)) {
           const newPeriod = filename.period;
@@ -107,7 +107,7 @@ export default function UpdateDocuments({
         if (montly) {
           const { error: newDocumentError, data } = await supabase.storage
             .from('document_files')
-            .upload(newDocumentName, file);
+            .upload(newDocumentName, file, { upsert: true });
 
           const { error: updateError } = await supabase
             .from(tableName)
@@ -143,7 +143,7 @@ export default function UpdateDocuments({
 
         const { error: uploadError } = await supabase.storage
           .from('document_files_expired')
-          .upload(documentName, fileData);
+          .upload(documentName, fileData, { upsert: true });
 
         if (uploadError) {
           // console.log(uploadError);
@@ -159,13 +159,13 @@ export default function UpdateDocuments({
 
         const { error: newDocumentError, data: finalDocument } = await supabase.storage
           .from('document_files')
-          .upload(newDocumentName, file);
+          .upload(newDocumentName, file, { upsert: true });
 
         const { error: updateError } = await supabase
           .from(tableName)
           .update({
             document_path: finalDocument?.path,
-            validity: filename.validity,
+            validity: filename.validity ? new Date(filename.validity).toISOString() : null,
             created_at: new Date(),
           })
           .eq('document_path', documentName);

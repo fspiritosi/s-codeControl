@@ -812,10 +812,31 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "dailyreportrows_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "dailyreportrows_daily_report_id_fkey"
             columns: ["daily_report_id"]
             isOneToOne: false
             referencedRelation: "dailyreport"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dailyreportrows_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "service_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dailyreportrows_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "customer_services"
             referencedColumns: ["id"]
           },
           {
@@ -870,6 +891,13 @@ export type Database = {
           work_active?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "diagram_type_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "public_diagram_type_company_id_fkey"
             columns: ["company_id"]
@@ -2032,7 +2060,6 @@ export type Database = {
         Row: {
           company_id: string
           created_at: string
-          customer_id: string
           customer_service_id: string
           id: string
           is_active: boolean | null
@@ -2044,7 +2071,6 @@ export type Database = {
         Insert: {
           company_id: string
           created_at?: string
-          customer_id: string
           customer_service_id: string
           id?: string
           is_active?: boolean | null
@@ -2056,7 +2082,6 @@ export type Database = {
         Update: {
           company_id?: string
           created_at?: string
-          customer_id?: string
           customer_service_id?: string
           id?: string
           is_active?: boolean | null
@@ -2071,13 +2096,6 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "company"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "public_service_items_costumer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
           {
@@ -2154,6 +2172,39 @@ export type Database = {
             referencedColumns: ["name"]
           },
         ]
+      }
+      storage_migrations: {
+        Row: {
+          created_at: string | null
+          document_id: string
+          error_message: string | null
+          executed_at: string | null
+          id: string
+          new_path: string
+          old_path: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_id: string
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          new_path: string
+          old_path: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          document_id?: string
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          new_path?: string
+          old_path?: string
+          status?: string | null
+        }
+        Relationships: []
       }
       type: {
         Row: {
@@ -2421,6 +2472,40 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      migrate_document: {
+        Args: {
+          target_id: string
+          execute_migration?: boolean
+        }
+        Returns: {
+          old_path: string
+          new_path: string
+          success: boolean
+          error_message: string
+          action_taken: string
+          storage_migration_id: string
+        }[]
+      }
+      migrate_documents_preview: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          old_path: string
+          new_path: string
+          success: boolean
+          error_message: string
+        }[]
+      }
+      migrate_single_document: {
+        Args: {
+          target_id: string
+        }
+        Returns: {
+          old_path: string
+          new_path: string
+          success: boolean
+          error_message: string
+        }[]
+      }
       obtener_documentos_por_vencer: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2475,6 +2560,8 @@ export type Database = {
         | "mantenimiento"
         | "dashboard"
         | "ayuda"
+        | "operaciones"
+        | "formularios"
       nationality_enum: "Argentina" | "Extranjero"
       notification_categories:
         | "vencimiento"
@@ -2488,6 +2575,7 @@ export type Database = {
         | "Despido con causa"
         | "Acuerdo de partes"
         | "Fin de contrato"
+        | "Fallecimiento"
       repair_state:
         | "Pendiente"
         | "Esperando repuestos"
