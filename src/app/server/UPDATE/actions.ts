@@ -8,7 +8,7 @@ export const CreateNewFormAnswer = async (formId: string, formAnswer: any) => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
   const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  // if (!company_id) return [];
   const { data, error } = await supabase.from('form_answers').insert({
     form_id: formId,
     answer: formAnswer,
