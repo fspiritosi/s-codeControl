@@ -81,6 +81,7 @@ export default function UpdateDocuments({
 
     toast.promise(
       async () => {
+        
         const versionRegex = /\(v(\d+)\)/;
         const dateRegex = /\((\d{2}-\d{2}-\d{4})\)\./;
         const periodRegex = /\((\d{4}-\d{2})\)/;
@@ -168,7 +169,7 @@ export default function UpdateDocuments({
             validity: filename.validity ? new Date(filename.validity).toISOString() : null,
             created_at: new Date(),
           })
-          .eq('document_path', documentName);
+          .eq('id', id);
 
         if (updateError) {
           //console.log(updateError);
