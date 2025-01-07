@@ -1,56 +1,56 @@
--- create type "public"."daily_report_status" as enum ('pendiente', 'ejecutado', 'reprogramado', 'cancelado');
+create type "public"."daily_report_status" as enum ('pendiente', 'ejecutado', 'reprogramado', 'cancelado');
 
--- alter table "public"."service_items" drop constraint "public_service_items_costumer_id_fkey";
+alter table "public"."service_items" drop constraint "public_service_items_costumer_id_fkey";
 
--- create table "public"."dailyreport" (
---     "id" uuid not null default gen_random_uuid(),
---     "creation_date" date default CURRENT_DATE,
---     "date" date not null,
---     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
---     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP,
---     "company_id" uuid not null,
---     "status" boolean default true,
---     "is_active" boolean default true
--- );
+create table "public"."dailyreport" (
+    "id" uuid not null default gen_random_uuid(),
+    "creation_date" date default CURRENT_DATE,
+    "date" date not null,
+    "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
+    "updated_at" timestamp without time zone default CURRENT_TIMESTAMP,
+    "company_id" uuid not null,
+    "status" boolean default true,
+    "is_active" boolean default true
+);
 
 
 alter table "public"."dailyreport" enable row level security;
 
--- create table "public"."dailyreportemployeerelations" (
---     "id" uuid not null default gen_random_uuid(),
---     "daily_report_row_id" uuid,
---     "employee_id" uuid,
---     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
--- );
+create table "public"."dailyreportemployeerelations" (
+    "id" uuid not null default gen_random_uuid(),
+    "daily_report_row_id" uuid,
+    "employee_id" uuid,
+    "created_at" timestamp without time zone default CURRENT_TIMESTAMP
+);
 
 
 alter table "public"."dailyreportemployeerelations" enable row level security;
 
--- create table "public"."dailyreportequipmentrelations" (
---     "id" uuid not null default gen_random_uuid(),
---     "daily_report_row_id" uuid,
---     "equipment_id" uuid,
---     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
--- );
+create table "public"."dailyreportequipmentrelations" (
+    "id" uuid not null default gen_random_uuid(),
+    "daily_report_row_id" uuid,
+    "equipment_id" uuid,
+    "created_at" timestamp without time zone default CURRENT_TIMESTAMP
+);
 
 
 alter table "public"."dailyreportequipmentrelations" enable row level security;
 
--- create table "public"."dailyreportrows" (
---     "id" uuid not null default gen_random_uuid(),
---     "daily_report_id" uuid,
---     "customer_id" uuid,
---     "service_id" uuid,
---     "item_id" uuid,
---     "start_time" time without time zone,
---     "end_time" time without time zone,
---     "description" text,
---     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
---     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP,
---     "status" daily_report_status not null default 'pendiente'::daily_report_status,
---     "working_day" text,
---     "document_path" text
--- );
+create table "public"."dailyreportrows" (
+    "id" uuid not null default gen_random_uuid(),
+    "daily_report_id" uuid,
+    "customer_id" uuid,
+    "service_id" uuid,
+    "item_id" uuid,
+    "start_time" time without time zone,
+    "end_time" time without time zone,
+    "description" text,
+    "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
+    "updated_at" timestamp without time zone default CURRENT_TIMESTAMP,
+    "status" daily_report_status not null default 'pendiente'::daily_report_status,
+    "working_day" text,
+    "document_path" text
+);
 
 
 alter table "public"."dailyreportrows" enable row level security;

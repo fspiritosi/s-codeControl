@@ -49,8 +49,8 @@ const AboutSectionOne = () => {
               </div>
             </div>
 
-            <div className="w-full px-4 lg:w-1/2 gap-2 flex">
-              <div className="relative mx-auto aspect-[24/12] max-w-[400px] min-h-40 lg:mr-0">
+            <div className="w-full lg:w-1/2 gap-2 flex justify-between">
+              <div className="relative mx-auto aspect-[24/12] max-w-[400px] lg:w-[800px] min-h-40 lg:mr-0">
                 <Image
                   src={notebook_01}
                   alt="about-image_1"

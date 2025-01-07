@@ -1,4 +1,5 @@
-import Image from "next/image";
+import empleados from '@/images/gestionDeEmpleados.png';
+import Image from 'next/image';
 
 const AboutSectionTwo = () => {
   return (
@@ -11,9 +12,8 @@ const AboutSectionTwo = () => {
               data-wow-delay=".15s"
             >
               <Image
-                src="/images/about/about-image-2.svg"
+                src={empleados}
                 alt="about image"
-                fill
                 className="drop-shadow-three dark:hidden dark:drop-shadow-none"
               />
               <Image
@@ -28,29 +28,30 @@ const AboutSectionTwo = () => {
             <div className="max-w-[470px]">
               <div className="mb-9">
                 <h3 className="mb-4 text-xl font-bold text-black dark:text-white sm:text-2xl lg:text-xl xl:text-2xl">
-                  Bug free code
+                  Gestión de empleados y equipos
                 </h3>
                 <p className="text-base font-medium leading-relaxed text-body-color sm:text-lg sm:leading-relaxed">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                  do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                  Todos tus recursos en una sola plataforma.{' '}
+                  <strong>Gestioná eficientemente a tus empleados y equipos</strong>, centralizá la información y
+                  optimizá la comunicación en tu empresa.
                 </p>
               </div>
               <div className="mb-9">
                 <h3 className="mb-4 text-xl font-bold text-black dark:text-white sm:text-2xl lg:text-xl xl:text-2xl">
-                  Premier support
+                  Gestión de Mantenimiento
                 </h3>
                 <p className="text-base font-medium leading-relaxed text-body-color sm:text-lg sm:leading-relaxed">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                  do eiusmod tempor incididunt.
+                  Podes gestionar el mantenimiento de tus equipos, vehículos, maquinarias y más.{' '}
+                  <strong>Lleva orden a tu taller.</strong>
                 </p>
               </div>
               <div className="mb-1">
                 <h3 className="mb-4 text-xl font-bold text-black dark:text-white sm:text-2xl lg:text-xl xl:text-2xl">
-                  Next.js
+                  Gestión de Operaciones
                 </h3>
                 <p className="text-base font-medium leading-relaxed text-body-color sm:text-lg sm:leading-relaxed">
-                  Lorem ipsum dolor sit amet, sed do eiusmod tempor incididunt
-                  consectetur adipiscing elit setim.
+                  Ahora tu gente, tus equipos y tus operaciones estan siempre conectados.{' '}
+                  <strong>Optimiza tus procesos.</strong>
                 </p>
               </div>
             </div>
