@@ -59,10 +59,17 @@ export const dailyColumns = (
     id: 'Empleados',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Empleados" />,
     cell: ({ row }) => {
+      
       return <div className="flex  items-center">{row.getValue('Empleados')}</div>;
     },
     filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
+     
+      // return value.includes(row.getValue(id));
+     
+    if (value.includes(null)) {
+      return (row.getValue(id) as string[]).length === 0;
+    }
+    return value.some((val: string) => (row.getValue(id) as string[]).includes(val));
     },
   },
   {
@@ -73,7 +80,12 @@ export const dailyColumns = (
       return <div className="flex  items-center">{row.getValue('Equipos')}</div>;
     },
     filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
+      // return value.includes(row.getValue(id));
+      
+      if (value.includes(null)) {
+        return (row.getValue(id) as string[]).length === 0;
+      }
+      return value.some((val: string) => (row.getValue(id) as string[]).includes(val));
     },
   },
   {

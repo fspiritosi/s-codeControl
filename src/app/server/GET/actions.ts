@@ -257,6 +257,7 @@ export const getNextMonthExpiringDocumentsEmployees = async () => {
     .from('documents_employees')
     .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
     .eq('applies.company_id', company_id)
+    .eq('applies.is_active', true)
     // .not('id_document_types.is_it_montlhy', 'is', false)
     .neq('id_document_types.is_it_montlhy', true) // Solo traer documentos que no sean mensuales
     .or(`validity.lte.${today.toISOString()},validity.lte.${nextMonth.toISOString()}`)

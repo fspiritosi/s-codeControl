@@ -18,9 +18,9 @@ export function ModeToggle() {
   const { setTheme, systemTheme, theme } = useTheme();
 
   if (theme && theme !== 'system') {
-    cookies.set('theme', theme)
+    cookies.set('theme', theme);
   } else if (systemTheme && theme === 'system') {
-    cookies.set('theme', systemTheme)
+    cookies.set('theme', systemTheme);
   }
 
   const companyId = cookies.get('actualComp');
@@ -28,7 +28,7 @@ export function ModeToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button variant="ghost" size="icon" className="!border-0">
           <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-neutral-950" />
           <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           <span className="sr-only">Seleccionar tema</span>

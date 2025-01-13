@@ -123,9 +123,9 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
     hierrical_position: createOptions('hierrical_position'),
     workflow_diagram: createOptions('workflow_diagram'),
     status: createOptions('status'),
-    guild_id: createOptions('guild_id'),
-    covenants_id: createOptions('covenants_id'),
-    category_id: createOptions('category_id'),
+    guild: createOptions('guild'),
+    covenants: createOptions('covenants'),
+    category: createOptions('category'),
   };
 
   function createOptions(key: string) {
@@ -209,19 +209,19 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
       option: allOptions.status,
       label: 'Estado',
     },
-    guild_id: {
+    guild: {
       name: 'guild_id',
-      option: allOptions.guild_id,
+      option: allOptions.guild,
       label: 'Asociación Gremial',
     },
-    covenants_id: {
+    covenants: {
       name: 'covenants_id',
-      option: allOptions.covenants_id,
+      option: allOptions.covenants,
       label: 'Convenios',
     },
-    category_id: {
+    category: {
       name: 'category_id',
-      option: allOptions.category_id,
+      option: allOptions.category,
       label: 'Categoria',
     },
   };
@@ -263,7 +263,7 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
       city: 'Todos',
       hierrical_position: 'Todos',
       status: 'Todos',
-      guild_id: 'Todos',
+      guild: 'Todos',
       covenants: 'Todos',
       category: 'Todos',
     });
