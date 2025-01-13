@@ -14,6 +14,7 @@ import { formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Suspense } from 'react';
 import DownloadButton from '../documentComponents/DownloadButton';
+import moment from 'moment';
 export default async function page({
   params,
   searchParams,
@@ -221,7 +222,7 @@ export default async function page({
                               <AvatarImage
                                 src={documents_employees?.[0]?.applies?.company_id?.company_logo}
                                 alt="Logo de la empresa"
-                                className="rounded-full object-cover"
+                                className="rounded-full object-contain"
                               />
                               <AvatarFallback>Logo</AvatarFallback>
                             </Avatar>
@@ -555,9 +556,7 @@ export default async function page({
                           <TableCell>
                             <CardDescription>
                               {documents_employees?.[0]?.document_types?.explired
-                                ? resource === 'company'
-                                  ? `Vence el ${documents_employees?.[0]?.validity}`
-                                  : `Vence el ${documents_employees?.[0]?.validity}`
+                                ? 'Vence el ' + moment(documents_employees?.[0]?.validity).format('DD/MM/YYYY')
                                 : 'No tiene vencimiento'}
                             </CardDescription>
                           </TableCell>

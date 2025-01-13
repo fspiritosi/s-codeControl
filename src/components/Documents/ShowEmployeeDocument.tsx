@@ -365,8 +365,8 @@ function ShowEmployeeDocument({
                             <CardDescription>
                               {documents_employees?.[0]?.id_document_types?.explired
                                 ? resource === 'company'
-                                  ? `Vence el ${documents_employees?.[0]?.validity}`
-                                  : `Vence el ${documents_employees?.[0]?.validity}`
+                                  ? `Vence el ${moment(documents_employees?.[0]?.validity).format('DD/MM/YYYY')}`
+                                  : `Vence el ${moment(documents_employees?.[0]?.validity).format('DD/MM/YYYY')}`
                                 : 'No tiene vencimiento'}
                             </CardDescription>
                           </TableCell>

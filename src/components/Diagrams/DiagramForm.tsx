@@ -23,10 +23,12 @@ export function DiagramForm({
   activeEmploees,
   diagrams_types,
   diagrams,
+  defaultId,
 }: {
-  diagrams: [];
+  diagrams: any[];
   activeEmploees: [];
   diagrams_types: [];
+  defaultId?: string;
 }) {
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
@@ -90,7 +92,7 @@ export function DiagramForm({
   const form = useForm<Diagram>({
     resolver: zodResolver(Diagram),
     defaultValues: {
-      employee: '',
+      employee: defaultId || '',
       event_diagram: '',
       initial_date: new Date(),
       finaly_date: new Date(),
@@ -100,6 +102,7 @@ export function DiagramForm({
   //CREA UN SOLO REGISTRO EN LA BASE DE DATOS
   async function createDiagram(values: DiagramaToCreate) {
     const data = values;
+    console.log(data, 'DATA DE EMPLOYEES');
     toast.promise(
       async () => {
         const valueToSend = JSON.stringify(values);
@@ -144,6 +147,7 @@ export function DiagramForm({
     //console.log(data);
     toast.promise(
       async () => {
+        console.log(values, 'values');
         const valueToSend = JSON.stringify(values);
         const response = await fetch(`${URL}/api/employees/diagrams`, { method: 'PUT', body: valueToSend });
         return response;
@@ -213,6 +217,8 @@ export function DiagramForm({
   async function onSubmit2(values: Diagram) {
     const data = values;
     const tipoDeDiagrama: any = diagrams_types.find((d: any) => d.id === data.event_diagram);
+    console.log(tipoDeDiagrama, 'tipo de diagrama');
+    console.log(data.event_diagram, 'data.event_diagram');
     const employee: any = activeEmploees.find((e: any) => e.id === data.employee);
 
     const diagramasToCreate: DiagramaToCreate[] = [];
@@ -256,6 +262,8 @@ export function DiagramForm({
     setErrorsDiagrams([...errorsDiagrams, ...errorToCreate]);
   }
 
+  console.log('errors',form.formState.errors);
+
   return (
     <ResizablePanelGroup direction="horizontal" className="pt-6">
       <ResizablePanel>
@@ -269,7 +277,7 @@ export function DiagramForm({
                   <FormLabel>Empleado</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="w-[400px]">
+                      <SelectTrigger disabled={defaultId ? true : false} className="w-[400px]">
                         <SelectValue placeholder="Elegir empleado" />
                       </SelectTrigger>
                     </FormControl>
@@ -399,7 +407,21 @@ export function DiagramForm({
                 <Label>La novedad dura: {duration} días</Label>
               </div>
             )}
-            <Button className="mt-4" type="submit">
+            <Button
+              className="mt-4"
+              type="button"
+              onClick={() => {
+                // Verificar que el formulario sea válido
+                form.handleSubmit(
+                  async (values) => {
+                    await onSubmit2(values);
+                  },
+                  (errors) => {
+                    console.log(errors);
+                  }
+                );
+              }}
+            >
               Comprobar novedades
             </Button>
           </form>

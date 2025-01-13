@@ -812,10 +812,31 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "dailyreportrows_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "dailyreportrows_daily_report_id_fkey"
             columns: ["daily_report_id"]
             isOneToOne: false
             referencedRelation: "dailyreport"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dailyreportrows_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "service_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dailyreportrows_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "customer_services"
             referencedColumns: ["id"]
           },
           {
@@ -871,10 +892,75 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "diagram_type_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "public_diagram_type_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      diagrams_logs: {
+        Row: {
+          created_at: string
+          description: string
+          diagram_id: string
+          employee_id: string
+          id: string
+          modified_by: string | null
+          prev_date: string
+          prev_state: string
+          state: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          diagram_id: string
+          employee_id: string
+          id?: string
+          modified_by?: string | null
+          prev_date: string
+          prev_state: string
+          state: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          diagram_id?: string
+          employee_id?: string
+          id?: string
+          modified_by?: string | null
+          prev_date?: string
+          prev_state?: string
+          state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diagrams_logs_diagram_id_fkey"
+            columns: ["diagram_id"]
+            isOneToOne: false
+            referencedRelation: "diagram_type"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "diagrams_logs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "diagrams_logs_modified_by_fkey"
+            columns: ["modified_by"]
+            isOneToOne: false
+            referencedRelation: "profile"
             referencedColumns: ["id"]
           },
         ]
@@ -1813,6 +1899,7 @@ export type Database = {
           mechanic_id: string | null
           mechanic_images: string[] | null
           reparation_type: string
+          scheduled: string | null
           state: Database["public"]["Enums"]["repair_state"]
           user_description: string | null
           user_id: string | null
@@ -1829,6 +1916,7 @@ export type Database = {
           mechanic_id?: string | null
           mechanic_images?: string[] | null
           reparation_type: string
+          scheduled?: string | null
           state: Database["public"]["Enums"]["repair_state"]
           user_description?: string | null
           user_id?: string | null
@@ -1845,6 +1933,7 @@ export type Database = {
           mechanic_id?: string | null
           mechanic_images?: string[] | null
           reparation_type?: string
+          scheduled?: string | null
           state?: Database["public"]["Enums"]["repair_state"]
           user_description?: string | null
           user_id?: string | null
@@ -2083,6 +2172,39 @@ export type Database = {
             referencedColumns: ["name"]
           },
         ]
+      }
+      storage_migrations: {
+        Row: {
+          created_at: string | null
+          document_id: string
+          error_message: string | null
+          executed_at: string | null
+          id: string
+          new_path: string
+          old_path: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_id: string
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          new_path: string
+          old_path: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          document_id?: string
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          new_path?: string
+          old_path?: string
+          status?: string | null
+        }
+        Relationships: []
       }
       type: {
         Row: {
@@ -2350,6 +2472,40 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      migrate_document: {
+        Args: {
+          target_id: string
+          execute_migration?: boolean
+        }
+        Returns: {
+          old_path: string
+          new_path: string
+          success: boolean
+          error_message: string
+          action_taken: string
+          storage_migration_id: string
+        }[]
+      }
+      migrate_documents_preview: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          old_path: string
+          new_path: string
+          success: boolean
+          error_message: string
+        }[]
+      }
+      migrate_single_document: {
+        Args: {
+          target_id: string
+        }
+        Returns: {
+          old_path: string
+          new_path: string
+          success: boolean
+          error_message: string
+        }[]
+      }
       obtener_documentos_por_vencer: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2404,6 +2560,8 @@ export type Database = {
         | "mantenimiento"
         | "dashboard"
         | "ayuda"
+        | "operaciones"
+        | "formularios"
       nationality_enum: "Argentina" | "Extranjero"
       notification_categories:
         | "vencimiento"
@@ -2417,6 +2575,7 @@ export type Database = {
         | "Despido con causa"
         | "Acuerdo de partes"
         | "Fin de contrato"
+        | "Fallecimiento"
       repair_state:
         | "Pendiente"
         | "Esperando repuestos"
@@ -2424,6 +2583,7 @@ export type Database = {
         | "Finalizado"
         | "Rechazado"
         | "Cancelado"
+        | "Programado"
       roles_enum: "Externo" | "Auditor"
       state: "presentado" | "rechazado" | "aprobado" | "vencido" | "pendiente"
       status_type:
@@ -2437,311 +2597,6 @@ export type Database = {
         | "A tiempo indeterminado"
         | "Plazo fijo"
       type_of_maintenance_ENUM: "Correctivo" | "Preventivo"
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-  storage: {
-    Tables: {
-      buckets: {
-        Row: {
-          allowed_mime_types: string[] | null
-          avif_autodetection: boolean | null
-          created_at: string | null
-          file_size_limit: number | null
-          id: string
-          name: string
-          owner: string | null
-          owner_id: string | null
-          public: boolean | null
-          updated_at: string | null
-        }
-        Insert: {
-          allowed_mime_types?: string[] | null
-          avif_autodetection?: boolean | null
-          created_at?: string | null
-          file_size_limit?: number | null
-          id: string
-          name: string
-          owner?: string | null
-          owner_id?: string | null
-          public?: boolean | null
-          updated_at?: string | null
-        }
-        Update: {
-          allowed_mime_types?: string[] | null
-          avif_autodetection?: boolean | null
-          created_at?: string | null
-          file_size_limit?: number | null
-          id?: string
-          name?: string
-          owner?: string | null
-          owner_id?: string | null
-          public?: boolean | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      migrations: {
-        Row: {
-          executed_at: string | null
-          hash: string
-          id: number
-          name: string
-        }
-        Insert: {
-          executed_at?: string | null
-          hash: string
-          id: number
-          name: string
-        }
-        Update: {
-          executed_at?: string | null
-          hash?: string
-          id?: number
-          name?: string
-        }
-        Relationships: []
-      }
-      objects: {
-        Row: {
-          bucket_id: string | null
-          created_at: string | null
-          id: string
-          last_accessed_at: string | null
-          metadata: Json | null
-          name: string | null
-          owner: string | null
-          owner_id: string | null
-          path_tokens: string[] | null
-          updated_at: string | null
-          version: string | null
-        }
-        Insert: {
-          bucket_id?: string | null
-          created_at?: string | null
-          id?: string
-          last_accessed_at?: string | null
-          metadata?: Json | null
-          name?: string | null
-          owner?: string | null
-          owner_id?: string | null
-          path_tokens?: string[] | null
-          updated_at?: string | null
-          version?: string | null
-        }
-        Update: {
-          bucket_id?: string | null
-          created_at?: string | null
-          id?: string
-          last_accessed_at?: string | null
-          metadata?: Json | null
-          name?: string | null
-          owner?: string | null
-          owner_id?: string | null
-          path_tokens?: string[] | null
-          updated_at?: string | null
-          version?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "objects_bucketId_fkey"
-            columns: ["bucket_id"]
-            isOneToOne: false
-            referencedRelation: "buckets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      s3_multipart_uploads: {
-        Row: {
-          bucket_id: string
-          created_at: string
-          id: string
-          in_progress_size: number
-          key: string
-          owner_id: string | null
-          upload_signature: string
-          version: string
-        }
-        Insert: {
-          bucket_id: string
-          created_at?: string
-          id: string
-          in_progress_size?: number
-          key: string
-          owner_id?: string | null
-          upload_signature: string
-          version: string
-        }
-        Update: {
-          bucket_id?: string
-          created_at?: string
-          id?: string
-          in_progress_size?: number
-          key?: string
-          owner_id?: string | null
-          upload_signature?: string
-          version?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "s3_multipart_uploads_bucket_id_fkey"
-            columns: ["bucket_id"]
-            isOneToOne: false
-            referencedRelation: "buckets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      s3_multipart_uploads_parts: {
-        Row: {
-          bucket_id: string
-          created_at: string
-          etag: string
-          id: string
-          key: string
-          owner_id: string | null
-          part_number: number
-          size: number
-          upload_id: string
-          version: string
-        }
-        Insert: {
-          bucket_id: string
-          created_at?: string
-          etag: string
-          id?: string
-          key: string
-          owner_id?: string | null
-          part_number: number
-          size?: number
-          upload_id: string
-          version: string
-        }
-        Update: {
-          bucket_id?: string
-          created_at?: string
-          etag?: string
-          id?: string
-          key?: string
-          owner_id?: string | null
-          part_number?: number
-          size?: number
-          upload_id?: string
-          version?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "s3_multipart_uploads_parts_bucket_id_fkey"
-            columns: ["bucket_id"]
-            isOneToOne: false
-            referencedRelation: "buckets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "s3_multipart_uploads_parts_upload_id_fkey"
-            columns: ["upload_id"]
-            isOneToOne: false
-            referencedRelation: "s3_multipart_uploads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      can_insert_object: {
-        Args: {
-          bucketid: string
-          name: string
-          owner: string
-          metadata: Json
-        }
-        Returns: undefined
-      }
-      extension: {
-        Args: {
-          name: string
-        }
-        Returns: string
-      }
-      filename: {
-        Args: {
-          name: string
-        }
-        Returns: string
-      }
-      foldername: {
-        Args: {
-          name: string
-        }
-        Returns: string[]
-      }
-      get_size_by_bucket: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          size: number
-          bucket_id: string
-        }[]
-      }
-      list_multipart_uploads_with_delimiter: {
-        Args: {
-          bucket_id: string
-          prefix_param: string
-          delimiter_param: string
-          max_keys?: number
-          next_key_token?: string
-          next_upload_token?: string
-        }
-        Returns: {
-          key: string
-          id: string
-          created_at: string
-        }[]
-      }
-      list_objects_with_delimiter: {
-        Args: {
-          bucket_id: string
-          prefix_param: string
-          delimiter_param: string
-          max_keys?: number
-          start_after?: string
-          next_token?: string
-        }
-        Returns: {
-          name: string
-          id: string
-          metadata: Json
-          updated_at: string
-        }[]
-      }
-      search: {
-        Args: {
-          prefix: string
-          bucketname: string
-          limits?: number
-          levels?: number
-          offsets?: number
-          search?: string
-          sortcolumn?: string
-          sortorder?: string
-        }
-        Returns: {
-          name: string
-          id: string
-          updated_at: string
-          created_at: string
-          last_accessed_at: string
-          metadata: Json
-        }[]
-      }
-    }
-    Enums: {
-      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never

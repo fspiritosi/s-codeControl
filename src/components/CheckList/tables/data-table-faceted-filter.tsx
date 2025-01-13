@@ -51,8 +51,9 @@ export function DataTableFacetedFilter<TData, TValue>({
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const facets = column?.getFacetedUniqueValues();
   const selectedValues = new Set(column?.getFilterValue() as string[]);
-  // console.log(employees)
-  // console.log(equipment)
+   console.log(options)
+   console.log(facets)
+   console.log(selectedValues)
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -81,10 +82,10 @@ export function DataTableFacetedFilter<TData, TValue>({
                             ? getServiceName(option.label, services as any)
                             : getItemName(option.label, items as any) !== 'Unknown'
                               ? getItemName(option.label, items as any)
-                              : getEmployeeNames([option?.label?.[0]], employees as any) !== 'Unknown'
-                                ? getEmployeeNames([option?.label[0]], employees as any)
-                                : getEquipmentNames([option?.label?.[0]], equipment as any) !== 'Unknown'
-                                  ? getEquipmentNames([option?.label[0]], equipment as any)
+                              : getEmployeeNames([option?.label], employees as any) !== 'Unknown'
+                                ? getEmployeeNames([option?.label], employees as any)
+                                : getEquipmentNames([option.label], equipment as any) !== 'Unknown'
+                                  ? getEquipmentNames([option.label], equipment as any)
                                   : option.label}
                       </Badge>
                     ))
@@ -111,9 +112,9 @@ export function DataTableFacetedFilter<TData, TValue>({
                       } else {
                         selectedValues.add(option.value);
                       }
-                      // console.log('selectedValues', selectedValues);
+                       console.log('selectedValues', selectedValues);
                       const filterValues = Array.from(selectedValues);
-                      // console.log('filterValues', filterValues);
+                       console.log('filterValues', filterValues);
                       column?.setFilterValue(filterValues.length ? filterValues : undefined);
                     }}
                   >
@@ -136,13 +137,14 @@ export function DataTableFacetedFilter<TData, TValue>({
                       <span>{getItemName(option.label, items as any)}</span>
                     )}
 
-                    {getEmployeeNames([option?.label?.[0]], employees as any) !== 'Unknown' && (
-                      <span>{getEmployeeNames([option?.label[0]], employees as any)}</span>
+                    {getEmployeeNames([option?.label], employees as any) !== 'Unknown' && (
+                      <span>{getEmployeeNames([option?.label], employees as any)}</span>
                     )}
 
-                    {getEquipmentNames([option?.label?.[0]], equipment as any) !== 'Unknown' && (
-                      <span>{getEquipmentNames([option?.label[0]], equipment as any)}</span>
+                    {getEquipmentNames([option?.label], equipment as any) !== 'Unknown' && (
+                      <span>{getEquipmentNames([option?.label], equipment as any)}</span>
                     )}
+                    {option.label?.includes('jornada') && <>{option.label}</>}
                     {(option.label?.includes('ejecutado') ||
                       option.label?.includes('pendiente') ||
                       option.label?.includes('reprogramado') ||

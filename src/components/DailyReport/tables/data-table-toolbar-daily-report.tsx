@@ -1,6 +1,6 @@
 'use client';
 
-import { DataTableFacetedFilter } from '@/components/CheckList/tables/data-table-faceted-filter';
+import { DataTableFacetedFilter } from '@/components/DailyReport/tables/data-table-faceted-filter2';
 import { DataTableViewOptions } from '@/components/CheckList/tables/data-table-view-options';
 import { Customers, Employee, Equipment, Items, Services } from '@/components/DailyReport/DailyReport';
 import { Button } from '@/components/ui/button';
@@ -34,15 +34,48 @@ export function DataTableToolbarDailyReport<TData>({
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
+  // const getUniqueValues = (columnId: string) => {
+  //   return table.getColumn(columnId)?.getFacetedUniqueValues()
+  //     ? Array.from(
+  //         new Set(
+  //           Array.from((table.getColumn(columnId)?.getFacetedUniqueValues() as any)?.keys()).map((item: any) => item)
+  //         )
+  //       )
+  //     : [];
+  // };
+  
+  
   const getUniqueValues = (columnId: string) => {
-    return table.getColumn(columnId)?.getFacetedUniqueValues()
+    
+    const values = table.getColumn(columnId)?.getFacetedUniqueValues()
       ? Array.from(
           new Set(
-            Array.from((table.getColumn(columnId)?.getFacetedUniqueValues() as any)?.keys()).map((item: any) => item)
+            // Aplanar el array y obtener los valores únicos, incluyendo vacíos
+            Array.from((table.getColumn(columnId)?.getFacetedUniqueValues() as any)?.keys()) // Aplanar arrays anidados
+              .map((item: any) => {
+    
+                // Convertir claves vacías en 'sin completar'
+                if (Array.isArray(item) && item.length === 0) {
+    
+                  return null;
+                }
+                // Manejar claves combinadas separadas por coma
+                // if (typeof item === 'string' && item.includes(':')) {
+                //   return item.split(',').map(k => k.trim() === '' ? 'sin completar' : k.trim());
+                // }
+                return item;
+              })
+             .flat() // Aplanar nuevamente después de dividir claves combinadas
           )
         )
       : [];
+  
+    return values;
   };
+
+  
+
+  
 
   const uniqueClient = getUniqueValues('Cliente');
   const uniqueItem = getUniqueValues('Item');
@@ -51,7 +84,7 @@ export function DataTableToolbarDailyReport<TData>({
   const uniqueEquipment = getUniqueValues('Equipos');
   const uniqueWorkingDay = getUniqueValues('Jornada');
   const uniqueStatus = getUniqueValues('Estado');
-
+ 
   const createOptions = (uniqueValues: string[], icon: any) => {
     return uniqueValues.map((value) => ({
       label: value,
@@ -67,7 +100,7 @@ export function DataTableToolbarDailyReport<TData>({
   const equipmentOptions = createOptions(uniqueEquipment, GearIcon);
   const workingDayOptions = createOptions(uniqueWorkingDay, CalendarIcon);
   const statusOptions = createOptions(uniqueStatus, CheckIcon);
-  //console.log(employees)
+  
   return (
     <div className="flex items-center justify-between">
       <div className="flex flex-1 items-center space-x-2">

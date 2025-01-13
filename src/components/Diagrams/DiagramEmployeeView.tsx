@@ -272,7 +272,7 @@ function DiagramEmployeeView({
               />
             </PopoverContent>
           </Popover>
-          <span className="text-[0.8rem] text-muted-foreground">La selección maxima es de 30 días</span>
+          <InfoComponent size="sm" message={'La selección maxima es de 30 días'} />
         </div>
       </div>
       <Table>

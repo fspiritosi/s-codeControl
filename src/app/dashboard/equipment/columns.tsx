@@ -61,25 +61,7 @@ const formSchema = z.object({
   }),
 });
 
-type Colum = {
-  picture: string;
-  types_of_vehicles: { name: string };
-  type_of_vehicle: string;
-  domain: string;
-  chassis: string;
-  engine: string;
-  serie: string;
-  intern_number: string;
-  year: string;
-  brand: string;
-  model: string;
-  is_active: boolean;
-  showInactive: boolean;
-  status: string;
-  allocated_to: string;
-  condition: 'operativo' | 'no operativo' | 'en reparación' | 'operativo condicionado';
-  kilometer: string;
-};
+type Colum = VehicleWithBrand;
 
 const allocatedToRangeFilter: FilterFn<Colum> = (
   row: Row<Colum>,
@@ -427,10 +409,16 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
   {
     accessorKey: 'type',
     header: 'Tipo',
+    cell: ({ row }) => {
+      return <Badge>{row.original.type.name}</Badge>;
+    },
   },
   {
     accessorKey: 'types_of_vehicles',
     header: 'Tipos de vehículos',
+    cell: ({ row }) => {
+      return <Badge>{row.original.types_of_vehicles.name}</Badge>;
+    },
   },
 
   {
@@ -446,22 +434,23 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
     accessorKey: 'allocated_to',
     header: 'Afectado a',
     cell: ({ row }) => {
-      return <Badge>Proximamente..</Badge>;
-      const values = row.original.allocated_to;
-      if (!values) return <Badge variant={'destructive'}>Revisando...</Badge>;
+      console.log(row.original);
 
-      const actualCompany = useLoggedUserStore((state) => state.actualCompany);
-      const contractorCompanies = useCountriesStore((state) =>
-        state.customers?.filter((company: any) => company.company_id.toString() === actualCompany?.id)
-      );
-
-      if (contractorCompanies.some((e) => e.name.includes(row.original.allocated_to))) return true;
-
-      // const name = contractorCompanies.find()
-
-      return <p>{row.original.allocated_to}</p>;
+      return row.original.contractor_equipment.map((contractor) => {
+        return <Badge key={contractor.contractor_id.id}>{contractor.contractor_id.name}</Badge>;
+      });
     },
-    filterFn: allocatedToRangeFilter,
+    filterFn: (row, columnId, filterValue) => {
+      // Filtrar por numero intenro o dominio
+      if (filterValue === 'sin afectar' && row.original.allocated_to === null) {
+        return true;
+      }
+      if (row.original.contractor_equipment.some((contractor) => contractor.contractor_id.name.includes(filterValue))) {
+        return true;
+      } else {
+        return false;
+      }
+    },
   },
 
   {
@@ -488,7 +477,7 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
       };
 
       return (
-        <Badge variant={variants[row.original?.condition] as 'default'}>
+        <Badge variant={variants[row.original?.condition ?? 'default'] as 'default'}>
           {row.original?.condition &&
             React.createElement(conditionConfig[row.original?.condition]?.icon, { className: 'mr-2 size-4' })}
           {row.original.condition}
@@ -500,6 +489,9 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
   {
     accessorKey: 'brand',
     header: 'Marca',
+    cell: ({ row }) => {
+      return <div>{row.original.brand.name}</div>;
+    },
   },
   {
     accessorKey: 'kilometer',
@@ -511,6 +503,9 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
   {
     accessorKey: 'model',
     header: 'Modelo',
+    cell: ({ row }) => {
+      return <div>{row.original.model.name}</div>;
+    },
   },
   {
     accessorKey: 'picture',
