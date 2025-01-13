@@ -1,29 +1,27 @@
+import { fetchAllEquipment, fetchCustomForms } from '@/app/server/GET/actions';
 import ChecklistTable from '@/components/CheckList/ListOfChecklist';
 import Viewcomponent from '@/components/ViewComponent';
-function MantenimientoPage() {
+import { ReportModal } from './components/ReportModal';
+async function MantenimientoPage() {
+  const checklists = await fetchCustomForms();
+  const vehicles = await fetchAllEquipment();
+
+  console.log(checklists);
+
   const viewData = {
     defaultValue: 'formularios',
     tabsValues: [
-      // {
-      //   value: 'show_created_forms',
-      //   name: 'Creados',
-      //   restricted: [''],
-      //   content: {
-      //     title: 'Formularios creados',
-      //     description: 'Aquí encontrarás todos los formularios creados',
-      //     buttonActioRestricted: [''],
-      //     component: <CreatedForm />,
-      //   },
-      // },
       {
         value: 'formularios',
         name: 'Tipos de checklist',
         restricted: [''],
+
         content: {
           title: 'Tipos de checklist',
           description: 'Aqui encontraras los checkList de mantenimiento',
           buttonActioRestricted: [''],
-          component: <ChecklistTable />,
+          buttonAction: <ReportModal vehicles={vehicles} checklists={checklists} />,
+          component: <ChecklistTable checklists={checklists} />,
         },
       },
       // {
