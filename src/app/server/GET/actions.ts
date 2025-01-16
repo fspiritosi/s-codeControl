@@ -266,7 +266,7 @@ export const getNextMonthExpiringDocumentsEmployees = async () => {
     .order('validity', { ascending: true }) // Ordenar por fecha de validez en orden ascendente
     .returns<EmployeeDocumentWithContractors[]>();
 
-  console.log(data, 'data');
+  //console.log(data, 'data');
 
   if (error) {
     console.error('Error fetching next month expiring documents:', error);
