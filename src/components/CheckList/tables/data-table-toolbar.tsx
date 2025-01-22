@@ -8,6 +8,7 @@ import { Table } from '@tanstack/react-table';
 import { frecuencias } from './data';
 import { DataTableFacetedFilter } from './data-table-faceted-filter';
 import { DataTableViewOptions } from './data-table-view-options';
+import { DataTableAnswersFacetedFilter } from './data-table-answers-filters';
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -36,7 +37,7 @@ export function DataTableToolbar<TData>({ table }: DataTableToolbarProps<TData>)
         />
 
         {table.getColumn('Frecuencia') && (
-          <DataTableFacetedFilter
+          <DataTableAnswersFacetedFilter
             column={table.getColumn('Frecuencia')}
             title="Frecuencia"
             options={frecuencias.filter((frecuencia) => uniqueFrequencies.includes(frecuencia.label))}
