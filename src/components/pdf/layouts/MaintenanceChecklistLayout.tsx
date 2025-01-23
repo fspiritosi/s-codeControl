@@ -1,0 +1,260 @@
+'use client';
+
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+
+const styles = StyleSheet.create({
+  page: {
+    padding: 40,
+    fontSize: 10,
+    fontFamily: 'Helvetica',
+    position: 'relative',
+  },
+  border: {
+    position: 'absolute',
+    top: 40,
+    left: 40,
+    right: 40,
+    bottom: 40,
+    border: '1pt solid black',
+  },
+  contentWrapper: {
+    position: 'relative',
+    height: '100%',
+    padding: 10,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottom: '1pt solid black',
+    backgroundColor: 'white',
+  },
+  headerLeft: {
+    width: '30%',
+  },
+  logo: {
+    width: 120,
+    height: 50,
+    objectFit: 'contain',
+  },
+  headerRight: {
+    width: '70%',
+    alignItems: 'flex-end',
+  },
+  headerText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    textAlign: 'right',
+    marginBottom: 4,
+  },
+  headerSubText: {
+    fontSize: 8,
+    textAlign: 'right',
+    marginBottom: 2,
+  },
+  content: {
+    height: '100%',
+  },
+  infoContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 20,
+    borderBottom: '1pt solid black',
+    paddingBottom: 10,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '30%',
+    minHeight: 25,
+    padding: 4,
+  },
+  infoLabel: {
+    fontWeight: 'bold',
+    marginRight: 5,
+  },
+  sectionContainer: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    backgroundColor: '#e6e6e6',
+    padding: 5,
+    marginBottom: 10,
+    textAlign: 'center',
+    borderBottom: '1pt solid black',
+  },
+  itemRow: {
+    flexDirection: 'row',
+    borderBottom: '1pt solid #000',
+    minHeight: 25,
+    padding: 4,
+  },
+  itemLabel: {
+    width: '60%',
+    borderRight: '1pt solid #000',
+    padding: 4,
+  },
+  itemResult: {
+    width: '40%',
+    textAlign: 'center',
+    padding: 4,
+  },
+  observaciones: {
+    marginTop: 20,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#000',
+  },
+  observacionesTitle: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    textAlign: 'center',
+    backgroundColor: '#e6e6e6',
+    padding: 5,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 50,
+    left: 50,
+    right: 50,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: '#000',
+    paddingTop: 10,
+  },
+  signature: {
+    width: '45%',
+    alignItems: 'center',
+  },
+  signatureLine: {
+    width: '100%',
+    borderBottomWidth: 1,
+    borderBottomColor: '#000',
+    marginBottom: 5,
+  },
+});
+
+interface MaintenanceChecklistLayoutProps {
+  title: string;
+  subtitle: string;
+  data: {
+    fecha?: string;
+    conductor?: string;
+    interno?: string;
+    dominio?: string;
+    kilometraje?: string;
+    hora?: string;
+    general?: Record<string, string>;
+    carroceria?: Record<string, string>;
+    luces?: Record<string, string>;
+    mecanica?: Record<string, string>;
+    neumaticos?: Record<string, string>;
+    suspension?: Record<string, string>;
+    niveles?: Record<string, string>;
+    seguridad?: Record<string, string>;
+    interior?: Record<string, string>;
+    observaciones?: string;
+  };
+  logoUrl?: string;
+}
+
+export const MaintenanceChecklistLayout = ({ title, subtitle, data, logoUrl }: MaintenanceChecklistLayoutProps) => {
+  const renderSection = (title: string, items?: Record<string, string>) => {
+    if (!items) return null;
+    return (
+      <View style={styles.sectionContainer}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        {Object.entries(items).map(([key, value], index) => (
+          <View key={index} style={styles.itemRow}>
+            <Text style={styles.itemLabel}>{key}</Text>
+            <Text style={styles.itemResult}>{value === 'true' ? 'SI' : value === 'false' ? 'NO' : value || '-'}</Text>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        <View style={styles.border} fixed />
+        <View style={styles.contentWrapper}>
+          <View style={styles.header} fixed>
+            <View style={styles.headerLeft}>
+              {logoUrl && (
+                <Image style={styles.logo} src={logoUrl} />
+              )}
+            </View>
+            <View style={styles.headerRight}>
+              <Text style={styles.headerText}>{title}</Text>
+              <Text style={styles.headerSubText}>Hoja 1 de 1</Text>
+              <Text style={styles.headerSubText}>{subtitle}</Text>
+            </View>
+          </View>
+
+          <View style={styles.content}>
+            <View style={styles.infoContainer}>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Fecha:</Text>
+                <Text>{data.fecha || '-'}</Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Hora:</Text>
+                <Text>{data.hora || '-'}</Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Conductor:</Text>
+                <Text>{data.conductor || '-'}</Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Interno:</Text>
+                <Text>{data.interno || '-'}</Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Dominio:</Text>
+                <Text>{data.dominio || '-'}</Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Kilometraje:</Text>
+                <Text>{data.kilometraje || '-'}</Text>
+              </View>
+            </View>
+
+            {renderSection('ESTADO GENERAL', data.general)}
+            {renderSection('CARROCERÍA', data.carroceria)}
+            {renderSection('LUCES', data.luces)}
+            {renderSection('MECÁNICA', data.mecanica)}
+            {renderSection('NEUMÁTICOS', data.neumaticos)}
+            {renderSection('SUSPENSIÓN', data.suspension)}
+            {renderSection('NIVELES', data.niveles)}
+            {renderSection('SEGURIDAD', data.seguridad)}
+            {renderSection('INTERIOR', data.interior)}
+
+            {data.observaciones && (
+              <View style={styles.observaciones}>
+                <Text style={styles.observacionesTitle}>OBSERVACIONES:</Text>
+                <Text>{data.observaciones}</Text>
+              </View>
+            )}
+
+            <View style={styles.footer}>
+              <View style={styles.signature}>
+                <View style={styles.signatureLine} />
+                <Text>Firma del Conductor</Text>
+              </View>
+              <View style={styles.signature}>
+                <View style={styles.signatureLine} />
+                <Text>Firma del Supervisor</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Page>
+    </Document>
+  );
+};
