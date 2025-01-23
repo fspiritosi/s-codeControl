@@ -1,0 +1,279 @@
+'use client';
+
+import { Document, Page, View, Text, StyleSheet, Image } from '@react-pdf/renderer';
+
+const styles = StyleSheet.create({
+  page: {
+    padding: 40,
+    fontSize: 10,
+    fontFamily: 'Helvetica',
+    position: 'relative',
+  },
+  border: {
+    position: 'absolute',
+    top: 40,
+    left: 40,
+    right: 40,
+    bottom: 40,
+    border: '1pt solid black',
+  },
+  contentWrapper: {
+    position: 'relative',
+    height: '100%',
+    padding: 10,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottom: '1pt solid black',
+    backgroundColor: 'white',
+  },
+  headerLeft: {
+    width: '30%',
+  },
+  logo: {
+    width: 120,
+    height: 50,
+    objectFit: 'contain',
+  },
+  headerRight: {
+    width: '70%',
+    alignItems: 'flex-end',
+    // paddingRight: 10,
+  },
+  headerText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    textAlign: 'right',
+    marginBottom: 4,
+  },
+  headerSubText: {
+    fontSize: 8,
+    textAlign: 'right',
+    marginBottom: 2,
+  },
+  content: {
+    height: '100%',
+  },
+  infoGrid: {
+    marginBottom: 15,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    borderBottom: '1pt solid #000',
+    minHeight: 25,
+    padding: 4,
+  },
+  infoLabel: {
+    width: '30%',
+    fontWeight: 'bold',
+    paddingLeft: 4,
+  },
+  infoValue: {
+    width: '70%',
+  },
+  terminology: {
+    marginBottom: 10,
+    marginTop: 0,
+    padding: 5,
+    backgroundColor: '#f0f0f0',
+  },
+  terminologyTitle: {
+    fontWeight: 'bold',
+    marginBottom: 5,
+    textAlign: 'center',
+  },
+  terminologyOptions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 50,
+  },
+  terminologyText: {
+    textAlign: 'center',
+  },
+  warning: {
+    color: 'red',
+    fontWeight: 'bold',
+    // marginTop: 10,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  table: {
+    // marginTop: 10,
+    marginBottom: 10,
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#e6e6e6',
+    borderBottom: '1pt solid #000',
+  },
+  tableColumn1: {
+    width: '60%',
+    padding: 4,
+    borderRight: '1pt solid #000',
+  },
+  tableColumn2: {
+    width: '20%',
+    padding: 4,
+    borderRight: '1pt solid #000',
+    textAlign: 'center',
+  },
+  tableColumn3: {
+    width: '20%',
+    padding: 4,
+    textAlign: 'center',
+  },
+  tableRow: {
+    flexDirection: 'row',
+    borderBottom: '1pt solid #000',
+    minHeight: 25,
+  },
+  footer: {
+    margin: 10,
+  },
+  footerText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  signature: {
+    marginTop: 50,
+    borderTop: '1pt solid #000',
+    width: '50%',
+    textAlign: 'center',
+    paddingTop: 5,
+  },
+});
+
+interface BaseChecklistProps {
+  title?: string;
+  subtitle?: string;
+  logoUrl?: string;
+  data: {
+    fecha?: string;
+    conductor?: string;
+    interno?: string;
+    dominio?: string;
+    servicio?: string;
+    marca?: string;
+    modelo?: string;
+    items: {
+      label: string;
+      result?: string;
+      observations?: string;
+    }[];
+  };
+}
+
+export const BaseChecklistLayout = ({ 
+  title = "CHECK LIST INSPECCION DIARIA",
+  subtitle = "Vigencia: 23-09-2024 REV: 00",
+  logoUrl,
+  data
+}: BaseChecklistProps) => {
+  const itemsPerPage = 10;
+  const pages = Math.ceil(data.items.length / itemsPerPage);
+  
+  return (
+    <Document>
+      {Array.from({ length: pages }).map((_, pageIndex) => (
+        <Page key={pageIndex} size="A4" style={styles.page}>
+          <View style={styles.border} fixed />
+          <View style={styles.contentWrapper}>
+            <View style={styles.header} fixed>
+              <View style={styles.headerLeft}>
+                {logoUrl && (
+                  <Image 
+                    style={styles.logo} 
+                    src={logoUrl}
+                  />
+                )}
+              </View>
+              <View style={styles.headerRight}>
+                <Text style={styles.headerText}>{title}</Text>
+                <Text style={styles.headerSubText}>Hoja {pageIndex + 1} de {pages}</Text>
+                <Text style={styles.headerSubText}>{subtitle}</Text>
+              </View>
+            </View>
+
+            <View style={styles.content}>
+              {pageIndex === 0 && (
+                <>
+                  <View style={styles.infoGrid}>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Fecha:</Text>
+                      <Text style={styles.infoValue}>{data.fecha || ''}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Nombre del conductor:</Text>
+                      <Text style={styles.infoValue}>{data.conductor || ''}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Interno:</Text>
+                      <Text style={styles.infoValue}>{data.interno || ''}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Dominio/patente:</Text>
+                      <Text style={styles.infoValue}>{data.dominio || ''}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Servicio/Proyecto:</Text>
+                      <Text style={styles.infoValue}>{data.servicio || ''}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Marca:</Text>
+                      <Text style={styles.infoValue}>{data.marca || ''}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Modelo:</Text>
+                      <Text style={styles.infoValue}>{data.modelo || ''}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.terminology}>
+                    <Text style={styles.terminologyTitle}>TERMINOLOGIA A UTILIZAR PARA EL LLENADO DEL CHECK</Text>
+                    <View style={styles.terminologyOptions}>
+                      <Text style={styles.terminologyText}>S: SI</Text>
+                      <Text style={styles.terminologyText}>N: NO</Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.warning}>ES FUNDAMENTAL QUE SE VERIFIQUEN LOS SIGUIENTES PUNTOS ANTES DE INICIAR RECORRIDO.</Text>
+                </>
+              )}
+
+              <View style={styles.table}>
+                <View style={styles.tableHeader}>
+                  <Text style={styles.tableColumn1}>Aspectos de verificar</Text>
+                  <Text style={styles.tableColumn2}>RESULTADO SI-NO</Text>
+                  <Text style={styles.tableColumn3}>OBSERVACIONES</Text>
+                </View>
+                
+                {data.items
+                  .slice(pageIndex * itemsPerPage, (pageIndex + 1) * itemsPerPage)
+                  .map((item, index) => (
+                    <View key={index} style={styles.tableRow}>
+                      <Text style={styles.tableColumn1}>{item.label}</Text>
+                      <Text style={styles.tableColumn2}>{item.result || ''}</Text>
+                      <Text style={styles.tableColumn3}>{item.observations || ''}</Text>
+                    </View>
+                  ))}
+              </View>
+
+              {pageIndex === pages - 1 && (
+                <View style={styles.footer}>
+                  <Text style={styles.footerText}>INDIQUE SI O NO SEGÚN RESULTADO DE VERIFICACION</Text>
+                  <Text style={styles.footerText}>APTO PARA OPERAR:          SI          NO</Text>
+                  
+                  <View style={styles.signature}>
+                    <Text>FIRMA DEL CHOFER QUE INSPECCIONÓ</Text>
+                  </View>
+                </View>
+              )}
+            </View>
+          </View>
+        </Page>
+      ))}
+    </Document>
+  );
+};

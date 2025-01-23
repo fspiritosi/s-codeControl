@@ -21,6 +21,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Textarea } from '../ui/textarea';
+import { PDFPreviewDialog } from '../pdf-preview-dialog';
 
 const checklistItems = {
   //Podemos armar un array de objetos que ya tengan las opciones
@@ -219,13 +220,17 @@ export default function VehicleInspectionChecklist({
           </CardTitle>
           <p className="text-sm text-muted-foreground mt-2 sm:mt-0">{(form_Info[0].form as { title: string }).title}</p>
         </div>
-        {resetQrSelection ? (
-          <Button onClick={() => resetQrSelection('')} variant="ghost" className="self-end">
-            Volver
-          </Button>
-        ) : (
+        <div className="flex gap-4">
           <BackButton />
-        )}
+          {defaultAnswer && (
+            <PDFPreviewDialog title={`Vista previa - ${form.getValues().movil || 'Formulario'}`} buttonText="Ver PDF">
+              <div className="h-full w-full bg-white">
+                {/* Aquí irá el contenido del PDF */}
+                <p>PDF Preview del formulario</p>
+              </div>
+            </PDFPreviewDialog>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <Form {...form}>

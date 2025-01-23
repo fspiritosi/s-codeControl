@@ -1,13 +1,14 @@
 import { fetchFormsAnswersByFormId } from '@/app/server/GET/actions';
 import BackButton from '@/components/BackButton';
 import Viewcomponent from '@/components/ViewComponent';
+import { PDFPreviewDialog } from '@/components/pdf-preview-dialog';
+import { DailyChecklistPDF } from '@/components/pdf/generators/DailyChecklistPDF';
 import { buttonVariants } from '@/components/ui/button';
 import Link from 'next/link';
 import CheckListAnwersTable from '../components/CheckListAnwersTable';
 
 async function page({ params }: { params: { id: string } }) {
   const answers = await fetchFormsAnswersByFormId(params.id);
-  // console.log('answers', answers[0], 'answers');
 
   const viewData = {
     defaultValue: 'anwers',
@@ -20,6 +21,14 @@ async function page({ params }: { params: { id: string } }) {
           buttonAction: (
             <div className="flex gap-4">
               <BackButton />
+              <PDFPreviewDialog 
+                title="Inspección Diaria de Vehículo"
+                description="Vista previa del formulario vacío"
+              >
+                <div className="h-full w-full bg-white">
+                  <DailyChecklistPDF preview={true} />
+                </div>
+              </PDFPreviewDialog>
               <Link className={buttonVariants({ variant: 'default' })} href={`/dashboard/forms/${params.id}/new`}>
                 Nueva respuesta
               </Link>

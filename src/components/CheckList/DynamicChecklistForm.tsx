@@ -1,6 +1,7 @@
 'use client';
 
 import { CreateNewFormAnswer, UpdateVehicle } from '@/app/server/UPDATE/actions';
+import { PDFPreviewDialog } from '@/components/pdf-preview-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -21,6 +22,9 @@ import * as z from 'zod';
 import BackButton from '../BackButton';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { DailyChecklistPDF } from '@/components/pdf/generators/DailyChecklistPDF';
+import { useLoggedUserStore } from '@/store/loggedUser';
+
 
 // Define the structure for a checklist item
 type ChecklistItem = {
@@ -278,6 +282,8 @@ export default function DynamicChecklistForm({
           },
   });
 
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
+
   // console.log(form_Info, 'form_Info');
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
@@ -330,8 +336,39 @@ export default function DynamicChecklistForm({
       )}
       <div className="flex justify-between items-center mr-4">
         <CardHeader>
-          <CardTitle className="text-xl sm:text-2xl md:text-3xl">{config.title}</CardTitle>
-          {config.subtitle && <p className="text-lg text-muted-foreground mt-2">{config.subtitle}</p>}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+            <div>
+              <CardTitle className="text-2xl">{config.title}</CardTitle>
+              {config.subtitle && <CardDescription className="mt-2">{config.subtitle}</CardDescription>}
+            </div>
+            <div className="flex gap-4">
+              {resetQrSelection ? (
+                <Button onClick={() => resetQrSelection('')} variant="ghost">
+                  Volver
+                </Button>
+              ) : (
+                <BackButton />
+              )}
+              <PDFPreviewDialog
+                title="Inspección Diaria de Vehículo"
+                description={`Conductor: ${form.getValues().chofer || 'No especificado'} - Fecha: ${form.getValues().fecha || new Date().toLocaleDateString()}`}
+              >
+                <div className="h-full w-full bg-white">
+                  <DailyChecklistPDF
+                    data={{
+                      movil: form.getValues().movil,
+                      chofer: form.getValues().chofer,
+                      kilometraje: form.getValues().kilometraje,
+                      fecha: form.getValues().fecha,
+                      ...form.getValues(),
+                    }}
+                    companyLogo={actualCompany?.company_logo || '/logo.png'}
+                    preview={true}
+                  />
+                </div>
+              </PDFPreviewDialog>
+            </div>
+          </div>
         </CardHeader>
         {resetQrSelection ? (
           <Button onClick={() => resetQrSelection('')} variant="ghost" className="self-end">

@@ -1,4 +1,5 @@
 'use client';
+import { PDFPreviewDialog } from '@/components/pdf-preview-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -258,7 +259,17 @@ export default function VehicleMaintenanceChecklist({
             Volver
           </Button>
         ) : (
-          <BackButton />
+          <div className="flex gap-4">
+            <BackButton />
+            {defaultAnswer && (
+              <PDFPreviewDialog title={`Vista previa - ${form.getValues().movil || 'Formulario'}`} buttonText="Ver PDF">
+                <div className="h-full w-full bg-white">
+                  {/* Aquí irá el contenido del PDF */}
+                  <p>PDF Preview del formulario</p>
+                </div>
+              </PDFPreviewDialog>
+            )}
+          </div>
         )}
       </CardHeader>
       <CardContent>

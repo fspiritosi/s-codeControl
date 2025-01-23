@@ -55,7 +55,7 @@ import { Separator } from './ui/separator';
 export default function NavBar() {
   const sharedCompanies = useLoggedUserStore((state) => state.sharedCompanies);
   const allCompanies = useLoggedUserStore((state) => state.allCompanies);
-  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany)
   const setNewDefectCompany = useLoggedUserStore((state) => state.setNewDefectCompany);
   const supabase = supabaseBrowser();
   const actualUser = useLoggedUserStore((state) => state.profile);
