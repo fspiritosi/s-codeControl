@@ -23,7 +23,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Textarea } from '../ui/textarea';
 import { PDFPreviewDialog } from '../pdf-preview-dialog';
 
-const checklistItems = {
+export const checklistItems = {
   //Podemos armar un array de objetos que ya tengan las opciones
   luces: [
     'Asientos (Estado en general)',

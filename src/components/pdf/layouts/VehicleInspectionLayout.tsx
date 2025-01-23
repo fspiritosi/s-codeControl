@@ -74,24 +74,22 @@ const styles = StyleSheet.create({
   content: {
     height: '100%',
   },
-  infoContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 20,
-    borderBottom: '1pt solid black',
-    paddingBottom: 10,
+  infoGrid: {
+    marginBottom: 15,
   },
-  infoItem: {
+  infoRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    width: '30%',
+    borderBottom: '1pt solid #000',
     minHeight: 25,
     padding: 4,
   },
   infoLabel: {
+    width: '30%',
     fontWeight: 'bold',
-    marginRight: 5,
+    paddingLeft: 4,
+  },
+  infoValue: {
+    width: '70%',
   },
   sectionContainer: {
     marginBottom: 20,
@@ -160,6 +158,8 @@ const styles = StyleSheet.create({
 
 export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl }: VehicleInspectionLayoutProps) => {
   const renderSection = (title: string, items?: Record<string, string>) => {
+
+    console.log(items,'items');
     if (!items) return null;
     return (
       <View style={styles.sectionContainer}>
@@ -173,6 +173,8 @@ export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl }: Vehi
       </View>
     );
   };
+
+  console.log(data,'data');
 
   return (
     <Document>
@@ -193,30 +195,30 @@ export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl }: Vehi
           </View>
 
           <View style={styles.content}>
-            <View style={styles.infoContainer}>
-              <View style={styles.infoItem}>
+            <View style={styles.infoGrid}>
+              <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Fecha:</Text>
-                <Text>{data.fecha || '-'}</Text>
+                <Text style={styles.infoValue}>{data.fecha || ''}</Text>
               </View>
-              <View style={styles.infoItem}>
+              <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Hora:</Text>
-                <Text>{data.hora || '-'}</Text>
+                <Text style={styles.infoValue}>{data.hora || ''}</Text>
               </View>
-              <View style={styles.infoItem}>
+              <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Conductor:</Text>
-                <Text>{data.conductor || '-'}</Text>
+                <Text style={styles.infoValue}>{data.conductor || ''}</Text>
               </View>
-              <View style={styles.infoItem}>
+              <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Interno:</Text>
-                <Text>{data.interno || '-'}</Text>
+                <Text style={styles.infoValue}>{data.interno || ''}</Text>
               </View>
-              <View style={styles.infoItem}>
+              <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Dominio:</Text>
-                <Text>{data.dominio || '-'}</Text>
+                <Text style={styles.infoValue}>{data.dominio || ''}</Text>
               </View>
-              <View style={styles.infoItem}>
+              <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Kilometraje:</Text>
-                <Text>{data.kilometraje || '-'}</Text>
+                <Text style={styles.infoValue}>{data.kilometraje || ''}</Text>
               </View>
             </View>
 

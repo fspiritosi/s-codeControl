@@ -3,6 +3,7 @@
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { VehicleInspectionLayout } from '../layouts/VehicleInspectionLayout';
 import dynamic from 'next/dynamic';
+import { checklistItems } from '@/components/CheckList/ChecklistSergio';
 
 // Importación dinámica del PDFViewer
 const PDFViewer = dynamic(
@@ -32,7 +33,7 @@ interface VehicleInspectionPDFProps {
 
 export const TransporteSPANAYCHKHYS01 = ({ data, preview = true, companyLogo }: VehicleInspectionPDFProps) => {
   const company = useLoggedUserStore((state) => state.actualCompany)?.company_logo;
-
+console.log(checklistItems, 'checklistItems');
   const pdfContent = (
     <VehicleInspectionLayout
       title="CHECK LIST INSPECCION VEHICULAR"
@@ -44,10 +45,10 @@ export const TransporteSPANAYCHKHYS01 = ({ data, preview = true, companyLogo }: 
         dominio: data?.dominio,
         kilometraje: data?.kilometraje,
         hora: data?.hora,
-        luces: data?.luces,
-        seguridad: data?.seguridad,
-        interior: data?.interior,
-        mecanica: data?.mecanica,
+        luces: checklistItems?.luces,
+        seguridad: checklistItems?.seguridad,
+        interior: checklistItems?.interior,
+        mecanica: checklistItems?.mecanica,
         observaciones: data?.observaciones,
       }}
       logoUrl={company}
