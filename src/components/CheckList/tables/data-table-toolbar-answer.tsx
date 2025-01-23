@@ -6,6 +6,7 @@ import { Table } from '@tanstack/react-table';
 
 import { DataTableFacetedFilter } from './data-table-faceted-filter';
 import { DataTableViewOptions } from './data-table-view-options';
+import { DataTableAnswersFacetedFilter } from './data-table-answers-filters';
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -51,10 +52,10 @@ export function DataTableToolbarAnswer<TData>({ table }: DataTableToolbarProps<T
     <div className="flex items-center justify-between">
       <div className="flex flex-1 items-center space-x-2">
         {table.getColumn('Chofer') && (
-          <DataTableFacetedFilter column={table.getColumn('Chofer')} title="Choferes" options={choferOptions} />
+          <DataTableAnswersFacetedFilter column={table.getColumn('Chofer')} title="Choferes" options={choferOptions} />
         )}
         {table.getColumn('Dominio') && (
-          <DataTableFacetedFilter column={table.getColumn('Dominio')} title="Dominios" options={domainOptions} />
+          <DataTableAnswersFacetedFilter column={table.getColumn('Dominio')} title="Dominios" options={domainOptions} />
         )}
         {isFiltered && (
           <Button variant="ghost" onClick={() => table.resetColumnFilters()} className="h-8 px-2 lg:px-3">
