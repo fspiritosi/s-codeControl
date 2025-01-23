@@ -2,6 +2,7 @@
 
 import { CreateNewFormAnswer, UpdateVehicle } from '@/app/server/UPDATE/actions';
 import { PDFPreviewDialog } from '@/components/pdf-preview-dialog';
+import { TransporteSPANAYCHKHYS04 } from '@/components/pdf/generators/TransporteSPANAYCHKHYS04';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -10,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import moment from 'moment';
@@ -22,9 +24,6 @@ import * as z from 'zod';
 import BackButton from '../BackButton';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { DailyChecklistPDF } from '@/components/pdf/generators/DailyChecklistPDF';
-import { useLoggedUserStore } from '@/store/loggedUser';
-
 
 // Define the structure for a checklist item
 type ChecklistItem = {
@@ -354,7 +353,7 @@ export default function DynamicChecklistForm({
                 description={`Conductor: ${form.getValues().chofer || 'No especificado'} - Fecha: ${form.getValues().fecha || new Date().toLocaleDateString()}`}
               >
                 <div className="h-full w-full bg-white">
-                  <DailyChecklistPDF
+                  <TransporteSPANAYCHKHYS04
                     data={{
                       movil: form.getValues().movil,
                       chofer: form.getValues().chofer,

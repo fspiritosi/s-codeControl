@@ -1,14 +1,35 @@
-import { fetchFormsAnswersByFormId } from '@/app/server/GET/actions';
+import { fetchCustomFormById, fetchFormsAnswersByFormId } from '@/app/server/GET/actions';
 import BackButton from '@/components/BackButton';
 import Viewcomponent from '@/components/ViewComponent';
 import { PDFPreviewDialog } from '@/components/pdf-preview-dialog';
-import { DailyChecklistPDF } from '@/components/pdf/generators/DailyChecklistPDF';
+import { TransporteSPANAYCHKHYS01 } from '@/components/pdf/generators/TransporteSPANAYCHKHYS01';
+import { TransporteSPANAYCHKHYS03 } from '@/components/pdf/generators/TransporteSPANAYCHKHYS03';
+import { TransporteSPANAYCHKHYS04 } from '@/components/pdf/generators/TransporteSPANAYCHKHYS04';
 import { buttonVariants } from '@/components/ui/button';
 import Link from 'next/link';
 import CheckListAnwersTable from '../components/CheckListAnwersTable';
 
+const renderForm = (activeFormType: string) => {
+  switch (activeFormType) {
+    case 'Transporte SP-ANAY - CHK - HYS - 01':
+      return <TransporteSPANAYCHKHYS01 preview={true} />;
+
+    case 'Transporte SP-ANAY - CHK - HYS - 04':
+      return <TransporteSPANAYCHKHYS04 preview={true} />;
+
+    case 'Transporte SP-ANAY - CHK - HYS - 03':
+      return <TransporteSPANAYCHKHYS03 preview={true} />;
+
+    default:
+      return <div>No hay formulario seleccionado</div>;
+  }
+};
+
 async function page({ params }: { params: { id: string } }) {
   const answers = await fetchFormsAnswersByFormId(params.id);
+  const formInfo = await fetchCustomFormById(params.id);
+  const formName = formInfo[0].name
+
 
   const viewData = {
     defaultValue: 'anwers',
@@ -21,13 +42,8 @@ async function page({ params }: { params: { id: string } }) {
           buttonAction: (
             <div className="flex gap-4">
               <BackButton />
-              <PDFPreviewDialog 
-                title="Inspección Diaria de Vehículo"
-                description="Vista previa del formulario vacío"
-              >
-                <div className="h-full w-full bg-white">
-                  <DailyChecklistPDF preview={true} />
-                </div>
+              <PDFPreviewDialog title={formName} description="Vista previa del formulario vacío">
+                <div className="h-full w-full bg-white">{renderForm(formName)}</div>
               </PDFPreviewDialog>
               <Link className={buttonVariants({ variant: 'default' })} href={`/dashboard/forms/${params.id}/new`}>
                 Nueva respuesta

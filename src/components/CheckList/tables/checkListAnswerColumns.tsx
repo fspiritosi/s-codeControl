@@ -1,7 +1,7 @@
 'use client';
 
 import { PDFPreviewDialog } from '@/components/pdf-preview-dialog';
-import { DailyChecklistPDF } from '@/components/pdf/generators/DailyChecklistPDF';
+import { TransporteSPANAYCHKHYS04 } from '@/components/pdf/generators/TransporteSPANAYCHKHYS04';
 import { PersonIcon } from '@radix-ui/react-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import moment from 'moment';
@@ -79,21 +79,21 @@ export const checkListAnswerColumns: ColumnDef<{
     id: 'actions',
     cell: ({ row }) => {
       return (
-        <PDFPreviewDialog 
+        <PDFPreviewDialog
           title="Inspección Diaria de Vehículo"
           description={`Conductor: ${row.original.chofer || 'No especificado'} - Vehículo: ${row.original.domain || 'No especificado'}`}
           buttonText="Ver PDF"
           className="ml-auto"
         >
           <div className="h-full w-full bg-white">
-            <DailyChecklistPDF 
+            <TransporteSPANAYCHKHYS04
               data={{
                 movil: row.original.domain,
-                chofer: row.original.chofer,
                 kilometraje: row.original.kilometer,
                 fecha: row.original.created_at,
-                ...row.original
-              }} 
+                ...row.original,
+                chofer: row.original.chofer,
+              }}
               preview={true}
             />
           </div>
