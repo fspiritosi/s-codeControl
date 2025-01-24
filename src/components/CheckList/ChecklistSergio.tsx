@@ -166,8 +166,6 @@ export default function VehicleInspectionChecklist({
             chofer: currentUser?.[0].fullname?.toLocaleUpperCase(),
           },
   });
-  console.log('errors', form.formState.errors);
-
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     const equipment = equipments?.find((equipment) => equipment.value === data.movil);
     //Si el kilometraje es menor al actual, marcar un error y no permitir guardar

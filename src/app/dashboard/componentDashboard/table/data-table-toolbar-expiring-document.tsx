@@ -42,7 +42,6 @@ export function DataTableToolbarExpiringDocument<TData>({ table }: DataTableTool
           .rows.map((row) => row.original)
           .filter((row: any) => row.state !== 'pendiente') as any;
 
-          console.log(documentToDownload, 'documentToDownload');
 
         const files = await Promise.all(
           documentToDownload?.map(async (doc: any) => {

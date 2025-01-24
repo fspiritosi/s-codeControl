@@ -38,6 +38,7 @@ declare global {
   type contractor_equipment = DB['public']['Tables']['contractor_equipment']['Row'];
   type contractor = DB['public']['Tables']['contractors']['Row'];
   type customers = DB['public']['Tables']['customers']['Row'];
+  type ShareCompanyUsers = DB['public']['Tables']['share_company_users']['Row'];
 
   //! Enums
   type RepairStatusEnum = DB['public']['Enums']['repair_state']; // Anteriormente: EnumOfRepairStatus
@@ -168,6 +169,26 @@ interface contractor_equipmentWithContractor extends Omit<contractor_equipment, 
     contractor_id: customers; // Anteriormente: CompanyWithRelations
 }
 
+  // Relaciones para ShareCompanyUsers con Equipment
+  interface ShareCompanyUsersWithEquipment extends Omit<ShareCompanyUsers, 'customer_id'> {
+    customer_id: CustomerWithContractorEquipment;
+  }
+
+  interface CustomerWithContractorEquipment extends Omit<Customer, 'contractor_equipment'> {
+    contractor_equipment: ContractorEquipmentWithVehicle[];
+  }
+
+  interface ContractorEquipmentWithVehicle extends Omit<contractor_equipment, 'equipment_id'> {
+    equipment_id: VehicleWithBrand;
+  }
+
+  interface VehicleWithAllRelations extends Omit<Vehicle, 'brand' | 'model' | 'type' | 'types_of_vehicles'> {
+    brand: VehicleBrand;
+    model: VehicleModel;
+    type: VehicleType;
+    types_of_vehicles: TypeOfVehicle;
+  }
+
   // Relaciones de Vehicle
   interface VehicleWithBrand extends Omit<Vehicle, 'brand' | 'model' | 'type'|'contractor_equipment'> {
     // Anteriormente: VehiclesWithBrand
@@ -216,5 +237,18 @@ interface contractor_equipmentWithContractor extends Omit<contractor_equipment, 
     // Anteriormente: DocumentEquipmentWithRelationsIncludesCompany
     id_document_types: DocumentTypes; // Anteriormente: TypeOfDocuments
     applies: VehicleWithCompany; // Anteriormente: VehiclestWithRelationsWithCompany
+  }
+
+  // Relaciones de ShareCompanyUsers
+  interface ShareCompanyUsersWithRelations extends Omit<ShareCompanyUsers, 'customer_id'> {
+    customer_id: CustomerWithContractorEmployee;
+  }
+
+  interface CustomerWithContractorEmployee extends Omit<Customer, 'contractor_employee'> {
+    contractor_employee: ContractorEmployeeWithEmployee[];
+  }
+
+  interface ContractorEmployeeWithEmployee extends Omit<ContractorEmployee, 'employee_id'> {
+    employee_id: Employee;
   }
 }

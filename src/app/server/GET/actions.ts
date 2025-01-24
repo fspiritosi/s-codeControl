@@ -1,5 +1,6 @@
 'use server';
 import { supabaseServer } from '@/lib/supabase/server';
+import { getActualRole } from '@/lib/utils';
 import moment from 'moment';
 import { cookies } from 'next/headers';
 
@@ -37,11 +38,25 @@ export const fetchCompanyDocuments = async () => {
   return data;
 };
 // Employee-related actions
-export const fetchAllEmployees = async () => {
+export const fetchAllEmployees = async (role?: string) => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
   const company_id = cookiesStore.get('actualComp')?.value;
+  const user = await fetchCurrentUser();
   if (!company_id) return [];
+
+  if (role === 'Invitado') {
+    const { data, error } = await supabase
+      .from('share_company_users')
+      .select(`*,customer_id(*,contractor_employee(*,employee_id(*)))`)
+      .eq('profile_id', user?.id || '')
+      .eq('company_id', company_id)
+      .returns<ShareCompanyUsersWithRelations[]>();
+
+    const employees = data?.[0].customer_id?.contractor_employee;
+    const allEmployees = employees?.map((employee) => employee.employee_id);
+    return allEmployees || [];
+  }
 
   const { data, error } = await supabase.from('employees').select('*').eq('company_id', company_id);
 
@@ -115,11 +130,14 @@ export const fetchEmployeeMonthlyDocuments = async () => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();
   const company_id = cookiesStore.get('actualComp')?.value;
+
   if (!company_id) return [];
 
   const { data, error } = await supabase
     .from('documents_employees')
     .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
+    // .eq('id_document_types.private', false)
+    // .not('id_document_types.private', 'is', true)
     .eq('applies.company_id', company_id)
     .eq('id_document_types.is_it_montlhy', true)
     .not('id_document_types', 'is', null)
@@ -138,11 +156,17 @@ export const fetchEmployeeMonthlyDocumentsByEmployeeId = async (employeeId: stri
   const company_id = cookiesStore.get('actualComp')?.value;
   if (!company_id) return [];
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const role = await getActualRole(company_id as string, user?.id as string);
+
   const { data, error } = await supabase
     .from('documents_employees')
     .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
     .eq('applies', employeeId)
     .eq('id_document_types.is_it_montlhy', true)
+    .eq('id_document_types.private', role === 'Invitado' ? false : true)
     .not('id_document_types', 'is', null)
     .returns<EmployeeDocumentWithContractors[]>();
 
@@ -158,11 +182,17 @@ export const fetchEmployeePermanentDocumentsByEmployeeId = async (employeeId: st
   const company_id = cookiesStore.get('actualComp')?.value;
   if (!company_id) return [];
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const role = await getActualRole(company_id as string, user?.id as string);
+
   const { data, error } = await supabase
     .from('documents_employees')
     .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
     .eq('applies', employeeId)
     .eq('id_document_types.is_it_montlhy', false)
+    .eq('id_document_types.private', role === 'Invitado' ? false : true)
     .not('id_document_types', 'is', null)
     .returns<EmployeeDocumentWithContractors[]>();
 
@@ -195,7 +225,6 @@ export const fetchEmployeePermanentDocuments = async () => {
 };
 export const getDiagramEmployee = async ({ employee_id }: { employee_id: string }) => {
   const supabase = supabaseServer();
-  console.log('employee_id', employee_id);
   let { data: employees_diagram, error } = await supabase
     .from('employees_diagram')
     .select('*')
@@ -266,7 +295,10 @@ export const getNextMonthExpiringDocumentsEmployees = async () => {
     .order('validity', { ascending: true }) // Ordenar por fecha de validez en orden ascendente
     .returns<EmployeeDocumentWithContractors[]>();
 
+<<<<<<< HEAD
   //console.log(data, 'data');
+=======
+>>>>>>> 656e6a679a9f2d2f1fed3608b45a115ccd676272
 
   if (error) {
     console.error('Error fetching next month expiring documents:', error);
@@ -307,6 +339,24 @@ export const fetchAllEquipment = async (company_equipment_id?: string) => {
   const supabase = supabaseServer();
   const company_id = cookiesStore.get('actualComp')?.value;
   if (!company_id && !company_equipment_id) return [];
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const role = await getActualRole(company_id as string, user?.id as string);
+
+  if (role === 'Invitado') {
+    const { data, error } = await supabase
+      .from('share_company_users')
+      .select(`*,customer_id(*,contractor_equipment(*,equipment_id(*,brand(*),model(*),type(*),types_of_vehicles(*))))`)
+      .eq('profile_id', user?.id || '')
+      .eq('company_id', (company_id ?? company_equipment_id) || '')
+      .returns<ShareCompanyUsersWithEquipment[]>();
+
+
+    const equipments = data?.[0].customer_id?.contractor_equipment;
+    const allEquipments = equipments?.map((equipment) => equipment.equipment_id);
+    return allEquipments || [];
+  }
 
   const { data, error } = await supabase
     .from('vehicles')
@@ -316,6 +366,7 @@ export const fetchAllEquipment = async (company_equipment_id?: string) => {
 
   if (error) {
     console.error('Error fetching equipment:', error);
+
     return [];
   }
   return data;
@@ -326,10 +377,16 @@ export const fetchMonthlyDocumentsByEquipmentId = async (equipmentId: string) =>
   const company_id = cookiesStore.get('actualComp')?.value;
   if (!company_id) return [];
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const role = await getActualRole(company_id as string, user?.id as string);
+
   const { data, error } = await supabase
     .from('documents_equipment')
     .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
     .eq('id_document_types.is_it_montlhy', true)
+    .eq('id_document_types.private', role === 'Invitado' ? false : true)
     .not('id_document_types', 'is', null)
     .eq('applies', equipmentId)
     .returns<EquipmentDocumentDetailed[]>();
@@ -366,11 +423,16 @@ export const fetchPermanentDocumentsByEquipmentId = async (equipmentId: string) 
   const supabase = supabaseServer();
   const company_id = cookiesStore.get('actualComp')?.value;
   if (!company_id) return [];
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const role = await getActualRole(company_id as string, user?.id as string);
 
   const { data, error } = await supabase
     .from('documents_equipment')
     .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
     .not('id_document_types.is_it_montlhy', 'is', true)
+    .eq('id_document_types.private', role === 'Invitado' ? false : true)
     .eq('applies', equipmentId)
     .not('id_document_types', 'is', null)
     .returns<EquipmentDocumentDetailed[]>();
@@ -511,17 +573,49 @@ export const fetchCustomForms = async (id_company?: string) => {
   const supabase = supabaseServer();
   const company_id = cookiesStore.get('actualComp')?.value;
   if (!company_id && !id_company) return [];
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const role = await getActualRole(company_id as string, user?.id as string);
+
+  if (role === 'Invitado') {
+    const { data: share_company_users, error: share_company_users_error } = await supabase
+      .from('share_company_users')
+      .select(`*,customer_id(*,contractor_equipment(*,equipment_id(*,brand(*),model(*),type(*),types_of_vehicles(*))))`)
+      .eq('profile_id', user?.id || '')
+      .eq('company_id', company_id || '')
+      .returns<ShareCompanyUsersWithEquipment[]>();
+
+    const equipments_id = share_company_users?.flatMap((uc) =>
+      uc.customer_id?.contractor_equipment?.map((ce) => ce.equipment_id.id)
+    );
+
+    // return [];
+
+    const { data, error } = await supabase
+      .from('custom_form')
+      .select('*,form_answers(*)')
+      .eq('company_id', company_id || id_company || '')
+      .in('form_answers.answer->>movil', equipments_id || [])
+      .returns<CheckListWithAnswer[]>();
+
+    if (error) {
+      console.error('Error fetching custom forms:', error);
+      return [];
+    }
+    return data;
+  }
   const { data, error } = await supabase
     .from('custom_form')
     .select('*,form_answers(*)')
     .eq('company_id', company_id || id_company || '')
     .returns<CheckListWithAnswer[]>();
-
-  if (error) {
-    console.error('Error fetching custom forms:', error);
-    return [];
-  }
-  return data;
+     if (error) {
+       console.error('Error fetching custom forms:', error);
+       return [];
+     }
+     return data;
 };
 export const fetchCustomFormById = async (formId: string) => {
   const supabase = supabaseServer();
@@ -534,10 +628,45 @@ export const fetchCustomFormById = async (formId: string) => {
   return data;
 };
 export const fetchFormsAnswersByFormId = async (formId: string) => {
+  const cookiesStore = cookies();
   const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const role = await getActualRole(company_id as string, user?.id as string);
+
+  if (role === 'Invitado') {
+    const { data: share_company_users, error: share_company_users_error } = await supabase
+      .from('share_company_users')
+      .select(`*,customer_id(*,contractor_equipment(*,equipment_id(*,brand(*),model(*),type(*),types_of_vehicles(*))))`)
+      .eq('profile_id', user?.id || '')
+      .eq('company_id', company_id || '')
+      .returns<ShareCompanyUsersWithEquipment[]>();
+
+    const equipments_id = share_company_users?.flatMap((uc) =>
+      uc.customer_id?.contractor_equipment?.map((ce) => ce.equipment_id.id)
+    ) || []
+
+    const { data, error } = await supabase
+      .from('form_answers')
+      .select('*')
+      .eq('form_id', formId)
+      .in('answer->>movil', equipments_id || [])
+      .returns<CheckListAnswerWithForm[]>();
+
+    if (error) {
+      console.error('Error fetching form answers:', error);
+      return [];
+    }
+    return data;
+  }
+
+  // Si no es invitado, retorna todas las respuestas del formulario
   const { data, error } = await supabase
     .from('form_answers')
-    .select('*,form_id(*)')
+    .select('*')
     .eq('form_id', formId)
     .returns<CheckListAnswerWithForm[]>();
 
@@ -545,7 +674,7 @@ export const fetchFormsAnswersByFormId = async (formId: string) => {
     console.error('Error fetching form answers:', error);
     return [];
   }
-  return data ?? [];
+  return data;
 };
 export const fetchAnswerById = async (answerId: string) => {
   const supabase = supabaseServer();
@@ -601,7 +730,6 @@ export const verifyUserRoleInCompany = async () => {
 
 export const fetchDiagramsHistoryByEmployeeId = async (employeeId: string) => {
   const supabase = supabaseServer();
-  console.log('employeeId', employeeId);
   const { data, error } = await supabase
     .from('diagrams_logs')
     .select('*,modified_by(*)')
@@ -609,7 +737,6 @@ export const fetchDiagramsHistoryByEmployeeId = async (employeeId: string) => {
     .order('created_at', { ascending: false })
     .returns<diagrams_logsWithUser[]>();
 
-  console.log(data, 'pero ree datata');
 
   if (error) {
     console.error('Error fetching diagrams history:', error);
@@ -647,8 +774,6 @@ export const fetchDiagramsByEmployeeId = async (employeeId: string) => {
     .eq('employee_id.id', employeeId)
     .not('employee_id', 'is', null)
     .returns<EmployeeDiagramWithDiagramType[]>();
-
-  console.log(data, 'pero ree datata2222');
 
   if (error) {
     console.error('Error fetching diagrams:', error);

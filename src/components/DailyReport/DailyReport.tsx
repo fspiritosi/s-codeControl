@@ -418,7 +418,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
       setSelectedCustomer(customer);
 
       const filteredEmployees = employees.filter((employee: Employee) => {
-        const isAllocatedToCustomer = employee.allocated_to.includes(customer.id);
+        const isAllocatedToCustomer = employee.allocated_to?.includes(customer.id);
         const isActiveOnReportDate = diagram.some((diagram) => {
           const diagramDate = new Date(diagram.year, diagram.month - 1, diagram.day);
           return (
@@ -434,7 +434,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
       setCustomerEmployees(filteredEmployees);
 
       const filteredEquipment = equipment.filter((equipment: Equipment) => {
-        const isAllocatedToCustomer = equipment.allocated_to.includes(customer.id);
+        const isAllocatedToCustomer = equipment.allocated_to?.includes(customer.id);
         const isNotUnderRepair = !(equipment.condition === 'en reparación' || equipment.condition === 'no operativo');
         return isAllocatedToCustomer && isNotUnderRepair;
       });
@@ -811,8 +811,8 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
       }));
 
       // Determinar relaciones a eliminar
-      const employeesToRemove = currentEmployees.filter((rel: any) => !data.employees.includes(rel.employee_id));
-      const equipmentToRemove = currentEquipment.filter((rel: any) => !data.equipment.includes(rel.equipment_id));
+      const employeesToRemove = currentEmployees.filter((rel: any) => !data.employees?.includes(rel.employee_id));
+      const equipmentToRemove = currentEquipment.filter((rel: any) => !data.equipment?.includes(rel.equipment_id));
 
       // Eliminar relaciones no utilizadas
       if (employeesToRemove.length > 0) {

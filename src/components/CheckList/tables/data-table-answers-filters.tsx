@@ -1,11 +1,3 @@
-import { Customers, Employee, Equipment, Items, Services } from '@/components/DailyReport/DailyReport';
-import {
-  getCustomerName,
-  getEmployeeNames,
-  getEquipmentNames,
-  getItemName,
-  getServiceName,
-} from '@/components/DailyReport/utils/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,11 +19,6 @@ import * as React from 'react';
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;
   title?: string;
-  customers?: Customers[];
-  services?: Services[];
-  items?: Items[];
-  employees?: Employee[];
-  equipment?: Equipment[];
   options: {
     label: string;
     value: string;
@@ -39,18 +26,14 @@ interface DataTableFacetedFilterProps<TData, TValue> {
   }[];
 }
 
-export function DataTableFacetedFilter<TData, TValue>({
+export function DataTableAnswersFacetedFilter<TData, TValue>({
   column,
   title,
   options,
-  customers,
-  services,
-  items,
-  employees,
-  equipment,
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const facets = column?.getFacetedUniqueValues();
   const selectedValues = new Set(column?.getFilterValue() as string[]);
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -73,17 +56,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                     .filter((option) => selectedValues.has(option.value))
                     .map((option) => (
                       <Badge variant="secondary" key={option.value} className="rounded-sm px-1 font-normal">
-                        {getCustomerName(option.label, customers as any) !== 'Unknown'
-                          ? getCustomerName(option.label, customers as any)
-                          : getServiceName(option.label, services as any) !== 'Unknown'
-                            ? getServiceName(option.label, services as any)
-                            : getItemName(option.label, items as any) !== 'Unknown'
-                              ? getItemName(option.label, items as any)
-                              : getEmployeeNames([option?.label], employees as any) !== 'Unknown'
-                                ? getEmployeeNames([option?.label], employees as any)
-                                : getEquipmentNames([option.label], equipment as any) !== 'Unknown'
-                                  ? getEquipmentNames([option.label], equipment as any)
-                                  : option.label}
+                        {option.label}
                       </Badge>
                     ))
                 )}
@@ -98,7 +71,7 @@ export function DataTableFacetedFilter<TData, TValue>({
           <CommandList>
             <CommandEmpty>Sin resultados</CommandEmpty>
             <CommandGroup>
-              {options?.map((option) => {
+              {options.map((option) => {
                 const isSelected = selectedValues.has(option.value);
                 return (
                   <CommandItem
@@ -122,28 +95,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                       <CheckIcon className={cn('h-4 w-4')} />
                     </div>
                     {option.icon && <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
-                    {getCustomerName(option.label, customers as any) !== 'Unknown' && (
-                      <span>{getCustomerName(option.label, customers as any)}</span>
-                    )}
-                    {getServiceName(option.label, services as any) !== 'Unknown' && (
-                      <span>{getServiceName(option.label, services as any)}</span>
-                    )}
-                    {getItemName(option.label, items as any) !== 'Unknown' && (
-                      <span>{getItemName(option.label, items as any)}</span>
-                    )}
-
-                    {getEmployeeNames([option?.label], employees as any) !== 'Unknown' && (
-                      <span>{getEmployeeNames([option?.label], employees as any)}</span>
-                    )}
-
-                    {getEquipmentNames([option?.label], equipment as any) !== 'Unknown' && (
-                      <span>{getEquipmentNames([option?.label], equipment as any)}</span>
-                    )}
-                    {option.label?.includes('jornada') && <>{option.label}</>}
-                    {(option.label?.includes('ejecutado') ||
-                      option.label?.includes('pendiente') ||
-                      option.label?.includes('reprogramado') ||
-                      option.label?.includes('cancelado')) && <>{option.value}</>}
+                    <span>{option.label}</span>
                     {facets?.get(option.value) && (
                       <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
                         {facets.get(option.value)}

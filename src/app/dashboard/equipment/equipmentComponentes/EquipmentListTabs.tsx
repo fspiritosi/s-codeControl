@@ -1,18 +1,16 @@
 import { CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { setVehiclesToShow } from '@/lib/utils/utils';
 
 import { fetchAllEquipment } from '@/app/server/GET/actions';
 import { EquipmentColums } from '../columns';
 import { EquipmentTable } from '../data-equipment';
 
 async function EquipmentListTabs({ inactives, actives }: { inactives?: boolean; actives?: boolean }) {
-  const equipments = (await fetchAllEquipment()) as any;
-  const onlyVehicles = equipments?.filter((v: any) => v.types_of_vehicles === 1)
-  const onlyNoVehicles = equipments?.filter((v: any) => v.types_of_vehicles === 2)
-  // const data = setVehiclesToShow(equipments);
+  const equipments = await fetchAllEquipment();
 
-  // console.log('data', data);
+  const onlyVehicles = equipments?.filter((v) => v.types_of_vehicles.id == '1');
+  const onlyNoVehicles = equipments?.filter((v) => v.types_of_vehicles.id == '2');
+  // const data = setVehiclesToShow(equipments);
 
   return (
     <div className="overflow-x-auto max-w-full">
