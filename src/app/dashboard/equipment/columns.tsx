@@ -434,7 +434,6 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
     accessorKey: 'allocated_to',
     header: 'Afectado a',
     cell: ({ row }) => {
-      console.log(row.original);
 
       return row.original.contractor_equipment.map((contractor) => {
         return <Badge key={contractor.contractor_id.id}>{contractor.contractor_id.name}</Badge>;

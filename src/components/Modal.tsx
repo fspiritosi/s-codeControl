@@ -12,7 +12,7 @@ export function Modal({
   children: React.ReactNode;
   modal: string;
   fetchData?: () => Promise<void>;
-  brandOptions?: generic[]
+  brandOptions?: VehicleBrand[] | null;
   fetchModels?: (brand_id: string) => Promise<void>;
 }) {
   return (

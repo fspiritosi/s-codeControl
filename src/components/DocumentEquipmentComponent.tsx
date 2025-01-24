@@ -6,12 +6,17 @@ import { CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 // import { useLoggedUserStore } from '@/store/loggedUser';
 import { fetchMonthlyDocumentsByEquipmentId, fetchPermanentDocumentsByEquipmentId } from '@/app/server/GET/actions';
-import { formatVehiculesDocuments } from '@/lib/utils';
+import { supabaseServer } from '@/lib/supabase/server';
+import { formatVehiculesDocuments, getActualRole } from '@/lib/utils';
+import { cookies } from 'next/headers';
 import DocumentNav from './DocumentNav';
 
-export default async function DocumentEquipmentComponent({ id }: { id: string }) {
+export default async function DocumentEquipmentComponent({ id, role }: { id: string,role: string }) {
   const monthlyDocuments = (await fetchMonthlyDocumentsByEquipmentId(id)).map(formatVehiculesDocuments);
+  const supabase = supabaseServer();
   const permanentDocuments = (await fetchPermanentDocumentsByEquipmentId(id)).map(formatVehiculesDocuments);
+  const cookiesStore = cookies();
+  const company_id = cookiesStore.get('actualComp')?.value;
 
   return (
     <Tabs defaultValue="permanentes">
@@ -20,7 +25,7 @@ export default async function DocumentEquipmentComponent({ id }: { id: string })
           <TabsTrigger value="permanentes">Documentos permanentes</TabsTrigger>
           <TabsTrigger value="mensuales">Documentos mensuales</TabsTrigger>
         </TabsList>
-        <DocumentNav id_user={id} onlyEquipment onlyNoMultiresource />
+        {role !== 'Invitado' && <DocumentNav id_user={id} onlyEquipment onlyNoMultiresource />}
       </CardContent>
       <TabsContent value="permanentes">
         <div className="grid ">

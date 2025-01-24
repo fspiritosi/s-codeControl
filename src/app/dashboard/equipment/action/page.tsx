@@ -2,13 +2,15 @@ import DocumentEquipmentComponent from '@/components/DocumentEquipmentComponent'
 import RepairTypes from '@/components/Tipos_de_reparaciones/RepairTypes';
 import { Card, CardFooter } from '@/components/ui/card';
 import { TabsContent } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
+import { cn, getActualRole } from '@/lib/utils';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
-import { supabase } from '../../../../../supabase/supabase';
+// import { supabase } from '../../../../../supabase/supabase';
 import VehiclesForm, { generic } from '../../../../components/VehiclesForm';
+import { supabaseServer } from '@/lib/supabase/server';
 
 export default async function EquipmentFormAction({ searchParams }: { searchParams: any }) {
+  const supabase = supabaseServer();
   const { data } = await supabase
     .from('documents_equipment')
     .select('*,id_document_types(*)')
@@ -53,6 +55,11 @@ export default async function EquipmentFormAction({ searchParams }: { searchPara
   // console.log('brand_vehicles', brand_vehicles);
   // console.log('errorError', errorError);
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const role = await getActualRole(company_id?.value as string, user?.id as string);
+
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">
       <Card
@@ -61,9 +68,14 @@ export default async function EquipmentFormAction({ searchParams }: { searchPara
           searchParams.action === 'new' && 'col-span-8'
         )}
       >
-        <VehiclesForm vehicle={vehicle?.[0]} types={types as generic[]} brand_vehicles={brand_vehicles as generic[]}>
+        <VehiclesForm
+          role={role as string}
+          vehicle={vehicle?.[0]}
+          types={types as generic[]}
+          brand_vehicles={brand_vehicles}
+        >
           <TabsContent value="documents">
-            <DocumentEquipmentComponent id={vehicle?.[0]?.id} />
+            <DocumentEquipmentComponent id={vehicle?.[0]?.id} role={role as string} />
           </TabsContent>
           <TabsContent value="repairs" className="px-3 py-2">
             <RepairTypes

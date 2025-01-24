@@ -27,7 +27,6 @@ export async function POST(request: NextRequest) {
   try {
     const { daily_report_id, customer_id, service_id, item_id, working_day, start_time, end_time, description } =
       await request.json();
-    console.log(start_time, end_time);
 
     // Crear el objeto de inserción, omitiendo start_time y end_time si están vacíos
     const insertData: any = {

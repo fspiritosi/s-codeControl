@@ -82,7 +82,6 @@ function DiagramFormUpdated({
     },
   });
 
-  console.log(diagrams, 'diagrams');
 
   const onSubmit = (data: z.infer<typeof FormSchema>) => {
     const { employee_id, dateRange, diagram_type } = data;
@@ -158,8 +157,6 @@ function DiagramFormUpdated({
     setErrorsDiagrams(errors);
     setSuccesDiagrams(successes);
 
-    console.log('Existing Diagrams:', existing);
-    console.log('New Dates:', newDates);
   };
 
   const updateDiagram = async (diagramToUpdate: ErrorToCreate) => {
@@ -205,8 +202,6 @@ function DiagramFormUpdated({
   };
 
   const createDiagram = (diagramToCreate: DiagramaToCreate) => {
-    console.log('Creating diagram:', diagramToCreate);
-    console.log('Success diagram:', succesDiagrams);
     const { day, month, year } = diagramToCreate;
 
     toast.promise(
@@ -237,7 +232,6 @@ function DiagramFormUpdated({
   };
 
   const createAll = (diagramsToCreate: DiagramaToCreate[]) => {
-    console.log('Creating all diagrams:', diagramsToCreate);
     toast.promise(
       async () =>
         await CreateDiagrams(

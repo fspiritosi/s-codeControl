@@ -36,11 +36,13 @@ export function DiagramDetailEmployeeView({
   diagrams_types,
   activeEmploees,
   historyData,
+  role,
 }: {
   historyData: any;
   diagrams: diagram[] | [];
   diagrams_types: any;
   activeEmploees: any;
+  role: string | null;
 }) {
   const [date, setDate] = useState<DateRange | undefined>({
     from: new Date(),
@@ -70,14 +72,12 @@ export function DiagramDetailEmployeeView({
   const diagramsFilteredByDate = filterDiagramsByDate(diagrams, date);
   const diagramsFilteredByType = filterDiagramsByType(diagramsFilteredByDate, diagramType);
 
-  console.log(historyData, 'historyData');
-
   return (
     <>
       <Tabs defaultValue="Diagramas">
         <TabsList>
           <TabsTrigger value="Diagramas">Diagramas</TabsTrigger>
-          <TabsTrigger value="NuevoDiagrama">Nuevo Diagrama</TabsTrigger>
+          {role !== 'Invitado' && <TabsTrigger value="NuevoDiagrama">Nuevo Diagrama</TabsTrigger>}
         </TabsList>
         <TabsContent value="Diagramas">
           <div className={cn('gap-2 flex')}>

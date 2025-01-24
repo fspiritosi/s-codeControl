@@ -7,7 +7,6 @@ export async function GET(request: NextRequest) {
   const supabase = supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual'); // ID de la compañía
-  console.log('Company ID:', company_id);
   try {
     // Obtener todas las filas del parte diario filtradas por company_id
     let { data: dailyreportrows, error } = await supabase.from('dailyreportrows' as any)
@@ -18,7 +17,6 @@ export async function GET(request: NextRequest) {
     
     
     // .or(`employees.company_id.eq.${company_id},vehicles.company_id.eq.${company_id}`);
-    console.log('Daily report rows:', dailyreportrows);
     if (error) {
       throw new Error(JSON.stringify(error));
     }
@@ -34,8 +32,6 @@ export async function POST(request: NextRequest) {
   try {
     const { daily_report_id, customer_id, service_id, item_id, working_day, start_time, end_time, description } =
       await request.json();
-    console.log(start_time, end_time);
-
     // Crear el objeto de inserción, omitiendo start_time y end_time si están vacíos
     const insertData: any = {
       daily_report_id,
