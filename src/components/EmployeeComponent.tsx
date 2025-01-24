@@ -105,8 +105,8 @@ export default function EmployeeComponent({
   children,
   diagrams_types,
   activeEmploees,
-  historyData
-  
+  historyData,
+  role
 }: {
   historyData: any;
   role: string | null;
@@ -137,12 +137,8 @@ export default function EmployeeComponent({
   children: React.ReactNode;
 }) {
 
-console.log(user)
-console.log(guild)
-console.log(covenants)
-console.log(categories)
   const profile = useLoggedUserStore((state) => state);
-  const role = useLoggedUserStore((state) => state.roleActualCompany);
+  // const role = useLoggedUserStore((state) => state.roleActualCompany);
   const searchParams = useSearchParams();
   const accion = searchParams.get('action');
   const employees = useLoggedUserStore((state) => state.active_and_inactive_employees);
@@ -1692,7 +1688,7 @@ console.log(categories)
               {children}
             </TabsContent>
             <TabsContent value="diagrams" className="px-2 py-2">
-              <DiagramDetailEmployeeView historyData={historyData} diagrams={diagrams as any} diagrams_types={diagrams_types} activeEmploees={activeEmploees}  />
+              <DiagramDetailEmployeeView role={role} historyData={historyData} diagrams={diagrams as any} diagrams_types={diagrams_types} activeEmploees={activeEmploees}  />
             </TabsContent>
             <TooltipProvider delayDuration={100}>
               <Tooltip>

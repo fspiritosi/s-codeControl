@@ -172,7 +172,6 @@ export const RegisterWithRole = () => {
               customer_id: values?.customer ? values?.customer : null,
             },
           ]);
-          console.log('data', data);
 
           if (error) {
             throw new Error(handleSupabaseError(error.message));
@@ -185,10 +184,18 @@ export const RegisterWithRole = () => {
           throw new Error('No se encontró un usuario con ese correo');
         }
         if (!profile || profile?.length === 0) {
-          const { data, error } = await supabase.auth.signUp({
+          // const { data, error } = await supabase.auth.signUp({
+          //   email: values.email,
+          //   password: values.password!,
+          
+          // });
+          
+          const { data, error } = await supabase.auth.admin.createUser({
             email: values.email,
             password: values.password!,
+            email_confirm:true
           });
+
           if (error) {
             throw new Error(handleSupabaseError(error.message));
           }

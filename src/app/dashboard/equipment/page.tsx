@@ -20,7 +20,7 @@ export default async function Equipment() {
         content: {
           title: 'Equipos totales',
           description: 'Todos los equipos',
-          buttonActioRestricted: [''],
+          buttonActioRestricted: ['Invitado'],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
               <Link
@@ -37,7 +37,7 @@ export default async function Equipment() {
       {
         value: 'Documentos de equipos',
         name: 'Documentos de equipos',
-        restricted: [''],
+        restricted: ['Invitado'],
         content: {
           title: 'Documentos cargados',
           description: 'Aquí encontrarás todos los documentos de tus equipos',
@@ -65,7 +65,7 @@ export default async function Equipment() {
       {
         value: 'type_of_repairs',
         name: 'Mantenimiento',
-        restricted: [],
+        restricted: ['Invitado'],
         content: {
           title: 'Mantenimiento de unidades',
           description: 'Genera solicitudes de mantenimiento para tus equipos',

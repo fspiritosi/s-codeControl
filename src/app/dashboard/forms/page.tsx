@@ -6,8 +6,6 @@ async function MantenimientoPage() {
   const checklists = await fetchCustomForms();
   const vehicles = await fetchAllEquipment();
 
-  console.log(checklists);
-
   const viewData = {
     defaultValue: 'formularios',
     tabsValues: [
@@ -19,7 +17,7 @@ async function MantenimientoPage() {
         content: {
           title: 'Tipos de checklist',
           description: 'Aqui encontraras los checkList de mantenimiento',
-          buttonActioRestricted: [''],
+          buttonActioRestricted: ['Invitado'],
           buttonAction: <ReportModal vehicles={vehicles} checklists={checklists} />,
           component: <ChecklistTable checklists={checklists} />,
         },

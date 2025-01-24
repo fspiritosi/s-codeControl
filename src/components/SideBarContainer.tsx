@@ -200,16 +200,29 @@ async function SideBarContainer() {
 
   let liksToShow: any = [];
 
-  //const filteredLinks = Allinks.filter((link) => link.name !== 'Empresa' && link.name !== 'Ayuda');
-
   const filterLinksRole = () => {
     if (role === 'owner') {
       liksToShow = Allinks;
       return;
     }
+
+    if (role === 'Invitado') {
+      liksToShow = Allinks.filter(
+        (link) =>
+          link.name.toLowerCase() !== 'empresa' &&
+          link.name.toLowerCase() !== 'operaciones' &&
+          link.name.toLowerCase() !== 'mantenimiento' &&
+          link.name.toLowerCase() !== 'documentación' 
+          // link.name.toLowerCase() !== 'dashboard'
+      );
+      return;
+    }
+
+
     userData?.modulos?.length === 0
-      ? (liksToShow = Allinks) // TODO esta linea se tiene que sacar porque por defecto tiene que tener todos los modulos activos
-      : userData?.modulos?.map((mod: string) => {
+      ? (liksToShow = Allinks)
+      : // TODO esta linea se tiene que sacar porque por defecto tiene que tener todos los modulos activos
+        userData?.modulos?.map((mod: string) => {
           Allinks.filter((link) => {
             link.name.toLowerCase() === mod.toLowerCase() && liksToShow.push(link);
           });

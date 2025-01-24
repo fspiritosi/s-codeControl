@@ -54,7 +54,6 @@ export const columnsGuests: ColumnDef<SharedUser>[] = [
     accessorKey: 'customerName',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nombre del cliente" />,
     cell: ({ row }) => {
-      console.log(row.original)
       return <div className="flex space-x-2 items-center">{<Badge>{row.original.customerName}</Badge>}</div>;
     },
   },
