@@ -5,7 +5,6 @@ import CustomerComponent from '../../../../../../components/CustomerComponent';
 
 export default async function CustomerFormAction({ searchParams, params }: { searchParams: any; params: any }) {
   const equipment = await fetchAllEquipment();
-  console.log(equipment.find((e) => e.contractor_equipment.length)?.contractor_equipment[0].contractor_id);
 
   return (
     <section className="grid grid-cols-2 xl:grid-cols-2 gap-2 py-4 justify-start">

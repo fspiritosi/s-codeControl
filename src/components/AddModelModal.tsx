@@ -42,7 +42,7 @@ export default function AddModelModal({
 }: {
   children: React.ReactNode;
   fetchModels?: (brand_id: string) => Promise<void>;
-  brandOptions?: generic[]
+  brandOptions?: VehicleBrand[] | null;
 }) {
   const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
@@ -75,7 +75,7 @@ export default function AddModelModal({
     }
     toast('Modelo agregado correctamente', { description: 'El modelo ha sido agregado correctamente' });
     if (fetchModels) {
-      fetchModels(brand_id || '');
+      fetchModels(`${brand_id}`);
     }
   }
 
@@ -109,7 +109,7 @@ export default function AddModelModal({
                   <SelectGroup>
                     <SelectLabel>Marcas registradas</SelectLabel>
                     {brandOptions?.map((option) => (
-                      <SelectItem key={option.id} value={option.name}>
+                      <SelectItem key={option.id} value={option.name || ''}>
                         {option.name}
                       </SelectItem>
                     ))}

@@ -82,9 +82,7 @@ export function DataTableAnswersFacetedFilter<TData, TValue>({
                       } else {
                         selectedValues.add(option.value);
                       }
-                      console.log('selectedValues', selectedValues);
                       const filterValues = Array.from(selectedValues);
-                      console.log('filterValues', filterValues);
                       column?.setFilterValue(filterValues.length ? filterValues : undefined);
                     }}
                   >
