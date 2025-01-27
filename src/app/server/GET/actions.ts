@@ -159,26 +159,22 @@ export const fetchEmployeeMonthlyDocumentsByEmployeeId = async (employeeId: stri
   } = await supabase.auth.getUser();
   const role = await getActualRole(company_id as string, user?.id as string);
 
-
-  if(role === 'Invitado'){
-  
-    
+  if (role === 'Invitado') {
     const { data, error } = await supabase
-    .from('documents_employees')
-    .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
-    .eq('applies', employeeId)
-    .eq('id_document_types.is_it_montlhy', true)
-    .eq('id_document_types.private',  false)
-    .not('id_document_types', 'is', null)
-    .returns<EmployeeDocumentWithContractors[]>();
-    
+      .from('documents_employees')
+      .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
+      .eq('applies', employeeId)
+      .eq('id_document_types.is_it_montlhy', true)
+      .eq('id_document_types.private', false)
+      .not('id_document_types', 'is', null)
+      .returns<EmployeeDocumentWithContractors[]>();
+
     if (error) {
       console.error('Error fetching employee monthly documents:', error);
       return [];
     }
     return data;
-  }else{
-      
+  } else {
     const { data, error } = await supabase
       .from('documents_employees')
       .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
@@ -192,7 +188,6 @@ export const fetchEmployeeMonthlyDocumentsByEmployeeId = async (employeeId: stri
       return [];
     }
     return data;
-    
   }
 };
 export const fetchEmployeePermanentDocumentsByEmployeeId = async (employeeId: string) => {
@@ -208,22 +203,22 @@ export const fetchEmployeePermanentDocumentsByEmployeeId = async (employeeId: st
 
   console.log(role);
 
-  if(role === 'Invitado'){
+  if (role === 'Invitado') {
     const { data, error } = await supabase
-    .from('documents_employees')
-    .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
-    .eq('applies', employeeId)
-    .eq('id_document_types.is_it_montlhy', false)
-    .eq('id_document_types.private', false)
-    .not('id_document_types', 'is', null)
-    .returns<EmployeeDocumentWithContractors[]>();
+      .from('documents_employees')
+      .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
+      .eq('applies', employeeId)
+      .eq('id_document_types.is_it_montlhy', false)
+      .eq('id_document_types.private', false)
+      .not('id_document_types', 'is', null)
+      .returns<EmployeeDocumentWithContractors[]>();
 
     if (error) {
       console.error('Error fetching employee permanent documents:', error);
       return [];
     }
     return data;
-  }else{
+  } else {
     const { data, error } = await supabase
       .from('documents_employees')
       .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
@@ -237,7 +232,6 @@ export const fetchEmployeePermanentDocumentsByEmployeeId = async (employeeId: st
       return [];
     }
     return data;
-
   }
 };
 export const fetchEmployeePermanentDocuments = async () => {
@@ -385,7 +379,6 @@ export const fetchAllEquipment = async (company_equipment_id?: string) => {
       .eq('company_id', (company_id ?? company_equipment_id) || '')
       .returns<ShareCompanyUsersWithEquipment[]>();
 
-
     const equipments = data?.[0].customer_id?.contractor_equipment;
     const allEquipments = equipments?.map((equipment) => equipment.equipment_id);
     return allEquipments || [];
@@ -415,20 +408,36 @@ export const fetchMonthlyDocumentsByEquipmentId = async (equipmentId: string) =>
   } = await supabase.auth.getUser();
   const role = await getActualRole(company_id as string, user?.id as string);
 
-  const { data, error } = await supabase
-    .from('documents_equipment')
-    .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
-    .eq('id_document_types.is_it_montlhy', true)
-    .eq('id_document_types.private', role === 'Invitado' ? false : true)
-    .not('id_document_types', 'is', null)
-    .eq('applies', equipmentId)
-    .returns<EquipmentDocumentDetailed[]>();
+  if (role === 'Invitado') {
+    const { data, error } = await supabase
+      .from('documents_equipment')
+      .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
+      .eq('id_document_types.is_it_montlhy', true)
+      .eq('id_document_types.private', false)
+      .not('id_document_types', 'is', null)
+      .eq('applies', equipmentId)
+      .returns<EquipmentDocumentDetailed[]>();
 
-  if (error) {
-    console.error('Error fetching equipment monthly documents:', error);
-    return [];
+    if (error) {
+      console.error('Error fetching equipment monthly documents:', error);
+      return [];
+    }
+    return data;
+  } else {
+    const { data, error } = await supabase
+      .from('documents_equipment')
+      .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
+      .eq('id_document_types.is_it_montlhy', true)
+      .not('id_document_types', 'is', null)
+      .eq('applies', equipmentId)
+      .returns<EquipmentDocumentDetailed[]>();
+
+    if (error) {
+      console.error('Error fetching equipment monthly documents:', error);
+      return [];
+    }
+    return data;
   }
-  return data;
 };
 export const fetchMonthlyDocumentsEquipment = async () => {
   const cookiesStore = cookies();
@@ -461,20 +470,36 @@ export const fetchPermanentDocumentsByEquipmentId = async (equipmentId: string) 
   } = await supabase.auth.getUser();
   const role = await getActualRole(company_id as string, user?.id as string);
 
-  const { data, error } = await supabase
-    .from('documents_equipment')
-    .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
-    .not('id_document_types.is_it_montlhy', 'is', true)
-    .eq('id_document_types.private', role === 'Invitado' ? false : true)
-    .eq('applies', equipmentId)
-    .not('id_document_types', 'is', null)
-    .returns<EquipmentDocumentDetailed[]>();
+  if (role === 'Invitado') {
+    const { data, error } = await supabase
+      .from('documents_equipment')
+      .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
+      .not('id_document_types.is_it_montlhy', 'is', true)
+      .eq('id_document_types.private', false)
+      .eq('applies', equipmentId)
+      .not('id_document_types', 'is', null)
+      .returns<EquipmentDocumentDetailed[]>();
 
-  if (error) {
-    console.error('Error fetching equipment permanent documents:', error);
-    return [];
+    if (error) {
+      console.error('Error fetching equipment permanent documents:', error);
+      return [];
+    }
+    return data;
+  } else {
+    const { data, error } = await supabase
+      .from('documents_equipment')
+      .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
+      .not('id_document_types.is_it_montlhy', 'is', true)
+      .eq('applies', equipmentId)
+      .not('id_document_types', 'is', null)
+      .returns<EquipmentDocumentDetailed[]>();
+
+    if (error) {
+      console.error('Error fetching equipment permanent documents:', error);
+      return [];
+    }
+    return data;
   }
-  return data;
 };
 export const fetchPermanentDocumentsEquipment = async () => {
   const cookiesStore = cookies();
@@ -644,11 +669,11 @@ export const fetchCustomForms = async (id_company?: string) => {
     .select('*,form_answers(*)')
     .eq('company_id', company_id || id_company || '')
     .returns<CheckListWithAnswer[]>();
-     if (error) {
-       console.error('Error fetching custom forms:', error);
-       return [];
-     }
-     return data;
+  if (error) {
+    console.error('Error fetching custom forms:', error);
+    return [];
+  }
+  return data;
 };
 export const fetchCustomFormById = async (formId: string) => {
   const supabase = supabaseServer();
@@ -678,9 +703,8 @@ export const fetchFormsAnswersByFormId = async (formId: string) => {
       .eq('company_id', company_id || '')
       .returns<ShareCompanyUsersWithEquipment[]>();
 
-    const equipments_id = share_company_users?.flatMap((uc) =>
-      uc.customer_id?.contractor_equipment?.map((ce) => ce.equipment_id.id)
-    ) || []
+    const equipments_id =
+      share_company_users?.flatMap((uc) => uc.customer_id?.contractor_equipment?.map((ce) => ce.equipment_id.id)) || [];
 
     const { data, error } = await supabase
       .from('form_answers')
@@ -769,7 +793,6 @@ export const fetchDiagramsHistoryByEmployeeId = async (employeeId: string) => {
     .eq('employee_id', employeeId)
     .order('created_at', { ascending: false })
     .returns<diagrams_logsWithUser[]>();
-
 
   if (error) {
     console.error('Error fetching diagrams history:', error);
