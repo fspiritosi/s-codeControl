@@ -481,10 +481,9 @@ export const EmployeesListColumns: ColumnDef<Colum>[] = [
       );
     },
   },
-
   {
     accessorKey: 'status',
-    header: 'Legajo',
+    header: 'Estado',
   },
   {
     accessorKey: 'picture',

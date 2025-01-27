@@ -39,11 +39,15 @@ import { useLoggedUserStore } from '@/store/loggedUser';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any;
-  data: TData[];
+  data: TData[];  
+  role?:string | null  
 }
 
-export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
+export function EmployeesTable<TData, TValue>({ columns, data,role }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [defaultColumns, setDefaultColumns] = useState<any[]>([]);
   const defaultVisibleColumns = [
     'full_name',
     'status',
@@ -57,7 +61,14 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
     'allocated_to',
   ];
 
-  // const data = setEmployeesToShow(employees) as TData[];
+  useEffect(() => {
+    // Filtrar las columnas basado en el rol
+    const filteredColumns = role === 'Invitado' 
+      ? columns.filter((col: any) => col.accessorKey !== 'status')
+      : columns;
+    
+    setDefaultColumns(filteredColumns);
+  }, [columns, role]);
 
   const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -77,21 +88,24 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
     const valorGuardado = JSON.parse(localStorage.getItem('employeeColumns') || '[]');
     if (valorGuardado.length) {
       setColumnVisibility(
-        columns.reduce((acc: any, column: any) => {
+        defaultColumns.reduce((acc: any, column: any) => {
           acc[column.accessorKey] = valorGuardado.includes(column.accessorKey);
           return acc;
         }, {})
       );
     }
-  }, [columns]);
+  }, [defaultColumns]);
 
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-    columns.reduce((acc: any, column: any) => {
-      acc[column.accessorKey] = defaultVisibleColumns.includes(column.accessorKey);
-      return acc;
-    }, {})
-  );
-  // const [showDeletedEmployees, setShowDeletedEmployees] = useState(false)
+  useEffect(() => {
+    // Set initial column visibility based on role
+    if (role === 'Invitado') {
+      setColumnVisibility(prev => ({
+        ...prev,
+        status: false
+      }));
+    }
+  }, [role]);
+
   const handleColumnVisibilityChange = (columnId: string, isVisible: boolean) => {
     setColumnVisibility((prev) => ({
       ...prev,
@@ -104,7 +118,6 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
     });
   };
 
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const loader = useLoggedUserStore((state) => state.isLoading);
 
   const allOptions = {
@@ -228,18 +241,18 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
 
   let table = useReactTable({
     data,
-    columns,
+    columns: defaultColumns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
     state: {
       sorting,
-      columnVisibility,
       columnFilters,
+      columnVisibility,
     },
   });
 
@@ -430,6 +443,7 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
                   >
                     {row.getVisibleCells()?.map((cell) => {
                       let is_active = (cell.row.original as any).is_active;
+                      // role
                       return (
                         <TableCell
                           key={cell.id}
@@ -464,7 +478,7 @@ export function EmployeesTable<TData, TValue>({ columns, data }: DataTableProps<
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell colSpan={defaultColumns.length} className="h-24 text-center">
                   {loader ? (
                     <div className="flex flex-col gap-3">
                       <div className="flex justify-between">

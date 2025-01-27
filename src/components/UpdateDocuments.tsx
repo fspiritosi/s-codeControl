@@ -116,6 +116,7 @@ export default function UpdateDocuments({
               document_path: data?.path,
               period: filename.period,
               created_at: new Date(),
+              state:'presentado'
             })
             .eq('document_path', documentName);
 
@@ -168,6 +169,7 @@ export default function UpdateDocuments({
             document_path: finalDocument?.path,
             validity: filename.validity ? new Date(filename.validity).toISOString() : null,
             created_at: new Date(),
+            state:'presentado'
           })
           .eq('id', id);
 

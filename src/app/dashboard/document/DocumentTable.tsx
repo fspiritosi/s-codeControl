@@ -20,6 +20,8 @@ export default async function DocumentTable({ employee_id, role }: Props) {
   const permanentDocuments = (await fetchEmployeePermanentDocumentsByEmployeeId(employee_id)).map(
     formatEmployeeDocuments
   );
+
+  console.log(permanentDocuments, monthlyDocuments);
   // console.log(allDocumentsToShow.employees.filter((e) => e.document_number === document));
   return (
     <Tabs defaultValue="permanentes">
