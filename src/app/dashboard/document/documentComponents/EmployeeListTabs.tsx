@@ -23,7 +23,7 @@ async function EmployeeListTabs({ inactives, actives }: { inactives?: boolean; a
 
   const employees = await fetchAllEmployees( role );
 
-  const activeEmploees = setEmployeesToShow(employees?.filter((e: any) => e.is_active));
+  const activeEmploees = setEmployeesToShow(employees?.filter((e) => e.is_active));
   const inactiveEmploees = setEmployeesToShow(employees?.filter((e: any) => !e.is_active));
 
   return (
@@ -37,10 +37,10 @@ async function EmployeeListTabs({ inactives, actives }: { inactives?: boolean; a
         </TabsList>
       </CardContent>
       <TabsContent value="Empleados activos">
-        <EmployeesTable columns={EmployeesListColumns} data={activeEmploees || []} />
+        <EmployeesTable role={role} columns={EmployeesListColumns} data={activeEmploees || []} />
       </TabsContent>
       <TabsContent value="Empleados inactivos">
-        <EmployeesTable columns={EmployeesListColumns} data={inactiveEmploees || []} />
+        <EmployeesTable role={role} columns={EmployeesListColumns} data={inactiveEmploees || []} />
       </TabsContent>
     </Tabs>
   );

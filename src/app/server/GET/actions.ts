@@ -136,8 +136,6 @@ export const fetchEmployeeMonthlyDocuments = async () => {
   const { data, error } = await supabase
     .from('documents_employees')
     .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
-    // .eq('id_document_types.private', false)
-    // .not('id_document_types.private', 'is', true)
     .eq('applies.company_id', company_id)
     .eq('id_document_types.is_it_montlhy', true)
     .not('id_document_types', 'is', null)
@@ -161,20 +159,41 @@ export const fetchEmployeeMonthlyDocumentsByEmployeeId = async (employeeId: stri
   } = await supabase.auth.getUser();
   const role = await getActualRole(company_id as string, user?.id as string);
 
-  const { data, error } = await supabase
+
+  if(role === 'Invitado'){
+  
+    
+    const { data, error } = await supabase
     .from('documents_employees')
     .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
     .eq('applies', employeeId)
     .eq('id_document_types.is_it_montlhy', true)
-    .eq('id_document_types.private', role === 'Invitado' ? false : true)
+    .eq('id_document_types.private',  false)
     .not('id_document_types', 'is', null)
     .returns<EmployeeDocumentWithContractors[]>();
+    
+    if (error) {
+      console.error('Error fetching employee monthly documents:', error);
+      return [];
+    }
+    return data;
+  }else{
+      
+    const { data, error } = await supabase
+      .from('documents_employees')
+      .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
+      .eq('applies', employeeId)
+      .eq('id_document_types.is_it_montlhy', true)
+      .not('id_document_types', 'is', null)
+      .returns<EmployeeDocumentWithContractors[]>();
 
-  if (error) {
-    console.error('Error fetching employee monthly documents:', error);
-    return [];
+    if (error) {
+      console.error('Error fetching employee monthly documents:', error);
+      return [];
+    }
+    return data;
+    
   }
-  return data;
 };
 export const fetchEmployeePermanentDocumentsByEmployeeId = async (employeeId: string) => {
   const cookiesStore = cookies();
@@ -187,20 +206,39 @@ export const fetchEmployeePermanentDocumentsByEmployeeId = async (employeeId: st
   } = await supabase.auth.getUser();
   const role = await getActualRole(company_id as string, user?.id as string);
 
-  const { data, error } = await supabase
+  console.log(role);
+
+  if(role === 'Invitado'){
+    const { data, error } = await supabase
     .from('documents_employees')
     .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
     .eq('applies', employeeId)
     .eq('id_document_types.is_it_montlhy', false)
-    .eq('id_document_types.private', role === 'Invitado' ? false : true)
+    .eq('id_document_types.private', false)
     .not('id_document_types', 'is', null)
     .returns<EmployeeDocumentWithContractors[]>();
 
-  if (error) {
-    console.error('Error fetching employee permanent documents:', error);
-    return [];
+    if (error) {
+      console.error('Error fetching employee permanent documents:', error);
+      return [];
+    }
+    return data;
+  }else{
+    const { data, error } = await supabase
+      .from('documents_employees')
+      .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
+      .eq('applies', employeeId)
+      .eq('id_document_types.is_it_montlhy', false)
+      .not('id_document_types', 'is', null)
+      .returns<EmployeeDocumentWithContractors[]>();
+
+    if (error) {
+      console.error('Error fetching employee permanent documents:', error);
+      return [];
+    }
+    return data;
+
   }
-  return data;
 };
 export const fetchEmployeePermanentDocuments = async () => {
   const cookiesStore = cookies();
@@ -294,7 +332,6 @@ export const getNextMonthExpiringDocumentsEmployees = async () => {
     .not('validity', 'is', null)
     .order('validity', { ascending: true }) // Ordenar por fecha de validez en orden ascendente
     .returns<EmployeeDocumentWithContractors[]>();
-
 
   if (error) {
     console.error('Error fetching next month expiring documents:', error);

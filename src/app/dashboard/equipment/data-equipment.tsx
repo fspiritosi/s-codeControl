@@ -44,17 +44,43 @@ interface DataEquipmentProps<TData, TValue> {
   // allCompany: any[];
   // showInactive: boolean;
   // setShowInactive?: (showInactive: boolean) => void;
+  role?: string | null;
 }
 
 export function EquipmentTable<TData, TValue>({
   columns,
   data,
+  role
   // showInactive,
   // setShowInactive,
   // allCompany,
 }: DataEquipmentProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [defaultColumns, setDefaultColumns] = useState<any[]>([]);
   const [showInactive, setShowInactive] = useState(false);
+
+  useEffect(() => {
+    // Filtrar las columnas basado en el rol
+    const filteredColumns = role === 'Invitado' 
+      ? columns.filter((col: any) => col.accessorKey !== 'status')
+      : columns;
+    
+    setDefaultColumns(filteredColumns);
+  }, [columns, role]);
+
+  useEffect(() => {
+    const valorGuardado = JSON.parse(localStorage.getItem('equipmentColumns') || '[]');
+    if (valorGuardado.length) {
+      setColumnVisibility(
+        defaultColumns.reduce((acc: any, column: any) => {
+          acc[column.accessorKey] = valorGuardado.includes(column.accessorKey);
+          return acc;
+        }, {})
+      );
+    }
+  }, [defaultColumns]);
 
   const defaultVisibleColumns = [
     'domain',
@@ -86,20 +112,13 @@ export function EquipmentTable<TData, TValue>({
     const valorGuardado = JSON.parse(localStorage.getItem('savedColumns') || '[]');
     if (valorGuardado.length) {
       setColumnVisibility(
-        columns.reduce((acc: any, column: any) => {
+        defaultColumns.reduce((acc: any, column: any) => {
           acc[column.accessorKey] = valorGuardado.includes(column.accessorKey);
           return acc;
         }, {})
       );
     }
-  }, [columns]);
-
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-    columns.reduce((acc: any, column: any) => {
-      acc[column.accessorKey] = defaultVisibleColumns.includes(column.accessorKey);
-      return acc;
-    }, {})
-  );
+  }, [defaultColumns]);
 
   const handleColumnVisibilityChange = (columnId: string, isVisible: boolean) => {
     setColumnVisibility((prev) => ({
@@ -113,7 +132,6 @@ export function EquipmentTable<TData, TValue>({
     });
   };
 
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const loader = useLoggedUserStore((state) => state.isLoading);
   //const filteredData = showInactive ? data?.filter((item: any) => item.is_active === false) : data;
   const allOptions = {
@@ -182,20 +200,20 @@ export function EquipmentTable<TData, TValue>({
     }
   };
 
-  let table = useReactTable({
+  const table = useReactTable({
     data,
-    columns,
+    columns: defaultColumns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
     state: {
       sorting,
-      columnVisibility,
       columnFilters,
+      columnVisibility,
     },
   });
   const setActivesVehicles = useLoggedUserStore((state) => state.setActivesVehicles);
@@ -466,7 +484,7 @@ export function EquipmentTable<TData, TValue>({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell colSpan={defaultColumns.length} className="h-24 text-center">
                   {loader ? (
                     <div className="flex flex-col gap-3">
                       <div className="flex justify-between">
