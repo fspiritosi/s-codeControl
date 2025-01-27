@@ -64,7 +64,7 @@ export function EquipmentTable<TData, TValue>({
   useEffect(() => {
     // Filtrar las columnas basado en el rol
     const filteredColumns = role === 'Invitado' 
-      ? columns.filter((col: any) => col.accessorKey !== 'status')
+      ? columns.filter((col: any) => col.accessorKey !== 'status' && col.accessorKey !== 'allocated_to')
       : columns;
     
     setDefaultColumns(filteredColumns);
@@ -72,15 +72,22 @@ export function EquipmentTable<TData, TValue>({
 
   useEffect(() => {
     const valorGuardado = JSON.parse(localStorage.getItem('equipmentColumns') || '[]');
+    // Si el rol es invitado, remover allocated_to del localStorage
+    if (role === 'Invitado') {
+      const newColumns = valorGuardado.filter((col: string) => col !== 'allocated_to');
+      localStorage.setItem('equipmentColumns', JSON.stringify(newColumns));
+    }
     if (valorGuardado.length) {
       setColumnVisibility(
         defaultColumns.reduce((acc: any, column: any) => {
-          acc[column.accessorKey] = valorGuardado.includes(column.accessorKey);
+          acc[column.accessorKey] = role === 'Invitado' 
+            ? valorGuardado.includes(column.accessorKey) && column.accessorKey !== 'allocated_to'
+            : valorGuardado.includes(column.accessorKey);
           return acc;
         }, {})
       );
     }
-  }, [defaultColumns]);
+  }, [defaultColumns, role]);
 
   const defaultVisibleColumns = [
     'domain',
@@ -92,11 +99,16 @@ export function EquipmentTable<TData, TValue>({
     'status',
     'intern_number',
     'condition',
+    ...(role !== 'Invitado' ? ['allocated_to'] : [])
   ];
 
   const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
     if (typeof window !== 'undefined') {
-      const valorGuardado = JSON.parse(localStorage.getItem('savedColumns') || '[]');
+      let valorGuardado = JSON.parse(localStorage.getItem('savedColumns') || '[]');
+      if (role === 'Invitado') {
+        valorGuardado = valorGuardado.filter((col: string) => col !== 'allocated_to');
+        localStorage.setItem('savedColumns', JSON.stringify(valorGuardado));
+      }
       return valorGuardado.length ? valorGuardado : defaultVisibleColumns;
     }
     return defaultVisibleColumns;
@@ -119,6 +131,17 @@ export function EquipmentTable<TData, TValue>({
       );
     }
   }, [defaultColumns]);
+
+  useEffect(() => {
+    // Set initial column visibility based on role
+    if (role === 'Invitado') {
+      setColumnVisibility(prev => ({
+        ...prev,
+        status: false,
+        allocated_to: false
+      }));
+    }
+  }, [role]);
 
   const handleColumnVisibilityChange = (columnId: string, isVisible: boolean) => {
     setColumnVisibility((prev) => ({
