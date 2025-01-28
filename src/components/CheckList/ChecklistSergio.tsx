@@ -200,6 +200,89 @@ export default function VehicleInspectionChecklist({
       router.push(`/dashboard/forms/${params.id}`);
     }
   };
+
+  const mapFormValuesToPdfProps = (formValues: any) => {
+    const mapping: { [key: string]: string } = {
+      'Asientos (Estado en general)': 'asientosEstado',
+      'Luces Altas': 'lucesAltas',
+      'Luces Bajas': 'lucesBajas',
+      'Luces de Giro': 'lucesGiro',
+      'Balizas': 'balizas',
+      'Luces de Retroceso': 'lucesRetroceso',
+      'Luces Freno': 'lucesFreno',
+      'Luces de Estacionamiento': 'lucesEstacionamiento',
+      'Funcionamiento Tacógrafo (Microtrack)': 'funcionamientoTacografo',
+      'Funciones de tablero (luces testigo)': 'funcionesTablero',
+      'Bocina': 'bocina',
+      'Alarma de Retroceso': 'alarmaRetroceso',
+      'Calefactor Desempañador': 'calefactorDesempanador',
+      'Aire Acondicionado': 'aireAcondicionado',
+      'Limpia Parabrisas y Lava Parabrisas': 'limpiaParabrisas',
+      'Parasol': 'parasol',
+      'Luneta': 'luneta',
+      'Ventanilla (apertura)': 'ventanillaApertura',
+      'Ventanilla (Cierre)': 'ventanillaCierre',
+      'Puertas (cierre efectivo)': 'puertasCierre',
+      'Espejo retrovisor': 'espejoRetrovisor',
+      'Espejos laterales': 'espejosLaterales',
+      'Cortinas/ Sogas / Soportes': 'cortinasSogasSoportes',
+      'Cinturones de seguridad': 'cinturones',
+      'Apoya cabezas': 'apoyaCabezas2',
+      'BOTIQUIN PRIMEROS AUXILIOS': 'botiquin',
+      'Balizas triangulares / conos': 'balizasTriangulares',
+      'Chalecos reflectantes': 'chalecosReflectantes',
+      'Revisión check Point/check Nut': 'revisionCheckPoint',
+      'Arrestallamas': 'arrestallamas',
+      'Airbags frontales': 'airbagsFrontales',
+      'Matafuego': 'matafuego',
+      'Suspensión (Amortiguadores)': 'suspension',
+      'Criquet (Gato) y llave de rueda': 'criquet',
+      'Filtro de Aire: Motor/Habitaculo Sopletear': 'filtroAire',
+      'Bateria/Estado': 'bateria',
+      'Nivel de fluidos y pérdidas': 'nivelFluidos',
+      'Sistema de Freno (ABS)': 'sistemaFreno',
+      'Cartelería de velocidad máxima': 'carteleriaVelocidad',
+      'Bandas laterales reflectivas': 'bandasLaterales',
+      'Nivel de combustible': 'nivelCombustible',
+      'Neumatico de auxilio': 'neumaticoAuxilio',
+      'Neumaticos Delanteros': 'neumaticosDelanteros',
+      'Neumaticos Traseros': 'neumaticosTraseros',
+      'Esparragos y Torque': 'esparragosTorque',
+      'Elementos sueltos': 'elementosSueltos',
+      'Bolsas para depósito de residuos': 'bolsasResiduos',
+      'Limpieza de Cabina y Exterior': 'limpiezaCabina',
+    };
+
+    const mappedValues: { [key: string]: any } = {
+      movil: formValues.movil,
+      chofer: formValues.chofer,
+      kilometraje: formValues.kilometraje,
+      fecha: formValues.fecha,
+      dominio: formValues.dominio,
+      hora: formValues.hora,
+      observaciones: formValues.observaciones,
+    };
+
+    // Mapear valores de las secciones
+    Object.entries(checklistItems).forEach(([section, items]) => {
+      items.forEach((item: string) => {
+        if (formValues[section]?.[item] && mapping[item]) {
+          if (item === 'Apoya cabezas' && section === 'seguridad') {
+            mappedValues['apoyaCabezas'] = formValues[section][item];
+          } else {
+            mappedValues[mapping[item]] = formValues[section][item];
+            // Si es el nivel de fluidos, también lo asignamos a nivelFluidos2
+            if (item === 'Nivel de fluidos y pérdidas') {
+              mappedValues['nivelFluidos2'] = formValues[section][item];
+            }
+          }
+        }
+      });
+    });
+
+    return mappedValues;
+  };
+
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
   return (
@@ -227,13 +310,7 @@ export default function VehicleInspectionChecklist({
             <PDFPreviewDialog title={`Vista previa - ${form.getValues().movil || 'Formulario'}`} buttonText="Ver PDF">
               <div className="h-full w-full bg-white">
                 <TransporteSPANAYCHKHYS03
-                  data={{
-                    movil: form.getValues().movil,
-                    chofer: form.getValues().chofer,
-                    kilometraje: form.getValues().kilometraje,
-                    fecha: form.getValues().fecha,
-                    ...form.getValues(),
-                  }}
+                  data={mapFormValuesToPdfProps(form.getValues())}
                   companyLogo={actualCompany?.company_logo || '/logo.png'}
                   preview={true}
                 />
