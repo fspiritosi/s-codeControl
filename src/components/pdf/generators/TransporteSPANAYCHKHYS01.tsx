@@ -33,7 +33,13 @@ interface VehicleInspectionPDFProps {
 
 export const TransporteSPANAYCHKHYS01 = ({ data, preview = true, companyLogo }: VehicleInspectionPDFProps) => {
   const company = useLoggedUserStore((state) => state.actualCompany)?.company_logo;
-console.log(checklistItems, 'checklistItems');
+
+  console.log(data, 'data');
+
+  const items = [
+    
+  ]
+
   const pdfContent = (
     <VehicleInspectionLayout
       title="CHECK LIST INSPECCION VEHICULAR"
@@ -45,10 +51,6 @@ console.log(checklistItems, 'checklistItems');
         dominio: data?.dominio,
         kilometraje: data?.kilometraje,
         hora: data?.hora,
-        luces: checklistItems?.luces,
-        seguridad: checklistItems?.seguridad,
-        interior: checklistItems?.interior,
-        mecanica: checklistItems?.mecanica,
         observaciones: data?.observaciones,
       }}
       logoUrl={company}

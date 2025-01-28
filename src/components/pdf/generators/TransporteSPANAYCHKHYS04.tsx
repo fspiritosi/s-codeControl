@@ -52,11 +52,11 @@ export const TransporteSPANAYCHKHYS04 = ({ data, preview = true, companyLogo }: 
     },
     {
       label: 'Alarma acústica de retroceso en funcionamiento',
-      result: data?.alarma,
+      result: data?.alarmaRetroceso,
     },
     {
       label: 'Parabrisas, ventanillas y espejos limpios en buen estado',
-      result: data?.parabrisas,
+      result: data?.parabrisasEspejos,
     },
     {
       label: 'Cierre efectivo de puertas',
@@ -71,11 +71,12 @@ export const TransporteSPANAYCHKHYS04 = ({ data, preview = true, companyLogo }: 
       result: data?.fluidos,
     },
     {
-      label: 'Matafuegos (si corresponde)',
-      result: data?.matafuegos,
+      label: 'Arrestallamas (si corresponde)',
+      result: data?.arrestallamas,
     },
     {
-      label: 'Neumáticos en buen estado, con correcta presión de aire, bien ajustados y con chochomoños en todas las tuercas',
+      label:
+        'Neumáticos en buen estado, con correcta presión de aire, bien ajustados y con chochomoños en todas las tuercas',
       result: data?.neumaticos,
     },
     {
@@ -113,7 +114,7 @@ export const TransporteSPANAYCHKHYS04 = ({ data, preview = true, companyLogo }: 
     {
       label: 'Manejo defensivo: vigente',
       result: data?.manejoDefensivo,
-    }
+    },
   ];
 
   const company = useLoggedUserStore((state) => state.actualCompany)?.company_logo
@@ -129,6 +130,8 @@ export const TransporteSPANAYCHKHYS04 = ({ data, preview = true, companyLogo }: 
         marca: data?.marca,
         modelo: data?.modelo,
         items: items,
+        kilometers: data?.kilometraje,
+        aptoParaOperar: data?.aptoParaOperar,
       }}
       logoUrl={company}
     />

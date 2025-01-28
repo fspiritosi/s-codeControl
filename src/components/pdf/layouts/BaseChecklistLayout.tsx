@@ -1,20 +1,20 @@
 'use client';
 
-import { Document, Page, View, Text, StyleSheet, Image } from '@react-pdf/renderer';
+import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 
 const styles = StyleSheet.create({
   page: {
-    padding: 40,
+    padding: 30,
     fontSize: 10,
     fontFamily: 'Helvetica',
     position: 'relative',
   },
   border: {
     position: 'absolute',
-    top: 40,
-    left: 40,
-    right: 40,
-    bottom: 40,
+    top: 30,
+    left: 30,
+    right: 30,
+    bottom: 30,
     border: '1pt solid black',
   },
   contentWrapper: {
@@ -57,21 +57,29 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   infoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     marginBottom: 15,
+    marginTop: 10,
+  },
+  infoColumn: {
+    width: '50%',
+    paddingRight: 4,
   },
   infoRow: {
     flexDirection: 'row',
-    borderBottom: '1pt solid #000',
+    alignItems: 'center',
     minHeight: 25,
     padding: 4,
   },
   infoLabel: {
-    width: '30%',
-    fontWeight: 'bold',
-    paddingLeft: 4,
+    fontSize: 10,
   },
   infoValue: {
-    width: '70%',
+    flex: 1,
+    borderBottom: '1pt solid #000',
+    marginLeft: 4,
+    paddingBottom: 2,
   },
   terminology: {
     marginBottom: 10,
@@ -110,24 +118,27 @@ const styles = StyleSheet.create({
   },
   tableColumn1: {
     width: '60%',
-    padding: 4,
+    padding: 2,
     borderRight: '1pt solid #000',
+    fontSize: 9,
   },
   tableColumn2: {
     width: '20%',
-    padding: 4,
+    padding: 2,
     borderRight: '1pt solid #000',
     textAlign: 'center',
+    fontSize: 9,
   },
   tableColumn3: {
     width: '20%',
-    padding: 4,
+    padding: 2,
     textAlign: 'center',
+    fontSize: 9,
   },
   tableRow: {
     flexDirection: 'row',
     borderBottom: '1pt solid #000',
-    minHeight: 25,
+    minHeight: 20,
   },
   footer: {
     margin: 10,
@@ -157,6 +168,8 @@ interface BaseChecklistProps {
     servicio?: string;
     marca?: string;
     modelo?: string;
+    kilometers?: string;
+    aptoParaOperar?: 'SI' | 'NO';
     items: {
       label: string;
       result?: string;
@@ -165,15 +178,17 @@ interface BaseChecklistProps {
   };
 }
 
-export const BaseChecklistLayout = ({ 
-  title = "CHECK LIST INSPECCION DIARIA",
-  subtitle = "Vigencia: 23-09-2024 REV: 00",
+export const BaseChecklistLayout = ({
+  title = 'CHECK LIST INSPECCION DIARIA',
+  subtitle = 'Vigencia: 23-09-2024 REV: 00',
   logoUrl,
-  data
+  data,
 }: BaseChecklistProps) => {
-  const itemsPerPage = 10;
+  const itemsPerPage = 30;
   const pages = Math.ceil(data.items.length / itemsPerPage);
-  
+
+  console.log(data,'data');
+
   return (
     <Document>
       {Array.from({ length: pages }).map((_, pageIndex) => (
@@ -181,17 +196,12 @@ export const BaseChecklistLayout = ({
           <View style={styles.border} fixed />
           <View style={styles.contentWrapper}>
             <View style={styles.header} fixed>
-              <View style={styles.headerLeft}>
-                {logoUrl && (
-                  <Image 
-                    style={styles.logo} 
-                    src={logoUrl}
-                  />
-                )}
-              </View>
+              <View style={styles.headerLeft}>{logoUrl && <Image style={styles.logo} src={logoUrl} />}</View>
               <View style={styles.headerRight}>
                 <Text style={styles.headerText}>{title}</Text>
-                <Text style={styles.headerSubText}>Hoja {pageIndex + 1} de {pages}</Text>
+                <Text style={styles.headerSubText}>
+                  Hoja {pageIndex + 1} de {pages}
+                </Text>
                 <Text style={styles.headerSubText}>{subtitle}</Text>
               </View>
             </View>
@@ -200,33 +210,42 @@ export const BaseChecklistLayout = ({
               {pageIndex === 0 && (
                 <>
                   <View style={styles.infoGrid}>
-                    <View style={styles.infoRow}>
-                      <Text style={styles.infoLabel}>Fecha:</Text>
-                      <Text style={styles.infoValue}>{data.fecha || ''}</Text>
+                    <View style={styles.infoColumn}>
+                      <View style={styles.infoRow}>
+                        <Text style={styles.infoLabel}>Interno:</Text>
+                        <Text style={styles.infoValue}>{data.interno || ''}</Text>
+                      </View>
+                      <View style={styles.infoRow}>
+                        <Text style={styles.infoLabel}>Dominio/patente:</Text>
+                        <Text style={styles.infoValue}>{data.dominio || ''}</Text>
+                      </View>
+                      <View style={styles.infoRow}>
+                        <Text style={styles.infoLabel}>Kilometraje:</Text>
+                        <Text style={styles.infoValue}>{data.kilometers || ''}</Text>
+                      </View>
+                      <View style={styles.infoRow}>
+                        <Text style={styles.infoLabel}>Nombre del conductor:</Text>
+                        <Text style={styles.infoValue}>{data.conductor || ''}</Text>
+                      </View>
                     </View>
-                    <View style={styles.infoRow}>
-                      <Text style={styles.infoLabel}>Nombre del conductor:</Text>
-                      <Text style={styles.infoValue}>{data.conductor || ''}</Text>
-                    </View>
-                    <View style={styles.infoRow}>
-                      <Text style={styles.infoLabel}>Interno:</Text>
-                      <Text style={styles.infoValue}>{data.interno || ''}</Text>
-                    </View>
-                    <View style={styles.infoRow}>
-                      <Text style={styles.infoLabel}>Dominio/patente:</Text>
-                      <Text style={styles.infoValue}>{data.dominio || ''}</Text>
-                    </View>
-                    <View style={styles.infoRow}>
-                      <Text style={styles.infoLabel}>Servicio/Proyecto:</Text>
-                      <Text style={styles.infoValue}>{data.servicio || ''}</Text>
-                    </View>
-                    <View style={styles.infoRow}>
-                      <Text style={styles.infoLabel}>Marca:</Text>
-                      <Text style={styles.infoValue}>{data.marca || ''}</Text>
-                    </View>
-                    <View style={styles.infoRow}>
-                      <Text style={styles.infoLabel}>Modelo:</Text>
-                      <Text style={styles.infoValue}>{data.modelo || ''}</Text>
+
+                    <View style={styles.infoColumn}>
+                      <View style={styles.infoRow}>
+                        <Text style={styles.infoLabel}>Servicio/Proyecto:</Text>
+                        <Text style={styles.infoValue}>{data.servicio || ''}</Text>
+                      </View>
+                      <View style={styles.infoRow}>
+                        <Text style={styles.infoLabel}>Marca:</Text>
+                        <Text style={styles.infoValue}>{data.marca || ''}</Text>
+                      </View>
+                      <View style={styles.infoRow}>
+                        <Text style={styles.infoLabel}>Modelo:</Text>
+                        <Text style={styles.infoValue}>{data.modelo || ''}</Text>
+                      </View>
+                      <View style={styles.infoRow}>
+                        <Text style={styles.infoLabel}>Fecha:</Text>
+                        <Text style={styles.infoValue}>{data.fecha || ''}</Text>
+                      </View>
                     </View>
                   </View>
 
@@ -238,7 +257,9 @@ export const BaseChecklistLayout = ({
                     </View>
                   </View>
 
-                  <Text style={styles.warning}>ES FUNDAMENTAL QUE SE VERIFIQUEN LOS SIGUIENTES PUNTOS ANTES DE INICIAR RECORRIDO.</Text>
+                  <Text style={styles.warning}>
+                    ES FUNDAMENTAL QUE SE VERIFIQUEN LOS SIGUIENTES PUNTOS ANTES DE INICIAR RECORRIDO.
+                  </Text>
                 </>
               )}
 
@@ -248,23 +269,28 @@ export const BaseChecklistLayout = ({
                   <Text style={styles.tableColumn2}>RESULTADO SI-NO</Text>
                   <Text style={styles.tableColumn3}>OBSERVACIONES</Text>
                 </View>
-                
-                {data.items
-                  .slice(pageIndex * itemsPerPage, (pageIndex + 1) * itemsPerPage)
-                  .map((item, index) => (
-                    <View key={index} style={styles.tableRow}>
-                      <Text style={styles.tableColumn1}>{item.label}</Text>
-                      <Text style={styles.tableColumn2}>{item.result || ''}</Text>
-                      <Text style={styles.tableColumn3}>{item.observations || ''}</Text>
-                    </View>
-                  ))}
+
+                {data.items.slice(pageIndex * itemsPerPage, (pageIndex + 1) * itemsPerPage).map((item, index) => (
+                  <View key={index} style={styles.tableRow}>
+                    <Text style={styles.tableColumn1}>{item.label}</Text>
+                    <Text style={styles.tableColumn2}>{item.result || ''}</Text>
+                    <Text style={styles.tableColumn3}>{item.observations || ''}</Text>
+                  </View>
+                ))}
               </View>
 
               {pageIndex === pages - 1 && (
                 <View style={styles.footer}>
                   <Text style={styles.footerText}>INDIQUE SI O NO SEGÚN RESULTADO DE VERIFICACION</Text>
-                  <Text style={styles.footerText}>APTO PARA OPERAR:          SI          NO</Text>
-                  
+                  <Text style={styles.footerText}>
+                    APTO PARA OPERAR:{' '}
+                    {data.aptoParaOperar ? (
+                      <Text style={{ fontWeight: 'bold' }}>{data.aptoParaOperar}</Text>
+                    ) : (
+                      'SI NO'
+                    )}
+                  </Text>
+
                   <View style={styles.signature}>
                     <Text>FIRMA DEL CHOFER QUE INSPECCIONÓ</Text>
                   </View>
