@@ -64,7 +64,7 @@ export function EmployeesTable<TData, TValue>({ columns, data,role }: DataTableP
   useEffect(() => {
     // Filtrar las columnas basado en el rol
     const filteredColumns = role === 'Invitado' 
-      ? columns.filter((col: any) => col.accessorKey !== 'status')
+      ? columns.filter((col: any) => col.accessorKey !== 'status' && col.accessorKey !== 'allocated_to')
       : columns;
     
     setDefaultColumns(filteredColumns);
@@ -72,10 +72,19 @@ export function EmployeesTable<TData, TValue>({ columns, data,role }: DataTableP
 
   const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
     if (typeof window !== 'undefined') {
-      const valorGuardado = JSON.parse(localStorage.getItem('employeeColumns') || '[]');
-      return valorGuardado.length ? valorGuardado : defaultVisibleColumns;
+      let valorGuardado = JSON.parse(localStorage.getItem('employeeColumns') || '[]');
+      // Si el rol es invitado, remover allocated_to del localStorage
+      if (role === 'Invitado') {
+        valorGuardado = valorGuardado.filter((col: string) => col !== 'allocated_to');
+        localStorage.setItem('employeeColumns', JSON.stringify(valorGuardado));
+      }
+      return valorGuardado.length ? valorGuardado : defaultVisibleColumns.filter(col => 
+        role === 'Invitado' ? col !== 'allocated_to' : true
+      );
     }
-    return defaultVisibleColumns;
+    return role === 'Invitado' 
+      ? defaultVisibleColumns.filter(col => col !== 'allocated_to')
+      : defaultVisibleColumns;
   });
 
   useEffect(() => {
@@ -101,7 +110,8 @@ export function EmployeesTable<TData, TValue>({ columns, data,role }: DataTableP
     if (role === 'Invitado') {
       setColumnVisibility(prev => ({
         ...prev,
-        status: false
+        status: false,
+        allocated_to: false
       }));
     }
   }, [role]);

@@ -9,12 +9,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabaseServer } from '@/lib/supabase/server';
-import { cn } from '@/lib/utils';
+import { cn, getActualRole } from '@/lib/utils';
 import { formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
+import moment from 'moment';
+import { cookies } from 'next/headers';
 import { Suspense } from 'react';
 import DownloadButton from '../documentComponents/DownloadButton';
-import moment from 'moment';
 export default async function page({
   params,
   searchParams,
@@ -30,11 +31,6 @@ export default async function page({
   let documentType: string | null = null;
   let resourceType: string | null = null;
   const supabase = supabaseServer();
-  const URL = process.env.NEXT_PUBLIC_BASE_URL;
-
-  const { response } = await fetch(`${URL}/api/document/${params.id}?resource=${searchParams.resource}`, {
-    cache: 'no-store',
-  }).then((e) => e.json());
 
   const {
     data: { session },
@@ -45,21 +41,11 @@ export default async function page({
     .select('*')
     .eq('email', session?.user.email || '')
     .single();
-  const { data: company, error } = await supabase.from('company').select(`id`);
-  let { data: share, error: sharedError } = await supabase
-    .from('share_company_users')
-    .select(`*`)
-    .eq('profile_id', usuario?.id || '');
 
-  let role = '';
+  const cookiesStore = cookies();
+  const actualComp = cookiesStore.get('actualComp');
 
-  const roleRaw = share
-    ?.filter(
-      (item: any) => company?.some((comp: any) => comp.id === item.company_id) && item.profile_id === usuario?.id
-    )
-    .map((item: any) => item.role);
-
-  role = roleRaw?.join('') as string;
+  const role = await getActualRole(actualComp?.value as string, usuario?.id as string);
 
   let { data: documents_employee } = await supabase
     .from('documents_employees')
@@ -71,11 +57,8 @@ export default async function page({
       city(name),
       province(name),
       contractor_employee(
-        customers(
-          *
-          )
-          ),
-          company_id(*,province_id(name))
+        customers(*)),
+        company_id(*,province_id(name))
           )
           `
     )
@@ -125,19 +108,19 @@ export default async function page({
   documentUrl = url.publicUrl;
   documents_employees = document;
 
-  function expireInLastMonth() {
-    const validity = documents_employees?.[0]?.validity;
-    if (!validity) return false;
+  // function expireInLastMonth() {
+  //   const validity = documents_employees?.[0]?.validity;
+  //   if (!validity) return false;
 
-    // Convertir la fecha a formato "mm/dd/yyyy"
-    const [day, month, year] = validity.split('/');
-    const validityDate = new Date(`${month}/${day}/${year}`);
+  //   // Convertir la fecha a formato "mm/dd/yyyy"
+  //   const [day, month, year] = validity.split('/');
+  //   const validityDate = new Date(`${month}/${day}/${year}`);
 
-    const oneMonthFromNow = new Date();
-    oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+  //   const oneMonthFromNow = new Date();
+  //   oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
 
-    return validityDate <= oneMonthFromNow;
-  }
+  //   return validityDate <= oneMonthFromNow;
+  // }
 
   return (
     <section className="md:mx-7">
