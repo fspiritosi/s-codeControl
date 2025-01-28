@@ -23,7 +23,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Textarea } from '../ui/textarea';
 
-const checklistItems = {
+export const checklistItems03 = {
   general: [
     'Discos de freno',
     'Jaula antivuelco',
@@ -149,7 +149,7 @@ const formSchema = z.object({
   chofer: z.string().min(1, { message: 'Chofer es requerido' }),
   fecha: z.string().min(1, { message: 'Fecha es requerida' }),
   hora: z.string().min(1, { message: 'Hora es requerida' }),
-  ...createChecklistSchema(checklistItems),
+  ...createChecklistSchema(checklistItems03),
   observaciones: z.string().optional(),
 });
 
@@ -417,7 +417,7 @@ export default function VehicleMaintenanceChecklist({
                     : 'grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9'
                 )}
               >
-                {Object.keys(checklistItems).map((section) => (
+                {Object.keys(checklistItems03).map((section) => (
                   <TabsTrigger
                     key={section}
                     value={section}
@@ -427,7 +427,7 @@ export default function VehicleMaintenanceChecklist({
                   </TabsTrigger>
                 ))}
               </TabsList>
-              {Object.entries(checklistItems).map(([section, items]) => (
+              {Object.entries(checklistItems03).map(([section, items]) => (
                 <TabsContent key={section} value={section}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                     {items.map((item) => (

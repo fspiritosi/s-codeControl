@@ -34,7 +34,7 @@ interface VehicleInspectionPDFProps {
 export const TransporteSPANAYCHKHYS01 = ({ data, preview = true, companyLogo }: VehicleInspectionPDFProps) => {
   const company = useLoggedUserStore((state) => state.actualCompany)?.company_logo;
 
-  console.log(data, 'data');
+  console.log(data, 'data keloke');
 
   const items = [
     

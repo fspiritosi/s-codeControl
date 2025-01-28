@@ -1,26 +1,65 @@
 'use client';
 
-import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
+
+interface MaintenanceChecklistLayoutProps {
+  title: string;
+  subtitle: string;
+  data: {
+    fecha?: string;
+    dominio?: string;
+    kilometraje?: string;
+    hora?: string;
+    observaciones?: string;
+    chofer?: string;
+  };
+  logoUrl?: string;
+  items: Array<{
+    title?: boolean;
+    label: string;
+    result?: string;
+    section?: string;
+  }>;
+}
 
 const styles = StyleSheet.create({
   page: {
-    padding: 40,
+    padding: 30,
+    fontSize: 10,
+    fontFamily: 'Helvetica',
+    position: 'relative',
+  },
+  pageCompact: {
+    padding: 25,
     fontSize: 10,
     fontFamily: 'Helvetica',
     position: 'relative',
   },
   border: {
     position: 'absolute',
-    top: 40,
-    left: 40,
-    right: 40,
-    bottom: 40,
+    top: 25,
+    left: 25,
+    right: 25,
+    bottom: 25,
+    border: '1pt solid black',
+  },
+  borderCompact: {
+    position: 'absolute',
+    top: 30,
+    left: 30,
+    right: 30,
+    bottom: 30,
     border: '1pt solid black',
   },
   contentWrapper: {
     position: 'relative',
     height: '100%',
     padding: 10,
+  },
+  contentWrapperCompact: {
+    position: 'relative',
+    height: '100%',
+    padding: 5,
   },
   header: {
     flexDirection: 'row',
@@ -32,14 +71,15 @@ const styles = StyleSheet.create({
   headerLeft: {
     width: '30%',
   },
-  logo: {
-    width: 120,
-    height: 50,
-    objectFit: 'contain',
-  },
   headerRight: {
     width: '70%',
     alignItems: 'flex-end',
+  },
+  logo: {
+    marginLeft: 10,
+    width: 120,
+    height: 50,
+    objectFit: 'contain',
   },
   headerText: {
     fontSize: 11,
@@ -52,132 +92,274 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginBottom: 2,
   },
-  content: {
-    height: '100%',
-  },
-  infoContainer: {
+  infoGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 20,
-    borderBottom: '1pt solid black',
-    paddingBottom: 10,
+    paddingVertical: 5,
   },
-  infoItem: {
+  infoGridCompact: {
     flexDirection: 'row',
+    paddingVertical: 3,
+  },
+  infoColumn: {
+    flex: 1,
+    paddingHorizontal: 10,
+  },
+  infoColumnCompact: {
+    flex: 1,
+    paddingHorizontal: 5,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    marginVertical: 2,
     alignItems: 'center',
-    width: '30%',
-    minHeight: 25,
-    padding: 4,
+  },
+  infoRowCompact: {
+    flexDirection: 'row',
+    marginVertical: 1,
+    alignItems: 'center',
   },
   infoLabel: {
-    fontWeight: 'bold',
-    marginRight: 5,
+    fontSize: 9,
+    marginRight: 2,
   },
-  sectionContainer: {
-    marginBottom: 20,
+  infoValue: {
+    flex: 1,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#000',
+    marginLeft: 2,
+    fontSize: 9,
+    minHeight: 12,
   },
-  sectionTitle: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    backgroundColor: '#e6e6e6',
-    padding: 5,
-    marginBottom: 10,
-    textAlign: 'center',
-    borderBottom: '1pt solid black',
-  },
-  itemRow: {
+  tablesContainer: {
     flexDirection: 'row',
-    borderBottom: '1pt solid #000',
-    minHeight: 25,
-    padding: 4,
-  },
-  itemLabel: {
-    width: '60%',
-    borderRight: '1pt solid #000',
-    padding: 4,
-  },
-  itemResult: {
-    width: '40%',
-    textAlign: 'center',
-    padding: 4,
-  },
-  observaciones: {
-    marginTop: 20,
+    gap: 10,
     padding: 10,
+  },
+  tablesContainerCompact: {
+    flexDirection: 'row',
+    gap: 5,
+    padding: 5,
+  },
+  tableColumn: {
+    flex: 1,
+  },
+  table: {
+    width: '100%',
     borderWidth: 1,
     borderColor: '#000',
+    // marginBottom: 10,
   },
-  observacionesTitle: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    textAlign: 'center',
-    backgroundColor: '#e6e6e6',
-    padding: 5,
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 50,
-    left: 50,
-    right: 50,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: '#000',
-    paddingTop: 10,
-  },
-  signature: {
-    width: '45%',
-    alignItems: 'center',
-  },
-  signatureLine: {
+  tableCompact: {
     width: '100%',
+    borderWidth: 1,
+    borderColor: '#000',
+    // marginBottom: 5,
+  },
+  tableHeader: {
+    backgroundColor: '#f0f0f0',
+    padding: 4,
     borderBottomWidth: 1,
     borderBottomColor: '#000',
+  },
+  tableHeaderCompact: {
+    backgroundColor: '#f0f0f0',
+    padding: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: '#000',
+  },
+  tableHeaderText: {
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+  tableHeaderTextCompact: {
+    fontSize: 8,
+    fontWeight: 'bold',
+  },
+  tableRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#000',
+    minHeight: 20,
+    padding: 2,
+  },
+  tableRowCompact: {
+    flexDirection: 'row',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#000',
+    minHeight: 16,
+    padding: 1,
+  },
+  tableCellLeft: {
+    flex: 1,
+    paddingLeft: 5,
+    borderRightWidth: 1,
+    borderRightColor: '#000',
+  },
+  tableCellLeftCompact: {
+    flex: 1,
+    paddingLeft: 2,
+    borderRightWidth: 1,
+    borderRightColor: '#000',
+  },
+  tableCellRight: {
+    width: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tableCellRightCompact: {
+    width: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tableCellText: {
+    fontSize: 9,
+  },
+  tableCellTextCompact: {
+    fontSize: 7,
+  },
+  terminology: {
+    marginVertical: 5,
+    padding: 5,
+    backgroundColor: '#f0f0f0',
+  },
+  terminologyCompact: {
+    marginVertical: 3,
+    padding: 3,
+    backgroundColor: '#f0f0f0',
+  },
+  terminologyTitle: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 3,
+  },
+  terminologyTitleCompact: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  terminologyOptions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  terminologyOptionsCompact: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: 5,
+  },
+  terminologyText: {
+    fontSize: 8,
+  },
+  terminologyTextCompact: {
+    fontSize: 7,
+  },
+  warning: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  warningCompact: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginVertical: 2,
+  },
+  footer: {
+    marginTop: 20,
+    padding: 10,
+  },
+  footerCompact: {
+    marginTop: 10,
+    padding: 5,
+  },
+  observaciones: {
+    borderWidth: 1,
+    borderColor: '#000',
+    padding: 5,
+  },
+  observacionesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  observacionesTitle: {
+    fontWeight: 'bold',
     marginBottom: 5,
+  },
+  observacionesLabel: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    marginRight: 2,
+  },
+  observacionesText: {
+    minHeight: 50,
+  },
+  observacionesValue: {
+    flex: 1,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#000',
+    minHeight: 12,
   },
 });
 
-interface MaintenanceChecklistLayoutProps {
-  title: string;
-  subtitle: string;
-  data: {
-    fecha?: string;
-    conductor?: string;
-    interno?: string;
-    dominio?: string;
-    kilometraje?: string;
-    hora?: string;
-    general?: Record<string, string>;
-    carroceria?: Record<string, string>;
-    luces?: Record<string, string>;
-    mecanica?: Record<string, string>;
-    neumaticos?: Record<string, string>;
-    suspension?: Record<string, string>;
-    niveles?: Record<string, string>;
-    seguridad?: Record<string, string>;
-    interior?: Record<string, string>;
-    observaciones?: string;
+export const MaintenanceChecklistLayout = ({
+  title,
+  subtitle,
+  data,
+  logoUrl,
+  items,
+}: MaintenanceChecklistLayoutProps) => {
+  // Separar los items por secciones
+  const sections = {
+    luces: [] as typeof items,
+    interior: [] as typeof items,
+    seguridad: [] as typeof items,
+    mecanica: [] as typeof items,
   };
-  logoUrl?: string;
-}
 
-export const MaintenanceChecklistLayout = ({ title, subtitle, data, logoUrl }: MaintenanceChecklistLayoutProps) => {
-  const renderSection = (title: string, items?: Record<string, string>) => {
-    if (!items) return null;
-    return (
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>{title}</Text>
-        {Object.entries(items).map(([key, value], index) => (
-          <View key={index} style={styles.itemRow}>
-            <Text style={styles.itemLabel}>{key}</Text>
-            <Text style={styles.itemResult}>{value === 'true' ? 'SI' : value === 'false' ? 'NO' : value || '-'}</Text>
-          </View>
-        ))}
+  let currentSection = '';
+
+  items.forEach((item) => {
+    if (item.title) {
+      switch (item.label) {
+        case 'LUCES':
+          currentSection = 'luces';
+          break;
+        case 'INTERIOR':
+          currentSection = 'interior';
+          break;
+        case 'SEGURIDAD / ACCESORIOS':
+          currentSection = 'seguridad';
+          break;
+        case 'MECANICA/MOTOR':
+          currentSection = 'mecanica';
+          break;
+      }
+    } else if (currentSection) {
+      sections[currentSection as keyof typeof sections].push(item);
+    }
+  });
+
+  const renderTable = (title: string, items: typeof sections.luces) => (
+    <View style={styles.table}>
+      <View style={styles.tableHeader}>
+        <Text style={styles.tableHeaderText}>{title}</Text>
       </View>
-    );
-  };
+      {items.map((item, index) => (
+        <View key={index} style={styles.tableRow}>
+          <View style={styles.tableCellLeft}>
+            <Text style={styles.tableCellText}>{item.label}</Text>
+          </View>
+          <View style={styles.tableCellRight}>
+            <Text style={styles.tableCellText}>{item.result || ''}</Text>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
 
   return (
     <Document>
@@ -185,11 +367,7 @@ export const MaintenanceChecklistLayout = ({ title, subtitle, data, logoUrl }: M
         <View style={styles.border} fixed />
         <View style={styles.contentWrapper}>
           <View style={styles.header} fixed>
-            <View style={styles.headerLeft}>
-              {logoUrl && (
-                <Image style={styles.logo} src={logoUrl} />
-              )}
-            </View>
+            <View style={styles.headerLeft}>{logoUrl && <Image style={styles.logo} src={logoUrl} />}</View>
             <View style={styles.headerRight}>
               <Text style={styles.headerText}>{title}</Text>
               <Text style={styles.headerSubText}>Hoja 1 de 1</Text>
@@ -197,60 +375,65 @@ export const MaintenanceChecklistLayout = ({ title, subtitle, data, logoUrl }: M
             </View>
           </View>
 
-          <View style={styles.content}>
-            <View style={styles.infoContainer}>
-              <View style={styles.infoItem}>
+          <View style={styles.infoGrid}>
+            <View style={styles.infoColumn}>
+              <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Fecha:</Text>
-                <Text>{data.fecha || '-'}</Text>
+                <Text style={styles.infoValue}>{data?.fecha || ''}</Text>
               </View>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Hora:</Text>
-                <Text>{data.hora || '-'}</Text>
-              </View>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Conductor:</Text>
-                <Text>{data.conductor || '-'}</Text>
-              </View>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Interno:</Text>
-                <Text>{data.interno || '-'}</Text>
-              </View>
-              <View style={styles.infoItem}>
+              <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Dominio:</Text>
-                <Text>{data.dominio || '-'}</Text>
+                <Text style={styles.infoValue}>{data?.dominio || ''}</Text>
               </View>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Kilometraje:</Text>
-                <Text>{data.kilometraje || '-'}</Text>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Chofer:</Text>
+                <Text style={styles.infoValue}>{data?.chofer || ''}</Text>
               </View>
             </View>
 
-            {renderSection('ESTADO GENERAL', data.general)}
-            {renderSection('CARROCERÍA', data.carroceria)}
-            {renderSection('LUCES', data.luces)}
-            {renderSection('MECÁNICA', data.mecanica)}
-            {renderSection('NEUMÁTICOS', data.neumaticos)}
-            {renderSection('SUSPENSIÓN', data.suspension)}
-            {renderSection('NIVELES', data.niveles)}
-            {renderSection('SEGURIDAD', data.seguridad)}
-            {renderSection('INTERIOR', data.interior)}
+            <View style={styles.infoColumn}>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Kilometraje:</Text>
+                <Text style={styles.infoValue}>{data?.kilometraje || ''}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Hora:</Text>
+                <Text style={styles.infoValue}>{data?.hora || ''}</Text>
+              </View>
+            </View>
+          </View>
 
-            {data.observaciones && (
-              <View style={styles.observaciones}>
-                <Text style={styles.observacionesTitle}>OBSERVACIONES:</Text>
-                <Text>{data.observaciones}</Text>
-              </View>
-            )}
+          <View style={styles.terminology}>
+            <Text style={styles.terminologyTitle}>TERMINOLOGIA A UTILIZAR</Text>
+            <View style={styles.terminologyOptions}>
+              <Text style={styles.terminologyText}>1: Faltante</Text>
+              <Text style={styles.terminologyText}>2: Roto</Text>
+              <Text style={styles.terminologyText}>3: Regular / Dañado</Text>
+              <Text style={styles.terminologyText}>4: Rayado</Text>
+              <Text style={styles.terminologyText}>5: Golpeado / Abollado</Text>
+              <Text style={styles.terminologyText}>6: OK</Text>
+            </View>
+          </View>
 
-            <View style={styles.footer}>
-              <View style={styles.signature}>
-                <View style={styles.signatureLine} />
-                <Text>Firma del Conductor</Text>
-              </View>
-              <View style={styles.signature}>
-                <View style={styles.signatureLine} />
-                <Text>Firma del Supervisor</Text>
-              </View>
+          <Text style={styles.warning}>
+            NOTA: Complete según corresponda (1 al 6 o G/R/F) Ampliar en observaciones anomalias.
+          </Text>
+
+          <View style={styles.tablesContainer}>
+            <View style={styles.tableColumn}>
+              {renderTable('LUCES', sections.luces)}
+              {renderTable('INTERIOR', sections.interior)}
+            </View>
+            <View style={styles.tableColumn}>
+              {renderTable('SEGURIDAD/ACCESORIOS', sections.seguridad)}
+              {renderTable('MECANICA/MOTOR', sections.mecanica)}
+            </View>
+          </View>
+
+          <View style={styles.footerCompact}>
+            <View style={styles.observacionesRow}>
+              <Text style={styles.observacionesLabel}>Observaciones:</Text>
+              <Text style={styles.observacionesValue}>{data?.observaciones}</Text>
             </View>
           </View>
         </View>

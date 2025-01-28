@@ -361,7 +361,7 @@ export default function DynamicChecklistForm({
                       fecha: form.getValues().fecha,
                       ...form.getValues(),
                     }}
-                    companyLogo={actualCompany?.company_logo || '/logo.png'}
+                    companyLogo={actualCompany?.company_logo }
                     preview={true}
                   />
                 </div>

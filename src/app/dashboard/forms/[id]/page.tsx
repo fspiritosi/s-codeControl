@@ -12,14 +12,12 @@ import CheckListAnwersTable from '../components/CheckListAnwersTable';
 const renderForm = (activeFormType: string) => {
   switch (activeFormType) {
     case 'Transporte SP-ANAY - CHK - HYS - 01':
+      return <TransporteSPANAYCHKHYS03 preview={true} />;
+    case 'Transporte SP-ANAY - CHK - HYS - 03':
       return <TransporteSPANAYCHKHYS01 preview={true} />;
 
     case 'Transporte SP-ANAY - CHK - HYS - 04':
       return <TransporteSPANAYCHKHYS04 preview={true} />;
-
-    case 'Transporte SP-ANAY - CHK - HYS - 03':
-      return <TransporteSPANAYCHKHYS03 preview={true} />;
-
     default:
       return <div>No hay formulario seleccionado</div>;
   }
@@ -28,8 +26,7 @@ const renderForm = (activeFormType: string) => {
 async function page({ params }: { params: { id: string } }) {
   const answers = await fetchFormsAnswersByFormId(params.id);
   const formInfo = await fetchCustomFormById(params.id);
-  const formName = formInfo[0].name
-
+  const formName = formInfo[0].name;
 
   const viewData = {
     defaultValue: 'anwers',
@@ -42,7 +39,11 @@ async function page({ params }: { params: { id: string } }) {
           buttonAction: (
             <div className="flex gap-4">
               <BackButton />
-              <PDFPreviewDialog title={formName} description="Vista previa del formulario vacío">
+              <PDFPreviewDialog
+                buttonText="Imprimir vacío"
+                title={formName}
+                description="Vista previa del formulario vacío"
+              >
                 <div className="h-full w-full bg-white">{renderForm(formName)}</div>
               </PDFPreviewDialog>
               <Link className={buttonVariants({ variant: 'default' })} href={`/dashboard/forms/${params.id}/new`}>

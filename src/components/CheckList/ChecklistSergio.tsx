@@ -22,6 +22,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Textarea } from '../ui/textarea';
 import { PDFPreviewDialog } from '../pdf-preview-dialog';
+import { TransporteSPANAYCHKHYS03 } from '../pdf/generators/TransporteSPANAYCHKHYS03';
+import { useLoggedUserStore } from '@/store/loggedUser';
 
 export const checklistItems = {
   //Podemos armar un array de objetos que ya tengan las opciones
@@ -198,6 +200,7 @@ export default function VehicleInspectionChecklist({
       router.push(`/dashboard/forms/${params.id}`);
     }
   };
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
   return (
     <Card className="w-full mx-auto mb-4">
@@ -223,8 +226,17 @@ export default function VehicleInspectionChecklist({
           {defaultAnswer && (
             <PDFPreviewDialog title={`Vista previa - ${form.getValues().movil || 'Formulario'}`} buttonText="Ver PDF">
               <div className="h-full w-full bg-white">
-                {/* Aquí irá el contenido del PDF */}
-                <p>PDF Preview del formulario</p>
+                <TransporteSPANAYCHKHYS03
+                  data={{
+                    movil: form.getValues().movil,
+                    chofer: form.getValues().chofer,
+                    kilometraje: form.getValues().kilometraje,
+                    fecha: form.getValues().fecha,
+                    ...form.getValues(),
+                  }}
+                  companyLogo={actualCompany?.company_logo || '/logo.png'}
+                  preview={true}
+                />
               </div>
             </PDFPreviewDialog>
           )}

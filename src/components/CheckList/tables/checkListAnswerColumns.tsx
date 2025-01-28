@@ -75,30 +75,30 @@ export const checkListAnswerColumns: ColumnDef<{
       return value.includes(row.getValue(id));
     },
   },
-  {
-    id: 'actions',
-    cell: ({ row }) => {
-      return (
-        <PDFPreviewDialog
-          title="Inspección Diaria de Vehículo"
-          description={`Conductor: ${row.original.chofer || 'No especificado'} - Vehículo: ${row.original.domain || 'No especificado'}`}
-          buttonText="Ver PDF"
-          className="ml-auto"
-        >
-          <div className="h-full w-full bg-white">
-            <TransporteSPANAYCHKHYS04
-              data={{
-                movil: row.original.domain,
-                kilometraje: row.original.kilometer,
-                fecha: row.original.created_at,
-                ...row.original,
-                chofer: row.original.chofer,
-              }}
-              preview={true}
-            />
-          </div>
-        </PDFPreviewDialog>
-      );
-    },
-  },
+  // {
+  //   id: 'actions',
+  //   cell: ({ row }) => {
+  //     return (
+  //       <PDFPreviewDialog
+  //         title="Inspección Diaria de Vehículo"
+  //         description={`Conductor: ${row.original.chofer || 'No especificado'} - Vehículo: ${row.original.domain || 'No especificado'}`}
+  //         buttonText="Ver PDF"
+  //         className="ml-auto"
+  //       >
+  //         <div className="h-full w-full bg-white">
+  //           <TransporteSPANAYCHKHYS04
+  //             data={{
+  //               movil: row.original.domain,
+  //               kilometraje: row.original.kilometer,
+  //               fecha: row.original.created_at,
+  //               ...row.original,
+  //               chofer: row.original.chofer,
+  //             }}
+  //             preview={true}
+  //           />
+  //         </div>
+  //       </PDFPreviewDialog>
+  //     );
+  //   },
+  
 ];
