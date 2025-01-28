@@ -52,7 +52,6 @@ export default async function page({
   }
 
 
-
   documentType = document?.[0]?.document_types?.id;
 
   //const resorceId = document?.[0]?.applies?.id;
