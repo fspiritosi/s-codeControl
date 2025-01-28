@@ -51,7 +51,7 @@ async function page({ params }: { params: { id: string } }) {
               </Link>
             </div>
           ),
-          title: `${answers[0]?.form_id.name ?? 'Sin respuestas'}`,
+          title: formName,
           description: `${(answers[0]?.form_id?.form as any)?.description ?? ''}`,
           buttonActioRestricted: [''],
           component: <CheckListAnwersTable answers={answers} />,

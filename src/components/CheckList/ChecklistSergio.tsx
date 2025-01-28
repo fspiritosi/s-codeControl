@@ -307,7 +307,7 @@ export default function VehicleInspectionChecklist({
         <div className="flex gap-4">
           <BackButton />
           {defaultAnswer && (
-            <PDFPreviewDialog title={`Vista previa - ${form.getValues().movil || 'Formulario'}`} buttonText="Ver PDF">
+            <PDFPreviewDialog title={`Vista previa - ${form.getValues().movil || 'Formulario'}`} buttonText="Imprimir respuesta">
               <div className="h-full w-full bg-white">
                 <TransporteSPANAYCHKHYS03
                   data={mapFormValuesToPdfProps(form.getValues())}

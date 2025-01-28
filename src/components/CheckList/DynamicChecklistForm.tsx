@@ -334,8 +334,8 @@ export default function DynamicChecklistForm({
         </CardHeader>
       )}
       <div className="flex justify-between items-center mr-4">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <CardHeader className="w-full">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full">
             <div>
               <CardTitle className="text-2xl">{config.title}</CardTitle>
               {config.subtitle && <CardDescription className="mt-2">{config.subtitle}</CardDescription>}
@@ -348,34 +348,36 @@ export default function DynamicChecklistForm({
               ) : (
                 <BackButton />
               )}
-              <PDFPreviewDialog
-                title="Inspección Diaria de Vehículo"
-                description={`Conductor: ${form.getValues().chofer || 'No especificado'} - Fecha: ${form.getValues().fecha || new Date().toLocaleDateString()}`}
-              >
-                <div className="h-full w-full bg-white">
-                  <TransporteSPANAYCHKHYS04
-                    data={{
-                      movil: form.getValues().movil,
-                      chofer: form.getValues().chofer,
-                      kilometraje: form.getValues().kilometraje,
-                      fecha: form.getValues().fecha,
-                      ...form.getValues(),
-                    }}
-                    companyLogo={actualCompany?.company_logo }
-                    preview={true}
-                  />
-                </div>
-              </PDFPreviewDialog>
+              {defaultAnswer && (
+                <PDFPreviewDialog
+                  title="Inspección Diaria de Vehículo"
+                  description={`Conductor: ${form.getValues().chofer || 'No especificado'} - Fecha: ${form.getValues().fecha || new Date().toLocaleDateString()}`}
+                >
+                  <div className="h-full w-full bg-white">
+                    <TransporteSPANAYCHKHYS04
+                      data={{
+                        movil: form.getValues().movil,
+                        chofer: form.getValues().chofer,
+                        kilometraje: form.getValues().kilometraje,
+                        fecha: form.getValues().fecha,
+                        ...form.getValues(),
+                      }}
+                      companyLogo={actualCompany?.company_logo}
+                      preview={true}
+                    />
+                  </div>
+                </PDFPreviewDialog>
+              )}
             </div>
           </div>
         </CardHeader>
-        {resetQrSelection ? (
+        {/* {resetQrSelection ? (
           <Button onClick={() => resetQrSelection('')} variant="ghost" className="self-end">
             Volver
           </Button>
         ) : (
           <BackButton />
-        )}
+        )} */}
       </div>
       <CardContent>
         <Form {...form}>
