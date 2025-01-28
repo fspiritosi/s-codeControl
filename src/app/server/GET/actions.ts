@@ -360,6 +360,39 @@ export const getNextMonthExpiringDocumentsVehicles = async () => {
   }
   return data;
 };
+export const getDocumentEmployeesById = async (id: string) => {
+  const supabase = supabaseServer();
+  let { data: documents_employee } = await supabase
+    .from('documents_employees')
+    .select(
+      `
+    *,
+    document_types(*),
+    applies(*,
+      city(name),
+      province(name),
+      contractor_employee(
+        customers(*)),
+        company_id(*,province_id(name))
+          )
+          `
+    )
+    .eq('id', id);
+    return documents_employee;
+}
+export const getDocumentEquipmentById = async (id: string) => {
+  const supabase = supabaseServer();
+  let { data: documents_vehicle } = await supabase
+      .from('documents_equipment')
+      .select(
+        `
+      *,
+      document_types(*),
+      applies(*,brand(name),model(name),type_of_vehicle(name), company_id(*,province_id(name)))`
+      )
+      .eq('id', id);
+      return documents_vehicle;
+}
 // Equipment-related actions
 export const fetchAllEquipment = async (company_equipment_id?: string) => {
   const cookiesStore = cookies();
