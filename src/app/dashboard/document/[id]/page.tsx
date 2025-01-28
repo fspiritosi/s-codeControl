@@ -34,9 +34,7 @@ export default async function page({
   const supabase = supabaseServer();
 
   const role = await getRole();
-  console.log(searchParams, 'searchParams')
-
-
+  
   if(searchParams.resource === 'Persona'){
     const documents_employee = await getDocumentEmployeesById(params.id);
     document = documents_employee;
