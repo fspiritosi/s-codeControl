@@ -7,7 +7,7 @@ import {
 import EmployeeComponent from '@/components/EmployeeComponent';
 import { Card, CardFooter } from '@/components/ui/card';
 import { supabaseServer } from '@/lib/supabase/server';
-import { cn } from '@/lib/utils';
+import { cn, getActualRole } from '@/lib/utils';
 import { setEmployeesToShow } from '@/lib/utils/utils';
 import moment from 'moment';
 import { cookies } from 'next/headers';
@@ -26,8 +26,6 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
     .from('share_company_users')
     .select('*')
     .eq('profile_id', user?.data?.user?.id || '');
-
-  const role: string | null = userShared?.[0]?.role || null;
 
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -116,7 +114,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
     modifiedAt: moment(item.created_at).local().format('DD/MM/YYYY HH:mm'), // Formatear a la hora local
     type: item.prev_state ? 'modified' : 'created',
   }));
-
+  const role = await getActualRole(company_id || '', user?.data?.user?.id as string);
   const diagrams2 = await fetchDiagramsByEmployeeId(searchParams.employee_id);
   const diagrams_types2 = await fetchDiagramsTypes();
   return (
@@ -133,7 +131,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
           activeEmploees={[formattedEmployee]}
           historyData={historyData}
         >
-          <DocumentTable employee_id={formattedEmployee?.id || ''} />
+          <DocumentTable role={role} employee_id={formattedEmployee?.id || ''} />
         </EmployeeComponent>
         <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
       </Card>

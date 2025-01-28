@@ -434,9 +434,8 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
     accessorKey: 'allocated_to',
     header: 'Afectado a',
     cell: ({ row }) => {
-      console.log(row.original);
 
-      return row.original.contractor_equipment.map((contractor) => {
+      return row.original.contractor_equipment?.map((contractor) => {
         return <Badge key={contractor.contractor_id.id}>{contractor.contractor_id.name}</Badge>;
       });
     },
@@ -445,7 +444,7 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
       if (filterValue === 'sin afectar' && row.original.allocated_to === null) {
         return true;
       }
-      if (row.original.contractor_equipment.some((contractor) => contractor.contractor_id.name.includes(filterValue))) {
+      if (row.original.contractor_equipment?.some((contractor) => contractor.contractor_id.name.includes(filterValue))) {
         return true;
       } else {
         return false;

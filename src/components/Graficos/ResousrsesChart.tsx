@@ -37,8 +37,10 @@ type ChartData = {
 export function ResoursesChart() {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const [data, setData] = useState<ChartData>();
+  console.log(data);
 
   const company_id = cookie.get('actualComp');
+  console.log(company_id);
 
   const dataChart = [
     {

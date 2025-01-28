@@ -102,7 +102,6 @@ export function DiagramForm({
   //CREA UN SOLO REGISTRO EN LA BASE DE DATOS
   async function createDiagram(values: DiagramaToCreate) {
     const data = values;
-    console.log(data, 'DATA DE EMPLOYEES');
     toast.promise(
       async () => {
         const valueToSend = JSON.stringify(values);
@@ -217,8 +216,6 @@ export function DiagramForm({
   async function onSubmit2(values: Diagram) {
     const data = values;
     const tipoDeDiagrama: any = diagrams_types.find((d: any) => d.id === data.event_diagram);
-    console.log(tipoDeDiagrama, 'tipo de diagrama');
-    console.log(data.event_diagram, 'data.event_diagram');
     const employee: any = activeEmploees.find((e: any) => e.id === data.employee);
 
     const diagramasToCreate: DiagramaToCreate[] = [];

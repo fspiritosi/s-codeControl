@@ -20,7 +20,6 @@ export default async function UsersTabComponent() {
   const ownerUser = await getOwnerUser();
   const company_users = await getAllUsers();
   //console.log('usuarios', company_users);
-  console.log(company_users,'company_users');
   const owner = ownerUser?.map((user: any) => {
     return {
       email: user.email,

@@ -22,7 +22,7 @@ const EmployeePage = async () => {
         content: {
           title: 'Empleados',
           description: 'Aquí encontrarás todos empleados',
-          buttonActioRestricted: [''],
+          buttonActioRestricted: ['Invitado'],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
               <Link
@@ -39,11 +39,11 @@ const EmployeePage = async () => {
       {
         value: 'Documentos de empleados',
         name: 'Documentos de empleados',
-        restricted: [''],
+        restricted: ['Invitado'],
         content: {
           title: 'Documentos cargados',
           description: 'Aquí encontrarás todos los documentos de tus empleados',
-          buttonActioRestricted: [''],
+          buttonActioRestricted: ['Invitado'],
           buttonAction: (
             <div className="flex gap-4 flex-wrap pl-6">
               <DocumentNav onlyEmployees />
@@ -78,7 +78,7 @@ const EmployeePage = async () => {
       {
         value: 'covenant',
         name: 'Convenios colectivos de trabajo',
-        restricted: [''],
+        restricted: ['Invitado'],
         content: {
           title: 'Convenios colectivos de trabajo',
           description: 'Lista de Convenios colectivos de trabajo',

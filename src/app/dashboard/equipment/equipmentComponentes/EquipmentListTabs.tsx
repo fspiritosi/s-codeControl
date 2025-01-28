@@ -1,18 +1,27 @@
 import { CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { setVehiclesToShow } from '@/lib/utils/utils';
 
 import { fetchAllEquipment } from '@/app/server/GET/actions';
 import { EquipmentColums } from '../columns';
 import { EquipmentTable } from '../data-equipment';
+import { cookies } from 'next/headers';
+import { supabaseServer } from '@/lib/supabase/server';
+import { getActualRole } from '@/lib/utils';
 
 async function EquipmentListTabs({ inactives, actives }: { inactives?: boolean; actives?: boolean }) {
-  const equipments = (await fetchAllEquipment()) as any;
-  const onlyVehicles = equipments?.filter((v: any) => v.types_of_vehicles === 1)
-  const onlyNoVehicles = equipments?.filter((v: any) => v.types_of_vehicles === 2)
-  // const data = setVehiclesToShow(equipments);
+  const equipments = await fetchAllEquipment();
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  const role = await getActualRole(
+    company_id as string,
+    user?.id as string
+  );
 
-  // console.log('data', data);
+  const onlyVehicles = equipments?.filter((v) => v.types_of_vehicles.id == '1');
+  const onlyNoVehicles = equipments?.filter((v) => v.types_of_vehicles.id == '2');
+  // const data = setVehiclesToShow(equipments);
 
   return (
     <div className="overflow-x-auto max-w-full">
@@ -25,13 +34,13 @@ async function EquipmentListTabs({ inactives, actives }: { inactives?: boolean; 
           </TabsList>
         </CardContent>
         <TabsContent value="all">
-          <EquipmentTable columns={EquipmentColums || []} data={equipments || []} />
+          <EquipmentTable role={role} columns={EquipmentColums || []} data={equipments || []} />
         </TabsContent>
         <TabsContent value="vehicles">
-          <EquipmentTable columns={EquipmentColums || []} data={onlyVehicles || []} />
+          <EquipmentTable role={role} columns={EquipmentColums || []} data={onlyVehicles || []} />
         </TabsContent>
         <TabsContent value="others">
-          <EquipmentTable columns={EquipmentColums || []} data={onlyNoVehicles || []} />
+          <EquipmentTable role={role} columns={EquipmentColums || []} data={onlyNoVehicles || []} />
         </TabsContent>
       </Tabs>
     </div>

@@ -72,17 +72,19 @@ export default function VehiclesForm2({
   children,
   types: vehicleType,
   brand_vehicles,
+  role,
 }: {
   vehicle: any | null;
   children: ReactNode;
   types: generic[];
-  brand_vehicles: generic[];
+  brand_vehicles: VehicleBrand[] | null;
+  role?: string;
 }) {
   const searchParams = useSearchParams();
   // const id = params
   const [accion, setAccion] = useState(searchParams.get('action'));
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
-  const role = useLoggedUserStore((state) => state.roleActualCompany);
+  // const role = useLoggedUserStore((state) => state.roleActualCompany);
   const [type, setType] = useState('');
 
   const [data, setData] = useState<dataType>({
@@ -351,7 +353,7 @@ export default function VehiclesForm2({
                 ...values,
                 domain: domain?.toUpperCase() || null,
                 type_of_vehicle: data.tipe_of_vehicles.find((e) => e.name === type_of_vehicle)?.id,
-                brand: brand_vehicles.find((e) => e.name === brand)?.id,
+                brand: brand_vehicles?.find((e) => e.name === brand)?.id,
                 model: data.models.find((e) => e.name === model)?.id,
                 type: vehicleType.find((e) => e.name === values.type)?.id,
                 company_id: actualCompany?.id,
@@ -482,9 +484,7 @@ export default function VehiclesForm2({
     toast.promise(
       async () => {
         const { brand_vehicles: brandd, model_vehicles, types_of_vehicles, ...rest } = vehicle;
-        console.log('formatVehicle', rest, 'formatVehicle');
         const result = compareContractorEmployees(rest, values);
-        console.log('result', result, 'result');
 
         result.valuesToRemove.forEach(async (e) => {
           const { error } = await supabase
@@ -506,11 +506,9 @@ export default function VehiclesForm2({
           })
         );
 
-        console.log(values, 'values');
-
         const updatedFields = getUpdatedFields(rest, {
           type_of_vehicle: data.tipe_of_vehicles.find((e) => e.name === values.type_of_vehicle)?.id,
-          brand: brand_vehicles.find((e: any) => e.name === values.brand)?.id,
+          brand: brand_vehicles?.find((e: any) => e.name === values.brand)?.id,
           model: data.models.find((e) => e.name === values.model)?.id,
           year: values.year,
           engine: values.engine,
@@ -828,11 +826,11 @@ export default function VehiclesForm2({
                             <CommandGroup>
                               {brand_vehicles?.map((option) => (
                                 <CommandItem
-                                  value={option.name}
+                                  value={option.name || ''}
                                   key={option.name}
                                   onSelect={() => {
-                                    form.setValue('brand', option.name);
-                                    fetchModels(option.id as string);
+                                    form.setValue('brand', option.name || '');
+                                    fetchModels(`${option.id}`);
                                   }}
                                 >
                                   {option.name}
@@ -1169,24 +1167,26 @@ export default function VehiclesForm2({
                     </FormItem>
                   )}
                 />
-                <div className=" min-w-[250px] flex flex-col gap-2">
-                  <FormField
-                    control={form.control}
-                    name="allocated_to"
-                    render={({ field }) => (
-                      <>
-                        <CheckboxDefaultValues
-                          disabled={readOnly}
-                          options={contractorCompanies}
-                          required={true}
-                          field={field}
-                          placeholder="Afectado a"
-                        />
-                        <FormDescription>Selecciona a quien se le asignará el equipo</FormDescription>
-                      </>
-                    )}
-                  />
-                </div>
+                {role !== 'Invitado' && (
+                  <div className=" min-w-[250px] flex flex-col gap-2">
+                    <FormField
+                      control={form.control}
+                      name="allocated_to"
+                      render={({ field }) => (
+                        <>
+                          <CheckboxDefaultValues
+                            disabled={readOnly}
+                            options={contractorCompanies}
+                            required={true}
+                            field={field}
+                            placeholder="Afectado a"
+                          />
+                          <FormDescription>Selecciona a quien se le asignará el equipo</FormDescription>
+                        </>
+                      )}
+                    />
+                  </div>
+                )}
                 <div className="w-[300px] flex  gap-2">
                   <FormField
                     control={form.control}
