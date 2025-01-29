@@ -24,14 +24,14 @@ interface MaintenanceChecklistLayoutProps {
 
 const styles = StyleSheet.create({
   page: {
-    padding: 30,
-    fontSize: 10,
+    padding: 25,
+    fontSize: 9,
     fontFamily: 'Helvetica',
     position: 'relative',
   },
   pageCompact: {
     padding: 25,
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: 'Helvetica',
     position: 'relative',
   },
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   contentWrapper: {
     position: 'relative',
     height: '100%',
-    padding: 10,
+    padding: 8,
   },
   contentWrapperCompact: {
     position: 'relative',
@@ -67,6 +67,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottom: '1pt solid black',
     backgroundColor: 'white',
+    marginBottom: 5,
   },
   headerLeft: {
     width: '30%',
@@ -77,24 +78,24 @@ const styles = StyleSheet.create({
   },
   logo: {
     marginLeft: 10,
-    width: 120,
-    height: 50,
+    width: 100,
+    height: 45,
     objectFit: 'contain',
   },
   headerText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 'bold',
-    textAlign: 'right',
-    marginBottom: 4,
-  },
-  headerSubText: {
-    fontSize: 8,
     textAlign: 'right',
     marginBottom: 2,
   },
+  headerSubText: {
+    fontSize: 7,
+    textAlign: 'right',
+    marginBottom: 1,
+  },
   infoGrid: {
     flexDirection: 'row',
-    paddingVertical: 5,
+    paddingVertical: 3,
   },
   infoGridCompact: {
     flexDirection: 'row',
@@ -102,7 +103,7 @@ const styles = StyleSheet.create({
   },
   infoColumn: {
     flex: 1,
-    paddingHorizontal: 10,
+    paddingHorizontal: 3,
   },
   infoColumnCompact: {
     flex: 1,
@@ -110,7 +111,7 @@ const styles = StyleSheet.create({
   },
   infoRow: {
     flexDirection: 'row',
-    marginVertical: 2,
+    marginVertical: 1,
     alignItems: 'center',
   },
   infoRowCompact: {
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   infoLabel: {
-    fontSize: 9,
+    fontSize: 8,
     marginRight: 2,
   },
   infoValue: {
@@ -127,13 +128,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: '#000',
     marginLeft: 2,
-    fontSize: 9,
-    minHeight: 12,
+    fontSize: 8,
+    minHeight: 10,
   },
   tablesContainer: {
     flexDirection: 'row',
-    gap: 10,
-    padding: 10,
+    gap: 3,
+    padding: 3,
   },
   tablesContainerCompact: {
     flexDirection: 'row',
@@ -147,17 +148,17 @@ const styles = StyleSheet.create({
     width: '100%',
     borderWidth: 1,
     borderColor: '#000',
-    // marginBottom: 10,
+    marginBottom: 3,
   },
   tableCompact: {
     width: '100%',
     borderWidth: 1,
     borderColor: '#000',
-    // marginBottom: 5,
+    marginBottom: 5,
   },
   tableHeader: {
     backgroundColor: '#f0f0f0',
-    padding: 4,
+    padding: 2,
     borderBottomWidth: 1,
     borderBottomColor: '#000',
   },
@@ -168,7 +169,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#000',
   },
   tableHeaderText: {
-    fontSize: 9,
+    fontSize: 7,
     fontWeight: 'bold',
   },
   tableHeaderTextCompact: {
@@ -179,8 +180,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: 0.5,
     borderBottomColor: '#000',
-    minHeight: 20,
-    padding: 2,
+    minHeight: 14,
+    padding: 1,
   },
   tableRowCompact: {
     flexDirection: 'row',
@@ -191,7 +192,7 @@ const styles = StyleSheet.create({
   },
   tableCellLeft: {
     flex: 1,
-    paddingLeft: 5,
+    paddingLeft: 2,
     borderRightWidth: 1,
     borderRightColor: '#000',
   },
@@ -202,7 +203,7 @@ const styles = StyleSheet.create({
     borderRightColor: '#000',
   },
   tableCellRight: {
-    width: 40,
+    width: 25,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -212,14 +213,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tableCellText: {
-    fontSize: 9,
+    fontSize: 7,
   },
   tableCellTextCompact: {
     fontSize: 7,
   },
   terminology: {
-    marginVertical: 5,
-    padding: 5,
+    marginVertical: 3,
+    padding: 3,
     backgroundColor: '#f0f0f0',
   },
   terminologyCompact: {
@@ -228,10 +229,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
   },
   terminologyTitle: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 3,
+    marginBottom: 2,
   },
   terminologyTitleCompact: {
     fontSize: 8,
@@ -243,7 +244,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
   },
   terminologyOptionsCompact: {
     flexDirection: 'row',
@@ -252,13 +253,13 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   terminologyText: {
-    fontSize: 8,
+    fontSize: 7,
   },
   terminologyTextCompact: {
     fontSize: 7,
   },
   warning: {
-    fontSize: 9,
+    fontSize: 7,
     fontWeight: 'bold',
     textAlign: 'center',
   },
@@ -269,8 +270,9 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   footer: {
-    marginTop: 20,
-    padding: 10,
+    marginTop: 8,
+    padding: 3,
+    marginBottom: 70,
   },
   footerCompact: {
     marginTop: 10,
@@ -284,24 +286,21 @@ const styles = StyleSheet.create({
   observacionesRow: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  observacionesTitle: {
-    fontWeight: 'bold',
-    marginBottom: 5,
+    minHeight: 20,
   },
   observacionesLabel: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: 'bold',
     marginRight: 2,
-  },
-  observacionesText: {
-    minHeight: 50,
   },
   observacionesValue: {
     flex: 1,
     borderBottomWidth: 0.5,
     borderBottomColor: '#000',
     minHeight: 12,
+    fontSize: 7,
+    textAlign: 'justify',
+    lineHeight: 1.2,
   },
   signatureContainer: {
     position: 'absolute',
@@ -309,15 +308,15 @@ const styles = StyleSheet.create({
     bottom: 5,
     alignItems: 'center',
     width: 150,
-    paddingBottom: 10,
+    paddingBottom: 8,
   },
   signatureImage: {
-    width: 120,
-    height: 60,
+    width: 100,
+    height: 50,
     marginBottom: 2,
   },
   signatureText: {
-    fontSize: 8,
+    fontSize: 7,
     textAlign: 'center',
     fontWeight: 'bold',
   },
@@ -458,7 +457,7 @@ export const MaintenanceChecklistLayout = ({
             </View>
           </View>
 
-          <View style={styles.footerCompact}>
+          <View style={styles.footer}>
             <View style={styles.observacionesRow}>
               <Text style={styles.observacionesLabel}>Observaciones:</Text>
               <Text style={styles.observacionesValue}>{data?.observaciones}</Text>
