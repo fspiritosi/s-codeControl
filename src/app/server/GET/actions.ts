@@ -555,6 +555,28 @@ export const fetchPermanentDocumentsEquipment = async () => {
   }
   return data;
 };
+export const fetchEquipmentById = async (id: string) => {
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+
+  const { data: vehicleData, error } = await supabase
+      .from('vehicles')
+      .select('*, brand_vehicles(name), model_vehicles(name),types_of_vehicles(name),type(name)')
+      .eq('id', id);
+
+  if (error) console.log('eroor', error);
+
+  const vehicle = vehicleData?.map((item: any) => ({
+      ...item,
+      type_of_vehicle: item.types_of_vehicles.name,
+      brand: item.brand_vehicles.name,
+      model: item.model_vehicles.name,
+      type: item.type.name,
+    }));
+    return vehicle;
+}
 // Repair-related actions
 export const fetchAllOpenRepairRequests = async () => {
   const cookiesStore = cookies();
