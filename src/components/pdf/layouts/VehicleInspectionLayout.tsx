@@ -74,6 +74,11 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginBottom: 2,
   },
+  pageNumber: {
+    fontSize: 8,
+    textAlign: 'right',
+    marginBottom: 2,
+  },
   infoGrid: {
     flexDirection: 'row',
     paddingVertical: 5,
@@ -193,21 +198,82 @@ const styles = StyleSheet.create({
 });
 
 export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl, items }: VehicleInspectionLayoutProps) => {
-  // Dividir los items para las dos páginas
-  const itemsPerPage = Math.ceil(items.length / 2);
-  const firstPageItems = items.slice(0, itemsPerPage);
-  const secondPageItems = items.slice(itemsPerPage);
+  const ITEMS_PER_COLUMN = 34;
 
-  // Dividir los items de cada página en dos columnas
-  const splitItemsInColumns = (pageItems: typeof items) => {
-    const halfLength = Math.ceil(pageItems.length / 2);
-    return {
-      leftItems: pageItems.slice(0, halfLength),
-      rightItems: pageItems.slice(halfLength),
-    };
+  // Función para dividir los items en secciones
+  const splitItemsInSections = (items:any) => {
+    const sections: Array<typeof items> = [];
+    let currentSection: typeof items = [];
+
+    items.forEach((item:any) => {
+      if (item.title) {
+        if (currentSection.length > 0) {
+          sections.push([...currentSection]);
+        }
+        currentSection = [item];
+      } else {
+        currentSection.push(item);
+      }
+    });
+
+    if (currentSection.length > 0) {
+      sections.push(currentSection);
+    }
+
+    return sections;
   };
 
-  const renderHeader = () => (
+  // Función para distribuir las secciones en columnas y páginas
+  const distributeItemsInPagesAndColumns = () => {
+    const sections = splitItemsInSections(items);
+    const pages: Array<{ leftItems: typeof items; rightItems: typeof items }> = [];
+    let currentPage = { leftItems: [] as typeof items, rightItems: [] as typeof items };
+    let currentColumnItems = 0;
+    let isLeftColumn = true;
+
+    // Procesar todas las secciones excepto las últimas 3
+    for (let i = 0; i < sections.length - 3; i++) {
+      const section = sections[i];
+      
+      if (currentColumnItems + section.length > ITEMS_PER_COLUMN) {
+        if (isLeftColumn) {
+          isLeftColumn = false;
+          currentColumnItems = 0;
+        } else {
+          pages.push(currentPage);
+          currentPage = { leftItems: [] as typeof items, rightItems: [] as typeof items };
+          isLeftColumn = true;
+          currentColumnItems = 0;
+        }
+      }
+
+      if (isLeftColumn) {
+        currentPage.leftItems.push(...section);
+      } else {
+        currentPage.rightItems.push(...section);
+      }
+      currentColumnItems += section.length;
+    }
+
+    // Si hay items en la página actual y no está vacía, la guardamos
+    if (currentPage.leftItems.length > 0 || currentPage.rightItems.length > 0) {
+      pages.push(currentPage);
+    }
+
+    // Crear una nueva página para las últimas 3 secciones
+    const lastThreeSections = sections.slice(-3);
+    const lastPage = {
+      leftItems: [...lastThreeSections[0], ...lastThreeSections[1]],
+      rightItems: [...lastThreeSections[2]]
+    };
+    pages.push(lastPage);
+
+    return pages;
+  };
+
+  const pages = distributeItemsInPagesAndColumns();
+
+  const renderHeader = (pageNumber: number, totalPages: number) => (
     <View style={styles.header} fixed>
       <View style={styles.headerLeft}>
         {logoUrl && <Image style={styles.logo} src={logoUrl} />}
@@ -215,6 +281,7 @@ export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl, items 
       <View style={styles.headerRight}>
         <Text style={styles.headerText}>{title}</Text>
         <Text style={styles.headerSubText}>{subtitle}</Text>
+        <Text style={styles.pageNumber}>Página {pageNumber} de {totalPages}</Text>
       </View>
     </View>
   );
@@ -254,55 +321,6 @@ export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl, items 
     </View>
   );
 
-  const renderTableColumns = (pageItems: typeof items) => {
-    const { leftItems, rightItems } = splitItemsInColumns(pageItems);
-    return (
-      <View style={styles.tablesContainer}>
-        <View style={styles.tableColumn}>
-          <View style={styles.table}>
-            {leftItems.map((item, index) => (
-              item.title ? (
-                <View key={`title-${index}`} style={styles.tableHeader}>
-                  <Text style={styles.tableHeaderText}>{item.label}</Text>
-                </View>
-              ) : (
-                <View key={`row-${index}`} style={styles.tableRow}>
-                  <View style={styles.tableCellLeft}>
-                    <Text style={styles.tableCellText}>{item.label}</Text>
-                  </View>
-                  <View style={styles.tableCellRight}>
-                    <Text style={styles.tableCellText}>{item.result}</Text>
-                  </View>
-                </View>
-              )
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.tableColumn}>
-          <View style={styles.table}>
-            {rightItems.map((item, index) => (
-              item.title ? (
-                <View key={`title-${index}`} style={styles.tableHeader}>
-                  <Text style={styles.tableHeaderText}>{item.label}</Text>
-                </View>
-              ) : (
-                <View key={`row-${index}`} style={styles.tableRow}>
-                  <View style={styles.tableCellLeft}>
-                    <Text style={styles.tableCellText}>{item.label}</Text>
-                  </View>
-                  <View style={styles.tableCellRight}>
-                    <Text style={styles.tableCellText}>{item.result}</Text>
-                  </View>
-                </View>
-              )
-            ))}
-          </View>
-        </View>
-      </View>
-    );
-  };
-
   const renderTerminology = () => (
     <View style={styles.terminologyContainer}>
       <Text style={styles.terminologyTitle}>TERMINOLOGIA A UTILIZAR</Text>
@@ -317,34 +335,73 @@ export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl, items 
     </View>
   );
 
+  const renderTableColumns = (pageItems: { leftItems: typeof items; rightItems: typeof items }) => (
+    <View style={styles.tablesContainer}>
+      <View style={styles.tableColumn}>
+        <View style={styles.table}>
+          {pageItems.leftItems.map((item, index) => (
+            item.title ? (
+              <View key={`title-${index}`} style={styles.tableHeader}>
+                <Text style={styles.tableHeaderText}>{item.label}</Text>
+              </View>
+            ) : (
+              <View key={`row-${index}`} style={styles.tableRow}>
+                <View style={styles.tableCellLeft}>
+                  <Text style={styles.tableCellText}>{item.label}</Text>
+                </View>
+                <View style={styles.tableCellRight}>
+                  <Text style={styles.tableCellText}>{item.result}</Text>
+                </View>
+              </View>
+            )
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.tableColumn}>
+        <View style={styles.table}>
+          {pageItems.rightItems.map((item, index) => (
+            item.title ? (
+              <View key={`title-${index}`} style={styles.tableHeader}>
+                <Text style={styles.tableHeaderText}>{item.label}</Text>
+              </View>
+            ) : (
+              <View key={`row-${index}`} style={styles.tableRow}>
+                <View style={styles.tableCellLeft}>
+                  <Text style={styles.tableCellText}>{item.label}</Text>
+                </View>
+                <View style={styles.tableCellRight}>
+                  <Text style={styles.tableCellText}>{item.result}</Text>
+                </View>
+              </View>
+            )
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+
   return (
     <Document>
-      {/* Primera página */}
-      <Page size="A4" style={styles.page}>
-        <View style={styles.border} fixed />
-        <View style={styles.contentWrapper}>
-          {renderHeader()}
-          {renderInfoGrid()}
-          {renderTerminology()}
-          {renderTableColumns(firstPageItems)}
-        </View>
-      </Page>
-
-      {/* Segunda página */}
-      <Page size="A4" style={styles.page}>
-        <View style={styles.border} fixed />
-        <View style={styles.contentWrapper}>
-          {renderHeader()}
-          {renderTerminology()}
-          {renderTableColumns(secondPageItems)}
-          <View style={styles.footer}>
-            <View style={styles.observacionesRow}>
-              <Text style={styles.observacionesLabel}>Observaciones:</Text>
-              <Text style={styles.observacionesValue}>{data?.observaciones}</Text>
-            </View>
+      {pages.map((pageItems, pageIndex) => (
+        <Page key={`page-${pageIndex}`} size="A4" style={styles.page}>
+          <View style={styles.border} fixed />
+          <View style={styles.contentWrapper}>
+            {renderHeader(pageIndex + 1, pages.length)}
+            {pageIndex === 0 && renderInfoGrid()}
+            {renderTerminology()}
+            {renderTableColumns(pageItems)}
+            {pageIndex === pages.length - 1 && (
+              <View style={styles.footer}>
+                <View style={styles.observacionesRow}>
+                  <Text style={styles.observacionesLabel}>Observaciones:</Text>
+                  <Text style={styles.observacionesValue}>{data?.observaciones}</Text>
+                </View>
+              </View>
+            )}
           </View>
-        </View>
-      </Page>
+        </Page>
+      ))}
     </Document>
   );
 };
