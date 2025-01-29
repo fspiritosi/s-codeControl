@@ -168,6 +168,24 @@ const styles = StyleSheet.create({
     borderBottomColor: '#000',
     minHeight: 12,
   },
+  signatureContainer: {
+    position: 'absolute',
+    right: 5,
+    bottom: 5,
+    alignItems: 'center',
+    width: 150,
+    paddingBottom: 10,
+  },
+  signatureImage: {
+    width: 120,
+    height: 60,
+    marginBottom: 2,
+  },
+  signatureText: {
+    fontSize: 8,
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
   terminologyTitle: {
     fontSize: 9,
     fontWeight: 'bold',
@@ -381,6 +399,16 @@ export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl, items 
     </View>
   );
 
+  const renderSignature = () => (
+    <View style={styles.signatureContainer}>
+      <Image 
+        style={styles.signatureImage} 
+        src="https://static.vecteezy.com/system/resources/previews/000/538/077/original/manual-signature-for-documents-on-white-background-hand-drawn-calligraphy-lettering-vector-illustration.jpg" 
+      />
+      <Text style={styles.signatureText}>FIRMA DEL CONDUCTOR</Text>
+    </View>
+  );
+
   return (
     <Document>
       {pages.map((pageItems, pageIndex) => (
@@ -392,12 +420,15 @@ export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl, items 
             {renderTerminology()}
             {renderTableColumns(pageItems)}
             {pageIndex === pages.length - 1 && (
-              <View style={styles.footer}>
-                <View style={styles.observacionesRow}>
-                  <Text style={styles.observacionesLabel}>Observaciones:</Text>
-                  <Text style={styles.observacionesValue}>{data?.observaciones}</Text>
+              <>
+                <View style={styles.footer}>
+                  <View style={styles.observacionesRow}>
+                    <Text style={styles.observacionesLabel}>Observaciones:</Text>
+                    <Text style={styles.observacionesValue}>{data?.observaciones}</Text>
+                  </View>
                 </View>
-              </View>
+                {renderSignature()}
+              </>
             )}
           </View>
         </Page>

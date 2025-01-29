@@ -303,6 +303,24 @@ const styles = StyleSheet.create({
     borderBottomColor: '#000',
     minHeight: 12,
   },
+  signatureContainer: {
+    position: 'absolute',
+    right: 5,
+    bottom: 5,
+    alignItems: 'center',
+    width: 150,
+    paddingBottom: 10,
+  },
+  signatureImage: {
+    width: 120,
+    height: 60,
+    marginBottom: 2,
+  },
+  signatureText: {
+    fontSize: 8,
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
 });
 
 export const MaintenanceChecklistLayout = ({
@@ -358,6 +376,16 @@ export const MaintenanceChecklistLayout = ({
           </View>
         </View>
       ))}
+    </View>
+  );
+
+  const renderSignature = () => (
+    <View style={styles.signatureContainer}>
+      <Image 
+        style={styles.signatureImage} 
+        src="https://static.vecteezy.com/system/resources/previews/000/538/077/original/manual-signature-for-documents-on-white-background-hand-drawn-calligraphy-lettering-vector-illustration.jpg" 
+      />
+      <Text style={styles.signatureText}>FIRMA DEL CONDUCTOR</Text>
     </View>
   );
 
@@ -436,6 +464,7 @@ export const MaintenanceChecklistLayout = ({
               <Text style={styles.observacionesValue}>{data?.observaciones}</Text>
             </View>
           </View>
+          {renderSignature()}
         </View>
       </Page>
     </Document>

@@ -22,6 +22,8 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Textarea } from '../ui/textarea';
+import { TransporteSPANAYCHKHYS03 } from '../pdf/generators/TransporteSPANAYCHKHYS03';
+import { useLoggedUserStore } from '@/store/loggedUser';
 
 export const checklistItems03 = {
   general: [
@@ -234,7 +236,7 @@ export default function VehicleMaintenanceChecklist({
       router.push(`/dashboard/forms/${params.id}`);
     }
   };
-
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   return (
     <Card className="w-full mx-auto mb-4">
       {resetQrSelection && (
@@ -262,10 +264,23 @@ export default function VehicleMaintenanceChecklist({
           <div className="flex gap-4">
             <BackButton />
             {defaultAnswer && (
-              <PDFPreviewDialog title={`Vista previa - ${form.getValues().movil || 'Formulario'}`} buttonText="Ver PDF">
+              <PDFPreviewDialog
+                title="Inspección Diaria de Vehículo"
+                description={`Conductor: ${form.getValues().chofer || 'No especificado'} - Fecha: ${form.getValues().fecha || new Date().toLocaleDateString()}`}
+                buttonText="Imprimir respuesta"
+              >
                 <div className="h-full w-full bg-white">
-                  {/* Aquí irá el contenido del PDF */}
-                  <p>PDF Preview del formulario</p>
+                  <TransporteSPANAYCHKHYS03
+                    data={{
+                      movil: form.getValues().movil,
+                      chofer: form.getValues().chofer,
+                      kilometraje: form.getValues().kilometraje,
+                      fecha: form.getValues().fecha,
+                      ...form.getValues(),
+                    }}
+                    companyLogo={actualCompany?.company_logo}
+                    preview={true}
+                  />
                 </div>
               </PDFPreviewDialog>
             )}

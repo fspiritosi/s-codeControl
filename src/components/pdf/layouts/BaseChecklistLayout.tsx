@@ -154,6 +154,24 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingTop: 5,
   },
+  signatureContainer: {
+    position: 'absolute',
+    right: 5,
+    bottom: 5,
+    alignItems: 'center',
+    width: 150,
+    paddingBottom: 10,
+  },
+  signatureImage: {
+    width: 120,
+    height: 60,
+    marginBottom: 2,
+  },
+  signatureText: {
+    fontSize: 8,
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
 });
 
 interface BaseChecklistProps {
@@ -188,6 +206,16 @@ export const BaseChecklistLayout = ({
   const pages = Math.ceil(data.items.length / itemsPerPage);
 
   console.log(data,'data');
+
+  const renderSignature = () => (
+    <View style={styles.signatureContainer}>
+      <Image 
+        style={styles.signatureImage} 
+        src="https://static.vecteezy.com/system/resources/previews/000/538/077/original/manual-signature-for-documents-on-white-background-hand-drawn-calligraphy-lettering-vector-illustration.jpg" 
+      />
+      <Text style={styles.signatureText}>FIRMA DEL CONDUCTOR</Text>
+    </View>
+  );
 
   return (
     <Document>
@@ -291,12 +319,11 @@ export const BaseChecklistLayout = ({
                     )}
                   </Text>
 
-                  <View style={styles.signature}>
-                    <Text>FIRMA DEL CHOFER QUE INSPECCIONÓ</Text>
-                  </View>
+              
                 </View>
               )}
             </View>
+            {renderSignature()}
           </View>
         </Page>
       ))}
