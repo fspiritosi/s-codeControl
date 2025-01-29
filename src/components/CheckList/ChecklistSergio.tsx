@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { CreateNewFormAnswer, UpdateVehicle } from '@/app/server/UPDATE/actions';
 import { cn } from '@/lib/utils';
+import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import moment from 'moment';
@@ -17,13 +18,12 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import BackButton from '../BackButton';
+import { PDFPreviewDialog } from '../pdf-preview-dialog';
+import { TransporteSPANAYCHKHYS01 } from '../pdf/generators/TransporteSPANAYCHKHYS01';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Textarea } from '../ui/textarea';
-import { PDFPreviewDialog } from '../pdf-preview-dialog';
-import { TransporteSPANAYCHKHYS03 } from '../pdf/generators/TransporteSPANAYCHKHYS03';
-import { useLoggedUserStore } from '@/store/loggedUser';
 
 export const checklistItems = {
   //Podemos armar un array de objetos que ya tengan las opciones
@@ -207,19 +207,19 @@ export default function VehicleInspectionChecklist({
       'Luces Altas': 'lucesAltas',
       'Luces Bajas': 'lucesBajas',
       'Luces de Giro': 'lucesGiro',
-      'Balizas': 'balizas',
+      Balizas: 'balizas',
       'Luces de Retroceso': 'lucesRetroceso',
       'Luces Freno': 'lucesFreno',
       'Luces de Estacionamiento': 'lucesEstacionamiento',
       'Funcionamiento Tacógrafo (Microtrack)': 'funcionamientoTacografo',
       'Funciones de tablero (luces testigo)': 'funcionesTablero',
-      'Bocina': 'bocina',
+      Bocina: 'bocina',
       'Alarma de Retroceso': 'alarmaRetroceso',
       'Calefactor Desempañador': 'calefactorDesempanador',
       'Aire Acondicionado': 'aireAcondicionado',
       'Limpia Parabrisas y Lava Parabrisas': 'limpiaParabrisas',
-      'Parasol': 'parasol',
-      'Luneta': 'luneta',
+      Parasol: 'parasol',
+      Luneta: 'luneta',
       'Ventanilla (apertura)': 'ventanillaApertura',
       'Ventanilla (Cierre)': 'ventanillaCierre',
       'Puertas (cierre efectivo)': 'puertasCierre',
@@ -232,9 +232,9 @@ export default function VehicleInspectionChecklist({
       'Balizas triangulares / conos': 'balizasTriangulares',
       'Chalecos reflectantes': 'chalecosReflectantes',
       'Revisión check Point/check Nut': 'revisionCheckPoint',
-      'Arrestallamas': 'arrestallamas',
+      Arrestallamas: 'arrestallamas',
       'Airbags frontales': 'airbagsFrontales',
-      'Matafuego': 'matafuego',
+      Matafuego: 'matafuego',
       'Suspensión (Amortiguadores)': 'suspension',
       'Criquet (Gato) y llave de rueda': 'criquet',
       'Filtro de Aire: Motor/Habitaculo Sopletear': 'filtroAire',
@@ -307,9 +307,12 @@ export default function VehicleInspectionChecklist({
         <div className="flex gap-4">
           <BackButton />
           {defaultAnswer && (
-            <PDFPreviewDialog title={`Vista previa - ${form.getValues().movil || 'Formulario'}`} buttonText="Imprimir respuesta">
+            <PDFPreviewDialog
+              title={`Vista previa - ${form.getValues().movil || 'Formulario'}`}
+              buttonText="Imprimir respuesta"
+            >
               <div className="h-full w-full bg-white">
-                <TransporteSPANAYCHKHYS03
+                <TransporteSPANAYCHKHYS01
                   data={mapFormValuesToPdfProps(form.getValues())}
                   companyLogo={actualCompany?.company_logo || '/logo.png'}
                   preview={true}

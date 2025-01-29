@@ -12,28 +12,30 @@ interface VehicleInspectionLayoutProps {
     dominio?: string;
     kilometraje?: string;
     hora?: string;
-    luces?: Record<string, string>;
-    seguridad?: Record<string, string>;
-    interior?: Record<string, string>;
-    mecanica?: Record<string, string>;
     observaciones?: string;
   };
   logoUrl?: string;
+  items: Array<{
+    title?: boolean;
+    label: string;
+    result?: string;
+    section?: string;
+  }>;
 }
 
 const styles = StyleSheet.create({
   page: {
-    padding: 40,
+    padding: 30,
     fontSize: 10,
     fontFamily: 'Helvetica',
     position: 'relative',
   },
   border: {
     position: 'absolute',
-    top: 40,
-    left: 40,
-    right: 40,
-    bottom: 40,
+    top: 30,
+    left: 30,
+    right: 30,
+    bottom: 30,
     border: '1pt solid black',
   },
   contentWrapper: {
@@ -52,6 +54,7 @@ const styles = StyleSheet.create({
     width: '30%',
   },
   logo: {
+    marginLeft: 10,
     width: 120,
     height: 50,
     objectFit: 'contain',
@@ -71,174 +74,273 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginBottom: 2,
   },
-  content: {
-    height: '100%',
-  },
   infoGrid: {
-    marginBottom: 15,
+    flexDirection: 'row',
+    paddingVertical: 5,
+  },
+  infoColumn: {
+    flex: 1,
+    paddingHorizontal: 5,
   },
   infoRow: {
     flexDirection: 'row',
-    borderBottom: '1pt solid #000',
-    minHeight: 25,
-    padding: 4,
-  },
-  infoLabel: {
-    width: '30%',
-    fontWeight: 'bold',
-    paddingLeft: 4,
-  },
-  infoValue: {
-    width: '70%',
-  },
-  sectionContainer: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    backgroundColor: '#e6e6e6',
-    padding: 5,
-    marginBottom: 10,
-    textAlign: 'center',
-    borderBottom: '1pt solid black',
-  },
-  itemRow: {
-    flexDirection: 'row',
-    borderBottom: '1pt solid #000',
-    minHeight: 25,
-    padding: 4,
-  },
-  itemLabel: {
-    width: '60%',
-    borderRight: '1pt solid #000',
-    padding: 4,
-  },
-  itemResult: {
-    width: '40%',
-    textAlign: 'center',
-    padding: 4,
-  },
-  observaciones: {
-    marginTop: 20,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#000',
-  },
-  observacionesTitle: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    textAlign: 'center',
-    backgroundColor: '#e6e6e6',
-    padding: 5,
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 50,
-    left: 50,
-    right: 50,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: '#000',
-    paddingTop: 10,
-  },
-  signature: {
-    width: '100%',
+    marginVertical: 1,
     alignItems: 'center',
   },
-  signatureLine: {
+  infoLabel: {
+    fontSize: 9,
+    marginRight: 2,
+  },
+  infoValue: {
+    flex: 1,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#000',
+    marginLeft: 2,
+    fontSize: 9,
+    minHeight: 12,
+  },
+  tablesContainer: {
+    flexDirection: 'row',
+    gap: 5,
+    padding: 5,
+  },
+  tableColumn: {
+    flex: 1,
+  },
+  table: {
     width: '100%',
+    borderWidth: 1,
+    borderColor: '#000',
+    marginBottom: 5,
+  },
+  tableHeader: {
+    backgroundColor: '#f0f0f0',
+    padding: 2,
     borderBottomWidth: 1,
     borderBottomColor: '#000',
-    marginBottom: 5,
+  },
+  tableHeaderText: {
+    fontSize: 8,
+    fontWeight: 'bold',
+  },
+  tableRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#000',
+    minHeight: 16,
+    padding: 1,
+  },
+  tableCellLeft: {
+    flex: 1,
+    paddingLeft: 2,
+    borderRightWidth: 1,
+    borderRightColor: '#000',
+  },
+  tableCellRight: {
+    width: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tableCellText: {
+    fontSize: 7,
+  },
+  footer: {
+    marginTop: 10,
+    padding: 5,
+  },
+  observacionesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  observacionesLabel: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    marginRight: 2,
+  },
+  observacionesValue: {
+    flex: 1,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#000',
+    minHeight: 12,
+  },
+  terminologyTitle: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 3,
+  },
+  terminologyContainer: {
+    marginVertical: 5,
+    padding: 5,
+    backgroundColor: '#f0f0f0',
+  },
+  terminologyRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  terminologyText: {
+    fontSize: 8,
+    // fontWeight: 'bold',
+  },
+  noteText: {
+    fontSize: 8,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 2,
   },
 });
 
-export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl }: VehicleInspectionLayoutProps) => {
-  const renderSection = (title: string, items?: Record<string, string>) => {
+export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl, items }: VehicleInspectionLayoutProps) => {
+  // Dividir los items para las dos páginas
+  const itemsPerPage = Math.ceil(items.length / 2);
+  const firstPageItems = items.slice(0, itemsPerPage);
+  const secondPageItems = items.slice(itemsPerPage);
 
-    console.log(items,'items');
-    if (!items) return null;
+  // Dividir los items de cada página en dos columnas
+  const splitItemsInColumns = (pageItems: typeof items) => {
+    const halfLength = Math.ceil(pageItems.length / 2);
+    return {
+      leftItems: pageItems.slice(0, halfLength),
+      rightItems: pageItems.slice(halfLength),
+    };
+  };
+
+  const renderHeader = () => (
+    <View style={styles.header} fixed>
+      <View style={styles.headerLeft}>
+        {logoUrl && <Image style={styles.logo} src={logoUrl} />}
+      </View>
+      <View style={styles.headerRight}>
+        <Text style={styles.headerText}>{title}</Text>
+        <Text style={styles.headerSubText}>{subtitle}</Text>
+      </View>
+    </View>
+  );
+
+  const renderInfoGrid = () => (
+    <View style={styles.infoGrid}>
+      <View style={styles.infoColumn}>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Fecha:</Text>
+          <Text style={styles.infoValue}>{data?.fecha}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Conductor:</Text>
+          <Text style={styles.infoValue}>{data?.conductor}</Text>
+        </View>
+      </View>
+      <View style={styles.infoColumn}>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Interno:</Text>
+          <Text style={styles.infoValue}>{data?.interno}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Dominio:</Text>
+          <Text style={styles.infoValue}>{data?.dominio}</Text>
+        </View>
+      </View>
+      <View style={styles.infoColumn}>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Kilometraje:</Text>
+          <Text style={styles.infoValue}>{data?.kilometraje}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Hora:</Text>
+          <Text style={styles.infoValue}>{data?.hora}</Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderTableColumns = (pageItems: typeof items) => {
+    const { leftItems, rightItems } = splitItemsInColumns(pageItems);
     return (
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>{title}</Text>
-        {Object.entries(items).map(([key, value], index) => (
-          <View key={index} style={styles.itemRow}>
-            <Text style={styles.itemLabel}>{key}</Text>
-            <Text style={styles.itemResult}>{value === 'true' ? 'SI' : value === 'false' ? 'NO' : value || '-'}</Text>
+      <View style={styles.tablesContainer}>
+        <View style={styles.tableColumn}>
+          <View style={styles.table}>
+            {leftItems.map((item, index) => (
+              item.title ? (
+                <View key={`title-${index}`} style={styles.tableHeader}>
+                  <Text style={styles.tableHeaderText}>{item.label}</Text>
+                </View>
+              ) : (
+                <View key={`row-${index}`} style={styles.tableRow}>
+                  <View style={styles.tableCellLeft}>
+                    <Text style={styles.tableCellText}>{item.label}</Text>
+                  </View>
+                  <View style={styles.tableCellRight}>
+                    <Text style={styles.tableCellText}>{item.result}</Text>
+                  </View>
+                </View>
+              )
+            ))}
           </View>
-        ))}
+        </View>
+
+        <View style={styles.tableColumn}>
+          <View style={styles.table}>
+            {rightItems.map((item, index) => (
+              item.title ? (
+                <View key={`title-${index}`} style={styles.tableHeader}>
+                  <Text style={styles.tableHeaderText}>{item.label}</Text>
+                </View>
+              ) : (
+                <View key={`row-${index}`} style={styles.tableRow}>
+                  <View style={styles.tableCellLeft}>
+                    <Text style={styles.tableCellText}>{item.label}</Text>
+                  </View>
+                  <View style={styles.tableCellRight}>
+                    <Text style={styles.tableCellText}>{item.result}</Text>
+                  </View>
+                </View>
+              )
+            ))}
+          </View>
+        </View>
       </View>
     );
   };
 
-  console.log(data,'data');
+  const renderTerminology = () => (
+    <View style={styles.terminologyContainer}>
+      <Text style={styles.terminologyTitle}>TERMINOLOGIA A UTILIZAR</Text>
+      <View style={styles.terminologyRow}>
+        <Text style={styles.terminologyText}>N: Normal</Text>
+        <Text style={styles.terminologyText}>R: Reparado</Text>
+        <Text style={styles.terminologyText}>NC: No Corresponde</Text>
+      </View>
+      <Text style={styles.noteText}>
+        NOTA: Complete con la inicial según corresponda. Ampliar en observaciones la accion que efectuó si corresponde
+      </Text>
+    </View>
+  );
 
   return (
     <Document>
+      {/* Primera página */}
       <Page size="A4" style={styles.page}>
         <View style={styles.border} fixed />
         <View style={styles.contentWrapper}>
-          <View style={styles.header} fixed>
-            <View style={styles.headerLeft}>
-              {logoUrl && (
-                <Image style={styles.logo} src={logoUrl} />
-              )}
-            </View>
-            <View style={styles.headerRight}>
-              <Text style={styles.headerText}>{title}</Text>
-              <Text style={styles.headerSubText}>Hoja 1 de 1</Text>
-              <Text style={styles.headerSubText}>{subtitle}</Text>
-            </View>
-          </View>
+          {renderHeader()}
+          {renderInfoGrid()}
+          {renderTerminology()}
+          {renderTableColumns(firstPageItems)}
+        </View>
+      </Page>
 
-          <View style={styles.content}>
-            <View style={styles.infoGrid}>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Fecha:</Text>
-                <Text style={styles.infoValue}>{data.fecha || ''}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Hora:</Text>
-                <Text style={styles.infoValue}>{data.hora || ''}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Conductor:</Text>
-                <Text style={styles.infoValue}>{data.conductor || ''}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Interno:</Text>
-                <Text style={styles.infoValue}>{data.interno || ''}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Dominio:</Text>
-                <Text style={styles.infoValue}>{data.dominio || ''}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Kilometraje:</Text>
-                <Text style={styles.infoValue}>{data.kilometraje || ''}</Text>
-              </View>
-            </View>
-
-            {renderSection('LUCES', data.luces)}
-            {renderSection('SEGURIDAD', data.seguridad)}
-            {renderSection('INTERIOR', data.interior)}
-            {renderSection('MECÁNICA', data.mecanica)}
-
-            {data.observaciones && (
-              <View style={styles.observaciones}>
-                <Text style={styles.observacionesTitle}>OBSERVACIONES:</Text>
-                <Text>{data.observaciones}</Text>
-              </View>
-            )}
-
-            <View style={styles.footer}>
-              <View style={styles.signature}>
-                <View style={styles.signatureLine} />
-                <Text>Firma del Conductor</Text>
-              </View>
+      {/* Segunda página */}
+      <Page size="A4" style={styles.page}>
+        <View style={styles.border} fixed />
+        <View style={styles.contentWrapper}>
+          {renderHeader()}
+          {renderTerminology()}
+          {renderTableColumns(secondPageItems)}
+          <View style={styles.footer}>
+            <View style={styles.observacionesRow}>
+              <Text style={styles.observacionesLabel}>Observaciones:</Text>
+              <Text style={styles.observacionesValue}>{data?.observaciones}</Text>
             </View>
           </View>
         </View>

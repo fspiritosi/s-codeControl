@@ -2,6 +2,7 @@ import { fetchCustomFormById, fetchFormsAnswersByFormId } from '@/app/server/GET
 import BackButton from '@/components/BackButton';
 import Viewcomponent from '@/components/ViewComponent';
 import { PDFPreviewDialog } from '@/components/pdf-preview-dialog';
+
 import { TransporteSPANAYCHKHYS01 } from '@/components/pdf/generators/TransporteSPANAYCHKHYS01';
 import { TransporteSPANAYCHKHYS03 } from '@/components/pdf/generators/TransporteSPANAYCHKHYS03';
 import { TransporteSPANAYCHKHYS04 } from '@/components/pdf/generators/TransporteSPANAYCHKHYS04';
@@ -12,12 +13,11 @@ import CheckListAnwersTable from '../components/CheckListAnwersTable';
 const renderForm = (activeFormType: string) => {
   switch (activeFormType) {
     case 'Transporte SP-ANAY - CHK - HYS - 01':
-      return <TransporteSPANAYCHKHYS03 preview={true} />;
+      return <TransporteSPANAYCHKHYS01 preview />;
     case 'Transporte SP-ANAY - CHK - HYS - 03':
-      return <TransporteSPANAYCHKHYS01 preview={true} />;
-
+      return <TransporteSPANAYCHKHYS03 preview />;
     case 'Transporte SP-ANAY - CHK - HYS - 04':
-      return <TransporteSPANAYCHKHYS04 preview={true} />;
+      return <TransporteSPANAYCHKHYS04 preview />;
     default:
       return <div>No hay formulario seleccionado</div>;
   }
