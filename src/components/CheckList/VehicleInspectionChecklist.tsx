@@ -1,4 +1,5 @@
 'use client';
+import { PDFPreviewDialog } from '@/components/pdf-preview-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -21,8 +22,10 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Textarea } from '../ui/textarea';
+import { TransporteSPANAYCHKHYS03 } from '../pdf/generators/TransporteSPANAYCHKHYS03';
+import { useLoggedUserStore } from '@/store/loggedUser';
 
-const checklistItems = {
+export const checklistItems03 = {
   general: [
     'Discos de freno',
     'Jaula antivuelco',
@@ -148,7 +151,7 @@ const formSchema = z.object({
   chofer: z.string().min(1, { message: 'Chofer es requerido' }),
   fecha: z.string().min(1, { message: 'Fecha es requerida' }),
   hora: z.string().min(1, { message: 'Hora es requerida' }),
-  ...createChecklistSchema(checklistItems),
+  ...createChecklistSchema(checklistItems03),
   observaciones: z.string().optional(),
 });
 
@@ -160,7 +163,9 @@ export default function VehicleMaintenanceChecklist({
   resetQrSelection,
   default_equipment_id,
   empleado_name,
+  singurl,
 }: {
+  singurl?: string | null;
   equipments?: {
     label: string;
     value: string;
@@ -233,7 +238,7 @@ export default function VehicleMaintenanceChecklist({
       router.push(`/dashboard/forms/${params.id}`);
     }
   };
-
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   return (
     <Card className="w-full mx-auto mb-4">
       {resetQrSelection && (
@@ -258,7 +263,31 @@ export default function VehicleMaintenanceChecklist({
             Volver
           </Button>
         ) : (
-          <BackButton />
+          <div className="flex gap-4">
+            <BackButton />
+            {defaultAnswer && (
+              <PDFPreviewDialog
+                title="Inspección Diaria de Vehículo"
+                description={`Conductor: ${form.getValues().chofer || 'No especificado'} - Fecha: ${form.getValues().fecha || new Date().toLocaleDateString()}`}
+                buttonText="Imprimir respuesta"
+              >
+                <div className="h-full w-full bg-white">
+                  <TransporteSPANAYCHKHYS03
+                    data={{
+                      movil: form.getValues().movil,
+                      chofer: form.getValues().chofer,
+                      kilometraje: form.getValues().kilometraje,
+                      fecha: form.getValues().fecha,
+                      ...form.getValues(),
+                    }}
+                    companyLogo={actualCompany?.company_logo}
+                    preview={true}
+                    singurl={singurl}
+                  />
+                </div>
+              </PDFPreviewDialog>
+            )}
+          </div>
         )}
       </CardHeader>
       <CardContent>
@@ -406,7 +435,7 @@ export default function VehicleMaintenanceChecklist({
                     : 'grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9'
                 )}
               >
-                {Object.keys(checklistItems).map((section) => (
+                {Object.keys(checklistItems03).map((section) => (
                   <TabsTrigger
                     key={section}
                     value={section}
@@ -416,7 +445,7 @@ export default function VehicleMaintenanceChecklist({
                   </TabsTrigger>
                 ))}
               </TabsList>
-              {Object.entries(checklistItems).map(([section, items]) => (
+              {Object.entries(checklistItems03).map(([section, items]) => (
                 <TabsContent key={section} value={section}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                     {items.map((item) => (

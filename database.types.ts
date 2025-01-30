@@ -812,31 +812,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "dailyreportrows_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "dailyreportrows_daily_report_id_fkey"
             columns: ["daily_report_id"]
             isOneToOne: false
             referencedRelation: "dailyreport"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dailyreportrows_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "service_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dailyreportrows_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "customer_services"
             referencedColumns: ["id"]
           },
           {
@@ -891,13 +870,6 @@ export type Database = {
           work_active?: boolean | null
         }
         Relationships: [
-          {
-            foreignKeyName: "diagram_type_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "company"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "public_diagram_type_company_id_fkey"
             columns: ["company_id"]
@@ -2472,6 +2444,59 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      find_employee_by_full_name_v2: {
+        Args: {
+          p_full_name: string
+          p_company_id: string
+        }
+        Returns: {
+          affiliate_status:
+            | Database["public"]["Enums"]["affiliate_status_enum"]
+            | null
+          allocated_to: string[] | null
+          birthplace: string
+          category_id: string | null
+          city: number
+          company_id: string | null
+          company_position: string | null
+          covenants_id: string | null
+          created_at: string
+          cuil: string
+          date_of_admission: string
+          document_number: string
+          document_type: Database["public"]["Enums"]["document_type_enum"]
+          email: string | null
+          file: string
+          firstname: string
+          gender: Database["public"]["Enums"]["gender_enum"] | null
+          guild_id: string | null
+          hierarchical_position: string | null
+          id: string
+          is_active: boolean | null
+          lastname: string
+          level_of_education:
+            | Database["public"]["Enums"]["level_of_education_enum"]
+            | null
+          marital_status:
+            | Database["public"]["Enums"]["marital_status_enum"]
+            | null
+          nationality: Database["public"]["Enums"]["nationality_enum"]
+          normal_hours: string | null
+          phone: string
+          picture: string
+          postal_code: string | null
+          province: number
+          reason_for_termination:
+            | Database["public"]["Enums"]["reason_for_termination_enum"]
+            | null
+          status: Database["public"]["Enums"]["status_type"] | null
+          street: string
+          street_number: string
+          termination_date: string | null
+          type_of_contract: Database["public"]["Enums"]["type_of_contract_enum"]
+          workflow_diagram: string | null
+        }[]
+      }
       migrate_document: {
         Args: {
           target_id: string
@@ -2488,17 +2513,6 @@ export type Database = {
       }
       migrate_documents_preview: {
         Args: Record<PropertyKey, never>
-        Returns: {
-          old_path: string
-          new_path: string
-          success: boolean
-          error_message: string
-        }[]
-      }
-      migrate_single_document: {
-        Args: {
-          target_id: string
-        }
         Returns: {
           old_path: string
           new_path: string

@@ -29,6 +29,7 @@ interface DynamicFormWrapperProps {
   resetQrSelection?: (formType: string) => void;
   default_equipment_id?: string;
   empleado_name?: string | undefined;
+  singurl?: string | null;
 }
 
 export default function DynamicFormWrapper({
@@ -40,7 +41,8 @@ export default function DynamicFormWrapper({
   dynamicFormConfig,
   resetQrSelection,
   default_equipment_id,
-  empleado_name
+  empleado_name,
+  singurl,
 }: DynamicFormWrapperProps) {
   const [activeFormType, setActiveFormType] = useState<FormType>(formType);
 
@@ -56,6 +58,7 @@ export default function DynamicFormWrapper({
             resetQrSelection={resetQrSelection}
             default_equipment_id={default_equipment_id}
             empleado_name={empleado_name}
+            singurl={singurl}
           />
         );
 
@@ -70,6 +73,7 @@ export default function DynamicFormWrapper({
             resetQrSelection={resetQrSelection}
             default_equipment_id={default_equipment_id}
             empleado_name={empleado_name}
+            singurl={singurl}
           />
         );
 
@@ -83,6 +87,7 @@ export default function DynamicFormWrapper({
             resetQrSelection={resetQrSelection}
             default_equipment_id={default_equipment_id}
             empleado_name={empleado_name}
+            singurl={singurl}
           />
         );
 

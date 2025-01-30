@@ -515,7 +515,7 @@ export function EditModal({ Equipo }: Props) {
           <AlertDialogTrigger disabled={!(resourcesToInsert.length > 0) || Equipo.applies === 'Empresa'} asChild>
             <Button className="self-end">Generar Alertas de documento</Button>
           </AlertDialogTrigger>
-          <AlertDialogContent>
+          <AlertDialogContent className='max-h-[90vh] overflow-y-auto'>
             <AlertDialogHeader>
               <AlertDialogTitle>Estas totalmente seguro?</AlertDialogTitle>
               <AlertDialogDescription>
