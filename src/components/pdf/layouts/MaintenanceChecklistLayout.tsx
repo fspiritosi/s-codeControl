@@ -4,6 +4,7 @@ import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/render
 
 interface MaintenanceChecklistLayoutProps {
   title: string;
+  singurl?: string | null;
   subtitle: string;
   data: {
     fecha?: string;
@@ -328,6 +329,7 @@ export const MaintenanceChecklistLayout = ({
   data,
   logoUrl,
   items,
+  singurl,
 }: MaintenanceChecklistLayoutProps) => {
   // Separar los items por secciones
   const sections = {
@@ -380,10 +382,7 @@ export const MaintenanceChecklistLayout = ({
 
   const renderSignature = () => (
     <View style={styles.signatureContainer}>
-      <Image 
-        style={styles.signatureImage} 
-        src="https://static.vecteezy.com/system/resources/previews/000/538/077/original/manual-signature-for-documents-on-white-background-hand-drawn-calligraphy-lettering-vector-illustration.jpg" 
-      />
+      {singurl ? <Image style={styles.signatureImage} src={singurl} /> : <Text>Sin firma</Text>}
       <Text style={styles.signatureText}>FIRMA DEL CONDUCTOR</Text>
     </View>
   );

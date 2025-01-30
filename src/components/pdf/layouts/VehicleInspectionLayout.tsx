@@ -1,6 +1,6 @@
 'use client';
 
-import { Image, Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
+import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 
 interface VehicleInspectionLayoutProps {
   title: string;
@@ -15,6 +15,7 @@ interface VehicleInspectionLayoutProps {
     observaciones?: string;
   };
   logoUrl?: string;
+  singurl?: string | null;
   items: Array<{
     title?: boolean;
     label: string;
@@ -215,15 +216,22 @@ const styles = StyleSheet.create({
   },
 });
 
-export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl, items }: VehicleInspectionLayoutProps) => {
+export const VehicleInspectionLayout = ({
+  title,
+  subtitle,
+  data,
+  logoUrl,
+  items,
+  singurl,
+}: VehicleInspectionLayoutProps) => {
   const ITEMS_PER_COLUMN = 34;
 
   // Función para dividir los items en secciones
-  const splitItemsInSections = (items:any) => {
+  const splitItemsInSections = (items: any) => {
     const sections: Array<typeof items> = [];
     let currentSection: typeof items = [];
 
-    items.forEach((item:any) => {
+    items.forEach((item: any) => {
       if (item.title) {
         if (currentSection.length > 0) {
           sections.push([...currentSection]);
@@ -252,7 +260,7 @@ export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl, items 
     // Procesar todas las secciones excepto las últimas 3
     for (let i = 0; i < sections.length - 3; i++) {
       const section = sections[i];
-      
+
       if (currentColumnItems + section.length > ITEMS_PER_COLUMN) {
         if (isLeftColumn) {
           isLeftColumn = false;
@@ -282,7 +290,7 @@ export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl, items 
     const lastThreeSections = sections.slice(-3);
     const lastPage = {
       leftItems: [...lastThreeSections[0], ...lastThreeSections[1]],
-      rightItems: [...lastThreeSections[2]]
+      rightItems: [...lastThreeSections[2]],
     };
     pages.push(lastPage);
 
@@ -293,13 +301,13 @@ export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl, items 
 
   const renderHeader = (pageNumber: number, totalPages: number) => (
     <View style={styles.header} fixed>
-      <View style={styles.headerLeft}>
-        {logoUrl && <Image style={styles.logo} src={logoUrl} />}
-      </View>
+      <View style={styles.headerLeft}>{logoUrl && <Image style={styles.logo} src={logoUrl} />}</View>
       <View style={styles.headerRight}>
         <Text style={styles.headerText}>{title}</Text>
         <Text style={styles.headerSubText}>{subtitle}</Text>
-        <Text style={styles.pageNumber}>Página {pageNumber} de {totalPages}</Text>
+        <Text style={styles.pageNumber}>
+          Página {pageNumber} de {totalPages}
+        </Text>
       </View>
     </View>
   );
@@ -357,7 +365,7 @@ export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl, items 
     <View style={styles.tablesContainer}>
       <View style={styles.tableColumn}>
         <View style={styles.table}>
-          {pageItems.leftItems.map((item, index) => (
+          {pageItems.leftItems.map((item, index) =>
             item.title ? (
               <View key={`title-${index}`} style={styles.tableHeader}>
                 <Text style={styles.tableHeaderText}>{item.label}</Text>
@@ -372,13 +380,13 @@ export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl, items 
                 </View>
               </View>
             )
-          ))}
+          )}
         </View>
       </View>
 
       <View style={styles.tableColumn}>
         <View style={styles.table}>
-          {pageItems.rightItems.map((item, index) => (
+          {pageItems.rightItems.map((item, index) =>
             item.title ? (
               <View key={`title-${index}`} style={styles.tableHeader}>
                 <Text style={styles.tableHeaderText}>{item.label}</Text>
@@ -393,7 +401,7 @@ export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl, items 
                 </View>
               </View>
             )
-          ))}
+          )}
         </View>
       </View>
     </View>
@@ -401,10 +409,7 @@ export const VehicleInspectionLayout = ({ title, subtitle, data, logoUrl, items 
 
   const renderSignature = () => (
     <View style={styles.signatureContainer}>
-      <Image 
-        style={styles.signatureImage} 
-        src="https://static.vecteezy.com/system/resources/previews/000/538/077/original/manual-signature-for-documents-on-white-background-hand-drawn-calligraphy-lettering-vector-illustration.jpg" 
-      />
+      {singurl ? <Image style={styles.signatureImage} src={singurl} /> : <Text>Sin firma</Text>}
       <Text style={styles.signatureText}>FIRMA DEL CONDUCTOR</Text>
     </View>
   );

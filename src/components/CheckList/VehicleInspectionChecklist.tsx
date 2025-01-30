@@ -163,7 +163,9 @@ export default function VehicleMaintenanceChecklist({
   resetQrSelection,
   default_equipment_id,
   empleado_name,
+  singurl,
 }: {
+  singurl?: string | null;
   equipments?: {
     label: string;
     value: string;
@@ -280,6 +282,7 @@ export default function VehicleMaintenanceChecklist({
                     }}
                     companyLogo={actualCompany?.company_logo}
                     preview={true}
+                    singurl={singurl}
                   />
                 </div>
               </PDFPreviewDialog>

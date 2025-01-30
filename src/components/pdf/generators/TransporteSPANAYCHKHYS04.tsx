@@ -42,9 +42,10 @@ interface DailyChecklistPDFProps {
   };
   preview?: boolean;
   companyLogo?: string;
+  singurl?: string | null;
 }
 
-export const TransporteSPANAYCHKHYS04 = ({ data, preview = true, companyLogo }: DailyChecklistPDFProps) => {
+export const TransporteSPANAYCHKHYS04 = ({ data, preview = true, companyLogo, singurl }: DailyChecklistPDFProps) => {
   const items = [
     {
       label: 'Verificar funcionamiento de todas las luces, altas bajas, de frenos, de posición, giro, balizas',
@@ -134,6 +135,7 @@ export const TransporteSPANAYCHKHYS04 = ({ data, preview = true, companyLogo }: 
         aptoParaOperar: data?.aptoParaOperar,
       }}
       logoUrl={company}
+      singurl={singurl}
     />
   );
 

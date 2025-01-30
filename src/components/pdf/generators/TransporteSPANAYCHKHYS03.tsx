@@ -29,9 +29,10 @@ interface VehicleInspectionPDFProps {
   };
   preview?: boolean;
   companyLogo?: string;
+  singurl?: string | null;
 }
 
-export const TransporteSPANAYCHKHYS03 = ({ data, preview = true, companyLogo }: VehicleInspectionPDFProps) => {
+export const TransporteSPANAYCHKHYS03 = ({ data, preview = true, companyLogo, singurl }: VehicleInspectionPDFProps) => {
   const company = useLoggedUserStore((state) => state.actualCompany)?.company_logo;
 
   console.log(data, 'data keloke');
@@ -414,6 +415,7 @@ export const TransporteSPANAYCHKHYS03 = ({ data, preview = true, companyLogo }: 
       }}
       items={items}
       logoUrl={company}
+      singurl={singurl}
     />
   );
 

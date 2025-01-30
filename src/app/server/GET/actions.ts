@@ -19,6 +19,65 @@ export const fetchCurrentCompany = async () => {
   }
   return data || [];
 };
+export const findEmployeeByFullName = async (fullName: string) => {
+  try {
+    const cookiesStore = cookies();
+    const company_id = cookiesStore.get('actualComp')?.value;
+
+    const supabase = supabaseServer();
+    const { data: employees, error } = await supabase
+      .rpc('find_employee_by_full_name_v2', {
+        p_full_name: fullName,
+        p_company_id: company_id || '',
+      })
+      .returns<Employee[]>();
+
+    if (error) {
+      console.log('Query params:', { fullName, company_id });
+      console.error('Error al buscar empleado por nombre completo:', error);
+      return null;
+    }
+
+    return employees?.[0] || null;
+  } catch (error) {
+    console.error('Error al buscar empleado por nombre completo:', error);
+    return null;
+  }
+};
+export const fetchSingEmployee = async (employeesId: string) => {
+  //Traer el tipo de documento que se llame firma
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+
+  const { data, error } = await supabase
+    .from('document_types')
+    .select('id')
+    .eq('name', 'Firma')
+    .eq('is_active', true)
+    .single();
+
+  const { data: employeeSingDocument, error: employeeSingDocumentError } = await supabase
+    .from('documents_employees')
+    .select('*')
+    .eq('id_document_types', data?.id || '')
+    .eq('applies', employeesId)
+    .not('document_path', 'is', null)
+    .eq('is_active', true);
+  // .single();
+
+  if (error) {
+    console.error('Error fetching document type:', error);
+    return null;
+  }
+
+  const data2 = supabase.storage.from('document_files').getPublicUrl(employeeSingDocument?.[0]?.document_path || '');
+
+  console.log('data', data2);
+
+  return data2.data.publicUrl || null;
+};
 export const fetchCompanyDocuments = async () => {
   const cookiesStore = cookies();
   const supabase = supabaseServer();

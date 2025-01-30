@@ -234,8 +234,10 @@ export default function DynamicChecklistForm({
   default_equipment_id,
   empleado_name,
   form_Info,
+  singurl,
 }: {
   config?: ChecklistConfig;
+  singurl?: string | null;
   currentUser?: Profile[];
   defaultAnswer?: CheckListAnswerWithForm[];
   equipments?: {
@@ -364,6 +366,7 @@ export default function DynamicChecklistForm({
                       }}
                       companyLogo={actualCompany?.company_logo}
                       preview={true}
+                      singurl={singurl}
                     />
                   </div>
                 </PDFPreviewDialog>

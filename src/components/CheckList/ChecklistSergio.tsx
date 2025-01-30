@@ -122,6 +122,7 @@ export default function VehicleInspectionChecklist({
   resetQrSelection,
   default_equipment_id,
   empleado_name,
+  singurl,
 }: {
   equipments?: {
     label: string;
@@ -139,6 +140,7 @@ export default function VehicleInspectionChecklist({
   default_equipment_id?: string;
   resetQrSelection?: (formType: string) => void;
   empleado_name?: string | undefined;
+  singurl?: string | null;
 }) {
   const [activeTab, setActiveTab] = useState('luces');
   const params = useParams();
@@ -316,6 +318,7 @@ export default function VehicleInspectionChecklist({
                   data={mapFormValuesToPdfProps(form.getValues())}
                   companyLogo={actualCompany?.company_logo || '/logo.png'}
                   preview={true}
+                  singurl={singurl}
                 />
               </div>
             </PDFPreviewDialog>

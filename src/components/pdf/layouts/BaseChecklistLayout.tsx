@@ -164,8 +164,8 @@ const styles = StyleSheet.create({
   },
   signatureImage: {
     width: 120,
-    height: 60,
-    marginBottom: 2,
+    aspectRatio: 16/9,
+    marginBottom: 1,
   },
   signatureText: {
     fontSize: 8,
@@ -176,6 +176,7 @@ const styles = StyleSheet.create({
 
 interface BaseChecklistProps {
   title?: string;
+  singurl?: string | null;
   subtitle?: string;
   logoUrl?: string;
   data: {
@@ -201,18 +202,16 @@ export const BaseChecklistLayout = ({
   subtitle = 'Vigencia: 23-09-2024 REV: 00',
   logoUrl,
   data,
+  singurl,
 }: BaseChecklistProps) => {
   const itemsPerPage = 30;
   const pages = Math.ceil(data.items.length / itemsPerPage);
 
-  console.log(data,'data');
+  console.log('singurl', singurl);
 
   const renderSignature = () => (
     <View style={styles.signatureContainer}>
-      <Image 
-        style={styles.signatureImage} 
-        src="https://static.vecteezy.com/system/resources/previews/000/538/077/original/manual-signature-for-documents-on-white-background-hand-drawn-calligraphy-lettering-vector-illustration.jpg" 
-      />
+      {singurl ? <Image style={styles.signatureImage} src={singurl} /> : <Text>Sin firma</Text>}
       <Text style={styles.signatureText}>FIRMA DEL CONDUCTOR</Text>
     </View>
   );

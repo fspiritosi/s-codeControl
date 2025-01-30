@@ -80,9 +80,10 @@ interface MaintenanceChecklistPDFProps {
   };
   preview?: boolean;
   companyLogo?: string;
+  singurl?: string | null;
 }
 
-export const TransporteSPANAYCHKHYS01 = ({ data, preview = true, companyLogo }: MaintenanceChecklistPDFProps) => {
+export const TransporteSPANAYCHKHYS01 = ({ data, preview = true, singurl }: MaintenanceChecklistPDFProps) => {
   const company = useLoggedUserStore((state) => state.actualCompany)?.company_logo;
 
   const items = [
@@ -318,6 +319,7 @@ export const TransporteSPANAYCHKHYS01 = ({ data, preview = true, companyLogo }: 
       }}
       logoUrl={company}
       items={items}
+      singurl={singurl}
     />
   );
 
