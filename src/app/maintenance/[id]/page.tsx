@@ -27,7 +27,7 @@ export default async function Home({
     redirect('/maintenance');
   }
 
-  let role;
+  let role: any;
   const { equipments } = await fetch(`${URL}/api/equipment/${params.id}`).then((e) => e.json());
 
   if (user?.id) {
@@ -74,6 +74,10 @@ export default async function Home({
   const currentEquipment = equipmentsForComboBox.find((equipment) => equipment.value === params.id);
 
   // console.log(checklists, 'checklists');
+
+  console.log(role, 'role');
+  console.log(checklists, 'checklists');
+
   // console.log(currentEquipment, 'currentEquipment');
   return (
     <QrActionSelector
@@ -84,11 +88,25 @@ export default async function Home({
       default_equipment_id={params.id}
       role={role}
       pendingRequests={data as any}
-      checkList={checklists.filter(
-        (checklist) =>
-          (checklist.form as { vehicle_type: string[] }).vehicle_type.includes(currentEquipment?.vehicle_type || '') ||
-          (checklist.form as { vehicle_type: string[] }).vehicle_type.includes('all')
-      )}
+      checkList={
+        checklists
+          .filter(
+            (checklist) =>
+              (checklist.form as { vehicle_type: string[] }).vehicle_type.includes(
+                currentEquipment?.vehicle_type || ''
+              ) || (checklist.form as { vehicle_type: string[] }).vehicle_type.includes('all')
+          )
+          .filter((checklist) => {
+            if (
+              (role === 'Invitado' || employee) &&
+              (checklist?.form as any)?.title === 'Transporte SP-ANAY - CHK - HYS - 03'
+            ) {
+              return false;
+            } else {
+              return true;
+            }
+          }) || []
+      }
       equipmentsForComboBox={equipmentsForComboBox}
       empleado_name={empleado_name}
     />

@@ -151,6 +151,12 @@ export default function CodeControlLogin() {
               >
                 Invitado
               </Button>
+              <Button
+                className="w-full bg-gray-600 hover:bg-gray-700 text-white"
+                onClick={() => handleSelection('invitado')}
+              >
+                Mecanico
+              </Button>
             </div>
           ) : (
             <Form {...form}>
