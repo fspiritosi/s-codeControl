@@ -3,7 +3,6 @@
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 
 interface VehicleInspectionLayoutProps {
-  title: string;
   subtitle: string;
   data: {
     fecha?: string;
@@ -22,6 +21,7 @@ interface VehicleInspectionLayoutProps {
     result?: string;
     section?: string;
   }>;
+  title: string;
 }
 
 const styles = StyleSheet.create({
@@ -407,9 +407,12 @@ export const VehicleInspectionLayout = ({
     </View>
   );
 
+  console.log( singurl ? 'siiiii' : data.conductor ?'nooooo' : 'nulllll')
+  console.log( singurl,'singurl')
+  console.log(data.conductor,'conductor')
   const renderSignature = () => (
     <View style={styles.signatureContainer}>
-      {singurl ? <Image style={styles.signatureImage} src={singurl} /> : <Text>Sin firma</Text>}
+      {singurl && !singurl.endsWith('_files/') ? <Image style={styles.signatureImage} src={singurl} /> : data.conductor ? <Text>Sin firma</Text> : null}
       <Text style={styles.signatureText}>FIRMA DEL CONDUCTOR</Text>
     </View>
   );

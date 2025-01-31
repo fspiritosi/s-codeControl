@@ -382,7 +382,7 @@ export const MaintenanceChecklistLayout = ({
 
   const renderSignature = () => (
     <View style={styles.signatureContainer}>
-      {singurl ? <Image style={styles.signatureImage} src={singurl} /> : <Text>Sin firma</Text>}
+      {singurl &&!singurl.endsWith('_files/')  ? <Image style={styles.signatureImage} src={singurl} /> : data.chofer ? <Text>Sin firma</Text> : null}
       <Text style={styles.signatureText}>FIRMA DEL CONDUCTOR</Text>
     </View>
   );

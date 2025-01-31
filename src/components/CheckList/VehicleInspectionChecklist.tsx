@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { CreateNewFormAnswer, UpdateVehicle } from '@/app/server/UPDATE/actions';
 import { cn } from '@/lib/utils';
+import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import moment from 'moment';
@@ -18,12 +19,11 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import BackButton from '../BackButton';
+import { TransporteSPANAYCHKHYS03 } from '../pdf/generators/TransporteSPANAYCHKHYS03';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Textarea } from '../ui/textarea';
-import { TransporteSPANAYCHKHYS03 } from '../pdf/generators/TransporteSPANAYCHKHYS03';
-import { useLoggedUserStore } from '@/store/loggedUser';
 
 export const checklistItems03 = {
   general: [
@@ -266,11 +266,7 @@ export default function VehicleMaintenanceChecklist({
           <div className="flex gap-4">
             <BackButton />
             {defaultAnswer && (
-              <PDFPreviewDialog
-                title="Inspección Diaria de Vehículo"
-                description={`Conductor: ${form.getValues().chofer || 'No especificado'} - Fecha: ${form.getValues().fecha || new Date().toLocaleDateString()}`}
-                buttonText="Imprimir respuesta"
-              >
+              <PDFPreviewDialog buttonText="Imprimir respuesta">
                 <div className="h-full w-full bg-white">
                   <TransporteSPANAYCHKHYS03
                     data={{
@@ -283,6 +279,8 @@ export default function VehicleMaintenanceChecklist({
                     companyLogo={actualCompany?.company_logo}
                     preview={true}
                     singurl={singurl}
+                    title="Inspección Diaria de Vehículo"
+                    description={`Conductor: ${form.getValues().chofer || 'No especificado'} - Fecha: ${form.getValues().fecha || new Date().toLocaleDateString()}`}
                   />
                 </div>
               </PDFPreviewDialog>

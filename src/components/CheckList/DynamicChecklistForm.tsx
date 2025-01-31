@@ -352,8 +352,6 @@ export default function DynamicChecklistForm({
               )}
               {defaultAnswer && (
                 <PDFPreviewDialog
-                  title="Inspección Diaria de Vehículo"
-                  description={`Conductor: ${form.getValues().chofer || 'No especificado'} - Fecha: ${form.getValues().fecha || new Date().toLocaleDateString()}`}
                 >
                   <div className="h-full w-full bg-white">
                     <TransporteSPANAYCHKHYS04
@@ -367,6 +365,8 @@ export default function DynamicChecklistForm({
                       companyLogo={actualCompany?.company_logo}
                       preview={true}
                       singurl={singurl}
+                      title="Inspección Diaria de Vehículo"
+                      description={`Conductor: ${form.getValues().chofer || 'No especificado'} - Fecha: ${form.getValues().fecha || new Date().toLocaleDateString()}`}
                     />
                   </div>
                 </PDFPreviewDialog>

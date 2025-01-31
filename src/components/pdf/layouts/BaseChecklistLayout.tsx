@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   },
   signatureImage: {
     width: 120,
-    aspectRatio: 16/9,
+    aspectRatio: 16 / 9,
     marginBottom: 1,
   },
   signatureText: {
@@ -211,7 +211,11 @@ export const BaseChecklistLayout = ({
 
   const renderSignature = () => (
     <View style={styles.signatureContainer}>
-      {singurl ? <Image style={styles.signatureImage} src={singurl} /> : <Text>Sin firma</Text>}
+      {singurl && !singurl.endsWith('_files/') ? (
+        <Image style={styles.signatureImage} src={singurl} />
+      ) : data.conductor ? (
+        <Text>Sin firma</Text>
+      ) : null}
       <Text style={styles.signatureText}>FIRMA DEL CONDUCTOR</Text>
     </View>
   );
@@ -311,14 +315,8 @@ export const BaseChecklistLayout = ({
                   <Text style={styles.footerText}>INDIQUE SI O NO SEGÚN RESULTADO DE VERIFICACION</Text>
                   <Text style={styles.footerText}>
                     APTO PARA OPERAR:{' '}
-                    {data.aptoParaOperar ? (
-                      <Text style={{ fontWeight: 'bold' }}>{data.aptoParaOperar}</Text>
-                    ) : (
-                      'SI NO'
-                    )}
+                    {data.aptoParaOperar ? <Text style={{ fontWeight: 'bold' }}>{data.aptoParaOperar}</Text> : 'SI NO'}
                   </Text>
-
-              
                 </View>
               )}
             </View>
