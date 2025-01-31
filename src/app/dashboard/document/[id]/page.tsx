@@ -9,13 +9,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabaseServer } from '@/lib/supabase/server';
-import { cn, getActualRole } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 import moment from 'moment';
-import { cookies } from 'next/headers';
 import { Suspense } from 'react';
 import DownloadButton from '../documentComponents/DownloadButton';
+import { getRole } from '@/lib/utils/getRole';
+import { getDocumentEmployeesById, getDocumentEquipmentById } from '@/app/server/GET/actions';
 export default async function page({
   params,
   searchParams,
@@ -32,95 +33,35 @@ export default async function page({
   let resourceType: string | null = null;
   const supabase = supabaseServer();
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  const { data: usuario } = await supabase
-    .from('profile')
-    .select('*')
-    .eq('email', session?.user.email || '')
-    .single();
-
-  const cookiesStore = cookies();
-  const actualComp = cookiesStore.get('actualComp');
-
-  const role = await getActualRole(actualComp?.value as string, usuario?.id as string);
-
-  let { data: documents_employee } = await supabase
-    .from('documents_employees')
-    .select(
-      `
-    *,
-    document_types(*),
-    applies(*,
-      city(name),
-      province(name),
-      contractor_employee(
-        customers(*)),
-        company_id(*,province_id(name))
-          )
-          `
-    )
-    .eq('id', params.id);
-
-  if (documents_employee?.length === 0) {
-    let { data: documents_vehicle } = await supabase
-      .from('documents_equipment')
-      .select(
-        `
-      *,
-      document_types(*),
-      applies(*,brand(name),model(name),type_of_vehicle(name), company_id(*,province_id(name)))`
-      )
-      .eq('id', params.id);
-
-    document = documents_vehicle;
-    resourceType = 'documentos-equipos';
-    resource = 'vehicle';
-
-    if (documents_vehicle?.length === 0) {
-      let { data: documents_company } = await supabase
-        .from('documents_company')
-        .select(`*,document_types:id_document_types(*)`)
-        .eq('id', params.id);
-
-      document = documents_company;
-      resourceType = 'documentos-company';
-      resource = 'company';
-    }
-  } else {
+  const role = await getRole();
+  
+  if(searchParams.resource === 'Persona'){
+    const documents_employee = await getDocumentEmployeesById(params.id);
     document = documents_employee;
     resourceType = 'documentos-empleados';
     resource = 'employee';
   }
 
+  if(searchParams.resource === 'Equipos'){
+    const documents_equipment = await getDocumentEquipmentById(params.id);
+    document = documents_equipment;
+    resourceType = 'documentos-equipos';
+    resource = 'vehicle';
+  }
+
+
   documentType = document?.[0]?.document_types?.id;
 
-  const resorceId = document?.[0]?.applies?.id;
-  const { data } = await supabase.storage.from('document_files').list(resourceType, {
-    search: `document-${documentType}-${resorceId}`,
-  });
+  //const resorceId = document?.[0]?.applies?.id;
+  // const { data } = await supabase.storage.from('document_files').list(resourceType, {
+  //   search: `document-${documentType ?? ''}-${resorceId ?? ''}`,
+  // });
 
   const { data: url } = supabase.storage.from('document_files').getPublicUrl(document?.[0]?.document_path);
 
   documentName = document?.[0]?.document_path;
   documentUrl = url.publicUrl;
   documents_employees = document;
-
-  // function expireInLastMonth() {
-  //   const validity = documents_employees?.[0]?.validity;
-  //   if (!validity) return false;
-
-  //   // Convertir la fecha a formato "mm/dd/yyyy"
-  //   const [day, month, year] = validity.split('/');
-  //   const validityDate = new Date(`${month}/${day}/${year}`);
-
-  //   const oneMonthFromNow = new Date();
-  //   oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
-
-  //   return validityDate <= oneMonthFromNow;
-  // }
 
   return (
     <section className="md:mx-7">

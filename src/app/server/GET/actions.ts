@@ -419,6 +419,39 @@ export const getNextMonthExpiringDocumentsVehicles = async () => {
   }
   return data;
 };
+export const getDocumentEmployeesById = async (id: string) => {
+  const supabase = supabaseServer();
+  let { data: documents_employee } = await supabase
+    .from('documents_employees')
+    .select(
+      `
+    *,
+    document_types(*),
+    applies(*,
+      city(name),
+      province(name),
+      contractor_employee(
+        customers(*)),
+        company_id(*,province_id(name))
+          )
+          `
+    )
+    .eq('id', id);
+    return documents_employee;
+}
+export const getDocumentEquipmentById = async (id: string) => {
+  const supabase = supabaseServer();
+  let { data: documents_vehicle } = await supabase
+      .from('documents_equipment')
+      .select(
+        `
+      *,
+      document_types(*),
+      applies(*,brand(name),model(name),type_of_vehicle(name), company_id(*,province_id(name)))`
+      )
+      .eq('id', id);
+      return documents_vehicle;
+}
 // Equipment-related actions
 export const fetchAllEquipment = async (company_equipment_id?: string) => {
   const cookiesStore = cookies();
@@ -581,6 +614,28 @@ export const fetchPermanentDocumentsEquipment = async () => {
   }
   return data;
 };
+export const fetchEquipmentById = async (id: string) => {
+  const cookiesStore = cookies();
+  const supabase = supabaseServer();
+  const company_id = cookiesStore.get('actualComp')?.value;
+  if (!company_id) return [];
+
+  const { data: vehicleData, error } = await supabase
+      .from('vehicles')
+      .select('*, brand_vehicles(name), model_vehicles(name),types_of_vehicles(name),type(name)')
+      .eq('id', id);
+
+  if (error) console.log('eroor', error);
+
+  const vehicle = vehicleData?.map((item: any) => ({
+      ...item,
+      type_of_vehicle: item.types_of_vehicles.name,
+      brand: item.brand_vehicles.name,
+      model: item.model_vehicles.name,
+      type: item.type.name,
+    }));
+    return vehicle;
+}
 // Repair-related actions
 export const fetchAllOpenRepairRequests = async () => {
   const cookiesStore = cookies();
