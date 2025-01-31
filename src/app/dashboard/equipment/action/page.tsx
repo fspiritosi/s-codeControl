@@ -8,13 +8,15 @@ import { cookies } from 'next/headers';
 // import { supabase } from '../../../../../supabase/supabase';
 import VehiclesForm, { generic } from '../../../../components/VehiclesForm';
 import { supabaseServer } from '@/lib/supabase/server';
+import { getRole } from '@/lib/utils/getRole';
+import { fetchEquipmentById } from '@/app/server/GET/actions';
 
 export default async function EquipmentFormAction({ searchParams }: { searchParams: any }) {
   const supabase = supabaseServer();
-  const { data } = await supabase
-    .from('documents_equipment')
-    .select('*,id_document_types(*)')
-    .eq('applies', searchParams.id);
+  // const { data } = await supabase
+  //   .from('documents_equipment')
+  //   .select('*,id_document_types(*)')
+  //   .eq('applies', searchParams.id);
 
   revalidatePath('/dashboard/equipment/action');
 
@@ -25,7 +27,10 @@ export default async function EquipmentFormAction({ searchParams }: { searchPara
 
   //console.log(searchParams.id, 'searchParams.id');
 
+  
+
   if (searchParams.id) {
+    //const newVehicle = await fetchEquipmentById(searchParams.id);
     const { data: vehicleData, error } = await supabase
       .from('vehicles')
       .select('*, brand_vehicles(name), model_vehicles(name),types_of_vehicles(name),type(name)')
@@ -41,7 +46,11 @@ export default async function EquipmentFormAction({ searchParams }: { searchPara
       model: item.model_vehicles.name,
       type: item.type.name,
     }));
+    console.log('vehicle-old-fetch', vehicle);
+    //console.log('vehicle-new-fetch', newVehicle);
   }
+
+
   let { data: types, error } = await supabase
     .from('type')
     .select('*')
@@ -52,14 +61,9 @@ export default async function EquipmentFormAction({ searchParams }: { searchPara
     .select('*')
     .or(`company_id.eq.${company_id?.value},company_id.is.null`);
 
-  // console.log('brand_vehicles', brand_vehicles);
-  // console.log('errorError', errorError);
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    const role = await getActualRole(company_id?.value as string, user?.id as string);
-
+    
+    const role = await getRole();
+    console.log('role action equipment', role);
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">
       <Card

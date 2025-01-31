@@ -1,26 +1,14 @@
 import { CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabaseServer } from '@/lib/supabase/server';
-import { getActualRole } from '@/lib/utils';
 import { setEmployeesToShow } from '@/lib/utils/utils';
-import { cookies } from 'next/headers';
 import { EmployeesListColumns } from '../../employee/columns';
 import { EmployeesTable } from '../../employee/data-table';
 import { fetchAllEmployees } from '@/app/server/GET/actions';
+import { getRole } from '@/lib/utils/getRole';
 
 async function EmployeeListTabs({ inactives, actives }: { inactives?: boolean; actives?: boolean }) {
-  const URL = process.env.NEXT_PUBLIC_BASE_URL;
-  const supabase = supabaseServer();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  
-  const coockiesStore = cookies();
-  const company_id = coockiesStore.get('actualComp')?.value;
-
-  const role = await getActualRole(company_id as string, user?.id as string);
-
+ 
+  const role = await getRole()
   const employees = await fetchAllEmployees( role );
 
   const activeEmploees = setEmployeesToShow(employees?.filter((e) => e.is_active));

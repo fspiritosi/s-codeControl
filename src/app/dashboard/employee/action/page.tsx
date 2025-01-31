@@ -7,7 +7,8 @@ import {
 import EmployeeComponent from '@/components/EmployeeComponent';
 import { Card, CardFooter } from '@/components/ui/card';
 import { supabaseServer } from '@/lib/supabase/server';
-import { cn, getActualRole } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { getRole } from '@/lib/utils/getRole';
 import { setEmployeesToShow } from '@/lib/utils/utils';
 import moment from 'moment';
 import { cookies } from 'next/headers';
@@ -18,14 +19,15 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
   //   .select('*,applies(*),id_document_types(*)')
   //   .eq('applies.document_number', searchParams.document)
   //   .not('applies', 'is', null)
+  const role = await getRole()
 
   const supabase = supabaseServer();
   const user = await supabase.auth.getUser();
 
-  const { data: userShared } = await supabase
-    .from('share_company_users')
-    .select('*')
-    .eq('profile_id', user?.data?.user?.id || '');
+  // const { data: userShared } = await supabase
+  //   .from('share_company_users')
+  //   .select('*')
+  //   .eq('profile_id', user?.data?.user?.id || '');
 
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -114,7 +116,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
     modifiedAt: moment(item.created_at).local().format('DD/MM/YYYY HH:mm'), // Formatear a la hora local
     type: item.prev_state ? 'modified' : 'created',
   }));
-  const role = await getActualRole(company_id || '', user?.data?.user?.id as string);
+  
   const diagrams2 = await fetchDiagramsByEmployeeId(searchParams.employee_id);
   const diagrams_types2 = await fetchDiagramsTypes();
   return (
