@@ -46,10 +46,6 @@ export function PDFPreviewDialog({
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
-        <DialogHeader className="p-6 pb-0">
-          <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
-        </DialogHeader>
         <div className="flex-1 p-6 pt-0 overflow-auto">
           {children}
         </div>

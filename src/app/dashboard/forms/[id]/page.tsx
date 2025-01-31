@@ -13,11 +13,11 @@ import CheckListAnwersTable from '../components/CheckListAnwersTable';
 const renderForm = (activeFormType: string) => {
   switch (activeFormType) {
     case 'Transporte SP-ANAY - CHK - HYS - 01':
-      return <TransporteSPANAYCHKHYS01 preview />;
+      return <TransporteSPANAYCHKHYS01 title="CHECK LIST MANTENIMIENTO VEHICULAR" description="Pdf vacio" preview />;
     case 'Transporte SP-ANAY - CHK - HYS - 03':
-      return <TransporteSPANAYCHKHYS03 preview />;
+      return <TransporteSPANAYCHKHYS03 title="CHECK LIST INSPECCION VEHICULAR" description="Pdf vacio" preview />;
     case 'Transporte SP-ANAY - CHK - HYS - 04':
-      return <TransporteSPANAYCHKHYS04 preview />;
+      return <TransporteSPANAYCHKHYS04 title="INSPERCION DIARIA DE VEHICULO" description="Pdf vacio" preview />;
     default:
       return <div>No hay formulario seleccionado</div>;
   }

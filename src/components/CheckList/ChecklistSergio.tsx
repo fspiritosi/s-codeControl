@@ -319,6 +319,8 @@ export default function VehicleInspectionChecklist({
                   companyLogo={actualCompany?.company_logo || '/logo.png'}
                   preview={true}
                   singurl={singurl}
+                  title="CHECK LIST MANTENIMIENTO VEHICULAR"
+                  description={`Conductor: ${form.getValues().chofer || 'No especificado'} - Fecha: ${form.getValues().fecha || new Date().toLocaleDateString()}`}
                 />
               </div>
             </PDFPreviewDialog>
