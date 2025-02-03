@@ -34,6 +34,7 @@
     "@radix-ui/react-toggle": "^1.0.3",
     "@radix-ui/react-toggle-group": "^1.0.4",
     "@radix-ui/react-tooltip": "^1.0.7",
+    "@react-pdf/renderer": "^4.1.6",
     "@supabase/auth-helpers-nextjs": "^0.8.7",
     "@supabase/gotrue-js": "^2.64.4",
     "@supabase/ssr": "^0.0.10",

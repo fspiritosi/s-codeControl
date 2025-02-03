@@ -1,4 +1,9 @@
-import { fetchAllEquipment, fetchAnswerById } from '@/app/server/GET/actions';
+import {
+  fetchAllEquipment,
+  fetchAnswerById,
+  fetchSingEmployee,
+  findEmployeeByFullName,
+} from '@/app/server/GET/actions';
 import DynamicFormWrapper from '@/components/CheckList/DynamicFormWrapper';
 
 async function page({ params }: { params: { id: string } }) {
@@ -16,6 +21,17 @@ async function page({ params }: { params: { id: string } }) {
     brand: equipment.brand.name,
     intern_number: equipment.intern_number,
   }));
+  const choferName = (answer[0].answer as any)?.chofer;
+  let singurl : any = '';
+
+  if (choferName) {
+    const data = await findEmployeeByFullName(choferName);
+    if (data?.id) {
+      const singEmployee = await fetchSingEmployee(data?.id);
+      singurl = singEmployee  || ''
+    }
+  }
+
 
   return (
     <div className="px-7">
@@ -24,6 +40,7 @@ async function page({ params }: { params: { id: string } }) {
         equipments={equipments}
         form_Info={[answer[0]?.form_id]}
         defaultAnswer={answer}
+        singurl={singurl}
       />
     </div>
   );

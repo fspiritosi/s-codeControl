@@ -1,6 +1,8 @@
 'use client';
 
 import { CreateNewFormAnswer, UpdateVehicle } from '@/app/server/UPDATE/actions';
+import { PDFPreviewDialog } from '@/components/pdf-preview-dialog';
+import { TransporteSPANAYCHKHYS04 } from '@/components/pdf/generators/TransporteSPANAYCHKHYS04';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -9,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import moment from 'moment';
@@ -231,8 +234,10 @@ export default function DynamicChecklistForm({
   default_equipment_id,
   empleado_name,
   form_Info,
+  singurl,
 }: {
   config?: ChecklistConfig;
+  singurl?: string | null;
   currentUser?: Profile[];
   defaultAnswer?: CheckListAnswerWithForm[];
   equipments?: {
@@ -277,6 +282,8 @@ export default function DynamicChecklistForm({
             chofer: currentUser?.[0].fullname?.toLocaleUpperCase(),
           },
   });
+
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
   // console.log(form_Info, 'form_Info');
 
@@ -329,17 +336,51 @@ export default function DynamicChecklistForm({
         </CardHeader>
       )}
       <div className="flex justify-between items-center mr-4">
-        <CardHeader>
-          <CardTitle className="text-xl sm:text-2xl md:text-3xl">{config.title}</CardTitle>
-          {config.subtitle && <p className="text-lg text-muted-foreground mt-2">{config.subtitle}</p>}
+        <CardHeader className="w-full">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full">
+            <div>
+              <CardTitle className="text-2xl">{config.title}</CardTitle>
+              {config.subtitle && <CardDescription className="mt-2">{config.subtitle}</CardDescription>}
+            </div>
+            <div className="flex gap-4">
+              {resetQrSelection ? (
+                <Button onClick={() => resetQrSelection('')} variant="ghost">
+                  Volver
+                </Button>
+              ) : (
+                <BackButton />
+              )}
+              {defaultAnswer && (
+                <PDFPreviewDialog
+                >
+                  <div className="h-full w-full bg-white">
+                    <TransporteSPANAYCHKHYS04
+                      data={{
+                        movil: form.getValues().movil,
+                        chofer: form.getValues().chofer,
+                        kilometraje: form.getValues().kilometraje,
+                        fecha: form.getValues().fecha,
+                        ...form.getValues(),
+                      }}
+                      companyLogo={actualCompany?.company_logo}
+                      preview={true}
+                      singurl={singurl}
+                      title="Inspección Diaria de Vehículo"
+                      description={`Conductor: ${form.getValues().chofer || 'No especificado'} - Fecha: ${form.getValues().fecha || new Date().toLocaleDateString()}`}
+                    />
+                  </div>
+                </PDFPreviewDialog>
+              )}
+            </div>
+          </div>
         </CardHeader>
-        {resetQrSelection ? (
+        {/* {resetQrSelection ? (
           <Button onClick={() => resetQrSelection('')} variant="ghost" className="self-end">
             Volver
           </Button>
         ) : (
           <BackButton />
-        )}
+        )} */}
       </div>
       <CardContent>
         <Form {...form}>
