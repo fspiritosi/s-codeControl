@@ -678,7 +678,7 @@ export const ColumnsMonthly: ColumnDef<Colum>[] = [
         return (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              {role !== 'Invitado' && <Button variant="link">Falta subir documento</Button>}
+              {role !== 'Invitado' && <Button variant="outline">Subir documento</Button>}
             </AlertDialogTrigger>
             <AlertDialogContent asChild>
               <AlertDialogHeader>
