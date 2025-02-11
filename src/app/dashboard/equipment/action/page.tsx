@@ -2,14 +2,13 @@ import DocumentEquipmentComponent from '@/components/DocumentEquipmentComponent'
 import RepairTypes from '@/components/Tipos_de_reparaciones/RepairTypes';
 import { Card, CardFooter } from '@/components/ui/card';
 import { TabsContent } from '@/components/ui/tabs';
-import { cn, getActualRole } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 // import { supabase } from '../../../../../supabase/supabase';
-import VehiclesForm, { generic } from '../../../../components/VehiclesForm';
 import { supabaseServer } from '@/lib/supabase/server';
 import { getRole } from '@/lib/utils/getRole';
-import { fetchEquipmentById } from '@/app/server/GET/actions';
+import VehiclesForm, { generic } from '../../../../components/VehiclesForm';
 
 export default async function EquipmentFormAction({ searchParams }: { searchParams: any }) {
   const supabase = supabaseServer();
@@ -26,8 +25,6 @@ export default async function EquipmentFormAction({ searchParams }: { searchPara
   let vehicle;
 
   //console.log(searchParams.id, 'searchParams.id');
-
-  
 
   if (searchParams.id) {
     //const newVehicle = await fetchEquipmentById(searchParams.id);
@@ -50,7 +47,6 @@ export default async function EquipmentFormAction({ searchParams }: { searchPara
     //console.log('vehicle-new-fetch', newVehicle);
   }
 
-
   let { data: types, error } = await supabase
     .from('type')
     .select('*')
@@ -61,9 +57,8 @@ export default async function EquipmentFormAction({ searchParams }: { searchPara
     .select('*')
     .or(`company_id.eq.${company_id?.value},company_id.is.null`);
 
-    
-    const role = await getRole();
-    console.log('role action equipment', role);
+  const role = await getRole();
+  console.log('role action equipment', role);
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">
       <Card
