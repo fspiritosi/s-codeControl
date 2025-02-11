@@ -121,7 +121,7 @@ export function calculateNameOFDocument(
   const formatedFileExtension = file_extension.replace(/\./g, '-');
 
   //console.log('alokofe');
-  return `${formatedCompanyName}(${company_cuit})/${resource}/${formatedAppliesName}/${formatedDocumentTypeName}-(${formatedVersion}).${formatedFileExtension}`;
+  return `${formatedCompanyName}-(${company_cuit})/${resource}/${formatedAppliesName}/${formatedDocumentTypeName}-(${formatedVersion}).${formatedFileExtension}`;
 }
 export async function verifyDuplicatedDocument(
   company_name: string,
@@ -133,7 +133,7 @@ export async function verifyDuplicatedDocument(
   const formatedCompanyName = company_name.toLowerCase().replace(/ /g, '-');
   const formatedAppliesName = formatedAppliesNames.toLowerCase().replace(/ /g, '-');
   const supabase = supabaseBrowser();
-  const path = `${formatedCompanyName}(${company_cuit})/${resource}/${formatedAppliesPath}`;
+  const path = `${formatedCompanyName}-(${company_cuit})/${resource}/${formatedAppliesPath}`;
 
   //console.log(path, 'Ruta completa');
 

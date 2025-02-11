@@ -293,11 +293,14 @@ export function EditModal({ Equipo }: Props) {
   }
   async function handleDeleteAlerts() {
     const tableNames = {
-      Equipo: 'documents_equipment',
+      Equipos: 'documents_equipment',
       Persona: 'documents_employees',
       Empresa: 'documents_company',
     };
-    const table = tableNames[Equipo.applies as 'Equipo' | 'Persona' | 'Empresa'];
+    const table = tableNames[Equipo.applies as 'Equipos' | 'Persona' | 'Empresa'];
+
+    console.log(table, 'esta es la tabla');
+    console.log(Equipo, 'esta es la Equipo');
 
     toast.promise(
       async () => {
@@ -306,6 +309,8 @@ export function EditModal({ Equipo }: Props) {
           .delete()
           .eq('id_document_types', Equipo.id)
           .is('document_path', null);
+        console.log(data, 'data');
+        console.log(error, 'error');
 
         if (error) {
           throw new Error(handleSupabaseError(error.message));
@@ -315,6 +320,7 @@ export function EditModal({ Equipo }: Props) {
         loading: 'Eliminando...',
         success: (data) => {
           fetchDocumentTypes(actualCompany?.id);
+          router.refresh();
           return 'Se han eliminado las alertas!';
         },
         error: (error) => {
@@ -515,7 +521,7 @@ export function EditModal({ Equipo }: Props) {
           <AlertDialogTrigger disabled={!(resourcesToInsert.length > 0) || Equipo.applies === 'Empresa'} asChild>
             <Button className="self-end">Generar Alertas de documento</Button>
           </AlertDialogTrigger>
-          <AlertDialogContent className='max-h-[90vh] overflow-y-auto'>
+          <AlertDialogContent className="max-h-[90vh] overflow-y-auto">
             <AlertDialogHeader>
               <AlertDialogTitle>Estas totalmente seguro?</AlertDialogTitle>
               <AlertDialogDescription>

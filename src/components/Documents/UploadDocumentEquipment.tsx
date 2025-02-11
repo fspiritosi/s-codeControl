@@ -14,7 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import moment from 'moment';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Database } from '../../../database.types';
 import { EnhancedDatePicker } from '../ui/enhanced-datepicket';
@@ -101,6 +101,28 @@ function UploadDocumentEquipment({
       console.error('error', error);
     }
   }
+
+  const fetchSelectedEquipmentDocuments = async () => {
+    if (default_id) {
+      const { data, error } = await supabase
+        .from('documents_equipment')
+        .select('*')
+        .eq('applies', default_id)
+        .neq('document_path', null);
+
+      if (error) {
+        console.error('error', error);
+        return;
+      }
+
+      console.log(data, 'data');
+      setSelectedResourceDocuments(data);
+    }
+  };
+  useEffect( () => { 
+    fetchSelectedEquipmentDocuments();
+  }, [default_id]);
+
   const [selectedFileName, setSelectedFileName] = useState<string>('');
   const [selectedResourceDocuments, setSelectedResourceDocuments] = useState<
     Database['public']['Tables']['documents_equipment']['Row'][]
@@ -166,6 +188,7 @@ function UploadDocumentEquipment({
                                   return;
                                 }
 
+                                console.log(data, 'data');
                                 setSelectedResourceDocuments(data);
                               }}
                             >
