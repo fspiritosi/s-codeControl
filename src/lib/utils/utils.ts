@@ -87,6 +87,7 @@ export const setEmployeesToShow = (employees: any) => {
       phone: employees?.phone,
       file: employees?.file,
       date_of_admission: employees?.date_of_admission,
+      born_date: employees?.born_date,
       affiliate_status: employees?.affiliate_status,
       city: employees?.city?.name?.trim(),
       hierrl_position: employees?.hierarchical_position?.name,

@@ -1,0 +1,664 @@
+alter table "public"."documents_employees" drop constraint "documents_employees_docoment_path_key";
+
+drop index if exists "public"."documents_employees_docoment_path_key";
+
+alter table "public"."employees" alter column "status" drop default;
+
+alter table "public"."vehicles" alter column "status" drop default;
+
+alter type "public"."status_type" rename to "status_type__old_version_to_be_dropped";
+
+create type "public"."status_type" as enum ('Avalado', 'No avalado', 'Incompleto', 'Completo', 'Completo con doc vencida');
+
+create table "public"."contractor_equipment" (
+    "id" uuid not null default gen_random_uuid(),
+    "created_at" timestamp with time zone not null default now(),
+    "equipment_id" uuid,
+    "contractor_id" uuid
+);
+
+
+alter table "public"."contractor_equipment" enable row level security;
+
+alter table "public"."employees" alter column status type "public"."status_type" using status::text::"public"."status_type";
+
+alter table "public"."vehicles" alter column status type "public"."status_type" using status::text::"public"."status_type";
+
+alter table "public"."employees" alter column "status" set default 'No avalado'::status_type;
+
+alter table "public"."vehicles" alter column "status" set default 'No avalado'::status_type;
+
+drop type "public"."status_type__old_version_to_be_dropped";
+
+alter table "public"."document_types" add column "down_document" boolean;
+
+alter table "public"."employees" alter column "status" set default 'Incompleto'::status_type;
+
+-- alter table "public"."share_company_users" alter column "customer_id" set data type uuid using "customer_id"::uuid;
+
+alter table "public"."vehicles" alter column "status" set default 'Incompleto'::status_type;
+
+CREATE UNIQUE INDEX contractor_equipment_employee_id_contractor_id_key ON public.contractor_equipment USING btree (equipment_id, contractor_id);
+
+CREATE UNIQUE INDEX contractor_equipment_pkey ON public.contractor_equipment USING btree (id);
+
+CREATE UNIQUE INDEX documents_employees_document_path_key ON public.documents_employees USING btree (document_path);
+
+alter table "public"."contractor_equipment" add constraint "contractor_equipment_pkey" PRIMARY KEY using index "contractor_equipment_pkey";
+
+alter table "public"."contractor_equipment" add constraint "contractor_equipment_contractor_id_fkey" FOREIGN KEY (contractor_id) REFERENCES customers(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+
+alter table "public"."contractor_equipment" validate constraint "contractor_equipment_contractor_id_fkey";
+
+alter table "public"."contractor_equipment" add constraint "contractor_equipment_employee_id_contractor_id_key" UNIQUE using index "contractor_equipment_employee_id_contractor_id_key";
+
+alter table "public"."contractor_equipment" add constraint "contractor_equipment_equipment_id_fkey" FOREIGN KEY (equipment_id) REFERENCES vehicles(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+
+alter table "public"."contractor_equipment" validate constraint "contractor_equipment_equipment_id_fkey";
+
+alter table "public"."documents_employees" add constraint "documents_employees_document_path_key" UNIQUE using index "documents_employees_document_path_key";
+
+-- alter table "public"."share_company_users" add constraint "share_company_users_customer_id_fkey" FOREIGN KEY (customer_id) REFERENCES customers(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
+
+-- alter table "public"."share_company_users" validate constraint "share_company_users_customer_id_fkey";
+
+set check_function_bodies = off;
+
+CREATE OR REPLACE FUNCTION public.equipment_allocated_to()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+  contractor_id UUID;
+BEGIN
+  IF NEW.allocated_to IS NOT NULL AND array_length(NEW.allocated_to, 1) > 0 THEN
+    -- Insertar en contractor_employee para cada ID en allocated_to
+    FOREACH contractor_id IN ARRAY NEW.allocated_to
+    LOOP
+      INSERT INTO contractor_equipment(contractor_id, equipment_id)
+      VALUES (contractor_id, NEW.id);
+    END LOOP;
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.update_status_trigger()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+  -- Para documents_employees
+  IF TG_TABLE_NAME = 'documents_employees' THEN
+    IF NEW.state = 'vencido' THEN
+      UPDATE employees
+      SET status = 'Completo con doc vencida'
+      WHERE id = NEW.applies;
+    ELSIF (SELECT COUNT(*) FROM documents_employees WHERE applies = NEW.applies AND state != 'presentado') = 0 THEN
+      UPDATE employees
+      SET status = 'Completo'
+      WHERE id = NEW.applies;
+    ELSE
+      UPDATE employees
+      SET status = 'Incompleto'
+      WHERE id = NEW.applies;
+    END IF;
+  END IF;
+
+  -- Para documents_equipment
+  IF TG_TABLE_NAME = 'documents_equipment' THEN
+    IF NEW.state = 'vencido' THEN
+      UPDATE vehicles
+      SET status = 'Completo con doc vencida'
+      WHERE id = NEW.applies;
+    ELSIF (SELECT COUNT(*) FROM documents_equipment WHERE applies = NEW.applies AND state != 'presentado') = 0 THEN
+      UPDATE vehicles
+      SET status = 'Completo'
+      WHERE id = NEW.applies;
+    ELSE
+      UPDATE vehicles
+      SET status = 'Incompleto'
+      WHERE id = NEW.applies;
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.actualizar_estado_documentos()
+ RETURNS void
+ LANGUAGE plpgsql
+AS $function$BEGIN
+set
+  datestyle = 'ISO, DMY';
+
+update documents_employees
+set
+  state = 'vencido'
+where
+  validity::date < current_date;
+
+update documents_equipment
+set
+  state = 'vencido'
+where
+   validity::date < current_date;
+END;
+-- DECLARE
+--     v_company_id UUID;
+--     resource TEXT; -- Variable para almacenar el company_id
+-- BEGIN
+-- SET datestyle = 'ISO, DMY';
+
+--     -- Verificar si hay documentos vencidos en documents_employees
+--     UPDATE documents_employees
+--     SET state = 'vencido'
+--     WHERE validity < CURRENT_DATE
+--     AND state <> 'vencido'; -- Solo si el estado no es ya 'vencido'
+
+--     -- Verificar si hay documentos vencidos en documents_equipment
+--     UPDATE documents_equipment
+--     SET state = 'vencido'
+--     WHERE validity < CURRENT_DATE
+--     AND state <> 'vencido'; -- Solo si el estado no es ya 'vencido'
+
+--     resource := 'employee';
+
+--     -- Insertar entrada en la tabla notifications si se cambió el estado
+--     IF SQL%ROWCOUNT > 0 THEN
+--         IF v_company_id IS NULL THEN
+--             -- Si no se encontró en documents_employees, buscar en documents_equipment
+--             SELECT company_id INTO v_company_id
+--             FROM documents_equipment
+--             WHERE documents_equipment.id = NEW.id;
+--             resource :='equipment';
+--         END IF;
+
+--             INSERT INTO notifications (title, description, category, company_id, document_id,reference)
+--             VALUES ('Venció un documento', '', 'vencimiento', v_company_id, NEW.id,resource);
+--     END IF;
+-- END;$function$
+;
+
+CREATE OR REPLACE FUNCTION public.enviar_documentos_a_46_dias()
+ RETURNS void
+ LANGUAGE plpgsql
+AS $function$DECLARE
+    destinatario TEXT;
+    asunto TEXT;
+    contenido TEXT;
+    documentos_usuario TEXT[];
+    documento RECORD;
+    destinatarios_adicionales TEXT[];
+    todos_destinatarios TEXT[];
+      nombre_compania TEXT;
+BEGIN
+    -- Obtener todos los destinatarios únicos
+    FOR destinatario IN SELECT DISTINCT profile.email FROM profile
+    LOOP
+        -- Inicializar el contenido del correo electrónico para el destinatario actual
+        contenido := '';
+
+        
+
+        -- Obtener todos los documentos para el destinatario actual
+        SELECT 
+            array_agg(
+                E'<br>Tipo de documento: ' || tipo_documento ||
+                '<br>Fecha de vencimiento: ' || fecha_vencimiento ||
+                CASE WHEN documento_empleado IS NOT NULL THEN '<br>Documento del empleado: ' || documento_empleado ELSE '' END ||
+                CASE WHEN dominio_vehiculo IS NOT NULL THEN '<br>Dominio del vehículo: ' || dominio_vehiculo ELSE '' END
+            )
+        INTO documentos_usuario
+        FROM (
+            SELECT 
+                dt.name AS tipo_documento, 
+                TO_DATE(de.validity, 'DD-MM-YYYY') AS fecha_vencimiento,
+                e.document_number AS documento_empleado,
+                v.domain AS dominio_vehiculo
+            FROM 
+                documents_employees de
+            JOIN 
+                profile ON de.user_id = profile.id
+            JOIN 
+                document_types dt ON de.id_document_types = dt.id
+            LEFT JOIN
+                employees e ON de.applies = e.id
+            LEFT JOIN
+                vehicles v ON de.applies = v.id
+            WHERE 
+                TO_DATE(de.validity, 'DD-MM-YYYY') >= CURRENT_DATE
+                AND TO_DATE(de.validity, 'DD-MM-YYYY') < DATE_TRUNC('day', CURRENT_DATE) + INTERVAL '45 days'
+                AND profile.email = destinatario
+            UNION ALL
+            SELECT 
+                dt.name AS tipo_documento, 
+                TO_DATE(de.validity, 'DD-MM-YYYY') AS fecha_vencimiento,
+                NULL AS documento_empleado,
+                v.domain AS dominio_vehiculo
+            FROM 
+                documents_equipment de
+            JOIN 
+                profile ON de.user_id = profile.id
+            JOIN 
+                document_types dt ON de.id_document_types = dt.id
+            LEFT JOIN
+                vehicles v ON de.applies = v.id
+            WHERE 
+                TO_DATE(de.validity, 'DD-MM-YYYY') >= CURRENT_DATE
+                AND TO_DATE(de.validity, 'DD-MM-YYYY') < DATE_TRUNC('day', CURRENT_DATE) + INTERVAL '45 days'
+                AND profile.email = destinatario
+        ) AS documentos;
+
+
+          SELECT c.company_name
+        INTO nombre_compania
+        FROM company c
+        JOIN share_company_users scu ON c.id = scu.company_id
+        JOIN profile p ON scu.profile_id = p.id
+        WHERE p.email = destinatario;
+
+        -- Construir el contenido del correo electrónico con el HTML proporcionado
+        contenido := '
+            <!DOCTYPE html PUBLIC >
+            <html lang="es">
+            <head>
+                <meta content="text/html; charset=UTF-8"/>
+            </head>
+            <body style="background-color:#f3f3f5;font-family:HelveticaNeue,Helvetica,Arial,sans-serif">
+                <table align="center" width="100%" border="0" cellPadding="0" cellSpacing="0" role="presentation" style="max-width:100%;width:680px;margin:0 auto;background-color:#ffffff">
+                    <tbody>
+                        <tr style="width:100%">
+                            <td>
+                                <table align="center" width="100%" border="0" cellPadding="0" cellSpacing="0" role="presentation" style="border-radius:0px 0px 0 0;display:flex;flex-direciont:column;background-color:#2b2d6e">
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <table align="center" width="100%" border="0" cellPadding="0" cellSpacing="0" role="presentation">
+                                                    <tbody style="width:100%">
+                                                        <tr style="width:100%">
+                                                            <td style="padding:20px 30px 15px">
+                                                                <h1 style="color:#fff;font-size:27px;font-weight:bold;line-height:27px">Codecontrol</h1>
+                                                                <p style="font-size:17px;line-height:24px;margin:16px 0;color:#fff">Documentos a Vencer en los próximos 45 días</p>
+                                                            </td>
+                                                            <td  style="padding:30px 10px"><img src="https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/logo/24417298440.png" style="display:block;outline:none;border:none;text-decoration:none;max-width:100%" width="140" /></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <table align="center" width="100%" border="0" cellPadding="0" cellSpacing="0" role="presentation" style="padding:30px 30px 40px 30px">
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <h2 style="margin:0 0 15px;font-weight:bold;font-size:21px;line-height:21px;color:#0c0d0e">Listado de Documentos de la compañia ' || nombre_compania || '</h2>
+                                                
+                                                <hr style="width:100%;border:none;border-top:1px solid #eaeaea;margin:30px 0" />
+                                                
+                                                <ul>' || array_to_string(documentos_usuario,'<br>') || '</ul>
+                                                
+                                                <hr style="width:100%;border:none;border-top:1px solid #eaeaea;margin:30px 0" />
+                                                <h2 style="margin:0 0 15px;font-weight:bold;font-size:21px;line-height:21px;color:#0c0d0e">Para ver los documentos diríjase a la app</h2>
+                                                <table align="center" width="100%" border="0" cellPadding="0" cellSpacing="0" role="presentation" style="margin-top:24px;display:block">
+                                                    <tbody>
+                                                        <tr>
+                                                            <td><a href="https://codecontrol.com.ar/dashboard" style="color:#fff;text-decoration:none;background-color:#0095ff;border:1px solid #0077cc;font-size:17px;line-height:17px;padding:13px 17px;border-radius:4px;max-width:120px" target="_blank">ir a CodeControl</a></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </body>
+            </html>';
+
+        -- Construir el asunto del correo electrónico
+        asunto := 'Documentos por vencer';
+
+         -- Obtener los destinatarios adicionales
+        SELECT array_agg(p.email)
+        INTO destinatarios_adicionales
+        FROM share_company_users scu
+        JOIN company c ON scu.company_id = c.id
+        JOIN profile p ON scu.profile_id = p.id
+        WHERE c.owner_id = (SELECT id FROM profile WHERE email = destinatario);
+
+         -- Crear el array todos_destinatarios
+        todos_destinatarios := ARRAY[destinatario] || destinatarios_adicionales;
+
+        -- Enviar el correo electrónico al destinatario actual
+        PERFORM net.http_post(
+            url := 'https://zktcbhhlcksopklpnubj.supabase.co/functions/v1/resend',
+            body := jsonb_build_object(
+                'from', 'Codecontrol <team@codecontrol.com.ar>',
+              'to', todos_destinatarios,
+                'subject', asunto,
+                'html', contenido
+            )
+        );
+        
+    END LOOP;
+END;$function$
+;
+
+CREATE OR REPLACE FUNCTION public.enviar_documentos_vencidos()
+ RETURNS void
+ LANGUAGE plpgsql
+AS $function$DECLARE
+    destinatario TEXT;
+    asunto TEXT;
+    contenido TEXT;
+    documentos_usuario TEXT[];
+    documento RECORD;
+    nombre_compania TEXT;
+    destinatarios_adicionales TEXT[];
+     todos_destinatarios TEXT[];
+BEGIN
+    -- Obtener todos los destinatarios únicos
+    FOR destinatario IN SELECT DISTINCT profile.email FROM profile
+    LOOP
+        -- Inicializar el contenido del correo electrónico para el destinatario actual
+        contenido := '';
+
+    SELECT c.company_name
+        INTO nombre_compania
+        FROM company c
+        JOIN share_company_users scu ON c.id = scu.company_id
+        JOIN profile p ON scu.profile_id = p.id
+        WHERE p.email = destinatario;
+        -- Obtener todos los documentos para el destinatario actual
+        SELECT 
+            array_agg(
+                E'<br>Tipo de documento: ' || tipo_documento ||
+                '<br>Fecha de vencimiento: ' || fecha_vencimiento ||
+                CASE WHEN documento_empleado IS NOT NULL THEN '<br>Documento del empleado: ' || documento_empleado ELSE '' END ||
+                CASE WHEN dominio_vehiculo IS NOT NULL THEN '<br>Dominio del vehículo: ' || dominio_vehiculo ELSE '' END
+            )
+        INTO documentos_usuario
+        FROM (
+            SELECT 
+                dt.name AS tipo_documento, 
+                TO_DATE(de.validity, 'DD-MM-YYYY') AS fecha_vencimiento,
+                e.document_number AS documento_empleado,
+                v.domain AS dominio_vehiculo
+            FROM 
+                documents_employees de
+            JOIN 
+                profile ON de.user_id = profile.id
+            JOIN 
+                document_types dt ON de.id_document_types = dt.id
+            LEFT JOIN
+                employees e ON de.applies = e.id
+            LEFT JOIN
+                vehicles v ON de.applies = v.id
+            WHERE 
+                TO_DATE(de.validity, 'DD-MM-YYYY') >= CURRENT_DATE
+                AND TO_DATE(de.validity, 'DD-MM-YYYY') = DATE_TRUNC('day', CURRENT_DATE)
+                AND profile.email = destinatario
+            UNION ALL
+            SELECT 
+                dt.name AS tipo_documento, 
+                TO_DATE(de.validity, 'DD-MM-YYYY') AS fecha_vencimiento,
+                NULL AS documento_empleado,
+                v.domain AS dominio_vehiculo
+            FROM 
+                documents_equipment de
+            JOIN 
+                profile ON de.user_id = profile.id
+            JOIN 
+                document_types dt ON de.id_document_types = dt.id
+            LEFT JOIN
+                vehicles v ON de.applies = v.id
+            WHERE 
+                TO_DATE(de.validity, 'DD-MM-YYYY') >= CURRENT_DATE
+                AND TO_DATE(de.validity, 'DD-MM-YYYY') = DATE_TRUNC('day', CURRENT_DATE)
+                AND profile.email = destinatario
+        ) AS documentos;
+
+        -- Construir el contenido del correo electrónico con el HTML proporcionado
+        contenido := '
+            <!DOCTYPE html PUBLIC >
+            <html lang="es">
+            <head>
+                <meta content="text/html; charset=UTF-8"/>
+            </head>
+            <body style="background-color:#f3f3f5;font-family:HelveticaNeue,Helvetica,Arial,sans-serif">
+                <table align="center" width="100%" border="0" cellPadding="0" cellSpacing="0" role="presentation" style="max-width:100%;width:680px;margin:0 auto;background-color:#ffffff">
+                    <tbody>
+                        <tr style="width:100%">
+                            <td>
+                                <table align="center" width="100%" border="0" cellPadding="0" cellSpacing="0" role="presentation" style="border-radius:0px 0px 0 0;display:flex;flex-direciont:column;background-color:#2b2d6e">
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <table align="center" width="100%" border="0" cellPadding="0" cellSpacing="0" role="presentation">
+                                                    <tbody style="width:100%">
+                                                        <tr style="width:100%">
+                                                            <td style="padding:20px 30px 15px">
+                                                                <h1 style="color:#fff;font-size:27px;font-weight:bold;line-height:27px">Codecontrol</h1>
+                                                                <p style="font-size:17px;line-height:24px;margin:16px 0;color:#fff">Documentos Vencidos</p>
+                                                            </td>
+                                                            <td  style="padding:30px 10px"><img src="https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/logo/24417298440.png" style="display:block;outline:none;border:none;text-decoration:none;max-width:100%" width="140" /></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <table align="center" width="100%" border="0" cellPadding="0" cellSpacing="0" role="presentation" style="padding:30px 30px 40px 30px">
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <h2 style="margin:0 0 15px;font-weight:bold;font-size:21px;line-height:21px;color:#0c0d0e">Listado de Documentos de la compañía: ' || nombre_compania || '</h2>
+                                                
+                                                <hr style="width:100%;border:none;border-top:1px solid #eaeaea;margin:30px 0" />
+                                                
+                                                <ul>' || array_to_string(documentos_usuario, '<br>') || '</ul>
+                                                
+                                                <hr style="width:100%;border:none;border-top:1px solid #eaeaea;margin:30px 0" />
+                                                <h2 style="margin:0 0 15px;font-weight:bold;font-size:21px;line-height:21px;color:#0c0d0e">Para ver los documentos diríjase a la app</h2>
+                                                <table align="center" width="100%" border="0" cellPadding="0" cellSpacing="0" role="presentation" style="margin-top:24px;display:block">
+                                                    <tbody>
+                                                        <tr>
+                                                            <td><a href="https://codecontrol.com.ar/dashboard" style="color:#fff;text-decoration:none;background-color:#0095ff;border:1px solid #0077cc;font-size:17px;line-height:17px;padding:13px 17px;border-radius:4px;max-width:120px" target="_blank">ir a CodeControl</a></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </body>
+            </html>';
+
+        -- Construir el asunto del correo electrónico
+        
+
+        SELECT array_agg(p.email)
+        INTO destinatarios_adicionales
+        FROM share_company_users scu
+        JOIN company c ON scu.company_id = c.id
+        JOIN profile p ON scu.profile_id = p.id
+        WHERE c.owner_id = (SELECT id FROM profile WHERE email = destinatario);
+
+        -- Crear el array todos_destinatarios
+        todos_destinatarios := ARRAY[destinatario] || destinatarios_adicionales;
+
+        asunto := 'Documentos vencidos';
+
+        -- Enviar el correo electrónico al destinatario actual
+        PERFORM net.http_post(
+            url := 'https://zktcbhhlcksopklpnubj.supabase.co/functions/v1/resend',
+            body := jsonb_build_object(
+                'from', 'Codecontrol <team@codecontrol.com.ar>',
+               'to', todos_destinatarios,
+                'subject', asunto,
+                'html', contenido
+            )
+        );
+    END LOOP;
+END;$function$
+;
+
+CREATE OR REPLACE FUNCTION public.log_document_employee_changes()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$BEGIN
+    IF TG_OP = 'INSERT' THEN
+        INSERT INTO documents_employees_logs (documents_employees_id, modified_by, updated_at)
+        VALUES (NEW.id, NEW.user_id, now());
+    ELSIF TG_OP = 'UPDATE' THEN
+        INSERT INTO documents_employees_logs (documents_employees_id, modified_by, updated_at)
+        VALUES (NEW.id, NEW.user_id, now());
+    END IF;
+    RETURN NULL;
+END;$function$
+;
+
+CREATE OR REPLACE FUNCTION public.log_document_equipment_changes()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$BEGIN
+    IF TG_OP = 'INSERT' THEN
+        INSERT INTO documents_equipment_logs (documents_equipment_id, modified_by, updated_at)
+        VALUES (NEW.id, NEW.user_id, now());
+    ELSIF TG_OP = 'UPDATE' THEN
+        INSERT INTO documents_equipment_logs (documents_equipment_id, modified_by, updated_at)
+        VALUES (NEW.id, NEW.user_id, now());
+    END IF;
+    RETURN NULL;
+END;$function$
+;
+
+CREATE OR REPLACE FUNCTION public.obtener_documentos_por_vencer()
+ RETURNS TABLE(tipo_documento text, correo_electronico text, fecha_vencimiento date, documento_empleado text, dominio_vehiculo text)
+ LANGUAGE plpgsql
+AS $function$BEGIN
+    RETURN QUERY (
+        SELECT 
+            dt.name AS tipo_documento, 
+            profile.email AS correo_electronico, 
+            TO_DATE(de.validity, 'DD-MM-YYYY') AS fecha_vencimiento,
+            e.document_number AS documento_empleado,
+            NULL AS dominio_vehiculo
+        FROM 
+            documents_employees de
+        JOIN 
+            profile ON de.user_id = profile.id
+        JOIN 
+            document_types dt ON de.id_document_types = dt.id
+        JOIN
+            employees e ON de.applies = e.id
+        WHERE 
+            TO_DATE(de.validity, 'DD-MM-YYYY') >= CURRENT_DATE
+            AND TO_DATE(de.validity, 'DD-MM-YYYY') < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '45 days'
+        UNION ALL
+        SELECT 
+            dt.name AS tipo_documento, 
+            profile.email AS correo_electronico, 
+            TO_DATE(de.validity, 'DD-MM-YYYY') AS fecha_vencimiento,
+            NULL AS documento_empleado,
+            v.domain AS dominio_vehiculo
+        FROM 
+            documents_equipment de
+        JOIN 
+            profile ON de.user_id = profile.id
+        JOIN 
+            document_types dt ON de.id_document_types = dt.id
+        LEFT JOIN
+            vehicles v ON de.applies = v.id
+        WHERE 
+            TO_DATE(de.validity, 'DD-MM-YYYY') >= CURRENT_DATE
+            AND TO_DATE(de.validity, 'DD-MM-YYYY') < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
+    );
+END;$function$
+;
+
+CREATE OR REPLACE FUNCTION public.update_company_by_defect()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    IF NEW.by_defect = true THEN
+        UPDATE company
+        SET by_defect = false
+        WHERE owner_id = NEW.owner_id AND id <> NEW.id;
+    END IF;
+    RETURN NEW;
+END;
+$function$
+;
+
+grant delete on table "public"."contractor_equipment" to "anon";
+
+grant insert on table "public"."contractor_equipment" to "anon";
+
+grant references on table "public"."contractor_equipment" to "anon";
+
+grant select on table "public"."contractor_equipment" to "anon";
+
+grant trigger on table "public"."contractor_equipment" to "anon";
+
+grant truncate on table "public"."contractor_equipment" to "anon";
+
+grant update on table "public"."contractor_equipment" to "anon";
+
+grant delete on table "public"."contractor_equipment" to "authenticated";
+
+grant insert on table "public"."contractor_equipment" to "authenticated";
+
+grant references on table "public"."contractor_equipment" to "authenticated";
+
+grant select on table "public"."contractor_equipment" to "authenticated";
+
+grant trigger on table "public"."contractor_equipment" to "authenticated";
+
+grant truncate on table "public"."contractor_equipment" to "authenticated";
+
+grant update on table "public"."contractor_equipment" to "authenticated";
+
+grant delete on table "public"."contractor_equipment" to "service_role";
+
+grant insert on table "public"."contractor_equipment" to "service_role";
+
+grant references on table "public"."contractor_equipment" to "service_role";
+
+grant select on table "public"."contractor_equipment" to "service_role";
+
+grant trigger on table "public"."contractor_equipment" to "service_role";
+
+grant truncate on table "public"."contractor_equipment" to "service_role";
+
+grant update on table "public"."contractor_equipment" to "service_role";
+
+create policy "todos los permisos"
+on "public"."contractor_equipment"
+as permissive
+for all
+to authenticated
+using (true);
+
+
+CREATE TRIGGER trg_update_documents_employees AFTER UPDATE ON public.documents_employees FOR EACH ROW EXECUTE FUNCTION update_status_trigger();
+
+CREATE TRIGGER trg_update_documents_equipment AFTER UPDATE ON public.documents_equipment FOR EACH ROW EXECUTE FUNCTION update_status_trigger();
+
+CREATE TRIGGER add_contractor_equipment BEFORE INSERT ON public.vehicles FOR EACH ROW EXECUTE FUNCTION equipment_allocated_to();
+
+
