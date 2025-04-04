@@ -53,6 +53,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import moment from 'moment';
 
 type Province = {
   id: number;
@@ -170,6 +171,7 @@ export default function EmployeeComponent({
           lastname: '',
           firstname: '',
           nationality: undefined,
+          born_date: undefined,
           cuil: '',
           document_type: undefined,
           document_number: '',
@@ -267,6 +269,12 @@ export default function EmployeeComponent({
       placeholder: 'Nacionalidad',
       options: nacionaliOptionsENUM,
       name: 'nationality',
+    },
+    {
+      label: 'Fecha de nacimiento',
+      type: 'text',
+      placeholder: 'Fecha de nacimiento',
+      name: 'born_date',
     },
     {
       label: 'CUIL',
@@ -478,6 +486,10 @@ export default function EmployeeComponent({
             values.date_of_admission instanceof Date
               ? values.date_of_admission.toISOString()
               : values.date_of_admission,
+          born_date:
+            values.born_date instanceof Date
+              ? values.born_date.toISOString()
+              : values.born_date,
           province: String(provincesOptions.find((e) => e.name.trim() === values.province)?.id),
           birthplace: String(countryOptions.find((e) => e.name === values.birthplace)?.id),
           city: String(citysOptions.find((e) => e.name.trim() === values.city)?.id),
@@ -570,6 +582,10 @@ export default function EmployeeComponent({
             values.date_of_admission instanceof Date
               ? values.date_of_admission.toISOString()
               : values.date_of_admission,
+          born_date:
+            values.born_date instanceof Date
+              ? values.born_date.toISOString()
+              : values.born_date,
           province: String(provincesOptions.find((e) => e.name.trim() === values.province)?.id),
           birthplace: String(countryOptions.find((e) => e.name === values.birthplace)?.id),
           city: String(citysOptions.find((e) => e.name.trim() === values.city)?.id),
@@ -670,7 +686,7 @@ export default function EmployeeComponent({
   const nextMonth = addMonths(new Date(), 1);
   const [month, setMonth] = useState<Date>(nextMonth);
 
-  const yearsAhead = Array.from({ length: 20 }, (_, index) => {
+  const yearsAhead = Array.from({ length: 70 }, (_, index) => {
     const year = today.getFullYear() - index - 1;
     return year;
   });
@@ -930,6 +946,101 @@ export default function EmployeeComponent({
               )}
               <div className="min-w-full max-w-sm flex flex-wrap gap-8 items-center">
                 {PERSONALDATA?.map((data, index) => {
+                  if (data.name === 'born_date') {
+                    return (
+                      // <div key={crypto.randomUUID()} className="w-[300px] flex flex-col gap-2">
+                      <div key={data.name} className="w-[300px] flex flex-col gap-2">
+                        <FormField
+                          control={form.control}
+                          name="born_date"
+                          render={({ field }) => {
+                            const value = field.value;
+
+                            if (value === 'undefined/undefined/undefined' || value === 'Invalid Date') {
+                              field.value = '';
+                            }
+
+                            return (
+                              <FormItem className="flex flex-col">
+                                <FormLabel>
+                                  Fecha de nacimiento <span style={{ color: 'red' }}> *</span>
+                                </FormLabel>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <FormControl>
+                                      <Button
+                                        disabled={readOnly}
+                                        variant="outline"
+                                        className={cn(
+                                          'w-[300px] pl-3 text-left font-normal',
+                                          !field.value && 'text-muted-foreground'
+                                        )}
+                                      >
+                                        {field.value ? (
+                                          moment(field.value, 'YYYY-MM-DD').format('DD/MM/YYYY')
+                                        ) : (
+                                          <span>Elegir fecha</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                      </Button>
+                                    </FormControl>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="flex w-full flex-col space-y-2 p-2" align="start">
+                                    <Select
+                                      onValueChange={(e) => {
+                                        setMonth(new Date(e));
+                                        setYear(e);
+                                        const newYear = parseInt(e, 10);
+                                        const dateWithNewYear = new Date(field.value);
+                                        dateWithNewYear.setFullYear(newYear);
+                                        field.onChange(dateWithNewYear);
+                                        setMonth(dateWithNewYear);
+                                      }}
+                                      value={years || today.getFullYear().toString()}
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Elegir año" />
+                                      </SelectTrigger>
+                                      <SelectContent position="popper">
+                                        <SelectItem
+                                          value={today.getFullYear().toString()}
+                                          disabled={years === today.getFullYear().toString()}
+                                        >
+                                          {today.getFullYear().toString()}
+                                        </SelectItem>
+                                        {yearsAhead?.map((year) => (
+                                          <SelectItem key={year} value={`${year}`}>
+                                            {year}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <Calendar
+                                      month={month}
+                                      onMonthChange={setMonth}
+                                      toDate={today}
+                                      locale={es}
+                                      mode="single"
+                                      // selected={new Date(field.value) || today}
+                                      selected={
+                                        field.value
+                                          ? moment(field.value, 'YYYY-MM-DD').toDate() // esto mantiene la fecha tal cual sin shift
+                                          : today
+                                      }
+                                      onSelect={(e) => {
+                                        field.onChange(e);
+                                      }}
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                              </FormItem>
+                            );
+                          }}
+                        />
+                      </div>
+                    );
+                  }
                   if (data.type === 'file') {
                     return (
                       // <div key={crypto.randomUUID()} className="w-[300px] flex  gap-2">
@@ -1144,10 +1255,15 @@ export default function EmployeeComponent({
                                           !field.value && 'text-muted-foreground'
                                         )}
                                       >
-                                        {field.value ? (
+                                        {/* {field.value ? (
                                           format(field?.value, 'PPP', {
                                             locale: es,
                                           } as any)
+                                        ) : (
+                                          <span>Elegir fecha</span>
+                                        )} */}
+                                        {field.value ? (
+                                          moment(field.value, 'YYYY-MM-DD').format('DD/MM/YYYY')
                                         ) : (
                                           <span>Elegir fecha</span>
                                         )}
@@ -1191,7 +1307,12 @@ export default function EmployeeComponent({
                                       toDate={today}
                                       locale={es}
                                       mode="single"
-                                      selected={new Date(field.value) || today}
+                                      // selected={new Date(field.value) || today}
+                                      selected={
+                                        field.value
+                                          ? moment(field.value, 'YYYY-MM-DD').toDate() // esto mantiene la fecha tal cual sin shift
+                                          : today
+                                      }
                                       onSelect={(e) => {
                                         field.onChange(e);
                                       }}

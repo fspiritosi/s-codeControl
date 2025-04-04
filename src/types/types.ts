@@ -123,6 +123,7 @@ export type Employee = {
   lastname: string;
   firstname: string;
   nationality: string | undefined;
+  born_date: Date | undefined | string;
   cuil: string; //!si
   document_type: string | undefined;
   document_number: string; //!si
