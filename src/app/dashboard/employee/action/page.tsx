@@ -133,7 +133,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
           activeEmploees={[formattedEmployee]}
           historyData={historyData}
         >
-          <DocumentTable role={role} employee_id={formattedEmployee?.id || ''} />
+          <DocumentTable   user={formattedEmployee}  role={role} employee_id={formattedEmployee?.id || ''} />
         </EmployeeComponent>
         <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
       </Card>
