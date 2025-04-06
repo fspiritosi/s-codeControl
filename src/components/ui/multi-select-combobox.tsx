@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, CheckSquare, Square } from 'lucide-react';
 import * as React from 'react';
 import { CardDescription } from './card';
 
@@ -21,6 +21,7 @@ interface MultiSelectComboboxProps {
   onChange: (values: string[]) => void;
   disabled?: boolean;
   selectedResourceDocuments?: EmployeeDocument[];
+  showSelectAll?: boolean;
 }
 
 export function MultiSelectCombobox({
@@ -31,6 +32,7 @@ export function MultiSelectCombobox({
   selectedResourceDocuments,
   onChange,
   disabled = false,
+  showSelectAll = false,
 }: MultiSelectComboboxProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -39,6 +41,26 @@ export function MultiSelectCombobox({
       ? selectedValues.filter((v) => v !== value)
       : [...selectedValues, value];
     onChange(updatedValues);
+  };
+
+  // Get selectable options (options that aren't disabled)
+  const selectableOptions = options.filter(
+    (option) => !selectedResourceDocuments?.some((document) => document.applies === option.value)
+  );
+  const selectableValues = selectableOptions.map((option) => option.value);
+
+  const handleSelectAll = () => {
+    // If all selectable options are already selected, deselect all
+    // Otherwise, select all options that aren't disabled
+    const allSelected = selectableValues.every((value) => selectedValues.includes(value));
+    
+    if (allSelected) {
+      // Deselect all
+      onChange([]);
+    } else {
+      // Select all selectable options
+      onChange(selectableValues);
+    }
   };
 
   return (
@@ -65,6 +87,20 @@ export function MultiSelectCombobox({
         <Command>
           <CommandInput placeholder={`Buscar ${placeholder.toLowerCase()}...`} />
           <CommandEmpty>{emptyMessage}</CommandEmpty>
+          {showSelectAll && (
+            <div className="px-2 py-1 border-b flex items-center">
+              <div 
+                className="flex items-center gap-2 text-sm cursor-pointer hover:text-foreground transition-colors"
+                onClick={handleSelectAll}
+              >
+                {selectableOptions.every((option) => selectedValues.includes(option.value)) ? 
+                  <CheckSquare className="h-4 w-4" /> : 
+                  <Square className="h-4 w-4" />
+                }
+                <span className="text-xs">Seleccionar todos</span>
+              </div>
+            </div>
+          )}
           <CommandGroup className="max-h-64 overflow-auto">
             {options.map((option) => (
               <CommandItem

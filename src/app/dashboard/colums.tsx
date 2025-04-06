@@ -524,6 +524,15 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
             >
               Descargar documento
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {/* Eliminar alerta */}
+            <DropdownMenuItem
+              onClick={() => {
+                // TODO: Implementar eliminación de documento
+              }}
+            >
+              Eliminar alerta
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

@@ -186,6 +186,7 @@ function UploadDocumentMultiEmployee({
                     emptyMessage="No se encontraron recursos."
                     selectedValues={field.value}
                     onChange={field.onChange}
+                    showSelectAll
                   />
                 </FormControl>
                 <FormDescription>Selecciona al menos dos recursos para vincular el documento.</FormDescription>
