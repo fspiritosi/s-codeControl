@@ -88,6 +88,7 @@ type Colum = {
   postal_code: string;
   phone: string;
   file: string;
+  born_date: string;
   date_of_admission: string;
   affiliate_status: string;
   city: string;
@@ -501,6 +502,11 @@ export const EmployeesListColumns: ColumnDef<Colum>[] = [
     accessorKey: 'firstname',
     header: 'Nombre',
   },
+  {
+    accessorKey: 'born_date',
+    header: 'Fecha de nacimiento',
+  },
+
   {
     accessorKey: 'email',
     header: 'Email',

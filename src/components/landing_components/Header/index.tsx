@@ -146,7 +146,7 @@ const Header = () => {
               </div>
               <div className="flex items-center justify-end pr-16 lg:pr-0 gap-8">
                 <Link href="/login" className="hidden md:block">
-                  <Button variant="default">Login</Button>
+                  <Button variant="default">Iniciar session</Button>
                 </Link>
                 {/* <Link
                   href="/signin"

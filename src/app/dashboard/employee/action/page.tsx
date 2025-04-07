@@ -62,7 +62,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
 
     formattedEmployee = setEmployeesToShow(employee)?.[0];
   }
-
+  console.log(formattedEmployee)
   let { data: guilds, error } = await supabase
     .from('guild')
     .select('*')
