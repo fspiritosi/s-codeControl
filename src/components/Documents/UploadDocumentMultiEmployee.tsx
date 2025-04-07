@@ -100,7 +100,7 @@ function UploadDocumentMultiEmployee({
 
   return (
     <div>
-      <CardTitle className="mb-3">Documento no multirecurso</CardTitle>
+      <CardTitle className="mb-3">Documento multirecurso</CardTitle>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 overflow-y-auto max-h-[80vh]">
           <FormField
