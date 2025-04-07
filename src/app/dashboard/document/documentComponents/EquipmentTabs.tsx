@@ -19,7 +19,7 @@ async function EquipmentTabs() {
       </CardContent>
       <TabsContent value="permanentes">
         <ExpiredDataTable
-          data={permanentDocuments || []}
+          data={(permanentDocuments as any) || []}
           columns={ExpiredColums}
           pending={true}
           vehicles

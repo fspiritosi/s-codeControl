@@ -10,33 +10,7 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: 'company_id is required' });
   }
   try {
-    let { data: employees, error } = await supabase
-      .from('employees')
-      // .select(
-      //   `*,guild(name),covenants(name),category(name), city (
-      //   name
-      // ),
-      // province(
-      //   name
-      // ),
-      // workflow_diagram(
-      //   name
-      // ),
-      // hierarchical_position(
-      //   name
-      // ),
-      // birthplace(
-      //   name
-      // ),
-      // contractor_employee(
-      //   customers(
-      //     *
-      //   )
-      // )`
-      // )
-      .select('*')
-      // Filters
-      .eq('company_id', company_id);
+    let { data: employees, error } = await supabase.from('employees').select('*').eq('company_id', company_id);
     //console.log(employees)
     if (error) {
       throw new Error(JSON.stringify(error));

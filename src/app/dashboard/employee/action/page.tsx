@@ -19,7 +19,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
   //   .select('*,applies(*),id_document_types(*)')
   //   .eq('applies.document_number', searchParams.document)
   //   .not('applies', 'is', null)
-  const role = await getRole()
+  const role = await getRole();
 
   const supabase = supabaseServer();
   const user = await supabase.auth.getUser();
@@ -28,8 +28,6 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
   //   .from('share_company_users')
   //   .select('*')
   //   .eq('profile_id', user?.data?.user?.id || '');
-
-  const URL = process.env.NEXT_PUBLIC_BASE_URL;
 
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
@@ -56,13 +54,13 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
       }[]
     | undefined = undefined;
   if (searchParams.employee_id) {
-    const { employee } = await fetch(
-      `${URL}/api/employees/${searchParams.employee_id}?actual=${company_id}&user=${user?.data?.user?.id}`
-    ).then((e) => e.json());
-
-    formattedEmployee = setEmployeesToShow(employee)?.[0];
+    let { data: employees, error } = await supabase
+      .from('employees')
+      .select('*')
+      .eq('company_id', company_id || '');
+    formattedEmployee = setEmployeesToShow(employees)?.[0];
   }
-  console.log(formattedEmployee)
+  console.log(formattedEmployee);
   let { data: guilds, error } = await supabase
     .from('guild')
     .select('*')
@@ -116,7 +114,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
     modifiedAt: moment(item.created_at).local().format('DD/MM/YYYY HH:mm'), // Formatear a la hora local
     type: item.prev_state ? 'modified' : 'created',
   }));
-  
+
   const diagrams2 = await fetchDiagramsByEmployeeId(searchParams.employee_id);
   const diagrams_types2 = await fetchDiagramsTypes();
   return (
@@ -133,7 +131,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
           activeEmploees={[formattedEmployee]}
           historyData={historyData}
         >
-          <DocumentTable role={role} employee_id={formattedEmployee?.id || ''} />
+          <DocumentTable user={formattedEmployee} role={role} employee_id={formattedEmployee?.id || ''} />
         </EmployeeComponent>
         <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>
       </Card>
