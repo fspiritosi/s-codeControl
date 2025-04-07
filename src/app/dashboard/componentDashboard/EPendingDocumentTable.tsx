@@ -7,7 +7,7 @@ function EPendingDocumentTable() {
   const employees = useLoggedUserStore((state) => state.pendingDocuments)?.employees;
   return (
     <ExpiredDataTable
-      data={employees || []}
+      data={employees as any}
       columns={ExpiredColums}
       pending={true}
       localStorageName="dashboardPendingColumns"

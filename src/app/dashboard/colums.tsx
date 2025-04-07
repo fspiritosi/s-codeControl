@@ -24,7 +24,6 @@ import {
   DialogDescription,
   DialogFooter,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -144,7 +143,7 @@ const domainAndInternNumber: FilterFn<Colum> = (
   return false;
 };
 
-export const ExpiredColums: ColumnDef<Colum>[] = [
+export const ExpiredColums: ColumnDef<any>[] = [
   {
     id: 'actions',
     cell: ({ row }: { row: any }) => {
@@ -260,7 +259,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
         setShowInactive(!showInactive);
       };
 
-      const router = useRouter()
+      const router = useRouter();
 
       async function viewDocumentEmployees() {
         const supabase = supabaseBrowser();
@@ -531,94 +530,84 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {/* Eliminar alerta */}
-            {
-              row.original.termination_date && (
-                <>
-                  {/* Use a separate state for this specific dialog */}
-                  {(() => {
-                    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-                    
-                    const handleDelete = async () => {
-                      try {
-                        // Close the dialog first
-                        setDeleteDialogOpen(false);
-                        
-                        // Show loading toast
-                        const loadingToast = toast.loading('Eliminando alerta...');
-                        
-                        // Perform the deletion based on the type of document
-                        if(row.original.applies === 'Persona') {
-                          const { error } = await supabase
-                            .from('documents_employees')
-                            .delete()
-                            .eq('id', row.original.id);
-                            
-                          if (error) {
-                            throw new Error(handleSupabaseError(error.message));
-                          }
-                        } else {
-                          // Delete equipment document
-                          const { error } = await supabase
-                            .from('documents_equipment')
-                            .delete()
-                            .eq('id', row.original.id);
-                            
-                          if (error) {
-                            throw new Error(handleSupabaseError(error.message));
-                          }
+            {row.original.termination_date && (
+              <>
+                {/* Use a separate state for this specific dialog */}
+                {(() => {
+                  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+                  const handleDelete = async () => {
+                    try {
+                      // Close the dialog first
+                      setDeleteDialogOpen(false);
+
+                      // Show loading toast
+                      const loadingToast = toast.loading('Eliminando alerta...');
+
+                      // Perform the deletion based on the type of document
+                      if (row.original.applies === 'Persona') {
+                        const { error } = await supabase.from('documents_employees').delete().eq('id', row.original.id);
+
+                        if (error) {
+                          throw new Error(handleSupabaseError(error.message));
                         }
-                        
-                        // Dismiss loading toast and show success
-                        toast.dismiss(loadingToast);
-                        toast.success('Alerta eliminada');
-                        
-                        // Refresh the page to update the UI
-                        router.refresh();
-                      } catch (error) {
-                        // Dismiss loading toast and show error
-                        toast.dismiss();
-                        toast.error('Error al eliminar alerta');
-                        console.error(error);
+                      } else {
+                        // Delete equipment document
+                        const { error } = await supabase.from('documents_equipment').delete().eq('id', row.original.id);
+
+                        if (error) {
+                          throw new Error(handleSupabaseError(error.message));
+                        }
                       }
-                    };
-                    
-                    return (
-                      <>
-                        <DropdownMenuItem 
-                          className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            setDeleteDialogOpen(true);
-                          }}
-                        >
-                          Eliminar alerta
-                        </DropdownMenuItem>
-                        
-                        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                          <DialogContent className="sm:max-w-[425px]">
-                            <DialogTitle>Eliminar alerta</DialogTitle>
-                            <DialogDescription>
-                              ¿Estás seguro de que deseas eliminar la alerta para el documento <span className="font-bold">{row.original.documentName}</span>?
-                            </DialogDescription>
-                            <DialogFooter className="mt-4">
-                              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-                                Cancelar
-                              </Button>
-                              <Button 
-                                variant="destructive" 
-                                onClick={handleDelete}
-                              >
-                                Eliminar
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-                      </>
-                    );
-                  })()} 
-                </>
-              )
-            }
+
+                      // Dismiss loading toast and show success
+                      toast.dismiss(loadingToast);
+                      toast.success('Alerta eliminada');
+
+                      // Refresh the page to update the UI
+                      router.refresh();
+                    } catch (error) {
+                      // Dismiss loading toast and show error
+                      toast.dismiss();
+                      toast.error('Error al eliminar alerta');
+                      console.error(error);
+                    }
+                  };
+
+                  return (
+                    <>
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          setDeleteDialogOpen(true);
+                        }}
+                      >
+                        Eliminar alerta
+                      </DropdownMenuItem>
+
+                      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                        <DialogContent className="sm:max-w-[425px]">
+                          <DialogTitle>Eliminar alerta</DialogTitle>
+                          <DialogDescription>
+                            ¿Estás seguro de que deseas eliminar la alerta para el documento{' '}
+                            <span className="font-bold">{row.original.documentName}</span>?
+                          </DialogDescription>
+                          <DialogFooter className="mt-4">
+                            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                              Cancelar
+                            </Button>
+                            <Button variant="destructive" onClick={handleDelete}>
+                              Eliminar
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </>
+                  );
+                })()}
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -634,7 +623,7 @@ export const ExpiredColums: ColumnDef<Colum>[] = [
   },
   {
     accessorKey: 'documentName',
-    header: 'Documento'
+    header: 'Documento',
   },
   {
     accessorKey: 'intern_number',

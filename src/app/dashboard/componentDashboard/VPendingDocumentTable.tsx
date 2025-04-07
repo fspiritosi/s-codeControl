@@ -7,7 +7,7 @@ function VPendingDocumentTable() {
   const vehicles = useLoggedUserStore((state) => state.pendingDocuments)?.vehicles;
   return (
     <ExpiredDataTable
-      data={vehicles || []}
+      data={(vehicles as any) || []}
       columns={ExpiredColums}
       pending={true}
       localStorageName="dashboardVPendingColumns"
