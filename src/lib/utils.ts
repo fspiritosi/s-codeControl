@@ -314,6 +314,7 @@ export const formatEmployeeDocuments = (doc: EmployeeDocumentWithContractors) =>
     applies: doc.id_document_types?.applies,
     id_document_types: doc.id_document_types?.id,
     intern_number: null,
+    termination_date:doc.applies.termination_date
   };
 };
 
