@@ -1,28 +1,30 @@
-'use client';
+"use client"
+
+import type React from "react"
 
 import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from '@tanstack/react-table';
+} from "@tanstack/react-table"
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -31,266 +33,393 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useLoggedUserStore } from '@/store/loggedUser';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+} from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useLoggedUserStore } from "@/store/loggedUser"
+import Link from "next/link"
+import { useEffect, useState } from "react"
 
 interface DataEquipmentProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[] | any;
-  data: TData[];
-  // allCompany: any[];
-  // showInactive: boolean;
-  // setShowInactive?: (showInactive: boolean) => void;
-  role?: string | null;
+  columns: ColumnDef<TData, TValue>[] | any
+  data: TData[]
+  role?: string | null
 }
 
-export function EquipmentTable<TData, TValue>({
-  columns,
-  data,
-  role
-  // showInactive,
-  // setShowInactive,
-  // allCompany,
-}: DataEquipmentProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [defaultColumns, setDefaultColumns] = useState<any[]>([]);
-  const [showInactive, setShowInactive] = useState(false);
+export function EquipmentTable<TData, TValue>({ columns, data, role }: DataEquipmentProps<TData, TValue>) {
+  // Identificador único para esta tabla
+  const tableId = "equipmentTable"
+
+  // Estados para la tabla
+  const [sorting, setSorting] = useState<SortingState>(() => {
+    // Cargar desde sessionStorage al inicializar
+    if (typeof window !== "undefined") {
+      const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
+      if (savedFilters) {
+        try {
+          const parsedFilters = JSON.parse(savedFilters)
+          if (parsedFilters.sorting) return parsedFilters.sorting
+        } catch (error) {
+          console.error("Error al cargar sorting:", error)
+        }
+      }
+    }
+    return []
+  })
+
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => {
+    // Cargar desde sessionStorage al inicializar
+    if (typeof window !== "undefined") {
+      const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
+      if (savedFilters) {
+        try {
+          const parsedFilters = JSON.parse(savedFilters)
+          if (parsedFilters.columnFilters) return parsedFilters.columnFilters
+        } catch (error) {
+          console.error("Error al cargar columnFilters:", error)
+        }
+      }
+    }
+    return []
+  })
+
+  // Añadir estado para el tamaño de página
+  const [pageSize, setPageSize] = useState<number>(() => {
+    // Cargar desde sessionStorage al inicializar
+    if (typeof window !== "undefined") {
+      const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
+      if (savedFilters) {
+        try {
+          const parsedFilters = JSON.parse(savedFilters)
+          if (parsedFilters.pageSize) return parsedFilters.pageSize
+        } catch (error) {
+          console.error("Error al cargar pageSize:", error)
+        }
+      }
+    }
+    return 20 // Valor por defecto
+  })
+
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [defaultColumns, setDefaultColumns] = useState<any[]>([])
+  const [showInactive, setShowInactive] = useState(false)
+
+  const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(() => {
+    // Cargar desde sessionStorage al inicializar
+    if (typeof window !== "undefined") {
+      const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
+      if (savedFilters) {
+        try {
+          const parsedFilters = JSON.parse(savedFilters)
+          if (parsedFilters.selectValues) return parsedFilters.selectValues
+        } catch (error) {
+          console.error("Error al cargar selectValues:", error)
+        }
+      }
+    }
+    return {}
+  })
+
+  // Guardar filtros en sessionStorage cuando cambien
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const filtersToSave = {
+        sorting,
+        columnFilters,
+        selectValues,
+        pageSize,
+      }
+      sessionStorage.setItem(`table-filters-${tableId}`, JSON.stringify(filtersToSave))
+    }
+  }, [sorting, columnFilters, selectValues, pageSize])
 
   useEffect(() => {
     // Filtrar las columnas basado en el rol
-    const filteredColumns = role === 'Invitado' 
-      ? columns.filter((col: any) => col.accessorKey !== 'status' && col.accessorKey !== 'allocated_to')
-      : columns;
-    
-    setDefaultColumns(filteredColumns);
-  }, [columns, role]);
+    const filteredColumns =
+      role === "Invitado"
+        ? columns.filter((col: any) => col.accessorKey !== "status" && col.accessorKey !== "allocated_to")
+        : columns
+
+    setDefaultColumns(filteredColumns)
+  }, [columns, role])
 
   useEffect(() => {
-    const valorGuardado = JSON.parse(localStorage.getItem('equipmentColumns') || '[]');
+    const valorGuardado = JSON.parse(localStorage.getItem("equipmentColumns") || "[]")
     // Si el rol es invitado, remover allocated_to del localStorage
-    if (role === 'Invitado') {
-      const newColumns = valorGuardado.filter((col: string) => col !== 'allocated_to');
-      localStorage.setItem('equipmentColumns', JSON.stringify(newColumns));
+    if (role === "Invitado") {
+      const newColumns = valorGuardado.filter((col: string) => col !== "allocated_to")
+      localStorage.setItem("equipmentColumns", JSON.stringify(newColumns))
     }
     if (valorGuardado.length) {
       setColumnVisibility(
         defaultColumns.reduce((acc: any, column: any) => {
-          acc[column.accessorKey] = role === 'Invitado' 
-            ? valorGuardado.includes(column.accessorKey) && column.accessorKey !== 'allocated_to'
-            : valorGuardado.includes(column.accessorKey);
-          return acc;
-        }, {})
-      );
+          acc[column.accessorKey] =
+            role === "Invitado"
+              ? valorGuardado.includes(column.accessorKey) && column.accessorKey !== "allocated_to"
+              : valorGuardado.includes(column.accessorKey)
+          return acc
+        }, {}),
+      )
     }
-  }, [defaultColumns, role]);
+  }, [defaultColumns, role])
 
   const defaultVisibleColumns = [
-    'domain',
-    'year',
-    'type_of_vehicle',
-    'brand',
-    'model',
-    'picture',
-    'status',
-    'intern_number',
-    'condition',
-    ...(role !== 'Invitado' ? ['allocated_to'] : [])
-  ];
+    "domain",
+    "year",
+    "type",
+    "brand",
+    "model",
+    "picture",
+    "status",
+    "intern_number",
+    "condition",
+    ...(role !== "Invitado" ? ["allocated_to"] : []),
+  ]
 
   const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
-    if (typeof window !== 'undefined') {
-      let valorGuardado = JSON.parse(localStorage.getItem('savedColumns') || '[]');
-      if (role === 'Invitado') {
-        valorGuardado = valorGuardado.filter((col: string) => col !== 'allocated_to');
-        localStorage.setItem('savedColumns', JSON.stringify(valorGuardado));
+    if (typeof window !== "undefined") {
+      let valorGuardado = JSON.parse(localStorage.getItem("savedColumns") || "[]")
+      if (role === "Invitado") {
+        valorGuardado = valorGuardado.filter((col: string) => col !== "allocated_to")
+        localStorage.setItem("savedColumns", JSON.stringify(valorGuardado))
       }
-      return valorGuardado.length ? valorGuardado : defaultVisibleColumns;
+      return valorGuardado.length ? valorGuardado : defaultVisibleColumns
     }
-    return defaultVisibleColumns;
-  });
+    return defaultVisibleColumns
+  })
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('savedColumns', JSON.stringify(defaultVisibleColumns1));
+    if (typeof window !== "undefined") {
+      localStorage.setItem("savedColumns", JSON.stringify(defaultVisibleColumns1))
     }
-  }, [defaultVisibleColumns1]);
+  }, [defaultVisibleColumns1])
 
   useEffect(() => {
-    const valorGuardado = JSON.parse(localStorage.getItem('savedColumns') || '[]');
+    const valorGuardado = JSON.parse(localStorage.getItem("savedColumns") || "[]")
     if (valorGuardado.length) {
       setColumnVisibility(
         defaultColumns.reduce((acc: any, column: any) => {
-          acc[column.accessorKey] = valorGuardado.includes(column.accessorKey);
-          return acc;
-        }, {})
-      );
+          acc[column.accessorKey] = valorGuardado.includes(column.accessorKey)
+          return acc
+        }, {}),
+      )
     }
-  }, [defaultColumns]);
+  }, [defaultColumns])
 
   useEffect(() => {
     // Set initial column visibility based on role
-    if (role === 'Invitado') {
-      setColumnVisibility(prev => ({
+    if (role === "Invitado") {
+      setColumnVisibility((prev) => ({
         ...prev,
         status: false,
-        allocated_to: false
-      }));
+        allocated_to: false,
+      }))
     }
-  }, [role]);
+  }, [role])
 
   const handleColumnVisibilityChange = (columnId: string, isVisible: boolean) => {
     setColumnVisibility((prev) => ({
       ...prev,
       [columnId]: isVisible,
-    }));
+    }))
     setDefaultVisibleColumns1((prev: any) => {
-      const newVisibleColumns = isVisible ? [...prev, columnId] : prev.filter((id: string) => id !== columnId);
-      localStorage.setItem('savedColumns', JSON.stringify(newVisibleColumns));
-      return newVisibleColumns;
-    });
-  };
+      const newVisibleColumns = isVisible ? [...prev, columnId] : prev.filter((id: string) => id !== columnId)
+      localStorage.setItem("savedColumns", JSON.stringify(newVisibleColumns))
+      return newVisibleColumns
+    })
+  }
 
-  const loader = useLoggedUserStore((state) => state.isLoading);
-  //const filteredData = showInactive ? data?.filter((item: any) => item.is_active === false) : data;
+  const loader = useLoggedUserStore((state) => state.isLoading)
+
   const allOptions = {
-    type_of_vehicle: createOptions('type_of_vehicle'),
-    types_of_vehicles: createOptions('types_of_vehicles'),
-    year: createOptions('year'),
-    brand: createOptions('brand_vehicles'),
-    model: createOptions('model_vehicles'),
-    status: createOptions('status'),
-    allocated_to: createOptions('allocated_to'),
-    condition: createOptions('condition'),
-    type: createOptions('type'),
-  };
+    // type: createOptions("type"),
+    types_of_vehicles: createOptions("types_of_vehicles"),
+    year: createOptions("year"),
+    brand: createOptions("brand"),
+    model: createOptions("model"),
+    status: createOptions("status"),
+    allocated_to: createOptions("allocated_to"),
+    condition: createOptions("condition"),
+    type: createOptions("type"),
+  }
 
   function createOptions(key: string) {
-    const values = data?.map((item: any) => (item?.[key]?.name ? item?.[key]?.name : item?.[key]));
+    const values = data?.map((item: any) => (item?.[key]?.name ? item?.[key]?.name : item?.[key]))
 
-    return ['Todos', ...Array.from(new Set(values))];
+    return ["Todos", ...Array.from(new Set(values))]
   }
 
   const selectHeader = {
-    type_of_vehicle: {
-      name: 'types_of_vehicles',
-      option: allOptions.type_of_vehicle,
-      label: 'Tipo de equipo',
+    type: {
+      name: "type",
+      option: allOptions.type,
+      label: "Tipo de equipo",
     },
     types_of_vehicles: {
-      name: 'types_of_vehicles.name',
+      name: "types_of_vehicles.name",
       option: allOptions.types_of_vehicles,
-      label: 'Tipos de vehículos',
+      label: "Tipos de vehículos",
     },
     year: {
-      name: 'year',
+      name: "year",
       option: allOptions.year,
-      label: 'Año',
+      label: "Año",
     },
     brand: {
-      name: 'brand',
+      name: "brand",
       option: allOptions.brand,
-      label: 'Marca',
+      label: "Marca",
     },
     model: {
-      name: 'model',
+      name: "model",
       option: allOptions.model,
-      label: 'Modelo',
+      label: "Modelo",
     },
     status: {
-      name: 'status',
+      name: "status",
       option: allOptions.status,
-      label: 'Estado',
+      label: "Estado",
     },
     allocated_to: {
-      name: 'allocated_to',
+      name: "allocated_to",
       option: allOptions.allocated_to,
-      label: 'Afectado a',
+      label: "Afectado a",
     },
     condition: {
-      name: 'condition',
+      name: "condition",
       option: allOptions.condition,
-      label: 'Condición',
+      label: "Condición",
     },
-    type: {
-      name: 'type',
-      option: allOptions.type,
-      label: 'Tipo',
-    }
-  };
+    // type: {
+    //   name: "type",
+    //   option: allOptions.type,
+    //   label: "Tipo",
+    // },
+  }
 
+  // Configuración de la tabla con filtrado personalizado para status
   const table = useReactTable({
     data,
-    columns: defaultColumns,
+    columns: defaultColumns.map((col) => ({
+      ...col,
+      id: col.accessorKey || col.id,
+      // Añadir filtrado personalizado para la columna status
+      ...(col.accessorKey === "status" && {
+        filterFn: (row, columnId, filterValue) => {
+          const value = row.getValue(columnId)
+          // Si no hay valor de filtro, mostrar todas las filas
+          if (!filterValue) return true
+          // Comparación exacta para evitar que "Completo" coincida con "Incompleto"
+          return String(value).toLowerCase() === String(filterValue).toLowerCase()
+        },
+      }),
+    })),
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
+    onSortingChange: (updater) => {
+      const newSorting = typeof updater === "function" ? updater(sorting) : updater
+      setSorting(newSorting)
+    },
     getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
+    onColumnFiltersChange: (updater) => {
+      const newFilters = typeof updater === "function" ? updater(columnFilters) : updater
+      setColumnFilters(newFilters)
+    },
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
+      pagination: {
+        pageIndex: 0,
+        pageSize,
+      },
     },
-  });
-  const setActivesVehicles = useLoggedUserStore((state) => state.setActivesVehicles);
-  //const router = useRouter()
+    // Añadir manejador para cambios en la paginación
+    onPaginationChange: (updater) => {
+      const newPagination = typeof updater === "function" ? updater(table.getState().pagination) : updater
+      if (newPagination.pageSize !== pageSize) {
+        setPageSize(newPagination.pageSize)
+      }
+    },
+  })
+
+  // Aplicar los filtros guardados cuando la tabla esté lista
+  useEffect(() => {
+    if (defaultColumns.length > 0) {
+      // Aplicar los filtros guardados a las columnas correspondientes
+      columnFilters.forEach((filter) => {
+        const column = table.getColumn(filter.id)
+        if (column) {
+          column.setFilterValue(filter.value)
+        }
+      })
+    }
+  }, [defaultColumns, table])
+
+  const setActivesVehicles = useLoggedUserStore((state) => state.setActivesVehicles)
 
   useEffect(() => {
-    const valorGuardado = JSON.parse(localStorage.getItem('savedColumns') || '');
+    const valorGuardado = JSON.parse(localStorage.getItem("savedColumns") || "")
     if (!valorGuardado.length) {
-      localStorage.setItem('savedColumns', JSON.stringify(defaultVisibleColumns1));
+      localStorage.setItem("savedColumns", JSON.stringify(defaultVisibleColumns1))
     } else {
       localStorage.setItem(
-        'savedColumns',
+        "savedColumns",
         JSON.stringify(
           table
             .getAllColumns()
             ?.filter((column) => column.getIsVisible())
-            .map((column) => column.id)
-        )
-      );
+            .map((column) => column.id),
+        ),
+      )
     }
-  }, [columnVisibility]);
+  }, [columnVisibility])
 
   const handleClearFilters = () => {
+    // Limpiar todos los filtros de columna
     table.getAllColumns().forEach((column) => {
-      column.setFilterValue('');
-    });
+      column.setFilterValue("")
+    })
 
+    // Resetear los valores de los selectores
     setSelectValues({
-      types_of_vehicles: 'Todos',
-      type_of_vehicle: 'todos',
-      domain: 'Todos',
-      chassis: 'Todos',
-      engine: 'Todos',
-      serie: 'Todos',
-      intern_number: 'Todos',
-      year: 'Todos',
-      brand: 'Todos',
-      model: 'Todos',
-      status: 'Todos',
-      condition: 'Todos',
-      type: 'Todos',
-    });
-    setActivesVehicles();
-  };
-  const maxRows = ['20', '40', '60', '80', '100'];
-  const [selectValues, setSelectValues] = useState<{ [key: string]: string }>({});
+      types_of_vehicles: "Todos",
+      type_of_vehicle: "Todos",
+      domain: "Todos",
+      chassis: "Todos",
+      engine: "Todos",
+      serie: "Todos",
+      intern_number: "Todos",
+      year: "Todos",
+      brand: "Todos",
+      model: "Todos",
+      status: "Todos",
+      condition: "Todos",
+      type: "Todos",
+    })
+
+    // Resetear los filtros de columna en el estado
+    setColumnFilters([])
+
+    // Limpiar filtros en sessionStorage
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem(`table-filters-${tableId}`)
+    }
+
+    setActivesVehicles()
+  }
+
+  const maxRows = ["20", "40", "60", "80", "100"]
 
   return (
     <div className="w-full grid grid-cols-1">
       <div className="flex items-center py-4 flex-wrap gap-y-2 overflow-auto">
         <Input
           placeholder="Buscar por Dominio o Número de interno"
-          value={(table.getColumn('domain')?.getFilterValue() as string) ?? ''}
-          onChange={(event) => table.getColumn('domain')?.setFilterValue(event.target.value)}
+          value={(table.getColumn("domain")?.getFilterValue() as string) ?? ""}
+          onChange={(event) => table.getColumn("domain")?.setFilterValue(event.target.value)}
           className="max-w-sm"
         />
         <Button variant="outline" size="default" className="ml-2" onClick={handleClearFilters}>
@@ -298,7 +427,14 @@ export function EquipmentTable<TData, TValue>({
         </Button>
 
         <div className=" flex gap-2 ml-2 flex-wrap">
-          <Select onValueChange={(e) => table.setPageSize(Number(e))}>
+          <Select
+            value={String(pageSize)}
+            onValueChange={(e) => {
+              const newSize = Number(e)
+              setPageSize(newSize)
+              table.setPageSize(newSize)
+            }}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Cantidad de filas" />
             </SelectTrigger>
@@ -322,14 +458,12 @@ export function EquipmentTable<TData, TValue>({
             <DropdownMenuContent align="end" className="max-h-[50dvh] overflow-y-auto">
               {table
                 .getAllColumns()
-                ?.filter((column) => column.getCanHide() && column.id !== 'intern_number' && column.id !== 'domain')
+                ?.filter((column) => column.getCanHide() && column.id !== "intern_number" && column.id !== "domain")
                 ?.map((column: any) => {
-                  if (column.id === 'actions') {
-                    return null;
+                  if (column.id === "actions") {
+                    return null
                   }
-                  // if (typeof column.columnDef.header !== 'string') {
-                  //   const name = `${column.columnDef.accessorKey}`;
-                  if (column.id === 'showUnavaliableEquipment') {
+                  if (column.id === "showUnavaliableEquipment") {
                     return (
                       <DropdownMenuCheckboxItem
                         key={column.id}
@@ -339,9 +473,9 @@ export function EquipmentTable<TData, TValue>({
                       >
                         {column.columnDef.header}
                       </DropdownMenuCheckboxItem>
-                    );
+                    )
                   }
-                  if (column.id === 'is_active') {
+                  if (column.id === "is_active") {
                     return (
                       <>
                         <DropdownMenuCheckboxItem
@@ -349,12 +483,11 @@ export function EquipmentTable<TData, TValue>({
                           className="capitalize  text-red-400"
                           checked={showInactive}
                           onClick={() => setShowInactive(!showInactive)}
-                          // onCheckedChange={(value) => handleColumnVisibilityChange(column.id, true)}
                         >
                           {column.columnDef.header}
                         </DropdownMenuCheckboxItem>
                       </>
-                    );
+                    )
                   }
                   return (
                     <DropdownMenuCheckboxItem
@@ -365,7 +498,7 @@ export function EquipmentTable<TData, TValue>({
                     >
                       {column.columnDef.header}
                     </DropdownMenuCheckboxItem>
-                  );
+                  )
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -383,24 +516,24 @@ export function EquipmentTable<TData, TValue>({
                         ? null
                         : flexRender(
                             header.id in selectHeader ? (
-                              header.id === 'allocated_to' ? (
+                              header.id === "allocated_to" ? (
                                 <div className="flex justify-center">
                                   <Input
                                     placeholder="Buscar por afectación"
-                                    value={table.getColumn('allocated_to')?.getFilterValue() as string}
+                                    value={table.getColumn("allocated_to")?.getFilterValue() as string}
                                     onChange={(event) => {
-                                      table.getColumn('allocated_to')?.setFilterValue(event.target.value);
+                                      table.getColumn("allocated_to")?.setFilterValue(event.target.value)
                                     }}
                                     className="max-w-sm"
                                   />
                                 </div>
-                              ) : header.id === 'intern_number' ? (
+                              ) : header.id === "intern_number" ? (
                                 <div className="flex justify-center">
                                   <Input
                                     placeholder="Número de interno"
-                                    value={table.getColumn('intern_number')?.getFilterValue() as string}
+                                    value={table.getColumn("intern_number")?.getFilterValue() as string}
                                     onChange={(event) =>
-                                      table.getColumn('intern_number')?.setFilterValue(event.target.value)
+                                      table.getColumn("intern_number")?.setFilterValue(event.target.value)
                                     }
                                     className="max-w-sm"
                                   />
@@ -408,21 +541,26 @@ export function EquipmentTable<TData, TValue>({
                               ) : (
                                 <div className="flex justify-center">
                                   <Select
-                                    value={selectValues[header.id]}
+                                    value={selectValues[header.id] || "Todos"}
                                     onValueChange={(event) => {
-                                      if (event === 'Todos') {
-                                        table.getColumn(header.id)?.setFilterValue('');
+                                      if (event === "Todos") {
+                                        table.getColumn(header.id)?.setFilterValue("")
                                         setSelectValues({
                                           ...selectValues,
                                           [header.id]: event,
-                                        });
-                                        return;
+                                        })
+                                        return
                                       }
-                                      table.getColumn(header.id)?.setFilterValue(event);
-                                      setSelectValues({
-                                        ...selectValues,
-                                        [header.id]: event,
-                                      });
+
+                                      // Pasar el valor exacto para el filtrado
+                                      const column = table.getColumn(header.id)
+                                      if (column) {
+                                        column.setFilterValue(event)
+                                        setSelectValues({
+                                          ...selectValues,
+                                          [header.id]: event,
+                                        })
+                                      }
                                     }}
                                   >
                                     <SelectTrigger className="w-[180px]">
@@ -435,7 +573,7 @@ export function EquipmentTable<TData, TValue>({
                                             <SelectItem key={option} value={option}>
                                               {option}
                                             </SelectItem>
-                                          )
+                                          ),
                                         )}
                                       </SelectGroup>
                                     </SelectContent>
@@ -445,10 +583,10 @@ export function EquipmentTable<TData, TValue>({
                             ) : (
                               header.column.columnDef.header
                             ),
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
-                  );
+                  )
                 })}
               </TableRow>
             ))}
@@ -456,16 +594,16 @@ export function EquipmentTable<TData, TValue>({
           <TableBody className="max-w-[50vw] overflow-x-auto">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows?.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
                   {row.getVisibleCells()?.map((cell) => {
-                    let is_active = (cell.row.original as any).is_active;
+                    const is_active = (cell.row.original as any).is_active
                     return (showInactive && !is_active) || (!showInactive && is_active) ? (
                       <TableCell
                         key={cell.id}
-                        className={`text-center whitespace-nowrap ${is_active ? '' : 'text-red-500'}`}
+                        className={`text-center whitespace-nowrap ${is_active ? "" : "text-red-500"}`}
                       >
-                        {cell.column.id === 'picture' ? (
-                          cell.getValue() !== '' ? (
+                        {cell.column.id === "picture" ? (
+                          cell.getValue() !== "" ? (
                             <Link href={cell.getValue() as any} target="_blank">
                               <Avatar className="size-14 border border-black">
                                 <AvatarImage
@@ -477,23 +615,23 @@ export function EquipmentTable<TData, TValue>({
                               </Avatar>
                             </Link>
                           ) : (
-                            'No disponible'
+                            "No disponible"
                           )
-                        ) : cell.column.id === 'status' ? (
+                        ) : cell.column.id === "status" ? (
                           <Badge
                             variant={
-                              cell.getValue() === 'Completo'
-                                ? 'success'
-                                : cell.getValue() === 'Completo con doc vencida'
-                                  ? 'yellow'
-                                  : 'destructive'
+                              cell.getValue() === "Completo"
+                                ? "success"
+                                : cell.getValue() === "Completo con doc vencida"
+                                  ? "yellow"
+                                  : "destructive"
                             }
                           >
                             {cell.getValue() as React.ReactNode}
                           </Badge>
-                        ) : cell.column.id === 'domain' ? (
+                        ) : cell.column.id === "domain" ? (
                           !cell.getValue() ? (
-                            'No posee'
+                            "No posee"
                           ) : (
                             (cell.getValue() as React.ReactNode)
                           )
@@ -501,7 +639,7 @@ export function EquipmentTable<TData, TValue>({
                           flexRender(cell.column.columnDef.cell, cell.getContext())
                         )}
                       </TableCell>
-                    ) : null;
+                    ) : null
                   })}
                 </TableRow>
               ))
@@ -530,7 +668,7 @@ export function EquipmentTable<TData, TValue>({
                       </div>
                     </div>
                   ) : (
-                    'No hay Equipos registrados'
+                    "No hay Equipos registrados"
                   )}
                 </TableCell>
               </TableRow>
@@ -547,5 +685,5 @@ export function EquipmentTable<TData, TValue>({
         </Button>
       </div>
     </div>
-  );
+  )
 }
