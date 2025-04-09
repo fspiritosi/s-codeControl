@@ -18,14 +18,62 @@ import { DatePicker } from '@/components/DailyReport/DatePicker';
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
+  storageKey?: string;
 }
 
 export function DataTableToolbarDetailReport<TData>({
   table,
+  storageKey = 'detail-report-filters'
 }: DataTableToolbarProps<TData>) {
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const isFiltered = table.getState().columnFilters.length > 0;
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+
+  // Cargar estado guardado al montar el componente
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isInitialLoad) {
+      try {
+        const savedState = sessionStorage.getItem(storageKey);
+        if (savedState) {
+          const parsedState = JSON.parse(savedState);
+          
+          // Aplicar filtros de columnas
+          if (Array.isArray(parsedState.columnFilters)) {
+            table.setColumnFilters(parsedState.columnFilters);
+          }
+          
+          // Aplicar fechas
+          if (parsedState.startDate) {
+            setStartDate(new Date(parsedState.startDate));
+          }
+          if (parsedState.endDate) {
+            setEndDate(new Date(parsedState.endDate));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading filters from sessionStorage:', error);
+        sessionStorage.removeItem(storageKey);
+      }
+      setIsInitialLoad(false);
+    }
+  }, [table, storageKey, isInitialLoad]);
+
+  // Guardar estado cuando cambia
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !isInitialLoad) {
+      try {
+        const stateToSave = {
+          columnFilters: table.getState().columnFilters,
+          startDate: startDate?.toISOString(),
+          endDate: endDate?.toISOString()
+        };
+        sessionStorage.setItem(storageKey, JSON.stringify(stateToSave));
+      } catch (error) {
+        console.error('Error saving filters to sessionStorage:', error);
+      }
+    }
+  }, [table.getState().columnFilters, startDate, endDate, storageKey, isInitialLoad]);
 
   const getUniqueValues = (columnId: string) => {
     return table.getColumn(columnId)?.getFacetedUniqueValues()
@@ -62,19 +110,21 @@ export function DataTableToolbarDetailReport<TData>({
       const formattedStartDate = moment(startDate).format('DD/MM/YYYY');
       const formattedEndDate = moment(endDate).format('DD/MM/YYYY');
       table.getColumn('Fecha')?.setFilterValue([formattedStartDate, formattedEndDate]);
-      
-      const filteredData = table.getFilteredRowModel().rows.filter((row) => {
-        const rowDate = moment((row.original as { date: string }).date, 'YYYY/MM/DD');
-        return rowDate.isBetween(startDate, endDate, undefined, '[]');
-      });
-      
-     
     }
   };
 
   useEffect(() => {
     handleDateChange();
   }, [startDate, endDate]);
+
+  const handleClearFilters = () => {
+    table.resetColumnFilters();
+    setStartDate(undefined);
+    setEndDate(undefined);
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem(storageKey);
+    }
+  };
 
   return (
     <div className="flex items-center justify-between">
@@ -131,11 +181,7 @@ export function DataTableToolbarDetailReport<TData>({
         {isFiltered && (
           <Button 
             variant="ghost" 
-            onClick={() => {
-              table.resetColumnFilters();
-              setStartDate(undefined);
-              setEndDate(undefined);
-            }} 
+            onClick={handleClearFilters} 
             className="h-8 px-2 lg:px-3"
           >
             Limpiar filtros
