@@ -378,6 +378,7 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
   },
   {
     accessorKey: 'domain',
+    id: 'domain',
     header: ({ column }: { column: any }) => {
       return (
         <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="p-0">
@@ -410,14 +411,18 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
     accessorKey: 'type',
     header: 'Tipo',
     cell: ({ row }) => {
-      return <Badge>{row.original.type.name}</Badge>;
+      return <Badge>{row.original.type?.name}</Badge>;
+    },
+    filterFn: (row, columnId, filterValue) => {
+      //Filtrar por tipo de equipo
+      return row.original.type?.name?.toLowerCase()?.includes(filterValue.toLowerCase()) ?? false;
     },
   },
   {
     accessorKey: 'types_of_vehicles',
     header: 'Tipos de vehículos',
     cell: ({ row }) => {
-      return <Badge>{row.original.types_of_vehicles.name}</Badge>;
+      return <Badge>{row.original.types_of_vehicles.name as string}</Badge>;
     },
   },
 
@@ -489,7 +494,15 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
     accessorKey: 'brand',
     header: 'Marca',
     cell: ({ row }) => {
-      return <div>{row.original.brand.name}</div>;
+      return <div>{row.original.brand?.name}</div>;
+    },
+    filterFn: (row, columnId, filterValue) => {
+      //Filtrar por marca
+      if (row.original?.brand?.name?.toLowerCase()?.includes(filterValue.toLowerCase())) {
+        return true;
+      } else {
+        return false;
+      }
     },
   },
   {
@@ -504,6 +517,14 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
     header: 'Modelo',
     cell: ({ row }) => {
       return <div>{row.original.model.name}</div>;
+    },
+    filterFn: (row, columnId, filterValue) => {
+      //Filtrar por modelo
+      if (row.original.model.name.toLowerCase().includes(filterValue.toLowerCase())) {
+        return true;
+      } else {
+        return false;
+      }
     },
   },
   {

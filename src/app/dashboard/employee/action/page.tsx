@@ -57,7 +57,8 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
     let { data: employees, error } = await supabase
       .from('employees')
       .select('*')
-      .eq('company_id', company_id || '');
+      .eq('company_id', company_id || '')
+      .eq('id', searchParams.employee_id);
     formattedEmployee = setEmployeesToShow(employees)?.[0];
   }
   console.log(formattedEmployee);

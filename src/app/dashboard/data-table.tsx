@@ -1,4 +1,6 @@
 'use client';
+
+import type React from "react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 import {
@@ -80,7 +82,91 @@ export function ExpiredDataTable<TData, TValue>({
   monthly,
   permanent,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const tableId = "expiredDataTable";
+  // Estados para la tabla
+    const [sorting, setSorting] = useState<SortingState>(() => {
+      // Cargar desde sessionStorage al inicializar
+      if (typeof window !== "undefined") {
+        const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
+        if (savedFilters) {
+          try {
+            const parsedFilters = JSON.parse(savedFilters)
+            if (parsedFilters.sorting) return parsedFilters.sorting
+          } catch (error) {
+            console.error("Error al cargar sorting:", error)
+          }
+        }
+      }
+      return []
+    })
+
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => {
+        // Cargar desde sessionStorage al inicializar
+        if (typeof window !== "undefined") {
+          const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
+          if (savedFilters) {
+            try {
+              const parsedFilters = JSON.parse(savedFilters)
+              if (parsedFilters.columnFilters) return parsedFilters.columnFilters
+            } catch (error) {
+              console.error("Error al cargar columnFilters:", error)
+            }
+          }
+        }
+        return []
+      })
+
+      // Añadir estado para el tamaño de página
+        const [pageSize, setPageSize] = useState<number>(() => {
+          // Cargar desde sessionStorage al inicializar
+          if (typeof window !== "undefined") {
+            const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
+            if (savedFilters) {
+              try {
+                const parsedFilters = JSON.parse(savedFilters)
+                if (parsedFilters.pageSize) return parsedFilters.pageSize
+              } catch (error) {
+                console.error("Error al cargar pageSize:", error)
+              }
+            }
+          }
+          return 20 // Valor por defecto
+        })
+
+        const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+          const [defaultColumns, setDefaultColumns] = useState<any[]>([])
+          const [showInactive, setShowInactive] = useState(false)
+        
+          const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(() => {
+            // Cargar desde sessionStorage al inicializar
+            if (typeof window !== "undefined") {
+              const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
+              if (savedFilters) {
+                try {
+                  const parsedFilters = JSON.parse(savedFilters)
+                  if (parsedFilters.selectValues) return parsedFilters.selectValues
+                } catch (error) {
+                  console.error("Error al cargar selectValues:", error)
+                }
+              }
+            }
+            return {}
+          })
+        
+  // Guardar filtros en sessionStorage cuando cambien
+    useEffect(() => {
+      if (typeof window !== "undefined") {
+        const filtersToSave = {
+          sorting,
+          columnFilters,
+          selectValues,
+          pageSize,
+        }
+        sessionStorage.setItem(`table-filters-${tableId}`, JSON.stringify(filtersToSave))
+      }
+    }, [sorting, columnFilters, selectValues, pageSize])
+
+
   const loader = useLoggedUserStore((state) => state.isLoading);
   const defaultVisibleColumns = defaultVisibleColumnsCustom || ['date', 'resource', 'documentName', 'validity', 'id'];
 
@@ -110,13 +196,13 @@ export function ExpiredDataTable<TData, TValue>({
     }
   }, [columns]);
 
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-    columns.reduce((acc: any, column: any) => {
-      acc[column.accessorKey] = defaultVisibleColumns.includes(column.accessorKey);
-      return acc;
-    }, {})
-  );
+  // const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  // const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
+  //   columns.reduce((acc: any, column: any) => {
+  //     acc[column.accessorKey] = defaultVisibleColumns.includes(column.accessorKey);
+  //     return acc;
+  //   }, {})
+  // );
   const table = useReactTable({
     data,
     columns,
@@ -131,6 +217,17 @@ export function ExpiredDataTable<TData, TValue>({
       sorting,
       columnVisibility,
       columnFilters,
+      pagination: {
+        pageIndex: 0,
+        pageSize,
+      },
+    },
+    // Añadir manejador para cambios en la paginación
+    onPaginationChange: (updater) => {
+      const newPagination = typeof updater === "function" ? updater(table.getState().pagination) : updater
+      if (newPagination.pageSize !== pageSize) {
+        setPageSize(newPagination.pageSize)
+      }
     },
     sortingFns: {
       myCustomSortingFn: (rowA, rowB, columnId) => {
@@ -141,7 +238,21 @@ export function ExpiredDataTable<TData, TValue>({
             : 0;
       },
     },
+
   });
+
+  // Aplicar los filtros guardados cuando la tabla esté lista
+    useEffect(() => {
+      if (defaultColumns.length > 0) {
+        // Aplicar los filtros guardados a las columnas correspondientes
+        columnFilters.forEach((filter) => {
+          const column = table.getColumn(filter.id)
+          if (column) {
+            column.setFilterValue(filter.value)
+          }
+        })
+      }
+    }, [defaultColumns, table])
 
   const handleColumnVisibilityChange = (columnId: string, isVisible: boolean) => {
     setColumnVisibility((prev) => ({
@@ -202,7 +313,7 @@ export function ExpiredDataTable<TData, TValue>({
     },
   };
 
-  const [selectValues, setSelectValues] = useState<{ [key: string]: string }>({});
+  // const [selectValues, setSelectValues] = useState<{ [key: string]: string }>({});
 
   if (selectValues.companyName && selectValues.companyName !== 'Todos') {
     const resourceOptions = data
@@ -212,7 +323,7 @@ export function ExpiredDataTable<TData, TValue>({
   } else {
     allOptions.resource = createOptions('resource');
   }
-  const maxRows = ['20', '40', '60', '80', '100'];
+  const maxRows = ['2','20', '40', '60', '80', '100'];
   const handleClearFilters = () => {
     table.getAllColumns().forEach((column) => {
       column.setFilterValue('');
@@ -226,13 +337,20 @@ export function ExpiredDataTable<TData, TValue>({
       multiresource: 'Todos',
       mandatory: 'Todos',
     });
+    setColumnFilters([]);
+    // Limpiar filtros en sessionStorage
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem(`table-filters-${tableId}`)
+    }
+    const showLastMonth = () => {
+      if (setShowLastMonthDocuments) {
+        setShowLastMonthDocuments();
+      }
+    };
+    showLastMonth();
   };
 
-  const showLastMonth = () => {
-    if (setShowLastMonthDocuments) {
-      setShowLastMonthDocuments();
-    }
-  };
+  
   const getColorForRow = (row: any) => {
     const isNoPresented = row.getValue('state') === 'pendiente';
     if (isNoPresented) {

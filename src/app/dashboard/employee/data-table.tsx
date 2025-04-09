@@ -1,29 +1,31 @@
-'use client';
+"use client"
 
-import { Button } from '@/components/ui/button';
+import type React from "react"
+
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+} from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from '@tanstack/react-table';
-import { useEffect, useState } from 'react';
+} from "@tanstack/react-table"
+import { useEffect, useState } from "react"
 
-import { Badge } from '@/components/ui/badge';
+import { Badge } from "@/components/ui/badge"
 import {
   Select,
   SelectContent,
@@ -32,285 +34,466 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
-import { useLoggedUserStore } from '@/store/loggedUser';
+} from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
+import { useLoggedUserStore } from "@/store/loggedUser"
+import { setEmployeesToShow } from "@/lib/utils/utils"
 
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[] | any;
-  data: TData[];  
-  role?:string | null  
+  columns: ColumnDef<TData, TValue>[] | any
+  data: TData[]
+  role?: string | null
 }
 
-export function EmployeesTable<TData, TValue>({ columns, data,role }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [defaultColumns, setDefaultColumns] = useState<any[]>([]);
-  const defaultVisibleColumns = [
-    'full_name',
-    'status',
-    'cuil',
-    'document_number',
-    'document_type',
-    'hierarchical_position',
-    'company_position',
-    'normal_hours',
-    'type_of_contract',
-    'allocated_to',
-  ];
+export function EmployeesTable<TData, TValue>({ columns, data, role }: DataTableProps<TData, TValue>) {
+  // Identificador único para esta tabla
+  const tableId = "employeesTable"
+
+  // Estados para la tabla
+  const [sorting, setSorting] = useState<SortingState>(() => {
+    // Cargar desde sessionStorage al inicializar
+    if (typeof window !== "undefined") {
+      const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
+      if (savedFilters) {
+        try {
+          const parsedFilters = JSON.parse(savedFilters)
+          if (parsedFilters.sorting) return parsedFilters.sorting
+        } catch (error) {
+          console.error("Error al cargar sorting:", error)
+        }
+      }
+    }
+    return []
+  })
+
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => {
+    // Cargar desde sessionStorage al inicializar
+    if (typeof window !== "undefined") {
+      const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
+      if (savedFilters) {
+        try {
+          const parsedFilters = JSON.parse(savedFilters)
+          if (parsedFilters.columnFilters) return parsedFilters.columnFilters
+        } catch (error) {
+          console.error("Error al cargar columnFilters:", error)
+        }
+      }
+    }
+    return []
+  })
+
+  // Añadir estado para el tamaño de página
+    const [pageSize, setPageSize] = useState<number>(() => {
+      // Cargar desde sessionStorage al inicializar
+      if (typeof window !== "undefined") {
+        const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
+        if (savedFilters) {
+          try {
+            const parsedFilters = JSON.parse(savedFilters)
+            if (parsedFilters.pageSize) return parsedFilters.pageSize
+          } catch (error) {
+            console.error("Error al cargar pageSize:", error)
+          }
+        }
+      }
+      return 20 // Valor por defecto
+    })
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [defaultColumns, setDefaultColumns] = useState<any[]>([])
+  const [showInactive, setShowInactive] = useState(false)
+
+  const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(() => {
+    // Cargar desde sessionStorage al inicializar
+    if (typeof window !== "undefined") {
+      const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
+      if (savedFilters) {
+        try {
+          const parsedFilters = JSON.parse(savedFilters)
+          if (parsedFilters.selectValues) return parsedFilters.selectValues
+        } catch (error) {
+          console.error("Error al cargar selectValues:", error)
+        }
+      }
+    }
+    return {}
+  })
+
+  // Guardar filtros en sessionStorage cuando cambien
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const filtersToSave = {
+        sorting,
+        columnFilters,
+        selectValues,
+        pageSize,
+      }
+      sessionStorage.setItem(`table-filters-${tableId}`, JSON.stringify(filtersToSave))
+    }
+  }, [sorting, columnFilters, selectValues, pageSize])
+
+  
 
   useEffect(() => {
     // Filtrar las columnas basado en el rol
-    const filteredColumns = role === 'Invitado' 
-      ? columns.filter((col: any) => col.accessorKey !== 'status' && col.accessorKey !== 'allocated_to')
-      : columns;
-    
-    setDefaultColumns(filteredColumns);
-  }, [columns, role]);
+    const filteredColumns =
+      role === "Invitado"
+        ? columns.filter((col: any) => col.accessorKey !== "status" && col.accessorKey !== "allocated_to")
+        : columns
+
+    setDefaultColumns(filteredColumns)
+  }, [columns, role])
+
+  useEffect(() => {
+      const valorGuardado = JSON.parse(localStorage.getItem("employeeColumns") || "[]")
+      // Si el rol es invitado, remover allocated_to del localStorage
+      if (role === "Invitado") {
+        const newColumns = valorGuardado.filter((col: string) => col !== "allocated_to")
+        localStorage.setItem("employeeColumns", JSON.stringify(newColumns))
+      }
+      if (valorGuardado.length) {
+        setColumnVisibility(
+          defaultColumns.reduce((acc: any, column: any) => {
+            acc[column.accessorKey] =
+              role === "Invitado"
+                ? valorGuardado.includes(column.accessorKey) && column.accessorKey !== "allocated_to"
+                : valorGuardado.includes(column.accessorKey)
+            return acc
+          }, {}),
+        )
+      }
+    }, [defaultColumns, role])
+
+    const defaultVisibleColumns = [
+      "full_name",
+      "status",
+      "cuil",
+      "document_number",
+      "document_type",
+      "hierarchical_position",
+      "company_position",
+      "normal_hours",
+      "type_of_contract",
+      "allocated_to",
+    ]
 
   const [defaultVisibleColumns1, setDefaultVisibleColumns1] = useState(() => {
-    if (typeof window !== 'undefined') {
-      let valorGuardado = JSON.parse(localStorage.getItem('employeeColumns') || '[]');
+    if (typeof window !== "undefined") {
+      let valorGuardado = JSON.parse(localStorage.getItem("employeeColumns") || "[]")
       // Si el rol es invitado, remover allocated_to del localStorage
-      if (role === 'Invitado') {
-        valorGuardado = valorGuardado.filter((col: string) => col !== 'allocated_to');
-        localStorage.setItem('employeeColumns', JSON.stringify(valorGuardado));
+      if (role === "Invitado") {
+        valorGuardado = valorGuardado.filter((col: string) => col !== "allocated_to")
+        localStorage.setItem("savedColumns", JSON.stringify(valorGuardado))
       }
-      return valorGuardado.length ? valorGuardado : defaultVisibleColumns.filter(col => 
-        role === 'Invitado' ? col !== 'allocated_to' : true
-      );
+      return valorGuardado.length
+        ? valorGuardado
+        : defaultVisibleColumns.filter((col) => (role === "Invitado" ? col !== "allocated_to" : true))
     }
-    return role === 'Invitado' 
-      ? defaultVisibleColumns.filter(col => col !== 'allocated_to')
-      : defaultVisibleColumns;
-  });
+    return defaultVisibleColumns
+  })
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('employeeColumns', JSON.stringify(defaultVisibleColumns1));
+    if (typeof window !== "undefined") {
+      localStorage.setItem("savedColumns", JSON.stringify(defaultVisibleColumns1))
     }
-  }, [defaultVisibleColumns1]);
+  }, [defaultVisibleColumns1])
 
   useEffect(() => {
-    const valorGuardado = JSON.parse(localStorage.getItem('employeeColumns') || '[]');
+    const valorGuardado = JSON.parse(localStorage.getItem("employeeColumns") || "[]")
     if (valorGuardado.length) {
       setColumnVisibility(
         defaultColumns.reduce((acc: any, column: any) => {
-          acc[column.accessorKey] = valorGuardado.includes(column.accessorKey);
-          return acc;
-        }, {})
-      );
+          acc[column.accessorKey] = valorGuardado.includes(column.accessorKey)
+          return acc
+        }, {}),
+      )
     }
-  }, [defaultColumns]);
+  }, [defaultColumns])
 
   useEffect(() => {
     // Set initial column visibility based on role
-    if (role === 'Invitado') {
-      setColumnVisibility(prev => ({
+    if (role === "Invitado") {
+      setColumnVisibility((prev) => ({
         ...prev,
         status: false,
-        allocated_to: false
-      }));
+        allocated_to: false,
+      }))
     }
-  }, [role]);
+  }, [role])
 
   const handleColumnVisibilityChange = (columnId: string, isVisible: boolean) => {
     setColumnVisibility((prev) => ({
       ...prev,
       [columnId]: isVisible,
-    }));
+    }))
     setDefaultVisibleColumns1((prev: any) => {
-      const newVisibleColumns = isVisible ? [...prev, columnId] : prev.filter((id: string) => id !== columnId);
-      localStorage.setItem('employeeColumns', JSON.stringify(newVisibleColumns));
-      return newVisibleColumns;
-    });
-  };
+      const newVisibleColumns = isVisible ? [...prev, columnId] : prev.filter((id: string) => id !== columnId)
+      localStorage.setItem("savedColumns", JSON.stringify(newVisibleColumns))
+      return newVisibleColumns
+    })
+  }
 
-  const loader = useLoggedUserStore((state) => state.isLoading);
+  const loader = useLoggedUserStore((state) => state.isLoading)
 
   const allOptions = {
-    document_type: createOptions('document_type'),
-    hierarchical_position: createOptions('hierarchical_position'),
-    type_of_contract: createOptions('type_of_contract'),
-    allocated_to: createOptions('allocated_to'),
-    nationality: createOptions('nationality'),
-    birthplace: createOptions('birthplace'),
-    gender: createOptions('gender'),
-    marital_status: createOptions('marital_status'),
-    level_of_education: createOptions('level_of_education'),
-    province: createOptions('province'),
-    affiliate_status: createOptions('affiliate_status'),
-    city: createOptions('city'),
-    hierrical_position: createOptions('hierrical_position'),
-    workflow_diagram: createOptions('workflow_diagram'),
-    status: createOptions('status'),
-    guild: createOptions('guild'),
-    covenants: createOptions('covenants'),
-    category: createOptions('category'),
-  };
+    document_type: createOptions("document_type"),
+    hierarchical_position: createOptions("hierarchical_position"),
+    type_of_contract: createOptions("type_of_contract"),
+    allocated_to: createOptions("allocated_to"),
+    nationality: createOptions("nationality"),
+    birthplace: createOptions("birthplace"),
+    gender: createOptions("gender"),
+    marital_status: createOptions("marital_status"),
+    level_of_education: createOptions("level_of_education"),
+    province: createOptions("province"),
+    affiliate_status: createOptions("affiliate_status"),
+    city: createOptions("city"),
+    hierrical_position: createOptions("hierrical_position"),
+    workflow_diagram: createOptions("workflow_diagram"),
+    status: createOptions("status"),
+    guild: createOptions("guild"),
+    covenants: createOptions("covenants"),
+    category: createOptions("category"),
+  }
 
   function createOptions(key: string) {
-    const values = data?.flatMap((item: any) => item?.[key]);
-    return ['Todos', ...Array.from(new Set(values))];
+    const values = data?.flatMap((item: any) => item?.[key])
+    return ["Todos", ...Array.from(new Set(values))]
   }
 
   const selectHeader = {
     document_type: {
-      name: 'document_type',
+      name: "document_type",
       option: allOptions.document_type,
-      label: 'Tipo de documento',
+      label: "Tipo de documento",
     },
     hierarchical_position: {
-      name: 'hierarchical_position',
+      name: "hierarchical_position",
       option: allOptions.hierarchical_position,
-      label: 'Posición jerárquica',
+      label: "Posición jerárquica",
     },
     type_of_contract: {
-      name: 'type_of_contract',
+      name: "type_of_contract",
       option: allOptions.type_of_contract,
-      label: 'Tipo de contrato',
+      label: "Tipo de contrato",
     },
     allocated_to: {
-      name: 'allocated_to',
+      name: "allocated_to",
       option: allOptions.allocated_to,
-      label: 'Afectado a',
+      label: "Afectado a",
     },
     nationality: {
-      name: 'nationality',
+      name: "nationality",
       option: allOptions.nationality,
-      label: 'Nacionalidad',
+      label: "Nacionalidad",
     },
     birthplace: {
-      name: 'birthplace',
+      name: "birthplace",
       option: allOptions.birthplace,
-      label: 'Lugar de nacimiento',
+      label: "Lugar de nacimiento",
     },
     gender: {
-      name: 'gender',
+      name: "gender",
       option: allOptions.gender,
-      label: 'Genero',
+      label: "Genero",
     },
     marital_status: {
-      name: 'marital_status',
+      name: "marital_status",
       option: allOptions.marital_status,
-      label: 'Estado civil',
+      label: "Estado civil",
     },
     level_of_education: {
-      name: 'level_of_education',
+      name: "level_of_education",
       option: allOptions.level_of_education,
-      label: 'Nivel de educacion',
+      label: "Nivel de educacion",
     },
     province: {
-      name: 'province',
+      name: "province",
       option: allOptions.province,
-      label: 'Provincia',
+      label: "Provincia",
     },
     affiliate_status: {
-      name: 'affiliate_status',
+      name: "affiliate_status",
       option: allOptions.affiliate_status,
-      label: 'Estado de afiliado',
+      label: "Estado de afiliado",
     },
     city: {
-      name: 'city',
+      name: "city",
       option: allOptions.city,
-      label: 'Ciudad',
+      label: "Ciudad",
     },
     hierrical_position: {
-      name: 'hierrical_position',
+      name: "hierrical_position",
       option: allOptions.hierrical_position,
-      label: 'Posición jerárquica',
+      label: "Posición jerárquica",
     },
     workflow_diagram: {
-      name: 'workflow_diagram',
+      name: "workflow_diagram",
       option: allOptions.workflow_diagram,
-      label: 'Diagrama de trabajo',
+      label: "Diagrama de trabajo",
     },
     status: {
-      name: 'status',
+      name: "status",
       option: allOptions.status,
-      label: 'Estado',
+      label: "Estado",
     },
     guild: {
-      name: 'guild_id',
+      name: "guild_id",
       option: allOptions.guild,
-      label: 'Asociación Gremial',
+      label: "Asociación Gremial",
     },
     covenants: {
-      name: 'covenants_id',
+      name: "covenants_id",
       option: allOptions.covenants,
-      label: 'Convenios',
+      label: "Convenios",
     },
     category: {
-      name: 'category_id',
+      name: "category_id",
       option: allOptions.category,
-      label: 'Categoria',
+      label: "Categoria",
     },
-  };
+  }
 
-  let table = useReactTable({
+  // Configuración de la tabla con filtrado personalizado para status
+  const table = useReactTable({
     data,
-    columns: defaultColumns,
+    columns: defaultColumns.map((col) => ({
+      ...col,
+      id: col.accessorKey || col.id,
+      // Añadir filtrado personalizado para la columna status
+      ...(col.accessorKey === "status" && {
+        filterFn: (row, columnId, filterValue) => {
+          const value = row.getValue(columnId)
+          // Si no hay valor de filtro, mostrar todas las filas
+          if (!filterValue) return true
+          // Comparación exacta para evitar que "Completo" coincida con "Incompleto"
+          return String(value).toLowerCase() === String(filterValue).toLowerCase()
+        },
+      }),
+    })),
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
+    onSortingChange: (updater) => {
+      const newSorting = typeof updater === "function" ? updater(sorting) : updater
+      setSorting(newSorting)
+    },
     getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
+    onColumnFiltersChange: (updater) => {
+      const newFilters = typeof updater === "function" ? updater(columnFilters) : updater
+      setColumnFilters(newFilters)
+    },
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
+      pagination: {
+        pageIndex: 0,
+        pageSize,
+      },
     },
-  });
+    // Añadir manejador para cambios en la paginación
+    onPaginationChange: (updater) => {
+      const newPagination = typeof updater === "function" ? updater(table.getState().pagination) : updater
+      if (newPagination.pageSize !== pageSize) {
+        setPageSize(newPagination.pageSize)
+      }
+    },
+  })
+
+  // Aplicar los filtros guardados cuando la tabla esté lista
+  useEffect(() => {
+    if (defaultColumns.length > 0) {
+      // Aplicar los filtros guardados a las columnas correspondientes
+      columnFilters.forEach((filter) => {
+        const column = table.getColumn(filter.id)
+        if (column) {
+          column.setFilterValue(filter.value)
+        }
+      })
+    }
+  }, [defaultColumns, table])
+
+  useEffect(() => {
+      const valorGuardado = JSON.parse(localStorage.getItem("savedColumns") || "")
+      if (!valorGuardado.length) {
+        localStorage.setItem("savedColumns", JSON.stringify(defaultVisibleColumns1))
+      } else {
+        localStorage.setItem(
+          "savedColumns",
+          JSON.stringify(
+            table
+              .getAllColumns()
+              ?.filter((column) => column.getIsVisible())
+              .map((column) => column.id),
+          ),
+        )
+      }
+    }, [columnVisibility])
 
   const handleClearFilters = () => {
     table.getAllColumns().forEach((column) => {
-      column.setFilterValue('');
-    });
+      column.setFilterValue("")
+    })
 
     setSelectValues({
-      hierarchical_position: 'Todos',
-      type_of_contract: 'Todos',
-      allocated_to: 'Todos',
-      document_type: 'Todos',
-      nationality: 'Todos',
-      birthplace: 'Todos',
-      gender: 'Todos',
-      marital_status: 'Todos',
-      level_of_education: 'Todos',
-      province: 'Todos',
-      affiliate_status: 'Todos',
-      city: 'Todos',
-      hierrical_position: 'Todos',
-      status: 'Todos',
-      guild: 'Todos',
-      covenants: 'Todos',
-      category: 'Todos',
-    });
-  };
+      hierarchical_position: "Todos",
+      type_of_contract: "Todos",
+      allocated_to: "Todos",
+      document_type: "Todos",
+      nationality: "Todos",
+      birthplace: "Todos",
+      gender: "Todos",
+      marital_status: "Todos",
+      level_of_education: "Todos",
+      province: "Todos",
+      affiliate_status: "Todos",
+      city: "Todos",
+      hierrical_position: "Todos",
+      status: "Todos",
+      guild: "Todos",
+      covenants: "Todos",
+      category: "Todos",
+    })
 
-  const maxRows = ['20', '40', '60', '80', '100'];
+    // Resetear los filtros de columna en el estado
+    setColumnFilters([])
 
-  const [selectValues, setSelectValues] = useState<{ [key: string]: string }>({});
+    // Limpiar filtros en sessionStorage
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem(`table-filters-${tableId}`)
+    }
+    setEmployeesToShow(data)
+  }
+
+  const maxRows = ["20", "40", "60", "80", "100"]
 
   return (
     <div className="w-full grid grid-cols-1">
       <div className="flex items-center py-4 flex-wrap gap-y-2 overflow-auto">
-        <Input
-          placeholder="Buscar por nombre"
-          value={(table.getColumn('full_name')?.getFilterValue() as string) ?? ''}
-          onChange={(event) => table.getColumn('full_name')?.setFilterValue(event.target.value)}
-          className="max-w-sm"
-        />
+        {table.getAllColumns().length > 0 && (
+          <Input
+            placeholder="Buscar por nombre"
+            value={(table.getColumn("full_name")?.getFilterValue() as string) ?? ""}
+            onChange={(event) => {
+              const column = table.getColumn("full_name")
+              if (column) {
+                column.setFilterValue(event.target.value)
+              }
+            }}
+            className="max-w-sm"
+          />
+        )}
         <Button variant="outline" size="default" className="ml-2" onClick={handleClearFilters}>
           Limpiar filtros
         </Button>
 
         <div className=" flex gap-2 ml-2 flex-wrap">
-          <Select onValueChange={(e) => table.setPageSize(Number(e))}>
+          <Select
+            value={table.getState().pagination.pageSize.toString()}
+            onValueChange={(e) => table.setPageSize(Number(e))}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Cantidad de filas" />
             </SelectTrigger>
@@ -335,11 +518,11 @@ export function EmployeesTable<TData, TValue>({ columns, data,role }: DataTableP
                 .getAllColumns()
                 ?.filter((column) => column.getCanHide())
                 ?.map((column) => {
-                  if (column.id === 'actions' || typeof column.columnDef.header !== 'string') {
-                    return null;
+                  if (column.id === "actions" || typeof column.columnDef.header !== "string") {
+                    return null
                   }
 
-                  if (column.id === 'showUnavaliableEmployees') {
+                  if (column.id === "showUnavaliableEmployees") {
                     return (
                       <DropdownMenuCheckboxItem
                         key={column.id}
@@ -352,7 +535,7 @@ export function EmployeesTable<TData, TValue>({ columns, data,role }: DataTableP
                       >
                         {column.columnDef.header}
                       </DropdownMenuCheckboxItem>
-                    );
+                    )
                   }
 
                   return (
@@ -364,7 +547,7 @@ export function EmployeesTable<TData, TValue>({ columns, data,role }: DataTableP
                     >
                       {column.columnDef.header}
                     </DropdownMenuCheckboxItem>
-                  );
+                  )
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -383,13 +566,13 @@ export function EmployeesTable<TData, TValue>({ columns, data,role }: DataTableP
                         ? null
                         : flexRender(
                             header.id in selectHeader ? (
-                              header.id === 'allocated_to' ? (
+                              header.id === "allocated_to" ? (
                                 <div className="flex justify-center">
                                   <Input
                                     placeholder="Buscar por afectación"
-                                    value={table.getColumn('allocated_to')?.getFilterValue() as string}
+                                    value={table.getColumn("allocated_to")?.getFilterValue() as string}
                                     onChange={(event) => {
-                                      table.getColumn('allocated_to')?.setFilterValue(event.target.value);
+                                      table.getColumn("allocated_to")?.setFilterValue(event.target.value)
                                     }}
                                     className="max-w-sm"
                                   />
@@ -397,21 +580,26 @@ export function EmployeesTable<TData, TValue>({ columns, data,role }: DataTableP
                               ) : (
                                 <div className="flex justify-center">
                                   <Select
-                                    value={selectValues[header.id]}
+                                    value={selectValues[header.id] || "Todos"}
                                     onValueChange={(event) => {
-                                      if (event === 'Todos') {
-                                        table.getColumn(header.id)?.setFilterValue('');
+                                      if (event === "Todos") {
+                                        table.getColumn(header.id)?.setFilterValue("")
                                         setSelectValues({
                                           ...selectValues,
                                           [header.id]: event,
-                                        });
-                                        return;
+                                        })
+                                        return
                                       }
-                                      table.getColumn(header.id)?.setFilterValue(event);
-                                      setSelectValues({
-                                        ...selectValues,
-                                        [header.id]: event,
-                                      });
+
+                                      // Pasar el valor exacto para el filtrado
+                                      const column = table.getColumn(header.id)
+                                      if (column) {
+                                        column.setFilterValue(event)
+                                        setSelectValues({
+                                          ...selectValues,
+                                          [header.id]: event,
+                                        })
+                                      }
                                     }}
                                   >
                                     <SelectTrigger className="">
@@ -424,7 +612,7 @@ export function EmployeesTable<TData, TValue>({ columns, data,role }: DataTableP
                                             <SelectItem key={option} value={option}>
                                               {option}
                                             </SelectItem>
-                                          )
+                                          ),
                                         )}
                                       </SelectGroup>
                                     </SelectContent>
@@ -434,10 +622,10 @@ export function EmployeesTable<TData, TValue>({ columns, data,role }: DataTableP
                             ) : (
                               header.column.columnDef.header
                             ),
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
-                  );
+                  )
                 })}
               </TableRow>
             ))}
@@ -447,32 +635,32 @@ export function EmployeesTable<TData, TValue>({ columns, data,role }: DataTableP
               table.getRowModel().rows?.map((row) => {
                 return (
                   <TableRow
-                    className={cn(!(row.original as any).is_active && 'opacity-40')}
+                    className={cn(!(row.original as any).is_active && "opacity-40")}
                     key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
+                    data-state={row.getIsSelected() && "selected"}
                   >
                     {row.getVisibleCells()?.map((cell) => {
-                      let is_active = (cell.row.original as any).is_active;
+                      const is_active = (cell.row.original as any).is_active
                       // role
                       return (
                         <TableCell
                           key={cell.id}
-                          className={`text-center whitespace-nowrap ${is_active ? '' : 'text-red-500'}`}
+                          className={`text-center whitespace-nowrap ${is_active ? "" : "text-red-500"}`}
                         >
-                          {cell.column.id === 'picture' ? (
+                          {cell.column.id === "picture" ? (
                             <img
-                              src={cell.getValue() as any}
+                              src={(cell.getValue() as any) || "/placeholder.svg"}
                               alt="Foto"
                               className="size-10 rounded-full object-cover"
                             />
-                          ) : cell.column.id === 'status' ? (
+                          ) : cell.column.id === "status" ? (
                             <Badge
                               variant={
-                                cell.getValue() === 'Completo'
-                                  ? 'success'
-                                  : cell.getValue() === 'Completo con doc vencida'
-                                    ? 'yellow'
-                                    : 'destructive'
+                                cell.getValue() === "Completo"
+                                  ? "success"
+                                  : cell.getValue() === "Completo con doc vencida"
+                                    ? "yellow"
+                                    : "destructive"
                               }
                             >
                               {cell.getValue() as React.ReactNode}
@@ -481,10 +669,10 @@ export function EmployeesTable<TData, TValue>({ columns, data,role }: DataTableP
                             (flexRender(cell.column.columnDef.cell, cell.getContext()) as React.ReactNode)
                           )}
                         </TableCell>
-                      );
+                      )
                     })}
                   </TableRow>
-                );
+                )
               })
             ) : (
               <TableRow>
@@ -511,7 +699,7 @@ export function EmployeesTable<TData, TValue>({ columns, data,role }: DataTableP
                       </div>
                     </div>
                   ) : (
-                    'No hay empleados'
+                    "No hay empleados"
                   )}
                 </TableCell>
               </TableRow>
@@ -528,7 +716,7 @@ export function EmployeesTable<TData, TValue>({ columns, data,role }: DataTableP
         </Button>
       </div>
     </div>
-  );
+  )
 }
 
 //armar la funcion de parseo de dato para la descarga
