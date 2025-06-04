@@ -12,6 +12,7 @@ import {
   Truck,
   Users,
   Wrench,
+  HardHat,
 } from 'lucide-react';
 import { cookies } from 'next/headers';
 import SideBar from './Sidebar';
@@ -203,6 +204,12 @@ async function SideBarContainer() {
       icon: <GraduationCap size={sizeIcons} />,
       position: 10,
       // regex: /^\/dashboard\/hse(\/|$)/,
+    },
+    {
+      name: 'HSE',
+      href: '/dashboard/hse',
+      icon: <HardHat size={sizeIcons} />,
+      position: 9,
     },
     {
       name: 'Ayuda',

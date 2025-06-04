@@ -13,6 +13,7 @@ import {
   Truck,
   Users,
   Wrench,
+  HardHat,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -64,6 +65,12 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
       href: '/dashboard/operations',
       icon: <Calendar size={sizeIcons} />,
       regex: /^\/dashboard\/operations(\/|$)/,
+    },
+    {
+      name: 'HSE',
+      href: '/dashboard/hse',
+      icon: <HardHat size={sizeIcons} />,
+      regex: /^\/dashboard\/hse(\/|$)/,
     },
     {
       name: 'Mantenimiento',
