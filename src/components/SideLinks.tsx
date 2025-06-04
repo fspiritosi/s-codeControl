@@ -2,17 +2,18 @@
 
 import { useLoggedUserStore } from '@/store/loggedUser';
 import cookies from 'js-cookie';
+import { GraduationCap } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { FiTool, FiTruck } from 'react-icons/fi';
 import {
+  MdCalendarMonth,
   MdHelpOutline,
   MdListAlt,
   MdOutlineCorporateFare,
   MdOutlinePersonAddAlt,
   MdOutlineSpaceDashboard,
-  MdCalendarMonth,
 } from 'react-icons/md';
 export async function getServerSideProps(context: any) {
   const { params } = context;
@@ -61,6 +62,12 @@ const Allinks = [
     name: 'Mantenimiento',
     href: '/dashboard/maintenance',
     icon: <FiTool size={sizeIcons} />,
+  },
+  {
+    name: 'HSE',
+    href: '/dashboard/hse',
+    icon: <GraduationCap size={sizeIcons} />,
+    regex: /^\/dashboard\/hse(\/|$)/,
   },
   // {
   //   name: 'Formularios',
