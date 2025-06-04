@@ -7,6 +7,7 @@ import {
   Calendar,
   ClipboardList,
   FileText,
+  GraduationCap,
   HelpCircle,
   LayoutDashboard,
   Truck,
@@ -75,6 +76,12 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
       href: '/dashboard/forms',
       icon: <ClipboardList size={sizeIcons} />,
       regex: /^\/dashboard\/forms(\/|$)/,
+    },
+    {
+      name: 'HSE',
+      href: '/dashboard/hse',
+      icon: <GraduationCap size={sizeIcons} />,
+      regex: /^\/dashboard\/hse(\/|$)/,
     },
     {
       name: 'Ayuda',
