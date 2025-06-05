@@ -191,26 +191,19 @@ async function SideBarContainer() {
       icon: <ClipboardList size={sizeIcons} />,
       position: 7,
     },
-    // {
-    //   name: 'HSE',
-    //   href: '/dashboard/hse',
-    //   icon: <GraduationCap size={sizeIcons} />,
-    //   position: 9,
-    //   regex: /^\/dashboard\/hse(\/|$)/,
-    // },
     {
       name: 'HSE',
       href: '/dashboard/hse',
       icon: <GraduationCap size={sizeIcons} />,
-      position: 10,
+      position: 9,
       // regex: /^\/dashboard\/hse(\/|$)/,
     },
-    {
-      name: 'HSE',
-      href: '/dashboard/hse',
-      icon: <HardHat size={sizeIcons} />,
-      position: 9,
-    },
+    // {
+    //   name: 'HSE',
+    //   href: '/dashboard/hse',
+    //   icon: <HardHat size={sizeIcons} />,
+    //   position: 9,
+    // },
     {
       name: 'Ayuda',
       href: '/dashboard/help',

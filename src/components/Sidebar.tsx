@@ -66,12 +66,12 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
       icon: <Calendar size={sizeIcons} />,
       regex: /^\/dashboard\/operations(\/|$)/,
     },
-    {
-      name: 'HSE',
-      href: '/dashboard/hse',
-      icon: <HardHat size={sizeIcons} />,
-      regex: /^\/dashboard\/hse(\/|$)/,
-    },
+    // {
+    //   name: 'HSE',
+    //   href: '/dashboard/hse',
+    //   icon: <HardHat size={sizeIcons} />,
+    //   regex: /^\/dashboard\/hse(\/|$)/,
+    // },
     {
       name: 'Mantenimiento',
       href: '/dashboard/maintenance',

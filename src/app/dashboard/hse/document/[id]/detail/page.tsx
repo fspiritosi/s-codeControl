@@ -9,26 +9,41 @@ import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Progress } from "@/components/ui/progress"
 import { ArrowLeft, CheckCircle, Clock, Download, ExternalLink } from "lucide-react"
+import { getDocumentById } from "@/features/Hse/actions/documents"
+import { useEffect, useState } from "react"
 
-// Mock document
-const mockDocument = {
-  id: "1",
-  title: "Manual de Seguridad Vial",
-  version: "2.1",
-  Apartir_De: "2024-01-15",
-  uploadDate: "2024-01-15",
-  expiryDate: "2024-12-31",
-  status: "active",
-  acceptedCount: 45,
-  totalEmployees: 60,
-  fileUrl: "/documents/manual-seguridad.pdf",
-  description:
-    "Este manual contiene las normas y procedimientos de seguridad vial que deben seguir todos los empleados de la empresa.",
-  previousVersions: [
-    { version: "2.0", uploadDate: "2023-10-10", expiryDate: "2024-01-14" },
-    { version: "1.5", uploadDate: "2023-05-15", expiryDate: "2023-10-09" },
-  ],
+interface Document {
+  id: string
+  title: string
+  version: string
+  upload_date: string
+  expiry_date: string
+  status: "active" | "expired" | "pending"
+  acceptedCount?: number
+  totalEmployees?: number
+  file_url: string
+  description: string | null
+  previousVersions?: { version: string; upload_date: string; expiry_date: string }[]
 }
+// Mock document
+// const mockDocument = {
+//   id: "1",
+//   title: "Manual de Seguridad Vial",
+//   version: "2.1",
+//   Apartir_De: "2024-01-15",
+//   uploadDate: "2024-01-15",
+//   expiryDate: "2024-12-31",
+//   status: "active",
+//   acceptedCount: 45,
+//   totalEmployees: 60,
+//   fileUrl: "/documents/manual-seguridad.pdf",
+//   description:
+//     "Este manual contiene las normas y procedimientos de seguridad vial que deben seguir todos los empleados de la empresa.",
+//   previousVersions: [
+//     { version: "2.0", uploadDate: "2023-10-10", expiryDate: "2024-01-14" },
+//     { version: "1.5", uploadDate: "2023-05-15", expiryDate: "2023-10-09" },
+//   ],
+// }
 
 // Mock employees
 const mockEmployees = [
@@ -54,7 +69,7 @@ const mockEmployees = [
     cuil: "20-11111111-1",
     department: "Operaciones",
     acceptedDate: null,
-    status: "pending",
+    status: "accepted",
   },
   {
     id: "4",
@@ -100,11 +115,23 @@ const mockEmployees = [
 
 export default function DocumentDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter()
+const [document, setDocument] = useState<Document | null>(null)
 console.log(params)
   // Filter employees by status
+  useEffect(() => {
+    const fetchDocument = async () => {
+      const document = await getDocumentById(params.id)
+      setDocument(document)
+      
+    }
+    fetchDocument()
+  }, [params.id])
+  console.log(document)
+  
   const acceptedEmployees = mockEmployees.filter((emp) => emp.status === "accepted")
   const pendingEmployees = mockEmployees.filter((emp) => emp.status === "pending")
-
+console.log(acceptedEmployees)
+console.log(pendingEmployees)
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
@@ -133,7 +160,7 @@ console.log(params)
 
   const generateMobileLink = () => {
     const baseUrl = window.location.origin
-    return `${baseUrl}/mobile/document/${mockDocument.id}`
+    return `${baseUrl}/mobile/document/${document?.id}`
   }
 
   return (
@@ -146,7 +173,7 @@ console.log(params)
           </Button>
           <div>
             <h1 className="text-lg font-semibold">Detalle de Documento</h1>
-            <p className="text-sm text-muted-foreground">{mockDocument.title}</p>
+            <p className="text-sm text-muted-foreground">{document?.title}</p>
           </div>
         </div>
       </header>
@@ -156,10 +183,10 @@ console.log(params)
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">{mockDocument.title}</h1>
-              <Badge className={getStatusColor(mockDocument.status)}>{getStatusText(mockDocument.status)}</Badge>
+              <h1 className="text-2xl font-bold">{document?.title}</h1>
+              <Badge className={getStatusColor(document?.status || "")}>{getStatusText(document?.status || "")}</Badge>
             </div>
-            <p className="text-muted-foreground">Versión {mockDocument.version}</p>
+            <p className="text-muted-foreground">Versión {document?.version}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline">
@@ -196,23 +223,23 @@ console.log(params)
                 <CardContent className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Fecha de subida:</span>
-                    <span>{new Date(mockDocument.uploadDate).toLocaleDateString()}</span>
+                    <span>{new Date(document?.upload_date || "").toLocaleDateString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Fecha de vencimiento:</span>
-                    <span>{new Date(mockDocument.expiryDate).toLocaleDateString()}</span>
+                    <span>{new Date(document?.expiry_date || "").toLocaleDateString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Estado:</span>
-                    <Badge className={getStatusColor(mockDocument.status)}>{getStatusText(mockDocument.status)}</Badge>
+                    <Badge className={getStatusColor(document?.status || "")}>{getStatusText(document?.status || "")}</Badge>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Versión actual:</span>
-                    <span>{mockDocument.version}</span>
+                    <span>{document?.version}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Versiones anteriores:</span>
-                    <span>{mockDocument.previousVersions.length}</span>
+                    <span>{document?.previousVersions?.length || 0}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -224,16 +251,17 @@ console.log(params)
                 <CardContent className="space-y-4">
                   <div className="text-center">
                     <div className="text-3xl font-bold">
-                      {mockDocument.acceptedCount}/{mockDocument.totalEmployees}
+                      {acceptedEmployees.length}/{acceptedEmployees.length + pendingEmployees.length}
                     </div>
                     <p className="text-muted-foreground">Empleados aceptaron</p>
                   </div>
-                  <Progress value={(mockDocument.acceptedCount / mockDocument.totalEmployees) * 100} className="h-2" />
+                  <Progress 
+                    value={(acceptedEmployees.length / (acceptedEmployees.length + pendingEmployees.length)) * 100} 
+                    className="h-2" 
+                  />
                   <div className="flex justify-between text-sm">
-                    <span>
-                      {Math.round((mockDocument.acceptedCount / mockDocument.totalEmployees) * 100)}% aceptado
-                    </span>
-                    <span>{mockDocument.totalEmployees - mockDocument.acceptedCount} pendientes</span>
+                    <span>{acceptedEmployees.length} aceptado</span>
+                    <span>{pendingEmployees.length} pendientes</span>
                   </div>
                 </CardContent>
               </Card>
@@ -264,7 +292,7 @@ console.log(params)
                 <CardTitle>Descripción del Documento</CardTitle>
               </CardHeader>
               <CardContent>
-                <p>{mockDocument.description}</p>
+                <p>{document?.description}</p>
               </CardContent>
             </Card>
           </TabsContent>
@@ -358,9 +386,9 @@ console.log(params)
               </CardHeader>
               <CardContent>
                 <iframe
-                  src={mockDocument.fileUrl}
+                  src={document?.file_url}
                   className="w-full h-[600px] border rounded"
-                  title={mockDocument.title}
+                  title={document?.title}
                 />
               </CardContent>
             </Card>
@@ -386,9 +414,9 @@ console.log(params)
                     </TableHeader>
                     <TableBody>
                       <TableRow>
-                        <TableCell className="font-medium">{mockDocument.version} (Actual)</TableCell>
-                        <TableCell>{new Date(mockDocument.uploadDate).toLocaleDateString()}</TableCell>
-                        <TableCell>{new Date(mockDocument.expiryDate).toLocaleDateString()}</TableCell>
+                        <TableCell className="font-medium">{document?.version} (Actual)</TableCell>
+                        <TableCell>{new Date(document?.upload_date || new Date()).toLocaleDateString()}</TableCell>
+                        <TableCell>{new Date(document?.expiry_date || new Date()).toLocaleDateString()}</TableCell>
                         <TableCell>
                           <Button variant="outline" size="sm">
                             <Download className="h-4 w-4 mr-1" />
@@ -396,11 +424,11 @@ console.log(params)
                           </Button>
                         </TableCell>
                       </TableRow>
-                      {mockDocument.previousVersions.map((version, index) => (
+                      {document?.previousVersions?.map((version, index) => (
                         <TableRow key={index}>
                           <TableCell className="font-medium">{version.version}</TableCell>
-                          <TableCell>{new Date(version.uploadDate).toLocaleDateString()}</TableCell>
-                          <TableCell>{new Date(version.expiryDate).toLocaleDateString()}</TableCell>
+                          <TableCell>{new Date(version.upload_date || new Date()).toLocaleDateString()}</TableCell>
+                          <TableCell>{new Date(version.expiry_date || new Date()).toLocaleDateString()}</TableCell>
                           <TableCell>
                             <Button variant="outline" size="sm">
                               <Download className="h-4 w-4 mr-1" />

@@ -1,25 +1,26 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, FileText, Calendar, Users, Eye, Download } from "lucide-react"
-import { DocumentUploadDialog } from "./Document-upload-dialog"
+// import { DocumentUploadDialog } from "./Document-upload-dialog"
 import { DocumentDetailDialog } from "./Document-detail-dialog"
 import { useRouter } from "next/navigation"
-
+import {getDocuments} from '@/features/Hse/actions/documents'
+import Cookies from 'js-cookie'
 interface Document {
   id: string
   title: string
   version: string
-  uploadDate: string
-  expiryDate: string
+  upload_date: string
+  expiry_date: string
   status: "active" | "expired" | "pending"
-  acceptedCount: number
-  totalEmployees: number
-  fileUrl: string
+  acceptedCount?: number
+  totalEmployees?: number
+  file_url: string
 }
 
 const mockDocuments: Document[] = [
@@ -27,69 +28,79 @@ const mockDocuments: Document[] = [
     id: "1",
     title: "Manual de Seguridad Vial",
     version: "2.1",
-    uploadDate: "2024-01-15",
-    expiryDate: "2024-12-31",
+    upload_date: "2024-01-15",
+    expiry_date: "2024-12-31",
     status: "active",
     acceptedCount: 45,
     totalEmployees: 60,
-    fileUrl: "/documents/manual-seguridad.pdf",
+    file_url: "/documents/manual-seguridad.pdf",
   },
   {
     id: "2",
     title: "Protocolo de Emergencias",
     version: "1.3",
-    uploadDate: "2024-02-01",
-    expiryDate: "2024-11-30",
+    upload_date: "2024-02-01",
+    expiry_date: "2024-11-30",
     status: "active",
     acceptedCount: 38,
     totalEmployees: 60,
-    fileUrl: "/documents/protocolo-emergencias.pdf",
+    file_url: "/documents/protocolo-emergencias.pdf",
   },
   {
     id: "3",
     title: "Normas de Higiene Industrial",
     version: "3.0",
-    uploadDate: "2023-12-01",
-    expiryDate: "2024-01-31",
+    upload_date: "2023-12-01",
+    expiry_date: "2024-01-31",
     status: "expired",
     acceptedCount: 60,
     totalEmployees: 60,
-    fileUrl: "/documents/normas-higiene.pdf",
+    file_url: "/documents/normas-higiene.pdf",
   },
   {
     id: "4",
     title: "Manual de Equipos de Protección",
     version: "1.5",
-    uploadDate: "2023-10-15",
-    expiryDate: "2023-12-31",
+    upload_date: "2023-10-15",
+    expiry_date: "2023-12-31",
     status: "expired",
     acceptedCount: 55,
     totalEmployees: 60,
-    fileUrl: "/documents/epp-manual.pdf",
+    file_url: "/documents/epp-manual.pdf",
   },
   {
     id: "5",
     title: "Procedimientos de Limpieza",
     version: "2.0",
-    uploadDate: "2023-08-01",
-    expiryDate: "2023-11-30",
+    upload_date: "2023-08-01",
+    expiry_date: "2023-11-30",
     status: "expired",
     acceptedCount: 48,
     totalEmployees: 60,
-    fileUrl: "/documents/limpieza.pdf",
+    file_url: "/documents/limpieza.pdf",
   },
 ]
 
 export function DocumentsSection() {
-  const [documents, setDocuments] = useState<Document[]>(mockDocuments)
+  const company_id = Cookies.get('actualComp')
+  console.log(company_id)
+  const [documents, setDocuments] = useState<Document[]>([])
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [showDetailDialog, setShowDetailDialog] = useState(false)
   const router = useRouter()
 
+ 
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      const documentos = await getDocuments(company_id || "");
+      setDocuments(documentos);
+    };
+    fetchDocuments();
+  }, [company_id]);
   const activeDocuments = documents.filter((doc) => doc.status === "active")
   const expiredDocuments = documents.filter((doc) => doc.status === "expired")
-
+console.log(documents)
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
@@ -131,7 +142,7 @@ export function DocumentsSection() {
           <CardContent className="space-y-3">
             <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
               <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
-              <span className="truncate">Vence: {new Date(document.expiryDate).toLocaleDateString()}</span>
+              <span className="truncate">Vence: {new Date(document.expiry_date).toLocaleDateString()}</span>
             </div>
 
             <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
@@ -144,7 +155,7 @@ export function DocumentsSection() {
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
                 className="bg-blue-600 h-2 rounded-full"
-                style={{ width: `${(document.acceptedCount / document.totalEmployees) * 100}%` }}
+                style={{ width: `${((document.acceptedCount || 0) / (document.totalEmployees || 0)) * 100}%` }}
               ></div>
             </div>
 
@@ -154,7 +165,7 @@ export function DocumentsSection() {
                 size="sm"
                 className="flex-1 text-xs sm:text-sm"
                 onClick={() => {
-                  router.push(`/document/${document.id}/detail`)
+                  router.push(`/dashboard/hse/document/${document.id}/detail`)
                 }}
               >
                 <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
@@ -172,7 +183,7 @@ export function DocumentsSection() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold">Documentos HSE</h2>
           <p className="text-sm sm:text-base text-muted-foreground">
@@ -183,7 +194,7 @@ export function DocumentsSection() {
           <Plus className="h-4 w-4 mr-2" />
           Subir Documento
         </Button>
-      </div>
+      </div> */}
 
       <Tabs defaultValue="active" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -218,14 +229,14 @@ export function DocumentsSection() {
         </TabsContent>
       </Tabs>
 
-      <DocumentUploadDialog
+      {/* <DocumentUploadDialog
         open={showUploadDialog}
         onOpenChange={setShowUploadDialog}
         onDocumentUploaded={(newDoc) => {
           setDocuments([...documents, newDoc])
           setShowUploadDialog(false)
         }}
-      />
+      /> */}
 
       <DocumentDetailDialog open={showDetailDialog} onOpenChange={setShowDetailDialog} document={selectedDocument} />
     </div>
