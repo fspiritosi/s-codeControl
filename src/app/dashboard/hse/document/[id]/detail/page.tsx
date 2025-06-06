@@ -11,7 +11,8 @@ import { Progress } from "@/components/ui/progress"
 import { ArrowLeft, CheckCircle, Clock, Download, ExternalLink } from "lucide-react"
 import { getDocumentById } from "@/features/Hse/actions/documents"
 import { useEffect, useState } from "react"
-
+import { supabaseBrowser } from "@/lib/supabase/browser"
+import { fetchAllActivesEmployees } from "@/app/server/GET/actions"
 interface Document {
   id: string
   title: string
@@ -21,10 +22,11 @@ interface Document {
   status: "active" | "expired" | "pending"
   acceptedCount?: number
   totalEmployees?: number
-  file_url: string
+  file_path: string
   description: string | null
   previousVersions?: { version: string; upload_date: string; expiry_date: string }[]
 }
+
 // Mock document
 // const mockDocument = {
 //   id: "1",
@@ -115,23 +117,38 @@ const mockEmployees = [
 
 export default function DocumentDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter()
+  const supabase = supabaseBrowser()
 const [document, setDocument] = useState<Document | null>(null)
+const [activeEmployees, setActiveEmployees] = useState<Database["public"]["Tables"]["employees"]["Row"]["affiliate_status"][]>([])
 console.log(params)
   // Filter employees by status
   useEffect(() => {
     const fetchDocument = async () => {
       const document = await getDocumentById(params.id)
       setDocument(document)
-      
     }
+    const fetchEmployees = async () => {
+      const employees = await fetchAllActivesEmployees()
+      setActiveEmployees(employees)
+      console.log(employees)
+    }
+    fetchEmployees()
     fetchDocument()
   }, [params.id])
   console.log(document)
-  
+  console.log(activeEmployees)
   const acceptedEmployees = mockEmployees.filter((emp) => emp.status === "accepted")
   const pendingEmployees = mockEmployees.filter((emp) => emp.status === "pending")
 console.log(acceptedEmployees)
 console.log(pendingEmployees)
+
+const getDocumentUrl = (filePath: string) => {
+  if (!filePath) return ''
+  const { data } = supabase.storage
+    .from('documents-hse') // Asegúrate de que este sea el nombre correcto de tu bucket
+    .getPublicUrl(filePath)
+  return data.publicUrl
+}
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
@@ -380,19 +397,25 @@ console.log(pendingEmployees)
 
           {/* Preview Tab */}
           <TabsContent value="preview" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Vista Previa del Documento</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <iframe
-                  src={document?.file_url}
-                  className="w-full h-[600px] border rounded"
-                  title={document?.title}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
+  <Card>
+    <CardHeader>
+      <CardTitle>Vista Previa del Documento</CardTitle>
+    </CardHeader>
+    <CardContent>
+      {document?.file_path ? (
+        <iframe
+          src={getDocumentUrl(document.file_path)}
+          className="w-full h-[600px] border rounded"
+          title={document?.title}
+        />
+      ) : (
+        <div className="flex items-center justify-center h-[600px] bg-gray-50 rounded">
+          <p className="text-gray-500">No hay vista previa disponible</p>
+        </div>
+      )}
+    </CardContent>
+  </Card>
+</TabsContent>
 
           {/* Versions Tab */}
           <TabsContent value="versions" className="space-y-6">

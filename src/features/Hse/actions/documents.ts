@@ -1,33 +1,23 @@
 'use server'
 
 import { supabaseServer } from '@/lib/supabase/server'
-import { uploadDocumentFile } from '@/lib/utils';
-
-import { z } from 'zod'
-
-// Esquema de validación para documentos
-const documentSchema = z.object({
-  title: z.string().min(3, 'El título debe tener al menos 3 caracteres').max(255),
-  description: z.string().nullable().optional(),
-  version: z.string().min(1, 'La versión es requerida').max(50),
-  file_url: z.string().url('URL de archivo no válida'),
-  file_name: z.string().min(1, 'Nombre de archivo requerido').max(255),
-  file_size: z.number().int().positive('El tamaño del archivo debe ser un número positivo'),
-  file_type: z.string().min(1, 'Tipo de archivo requerido').max(100),
-  upload_date: z.string().or(z.date()).transform(val => new Date(val).toISOString()).optional(),
-  expiry_date: z.string().or(z.date()).transform(val => new Date(val).toISOString().split('T')[0]),
-  status: z.enum(['active', 'expired', 'pending']).default('pending'),
-  created_by: z.string().uuid('ID de usuario no válido').optional()
-})
 
 // Tipos
-export type DocumentInput = z.infer<typeof documentSchema>
+export type DocumentInput = {
+  title: string
+  description: string | null
+  version: string
+  file: File
+  expiry_date: string
+}
+
+//infer<typeof documentSchema>
 export type Document = {
   id: string
   title: string
   description: string | null
   version: string
-  file_url: string
+  file_path: string  // Cambiado de file_url a file_path
   file_name: string
   file_size: number
   file_type: string
@@ -38,39 +28,19 @@ export type Document = {
   created_at: string
   updated_at: string
 }
-type FileData = {
-  name: string
-  type: string
-  size: number
-  data: number[] // Array de bytes
-}
-
-type CreateDocumentInput = {
-  title: string
-  version: string
-  expiry_date: string
-  description?: string | null
-  file: FileData
-}
 
 // Obtener todos los documentos
-export async function getDocuments(company_id: string ,filters?: {
+export async function getDocuments(company_id: string, filters?: {
   status?: 'active' | 'expired' | 'pending'
   search?: string
 }) {
-  
-    
   const supabase = supabaseServer()
   
-  console.log(company_id)
   let query = supabase
     .from('hse_documents' as any)
     .select('*')
     .eq("company_id", company_id)
     
-    
-
-
   if (filters?.status) {
     query = query.eq('status', filters.status)
   }
@@ -108,41 +78,30 @@ export async function getDocumentById(id: string): Promise<Document> {
   return data as Document
 }
 
-export async function createDocument(formData: FormData) {
+export async function createDocument(formData: FormData, company_id: string) {
   const supabase = supabaseServer()
 
-  // Recuperar el usuario autenticado
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
+  // 1. Obtener el usuario autenticado
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
   if (userError || !user) {
     console.error('Error al obtener el usuario:', userError)
     throw new Error('No se pudo obtener el usuario autenticado')
   }
 
-  // Leer campos del FormData
-  const title = formData.get('title') as string
-  const version = formData.get('version') as string
-  const expiryDate = formData.get('expiryDate') as string
-  const description = formData.get('description') as string | null
-  const file = formData.get('file') as File
-
-  if (!file || typeof file.name !== 'string') {
-    throw new Error('Archivo inválido')
+  // 2. Validar y obtener datos del formulario
+  const file = formData.get('file') as File | null
+  if (!file) {
+    throw new Error('No se ha proporcionado ningún archivo')
   }
 
-  // Convertir archivo a ArrayBuffer para subirlo
-  const arrayBuffer = await file.arrayBuffer()
-
+  // 3. Subir el archivo a Supabase Storage
   const filePath = `hse/documents/${Date.now()}-${file.name}`
+  const arrayBuffer = await file.arrayBuffer()
 
   const { data: uploadData, error: uploadError } = await supabase.storage
     .from('documents-hse')
     .upload(filePath, Buffer.from(arrayBuffer), {
       contentType: file.type,
-      upsert: false,
     })
 
   if (uploadError) {
@@ -150,40 +109,51 @@ export async function createDocument(formData: FormData) {
     throw new Error('No se pudo subir el archivo')
   }
 
+  // 4. Obtener URL pública del archivo
   const { data: { publicUrl } } = supabase.storage
     .from('documents-hse')
     .getPublicUrl(filePath)
 
-  // Insertar en la base de datos
+  // 5. Preparar datos para la base de datos
+  const documentData = {
+    title: formData.get('title') as string,
+    version: formData.get('version') as string,
+    expiry_date: formData.get('expiry_date') as string,
+    description: formData.get('description') as string | null,
+    file_path: filePath,
+    file_name: file.name,
+    file_size: file.size,
+    file_type: file.type,
+    upload_date: new Date().toISOString(),
+    status: 'active' as const,
+    created_by: user.id,
+    company_id: company_id
+  }
+
+  // 6. Validar con el esquema compartido
+  // const validation = documentSchema.safeParse(documentData)
+  // if (!validation.success) {
+  //   console.error('Error de validación:', validation.error)
+  //   throw new Error('Datos del documento no válidos')
+  // }
+
+  // 7. Insertar en la base de datos
   const { data, error } = await supabase
     .from('hse_documents' as any)
-    .insert([
-      {
-        title,
-        version,
-        expiry_date: expiryDate,
-        description,
-        file_url: publicUrl,
-        file_name: file.name,
-        file_size: file.size,
-        file_type: file.type,
-        upload_date: new Date().toISOString(),
-        status: 'pending',
-        created_by: user.id,
-      },
-    ])
+    .insert([documentData])
     .select()
     .single()
 
   if (error) {
     console.error('Error al guardar el documento:', error)
+    // Intentar eliminar el archivo subido si falla la inserción
+    await supabase.storage
+      .from('documents-hse')
+      .remove([filePath])
+      .catch(console.error)
+    
     throw new Error('Error al guardar el documento en la base de datos')
   }
 
-  return data
+  return data as Document
 }
-
-
-
-
-

@@ -7,10 +7,14 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, FileText, Calendar, Users, Eye, Download } from "lucide-react"
 // import { DocumentUploadDialog } from "./Document-upload-dialog"
-import { DocumentDetailDialog } from "./Document-detail-dialog"
+// import { DocumentDetailDialog } from "./Document-detail-dialog"
 import { useRouter } from "next/navigation"
 import {getDocuments} from '@/features/Hse/actions/documents'
 import Cookies from 'js-cookie'
+import { Input } from "@/components/ui/input"
+import { Filter } from "lucide-react";
+
+
 interface Document {
   id: string
   title: string
@@ -88,9 +92,19 @@ export function DocumentsSection() {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [showDetailDialog, setShowDetailDialog] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
   const router = useRouter()
 
- 
+  const filterDocuments = (documents: Document[]) => {
+    return documents.filter((document) => {
+      const matchesSearch =
+        document.title.toLowerCase().includes(searchTerm.toLowerCase());
+    
+      // const matchesTag = tagFilter === 'all' || document.tags.includes(tagFilter);
+    
+      return matchesSearch;
+    });
+  };
   useEffect(() => {
     const fetchDocuments = async () => {
       const documentos = await getDocuments(company_id || "");
@@ -100,6 +114,8 @@ export function DocumentsSection() {
   }, [company_id]);
   const activeDocuments = documents.filter((doc) => doc.status === "active")
   const expiredDocuments = documents.filter((doc) => doc.status === "expired")
+  console.log(activeDocuments)
+  console.log(expiredDocuments)
 console.log(documents)
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -128,7 +144,10 @@ console.log(documents)
   }
 
   const DocumentGrid = ({ documents }: { documents: Document[] }) => (
+    <div>
+      
     <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+                
       {documents.map((document) => (
         <Card key={document.id} className="hover:shadow-md transition-shadow">
           <CardHeader className="pb-3">
@@ -179,6 +198,7 @@ console.log(documents)
         </Card>
       ))}
     </div>
+    </div>
   )
 
   return (
@@ -208,7 +228,22 @@ console.log(documents)
 
         <TabsContent value="active" className="space-y-4">
           {activeDocuments.length > 0 ? (
-            <DocumentGrid documents={activeDocuments} />
+          <div>
+            <div className="flex-1">
+              <div className="relative">
+                <Input
+                  placeholder="Buscar documentos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-3 pr-8 w-full"
+                />
+                <Filter className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+              </div>
+            </div>
+            <div className="flex flex-col md:flex-row gap-4 mb-4">
+          </div>
+            <DocumentGrid documents={filterDocuments(activeDocuments)} />
+              </div>
           ) : (
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -219,7 +254,22 @@ console.log(documents)
 
         <TabsContent value="expired" className="space-y-4">
           {expiredDocuments.length > 0 ? (
-            <DocumentGrid documents={expiredDocuments} />
+            <div>
+            <div className="flex-1">
+              <div className="relative">
+                <Input
+                  placeholder="Buscar documentos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-3 pr-8 w-full"
+                />
+                <Filter className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+              </div>
+            </div>
+            <div className="flex flex-col md:flex-row gap-4 mb-4">
+          </div>
+            <DocumentGrid documents={filterDocuments(expiredDocuments)} />
+            </div>
           ) : (
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -238,7 +288,7 @@ console.log(documents)
         }}
       /> */}
 
-      <DocumentDetailDialog open={showDetailDialog} onOpenChange={setShowDetailDialog} document={selectedDocument} />
+      {/* <DocumentDetailDialog open={showDetailDialog} onOpenChange={setShowDetailDialog} document={selectedDocument} /> */}
     </div>
   )
 }
