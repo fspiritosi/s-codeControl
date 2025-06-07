@@ -108,7 +108,7 @@ export function DocumentsSection() {
   useEffect(() => {
     const fetchDocuments = async () => {
       const documentos = await getDocuments(company_id || "");
-      setDocuments(documentos);
+      setDocuments(documentos as any);
     };
     fetchDocuments();
   }, [company_id]);

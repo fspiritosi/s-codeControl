@@ -1,30 +1,29 @@
 "use client"
+import * as React from 'react'
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-// import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Progress } from "@/components/ui/progress"
 import { ArrowLeft, CheckCircle, Clock, Download, ExternalLink } from "lucide-react"
-import { getDocumentById } from "@/features/Hse/actions/documents"
+import { getDocumentById, type Document, type DocumentVersion } from "@/features/Hse/actions/documents"
+import { downloadFile } from "@/lib/download"
 import { useEffect, useState } from "react"
 import { supabaseBrowser } from "@/lib/supabase/browser"
 import { fetchAllActivesEmployees } from "@/app/server/GET/actions"
-interface Document {
-  id: string
-  title: string
-  version: string
-  upload_date: string
-  expiry_date: string
-  status: "active" | "expired" | "pending"
+import { toast } from "sonner"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
+
+// Extendemos el tipo Document para incluir las propiedades adicionales que necesitamos
+interface ExtendedDocument extends Document {
   acceptedCount?: number
   totalEmployees?: number
-  file_path: string
-  description: string | null
-  previousVersions?: { version: string; upload_date: string; expiry_date: string }[]
+  previousVersions?: DocumentVersion[]
+  versions?: DocumentVersion[]
 }
 
 // Mock document
@@ -118,31 +117,101 @@ const mockEmployees = [
 export default function DocumentDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const supabase = supabaseBrowser()
-const [document, setDocument] = useState<Document | null>(null)
-const [activeEmployees, setActiveEmployees] = useState<Database["public"]["Tables"]["employees"]["Row"]["affiliate_status"][]>([])
-console.log(params)
-  // Filter employees by status
+  const [document, setDocument] = useState<ExtendedDocument | null>(null)
+  const [activeEmployees, setActiveEmployees] = useState<any[]>([])
+  const [selectedEmployee, setSelectedEmployee] = useState<string>("")
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Función para manejar la descarga de archivos
+  // Función para manejar la descarga de archivos
+  const handleDownload = (fileUrl: string, fileName: string) => {
+    if (isDownloading) return;
+    
+    setIsDownloading(true);
+    try {
+      // Usar window.document para evitar conflictos con la interfaz Document
+      const doc = window.document;
+      const link = doc.createElement('a');
+      link.href = fileUrl;
+      link.download = fileName; // Siempre forzar la descarga
+      
+      doc.body.appendChild(link);
+      link.click();
+      doc.body.removeChild(link);
+      
+      toast.success('Descarga iniciada');
+    } catch (error) {
+      console.error('Error al descargar el archivo:', error);
+      toast.error('Error al descargar el archivo');
+    } finally {
+      setIsDownloading(false);
+    }
+  }
+
+  // Cargar documento y empleados
   useEffect(() => {
-    const fetchDocument = async () => {
-      const document = await getDocumentById(params.id)
-      setDocument(document)
+    const fetchData = async () => {
+      try {
+        setIsLoading(true)
+        const [doc, employees] = await Promise.all([
+          getDocumentById(params.id),
+          fetchAllActivesEmployees()
+        ])
+        
+        if (!doc) {
+          console.error('Documento no encontrado')
+          router.push('/dashboard/hse/documents')
+          return
+        }
+        
+        setDocument(doc as ExtendedDocument)
+        setActiveEmployees(employees || [])
+      } catch (error) {
+        console.error('Error al cargar los datos:', error)
+        toast.error('Error al cargar el documento')
+      } finally {
+        setIsLoading(false)
+      }
     }
-    const fetchEmployees = async () => {
-      const employees = await fetchAllActivesEmployees()
-      setActiveEmployees(employees)
-      console.log(employees)
-    }
-    fetchEmployees()
-    fetchDocument()
+    
+    fetchData()
   }, [params.id])
   console.log(document)
-  console.log(activeEmployees)
-  const acceptedEmployees = mockEmployees.filter((emp) => emp.status === "accepted")
-  const pendingEmployees = mockEmployees.filter((emp) => emp.status === "pending")
-console.log(acceptedEmployees)
-console.log(pendingEmployees)
+  // Ordenar versiones por fecha (más reciente primero)
+  const sortedVersions = React.useMemo(() => {
+    // Usar versions si está definido, de lo contrario usar un array vacío
+    const versions = document?.versions || []
+    return [...versions].sort((a, b) => 
+      new Date(b.upload_date || b.created_at).getTime() - new Date(a.upload_date || a.created_at).getTime()
+    )
+  }, [document?.versions])
 
-const getDocumentUrl = (filePath: string) => {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  if (!document) {
+    return <div>Documento no encontrado</div>
+  }
+  // Usar los empleados reales en lugar de mockEmployees
+  const acceptedEmployees = activeEmployees || []
+  const pendingEmployees = activeEmployees || [] // Ajustar según la lógica de negocio
+
+  // Verificar si el documento existe
+  if (!document) {
+    return (
+      <div className="p-8">
+        <p>Documento no encontrado</p>
+      </div>
+    )
+  }
+
+  const getDocumentUrl = (filePath: string) => {
   if (!filePath) return ''
   const { data } = supabase.storage
     .from('documents-hse') // Asegúrate de que este sea el nombre correcto de tu bucket
@@ -206,7 +275,7 @@ const getDocumentUrl = (filePath: string) => {
             <p className="text-muted-foreground">Versión {document?.version}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => handleDownload(document.file_path, document.file_name)}>
               <Download className="h-4 w-4 mr-2" />
               Descargar
             </Button>
@@ -436,24 +505,45 @@ const getDocumentUrl = (filePath: string) => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      <TableRow>
-                        <TableCell className="font-medium">{document?.version} (Actual)</TableCell>
-                        <TableCell>{new Date(document?.upload_date || new Date()).toLocaleDateString()}</TableCell>
-                        <TableCell>{new Date(document?.expiry_date || new Date()).toLocaleDateString()}</TableCell>
+                      {/* Versión actual */}
+                      <TableRow className="bg-muted/50">
+                        <TableCell className="font-medium">
+                          {document.version} (Actual)
+                        </TableCell>
                         <TableCell>
-                          <Button variant="outline" size="sm">
+                          {document.upload_date ? format(new Date(document.upload_date), 'PPP', { locale: es }) : '-'}
+                        </TableCell>
+                        <TableCell>
+                          {document.expiry_date ? format(new Date(document.expiry_date), 'PPP', { locale: es }) : 'Sin vencimiento'}
+                        </TableCell>
+                        <TableCell className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleDownload(document.file_path, document.file_name)}
+                          >
                             <Download className="h-4 w-4 mr-1" />
                             Descargar
                           </Button>
                         </TableCell>
                       </TableRow>
-                      {document?.previousVersions?.map((version, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">{version.version}</TableCell>
-                          <TableCell>{new Date(version.upload_date || new Date()).toLocaleDateString()}</TableCell>
-                          <TableCell>{new Date(version.expiry_date || new Date()).toLocaleDateString()}</TableCell>
+                      
+                      {/* Versiones anteriores */}
+                      {document.versions?.map((version, index) => (
+                        <TableRow key={version.id || index}>
+                          <TableCell className="font-medium">
+                            {version.version}
+                          </TableCell>
                           <TableCell>
-                            <Button variant="outline" size="sm">
+                            {version.created_at ? format(new Date(version.created_at), 'PPP', { locale: es }) : '-'}
+                          </TableCell>
+                          <TableCell>Sin vencimiento</TableCell>
+                          <TableCell>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleDownload(getDocumentUrl(version.file_path), version.file_name)}
+                            >
                               <Download className="h-4 w-4 mr-1" />
                               Descargar
                             </Button>

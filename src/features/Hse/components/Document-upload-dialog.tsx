@@ -89,7 +89,27 @@ export function DocumentUploadDialog() {
       if (data.description) {
         formData.append('description', data.description);
       }
-      formData.append('file', data.file);
+      
+      // Ensure we're getting the file from the file input
+      const fileInput = fileInputRef.current;
+      if (fileInput?.files?.[0]) {
+        formData.append('file', fileInput.files[0]);
+      } else if (data.file) {
+        // Fallback to the file from form data if available
+        formData.append('file', data.file);
+      } else {
+        throw new Error('No se ha seleccionado ningún archivo');
+      }
+
+      console.log('Enviando formulario con datos:', {
+        title: data.title,
+        version: data.version,
+        expiry_date: data.expiry_date,
+        hasFile: !!data.file,
+        fileType: data.file?.type,
+        fileSize: data.file?.size,
+        fileName: data.file?.name
+      });
 
       await createDocument(formData, companyId);
       // Cerrar el diálogo y limpiar el formulario
