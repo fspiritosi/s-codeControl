@@ -23,6 +23,7 @@ export interface DocumentVersion {
   created_by: string
   created_at: string
   change_log?: string
+  expiry_date: string | null
 }
 
 export interface Document {
@@ -177,13 +178,15 @@ export async function createDocument(formData: FormData, company_id: string) {
         const versionData = {
           document_id: documentId,
           version: existingDoc.version,
-          file_url: publicUrl, // Usar la URL pública en lugar de la ruta del archivo
+          file_path: filePath, // Usar la URL pública en lugar de la ruta del archivo
           file_name: existingDoc.file_name,
           file_size: existingDoc.file_size,
           file_type: existingDoc.file_type,
           created_by: existingDoc.created_by,
           change_log: `Versión ${existingDoc.version} - Reemplazada por nueva versión`,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          expiry_date: existingDoc.expiry_date,
+          
         };
         console.log(versionData)
         console.log('Guardando versión anterior en hse_document_versions:', versionData);

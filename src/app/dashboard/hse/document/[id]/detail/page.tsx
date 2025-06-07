@@ -325,7 +325,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Versiones anteriores:</span>
-                    <span>{document?.previousVersions?.length || 0}</span>
+                    <span>{document?.versions?.length || 0}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -537,12 +537,14 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
                           <TableCell>
                             {version.created_at ? format(new Date(version.created_at), 'PPP', { locale: es }) : '-'}
                           </TableCell>
-                          <TableCell>Sin vencimiento</TableCell>
+                          <TableCell>
+                            {version.expiry_date ? format(new Date(version.expiry_date), 'PPP', { locale: es }) : 'Sin vencimiento'}
+                          </TableCell>
                           <TableCell>
                             <Button 
                               variant="outline" 
                               size="sm"
-                              onClick={() => handleDownload(getDocumentUrl(version.file_path), version.file_name)}
+                              onClick={() => handleDownload(version.file_path, version.file_name)}
                             >
                               <Download className="h-4 w-4 mr-1" />
                               Descargar

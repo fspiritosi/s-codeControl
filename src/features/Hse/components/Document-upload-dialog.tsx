@@ -30,6 +30,9 @@ import { Plus, Upload } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { toast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+
 
 
 
@@ -39,6 +42,7 @@ export const documentFormSchema = z.object({
   version: z.string().min(1, 'La versión es requerida'),
   expiry_date: z.string().min(1, 'La fecha de vencimiento es requerida'),
   description: z.string().optional(),
+  typeOfEmployee: z.array(z.string()).optional(), // Actualizar definición del esquema
   file: z.any()
     .refine(
       (file) => file instanceof File,
@@ -64,6 +68,7 @@ export function DocumentUploadDialog() {
       version: '',
       expiry_date: '',
       description: '',
+      typeOfEmployee: [],
     },
   });
   const cookies = Cookies.get();
@@ -72,8 +77,31 @@ export function DocumentUploadDialog() {
   const fileRef = form.register('file');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string>('');
+  const [selectAll, setSelectAll] = useState(false);
+  const positions = ['Gerente', 'Supervisor', 'Operario', 'Administrativo']; // Reemplazar con datos reales
 
   const companyId = cookies['actualComp'];
+
+  // Función para manejar la selección de "Todos"
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked);
+    form.setValue('typeOfEmployee', checked ? positions : []);
+  };
+
+  // Función para manejar cambios en posiciones individuales
+  const handlePositionChange = (position: string, checked: boolean) => {
+    const currentSelections = form.getValues('typeOfEmployee') || [];
+    let newSelections: string[] = [];
+    
+    if (checked) {
+      newSelections = [...currentSelections, position];
+    } else {
+      newSelections = currentSelections.filter(p => p !== position);
+    }
+    
+    form.setValue('typeOfEmployee', newSelections);
+    setSelectAll(newSelections.length === positions.length);
+  };
 
   const onSubmit = async (data: DocumentFormValues) => {
     if (!companyId) {
@@ -210,6 +238,41 @@ export function DocumentUploadDialog() {
                       value={field.value || ''}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="typeOfEmployee"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Destinatarios</FormLabel>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="selectAll"
+                        checked={selectAll}
+                        onCheckedChange={handleSelectAll}
+                      />
+                      <Label htmlFor="selectAll" className="font-medium">Todos los empleados</Label>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 pl-6">
+                      {positions.map((position) => (
+                        <div key={position} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`position-${position}`}
+                            checked={field.value?.includes(position) || false}
+                            onCheckedChange={(checked) => 
+                              handlePositionChange(position, checked as boolean)
+                            }
+                          />
+                          <Label htmlFor={`position-${position}`}>{position}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
