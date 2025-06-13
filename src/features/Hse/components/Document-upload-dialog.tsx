@@ -32,6 +32,7 @@ import { toast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 
 
 
@@ -40,7 +41,7 @@ import { Label } from '@/components/ui/label';
 export const documentFormSchema = z.object({
   title: z.string().min(2, 'El título debe tener al menos 2 caracteres'),
   version: z.string().min(1, 'La versión es requerida'),
-  expiry_date: z.string().min(1, 'La fecha de vencimiento es requerida'),
+  expiry_date: z.string().optional(),
   description: z.string().optional(),
   typeOfEmployee: z.array(z.string()).optional(), // Actualizar definición del esquema
   file: z.any()
@@ -78,14 +79,19 @@ export function DocumentUploadDialog() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string>('');
   const [selectAll, setSelectAll] = useState(false);
-  const positions = ['Gerente', 'Supervisor', 'Operario', 'Administrativo']; // Reemplazar con datos reales
-
+  // const positions = ['Gerente', 'Supervisor', 'Operario', 'Administrativo']; // Reemplazar con datos reales
+  const positions = [
+    { label: 'Gerente', value: 'Gerente' },
+    { label: 'Supervisor', value: 'Supervisor' },
+    { label: 'Operario', value: 'Operario' },
+    { label: 'Administrativo', value: 'Administrativo' },
+  ];
   const companyId = cookies['actualComp'];
 
   // Función para manejar la selección de "Todos"
   const handleSelectAll = (checked: boolean) => {
     setSelectAll(checked);
-    form.setValue('typeOfEmployee', checked ? positions : []);
+    form.setValue('typeOfEmployee', checked ? [] : []);
   };
 
   // Función para manejar cambios en posiciones individuales
@@ -113,7 +119,7 @@ export function DocumentUploadDialog() {
       const formData = new FormData();
       formData.append('title', data.title);
       formData.append('version', data.version);
-      formData.append('expiry_date', data.expiry_date);
+      formData.append('expiry_date', data.expiry_date || '');
       if (data.description) {
         formData.append('description', data.description);
       }
@@ -123,23 +129,18 @@ export function DocumentUploadDialog() {
       if (fileInput?.files?.[0]) {
         formData.append('file', fileInput.files[0]);
       } else if (data.file) {
-        // Fallback to the file from form data if available
         formData.append('file', data.file);
       } else {
         throw new Error('No se ha seleccionado ningún archivo');
       }
 
-      console.log('Enviando formulario con datos:', {
-        title: data.title,
-        version: data.version,
-        expiry_date: data.expiry_date,
-        hasFile: !!data.file,
-        fileType: data.file?.type,
-        fileSize: data.file?.size,
-        fileName: data.file?.name
-      });
 
-      await createDocument(formData, companyId);
+      const result = await createDocument(formData, companyId);
+
+      if (!result?.success) {
+        throw new Error('No se pudo crear el documento');
+      }
+
       // Cerrar el diálogo y limpiar el formulario
       document.getElementById('close-dialog')?.click();
       form.reset();
@@ -151,14 +152,24 @@ export function DocumentUploadDialog() {
       });
       router.refresh();
     } catch (error) {
-      toast({
-        title: 'Error al subir el documento',
-        description: 'Hubo un problema al subir el documento',
-        variant: 'destructive',
-        duration: 3000,
-      });
-      console.error('Error al crear el documento:', error);
+      if (error instanceof Error && error.message === 'El documento ya existe') {
+        toast({
+          title: 'El documento ya existe',
+          description: 'Por favor, ve al detalle del documento para agregar una nueva versión.',
+          variant: 'destructive',
+          duration: 5000,
+        });
+      } else {
+        toast({
+          title: 'Error al subir el documento',
+          description: error instanceof Error ? error.message : 'Hubo un problema al subir el documento',
+          variant: 'destructive',
+          duration: 5000,
+        });
+        console.error('Error al crear el documento:', error);
+      }
     }
+    router.refresh();
   };
 
   return (
@@ -242,37 +253,20 @@ export function DocumentUploadDialog() {
                 </FormItem>
               )}
             />
-            <FormField
+           <FormField
               control={form.control}
               name="typeOfEmployee"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel>Destinatarios</FormLabel>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="selectAll"
-                        checked={selectAll}
-                        onCheckedChange={handleSelectAll}
-                      />
-                      <Label htmlFor="selectAll" className="font-medium">Todos los empleados</Label>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2 pl-6">
-                      {positions.map((position) => (
-                        <div key={position} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`position-${position}`}
-                            checked={field.value?.includes(position) || false}
-                            onCheckedChange={(checked) => 
-                              handlePositionChange(position, checked as boolean)
-                            }
-                          />
-                          <Label htmlFor={`position-${position}`}>{position}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <MultiSelectCombobox
+                    options={positions}
+                    placeholder="Seleccionar cargos"
+                    emptyMessage="No se encontraron cargos"
+                    selectedValues={field.value || []}
+                    onChange={field.onChange}
+                    showSelectAll
+                  />
                   <FormMessage />
                 </FormItem>
               )}

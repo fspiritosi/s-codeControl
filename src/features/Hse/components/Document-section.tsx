@@ -13,80 +13,84 @@ import {getDocuments} from '@/features/Hse/actions/documents'
 import Cookies from 'js-cookie'
 import { Input } from "@/components/ui/input"
 import { Filter } from "lucide-react";
-
+import { toast } from "sonner"
+import { supabaseBrowser } from "@/lib/supabase/browser"
 
 interface Document {
   id: string
   title: string
   version: string
   upload_date: string
-  expiry_date: string
+  expiry_date: string | null
   status: "active" | "expired" | "pending"
   acceptedCount?: number
   totalEmployees?: number
-  file_url: string
+  file_path: string
+  file_name: string
+  file_size: string
 }
 
-const mockDocuments: Document[] = [
-  {
-    id: "1",
-    title: "Manual de Seguridad Vial",
-    version: "2.1",
-    upload_date: "2024-01-15",
-    expiry_date: "2024-12-31",
-    status: "active",
-    acceptedCount: 45,
-    totalEmployees: 60,
-    file_url: "/documents/manual-seguridad.pdf",
-  },
-  {
-    id: "2",
-    title: "Protocolo de Emergencias",
-    version: "1.3",
-    upload_date: "2024-02-01",
-    expiry_date: "2024-11-30",
-    status: "active",
-    acceptedCount: 38,
-    totalEmployees: 60,
-    file_url: "/documents/protocolo-emergencias.pdf",
-  },
-  {
-    id: "3",
-    title: "Normas de Higiene Industrial",
-    version: "3.0",
-    upload_date: "2023-12-01",
-    expiry_date: "2024-01-31",
-    status: "expired",
-    acceptedCount: 60,
-    totalEmployees: 60,
-    file_url: "/documents/normas-higiene.pdf",
-  },
-  {
-    id: "4",
-    title: "Manual de Equipos de Protección",
-    version: "1.5",
-    upload_date: "2023-10-15",
-    expiry_date: "2023-12-31",
-    status: "expired",
-    acceptedCount: 55,
-    totalEmployees: 60,
-    file_url: "/documents/epp-manual.pdf",
-  },
-  {
-    id: "5",
-    title: "Procedimientos de Limpieza",
-    version: "2.0",
-    upload_date: "2023-08-01",
-    expiry_date: "2023-11-30",
-    status: "expired",
-    acceptedCount: 48,
-    totalEmployees: 60,
-    file_url: "/documents/limpieza.pdf",
-  },
-]
+// const mockDocuments: Document[] = [
+//   {
+//     id: "1",
+//     title: "Manual de Seguridad Vial",
+//     version: "2.1",
+//     upload_date: "2024-01-15",
+//     expiry_date: "2024-12-31",
+//     status: "active",
+//     acceptedCount: 45,
+//     totalEmployees: 60,
+//     file_url: "/documents/manual-seguridad.pdf",
+//   },
+//   {
+//     id: "2",
+//     title: "Protocolo de Emergencias",
+//     version: "1.3",
+//     upload_date: "2024-02-01",
+//     expiry_date: "2024-11-30",
+//     status: "active",
+//     acceptedCount: 38,
+//     totalEmployees: 60,
+//     file_url: "/documents/protocolo-emergencias.pdf",
+//   },
+//   {
+//     id: "3",
+//     title: "Normas de Higiene Industrial",
+//     version: "3.0",
+//     upload_date: "2023-12-01",
+//     expiry_date: "2024-01-31",
+//     status: "expired",
+//     acceptedCount: 60,
+//     totalEmployees: 60,
+//     file_url: "/documents/normas-higiene.pdf",
+//   },
+//   {
+//     id: "4",
+//     title: "Manual de Equipos de Protección",
+//     version: "1.5",
+//     upload_date: "2023-10-15",
+//     expiry_date: "2023-12-31",
+//     status: "expired",
+//     acceptedCount: 55,
+//     totalEmployees: 60,
+//     file_url: "/documents/epp-manual.pdf",
+//   },
+//   {
+//     id: "5",
+//     title: "Procedimientos de Limpieza",
+//     version: "2.0",
+//     upload_date: "2023-08-01",
+//     expiry_date: "2023-11-30",
+//     status: "expired",
+//     acceptedCount: 48,
+//     totalEmployees: 60,
+//     file_url: "/documents/limpieza.pdf",
+//   },
+// ]
 
 export function DocumentsSection() {
   const company_id = Cookies.get('actualComp')
+  const supabase = supabaseBrowser()
   console.log(company_id)
   const [documents, setDocuments] = useState<Document[]>([])
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
@@ -94,7 +98,7 @@ export function DocumentsSection() {
   const [showDetailDialog, setShowDetailDialog] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const router = useRouter()
-
+console.log(documents)
   const filterDocuments = (documents: Document[]) => {
     return documents.filter((document) => {
       const matchesSearch =
@@ -117,6 +121,13 @@ export function DocumentsSection() {
   console.log(activeDocuments)
   console.log(expiredDocuments)
 console.log(documents)
+// const getDocumentUrl = (filePath: string) => {
+//   if (!filePath) return '';
+//   const { data } = supabase.storage
+//     .from('documents-hse') // Asegúrate de que este sea el nombre correcto de tu bucket
+//     .getPublicUrl(filePath);
+//   return data.publicUrl;
+// };
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
@@ -161,7 +172,7 @@ console.log(documents)
           <CardContent className="space-y-3">
             <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
               <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
-              <span className="truncate">Vence: {new Date(document.expiry_date).toLocaleDateString()}</span>
+              <span className="truncate">Vence: {document.expiry_date ? new Date(document.expiry_date).toLocaleDateString() : "sin vencimiento"}</span>
             </div>
 
             <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
@@ -190,7 +201,7 @@ console.log(documents)
                 <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                 Ver Detalle
               </Button>
-              <Button variant="outline" size="sm" className="sm:w-auto">
+              <Button variant="outline" size="sm" className="sm:w-auto" onClick={() => handleDownload(document.file_path, document.file_name)}>
                 <Download className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             </div>
@@ -201,6 +212,21 @@ console.log(documents)
     </div>
   )
 
+  const handleDownload = (file_path: string, file_name: string) => {
+      console.log(file_path)
+      try {
+        const doc = window.document
+        const link = doc.createElement('a')
+        link.href = file_path
+        link.download = file_name
+        doc.body.appendChild(link)
+        link.click()
+        doc.body.removeChild(link)
+      } catch (error) {
+        console.error('Error al descargar el archivo:', error)
+        toast.error('Error al descargar el archivo')
+      } 
+    }
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
