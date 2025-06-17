@@ -9,7 +9,7 @@ import { Plus, FileText, Calendar, Users, Eye, Download } from "lucide-react"
 // import { DocumentUploadDialog } from "./Document-upload-dialog"
 // import { DocumentDetailDialog } from "./Document-detail-dialog"
 import { useRouter } from "next/navigation"
-import {getDocuments} from '@/features/Hse/actions/documents'
+import {getDocuments,getEmployeesWithAssignedDocuments} from '@/features/Hse/actions/documents'
 import Cookies from 'js-cookie'
 import { Input } from "@/components/ui/input"
 import { Filter } from "lucide-react";
@@ -30,64 +30,11 @@ interface Document {
   file_size: string
 }
 
-// const mockDocuments: Document[] = [
-//   {
-//     id: "1",
-//     title: "Manual de Seguridad Vial",
-//     version: "2.1",
-//     upload_date: "2024-01-15",
-//     expiry_date: "2024-12-31",
-//     status: "active",
-//     acceptedCount: 45,
-//     totalEmployees: 60,
-//     file_url: "/documents/manual-seguridad.pdf",
-//   },
-//   {
-//     id: "2",
-//     title: "Protocolo de Emergencias",
-//     version: "1.3",
-//     upload_date: "2024-02-01",
-//     expiry_date: "2024-11-30",
-//     status: "active",
-//     acceptedCount: 38,
-//     totalEmployees: 60,
-//     file_url: "/documents/protocolo-emergencias.pdf",
-//   },
-//   {
-//     id: "3",
-//     title: "Normas de Higiene Industrial",
-//     version: "3.0",
-//     upload_date: "2023-12-01",
-//     expiry_date: "2024-01-31",
-//     status: "expired",
-//     acceptedCount: 60,
-//     totalEmployees: 60,
-//     file_url: "/documents/normas-higiene.pdf",
-//   },
-//   {
-//     id: "4",
-//     title: "Manual de Equipos de Protección",
-//     version: "1.5",
-//     upload_date: "2023-10-15",
-//     expiry_date: "2023-12-31",
-//     status: "expired",
-//     acceptedCount: 55,
-//     totalEmployees: 60,
-//     file_url: "/documents/epp-manual.pdf",
-//   },
-//   {
-//     id: "5",
-//     title: "Procedimientos de Limpieza",
-//     version: "2.0",
-//     upload_date: "2023-08-01",
-//     expiry_date: "2023-11-30",
-//     status: "expired",
-//     acceptedCount: 48,
-//     totalEmployees: 60,
-//     file_url: "/documents/limpieza.pdf",
-//   },
-// ]
 
+type EmployeeCounts = {
+  total: number;
+  accepted: number;
+};
 export function DocumentsSection() {
   const company_id = Cookies.get('actualComp')
   const supabase = supabaseBrowser()
@@ -97,6 +44,7 @@ export function DocumentsSection() {
   const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [showDetailDialog, setShowDetailDialog] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [employees, setEmployees] = useState<any[]>([])
   const router = useRouter()
 console.log(documents)
   const filterDocuments = (documents: Document[]) => {
@@ -109,18 +57,52 @@ console.log(documents)
       return matchesSearch;
     });
   };
+ 
   useEffect(() => {
     const fetchDocuments = async () => {
       const documentos = await getDocuments(company_id || "");
       setDocuments(documentos as any);
     };
+    const fetchEmployees = async () => {
+      const empleados = await getEmployeesWithAssignedDocuments();
+      setEmployees(empleados as any);
+    };
     fetchDocuments();
+    fetchEmployees();
   }, [company_id]);
   const activeDocuments = documents.filter((doc) => doc.status === "active")
   const expiredDocuments = documents.filter((doc) => doc.status === "expired")
   console.log(activeDocuments)
   console.log(expiredDocuments)
+  console.log(employees)
 console.log(documents)
+const getEmployeeCounts = (documentId: string): EmployeeCounts => {
+  if (!employees?.data) return { total: 0, accepted: 0 };
+
+  const counts = employees.data.reduce((acc: EmployeeCounts, employee) => {
+    // Buscar si el empleado tiene el documento
+    const hasDocument = employee.documents.some(
+      (doc:any)=> doc.document.id === documentId
+    );
+
+    if (hasDocument) {
+      acc.total += 1;
+      
+      // Verificar si el documento está aceptado
+      const isAccepted = employee.documents.some(
+        (doc:any) => doc.document.id === documentId && doc.status === 'accepted'
+      );
+      
+      if (isAccepted) {
+        acc.accepted += 1;
+      }
+    }
+
+    return acc;
+  }, { total: 0, accepted: 0 });
+
+  return counts;
+};
 // const getDocumentUrl = (filePath: string) => {
 //   if (!filePath) return '';
 //   const { data } = supabase.storage
@@ -178,14 +160,14 @@ console.log(documents)
             <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
               <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
               <span>
-                {document.acceptedCount}/{document.totalEmployees} empleados
+                {getEmployeeCounts(document.id).accepted}/{getEmployeeCounts(document.id).total} empleados
               </span>
             </div>
 
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
                 className="bg-blue-600 h-2 rounded-full"
-                style={{ width: `${((document.acceptedCount || 0) / (document.totalEmployees || 0)) * 100}%` }}
+                style={{ width: `${((getEmployeeCounts(document.id).accepted || 0) / (getEmployeeCounts(document.id).total || 0)) * 100}%` }}
               ></div>
             </div>
 

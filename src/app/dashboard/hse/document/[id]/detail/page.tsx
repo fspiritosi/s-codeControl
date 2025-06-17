@@ -18,7 +18,11 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-
+import {getEmployeesWithAssignedDocuments, updateDocumentExpiry} from '@/features/Hse/actions/documents';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import * as XLSX from 'xlsx';
 // Extendemos el tipo Document para incluir las propiedades adicionales que necesitamos
 interface ExtendedDocument extends Document {
   documentTitle: string;
@@ -28,73 +32,7 @@ interface ExtendedDocument extends Document {
   versions?: DocumentVersion[];
 }
 
-// Mock employees
-const mockEmployees = [
-  {
-    id: '1',
-    name: 'Juan Pérez',
-    cuil: '20-12345678-9',
-    department: 'Logística',
-    acceptedDate: '2024-01-20',
-    status: 'accepted',
-  },
-  {
-    id: '2',
-    name: 'María García',
-    cuil: '27-87654321-0',
-    department: 'Administración',
-    acceptedDate: '2024-01-22',
-    status: 'accepted',
-  },
-  {
-    id: '3',
-    name: 'Carlos López',
-    cuil: '20-11111111-1',
-    department: 'Operaciones',
-    acceptedDate: null,
-    status: 'accepted',
-  },
-  {
-    id: '4',
-    name: 'Ana Martínez',
-    cuil: '27-22222222-2',
-    department: 'Logística',
-    acceptedDate: '2024-01-25',
-    status: 'accepted',
-  },
-  {
-    id: '5',
-    name: 'Roberto Silva',
-    cuil: '20-33333333-3',
-    department: 'Operaciones',
-    acceptedDate: null,
-    status: 'pending',
-  },
-  {
-    id: '6',
-    name: 'Laura Fernández',
-    cuil: '27-44444444-4',
-    department: 'Administración',
-    acceptedDate: '2024-01-23',
-    status: 'accepted',
-  },
-  {
-    id: '7',
-    name: 'Miguel Torres',
-    cuil: '20-55555555-5',
-    department: 'Logística',
-    acceptedDate: null,
-    status: 'pending',
-  },
-  {
-    id: '8',
-    name: 'Sofía Ramírez',
-    cuil: '27-66666666-6',
-    department: 'Operaciones',
-    acceptedDate: '2024-01-19',
-    status: 'accepted',
-  },
-];
+
 
 export default function DocumentDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -105,9 +43,28 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
   const [selectedEmployee, setSelectedEmployee] = useState<string>('');
   const [isDownloading, setIsDownloading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showExtendDialog, setShowExtendDialog] = useState(false);
+  const [isSendingReminders, setIsSendingReminders] = useState(false);
+const [newExpiryDate, setNewExpiryDate] = useState<string>('');
   // const cookies = cookies()
   // const userId = cookies['userId']
   const companyId = cookies.get('actualComp');
+
+  const [employeesWithDocuments, setEmployeesWithDocuments] = useState<any[]>([]);
+  useEffect(() => {
+    const fetchEmployeesWithDocuments = async () => {
+      try {
+        const { data, error } = await getEmployeesWithAssignedDocuments(params.id);
+        if (error) throw error;
+        setEmployeesWithDocuments(data || []);
+      } catch (error) {
+        console.error('Error al obtener empleados con documentos:', error);
+        toast.error('Error al cargar los empleados');
+      }
+    };
+  
+    fetchEmployeesWithDocuments();
+  }, [params.id]);
 
   // Función para manejar la descarga de archivos
   // Función para manejar la descarga de archivos
@@ -140,7 +97,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [doc, employees] = await Promise.all([getDocumentById(params.id), fetchAllActivesEmployees()]);
+        const [doc, employees] = await Promise.all([getDocumentById(params.id), getEmployeesWithAssignedDocuments(params.id)]);
 
         if (!doc) {
           console.error('Documento no encontrado');
@@ -149,7 +106,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
         }
 
         setDocument(doc as ExtendedDocument);
-        setActiveEmployees(employees || []);
+        setActiveEmployees(employees as any || []);
       } catch (error) {
         console.error('Error al cargar los datos:', error);
         toast.error('Error al cargar el documento');
@@ -161,6 +118,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
     fetchData();
   }, [params.id]);
   console.log(document);
+  console.log(employeesWithDocuments);
   // Ordenar versiones por fecha (más reciente primero)
   const sortedVersions = React.useMemo(() => {
     // Usar versions si está definido, de lo contrario usar un array vacío
@@ -182,8 +140,13 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
     return <div>Documento no encontrado</div>;
   }
   // Usar los empleados reales en lugar de mockEmployees
-  const acceptedEmployees = activeEmployees || [];
-  const pendingEmployees = activeEmployees || []; // Ajustar según la lógica de negocio
+  const acceptedEmployees = employeesWithDocuments.filter(employee => 
+    employee.documents.some((doc: any) => doc.status === 'accepted')
+  );
+  
+  const pendingEmployees = employeesWithDocuments.filter(employee => 
+    employee.documents.some((doc: any) => doc.status === 'pending')
+  );
 
   // Verificar si el documento existe
   if (!document) {
@@ -230,6 +193,203 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
   const generateMobileLink = () => {
     const baseUrl = window.location.origin;
     return `${baseUrl}/mobile/document/${document?.id}`;
+  };
+
+  const handleExtendExpiry = async () => {
+    if (!document?.id || !newExpiryDate) return;
+  
+    try {
+      await updateDocumentExpiry(document.id, newExpiryDate);
+      
+      // Actualizar el documento localmente
+      setDocument(prev => prev ? { 
+        ...prev, 
+        expiry_date: newExpiryDate 
+      } : null);
+      
+      setShowExtendDialog(false);
+      toast.success('Vigencia extendida correctamente');
+    } catch (error) {
+      console.error('Error al extender la vigencia:', error);
+      toast.error('Error al extender la vigencia');
+    }
+  };
+
+  const handleSendReminders = async () => {
+    if (!document) return;
+  
+    try {
+      setIsSendingReminders(true);
+      
+      // 1. Obtener empleados pendientes
+      
+  
+      if (pendingEmployees.length === 0) {
+        toast.info('No hay empleados pendientes para notificar');
+        return;
+      }
+  
+      // 2. Enviar recordatorios
+      const results = await Promise.all(
+        pendingEmployees.map(async (employee) => {
+          try {
+            const documentUrl = `${window.location.origin}/dashboard/documents/${document.id}`;
+            const message = `
+              Hola ${employee.name},
+              
+              Tienes pendiente de revisión el documento "${document.title}".
+              
+              Por favor, accede a la plataforma para revisarlo y aceptarlo.
+              
+              <a href="${documentUrl}" style="
+                display: inline-block;
+                padding: 10px 20px;
+                background-color: #2563eb;
+                color: white;
+                text-decoration: none;
+                border-radius: 5px;
+                margin: 10px 0;
+              ">Ver Documento</a>
+              
+              Gracias,
+              El equipo de Recursos Humanos
+            `;
+  
+            const response = await fetch('/api/send', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                to: employee.email,
+                subject: `Recordatorio: ${document.title} pendiente de revisión`,
+                userEmail: employee.email,
+                react: 'recordatorio_documento',
+                body: message
+              }),
+            });
+  
+            if (!response.ok) {
+              throw new Error('Error en la respuesta del servidor');
+            }
+  
+            return { success: true, email: employee.email };
+          } catch (error) {
+            console.error(`Error enviando a ${employee.email}:`, error);
+            return { success: false, email: employee.email, error };
+          }
+        })
+      );
+  
+      // 3. Mostrar resultados
+      const successful = results.filter(r => r.success).length;
+      const failed = results.length - successful;
+  
+      toast.success(
+        `Recordatorios enviados: ${successful} exitosos, ${failed} fallidos`
+      );
+  
+    } catch (error) {
+      console.error('Error al enviar recordatorios:', error);
+      toast.error('Error al enviar los recordatorios');
+    } finally {
+      setIsSendingReminders(false);
+    }
+  };
+
+  const exportToExcel = () => {
+    try {
+      if (!document || !employeesWithDocuments.length) {
+        toast.info('No hay empleados para exportar');
+        return;
+      }
+  
+      // Función para formatear fechas
+      const formatDate = (dateString: string | null) => {
+        if (!dateString) return 'Pendiente';
+        try {
+          return new Date(dateString).toLocaleDateString('es-AR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        } catch (e) {
+          return dateString; // En caso de error, devolver el string original
+        }
+      };
+  
+      // Crear datos para el Excel
+      const data = employeesWithDocuments.map(employee => {
+        // Encontrar la asignación del documento actual para este empleado
+        const docAssignment = employee.documents.find(doc => 
+          doc.document.id === document.id
+        );
+  
+        return {
+          'Cuil': employee.cuil || 'N/A',
+          'Nombre': employee.name,
+          'Email': employee.email,
+          'Puesto': employee.position || 'N/A',
+          'Estado': docAssignment?.status === 'accepted' ? 'Aceptado' : 'Pendiente',
+          'Fecha de Asignación': formatDate(docAssignment?.assignedAt),
+          'Fecha de Aceptación': docAssignment?.acceptedAt 
+            ? formatDate(docAssignment.acceptedAt)
+            : 'Pendiente',
+          'Fecha de Vencimiento': document.expiry_date 
+            ? formatDate(document.expiry_date)
+            : 'Sin fecha'
+        };
+      });
+  
+      // Ordenar por estado (primero los pendientes)
+      data.sort((a, b) => {
+        if (a.Estado === 'Pendiente' && b.Estado !== 'Pendiente') return -1;
+        if (a.Estado !== 'Pendiente' && b.Estado === 'Pendiente') return 1;
+        return 0;
+      });
+  
+      // Crear un libro de trabajo y una hoja
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      
+      // Ajustar el ancho de las columnas
+      const wscols = [
+        { wch: 15 }, // Legajo
+        { wch: 25 }, // Nombre
+        { wch: 30 }, // Email
+        { wch: 20 }, // Puesto
+        { wch: 15 }, // Estado
+        { wch: 25 }, // Fecha Asignación
+        { wch: 25 }, // Fecha Aceptación
+        { wch: 25 }, // Fecha Vencimiento
+      ];
+      ws['!cols'] = wscols;
+  
+      // Agregar encabezados con estilo
+      const headerStyle = {
+        font: { bold: true },
+        fill: { fgColor: { rgb: "D9D9D9" } }
+      };
+      
+      // Aplicar estilo a la primera fila (encabezados)
+      if (!ws['!rows']) ws['!rows'] = [];
+      ws['!rows'][0] = { ...ws['!rows'][0], style: headerStyle };
+  
+      XLSX.utils.book_append_sheet(wb, ws, 'Empleados');
+  
+      // Generar el nombre del archivo
+      const fileName = `Documento_${document.title}_Empleados_${new Date().toISOString().split('T')[0]}.xlsx`;
+      
+      // Guardar el archivo
+      XLSX.writeFile(wb, fileName);
+      
+      toast.success('Lista de empleados exportada correctamente');
+    } catch (error) {
+      console.error('Error al exportar a Excel:', error);
+      toast.error('Error al exportar la lista de empleados');
+    }
   };
 
   return (
@@ -342,18 +502,40 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
                   <CardTitle>Acciones Rápidas</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button variant="outline" className="w-full justify-start">
-                    <Download className="h-4 w-4 mr-2" />
-                    Exportar Lista de Empleados
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
+                <Button 
+  variant="outline" 
+  className="w-full justify-start"
+  onClick={exportToExcel}
+  disabled={!employeesWithDocuments.length}
+>
+  <Download className="h-4 w-4 mr-2" />
+  Exportar Lista de Empleados
+</Button>
+                  <Button variant="outline" className="w-full justify-start"onClick={() => {
+    setNewExpiryDate(document?.expiry_date || '');
+    setShowExtendDialog(true);
+  }}>
                     <Clock className="h-4 w-4 mr-2" />
                     Extender Vigencia
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Enviar Recordatorios
-                  </Button>
+                  <Button 
+  variant="outline" 
+  className="w-full justify-start"
+  onClick={handleSendReminders}
+  disabled={isSendingReminders}
+>
+  {isSendingReminders ? (
+    <>
+      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+      Enviando...
+    </>
+  ) : (
+    <>
+      <CheckCircle className="h-4 w-4 mr-2" />
+      Enviar Recordatorios
+    </>
+  )}
+</Button>
                   <Button
                     variant="outline"
                     className="w-full justify-start"
@@ -382,7 +564,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
               <CardHeader>
                 <CardTitle>Empleados que Aceptaron</CardTitle>
                 <CardDescription>
-                  {acceptedEmployees.length} de {mockEmployees.length} empleados han aceptado este documento
+                  {acceptedEmployees.length} de {employeesWithDocuments.length} empleados han aceptado este documento
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -402,8 +584,12 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
                         <TableRow key={employee.id}>
                           <TableCell className="font-medium">{employee.name}</TableCell>
                           <TableCell>{employee.cuil}</TableCell>
-                          <TableCell>{employee.department}</TableCell>
-                          <TableCell>{employee.acceptedDate}</TableCell>
+                          <TableCell>{employee.position}</TableCell>
+                          <TableCell>
+  {employee.documents && employee.documents.length > 0 
+    ? format(new Date(employee.documents[0].acceptedAt), 'PPP', { locale: es }) 
+    : '-'}
+</TableCell>
                           <TableCell>
                             <Badge className="bg-green-100 text-green-800">Aceptado</Badge>
                           </TableCell>
@@ -439,7 +625,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
                         <TableRow key={employee.id}>
                           <TableCell className="font-medium">{employee.name}</TableCell>
                           <TableCell>{employee.cuil}</TableCell>
-                          <TableCell>{employee.department}</TableCell>
+                          <TableCell>{employee.position}</TableCell>
                           <TableCell>
                             <Badge className="bg-yellow-100 text-yellow-800">Pendiente</Badge>
                           </TableCell>
@@ -578,7 +764,47 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
           console.log('Nueva versión creada:', newVersion);
           setShowNewVersionDialog(false);
         }}
+        
       />
+      <Dialog open={showExtendDialog} onOpenChange={setShowExtendDialog}>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Extender Vigencia del Documento</DialogTitle>
+      <DialogDescription>
+        Selecciona la nueva fecha de vencimiento para este documento.
+      </DialogDescription>
+    </DialogHeader>
+    
+    <div className="space-y-4 py-4">
+      <div className="space-y-2">
+        <Label htmlFor="expiryDate">Nueva Fecha de Vencimiento</Label>
+        <Input
+          id="expiryDate"
+          type="date"
+          value={newExpiryDate ? newExpiryDate.split('T')[0] : ''}
+          onChange={(e) => setNewExpiryDate(e.target.value)}
+          min={new Date().toISOString().split('T')[0]} // No permitir fechas anteriores a hoy
+          className="w-full"
+        />
+      </div>
+    </div>
+    
+    <DialogFooter>
+      <Button 
+        variant="outline" 
+        onClick={() => setShowExtendDialog(false)}
+      >
+        Cancelar
+      </Button>
+      <Button 
+        onClick={handleExtendExpiry}
+        disabled={!newExpiryDate}
+      >
+        Guardar Cambios
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
     </div>
   );
 }
