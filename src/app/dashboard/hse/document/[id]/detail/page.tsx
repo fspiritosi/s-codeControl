@@ -730,16 +730,28 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
                               Descargar
                             </Button>
                             <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              // Navegar a la vista de detalle de esta versión
-                              router.push(`/dashboard/hse/document/${document.id}/detail/version/${version.version}/detail`);
-                            }}
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            Ver Detalle
-                          </Button>
+  variant="outline"
+  size="sm"
+  onClick={() => {
+    // Buscar la versión específica en el array de versiones
+    const versionData = document.versions?.find(v => v.version === version.version);
+    
+    // Opción 1: Usar template strings para la URL
+    router.push(`/dashboard/hse/document/${document.id}/detail/version/${version.version}/detail?documentId=${document.id}&versionId=${versionData?.id}`);
+    
+    // O también puedes usar el objeto con pathname y query (importa useRouter de 'next/router')
+    // router.push({
+    //   pathname: `/dashboard/hse/document/${document.id}/detail/version/${version.version}/detail`,
+    //   query: {
+    //     documentId: document.id,
+    //     versionId: versionData?.id
+    //   }
+    // });
+  }}
+>
+  <Eye className="h-4 w-4 mr-1" />
+  Ver Detalle
+</Button>
                             </div>
                           </TableCell>
                         </TableRow>

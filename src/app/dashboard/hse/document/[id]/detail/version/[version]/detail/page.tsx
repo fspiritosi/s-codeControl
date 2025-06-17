@@ -16,7 +16,9 @@ import { getDocumentById, type Document, type DocumentVersion } from "@/features
 // import { DocumentNewVersionDialog } from "@/features/Hse/components/Document-new-version-dialog"
 import { supabaseBrowser } from "@/lib/supabase/browser"
 import { Loader2 } from "lucide-react"
-
+import { getAssignedEmployeesByDocumentVersion } from "@/features/Hse/actions/documents"
+import { format } from "date-fns"
+import { useSearchParams } from "next/navigation"
 interface ExtendedDocument extends Document {
   title: string
   acceptedCount?: number
@@ -26,77 +28,77 @@ interface ExtendedDocument extends Document {
 }
 
 // Mock document versions
-const mockDocumentVersions = {
-  "1": {
-    "2.1": {
-      id: "1",
-      title: "Manual de Seguridad Vial",
-      version: "2.1",
-      uploadDate: "2024-01-15",
-      expiryDate: "2024-12-31",
-      status: "active",
-      acceptedCount: 45,
-      totalEmployees: 60,
-      fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-      description: "Versión actual con actualizaciones de normativas 2024",
-      isCurrent: true,
-    },
-    "2.0": {
-      id: "1",
-      title: "Manual de Seguridad Vial",
-      version: "2.0",
-      uploadDate: "2023-10-10",
-      expiryDate: "2024-01-14",
-      status: "expired",
-      acceptedCount: 60,
-      totalEmployees: 60,
-      fileUrl: "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf",
-      description: "Versión anterior con normativas 2023",
-      isCurrent: false,
-    },
-    "1.5": {
-      id: "1",
-      title: "Manual de Seguridad Vial",
-      version: "1.5",
-      uploadDate: "2023-05-15",
-      expiryDate: "2023-10-09",
-      status: "expired",
-      acceptedCount: 58,
-      totalEmployees: 60,
-      fileUrl: "https://www.adobe.com/support/products/enterprise/knowledgecenter/media/c4611_sample_explain.pdf",
-      description: "Versión con correcciones menores",
-      isCurrent: false,
-    },
-  },
-}
+// const mockDocumentVersions = {
+//   "1": {
+//     "2.1": {
+//       id: "1",
+//       title: "Manual de Seguridad Vial",
+//       version: "2.1",
+//       uploadDate: "2024-01-15",
+//       expiryDate: "2024-12-31",
+//       status: "active",
+//       acceptedCount: 45,
+//       totalEmployees: 60,
+//       fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+//       description: "Versión actual con actualizaciones de normativas 2024",
+//       isCurrent: true,
+//     },
+//     "2.0": {
+//       id: "1",
+//       title: "Manual de Seguridad Vial",
+//       version: "2.0",
+//       uploadDate: "2023-10-10",
+//       expiryDate: "2024-01-14",
+//       status: "expired",
+//       acceptedCount: 60,
+//       totalEmployees: 60,
+//       fileUrl: "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf",
+//       description: "Versión anterior con normativas 2023",
+//       isCurrent: false,
+//     },
+//     "1.5": {
+//       id: "1",
+//       title: "Manual de Seguridad Vial",
+//       version: "1.5",
+//       uploadDate: "2023-05-15",
+//       expiryDate: "2023-10-09",
+//       status: "expired",
+//       acceptedCount: 58,
+//       totalEmployees: 60,
+//       fileUrl: "https://www.adobe.com/support/products/enterprise/knowledgecenter/media/c4611_sample_explain.pdf",
+//       description: "Versión con correcciones menores",
+//       isCurrent: false,
+//     },
+//   },
+// }
 
 // Mock employees para la versión específica
-const mockEmployeesForVersion = [
-  {
-    id: "1",
-    name: "Juan Pérez",
-    cuil: "20-12345678-9",
-    department: "Logística",
-    acceptedDate: "2023-10-15",
-    status: "accepted",
-  },
-  {
-    id: "2",
-    name: "María García",
-    cuil: "27-87654321-0",
-    department: "Administración",
-    acceptedDate: "2023-10-18",
-    status: "accepted",
-  },
-  {
-    id: "3",
-    name: "Carlos López",
-    cuil: "20-11111111-1",
-    department: "Operaciones",
-    acceptedDate: "2023-10-20",
-    status: "accepted",
-  },
-]
+// const mockEmployeesForVersion = [
+//   {
+//     id: "1",
+//     name: "Juan Pérez",
+//     cuil: "20-12345678-9",
+//     department: "Logística",
+//     acceptedDate: "2023-10-15",
+//     status: "accepted",
+//   },
+//   {
+//     id: "2",
+//     name: "María García",
+//     cuil: "27-87654321-0",
+//     department: "Administración",
+//     acceptedDate: "2023-10-18",
+//     status: "accepted",
+//   },
+//   {
+//     id: "3",
+//     name: "Carlos López",
+//     cuil: "20-11111111-1",
+//     department: "Operaciones",
+//     acceptedDate: "2023-10-20",
+//     status: "accepted",
+//   },
+// ]
 
 export default function DocumentVersionDetailPage({
   params,
@@ -110,6 +112,9 @@ export default function DocumentVersionDetailPage({
   const [activeEmployees, setActiveEmployees] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isDownloading, setIsDownloading] = useState(false)
+  const searchParams = useSearchParams()
+  const documentId = searchParams.get('documentId');
+  const versionId = searchParams.get('versionId');
 //   const userId = cookies['userId']
   const companyId = cookies.get('actualComp')
   useEffect(() => {
@@ -136,12 +141,38 @@ export default function DocumentVersionDetailPage({
         setIsLoading(false)
       }
     }
+    const fetchEmployees = async () => {
+      try {
+        setIsLoading(true)
+        const [employees] = await Promise.all([
+          getAssignedEmployeesByDocumentVersion(versionId || ""),
+
+
+
+        ])
+        
+        if (!employees) {
+          console.error('Empleados no encontrados')
+          return
+        }
+        
+        setActiveEmployees(employees || [])
+      } catch (error) {
+        console.error('Error al cargar los empleados:', error)
+        toast.error('Error al cargar los empleados')
+      } finally {
+        setIsLoading(false)
+      }
+    }
     
     fetchData()
+    fetchEmployees()
   }, [params.id])
-  console.log(params.id)
-  console.log(document)
-
+  console.log("params id",params.id)
+  console.log("document",document)
+    const filteredEmployees = activeEmployees.filter((employee) => employee.documentId === params.id)
+  console.log("filteredEmployees",filteredEmployees)
+  console.log("activeEmployees",activeEmployees)
 
   // Obtener la versión específica del documento
   // const documentVersion = mockDocumentVersions[params.id as keyof typeof mockDocumentVersions]?.[params.version]
@@ -322,19 +353,19 @@ if (!documentVersion) {
                 <CardContent className="space-y-4">
                   <div className="text-center">
                     <div className="text-3xl font-bold">
-                      {documentVersion.acceptedCount}/{documentVersion.totalEmployees}
+                      {activeEmployees.filter((employee) => employee.status === "accepted").length}/{activeEmployees.length}
                     </div>
                     <p className="text-muted-foreground">Empleados aceptaron</p>
                   </div>
                   <Progress
-                    value={(documentVersion?.acceptedCount || 0) / (documentVersion?.totalEmployees || 0) * 100}
+                    value={(activeEmployees.filter((employee) => employee.status === "accepted").length || 0) / (activeEmployees.length || 0) * 100}
                     className="h-2"
                   />
                   <div className="flex justify-between text-sm">
                     <span>
-                      {Math.round((documentVersion?.acceptedCount || 0) / (documentVersion?.totalEmployees || 0) * 100)}% aceptado
+                      {Math.round((activeEmployees.filter((employee) => employee.status === "accepted").length || 0) / (activeEmployees.length || 0) * 100)}% aceptado
                     </span>
-                    <span>{((documentVersion.totalEmployees ?? 0) - (documentVersion.acceptedCount ?? 0))} empleados no aceptaron</span>
+                    <span>{((activeEmployees.length ?? 0) - (activeEmployees.filter((employee) => employee.status === "accepted").length ?? 0))} empleados no aceptaron</span>
                   </div>
                 </CardContent>
               </Card>
@@ -370,14 +401,14 @@ if (!documentVersion) {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {mockEmployeesForVersion.map((employee) => (
+                      {activeEmployees.map((employee) => (
                         <TableRow key={employee.id}>
-                          <TableCell className="font-medium">{employee.name}</TableCell>
-                          <TableCell>{employee.cuil}</TableCell>
-                          <TableCell>{employee.department}</TableCell>
-                          <TableCell>{employee.acceptedDate}</TableCell>
+                          <TableCell className="font-medium">{employee.employee.firstname + " " + employee.employee.lastname}</TableCell>
+                          <TableCell>{employee.employee.cuil}</TableCell>
+                          <TableCell>{employee.employee.hierarchical_position.name}</TableCell>
+                          <TableCell>{employee.accepted_at ? format(new Date(employee.accepted_at), 'dd/MM/yyyy HH:mm') : "-"}</TableCell>
                           <TableCell>
-                            <Badge className="bg-green-100 text-green-800">Aceptado</Badge>
+                            <Badge className={employee.status === "accepted" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>{employee.status === "accepted" ? "Aceptado" : "Pendiente"}</Badge>
                           </TableCell>
                         </TableRow>
                       ))}
