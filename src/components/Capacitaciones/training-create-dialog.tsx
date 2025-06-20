@@ -17,20 +17,15 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2 } from 'lucide-react';
+import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { toast } from 'sonner';
+import { addTrainingMaterials, createTraining } from './actions/actions';
+import { uploadMaterialFile } from './utils/utils';
 
 interface TrainingCreateDialogProps {
-  //   open: boolean;
-  //   onOpenChange: (open: boolean) => void;
-  //   onTrainingCreated: (training: any) => void;
-}
-
-interface Question {
-  id: string;
-  question: string;
-  options: string[];
-  correctAnswer: number;
+  // No se necesitan props por ahora
 }
 
 export function TrainingCreateDialog() {
@@ -38,9 +33,11 @@ export function TrainingCreateDialog() {
     title: '',
     description: '',
     materials: [] as Array<{ type: string; file: File | null; name: string }>,
-    questions: [] as Question[],
-    passingScore: 0,
   });
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const router = useRouter();
 
   const addMaterial = () => {
     setFormData({
@@ -54,86 +51,135 @@ export function TrainingCreateDialog() {
     setFormData({ ...formData, materials: newMaterials });
   };
 
-  const addQuestion = () => {
-    const newQuestion: Question = {
-      id: Date.now().toString(),
-      question: '',
-      options: ['', ''],
-      correctAnswer: 0,
-    };
-    setFormData({
-      ...formData,
-      questions: [...formData.questions, newQuestion],
-    });
-  };
 
-  const removeQuestion = (index: number) => {
-    const newQuestions = formData.questions.filter((_, i) => i !== index);
-    setFormData({ ...formData, questions: newQuestions });
-  };
 
-  const updateQuestion = (index: number, field: string, value: any) => {
-    const newQuestions: any = [...formData.questions];
-    if (field === 'options') {
-      newQuestions[index].options = value;
-    } else {
-      newQuestions[index][field as keyof Question] = value;
-    }
-    setFormData({ ...formData, questions: newQuestions });
-  };
+  const handleSubmit = async () => {
+    toast.promise(
+      async () => {
+        try {
+          setIsLoading(true);
 
-  const handleSubmit = () => {
-    const newTraining = {
-      id: Date.now().toString(),
-      title: formData.title,
-      description: formData.description,
-      createdDate: new Date().toISOString().split('T')[0],
-      materials: formData.materials.map((m) => ({
-        type: m.type,
-        name: m.file?.name || m.name,
-        url: `/materials/${m.file?.name || 'file'}`,
-      })),
-      evaluation: {
-        questions: formData.questions.length,
-        passingScore: formData.passingScore,
+          // Validación básica
+          if (!formData.title.trim()) {
+            // toast({
+            //   title: 'Error',
+            //   description: 'El título de la capacitación es obligatorio',
+            //   variant: 'destructive',
+            // });
+            setIsLoading(false);
+            // return;
+            throw new Error('El título de la capacitación es obligatorio');
+          }
+
+          // 1. Crear la capacitación principal
+          const trainingResult = await createTraining({
+            title: formData.title,
+            description: formData.description,
+            // No se envía passing_score ya que es opcional y se manejará en la evaluación si es necesario
+          });
+
+          if (!trainingResult.success) {
+            setIsLoading(false);
+            // return;
+            throw new Error(trainingResult.error);
+          }
+
+          // Verificar que trainingResult.data existe y tiene un id
+          if (!trainingResult.data || !trainingResult.data.id) {
+            // toast({
+            //   title: 'Error',
+            //   description: 'No se pudo obtener el ID de la capacitación creada',
+            //   variant: 'destructive',
+            setIsLoading(false);
+            throw new Error('No se pudo obtener el ID de la capacitación creada');
+          }
+
+          const trainingId = trainingResult.data.id;
+
+          // 2. Subir los materiales si existen
+          if (formData.materials.length > 0) {
+            // Subir archivos a Supabase Storage
+            const materialUploads = formData.materials
+              .filter((m) => m.file) // Solo los que tienen archivo
+              .map(async (material) => {
+                if (material.file) {
+                  return await uploadMaterialFile(material.file, trainingId);
+                }
+                return null;
+              });
+
+            const uploadResults = await Promise.all(materialUploads);
+            // Filtra resultados exitosos que tienen url definida
+            const validUploads = uploadResults
+              .filter((result): result is { success: true, url: string, path: string } => 
+                !!result && result.success === true && typeof result.url === 'string');
+
+            // Crear registros de materiales en la base de datos
+            if (validUploads.length > 0) {
+              const materialsData = validUploads.map((upload, index) => {
+                const material = formData.materials[index];
+                return {
+                  name: material.name || material.file?.name || `Material ${index + 1}`,
+                  type: material.type,
+                  file_url: upload.url, // Ya filtramos para garantizar que url existe
+                  file_size: material.file?.size || 0,
+                  order_index: index,
+                  is_required: true
+                };
+              });
+              
+              await addTrainingMaterials(trainingId, materialsData);
+            }
+          }
+
+          // 3. Limpiar formulario y cerrar diálogo
+
+          // Reset form
+          setFormData({
+            title: '',
+            description: '',
+            materials: [],
+          });
+
+          setIsDialogOpen(false);
+          router.refresh(); // Para actualizar la lista de capacitaciones
+        } catch (error: any) {
+          console.error('Error al crear capacitación:', error);
+          // toast({
+          //   title: 'Error inesperado',
+          //   description: error.message || 'Ocurrió un error al crear la capacitación',
+          //   variant: 'destructive',
+          // });
+          throw error;
+        } finally {
+          setIsLoading(false);
+        }
       },
-      completedCount: 0,
-      totalEmployees: 60,
-      status: 'active' as const,
-    };
-
-    // onTrainingCreated(newTraining);
-
-    // Reset form
-    setFormData({
-      title: '',
-      description: '',
-      materials: [],
-      questions: [],
-      passingScore: 0,
-    });
+      {
+        loading: 'Creando capacitación...',
+        success: 'Capacitación creada exitosamente',
+        error: 'Error al crear la capacitación',
+      }
+    );
   };
 
   return (
-    <Dialog>
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
-        <Button>
-          {' '}
-          <Plus className="h-4 w-4 mr-2" />
-          Nueva Capacitación
+        <Button variant="outline" onClick={() => setIsDialogOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" /> Nueva Capacitación
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-scroll">
         <DialogHeader>
           <DialogTitle>Nueva Capacitación</DialogTitle>
-          <DialogDescription>Crea una nueva capacitación con materiales y evaluación</DialogDescription>
+          <DialogDescription>Rellena la información para crear una nueva capacitación.</DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="basic" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="basic">Información</TabsTrigger>
             <TabsTrigger value="materials">Materiales</TabsTrigger>
-            <TabsTrigger value="evaluation">Evaluación</TabsTrigger>
           </TabsList>
 
           <TabsContent value="basic" className="space-y-4">
@@ -220,125 +266,25 @@ export function TrainingCreateDialog() {
             </div>
           </TabsContent>
 
-          <TabsContent value="evaluation" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="font-medium">Evaluación</h3>
-              <Button onClick={addQuestion} size="sm">
-                <Plus className="h-4 w-4 mr-1" />
-                Agregar Pregunta
-              </Button>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="passingScore">Puntaje Mínimo para Aprobar</Label>
-              <Input
-                id="passingScore"
-                type="number"
-                value={formData.passingScore}
-                onChange={(e) => setFormData({ ...formData, passingScore: Number.parseInt(e.target.value) || 0 })}
-                placeholder="Ej: 8"
-                max={formData.questions.length}
-              />
-              <p className="text-sm text-muted-foreground">De {formData.questions.length} preguntas totales</p>
-            </div>
-
-            <div className="space-y-4">
-              {formData.questions.map((question, index) => (
-                <Card key={question.id}>
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-center">
-                      <CardTitle className="text-sm">Pregunta {index + 1}</CardTitle>
-                      <Button variant="outline" size="sm" onClick={() => removeQuestion(index)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div>
-                      <Label>Pregunta</Label>
-                      <Textarea
-                        value={question.question}
-                        onChange={(e) => updateQuestion(index, 'question', e.target.value)}
-                        placeholder="Escribe la pregunta..."
-                        rows={2}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <Label>Opciones de Respuesta</Label>
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              if (question.options.length < 6) {
-                                const newOptions = [...question.options, ''];
-                                updateQuestion(index, 'options', newOptions);
-                              }
-                            }}
-                            disabled={question.options.length >= 6}
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              if (question.options.length > 2) {
-                                const newOptions = question.options.slice(0, -1);
-                                updateQuestion(index, 'options', newOptions);
-                                // Ajustar respuesta correcta si es necesario
-                                if (question.correctAnswer >= newOptions.length) {
-                                  updateQuestion(index, 'correctAnswer', 0);
-                                }
-                              }
-                            }}
-                            disabled={question.options.length <= 2}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                      {question.options.map((option, optionIndex) => (
-                        <div key={optionIndex} className="flex gap-2 items-center">
-                          <Input
-                            value={option}
-                            onChange={(e) => {
-                              const newOptions = [...question.options];
-                              newOptions[optionIndex] = e.target.value;
-                              updateQuestion(index, 'options', newOptions);
-                            }}
-                            placeholder={`Opción ${optionIndex + 1}`}
-                            className="flex-1"
-                          />
-                          <div className="flex items-center gap-2 min-w-fit">
-                            <input
-                              type="radio"
-                              name={`correct-${question.id}`}
-                              checked={question.correctAnswer === optionIndex}
-                              onChange={() => updateQuestion(index, 'correctAnswer', optionIndex)}
-                            />
-                            <Label className="text-xs sm:text-sm whitespace-nowrap">Correcta</Label>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
         </Tabs>
 
         <DialogFooter>
-          <DialogClose>
-            <Button variant="outline">Cancelar</Button>
+          <DialogClose asChild>
+            <Button type="button" variant="outline" disabled={isLoading}>
+              Cancelar
+            </Button>
           </DialogClose>
-
-          <Button onClick={handleSubmit}>Crear Capacitación</Button>
+          <Button type="submit" onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Guardando...
+              </>
+            ) : (
+              <>Crear Capacitación</>
+            )}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

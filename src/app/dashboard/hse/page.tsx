@@ -1,7 +1,14 @@
+import { fetchTrainings } from '@/components/Capacitaciones/actions/actions';
 import { TrainingCreateDialog } from '@/components/Capacitaciones/training-create-dialog';
 import { TrainingSection } from '@/components/Capacitaciones/training-section';
 import Viewcomponent from '@/components/ViewComponent';
-function HSEPage() {
+
+async function HSEPage() {
+  // Obtener los datos de capacitaciones desde la base de datos
+  const trainingsResult = await fetchTrainings();
+
+  // Log para debugging
+  console.log('Datos obtenidos:', trainingsResult);
   const viewData = {
     defaultValue: 'trainingsTable',
     tabsValues: [
@@ -14,7 +21,7 @@ function HSEPage() {
           description: 'Aquí encontrarás todas las capacitaciones',
           buttonActioRestricted: [''],
           buttonAction: <TrainingCreateDialog />,
-          component: <TrainingSection />,
+          component: <TrainingSection trainings={trainingsResult} />,
         },
       },
     ],

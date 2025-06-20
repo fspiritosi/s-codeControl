@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Eye, FileText, Filter, GraduationCap, Presentation, Tag, Users, Video } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { fetchTrainings } from './actions/actions';
 
 interface Training {
   id: string;
@@ -122,9 +123,14 @@ const mockTrainings: Training[] = [
 // Extract all unique tags
 const allTags = Array.from(new Set(mockTrainings.flatMap((t) => t.tags)));
 
-export function TrainingSection() {
-  const [trainings, setTrainings] = useState<Training[]>(mockTrainings);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
+// Tipo para las props del componente
+interface TrainingSectionProps {
+  trainings: Awaited<ReturnType<typeof fetchTrainings>>;
+}
+
+export function TrainingSection({ trainings }: TrainingSectionProps) {
+  // Datos recibidos por props en lugar de datos mock
+  console.log('Datos de capacitaciones recibidos:', trainings);
   const [searchTerm, setSearchTerm] = useState('');
   const [tagFilter, setTagFilter] = useState('all');
   const router = useRouter();
@@ -201,9 +207,7 @@ export function TrainingSection() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <GraduationCap className="h-8 w-8 text-purple-600" />
-                  <Badge variant={training.status === 'active' ? 'default' : 'secondary'}>
-                    {training.status === 'active' ? 'Activa' : 'Borrador'}
-                  </Badge>
+                  <Badge variant={training.status === 'Publicado' ? 'default' : 'secondary'}>{training.status}</Badge>
                 </div>
                 <CardTitle className="text-lg">{training.title}</CardTitle>
                 <CardDescription className="line-clamp-2">{training.description}</CardDescription>
@@ -241,10 +245,12 @@ export function TrainingSection() {
                   </div>
                 </div>
 
-                <div className="text-sm text-muted-foreground">
-                  Evaluación: {training.evaluation.questions.length} preguntas (mín. {training.evaluation.passingScore}{' '}
-                  correctas)
-                </div>
+                {training.evaluation && training.evaluation.questions.length > 0 && (
+                  <div className="text-sm text-muted-foreground">
+                    Evaluación: {training.evaluation.questions.length} preguntas
+                    {training.evaluation.passingScore > 0 && <> (mín. {training.evaluation.passingScore} correctas)</>}
+                  </div>
+                )}
 
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Button

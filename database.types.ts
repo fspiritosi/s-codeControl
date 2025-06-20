@@ -7,31 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          operationName?: string
-          query?: string
-          variables?: Json
-          extensions?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       assing_customer: {
@@ -1246,6 +1221,48 @@ export type Database = {
           },
         ]
       }
+      employee_material_progress: {
+        Row: {
+          completed_at: string | null
+          employee_id: string
+          id: string
+          material_id: string | null
+          started_at: string | null
+          time_spent_seconds: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          employee_id: string
+          id?: string
+          material_id?: string | null
+          started_at?: string | null
+          time_spent_seconds?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          employee_id?: string
+          id?: string
+          material_id?: string | null
+          started_at?: string | null
+          time_spent_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_material_progress_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_material_progress_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "training_materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           affiliate_status:
@@ -1253,6 +1270,7 @@ export type Database = {
             | null
           allocated_to: string[] | null
           birthplace: string
+          born_date: string | null
           category_id: string | null
           city: number
           company_id: string | null
@@ -1300,6 +1318,7 @@ export type Database = {
             | null
           allocated_to?: string[] | null
           birthplace: string
+          born_date?: string | null
           category_id?: string | null
           city: number
           company_id?: string | null
@@ -1347,6 +1366,7 @@ export type Database = {
             | null
           allocated_to?: string[] | null
           birthplace?: string
+          born_date?: string | null
           category_id?: string | null
           city?: number
           company_id?: string | null
@@ -1819,20 +1839,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "profile_credential_id_fkey"
-            columns: ["credential_id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profile_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "profile_role_fkey"
             columns: ["role"]
             isOneToOne: false
@@ -2178,6 +2184,369 @@ export type Database = {
         }
         Relationships: []
       }
+      training_assignments: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          due_date: string | null
+          employee_id: string
+          id: string
+          is_mandatory: boolean | null
+          training_id: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          due_date?: string | null
+          employee_id: string
+          id?: string
+          is_mandatory?: boolean | null
+          training_id?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          due_date?: string | null
+          employee_id?: string
+          id?: string
+          is_mandatory?: boolean | null
+          training_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_assignments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_assignments_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_attempt_answers: {
+        Row: {
+          answered_at: string | null
+          attempt_id: string | null
+          id: string
+          is_correct: boolean | null
+          question_id: string | null
+          selected_option_id: string | null
+          text_answer: string | null
+        }
+        Insert: {
+          answered_at?: string | null
+          attempt_id?: string | null
+          id?: string
+          is_correct?: boolean | null
+          question_id?: string | null
+          selected_option_id?: string | null
+          text_answer?: string | null
+        }
+        Update: {
+          answered_at?: string | null
+          attempt_id?: string | null
+          id?: string
+          is_correct?: boolean | null
+          question_id?: string | null
+          selected_option_id?: string | null
+          text_answer?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_attempt_answers_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "training_attempts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_attempt_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "training_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_attempt_answers_selected_option_id_fkey"
+            columns: ["selected_option_id"]
+            isOneToOne: false
+            referencedRelation: "training_question_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_attempts: {
+        Row: {
+          attempt_number: number
+          completed_at: string | null
+          employee_id: string
+          id: string
+          max_score: number
+          passed: boolean | null
+          score: number | null
+          started_at: string | null
+          time_spent_seconds: number | null
+          training_id: string | null
+        }
+        Insert: {
+          attempt_number?: number
+          completed_at?: string | null
+          employee_id: string
+          id?: string
+          max_score: number
+          passed?: boolean | null
+          score?: number | null
+          started_at?: string | null
+          time_spent_seconds?: number | null
+          training_id?: string | null
+        }
+        Update: {
+          attempt_number?: number
+          completed_at?: string | null
+          employee_id?: string
+          id?: string
+          max_score?: number
+          passed?: boolean | null
+          score?: number | null
+          started_at?: string | null
+          time_spent_seconds?: number | null
+          training_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_attempts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_attempts_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_materials: {
+        Row: {
+          created_at: string | null
+          file_size: number | null
+          file_url: string
+          id: string
+          is_required: boolean | null
+          name: string
+          order_index: number
+          training_id: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_size?: number | null
+          file_url: string
+          id?: string
+          is_required?: boolean | null
+          name: string
+          order_index?: number
+          training_id?: string | null
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          is_required?: boolean | null
+          name?: string
+          order_index?: number
+          training_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_materials_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_question_options: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_correct: boolean | null
+          option_text: string
+          order_index: number
+          question_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          option_text: string
+          order_index?: number
+          question_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          option_text?: string
+          order_index?: number
+          question_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_question_options_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "training_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_questions: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          order_index: number
+          points: number | null
+          question_text: string
+          question_type: string | null
+          training_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          order_index?: number
+          points?: number | null
+          question_text: string
+          question_type?: string | null
+          training_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          order_index?: number
+          points?: number | null
+          question_text?: string
+          question_type?: string | null
+          training_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_questions_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_tag_assignments: {
+        Row: {
+          tag_id: string
+          training_id: string
+        }
+        Insert: {
+          tag_id: string
+          training_id: string
+        }
+        Update: {
+          tag_id?: string
+          training_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_tag_assignments_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "training_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_tag_assignments_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_tags: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      trainings: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          passing_score: number
+          status: Database["public"]["Enums"]["training_status"] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          passing_score?: number
+          status?: Database["public"]["Enums"]["training_status"] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          passing_score?: number
+          status?: Database["public"]["Enums"]["training_status"] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       type: {
         Row: {
           company_id: string | null
@@ -2425,7 +2794,41 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      employee_training_progress: {
+        Row: {
+          assigned_at: string | null
+          completed_materials: number | null
+          due_date: string | null
+          employee_id: string | null
+          is_mandatory: boolean | null
+          last_attempt_date: string | null
+          last_attempt_number: number | null
+          last_attempt_passed: boolean | null
+          last_score: number | null
+          material_progress_percentage: number | null
+          max_score: number | null
+          overall_status: string | null
+          total_materials: number | null
+          training_id: string | null
+          training_title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_assignments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_assignments_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       actualizar_estado_documentos: {
@@ -2445,16 +2848,14 @@ export type Database = {
         Returns: undefined
       }
       find_employee_by_full_name_v2: {
-        Args: {
-          p_full_name: string
-          p_company_id: string
-        }
+        Args: { p_full_name: string; p_company_id: string }
         Returns: {
           affiliate_status:
             | Database["public"]["Enums"]["affiliate_status_enum"]
             | null
           allocated_to: string[] | null
           birthplace: string
+          born_date: string | null
           category_id: string | null
           city: number
           company_id: string | null
@@ -2498,10 +2899,7 @@ export type Database = {
         }[]
       }
       migrate_document: {
-        Args: {
-          target_id: string
-          execute_migration?: boolean
-        }
+        Args: { target_id: string; execute_migration?: boolean }
         Returns: {
           old_path: string
           new_path: string
@@ -2606,6 +3004,7 @@ export type Database = {
         | "Incompleto"
         | "Completo"
         | "Completo con doc vencida"
+      training_status: "Borrador" | "Archivado" | "Publicado"
       type_of_contract_enum:
         | "Período de prueba"
         | "A tiempo indeterminado"
@@ -2618,27 +3017,29 @@ export type Database = {
   }
 }
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
+type DefaultSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -2646,20 +3047,22 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -2667,20 +3070,22 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -2688,15 +3093,120 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
     | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      affiliate_status_enum: ["Dentro de convenio", "Fuera de convenio"],
+      condition_enum: [
+        "operativo",
+        "no operativo",
+        "en reparación",
+        "operativo condicionado",
+      ],
+      daily_report_status: [
+        "pendiente",
+        "ejecutado",
+        "reprogramado",
+        "cancelado",
+      ],
+      document_applies: ["Persona", "Equipos", "Empresa"],
+      document_type_enum: ["DNI", "LE", "LC", "PASAPORTE"],
+      gender_enum: ["Masculino", "Femenino", "No Declarado"],
+      level_of_education_enum: [
+        "Primario",
+        "Secundario",
+        "Terciario",
+        "Universitario",
+        "PosGrado",
+      ],
+      marital_status_enum: [
+        "Casado",
+        "Soltero",
+        "Divorciado",
+        "Viudo",
+        "Separado",
+      ],
+      modulos: [
+        "empresa",
+        "empleados",
+        "equipos",
+        "documentación",
+        "mantenimiento",
+        "dashboard",
+        "ayuda",
+        "operaciones",
+        "formularios",
+      ],
+      nationality_enum: ["Argentina", "Extranjero"],
+      notification_categories: [
+        "vencimiento",
+        "noticia",
+        "advertencia",
+        "aprobado",
+        "rechazado",
+      ],
+      reason_for_termination_enum: [
+        "Despido sin causa",
+        "Renuncia",
+        "Despido con causa",
+        "Acuerdo de partes",
+        "Fin de contrato",
+        "Fallecimiento",
+      ],
+      repair_state: [
+        "Pendiente",
+        "Esperando repuestos",
+        "En reparación",
+        "Finalizado",
+        "Rechazado",
+        "Cancelado",
+        "Programado",
+      ],
+      roles_enum: ["Externo", "Auditor"],
+      state: ["presentado", "rechazado", "aprobado", "vencido", "pendiente"],
+      status_type: [
+        "Avalado",
+        "No avalado",
+        "Incompleto",
+        "Completo",
+        "Completo con doc vencida",
+      ],
+      training_status: ["Borrador", "Archivado", "Publicado"],
+      type_of_contract_enum: [
+        "Período de prueba",
+        "A tiempo indeterminado",
+        "Plazo fijo",
+      ],
+      type_of_maintenance_ENUM: ["Correctivo", "Preventivo"],
+    },
+  },
+} as const
