@@ -1,7 +1,15 @@
 import { TrainingCreateDialog } from '@/components/Capacitaciones/training-create-dialog';
 import { TrainingSection } from '@/components/Capacitaciones/training-section';
+import { DocumentUploadDialog } from '@/features/Hse/components/Document-upload-dialog';
+import { DocumentsSection } from '@/features/Hse/components/Document-section';
 import Viewcomponent from '@/components/ViewComponent';
-function HSEPage() {
+import { cookies } from 'next/headers';
+import {getDocuments} from '@/features/Hse/actions/documents'
+async function HSEPage() {
+  const cookieStore = cookies()
+  const company_id = cookieStore.get('actualComp')?.value
+  const documents = await getDocuments(company_id || "")
+  
   const viewData = {
     defaultValue: 'trainingsTable',
     tabsValues: [
@@ -15,6 +23,18 @@ function HSEPage() {
           buttonActioRestricted: [''],
           buttonAction: <TrainingCreateDialog />,
           component: <TrainingSection />,
+        },
+      },
+      {
+        value: 'documentsTable',
+        name: 'Documentos',
+        restricted: [''],
+        content: {
+          title: 'Ver documentos',
+          description: 'Aquí encontrarás todos los documentos',
+          buttonActioRestricted: [''],
+          buttonAction: <DocumentUploadDialog/>,
+          component: <DocumentsSection />,
         },
       },
     ],

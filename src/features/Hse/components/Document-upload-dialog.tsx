@@ -1,0 +1,676 @@
+// 'use client';
+
+// import { zodResolver } from '@hookform/resolvers/zod';
+// import { useForm } from 'react-hook-form';
+// import { z } from 'zod';
+// import { useRef, useState } from 'react';
+// import { Button } from '@/components/ui/button';
+// import {
+//   Dialog,
+//   DialogClose,
+//   DialogContent,
+//   DialogDescription,
+//   DialogFooter,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogTrigger,
+// } from '@/components/ui/dialog';
+// import {
+//   Form,
+//   FormControl,
+//   FormField,
+//   FormItem,
+//   FormLabel,
+//   FormMessage,
+// } from '@/components/ui/form';
+// import { Input } from '@/components/ui/input';
+// import { Textarea } from '@/components/ui/textarea';
+// import { createDocumentWithAssignments } from '@/features/Hse/actions/documents';
+// import { Plus, Upload } from 'lucide-react';
+// import Cookies from 'js-cookie';
+// import { toast } from '@/components/ui/use-toast';
+// import { useRouter } from 'next/navigation';
+// import { Checkbox } from '@/components/ui/checkbox';
+// import { Label } from '@/components/ui/label';
+// import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
+
+
+
+
+// // Esquema de validación
+// export const documentFormSchema = z.object({
+//   title: z.string().min(2, 'El título debe tener al menos 2 caracteres'),
+//   version: z.string().min(1, 'La versión es requerida'),
+//   expiry_date: z.string().optional(),
+//   description: z.string().optional(),
+//   typeOfEmployee: z.array(z.string()).optional(), // Actualizar definición del esquema
+//   file: z.any()
+//     .refine(
+//       (file) => file instanceof File,
+//       { message: 'Por favor, sube un archivo' }
+//     )
+//     .refine(
+//       (file) => file.size <= 10 * 1024 * 1024, 
+//       { message: 'El archivo no puede pesar más de 10MB' }
+//     )
+//     .refine(
+//       (file) => ['.pdf', '.doc', '.docx'].some(ext => file.name.toLowerCase().endsWith(ext)),
+//       { message: 'Solo se permiten archivos PDF, DOC o DOCX' }
+//     )
+// });
+
+// type DocumentFormValues = z.infer<typeof documentFormSchema>;
+
+// export function DocumentUploadDialog() {
+//   const form = useForm<DocumentFormValues>({
+//     resolver: zodResolver(documentFormSchema),
+//     defaultValues: {
+//       title: '',
+//       version: '',
+//       expiry_date: '',
+//       description: '',
+//       typeOfEmployee: [],
+//     },
+//   });
+//   const cookies = Cookies.get();
+  
+//   const router = useRouter();
+//   const fileRef = form.register('file');
+//   const fileInputRef = useRef<HTMLInputElement>(null);
+//   const [fileName, setFileName] = useState<string>('');
+//   const [selectAll, setSelectAll] = useState(false);
+//   // const positions = ['Gerente', 'Supervisor', 'Operario', 'Administrativo']; // Reemplazar con datos reales
+//   const positions = [
+//     { label: 'Gerente', value: 'Gerente' },
+//     { label: 'Supervisor', value: 'Supervisor' },
+//     { label: 'Operario', value: 'Operario' },
+//     { label: 'Administrativo', value: 'Administrativo' },
+//   ];
+//   const companyId = cookies['actualComp'];
+
+//   // Función para manejar la selección de "Todos"
+//   const handleSelectAll = (checked: boolean) => {
+//     setSelectAll(checked);
+//     form.setValue('typeOfEmployee', checked ? [] : []);
+//   };
+
+//   // Función para manejar cambios en posiciones individuales
+//   const handlePositionChange = (position: string, checked: boolean) => {
+//     const currentSelections = form.getValues('typeOfEmployee') || [];
+//     let newSelections: string[] = [];
+    
+//     if (checked) {
+//       newSelections = [...currentSelections, position];
+//     } else {
+//       newSelections = currentSelections.filter(p => p !== position);
+//     }
+    
+//     form.setValue('typeOfEmployee', newSelections);
+//     setSelectAll(newSelections.length === positions.length);
+//   };
+
+//   const onSubmit = async (data: DocumentFormValues) => {
+//     if (!companyId) {
+//       console.error('No se pudo obtener el ID de la compañía');
+//       return;
+//     }
+
+//     try {
+//       const formData = new FormData();
+//       formData.append('title', data.title);
+//       formData.append('version', data.version);
+//       formData.append('expiry_date', data.expiry_date || '');
+//       if (data.description) {
+//         formData.append('description', data.description);
+//       }
+      
+//       // Ensure we're getting the file from the file input
+//       const fileInput = fileInputRef.current;
+//       if (fileInput?.files?.[0]) {
+//         formData.append('file', fileInput.files[0]);
+//       } else if (data.file) {
+//         formData.append('file', data.file);
+//       } else {
+//         throw new Error('No se ha seleccionado ningún archivo');
+//       }
+
+
+//       const result = await createDocumentWithAssignments(formData, companyId);
+
+//       if (!result?.success) {
+//         throw new Error('No se pudo crear el documento');
+//       }
+
+//       // Cerrar el diálogo y limpiar el formulario
+//       document.getElementById('close-dialog')?.click();
+//       form.reset();
+//       toast({
+//         title: 'Documento subido con éxito',
+//         description: 'El documento se ha subido correctamente',
+//         variant: 'default',
+//         duration: 3000,
+//       });
+//       router.refresh();
+//     } catch (error) {
+//       if (error instanceof Error && error.message === 'El documento ya existe') {
+//         toast({
+//           title: 'El documento ya existe',
+//           description: 'Por favor, ve al detalle del documento para agregar una nueva versión.',
+//           variant: 'destructive',
+//           duration: 5000,
+//         });
+//       } else {
+//         toast({
+//           title: 'Error al subir el documento',
+//           description: error instanceof Error ? error.message : 'Hubo un problema al subir el documento',
+//           variant: 'destructive',
+//           duration: 5000,
+//         });
+//         console.error('Error al crear el documento:', error);
+//       }
+//     }
+//     router.refresh();
+//   };
+
+//   return (
+//     <Dialog>
+//       <DialogTrigger asChild>
+//         <Button>
+//           {' '}
+//           <Plus className="h-4 w-4 mr-2" />
+//           Nuevo Documento
+//         </Button>
+//       </DialogTrigger>
+//       <DialogContent className="sm:max-w-[425px]">
+//         <DialogHeader>
+//           <DialogTitle>Subir Nuevo Documento</DialogTitle>
+//           <DialogDescription>Agrega un nuevo documento HSE al sistema</DialogDescription>
+//         </DialogHeader>
+
+//         <Form {...form}>
+//           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+//             <FormField
+//               control={form.control}
+//               name="title"
+//               render={({ field }) => (
+//                 <FormItem>
+//                   <FormLabel>Título del Documento</FormLabel>
+//                   <FormControl>
+//                     <Input
+//                       placeholder="Ej: Manual de Seguridad Vial"
+//                       {...field}
+//                     />
+//                   </FormControl>
+//                   <FormMessage />
+//                 </FormItem>
+//               )}
+//             />
+
+//             <div className="grid grid-cols-2 gap-4">
+//               <FormField
+//                 control={form.control}
+//                 name="version"
+//                 render={({ field }) => (
+//                   <FormItem>
+//                     <FormLabel>Versión</FormLabel>
+//                     <FormControl>
+//                       <Input placeholder="Ej: 1.0" {...field} />
+//                     </FormControl>
+//                     <FormMessage />
+//                   </FormItem>
+//                 )}
+//               />
+//               <FormField
+//                 control={form.control}
+//                 name="expiry_date"
+//                 render={({ field }) => (
+//                   <FormItem>
+//                     <FormLabel>Fecha de Vencimiento</FormLabel>
+//                     <FormControl>
+//                       <Input type="date" {...field} />
+//                     </FormControl>
+//                     <FormMessage />
+//                   </FormItem>
+//                 )}
+//               />
+//             </div>
+
+//             <FormField
+//               control={form.control}
+//               name="description"
+//               render={({ field }) => (
+//                 <FormItem>
+//                   <FormLabel>Descripción (Opcional)</FormLabel>
+//                   <FormControl>
+//                     <Textarea
+//                       placeholder="Descripción del documento..."
+//                       rows={3}
+//                       {...field}
+//                       value={field.value || ''}
+//                     />
+//                   </FormControl>
+//                   <FormMessage />
+//                 </FormItem>
+//               )}
+//             />
+//            <FormField
+//               control={form.control}
+//               name="typeOfEmployee"
+//               render={({ field }) => (
+//                 <FormItem className="flex flex-col">
+//                   <FormLabel>Destinatarios</FormLabel>
+//                   <MultiSelectCombobox
+//                     options={positions}
+//                     placeholder="Seleccionar cargos"
+//                     emptyMessage="No se encontraron cargos"
+//                     selectedValues={field.value || []}
+//                     onChange={field.onChange}
+//                     showSelectAll
+//                   />
+//                   <FormMessage />
+//                 </FormItem>
+//               )}
+//             />
+
+//             <FormField
+//               control={form.control}
+//               name="file"
+//               render={({ field: { onChange } }) => (
+//                 <FormItem>
+//                   <FormLabel>Archivo</FormLabel>
+//                   <FormControl>
+//                     <div className="flex items-center gap-2">
+//                       <Input
+//                         type="file"
+//                         accept=".pdf,.doc,.docx"
+//                         className="hidden"
+//                         {...fileRef}
+//                         ref={(e) => {
+//                           fileRef.ref(e);
+//                           if (e) {
+//                             (fileInputRef as any).current = e;
+//                           }
+//                         }}
+//                         onChange={(e) => {
+//                           const file = e.target.files?.[0];
+//                           if (file) {
+//                             setFileName(file.name);
+//                             onChange(file);
+//                           }
+//                         }}
+//                       />
+//                       <Button
+//                         type="button"
+//                         variant="outline"
+//                         onClick={() => fileInputRef.current?.click()}
+//                         className="w-full justify-between"
+//                       >
+//                         <span>{fileName || 'Seleccionar archivo'}</span>
+//                         <Upload className="h-4 w-4 ml-2" />
+//                       </Button>
+//                     </div>
+//                   </FormControl>
+//                   <p className="text-xs text-muted-foreground">Formatos permitidos: PDF, DOC, DOCX (máx. 10MB)</p>
+//                   <FormMessage />
+//                 </FormItem>
+//               )}
+//             />
+
+//             <DialogFooter>
+//               <DialogClose asChild>
+//                 <Button type="button" variant="outline" id="close-dialog">
+//                   Cancelar
+//                 </Button>
+//               </DialogClose>
+//               <Button type="submit" disabled={form.formState.isSubmitting}>
+//                 {form.formState.isSubmitting ? 'Subiendo...' : 'Subir Documento'}
+//               </Button>
+//             </DialogFooter>
+//           </form>
+//         </Form>
+//       </DialogContent>
+//     </Dialog>
+//   );
+// }
+
+"use client"
+
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { useRef, useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { createDocumentWithAssignments, getAllHierarchicalPositions } from "@/features/Hse/actions/documents"
+import { Plus, Upload } from "lucide-react"
+import Cookies from "js-cookie"
+import { toast } from "@/components/ui/use-toast"
+import { useRouter } from "next/navigation"
+import { MultiSelectCombobox } from "@/components/ui/multi-select-combobox"
+
+// Esquema de validación
+export const documentFormSchema = z.object({
+  title: z.string().min(2, "El título debe tener al menos 2 caracteres"),
+  version: z.string().min(1, "La versión es requerida"),
+  expiry_date: z.string().optional(),
+  description: z.string().optional(),
+  typeOfEmployee: z.array(z.string()).optional(), // Actualizar definición del esquema
+  file: z
+    .any()
+    .refine((file) => file instanceof File, { message: "Por favor, sube un archivo" })
+    .refine((file) => file.size <= 10 * 1024 * 1024, { message: "El archivo no puede pesar más de 10MB" })
+    .refine((file) => [".pdf", ".doc", ".docx"].some((ext) => file.name.toLowerCase().endsWith(ext)), {
+      message: "Solo se permiten archivos PDF, DOC o DOCX",
+    }),
+})
+
+type DocumentFormValues = z.infer<typeof documentFormSchema>
+
+export function DocumentUploadDialog() {
+  const form = useForm<DocumentFormValues>({
+    resolver: zodResolver(documentFormSchema),
+    defaultValues: {
+      title: "",
+      version: "",
+      expiry_date: "",
+      description: "",
+      typeOfEmployee: [],
+    },
+  })
+  const cookies = Cookies.get()
+
+  const router = useRouter()
+  const fileRef = form.register("file")
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [fileName, setFileName] = useState<string>("")
+  const [selectAll, setSelectAll] = useState(false)
+  const [positions, setPositions] = useState<any[]>([])
+  useEffect(() => {
+    const fetchPositions = async () => {
+      const { data } = await getAllHierarchicalPositions()
+     
+      const formattedPositions = (data || []).map((position: any) => ({
+        label: position.name,
+        value: position.id
+      }))
+      setPositions(formattedPositions)
+    }
+    fetchPositions()
+  }, [])
+  
+  // const positions = [
+  //   { label: "Gerente", value: "Gerente" },
+  //   { label: "Supervisor", value: "Supervisor" },
+  //   { label: "Operativo", value: "operativo" },
+  //   { label: "Administrativo", value: "administrativo" },
+  // ]
+  const companyId = cookies["actualComp"]
+
+  // Función para manejar la selección de "Todos"
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked)
+    form.setValue("typeOfEmployee", checked ? [] : [])
+  }
+
+  // Función para manejar cambios en posiciones individuales
+  const handlePositionChange = (position: string, checked: boolean) => {
+    const currentSelections = form.getValues("typeOfEmployee") || []
+    let newSelections: string[] = []
+
+    if (checked) {
+      newSelections = [...currentSelections, position]
+    } else {
+      newSelections = currentSelections.filter((p) => p !== position)
+    }
+
+    form.setValue("typeOfEmployee", newSelections)
+    setSelectAll(newSelections.length === positions.length)
+  }
+
+  const onSubmit = async (data: DocumentFormValues) => {
+    if (!companyId) {
+      console.error("No se pudo obtener el ID de la compañía")
+      return
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append("title", data.title)
+      formData.append("version", data.version)
+      formData.append("expiry_date", data.expiry_date || "")
+      if (data.description) {
+        formData.append("description", data.description)
+      }
+
+      // ✅ CAMBIO PRINCIPAL: Agregar typeOfEmployee al FormData
+      formData.append("typeOfEmployee", JSON.stringify(data.typeOfEmployee || []))
+
+      // Ensure we're getting the file from the file input
+      const fileInput = fileInputRef.current
+      if (fileInput?.files?.[0]) {
+        formData.append("file", fileInput.files[0])
+      } else if (data.file) {
+        formData.append("file", data.file)
+      } else {
+        throw new Error("No se ha seleccionado ningún archivo")
+      }
+
+      const result = await createDocumentWithAssignments(formData, companyId)
+
+      if (!result?.success) {
+        throw new Error("No se pudo crear el documento")
+      }
+
+      // Cerrar el diálogo y limpiar el formulario
+      document.getElementById("close-dialog")?.click()
+      form.reset()
+      setFileName("") // ✅ Limpiar nombre del archivo
+
+      // ✅ MEJORA: Mensaje más informativo sobre las asignaciones
+      const assignmentMessage =
+        data.typeOfEmployee && data.typeOfEmployee.length > 0
+          ? `Documento asignado a empleados con cargos: ${data.typeOfEmployee.map((id) => positions.find((p) => p.value === id)?.label).join(", ")}`
+          : "Documento asignado a todos los empleados activos"
+
+      toast({
+        title: "Documento subido con éxito",
+        description: `${result.document.title} - ${assignmentMessage}`,
+        variant: "default",
+        duration: 5000, // ✅ Más tiempo para leer el mensaje
+      })
+
+      router.refresh()
+    } catch (error) {
+      if (error instanceof Error && error.message === "El documento ya existe") {
+        toast({
+          title: "El documento ya existe",
+          description: "Por favor, ve al detalle del documento para agregar una nueva versión.",
+          variant: "destructive",
+          duration: 5000,
+        })
+      } else {
+        toast({
+          title: "Error al subir el documento",
+          description: error instanceof Error ? error.message : "Hubo un problema al subir el documento",
+          variant: "destructive",
+          duration: 5000,
+        })
+        console.error("Error al crear el documento:", error)
+      }
+    }
+  }
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          Nuevo Documento
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Subir Nuevo Documento</DialogTitle>
+          <DialogDescription>Agrega un nuevo documento HSE al sistema</DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Título del Documento</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ej: Manual de Seguridad Vial" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="version"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Versión</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ej: 1.0" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="expiry_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fecha de Vencimiento</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Descripción (Opcional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Descripción del documento..."
+                      rows={3}
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="typeOfEmployee"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Destinatarios</FormLabel>
+                  <FormControl>
+                    <MultiSelectCombobox
+                      options={positions}
+                      placeholder="Seleccionar cargos (vacío = todos)"
+                      emptyMessage="No se encontraron cargos"
+                      selectedValues={field.value || []}
+                      onChange={field.onChange}
+                      showSelectAll
+                    />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Si no seleccionas ningún cargo, el documento se asignará a todos los empleados activos
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="file"
+              render={({ field: { onChange } }) => (
+                <FormItem>
+                  <FormLabel>Archivo</FormLabel>
+                  <FormControl>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        className="hidden"
+                        {...fileRef}
+                        ref={(e) => {
+                          fileRef.ref(e)
+                          if (e) {
+                            ;(fileInputRef as any).current = e
+                          }
+                        }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) {
+                            setFileName(file.name)
+                            onChange(file)
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full justify-between"
+                      >
+                        <span>{fileName || "Seleccionar archivo"}</span>
+                        <Upload className="h-4 w-4 ml-2" />
+                      </Button>
+                    </div>
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">Formatos permitidos: PDF, DOC, DOCX (máx. 10MB)</p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline" id="close-dialog">
+                  Cancelar
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? "Subiendo..." : "Subir Documento"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  )
+}
