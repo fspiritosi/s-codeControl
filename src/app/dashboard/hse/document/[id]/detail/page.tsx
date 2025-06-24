@@ -1,29 +1,43 @@
 'use client';
-import { fetchAllActivesEmployees } from '@/app/server/GET/actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getDocumentById, type Document, type DocumentVersion } from '@/features/Hse/actions/documents';
+import {
+  getDocumentById,
+  getEmployeesWithAssignedDocuments,
+  updateDocumentExpiry,
+  type Document,
+  type DocumentVersion,
+} from '@/features/Hse/actions/documents';
 import { DocumentNewVersionDialog } from '@/features/Hse/components/Document-new-version-dialog';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import cookies from 'js-cookie';
-import { ArrowLeft, CheckCircle, Clock, Download, ExternalLink, Plus, Eye } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, Download, ExternalLink, Eye, Loader2, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
-import {getEmployeesWithAssignedDocuments, updateDocumentExpiry} from '@/features/Hse/actions/documents';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import * as XLSX from 'xlsx';
-// Extendemos el tipo Document para incluir las propiedades adicionales que necesitamos
+import { BaseDataTable } from '@/shared/components/data-table/base/data-table';
+import { DataTableColumnHeader } from '@/shared/components/data-table/base/data-table-column-header';
+import { ColumnDef } from '@tanstack/react-table';
+import { VisibilityState } from '@tanstack/react-table';
+
 interface ExtendedDocument extends Document {
   documentTitle: string;
   acceptedCount?: number;
@@ -32,31 +46,216 @@ interface ExtendedDocument extends Document {
   versions?: DocumentVersion[];
 }
 
+interface ProcessedDocument {
+  id?: string;
+  status: 'accepted' | 'pending';
+  acceptedAt?: string;
+  assignedAt?: string;
+}
 
+
+type LocalProcessedDocument = Omit<ProcessedDocument, 'status'> & {
+  status: 'accepted' | 'pending';
+};
+
+interface ProcessedEmployee {
+  id: string;
+  name: string;
+  cuil?: string | null;  // Añade | null
+  // position: { id: string; name: string } | null;
+  position?: string;  // Solo el nombre como string
+  email?: string | null;  // Añade | null
+  documents?: ProcessedDocument[];
+}
+
+interface Employee {
+  id: string;
+  name: string;
+  cuil?: string;
+  position?: string;  // Solo el nombre como string
+  email?: string;
+  documents?: Array<{
+    id: string;
+    status: 'accepted' | 'pending';
+    acceptedAt?: string;
+    assignedAt?: string;
+  }>;
+}
+
+
+interface EmployeeWithDocuments extends Employee {}
+ 
+interface EmployeeTableProp {
+  employees: Employee[];
+}
+interface Filter {
+  label: string;
+  value: string;
+}
+export function getEmployeeColums(
+  handleEdit: (employee: EmployeeTableProp['employees'][number]) => void
+): ColumnDef<EmployeeTableProp['employees']>[] {
+  return [
+    {
+      accessorKey: 'nombre',
+      id: 'Nombre',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Nombre" />,
+      filterFn: (row, id, value) => {
+        return value.includes(row.getValue(id));
+      },
+    },
+    {
+      accessorKey: 'cuil',
+      id: 'Cuil',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Cuil" />,
+      filterFn: (row, id, value) => {
+        return value.includes(row.getValue(id));
+      },
+    },
+    {
+      accessorKey: 'departamento',
+      id: 'Departamento',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Departamento" />,
+      filterFn: (row, id, value) => {
+        return value.includes(row.getValue(id));
+      },
+    },
+    // {
+    //   accessorKey: 'status',
+    //   id: 'Status',
+    //   header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
+    //   filterFn: (row, id, value) => {
+    //     return value.includes(row.getValue(id));
+    //   },
+    // },    
+    {
+      accessorKey: 'status',
+      id: 'Status',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
+      cell: ({ row }) => {
+        const status = row.getValue('Status');
+        console.log(status)
+        return (
+          <Badge variant={status === 'accepted' ? 'success' : 'yellow'}>
+            {status === 'accepted' ? 'Aceptado' : 'Pendiente'}
+          </Badge>
+        );
+      },
+      filterFn: (row, id, value) => {
+        return value.includes(row.getValue(id));
+      },
+    },
+    
+    {
+      accessorKey: 'actions',
+      id: 'Acciones',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Acciones" />,
+      cell: ({ row }) => {
+        const status = row.getValue('Status');
+        const handleSelectArea = () => {
+          handleEdit((row.original as any).area_full);
+        };
+        return status === 'accepted' ? null : (
+          <Button size="sm" variant="link" className="hover:text-blue-400" onClick={handleSelectArea}>
+            Enviar recordatorio
+          </Button>
+        );
+      },
+    },
+  ];
+}
+
+export const createFilterOptions = <T,>(
+  data: T[] | undefined,
+  accessor: (item: T) => any,
+  icon?: React.ComponentType<{ className?: string }>
+) => {
+  return Array.from(new Set(data?.map(accessor).filter(Boolean))).map((value) => ({
+    label: typeof value === 'string' ? value.replaceAll('_', ' ') : value || '',
+    value: value || '',
+    icon,
+  }));
+};
 
 export default function DocumentDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const supabase = supabaseBrowser();
   const [showNewVersionDialog, setShowNewVersionDialog] = useState(false);
   const [document, setDocument] = useState<ExtendedDocument | null>(null);
-  const [activeEmployees, setActiveEmployees] = useState<any[]>([]);
+  const [activeEmployees, setActiveEmployees] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>('');
   const [isDownloading, setIsDownloading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showExtendDialog, setShowExtendDialog] = useState(false);
   const [isSendingReminders, setIsSendingReminders] = useState(false);
-const [newExpiryDate, setNewExpiryDate] = useState<string>('');
+  const [newExpiryDate, setNewExpiryDate] = useState<string>('');
+  const [savedVisibility, setSavedVisibility] = useState<VisibilityState>({});
+  const [mode, setMode] = useState<string>('');
+  const [employeesWithDocuments, setEmployeesWithDocuments] = useState<EmployeeWithDocuments[]>([]);
+  
+  // const [savedFilters, setSavedFilters] = useState<Filter[]>([]);
   // const cookies = cookies()
   // const userId = cookies['userId']
   const companyId = cookies.get('actualComp');
 
-  const [employeesWithDocuments, setEmployeesWithDocuments] = useState<any[]>([]);
+  const names = createFilterOptions<EmployeeWithDocuments>(
+    employeesWithDocuments, 
+    (employee) => employee.name
+  );
+  
+  const cuils = createFilterOptions<EmployeeWithDocuments>(
+    employeesWithDocuments, 
+    (employee) => employee.cuil || ''
+  );
+  
+  const positions = createFilterOptions<EmployeeWithDocuments>(
+    employeesWithDocuments, 
+    (employee) => employee.position || ''
+  );
+  
+  const status = createFilterOptions<EmployeeWithDocuments>(
+    employeesWithDocuments, 
+    (employee) => employee.documents?.map(doc => doc.status).join(', ') || ''
+  );
+  console.log(employeesWithDocuments)
+  const formattedEmployees: any = employeesWithDocuments.map((employee) => {
+    return {
+      nombre: employee.name,
+      cuil: employee.cuil || '',
+      departamento: employee.position || '',
+      status: employee.documents?.map((document: any) => document.status).join(', ')  || '',
+    };
+  });
+  console.log(formattedEmployees)
+  const handleEdit = (employee: any) => {
+    setSelectedEmployee(employee);
+    setMode('edit');
+  };
+  const transformEmployee = (emp: ProcessedEmployee): Employee => ({
+    ...emp,
+    cuil: emp.cuil || undefined,
+    email: emp.email || undefined,
+    position: emp.position || undefined,
+    documents: emp.documents?.map(doc => ({
+      id: doc.id || '',
+      status: doc.status as 'accepted' | 'pending', 
+      acceptedAt: doc.acceptedAt,
+      assignedAt: doc.assignedAt
+    })) || []
+  });
   useEffect(() => {
     const fetchEmployeesWithDocuments = async () => {
       try {
-        const { data, error } = await getEmployeesWithAssignedDocuments(params.id);
+        const { data, error } = await getEmployeesWithAssignedDocuments(params.id) as {
+          data: ProcessedEmployee[] | null;
+          error: Error | null;
+        };
         if (error) throw error;
-        setEmployeesWithDocuments(data || []);
+        console.log(data)
+        // Usa la función de transformación
+        const transformedData = data?.map(transformEmployee) || [];
+        console.log(transformedData)
+        setEmployeesWithDocuments(transformedData);
       } catch (error) {
         console.error('Error al obtener empleados con documentos:', error);
         toast.error('Error al cargar los empleados');
@@ -65,7 +264,7 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
   
     fetchEmployeesWithDocuments();
   }, [params.id]);
-
+console.log(employeesWithDocuments)
   // Función para manejar la descarga de archivos
   // Función para manejar la descarga de archivos
   const handleDownload = (fileUrl: string, fileName: string) => {
@@ -97,7 +296,10 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [doc, employees] = await Promise.all([getDocumentById(params.id), getEmployeesWithAssignedDocuments(params.id)]);
+        const [doc, employees] = await Promise.all([
+          getDocumentById(params.id),
+          getEmployeesWithAssignedDocuments(params.id),
+        ]);
 
         if (!doc) {
           console.error('Documento no encontrado');
@@ -106,7 +308,7 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
         }
 
         setDocument(doc as ExtendedDocument);
-        setActiveEmployees(employees as any || []);
+        setActiveEmployees((employees as any) || []);
       } catch (error) {
         console.error('Error al cargar los datos:', error);
         toast.error('Error al cargar el documento');
@@ -131,21 +333,21 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-      <Loader2 className="h-8 w-8 animate-spin" />
-    </div>)
-    
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   if (!document) {
     return <div>Documento no encontrado</div>;
   }
   // Usar los empleados reales en lugar de mockEmployees
-  const acceptedEmployees = employeesWithDocuments.filter(employee => 
-    employee.documents.some((doc: any) => doc.status === 'accepted')
+  const acceptedEmployees = employeesWithDocuments.filter((employee) =>
+    employee.documents?.some((doc: ProcessedDocument) => doc.status === 'accepted')
   );
-  
-  const pendingEmployees = employeesWithDocuments.filter(employee => 
-    employee.documents.some((doc: any) => doc.status === 'pending')
+
+  const pendingEmployees = employeesWithDocuments.filter((employee) =>
+    employee.documents?.some((doc: ProcessedDocument) => doc.status === 'pending')
   );
 
   // Verificar si el documento existe
@@ -197,16 +399,20 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
 
   const handleExtendExpiry = async () => {
     if (!document?.id || !newExpiryDate) return;
-  
+
     try {
       await updateDocumentExpiry(document.id, newExpiryDate);
-      
+
       // Actualizar el documento localmente
-      setDocument(prev => prev ? { 
-        ...prev, 
-        expiry_date: newExpiryDate 
-      } : null);
-      
+      setDocument((prev) =>
+        prev
+          ? {
+              ...prev,
+              expiry_date: newExpiryDate,
+            }
+          : null
+      );
+
       setShowExtendDialog(false);
       toast.success('Vigencia extendida correctamente');
     } catch (error) {
@@ -217,18 +423,17 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
 
   const handleSendReminders = async () => {
     if (!document) return;
-  
+
     try {
       setIsSendingReminders(true);
-      
+
       // 1. Obtener empleados pendientes
-      
-  
+
       if (pendingEmployees.length === 0) {
         toast.info('No hay empleados pendientes para notificar');
         return;
       }
-  
+
       // 2. Enviar recordatorios
       const results = await Promise.all(
         pendingEmployees.map(async (employee) => {
@@ -254,7 +459,7 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
               Gracias,
               El equipo de Recursos Humanos
             `;
-  
+
             const response = await fetch('/api/send', {
               method: 'POST',
               headers: {
@@ -263,16 +468,15 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
               body: JSON.stringify({
                 to: employee.email,
                 subject: `Recordatorio: ${document.title} pendiente de revisión`,
-                userEmail: employee.email,
-                react: 'recordatorio_documento',
-                body: message
+                html: message, // Usamos html en lugar de body
+                text: `Hola ${employee.name},\n\nTienes pendiente de revisión el documento "${document.title}".\n\nPor favor, accede a la plataforma para revisarlo y aceptarlo.\n\n${documentUrl}`
               }),
             });
-  
+
             if (!response.ok) {
               throw new Error('Error en la respuesta del servidor');
             }
-  
+
             return { success: true, email: employee.email };
           } catch (error) {
             console.error(`Error enviando a ${employee.email}:`, error);
@@ -280,15 +484,12 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
           }
         })
       );
-  
+
       // 3. Mostrar resultados
-      const successful = results.filter(r => r.success).length;
+      const successful = results.filter((r) => r.success).length;
       const failed = results.length - successful;
-  
-      toast.success(
-        `Recordatorios enviados: ${successful} exitosos, ${failed} fallidos`
-      );
-  
+
+      toast.success(`Recordatorios enviados: ${successful} exitosos, ${failed} fallidos`);
     } catch (error) {
       console.error('Error al enviar recordatorios:', error);
       toast.error('Error al enviar los recordatorios');
@@ -303,7 +504,7 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
         toast.info('No hay empleados para exportar');
         return;
       }
-  
+
       // Función para formatear fechas
       const formatDate = (dateString: string | null) => {
         if (!dateString) return 'Pendiente';
@@ -313,47 +514,41 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
             month: '2-digit',
             year: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
           });
         } catch (e) {
           return dateString; // En caso de error, devolver el string original
         }
       };
-  
+
       // Crear datos para el Excel
-      const data = employeesWithDocuments.map(employee => {
+      const data = employeesWithDocuments.map((employee: any) => {
         // Encontrar la asignación del documento actual para este empleado
-        const docAssignment = employee.documents.find(doc => 
-          doc.document.id === document.id
-        );
-  
+        const docAssignment = employee.documents.find((doc: any) => doc.document.id === document.id);
+
         return {
-          'Cuil': employee.cuil || 'N/A',
-          'Nombre': employee.name,
-          'Email': employee.email,
-          'Puesto': employee.position || 'N/A',
-          'Estado': docAssignment?.status === 'accepted' ? 'Aceptado' : 'Pendiente',
+          Cuil: employee.cuil || 'N/A',
+          Nombre: employee.name,
+          Email: employee.email,
+          Puesto: employee.position || 'N/A',
+          Estado: docAssignment?.status === 'accepted' ? 'Aceptado' : 'Pendiente',
           'Fecha de Asignación': formatDate(docAssignment?.assignedAt),
-          'Fecha de Aceptación': docAssignment?.acceptedAt 
-            ? formatDate(docAssignment.acceptedAt)
-            : 'Pendiente',
-          'Fecha de Vencimiento': document.expiry_date 
-            ? formatDate(document.expiry_date)
-            : 'Sin fecha'
+          'Fecha de Aceptación': docAssignment?.acceptedAt ? formatDate(docAssignment.acceptedAt) : 'Pendiente',
+          'Fecha de Vencimiento': document.expiry_date ? formatDate(document.expiry_date) : 'Sin fecha',
         };
       });
-  
+
       // Ordenar por estado (primero los pendientes)
       data.sort((a, b) => {
         if (a.Estado === 'Pendiente' && b.Estado !== 'Pendiente') return -1;
         if (a.Estado !== 'Pendiente' && b.Estado === 'Pendiente') return 1;
         return 0;
       });
-  
+
       // Crear un libro de trabajo y una hoja
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
-      
+
       // Ajustar el ancho de las columnas
       const wscols = [
         { wch: 15 }, // Legajo
@@ -366,25 +561,25 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
         { wch: 25 }, // Fecha Vencimiento
       ];
       ws['!cols'] = wscols;
-  
+
       // Agregar encabezados con estilo
       const headerStyle = {
         font: { bold: true },
-        fill: { fgColor: { rgb: "D9D9D9" } }
+        fill: { fgColor: { rgb: 'D9D9D9' } },
       };
-      
+
       // Aplicar estilo a la primera fila (encabezados)
       if (!ws['!rows']) ws['!rows'] = [];
-      ws['!rows'][0] = { ...ws['!rows'][0], style: headerStyle };
-  
+      ws['!rows'][0] = { ...ws['!rows'][0]};
+
       XLSX.utils.book_append_sheet(wb, ws, 'Empleados');
-  
+
       // Generar el nombre del archivo
       const fileName = `Documento_${document.title}_Empleados_${new Date().toISOString().split('T')[0]}.xlsx`;
-      
+
       // Guardar el archivo
       XLSX.writeFile(wb, fileName);
-      
+
       toast.success('Lista de empleados exportada correctamente');
     } catch (error) {
       console.error('Error al exportar a Excel:', error);
@@ -393,7 +588,7 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" onClick={() => router.back()}>
@@ -413,15 +608,17 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold">{document?.title}</h1>
-              <Badge className={getStatusColor(document?.status || '')}>{getStatusText(document?.status || '')}</Badge>
+              <Badge className={getStatusColor(document?.status || '')}>
+                {getStatusText(document?.status || '')}
+              </Badge>
             </div>
             <p className="text-muted-foreground">Versión {document?.version}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => handleDownload(document.file_path, document.file_name)}>
+            {/* <Button variant="outline" onClick={() => handleDownload(document.file_path, document.file_name)}>
               <Download className="h-4 w-4 mr-2" />
               Descargar
-            </Button>
+            </Button> */}
             <Button
               onClick={() => {
                 navigator.clipboard.writeText(generateMobileLink());
@@ -456,7 +653,11 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Fecha de vto:</span>
-                    <span>{document?.expiry_date ? new Date(document?.expiry_date || '').toLocaleDateString() : "sin vencimiento"}</span>
+                    <span>
+                      {document?.expiry_date
+                        ? new Date(document?.expiry_date || '').toLocaleDateString()
+                        : 'sin vencimiento'}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Estado:</span>
@@ -502,43 +703,47 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
                   <CardTitle>Acciones Rápidas</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                <Button 
-  variant="outline" 
-  className="w-full justify-start"
-  onClick={exportToExcel}
-  disabled={!employeesWithDocuments.length}
->
-  <Download className="h-4 w-4 mr-2" />
-  Exportar Lista de Empleados
-</Button>
-                  <Button variant="outline" className="w-full justify-start"onClick={() => {
-    setNewExpiryDate(document?.expiry_date || '');
-    setShowExtendDialog(true);
-  }}>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start truncate"
+                    onClick={exportToExcel}
+                    disabled={!employeesWithDocuments.length}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Exportar Lista de Empleados
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start truncate"
+                    onClick={() => {
+                      setNewExpiryDate(document?.expiry_date || '');
+                      setShowExtendDialog(true);
+                    }}
+                  >
                     <Clock className="h-4 w-4 mr-2" />
                     Extender Vigencia
                   </Button>
-                  <Button 
-  variant="outline" 
-  className="w-full justify-start"
-  onClick={handleSendReminders}
-  disabled={isSendingReminders}
->
-  {isSendingReminders ? (
-    <>
-      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-      Enviando...
-    </>
-  ) : (
-    <>
-      <CheckCircle className="h-4 w-4 mr-2" />
-      Enviar Recordatorios
-    </>
-  )}
-</Button>
                   <Button
                     variant="outline"
-                    className="w-full justify-start"
+                    className="w-full justify-start truncate"
+                    onClick={handleSendReminders}
+                    disabled={isSendingReminders}
+                  >
+                    {isSendingReminders ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Enviar Recordatorios
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start truncate"
                     onClick={() => setShowNewVersionDialog(true)}
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -553,7 +758,7 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
                 <CardTitle>Descripción del Documento</CardTitle>
               </CardHeader>
               <CardContent>
-                <p>{document?.description ? document?.description : "sin descripción"}</p>
+                <p>{document?.description ? document?.description : 'sin descripción'}</p>
               </CardContent>
             </Card>
           </TabsContent>
@@ -562,14 +767,47 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
           <TabsContent value="employees" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Empleados que Aceptaron</CardTitle>
+                <CardTitle>Empleados</CardTitle>
                 <CardDescription>
                   {acceptedEmployees.length} de {employeesWithDocuments.length} empleados han aceptado este documento
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="rounded-md border">
-                  <Table>
+                <div className="rounded-md border p-2">
+                <BaseDataTable
+                  data={formattedEmployees}
+                  columns={getEmployeeColums(handleEdit)}
+                  savedVisibility={savedVisibility}
+                  tableId="employeeTable"
+                  toolbarOptions={{
+                    initialVisibleFilters: [],
+                    filterableColumns: [
+                      {
+                        columnId: 'Nombre',
+                        title: 'Nombre',
+                        options: names,
+                      },
+                      {
+                        columnId: 'Cuil',
+                        title: 'Cuil',
+                        options: cuils ,
+                      },
+                      {
+                        columnId: 'Departamento',
+                        title: 'Departamento',
+                        options: positions,
+                      },
+                      {
+                        columnId: 'Status',
+                        title: 'Status',
+                        options: status,
+                      },
+
+                      
+                    ],
+                  }}
+                />
+                  {/* <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Nombre</TableHead>
@@ -586,22 +824,22 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
                           <TableCell>{employee.cuil}</TableCell>
                           <TableCell>{employee.position}</TableCell>
                           <TableCell>
-  {employee.documents && employee.documents.length > 0 
-    ? format(new Date(employee.documents[0].acceptedAt), 'PPP', { locale: es }) 
-    : '-'}
-</TableCell>
+                            {employee.documents && employee.documents.length > 0
+                              ? format(new Date(employee.documents[0].acceptedAt), 'PPP', { locale: es })
+                              : '-'}
+                          </TableCell>
                           <TableCell>
                             <Badge className="bg-green-100 text-green-800">Aceptado</Badge>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
-                  </Table>
+                  </Table> */}
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            {/* <Card>
               <CardHeader>
                 <CardTitle>Empleados Pendientes</CardTitle>
                 <CardDescription>
@@ -640,7 +878,7 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
                   </Table>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
           </TabsContent>
 
           {/* Preview Tab */}
@@ -721,37 +959,39 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDownload(version.file_path, version.file_name)}
-                            >
-                              <Download className="h-4 w-4 mr-1" />
-                              Descargar
-                            </Button>
-                            <Button
-  variant="outline"
-  size="sm"
-  onClick={() => {
-    // Buscar la versión específica en el array de versiones
-    const versionData = document.versions?.find(v => v.version === version.version);
-    
-    // Opción 1: Usar template strings para la URL
-    router.push(`/dashboard/hse/document/${document.id}/detail/version/${version.version}/detail?documentId=${document.id}&versionId=${versionData?.id}`);
-    
-    // O también puedes usar el objeto con pathname y query (importa useRouter de 'next/router')
-    // router.push({
-    //   pathname: `/dashboard/hse/document/${document.id}/detail/version/${version.version}/detail`,
-    //   query: {
-    //     documentId: document.id,
-    //     versionId: versionData?.id
-    //   }
-    // });
-  }}
->
-  <Eye className="h-4 w-4 mr-1" />
-  Ver Detalle
-</Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDownload(version.file_path, version.file_name)}
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                Descargar
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  // Buscar la versión específica en el array de versiones
+                                  const versionData = document.versions?.find((v) => v.version === version.version);
+
+                                  // Opción 1: Usar template strings para la URL
+                                  router.push(
+                                    `/dashboard/hse/document/${document.id}/detail/version/${version.version}/detail?documentId=${document.id}&versionId=${versionData?.id}`
+                                  );
+
+                                  // O también puedes usar el objeto con pathname y query (importa useRouter de 'next/router')
+                                  // router.push({
+                                  //   pathname: `/dashboard/hse/document/${document.id}/detail/version/${version.version}/detail`,
+                                  //   query: {
+                                  //     documentId: document.id,
+                                  //     versionId: versionData?.id
+                                  //   }
+                                  // });
+                                }}
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                Ver Detalle
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -776,47 +1016,38 @@ const [newExpiryDate, setNewExpiryDate] = useState<string>('');
           console.log('Nueva versión creada:', newVersion);
           setShowNewVersionDialog(false);
         }}
-        
       />
       <Dialog open={showExtendDialog} onOpenChange={setShowExtendDialog}>
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Extender Vigencia del Documento</DialogTitle>
-      <DialogDescription>
-        Selecciona la nueva fecha de vencimiento para este documento.
-      </DialogDescription>
-    </DialogHeader>
-    
-    <div className="space-y-4 py-4">
-      <div className="space-y-2">
-        <Label htmlFor="expiryDate">Nueva Fecha de Vencimiento</Label>
-        <Input
-          id="expiryDate"
-          type="date"
-          value={newExpiryDate ? newExpiryDate.split('T')[0] : ''}
-          onChange={(e) => setNewExpiryDate(e.target.value)}
-          min={new Date().toISOString().split('T')[0]} // No permitir fechas anteriores a hoy
-          className="w-full"
-        />
-      </div>
-    </div>
-    
-    <DialogFooter>
-      <Button 
-        variant="outline" 
-        onClick={() => setShowExtendDialog(false)}
-      >
-        Cancelar
-      </Button>
-      <Button 
-        onClick={handleExtendExpiry}
-        disabled={!newExpiryDate}
-      >
-        Guardar Cambios
-      </Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Extender Vigencia del Documento</DialogTitle>
+            <DialogDescription>Selecciona la nueva fecha de vencimiento para este documento.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="expiryDate">Nueva Fecha de Vencimiento</Label>
+              <Input
+                id="expiryDate"
+                type="date"
+                value={newExpiryDate ? newExpiryDate.split('T')[0] : ''}
+                onChange={(e) => setNewExpiryDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]} // No permitir fechas anteriores a hoy
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowExtendDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleExtendExpiry} disabled={!newExpiryDate}>
+              Guardar Cambios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

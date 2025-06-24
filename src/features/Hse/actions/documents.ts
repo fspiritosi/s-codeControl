@@ -70,7 +70,10 @@ interface DocumentAssignment {
     lastname: string;
     cuil: string;
     email: string | null;
-    hierarchical_position: string | null;
+    hierarchical_position: {
+      id: string;
+      name: string;
+    } | null;
     company_position: string | null;
   } | null;
 }
@@ -91,16 +94,13 @@ interface ProcessedDocument {
 
 // Interface para los empleados procesados
 export interface ProcessedEmployee {
-  id: string;
-  name: string;
-  cuil: string;
-  email: string | null;
-  position: {
-    id: string;
-    name: string;
-  } | null;
-  company_position: string | null;
-  documents: ProcessedDocument[];
+  id: string
+  name: string
+  cuil: string
+  email: string | null
+  position: string | null
+  company_position: string | null
+  documents: ProcessedDocument[]
 }
 
 // Obtener todos los documentos
@@ -1219,38 +1219,39 @@ export async function getEmployeesWithAssignedDocuments(documentId?: string) {
     }
 
     const { data, error } = await query;
-
+    console.log(data)
     if (error) throw error;
 
     // Si no hay asignaciones, devolver array vacío
     if (!data || data.length === 0) return { data: [], error: null };
 
     // Procesar los datos
-    const processedData: ProcessedEmployee[] = data
-      // Filtrar asignaciones sin empleado (por si acaso)
-      .filter(assignment => assignment.employee)
-      // Mapear a la estructura deseada
-      .map(assignment => ({
-        id: assignment.employee.id,
-        name: `${assignment.employee.firstname || ''} ${assignment.employee.lastname || ''}`.trim(),
-        cuil: assignment.employee.cuil,
-        email: assignment.employee.email,
-        position: assignment.employee.hierarchical_position.name,
-        company_position: assignment.employee.company_position,
-        documents: [{
-          assignmentId: assignment.id,
-          status: assignment.status,
-          assignedAt: assignment.assigned_at,
-          acceptedAt: assignment.accepted_at,
-          document: {
-            id: assignment.document.id,
-            title: assignment.document.title,
-            version: assignment.document.version,
-            expiryDate: assignment.document.expiry_date
-          }
-        }]
-      }));
-
+    // Procesar los datos
+const processedData: ProcessedEmployee[] = data.map((assignment: any) => {
+  const employee = assignment.employee;
+  
+  return {
+    id: employee.id,
+    name: `${employee.firstname || ''} ${employee.lastname || ''}`.trim(),
+    cuil: employee.cuil,
+    email: employee.email,
+    position: employee.hierarchical_position?.name || null,
+    company_position: employee.company_position || null,
+    documents: [{
+      assignmentId: assignment.id,
+      status: assignment.status,
+      assignedAt: assignment.assigned_at,
+      acceptedAt: assignment.accepted_at || null,
+      document: {
+        id: assignment.document.id,
+        title: assignment.document.title,
+        version: assignment.document.version,
+        expiryDate: assignment.document.expiry_date
+      }
+    }]
+  };
+});
+console.log(processedData)
     return { data: processedData, error: null };
   } catch (error) {
     console.error('Error al obtener empleados con documentos asignados:', error);

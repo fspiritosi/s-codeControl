@@ -117,7 +117,7 @@ export function DocumentNewVersionDialog({
             <FileText className="h-5 w-5" />
             Nueva Versión del Documento
           </DialogTitle>
-          <DialogDescription>Agrega una nueva versión de "{documentTitle}"</DialogDescription>
+          <DialogDescription>Agrega una nueva versión de {documentTitle}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
