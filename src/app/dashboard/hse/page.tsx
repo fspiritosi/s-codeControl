@@ -8,11 +8,8 @@ import {getDocuments} from '@/features/Hse/actions/documents'
 async function HSEPage() {
   const cookieStore = cookies()
   const company_id = cookieStore.get('actualComp')?.value
-  console.log(company_id)
   const documents = await getDocuments(company_id || "")
   
-  console.log(documents)
-
   const viewData = {
     defaultValue: 'trainingsTable',
     tabsValues: [

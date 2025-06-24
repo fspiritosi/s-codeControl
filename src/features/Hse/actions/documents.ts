@@ -413,7 +413,7 @@ export async function getDocumentById(id: string): Promise<(Document & { version
 
 
 export async function createDocumentWithAssignments(formData: FormData, company_id: string) {
-  console.log("Iniciando creación de documento con asignaciones...")
+  
   const supabase = supabaseServer()
   let filePath: string | null = null
 
@@ -475,7 +475,7 @@ export async function createDocumentWithAssignments(formData: FormData, company_
     const fileName = `${Date.now()}.${fileExt}`
     filePath = `${company_id}/${fileName}`
 
-    console.log("Subiendo archivo a storage:", { filePath, size: file.size, type: file.type })
+    
 
     const { error: uploadError } = await supabase.storage.from("documents-hse").upload(filePath, file)
 
@@ -492,7 +492,7 @@ export async function createDocumentWithAssignments(formData: FormData, company_
     let documentId: string
 
     // 7. Crear el documento
-    console.log("Creando nuevo documento...")
+    
     const newDoc = {
       title,
       description: (formData.get("description") as string) || null,
@@ -508,7 +508,7 @@ export async function createDocumentWithAssignments(formData: FormData, company_
       company_id,
     }
 
-    console.log("Insertando nuevo documento:", newDoc)
+    
 
     const { data: documentData, error: insertError } = await supabase
       .from("hse_documents" as any)
@@ -522,7 +522,7 @@ export async function createDocumentWithAssignments(formData: FormData, company_
       if (filePath) {
         try {
           await supabase.storage.from("documents-hse").remove([filePath])
-          console.log("Archivo temporal eliminado")
+          
         } catch (cleanupError) {
           console.error("Error al limpiar archivo temporal:", cleanupError)
         }
@@ -530,7 +530,7 @@ export async function createDocumentWithAssignments(formData: FormData, company_
       throw insertError
     }
 
-    console.log("Documento creado correctamente:", documentData)
+    
     documentId = documentData.id
 
     // 8. CREAR ASIGNACIONES AUTOMÁTICAS
@@ -569,7 +569,7 @@ export async function createDocumentWithAssignments(formData: FormData, company_
     // Intentar limpiar el archivo si existe
     if (filePath) {
       try {
-        console.log("Intentando limpiar archivo temporal...")
+       
         const { error: cleanupError } = await supabase.storage.from("documents-hse").remove([filePath])
 
         if (cleanupError) {
@@ -595,12 +595,11 @@ async function createDocumentAssignments(
   assignToAll: boolean,
   selectedPositions: string[],
 ) {
-  console.log("Creando asignaciones de documento...", { documentId, assignToAll, selectedPositions })
+ 
 
   try {
     if (assignToAll) {
       // OPCIÓN 1: Asignar a todos los empleados activos de la empresa
-      console.log("Asignando documento a todos los empleados activos")
 
       // Obtener todos los empleados activos de la empresa
       const { data: employees, error: employeesError } = await supabase
@@ -632,11 +631,11 @@ async function createDocumentAssignments(
           throw new Error("No se pudieron crear las asignaciones individuales")
         }
 
-        console.log(`Asignaciones creadas para ${employees.length} empleados`)
+       
       }
     } else if (selectedPositions.length > 0) {
       // OPCIÓN 2: Asignar por posiciones específicas
-      console.log("Asignando documento por posiciones:", selectedPositions)
+      
 
       // Obtener empleados que coincidan con las posiciones seleccionadas
       const { data: employees, error: employeesError } = await supabase
@@ -908,7 +907,7 @@ export async function createDocumentVersion(
   formData: FormData,
   company_id: string,
 ) {
-  console.log('Iniciando creación de nueva versión de documento...');
+ 
   const supabase = supabaseServer();
   let filePath: string | null = null;
 
@@ -973,7 +972,7 @@ export async function createDocumentVersion(
       description: existingDoc.description,
     };
 
-    console.log('Guardando versión anterior en hse_document_versions:', versionData);
+   
 
     const { data: versionInsert, error: versionError } = await supabase
       .from('hse_document_versions' as any)
@@ -996,8 +995,7 @@ export async function createDocumentVersion(
       console.error('Error al obtener asignaciones activas:', assignmentError);
       throw new Error('No se pudieron obtener las asignaciones del documento');
     }
-    console.log('Asignaciones activas:', currentAssignments);
-    console.log('Version ID:', versionId);
+    
     if (versionId && currentAssignments?.length > 0) {
       const versionAssignments = currentAssignments.map((a) => ({
         assignment_id: a.id,
@@ -1047,7 +1045,7 @@ export async function createDocumentVersion(
       status: 'active',
     };
 
-    console.log('Actualizando documento principal con nueva versión:', updateData);
+    
 
     const { error: updateError } = await supabase
       .from('hse_documents' as any)
@@ -1076,7 +1074,7 @@ export async function createDocumentVersion(
     if (filePath) {
       try {
         await supabase.storage.from('documents-hse').remove([filePath]);
-        console.log('Archivo temporal eliminado');
+        
       } catch (cleanupError) {
         console.error('Error al limpiar archivo temporal:', cleanupError);
       }
@@ -1092,7 +1090,7 @@ export async function assignDocumentsToNewEmployee(
   companyId: string,
   employeePosition: string,
 ) {
-  console.log("Asignando documentos existentes a nuevo empleado...", { employeeId, employeePosition })
+ 
 
   try {
     // 1. Buscar documentos activos que deberían asignarse a este empleado
@@ -1114,7 +1112,7 @@ export async function assignDocumentsToNewEmployee(
     }
 
     if (!activeDocuments || activeDocuments.length === 0) {
-      console.log("No hay documentos activos para asignar")
+      
       return
     }
 
@@ -1136,7 +1134,7 @@ export async function assignDocumentsToNewEmployee(
     const documentsToAssign = activeDocuments.filter((doc: any) => !assignedDocIds.includes(doc.id))
 
     if (documentsToAssign.length === 0) {
-      console.log("Todos los documentos ya están asignados a este empleado")
+      
       return
     }
 
@@ -1156,7 +1154,7 @@ export async function assignDocumentsToNewEmployee(
       return
     }
 
-    console.log(`Asignados ${documentsToAssign.length} documentos al nuevo empleado`)
+    
   } catch (error) {
     console.error("Error en asignación automática a nuevo empleado:", error)
   }
@@ -1219,7 +1217,7 @@ export async function getEmployeesWithAssignedDocuments(documentId?: string) {
     }
 
     const { data, error } = await query;
-    console.log(data)
+    
     if (error) throw error;
 
     // Si no hay asignaciones, devolver array vacío
@@ -1251,7 +1249,7 @@ const processedData: ProcessedEmployee[] = data.map((assignment: any) => {
     }]
   };
 });
-console.log(processedData)
+
     return { data: processedData, error: null };
   } catch (error) {
     console.error('Error al obtener empleados con documentos asignados:', error);
@@ -1269,7 +1267,8 @@ export async function updateDocumentExpiry(documentId: string, expiryDate: strin
     .from('hse_documents' as any)
     .update({ 
       expiry_date: expiryDate,
-      updated_at: new Date().toISOString() // Opcional: actualizar la fecha de modificación
+      updated_at: new Date().toISOString(), // Opcional: actualizar la fecha de modificación
+      status: 'active',
     })
     .eq('id', documentId)
     .select()
@@ -1311,7 +1310,7 @@ export async function getAssignedEmployeesByDocumentVersion(
   documentVersionId: string
 ): Promise<DocumentVersionAssignment[]> {
   const supabase = supabaseServer();
-  console.log(documentVersionId)
+  
   const { data, error } = await supabase
     .from('hse_document_assignment_versions' as any)
     .select(`
@@ -1332,7 +1331,7 @@ export async function getAssignedEmployeesByDocumentVersion(
     console.error('Error fetching assigned employees:', error);
     throw new Error('Error al obtener los empleados asignados');
   }
-console.log(data)
+ 
   // Type assertion to ensure the data matches our interface
   return data as unknown as DocumentVersionAssignment[];
 }

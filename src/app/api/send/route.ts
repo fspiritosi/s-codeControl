@@ -14,13 +14,15 @@ if (missingVars.length > 0 && process.env.NODE_ENV === 'development') {
 
 // Crear transporter reutilizable
 const transporter = nodemailer.createTransport({
+  
   host: process.env.SMTP_HOST,
   port: parseInt(process.env.SMTP_PORT || '465'),
   secure: process.env.SMTP_SECURE === 'true',
   auth: {
-    user:"no-reply@codecontrol.com.ar",
-    pass:"^FXc9$6bC",
-  },
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+
   pool: true,
   maxConnections: 5,
   maxMessages: 100,
@@ -34,7 +36,7 @@ transporter.verify(function(error) {
   if (error) {
     console.error('Error de conexión SMTP:', error);
   } else {
-    console.log('Servidor SMTP listo para enviar mensajes');
+    
   }
 });
 

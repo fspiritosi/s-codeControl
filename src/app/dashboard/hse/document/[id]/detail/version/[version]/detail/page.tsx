@@ -45,7 +45,7 @@ interface ActiveEmployee {
   status: string;
 }
 
-export function getEmployeeColums(
+function getEmployeeColums(
   handleEdit: (employee: ActiveEmployee) => void
 ): ColumnDef<ActiveEmployee>[] {
   return [
@@ -87,7 +87,7 @@ export function getEmployeeColums(
       header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
       cell: ({ row }) => {
         const status = row.getValue('Status');
-        console.log(status)
+        
         return (
           <Badge variant={status === 'accepted' ? 'success' : 'yellow'}>
             {status === 'accepted' ? 'Aceptado' : 'Pendiente'}
@@ -103,7 +103,7 @@ export function getEmployeeColums(
   ];
 }
 
-export const createFilterOptions = <T,>(
+const createFilterOptions = <T,>(
   data: T[] | undefined,
   accessor: (item: T) => any,
   icon?: React.ComponentType<{ className?: string }>
@@ -144,7 +144,7 @@ export default function DocumentVersionDetailPage({ params }: { params: { id: st
     
     const positions = createFilterOptions<ActiveEmployee>(
       activeEmployees, 
-      (employee) => employee.employee.hierarchical_position?.name || ''
+      (employee) => employee.employee.hierarchical_position || ''
     );
     
     const status = createFilterOptions<ActiveEmployee>(
@@ -212,16 +212,14 @@ export default function DocumentVersionDetailPage({ params }: { params: { id: st
     fetchData();
     fetchEmployees();
   }, [params.id]);
-  console.log('params id', params.id);
-  console.log('document', document);
+  
   const filteredEmployees = activeEmployees.filter((employee) => employee.documentId === params.id);
-  console.log('filteredEmployees', filteredEmployees);
-  console.log('activeEmployees', activeEmployees);
+  
 
   // Obtener la versión específica del documento
   // const documentVersion = mockDocumentVersions[params.id as keyof typeof mockDocumentVersions]?.[params.version]
   const documentVersion = document?.versions?.find((version) => version.version === params.version);
-  console.log(documentVersion);
+  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">

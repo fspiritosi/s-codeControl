@@ -31,6 +31,22 @@ interface Document {
 }
 
 
+interface EmployeeDocument {
+  document: {
+    id: string;
+  };
+  status: string;
+}
+
+interface Employee {
+  documents: EmployeeDocument[];
+  // Otras propiedades del empleado si las hay
+}
+
+interface EmployeesResponse {
+  data: Employee[];
+}
+
 type EmployeeCounts = {
   total: number;
   accepted: number;
@@ -38,15 +54,15 @@ type EmployeeCounts = {
 export function DocumentsSection() {
   const company_id = Cookies.get('actualComp')
   const supabase = supabaseBrowser()
-  console.log(company_id)
+ 
   const [documents, setDocuments] = useState<Document[]>([])
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [showDetailDialog, setShowDetailDialog] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [employees, setEmployees] = useState<any[]>([])
+  const [employees, setEmployees] = useState<EmployeesResponse | null>(null)
   const router = useRouter()
-console.log(documents)
+ 
   const filterDocuments = (documents: Document[]) => {
     return documents.filter((document) => {
       const matchesSearch =
@@ -64,33 +80,33 @@ console.log(documents)
       setDocuments(documentos as any);
     };
     const fetchEmployees = async () => {
-      const empleados = await getEmployeesWithAssignedDocuments();
-      setEmployees(empleados as any);
+      try {
+        const empleados = await getEmployeesWithAssignedDocuments();
+        setEmployees(empleados as EmployeesResponse);
+      } catch (error) {
+        console.error('Error al cargar empleados:', error);
+        setEmployees({ data: [] });
+      }
     };
     fetchDocuments();
     fetchEmployees();
   }, [company_id]);
   const activeDocuments = documents.filter((doc) => doc.status === "active")
   const expiredDocuments = documents.filter((doc) => doc.status === "expired")
-  console.log(activeDocuments)
-  console.log(expiredDocuments)
-  console.log(employees)
-console.log(documents)
+  
 const getEmployeeCounts = (documentId: string): EmployeeCounts => {
   if (!employees?.data) return { total: 0, accepted: 0 };
 
   const counts = employees.data.reduce((acc: EmployeeCounts, employee) => {
-    // Buscar si el empleado tiene el documento
-    const hasDocument = employee.documents.some(
-      (doc:any)=> doc.document.id === documentId
+    const hasDocument = employee.documents?.some(
+      doc => doc.document?.id === documentId
     );
 
     if (hasDocument) {
       acc.total += 1;
       
-      // Verificar si el documento está aceptado
-      const isAccepted = employee.documents.some(
-        (doc:any) => doc.document.id === documentId && doc.status === 'accepted'
+      const isAccepted = employee.documents?.some(
+        doc => doc.document?.id === documentId && doc.status === 'accepted'
       );
       
       if (isAccepted) {
@@ -195,7 +211,7 @@ const getEmployeeCounts = (documentId: string): EmployeeCounts => {
   )
 
   const handleDownload = (file_path: string, file_name: string) => {
-      console.log(file_path)
+      
       try {
         const doc = window.document
         const link = doc.createElement('a')

@@ -92,9 +92,11 @@ interface Filter {
   label: string;
   value: string;
 }
-export function getEmployeeColums(
-  handleEdit: (employee: EmployeeTableProp['employees'][number]) => void
-): ColumnDef<EmployeeTableProp['employees']>[] {
+function getEmployeeColums(
+  handleEdit: (employee: EmployeeTableProp['employees'][number]) => void,
+  handleSendReminders: (employee: EmployeeTableProp['employees'][number]) => void,
+  employeesWithDocuments: Employee[]
+):ColumnDef<Employee>[] {
   return [
     {
       accessorKey: 'nombre',
@@ -134,7 +136,7 @@ export function getEmployeeColums(
       header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
       cell: ({ row }) => {
         const status = row.getValue('Status');
-        console.log(status)
+
         return (
           <Badge variant={status === 'accepted' ? 'success' : 'yellow'}>
             {status === 'accepted' ? 'Aceptado' : 'Pendiente'}
@@ -156,7 +158,12 @@ export function getEmployeeColums(
           handleEdit((row.original as any).area_full);
         };
         return status === 'accepted' ? null : (
-          <Button size="sm" variant="link" className="hover:text-blue-400" onClick={handleSelectArea}>
+          <Button size="sm" variant="link" className="hover:text-blue-400" onClick={() => {
+            const employee = employeesWithDocuments.find(e => e.id === row.original.id);
+            if (employee) {
+              handleSendReminders(employee);
+            }
+          }}>
             Enviar recordatorio
           </Button>
         );
@@ -165,7 +172,7 @@ export function getEmployeeColums(
   ];
 }
 
-export const createFilterOptions = <T,>(
+const createFilterOptions = <T,>(
   data: T[] | undefined,
   accessor: (item: T) => any,
   icon?: React.ComponentType<{ className?: string }>
@@ -217,16 +224,18 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
     employeesWithDocuments, 
     (employee) => employee.documents?.map(doc => doc.status).join(', ') || ''
   );
-  console.log(employeesWithDocuments)
+  
   const formattedEmployees: any = employeesWithDocuments.map((employee) => {
     return {
+      ...employee,
       nombre: employee.name,
       cuil: employee.cuil || '',
       departamento: employee.position || '',
       status: employee.documents?.map((document: any) => document.status).join(', ')  || '',
     };
   });
-  console.log(formattedEmployees)
+  
+  
   const handleEdit = (employee: any) => {
     setSelectedEmployee(employee);
     setMode('edit');
@@ -251,10 +260,10 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
           error: Error | null;
         };
         if (error) throw error;
-        console.log(data)
+        
         // Usa la función de transformación
         const transformedData = data?.map(transformEmployee) || [];
-        console.log(transformedData)
+        
         setEmployeesWithDocuments(transformedData);
       } catch (error) {
         console.error('Error al obtener empleados con documentos:', error);
@@ -264,7 +273,6 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
   
     fetchEmployeesWithDocuments();
   }, [params.id]);
-console.log(employeesWithDocuments)
   // Función para manejar la descarga de archivos
   // Función para manejar la descarga de archivos
   const handleDownload = (fileUrl: string, fileName: string) => {
@@ -319,8 +327,7 @@ console.log(employeesWithDocuments)
 
     fetchData();
   }, [params.id]);
-  console.log(document);
-  console.log(employeesWithDocuments);
+  
   // Ordenar versiones por fecha (más reciente primero)
   const sortedVersions = React.useMemo(() => {
     // Usar versions si está definido, de lo contrario usar un array vacío
@@ -419,77 +426,164 @@ console.log(employeesWithDocuments)
       console.error('Error al extender la vigencia:', error);
       toast.error('Error al extender la vigencia');
     }
+    router.push(`/dashboard/hse`);
   };
 
-  const handleSendReminders = async () => {
-    if (!document) return;
+  // const handleSendReminders = async () => {
+  //   if (!document) return;
 
+  //   try {
+  //     setIsSendingReminders(true);
+
+  //     // 1. Obtener empleados pendientes
+
+  //     if (pendingEmployees.length === 0) {
+  //       toast.info('No hay empleados pendientes para notificar');
+  //       return;
+  //     }
+
+  //     // 2. Enviar recordatorios
+  //     const results = await Promise.all(
+  //       pendingEmployees.map(async (employee) => {
+  //         try {
+  //           const documentUrl = `${window.location.origin}/dashboard/documents/${document.id}`;
+  //           const message = `
+  //             Hola ${employee.name},
+              
+  //             Tienes pendiente de revisión el documento "${document.title}".
+              
+  //             Por favor, accede a la plataforma para revisarlo y aceptarlo.
+              
+  //             <a href="${documentUrl}" style="
+  //               display: inline-block;
+  //               padding: 10px 20px;
+  //               background-color: #2563eb;
+  //               color: white;
+  //               text-decoration: none;
+  //               border-radius: 5px;
+  //               margin: 10px 0;
+  //             ">Ver Documento</a>
+              
+  //             Gracias,
+  //             El equipo de Recursos Humanos
+  //           `;
+
+  //           const response = await fetch('/api/send', {
+  //             method: 'POST',
+  //             headers: {
+  //               'Content-Type': 'application/json',
+  //             },
+  //             body: JSON.stringify({
+  //               to: employee.email,
+  //               subject: `Recordatorio: ${document.title} pendiente de revisión`,
+  //               html: message, // Usamos html en lugar de body
+  //               text: `Hola ${employee.name},\n\nTienes pendiente de revisión el documento "${document.title}".\n\nPor favor, accede a la plataforma para revisarlo y aceptarlo.\n\n${documentUrl}`
+  //             }),
+  //           });
+
+  //           if (!response.ok) {
+  //             throw new Error('Error en la respuesta del servidor');
+  //           }
+
+  //           return { success: true, email: employee.email };
+  //         } catch (error) {
+  //           console.error(`Error enviando a ${employee.email}:`, error);
+  //           return { success: false, email: employee.email, error };
+  //         }
+  //       })
+  //     );
+
+  //     // 3. Mostrar resultados
+  //     const successful = results.filter((r) => r.success).length;
+  //     const failed = results.length - successful;
+
+  //     toast.success(`Recordatorios enviados: ${successful} exitosos, ${failed} fallidos`);
+  //   } catch (error) {
+  //     console.error('Error al enviar recordatorios:', error);
+  //     toast.error('Error al enviar los recordatorios');
+  //   } finally {
+  //     setIsSendingReminders(false);
+  //   }
+  // };
+
+  const sendReminder = async (employee: Employee) => {
+    try {
+      const documentUrl = `${window.location.origin}/dashboard/documents/${document.id}`;
+      const message = `
+        Hola ${employee.name},
+  
+        Tienes pendiente de revisión el documento "${document.title}".
+  
+        Por favor, accede a la plataforma para revisarlo y aceptarlo.
+  
+        <a href="${documentUrl}" style="
+          display: inline-block;
+          padding: 10px 20px;
+          background-color: #2563eb;
+          color: white;
+          text-decoration: none;
+          border-radius: 5px;
+          margin: 10px 0;
+        ">Ver Documento</a>
+  
+        Gracias,
+        El equipo de Recursos Humanos
+      `;
+  
+      const response = await fetch('/api/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: employee.email,
+          subject: `Recordatorio: ${document.title} pendiente de revisión`,
+          html: message,
+          text: `Hola ${employee.name},\n\nTienes pendiente de revisión el documento "${document.title}".\n\nPor favor, accede a la plataforma para revisarlo y aceptarlo.\n\n${documentUrl}`
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Error en la respuesta del servidor');
+      }
+  
+      return { success: true, email: employee.email };
+    } catch (error) {
+      console.error(`Error enviando a ${employee.email}:`, error);
+      return { success: false, email: employee.email, error };
+    }
+  };
+
+  const handleSendReminders = async (employeeToNotify: Employee | null = null) => {
+    if (!document) return;
+  
     try {
       setIsSendingReminders(true);
-
-      // 1. Obtener empleados pendientes
-
-      if (pendingEmployees.length === 0) {
+  
+      const employees = employeeToNotify
+        ? [employeeToNotify]
+        : pendingEmployees;
+  
+      if (employees.length === 0) {
         toast.info('No hay empleados pendientes para notificar');
         return;
       }
-
-      // 2. Enviar recordatorios
-      const results = await Promise.all(
-        pendingEmployees.map(async (employee) => {
-          try {
-            const documentUrl = `${window.location.origin}/dashboard/documents/${document.id}`;
-            const message = `
-              Hola ${employee.name},
-              
-              Tienes pendiente de revisión el documento "${document.title}".
-              
-              Por favor, accede a la plataforma para revisarlo y aceptarlo.
-              
-              <a href="${documentUrl}" style="
-                display: inline-block;
-                padding: 10px 20px;
-                background-color: #2563eb;
-                color: white;
-                text-decoration: none;
-                border-radius: 5px;
-                margin: 10px 0;
-              ">Ver Documento</a>
-              
-              Gracias,
-              El equipo de Recursos Humanos
-            `;
-
-            const response = await fetch('/api/send', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                to: employee.email,
-                subject: `Recordatorio: ${document.title} pendiente de revisión`,
-                html: message, // Usamos html en lugar de body
-                text: `Hola ${employee.name},\n\nTienes pendiente de revisión el documento "${document.title}".\n\nPor favor, accede a la plataforma para revisarlo y aceptarlo.\n\n${documentUrl}`
-              }),
-            });
-
-            if (!response.ok) {
-              throw new Error('Error en la respuesta del servidor');
-            }
-
-            return { success: true, email: employee.email };
-          } catch (error) {
-            console.error(`Error enviando a ${employee.email}:`, error);
-            return { success: false, email: employee.email, error };
-          }
-        })
-      );
-
-      // 3. Mostrar resultados
+  
+      const results = await Promise.all(employees.map(sendReminder));
+  
       const successful = results.filter((r) => r.success).length;
       const failed = results.length - successful;
-
-      toast.success(`Recordatorios enviados: ${successful} exitosos, ${failed} fallidos`);
+  
+      if (employeeToNotify) {
+        // Modo individual
+        const msg = successful
+          ? `Recordatorio enviado a ${employeeToNotify.name}`
+          : `Error al enviar a ${employeeToNotify.name}`;
+        successful ? toast.success(msg) : toast.error(msg);
+      } else {
+        // Modo masivo
+        toast.success(`Recordatorios enviados: ${successful} exitosos, ${failed} fallidos`);
+      }
     } catch (error) {
       console.error('Error al enviar recordatorios:', error);
       toast.error('Error al enviar los recordatorios');
@@ -497,7 +591,7 @@ console.log(employeesWithDocuments)
       setIsSendingReminders(false);
     }
   };
-
+  
   const exportToExcel = () => {
     try {
       if (!document || !employeesWithDocuments.length) {
@@ -723,24 +817,26 @@ console.log(employeesWithDocuments)
                     <Clock className="h-4 w-4 mr-2" />
                     Extender Vigencia
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start truncate"
-                    onClick={handleSendReminders}
-                    disabled={isSendingReminders}
-                  >
-                    {isSendingReminders ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Enviando...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Enviar Recordatorios
-                      </>
-                    )}
-                  </Button>
+                  {document?.status !== 'expired' && (
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start truncate"
+                      onClick={() => handleSendReminders(null)}
+                      disabled={isSendingReminders}
+                    >
+                      {isSendingReminders ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Enviar Recordatorios
+                        </>
+                      )}
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     className="w-full justify-start truncate"
@@ -776,7 +872,7 @@ console.log(employeesWithDocuments)
                 <div className="rounded-md border p-2">
                 <BaseDataTable
                   data={formattedEmployees}
-                  columns={getEmployeeColums(handleEdit)}
+                  columns={getEmployeeColums(handleEdit, handleSendReminders, employeesWithDocuments)}
                   savedVisibility={savedVisibility}
                   tableId="employeeTable"
                   toolbarOptions={{
@@ -1013,7 +1109,6 @@ console.log(employeesWithDocuments)
         currentVersion={document?.version}
         onVersionCreated={(newVersion) => {
           // Aquí actualizarías el documento con la nueva versión
-          console.log('Nueva versión creada:', newVersion);
           setShowNewVersionDialog(false);
         }}
       />

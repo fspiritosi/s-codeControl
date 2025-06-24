@@ -400,7 +400,7 @@ export function DocumentUploadDialog() {
   useEffect(() => {
     const fetchPositions = async () => {
       const { data } = await getAllHierarchicalPositions()
-      console.log(data)
+     
       const formattedPositions = (data || []).map((position: any) => ({
         label: position.name,
         value: position.id
@@ -409,7 +409,7 @@ export function DocumentUploadDialog() {
     }
     fetchPositions()
   }, [])
-  console.log(positions)
+  
   // const positions = [
   //   { label: "Gerente", value: "Gerente" },
   //   { label: "Supervisor", value: "Supervisor" },

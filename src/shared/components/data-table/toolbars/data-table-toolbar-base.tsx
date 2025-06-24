@@ -72,7 +72,7 @@ export function DataTableToolbarBase<TData>({
   // Estado para controlar qué filtros son visibles
   const [visibleFilters, setVisibleFilters] = React.useState<string[]>(initialVisibleFilters || []);
 
-  console.log(initialVisibleFilters);
+  
 
   // NUEVO: Estado para los filtros de rango de fechas por columna
   const [dateFilters, setDateFilters] = React.useState<{ [columnId: string]: { from: Date | null; to: Date | null } }>(
