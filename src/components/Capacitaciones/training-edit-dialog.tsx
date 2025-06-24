@@ -96,6 +96,7 @@ export function TrainingEditDialog({ training, open, onOpenChange, selectedTab }
       options: ['', ''],
       correctAnswer: 0,
       points: 0,
+      order_index: formData.questions.length, // Añadir order_index para ordenar correctamente
     };
     setFormData({
       ...formData,
@@ -233,32 +234,66 @@ export function TrainingEditDialog({ training, open, onOpenChange, selectedTab }
           <DialogDescription>Modifica los detalles de la capacitación</DialogDescription>
         </DialogHeader>
       
-              <Select  onValueChange={(value : "Borrador" | "Archivado" | "Publicado") => setFormData({ ...formData, status: value })}
-              
-              
-              defaultValue={
-                formData.status
-              }>
+              <Select
+                onValueChange={(value : "Borrador" | "Archivado" | "Publicado") => setFormData({ ...formData, status: value })}
+                defaultValue={formData.status}
+              >
                 <SelectTrigger className='w-[180px]'>
-                  <SelectValue defaultValue={formData.status} placeholder="Seleccione un estado" />
+                  <SelectValue placeholder="Seleccione un estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem  value="Borrador">
-                    <div className='flex items-center gap-2'>
-
-                    <PencilIcon className="h-4 w-4" />Borrador
-                    </div>
-                    </SelectItem>
-                  <SelectItem  value="Publicado">
-                    <div className='flex items-center gap-2'>
-                    <GlobeIcon className="h-4 w-4" />Publicado
-                    </div>
-                  </SelectItem>
-                  <SelectItem  value="Archivado">
-                    <div className='flex items-center gap-2'>
-                    <ArchiveIcon className="h-4 w-4" />Archivado
-                    </div>
-                  </SelectItem>
+                  {/* Si está en borrador, puede cambiar a cualquier estado */}
+                  {formData.status === "Borrador" && (
+                    <>
+                      <SelectItem value="Borrador">
+                        <div className='flex items-center gap-2'>
+                          <PencilIcon className="h-4 w-4" />Borrador
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="Publicado">
+                        <div className='flex items-center gap-2'>
+                          <GlobeIcon className="h-4 w-4" />Publicado
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="Archivado">
+                        <div className='flex items-center gap-2'>
+                          <ArchiveIcon className="h-4 w-4" />Archivado
+                        </div>
+                      </SelectItem>
+                    </>
+                  )}
+                  
+                  {/* Si está publicado, solo puede archivarse */}
+                  {formData.status === "Publicado" && (
+                    <>
+                      <SelectItem value="Publicado">
+                        <div className='flex items-center gap-2'>
+                          <GlobeIcon className="h-4 w-4" />Publicado
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="Archivado">
+                        <div className='flex items-center gap-2'>
+                          <ArchiveIcon className="h-4 w-4" />Archivado
+                        </div>
+                      </SelectItem>
+                    </>
+                  )}
+                  
+                  {/* Si está archivado, solo puede publicarse */}
+                  {formData.status === "Archivado" && (
+                    <>
+                      <SelectItem value="Publicado">
+                        <div className='flex items-center gap-2'>
+                          <GlobeIcon className="h-4 w-4" />Publicado
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="Archivado">
+                        <div className='flex items-center gap-2'>
+                          <ArchiveIcon className="h-4 w-4" />Archivado
+                        </div>
+                      </SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
         </div>

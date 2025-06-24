@@ -1,6 +1,6 @@
 import { fetchTrainings } from '@/components/Capacitaciones/actions/actions';
 import { TrainingCreateDialog } from '@/components/Capacitaciones/training-create-dialog';
-import { TrainingSection } from '@/components/Capacitaciones/training-section';
+import TrainingSection from '@/components/Capacitaciones/training-section';
 import Viewcomponent from '@/components/ViewComponent';
 
 async function HSEPage() {

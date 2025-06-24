@@ -312,14 +312,17 @@ export const fetchTrainings = async () => {
           url: material.file_url,
         })) || [];
 
-      // Extraer preguntas y opciones
+      // Extraer preguntas y opciones y ordenarlas por order_index
       const questions =
-        training.training_questions?.map((question) => ({
-          id: question.id,
-          question: question.question_text,
-          options: question.training_question_options?.map((option) => option.option_text) || [],
-          correctAnswer: question.training_question_options?.findIndex((option) => option.is_correct) || 0,
-        })) || [];
+        training.training_questions
+          ?.map((question) => ({
+            id: question.id,
+            question: question.question_text,
+            options: question.training_question_options?.map((option) => option.option_text) || [],
+            correctAnswer: question.training_question_options?.findIndex((option) => option.is_correct) || 0,
+            order_index: question.order_index || 0, // Añadir order_index para ordenar
+          }))
+          .sort((a, b) => a.order_index - b.order_index) || []; // Ordenar por order_index
 
       return {
         id: training.id,
@@ -416,7 +419,7 @@ export const fetchTrainingById = async (id: string) => {
 
     // 3. Crear un conjunto de IDs de empleados que completaron la capacitación
     const completedEmployeeIds = new Set<string>();
-    const attemptsByEmployeeId: typeof completedAttempts[number] |{} = {};
+    const attemptsByEmployeeId: (typeof completedAttempts)[number] | {} = {};
 
     if (completedAttempts && completedAttempts.length > 0) {
       completedAttempts.forEach((attempt) => {
@@ -501,15 +504,18 @@ export const fetchTrainingById = async (id: string) => {
         }))
         .sort((a, b) => a.order - b.order) || [];
 
-    // Extraer preguntas y opciones
+    // Extraer preguntas y opciones y ordenarlas por order_index
     const questions =
-      trainingData.training_questions?.map((question) => ({
-        id: question.id,
-        question: question.question_text,
-        options: question.training_question_options?.map((option) => option.option_text) || [],
-        correctAnswer: question.training_question_options?.findIndex((option) => option.is_correct) || 0,
-        points: question.points || 1,
-      })) || [];
+      trainingData.training_questions
+        ?.map((question) => ({
+          id: question.id,
+          question: question.question_text,
+          options: question.training_question_options?.map((option) => option.option_text) || [],
+          correctAnswer: question.training_question_options?.findIndex((option) => option.is_correct) || 0,
+          points: question.points || 1,
+          order_index: question.order_index || 0, // Añadir order_index para ordenar
+        }))
+        .sort((a, b) => a.order_index - b.order_index) || []; // Ordenar por order_index
 
     // Formato final para la respuesta
     const formattedTraining = {
@@ -531,7 +537,7 @@ export const fetchTrainingById = async (id: string) => {
           totalEmployees: activeEmployees?.length || 0,
         },
       },
-      status: trainingData.status ,
+      status: trainingData.status,
     };
 
     return formattedTraining;
@@ -546,7 +552,12 @@ export const fetchTrainingById = async (id: string) => {
  */
 export const updateTrainingBasicInfo = async (
   trainingId: string,
-  data: { title: string; description: string; passing_score: number; status: "Borrador" | "Archivado" | "Publicado" | null }
+  data: {
+    title: string;
+    description: string;
+    passing_score: number;
+    status: 'Borrador' | 'Archivado' | 'Publicado' | null;
+  }
 ) => {
   try {
     const supabase = supabaseServer();
@@ -589,7 +600,7 @@ export const updateTrainingBasicInfo = async (
 
 /**
  * Actualiza los materiales de una capacitación
- * Elimina los materiales existentes y añade los nuevos
+ * Elimina los materiales existentes, sus archivos del storage y añade los nuevos
  */
 export const updateTrainingMaterials = async (
   trainingId: string,
@@ -606,7 +617,34 @@ export const updateTrainingMaterials = async (
   try {
     const supabase = supabaseServer();
 
-    // Primero eliminar todos los materiales existentes
+    // Primero obtener todos los materiales existentes para eliminar sus archivos
+    const { data: existingMaterials, error: fetchError } = await supabase
+      .from('training_materials')
+      .select('*')
+      .eq('training_id', trainingId);
+
+    if (fetchError) {
+      console.error('Error al obtener materiales existentes:', fetchError);
+      return { success: false, error: `Error al obtener materiales: ${fetchError.message}` };
+    }
+
+    // Eliminar los archivos del storage si existen
+    if (existingMaterials && existingMaterials.length > 0) {
+      const fileUrls = existingMaterials
+        .map((material) => material.file_url)
+        .filter((url) => url && url.trim() !== '');
+
+      if (fileUrls.length > 0) {
+        const { error: storageError } = await supabase.storage.from('documents').remove(fileUrls);
+        if (storageError) {
+          console.error('Error al eliminar archivos del storage:', storageError);
+          // No interrumpimos el proceso si falla la eliminación del storage
+          // pero registramos el error para depuración
+        }
+      }
+    }
+
+    // Ahora eliminar los registros de materiales de la base de datos
     const { error: deleteError } = await supabase.from('training_materials').delete().eq('training_id', trainingId);
 
     if (deleteError) {
@@ -669,7 +707,7 @@ export const updateTrainingQuestions = async (
     // 1. Obtener todas las preguntas actuales para este training
     const { data: existingQuestions, error: getQuestionsError } = await supabase
       .from('training_questions')
-      .select('*')
+      .select('*,training_attempt_answers(*)')
       .eq('training_id', trainingId);
 
     if (getQuestionsError) {
@@ -680,21 +718,7 @@ export const updateTrainingQuestions = async (
       };
     }
 
-    // 2. Desactivar todas las preguntas (luego activaremos solo las que mantengamos o creemos nuevas)
-    const { error: deactivateError } = await supabase
-      .from('training_questions')
-      .update({ is_active: false })
-      .eq('training_id', trainingId);
-
-    if (deactivateError) {
-      console.error('Error al desactivar preguntas:', deactivateError);
-      return {
-        success: false,
-        error: `Error al desactivar preguntas: ${deactivateError.message}`,
-      };
-    }
-
-    // 3. Función para actualizar opciones de una pregunta
+    // 2. Función para actualizar opciones de una pregunta
     const updateQuestionOptions = async (questionId: string, options: string[], correctAnswer: number) => {
       try {
         // Eliminar todas las opciones existentes para esta pregunta
@@ -730,41 +754,86 @@ export const updateTrainingQuestions = async (
       }
     };
 
-    // 4. Preparar arrays para inserción
+    // 3. Identificar preguntas a eliminar (existentes que no están en la lista nueva)
+    const questionIdsToKeep = questions.filter((q) => q.id).map((q) => q.id as string);
+
+    const questionsToRemove = existingQuestions?.filter((eq) => !questionIdsToKeep.includes(eq.id)) || [];
+
+    // 4. Procesar eliminaciones
+    for (const questionToRemove of questionsToRemove) {
+      // Verificar si tiene intentos de respuesta
+      const hasAttempts =
+        questionToRemove.training_attempt_answers && questionToRemove.training_attempt_answers.length > 0;
+
+      if (hasAttempts) {
+        // Soft delete si tiene intentos
+        const { error: softDeleteError } = await supabase
+          .from('training_questions')
+          .update({ is_active: false })
+          .eq('id', questionToRemove.id);
+
+        if (softDeleteError) {
+          console.error(`Error al desactivar pregunta ${questionToRemove.id}:`, softDeleteError);
+          return {
+            success: false,
+            error: `Error al desactivar pregunta: ${softDeleteError.message}`,
+          };
+        }
+      } else {
+        // Eliminar opciones primero
+        const { error: deleteOptionsError } = await supabase
+          .from('training_question_options')
+          .delete()
+          .eq('question_id', questionToRemove.id);
+
+        if (deleteOptionsError) {
+          console.error(`Error al eliminar opciones de pregunta ${questionToRemove.id}:`, deleteOptionsError);
+          return {
+            success: false,
+            error: `Error al eliminar opciones: ${deleteOptionsError.message}`,
+          };
+        }
+
+        // Eliminar la pregunta físicamente
+        const { error: deleteQuestionError } = await supabase
+          .from('training_questions')
+          .delete()
+          .eq('id', questionToRemove.id);
+
+        if (deleteQuestionError) {
+          console.error(`Error al eliminar pregunta ${questionToRemove.id}:`, deleteQuestionError);
+          return {
+            success: false,
+            error: `Error al eliminar pregunta: ${deleteQuestionError.message}`,
+          };
+        }
+      }
+    }
+
+    // 5. Preparar arrays para inserción
     const questionInserts: any[] = [];
     const pendingOptionInserts: any[] = [];
 
-    // 5. Procesar cada pregunta
+    // 6. Procesar cada pregunta
     for (const [index, question] of questions.entries()) {
       // Comprobar si la pregunta tiene un ID y existe en la base de datos
       if (question.id && existingQuestions?.some((eq) => eq.id === question.id)) {
         const existingQuestion = existingQuestions.find((eq) => eq.id === question.id);
 
         if (existingQuestion) {
-          // Reactivar la pregunta si estaba inactiva
-          if (!existingQuestion.is_active) {
-            const { error: reactivateError } = await supabase
-              .from('training_questions')
-              .update({ is_active: true })
-              .eq('id', existingQuestion.id);
-
-            if (reactivateError) {
-              console.error(`Error al reactivar pregunta ${existingQuestion.id}:`, reactivateError);
-              return {
-                success: false,
-                error: `Error al reactivar pregunta: ${reactivateError.message}`,
-              };
-            }
-          }
-
-          // Actualizar la pregunta si hay cambios
-          if (existingQuestion.question_text !== question.question) {
+          // Actualizar solo si hay cambios
+          if (
+            existingQuestion.question_text !== question.question ||
+            existingQuestion.order_index !== index ||
+            !existingQuestion.is_active
+          ) {
             const { error: updateError } = await supabase
               .from('training_questions')
               .update({
                 question_text: question.question,
-                points: 1,
+                points: question.points || 1,
                 order_index: index,
+                is_active: true, // Asegurarse que esté activa
               })
               .eq('id', existingQuestion.id);
 
@@ -790,11 +859,11 @@ export const updateTrainingQuestions = async (
       } else {
         // Es una pregunta nueva, la añadimos al array de inserciones
         questionInserts.push({
-          id: crypto.randomUUID(), // Dejamos que la BD genere el UUID
+          id: crypto.randomUUID(),
           training_id: trainingId,
           question_text: question.question,
           question_type: 'multiple_choice',
-          points: 1,
+          points: question.points || 1,
           order_index: index,
           is_active: true,
         });
@@ -808,7 +877,7 @@ export const updateTrainingQuestions = async (
       }
     }
 
-    // 6. Insertar las nuevas preguntas si hay
+    // 7. Insertar las nuevas preguntas si hay
     if (questionInserts.length > 0) {
       const { data: insertedQuestions, error: insertQuestionsError } = await supabase
         .from('training_questions')
@@ -823,7 +892,7 @@ export const updateTrainingQuestions = async (
         };
       }
 
-      // 7. Insertar las opciones de las nuevas preguntas
+      // 8. Insertar las opciones de las nuevas preguntas
       if (insertedQuestions && insertedQuestions.length > 0) {
         for (const pending of pendingOptionInserts) {
           const questionId = insertedQuestions[pending.questionIndex].id;
@@ -849,7 +918,6 @@ export const updateTrainingQuestions = async (
     return { success: false, error: error.message };
   }
 };
-
 /**
  * Actualiza las etiquetas de una capacitación
  */
@@ -1011,7 +1079,7 @@ export const updateTraining = async (
   data: {
     title: string;
     description: string;
-    status: "Borrador" | "Archivado" | "Publicado" | null;
+    status: 'Borrador' | 'Archivado' | 'Publicado' | null;
     passingScore: number;
     materials: Array<{
       id?: string;
@@ -1074,6 +1142,53 @@ export const updateTraining = async (
     return {
       success: false,
       error: `Error al actualizar capacitación: ${error.message}`,
+    };
+  }
+};
+
+/**
+ * Elimina una capacitación y todos sus datos relacionados
+ * Solo permite eliminar capacitaciones en estado "Borrador"
+ */
+export const deleteTraining = async (trainingId: string) => {
+  try {
+    const supabase = supabaseServer();
+
+    // 4. Eliminar materiales
+    const { data: materials, error: materialsError } = await supabase
+      .from('training_materials')
+      .select()
+      .eq('training_id', trainingId);
+
+    if (materialsError) {
+      console.error('Error al eliminar materiales:', materialsError);
+      return { success: false, error: 'Error al eliminar materiales de la capacitación' };
+    }
+
+    const documentsUrl = materials.map((material) => material.file_url);
+    await supabase.storage.from('documents').remove(documentsUrl);
+    await supabase.from('training_materials').delete().eq('training_id', trainingId);
+
+    // 5. Finalmente eliminar la capacitación
+    const { error: deleteError } = await supabase.from('trainings').delete().eq('id', trainingId);
+
+    if (deleteError) {
+      console.error('Error al eliminar capacitación:', deleteError);
+      return { success: false, error: 'Error al eliminar la capacitación' };
+    }
+
+    // Revalidar rutas para actualizar la UI
+    revalidatePath('/dashboard/hse');
+
+    return {
+      success: true,
+      message: 'Capacitación eliminada exitosamente',
+    };
+  } catch (error: any) {
+    console.error('Error inesperado al eliminar capacitación:', error);
+    return {
+      success: false,
+      error: `Error al eliminar capacitación: ${error.message}`,
     };
   }
 };
