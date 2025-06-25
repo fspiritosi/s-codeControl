@@ -23,9 +23,16 @@ export function ReportAnIssue() {
         },
         body: JSON.stringify({
           to: 'info@codecontrol.com.ar',
-          subject: asunto,
+          template: 'help',
           react: descripcion,
           userEmail: emailUser,
+          body: { // Añade un objeto body vacío o con los datos necesarios
+            recurso: 'ayuda',
+            document_name: 'Solicitud de ayuda',
+            company_name: 'CodeControl',
+            resource_name: 'Soporte',
+            document_number: 'AYUDA-' + Date.now()
+          }
         }),
       });
 
