@@ -22,7 +22,8 @@ export function ReportAnIssue() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          to: 'info@codecontrol.com.ar',
+          to: 'diegodac77@gmail.com',
+          subject: 'Solicitud de ayudainfo@codecontrol.com.ar',
           template: 'help',
           react: descripcion,
           userEmail: emailUser,

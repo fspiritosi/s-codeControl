@@ -453,9 +453,13 @@ export function DocumentUploadDialog() {
       if (data.description) {
         formData.append("description", data.description)
       }
+      // Si no hay cargos seleccionados, usamos todos los cargos disponibles
+const selectedPositions = data.typeOfEmployee && data.typeOfEmployee.length > 0
+? data.typeOfEmployee
+: positions.map((p) => p.value)
 
       // ✅ CAMBIO PRINCIPAL: Agregar typeOfEmployee al FormData
-      formData.append("typeOfEmployee", JSON.stringify(data.typeOfEmployee || []))
+      formData.append("typeOfEmployee", JSON.stringify(selectedPositions))
 
       // Ensure we're getting the file from the file input
       const fileInput = fileInputRef.current
