@@ -4,6 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
+  ChevronLeft,
+  ChevronRight,
   Download,
   FileText,
   ImageIcon,
@@ -15,7 +17,7 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react'; // Import useEffect
 
 interface Material {
   type: 'pdf' | 'video' | 'ppt' | 'image';
@@ -27,16 +29,23 @@ interface MaterialViewerProps {
   materials: Material[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialMaterialIndex?: number; // New prop
 }
 
-export function MaterialViewer({ materials, open, onOpenChange }: MaterialViewerProps) {
-  const [currentMaterial, setCurrentMaterial] = useState(0);
+export function MaterialViewer({ materials, open, onOpenChange, initialMaterialIndex = 0 }: MaterialViewerProps) {
+  const [currentMaterial, setCurrentMaterial] = useState(initialMaterialIndex);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [totalPages, setTotalPages] = useState(1); // This would ideally come from PDF viewer library
 
-  console.log(materials);
+  // Reset currentMaterial when dialog opens or materials change
+  useEffect(() => {
+    if (open) {
+      setCurrentMaterial(initialMaterialIndex);
+      setCurrentPage(1); // Reset page when material changes
+    }
+  }, [open, materials, initialMaterialIndex]);
 
   const material = materials[currentMaterial];
 
@@ -62,6 +71,31 @@ export function MaterialViewer({ materials, open, onOpenChange }: MaterialViewer
       case 'pdf':
         return (
           <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <span className="text-sm">
+                  Página {currentPage} de {totalPages}
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
             <iframe
               src={`${material.url}#page=${currentPage}`}
               className="w-full h-[600px] border rounded"
@@ -131,32 +165,47 @@ export function MaterialViewer({ materials, open, onOpenChange }: MaterialViewer
         );
 
       case 'ppt':
-        // Codificar la URL para pasarla al visor de Office Online
-        const encodedUrl = encodeURIComponent(material.url);
-        const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodedUrl}`;
-
         return (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <span className="text-sm">Presentación PowerPoint</span>
+                <span className="text-sm">
+                  Diapositiva {currentPage} de {totalPages}
+                </span>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => window.open(officeViewerUrl, '_blank')}>
-                  <Maximize className="h-4 w-4 mr-2" />
-                  Ver en pantalla completa
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
-            {/* Visor de PowerPoint usando Microsoft Office Online */}
-            <iframe
-              src={officeViewerUrl}
-              className="w-full h-[600px] border rounded"
-              title={material.name}
-              frameBorder="0"
-              allowFullScreen
-            />
-            <p className="text-xs text-muted-foreground text-center">Visor proporcionado por Microsoft Office Online</p>
+            {/* Para PowerPoint, podrías usar Office Online o convertir a imágenes */}
+            <div className="w-full h-[600px] border rounded bg-gray-100 flex items-center justify-center">
+              <div className="text-center space-y-4">
+                <Presentation className="h-16 w-16 text-orange-600 mx-auto" />
+                <div>
+                  <p className="font-medium">Presentación PowerPoint</p>
+                  <p className="text-sm text-muted-foreground">Diapositiva {currentPage}</p>
+                </div>
+                <Button variant="outline" onClick={() => window.open(material.url, '_blank')}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Descargar para ver
+                </Button>
+              </div>
+            </div>
           </div>
         );
 

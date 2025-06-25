@@ -31,19 +31,22 @@ export async function renderEmailTemplate(options: {
   body?: unknown;
 }): Promise<string> {
   if (options.to !== 'info@codecontrol.com.ar' && (!options.body || !isEmailInfo(options.body))) {
-    throw new Error('Invalid email info provided. Required fields: recurso, document_name, company_name, resource_name, document_number');
+    throw new Error(
+      'Invalid email info provided. Required fields: recurso, document_name, company_name, resource_name, document_number'
+    );
   }
 
-  const template = options.to === 'info@codecontrol.com.ar'
-    ? EmailTemplateHelp({ 
-        userEmail: options.userEmail, 
-        reason: options.react 
-      })
-    : EmailTemplate({ 
-        userEmail: options.userEmail, 
-        reason: options.react, 
-        emailInfo: options.body as EmailInfo
-      });
+  const template =
+    options.to === 'info@codecontrol.com.ar'
+      ? EmailTemplateHelp({
+          userEmail: options.userEmail,
+          reason: options.react,
+        })
+      : EmailTemplate({
+          userEmail: options.userEmail,
+          reason: options.react,
+          emailInfo: options.body as EmailInfo,
+        });
 
   // In a client component, we can safely use renderToStaticMarkup
   return renderToStaticMarkup(template);
@@ -51,9 +54,9 @@ export async function renderEmailTemplate(options: {
 
 // Función auxiliar para enviar correos usando Nodemailer a través de la API
 export async function sendEmail(options: {
-  to: string;
+  to: string | string[];
   subject: string;
-  userEmail: string;
+  userEmail?: string;
   react?: string;
   body?: unknown;
   html?: string;
