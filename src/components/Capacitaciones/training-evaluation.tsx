@@ -3,10 +3,11 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ArrowLeft, ArrowRight, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Clock, Plus, Trash, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 interface Question {
@@ -18,21 +19,154 @@ interface Question {
 
 interface EvaluationProps {
   training: any;
-  mode: 'take' | 'review' | 'preview';
+  mode: 'take' | 'review' | 'preview' | 'edit';
   existingAnswers?: number[];
   employeeName?: string;
   attemptNumber?: number;
+  onUpdate?: (questions: Question[], passingScore: number) => void;
 }
 
-export function TrainingEvaluation({ training, mode, existingAnswers, employeeName, attemptNumber }: EvaluationProps) {
+export function TrainingEvaluation({
+  training,
+  mode,
+  existingAnswers,
+  employeeName,
+  attemptNumber,
+  onUpdate,
+}: EvaluationProps) {
+  // Estados para modo normal
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>(
-    existingAnswers || new Array(training.evaluation.questions.length).fill(-1)
+    existingAnswers || new Array(training.evaluation?.questions?.length || 0).fill(-1)
   );
   const [isSubmitted, setIsSubmitted] = useState(mode === 'review' || mode === 'preview');
   const [timeRemaining, setTimeRemaining] = useState(30 * 60); // 30 minutos
 
-  const questions = training.evaluation.questions;
+  // Estados para modo edición
+  const [editableQuestions, setEditableQuestions] = useState<Question[]>(training.evaluation?.questions || []);
+  const [passingScore, setPassingScore] = useState<number>(training.evaluation?.passingScore || 0);
+
+  // Funciones para el modo de edición
+  const handleAddQuestion = () => {
+    if (mode !== 'edit') return;
+
+    const newQuestion: Question = {
+      id: crypto.randomUUID(),
+      question: '',
+      options: ['', ''],
+      correctAnswer: 0,
+    };
+
+    const updatedQuestions = [...editableQuestions, newQuestion];
+    setEditableQuestions(updatedQuestions);
+
+    // Notificar al componente padre de los cambios
+    if (onUpdate) {
+      onUpdate(updatedQuestions, passingScore);
+    }
+  };
+
+  const handleRemoveQuestion = (questionId: string) => {
+    if (mode !== 'edit') return;
+
+    const updatedQuestions = editableQuestions.filter((q) => q.id !== questionId);
+    setEditableQuestions(updatedQuestions);
+
+    if (onUpdate) {
+      onUpdate(updatedQuestions, passingScore);
+    }
+  };
+
+  const handleUpdateQuestion = (
+    questionId: string,
+    field: keyof Question | 'options',
+    value: any,
+    optionIndex?: number
+  ) => {
+    if (mode !== 'edit') return;
+
+    const updatedQuestions = editableQuestions.map((q) => {
+      if (q.id === questionId) {
+        if (field === 'options' && optionIndex !== undefined) {
+          // Actualizar una opción específica
+          const newOptions = [...q.options];
+          newOptions[optionIndex] = value;
+          return { ...q, options: newOptions };
+        } else {
+          // Actualizar cualquier otro campo
+          return { ...q, [field]: value };
+        }
+      }
+      return q;
+    });
+
+    setEditableQuestions(updatedQuestions);
+
+    if (onUpdate) {
+      onUpdate(updatedQuestions, passingScore);
+    }
+  };
+
+  const handleAddOption = (questionId: string) => {
+    if (mode !== 'edit') return;
+
+    const updatedQuestions = editableQuestions.map((q) => {
+      if (q.id === questionId && q.options.length < 6) {
+        return { ...q, options: [...q.options, ''] };
+      }
+      return q;
+    });
+
+    setEditableQuestions(updatedQuestions);
+
+    if (onUpdate) {
+      onUpdate(updatedQuestions, passingScore);
+    }
+  };
+
+  const handleRemoveOption = (questionId: string, optionIndex: number) => {
+    if (mode !== 'edit') return;
+
+    const updatedQuestions = editableQuestions.map((q) => {
+      if (q.id === questionId && q.options.length > 2) {
+        const newOptions = q.options.filter((_, idx) => idx !== optionIndex);
+
+        // Ajustar la respuesta correcta si es necesario
+        let newCorrectAnswer = q.correctAnswer;
+        if (optionIndex === q.correctAnswer) {
+          newCorrectAnswer = 0; // Si se elimina la respuesta correcta, establecemos la primera opción como correcta
+        } else if (optionIndex < q.correctAnswer) {
+          newCorrectAnswer -= 1; // Si se elimina una opción antes de la respuesta correcta, ajustamos el índice
+        }
+
+        return {
+          ...q,
+          options: newOptions,
+          correctAnswer: newCorrectAnswer,
+        };
+      }
+      return q;
+    });
+
+    setEditableQuestions(updatedQuestions);
+
+    if (onUpdate) {
+      onUpdate(updatedQuestions, passingScore);
+    }
+  };
+
+  const handleUpdatePassingScore = (score: number) => {
+    if (mode !== 'edit') return;
+
+    const validScore = Math.min(Math.max(0, score), editableQuestions.length);
+    setPassingScore(validScore);
+
+    if (onUpdate) {
+      onUpdate(editableQuestions, validScore);
+    }
+  };
+
+  const questions = mode === 'edit' ? editableQuestions : training.evaluation?.questions || [];
 
   const handleAnswerChange = (questionIndex: number, answerIndex: number) => {
     if (mode === 'review' || mode === 'preview') return;
@@ -50,7 +184,7 @@ export function TrainingEvaluation({ training, mode, existingAnswers, employeeNa
   const calculateScore = () => {
     let correct = 0;
     answers.forEach((answer, index) => {
-      if (answer === questions[index].correctAnswer) {
+      if (answer === questions[index]?.correctAnswer) {
         correct++;
       }
     });
@@ -66,6 +200,125 @@ export function TrainingEvaluation({ training, mode, existingAnswers, employeeNa
   const progress = ((currentQuestion + 1) / questions.length) * 100;
   const score = calculateScore();
   const passed = score >= (training?.evaluation?.passingScore || 0);
+
+  // Renderizado especial para el modo edit
+  if (mode === 'edit') {
+    return (
+      <div className="space-y-6">
+        {/* Config section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Configuración de evaluación</CardTitle>
+            <CardDescription>Establece el puntaje mínimo para aprobar</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <Label htmlFor="passing-score">Respuestas correctas para aprobar:</Label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  type="number"
+                  id="passing-score"
+                  min="0"
+                  max={editableQuestions.length + 1}
+                  value={passingScore}
+                  onChange={(e) => handleUpdatePassingScore(parseInt(e.target.value) || 0)}
+                  className="w-20"
+                />
+                <span className="text-sm text-muted-foreground">de {editableQuestions.length}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Questions section */}
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-medium">Preguntas</h3>
+            <Button onClick={handleAddQuestion} size="sm">
+              <Plus className="h-4 w-4 mr-2" /> Agregar Pregunta
+            </Button>
+          </div>
+
+          {editableQuestions.length > 0 ? (
+            <div className="space-y-4">
+              {editableQuestions.map((question, qIndex) => (
+                <Card key={question.id} className="border-l-4 border-l-blue-500">
+                  <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="mr-2">
+                          {qIndex + 1}
+                        </Badge>
+                        <Input
+                          value={question.question}
+                          onChange={(e) => handleUpdateQuestion(question.id, 'question', e.target.value)}
+                          placeholder="Escribe la pregunta"
+                          className="font-medium"
+                        />
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => handleRemoveQuestion(question.id)}>
+                      <Trash className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="space-y-4 pt-0">
+                    <div className="space-y-2">
+                      <Label>Opciones</Label>
+                      <RadioGroup
+                        value={question.correctAnswer.toString()}
+                        onValueChange={(value) => handleUpdateQuestion(question.id, 'correctAnswer', parseInt(value))}
+                      >
+                        {question.options.map((option, oIndex) => (
+                          <div key={oIndex} className="flex items-center space-x-2">
+                            <RadioGroupItem value={oIndex.toString()} id={`q${question.id}-option-${oIndex}`} />
+                            <Input
+                              value={option}
+                              onChange={(e) => handleUpdateQuestion(question.id, 'options', e.target.value, oIndex)}
+                              placeholder={`Opción ${oIndex + 1}`}
+                              className="flex-1"
+                            />
+                            {question.options.length > 2 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                type="button"
+                                onClick={() => handleRemoveOption(question.id, oIndex)}
+                              >
+                                <Trash className="h-3 w-3 text-red-500" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                      </RadioGroup>
+                      {question.options.length < 6 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddOption(question.id)}
+                          className="w-full mt-2"
+                        >
+                          <Plus className="h-4 w-4 mr-2" /> Agregar Opción
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-8">
+                <p className="text-muted-foreground mb-4">No hay preguntas aún.</p>
+                <Button onClick={handleAddQuestion}>
+                  <Plus className="h-4 w-4 mr-2" /> Agregar Primera Pregunta
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (isSubmitted) {
     return (

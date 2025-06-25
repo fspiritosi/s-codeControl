@@ -1,15 +1,13 @@
+import { fetchTrainings } from '@/components/Capacitaciones/actions/actions';
 import { TrainingCreateDialog } from '@/components/Capacitaciones/training-create-dialog';
-import { TrainingSection } from '@/components/Capacitaciones/training-section';
-import { DocumentUploadDialog } from '@/features/Hse/components/Document-upload-dialog';
-import { DocumentsSection } from '@/features/Hse/components/Document-section';
+import TrainingSection from '@/components/Capacitaciones/training-section';
 import Viewcomponent from '@/components/ViewComponent';
-import { cookies } from 'next/headers';
-import {getDocuments} from '@/features/Hse/actions/documents'
+import { DocumentsSection } from '@/features/Hse/components/Document-section';
+import { DocumentUploadDialog } from '@/features/Hse/components/Document-upload-dialog';
+
 async function HSEPage() {
-  const cookieStore = cookies()
-  const company_id = cookieStore.get('actualComp')?.value
-  const documents = await getDocuments(company_id || "")
-  
+  // Obtener los datos de capacitaciones desde la base de datos
+  const trainingsResult = await fetchTrainings();
   const viewData = {
     defaultValue: 'trainingsTable',
     tabsValues: [
@@ -22,7 +20,7 @@ async function HSEPage() {
           description: 'Aquí encontrarás todas las capacitaciones',
           buttonActioRestricted: [''],
           buttonAction: <TrainingCreateDialog />,
-          component: <TrainingSection />,
+          component: <TrainingSection trainings={trainingsResult} />,
         },
       },
       {
@@ -33,7 +31,7 @@ async function HSEPage() {
           title: 'Ver documentos',
           description: 'Aquí encontrarás todos los documentos',
           buttonActioRestricted: [''],
-          buttonAction: <DocumentUploadDialog/>,
+          buttonAction: <DocumentUploadDialog />,
           component: <DocumentsSection />,
         },
       },
