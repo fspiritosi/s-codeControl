@@ -463,15 +463,15 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
         recurso: document.category?.name || 'Documento',
         document_name: document.title,
         company_name: company?.company_name || 'Empresa',
-        resource_name: document.resource?.name || 'Recurso',
+        resource_name: employee.name,  // Usar el nombre del empleado
         document_number: document.documentNumber || 'N/A',
         companyConfig: {
           name: company?.company_name || 'Empresa',
           logo: company?.company_logo || 'https://via.placeholder.com/200x60/667eea/ffffff?text=LOGO',
           website: company?.website || 'https://tuempresa.com',
           supportEmail: company?.contact_email || 'soporte@tuempresa.com',
-          primaryColor: '#667eea',  // Color primario por defecto
-          secondaryColor: '#764ba2' // Color secundario por defecto
+          primaryColor: '#667eea',
+          secondaryColor: '#764ba2'
         }
       };
 
@@ -630,7 +630,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" onClick={() => router.back()}>
@@ -644,7 +644,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
         </div>
       </header>
 
-      <div className="container mx-auto py-6 space-y-8">
+      <div className="w-full pl-6 pr-4 py-6 space-y-8">
         {/* Document Header */}
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div>

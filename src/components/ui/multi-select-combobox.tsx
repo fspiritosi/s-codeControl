@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, CheckSquare, ChevronsUpDown, Square } from 'lucide-react';
 import * as React from 'react';
 import { CardDescription } from './card';
 
@@ -94,9 +94,9 @@ export function MultiSelectCombobox({
                 onClick={handleSelectAll}
               >
                 {selectableOptions.every((option) => selectedValues.includes(option.value)) ? (
-                  <Check className="h-4 w-4" />
+                  <CheckSquare className="h-4 w-4" />
                 ) : (
-                  <div className="w-4" />
+                  <Square className="h-4 w-4" />
                 )}
                 <span>Seleccionar todos</span>
               </div>
@@ -109,9 +109,11 @@ export function MultiSelectCombobox({
                 key={option.value}
                 onSelect={() => handleSelect(option.value)}
               >
-                <Check
-                  className={cn('mr-2 h-4 w-4', selectedValues?.includes(option.value) ? 'opacity-100' : 'opacity-0')}
-                />
+                {selectedValues.includes(option.value) ? (
+                  <CheckSquare className="mr-2 h-4 w-4" />
+                ) : (
+                  <Square className="mr-2 h-4 w-4" />
+                )}
                 {option.label}
               </CommandItem>
             ))}
