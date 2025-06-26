@@ -3,7 +3,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { useState } from 'react';
 import { fetchAllTags } from '../../actions/actions';
 import TagForm from './tagForm';
-import AreaTable from './tagTable';
+import TagTable from './tagTable';
 
 function TagTab({ tags }: { tags: Awaited<ReturnType<typeof fetchAllTags>> }) {
   const [selectedTag, setSelectedTag] = useState<Awaited<ReturnType<typeof fetchAllTags>>[number] | null>(null);
@@ -23,13 +23,7 @@ function TagTab({ tags }: { tags: Awaited<ReturnType<typeof fetchAllTags>> }) {
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={60}>
-          <AreaTable
-            tags={tags}
-            selectedTag={selectedTag}
-            setSelectedTag={setSelectedTag}
-            setMode={setMode}
-            mode={mode}
-          />
+          <TagTable tags={tags} selectedTag={selectedTag} setSelectedTag={setSelectedTag} setMode={setMode} />
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>

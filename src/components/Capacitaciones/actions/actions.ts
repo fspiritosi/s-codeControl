@@ -221,7 +221,7 @@ export const addTrainingTags = async (trainingId: string, tagIds: string[]) => {
 export const fetchTrainingTags = async () => {
   try {
     const supabase = supabaseServer();
-    const { data, error } = await supabase.from('training_tags').select('*');
+    const { data, error } = await supabase.from('training_tags').select('*').eq('is_active', true);
 
     if (error) {
       console.error('Error al obtener etiquetas:', error);
@@ -235,12 +235,12 @@ export const fetchTrainingTags = async () => {
   }
 };
 
-export const updateTag = async (dataToUpdate: { id: string; name: string; color: string }) => {
+export const updateTag = async (dataToUpdate: { id: string; name: string; color: string; is_active: boolean }) => {
   try {
     const supabase = supabaseServer();
     const { data, error } = await supabase
       .from('training_tags')
-      .update({ name: dataToUpdate.name, color: dataToUpdate.color })
+      .update({ name: dataToUpdate.name, color: dataToUpdate.color, is_active: dataToUpdate.is_active })
       .eq('id', dataToUpdate.id);
 
     if (error) {

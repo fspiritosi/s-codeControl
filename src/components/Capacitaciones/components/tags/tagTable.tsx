@@ -37,6 +37,16 @@ export function getTagColums(handleEdit: (tag: Area) => void): ColumnDef<Area>[]
       },
     },
     {
+      accessorKey: 'is_active',
+      id: 'Activo',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Activo" />,
+      cell: ({ row }) => <>{row.original.is_active ? 'Sí' : 'No'}</>,
+      filterFn: (row, id, value) => {
+        const isActive = row.getValue(id) === true;
+        return value.includes(isActive ? 'Sí' : 'No');
+      },
+    },
+    {
       accessorKey: 'actions',
       id: 'Acciones',
       header: ({ column }) => <DataTableColumnHeader column={column} title="Acciones" />,
@@ -57,9 +67,15 @@ export function getTagColums(handleEdit: (tag: Area) => void): ColumnDef<Area>[]
   ];
 }
 
-function AreaTable({ tags, selectedTag, setSelectedTag, setMode }: AreaTableProp) {
+interface TagTableProp {
+  tags: Area[];
+  selectedTag: Area | null;
+  setSelectedTag: (tag: Area | null) => void;
+  setMode: (mode: 'create' | 'edit') => void;
+}
+function TagTable({ tags, selectedTag, setSelectedTag, setMode }: TagTableProp) {
   const cookies = Cookies.get('areaTable');
-  const handleEdit = (tag: AreaTableProp['tags'][number]) => {
+  const handleEdit = (tag: TagTableProp['tags'][number]) => {
     setSelectedTag(tag);
     setMode('edit');
   };
@@ -68,18 +84,19 @@ function AreaTable({ tags, selectedTag, setSelectedTag, setMode }: AreaTableProp
 
   const names = createFilterOptions(tags, (tag) => tag.name);
   const colors = createFilterOptions(tags, (tag) => tag.color || '');
+  const isActive = createFilterOptions(tags, (tag) => (tag.is_active ? 'Sí' : 'No'));
 
   return (
     <div className="flex flex-col gap-4 p-4 pt-0">
-      <h2 className="text-xl font-bold ">Areas</h2>
+      <h2 className="text-xl font-bold ">Etiquetas</h2>
 
       <BaseDataTable
         columns={getTagColums(handleEdit)}
         data={tags}
         savedVisibility={savedVisibility}
-        tableId="areaTable"
+        tableId="tagTable"
         toolbarOptions={{
-          initialVisibleFilters: [],
+          initialVisibleFilters: ['Nombre', 'Color', 'Activo'],
           filterableColumns: [
             {
               columnId: 'Nombre',
@@ -91,6 +108,11 @@ function AreaTable({ tags, selectedTag, setSelectedTag, setMode }: AreaTableProp
               title: 'Color',
               options: colors,
             },
+            {
+              columnId: 'Activo',
+              title: 'Activo',
+              options: isActive,
+            },
           ],
         }}
       />
@@ -98,4 +120,4 @@ function AreaTable({ tags, selectedTag, setSelectedTag, setMode }: AreaTableProp
   );
 }
 
-export default AreaTable;
+export default TagTable;

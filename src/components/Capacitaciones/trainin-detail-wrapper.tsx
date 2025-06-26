@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Edit, Loader2, Save, Tag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react'; // Importa useEffect
 import {
   Area,
   AreaChart,
@@ -31,7 +31,7 @@ import {
   YAxis,
 } from 'recharts';
 import { toast } from 'sonner';
-import { fetchAllTags, fetchTrainingById, updateTrainingEvaluation } from './actions/actions';
+import { updateTrainingEvaluation, type fetchAllTags, type fetchTrainingById } from './actions/actions';
 import EmployeesTab from './components/EmployeesTab';
 import MaterialsTab from './components/MaterialsTab';
 import OverviewTab from './components/OverviewTab';
@@ -56,6 +56,20 @@ export default function TrainingDetail({
   const [hasChanges, setHasChanges] = useState(false);
   const [originalQuestions, setOriginalQuestions] = useState(JSON.stringify(training?.evaluation?.questions || []));
   const [originalScore, setOriginalScore] = useState(training?.evaluation?.passingScore || 0);
+
+  // Nuevo: useEffect para actualizar el estado original cuando la prop 'training' cambia
+  useEffect(() => {
+    if (training?.evaluation) {
+      const currentTrainingQuestions = training.evaluation.questions || [];
+      const currentTrainingPassingScore = training.evaluation.passingScore || 0;
+
+      setEvaluationQuestions(currentTrainingQuestions);
+      setPassingScore(currentTrainingPassingScore);
+      setOriginalQuestions(JSON.stringify(currentTrainingQuestions));
+      setOriginalScore(currentTrainingPassingScore);
+      setHasChanges(false); // Reinicia hasChanges cuando la prop training se actualiza
+    }
+  }, [training?.evaluation?.questions, training?.evaluation]); // Depende de los datos de evaluación
 
   // Función para manejar actualizaciones de la evaluación
   const handleEvaluationUpdate = (questions: any[], score: number) => {
@@ -103,19 +117,15 @@ export default function TrainingDetail({
       const result = await updateTrainingEvaluation(training.id, evaluationData);
 
       if (result.success) {
-        // La API puede devolver diferentes formatos de respuesta exitosa
         toast.success('Evaluación guardada correctamente');
-        // Actualizar estado original
-        setOriginalQuestions(JSON.stringify(evaluationQuestions));
-        setOriginalScore(passingScore);
-        setHasChanges(false);
-        // Recargar los datos para mostrar la versión actualizada
+        // El useEffect se encargará de actualizar originalQuestions, originalScore y hasChanges
+        // después de que router.refresh() cause que la prop training se actualice.
+        router.refresh(); // Esto hará que el componente se vuelva a renderizar con datos frescos
       } else {
         // Manejar caso de error
         const errorMessage = 'error' in result ? result.error : 'Error desconocido';
         throw new Error(errorMessage);
       }
-      router.refresh();
     } catch (error: any) {
       console.error('Error al guardar la evaluación:', error);
       toast.error(`Error al guardar la evaluación: ${error.message || 'Intente nuevamente'}`);
@@ -126,10 +136,6 @@ export default function TrainingDetail({
   if (!training) {
     return;
   }
-
-  // Combinar empleados completados y pendientes para filtrado
-
-  // console.log(formData);
 
   return (
     <Card className="mx-7">

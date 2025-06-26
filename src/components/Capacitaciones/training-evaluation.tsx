@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ArrowLeft, ArrowRight, CheckCircle, Clock, Plus, Trash, XCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react'; // Asegúrate de importar useEffect
 
 interface Question {
   id: string;
@@ -45,6 +45,14 @@ export function TrainingEvaluation({
   // Estados para modo edición
   const [editableQuestions, setEditableQuestions] = useState<Question[]>(training.evaluation?.questions || []);
   const [passingScore, setPassingScore] = useState<number>(training.evaluation?.passingScore || 0);
+
+  // NUEVO: useEffect para sincronizar los estados editables con las props cuando está en modo edición
+  useEffect(() => {
+    if (mode === 'edit' && training?.evaluation) {
+      setEditableQuestions(training.evaluation.questions || []);
+      setPassingScore(training.evaluation.passingScore || 0);
+    }
+  }, [training?.evaluation, mode]); // Dependencias para re-ejecutar el efecto
 
   // Funciones para el modo de edición
   const handleAddQuestion = () => {
@@ -221,7 +229,7 @@ export function TrainingEvaluation({
                   min="0"
                   max={editableQuestions.length + 1}
                   value={passingScore}
-                  onChange={(e) => handleUpdatePassingScore(parseInt(e.target.value) || 0)}
+                  onChange={(e) => handleUpdatePassingScore(Number.parseInt(e.target.value) || 0)}
                   className="w-20"
                 />
                 <span className="text-sm text-muted-foreground">de {editableQuestions.length}</span>
@@ -232,12 +240,7 @@ export function TrainingEvaluation({
 
         {/* Questions section */}
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium">Preguntas</h3>
-            <Button onClick={handleAddQuestion} size="sm">
-              <Plus className="h-4 w-4 mr-2" /> Agregar Pregunta
-            </Button>
-          </div>
+          <h3 className="text-lg font-medium">Preguntas</h3>
 
           {editableQuestions.length > 0 ? (
             <div className="space-y-4">
@@ -266,7 +269,9 @@ export function TrainingEvaluation({
                       <Label>Opciones</Label>
                       <RadioGroup
                         value={question.correctAnswer.toString()}
-                        onValueChange={(value) => handleUpdateQuestion(question.id, 'correctAnswer', parseInt(value))}
+                        onValueChange={(value) =>
+                          handleUpdateQuestion(question.id, 'correctAnswer', Number.parseInt(value))
+                        }
                       >
                         {question.options.map((option, oIndex) => (
                           <div key={oIndex} className="flex items-center space-x-2">
@@ -304,6 +309,10 @@ export function TrainingEvaluation({
                   </CardContent>
                 </Card>
               ))}
+              {/* Botón "Agregar Pregunta" movido al final de la lista */}
+              <Button onClick={handleAddQuestion} size="sm" className="w-full">
+                <Plus className="h-4 w-4 mr-2" /> Agregar Nueva Pregunta
+              </Button>
             </div>
           ) : (
             <Card>

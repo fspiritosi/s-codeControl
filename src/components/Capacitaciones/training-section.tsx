@@ -25,6 +25,8 @@ import {
   GraduationCap,
   Presentation,
   RefreshCcw,
+  SortAsc,
+  SortDesc,
   Tag,
   Trash2,
   Users,
@@ -32,8 +34,9 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { deleteTraining, fetchAllTags, fetchTrainings } from './actions/actions';
+import { deleteTraining, type fetchAllTags, type fetchTrainings } from './actions/actions';
 import TagTab from './components/tags/TagTab';
+
 interface TrainingMaterial {
   type: string;
   name: string;
@@ -54,6 +57,8 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [tagFilter, setTagFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('createdDate'); // 'createdDate', 'title', 'status'
+  const [sortOrder, setSortOrder] = useState<string>('desc'); // 'asc', 'desc'
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [trainingToDelete, setTrainingToDelete] = useState<string | null>(null);
@@ -107,20 +112,36 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
     }
   };
 
-  // Filter trainings based on search term, tag and status
-  const filteredTrainings = trainings.filter((training) => {
-    const matchesSearch =
-      training.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      training.description.toLowerCase().includes(searchTerm.toLowerCase());
+  // Filter and sort trainings
+  const filteredAndSortedTrainings = [...trainings]
+    .filter((training) => {
+      const matchesSearch =
+        training.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        training.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesTag = tagFilter === 'all' || (training.tags || []).some((tag) => tag?.id === tagFilter);
+      const matchesTag = tagFilter === 'all' || (training.tags || []).some((tag) => tag?.id === tagFilter);
 
-    const matchesStatus = statusFilter === 'all' || training.status === statusFilter;
+      const matchesStatus = statusFilter === 'all' || training.status === statusFilter;
 
-    return matchesSearch && matchesTag && matchesStatus;
-  });
+      return matchesSearch && matchesTag && matchesStatus;
+    })
+    .sort((a, b) => {
+      let compareValue = 0;
 
-  console.log(filteredTrainings);
+      if (sortBy === 'createdDate') {
+        const dateA = new Date(a.createdDate).getTime();
+        const dateB = new Date(b.createdDate).getTime();
+        compareValue = dateA - dateB;
+      } else if (sortBy === 'title') {
+        compareValue = a.title.localeCompare(b.title);
+      } else if (sortBy === 'status') {
+        // Define a custom order for status if needed, e.g., 'Publicado' before 'Borrador'
+        const statusOrder: { [key: string]: number } = { Publicado: 1, Borrador: 2 };
+        compareValue = statusOrder[a.status] - statusOrder[b.status];
+      }
+
+      return sortOrder === 'asc' ? compareValue : -compareValue;
+    });
 
   const getMaterialIcon = (type: string) => {
     switch (type) {
@@ -162,18 +183,63 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
                 <SelectContent>
                   <SelectItem value="all">Todas las etiquetas</SelectItem>
                   {allTags.map((tag) => (
-                    <SelectItem key={tag.id} value={tag.name}>
+                    <SelectItem key={tag.id} value={tag.id}>
+                      {' '}
+                      {/* Changed value to tag.id */}
                       {tag.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+            <div className="w-full md:w-[200px]">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filtrar por estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  <SelectItem value="Publicado">Publicado</SelectItem>
+                  <SelectItem value="Borrador">Borrador</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-full md:w-[200px]">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Ordenar por" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="createdDate">Fecha de Creación</SelectItem>
+                  <SelectItem value="title">Título</SelectItem>
+                  <SelectItem value="status">Estado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-full md:w-[100px]">
+              <Select value={sortOrder} onValueChange={setSortOrder}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Orden" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="asc">
+                    <div className="flex items-center gap-2">
+                      <SortAsc className="h-4 w-4" /> Ascendente
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="desc">
+                    <div className="flex items-center gap-2">
+                      <SortDesc className="h-4 w-4" /> Descendente
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-            {filteredTrainings.length > 0 ? (
-              filteredTrainings.map((training) => (
+            {filteredAndSortedTrainings.length > 0 ? (
+              filteredAndSortedTrainings.map((training) => (
                 <Card key={training.id} className="hover:shadow-md transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
@@ -186,7 +252,6 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
                     <CardDescription className="line-clamp-2">{training.description}</CardDescription>
                     <div className="flex flex-wrap gap-1 mt-2">
                       {training.tags.map((tag, index: number) => {
-                        console.log(tag);
                         return (
                           <Badge
                             key={index}
@@ -304,6 +369,8 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
                       setSearchTerm('');
                       setTagFilter('all');
                       setStatusFilter('all');
+                      setSortBy('createdDate');
+                      setSortOrder('desc');
                     }}
                   >
                     <RefreshCcw className="h-4 w-4 mr-2" />

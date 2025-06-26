@@ -1661,6 +1661,239 @@ export type Database = {
           },
         ]
       }
+      hse_document_assignment_versions: {
+        Row: {
+          accepted_at: string | null
+          assignee_id: string
+          assignment_id: string
+          created_at: string
+          declined_at: string | null
+          declined_reason: string | null
+          document_version_id: string
+          id: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          assignee_id: string
+          assignment_id: string
+          created_at?: string
+          declined_at?: string | null
+          declined_reason?: string | null
+          document_version_id: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          assignee_id?: string
+          assignment_id?: string
+          created_at?: string
+          declined_at?: string | null
+          declined_reason?: string | null
+          document_version_id?: string
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_assignment"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "hse_document_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_document_version"
+            columns: ["document_version_id"]
+            isOneToOne: false
+            referencedRelation: "hse_document_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_employee"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hse_document_assignments: {
+        Row: {
+          accepted_at: string | null
+          assigned_at: string
+          assigned_by: string
+          assignee_id: string | null
+          assignee_type: string
+          declined_at: string | null
+          declined_reason: string | null
+          document_id: string
+          id: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          assigned_at?: string
+          assigned_by: string
+          assignee_id?: string | null
+          assignee_type: string
+          declined_at?: string | null
+          declined_reason?: string | null
+          document_id: string
+          id?: string
+          status: string
+        }
+        Update: {
+          accepted_at?: string | null
+          assigned_at?: string
+          assigned_by?: string
+          assignee_id?: string | null
+          assignee_type?: string
+          declined_at?: string | null
+          declined_reason?: string | null
+          document_id?: string
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hse_document_assignments_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hse_document_assignments_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "hse_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hse_document_versions: {
+        Row: {
+          change_log: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          document_id: string
+          expiry_date: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          status: string | null
+          title: string | null
+          version: string
+        }
+        Insert: {
+          change_log?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          document_id: string
+          expiry_date?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          status?: string | null
+          title?: string | null
+          version: string
+        }
+        Update: {
+          change_log?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          document_id?: string
+          expiry_date?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          status?: string | null
+          title?: string | null
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hse_document_versions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "hse_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hse_documents: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          expiry_date: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          status: string
+          title: string
+          updated_at: string
+          upload_date: string
+          version: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          expiry_date?: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          status: string
+          title: string
+          updated_at?: string
+          upload_date?: string
+          version: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          expiry_date?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          upload_date?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hse_documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       industry_type: {
         Row: {
           created_at: string
@@ -2031,6 +2264,45 @@ export type Database = {
           intern?: boolean | null
           is_active?: boolean | null
           name?: string
+        }
+        Relationships: []
+      }
+      sent_emails: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          recipient: string | null
+          sent_at: string | null
+          status: string
+          subject: string
+          template_name: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          recipient?: string | null
+          sent_at?: string | null
+          status: string
+          subject: string
+          template_name?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          recipient?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          template_name?: string | null
         }
         Relationships: []
       }
@@ -2490,18 +2762,21 @@ export type Database = {
           color: string | null
           created_at: string | null
           id: string
+          is_active: boolean
           name: string
         }
         Insert: {
           color?: string | null
           created_at?: string | null
           id?: string
+          is_active?: boolean
           name: string
         }
         Update: {
           color?: string | null
           created_at?: string | null
           id?: string
+          is_active?: boolean
           name?: string
         }
         Relationships: []
