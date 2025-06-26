@@ -54,7 +54,7 @@ export async function sendEmail(options: EmailOptions) {
       if (template === 'document' && body) {
         emailHtml = renderDocumentEmailTemplate(userEmail, body as any);
       } else if (template === 'help') {
-        emailHtml = renderHelpEmailTemplate(userEmail, body as any, reason || '');
+        emailHtml = renderHelpEmailTemplate({userEmail, reason, body:body as any});
       }
     }
     

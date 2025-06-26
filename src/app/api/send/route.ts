@@ -62,7 +62,11 @@ export async function POST(request: Request) {
       
       if (react === 'help') {
         // Plantilla de ayuda - usamos 'reason' si está disponible, si no, usamos un string vacío
-        emailHtml = renderHelpEmailTemplate(userEmail, body as any, requestData.reason || '');
+        emailHtml = renderHelpEmailTemplate({ 
+          userEmail, 
+          reason: requestData.reason || '',
+          body: body as any 
+        });
       } else {
         // Plantilla de documento - pasamos el body completo
         

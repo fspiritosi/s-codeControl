@@ -773,6 +773,12 @@ interface EmailInfo {
   companyConfig?: CompanyConfig // Opcional para mantener compatibilidad
 }
 
+interface HelpEmailOptions {
+  userEmail: string;
+  reason?: string;
+  body?: any; // o un tipo más específico según lo que necesites
+}
+
 // Configuración por defecto
 const DEFAULT_COMPANY_CONFIG: CompanyConfig = {
   name: "Tu Empresa S.A.",
@@ -897,8 +903,16 @@ function getBasicStyles(primaryColor: string): string {
 }
 
 // ✅ FUNCIÓN 1: renderHelpEmailTemplate - NOMBRE EXACTO
-export function renderHelpEmailTemplate(userEmail: string, reason?: string): string {
-  const companyConfig = DEFAULT_COMPANY_CONFIG
+export function renderHelpEmailTemplate({ userEmail, reason, body }: HelpEmailOptions): string {
+  const companyConfig = {
+    ...DEFAULT_COMPANY_CONFIG,
+    ...(body?.company_name && { name: body.company_name }),
+    ...(body?.companyConfig?.logo && { logo: body.companyConfig.logo }),
+    ...(body?.companyConfig?.website && { website: body.companyConfig.website }),
+    ...(body?.companyConfig?.supportEmail && { supportEmail: body.companyConfig.supportEmail }),
+    ...(body?.companyConfig?.primaryColor && { primaryColor: body.companyConfig.primaryColor }),
+    ...(body?.companyConfig?.secondaryColor && { secondaryColor: body.companyConfig.secondaryColor })
+  };
   const timestamp = new Date().toLocaleString("es-ES", {
     year: "numeric",
     month: "long",

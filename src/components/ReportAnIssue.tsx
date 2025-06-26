@@ -69,7 +69,6 @@ export function ReportAnIssue() {
           }
         })
       });
-  
       if (!response.ok) {
         throw new Error('Error al enviar la solicitud');
       }

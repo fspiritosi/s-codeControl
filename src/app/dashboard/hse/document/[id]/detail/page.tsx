@@ -112,7 +112,10 @@ interface Filter {
 function getEmployeeColums(
   handleEdit: (employee: EmployeeTableProp['employees'][number]) => void,
   handleSendReminders: (employee: EmployeeTableProp['employees'][number]) => void,
-  employeesWithDocuments: Employee[]
+  employeesWithDocuments: Employee[],
+  sendingReminderFor: string | null,
+  isSendingReminders: boolean,
+  setSendingReminderFor: (id: string | null) => void
 ):ColumnDef<Employee>[] {
   return [
     {
@@ -175,14 +178,32 @@ function getEmployeeColums(
           handleEdit((row.original as any).area_full);
         };
         return status === 'accepted' ? null : (
-          <Button size="sm" variant="link" className="hover:text-blue-400" onClick={() => {
-            const employee = employeesWithDocuments.find(e => e.id === row.original.id);
-            if (employee) {
-              handleSendReminders(employee);
-            }
-          }}>
-            Enviar recordatorio
-          </Button>
+          <Button 
+  size="sm" 
+  variant="outline" 
+  className="hover:text-blue-400" 
+  onClick={async () => {
+    const employee = employeesWithDocuments.find(e => e.id === row.original.id);
+    if (employee) {
+      setSendingReminderFor(employee.id);
+      try {
+        await handleSendReminders(employee);
+      } finally {
+        setSendingReminderFor(null);
+      }
+    }
+  }}
+  disabled={!!sendingReminderFor || isSendingReminders}
+>
+  {sendingReminderFor === row.original.id ? (
+    <div className="flex items-center gap-2">
+      <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+      Enviando...
+    </div>
+  ) : (
+    "Enviar recordatorio"
+  )}
+</Button>
         );
       },
     },
@@ -217,6 +238,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
   const [mode, setMode] = useState<string>('');
   const [employeesWithDocuments, setEmployeesWithDocuments] = useState<EmployeeWithDocuments[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
+  const [sendingReminderFor, setSendingReminderFor] = useState<string | null>(null);
   // const [savedFilters, setSavedFilters] = useState<Filter[]>([]);
   // const cookies = cookies()
   // const userId = cookies['userId']
@@ -820,7 +842,14 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
                 <div className="rounded-md border p-2">
                 <BaseDataTable
                   data={formattedEmployees}
-                  columns={getEmployeeColums(handleEdit, handleSendReminders, employeesWithDocuments)}
+                  columns={getEmployeeColums(
+                    handleEdit,
+                    handleSendReminders,
+                    employeesWithDocuments,
+                    sendingReminderFor,
+                    isSendingReminders,
+                    setSendingReminderFor,
+                  )}
                   savedVisibility={savedVisibility}
                   tableId="employeeTable"
                   toolbarOptions={{
