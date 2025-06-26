@@ -99,7 +99,6 @@ interface Employee {
     assignedAt?: string;
   }>;
 }
-const [company, setCompany] = useState(null);
 
 interface EmployeeWithDocuments extends Employee {}
  
