@@ -1,4 +1,4 @@
-import { fetchTrainings } from '@/components/Capacitaciones/actions/actions';
+import { fetchAllTags, fetchTrainings } from '@/components/Capacitaciones/actions/actions';
 import { TrainingCreateDialog } from '@/components/Capacitaciones/training-create-dialog';
 import TrainingSection from '@/components/Capacitaciones/training-section';
 import Viewcomponent from '@/components/ViewComponent';
@@ -8,6 +8,7 @@ import { DocumentUploadDialog } from '@/features/Hse/components/Document-upload-
 async function HSEPage() {
   // Obtener los datos de capacitaciones desde la base de datos
   const trainingsResult = await fetchTrainings();
+  const tagsResult = await fetchAllTags();
   const viewData = {
     defaultValue: 'trainingsTable',
     tabsValues: [
@@ -20,7 +21,7 @@ async function HSEPage() {
           description: 'Aquí encontrarás todas las capacitaciones',
           buttonActioRestricted: [''],
           buttonAction: <TrainingCreateDialog />,
-          component: <TrainingSection trainings={trainingsResult} />,
+          component: <TrainingSection trainings={trainingsResult} allTags={tagsResult} />,
         },
       },
       {

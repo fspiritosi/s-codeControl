@@ -1,12 +1,13 @@
+import { fetchAllTags, fetchTrainingById } from '@/components/Capacitaciones/actions/actions';
 import TrainingDetail from '@/components/Capacitaciones/trainin-detail-wrapper';
-import { fetchTrainingById } from '@/components/Capacitaciones/actions/actions';
 
 export default async function TrainingDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
-  
+
   try {
     const training = await fetchTrainingById(id);
-    
+    const allTags = await fetchAllTags();
+
     if (!training) {
       // Si no se encuentra la capacitación, muestra un mensaje de error
       return (
@@ -16,10 +17,8 @@ export default async function TrainingDetailPage({ params }: { params: { id: str
         </div>
       );
     }
-    
-    console.log('Training data fetched:', training.id);
-    return <TrainingDetail training={training} />;
-    
+
+    return <TrainingDetail allTags={allTags} training={training} />;
   } catch (error) {
     console.error('Error fetching training:', error);
     return (

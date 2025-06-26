@@ -235,9 +235,64 @@ export const fetchTrainingTags = async () => {
   }
 };
 
+export const updateTag = async (dataToUpdate: { id: string; name: string; color: string }) => {
+  try {
+    const supabase = supabaseServer();
+    const { data, error } = await supabase
+      .from('training_tags')
+      .update({ name: dataToUpdate.name, color: dataToUpdate.color })
+      .eq('id', dataToUpdate.id);
+
+    if (error) {
+      console.error('Error al actualizar etiqueta:', error);
+      throw new Error(`Error al actualizar etiqueta: ${error.message}`);
+    }
+
+    return { success: true, data };
+  } catch (error: any) {
+    console.error('Error inesperado al actualizar etiqueta:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const createArea = async (dataToCreate: { name: string; color: string }) => {
+  try {
+    const supabase = supabaseServer();
+    const { data, error } = await supabase
+      .from('training_tags')
+      .insert({ name: dataToCreate.name, color: dataToCreate.color });
+
+    if (error) {
+      console.error('Error al crear etiqueta:', error);
+      throw new Error(`Error al crear etiqueta: ${error.message}`);
+    }
+
+    return { success: true, data };
+  } catch (error: any) {
+    console.error('Error inesperado al crear etiqueta:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 /**
  * Obtiene todas las capacitaciones
  */
+export const fetchAllTags = async () => {
+  try {
+    const supabase = supabaseServer();
+    const { data, error } = await supabase.from('training_tags').select('*');
+
+    if (error) {
+      console.error('Error al obtener etiquetas:', error);
+      return [];
+    }
+
+    return data;
+  } catch (error: any) {
+    console.error('Error inesperado al obtener etiquetas:', error);
+    return [];
+  }
+};
 export const fetchTrainings = async () => {
   try {
     const supabase = supabaseServer();
@@ -300,9 +355,7 @@ export const fetchTrainings = async () => {
 
       // Extraer las etiquetas
       const tags =
-        training.training_tag_assignments
-          ?.map((tagAssignment) => tagAssignment.training_tags?.name || '')
-          .filter(Boolean) || [];
+        training.training_tag_assignments?.map((tagAssignment) => tagAssignment.training_tags).filter(Boolean) || [];
 
       // Extraer los materiales
       const materials =
@@ -333,7 +386,7 @@ export const fetchTrainings = async () => {
         materials,
         evaluation: {
           questions,
-          passingScore: training.passing_score || 70,
+          passingScore: training.passing_score || 0,
         },
         completedCount: Number(completedCount) || 0,
         totalEmployees: Number(totalEmployeesCount) || 0,
@@ -355,6 +408,36 @@ export const fetchTrainings = async () => {
  * @param id ID de la capacitación a obtener
  * @returns Objeto con los detalles de la capacitación y datos relacionados
  */
+export const getEmployeesCount = async () => {
+  try {
+    const supabase = supabaseServer();
+    const cookiesStore = cookies();
+    const company_id = cookiesStore.get('actualComp')?.value;
+
+    if (!company_id) {
+      console.error('No hay company_id en las cookies');
+      return 0;
+    }
+
+    // Obtener la capacitación específica con todos sus datos relacionados
+    const { data, error } = await supabase
+      .from('employees')
+      .select('count', { count: 'exact' })
+      .eq('company_id', company_id)
+      .eq('is_active', true);
+
+    if (error) {
+      console.error('Error al obtener empleados:', error);
+      return 0;
+    }
+
+    return data?.[0].count || 0;
+  } catch (error: any) {
+    console.error('Error inesperado al obtener empleados:', error);
+    return 0;
+  }
+};
+
 export const fetchTrainingById = async (id: string) => {
   try {
     const supabase = supabaseServer();
@@ -450,6 +533,7 @@ export const fetchTrainingById = async (id: string) => {
       cuil: string;
       department: string | null;
       status: string;
+      email: string;
     }[] = [];
 
     if (activeEmployees && activeEmployees.length > 0) {
@@ -479,6 +563,7 @@ export const fetchTrainingById = async (id: string) => {
             cuil: employee.cuil || '',
             department: employee.company_position || null, // Campo correcto según Employee
             status: 'pending',
+            email: employee.email || '',
           });
         }
       });
@@ -527,18 +612,19 @@ export const fetchTrainingById = async (id: string) => {
       materials,
       evaluation: {
         questions,
-        passingScore: trainingData.passing_score || 70,
+        passingScore: trainingData.passing_score || 0,
       },
       employees: {
         completed: completedEmployees,
         pending: pendingEmployees,
         total: {
           completedCount: completedEmployees.length,
-          totalEmployees: activeEmployees?.length || 0,
+          totalEmployees: await getEmployeesCount(),
         },
       },
       status: trainingData.status,
     };
+    console.log(formattedTraining);
 
     return formattedTraining;
   } catch (error) {
@@ -555,8 +641,8 @@ export const updateTrainingBasicInfo = async (
   data: {
     title: string;
     description: string;
-    passing_score: number;
     status: 'Borrador' | 'Archivado' | 'Publicado' | null;
+    passing_score?: number;
   }
 ) => {
   try {
@@ -575,9 +661,9 @@ export const updateTrainingBasicInfo = async (
       .update({
         title: data.title,
         description: data.description,
-        passing_score: data.passing_score,
         updated_at: new Date().toISOString(),
         status: data.status,
+        passing_score: data.passing_score,
       })
       .eq('id', trainingId)
       .eq('company_id', company_id)
@@ -604,7 +690,7 @@ export const updateTrainingBasicInfo = async (
  */
 export const updateTrainingMaterials = async (
   trainingId: string,
-  materials: Array<{
+  materials?: Array<{
     id?: string;
     name: string;
     type: string;
@@ -620,7 +706,7 @@ export const updateTrainingMaterials = async (
     // Primero obtener todos los materiales existentes para eliminar sus archivos
     const { data: existingMaterials, error: fetchError } = await supabase
       .from('training_materials')
-      .select('*')
+      .select('file_url') // Solo necesitamos la URL del archivo
       .eq('training_id', trainingId);
 
     if (fetchError) {
@@ -630,16 +716,24 @@ export const updateTrainingMaterials = async (
 
     // Eliminar los archivos del storage si existen
     if (existingMaterials && existingMaterials.length > 0) {
-      const fileUrls = existingMaterials
-        .map((material) => material.file_url)
-        .filter((url) => url && url.trim() !== '');
+      const filePathsToDelete = existingMaterials
+        .map((material) => {
+          // Extraer la ruta del archivo del final de la URL pública
+          const parts = material.file_url.split('training-materials/');
+          return parts.length > 1 ? parts[1] : null;
+        })
+        .filter((path): path is string => path !== null && path.trim() !== ''); // Filtrar nulos y vacíos
 
-      if (fileUrls.length > 0) {
-        const { error: storageError } = await supabase.storage.from('documents').remove(fileUrls);
+      if (filePathsToDelete.length > 0) {
+        console.log('Archivos a eliminar del storage:', filePathsToDelete);
+        const { error: storageError } = await supabase.storage.from('training-materials').remove(filePathsToDelete);
+
         if (storageError) {
           console.error('Error al eliminar archivos del storage:', storageError);
           // No interrumpimos el proceso si falla la eliminación del storage
           // pero registramos el error para depuración
+        } else {
+          console.log('Archivos eliminados del storage correctamente.');
         }
       }
     }
@@ -648,12 +742,15 @@ export const updateTrainingMaterials = async (
     const { error: deleteError } = await supabase.from('training_materials').delete().eq('training_id', trainingId);
 
     if (deleteError) {
-      console.error('Error al eliminar materiales existentes:', deleteError);
-      return { success: false, error: `Error al eliminar materiales: ${deleteError.message}` };
+      console.error('Error al eliminar materiales existentes de la DB:', deleteError);
+      return { success: false, error: `Error al eliminar materiales de la DB: ${deleteError.message}` };
+    } else {
+      console.log('Registros de materiales eliminados de la DB correctamente.');
     }
 
-    // Si no hay nuevos materiales, terminar aquí
-    if (materials.length === 0) {
+    // Si no hay nuevos materiales para insertar, terminar aquí
+    if (!materials || materials.length === 0) {
+      revalidatePath(`/training/${trainingId}/detail`);
       return { success: true, data: [] };
     }
 
@@ -678,7 +775,7 @@ export const updateTrainingMaterials = async (
       return { success: false, error: `Error al añadir materiales: ${insertError.message}` };
     }
 
-    revalidatePath(`/dashboard/hse/detail/${trainingId}`);
+    revalidatePath(`/training/${trainingId}/detail`); // Revalidar la ruta para mostrar los cambios
 
     return { success: true, data: newMaterials };
   } catch (error: any) {
@@ -921,7 +1018,7 @@ export const updateTrainingQuestions = async (
 /**
  * Actualiza las etiquetas de una capacitación
  */
-export const updateTrainingTags = async (trainingId: string, tagNames: string[]) => {
+export const updateTrainingTags = async (trainingId: string, tagIds: string[]) => {
   try {
     const supabase = supabaseServer();
     const cookiesStore = cookies();
@@ -944,46 +1041,10 @@ export const updateTrainingTags = async (trainingId: string, tagNames: string[])
     }
 
     // Si no hay nuevas etiquetas, terminar aquí
-    if (tagNames.length === 0) {
+    if (tagIds.length === 0) {
       return { success: true, data: [] };
     }
 
-    // Para cada nombre de etiqueta, buscarla o crearla
-    const tagIds = [];
-    for (const tagName of tagNames) {
-      // Buscar si la etiqueta ya existe
-      const { data: existingTags } = await supabase
-        .from('training_tags')
-        .select('id')
-        .eq('name', tagName)
-        .eq('company_id', company_id);
-
-      let tagId;
-
-      // Si existe, usar su ID
-      if (existingTags && existingTags.length > 0) {
-        tagId = existingTags[0].id;
-      } else {
-        // Si no existe, crear una nueva etiqueta
-        const { data: newTag, error: createError } = await supabase
-          .from('training_tags')
-          .insert({ name: tagName, company_id })
-          .select('id');
-
-        if (createError) {
-          console.error(`Error al crear etiqueta "${tagName}":`, createError);
-          continue;
-        }
-
-        tagId = newTag?.[0]?.id;
-      }
-
-      if (tagId) {
-        tagIds.push(tagId);
-      }
-    }
-
-    // Crear asignaciones para todas las etiquetas encontradas/creadas
     const assignments = tagIds.map((tag_id) => ({
       training_id: trainingId,
       tag_id,
@@ -1080,8 +1141,8 @@ export const updateTraining = async (
     title: string;
     description: string;
     status: 'Borrador' | 'Archivado' | 'Publicado' | null;
-    passingScore: number;
-    materials: Array<{
+    passingScore?: number;
+    materials?: Array<{
       id?: string;
       type: string;
       name: string;
@@ -1090,7 +1151,7 @@ export const updateTraining = async (
       is_required?: boolean;
       file_size?: number;
     }>;
-    questions: Array<{
+    questions?: Array<{
       id?: string;
       question: string;
       options: string[];
@@ -1101,33 +1162,40 @@ export const updateTraining = async (
 ) => {
   try {
     // Actualizar información básica
-    const basicInfoResult = await updateTrainingBasicInfo(trainingId, {
-      title: data.title,
-      description: data.description,
-      passing_score: data.passingScore,
-      status: data.status,
-    });
+    if (data.title || data.description || data.status) {
+      const basicInfoResult = await updateTrainingBasicInfo(trainingId, {
+        title: data.title,
+        description: data.description,
+        status: data.status,
+      });
 
-    if (!basicInfoResult.success) {
-      return basicInfoResult;
+      if (!basicInfoResult.success) {
+        return basicInfoResult;
+      }
     }
 
-    // Actualizar materiales
-    const materialsResult = await updateTrainingMaterials(trainingId, data.materials);
-    if (!materialsResult.success) {
-      return materialsResult;
+    if (data.materials) {
+      // Actualizar materiales
+      const materialsResult = await updateTrainingMaterials(trainingId, data.materials);
+      if (!materialsResult.success) {
+        return materialsResult;
+      }
     }
 
-    // Actualizar preguntas
-    const questionsResult = await updateTrainingQuestions(trainingId, data.questions);
-    if (!questionsResult.success) {
-      return questionsResult;
+    if (data.questions) {
+      // Actualizar preguntas
+      const questionsResult = await updateTrainingQuestions(trainingId, data.questions || []);
+      if (!questionsResult.success) {
+        return questionsResult;
+      }
     }
 
-    // Actualizar etiquetas
-    const tagsResult = await updateTrainingTags(trainingId, data.tags);
-    if (!tagsResult.success) {
-      return tagsResult;
+    if (data.tags) {
+      // Actualizar etiquetas
+      const tagsResult = await updateTrainingTags(trainingId, data.tags);
+      if (!tagsResult.success) {
+        return tagsResult;
+      }
     }
 
     revalidatePath('/dashboard/hse');
@@ -1143,6 +1211,27 @@ export const updateTraining = async (
       success: false,
       error: `Error al actualizar capacitación: ${error.message}`,
     };
+  }
+};
+
+export const updateTrainingStatus = async (trainingId: string, status: 'Borrador' | 'Archivado' | 'Publicado') => {
+  try {
+    const supabase = supabaseServer();
+
+    const { error: updateError } = await supabase.from('trainings').update({ status }).eq('id', trainingId);
+
+    if (updateError) {
+      console.error('Error al actualizar estado de capacitación:', updateError);
+      return { success: false, error: `Error al actualizar estado: ${updateError.message}` };
+    }
+
+    revalidatePath('/dashboard/hse');
+    revalidatePath(`/dashboard/hse/detail/${trainingId}`);
+
+    return { success: true, message: 'Estado de capacitación actualizado exitosamente' };
+  } catch (error: any) {
+    console.error('Error inesperado al actualizar estado de capacitación:', error);
+    return { success: false, error: `Error al actualizar estado: ${error.message}` };
   }
 };
 

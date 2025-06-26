@@ -253,7 +253,7 @@ export function TrainingEvaluation({
                           value={question.question}
                           onChange={(e) => handleUpdateQuestion(question.id, 'question', e.target.value)}
                           placeholder="Escribe la pregunta"
-                          className="font-medium"
+                          className="font-medium w-full"
                         />
                       </div>
                     </div>
