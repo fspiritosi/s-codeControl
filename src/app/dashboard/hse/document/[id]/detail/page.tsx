@@ -37,13 +37,31 @@ import { BaseDataTable } from '@/shared/components/data-table/base/data-table';
 import { DataTableColumnHeader } from '@/shared/components/data-table/base/data-table-column-header';
 import { ColumnDef } from '@tanstack/react-table';
 import { VisibilityState } from '@tanstack/react-table';
+import { getCompanyDetails } from '@/app/server/GET/actions';
 
+// interface ExtendedDocument extends Document {
+//   documentTitle: string;
+//   acceptedCount?: number;
+//   totalEmployees?: number;
+//   previousVersions?: DocumentVersion[];
+//   versions?: DocumentVersion[];
+// }
 interface ExtendedDocument extends Document {
   documentTitle: string;
   acceptedCount?: number;
   totalEmployees?: number;
   previousVersions?: DocumentVersion[];
   versions?: DocumentVersion[];
+  // Agregar estas propiedades
+  id: string;
+  title: string;
+  category?: {
+    name: string;
+  };
+  resource?: {
+    name: string;
+  };
+  documentNumber?: string;
 }
 
 interface ProcessedDocument {
@@ -81,7 +99,7 @@ interface Employee {
     assignedAt?: string;
   }>;
 }
-
+const [company, setCompany] = useState(null);
 
 interface EmployeeWithDocuments extends Employee {}
  
@@ -199,7 +217,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
   const [savedVisibility, setSavedVisibility] = useState<VisibilityState>({});
   const [mode, setMode] = useState<string>('');
   const [employeesWithDocuments, setEmployeesWithDocuments] = useState<EmployeeWithDocuments[]>([]);
-  
+  const [company, setCompany] = useState<Company | null>(null);
   // const [savedFilters, setSavedFilters] = useState<Filter[]>([]);
   // const cookies = cookies()
   // const userId = cookies['userId']
@@ -270,11 +288,19 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
         toast.error('Error al cargar los empleados');
       }
     };
-  
+    const fetchCompany = async () => {
+      
+      if (companyId) {
+        const companyData = await getCompanyDetails(companyId);
+        setCompany(companyData as any);
+      }
+    };
+    fetchCompany();
     fetchEmployeesWithDocuments();
   }, [params.id]);
   // Función para manejar la descarga de archivos
   // Función para manejar la descarga de archivos
+  
   const handleDownload = (fileUrl: string, fileName: string) => {
     if (isDownloading) return;
 
@@ -429,107 +455,29 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
     router.push(`/dashboard/hse`);
   };
 
-  // const handleSendReminders = async () => {
-  //   if (!document) return;
-
-  //   try {
-  //     setIsSendingReminders(true);
-
-  //     // 1. Obtener empleados pendientes
-
-  //     if (pendingEmployees.length === 0) {
-  //       toast.info('No hay empleados pendientes para notificar');
-  //       return;
-  //     }
-
-  //     // 2. Enviar recordatorios
-  //     const results = await Promise.all(
-  //       pendingEmployees.map(async (employee) => {
-  //         try {
-  //           const documentUrl = `${window.location.origin}/dashboard/documents/${document.id}`;
-  //           const message = `
-  //             Hola ${employee.name},
-              
-  //             Tienes pendiente de revisión el documento "${document.title}".
-              
-  //             Por favor, accede a la plataforma para revisarlo y aceptarlo.
-              
-  //             <a href="${documentUrl}" style="
-  //               display: inline-block;
-  //               padding: 10px 20px;
-  //               background-color: #2563eb;
-  //               color: white;
-  //               text-decoration: none;
-  //               border-radius: 5px;
-  //               margin: 10px 0;
-  //             ">Ver Documento</a>
-              
-  //             Gracias,
-  //             El equipo de Recursos Humanos
-  //           `;
-
-  //           const response = await fetch('/api/send', {
-  //             method: 'POST',
-  //             headers: {
-  //               'Content-Type': 'application/json',
-  //             },
-  //             body: JSON.stringify({
-  //               to: employee.email,
-  //               subject: `Recordatorio: ${document.title} pendiente de revisión`,
-  //               html: message, // Usamos html en lugar de body
-  //               text: `Hola ${employee.name},\n\nTienes pendiente de revisión el documento "${document.title}".\n\nPor favor, accede a la plataforma para revisarlo y aceptarlo.\n\n${documentUrl}`
-  //             }),
-  //           });
-
-  //           if (!response.ok) {
-  //             throw new Error('Error en la respuesta del servidor');
-  //           }
-
-  //           return { success: true, email: employee.email };
-  //         } catch (error) {
-  //           console.error(`Error enviando a ${employee.email}:`, error);
-  //           return { success: false, email: employee.email, error };
-  //         }
-  //       })
-  //     );
-
-  //     // 3. Mostrar resultados
-  //     const successful = results.filter((r) => r.success).length;
-  //     const failed = results.length - successful;
-
-  //     toast.success(`Recordatorios enviados: ${successful} exitosos, ${failed} fallidos`);
-  //   } catch (error) {
-  //     console.error('Error al enviar recordatorios:', error);
-  //     toast.error('Error al enviar los recordatorios');
-  //   } finally {
-  //     setIsSendingReminders(false);
-  //   }
-  // };
-
   const sendReminder = async (employee: Employee) => {
     try {
-      const documentUrl = `${window.location.origin}/dashboard/documents/${document.id}`;
-      const message = `
-        Hola ${employee.name},
-  
-        Tienes pendiente de revisión el documento "${document.title}".
-  
-        Por favor, accede a la plataforma para revisarlo y aceptarlo.
-  
-        <a href="${documentUrl}" style="
-          display: inline-block;
-          padding: 10px 20px;
-          background-color: #2563eb;
-          color: white;
-          text-decoration: none;
-          border-radius: 5px;
-          margin: 10px 0;
-        ">Ver Documento</a>
-  
-        Gracias,
-        El equipo de Recursos Humanos
-      `;
-  
+      const documentUrl = `${window.location.origin}/dashboard/hse/document/${document.id}/detail`;
+      
+      // Crear el cuerpo del correo usando el template
+      const emailBody = {
+        recurso: document.category?.name || 'Documento',
+        document_name: document.title,
+        company_name: company?.company_name || 'Empresa',
+        resource_name: document.resource?.name || 'Recurso',
+        document_number: document.documentNumber || 'N/A',
+        companyConfig: {
+          name: company?.company_name || 'Empresa',
+          logo: company?.company_logo || 'https://via.placeholder.com/200x60/667eea/ffffff?text=LOGO',
+          website: company?.website || 'https://tuempresa.com',
+          supportEmail: company?.contact_email || 'soporte@tuempresa.com',
+          primaryColor: '#667eea',  // Color primario por defecto
+          secondaryColor: '#764ba2' // Color secundario por defecto
+        }
+      };
+
+      
+
       const response = await fetch('/api/send', {
         method: 'POST',
         headers: {
@@ -538,8 +486,9 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
         body: JSON.stringify({
           to: employee.email,
           subject: `Recordatorio: ${document.title} pendiente de revisión`,
-          html: message,
-          text: `Hola ${employee.name},\n\nTienes pendiente de revisión el documento "${document.title}".\n\nPor favor, accede a la plataforma para revisarlo y aceptarlo.\n\n${documentUrl}`
+          userEmail: employee.email,
+          react: 'document',
+          body: emailBody
         }),
       });
   

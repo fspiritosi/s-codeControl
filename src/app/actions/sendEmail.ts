@@ -52,9 +52,9 @@ export async function sendEmail(options: EmailOptions) {
     // Si se especifica un template, usarlo
     if (template && !html) {
       if (template === 'document' && body) {
-        emailHtml = renderDocumentEmailTemplate(userEmail, body);
+        emailHtml = renderDocumentEmailTemplate(userEmail, body as any);
       } else if (template === 'help') {
-        emailHtml = renderHelpEmailTemplate(userEmail, reason || '');
+        emailHtml = renderHelpEmailTemplate(userEmail, body as any, reason || '');
       }
     }
     
@@ -74,7 +74,7 @@ export async function sendEmail(options: EmailOptions) {
 
     // Enviar el correo
     const info = await transporter.sendMail(mailOptions);
-    console.log('Message sent: %s', info.messageId);
+    
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('Error sending email:', error);

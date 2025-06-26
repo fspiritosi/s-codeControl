@@ -5,45 +5,85 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useLoggedUserStore } from '@/store/loggedUser';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import Cookies from 'js-cookie';
+import { getCompanyDetails } from '@/app/server/GET/actions';
+import { Toaster, toast } from 'sonner';
+
+
 
 export function ReportAnIssue() {
+  const companyId = Cookies.get('actualComp');
   const [area, setArea] = useState('billing'); // Valor por defecto para el área
   const [nivelSeguridad, setNivelSeguridad] = useState('2'); // Valor por defecto para el nivel de seguridad
   const [asunto, setAsunto] = useState(''); // Valor inicial para el asunto
   const [descripcion, setDescripcion] = useState(''); // Valor inicial para la descripción
   const emailUser = useLoggedUserStore((state) => state.credentialUser?.email);
-  async function submit() {
+  const [company, setCompany] = useState<Company | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    async function getCompany() {
+      const companyData = await getCompanyDetails(companyId as string);
+      setCompany(companyData as Company);
+    }
+    getCompany();
+  }, [companyId]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!descripcion.trim()) {
+      toast.error('Por favor, ingresa una descripción del problema');
+      return;
+    }
+  
     try {
-      //EmailTemplateHelp({ userEmail: emailUser as string, reason: descripcion });
+      setIsSubmitting(true);
       const response = await fetch('/api/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          to: 'diegodac77@gmail.com',
-          subject: 'Solicitud de ayudainfo@codecontrol.com.ar',
+          to: 'info@codecontrol.com.ar',
+          subject: 'Solicitud de ayuda - CodeControl',
           template: 'help',
-          react: descripcion,
+          react: 'help',
+          reason: descripcion,
           userEmail: emailUser,
-          body: { // Añade un objeto body vacío o con los datos necesarios
+          body: {
             recurso: 'ayuda',
             document_name: 'Solicitud de ayuda',
-            company_name: 'CodeControl',
+            company_name: company?.company_name || 'CodeControl',
             resource_name: 'Soporte',
-            document_number: 'AYUDA-' + Date.now()
+            document_number: 'AYUDA-' + Date.now(),
+            companyConfig: {
+              name: company?.company_name || 'CodeControl',
+              logo: company?.company_logo || 'https://tu-dominio.com/logo-codecontrol.png',
+              website: company?.website || 'https://codecontrol.com.ar',
+              supportEmail: company?.contact_email || 'soporte@codecontrol.com.ar',
+              primaryColor: '#667eea',
+              secondaryColor: '#764ba2'
+            }
           }
-        }),
+        })
       });
-
-      if (response.ok) {
-      } else {
+  
+      if (!response.ok) {
+        throw new Error('Error al enviar la solicitud');
       }
+      
+      toast.success('Solicitud enviada correctamente');
+      setDescripcion(''); // Limpiar el campo después del envío exitoso
+      
     } catch (error) {
       console.error('Error inesperado:', error);
+      toast.error(error instanceof Error ? error.message : 'Error inesperado al enviar la solicitud');
+    } finally {
+      setIsSubmitting(false);
     }
-  }
+  };
   return (
     // <section className="md:mx-7 w-1/2">
     //   <Card>
@@ -112,7 +152,7 @@ export function ReportAnIssue() {
           <CardTitle>Reportar un problema</CardTitle>
           <CardDescription>Por favor, describe el problema que estás experimentando</CardDescription>
         </CardHeader>
-        <form onSubmit={submit}>
+        <form onSubmit={handleSubmit}>
           <CardContent className="grid gap-6">
             <div className="grid gap-2">
               <Label htmlFor="subject">Asunto</Label>
@@ -135,10 +175,17 @@ export function ReportAnIssue() {
           </CardContent>
           <CardFooter className="justify-between space-x-2">
             <Button variant="ghost">Cancelar</Button>
-            <Button type="submit">Enviar</Button>
+            <Button 
+  type="submit" 
+  disabled={isSubmitting}
+  className={isSubmitting ? "opacity-70" : ""}
+>
+  {isSubmitting ? "Enviando..." : "Enviar"}
+</Button>
           </CardFooter>
         </form>
       </Card>
+      {/* <Toaster position="top-right" /> */}
     </section>
   );
 }

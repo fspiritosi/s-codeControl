@@ -35,6 +35,7 @@ type EmailRequest = {
   subject: string;
   userEmail: string;
   react?: string;
+  reason?: string;
   body?: unknown;
   html?: string;
   text?: string;
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
   
   try {
     const requestData: EmailRequest = await request.json();
-    const { to, subject, userEmail, react, body, html, text } = requestData;
+    const { to, subject, userEmail, react, reason, body, html, text } = requestData;
     // Actualizar valores con los datos de la solicitud si están presentes
     if (to) toEmail = to;
     if (subject) emailSubject = subject;
@@ -59,11 +60,12 @@ export async function POST(request: Request) {
     if (react && body) {
       let emailHtml: string;
       
-      if (toEmail === 'info@codecontrol.com.ar') {
-        // Plantilla de ayuda
-        emailHtml = renderHelpEmailTemplate(userEmail, react);
+      if (react === 'help') {
+        // Plantilla de ayuda - usamos 'reason' si está disponible, si no, usamos un string vacío
+        emailHtml = renderHelpEmailTemplate(userEmail, body as any, requestData.reason || '');
       } else {
-        // Plantilla de documento
+        // Plantilla de documento - pasamos el body completo
+        
         emailHtml = renderDocumentEmailTemplate(userEmail, body as any);
       }
 
