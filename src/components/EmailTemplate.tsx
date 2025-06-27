@@ -10,7 +10,7 @@ type EmailInfo = {
 
 interface EmailTemplateProps {
   userEmail: string;
-  reason: string;
+  reason?: string;
   emailInfo: EmailInfo;
 }
 

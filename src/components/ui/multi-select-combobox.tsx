@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Check, ChevronsUpDown, CheckSquare, Square } from 'lucide-react';
+import { Check, CheckSquare, ChevronsUpDown, Square } from 'lucide-react';
 import * as React from 'react';
 import { CardDescription } from './card';
 
@@ -53,7 +53,7 @@ export function MultiSelectCombobox({
     // If all selectable options are already selected, deselect all
     // Otherwise, select all options that aren't disabled
     const allSelected = selectableValues.every((value) => selectedValues.includes(value));
-    
+
     if (allSelected) {
       // Deselect all
       onChange([]);
@@ -88,16 +88,17 @@ export function MultiSelectCombobox({
           <CommandInput placeholder={`Buscar ${placeholder.toLowerCase()}...`} />
           <CommandEmpty>{emptyMessage}</CommandEmpty>
           {showSelectAll && (
-            <div className="px-2 py-1 border-b flex items-center">
-              <div 
-                className="flex items-center gap-2 text-sm cursor-pointer hover:text-foreground transition-colors"
+            <div className="px-3 py-1.5 border-b flex items-center">
+              <div
+                className="flex items-center gap-2 text-sm cursor-pointer hover:text-foreground transition-colors w-full"
                 onClick={handleSelectAll}
               >
-                {selectableOptions.every((option) => selectedValues.includes(option.value)) ? 
-                  <CheckSquare className="h-4 w-4" /> : 
+                {selectableOptions.every((option) => selectedValues.includes(option.value)) ? (
+                  <CheckSquare className="h-4 w-4" />
+                ) : (
                   <Square className="h-4 w-4" />
-                }
-                <span className="text-xs">Seleccionar todos</span>
+                )}
+                <span>Seleccionar todos</span>
               </div>
             </div>
           )}
@@ -108,9 +109,11 @@ export function MultiSelectCombobox({
                 key={option.value}
                 onSelect={() => handleSelect(option.value)}
               >
-                <Check
-                  className={cn('mr-2 h-4 w-4', selectedValues?.includes(option.value) ? 'opacity-100' : 'opacity-0')}
-                />
+                {selectedValues.includes(option.value) ? (
+                  <CheckSquare className="mr-2 h-4 w-4" />
+                ) : (
+                  <Square className="mr-2 h-4 w-4" />
+                )}
                 {option.label}
               </CommandItem>
             ))}

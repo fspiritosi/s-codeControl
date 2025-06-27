@@ -7,11 +7,13 @@ import {
   Calendar,
   ClipboardList,
   FileText,
+  GraduationCap,
   HelpCircle,
   LayoutDashboard,
   Truck,
   Users,
   Wrench,
+  HardHat,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -64,6 +66,12 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
       icon: <Calendar size={sizeIcons} />,
       regex: /^\/dashboard\/operations(\/|$)/,
     },
+    // {
+    //   name: 'HSE',
+    //   href: '/dashboard/hse',
+    //   icon: <HardHat size={sizeIcons} />,
+    //   regex: /^\/dashboard\/hse(\/|$)/,
+    // },
     {
       name: 'Mantenimiento',
       href: '/dashboard/maintenance',
@@ -75,6 +83,12 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
       href: '/dashboard/forms',
       icon: <ClipboardList size={sizeIcons} />,
       regex: /^\/dashboard\/forms(\/|$)/,
+    },
+    {
+      name: 'HSE',
+      href: '/dashboard/hse',
+      icon: <GraduationCap size={sizeIcons} />,
+      regex: /^\/dashboard\/hse(\/|$)/,
     },
     {
       name: 'Ayuda',

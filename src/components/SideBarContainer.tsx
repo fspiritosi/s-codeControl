@@ -6,11 +6,13 @@ import {
   Calendar,
   ClipboardList,
   FileText,
+  GraduationCap,
   HelpCircle,
   LayoutDashboard,
   Truck,
   Users,
   Wrench,
+  HardHat,
 } from 'lucide-react';
 import { cookies } from 'next/headers';
 import SideBar from './Sidebar';
@@ -190,6 +192,19 @@ async function SideBarContainer() {
       position: 7,
     },
     {
+      name: 'HSE',
+      href: '/dashboard/hse',
+      icon: <GraduationCap size={sizeIcons} />,
+      position: 9,
+      // regex: /^\/dashboard\/hse(\/|$)/,
+    },
+    // {
+    //   name: 'HSE',
+    //   href: '/dashboard/hse',
+    //   icon: <HardHat size={sizeIcons} />,
+    //   position: 9,
+    // },
+    {
       name: 'Ayuda',
       href: '/dashboard/help',
       icon: <HelpCircle size={sizeIcons} />,
@@ -212,12 +227,11 @@ async function SideBarContainer() {
           link.name.toLowerCase() !== 'empresa' &&
           link.name.toLowerCase() !== 'operaciones' &&
           link.name.toLowerCase() !== 'mantenimiento' &&
-          link.name.toLowerCase() !== 'documentación' 
-          // link.name.toLowerCase() !== 'dashboard'
+          link.name.toLowerCase() !== 'documentación'
+        // link.name.toLowerCase() !== 'dashboard'
       );
       return;
     }
-
 
     userData?.modulos?.length === 0
       ? (liksToShow = Allinks)

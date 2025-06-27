@@ -3,7 +3,7 @@ import * as React from 'react';
 
 interface EmailTemplateHelpProps {
   userEmail: string;
-  reason: string;
+  reason?: string;
 }
 
 export const EmailTemplateHelp: React.FC<Readonly<EmailTemplateHelpProps>> = ({ userEmail, reason }) => (
