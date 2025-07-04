@@ -21,9 +21,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es">
       <body className={popinsFont.className}>
         <ThemeProvider attribute="class" defaultTheme="ligth" enableSystem disableTransitionOnChange>
-          <Toaster />
-          <Sonner richColors={true} />
-          <main>{children}</main>
+          <div>
+            <Toaster />
+            <Sonner richColors={true} />
+            <main>{children}</main>
+          </div>
         </ThemeProvider>
       </body>
     </html>
