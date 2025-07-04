@@ -1336,4 +1336,43 @@ export async function getAssignedEmployeesByDocumentVersion(
   return data as unknown as DocumentVersionAssignment[];
 }
 
+// "use server";
+
+// import { createServerSupabaseClient } from "@/lib/supabase/server";
+// import { cookies } from "next/headers";
+
+// Crear documento (status: 'borrador')
+export async function createDocument(data: any) {
+  const supabase = supabaseServer();
+  const { error, data: inserted } = await supabase
+    .from("hse_documents")
+    .insert([{ ...data, status: "borrador" }])
+    .select();
+  if (error) throw new Error(error.message);
+  return inserted?.[0];
+}
+
+// Editar documento (solo si status === 'borrador')
+export async function editDocument(id: string, data: any) {
+  const supabase = supabaseServer();
+  const { error, data: updated } = await supabase
+    .from("hse_documents")
+    .update(data)
+    .eq("id", id)
+    .eq("status", "borrador")
+    .select();
+  if (error) throw new Error(error.message);
+  return updated?.[0];
+}
+
+// Publicar documento
+export async function publishDocument(id: string) {
+  const supabase = supabaseServer();
+  const { error } = await supabase
+    .from("hse_documents")
+    .update({ status: "publicado" })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  return true;
+}
 
