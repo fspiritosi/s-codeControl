@@ -51,6 +51,7 @@ export interface Document {
   updated_at: string
   company_id: string
   versions?: DocumentVersion[]
+  tags?: string[]
 }
 
 interface DocumentAssignment {
@@ -1376,3 +1377,166 @@ export async function publishDocument(id: string) {
   return true;
 }
 
+// En actions/documents.ts
+// En actions/documents.ts
+// En actions/documents.ts
+// En actions/documents.ts
+export async function updateDocument(formData: FormData, companyId: string) {
+  const supabase = supabaseServer();
+
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      throw new Error("No se pudo autenticar al usuario");
+    }
+
+    const documentId = formData.get("documentId") as string;
+    const typeOfEmployee = JSON.parse(
+      formData.get("typeOfEmployee") as string || "[]"
+    ) as string[];
+    const assignToAll = typeOfEmployee.length === 0;
+
+    if (!documentId) {
+      throw new Error("ID de documento no proporcionado");
+    }
+
+    // 1. Actualizar archivo si hay uno nuevo
+    const file = formData.get("file") as File | null;
+    let filePath: string | undefined;
+
+    if (file && file.size > 0) {
+      const fileName = `documents/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("documents-hse")
+        .upload(fileName, file, { cacheControl: "3600", upsert: true });
+
+      if (uploadError) {
+        throw new Error("Error al subir el archivo: " + uploadError.message);
+      }
+
+      filePath = fileName;
+    }
+
+    // 2. Actualizar metadatos
+    const updates = {
+      title: formData.get("title") as string,
+      version: formData.get("version") as string,
+      description: (formData.get("description") as string) || null,
+      expiry_date: (formData.get("expiry_date") as string) || null,
+      updated_at: new Date().toISOString(),
+      ...(filePath && { file_path: filePath }),
+    };
+
+    const { data: document, error: updateError } = await supabase
+      .from("hse_documents")
+      .update(updates)
+      .eq("id", documentId)
+      .select()
+      .single();
+
+    if (updateError) {
+      throw new Error("Error al actualizar el documento: " + updateError.message);
+    }
+
+    // 3. Actualizar asignaciones
+    const { error: deleteError } = await supabase
+      .from("hse_document_assignments")
+      .delete()
+      .eq("document_id", documentId);
+
+    if (deleteError) {
+      console.error("Error al eliminar asignaciones anteriores:", deleteError);
+      throw new Error("No se pudieron actualizar las asignaciones");
+    }
+
+    await createDocumentAssignments(
+      supabase,
+      documentId,
+      companyId,
+      user.id,
+      assignToAll,
+      typeOfEmployee
+    );
+
+    return { success: true, document };
+  } catch (error) {
+    console.error("Error en updateDocument:", error);
+    throw error;
+  }
+}
+
+type TypeOfEmployee = {
+  id: string;
+  name: string;
+};
+
+export async function getTypeOfEmployeeForDocument(documentId: string): Promise<{
+  data: TypeOfEmployee[] | null;
+  error: string | null;
+}> {
+  const supabase = supabaseServer();
+
+  try {
+    console.log('🔍 Buscando posiciones asignadas para el documento:', documentId);
+    
+    // Primero, buscamos directamente las asignaciones de tipo 'position' para este documento
+    const { data: positionAssignments, error: assignmentsError } = await supabase
+      .from('hse_document_assignments')
+      .select('assignee_id')
+      .eq('document_id', documentId)
+      .eq('assignee_type', 'position');
+
+    if (assignmentsError) {
+      console.error('❌ Error al buscar asignaciones:', assignmentsError);
+      throw assignmentsError;
+    }
+
+    console.log('📋 Asignaciones de posiciones encontradas:', positionAssignments);
+
+    // Si no hay asignaciones, retornamos un array vacío
+    if (!positionAssignments || positionAssignments.length === 0) {
+      console.log('ℹ️ No se encontraron asignaciones de posiciones para el documento');
+      return { data: [], error: null };
+    }
+
+    // Extraemos los IDs de las posiciones, asegurándonos de que no sean nulos
+    const positionIds = positionAssignments
+      .map((a: any) => a.assignee_id)
+      .filter((id: string | null): id is string => id !== null);
+    
+    console.log('🔢 IDs de posiciones a buscar en hierarchy:', positionIds);
+
+    if (positionIds.length === 0) {
+      console.log('⚠️ No hay IDs de posiciones válidos para buscar');
+      return { data: [], error: null };
+    }
+
+    // Obtenemos los detalles de las posiciones desde la tabla hierarchy
+    const { data: positions, error: positionsError } = await supabase
+      .from('hierarchy')
+      .select('id, name')
+      .in('id', positionIds);
+
+    if (positionsError) {
+      console.error('❌ Error al buscar las posiciones en hierarchy:', positionsError);
+      throw positionsError;
+    }
+    
+    console.log('✅ Posiciones encontradas en la base de datos:', positions);
+
+    return { 
+      data: positions || [], 
+      error: null 
+    };
+  } catch (err) {
+    console.error('Error al obtener cargos asignados al documento:', err);
+    return {
+      data: null,
+      error: 'No se pudieron obtener las posiciones jerárquicas asignadas al documento.',
+    };
+  }
+}

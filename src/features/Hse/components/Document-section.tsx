@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 // import { useState, useEffect } from "react"
 // import { Button } from "@/components/ui/button"
@@ -30,7 +30,6 @@
 //   file_size: string
 // }
 
-
 // interface EmployeeDocument {
 //   document: {
 //     id: string;
@@ -59,7 +58,7 @@
 // export function DocumentsSection({ initialDocuments, initialEmployees }: DocumentsSectionProps) {
 //   const company_id = Cookies.get('actualComp')
 //   const supabase = supabaseBrowser()
- 
+
 //   const [documents, setDocuments] = useState<Document[]>(initialDocuments)
 //   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
 //   const [showUploadDialog, setShowUploadDialog] = useState(false)
@@ -67,22 +66,21 @@
 //   const [searchTerm, setSearchTerm] = useState('')
 //   const [employees, setEmployees] = useState<EmployeesResponse | null>(initialEmployees)
 //   const router = useRouter()
- 
+
 //   const filterDocuments = (documents: Document[]) => {
 //     return documents.filter((document) => {
 //       const matchesSearch =
 //         document.title.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
 //       // const matchesTag = tagFilter === 'all' || document.tags.includes(tagFilter);
-    
+
 //       return matchesSearch;
 //     });
 //   };
- 
 
 //   const activeDocuments = documents.filter((doc) => doc.status === "active")
 //   const expiredDocuments = documents.filter((doc) => doc.status === "expired")
-  
+
 // const getEmployeeCounts = (documentId: string): EmployeeCounts => {
 //   if (!employees?.data) return { total: 0, accepted: 0 };
 
@@ -93,11 +91,11 @@
 
 //     if (hasDocument) {
 //       acc.total += 1;
-      
+
 //       const isAccepted = employee.documents?.some(
 //         doc => doc.document?.id === documentId && doc.status === 'accepted'
 //       );
-      
+
 //       if (isAccepted) {
 //         acc.accepted += 1;
 //       }
@@ -143,9 +141,9 @@
 
 //   const DocumentGrid = ({ documents }: { documents: Document[] }) => (
 //     <div>
-      
+
 //     <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-                
+
 //       {documents.map((document) => (
 //         <Card key={document.id} className="hover:shadow-md transition-shadow">
 //           <CardHeader className="pb-3">
@@ -200,7 +198,7 @@
 //   )
 
 //   const handleDownload = (file_path: string, file_name: string) => {
-      
+
 //       try {
 //         const doc = window.document
 //         const link = doc.createElement('a')
@@ -212,7 +210,7 @@
 //       } catch (error) {
 //         console.error('Error al descargar el archivo:', error)
 //         toast.error('Error al descargar el archivo')
-//       } 
+//       }
 //     }
 //   return (
 //     <div className="space-y-4 sm:space-y-6">
@@ -306,34 +304,20 @@
 //   )
 // }
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Calendar, Users, Eye, Download, List, LayoutGrid, Filter } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { Document } from '@/features/Hse/actions/documents'; // <-- ¡SÍ!
+import { supabaseBrowser } from '@/lib/supabase/browser';
 import Cookies from 'js-cookie';
-import { toast } from "sonner";
-import { supabaseBrowser } from "@/lib/supabase/browser";
-import { useRouter } from "next/navigation";
-
-
-interface Document {
-  id: string;
-  title: string;
-  version: string;
-  upload_date: string;
-  expiry_date: string | null;
-  status: "active" | "expired" | "pending" |"inactive";
-  acceptedCount?: number;
-  totalEmployees?: number;
-  file_path: string;
-  file_name: string;
-  file_size: string;
-  tags?: string[];
-}
+import { Calendar, Download, Eye, FileText, LayoutGrid, List, Users } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import {DocumentUploadDialog} from '@/features/Hse/components/Document-upload-dialog';
 
 interface DocumentsSectionProps {
   initialDocuments: Document[];
@@ -357,63 +341,113 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [employees, setEmployees] = useState<any>(initialEmployees);
-
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [documentToEdit, setDocumentToEdit] = useState<Document | null>(null);
   // Nuevos estados para filtros y vista
   const [sortBy, setSortBy] = useState<'upload_date' | 'title'>('upload_date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [tagFilter, setTagFilter] = useState<string>('all');
   const [tab, setTab] = useState<'active' | 'expired'>('active');
-
+  console.log(initialEmployees);
   // Helpers originales
   const getEmployeeCounts = (documentId: string): EmployeeCounts => {
-    if (!employees?.data) return { total: 0, accepted: 0 };
-    const counts = employees.data.reduce((acc: EmployeeCounts, employee: any) => {
+    if (!employees || !Array.isArray(employees)) return { total: 0, accepted: 0 };
+    const counts = employees.reduce(
+      (acc: EmployeeCounts, employee: any) => {
+        const hasDocument = employee.documents?.some((doc: any) => doc.document?.id === documentId);
+        if (hasDocument) {
+          acc.total += 1;
+          const isAccepted = employee.documents?.some(
+            (doc: any) => doc.document?.id === documentId && doc.status === 'accepted'
+          );
+          if (isAccepted) acc.accepted += 1;
+        }
+        return acc;
+      },
+      { total: 0, accepted: 0 }
+    );
+    return counts;
+  };
+
+  /**
+   * Obtiene los IDs de las posiciones únicas a las que está asignado un documento
+   * @param documentId - ID del documento
+   * @returns Array con los IDs de las posiciones únicas que tienen asignado el documento
+   */
+  const getDocumentAssignedPositions = (documentId: string): string[] => {
+    if (!employees || !Array.isArray(employees)) {
+      console.log('No hay empleados o no es un array');
+      return [];
+    }
+
+    console.log('Buscando posiciones para el documento:', documentId);
+    console.log('Total de empleados a procesar:', employees.length);
+    
+    const positionSet = new Set<string>();
+    let empleadosConDocumento = 0;
+
+    employees.forEach((employee, index) => {
       const hasDocument = employee.documents?.some(
         (doc: any) => doc.document?.id === documentId
       );
+      
       if (hasDocument) {
-        acc.total += 1;
-        const isAccepted = employee.documents?.some(
-          (doc: any) => doc.document?.id === documentId && doc.status === 'accepted'
-        );
-        if (isAccepted) acc.accepted += 1;
+        empleadosConDocumento++;
+        // Verificamos si el empleado tiene company_position
+        if (employee.hierarchical_position && typeof employee.hierarchical_position === 'object') {
+          console.log(`Empleado ${index} tiene el documento y posición:`, employee.company_position);
+          positionSet.add(employee.company_position);
+        } 
+        // Si no tiene company_position, verificamos si tiene position (string)
+        else if (employee.position && typeof employee.position === 'string') {
+          console.log(`Empleado ${index} tiene el documento y posición (string):`, employee.position);
+          positionSet.add(employee.position);
+        } 
+        // Si no tiene ninguna de las dos, mostramos un mensaje de depuración
+        else {
+          console.log(`Empleado ${index} tiene el documento pero no tiene posición definida o es inválida`, employee);
+        }
       }
-      return acc;
-    }, { total: 0, accepted: 0 });
-    return counts;
+    });
+
+    console.log(`Total de empleados con el documento: ${empleadosConDocumento}`);
+    const posicionesUnicas = Array.from(positionSet);
+    console.log('Posiciones únicas encontradas:', posicionesUnicas);
+    
+    return posicionesUnicas;
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800";
-      case "expired":
-        return "bg-red-100 text-red-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'expired':
+        return 'bg-red-100 text-red-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
       default:
-        return "bg-gray-100 text-gray-800";
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "active":
-        return "Vigente";
-      case "expired":
-        return "Vencido";
-      case "pending":
-        return "Pendiente";
+      case 'active':
+        return 'Vigente';
+      case 'expired':
+        return 'Vencido';
+      case 'pending':
+        return 'Pendiente';
       default:
-        return "Desconocido";
+        return 'Desconocido';
     }
   };
 
   // Filtro y orden
   const filterAndSortDocuments = (docs: Document[]) => {
     return docs
-      .filter(doc => {
+      .filter((doc) => {
         const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesTag = tagFilter === 'all' || (doc.tags && doc.tags.includes(tagFilter));
         return matchesSearch && matchesTag;
@@ -433,8 +467,8 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
       });
   };
 
-  const activeDocuments = documents.filter((doc) => doc.status === "active");
-  const expiredDocuments = documents.filter((doc) => doc.status === "expired");
+  const activeDocuments = documents.filter((doc) => doc.status === 'active');
+  const expiredDocuments = documents.filter((doc) => doc.status === 'expired');
   const currentTabDocuments = tab === 'active' ? activeDocuments : expiredDocuments;
 
   const handleDownload = (file_path: string, file_name: string) => {
@@ -452,15 +486,23 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleString('es-AR', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit'
-    });
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return 'Sin fecha';
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleString('es-AR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (e) {
+      console.error('Error formateando fecha:', e);
+      return 'Fecha inválida';
+    }
   };
-
-  // Tu DocumentGrid original, sin modificar:
+console.log(documents);
   const DocumentGrid = ({ documents }: { documents: Document[] }) => (
     <div>
       <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
@@ -474,7 +516,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
               <CardTitle className="text-base sm:text-lg line-clamp-2">{document.title}</CardTitle>
               {document.tags && document.tags.length > 0 && (
                 <div className="flex gap-1 mt-2 flex-wrap">
-                  {document.tags.map(tag => (
+                  {document.tags.map((tag) => (
                     <Badge key={tag}>{tag}</Badge>
                   ))}
                 </div>
@@ -484,9 +526,11 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
             <CardContent className="space-y-3">
               <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
                 <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
-                <span className="truncate">
-                  Fecha de creación: {formatDate(document.upload_date)}
-                </span>
+                <span className="truncate">Fecha de creación: {formatDate(document.upload_date)}</span>
+              </div>
+              <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
+                <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Fecha de vencimiento: {formatDate(document.expiry_date) || 'sin vencimiento'}</span>
               </div>
               <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
                 <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
@@ -497,22 +541,39 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-blue-600 h-2 rounded-full"
-                  style={{ width: `${((getEmployeeCounts(document.id).accepted || 0) / (getEmployeeCounts(document.id).total || 1)) * 100}%` }}
+                  style={{
+                    width: `${((getEmployeeCounts(document.id).accepted || 0) / (getEmployeeCounts(document.id).total || 1)) * 100}%`,
+                  }}
                 ></div>
               </div>
               <div className="flex flex-col sm:flex-row gap-2 pt-2">
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() => {
+                    setDocumentToEdit(document); // documento es el objeto actual del map
+                    setEditDialogOpen(true);
+                  }}
+                >
+                  Editar
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="flex-1 text-xs sm:text-sm"
                   onClick={() => {
-                    router.push(`/dashboard/hse/document/${document.id}/detail`)
+                    router.push(`/dashboard/hse/document/${document.id}/detail`);
                   }}
                 >
                   <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                   Ver Detalle
                 </Button>
-                <Button variant="outline" size="sm" className="sm:w-auto" onClick={() => handleDownload(document.file_path, document.file_name)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="sm:w-auto"
+                  onClick={() => handleDownload(document.file_path, document.file_name)}
+                >
                   <Download className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </div>
@@ -526,7 +587,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
   // Vista de lista
   const DocumentList = ({ documents }: { documents: Document[] }) => (
     <div className="divide-y rounded border">
-      {documents.map(doc => (
+      {documents.map((doc) => (
         <div key={doc.id} className="flex items-center px-4 py-2 min-h-0">
           <div className="flex-1 min-w-0">
             {/* Primer renglón */}
@@ -536,7 +597,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
               <span className="text-xs text-muted-foreground">Versión {doc.version}</span>
               {doc.tags && doc.tags.length > 0 && (
                 <div className="flex gap-1 flex-wrap">
-                  {doc.tags.map(tag => (
+                  {doc.tags.map((tag) => (
                     <Badge key={tag}>{tag}</Badge>
                   ))}
                 </div>
@@ -545,6 +606,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
             {/* Segundo renglón */}
             <div className="flex items-center gap-4 text-xs text-muted-foreground mt-0.5">
               <span>Fecha de creación: {formatDate(doc.upload_date)}</span>
+              <span>Fecha de vencimiento: {formatDate(doc.expiry_date) || 'sin vencimiento'}</span>
               <span className="flex items-center">
                 <Users className="h-3 w-3 mr-1" />
                 {getEmployeeCounts(doc.id).accepted}/{getEmployeeCounts(doc.id).total} empleados
@@ -553,7 +615,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
                 <div
                   className="bg-blue-600 h-1 rounded-full"
                   style={{
-                    width: `${((getEmployeeCounts(doc.id).accepted || 0) / (getEmployeeCounts(doc.id).total || 1)) * 100}%`
+                    width: `${((getEmployeeCounts(doc.id).accepted || 0) / (getEmployeeCounts(doc.id).total || 1)) * 100}%`,
                   }}
                 ></div>
               </div>
@@ -561,6 +623,16 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
           </div>
           {/* Acciones */}
           <div className="flex items-center ml-2 gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setDocumentToEdit(doc); // documento es el objeto actual del map
+                setEditDialogOpen(true);
+              }}
+            >
+              Editar
+            </Button>
             <Button
               onClick={() => router.push(`/dashboard/hse/document/${doc.id}/detail`)}
               size="sm"
@@ -581,7 +653,12 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <Tabs defaultValue="active" value={tab} onValueChange={v => setTab(v as 'active' | 'expired')} className="w-full">
+      <Tabs
+        defaultValue="active"
+        value={tab}
+        onValueChange={(v) => setTab(v as 'active' | 'expired')}
+        className="w-full"
+      >
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="active" className="text-xs sm:text-sm">
             Vigentes ({activeDocuments.length})
@@ -597,7 +674,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
             <Input
               placeholder="Buscar documentos..."
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-48"
             />
             <Select value={tagFilter} onValueChange={setTagFilter}>
@@ -606,12 +683,14 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas las etiquetas</SelectItem>
-                {allTags?.map(tag => (
-                  <SelectItem key={tag.id} value={tag.name}>{tag.name}</SelectItem>
+                {allTags?.map((tag) => (
+                  <SelectItem key={tag.id} value={tag.name}>
+                    {tag.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select value={sortBy} onValueChange={value => setSortBy(value as 'upload_date' | 'title')}>
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'upload_date' | 'title')}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
@@ -620,7 +699,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
                 <SelectItem value="title">Título</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={sortOrder} onValueChange={value => setSortOrder(value as 'asc' | 'desc')}>
+            <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Orden" />
               </SelectTrigger>
@@ -643,9 +722,11 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
           </div>
           {/* Renderizado según vista */}
           {filterAndSortDocuments(activeDocuments).length > 0 ? (
-            viewMode === 'grid'
-              ? <DocumentGrid documents={filterAndSortDocuments(activeDocuments)} />
-              : <DocumentList documents={filterAndSortDocuments(activeDocuments)} />
+            viewMode === 'grid' ? (
+              <DocumentGrid documents={filterAndSortDocuments(activeDocuments)} />
+            ) : (
+              <DocumentList documents={filterAndSortDocuments(activeDocuments)} />
+            )
           ) : (
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -660,7 +741,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
             <Input
               placeholder="Buscar documentos..."
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-48"
             />
             <Select value={tagFilter} onValueChange={setTagFilter}>
@@ -669,12 +750,14 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas las etiquetas</SelectItem>
-                {allTags?.map(tag => (
-                  <SelectItem key={tag.id} value={tag.name}>{tag.name}</SelectItem>
+                {allTags?.map((tag) => (
+                  <SelectItem key={tag.id} value={tag.name}>
+                    {tag.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select value={sortBy} onValueChange={value => setSortBy(value as 'upload_date' | 'title')}>
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'upload_date' | 'title')}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
@@ -683,7 +766,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
                 <SelectItem value="title">Título</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={sortOrder} onValueChange={value => setSortOrder(value as 'asc' | 'desc')}>
+            <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Orden" />
               </SelectTrigger>
@@ -706,9 +789,11 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
           </div>
           {/* Renderizado según vista */}
           {filterAndSortDocuments(expiredDocuments).length > 0 ? (
-            viewMode === 'grid'
-              ? <DocumentGrid documents={filterAndSortDocuments(expiredDocuments)} />
-              : <DocumentList documents={filterAndSortDocuments(expiredDocuments)} />
+            viewMode === 'grid' ? (
+              <DocumentGrid documents={filterAndSortDocuments(expiredDocuments)} />
+            ) : (
+              <DocumentList documents={filterAndSortDocuments(expiredDocuments)} />
+            )
           ) : (
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -717,6 +802,26 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
           )}
         </TabsContent>
       </Tabs>
+      {editDialogOpen && documentToEdit && (
+        <DocumentUploadDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          initialData={{
+            id: documentToEdit.id,
+            title: documentToEdit.title,
+            version: documentToEdit.version,
+            description: documentToEdit.description || '',
+            expiry_date: documentToEdit.expiry_date || undefined,
+            file_path: documentToEdit.file_path,
+            file_name: documentToEdit.file_name,
+            file_type: documentToEdit.file_type,
+            file_size: documentToEdit.file_size,
+            typeOfEmployee: getDocumentAssignedPositions(documentToEdit.id)
+          }}
+          documentId={documentToEdit.id}
+          mode="edit"
+        />
+      )}
     </div>
   );
 }
