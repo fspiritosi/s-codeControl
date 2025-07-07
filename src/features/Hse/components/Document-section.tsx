@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import type { Document } from '@/features/Hse/actions/documents'; // <-- ¡SÍ!
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import Cookies from 'js-cookie';
@@ -14,6 +15,206 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import {DocumentUploadDialog} from '@/features/Hse/components/Document-upload-dialog';
+
+// Componente para la vista de cuadrícula
+const DocumentGrid = ({ documents, allTags, getStatusColor, getStatusText, formatDate, getEmployeeCounts, setDocumentToEdit, setEditDialogOpen, router, handleDownload }: { 
+  documents: any[], 
+  allTags: any[],
+  getStatusColor: (status: string) => string,
+  getStatusText: (status: string) => string,
+  formatDate: (dateStr: string | null | undefined) => string,
+  getEmployeeCounts: (id: string) => { accepted: number, total: number },
+  setDocumentToEdit: (doc: any) => void,
+  setEditDialogOpen: (open: boolean) => void,
+  router: any,
+  handleDownload: (file_path: string, file_name: string) => void
+}) => (
+  <div>
+    <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+      {documents.map((document) => (
+        <Card key={document.id} className="hover:shadow-md transition-shadow">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 flex-shrink-0" />
+              <Badge className={getStatusColor(document.status)}>{getStatusText(document.status)}</Badge>
+            </div>
+            <CardTitle className="text-base sm:text-lg line-clamp-2">{document.title}</CardTitle>
+            {document.tags && document.tags.length > 0 && (
+              <div className="flex gap-1 mt-2 flex-wrap">
+                {document.tags.map((tagName: string) => {
+                  // Buscar el tag por nombre (case insensitive)
+                  const tag = allTags.find((t: any) => t.name.toLowerCase() === tagName.toLowerCase());
+                  const tagColor = tag?.color || '#6b7280'; // Color gris por defecto
+                  
+                  return (
+                    <Badge 
+                      key={tagName}
+                      className="text-white hover:opacity-80 transition-opacity"
+                      style={{ 
+                        backgroundColor: tagColor,
+                        borderColor: tagColor
+                      }}
+                    >
+                      {tagName}
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
+            <CardDescription>Versión {document.version}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
+              <span className="truncate">Fecha de creación: {formatDate(document.upload_date)}</span>
+            </div>
+            <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
+              <span className="truncate">Fecha de vencimiento: {formatDate(document.expiry_date) || 'sin vencimiento'}</span>
+            </div>
+            <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
+              <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
+              <span>
+                {getEmployeeCounts(document.id).accepted}/{getEmployeeCounts(document.id).total} empleados
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-blue-600 h-2 rounded-full"
+                style={{
+                  width: `${((getEmployeeCounts(document.id).accepted || 0) / (getEmployeeCounts(document.id).total || 1)) * 100}%`,
+                }}
+              ></div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setDocumentToEdit(document);
+                  setEditDialogOpen(true);
+                }}
+              >
+                Editar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 text-xs sm:text-sm"
+                onClick={() => {
+                  router.push(`/dashboard/hse/document/${document.id}/detail`);
+                }}
+              >
+                <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                Ver Detalle
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="sm:w-auto"
+                onClick={() => handleDownload(document.file_path, document.file_name)}
+              >
+                <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  </div>
+);
+
+// Componente para la vista de lista
+const DocumentList = ({ documents, allTags, getStatusColor, getStatusText, formatDate, getEmployeeCounts, setDocumentToEdit, setEditDialogOpen, router, handleDownload }: { 
+  documents: any[], 
+  allTags: any[],
+  getStatusColor: (status: string) => string,
+  getStatusText: (status: string) => string,
+  formatDate: (dateStr: string | null | undefined) => string,
+  getEmployeeCounts: (id: string) => { accepted: number, total: number },
+  setDocumentToEdit: (doc: any) => void,
+  setEditDialogOpen: (open: boolean) => void,
+  router: any,
+  handleDownload: (file_path: string, file_name: string) => void
+}) => (
+  <div className="divide-y rounded border">
+    {documents.map((doc) => (
+      <div key={doc.id} className="flex items-center px-4 py-2 min-h-0">
+        <div className="flex-1 min-w-0">
+          {/* Primer renglón */}
+          <div className="flex items-center gap-2 flex-wrap truncate">
+            <span className="font-medium text-base truncate">{doc.title}</span>
+            <Badge className={getStatusColor(doc.status)}>{getStatusText(doc.status)}</Badge>
+            <span className="text-xs text-muted-foreground">Versión {doc.version}</span>
+            {doc.tags && doc.tags.length > 0 && (
+              <div className="flex gap-1 flex-wrap">
+                {doc.tags.map((tagName: string) => {
+                  const tag = allTags.find((t: any) => t.name.toLowerCase() === tagName.toLowerCase());
+                  const tagColor = tag?.color || '#6b7280';
+                  
+                  return (
+                    <Badge 
+                      key={tagName}
+                      className="text-white hover:opacity-80 transition-opacity"
+                      style={{
+                        backgroundColor: tagColor,
+                        borderColor: tagColor
+                      }}
+                    >
+                      {tagName}
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          {/* Segundo renglón */}
+          <div className="flex items-center gap-4 text-xs text-muted-foreground mt-0.5">
+            <span>Fecha de creación: {formatDate(doc.upload_date)}</span>
+            <span>Fecha de vencimiento: {formatDate(doc.expiry_date) || 'sin vencimiento'}</span>
+            <span className="flex items-center">
+              <Users className="h-3 w-3 mr-1" />
+              {getEmployeeCounts(doc.id).accepted}/{getEmployeeCounts(doc.id).total} empleados
+            </span>
+            <div className="w-20 bg-gray-200 rounded-full h-1 ml-2">
+              <div
+                className="bg-blue-600 h-1 rounded-full"
+                style={{
+                  width: `${((getEmployeeCounts(doc.id).accepted || 0) / (getEmployeeCounts(doc.id).total || 1)) * 100}%`,
+                }}
+              ></div>
+            </div>
+          </div>
+        </div>
+        {/* Acciones */}
+        <div className="flex items-center ml-2 gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setDocumentToEdit(doc);
+              setEditDialogOpen(true);
+            }}
+          >
+            Editar
+          </Button>
+          <Button
+            onClick={() => router.push(`/dashboard/hse/document/${doc.id}/detail`)}
+            size="sm"
+            variant="outline"
+            className="mr-1"
+          >
+            <Eye className="h-4 w-4 mr-1" />
+            Ver Detalle
+          </Button>
+          <Button onClick={() => handleDownload(doc.file_path, doc.file_name)} size="sm" variant="ghost">
+            <Download className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    ))}
+  </div>
+);
 
 interface DocumentsSectionProps {
   initialDocuments: Document[];
@@ -43,7 +244,7 @@ console.log(allTags);
   const [sortBy, setSortBy] = useState<'upload_date' | 'title'>('upload_date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [tagFilter, setTagFilter] = useState<string>('all');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tab, setTab] = useState<'active' | 'expired'>('active');
   console.log(initialEmployees);
   // Helpers originales
@@ -145,8 +346,18 @@ console.log(allTags);
     return docs
       .filter((doc) => {
         const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesTag = tagFilter === 'all' || (doc.tags && doc.tags.includes(tagFilter));
-        return matchesSearch && matchesTag;
+        
+        // Si no hay etiquetas seleccionadas, mostrar todos los documentos que coincidan con la búsqueda
+        if (selectedTags.length === 0) {
+          return matchesSearch;
+        }
+        
+        // Verificar si el documento tiene al menos una de las etiquetas seleccionadas
+        const hasMatchingTag = doc.tags && doc.tags.some(tag => 
+          selectedTags.includes(tag)
+        );
+        
+        return matchesSearch && hasMatchingTag;
       })
       .sort((a, b) => {
         if (sortBy === 'upload_date') {
@@ -199,183 +410,6 @@ console.log(allTags);
     }
   };
 console.log(documents);
-  const DocumentGrid = ({ documents }: { documents: Document[] }) => (
-    <div>
-      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-        {documents.map((document) => (
-          <Card key={document.id} className="hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 flex-shrink-0" />
-                <Badge className={getStatusColor(document.status)}>{getStatusText(document.status)}</Badge>
-              </div>
-              <CardTitle className="text-base sm:text-lg line-clamp-2">{document.title}</CardTitle>
-              {document.tags && document.tags.length > 0 && (
-                <div className="flex gap-1 mt-2 flex-wrap">
-                  {document.tags.map((tagName) => {
-                    // Buscar el tag por nombre (case insensitive)
-                    const tag = allTags.find(t => t.name.toLowerCase() === tagName.toLowerCase());
-                    const tagColor = tag?.color || '#6b7280'; // Color gris por defecto
-                    
-                    return (
-                      <Badge 
-                        key={tagName}
-                        className="text-white hover:opacity-80 transition-opacity"
-                        style={{ 
-                          backgroundColor: tagColor,
-                          borderColor: tagColor
-                        }}
-                      >
-                        {tagName}
-                      </Badge>
-                    );
-                  })}
-                </div>
-              )}
-              <CardDescription>Versión {document.version}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
-                <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
-                <span className="truncate">Fecha de creación: {formatDate(document.upload_date)}</span>
-              </div>
-              <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
-                <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
-                <span className="truncate">Fecha de vencimiento: {formatDate(document.expiry_date) || 'sin vencimiento'}</span>
-              </div>
-              <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
-                <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
-                <span>
-                  {getEmployeeCounts(document.id).accepted}/{getEmployeeCounts(document.id).total} empleados
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full"
-                  style={{
-                    width: `${((getEmployeeCounts(document.id).accepted || 0) / (getEmployeeCounts(document.id).total || 1)) * 100}%`,
-                  }}
-                ></div>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setDocumentToEdit(document); // documento es el objeto actual del map
-                    setEditDialogOpen(true);
-                  }}
-                >
-                  Editar
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 text-xs sm:text-sm"
-                  onClick={() => {
-                    router.push(`/dashboard/hse/document/${document.id}/detail`);
-                  }}
-                >
-                  <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                  Ver Detalle
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="sm:w-auto"
-                  onClick={() => handleDownload(document.file_path, document.file_name)}
-                >
-                  <Download className="h-3 w-3 sm:h-4 sm:w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-
-  // Vista de lista
-  const DocumentList = ({ documents }: { documents: Document[] }) => (
-    <div className="divide-y rounded border">
-      {documents.map((doc) => (
-        <div key={doc.id} className="flex items-center px-4 py-2 min-h-0">
-          <div className="flex-1 min-w-0">
-            {/* Primer renglón */}
-            <div className="flex items-center gap-2 flex-wrap truncate">
-              <span className="font-medium text-base truncate">{doc.title}</span>
-              <Badge className={getStatusColor(doc.status)}>{getStatusText(doc.status)}</Badge>
-              <span className="text-xs text-muted-foreground">Versión {doc.version}</span>
-              {doc.tags && doc.tags.length > 0 && (
-                <div className="flex gap-1 flex-wrap">
-                  {doc.tags.map((tagName) => {
-                    const tag = allTags.find(t => t.name.toLowerCase() === tagName.toLowerCase());
-                    const tagColor = tag?.color || '#6b7280';
-                    
-                    return (
-                      <Badge 
-                        key={tagName}
-                        className="text-white hover:opacity-80 transition-opacity"
-                        style={{
-                          backgroundColor: tagColor,
-                          borderColor: tagColor
-                        }}
-                      >
-                        {tagName}
-                      </Badge>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-            {/* Segundo renglón */}
-            <div className="flex items-center gap-4 text-xs text-muted-foreground mt-0.5">
-              <span>Fecha de creación: {formatDate(doc.upload_date)}</span>
-              <span>Fecha de vencimiento: {formatDate(doc.expiry_date) || 'sin vencimiento'}</span>
-              <span className="flex items-center">
-                <Users className="h-3 w-3 mr-1" />
-                {getEmployeeCounts(doc.id).accepted}/{getEmployeeCounts(doc.id).total} empleados
-              </span>
-              <div className="w-20 bg-gray-200 rounded-full h-1 ml-2">
-                <div
-                  className="bg-blue-600 h-1 rounded-full"
-                  style={{
-                    width: `${((getEmployeeCounts(doc.id).accepted || 0) / (getEmployeeCounts(doc.id).total || 1)) * 100}%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-          </div>
-          {/* Acciones */}
-          <div className="flex items-center ml-2 gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setDocumentToEdit(doc); // documento es el objeto actual del map
-                setEditDialogOpen(true);
-              }}
-            >
-              Editar
-            </Button>
-            <Button
-              onClick={() => router.push(`/dashboard/hse/document/${doc.id}/detail`)}
-              size="sm"
-              variant="outline"
-              className="mr-1"
-            >
-              <Eye className="h-4 w-4 mr-1" />
-              Ver Detalle
-            </Button>
-            <Button onClick={() => handleDownload(doc.file_path, doc.file_name)} size="sm" variant="ghost">
-              <Download className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
   return (
     <div className="space-y-4 sm:space-y-6">
       <Tabs
@@ -395,129 +429,100 @@ console.log(documents);
 
         <TabsContent value="active" className="space-y-4">
           {/* Controles de filtro, orden, búsqueda y vista */}
-          <div className="flex flex-wrap gap-2 items-center mb-4">
-            <Input
-              placeholder="Buscar documentos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-48"
-            />
-            <Select value={tagFilter} onValueChange={setTagFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Filtrar por etiqueta" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las etiquetas</SelectItem>
-                {allTags?.map((tag) => (
-                  <SelectItem key={tag.id} value={tag.name}>
-                    {tag.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'upload_date' | 'title')}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Ordenar por" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="upload_date">Fecha de creación</SelectItem>
-                <SelectItem value="title">Título</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Orden" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="desc">Descendente</SelectItem>
-                <SelectItem value="asc">Ascendente</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
-              {viewMode === 'grid' ? (
-                <>
-                  <List className="h-4 w-4 mr-1" /> Vista de lista
-                </>
-              ) : (
-                <>
-                  <LayoutGrid className="h-4 w-4 mr-1" /> Vista de grid
-                </>
-              )}
-            </Button>
-          </div>
-          {/* Renderizado según vista */}
-          {filterAndSortDocuments(activeDocuments).length > 0 ? (
-            viewMode === 'grid' ? (
-              <DocumentGrid documents={filterAndSortDocuments(activeDocuments)} />
-            ) : (
-              <DocumentList documents={filterAndSortDocuments(activeDocuments)} />
-            )
-          ) : (
-            <div className="text-center py-8">
-              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No hay documentos vigentes</p>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap gap-2 items-center">
+              <Input
+                placeholder="Buscar documentos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-48"
+              />
+              
+              {/* <div className="w-64"> */}
+                
+              {/* </div> */}
+              
+              {/* <div className="flex gap-2"> */}
+                <Select 
+                  value={sortBy} 
+                  onValueChange={(value) => setSortBy(value as 'upload_date' | 'title')}
+                >
+                  <SelectTrigger className="w-45">
+                    <SelectValue placeholder="Ordenar por" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="upload_date">Fecha de creación</SelectItem>
+                    <SelectItem value="title">Título</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Select 
+                  value={sortOrder} 
+                  onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
+                >
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Orden" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="desc">Descendente</SelectItem>
+                    <SelectItem value="asc">Ascendente</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="w-64">
+                <MultiSelectCombobox
+                  options={allTags?.map(tag => ({
+                    label: tag.name,
+                    value: tag.name,
+                  })) || []}
+                  selectedValues={selectedTags}
+                  placeholder="Filtrar por etiquetas"
+                  emptyMessage="No hay etiquetas disponibles"
+                  onChange={setSelectedTags}
+                  showSelectAll
+                />
+                </div>
+                <Button variant="outline" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
+                {viewMode === 'grid' ? (
+                  <>
+                    <List className="h-4 w-4 mr-1" /> Vista de lista
+                  </>
+                ) : (
+                  <>
+                    <LayoutGrid className="h-4 w-4 mr-1" /> Vista de grid
+                  </>
+                )}
+              </Button>
+              </div>
+              
             </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="expired" className="space-y-4">
-          {/* Controles de filtro, orden, búsqueda y vista */}
-          <div className="flex flex-wrap gap-2 items-center mb-4">
-            <Input
-              placeholder="Buscar documentos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-48"
-            />
-            <Select value={tagFilter} onValueChange={setTagFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Filtrar por etiqueta" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las etiquetas</SelectItem>
-                {allTags?.map((tag) => (
-                  <SelectItem key={tag.id} value={tag.name}>
-                    {tag.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'upload_date' | 'title')}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Ordenar por" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="upload_date">Fecha de creación</SelectItem>
-                <SelectItem value="title">Título</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Orden" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="desc">Descendente</SelectItem>
-                <SelectItem value="asc">Ascendente</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
-              {viewMode === 'grid' ? (
-                <>
-                  <List className="h-4 w-4 mr-1" /> Vista de lista
-                </>
-              ) : (
-                <>
-                  <LayoutGrid className="h-4 w-4 mr-1" /> Vista de grid
-                </>
-              )}
-            </Button>
-          </div>
           {/* Renderizado según vista */}
-          {filterAndSortDocuments(expiredDocuments).length > 0 ? (
+          {filterAndSortDocuments(currentTabDocuments).length > 0 ? (
             viewMode === 'grid' ? (
-              <DocumentGrid documents={filterAndSortDocuments(expiredDocuments)} />
+              <DocumentGrid 
+                documents={filterAndSortDocuments(currentTabDocuments)}
+                allTags={allTags}
+                getStatusColor={getStatusColor}
+                getStatusText={getStatusText}
+                formatDate={formatDate}
+                getEmployeeCounts={getEmployeeCounts}
+                setDocumentToEdit={setDocumentToEdit}
+                setEditDialogOpen={setEditDialogOpen}
+                router={router}
+                handleDownload={handleDownload}
+              />
             ) : (
-              <DocumentList documents={filterAndSortDocuments(expiredDocuments)} />
+              <DocumentList 
+                documents={filterAndSortDocuments(currentTabDocuments)}
+                allTags={allTags}
+                getStatusColor={getStatusColor}
+                getStatusText={getStatusText}
+                formatDate={formatDate}
+                getEmployeeCounts={getEmployeeCounts}
+                setDocumentToEdit={setDocumentToEdit}
+                setEditDialogOpen={setEditDialogOpen}
+                router={router}
+                handleDownload={handleDownload}
+              />
             )
           ) : (
             <div className="text-center py-8">
