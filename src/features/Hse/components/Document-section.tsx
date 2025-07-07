@@ -87,16 +87,18 @@ const DocumentGrid = ({ documents, allTags, getStatusColor, getStatusText, forma
               ></div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setDocumentToEdit(document);
-                  setEditDialogOpen(true);
-                }}
-              >
-                Editar
-              </Button>
+              {document.status === 'borrador' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDocumentToEdit(document);
+                    setEditDialogOpen(true);
+                  }}
+                >
+                  Editar
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -188,16 +190,18 @@ const DocumentList = ({ documents, allTags, getStatusColor, getStatusText, forma
         </div>
         {/* Acciones */}
         <div className="flex items-center ml-2 gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setDocumentToEdit(doc);
-              setEditDialogOpen(true);
-            }}
-          >
-            Editar
-          </Button>
+          {doc.status === 'borrador' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setDocumentToEdit(doc);
+                setEditDialogOpen(true);
+              }}
+            >
+              Editar
+            </Button>
+          )}
           <Button
             onClick={() => router.push(`/dashboard/hse/document/${doc.id}/detail`)}
             size="sm"
@@ -323,6 +327,8 @@ console.log(allTags);
         return 'bg-red-100 text-red-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
+      case 'borrador':
+        return 'bg-blue-100 text-blue-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -336,8 +342,10 @@ console.log(allTags);
         return 'Vencido';
       case 'pending':
         return 'Pendiente';
+      case 'borrador':
+        return 'Borrador';
       default:
-        return 'Desconocido';
+        return status; // Return the status as is if not matched
     }
   };
 
@@ -374,7 +382,9 @@ console.log(allTags);
       });
   };
 
-  const activeDocuments = documents.filter((doc) => doc.status === 'active');
+  const activeDocuments = documents.filter((doc) => 
+    doc.status === 'active' || doc.status === 'borrador'
+  );
   const expiredDocuments = documents.filter((doc) => doc.status === 'expired');
   const currentTabDocuments = tab === 'active' ? activeDocuments : expiredDocuments;
 
