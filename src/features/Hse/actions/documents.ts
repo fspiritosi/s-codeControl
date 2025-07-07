@@ -104,12 +104,14 @@ export interface ProcessedEmployee {
   documents: ProcessedDocument[]
 }
 
-// Obtener todos los documentos
+// Obtener todos los documentos con sus etiquetas
 export async function getDocuments(company_id: string, filters?: {
   status?: 'active' | 'expired' | 'pending'
   search?: string
 }) {
   const supabase = supabaseServer()
+  
+  // Primero obtenemos los documentos básicos
   let query = supabase
     .from('hse_documents' as any)
     .select('*')
@@ -124,14 +126,89 @@ export async function getDocuments(company_id: string, filters?: {
     query = query.ilike('title', `%${filters.search}%`)
   }
 
-  const { data, error } = await query
+  const { data: documents, error } = await query
 
   if (error) {
     console.error('Error al obtener documentos:', error)
     throw new Error('No se pudieron obtener los documentos')
   }
 
-  return data as Document[]
+  if (!documents || documents.length === 0) {
+    return [];
+  }
+
+  // Obtenemos los IDs de los documentos para buscar sus etiquetas
+  const documentIds = documents.map(doc => doc.id);
+
+  // Obtenemos las asignaciones de etiquetas para estos documentos
+  const tagQuery = supabase
+    .from('hse_document_tag_assignments' as any)
+    .select(`
+      document_id,
+      training_tags (
+        id,
+        name
+      )
+    `)
+    .in('document_id', documentIds);
+
+  const { data: tagAssignments, error: tagError } = await tagQuery as unknown as {
+    data: Array<{
+      document_id: string;
+      training_tags: { id: string; name: string } | { id: string; name: string }[] | null;
+    }> | null;
+    error: any;
+  };
+
+  if (tagError) {
+    console.error('Error al obtener asignaciones de etiquetas:', tagError);
+    // Si hay error, devolvemos los documentos sin etiquetas
+    return documents.map(doc => ({
+      ...doc,
+      tags: []
+    }));
+  }
+
+  // Creamos un mapa de document_id a array de nombres de etiquetas
+  const tagsByDocument = new Map<string, string[]>();
+  
+  if (tagAssignments) {
+    // Procesamos las asignaciones de etiquetas
+    tagAssignments.forEach(assignment => {
+      if (!assignment) return;
+      
+      const documentId = assignment.document_id;
+      const trainingTags = assignment.training_tags;
+      
+      // Aseguramos que training_tags sea un array
+      const tags = Array.isArray(trainingTags) 
+        ? trainingTags 
+        : trainingTags ? [trainingTags] : [];
+      
+      // Filtramos solo las etiquetas válidas
+      const validTags = tags.filter(tag => 
+        tag && typeof tag === 'object' && 'id' in tag && 'name' in tag
+      ) as { id: string; name: string }[];
+
+      if (validTags.length > 0) {
+        const tagNames = validTags.map(tag => tag.name);
+        
+        // Si ya existe el documento en el mapa, añadimos las etiquetas
+        if (tagsByDocument.has(documentId)) {
+          const existingTags = tagsByDocument.get(documentId) || [];
+          tagsByDocument.set(documentId, [...existingTags, ...tagNames]);
+        } else {
+          tagsByDocument.set(documentId, tagNames);
+        }
+      }
+    });
+  }
+
+  // Combinamos los documentos con sus etiquetas
+  return documents.map(doc => ({
+    ...doc,
+    tags: tagsByDocument.get(doc.id) || []
+  })) as Document[];
 }
 
 // Obtener un documento por ID con sus versiones anteriores
@@ -438,6 +515,7 @@ export async function createDocumentWithAssignments(formData: FormData, company_
     const version = formData.get("version") as string
     const file = formData.get("file") as File
     const typeOfEmployee = formData.get("typeOfEmployee") as string // JSON string de array
+    const tagsJson = formData.get("tags") as string // JSON string de array de IDs de etiquetas
 
     if (!title || !file) {
       throw new Error("El título y el archivo son obligatorios")
@@ -492,8 +570,20 @@ export async function createDocumentWithAssignments(formData: FormData, company_
 
     let documentId: string
 
-    // 7. Crear el documento
-    
+    // 7. Parsear tags si existen
+    let tagIds: string[] = [];
+    if (tagsJson) {
+      try {
+        tagIds = JSON.parse(tagsJson) as string[];
+        if (!Array.isArray(tagIds)) {
+          tagIds = [];
+        }
+      } catch (e) {
+        console.warn("Error parsing tags:", e);
+      }
+    }
+
+    // 8. Crear el documento
     const newDoc = {
       title,
       description: (formData.get("description") as string) || null,
@@ -534,8 +624,50 @@ export async function createDocumentWithAssignments(formData: FormData, company_
     
     documentId = documentData.id
 
-    // 8. CREAR ASIGNACIONES AUTOMÁTICAS
+    // 9. CREAR ASIGNACIONES AUTOMÁTICAS
     await createDocumentAssignments(supabase, documentId, company_id, user.id, assignToAll, selectedPositions)
+
+    // 10. CREAR ASIGNACIONES DE ETIQUETAS
+    if (tagIds.length > 0) {
+      // Verificar qué etiquetas existen
+      const { data: existingTags, error: tagsError } = await supabase
+        .from('hse_document_tags' as any)
+        .select('id')
+        .in('id', tagIds);
+
+      if (tagsError) {
+        console.error('Error al verificar etiquetas existentes:', tagsError);
+        // Continuamos sin asignar etiquetas
+      } else {
+        const existingTagIds = new Set(existingTags?.map(tag => tag.id) || []);
+        const validTagIds = tagIds.filter(id => existingTagIds.has(id));
+
+        // Registrar advertencia si hay etiquetas no encontradas
+        if (validTagIds.length !== tagIds.length) {
+          const missingTags = tagIds.filter(id => !existingTagIds.has(id));
+          console.warn(`Las siguientes etiquetas no existen y no se asignarán: ${missingTags.join(', ')}`);
+        }
+
+        // Solo crear asignaciones para etiquetas que existen
+        if (validTagIds.length > 0) {
+          const tagAssignments = validTagIds.map(tagId => ({
+            document_id: documentId,
+            tag_id: tagId,
+            assigned_by: user.id,
+            assigned_at: new Date().toISOString()
+          }));
+
+          const { error: tagAssignError } = await supabase
+            .from('hse_document_tag_assignments' as any)
+            .insert(tagAssignments);
+
+          if (tagAssignError) {
+            console.error('Error al asignar etiquetas al documento:', tagAssignError);
+            // No lanzamos error para no fallar la creación del documento
+          }
+        }
+      }
+    }
 
     // 9. Obtener el documento actualizado/creado
     const { data: document, error: fetchDocError } = await supabase
@@ -1399,6 +1531,16 @@ export async function updateDocument(formData: FormData, companyId: string) {
       formData.get("typeOfEmployee") as string || "[]"
     ) as string[];
     const assignToAll = typeOfEmployee.length === 0;
+    
+    // Parse tag assignments
+    const tagsJson = formData.get("tags") as string || "[]";
+    let tagIds: string[] = [];
+    try {
+      const parsedTags = JSON.parse(tagsJson);
+      tagIds = Array.isArray(parsedTags) ? parsedTags : [];
+    } catch (e) {
+      console.warn("Error parsing tags:", e);
+    }
 
     if (!documentId) {
       throw new Error("ID de documento no proporcionado");
@@ -1442,7 +1584,7 @@ export async function updateDocument(formData: FormData, companyId: string) {
       throw new Error("Error al actualizar el documento: " + updateError.message);
     }
 
-    // 3. Actualizar asignaciones
+    // 3. Actualizar asignaciones de empleados
     const { error: deleteError } = await supabase
       .from("hse_document_assignments")
       .delete()
@@ -1461,6 +1603,71 @@ export async function updateDocument(formData: FormData, companyId: string) {
       assignToAll,
       typeOfEmployee
     );
+
+    // 4. Actualizar asignaciones de etiquetas
+    console.log('🔍 Iniciando actualización de etiquetas...');
+    
+    // Primero eliminamos todas las asignaciones existentes
+    const { error: deleteTagsError } = await supabase
+      .from('hse_document_tag_assignments' as any)
+      .delete()
+      .eq('document_id', documentId);
+
+    if (deleteTagsError) {
+      console.error('❌ Error al eliminar asignaciones de etiquetas anteriores:', deleteTagsError);
+      // No lanzamos error para no fallar la actualización del documento
+    } else {
+      console.log('✅ Asignaciones de etiquetas anteriores eliminadas');
+    }
+
+    // Luego creamos las nuevas asignaciones si hay etiquetas
+    if (tagIds.length > 0) {
+      console.log('🔍 Verificando etiquetas existentes:', tagIds);
+      
+      // Verificar qué etiquetas existen
+      const { data: existingTags, error: tagsError } = await supabase
+        .from('training_tags')
+        .select('id')
+        .in('id', tagIds);
+
+      if (tagsError) {
+        console.error('❌ Error al verificar etiquetas existentes:', tagsError);
+      } else {
+        const existingTagIds = new Set(existingTags?.map(tag => tag.id) || []);
+        const validTagIds = tagIds.filter(id => existingTagIds.has(id));
+
+        // Registrar advertencia si hay etiquetas no encontradas
+        if (validTagIds.length !== tagIds.length) {
+          const missingTags = tagIds.filter(id => !existingTagIds.has(id));
+          console.warn(`⚠️ Las siguientes etiquetas no existen y no se asignarán: ${missingTags.join(', ')}`);
+        }
+
+        // Solo crear asignaciones para etiquetas que existen
+        if (validTagIds.length > 0) {
+          console.log('➕ Creando asignaciones para etiquetas válidas:', validTagIds);
+          
+          const tagAssignments = validTagIds.map(tagId => ({
+            document_id: documentId,
+            tag_id: tagId,
+            
+          }));
+
+          const { error: tagAssignError } = await supabase
+            .from('hse_document_tag_assignments' as any)
+            .insert(tagAssignments);
+
+          if (tagAssignError) {
+            console.error('❌ Error al asignar etiquetas al documento:', tagAssignError);
+          } else {
+            console.log('✅ Asignaciones de etiquetas actualizadas correctamente');
+          }
+        } else {
+          console.log('ℹ️ No hay etiquetas válidas para asignar');
+        }
+      }
+    } else {
+      console.log('ℹ️ No se especificaron etiquetas para asignar');
+    }
 
     return { success: true, document };
   } catch (error) {
@@ -1485,7 +1692,7 @@ export async function getTypeOfEmployeeForDocument(documentId: string): Promise<
     
     // Primero, buscamos directamente las asignaciones de tipo 'position' para este documento
     const { data: positionAssignments, error: assignmentsError } = await supabase
-      .from('hse_document_assignments')
+      .from('hse_document_assignments' as any)
       .select('assignee_id')
       .eq('document_id', documentId)
       .eq('assignee_type', 'position');

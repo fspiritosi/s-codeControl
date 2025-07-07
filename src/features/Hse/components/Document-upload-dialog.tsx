@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -25,6 +26,7 @@ import { toast } from "@/components/ui/use-toast"
 import { useRouter } from "next/navigation"
 import { MultiSelectCombobox } from "@/components/ui/multi-select-combobox"
 import { getTypeOfEmployeeForDocument } from '../actions/documents';
+import { fetchAllTags } from '@/components/Capacitaciones/actions/actions';
 // Esquema de validación
 const documentFormSchema = z.object({
   title: z.string().min(1, "El título es obligatorio"),
@@ -52,6 +54,8 @@ const documentFormSchema = z.object({
     }, {
       message: "El archivo no puede pesar más de 10MB",
     }),
+  tags: z.array(z.string()).optional(),
+
 });
 interface DocumentUploadDialogProps {
   open?: boolean; // Opcional, solo si quieres controlar el modal desde afuera
@@ -59,6 +63,7 @@ interface DocumentUploadDialogProps {
   initialData?: DocumentFormValues & { id?: string };
   documentId?: string;
   mode?: "create" | "edit";
+  allTags: { id: string; name: string }[];
 }
 type DocumentFormValues = z.infer<typeof documentFormSchema> & {
   id?: string;
@@ -67,13 +72,57 @@ type DocumentFormValues = z.infer<typeof documentFormSchema> & {
   file_type?: string;
   file_size?: number;
   typeOfEmployee?: string[];
+  tags?: string[];
 }
 
-export function DocumentUploadDialog({ open, onOpenChange, initialData, documentId, mode }: DocumentUploadDialogProps) {
+export function DocumentUploadDialog({ open, onOpenChange, initialData, documentId, mode, allTags }: DocumentUploadDialogProps) {
   const [positions, setPositions] = useState<any[]>([]);
   const [fileName, setFileName] = useState<string>("");
   const [selectAll, setSelectAll] = useState(false);
-  
+  console.log(allTags)
+  // Format tags for MultiSelectCombobox
+  const tagOptions = React.useMemo(() => {
+    return (allTags || []).map(tag => ({
+      label: tag.name,
+      value: tag.id,
+    }));
+  }, [allTags]);
+
+  // Get initial selected tag IDs for edit mode
+  const getInitialTags = () => {
+    if (mode === "edit" && initialData?.tags) {
+      console.log('Initial tags from props:', initialData.tags);
+      
+      // Si los tags son objetos con id, mapear a array de IDs
+      if (initialData.tags.length > 0 && typeof initialData.tags[0] === 'object') {
+        const tagIds = initialData.tags.map((tag: any) => tag.id);
+        console.log('Mapped tag IDs from objects:', tagIds);
+        return tagIds;
+      }
+      
+      // Si los tags son nombres, buscar los IDs correspondientes en allTags
+      if (initialData.tags.length > 0 && typeof initialData.tags[0] === 'string') {
+        const tagIds = initialData.tags.map(tagName => {
+          const foundTag = allTags.find(tag => tag.name === tagName);
+          return foundTag ? foundTag.id : null;
+        }).filter(Boolean); // Filtrar cualquier null en caso de no encontrar el tag
+        
+        console.log('Mapped tag names to IDs:', { 
+          tagNames: initialData.tags,
+          mappedIds: tagIds 
+        });
+        
+        return tagIds;
+      }
+      
+      // Si ya es un array de IDs, usarlo tal cual
+      console.log('Using tags as is (already IDs):', initialData.tags);
+      return initialData.tags || [];
+    }
+    console.log('No tags to initialize');
+    return [];
+  };
+
   const form = useForm<DocumentFormValues>({
     resolver: zodResolver(documentFormSchema),
     defaultValues: {
@@ -82,12 +131,18 @@ export function DocumentUploadDialog({ open, onOpenChange, initialData, document
       expiry_date: "",
       description: "",
       typeOfEmployee: [],
+      tags: [],
       ...(mode === "edit" && initialData ? {
         ...initialData,
-        id: initialData.id, // Incluir el id en modo edición
+        id: initialData.id,
+        tags: [], // We'll set tags in the useEffect
       } : {})
     },
   });
+  
+  // Debug log for form values
+  const formValues = form.watch();
+  console.log('Form values:', formValues);
 
   const cookies = Cookies.get();
   const router = useRouter();
@@ -145,6 +200,8 @@ export function DocumentUploadDialog({ open, onOpenChange, initialData, document
   useEffect(() => {
     // Solo hacer algo si estamos en modo edición y hay datos iniciales
     if (mode === "edit" && initialData) {
+      console.log('Initializing form with data:', initialData);
+      
       // Configurar el archivo si existe
       if (initialData.file_path) {
         setFileName(initialData.file_name || "Archivo actual");
@@ -154,9 +211,14 @@ export function DocumentUploadDialog({ open, onOpenChange, initialData, document
         Object.defineProperty(file, 'size', { value: initialData.file_size || 0 });
         form.setValue("file", file);
       }
+      
+      // Asegurarse de que los tags se establezcan correctamente
+      const initialTags = getInitialTags();
+      console.log('Setting initial tags in form:', initialTags);
+      form.setValue('tags', initialTags, { shouldValidate: true });
     }
     // No hacemos nada en modo creación ya que el formulario ya está vacío por defecto
-  }, [mode, initialData]);
+  }, [mode, initialData, form]);
   
   // Resetear el formulario cuando se abre el diálogo en modo creación
   useEffect(() => {
@@ -167,18 +229,14 @@ export function DocumentUploadDialog({ open, onOpenChange, initialData, document
         description: "",
         expiry_date: "",
         typeOfEmployee: [],
-        file: undefined
+        file: undefined,
+        tags: []
       });
       setFileName("");
     }
   }, [mode, form]);
   console.log(initialData)
-  // const positions = [
-  //   { label: "Gerente", value: "Gerente" },
-  //   { label: "Supervisor", value: "Supervisor" },
-  //   { label: "Operativo", value: "operativo" },
-  //   { label: "Administrativo", value: "administrativo" },
-  // ]
+  
   const companyId = cookies["actualComp"]
 
   // Función para manejar la selección de "Todos"
@@ -202,82 +260,7 @@ export function DocumentUploadDialog({ open, onOpenChange, initialData, document
     setSelectAll(newSelections.length === positions.length)
   }
 
-//   const onSubmit = async (data: DocumentFormValues) => {
-//     if (!companyId) {
-//       console.error("No se pudo obtener el ID de la compañía")
-//       return
-//     }
 
-//     try {
-//       const formData = new FormData()
-//       formData.append("title", data.title)
-//       formData.append("version", data.version)
-//       formData.append("expiry_date", data.expiry_date || "")
-//       if (data.description) {
-//         formData.append("description", data.description)
-//       }
-//       // Si no hay cargos seleccionados, usamos todos los cargos disponibles
-// const selectedPositions = data.typeOfEmployee && data.typeOfEmployee.length > 0
-// ? data.typeOfEmployee
-// : positions.map((p) => p.value)
-
-//       // ✅ CAMBIO PRINCIPAL: Agregar typeOfEmployee al FormData
-//       formData.append("typeOfEmployee", JSON.stringify(selectedPositions))
-
-//       // Ensure we're getting the file from the file input
-//       const fileInput = fileInputRef.current
-//       if (fileInput?.files?.[0]) {
-//         formData.append("file", fileInput.files[0])
-//       } else if (data.file) {
-//         formData.append("file", data.file)
-//       } else {
-//         throw new Error("No se ha seleccionado ningún archivo")
-//       }
-
-//       const result = await createDocumentWithAssignments(formData, companyId)
-
-//       if (!result?.success) {
-//         throw new Error("No se pudo crear el documento")
-//       }
-
-//       // Cerrar el diálogo y limpiar el formulario
-//       document.getElementById("close-dialog")?.click()
-//       form.reset()
-//       setFileName("") // ✅ Limpiar nombre del archivo
-
-//       // ✅ MEJORA: Mensaje más informativo sobre las asignaciones
-//       const assignmentMessage =
-//         data.typeOfEmployee && data.typeOfEmployee.length > 0
-//           ? `Documento asignado a empleados con cargos: ${data.typeOfEmployee.map((id) => positions.find((p) => p.value === id)?.label).join(", ")}`
-//           : "Documento asignado a todos los empleados activos"
-
-//       toast({
-//         title: "Documento subido con éxito",
-//         description: `${result.document.title} - ${assignmentMessage}`,
-//         variant: "default",
-//         duration: 5000, // ✅ Más tiempo para leer el mensaje
-//       })
-
-//       router.refresh()
-//     } catch (error) {
-//       if (error instanceof Error && error.message === "El documento ya existe") {
-//         toast({
-//           title: "El documento ya existe",
-//           description: "Por favor, ve al detalle del documento para agregar una nueva versión.",
-//           variant: "destructive",
-//           duration: 5000,
-//         })
-//       } else {
-//         toast({
-//           title: "Error al subir el documento",
-//           description: error instanceof Error ? error.message : "Hubo un problema al subir el documento",
-//           variant: "destructive",
-//           duration: 5000,
-//         })
-//         console.error("Error al crear el documento:", error)
-//       }
-//     }
-//   }
 const onSubmit = async (data: DocumentFormValues) => {
   try {
     const formData = new FormData();
@@ -286,11 +269,14 @@ const onSubmit = async (data: DocumentFormValues) => {
     formData.append("version", data.version);
 
     const selectedPositions: string[] = Array.isArray(data.typeOfEmployee) && data.typeOfEmployee.length > 0
-  ? data.typeOfEmployee
-  : positions.map((p) => p.value);
-
+      ? data.typeOfEmployee
+      : positions.map((p) => p.value);
 
     formData.append("typeOfEmployee", JSON.stringify(selectedPositions));
+    
+    // Add tags to form data - ensure we always send an array, even if empty
+    const tagsToSend = Array.isArray(data.tags) ? data.tags : [];
+    formData.append("tags", JSON.stringify(tagsToSend));
 
     if (data.expiry_date) formData.append("expiry_date", data.expiry_date);
     if (data.description) formData.append("description", data.description);
@@ -431,6 +417,62 @@ const onSubmit = async (data: DocumentFormValues) => {
                 )}
               />
             </div>
+            <FormField
+              control={form.control}
+              name="tags"
+              render={({ field, fieldState }) => {
+                // Asegurarse de que siempre trabajamos con un array de IDs
+                const selectedValues = Array.isArray(field.value) 
+                  ? field.value.filter(Boolean) // Filtrar valores nulos o indefinidos
+                  : [];
+                
+                console.log('Selected tag IDs:', selectedValues);
+                console.log('Available tag options:', tagOptions);
+                
+                // Verificar que los IDs seleccionados existan en allTags
+                const validSelectedValues = selectedValues.filter(id => 
+                  allTags.some(tag => tag.id === id)
+                );
+                
+                // Si hay discrepancias, actualizar el valor del campo
+                if (validSelectedValues.length !== selectedValues.length) {
+                  console.warn('Algunos tags seleccionados no existen en allTags');
+                  // Usar setTimeout para evitar problemas de renderizado
+                  setTimeout(() => field.onChange(validSelectedValues), 0);
+                }
+                
+                return (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Etiquetas</FormLabel>
+                    <FormControl>
+                      <div>
+                        <MultiSelectCombobox
+                          key="tags-selector"
+                          options={tagOptions}
+                          selectedValues={validSelectedValues}
+                          placeholder="Seleccionar etiquetas"
+                          emptyMessage="No hay etiquetas disponibles"
+                          onChange={(values) => {
+                            const newValues = Array.isArray(values) ? values : [];
+                            console.log('Tag selection changed:', { 
+                              values, 
+                              newValues,
+                              fieldValue: field.value,
+                              tagOptions
+                            });
+                            field.onChange(newValues);
+                          }}
+                          showSelectAll
+                        />
+                      </div>
+                    </FormControl>
+                    {fieldState.error && (
+                      <FormMessage>{fieldState.error.message}</FormMessage>
+                    )}
+                  </FormItem>
+                );
+              }}
+            />
 
             <FormField
               control={form.control}

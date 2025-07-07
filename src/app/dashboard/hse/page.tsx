@@ -67,6 +67,8 @@ const employeesResult =
   console.log(employeesResultRaw);
   console.log(employeesResult);
   console.log(documentsResult);
+  console.log(tagsResult);
+  console.log(trainingsResult);
   
   function normalizeDocument(doc: any): Document {
     return {
@@ -100,7 +102,7 @@ const employeesResult =
           title: 'Ver documentos',
           description: 'Aquí encontrarás todos los documentos',
           buttonActioRestricted: [''],
-          buttonAction: <DocumentUploadDialog />,
+          buttonAction: <DocumentUploadDialog allTags={tagsResult || []} />,
           component: <DocumentsSection 
             initialDocuments={documentsResult.map(normalizeDocument)} 
             allTags={tagsResult} 
