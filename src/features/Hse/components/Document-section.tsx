@@ -7,17 +7,41 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
-import type { Document } from '@/features/Hse/actions/documents'; // <-- ¡SÍ!
+import type { Document } from '@/features/Hse/actions/documents';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import Cookies from 'js-cookie';
-import { Calendar, Download, Eye, FileText, LayoutGrid, List, Users } from 'lucide-react';
+import { Calendar, Download, Eye, FileText, LayoutGrid, List, Trash2, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import {DocumentUploadDialog} from '@/features/Hse/components/Document-upload-dialog';
+import { DocumentUploadDialog } from '@/features/Hse/components/Document-upload-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Componente para la vista de cuadrícula
-const DocumentGrid = ({ documents, allTags, getStatusColor, getStatusText, formatDate, getEmployeeCounts, setDocumentToEdit, setEditDialogOpen, router, handleDownload }: { 
+const DocumentGrid = ({ 
+  documents, 
+  allTags, 
+  getStatusColor, 
+  getStatusText, 
+  formatDate, 
+  getEmployeeCounts, 
+  setDocumentToEdit, 
+  setEditDialogOpen, 
+  router, 
+  handleDownload,
+  handlePublish,
+  handleDelete,
+  isLoading
+}: { 
   documents: any[], 
   allTags: any[],
   getStatusColor: (status: string) => string,
@@ -27,7 +51,10 @@ const DocumentGrid = ({ documents, allTags, getStatusColor, getStatusText, forma
   setDocumentToEdit: (doc: any) => void,
   setEditDialogOpen: (open: boolean) => void,
   router: any,
-  handleDownload: (file_path: string, file_name: string) => void
+  handleDownload: (file_path: string, file_name: string) => void,
+  handlePublish: (documentId: string) => void,
+  handleDelete: (documentId: string, documentTitle: string) => void,
+  isLoading: { [key: string]: boolean }
 }) => (
   <div>
     <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
@@ -86,38 +113,63 @@ const DocumentGrid = ({ documents, allTags, getStatusColor, getStatusText, forma
                 }}
               ></div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 pt-2">
-              {document.status === 'borrador' && (
+            <div className="flex flex-col gap-2 pt-2">
+              <div className="flex flex-wrap gap-2">
+                {document.status === 'borrador' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 min-w-[100px]"
+                    onClick={() => {
+                      setDocumentToEdit(document);
+                      setEditDialogOpen(true);
+                    }}
+                  >
+                    Editar
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
+                  className="flex-1 min-w-[100px]"
                   onClick={() => {
-                    setDocumentToEdit(document);
-                    setEditDialogOpen(true);
+                    router.push(`/dashboard/hse/document/${document.id}/detail`);
                   }}
                 >
-                  Editar
+                  <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  Ver Detalle
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="sm:w-auto"
+                  onClick={() => handleDownload(document.file_path, document.file_name)}
+                >
+                  <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+                </Button>
+              </div>
+              {document.status === 'borrador' && (
+                <div className="flex gap-2 w-full">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    onClick={() => handlePublish(document.id)}
+                    disabled={isLoading[document.id]}
+                  >
+                    {isLoading[document.id] ? 'Publicando...' : 'Publicar'}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => handleDelete(document.id, document.title)}
+                    disabled={isLoading[document.id]}
+                  >
+                    {isLoading[document.id] ? 'Eliminando...' : 'Eliminar'}
+                  </Button>
+                </div>
               )}
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 text-xs sm:text-sm"
-                onClick={() => {
-                  router.push(`/dashboard/hse/document/${document.id}/detail`);
-                }}
-              >
-                <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                Ver Detalle
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="sm:w-auto"
-                onClick={() => handleDownload(document.file_path, document.file_name)}
-              >
-                <Download className="h-3 w-3 sm:h-4 sm:w-4" />
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -127,7 +179,7 @@ const DocumentGrid = ({ documents, allTags, getStatusColor, getStatusText, forma
 );
 
 // Componente para la vista de lista
-const DocumentList = ({ documents, allTags, getStatusColor, getStatusText, formatDate, getEmployeeCounts, setDocumentToEdit, setEditDialogOpen, router, handleDownload }: { 
+const DocumentList = ({ documents, allTags, getStatusColor, getStatusText, formatDate, getEmployeeCounts, setDocumentToEdit, setEditDialogOpen, router, handleDownload, handlePublish, handleDelete, isLoading }: { 
   documents: any[], 
   allTags: any[],
   getStatusColor: (status: string) => string,
@@ -137,7 +189,10 @@ const DocumentList = ({ documents, allTags, getStatusColor, getStatusText, forma
   setDocumentToEdit: (doc: any) => void,
   setEditDialogOpen: (open: boolean) => void,
   router: any,
-  handleDownload: (file_path: string, file_name: string) => void
+  handleDownload: (file_path: string, file_name: string) => void,
+  handlePublish: (documentId: string) => void,
+  handleDelete: (documentId: string, documentTitle: string) => void,
+  isLoading: { [key: string]: boolean }
 }) => (
   <div className="divide-y rounded border">
     {documents.map((doc) => (
@@ -189,31 +244,62 @@ const DocumentList = ({ documents, allTags, getStatusColor, getStatusText, forma
           </div>
         </div>
         {/* Acciones */}
-        <div className="flex items-center ml-2 gap-1">
-          {doc.status === 'borrador' && (
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            {doc.status === 'borrador' && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8"
+                onClick={() => {
+                  setDocumentToEdit(doc);
+                  setEditDialogOpen(true);
+                }}
+                disabled={isLoading[doc.id]}
+              >
+                Editar
+              </Button>
+            )}
             <Button
-              variant="outline"
+              onClick={() => router.push(`/dashboard/hse/document/${doc.id}/detail`)}
               size="sm"
-              onClick={() => {
-                setDocumentToEdit(doc);
-                setEditDialogOpen(true);
-              }}
+              variant="ghost"
+              className="h-8"
             >
-              Editar
+              <Eye className="h-4 w-4 mr-1" />
+              Ver
             </Button>
+            <Button 
+              onClick={() => handleDownload(doc.file_path, doc.file_name)} 
+              size="sm" 
+              variant="ghost"
+              className="h-8"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          </div>
+          {doc.status === 'borrador' && (
+            <div className="flex items-center gap-1 border-l pl-2 ml-1">
+              <Button
+                variant="default"
+                size="sm"
+                className="h-8 bg-green-600 hover:bg-green-700"
+                onClick={() => handlePublish(doc.id)}
+                disabled={isLoading[doc.id]}
+              >
+                {isLoading[doc.id] ? 'Publicando...' : 'Publicar'}
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-8"
+                onClick={() => handleDelete(doc.id, doc.title)}
+                disabled={isLoading[doc.id]}
+              >
+                {isLoading[doc.id] ? 'Eliminando...' : 'Eliminar'}
+              </Button>
+            </div>
           )}
-          <Button
-            onClick={() => router.push(`/dashboard/hse/document/${doc.id}/detail`)}
-            size="sm"
-            variant="outline"
-            className="mr-1"
-          >
-            <Eye className="h-4 w-4 mr-1" />
-            Ver Detalle
-          </Button>
-          <Button onClick={() => handleDownload(doc.file_path, doc.file_name)} size="sm" variant="ghost">
-            <Download className="h-4 w-4" />
-          </Button>
         </div>
       </div>
     ))}
@@ -235,23 +321,20 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
   const company_id = Cookies.get('actualComp');
   const supabase = supabaseBrowser();
   const router = useRouter();
-console.log(allTags);
   const [documents, setDocuments] = useState<Document[]>(initialDocuments);
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [employees, setEmployees] = useState<any>(initialEmployees);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [documentToEdit, setDocumentToEdit] = useState<Document | null>(null);
-  // Nuevos estados para filtros y vista
   const [sortBy, setSortBy] = useState<'upload_date' | 'title'>('upload_date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tab, setTab] = useState<'active' | 'expired'>('active');
-  console.log(initialEmployees);
-  // Helpers originales
+  const [isLoading, setIsLoading] = useState<{[key: string]: boolean}>({});
+  
   const getEmployeeCounts = (documentId: string): EmployeeCounts => {
     if (!employees || !Array.isArray(employees)) return { total: 0, accepted: 0 };
     const counts = employees.reduce(
@@ -278,12 +361,11 @@ console.log(allTags);
    */
   const getDocumentAssignedPositions = (documentId: string): string[] => {
     if (!employees || !Array.isArray(employees)) {
-      console.log('No hay empleados o no es un array');
+      
       return [];
     }
 
-    console.log('Buscando posiciones para el documento:', documentId);
-    console.log('Total de empleados a procesar:', employees.length);
+    
     
     const positionSet = new Set<string>();
     let empleadosConDocumento = 0;
@@ -295,14 +377,14 @@ console.log(allTags);
       
       if (hasDocument) {
         empleadosConDocumento++;
-        // Verificamos si el empleado tiene company_position
+        
         if (employee.hierarchical_position && typeof employee.hierarchical_position === 'object') {
-          console.log(`Empleado ${index} tiene el documento y posición:`, employee.company_position);
-          positionSet.add(employee.company_position);
+          
+          positionSet.add(employee.company_position || employee.hierarchical_position.name);
         } 
-        // Si no tiene company_position, verificamos si tiene position (string)
+        
         else if (employee.position && typeof employee.position === 'string') {
-          console.log(`Empleado ${index} tiene el documento y posición (string):`, employee.position);
+          
           positionSet.add(employee.position);
         } 
         // Si no tiene ninguna de las dos, mostramos un mensaje de depuración
@@ -312,9 +394,8 @@ console.log(allTags);
       }
     });
 
-    console.log(`Total de empleados con el documento: ${empleadosConDocumento}`);
+    
     const posicionesUnicas = Array.from(positionSet);
-    console.log('Posiciones únicas encontradas:', posicionesUnicas);
     
     return posicionesUnicas;
   };
@@ -388,18 +469,110 @@ console.log(allTags);
   const expiredDocuments = documents.filter((doc) => doc.status === 'expired');
   const currentTabDocuments = tab === 'active' ? activeDocuments : expiredDocuments;
 
-  const handleDownload = (file_path: string, file_name: string) => {
+  const handleDownload = async (file_path: string, file_name: string) => {
     try {
-      const doc = window.document;
-      const link = doc.createElement('a');
-      link.href = file_path;
-      link.download = file_name;
-      doc.body.appendChild(link);
-      link.click();
-      doc.body.removeChild(link);
+      const { data, error } = await supabase.storage
+        .from('documents-hse')
+        .download(file_path);
+
+      if (error) throw error;
+
+      const url = window.URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file_name;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (error) {
-      console.error('Error al descargar el archivo:', error);
-      toast.error('Error al descargar el archivo');
+      console.error('Error downloading file:', error);
+      toast.error('Error al descargar el documento');
+    }
+  };
+
+  // Estados para controlar los diálogos de confirmación
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<{ id: string; title?: string } | null>(null);
+
+  const handlePublish = async (documentId: string) => {
+    // Mostrar el diálogo de confirmación
+    setSelectedDocument({ id: documentId });
+    setPublishDialogOpen(true);
+  };
+
+  const confirmPublish = async () => {
+    if (!selectedDocument) return;
+    
+    const documentId = selectedDocument.id;
+    setIsLoading(prev => ({ ...prev, [documentId]: true }));
+    
+    try {
+      // Importar la server action directamente
+      const { publishDocument } = await import('@/features/Hse/actions/documents');
+      
+      // Llamar a la server action
+      const success = await publishDocument(documentId);
+      
+      if (!success) {
+        throw new Error('No se pudo publicar el documento');
+      }
+
+      // Actualizar el estado local
+      setDocuments(docs => 
+        docs.map(doc => 
+          doc.id === documentId 
+            ? { ...doc, status: 'active' as const }
+            : doc
+        )
+      );
+      
+      toast.success('Documento publicado correctamente');
+    } catch (error) {
+      console.error('Error al publicar el documento:', error);
+      toast.error(error instanceof Error ? error.message : 'Error al publicar el documento');
+    } finally {
+      setIsLoading(prev => ({ ...prev, [documentId]: false }));
+      setPublishDialogOpen(false);
+      setSelectedDocument(null);
+    }
+  };
+
+  const handleDelete = (documentId: string, documentTitle: string) => {
+    // Mostrar el diálogo de confirmación
+    setSelectedDocument({ id: documentId, title: documentTitle });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedDocument) return;
+    
+    const documentId = selectedDocument.id;
+    setIsLoading(prev => ({ ...prev, [documentId]: true }));
+    
+    try {
+      // Importar la server action directamente
+      const { deleteDocument } = await import('@/features/Hse/actions/documents');
+      
+      // Llamar a la server action
+      const result = await deleteDocument(documentId);
+      
+      if (result && !result.success) {
+        throw new Error(result.message || 'Error al eliminar el documento');
+      }
+
+      // Actualizar el estado local
+      setDocuments(docs => docs.filter(doc => doc.id !== documentId));
+      
+      toast.success('Documento eliminado correctamente');
+    } catch (error) {
+      console.error('Error al eliminar el documento:', error);
+      toast.error(error instanceof Error ? error.message : 'Error al eliminar el documento');
+    } finally {
+      setIsLoading(prev => ({ ...prev, [documentId]: false }));
+      setDeleteDialogOpen(false);
+      setSelectedDocument(null);
     }
   };
 
@@ -419,9 +592,51 @@ console.log(allTags);
       return 'Fecha inválida';
     }
   };
-console.log(documents);
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Diálogo de confirmación para publicar */}
+      <AlertDialog open={publishDialogOpen} onOpenChange={setPublishDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Publicar documento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que deseas publicar este documento? No podrás editarlo después de publicarlo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmPublish}
+              disabled={isLoading[selectedDocument?.id || '']}
+            >
+              {isLoading[selectedDocument?.id || ''] ? 'Publicando...' : 'Publicar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Diálogo de confirmación para eliminar */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar documento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que deseas eliminar el documento "{selectedDocument?.title}"? 
+              <span className="text-destructive">Esta acción no se puede deshacer.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isLoading[selectedDocument?.id || '']}
+            >
+              {isLoading[selectedDocument?.id || ''] ? 'Eliminando...' : 'Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Tabs
         defaultValue="active"
         value={tab}
@@ -519,6 +734,9 @@ console.log(documents);
                 setEditDialogOpen={setEditDialogOpen}
                 router={router}
                 handleDownload={handleDownload}
+                handlePublish={handlePublish}
+                handleDelete={handleDelete}
+                isLoading={isLoading}
               />
             ) : (
               <DocumentList 
@@ -532,6 +750,9 @@ console.log(documents);
                 setEditDialogOpen={setEditDialogOpen}
                 router={router}
                 handleDownload={handleDownload}
+                handlePublish={handlePublish}
+                handleDelete={handleDelete}
+                isLoading={isLoading}
               />
             )
           ) : (

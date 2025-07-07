@@ -64,12 +64,6 @@ const employeesResult =
     ? employeesResultRaw.data
     : [];
   
-  console.log(employeesResultRaw);
-  console.log(employeesResult);
-  console.log(documentsResult);
-  console.log(tagsResult);
-  console.log(trainingsResult);
-  
   function normalizeDocument(doc: any): Document {
     return {
       ...doc,

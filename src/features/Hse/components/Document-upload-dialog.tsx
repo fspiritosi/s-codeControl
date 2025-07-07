@@ -79,8 +79,7 @@ export function DocumentUploadDialog({ open, onOpenChange, initialData, document
   const [positions, setPositions] = useState<any[]>([]);
   const [fileName, setFileName] = useState<string>("");
   const [selectAll, setSelectAll] = useState(false);
-  console.log(allTags)
-  // Format tags for MultiSelectCombobox
+  
   const tagOptions = React.useMemo(() => {
     return (allTags || []).map(tag => ({
       label: tag.name,
@@ -88,15 +87,11 @@ export function DocumentUploadDialog({ open, onOpenChange, initialData, document
     }));
   }, [allTags]);
 
-  // Get initial selected tag IDs for edit mode
   const getInitialTags = () => {
     if (mode === "edit" && initialData?.tags) {
-      console.log('Initial tags from props:', initialData.tags);
       
-      // Si los tags son objetos con id, mapear a array de IDs
       if (initialData.tags.length > 0 && typeof initialData.tags[0] === 'object') {
         const tagIds = initialData.tags.map((tag: any) => tag.id);
-        console.log('Mapped tag IDs from objects:', tagIds);
         return tagIds;
       }
       
@@ -107,19 +102,11 @@ export function DocumentUploadDialog({ open, onOpenChange, initialData, document
           return foundTag ? foundTag.id : null;
         }).filter(Boolean); // Filtrar cualquier null en caso de no encontrar el tag
         
-        console.log('Mapped tag names to IDs:', { 
-          tagNames: initialData.tags,
-          mappedIds: tagIds 
-        });
-        
         return tagIds;
       }
       
-      // Si ya es un array de IDs, usarlo tal cual
-      console.log('Using tags as is (already IDs):', initialData.tags);
       return initialData.tags || [];
     }
-    console.log('No tags to initialize');
     return [];
   };
 
@@ -140,31 +127,22 @@ export function DocumentUploadDialog({ open, onOpenChange, initialData, document
     },
   });
   
-  // Debug log for form values
   const formValues = form.watch();
-  console.log('Form values:', formValues);
 
   const cookies = Cookies.get();
   const router = useRouter();
   const fileRef = form.register("file");
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  console.log('Initial data:', initialData);
   
-  // Efecto para manejar la conversión de valores iniciales cuando se cargan las posiciones
   useEffect(() => {
     if (mode === "edit" && initialData?.typeOfEmployee && positions.length > 0) {
-      console.log('Converting initial data:', initialData.typeOfEmployee);
-      // Convertir nombres de cargos a sus respectivos IDs
       const convertedValues = initialData.typeOfEmployee
         .map(name => {
           const position = positions.find(p => p.label === name);
-          console.log(`Converting ${name}:`, position);
           return position?.value || null;
         })
         .filter(Boolean);
-      
-      console.log('Converted values:', convertedValues);
       
       if (convertedValues.length > 0) {
         form.setValue('typeOfEmployee', convertedValues, { shouldValidate: true });
@@ -200,7 +178,7 @@ export function DocumentUploadDialog({ open, onOpenChange, initialData, document
   useEffect(() => {
     // Solo hacer algo si estamos en modo edición y hay datos iniciales
     if (mode === "edit" && initialData) {
-      console.log('Initializing form with data:', initialData);
+      
       
       // Configurar el archivo si existe
       if (initialData.file_path) {
@@ -214,7 +192,6 @@ export function DocumentUploadDialog({ open, onOpenChange, initialData, document
       
       // Asegurarse de que los tags se establezcan correctamente
       const initialTags = getInitialTags();
-      console.log('Setting initial tags in form:', initialTags);
       form.setValue('tags', initialTags, { shouldValidate: true });
     }
     // No hacemos nada en modo creación ya que el formulario ya está vacío por defecto
@@ -235,7 +212,6 @@ export function DocumentUploadDialog({ open, onOpenChange, initialData, document
       setFileName("");
     }
   }, [mode, form]);
-  console.log(initialData)
   
   const companyId = cookies["actualComp"]
 
@@ -421,15 +397,12 @@ const onSubmit = async (data: DocumentFormValues) => {
               control={form.control}
               name="tags"
               render={({ field, fieldState }) => {
-                // Asegurarse de que siempre trabajamos con un array de IDs
                 const selectedValues = Array.isArray(field.value) 
-                  ? field.value.filter(Boolean) // Filtrar valores nulos o indefinidos
+                  ? field.value.filter(Boolean) 
                   : [];
                 
-                console.log('Selected tag IDs:', selectedValues);
-                console.log('Available tag options:', tagOptions);
                 
-                // Verificar que los IDs seleccionados existan en allTags
+                
                 const validSelectedValues = selectedValues.filter(id => 
                   allTags.some(tag => tag.id === id)
                 );
@@ -454,12 +427,6 @@ const onSubmit = async (data: DocumentFormValues) => {
                           emptyMessage="No hay etiquetas disponibles"
                           onChange={(values) => {
                             const newValues = Array.isArray(values) ? values : [];
-                            console.log('Tag selection changed:', { 
-                              values, 
-                              newValues,
-                              fieldValue: field.value,
-                              tagOptions
-                            });
                             field.onChange(newValues);
                           }}
                           showSelectAll
@@ -497,13 +464,10 @@ const onSubmit = async (data: DocumentFormValues) => {
               control={form.control}
               name="typeOfEmployee"
               render={({ field }) => {
-                // Convertir los IDs seleccionados a objetos {label, value} para el MultiSelect
-                // Obtener los valores seleccionados actuales
-                const selectedValues = Array.isArray(field.value) ? field.value : [];
-                console.log('selectedValues:', selectedValues);
-                console.log('positions:', positions);
                 
-                // Obtener los labels de las opciones seleccionadas
+                const selectedValues = Array.isArray(field.value) ? field.value : [];
+                
+                
                 const getSelectedLabels = () => {
                   return selectedValues
                     .map(value => {
@@ -533,20 +497,12 @@ const onSubmit = async (data: DocumentFormValues) => {
                           placeholder="Seleccionar cargos (vacío = todos)"
                           emptyMessage="No se encontraron cargos"
                           onChange={(values) => {
-                            console.log('onChange values:', values);
                             const newValues = Array.isArray(values) ? values : [];
-                            console.log('Setting field value to:', newValues);
                             field.onChange(newValues);
                           }}
                           showSelectAll
                         />
-                        {/* {selectedValues.length > 0 && (
-                          <div className="mt-1">
-                            <span className="text-xs text-muted-foreground">
-                              {selectedValues.length} {selectedValues.length === 1 ? 'cargo seleccionado' : 'cargos seleccionados'}
-                            </span>
-                          </div>
-                        )} */}
+                        
                       </div>
                     </FormControl>
                     {selectedValues.length === 0 && (
