@@ -133,7 +133,7 @@ export function DocumentUploadDialog({ open, onOpenChange, initialData, document
   const router = useRouter();
   const fileRef = form.register("file");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+  console.log(initialData)
   
   useEffect(() => {
     if (mode === "edit" && initialData?.typeOfEmployee && positions.length > 0) {

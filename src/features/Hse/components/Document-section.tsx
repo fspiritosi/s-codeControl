@@ -332,7 +332,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [tab, setTab] = useState<'active' | 'expired'>('active');
+  const [tab, setTab] = useState<'active' | 'expired' | 'drafts'>('active');
   const [isLoading, setIsLoading] = useState<{[key: string]: boolean}>({});
   
   const getEmployeeCounts = (documentId: string): EmployeeCounts => {
@@ -463,12 +463,14 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
       });
   };
 
-  const activeDocuments = documents.filter((doc) => 
-    doc.status === 'active' || doc.status === 'borrador'
-  );
+  const activeDocuments = documents.filter((doc) => doc.status === 'active' );
+  const draftDocuments = documents.filter((doc) => doc.status === 'borrador');
   const expiredDocuments = documents.filter((doc) => doc.status === 'expired');
-  const currentTabDocuments = tab === 'active' ? activeDocuments : expiredDocuments;
-
+  const currentTabDocuments = 
+    tab === 'active' ? activeDocuments : 
+    tab === 'drafts' ? draftDocuments : 
+    tab === 'expired' ? expiredDocuments : [];
+ 
   const handleDownload = async (file_path: string, file_name: string) => {
     try {
       const { data, error } = await supabase.storage
@@ -640,19 +642,27 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
       <Tabs
         defaultValue="active"
         value={tab}
-        onValueChange={(v) => setTab(v as 'active' | 'expired')}
+        onValueChange={(value: string) => {
+          if (value === 'active' || value === 'expired' || value === 'drafts') {
+            setTab(value);
+          }
+        }}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="active" className="text-xs sm:text-sm">
             Vigentes ({activeDocuments.length})
+          </TabsTrigger>
+          <TabsTrigger value="drafts" className="text-xs sm:text-sm">
+            Borradores ({draftDocuments.length})
           </TabsTrigger>
           <TabsTrigger value="expired" className="text-xs sm:text-sm">
             No Vigentes ({expiredDocuments.length})
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="active" className="space-y-4">
+        {/* Single dynamic TabsContent that works for all tabs */}
+        <TabsContent value={tab} className="space-y-4">
           {/* Controles de filtro, orden, búsqueda y vista */}
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap gap-2 items-center">
@@ -662,38 +672,33 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-48"
               />
+              <Select 
+                value={sortBy} 
+                onValueChange={(value) => setSortBy(value as 'upload_date' | 'title')}
+              >
+                <SelectTrigger className="w-45">
+                  <SelectValue placeholder="Ordenar por" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="upload_date">Fecha de creación</SelectItem>
+                  <SelectItem value="title">Título</SelectItem>
+                </SelectContent>
+              </Select>
               
-              {/* <div className="w-64"> */}
-                
-              {/* </div> */}
+              <Select 
+                value={sortOrder} 
+                onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Orden" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="desc">Descendente</SelectItem>
+                  <SelectItem value="asc">Ascendente</SelectItem>
+                </SelectContent>
+              </Select>
               
-              {/* <div className="flex gap-2"> */}
-                <Select 
-                  value={sortBy} 
-                  onValueChange={(value) => setSortBy(value as 'upload_date' | 'title')}
-                >
-                  <SelectTrigger className="w-45">
-                    <SelectValue placeholder="Ordenar por" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="upload_date">Fecha de creación</SelectItem>
-                    <SelectItem value="title">Título</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <Select 
-                  value={sortOrder} 
-                  onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
-                >
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Orden" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="desc">Descendente</SelectItem>
-                    <SelectItem value="asc">Ascendente</SelectItem>
-                  </SelectContent>
-                </Select>
-                <div className="w-64">
+              <div className="w-64">
                 <MultiSelectCombobox
                   options={allTags?.map(tag => ({
                     label: tag.name,
@@ -705,21 +710,28 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
                   onChange={setSelectedTags}
                   showSelectAll
                 />
-                </div>
-                <Button variant="outline" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
-                {viewMode === 'grid' ? (
-                  <>
-                    <List className="h-4 w-4 mr-1" /> Vista de lista
-                  </>
-                ) : (
-                  <>
-                    <LayoutGrid className="h-4 w-4 mr-1" /> Vista de grid
-                  </>
-                )}
-              </Button>
               </div>
               
+              <div className="relative group">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                  className="relative"
+                >
+                  {viewMode === 'grid' ? (
+                    <List className="h-4 w-4 mr-1 hover:text-primary-foreground" />
+                  ) : (
+                    <LayoutGrid className="h-4 w-4 mr-1 hover:text-primary-foreground" />
+                  )}
+                </Button>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  Vista de {viewMode === 'grid' ? 'lista' : 'cuadrícula'}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-gray-800"></div>
+                </div>
+              </div>
             </div>
+          </div>
+          
           {/* Renderizado según vista */}
           {filterAndSortDocuments(currentTabDocuments).length > 0 ? (
             viewMode === 'grid' ? (
@@ -758,7 +770,13 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
           ) : (
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No hay documentos vencidos</p>
+              <p className="text-muted-foreground">
+                {tab === 'active' 
+                  ? 'No hay documentos activos en este momento' 
+                  : tab === 'expired' 
+                    ? 'No hay documentos vencidos' 
+                    : 'No hay borradores'}
+              </p>
             </div>
           )}
         </TabsContent>
