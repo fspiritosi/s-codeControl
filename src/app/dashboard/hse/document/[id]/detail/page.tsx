@@ -23,11 +23,12 @@ import {
   type DocumentVersion,
 } from '@/features/Hse/actions/documents';
 import { DocumentNewVersionDialog } from '@/features/Hse/components/Document-new-version-dialog';
+import { DocumentUploadDialog } from '@/features/Hse/components/Document-upload-dialog';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import cookies from 'js-cookie';
-import { ArrowLeft, CheckCircle, Clock, Download, ExternalLink, Eye, Loader2, Plus } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, Download, Edit, ExternalLink, Eye, Loader2, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
@@ -38,6 +39,7 @@ import { DataTableColumnHeader } from '@/shared/components/data-table/base/data-
 import { ColumnDef } from '@tanstack/react-table';
 import { VisibilityState } from '@tanstack/react-table';
 import { getCompanyDetails } from '@/app/server/GET/actions';
+import { fetchAllTags } from '@/components/Capacitaciones/actions/actions';
 
 // interface ExtendedDocument extends Document {
 //   documentTitle: string;
@@ -239,6 +241,8 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
   const [employeesWithDocuments, setEmployeesWithDocuments] = useState<EmployeeWithDocuments[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
   const [sendingReminderFor, setSendingReminderFor] = useState<string | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [allTags, setAllTags] = useState<{id: string; name: string}[]>([]);
   // const [savedFilters, setSavedFilters] = useState<Filter[]>([]);
   // const cookies = cookies()
   // const userId = cookies['userId']
@@ -345,6 +349,20 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
       setIsDownloading(false);
     }
   };
+
+  // Cargar tags
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        const tags = await fetchAllTags();
+        setAllTags(tags);
+      } catch (error) {
+        console.error('Error al cargar las etiquetas:', error);
+      }
+    };
+    
+    fetchTags();
+  }, []);
 
   // Cargar documento y empleados
   useEffect(() => {
@@ -659,12 +677,37 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
-          <div>
-            <h1 className="text-lg font-semibold">Detalle de Documento</h1>
-            <p className="text-sm text-muted-foreground">{document?.title}</p>
-          </div>
+          
+        </div>
+        <div>
+          <h1 className="text-lg font-semibold">Detalle de Documento</h1>
+          <p className="text-sm text-muted-foreground">{document?.title}</p>
         </div>
       </header>
+
+      {/* Edit Document Dialog */}
+      {document && (
+        <DocumentUploadDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          mode="edit"
+          allTags={allTags}
+          initialData={{
+            id: document.id,
+            title: document.title,
+            version: document.version,
+            description: document.description || '',
+            expiry_date: document.expiry_date || undefined,
+            file_path: document.file_path,
+            file_name: document.file_name,
+            file_type: document.file_type,
+            file_size: document.file_size,
+            typeOfEmployee: [],
+            tags: []
+          }}
+          documentId={document.id}
+        />
+      )}
 
       <div className="w-full pl-6 pr-4 py-6 space-y-8">
         {/* Document Header */}
@@ -683,7 +726,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
               <Download className="h-4 w-4 mr-2" />
               Descargar
             </Button> */}
-            <Button
+            {/* <Button
               onClick={() => {
                 navigator.clipboard.writeText(generateMobileLink());
                 alert('Link copiado al portapapeles');
@@ -691,7 +734,16 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               Copiar Link Móvil
-            </Button>
+            </Button> */}
+            <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsEditDialogOpen(true)}
+            disabled={document?.status === 'active'}
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Editar Documento
+          </Button>
           </div>
         </div>
 

@@ -11,11 +11,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
+import {List, Grid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { TrainingGrid } from './components/TrainingGrid';
+import { TrainingList } from './components/TrainingList';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import { toast } from '@/components/ui/use-toast';
 import {
   Eye,
@@ -56,12 +59,14 @@ interface TrainingSectionProps {
 export default function TrainingSection({ trainings, allTags }: TrainingSectionProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [tagFilter, setTagFilter] = useState<string>('all');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>('createdDate'); // 'createdDate', 'title', 'status'
   const [sortOrder, setSortOrder] = useState<string>('desc'); // 'asc', 'desc'
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [trainingToDelete, setTrainingToDelete] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
   const router = useRouter();
 
   // Función para manejar la eliminación de una capacitación
@@ -112,36 +117,42 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
     }
   };
 
-  // Filter and sort trainings
-  const filteredAndSortedTrainings = [...trainings]
-    .filter((training) => {
-      const matchesSearch =
-        training.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        training.description.toLowerCase().includes(searchTerm.toLowerCase());
+  // Filtrar capacitaciones
+  const filteredTrainings = trainings.filter((training) => {
+    const matchesSearch = training.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || training.status === statusFilter;
+    
+    // Si no hay etiquetas seleccionadas, mostrar todas las capacitaciones
+    if (selectedTags.length === 0) {
+      return matchesSearch && matchesStatus;
+    }
+    
+    // Verificar si la capacitación tiene al menos una de las etiquetas seleccionadas
+    const hasMatchingTag = training.tags && training.tags.some((tag: any) => 
+      selectedTags.includes(tag.id)
+    );
+    
+    return matchesSearch && matchesStatus && hasMatchingTag;
+  });
 
-      const matchesTag = tagFilter === 'all' || (training.tags || []).some((tag) => tag?.id === tagFilter);
+  // Ordenar capacitaciones
+  const filteredAndSortedTrainings = [...filteredTrainings].sort((a, b) => {
+    let compareValue = 0;
 
-      const matchesStatus = statusFilter === 'all' || training.status === statusFilter;
+    if (sortBy === 'createdDate') {
+      const dateA = new Date(a.createdDate).getTime();
+      const dateB = new Date(b.createdDate).getTime();
+      compareValue = dateA - dateB;
+    } else if (sortBy === 'title') {
+      compareValue = a.title.localeCompare(b.title);
+    } else if (sortBy === 'status') {
+      // Define un orden personalizado para los estados: 'Publicado' antes que 'Borrador'
+      const statusOrder: { [key: string]: number } = { Publicado: 1, Borrador: 2 };
+      compareValue = statusOrder[a.status] - statusOrder[b.status];
+    }
 
-      return matchesSearch && matchesTag && matchesStatus;
-    })
-    .sort((a, b) => {
-      let compareValue = 0;
-
-      if (sortBy === 'createdDate') {
-        const dateA = new Date(a.createdDate).getTime();
-        const dateB = new Date(b.createdDate).getTime();
-        compareValue = dateA - dateB;
-      } else if (sortBy === 'title') {
-        compareValue = a.title.localeCompare(b.title);
-      } else if (sortBy === 'status') {
-        // Define a custom order for status if needed, e.g., 'Publicado' before 'Borrador'
-        const statusOrder: { [key: string]: number } = { Publicado: 1, Borrador: 2 };
-        compareValue = statusOrder[a.status] - statusOrder[b.status];
-      }
-
-      return sortOrder === 'asc' ? compareValue : -compareValue;
-    });
+    return sortOrder === 'asc' ? compareValue : -compareValue;
+  });
 
   const getMaterialIcon = (type: string) => {
     switch (type) {
@@ -166,31 +177,31 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
         <TabsContent value="general">
           <div className="flex flex-col md:flex-row gap-4 mb-4">
             <div className="flex-1">
-              <div className="relative">
-                <Input
-                  placeholder="Buscar capacitaciones..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <Filter className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <div className="flex flex-col gap-2 w-[180]">
+                <div>
+                  <Input
+                    placeholder="Buscar capacitaciones..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  <Filter className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                </div>
+                
+                
               </div>
             </div>
-            <div className="w-full md:w-[200px]">
-              <Select value={tagFilter} onValueChange={setTagFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filtrar por etiqueta" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas las etiquetas</SelectItem>
-                  {allTags.map((tag) => (
-                    <SelectItem key={tag.id} value={tag.id}>
-                      {' '}
-                      {/* Changed value to tag.id */}
-                      {tag.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="w-full md:w-[180px]">
+              <MultiSelectCombobox
+                options={allTags?.map(tag => ({
+                  label: tag.name,
+                  value: tag.id,
+                })) || []}
+                selectedValues={selectedTags}
+                placeholder="Filtrar por etiquetas"
+                emptyMessage="No hay etiquetas disponibles"
+                onChange={setSelectedTags}
+                showSelectAll
+              />
             </div>
             <div className="w-full md:w-[200px]">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -216,7 +227,7 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
                 </SelectContent>
               </Select>
             </div>
-            <div className="w-full md:w-[100px]">
+            <div className="w-full md:w-[180px]">
               <Select value={sortOrder} onValueChange={setSortOrder}>
                 <SelectTrigger>
                   <SelectValue placeholder="Orden" />
@@ -235,139 +246,98 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
                 </SelectContent>
               </Select>
             </div>
+            <div className="relative group">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                  className="relative"
+                >
+                  {viewMode === 'grid' ? (
+                    <List className="h-4 w-4 mr-1 hover:text-primary-foreground" />
+                  ) : (
+                    <Grid className="h-4 w-4 mr-1 hover:text-primary-foreground" />
+                  )}
+                </Button>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  Vista de {viewMode === 'grid' ? 'lista' : 'cuadrícula'}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-gray-800"></div>
+                </div>
+              </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium">
+                {filteredAndSortedTrainings.length} capacitación{filteredAndSortedTrainings.length !== 1 ? 'es' : ''} encontrada{filteredAndSortedTrainings.length !== 1 ? 's' : ''}
+              </h3>
+              
+            </div>
+
             {filteredAndSortedTrainings.length > 0 ? (
-              filteredAndSortedTrainings.map((training) => (
-                <Card key={training.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <GraduationCap className="h-8 w-8 text-purple-600" />
-                      <Badge variant={training.status === 'Publicado' ? 'default' : 'secondary'}>
-                        {training.status}
-                      </Badge>
-                    </div>
-                    <CardTitle className="text-lg">{training.title}</CardTitle>
-                    <CardDescription className="line-clamp-2">{training.description}</CardDescription>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {training.tags.map((tag, index: number) => {
-                        return (
-                          <Badge
-                            key={index}
-                            variant="outline"
-                            className="flex items-center gap-1 text-xs"
-                            style={{ backgroundColor: tag?.color || '#ccc' }}
-                          >
-                            <Tag className="h-3 w-3" />
-                            {tag?.name}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Users className="h-4 w-4 mr-2" />
-                      {training.completedCount}/{training.totalEmployees} completaron
-                    </div>
-
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-purple-600 h-2 rounded-full"
-                        style={{ width: `${(training.completedCount / training.totalEmployees) * 100}%` }}
-                      ></div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">Materiales:</p>
-                      <div className="flex gap-1 flex-wrap">
-                        {training.materials.map((material: TrainingMaterial, index: number) => (
-                          <div key={index} className="flex items-center gap-1 text-xs bg-gray-100 rounded px-2 py-1">
-                            {getMaterialIcon(material.type)}
-                            <span>{material.type.toUpperCase()}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {training.evaluation && training.evaluation.questions.length > 0 && (
-                      <div className="text-sm text-muted-foreground">
-                        Evaluación: {training.evaluation.questions.length} preguntas
-                        {training.evaluation.passingScore > 0 && (
-                          <> (mín. {training.evaluation.passingScore} correctas)</>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="flex flex-col gap-2">
-                      <div className="flex flex-row gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => {
-                            router.push(`/dashboard/hse/detail/${training.id}`);
-                          }}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Administrar
-                        </Button>
-
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => {
-                            window.open(`/hse/training`, '_blank');
-                          }}
-                        >
-                          <GraduationCap className="h-4 w-4 mr-1" />
-                          Vista Empleado
-                        </Button>
-                      </div>
-
-                      {/* Botón eliminar solo para capacitaciones en estado Borrador */}
-                      {training.status === 'Borrador' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => {
-                            setTrainingToDelete(training.id);
-                            setConfirmDialogOpen(true);
-                          }}
-                          disabled={isDeleting && trainingToDelete === training.id}
-                        >
-                          {isDeleting && trainingToDelete === training.id ? (
-                            <>Eliminando...</>
-                          ) : (
-                            <>
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              Eliminar
-                            </>
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+              viewMode === 'grid' ? (
+                <TrainingGrid
+                  trainings={filteredAndSortedTrainings.map(training => ({
+                    ...training,
+                    status: training.status === 'Publicado' || training.status === 'Borrador' 
+                      ? training.status 
+                      : 'Borrador', // Default to 'Borrador' if status is invalid
+                    tags: training.tags
+                      .filter((tag): tag is NonNullable<typeof tag> => tag !== null)
+                      .map(tag => ({
+                        ...tag,
+                        color: tag.color ?? undefined
+                      }))
+                  }))}
+                  onDeleteClick={(id) => {
+                    setTrainingToDelete(id);
+                    setConfirmDialogOpen(true);
+                  }}
+                  getMaterialIcon={getMaterialIcon}
+                  isDeleting={isDeleting}
+                  trainingToDelete={trainingToDelete}
+                  onViewEmployee={() => window.open('/hse/training', '_blank')}
+                  onManage={(id) => router.push(`/dashboard/hse/detail/${id}`)}
+                />
+              ) : (
+                <TrainingList
+                  trainings={filteredAndSortedTrainings.map(training => ({
+                    ...training,
+                    status: training.status === 'Publicado' || training.status === 'Borrador' 
+                      ? training.status 
+                      : 'Borrador', // Default to 'Borrador' if status is invalid
+                    tags: training.tags
+                      .filter((tag): tag is NonNullable<typeof tag> => tag !== null)
+                      .map(tag => ({
+                        ...tag,
+                        color: tag.color ?? undefined
+                      }))
+                  }))}
+                  onDeleteClick={(id) => {
+                    setTrainingToDelete(id);
+                    setConfirmDialogOpen(true);
+                  }}
+                  getMaterialIcon={getMaterialIcon}
+                  isDeleting={isDeleting}
+                  trainingToDelete={trainingToDelete}
+                  onViewEmployee={() => window.open('/hse/training', '_blank')}
+                  onManage={(id) => router.push(`/dashboard/hse/detail/${id}`)}
+                />
+              )
             ) : (
               <div className="col-span-full flex flex-col items-center justify-center p-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
                 <FileX className="h-12 w-12 text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium mb-2">No se encontraron capacitaciones</h3>
                 <p className="text-gray-500 text-center max-w-md mb-4">
-                  {searchTerm || tagFilter !== 'all' || statusFilter !== 'all'
+                  {searchTerm || selectedTags.length > 0 || statusFilter !== 'all'
                     ? 'No hay capacitaciones que coincidan con los criterios de búsqueda.'
                     : 'Aún no hay capacitaciones registradas en el sistema.'}
                 </p>
-                {(searchTerm || tagFilter !== 'all' || statusFilter !== 'all') && (
+                {(searchTerm || selectedTags.length > 0 || statusFilter !== 'all') && (
                   <Button
                     variant="outline"
                     onClick={() => {
                       setSearchTerm('');
-                      setTagFilter('all');
+                      setSelectedTags([]);
                       setStatusFilter('all');
                       setSortBy('createdDate');
                       setSortOrder('desc');
