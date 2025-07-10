@@ -1,20 +1,5 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
-import type { Document } from '@/features/Hse/actions/documents';
-import { supabaseBrowser } from '@/lib/supabase/browser';
-import Cookies from 'js-cookie';
-import { Calendar, Download, Eye, FileText, LayoutGrid, List, Trash2, Users } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { toast } from 'sonner';
-import { DocumentUploadDialog } from '@/features/Hse/components/Document-upload-dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,36 +10,51 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { Document } from '@/features/Hse/actions/documents';
+import { DocumentUploadDialog } from '@/features/Hse/components/Document-upload-dialog';
+import { supabaseBrowser } from '@/lib/supabase/browser';
+import Cookies from 'js-cookie';
+import { Calendar, Download, Eye, FileText, LayoutGrid, List, Users } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 // Componente para la vista de cuadrícula
-const DocumentGrid = ({ 
-  documents, 
-  allTags, 
-  getStatusColor, 
-  getStatusText, 
-  formatDate, 
-  getEmployeeCounts, 
-  setDocumentToEdit, 
-  setEditDialogOpen, 
-  router, 
+const DocumentGrid = ({
+  documents,
+  allTags,
+  getStatusColor,
+  getStatusText,
+  formatDate,
+  getEmployeeCounts,
+  setDocumentToEdit,
+  setEditDialogOpen,
+  router,
   handleDownload,
   handlePublish,
   handleDelete,
-  isLoading
-}: { 
-  documents: any[], 
-  allTags: any[],
-  getStatusColor: (status: string) => string,
-  getStatusText: (status: string) => string,
-  formatDate: (dateStr: string | null | undefined) => string,
-  getEmployeeCounts: (id: string) => { accepted: number, total: number },
-  setDocumentToEdit: (doc: any) => void,
-  setEditDialogOpen: (open: boolean) => void,
-  router: any,
-  handleDownload: (file_path: string, file_name: string) => void,
-  handlePublish: (documentId: string) => void,
-  handleDelete: (documentId: string, documentTitle: string) => void,
-  isLoading: { [key: string]: boolean }
+  isLoading,
+}: {
+  documents: any[];
+  allTags: any[];
+  getStatusColor: (status: string) => string;
+  getStatusText: (status: string) => string;
+  formatDate: (dateStr: string | null | undefined) => string;
+  getEmployeeCounts: (id: string) => { accepted: number; total: number };
+  setDocumentToEdit: (doc: any) => void;
+  setEditDialogOpen: (open: boolean) => void;
+  router: any;
+  handleDownload: (file_path: string, file_name: string) => void;
+  handlePublish: (documentId: string) => void;
+  handleDelete: (documentId: string, documentTitle: string) => void;
+  isLoading: { [key: string]: boolean };
 }) => (
   <div>
     <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
@@ -72,14 +72,14 @@ const DocumentGrid = ({
                   // Buscar el tag por nombre (case insensitive)
                   const tag = allTags.find((t: any) => t.name.toLowerCase() === tagName.toLowerCase());
                   const tagColor = tag?.color || '#6b7280'; // Color gris por defecto
-                  
+
                   return (
-                    <Badge 
+                    <Badge
                       key={tagName}
                       className="text-white hover:opacity-80 transition-opacity"
-                      style={{ 
+                      style={{
                         backgroundColor: tagColor,
-                        borderColor: tagColor
+                        borderColor: tagColor,
                       }}
                     >
                       {tagName}
@@ -97,7 +97,9 @@ const DocumentGrid = ({
             </div>
             <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
               <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
-              <span className="truncate">Fecha de vencimiento: {formatDate(document.expiry_date) || 'sin vencimiento'}</span>
+              <span className="truncate">
+                Fecha de vencimiento: {formatDate(document.expiry_date) || 'sin vencimiento'}
+              </span>
             </div>
             <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
               <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
@@ -179,20 +181,34 @@ const DocumentGrid = ({
 );
 
 // Componente para la vista de lista
-const DocumentList = ({ documents, allTags, getStatusColor, getStatusText, formatDate, getEmployeeCounts, setDocumentToEdit, setEditDialogOpen, router, handleDownload, handlePublish, handleDelete, isLoading }: { 
-  documents: any[], 
-  allTags: any[],
-  getStatusColor: (status: string) => string,
-  getStatusText: (status: string) => string,
-  formatDate: (dateStr: string | null | undefined) => string,
-  getEmployeeCounts: (id: string) => { accepted: number, total: number },
-  setDocumentToEdit: (doc: any) => void,
-  setEditDialogOpen: (open: boolean) => void,
-  router: any,
-  handleDownload: (file_path: string, file_name: string) => void,
-  handlePublish: (documentId: string) => void,
-  handleDelete: (documentId: string, documentTitle: string) => void,
-  isLoading: { [key: string]: boolean }
+const DocumentList = ({
+  documents,
+  allTags,
+  getStatusColor,
+  getStatusText,
+  formatDate,
+  getEmployeeCounts,
+  setDocumentToEdit,
+  setEditDialogOpen,
+  router,
+  handleDownload,
+  handlePublish,
+  handleDelete,
+  isLoading,
+}: {
+  documents: any[];
+  allTags: any[];
+  getStatusColor: (status: string) => string;
+  getStatusText: (status: string) => string;
+  formatDate: (dateStr: string | null | undefined) => string;
+  getEmployeeCounts: (id: string) => { accepted: number; total: number };
+  setDocumentToEdit: (doc: any) => void;
+  setEditDialogOpen: (open: boolean) => void;
+  router: any;
+  handleDownload: (file_path: string, file_name: string) => void;
+  handlePublish: (documentId: string) => void;
+  handleDelete: (documentId: string, documentTitle: string) => void;
+  isLoading: { [key: string]: boolean };
 }) => (
   <div className="divide-y rounded border">
     {documents.map((doc) => (
@@ -208,14 +224,14 @@ const DocumentList = ({ documents, allTags, getStatusColor, getStatusText, forma
                 {doc.tags.map((tagName: string) => {
                   const tag = allTags.find((t: any) => t.name.toLowerCase() === tagName.toLowerCase());
                   const tagColor = tag?.color || '#6b7280';
-                  
+
                   return (
-                    <Badge 
+                    <Badge
                       key={tagName}
                       className="text-white hover:opacity-80 transition-opacity"
                       style={{
                         backgroundColor: tagColor,
-                        borderColor: tagColor
+                        borderColor: tagColor,
                       }}
                     >
                       {tagName}
@@ -269,9 +285,9 @@ const DocumentList = ({ documents, allTags, getStatusColor, getStatusText, forma
               <Eye className="h-4 w-4 mr-1" />
               Ver
             </Button>
-            <Button 
-              onClick={() => handleDownload(doc.file_path, doc.file_name)} 
-              size="sm" 
+            <Button
+              onClick={() => handleDownload(doc.file_path, doc.file_name)}
+              size="sm"
               variant="ghost"
               className="h-8"
             >
@@ -333,8 +349,8 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tab, setTab] = useState<'active' | 'expired' | 'drafts'>('active');
-  const [isLoading, setIsLoading] = useState<{[key: string]: boolean}>({});
-  
+  const [isLoading, setIsLoading] = useState<{ [key: string]: boolean }>({});
+
   const getEmployeeCounts = (documentId: string): EmployeeCounts => {
     if (!employees || !Array.isArray(employees)) return { total: 0, accepted: 0 };
     const counts = employees.reduce(
@@ -361,32 +377,23 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
    */
   const getDocumentAssignedPositions = (documentId: string): string[] => {
     if (!employees || !Array.isArray(employees)) {
-      
       return [];
     }
 
-    
-    
     const positionSet = new Set<string>();
     let empleadosConDocumento = 0;
 
     employees.forEach((employee, index) => {
-      const hasDocument = employee.documents?.some(
-        (doc: any) => doc.document?.id === documentId
-      );
-      
+      const hasDocument = employee.documents?.some((doc: any) => doc.document?.id === documentId);
+
       if (hasDocument) {
         empleadosConDocumento++;
-        
+
         if (employee.hierarchical_position && typeof employee.hierarchical_position === 'object') {
-          
           positionSet.add(employee.company_position || employee.hierarchical_position.name);
-        } 
-        
-        else if (employee.position && typeof employee.position === 'string') {
-          
+        } else if (employee.position && typeof employee.position === 'string') {
           positionSet.add(employee.position);
-        } 
+        }
         // Si no tiene ninguna de las dos, mostramos un mensaje de depuración
         else {
           console.log(`Empleado ${index} tiene el documento pero no tiene posición definida o es inválida`, employee);
@@ -394,9 +401,8 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
       }
     });
 
-    
     const posicionesUnicas = Array.from(positionSet);
-    
+
     return posicionesUnicas;
   };
 
@@ -435,17 +441,15 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
     return docs
       .filter((doc) => {
         const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase());
-        
+
         // Si no hay etiquetas seleccionadas, mostrar todos los documentos que coincidan con la búsqueda
         if (selectedTags.length === 0) {
           return matchesSearch;
         }
-        
+
         // Verificar si el documento tiene al menos una de las etiquetas seleccionadas
-        const hasMatchingTag = doc.tags && doc.tags.some(tag => 
-          selectedTags.includes(tag)
-        );
-        
+        const hasMatchingTag = doc.tags && doc.tags.some((tag) => selectedTags.includes(tag));
+
         return matchesSearch && hasMatchingTag;
       })
       .sort((a, b) => {
@@ -463,19 +467,15 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
       });
   };
 
-  const activeDocuments = documents.filter((doc) => doc.status === 'active' );
+  const activeDocuments = documents.filter((doc) => doc.status === 'active');
   const draftDocuments = documents.filter((doc) => doc.status === 'borrador');
   const expiredDocuments = documents.filter((doc) => doc.status === 'expired');
-  const currentTabDocuments = 
-    tab === 'active' ? activeDocuments : 
-    tab === 'drafts' ? draftDocuments : 
-    tab === 'expired' ? expiredDocuments : [];
- 
+  const currentTabDocuments =
+    tab === 'active' ? activeDocuments : tab === 'drafts' ? draftDocuments : tab === 'expired' ? expiredDocuments : [];
+
   const handleDownload = async (file_path: string, file_name: string) => {
     try {
-      const { data, error } = await supabase.storage
-        .from('documents-hse')
-        .download(file_path);
+      const { data, error } = await supabase.storage.from('documents-hse').download(file_path);
 
       if (error) throw error;
 
@@ -506,36 +506,30 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
 
   const confirmPublish = async () => {
     if (!selectedDocument) return;
-    
+
     const documentId = selectedDocument.id;
-    setIsLoading(prev => ({ ...prev, [documentId]: true }));
-    
+    setIsLoading((prev) => ({ ...prev, [documentId]: true }));
+
     try {
       // Importar la server action directamente
       const { publishDocument } = await import('@/features/Hse/actions/documents');
-      
+
       // Llamar a la server action
       const success = await publishDocument(documentId);
-      
+
       if (!success) {
         throw new Error('No se pudo publicar el documento');
       }
 
       // Actualizar el estado local
-      setDocuments(docs => 
-        docs.map(doc => 
-          doc.id === documentId 
-            ? { ...doc, status: 'active' as const }
-            : doc
-        )
-      );
-      
+      setDocuments((docs) => docs.map((doc) => (doc.id === documentId ? { ...doc, status: 'active' as const } : doc)));
+
       toast.success('Documento publicado correctamente');
     } catch (error) {
       console.error('Error al publicar el documento:', error);
       toast.error(error instanceof Error ? error.message : 'Error al publicar el documento');
     } finally {
-      setIsLoading(prev => ({ ...prev, [documentId]: false }));
+      setIsLoading((prev) => ({ ...prev, [documentId]: false }));
       setPublishDialogOpen(false);
       setSelectedDocument(null);
     }
@@ -549,30 +543,30 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
 
   const confirmDelete = async () => {
     if (!selectedDocument) return;
-    
+
     const documentId = selectedDocument.id;
-    setIsLoading(prev => ({ ...prev, [documentId]: true }));
-    
+    setIsLoading((prev) => ({ ...prev, [documentId]: true }));
+
     try {
       // Importar la server action directamente
       const { deleteDocument } = await import('@/features/Hse/actions/documents');
-      
+
       // Llamar a la server action
       const result = await deleteDocument(documentId);
-      
+
       if (result && !result.success) {
         throw new Error(result.message || 'Error al eliminar el documento');
       }
 
       // Actualizar el estado local
-      setDocuments(docs => docs.filter(doc => doc.id !== documentId));
-      
+      setDocuments((docs) => docs.filter((doc) => doc.id !== documentId));
+
       toast.success('Documento eliminado correctamente');
     } catch (error) {
       console.error('Error al eliminar el documento:', error);
       toast.error(error instanceof Error ? error.message : 'Error al eliminar el documento');
     } finally {
-      setIsLoading(prev => ({ ...prev, [documentId]: false }));
+      setIsLoading((prev) => ({ ...prev, [documentId]: false }));
       setDeleteDialogOpen(false);
       setSelectedDocument(null);
     }
@@ -607,10 +601,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmPublish}
-              disabled={isLoading[selectedDocument?.id || '']}
-            >
+            <AlertDialogAction onClick={confirmPublish} disabled={isLoading[selectedDocument?.id || '']}>
               {isLoading[selectedDocument?.id || ''] ? 'Publicando...' : 'Publicar'}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -623,13 +614,13 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar documento?</AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Estás seguro de que deseas eliminar el documento "{selectedDocument?.title}"? 
+              ¿Estás seguro de que deseas eliminar el documento {selectedDocument?.title}?
               <span className="text-destructive">Esta acción no se puede deshacer.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={confirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isLoading[selectedDocument?.id || '']}
@@ -672,10 +663,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-48"
               />
-              <Select 
-                value={sortBy} 
-                onValueChange={(value) => setSortBy(value as 'upload_date' | 'title')}
-              >
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'upload_date' | 'title')}>
                 <SelectTrigger className="w-45">
                   <SelectValue placeholder="Ordenar por" />
                 </SelectTrigger>
@@ -684,11 +672,8 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
                   <SelectItem value="title">Título</SelectItem>
                 </SelectContent>
               </Select>
-              
-              <Select 
-                value={sortOrder} 
-                onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
-              >
+
+              <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}>
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="Orden" />
                 </SelectTrigger>
@@ -697,13 +682,15 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
                   <SelectItem value="asc">Ascendente</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               <div className="w-64">
                 <MultiSelectCombobox
-                  options={allTags?.map(tag => ({
-                    label: tag.name,
-                    value: tag.name,
-                  })) || []}
+                  options={
+                    allTags?.map((tag) => ({
+                      label: tag.name,
+                      value: tag.name,
+                    })) || []
+                  }
                   selectedValues={selectedTags}
                   placeholder="Filtrar por etiquetas"
                   emptyMessage="No hay etiquetas disponibles"
@@ -711,10 +698,10 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
                   showSelectAll
                 />
               </div>
-              
+
               <div className="relative group">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
                   className="relative"
                 >
@@ -731,11 +718,11 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
               </div>
             </div>
           </div>
-          
+
           {/* Renderizado según vista */}
           {filterAndSortDocuments(currentTabDocuments).length > 0 ? (
             viewMode === 'grid' ? (
-              <DocumentGrid 
+              <DocumentGrid
                 documents={filterAndSortDocuments(currentTabDocuments)}
                 allTags={allTags}
                 getStatusColor={getStatusColor}
@@ -751,7 +738,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
                 isLoading={isLoading}
               />
             ) : (
-              <DocumentList 
+              <DocumentList
                 documents={filterAndSortDocuments(currentTabDocuments)}
                 allTags={allTags}
                 getStatusColor={getStatusColor}
@@ -771,10 +758,10 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">
-                {tab === 'active' 
-                  ? 'No hay documentos activos en este momento' 
-                  : tab === 'expired' 
-                    ? 'No hay documentos vencidos' 
+                {tab === 'active'
+                  ? 'No hay documentos activos en este momento'
+                  : tab === 'expired'
+                    ? 'No hay documentos vencidos'
                     : 'No hay borradores'}
               </p>
             </div>
