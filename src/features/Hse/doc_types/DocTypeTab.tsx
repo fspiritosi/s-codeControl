@@ -8,9 +8,9 @@ import DocTypeTable from './DocTypeTable';
 
 
 function DocTypeTab() {
-  const [selectedDocType, setSelectedDocType] = useState<Awaited<ReturnType<typeof fetchAllHseDocTypes>>[] | null>(null);
+  const [selectedDocType, setSelectedDocType] = useState<Awaited<ReturnType<typeof fetchAllHseDocTypes>>[number] | null>(null);
   const [mode, setMode] = useState<'create' | 'edit'>('create');
-  const [hse_doc_types, setHse_Doc_types] = useState<Awaited<ReturnType<typeof fetchAllHseDocTypes>>[]>([]);
+  const [hse_doc_types, setHse_Doc_types] = useState<Awaited<ReturnType<typeof fetchAllHseDocTypes>>>([]);
 
   useEffect(()=>{
     async function fetchDocTypes() {
@@ -33,7 +33,7 @@ function DocTypeTab() {
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={60}>
-          <DocTypeTable hse_doc_types={hse_doc_types} selectedHse_Doc_type={selectedDocType} setSelectedHse_Doc_type={setSelectedDocType} setMode={setMode} />
+          <DocTypeTable hse_doc_types={hse_doc_types} selectedHse_Doc_type={selectedDocType} setSelectedHse_Doc_type={setSelectedDocType} setMode={setMode} mode={mode} />
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>

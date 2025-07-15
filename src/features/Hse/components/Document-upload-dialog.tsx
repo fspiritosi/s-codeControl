@@ -19,7 +19,7 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { createDocumentWithAssignments, getAllHierarchicalPositions, HseDocType, updateDocument } from "@/features/Hse/actions/documents"
+import { createDocumentWithAssignments, getAllHierarchicalPositions, updateDocument } from "@/features/Hse/actions/documents"
 import { Plus, Upload } from "lucide-react"
 import Cookies from "js-cookie"
 import { toast } from "@/components/ui/use-toast"

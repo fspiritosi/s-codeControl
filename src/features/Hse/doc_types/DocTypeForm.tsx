@@ -23,8 +23,8 @@ const tagSchema = z.object({
 interface DocTypeFormProps {
   mode: 'create' | 'edit';
   setMode: (mode: 'create' | 'edit') => void;
-  selectedDocType: Awaited<ReturnType<typeof fetchAllHseDocTypes>>[] | null;
-  setSelectedDocType: (docType: Awaited<ReturnType<typeof fetchAllHseDocTypes>>[] | null) => void;
+  selectedDocType: Awaited<ReturnType<typeof fetchAllHseDocTypes>>[number] | null;
+  setSelectedDocType: (docType: Awaited<ReturnType<typeof fetchAllHseDocTypes>>[number] | null) => void;
 }
 
 type DocTypeFormValues = z.infer<typeof tagSchema>;
@@ -46,9 +46,9 @@ function DocTypeForm({ mode, setMode, selectedDocType, setSelectedDocType }: Doc
   useEffect(() => {
     if (mode === 'edit' && selectedDocType) {
       reset({
-        name: selectedDocType.name,
-        short_description: selectedDocType.short_description,
-        is_active: selectedDocType.is_active,
+        name: selectedDocType.name || '',
+        short_description: selectedDocType.short_description || '',
+        is_active: selectedDocType.is_active || true,
       });
     } else if (mode === 'create') {
       reset({

@@ -6,18 +6,18 @@ import { createFilterOptions } from '@/shared/components/utils/utils';
 import { ColumnDef } from '@tanstack/react-table';
 import Cookies from 'js-cookie';
 import { fetchAllHseDocTypes } from '../actions/documents';
-type DocType = Awaited<ReturnType<typeof fetchAllHseDocTypes>>[0];
+
 
 
 export interface DocTypeTableProp {
   mode: 'create' | 'edit';
   setMode: (mode: 'create' | 'edit') => void;
-  selectedTag: Awaited<ReturnType<typeof fetchAllHseDocTypes>>[] | null;
-  setSelectedTag: (hse_doc_type: Awaited<ReturnType<typeof fetchAllHseDocTypes>>[] | null) => void;
-  tags: Awaited<ReturnType<typeof fetchAllHseDocTypes>>[];
+  selectedHse_Doc_type: Awaited<ReturnType<typeof fetchAllHseDocTypes>>[number] | null;
+  setSelectedHse_Doc_type: (hse_doc_type: Awaited<ReturnType<typeof fetchAllHseDocTypes>>[number] | null) => void;
+  hse_doc_types: Awaited<ReturnType<typeof fetchAllHseDocTypes>>;
 }
 
-export function getTagColums(handleEdit: (hse_doc_types:  DocType) => void): ColumnDef<DocType>[] {
+export function getTagColums(handleEdit: (hse_doc_types:  DocTypeTableProp['hse_doc_types'][number]) => void): ColumnDef<DocTypeTableProp['hse_doc_types'][number]>[] {
   return [
     {
       accessorKey: 'name',
@@ -66,12 +66,7 @@ export function getTagColums(handleEdit: (hse_doc_types:  DocType) => void): Col
   ];
 }
 
-export interface DocTypeTableProp {
-  hse_doc_types: DocType[];
-  selectedHse_Doc_type: DocType;
-  setSelectedHse_Doc_type: (DocType: DocType) => void;
-  setMode: (mode: 'create' | 'edit') => void;
-}
+
 function DocTypeTable({ hse_doc_types, selectedHse_Doc_type, setSelectedHse_Doc_type, setMode }: DocTypeTableProp) {
   const cookies = Cookies.get('areaTable');
   const handleEdit = (HseDocType: DocTypeTableProp['hse_doc_types'][number]) => {

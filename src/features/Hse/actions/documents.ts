@@ -2,6 +2,7 @@
 
 import { supabaseServer } from '@/lib/supabase/server'
 
+
 // Tipos
 export type DocumentInput = {
   title: string
@@ -9,15 +10,6 @@ export type DocumentInput = {
   version: string
   file: File
   expiry_date: string
-}
-
-export interface HseDocType {
-  id: string;
-  name: string | null;
-  short_description: string | null;
-  is_active: boolean | null;
-  created_at?: string;
-  updated_at?: string;
 }
 
 
@@ -1479,7 +1471,7 @@ export async function fetchHseDocTypesOnlyName() {
   }
 };
 
-export const createDocType = async (data: HseDocType) => {
+export const createDocType = async (data: Database['public']['Tables']['hse_doc_types']['Insert']) => {
   console.log('createDocType', data);
   try {
     const supabase = supabaseServer();
@@ -1497,10 +1489,10 @@ export const createDocType = async (data: HseDocType) => {
   }
 };
 
-export const updateDocType = async (data: HseDocType) => {
+export const updateDocType = async (data: Database['public']['Tables']['hse_doc_types']['Update']) => {
   try {
     const supabase = supabaseServer();
-    const { error } = await supabase.from('hse_doc_types').update(data).eq('id', data.id);
+    const { error } = await supabase.from('hse_doc_types').update(data).eq('id', data.id || '');
 
     if (error) {
       console.error('Error al actualizar tipo de documento:', error);
