@@ -11,6 +11,16 @@ export type DocumentInput = {
   expiry_date: string
 }
 
+export interface HseDocType {
+  id: string;
+  name: string | null;
+  short_description: string | null;
+  is_active: boolean | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+
 //infer<typeof documentSchema>
 export interface DocumentVersion {
   id: string
@@ -242,10 +252,6 @@ export async function getDocumentById(id: string): Promise<(Document & { version
 
   return { ...document, versions: versions || [] }
 }
-
-
-
-
 
 export async function createDocumentWithAssignments(formData: FormData, company_id: string) {
   
@@ -607,9 +613,6 @@ async function createDocumentAssignments(
     console.warn("Documento creado pero las asignaciones fallaron")
   }
 }
-
-
-
 
 export async function createDocumentVersion(
   documentId: string,
@@ -1440,3 +1443,73 @@ export async function getTypeOfEmployeeForDocument(documentId: string): Promise<
     };
   }
 }
+
+export async function fetchAllHseDocTypes() {
+  const supabase = supabaseServer();
+  try {
+    const { data: hse_doc_types, error } = await supabase.from('hse_doc_types').select('*');
+    console.log('fetchAllDocTypes', hse_doc_types);
+
+    if (error) {
+      console.error('Error al obtener tipos de documentos:', error);
+      return [];
+    }
+
+    return hse_doc_types;
+  } catch (error: any) {
+    console.error('Error inesperado al obtener tipos de documentos:', error);
+    return [];
+  }
+};
+
+export async function fetchHseDocTypesOnlyName() {
+  const supabase = supabaseServer();
+  try {
+    const { data: hse_doc_types, error } = await supabase.from('hse_doc_types').select('id,name');
+    
+    if (error) {
+      console.error('Error al obtener tipos de documentos:', error);
+      return [];
+    }
+
+    return hse_doc_types;
+  } catch (error: any) {
+    console.error('Error inesperado al obtener tipos de documentos:', error);
+    return [];
+  }
+};
+
+export const createDocType = async (data: HseDocType) => {
+  console.log('createDocType', data);
+  try {
+    const supabase = supabaseServer();
+    const { error } = await supabase.from('hse_doc_types').insert([data]);
+
+    if (error) {
+      console.error('Error al crear tipo de documento:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error inesperado al crear tipo de documento:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const updateDocType = async (data: HseDocType) => {
+  try {
+    const supabase = supabaseServer();
+    const { error } = await supabase.from('hse_doc_types').update(data).eq('id', data.id);
+
+    if (error) {
+      console.error('Error al actualizar tipo de documento:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error inesperado al actualizar tipo de documento:', error);
+    return { success: false, error: error.message };
+  }
+};

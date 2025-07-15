@@ -7,6 +7,7 @@ import {DocumentUploadDialog} from '@/features/Hse/components/Document-upload-di
 import { getDocuments, getEmployeesWithAssignedDocuments } from '@/features/Hse/actions/documents';
 import { cookies } from 'next/headers';
 import type { Document } from '@/features/Hse/actions/documents'; // <-- ¡SÍ!
+import DocTypeTab from '@/features/Hse/doc_types/DocTypeTab';
 
 
 export type TagType = {
@@ -16,6 +17,7 @@ export type TagType = {
   is_active: boolean;
   name: string;
 };
+
 
 export type TrainingType = {
   id: string;
@@ -59,11 +61,11 @@ async function HSEPage() {
   const tagsResult = results[1].status === 'fulfilled' ? results[1].value as TagType[] : [];
   const documentsResult = results[2].status === 'fulfilled' ? results[2].value as Document[] : [];
   const employeesResultRaw = results[3].status === 'fulfilled' ? results[3].value : { data: null, error: 'unknown' };
-const employeesResult =
-  employeesResultRaw && employeesResultRaw.data
-    ? employeesResultRaw.data
-    : [];
-  
+  const employeesResult =
+    employeesResultRaw && employeesResultRaw.data
+      ? employeesResultRaw.data
+      : [];
+    
   function normalizeDocument(doc: any): Document {
     return {
       ...doc,
@@ -102,6 +104,18 @@ const employeesResult =
             allTags={tagsResult} 
             initialEmployees={employeesResult} 
           />,
+        },
+      },
+      {
+        value: 'documentsTypeTable',
+        name: 'Tipos de Documentos',
+        restricted: [''],
+        content: {
+          title: 'Ver tipos de documentos',
+          description: 'Aquí encontrarás todos los tipos de documentos',
+          buttonActioRestricted: [''],
+          buttonAction: <DocumentUploadDialog allTags={tagsResult || []} />,
+          component: <DocTypeTab  /> 
         },
       },
     ],

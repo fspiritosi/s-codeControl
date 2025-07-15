@@ -320,7 +320,7 @@ export const fetchTrainings = async () => {
       .eq('company_id', company_id)
       .order('created_at', { ascending: false });
 
-    console.log('Datos de capacitaciones recibidos:', data);
+    // console.log('Datos de capacitaciones recibidos:', data);
 
     if (error) {
       console.error('Error al obtener capacitaciones:', error);
@@ -1281,3 +1281,6 @@ export const deleteTraining = async (trainingId: string) => {
     };
   }
 };
+
+
+
