@@ -2,6 +2,7 @@
 
 import { supabaseServer } from '@/lib/supabase/server'
 
+
 // Tipos
 export type DocumentInput = {
   title: string
@@ -10,6 +11,7 @@ export type DocumentInput = {
   file: File
   expiry_date: string
 }
+
 
 //infer<typeof documentSchema>
 export interface DocumentVersion {
@@ -268,59 +270,18 @@ export async function getDocumentById(id: string): Promise<(Document & {
       .eq('document_id', id)
       .order('created_at', { ascending: false });
 
-    if (versionsError) {
-      console.error('Error al obtener versiones del documento:', versionsError);
-      // Continuamos aunque falle, devolviendo un array vacío de versiones
-    }
+  if (versionsError) {
+    console.error('Error al obtener versiones del documento:', versionsError)
+    // Si hay error, devolvemos el documento sin versiones
+    return { ...document, versions: [] }
+  }
 
-    // Obtener las etiquetas del documento
-    const { data: tagAssignments, error: tagError } = await supabase
-      .from('hse_document_tag_assignments' as any)
-      .select(`
-        document_id,
-        training_tags (
-          id,
-          name
-        )
-      `)
-      .eq('document_id', id);
-
-    let tags: string[] = [];
-    
-    if (!tagError && tagAssignments) {
-      // Procesar las etiquetas como en getDocuments
-      const validTags = tagAssignments
-        .map(assignment => {
-          const trainingTags = assignment.training_tags;
-          // Aseguramos que training_tags sea un array
-          return Array.isArray(trainingTags) 
-            ? trainingTags 
-            : trainingTags ? [trainingTags] : [];
-        })
-        .flat()
-        .filter(tag => tag && typeof tag === 'object' && 'id' in tag && 'name' in tag)
-        .map(tag => tag.name);
-
-      // Eliminar duplicados por si acaso
-      tags = [...new Set(validTags)];
-    } else if (tagError) {
-      console.error('Error al obtener etiquetas del documento:', tagError);
-    }
-
-    // Devolver el documento con versiones y etiquetas
-    return { 
-      ...document, 
-      versions: versions || [],
-      tags 
-    };
+  return { ...document, versions: versions || [] }
   } catch (error) {
-    console.error('Error inesperado en getDocumentById:', error);
+    console.error('Error al obtener documento:', error);
     return null;
   }
 }
-
-
-
 
 export async function createDocumentWithAssignments(formData: FormData, company_id: string) {
   
@@ -682,9 +643,6 @@ async function createDocumentAssignments(
     console.warn("Documento creado pero las asignaciones fallaron")
   }
 }
-
-
-
 
 export async function createDocumentVersion(
   documentId: string,
@@ -1515,3 +1473,73 @@ export async function getTypeOfEmployeeForDocument(documentId: string): Promise<
     };
   }
 }
+
+export async function fetchAllHseDocTypes() {
+  const supabase = supabaseServer();
+  try {
+    const { data: hse_doc_types, error } = await supabase.from('hse_doc_types').select('*');
+    console.log('fetchAllDocTypes', hse_doc_types);
+
+    if (error) {
+      console.error('Error al obtener tipos de documentos:', error);
+      return [];
+    }
+
+    return hse_doc_types;
+  } catch (error: any) {
+    console.error('Error inesperado al obtener tipos de documentos:', error);
+    return [];
+  }
+};
+
+export async function fetchHseDocTypesOnlyName() {
+  const supabase = supabaseServer();
+  try {
+    const { data: hse_doc_types, error } = await supabase.from('hse_doc_types').select('id,name');
+    
+    if (error) {
+      console.error('Error al obtener tipos de documentos:', error);
+      return [];
+    }
+
+    return hse_doc_types;
+  } catch (error: any) {
+    console.error('Error inesperado al obtener tipos de documentos:', error);
+    return [];
+  }
+};
+
+export const createDocType = async (data: Database['public']['Tables']['hse_doc_types']['Insert']) => {
+  console.log('createDocType', data);
+  try {
+    const supabase = supabaseServer();
+    const { error } = await supabase.from('hse_doc_types').insert([data]);
+
+    if (error) {
+      console.error('Error al crear tipo de documento:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error inesperado al crear tipo de documento:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const updateDocType = async (data: Database['public']['Tables']['hse_doc_types']['Update']) => {
+  try {
+    const supabase = supabaseServer();
+    const { error } = await supabase.from('hse_doc_types').update(data).eq('id', data.id || '');
+
+    if (error) {
+      console.error('Error al actualizar tipo de documento:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error inesperado al actualizar tipo de documento:', error);
+    return { success: false, error: error.message };
+  }
+};

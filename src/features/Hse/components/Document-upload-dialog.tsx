@@ -27,6 +27,8 @@ import { useRouter } from "next/navigation"
 import { MultiSelectCombobox } from "@/components/ui/multi-select-combobox"
 import { getTypeOfEmployeeForDocument } from '../actions/documents';
 import { fetchAllTags } from '@/components/Capacitaciones/actions/actions';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { fetchHseDocTypesOnlyName } from "@/features/Hse/actions/documents";
 // Esquema de validación
 const documentFormSchema = z.object({
   title: z.string().min(1, "El título es obligatorio"),
@@ -75,10 +77,13 @@ type DocumentFormValues = z.infer<typeof documentFormSchema> & {
   tags?: string[];
 }
 
+
+
 export function DocumentUploadDialog({ open, onOpenChange, initialData, documentId, mode, allTags }: DocumentUploadDialogProps) {
   const [positions, setPositions] = useState<any[]>([]);
   const [fileName, setFileName] = useState<string>("");
   const [selectAll, setSelectAll] = useState(false);
+  const [docType, setDocType] = useState<Awaited <ReturnType<typeof fetchHseDocTypesOnlyName>> | null>(null);
   
   const tagOptions = React.useMemo(() => {
     return (allTags || []).map(tag => ({
@@ -133,6 +138,9 @@ export function DocumentUploadDialog({ open, onOpenChange, initialData, document
   const router = useRouter();
   const fileRef = form.register("file");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  console.log(initialData)
+
+  console.log('docType', docType)
   
   useEffect(() => {
     if (mode === "edit" && initialData?.typeOfEmployee && positions.length > 0) {
@@ -211,7 +219,15 @@ export function DocumentUploadDialog({ open, onOpenChange, initialData, document
       setFileName("");
     }
   }, [mode, form]);
-  
+
+  useEffect(() => {
+    const fetchDocTypes = async () => {
+      const docTypes = await fetchHseDocTypesOnlyName();
+      setDocType(docTypes);
+    };
+    fetchDocTypes();
+  }, []);
+    
   const companyId = cookies["actualComp"]
 
   // Función para manejar la selección de "Todos"
@@ -350,6 +366,30 @@ const onSubmit = async (data: DocumentFormValues) => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           {/* Campos del formulario */}
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tipo de Documento</FormLabel>
+                <FormControl>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {docType?.map((docType: any) => (
+                        <SelectItem key={docType.id} value={docType.id}>
+                          {docType.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="title"
