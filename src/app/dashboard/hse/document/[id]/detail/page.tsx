@@ -1,4 +1,6 @@
 'use client';
+import { getCompanyDetails } from '@/app/server/GET/actions';
+import { fetchAllTags } from '@/components/Capacitaciones/actions/actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,21 +27,18 @@ import {
 import { DocumentNewVersionDialog } from '@/features/Hse/components/Document-new-version-dialog';
 import { DocumentUploadDialog } from '@/features/Hse/components/Document-upload-dialog';
 import { supabaseBrowser } from '@/lib/supabase/browser';
+import { BaseDataTable } from '@/shared/components/data-table/base/data-table';
+import { DataTableColumnHeader } from '@/shared/components/data-table/base/data-table-column-header';
+import { ColumnDef, VisibilityState } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import cookies from 'js-cookie';
-import { ArrowLeft, CheckCircle, Clock, Download, Edit, ExternalLink, Eye, Loader2, Plus } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, Download, Edit, Eye, Loader2, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
-import { BaseDataTable } from '@/shared/components/data-table/base/data-table';
-import { DataTableColumnHeader } from '@/shared/components/data-table/base/data-table-column-header';
-import { ColumnDef } from '@tanstack/react-table';
-import { VisibilityState } from '@tanstack/react-table';
-import { getCompanyDetails } from '@/app/server/GET/actions';
-import { fetchAllTags } from '@/components/Capacitaciones/actions/actions';
 
 // interface ExtendedDocument extends Document {
 //   documentTitle: string;
@@ -64,16 +63,22 @@ interface ExtendedDocument extends Document {
     name: string;
   };
   documentNumber?: string;
+  tags?: string[];
 }
 
 interface ProcessedDocument {
   id?: string;
+  assignmentId?: string; // Add this line
   status: 'accepted' | 'pending';
   acceptedAt?: string;
   assignedAt?: string;
+  document?: {
+    id: string;
+    title: string;
+    version: string;
+    expiryDate: string | null;
+  };
 }
-
-
 type LocalProcessedDocument = Omit<ProcessedDocument, 'status'> & {
   status: 'accepted' | 'pending';
 };
@@ -81,10 +86,10 @@ type LocalProcessedDocument = Omit<ProcessedDocument, 'status'> & {
 interface ProcessedEmployee {
   id: string;
   name: string;
-  cuil?: string | null;  // Añade | null
+  cuil?: string | null; // Añade | null
   // position: { id: string; name: string } | null;
-  position?: string;  // Solo el nombre como string
-  email?: string | null;  // Añade | null
+  position?: string; // Solo el nombre como string
+  email?: string | null; // Añade | null
   documents?: ProcessedDocument[];
 }
 
@@ -92,21 +97,41 @@ interface Employee {
   id: string;
   name: string;
   cuil?: string;
-  position?: string;  // Solo el nombre como string
+  position?: string;
+  hierarchical_position?: {
+    name: string;
+    id: string;
+  };
   email?: string;
+  company_position?: string;
   documents?: Array<{
     id: string;
     status: 'accepted' | 'pending';
     acceptedAt?: string;
     assignedAt?: string;
+    document?: {
+      id: string;
+      title: string;
+      version: string;
+      expiryDate: string | null;
+    };
   }>;
 }
 
 interface EmployeeWithDocuments extends Employee {}
- 
+
 interface EmployeeTableProp {
   employees: Employee[];
 }
+
+interface Tag {
+  id: string;
+  name: string;
+  color: string;
+  created_at: string;
+  is_active: boolean;
+}
+
 interface Filter {
   label: string;
   value: string;
@@ -118,7 +143,7 @@ function getEmployeeColums(
   sendingReminderFor: string | null,
   isSendingReminders: boolean,
   setSendingReminderFor: (id: string | null) => void
-):ColumnDef<Employee>[] {
+): ColumnDef<Employee>[] {
   return [
     {
       accessorKey: 'nombre',
@@ -151,7 +176,7 @@ function getEmployeeColums(
     //   filterFn: (row, id, value) => {
     //     return value.includes(row.getValue(id));
     //   },
-    // },    
+    // },
     {
       accessorKey: 'status',
       id: 'Status',
@@ -169,7 +194,7 @@ function getEmployeeColums(
         return value.includes(row.getValue(id));
       },
     },
-    
+
     {
       accessorKey: 'actions',
       id: 'Acciones',
@@ -180,32 +205,32 @@ function getEmployeeColums(
           handleEdit((row.original as any).area_full);
         };
         return status === 'accepted' ? null : (
-          <Button 
-  size="sm" 
-  variant="outline" 
-  className="hover:text-blue-400" 
-  onClick={async () => {
-    const employee = employeesWithDocuments.find(e => e.id === row.original.id);
-    if (employee) {
-      setSendingReminderFor(employee.id);
-      try {
-        await handleSendReminders(employee);
-      } finally {
-        setSendingReminderFor(null);
-      }
-    }
-  }}
-  disabled={!!sendingReminderFor || isSendingReminders}
->
-  {sendingReminderFor === row.original.id ? (
-    <div className="flex items-center gap-2">
-      <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-      Enviando...
-    </div>
-  ) : (
-    "Enviar recordatorio"
-  )}
-</Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="hover:text-blue-400"
+            onClick={async () => {
+              const employee = employeesWithDocuments.find((e) => e.id === row.original.id);
+              if (employee) {
+                setSendingReminderFor(employee.id);
+                try {
+                  await handleSendReminders(employee);
+                } finally {
+                  setSendingReminderFor(null);
+                }
+              }
+            }}
+            disabled={!!sendingReminderFor || isSendingReminders}
+          >
+            {sendingReminderFor === row.original.id ? (
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+                Enviando...
+              </div>
+            ) : (
+              'Enviar recordatorio'
+            )}
+          </Button>
         );
       },
     },
@@ -242,43 +267,36 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
   const [company, setCompany] = useState<Company | null>(null);
   const [sendingReminderFor, setSendingReminderFor] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [allTags, setAllTags] = useState<{id: string; name: string}[]>([]);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
   // const [savedFilters, setSavedFilters] = useState<Filter[]>([]);
   // const cookies = cookies()
   // const userId = cookies['userId']
   const companyId = cookies.get('actualComp');
 
-  const names = createFilterOptions<EmployeeWithDocuments>(
-    employeesWithDocuments, 
-    (employee) => employee.name
-  );
-  
-  const cuils = createFilterOptions<EmployeeWithDocuments>(
-    employeesWithDocuments, 
-    (employee) => employee.cuil || ''
-  );
-  
+  const names = createFilterOptions<EmployeeWithDocuments>(employeesWithDocuments, (employee) => employee.name);
+
+  const cuils = createFilterOptions<EmployeeWithDocuments>(employeesWithDocuments, (employee) => employee.cuil || '');
+
   const positions = createFilterOptions<EmployeeWithDocuments>(
-    employeesWithDocuments, 
+    employeesWithDocuments,
     (employee) => employee.position || ''
   );
-  
+
   const status = createFilterOptions<EmployeeWithDocuments>(
-    employeesWithDocuments, 
-    (employee) => employee.documents?.map(doc => doc.status).join(', ') || ''
+    employeesWithDocuments,
+    (employee) => employee.documents?.map((doc) => doc.status).join(', ') || ''
   );
-  
+
   const formattedEmployees: any = employeesWithDocuments.map((employee) => {
     return {
       ...employee,
       nombre: employee.name,
       cuil: employee.cuil || '',
       departamento: employee.position || '',
-      status: employee.documents?.map((document: any) => document.status).join(', ')  || '',
+      status: employee.documents?.map((document: any) => document.status).join(', ') || '',
     };
   });
-  
-  
+
   const handleEdit = (employee: any) => {
     setSelectedEmployee(employee);
     setMode('edit');
@@ -288,17 +306,18 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
     cuil: emp.cuil || undefined,
     email: emp.email || undefined,
     position: emp.position || undefined,
-    documents: emp.documents?.map(doc => ({
-      id: doc.id || '',
-      status: doc.status as 'accepted' | 'pending', 
+    documents: emp.documents?.map((doc) => ({
+      id: doc.assignmentId || doc.id || '',
+      status: doc.status as 'accepted' | 'pending',
       acceptedAt: doc.acceptedAt,
-      assignedAt: doc.assignedAt
-    })) || []
+      assignedAt: doc.assignedAt,
+      document: doc.document // Preserve the nested document object
+    })) || [],
   });
   useEffect(() => {
     const fetchEmployeesWithDocuments = async () => {
       try {
-        const { data, error } = await getEmployeesWithAssignedDocuments(params.id) as {
+        const { data, error } = (await getEmployeesWithAssignedDocuments(params.id)) as {
           data: ProcessedEmployee[] | null;
           error: Error | null;
         };
@@ -306,7 +325,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
         
         // Usa la función de transformación
         const transformedData = data?.map(transformEmployee) || [];
-        
+
         setEmployeesWithDocuments(transformedData);
       } catch (error) {
         console.error('Error al obtener empleados con documentos:', error);
@@ -314,7 +333,6 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
       }
     };
     const fetchCompany = async () => {
-      
       if (companyId) {
         const companyData = await getCompanyDetails(companyId);
         setCompany(companyData as any);
@@ -325,7 +343,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
   }, [params.id]);
   // Función para manejar la descarga de archivos
   // Función para manejar la descarga de archivos
-  
+
   const handleDownload = (fileUrl: string, fileName: string) => {
     if (isDownloading) return;
 
@@ -355,14 +373,37 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
     const fetchTags = async () => {
       try {
         const tags = await fetchAllTags();
-        setAllTags(tags);
+        setAllTags(tags as Tag[]);
       } catch (error) {
         console.error('Error al cargar las etiquetas:', error);
       }
     };
-    
+
     fetchTags();
   }, []);
+  
+
+  // Obtener el color de un tag basado en su nombre
+  const getTagColor = (tagName: string) => {
+    if (!allTags || allTags.length === 0) return { backgroundColor: '#f3f4f6', color: '#1f2937' }; // gris por defecto
+
+    const tag = allTags.find((t) => t.name === tagName);
+    if (!tag || !tag.color) return { backgroundColor: '#f3f4f6', color: '#1f2937' }; // gris por defecto
+
+    // Calcular el color de texto para mejor contraste (blanco o negro)
+    const hex = tag.color.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    const textColor = brightness > 128 ? '#1f2937' : '#ffffff'; // Negro para fondos claros, blanco para fondos oscuros
+
+    return {
+      backgroundColor: tag.color,
+      color: textColor,
+      border: 'none',
+    };
+  };
 
   // Cargar documento y empleados
   useEffect(() => {
@@ -373,6 +414,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
           getDocumentById(params.id),
           getEmployeesWithAssignedDocuments(params.id),
         ]);
+        
 
         if (!doc) {
           console.error('Documento no encontrado');
@@ -392,7 +434,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
 
     fetchData();
   }, [params.id]);
-  
+
   // Ordenar versiones por fecha (más reciente primero)
   const sortedVersions = React.useMemo(() => {
     // Usar versions si está definido, de lo contrario usar un array vacío
@@ -459,6 +501,8 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
         return 'Vencido';
       case 'pending':
         return 'Pendiente';
+      case 'borrador':
+        return 'Borrador';
       default:
         return 'Desconocido';
     }
@@ -497,13 +541,13 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
   const sendReminder = async (employee: Employee) => {
     try {
       const documentUrl = `${window.location.origin}/dashboard/hse/document/${document.id}/detail`;
-      
+
       // Crear el cuerpo del correo usando el template
       const emailBody = {
         recurso: document.category?.name || 'Documento',
         document_name: document.title,
         company_name: company?.company_name || 'Empresa',
-        resource_name: employee.name,  // Usar el nombre del empleado
+        resource_name: employee.name, // Usar el nombre del empleado
         document_number: document.documentNumber || 'N/A',
         companyConfig: {
           name: company?.company_name || 'Empresa',
@@ -511,11 +555,9 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
           website: company?.website || 'https://tuempresa.com',
           supportEmail: company?.contact_email || 'soporte@tuempresa.com',
           primaryColor: '#667eea',
-          secondaryColor: '#764ba2'
-        }
+          secondaryColor: '#764ba2',
+        },
       };
-
-      
 
       const response = await fetch('/api/send', {
         method: 'POST',
@@ -527,14 +569,14 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
           subject: `Recordatorio: ${document.title} pendiente de revisión`,
           userEmail: employee.email,
           react: 'document',
-          body: emailBody
+          body: emailBody,
         }),
       });
-  
+
       if (!response.ok) {
         throw new Error('Error en la respuesta del servidor');
       }
-  
+
       return { success: true, email: employee.email };
     } catch (error) {
       console.error(`Error enviando a ${employee.email}:`, error);
@@ -544,24 +586,22 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
 
   const handleSendReminders = async (employeeToNotify: Employee | null = null) => {
     if (!document) return;
-  
+
     try {
       setIsSendingReminders(true);
-  
-      const employees = employeeToNotify
-        ? [employeeToNotify]
-        : pendingEmployees;
-  
+
+      const employees = employeeToNotify ? [employeeToNotify] : pendingEmployees;
+
       if (employees.length === 0) {
         toast.info('No hay empleados pendientes para notificar');
         return;
       }
-  
+
       const results = await Promise.all(employees.map(sendReminder));
-  
+
       const successful = results.filter((r) => r.success).length;
       const failed = results.length - successful;
-  
+
       if (employeeToNotify) {
         // Modo individual
         const msg = successful
@@ -579,7 +619,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
       setIsSendingReminders(false);
     }
   };
-  
+
   const exportToExcel = () => {
     try {
       if (!document || !employeesWithDocuments.length) {
@@ -652,7 +692,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
 
       // Aplicar estilo a la primera fila (encabezados)
       if (!ws['!rows']) ws['!rows'] = [];
-      ws['!rows'][0] = { ...ws['!rows'][0]};
+      ws['!rows'][0] = { ...ws['!rows'][0] };
 
       XLSX.utils.book_append_sheet(wb, ws, 'Empleados');
 
@@ -669,6 +709,30 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
     }
   };
 
+  const getDocumentAssignedPositions = (documentId: string): string[] => {
+    if (!employeesWithDocuments || !Array.isArray(employeesWithDocuments)) {
+      return [];
+    }
+  
+    const positionSet = new Set<string>();
+  
+    employeesWithDocuments.forEach((employee) => {
+      const hasDocument = employee.documents?.some(doc => 
+        doc.document?.id === documentId || doc.id === documentId
+      );
+  
+      if (hasDocument) {
+        if (employee.hierarchical_position && typeof employee.hierarchical_position === 'object') {
+          positionSet.add(employee.company_position || employee.hierarchical_position.name);
+        } else if (employee.position && typeof employee.position === 'string') {
+          positionSet.add(employee.position);
+        }
+      }
+    });
+  
+    return Array.from(positionSet);
+  };
+
   return (
     <div className="space-y-6 w-full">
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -677,7 +741,6 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
-          
         </div>
         <div>
           <h1 className="text-lg font-semibold">Detalle de Documento</h1>
@@ -702,8 +765,8 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
             file_name: document.file_name,
             file_type: document.file_type,
             file_size: document.file_size,
-            typeOfEmployee: [],
-            tags: []
+            typeOfEmployee:getDocumentAssignedPositions(document?.id),
+            tags: document.tags,
           }}
           documentId={document.id}
         />
@@ -715,9 +778,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold">{document?.title}</h1>
-              <Badge className={getStatusColor(document?.status || '')}>
-                {getStatusText(document?.status || '')}
-              </Badge>
+              <Badge className={getStatusColor(document?.status || '')}>{getStatusText(document?.status || '')}</Badge>
             </div>
             <p className="text-muted-foreground">Versión {document?.version}</p>
           </div>
@@ -736,14 +797,14 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
               Copiar Link Móvil
             </Button> */}
             <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditDialogOpen(true)}
-            disabled={document?.status === 'active'}
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Editar Documento
-          </Button>
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditDialogOpen(true)}
+              disabled={document?.status === 'active'}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Editar Documento
+            </Button>
           </div>
         </div>
 
@@ -763,6 +824,16 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
                   <CardTitle>Información General</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
+                  <div className="flex justify-between">
+                    <div className="flex flex-wrap gap-2">
+                      {document?.tags?.map((tag) => (
+                        <Badge key={tag} className="px-2 py-1 text-sm" style={getTagColor(tag)}>
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+
+                  </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Fecha de subida:</span>
                     <span>{new Date(document?.upload_date || '').toLocaleDateString()}</span>
@@ -892,46 +963,44 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border p-2">
-                <BaseDataTable
-                  data={formattedEmployees}
-                  columns={getEmployeeColums(
-                    handleEdit,
-                    handleSendReminders,
-                    employeesWithDocuments,
-                    sendingReminderFor,
-                    isSendingReminders,
-                    setSendingReminderFor,
-                  )}
-                  savedVisibility={savedVisibility}
-                  tableId="employeeTable"
-                  toolbarOptions={{
-                    initialVisibleFilters: [],
-                    filterableColumns: [
-                      {
-                        columnId: 'Nombre',
-                        title: 'Nombre',
-                        options: names,
-                      },
-                      {
-                        columnId: 'Cuil',
-                        title: 'Cuil',
-                        options: cuils ,
-                      },
-                      {
-                        columnId: 'Departamento',
-                        title: 'Departamento',
-                        options: positions,
-                      },
-                      {
-                        columnId: 'Status',
-                        title: 'Status',
-                        options: status,
-                      },
-
-                      
-                    ],
-                  }}
-                />
+                  <BaseDataTable
+                    data={formattedEmployees}
+                    columns={getEmployeeColums(
+                      handleEdit,
+                      handleSendReminders,
+                      employeesWithDocuments,
+                      sendingReminderFor,
+                      isSendingReminders,
+                      setSendingReminderFor
+                    )}
+                    savedVisibility={savedVisibility}
+                    tableId="employeeTable"
+                    toolbarOptions={{
+                      initialVisibleFilters: [],
+                      filterableColumns: [
+                        {
+                          columnId: 'Nombre',
+                          title: 'Nombre',
+                          options: names,
+                        },
+                        {
+                          columnId: 'Cuil',
+                          title: 'Cuil',
+                          options: cuils,
+                        },
+                        {
+                          columnId: 'Departamento',
+                          title: 'Departamento',
+                          options: positions,
+                        },
+                        {
+                          columnId: 'Status',
+                          title: 'Status',
+                          options: status,
+                        },
+                      ],
+                    }}
+                  />
                   {/* <Table>
                     <TableHeader>
                       <TableRow>

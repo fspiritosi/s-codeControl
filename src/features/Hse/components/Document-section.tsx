@@ -25,7 +25,6 @@ import { Calendar, Download, Eye, FileText, LayoutGrid, List, Users } from 'luci
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-
 // Componente para la vista de cuadrícula
 const DocumentGrid = ({
   documents,

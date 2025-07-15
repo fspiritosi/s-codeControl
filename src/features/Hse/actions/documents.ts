@@ -212,37 +212,112 @@ export async function getDocuments(company_id: string, filters?: {
 }
 
 // Obtener un documento por ID con sus versiones anteriores
-export async function getDocumentById(id: string): Promise<(Document & { versions: DocumentVersion[] }) | null> {
-  const supabase = supabaseServer()
+// export async function getDocumentById(id: string): Promise<(Document & { versions: DocumentVersion[] }) | null> {
+//   const supabase = supabaseServer()
   
-  // Obtener el documento principal
-  const { data: document, error: docError } = await supabase
-    .from('hse_documents' as any)
-    .select('*')
-    .eq('id', id)
-    .single()
+//   // Obtener el documento principal
+//   const { data: document, error: docError } = await supabase
+//     .from('hse_documents' as any)
+//     .select('*')
+//     .eq('id', id)
+//     .single()
 
-  if (docError) {
-    console.error('Error al obtener documento:', docError)
-    return null
+//   if (docError) {
+//     console.error('Error al obtener documento:', docError)
+//     return null
+//   }
+
+//   // Obtener las versiones anteriores del documento
+//   const { data: versions, error: versionsError } = await supabase
+//     .from('hse_document_versions' as any)
+//     .select('*')
+//     .eq('document_id', id)
+//     .order('created_at', { ascending: false })
+
+//   if (versionsError) {
+//     console.error('Error al obtener versiones del documento:', versionsError)
+//     // Si hay error, devolvemos el documento sin versiones
+//     return { ...document, versions: [] }
+//   }
+
+//   return { ...document, versions: versions || [] }
+// }
+export async function getDocumentById(id: string): Promise<(Document & { 
+  versions: DocumentVersion[];
+  tags: string[]; // Añadido para mantener consistencia
+}) | null> {
+  const supabase = supabaseServer();
+  
+  try {
+    // Obtener el documento principal
+    const { data: document, error: docError } = await supabase
+      .from('hse_documents' as any)
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (docError || !document) {
+      console.error('Error al obtener documento:', docError);
+      return null;
+    }
+
+    // Obtener las versiones anteriores del documento
+    const { data: versions, error: versionsError } = await supabase
+      .from('hse_document_versions' as any)
+      .select('*')
+      .eq('document_id', id)
+      .order('created_at', { ascending: false });
+
+    if (versionsError) {
+      console.error('Error al obtener versiones del documento:', versionsError);
+      // Continuamos aunque falle, devolviendo un array vacío de versiones
+    }
+
+    // Obtener las etiquetas del documento
+    const { data: tagAssignments, error: tagError } = await supabase
+      .from('hse_document_tag_assignments' as any)
+      .select(`
+        document_id,
+        training_tags (
+          id,
+          name
+        )
+      `)
+      .eq('document_id', id);
+
+    let tags: string[] = [];
+    
+    if (!tagError && tagAssignments) {
+      // Procesar las etiquetas como en getDocuments
+      const validTags = tagAssignments
+        .map(assignment => {
+          const trainingTags = assignment.training_tags;
+          // Aseguramos que training_tags sea un array
+          return Array.isArray(trainingTags) 
+            ? trainingTags 
+            : trainingTags ? [trainingTags] : [];
+        })
+        .flat()
+        .filter(tag => tag && typeof tag === 'object' && 'id' in tag && 'name' in tag)
+        .map(tag => tag.name);
+
+      // Eliminar duplicados por si acaso
+      tags = [...new Set(validTags)];
+    } else if (tagError) {
+      console.error('Error al obtener etiquetas del documento:', tagError);
+    }
+
+    // Devolver el documento con versiones y etiquetas
+    return { 
+      ...document, 
+      versions: versions || [],
+      tags 
+    };
+  } catch (error) {
+    console.error('Error inesperado en getDocumentById:', error);
+    return null;
   }
-
-  // Obtener las versiones anteriores del documento
-  const { data: versions, error: versionsError } = await supabase
-    .from('hse_document_versions' as any)
-    .select('*')
-    .eq('document_id', id)
-    .order('created_at', { ascending: false })
-
-  if (versionsError) {
-    console.error('Error al obtener versiones del documento:', versionsError)
-    // Si hay error, devolvemos el documento sin versiones
-    return { ...document, versions: [] }
-  }
-
-  return { ...document, versions: versions || [] }
 }
-
 
 
 
