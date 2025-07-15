@@ -49,6 +49,7 @@ import * as XLSX from 'xlsx';
 // }
 interface ExtendedDocument extends Document {
   documentTitle: string;
+  docs_types: string;
   acceptedCount?: number;
   totalEmployees?: number;
   previousVersions?: DocumentVersion[];
@@ -757,6 +758,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
           allTags={allTags}
           initialData={{
             id: document.id,
+            docs_types: document.docs_types,
             title: document.title,
             version: document.version,
             description: document.description || '',

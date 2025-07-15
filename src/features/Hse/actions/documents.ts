@@ -34,6 +34,7 @@ export interface DocumentVersion {
   rejectedCount?: number | null
   totalEmployees?: number | null
   pendingCount?: number | null
+  docs_types?: string
 }
 
 export interface Document {
@@ -54,6 +55,7 @@ export interface Document {
   company_id: string
   versions?: DocumentVersion[]
   tags?: string[]
+  docs_types?: string
 }
 
 interface DocumentAssignment {
@@ -66,6 +68,7 @@ interface DocumentAssignment {
     title: string;
     version: string;
     expiry_date: string | null;
+    docs_types?: string;
   };
   employee: {
     id: string;
@@ -214,39 +217,9 @@ export async function getDocuments(company_id: string, filters?: {
 }
 
 // Obtener un documento por ID con sus versiones anteriores
-// export async function getDocumentById(id: string): Promise<(Document & { versions: DocumentVersion[] }) | null> {
-//   const supabase = supabaseServer()
-  
-//   // Obtener el documento principal
-//   const { data: document, error: docError } = await supabase
-//     .from('hse_documents' as any)
-//     .select('*')
-//     .eq('id', id)
-//     .single()
-
-//   if (docError) {
-//     console.error('Error al obtener documento:', docError)
-//     return null
-//   }
-
-//   // Obtener las versiones anteriores del documento
-//   const { data: versions, error: versionsError } = await supabase
-//     .from('hse_document_versions' as any)
-//     .select('*')
-//     .eq('document_id', id)
-//     .order('created_at', { ascending: false })
-
-//   if (versionsError) {
-//     console.error('Error al obtener versiones del documento:', versionsError)
-//     // Si hay error, devolvemos el documento sin versiones
-//     return { ...document, versions: [] }
-//   }
-
-//   return { ...document, versions: versions || [] }
-// }
 export async function getDocumentById(id: string): Promise<(Document & { 
   versions: DocumentVersion[];
-  tags: string[]; // Añadido para mantener consistencia
+  tags: string[];
 }) | null> {
   const supabase = supabaseServer();
   
@@ -270,13 +243,51 @@ export async function getDocumentById(id: string): Promise<(Document & {
       .eq('document_id', id)
       .order('created_at', { ascending: false });
 
-  if (versionsError) {
-    console.error('Error al obtener versiones del documento:', versionsError)
-    // Si hay error, devolvemos el documento sin versiones
-    return { ...document, versions: [] }
-  }
+    if (versionsError) {
+      console.error('Error al obtener versiones del documento:', versionsError);
+      return { ...document, versions: [], tags: [] };
+    }
 
-  return { ...document, versions: versions || [] }
+    // Obtener las etiquetas del documento
+    const { data: tagAssignments, error: tagError } = await supabase
+      .from('hse_document_tag_assignments' as any)
+      .select(`
+        document_id,
+        training_tags (
+          id,
+          name
+        )
+      `)
+      .eq('document_id', id);
+
+    let tags: string[] = [];
+    
+    if (!tagError && tagAssignments) {
+      // Procesar las etiquetas
+      const validTags = tagAssignments
+        .map((assignment: any) => {
+          const trainingTags = assignment.training_tags;
+          // Aseguramos que training_tags sea un array
+          return Array.isArray(trainingTags) 
+            ? trainingTags 
+            : trainingTags ? [trainingTags] : [];
+        })
+        .flat()
+        .filter((tag: any) => tag && typeof tag === 'object' && 'id' in tag && 'name' in tag)
+        .map((tag: any) => tag.name);
+
+      // Eliminar duplicados
+      tags = [...new Set(validTags)];
+    } else if (tagError) {
+      console.error('Error al obtener etiquetas del documento:', tagError);
+    }
+
+    // Devolver el documento con versiones y etiquetas
+    return { 
+      ...document, 
+      versions: versions || [],
+      tags 
+    };
   } catch (error) {
     console.error('Error al obtener documento:', error);
     return null;
@@ -287,7 +298,7 @@ export async function createDocumentWithAssignments(formData: FormData, company_
   
   const supabase = supabaseServer()
   let filePath: string | null = null
-
+  console.log(formData)
   try {
     // 1. Validar company_id
     if (!company_id) {
@@ -304,6 +315,7 @@ export async function createDocumentWithAssignments(formData: FormData, company_
     }
 
     // 3. Validar campos obligatorios
+    const docs_types = formData.get("docs_types") as string
     const title = formData.get("title") as string
     const version = formData.get("version") as string
     const file = formData.get("file") as File
@@ -378,6 +390,7 @@ export async function createDocumentWithAssignments(formData: FormData, company_
 
     // 8. Crear el documento
     const newDoc = {
+      docs_types: docs_types,
       title,
       description: (formData.get("description") as string) || null,
       version: String(version || "1.0"),
@@ -392,7 +405,7 @@ export async function createDocumentWithAssignments(formData: FormData, company_
       company_id,
     }
 
-    
+    console.log(newDoc)
 
     const { data: documentData, error: insertError } = await supabase
       .from("hse_documents" as any)
@@ -657,6 +670,7 @@ export async function createDocumentVersion(
     if (!company_id) throw new Error('Se requiere el ID de la compañía');
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
+
     if (userError || !user) throw new Error('No se pudo autenticar al usuario');
 
     const version = formData.get('version') as string;
@@ -689,7 +703,7 @@ export async function createDocumentVersion(
 
     const { error: uploadError } = await supabase.storage
       .from('documents-hse')
-      .upload(filePath, file);
+      .upload(fileName, file, { cacheControl: "3600", upsert: true });
 
     if (uploadError) throw new Error('No se pudo subir el archivo');
 

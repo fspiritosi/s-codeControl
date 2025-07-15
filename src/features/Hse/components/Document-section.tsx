@@ -773,6 +773,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
           onOpenChange={setEditDialogOpen}
           initialData={{
             id: documentToEdit.id,
+            doc_type_id: documentToEdit.doc_type_id || '',
             title: documentToEdit.title,
             version: documentToEdit.version,
             description: documentToEdit.description || '',
