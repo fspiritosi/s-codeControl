@@ -25,7 +25,6 @@ import { Calendar, Download, Eye, FileText, LayoutGrid, List, Users } from 'luci
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-
 // Componente para la vista de cuadrícula
 const DocumentGrid = ({
   documents,
@@ -65,7 +64,9 @@ const DocumentGrid = ({
               <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 flex-shrink-0" />
               <Badge className={getStatusColor(document.status)}>{getStatusText(document.status)}</Badge>
             </div>
-            <CardTitle className="text-base sm:text-lg line-clamp-2">{document.title}</CardTitle>
+            <CardTitle className="text-base sm:text-lg line-clamp-2">
+              {document.docs_types?.short_description} - {document.title}
+            </CardTitle>
             {document.tags && document.tags.length > 0 && (
               <div className="flex gap-1 mt-2 flex-wrap">
                 {document.tags.map((tagName: string) => {
@@ -216,7 +217,7 @@ const DocumentList = ({
         <div className="flex-1 min-w-0">
           {/* Primer renglón */}
           <div className="flex items-center gap-2 flex-wrap truncate">
-            <span className="font-medium text-base truncate">{doc.title}</span>
+            <span className="font-medium text-base truncate">{doc.docs_types?.short_description} - {doc.title}</span>
             <Badge className={getStatusColor(doc.status)}>{getStatusText(doc.status)}</Badge>
             <span className="text-xs text-muted-foreground">Versión {doc.version}</span>
             {doc.tags && doc.tags.length > 0 && (
@@ -326,6 +327,7 @@ interface DocumentsSectionProps {
   initialDocuments: Document[];
   initialEmployees: any;
   allTags: { id: string; name: string; color: string | null }[]; // Aceptar string o null
+  docTypes: any;
 }
 
 type EmployeeCounts = {
@@ -333,7 +335,7 @@ type EmployeeCounts = {
   accepted: number;
 };
 
-export function DocumentsSection({ initialDocuments, initialEmployees, allTags }: DocumentsSectionProps) {
+export function DocumentsSection({ initialDocuments, initialEmployees, allTags, docTypes }: DocumentsSectionProps) {
   const company_id = Cookies.get('actualComp');
   const supabase = supabaseBrowser();
   const router = useRouter();
@@ -350,7 +352,9 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tab, setTab] = useState<'active' | 'expired' | 'drafts'>('active');
   const [isLoading, setIsLoading] = useState<{ [key: string]: boolean }>({});
+  const [selectedDocTypes, setSelectedDocTypes] = useState<string[]>([]);
 
+  
   const getEmployeeCounts = (documentId: string): EmployeeCounts => {
     if (!employees || !Array.isArray(employees)) return { total: 0, accepted: 0 };
     const counts = employees.reduce(
@@ -437,20 +441,46 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
   };
 
   // Filtro y orden
+  // const filterAndSortDocuments = (docs: Document[]) => {
+  //   return docs
+  //     .filter((doc) => {
+  //       const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase());
+
+  //       // Si no hay etiquetas seleccionadas, mostrar todos los documentos que coincidan con la búsqueda
+  //       if (selectedTags.length === 0) {
+  //         return matchesSearch;
+  //       }
+
+  //       // Verificar si el documento tiene al menos una de las etiquetas seleccionadas
+  //       const hasMatchingTag = doc.tags && doc.tags.some((tag) => selectedTags.includes(tag));
+
+  //       return matchesSearch && hasMatchingTag;
+  //     })
+  //     .sort((a, b) => {
+  //       if (sortBy === 'upload_date') {
+  //         const dateA = new Date(a.upload_date).getTime();
+  //         const dateB = new Date(b.upload_date).getTime();
+  //         return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+  //       } else {
+  //         if (sortOrder === 'asc') {
+  //           return a.title.localeCompare(b.title);
+  //         } else {
+  //           return b.title.localeCompare(a.title);
+  //         }
+  //       }
+  //     });
+  // };
+
   const filterAndSortDocuments = (docs: Document[]) => {
     return docs
       .filter((doc) => {
         const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesTags =
+          selectedTags.length === 0 || (doc.tags && doc.tags.some((tag) => selectedTags.includes(tag)));
+        const matchesDocTypes =
+          selectedDocTypes.length === 0 || (doc.docs_types && selectedDocTypes.includes(doc.docs_types.id));
 
-        // Si no hay etiquetas seleccionadas, mostrar todos los documentos que coincidan con la búsqueda
-        if (selectedTags.length === 0) {
-          return matchesSearch;
-        }
-
-        // Verificar si el documento tiene al menos una de las etiquetas seleccionadas
-        const hasMatchingTag = doc.tags && doc.tags.some((tag) => selectedTags.includes(tag));
-
-        return matchesSearch && hasMatchingTag;
+        return matchesSearch && matchesTags && matchesDocTypes;
       })
       .sort((a, b) => {
         if (sortBy === 'upload_date') {
@@ -458,15 +488,23 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
           const dateB = new Date(b.upload_date).getTime();
           return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
         } else {
-          if (sortOrder === 'asc') {
-            return a.title.localeCompare(b.title);
-          } else {
-            return b.title.localeCompare(a.title);
-          }
+          return sortOrder === 'asc' ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title);
         }
       });
   };
+  // const filteredDocuments = useMemo(() => {
+  //   return documents.filter(doc => {
+  //     // Filtro por tags
+  //     const matchesTags = selectedTags.length === 0 ||
+  //       (doc.tags && selectedTags.some(tag => doc.tags?.includes(tag)));
 
+  //     // Filtro por tipos de documento
+  //     const matchesDocTypes = selectedDocTypes.length === 0 ||
+  //       (doc.docs_types && selectedDocTypes.includes(doc.docs_types.id));
+
+  //     return matchesTags && matchesDocTypes;
+  //   });
+  // }, [documents, selectedTags, selectedDocTypes]);
   const activeDocuments = documents.filter((doc) => doc.status === 'active');
   const draftDocuments = documents.filter((doc) => doc.status === 'borrador');
   const expiredDocuments = documents.filter((doc) => doc.status === 'expired');
@@ -698,7 +736,22 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
                   showSelectAll
                 />
               </div>
-
+              <div className="w-64">
+                <MultiSelectCombobox
+                  options={
+                    docTypes?.map((type: any) => ({
+                      label: type.name,
+                      value: type.id,
+                      shortDescription: type.short_description,
+                    })) || []
+                  }
+                  selectedValues={selectedDocTypes}
+                  placeholder="Filtrar por tipo"
+                  emptyMessage="No hay tipos disponibles"
+                  onChange={setSelectedDocTypes}
+                  showSelectAll
+                />
+              </div>
               <div className="relative group">
                 <Button
                   variant="outline"
@@ -774,6 +827,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags }
           onOpenChange={setEditDialogOpen}
           initialData={{
             id: documentToEdit.id,
+            docs_types: documentToEdit.docs_types?.id || '',
             title: documentToEdit.title,
             version: documentToEdit.version,
             description: documentToEdit.description || '',

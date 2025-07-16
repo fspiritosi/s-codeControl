@@ -1,9 +1,10 @@
 import { fetchAllTags, fetchTrainings } from '@/components/Capacitaciones/actions/actions';
+import TagTab from '@/components/Capacitaciones/components/tags/TagTab';
 import { TrainingCreateDialog } from '@/components/Capacitaciones/training-create-dialog';
 import TrainingSection from '@/components/Capacitaciones/training-section';
 import Viewcomponent from '@/components/ViewComponent';
 import type { Document } from '@/features/Hse/actions/documents'; // <-- ¡SÍ!
-import { getDocuments, getEmployeesWithAssignedDocuments } from '@/features/Hse/actions/documents';
+import { fetchAllHseDocTypes, getDocuments, getEmployeesWithAssignedDocuments } from '@/features/Hse/actions/documents';
 import { DocumentsSection } from '@/features/Hse/components/Document-section';
 import { DocumentUploadDialog } from '@/features/Hse/components/Document-upload-dialog';
 import DocTypeTab from '@/features/Hse/doc_types/DocTypeTab';
@@ -51,6 +52,7 @@ async function HSEPage() {
     fetchAllTags(),
     getDocuments(company_id),
     getEmployeesWithAssignedDocuments(),
+    fetchAllHseDocTypes(company_id),
   ]);
 
   const trainingsResult = results[0].status === 'fulfilled' ? results[0].value : [];
@@ -67,6 +69,7 @@ async function HSEPage() {
       tags: doc.tags ?? [],
     };
   }
+  const docTypesResult = results[4].status === 'fulfilled' ? results[4].value : [];
 
   const viewData = {
     defaultValue: 'trainingsTable',
@@ -97,8 +100,21 @@ async function HSEPage() {
               initialDocuments={documentsResult.map(normalizeDocument)}
               allTags={tagsResult}
               initialEmployees={employeesResult}
+              docTypes={docTypesResult}
             />
           ),
+        },
+      },
+      {
+        value: 'tags',
+        name: 'Etiquetas',
+        restricted: [''],
+        content: {
+          title: 'Ver etiquetas',
+          description: 'Aquí encontrarás todas las etiquetas',
+          buttonActioRestricted: [''],
+          buttonAction: '',
+          component: <TagTab tags={tagsResult || []} />,
         },
       },
       {

@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { fetchAllHseDocTypes } from '../actions/documents';
 import DocTypeForm from './DocTypeForm';
 import DocTypeTable from './DocTypeTable';
+import Cookies from 'js-cookie';
+
 
 
 
@@ -11,10 +13,12 @@ function DocTypeTab() {
   const [selectedDocType, setSelectedDocType] = useState<Awaited<ReturnType<typeof fetchAllHseDocTypes>>[number] | null>(null);
   const [mode, setMode] = useState<'create' | 'edit'>('create');
   const [hse_doc_types, setHse_Doc_types] = useState<Awaited<ReturnType<typeof fetchAllHseDocTypes>>>([]);
-
+  
+  const companyId = Cookies.get('actualComp');
+  
   useEffect(()=>{
     async function fetchDocTypes() {
-      const hse_doc_types = await fetchAllHseDocTypes();
+      const hse_doc_types = await fetchAllHseDocTypes(companyId as string);
       setHse_Doc_types(hse_doc_types);
     }
     fetchDocTypes();},[])

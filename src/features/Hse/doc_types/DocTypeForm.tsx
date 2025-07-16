@@ -11,7 +11,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { createDocType, updateDocType, fetchAllHseDocTypes} from '../actions/documents';
-
+import Cookies from 'js-cookie';
 const tagSchema = z.object({
   name: z.string().nonempty({ message: 'El nombre es requerido' }),
   short_description: z.string().nonempty({ message: 'La descripción corta es requerida' }),
@@ -41,7 +41,9 @@ function DocTypeForm({ mode, setMode, selectedDocType, setSelectedDocType }: Doc
 
   const { reset } = form;
   const router = useRouter();
-
+ 
+  const companyId = Cookies.get('actualComp');
+  
   // Cargar datos cuando cambia el modo o el área seleccionada
   useEffect(() => {
     if (mode === 'edit' && selectedDocType) {
@@ -66,7 +68,7 @@ function DocTypeForm({ mode, setMode, selectedDocType, setSelectedDocType }: Doc
           const response = await updateDocType({ ...values, id: selectedDocType.id });
           return response;
         } else {
-          const response = await createDocType(values);
+          const response = await createDocType(values, companyId as string);
           return response;
         }
       })(),
