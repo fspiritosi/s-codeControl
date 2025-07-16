@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Edit, Loader2, Save, Tag } from 'lucide-react';
+import { ArrowLeft, Copy, Edit, Loader2, Save, Tag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react'; // Importa useEffect
 import {
@@ -50,12 +50,14 @@ export default function TrainingDetail({
   // Estado para la evaluación
   const [evaluationQuestions, setEvaluationQuestions] = useState(training?.evaluation?.questions || []);
   const [passingScore, setPassingScore] = useState(training?.evaluation?.passingScore || 0);
+  const [timeLimit, setTimeLimit] = useState<number>(training?.test_limit_time || 30);
 
   // Estados para manejar cambios y guardado
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [originalQuestions, setOriginalQuestions] = useState(JSON.stringify(training?.evaluation?.questions || []));
   const [originalScore, setOriginalScore] = useState(training?.evaluation?.passingScore || 0);
+  // const [originalTimeLimit, setOriginalTimeLimit] = useState(training?.test_limit_time || 30);
 
   // Nuevo: useEffect para actualizar el estado original cuando la prop 'training' cambia
   useEffect(() => {
@@ -72,16 +74,18 @@ export default function TrainingDetail({
   }, [training?.evaluation?.questions, training?.evaluation]); // Depende de los datos de evaluación
 
   // Función para manejar actualizaciones de la evaluación
-  const handleEvaluationUpdate = (questions: any[], score: number) => {
+  const handleEvaluationUpdate = (questions: any[], score: number, timeLimit: number) => {
     setEvaluationQuestions(questions);
     setPassingScore(score);
+    setTimeLimit(timeLimit);
 
     // Verificar si hay cambios comparando con el estado original
     const currentQuestionsString = JSON.stringify(questions);
     const hasQuestionsChanges = currentQuestionsString !== originalQuestions;
     const hasScoreChanges = score !== originalScore;
+    const hasTimeLimitChanges = timeLimit !== training?.test_limit_time;
 
-    setHasChanges(hasQuestionsChanges || hasScoreChanges);
+    setHasChanges(hasQuestionsChanges || hasScoreChanges || hasTimeLimitChanges);
   };
 
   // Función para descartar cambios
@@ -111,6 +115,7 @@ export default function TrainingDetail({
           options: q.options,
           correctAnswer: q.correctAnswer,
         })),
+        test_limit_time: timeLimit,
       };
 
       // Llamar a la API para actualizar
@@ -169,15 +174,22 @@ export default function TrainingDetail({
             <p className="text-muted-foreground">{training.description}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowEditDialog(true);
-              }}
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              Editar Capacitación
-            </Button>
+            {training.attempts.length > 0 ? (
+              <Button disabled>
+                <Copy className="h-4 w-4 mr-2" />
+                Clonar capacitación
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEditDialog(true);
+                }}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Editar Capacitación
+              </Button>
+            )}
           </div>
         </div>
 
@@ -224,30 +236,32 @@ export default function TrainingDetail({
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex justify-end mb-4 space-x-2">
-                  <Button
-                    onClick={discardEvaluationChanges}
-                    disabled={isSaving || !hasChanges}
-                    variant="outline"
-                    className="gap-2"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Descartar Cambios
-                  </Button>
-                  <Button onClick={saveEvaluationChanges} disabled={isSaving || !hasChanges} className="gap-2">
-                    {isSaving ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Guardando...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4" />
-                        Guardar Cambios
-                      </>
-                    )}
-                  </Button>
-                </div>
+                {!training.attempts.length && (
+                  <div className="flex justify-end mb-4 space-x-2">
+                    <Button
+                      onClick={discardEvaluationChanges}
+                      disabled={isSaving || !hasChanges}
+                      variant="outline"
+                      className="gap-2"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      Descartar Cambios
+                    </Button>
+                    <Button onClick={saveEvaluationChanges} disabled={isSaving || !hasChanges} className="gap-2">
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Guardando...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          Guardar Cambios
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>

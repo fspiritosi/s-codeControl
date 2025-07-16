@@ -2,13 +2,12 @@ import { fetchAllTags, fetchTrainings } from '@/components/Capacitaciones/action
 import { TrainingCreateDialog } from '@/components/Capacitaciones/training-create-dialog';
 import TrainingSection from '@/components/Capacitaciones/training-section';
 import Viewcomponent from '@/components/ViewComponent';
-import { DocumentsSection } from '@/features/Hse/components/Document-section';
-import {DocumentUploadDialog} from '@/features/Hse/components/Document-upload-dialog';
-import { getDocuments, getEmployeesWithAssignedDocuments } from '@/features/Hse/actions/documents';
-import { cookies } from 'next/headers';
 import type { Document } from '@/features/Hse/actions/documents'; // <-- ¡SÍ!
+import { getDocuments, getEmployeesWithAssignedDocuments } from '@/features/Hse/actions/documents';
+import { DocumentsSection } from '@/features/Hse/components/Document-section';
+import { DocumentUploadDialog } from '@/features/Hse/components/Document-upload-dialog';
 import DocTypeTab from '@/features/Hse/doc_types/DocTypeTab';
-
+import { cookies } from 'next/headers';
 
 export type TagType = {
   color: string | null;
@@ -18,7 +17,6 @@ export type TagType = {
   name: string;
 };
 
-
 export type TrainingType = {
   id: string;
   title: string;
@@ -26,7 +24,7 @@ export type TrainingType = {
   createdDate: string;
   tags: (TagType | null)[];
   materials: any[]; // ajusta el tipo real si lo sabes
-  evaluation: any;  // ajusta el tipo real si lo sabes
+  evaluation: any; // ajusta el tipo real si lo sabes
   completedCount: number;
   totalEmployees: number;
   status: string;
@@ -42,30 +40,25 @@ async function HSEPage() {
   // Obtener los datos necesarios desde la base de datos
   const cookieStore = cookies();
   const company_id = cookieStore.get('actualComp')?.value;
-  
+
   // Si no hay company_id, redirigir o manejar el error según corresponda
   if (!company_id) {
     throw new Error('No se pudo obtener el ID de la compañía');
   }
-  
+
   const results = await Promise.allSettled([
     fetchTrainings(),
     fetchAllTags(),
     getDocuments(company_id),
-    getEmployeesWithAssignedDocuments()
+    getEmployeesWithAssignedDocuments(),
   ]);
-  
- 
-  
-  const trainingsResult = results[0].status === 'fulfilled' ? results[0].value as TrainingType[] : [];
-  const tagsResult = results[1].status === 'fulfilled' ? results[1].value as TagType[] : [];
-  const documentsResult = results[2].status === 'fulfilled' ? results[2].value as Document[] : [];
+
+  const trainingsResult = results[0].status === 'fulfilled' ? results[0].value : [];
+  const tagsResult = results[1].status === 'fulfilled' ? results[1].value : [];
+  const documentsResult = results[2].status === 'fulfilled' ? results[2].value : [];
   const employeesResultRaw = results[3].status === 'fulfilled' ? results[3].value : { data: null, error: 'unknown' };
-  const employeesResult =
-    employeesResultRaw && employeesResultRaw.data
-      ? employeesResultRaw.data
-      : [];
-    
+  const employeesResult = employeesResultRaw && employeesResultRaw.data ? employeesResultRaw.data : [];
+
   function normalizeDocument(doc: any): Document {
     return {
       ...doc,
@@ -74,7 +67,7 @@ async function HSEPage() {
       tags: doc.tags ?? [],
     };
   }
-  
+
   const viewData = {
     defaultValue: 'trainingsTable',
     tabsValues: [
@@ -99,11 +92,13 @@ async function HSEPage() {
           description: 'Aquí encontrarás todos los documentos',
           buttonActioRestricted: [''],
           buttonAction: <DocumentUploadDialog allTags={tagsResult || []} />,
-          component: <DocumentsSection 
-            initialDocuments={documentsResult.map(normalizeDocument)} 
-            allTags={tagsResult} 
-            initialEmployees={employeesResult} 
-          />,
+          component: (
+            <DocumentsSection
+              initialDocuments={documentsResult.map(normalizeDocument)}
+              allTags={tagsResult}
+              initialEmployees={employeesResult}
+            />
+          ),
         },
       },
       {
@@ -115,7 +110,7 @@ async function HSEPage() {
           description: 'Aquí encontrarás todos los tipos de documentos',
           buttonActioRestricted: [''],
           buttonAction: <DocumentUploadDialog allTags={tagsResult || []} />,
-          component: <DocTypeTab  /> 
+          component: <DocTypeTab />,
         },
       },
     ],

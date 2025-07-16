@@ -1920,7 +1920,7 @@ export type Database = {
           declined_reason: string | null
           document_id: string
           id: string
-          status: string
+          status: Database["public"]["Enums"]["hse_doc_status"]
         }
         Insert: {
           accepted_at?: string | null
@@ -1932,7 +1932,7 @@ export type Database = {
           declined_reason?: string | null
           document_id: string
           id?: string
-          status: string
+          status: Database["public"]["Enums"]["hse_doc_status"]
         }
         Update: {
           accepted_at?: string | null
@@ -1944,7 +1944,7 @@ export type Database = {
           declined_reason?: string | null
           document_id?: string
           id?: string
-          status?: string
+          status?: Database["public"]["Enums"]["hse_doc_status"]
         }
         Relationships: [
           {
@@ -2180,6 +2180,7 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          docs_types: string | null
           expiry_date: string | null
           file_name: string
           file_path: string
@@ -2197,6 +2198,7 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
+          docs_types?: string | null
           expiry_date?: string | null
           file_name: string
           file_path: string
@@ -2214,6 +2216,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          docs_types?: string | null
           expiry_date?: string | null
           file_name?: string
           file_path?: string
@@ -2240,6 +2243,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "company_users_by_cuil"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "hse_documents_docs_types_fkey"
+            columns: ["docs_types"]
+            isOneToOne: false
+            referencedRelation: "hse_doc_types"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -3172,6 +3182,7 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          is_active: boolean | null
           is_correct: boolean | null
           option_text: string
           order_index: number
@@ -3180,6 +3191,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: string
+          is_active?: boolean | null
           is_correct?: boolean | null
           option_text: string
           order_index?: number
@@ -3188,6 +3200,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
+          is_active?: boolean | null
           is_correct?: boolean | null
           option_text?: string
           order_index?: number
@@ -3320,6 +3333,7 @@ export type Database = {
           id: string
           passing_score: number
           status: Database["public"]["Enums"]["training_status"] | null
+          test_limit_time: number
           title: string
           updated_at: string | null
         }
@@ -3330,6 +3344,7 @@ export type Database = {
           id?: string
           passing_score?: number
           status?: Database["public"]["Enums"]["training_status"] | null
+          test_limit_time?: number
           title: string
           updated_at?: string | null
         }
@@ -3340,6 +3355,7 @@ export type Database = {
           id?: string
           passing_score?: number
           status?: Database["public"]["Enums"]["training_status"] | null
+          test_limit_time?: number
           title?: string
           updated_at?: string | null
         }
@@ -3653,6 +3669,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      close_expired_exams: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       complete_exam_attempt: {
         Args: { attempt_id: string }
         Returns: Json
@@ -3802,6 +3822,7 @@ export type Database = {
       document_applies: "Persona" | "Equipos" | "Empresa"
       document_type_enum: "DNI" | "LE" | "LC" | "PASAPORTE"
       gender_enum: "Masculino" | "Femenino" | "No Declarado"
+      hse_doc_status: "pendiente" | "aceptado" | "rechazado" | "pending"
       level_of_education_enum:
         | "Primario"
         | "Secundario"
@@ -3818,7 +3839,7 @@ export type Database = {
         | "empresa"
         | "empleados"
         | "equipos"
-        | "documentaci├│n"
+        | "documentación"
         | "mantenimiento"
         | "dashboard"
         | "ayuda"
@@ -3841,7 +3862,7 @@ export type Database = {
       repair_state:
         | "Pendiente"
         | "Esperando repuestos"
-        | "En reparaci├│n"
+        | "En reparación"
         | "Finalizado"
         | "Rechazado"
         | "Cancelado"
@@ -3856,7 +3877,7 @@ export type Database = {
         | "Completo con doc vencida"
       training_status: "Borrador" | "Archivado" | "Publicado"
       type_of_contract_enum:
-        | "Per├¡odo de prueba"
+        | "Período de prueba"
         | "A tiempo indeterminado"
         | "Plazo fijo"
       type_of_maintenance_ENUM: "Correctivo" | "Preventivo"
@@ -4003,6 +4024,7 @@ export const Constants = {
       document_applies: ["Persona", "Equipos", "Empresa"],
       document_type_enum: ["DNI", "LE", "LC", "PASAPORTE"],
       gender_enum: ["Masculino", "Femenino", "No Declarado"],
+      hse_doc_status: ["pendiente", "aceptado", "rechazado", "pending"],
       level_of_education_enum: [
         "Primario",
         "Secundario",
@@ -4021,7 +4043,7 @@ export const Constants = {
         "empresa",
         "empleados",
         "equipos",
-        "documentaci├│n",
+        "documentación",
         "mantenimiento",
         "dashboard",
         "ayuda",
@@ -4047,7 +4069,7 @@ export const Constants = {
       repair_state: [
         "Pendiente",
         "Esperando repuestos",
-        "En reparaci├│n",
+        "En reparación",
         "Finalizado",
         "Rechazado",
         "Cancelado",
@@ -4064,7 +4086,7 @@ export const Constants = {
       ],
       training_status: ["Borrador", "Archivado", "Publicado"],
       type_of_contract_enum: [
-        "Per├¡odo de prueba",
+        "Período de prueba",
         "A tiempo indeterminado",
         "Plazo fijo",
       ],

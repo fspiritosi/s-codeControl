@@ -11,7 +11,9 @@ import { fetchTrainingById, updateTrainingStatus } from '../actions/actions';
 
 function OverviewTab({ training }: { training: Awaited<ReturnType<typeof fetchTrainingById>> }) {
   // Calcular métricas importantes
-  const completedCount = training?.employees?.completed?.length || 0;
+  const completedCount = Array.from(
+    new Set(training?.attempts?.filter((attempt) => attempt.passed).map((a) => a.employee_id))
+  ).length;
   const totalEmployees = training?.employees?.total?.totalEmployees || 0;
 
   const sendReminder = () => {
