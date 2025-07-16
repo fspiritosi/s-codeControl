@@ -154,9 +154,7 @@ export function DocumentUploadDialog({
   const router = useRouter();
   const fileRef = form.register('file');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  console.log(initialData);
-
-  console.log('docType', docType);
+  
 
   useEffect(() => {
     if (mode === 'edit' && initialData?.typeOfEmployee && positions.length > 0) {
@@ -237,7 +235,7 @@ export function DocumentUploadDialog({
 
   useEffect(() => {
     const fetchDocTypes = async () => {
-      const docTypes = await fetchHseDocTypesOnlyName();
+      const docTypes = await fetchHseDocTypesOnlyName(companyId);
       setDocType(docTypes);
     };
     fetchDocTypes();
@@ -312,7 +310,7 @@ export function DocumentUploadDialog({
         }
 
         formData.append('file', data.file);
-        console.log('formData', formData);
+       
         const result = await createDocumentWithAssignments(formData, companyId);
 
         if (!result?.success) {
@@ -384,7 +382,7 @@ export function DocumentUploadDialog({
                     <Select
                       value={field.value}
                       onValueChange={(value) => {
-                        console.log('Seleccionado:', value);
+                        
                         form.setValue('docs_types', value);
                       }}
                     >

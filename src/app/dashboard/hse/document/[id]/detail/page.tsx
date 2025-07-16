@@ -49,7 +49,11 @@ import * as XLSX from 'xlsx';
 // }
 interface ExtendedDocument extends Document {
   documentTitle: string;
-  docs_types: string;
+  docs_types: {
+    id: string;
+    name: string;
+    short_description: string;
+  };
   acceptedCount?: number;
   totalEmployees?: number;
   previousVersions?: DocumentVersion[];
@@ -745,7 +749,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
         </div>
         <div>
           <h1 className="text-lg font-semibold">Detalle de Documento</h1>
-          <p className="text-sm text-muted-foreground">{document?.title}</p>
+          <p className="text-sm text-muted-foreground">{document?.docs_types?.short_description} - {document?.title}</p>
         </div>
       </header>
 
@@ -758,7 +762,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
           allTags={allTags}
           initialData={{
             id: document.id,
-            docs_types: document.docs_types,
+            docs_types: document.docs_types.id,
             title: document.title,
             version: document.version,
             description: document.description || '',
@@ -779,7 +783,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">{document?.title}</h1>
+              <h1 className="text-2xl font-bold">{document?.docs_types?.short_description} - {document?.title}</h1>
               <Badge className={getStatusColor(document?.status || '')}>{getStatusText(document?.status || '')}</Badge>
             </div>
             <p className="text-muted-foreground">Versión {document?.version}</p>
@@ -835,6 +839,10 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
                       ))}
                     </div>
 
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Tipo de documento:</span>
+                    <span>{document?.docs_types?.name}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Fecha de subida:</span>

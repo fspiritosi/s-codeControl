@@ -8,6 +8,8 @@ import { getDocuments, getEmployeesWithAssignedDocuments } from '@/features/Hse/
 import { cookies } from 'next/headers';
 import type { Document } from '@/features/Hse/actions/documents'; // <-- ¡SÍ!
 import DocTypeTab from '@/features/Hse/doc_types/DocTypeTab';
+import TagTab from '@/components/Capacitaciones/components/tags/TagTab';
+import { fetchAllHseDocTypes } from '@/features/Hse/actions/documents';
 
 
 export type TagType = {
@@ -52,7 +54,8 @@ async function HSEPage() {
     fetchTrainings(),
     fetchAllTags(),
     getDocuments(company_id),
-    getEmployeesWithAssignedDocuments()
+    getEmployeesWithAssignedDocuments(),
+    fetchAllHseDocTypes(company_id)
   ]);
   
  
@@ -74,6 +77,7 @@ async function HSEPage() {
       tags: doc.tags ?? [],
     };
   }
+  const docTypesResult = results[4].status === 'fulfilled' ? results[4].value : [];
   
   const viewData = {
     defaultValue: 'trainingsTable',
@@ -103,7 +107,21 @@ async function HSEPage() {
             initialDocuments={documentsResult.map(normalizeDocument)} 
             allTags={tagsResult} 
             initialEmployees={employeesResult} 
+            docTypes={docTypesResult}
           />,
+        },
+      },
+      {
+        value: 'tags',
+        name: 'Etiquetas',
+        restricted: [''],
+        content: {
+          title: 'Ver etiquetas',
+          description: 'Aquí encontrarás todas las etiquetas',
+          buttonActioRestricted: [''],
+          buttonAction: '',
+          component: <TagTab tags={tagsResult || []} /> 
+              
         },
       },
       {

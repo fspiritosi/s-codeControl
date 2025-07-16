@@ -55,7 +55,11 @@ export interface Document {
   company_id: string
   versions?: DocumentVersion[]
   tags?: string[]
-  docs_types?: string
+  docs_types?: {
+    id: string;
+    name: string;
+    short_description: string;
+  }
 }
 
 interface DocumentAssignment {
@@ -119,7 +123,7 @@ export async function getDocuments(company_id: string, filters?: {
   // Primero obtenemos los documentos básicos
   let query = supabase
     .from('hse_documents' as any)
-    .select('*')
+    .select('*,docs_types(id, name,short_description)')
     .eq('company_id', company_id)
     .order('created_at', { ascending: false })
 
@@ -227,7 +231,7 @@ export async function getDocumentById(id: string): Promise<(Document & {
     // Obtener el documento principal
     const { data: document, error: docError } = await supabase
       .from('hse_documents' as any)
-      .select('*')
+      .select('*,docs_types(id, name,short_description)')
       .eq('id', id)
       .single();
 
@@ -298,7 +302,7 @@ export async function createDocumentWithAssignments(formData: FormData, company_
   
   const supabase = supabaseServer()
   let filePath: string | null = null
-  console.log(formData)
+  
   try {
     // 1. Validar company_id
     if (!company_id) {
@@ -405,7 +409,7 @@ export async function createDocumentWithAssignments(formData: FormData, company_
       company_id,
     }
 
-    console.log(newDoc)
+    
 
     const { data: documentData, error: insertError } = await supabase
       .from("hse_documents" as any)
@@ -1253,9 +1257,171 @@ export async function deleteDocument(documentId: string) {
 }
 
 
+// export async function updateDocument(formData: FormData, companyId: string) {
+//   const supabase = supabaseServer();
+
+//   try {
+//     const {
+//       data: { user },
+//       error: userError,
+//     } = await supabase.auth.getUser();
+
+//     if (userError || !user) {
+//       throw new Error("No se pudo autenticar al usuario");
+//     }
+
+//     const documentId = formData.get("documentId") as string;
+//     const typeOfEmployee = JSON.parse(
+//       formData.get("typeOfEmployee") as string || "[]"
+//     ) as string[];
+//     const assignToAll = typeOfEmployee.length === 0;
+    
+//     // Parse tag assignments
+//     const tagsJson = formData.get("tags") as string || "[]";
+//     let tagIds: string[] = [];
+//     try {
+//       const parsedTags = JSON.parse(tagsJson);
+//       tagIds = Array.isArray(parsedTags) ? parsedTags : [];
+//     } catch (e) {
+//       console.warn("Error parsing tags:", e);
+//     }
+
+//     if (!documentId) {
+//       throw new Error("ID de documento no proporcionado");
+//     }
+
+//     // 1. Actualizar archivo si hay uno nuevo
+//     const file = formData.get("file") as File | null;
+//     let filePath: string | undefined;
+
+//     if (file && file.size > 0) {
+//       const fileName = `documents/${Date.now()}_${file.name}`;
+//       const { error: uploadError } = await supabase.storage
+//         .from("documents-hse")
+//         .upload(fileName, file, { cacheControl: "3600", upsert: true });
+
+//       if (uploadError) {
+//         throw new Error("Error al subir el archivo: " + uploadError.message);
+//       }
+
+//       filePath = fileName;
+//     }
+
+//     // 2. Actualizar metadatos
+//     const updates = {
+//       title: formData.get("title") as string,
+//       version: formData.get("version") as string,
+//       description: (formData.get("description") as string) || null,
+//       expiry_date: (formData.get("expiry_date") as string) || null,
+//       updated_at: new Date().toISOString(),
+//       ...(filePath && { file_path: filePath }),
+//     };
+
+//     const { data: document, error: updateError } = await supabase
+//       .from("hse_documents")
+//       .update(updates)
+//       .eq("id", documentId)
+//       .select()
+//       .single();
+
+//     if (updateError) {
+//       throw new Error("Error al actualizar el documento: " + updateError.message);
+//     }
+
+//     // 3. Actualizar asignaciones de empleados
+//     const { error: deleteError } = await supabase
+//       .from("hse_document_assignments")
+//       .delete()
+//       .eq("document_id", documentId);
+
+//     if (deleteError) {
+//       console.error("Error al eliminar asignaciones anteriores:", deleteError);
+//       throw new Error("No se pudieron actualizar las asignaciones");
+//     }
+
+//     await createDocumentAssignments(
+//       supabase,
+//       documentId,
+//       companyId,
+//       user.id,
+//       assignToAll,
+//       typeOfEmployee
+//     );
+
+//     // 4. Actualizar asignaciones de etiquetas
+    
+    
+//     // Primero eliminamos todas las asignaciones existentes
+//     const { error: deleteTagsError } = await supabase
+//       .from('hse_document_tag_assignments' as any)
+//       .delete()
+//       .eq('document_id', documentId);
+
+//     if (deleteTagsError) {
+//       console.error('❌ Error al eliminar asignaciones de etiquetas anteriores:', deleteTagsError);
+//       // No lanzamos error para no fallar la actualización del documento
+//     } else {
+//       console.log('✅ Asignaciones de etiquetas anteriores eliminadas');
+//     }
+
+//     // Luego creamos las nuevas asignaciones si hay etiquetas
+//     if (tagIds.length > 0) {
+      
+      
+//       // Verificar qué etiquetas existen
+//       const { data: existingTags, error: tagsError } = await supabase
+//         .from('training_tags')
+//         .select('id')
+//         .in('id', tagIds);
+
+//       if (tagsError) {
+//         console.error('❌ Error al verificar etiquetas existentes:', tagsError);
+//       } else {
+//         const existingTagIds = new Set(existingTags?.map(tag => tag.id) || []);
+//         const validTagIds = tagIds.filter(id => existingTagIds.has(id));
+
+//         // Registrar advertencia si hay etiquetas no encontradas
+//         if (validTagIds.length !== tagIds.length) {
+//           const missingTags = tagIds.filter(id => !existingTagIds.has(id));
+//           console.warn(`⚠️ Las siguientes etiquetas no existen y no se asignarán: ${missingTags.join(', ')}`);
+//         }
+
+//         // Solo crear asignaciones para etiquetas que existen
+//         if (validTagIds.length > 0) {
+          
+          
+//           const tagAssignments = validTagIds.map(tagId => ({
+//             document_id: documentId,
+//             tag_id: tagId,
+            
+//           }));
+
+//           const { error: tagAssignError } = await supabase
+//             .from('hse_document_tag_assignments' as any)
+//             .insert(tagAssignments);
+
+//           if (tagAssignError) {
+//             console.error('❌ Error al asignar etiquetas al documento:', tagAssignError);
+//           } else {
+//             console.log('✅ Asignaciones de etiquetas actualizadas correctamente');
+//           }
+//         } else {
+//           console.log('ℹ️ No hay etiquetas válidas para asignar');
+//         }
+//       }
+//     } else {
+//       console.log('ℹ️ No se especificaron etiquetas para asignar');
+//     }
+
+//     return { success: true, document };
+//   } catch (error) {
+//     console.error("Error en updateDocument:", error);
+//     throw error;
+//   }
+// }
 export async function updateDocument(formData: FormData, companyId: string) {
   const supabase = supabaseServer();
-
+  
   try {
     const {
       data: { user },
@@ -1305,6 +1471,7 @@ export async function updateDocument(formData: FormData, companyId: string) {
 
     // 2. Actualizar metadatos
     const updates = {
+      docs_types: formData.get("docs_types") as string,
       title: formData.get("title") as string,
       version: formData.get("version") as string,
       description: (formData.get("description") as string) || null,
@@ -1488,11 +1655,11 @@ export async function getTypeOfEmployeeForDocument(documentId: string): Promise<
   }
 }
 
-export async function fetchAllHseDocTypes() {
+export async function fetchAllHseDocTypes(companyId: string) {
   const supabase = supabaseServer();
   try {
-    const { data: hse_doc_types, error } = await supabase.from('hse_doc_types').select('*');
-    console.log('fetchAllDocTypes', hse_doc_types);
+    const { data: hse_doc_types, error } = await supabase.from('hse_doc_types').select('*').eq('company_id', companyId);
+    
 
     if (error) {
       console.error('Error al obtener tipos de documentos:', error);
@@ -1506,10 +1673,10 @@ export async function fetchAllHseDocTypes() {
   }
 };
 
-export async function fetchHseDocTypesOnlyName() {
+export async function fetchHseDocTypesOnlyName(companyId: string) {
   const supabase = supabaseServer();
   try {
-    const { data: hse_doc_types, error } = await supabase.from('hse_doc_types').select('id,name');
+    const { data: hse_doc_types, error } = await supabase.from('hse_doc_types').select('id,name').eq('company_id', companyId);
     
     if (error) {
       console.error('Error al obtener tipos de documentos:', error);
@@ -1523,11 +1690,17 @@ export async function fetchHseDocTypesOnlyName() {
   }
 };
 
-export const createDocType = async (data: Database['public']['Tables']['hse_doc_types']['Insert']) => {
-  console.log('createDocType', data);
+export const createDocType = async (data: Database['public']['Tables']['hse_doc_types']['Insert'], companyId: string) => {
+  
+
+  const docType = {
+    ...data,
+    company_id: companyId,
+  };
+  
   try {
     const supabase = supabaseServer();
-    const { error } = await supabase.from('hse_doc_types').insert([data]);
+    const { error } = await supabase.from('hse_doc_types').insert([docType]);
 
     if (error) {
       console.error('Error al crear tipo de documento:', error);

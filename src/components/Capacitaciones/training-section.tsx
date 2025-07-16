@@ -172,7 +172,7 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
       <Tabs defaultValue="general">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="tags">Etiquetas</TabsTrigger>
+          {/* <TabsTrigger value="tags">Etiquetas</TabsTrigger> */}
         </TabsList>
         <TabsContent value="general">
           <div className="flex flex-col md:flex-row gap-4 mb-4">
@@ -385,9 +385,9 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
             </AlertDialogContent>
           </AlertDialog>
         </TabsContent>
-        <TabsContent value="tags">
+        {/* <TabsContent value="tags">
           <TagTab tags={allTags} />
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
     </div>
   );
