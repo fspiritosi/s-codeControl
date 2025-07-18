@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowDown, ArrowUp, Edit, Loader2, Plus, Save, Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { updateTrainingMaterials, type fetchTrainingById } from '../actions/actions';
@@ -44,6 +45,8 @@ function MaterialsTab({ training }: { training: Awaited<ReturnType<typeof fetchT
     name: '',
     localFile: null,
   });
+
+  const router = useRouter();
 
   // Initialize formData with existing materials, ensuring 'localFile' is null by default
   const [formData, setFormData] = useState<{ materials: Material[] }>({
@@ -176,7 +179,7 @@ function MaterialsTab({ training }: { training: Awaited<ReturnType<typeof fetchT
 
     // Step 2: Update materials in the database
     try {
-      await toast.promise(
+      toast.promise(
         updateTrainingMaterials(
           training?.id || '',
           materialsToSave.map((material) => ({
@@ -200,6 +203,7 @@ function MaterialsTab({ training }: { training: Awaited<ReturnType<typeof fetchT
         materials: materialsToSave.map((m) => ({ ...m, localFile: null, isNew: false })),
       });
       setIsEditingEnabled(false); // Disable editing after saving
+      router.refresh();
     } catch (error) {
       console.error('Error al guardar:', error);
     } finally {

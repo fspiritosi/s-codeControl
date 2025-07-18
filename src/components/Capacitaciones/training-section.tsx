@@ -22,7 +22,6 @@ import { useState } from 'react';
 import { deleteTraining, type fetchAllTags, type fetchTrainings } from './actions/actions';
 import { TrainingGrid } from './components/TrainingGrid';
 import { TrainingList } from './components/TrainingList';
-import TagTab from './components/tags/TagTab';
 
 interface TrainingMaterial {
   type: string;
@@ -101,20 +100,31 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
     }
   };
 
-  // Filtrar capacitaciones
-  const filteredTrainings = trainings.filter((training) => {
-    const matchesSearch = training.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || training.status === statusFilter;
+  // Filtrar capacitaciones por estado para cada tab
+  const publishedTrainings = trainings.filter((training) => training.status === 'Publicado');
+  const draftTrainings = trainings.filter((training) => training.status === 'Borrador');
+  const archivedTrainings = trainings.filter((training) => training.status === 'Archivado');
+  
+  // Determinar el conjunto de capacitaciones actualmente seleccionado por tab
+  const [tab, setTab] = useState<'published' | 'draft' | 'archived'>('published');
+  const currentTabTrainings = 
+    tab === 'published' ? publishedTrainings : 
+    tab === 'draft' ? draftTrainings : 
+    archivedTrainings;
 
-    // Si no hay etiquetas seleccionadas, mostrar todas las capacitaciones
+  // Filtrar capacitaciones por búsqueda y etiquetas
+  const filteredTrainings = currentTabTrainings.filter((training) => {
+    const matchesSearch = training.title.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Si no hay etiquetas seleccionadas, mostrar todas las capacitaciones que coincidan con la búsqueda
     if (selectedTags.length === 0) {
-      return matchesSearch && matchesStatus;
+      return matchesSearch;
     }
 
     // Verificar si la capacitación tiene al menos una de las etiquetas seleccionadas
     const hasMatchingTag = training.tags && training.tags.some((tag: any) => selectedTags.includes(tag.id));
 
-    return matchesSearch && matchesStatus && hasMatchingTag;
+    return matchesSearch && hasMatchingTag;
   });
 
   // Ordenar capacitaciones
@@ -151,12 +161,28 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="general">
-        <TabsList>
-          <TabsTrigger value="general">General</TabsTrigger>
-          {/* <TabsTrigger value="tags">Etiquetas</TabsTrigger> */}
+      <Tabs 
+        defaultValue="published"
+        value={tab}
+        onValueChange={(value: string) => {
+          if (value === 'published' || value === 'draft' || value === 'archived') {
+            setTab(value as 'published' | 'draft' | 'archived');
+          }
+        }}
+        className="w-full"
+      >
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="published" className="text-xs sm:text-sm">
+            Publicado ({publishedTrainings.length})
+          </TabsTrigger>
+          <TabsTrigger value="draft" className="text-xs sm:text-sm">
+            Borrador ({draftTrainings.length})
+          </TabsTrigger>
+          <TabsTrigger value="archived" className="text-xs sm:text-sm">
+            Archivado ({archivedTrainings.length})
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="general">
+        <TabsContent value={tab} className="space-y-4">
           <div className="flex flex-col md:flex-row gap-4 mb-4">
             <div className="flex-1">
               <div className="flex flex-col gap-2 w-[180]">
@@ -248,13 +274,6 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
           </div>
 
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium">
-                {filteredAndSortedTrainings.length} capacitación{filteredAndSortedTrainings.length !== 1 ? 'es' : ''}{' '}
-                encontrada{filteredAndSortedTrainings.length !== 1 ? 's' : ''}
-              </h3>
-            </div>
-
             {filteredAndSortedTrainings.length > 0 ? (
               viewMode === 'grid' ? (
                 <TrainingGrid
@@ -288,17 +307,20 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
                 <FileX className="h-12 w-12 text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium mb-2">No se encontraron capacitaciones</h3>
                 <p className="text-gray-500 text-center max-w-md mb-4">
-                  {searchTerm || selectedTags.length > 0 || statusFilter !== 'all'
+                  {searchTerm || selectedTags.length > 0 
                     ? 'No hay capacitaciones que coincidan con los criterios de búsqueda.'
-                    : 'Aún no hay capacitaciones registradas en el sistema.'}
+                    : tab === 'published' 
+                      ? 'No hay capacitaciones publicadas.'
+                      : tab === 'draft'
+                        ? 'No hay capacitaciones en borrador.'
+                        : 'No hay capacitaciones archivadas.'}
                 </p>
-                {(searchTerm || selectedTags.length > 0 || statusFilter !== 'all') && (
+                {(searchTerm || selectedTags.length > 0) && (
                   <Button
                     variant="outline"
                     onClick={() => {
                       setSearchTerm('');
                       setSelectedTags([]);
-                      setStatusFilter('all');
                       setSortBy('createdDate');
                       setSortOrder('desc');
                     }}

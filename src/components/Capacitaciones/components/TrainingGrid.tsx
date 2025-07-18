@@ -59,7 +59,7 @@ export function TrainingGrid({
   return (
     <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
       {trainings.map((training) => {
-        const status = training.status === 'Publicado' || training.status === 'Borrador' ? training.status : 'Borrador'; // Default to 'Borrador' if status is invalid
+        const status = training.status; // Default to 'Borrador' if status is invalid
         const tags = training.tags
           .filter((tag): tag is NonNullable<typeof tag> => tag !== null)
           .map((tag) => ({
@@ -72,7 +72,9 @@ export function TrainingGrid({
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <GraduationCap className="h-8 w-8 text-purple-600" />
-                <Badge variant={status === 'Publicado' ? 'default' : 'secondary'}>{status}</Badge>
+                <Badge variant={status === 'Publicado' ? 'default' : status === 'Borrador' ? 'outline' : 'destructive'}>
+                  {status}
+                </Badge>
               </div>
               <CardTitle className="text-lg">{training.title}</CardTitle>
               <CardDescription className="line-clamp-2">{training.description}</CardDescription>
