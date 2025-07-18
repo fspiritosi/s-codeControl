@@ -8,6 +8,7 @@ import CompanySkeleton from '@/components/Skeletons/CompanySkeleton';
 import UsersTabComponent from '@/components/UsersTabComponent';
 import Viewcomponent from '@/components/ViewComponent';
 import { buttonVariants } from '@/components/ui/button';
+import PortalEmployeeWrapper from '@/features/Empresa/PortalEmpleados/components/PortalEmployeeWrapper';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { Suspense } from 'react';
@@ -141,20 +142,18 @@ export default async function CompanyPage() {
           component: <ServiceComponent />,
         },
       },
-      // {
-      //   value:"modules",
-      //   name:"Módulos",
-      //   restricted:[""],
-      //   content:{
-      //     title:"Módulos habilitados",
-      //     description:"Lista de módulos habilitados",
-      //     buttonAction:(
-      //       ""
-      //     ),
-      //     component:<div>Modulos</div>
-      //   }
-
-      // },
+      {
+        value: 'portal_employee',
+        name: 'Portal de Empleados',
+        restricted: [''],
+        content: {
+          title: 'Portal de Empleados',
+          description: 'Portal de Empleados',
+          buttonActioRestricted: [''],
+          buttonAction: '',
+          component: <PortalEmployeeWrapper />,
+        },
+      },
     ],
   };
 

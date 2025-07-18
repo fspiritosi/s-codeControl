@@ -1,8 +1,5 @@
-
-import React from 'react'
 import { ItemCompany } from '@/app/dashboard/company/actualCompany/components/itemCompany';
 import { cookies } from 'next/headers';
-
 
 interface Company {
   companyId: {
@@ -13,7 +10,7 @@ interface Company {
     contact_email: string;
     contact_phone: string;
     address: string;
-    city: {name: string};
+    city: { name: string };
     country: string;
     industry: string;
     company_logo: string;
@@ -26,7 +23,6 @@ interface Company {
 }
 
 export default async function CompanyComponent() {
-
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const coockiesStore = cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
@@ -34,10 +30,10 @@ export default async function CompanyComponent() {
   const companyDataResponse = companyResponse.ok ? await companyResponse.json() : null;
 
   const companyData = companyDataResponse.data[0];
-  
+
   return (
     <div>
-      {companyData && ( 
+      {companyData && (
         <div>
           <ItemCompany name="Razón Social" info={companyData.company_name} />
           <ItemCompany name="CUIT" info={companyData.company_cuit} />
@@ -48,7 +44,7 @@ export default async function CompanyComponent() {
           <ItemCompany name="Teléfono de contacto" info={companyData.contact_phone} />
           <ItemCompany name="Email de contacto" info={companyData.contact_email} />
         </div>
-      )}  
+      )}
     </div>
-  )
+  );
 }

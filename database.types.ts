@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instanciate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.0.1 (cd38da5)"
+  }
   public: {
     Tables: {
       assing_customer: {
@@ -32,6 +37,20 @@ export type Database = {
           id?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "public_assing_customer_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "public_assing_customer_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
           {
             foreignKeyName: "public_assing_customer_employee_id_fkey"
             columns: ["employee_id"]
@@ -143,6 +162,20 @@ export type Database = {
             foreignKeyName: "public_covenant_employee_emplyee_id_fkey"
             columns: ["emplyee_id"]
             isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "public_covenant_employee_emplyee_id_fkey"
+            columns: ["emplyee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "public_covenant_employee_emplyee_id_fkey"
+            columns: ["emplyee_id"]
+            isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
@@ -200,6 +233,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "company"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "companies_employees_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "companies_employees_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "companies_employees_employee_id_fkey"
@@ -372,6 +419,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_employee_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "contractor_employee_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "contractor_employee_employee_id_fkey"
@@ -698,6 +759,20 @@ export type Database = {
             foreignKeyName: "dailyreportemployeerelations_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "dailyreportemployeerelations_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "dailyreportemployeerelations_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
@@ -816,6 +891,27 @@ export type Database = {
           },
         ]
       }
+      debug_logs: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          id: number
+          message: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          id?: number
+          message?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          id?: number
+          message?: string | null
+        }
+        Relationships: []
+      }
       diagram_type: {
         Row: {
           color: string
@@ -895,6 +991,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "diagram_type"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "diagrams_logs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "diagrams_logs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "diagrams_logs_employee_id_fkey"
@@ -1080,6 +1190,20 @@ export type Database = {
             foreignKeyName: "documents_employees_applies_fkey"
             columns: ["applies"]
             isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "documents_employees_applies_fkey"
+            columns: ["applies"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "documents_employees_applies_fkey"
+            columns: ["applies"]
+            isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
@@ -1247,6 +1371,20 @@ export type Database = {
           time_spent_seconds?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "employee_material_progress_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "employee_material_progress_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
           {
             foreignKeyName: "employee_material_progress_employee_id_fkey"
             columns: ["employee_id"]
@@ -1514,6 +1652,20 @@ export type Database = {
             foreignKeyName: "public_employees_diagram_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "public_employees_diagram_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "public_employees_diagram_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
@@ -1661,6 +1813,30 @@ export type Database = {
           },
         ]
       }
+      hse_doc_types: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string | null
+          short_description: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string | null
+          short_description?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string | null
+          short_description?: string | null
+        }
+        Relationships: []
+      }
       hse_document_assignment_versions: {
         Row: {
           accepted_at: string | null
@@ -1714,6 +1890,20 @@ export type Database = {
             foreignKeyName: "fk_employee"
             columns: ["assignee_id"]
             isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "fk_employee"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "fk_employee"
+            columns: ["assignee_id"]
+            isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
@@ -1730,7 +1920,7 @@ export type Database = {
           declined_reason: string | null
           document_id: string
           id: string
-          status: string
+          status: Database["public"]["Enums"]["hse_doc_status"]
         }
         Insert: {
           accepted_at?: string | null
@@ -1742,7 +1932,7 @@ export type Database = {
           declined_reason?: string | null
           document_id: string
           id?: string
-          status: string
+          status: Database["public"]["Enums"]["hse_doc_status"]
         }
         Update: {
           accepted_at?: string | null
@@ -1754,9 +1944,30 @@ export type Database = {
           declined_reason?: string | null
           document_id?: string
           id?: string
-          status?: string
+          status?: Database["public"]["Enums"]["hse_doc_status"]
         }
         Relationships: [
+          {
+            foreignKeyName: "hse_document_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "hse_document_assignments_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "hse_document_assignments_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
           {
             foreignKeyName: "hse_document_assignments_assignee_id_fkey"
             columns: ["assignee_id"]
@@ -1769,6 +1980,130 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "hse_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hse_document_tag_assignments: {
+        Row: {
+          created_at: string | null
+          document_id: string
+          id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          document_id: string
+          id?: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string | null
+          document_id?: string
+          id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hse_document_tag_assignments_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "hse_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hse_document_tag_assignments_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "training_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hse_document_tags: {
+        Row: {
+          color: string | null
+          company_id: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hse_document_tags_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hse_document_type_assignmente: {
+        Row: {
+          created_at: string | null
+          docType_id: string
+          document_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          docType_id: string
+          document_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          docType_id?: string
+          document_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hse_document_type_assignmente_docType_id_fkey"
+            columns: ["docType_id"]
+            isOneToOne: false
+            referencedRelation: "hse_doc_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hse_document_type_assignmente_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "hse_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hse_document_type_assignmente_document_id_fkey1"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "hse_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hse_document_type_assignmente_tag_id_fkey"
+            columns: ["docType_id"]
+            isOneToOne: false
+            referencedRelation: "training_tags"
             referencedColumns: ["id"]
           },
         ]
@@ -1824,6 +2159,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "hse_document_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "hse_document_versions_document_id_fkey"
             columns: ["document_id"]
             isOneToOne: false
@@ -1838,6 +2180,7 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          docs_types: string | null
           expiry_date: string | null
           file_name: string
           file_path: string
@@ -1855,6 +2198,7 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
+          docs_types?: string | null
           expiry_date?: string | null
           file_name: string
           file_path: string
@@ -1872,6 +2216,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          docs_types?: string | null
           expiry_date?: string | null
           file_name?: string
           file_path?: string
@@ -1890,6 +2235,20 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hse_documents_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "hse_documents_docs_types_fkey"
+            columns: ["docs_types"]
+            isOneToOne: false
+            referencedRelation: "hse_doc_types"
             referencedColumns: ["id"]
           },
         ]
@@ -2072,6 +2431,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "profile_credential_id_fkey"
+            columns: ["credential_id"]
+            isOneToOne: true
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "profile_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "profile_role_fkey"
             columns: ["role"]
             isOneToOne: false
@@ -2155,6 +2528,20 @@ export type Database = {
             foreignKeyName: "repair_solicitudes_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "repair_solicitudes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "repair_solicitudes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
@@ -2220,6 +2607,20 @@ export type Database = {
           title?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "repairlogs_modified_by_employee_fkey"
+            columns: ["modified_by_employee"]
+            isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "repairlogs_modified_by_employee_fkey"
+            columns: ["modified_by_employee"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
           {
             foreignKeyName: "repairlogs_modified_by_employee_fkey"
             columns: ["modified_by_employee"]
@@ -2486,11 +2887,39 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "training_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "training_assignments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "training_assignments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
             foreignKeyName: "training_assignments_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_assignments_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["training_id"]
           },
           {
             foreignKeyName: "training_assignments_training_id_fkey"
@@ -2595,11 +3024,102 @@ export type Database = {
             foreignKeyName: "training_attempts_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "training_attempts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "training_attempts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "training_attempts_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["training_id"]
+          },
+          {
+            foreignKeyName: "training_attempts_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_material_readings: {
+        Row: {
+          created_at: string | null
+          employee_id: string
+          id: string
+          material_id: string
+          read_at: string | null
+          training_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          employee_id: string
+          id?: string
+          material_id: string
+          read_at?: string | null
+          training_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          employee_id?: string
+          id?: string
+          material_id?: string
+          read_at?: string | null
+          training_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_material_readings_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "company_users_by_cuil"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "training_material_readings_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "training_material_readings_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_material_readings_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "training_materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_material_readings_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["training_id"]
+          },
+          {
+            foreignKeyName: "training_material_readings_training_id_fkey"
             columns: ["training_id"]
             isOneToOne: false
             referencedRelation: "trainings"
@@ -2646,6 +3166,13 @@ export type Database = {
             foreignKeyName: "training_materials_training_id_fkey"
             columns: ["training_id"]
             isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["training_id"]
+          },
+          {
+            foreignKeyName: "training_materials_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
             referencedRelation: "trainings"
             referencedColumns: ["id"]
           },
@@ -2655,6 +3182,7 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          is_active: boolean | null
           is_correct: boolean | null
           option_text: string
           order_index: number
@@ -2663,6 +3191,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: string
+          is_active?: boolean | null
           is_correct?: boolean | null
           option_text: string
           order_index?: number
@@ -2671,6 +3200,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
+          is_active?: boolean | null
           is_correct?: boolean | null
           option_text?: string
           order_index?: number
@@ -2722,6 +3252,13 @@ export type Database = {
             foreignKeyName: "training_questions_training_id_fkey"
             columns: ["training_id"]
             isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["training_id"]
+          },
+          {
+            foreignKeyName: "training_questions_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
             referencedRelation: "trainings"
             referencedColumns: ["id"]
           },
@@ -2747,6 +3284,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "training_tags"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_tag_assignments_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["training_id"]
           },
           {
             foreignKeyName: "training_tag_assignments_training_id_fkey"
@@ -2789,6 +3333,7 @@ export type Database = {
           id: string
           passing_score: number
           status: Database["public"]["Enums"]["training_status"] | null
+          test_limit_time: number
           title: string
           updated_at: string | null
         }
@@ -2799,6 +3344,7 @@ export type Database = {
           id?: string
           passing_score?: number
           status?: Database["public"]["Enums"]["training_status"] | null
+          test_limit_time?: number
           title: string
           updated_at?: string | null
         }
@@ -2809,6 +3355,7 @@ export type Database = {
           id?: string
           passing_score?: number
           status?: Database["public"]["Enums"]["training_status"] | null
+          test_limit_time?: number
           title?: string
           updated_at?: string | null
         }
@@ -3069,6 +3616,33 @@ export type Database = {
       }
     }
     Views: {
+      company_users_by_cuil: {
+        Row: {
+          company_id: string | null
+          confirmed_at: string | null
+          email: string | null
+          employee_created_at: string | null
+          employee_cuil: string | null
+          employee_id: string | null
+          firstname: string | null
+          last_sign_in_at: string | null
+          lastname: string | null
+          phone: string | null
+          user_created_at: string | null
+          user_cuil: string | null
+          user_id: string | null
+          user_updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_training_progress: {
         Row: {
           assigned_at: string | null
@@ -3080,35 +3654,28 @@ export type Database = {
           last_attempt_number: number | null
           last_attempt_passed: boolean | null
           last_score: number | null
-          material_progress_percentage: number | null
+          material_progress_percentage: string | null
           max_score: number | null
           overall_status: string | null
           total_materials: number | null
           training_id: string | null
           training_title: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "training_assignments_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: false
-            referencedRelation: "employees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "training_assignments_training_id_fkey"
-            columns: ["training_id"]
-            isOneToOne: false
-            referencedRelation: "trainings"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Functions: {
       actualizar_estado_documentos: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      close_expired_exams: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      complete_exam_attempt: {
+        Args: { attempt_id: string }
+        Returns: Json
       }
       delete_expired_subscriptions: {
         Args: Record<PropertyKey, never>
@@ -3173,6 +3740,26 @@ export type Database = {
           workflow_diagram: string | null
         }[]
       }
+      get_company_users_by_cuil: {
+        Args: { p_company_id: string }
+        Returns: {
+          user_id: string
+          email: string
+          phone: string
+          confirmed_at: string
+          last_sign_in_at: string
+          user_created_at: string
+          user_updated_at: string
+          user_cuil: string
+          employee_id: string
+          employee_cuil: string
+          company_id: string
+          first_name: string
+          last_name: string
+          employee_created_at: string
+          raw_user_meta_data: Json
+        }[]
+      }
       migrate_document: {
         Args: { target_id: string; execute_migration?: boolean }
         Returns: {
@@ -3207,6 +3794,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      schedule_exam_auto_completion: {
+        Args: { attempt_id: string; minutes_limit: number }
+        Returns: Json
+      }
+      validate_user_password: {
+        Args: { p_password: string }
+        Returns: boolean
+      }
       verificar_documentos_vencidos_prueba: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -3217,7 +3812,7 @@ export type Database = {
       condition_enum:
         | "operativo"
         | "no operativo"
-        | "en reparación"
+        | "en reparacion"
         | "operativo condicionado"
       daily_report_status:
         | "pendiente"
@@ -3227,6 +3822,7 @@ export type Database = {
       document_applies: "Persona" | "Equipos" | "Empresa"
       document_type_enum: "DNI" | "LE" | "LC" | "PASAPORTE"
       gender_enum: "Masculino" | "Femenino" | "No Declarado"
+      hse_doc_status: "pendiente" | "aceptado" | "rechazado" | "pending"
       level_of_education_enum:
         | "Primario"
         | "Secundario"
@@ -3292,21 +3888,25 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -3324,14 +3924,16 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -3347,14 +3949,16 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -3370,14 +3974,16 @@ export type TablesUpdate<
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
@@ -3385,14 +3991,16 @@ export type Enums<
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
@@ -3404,7 +4012,7 @@ export const Constants = {
       condition_enum: [
         "operativo",
         "no operativo",
-        "en reparación",
+        "en reparacion",
         "operativo condicionado",
       ],
       daily_report_status: [
@@ -3416,6 +4024,7 @@ export const Constants = {
       document_applies: ["Persona", "Equipos", "Empresa"],
       document_type_enum: ["DNI", "LE", "LC", "PASAPORTE"],
       gender_enum: ["Masculino", "Femenino", "No Declarado"],
+      hse_doc_status: ["pendiente", "aceptado", "rechazado", "pending"],
       level_of_education_enum: [
         "Primario",
         "Secundario",

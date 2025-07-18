@@ -192,20 +192,13 @@ export function MaterialViewer({ materials, open, onOpenChange, initialMaterialI
                 </Button>
               </div>
             </div>
-            {/* Para PowerPoint, podrías usar Office Online o convertir a imágenes */}
-            <div className="w-full h-[600px] border rounded bg-gray-100 flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <Presentation className="h-16 w-16 text-orange-600 mx-auto" />
-                <div>
-                  <p className="font-medium">Presentación PowerPoint</p>
-                  <p className="text-sm text-muted-foreground">Diapositiva {currentPage}</p>
-                </div>
-                <Button variant="outline" onClick={() => window.open(material.url, '_blank')}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Descargar para ver
-                </Button>
-              </div>
-            </div>
+            <iframe
+              src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(material.url)}`}
+              className="w-full h-[600px] border rounded"
+              frameBorder="0"
+              title={material.name}
+              allowFullScreen
+            />
           </div>
         );
 
