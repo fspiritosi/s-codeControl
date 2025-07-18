@@ -40,7 +40,7 @@ create table "public"."storage_migrations" (
 
 alter table "public"."employees" alter column reason_for_termination type "public"."reason_for_termination_enum" using reason_for_termination::text::"public"."reason_for_termination_enum";
 
-drop type "public"."modulos__old_version_to_be_dropped";
+-- drop type "public"."modulos__old_version_to_be_dropped";
 
 drop type "public"."reason_for_termination_enum__old_version_to_be_dropped";
 

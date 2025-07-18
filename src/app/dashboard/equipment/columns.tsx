@@ -468,7 +468,7 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
       const variants = {
         operativo: 'success',
         'no operativo': 'destructive',
-        'en reparación': 'yellow',
+        'en reparacion': 'yellow',
         'operativo condicionado': 'info',
         default: 'default',
       };
@@ -477,7 +477,7 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
         'operativo condicionado': { color: 'bg-blue-500', icon: AlertTriangle },
         operativo: { color: 'bg-green-500', icon: CheckCircle },
         'no operativo': { color: 'bg-red-500', icon: XCircle },
-        'en reparación': { color: 'bg-yellow-500', icon: RiToolsFill },
+        'en reparacion': { color: 'bg-yellow-500', icon: RiToolsFill },
       };
 
       return (
