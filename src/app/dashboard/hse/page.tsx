@@ -51,15 +51,21 @@ async function HSEPage() {
     fetchTrainings(),
     fetchAllTags(),
     getDocuments(company_id),
-    getEmployeesWithAssignedDocuments(),
-    fetchAllHseDocTypes(company_id),
+
+    getEmployeesWithAssignedDocuments(company_id),
+    fetchAllHseDocTypes(company_id)
+
   ]);
 
   const trainingsResult = results[0].status === 'fulfilled' ? results[0].value : [];
   const tagsResult = results[1].status === 'fulfilled' ? results[1].value : [];
   const documentsResult = results[2].status === 'fulfilled' ? results[2].value : [];
   const employeesResultRaw = results[3].status === 'fulfilled' ? results[3].value : { data: null, error: 'unknown' };
-  const employeesResult = employeesResultRaw && employeesResultRaw.data ? employeesResultRaw.data : [];
+  const employeesResult =
+    employeesResultRaw && employeesResultRaw.data
+      ? employeesResultRaw.data
+      : [];
+  
 
   function normalizeDocument(doc: any): Document {
     return {
@@ -70,6 +76,7 @@ async function HSEPage() {
     };
   }
   const docTypesResult = results[4].status === 'fulfilled' ? results[4].value : [];
+
 
   const viewData = {
     defaultValue: 'trainingsTable',
@@ -126,7 +133,8 @@ async function HSEPage() {
           description: 'Aquí encontrarás todos los tipos de documentos',
           buttonActioRestricted: [''],
           buttonAction: <DocumentUploadDialog allTags={tagsResult || []} />,
-          component: <DocTypeTab />,
+          component: <DocTypeTab docs_types={docTypesResult || []} /> 
+
         },
       },
     ],
