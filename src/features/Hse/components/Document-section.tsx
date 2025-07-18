@@ -46,7 +46,7 @@ const DocumentGrid = ({
   getStatusColor: (status: string) => string;
   getStatusText: (status: string) => string;
   formatDate: (dateStr: string | null | undefined) => string;
-  getEmployeeCounts: (id: string) => { accepted: number; total: number };
+  getEmployeeCounts: (id: string) => { accepted: number; total: number; rejected: number };
   setDocumentToEdit: (doc: any) => void;
   setEditDialogOpen: (open: boolean) => void;
   router: any;
@@ -105,16 +105,26 @@ const DocumentGrid = ({
             <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
               <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
               <span>
-                {getEmployeeCounts(document.id).accepted}/{getEmployeeCounts(document.id).total} empleados
+                {getEmployeeCounts(document.id).accepted}/{getEmployeeCounts(document.id).rejected}/{getEmployeeCounts(document.id).total} empleados
+                <span className="text-xs text-green-600 ml-1">✓{getEmployeeCounts(document.id).accepted}</span>
+                <span className="text-xs text-red-600 ml-1">✗{getEmployeeCounts(document.id).rejected}</span>
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-blue-600 h-2 rounded-full"
-                style={{
-                  width: `${((getEmployeeCounts(document.id).accepted || 0) / (getEmployeeCounts(document.id).total || 1)) * 100}%`,
-                }}
-              ></div>
+            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+              <div className="flex h-full">
+                <div 
+                  className="bg-green-500 h-full transition-all duration-300"
+                  style={{
+                    width: `${(getEmployeeCounts(document.id).accepted / getEmployeeCounts(document.id).total) * 100}%`,
+                  }}
+                ></div>
+                <div 
+                  className="bg-red-500 h-full transition-all duration-300"
+                  style={{
+                    width: `${(getEmployeeCounts(document.id).rejected / getEmployeeCounts(document.id).total) * 100}%`,
+                  }}
+                ></div>
+              </div>
             </div>
             <div className="flex flex-col gap-2 pt-2">
               <div className="flex flex-wrap gap-2">
@@ -202,7 +212,7 @@ const DocumentList = ({
   getStatusColor: (status: string) => string;
   getStatusText: (status: string) => string;
   formatDate: (dateStr: string | null | undefined) => string;
-  getEmployeeCounts: (id: string) => { accepted: number; total: number };
+  getEmployeeCounts: (id: string) => { accepted: number; total: number; rejected: number };
   setDocumentToEdit: (doc: any) => void;
   setEditDialogOpen: (open: boolean) => void;
   router: any;
@@ -248,15 +258,25 @@ const DocumentList = ({
             <span>Fecha de vencimiento: {formatDate(doc.expiry_date) || 'sin vencimiento'}</span>
             <span className="flex items-center">
               <Users className="h-3 w-3 mr-1" />
-              {getEmployeeCounts(doc.id).accepted}/{getEmployeeCounts(doc.id).total} empleados
+              {getEmployeeCounts(doc.id).accepted}/{getEmployeeCounts(doc.id).rejected}/{getEmployeeCounts(doc.id).total} empleados
+              <span className="text-xs text-green-600 ml-1">✓{getEmployeeCounts(doc.id).accepted}</span>
+              <span className="text-xs text-red-600 ml-1">✗{getEmployeeCounts(doc.id).rejected}</span>
             </span>
-            <div className="w-20 bg-gray-200 rounded-full h-1 ml-2">
-              <div
-                className="bg-blue-600 h-1 rounded-full"
-                style={{
-                  width: `${((getEmployeeCounts(doc.id).accepted || 0) / (getEmployeeCounts(doc.id).total || 1)) * 100}%`,
-                }}
-              ></div>
+            <div className="w-20 bg-gray-200 rounded-full h-1 ml-2 overflow-hidden">
+              <div className="flex h-full">
+                <div 
+                  className="bg-green-500 h-full transition-all duration-300"
+                  style={{
+                    width: `${(getEmployeeCounts(doc.id).accepted / getEmployeeCounts(doc.id).total) * 100}%`,
+                  }}
+                ></div>
+                <div 
+                  className="bg-red-500 h-full transition-all duration-300"
+                  style={{
+                    width: `${(getEmployeeCounts(doc.id).rejected / getEmployeeCounts(doc.id).total) * 100}%`,
+                  }}
+                ></div>
+              </div>
             </div>
           </div>
         </div>
@@ -333,6 +353,7 @@ interface DocumentsSectionProps {
 type EmployeeCounts = {
   total: number;
   accepted: number;
+  rejected: number;
 };
 
 export function DocumentsSection({ initialDocuments, initialEmployees, allTags, docTypes }: DocumentsSectionProps) {
@@ -354,22 +375,22 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags, 
   const [isLoading, setIsLoading] = useState<{ [key: string]: boolean }>({});
   const [selectedDocTypes, setSelectedDocTypes] = useState<string[]>([]);
 
-  
   const getEmployeeCounts = (documentId: string): EmployeeCounts => {
-    if (!employees || !Array.isArray(employees)) return { total: 0, accepted: 0 };
+    if (!employees || !Array.isArray(employees)) return { total: 0, accepted: 0, rejected: 0 };
     const counts = employees.reduce(
       (acc: EmployeeCounts, employee: any) => {
-        const hasDocument = employee.documents?.some((doc: any) => doc.document?.id === documentId);
-        if (hasDocument) {
+        const employeeDoc = employee.documents?.find((doc: any) => doc.document?.id === documentId);
+        if (employeeDoc) {
           acc.total += 1;
-          const isAccepted = employee.documents?.some(
-            (doc: any) => doc.document?.id === documentId && doc.status === 'accepted'
-          );
-          if (isAccepted) acc.accepted += 1;
+          if (employeeDoc.status === 'aceptado') {
+            acc.accepted += 1;
+          } else if (employeeDoc.status === 'rechazado') {
+            acc.rejected += 1;
+          }
         }
         return acc;
       },
-      { total: 0, accepted: 0 }
+      { total: 0, accepted: 0, rejected: 0 }
     );
     return counts;
   };
