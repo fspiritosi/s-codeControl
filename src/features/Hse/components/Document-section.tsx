@@ -354,7 +354,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags, 
   const [isLoading, setIsLoading] = useState<{ [key: string]: boolean }>({});
   const [selectedDocTypes, setSelectedDocTypes] = useState<string[]>([]);
 
-  
+
   const getEmployeeCounts = (documentId: string): EmployeeCounts => {
     if (!employees || !Array.isArray(employees)) return { total: 0, accepted: 0 };
     const counts = employees.reduce(
@@ -363,7 +363,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags, 
         if (hasDocument) {
           acc.total += 1;
           const isAccepted = employee.documents?.some(
-            (doc: any) => doc.document?.id === documentId && doc.status === 'accepted'
+            (doc: any) => doc.document?.id === documentId && doc.status === 'aceptado'
           );
           if (isAccepted) acc.accepted += 1;
         }

@@ -108,7 +108,10 @@ export interface ProcessedEmployee {
   name: string
   cuil: string
   email: string | null
-  position: string | null
+  position: {
+    id: string;
+    name: string;
+  } | null;
   company_position: string | null
   documents: ProcessedDocument[]
 }
@@ -940,75 +943,77 @@ export async function getAllHierarchicalPositions() {
   }
 }
 
-export async function getEmployeesWithAssignedDocuments(documentId?: string) {
+export async function getEmployeesWithAssignedDocuments(companyId: string, documentId?: string) {
   const supabase = supabaseServer();
 
   try {
-    // Consulta para obtener empleados con sus documentos asignados
-    let query = supabase
-      .from('hse_document_assignments' as any)
+    // 1. Primero obtenemos los empleados de la compañía
+    let employeeQuery = supabase
+      .from('employees')
       .select(`
         id,
-        status,
-        assigned_at,
-        accepted_at,
-        document:hse_documents!inner(
+        firstname,
+        lastname,
+        cuil,
+        email,
+        company_id,
+        hierarchical_position:hierarchy(id, name),
+        company_position,
+        document_assignments:hse_document_assignments!inner(
           id,
-          title,
-          version,
-          expiry_date
-        ),
-        employee:employees!hse_document_assignments_assignee_id_fkey(
-          id,
-          firstname,
-          lastname,
-          cuil,
-          email,
-          hierarchical_position(id, name),
-          company_position
+          status,
+          assigned_at,
+          accepted_at,
+          document:hse_documents!inner(
+            id,
+            title,
+            version,
+            expiry_date
+          )
         )
       `)
-      // Filtrar solo asignaciones de empleados (no de otros tipos)
-      // .eq('assignee_type', 'employee')
-      // .eq('document_id', documentId || '');  
-    // Si se proporciona un documentId, filtrar por ese documento
+      .eq('company_id', companyId);  // Filtramos por company_id directamente
+
+    // Si se proporciona un documentId, lo agregamos al filtro
     if (documentId) {
-      query = query.eq('document_id', documentId);
+      employeeQuery = employeeQuery.eq('document_assignments.document_id', documentId);
     }
 
-    const { data, error } = await query;
-    
+    const { data: employees, error } = await employeeQuery;
+
     if (error) throw error;
+    if (!employees || employees.length === 0) return { data: [], error: null };
 
-    // Si no hay asignaciones, devolver array vacío
-    if (!data || data.length === 0) return { data: [], error: null };
+    // 2. Procesamos los datos
+    const processedData: ProcessedEmployee[] = employees.map(employee => {
+      const documents = (employee.document_assignments || []).map(assignment => ({
+        assignmentId: assignment.id,
+        status: assignment.status,
+        assignedAt: assignment.assigned_at,
+        acceptedAt: assignment.accepted_at || null,
+        document: {
+          id: assignment.document.id,
+          title: assignment.document.title,
+          version: assignment.document.version,
+          expiryDate: assignment.document.expiry_date
+        }
+      }));
 
-    // Procesar los datos
-    // Procesar los datos
-const processedData: ProcessedEmployee[] = data.map((assignment: any) => {
-  const employee = assignment.employee;
-  
-  return {
-    id: employee.id,
-    name: `${employee.firstname || ''} ${employee.lastname || ''}`.trim(),
-    cuil: employee.cuil,
-    email: employee.email,
-    position: employee.hierarchical_position?.name || null,
-    company_position: employee.company_position || null,
-    documents: [{
-      assignmentId: assignment.id,
-      status: assignment.status,
-      assignedAt: assignment.assigned_at,
-      acceptedAt: assignment.accepted_at || null,
-      document: {
-        id: assignment.document.id,
-        title: assignment.document.title,
-        version: assignment.document.version,
-        expiryDate: assignment.document.expiry_date
-      }
-    }]
-  };
-});
+      return {
+        id: employee.id,
+        name: `${employee.firstname || ''} ${employee.lastname || ''}`.trim(),
+        cuil: employee.cuil,
+        email: employee.email,
+        position: employee.hierarchical_position
+        ? {
+            id: employee.hierarchical_position.id,
+            name: employee.hierarchical_position.name
+          }
+        : null,
+        company_position: employee.company_position || null,
+        documents
+      };
+    });
 
     return { data: processedData, error: null };
   } catch (error) {
@@ -1215,6 +1220,17 @@ export async function deleteDocument(documentId: string) {
       console.error('❌ Error al eliminar asignaciones a empleados:', deleteEmployeeAssignmentsError);
       // Continuamos a pesar del error, ya que podrían no existir asignaciones
     
+    }
+
+    // 3.1 Eliminar asignaciones del documento en hse_document_assignments
+    const { error: deleteDocumentAssignmentsError } = await supabase
+      .from('hse_document_assignments' as any)
+      .delete()
+      .eq('document_id', documentId);
+
+    if (deleteDocumentAssignmentsError) {
+      console.error('❌ Error al eliminar asignaciones del documento:', deleteDocumentAssignmentsError);
+      // Continuamos a pesar del error
     }
 
     // 4. Finalmente, eliminar el documento

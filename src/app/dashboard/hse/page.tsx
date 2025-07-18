@@ -54,7 +54,7 @@ async function HSEPage() {
     fetchTrainings(),
     fetchAllTags(),
     getDocuments(company_id),
-    getEmployeesWithAssignedDocuments(),
+    getEmployeesWithAssignedDocuments(company_id),
     fetchAllHseDocTypes(company_id)
   ]);
   
@@ -68,7 +68,7 @@ async function HSEPage() {
     employeesResultRaw && employeesResultRaw.data
       ? employeesResultRaw.data
       : [];
-    
+  
   function normalizeDocument(doc: any): Document {
     return {
       ...doc,
@@ -79,6 +79,7 @@ async function HSEPage() {
   }
   const docTypesResult = results[4].status === 'fulfilled' ? results[4].value : [];
   
+
   const viewData = {
     defaultValue: 'trainingsTable',
     tabsValues: [
@@ -133,7 +134,7 @@ async function HSEPage() {
           description: 'Aquí encontrarás todos los tipos de documentos',
           buttonActioRestricted: [''],
           buttonAction: <DocumentUploadDialog allTags={tagsResult || []} />,
-          component: <DocTypeTab  /> 
+          component: <DocTypeTab docs_types={docTypesResult || []} /> 
         },
       },
     ],
