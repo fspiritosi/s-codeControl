@@ -7,6 +7,7 @@ import { BaseDataTable } from '@/shared/components/data-table/base/data-table';
 import { DataTableColumnHeader } from '@/shared/components/data-table/base/data-table-column-header';
 import { createFilterOptions } from '@/shared/components/utils/utils';
 import { ColumnDef } from '@tanstack/react-table';
+import moment from 'moment';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { fetchTrainingById } from '../actions/actions';
@@ -77,6 +78,10 @@ export function getAreaColums(handleEdit: (email: string) => Promise<void>): Col
       accessorKey: 'lastAttempt.date',
       id: 'Fecha',
       header: ({ column }) => <DataTableColumnHeader column={column} title="Fecha" />,
+      cell: ({ row }) => {
+        const date = row.original.lastAttempt?.date;
+        return date ? moment(date).format('DD/MM/YYYY') : 'N/A';
+      },
       filterFn: (row, id, value) => {
         return value.includes(row.getValue(id));
       },
@@ -85,6 +90,10 @@ export function getAreaColums(handleEdit: (email: string) => Promise<void>): Col
       accessorKey: 'lastAttempt.result',
       id: 'Resultado',
       header: ({ column }) => <DataTableColumnHeader column={column} title="Resultado" />,
+      cell: ({ row }) => {
+        const result = row.original.lastAttempt?.result;
+        return result === 'passed' ? 'Aprobado' : 'Desaprobado';
+      },
       filterFn: (row, id, value) => {
         return value.includes(row.getValue(id));
       },
@@ -92,30 +101,34 @@ export function getAreaColums(handleEdit: (email: string) => Promise<void>): Col
     {
       accessorKey: 'lastAttempt.score',
       id: 'Puntaje',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Puntaje" />,
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Respuestas correctas" />,
+      cell: ({ row }) => {
+        const score = row.original.lastAttempt?.score;
+        return score ? score : 'N/A';
+      },
       filterFn: (row, id, value) => {
         return value.includes(row.getValue(id));
       },
     },
 
-    {
-      accessorKey: 'actions',
-      id: 'Acciones',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Acciones" />,
-      cell: ({ row }) => {
-        const handleSelectArea = () => {
-          handleEdit((row.original as any).area_full);
-        };
-        return (
-          <Button size="sm" variant="link" className="hover:text-blue-400" onClick={handleSelectArea}>
-            Editar
-          </Button>
-        );
-      },
-      filterFn: (row, id, value) => {
-        return value.includes(row.getValue(id));
-      },
-    },
+    // {
+    //   accessorKey: 'actions',
+    //   id: 'Acciones',
+    //   header: ({ column }) => <DataTableColumnHeader column={column} title="Acciones" />,
+    //   cell: ({ row }) => {
+    //     const handleSelectArea = () => {
+    //       handleEdit((row.original as any).area_full);
+    //     };
+    //     return (
+    //       <Button size="sm" variant="link" className="hover:text-blue-400" onClick={handleSelectArea}>
+    //         Editar
+    //       </Button>
+    //     );
+    //   },
+    //   filterFn: (row, id, value) => {
+    //     return value.includes(row.getValue(id));
+    //   },
+    // },
   ];
 }
 export function getPendingColums(handleEdit: (email: string) => Promise<void>): ColumnDef<Employee[number]>[] {

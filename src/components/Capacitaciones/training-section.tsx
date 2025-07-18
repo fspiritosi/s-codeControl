@@ -10,34 +10,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
-import {List, Grid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { TrainingGrid } from './components/TrainingGrid';
-import { TrainingList } from './components/TrainingList';
 import { Input } from '@/components/ui/input';
+import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import { toast } from '@/components/ui/use-toast';
-import {
-  Eye,
-  FileText,
-  FileX,
-  Filter,
-  GraduationCap,
-  Presentation,
-  RefreshCcw,
-  SortAsc,
-  SortDesc,
-  Tag,
-  Trash2,
-  Users,
-  Video,
-} from 'lucide-react';
+import { FileText, FileX, Filter, Grid, List, Presentation, RefreshCcw, SortAsc, SortDesc, Video } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { deleteTraining, type fetchAllTags, type fetchTrainings } from './actions/actions';
+import { TrainingGrid } from './components/TrainingGrid';
+import { TrainingList } from './components/TrainingList';
 import TagTab from './components/tags/TagTab';
 
 interface TrainingMaterial {
@@ -121,17 +105,15 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
   const filteredTrainings = trainings.filter((training) => {
     const matchesSearch = training.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || training.status === statusFilter;
-    
+
     // Si no hay etiquetas seleccionadas, mostrar todas las capacitaciones
     if (selectedTags.length === 0) {
       return matchesSearch && matchesStatus;
     }
-    
+
     // Verificar si la capacitación tiene al menos una de las etiquetas seleccionadas
-    const hasMatchingTag = training.tags && training.tags.some((tag: any) => 
-      selectedTags.includes(tag.id)
-    );
-    
+    const hasMatchingTag = training.tags && training.tags.some((tag: any) => selectedTags.includes(tag.id));
+
     return matchesSearch && matchesStatus && hasMatchingTag;
   });
 
@@ -186,16 +168,16 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
                   />
                   <Filter className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 </div>
-                
-                
               </div>
             </div>
             <div className="w-full md:w-[180px]">
               <MultiSelectCombobox
-                options={allTags?.map(tag => ({
-                  label: tag.name,
-                  value: tag.id,
-                })) || []}
+                options={
+                  allTags?.map((tag) => ({
+                    label: tag.name,
+                    value: tag.id,
+                  })) || []
+                }
                 selectedValues={selectedTags}
                 placeholder="Filtrar por etiquetas"
                 emptyMessage="No hay etiquetas disponibles"
@@ -247,47 +229,36 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
               </Select>
             </div>
             <div className="relative group">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                  className="relative"
-                >
-                  {viewMode === 'grid' ? (
-                    <List className="h-4 w-4 mr-1 hover:text-primary-foreground" />
-                  ) : (
-                    <Grid className="h-4 w-4 mr-1 hover:text-primary-foreground" />
-                  )}
-                </Button>
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                  Vista de {viewMode === 'grid' ? 'lista' : 'cuadrícula'}
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-gray-800"></div>
-                </div>
+              <Button
+                variant="outline"
+                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                className="relative"
+              >
+                {viewMode === 'grid' ? (
+                  <List className="h-4 w-4 mr-1 hover:text-primary-foreground" />
+                ) : (
+                  <Grid className="h-4 w-4 mr-1 hover:text-primary-foreground" />
+                )}
+              </Button>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                Vista de {viewMode === 'grid' ? 'lista' : 'cuadrícula'}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-gray-800"></div>
               </div>
+            </div>
           </div>
 
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium">
-                {filteredAndSortedTrainings.length} capacitación{filteredAndSortedTrainings.length !== 1 ? 'es' : ''} encontrada{filteredAndSortedTrainings.length !== 1 ? 's' : ''}
+                {filteredAndSortedTrainings.length} capacitación{filteredAndSortedTrainings.length !== 1 ? 'es' : ''}{' '}
+                encontrada{filteredAndSortedTrainings.length !== 1 ? 's' : ''}
               </h3>
-              
             </div>
 
             {filteredAndSortedTrainings.length > 0 ? (
               viewMode === 'grid' ? (
                 <TrainingGrid
-                  trainings={filteredAndSortedTrainings.map(training => ({
-                    ...training,
-                    status: training.status === 'Publicado' || training.status === 'Borrador' 
-                      ? training.status 
-                      : 'Borrador', // Default to 'Borrador' if status is invalid
-                    tags: training.tags
-                      .filter((tag): tag is NonNullable<typeof tag> => tag !== null)
-                      .map(tag => ({
-                        ...tag,
-                        color: tag.color ?? undefined
-                      }))
-                  }))}
+                  trainings={filteredAndSortedTrainings}
                   onDeleteClick={(id) => {
                     setTrainingToDelete(id);
                     setConfirmDialogOpen(true);
@@ -300,18 +271,7 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
                 />
               ) : (
                 <TrainingList
-                  trainings={filteredAndSortedTrainings.map(training => ({
-                    ...training,
-                    status: training.status === 'Publicado' || training.status === 'Borrador' 
-                      ? training.status 
-                      : 'Borrador', // Default to 'Borrador' if status is invalid
-                    tags: training.tags
-                      .filter((tag): tag is NonNullable<typeof tag> => tag !== null)
-                      .map(tag => ({
-                        ...tag,
-                        color: tag.color ?? undefined
-                      }))
-                  }))}
+                  trainings={filteredAndSortedTrainings}
                   onDeleteClick={(id) => {
                     setTrainingToDelete(id);
                     setConfirmDialogOpen(true);

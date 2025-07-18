@@ -222,6 +222,7 @@ function MaterialsTab({ training }: { training: Awaited<ReturnType<typeof fetchT
             <div className="space-y-2">
               <Label htmlFor="new-material-name">Nombre del Material</Label>
               <Input
+                disabled={(training?.attempts.length || 0) > 0}
                 id="new-material-name"
                 value={newMaterialForm.name}
                 onChange={(e) => setNewMaterialForm({ ...newMaterialForm, name: e.target.value })}
@@ -231,6 +232,7 @@ function MaterialsTab({ training }: { training: Awaited<ReturnType<typeof fetchT
             <div className="space-y-2">
               <Label htmlFor="new-material-type">Tipo de Material</Label>
               <Select
+                disabled={(training?.attempts.length || 0) > 0}
                 value={newMaterialForm.type}
                 onValueChange={(value) => setNewMaterialForm({ ...newMaterialForm, type: value as Material['type'] })}
               >
@@ -247,6 +249,7 @@ function MaterialsTab({ training }: { training: Awaited<ReturnType<typeof fetchT
             <div className="space-y-2">
               <Label htmlFor="new-material-file-input">Archivo</Label>
               <Input
+                disabled={(training?.attempts.length || 0) > 0}
                 id="new-material-file-input"
                 type="file"
                 accept={
@@ -267,7 +270,11 @@ function MaterialsTab({ training }: { training: Awaited<ReturnType<typeof fetchT
                 </p>
               )}
             </div>
-            <Button onClick={handleAddNewMaterial} className="w-full" disabled={isSubmitting || isAnyFileUploading}>
+            <Button
+              disabled={(training?.attempts.length || 0) > 0 || isSubmitting || isAnyFileUploading || false}
+              onClick={handleAddNewMaterial}
+              className="w-full"
+            >
               <Plus className="h-4 w-4 mr-1" />
               Agregar a la Lista
             </Button>
@@ -283,7 +290,12 @@ function MaterialsTab({ training }: { training: Awaited<ReturnType<typeof fetchT
             </div>
             <div className="flex items-center gap-2">
               {!isEditingEnabled ? (
-                <Button onClick={() => setIsEditingEnabled(true)} variant="outline" size="sm">
+                <Button
+                  disabled={(training?.attempts.length || 0) > 0 || false}
+                  onClick={() => setIsEditingEnabled(true)}
+                  variant="outline"
+                  size="sm"
+                >
                   <Edit className="h-4 w-4 mr-1" />
                   Habilitar Edición
                 </Button>
