@@ -74,7 +74,7 @@ interface ExtendedDocument extends Document {
 interface ProcessedDocument {
   id?: string;
   assignmentId?: string; // Add this line
-  status: 'aceptado' | 'pending';
+  status: 'aceptado' | 'pending' | 'rechazado';
   acceptedAt?: string;
   assignedAt?: string;
   document?: {
@@ -111,7 +111,7 @@ interface Employee {
   company_position?: string;
   documents?: Array<{
     id: string;
-    status: 'aceptado' | 'pending';
+    status: 'aceptado' | 'pending' | 'rechazado';
     acceptedAt?: string;
     assignedAt?: string;
     document?: {
@@ -190,8 +190,20 @@ function getEmployeeColums(
         const status = row.getValue('Status');
 
         return (
-          <Badge variant={status === 'aceptado' ? 'success' : 'yellow'}>
-            {status === 'aceptado' ? 'Aceptado' : 'Pendiente'}
+          <Badge
+            variant={
+              status === 'aceptado'
+                ? 'success'
+                : status === 'rechazado'
+                ? 'destructive'
+                : 'yellow'
+            }
+          >
+            {status === 'aceptado'
+              ? 'Aceptado'
+              : status === 'rechazado'
+              ? 'Rechazado'
+              : 'Pendiente'}
           </Badge>
         );
       },
@@ -209,7 +221,7 @@ function getEmployeeColums(
         const handleSelectArea = () => {
           handleEdit((row.original as any).area_full);
         };
-        return status === 'aceptado' ? null : (
+        return (status === 'aceptado'|| status === 'rechazado') ? null : (
           <Button
             size="sm"
             variant="outline"
@@ -314,7 +326,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
     position: emp.position?.name || undefined,
     documents: emp.documents?.map((doc) => ({
       id: doc.assignmentId || doc.id || '',
-      status: doc.status as 'aceptado' | 'pending',
+      status: doc.status as 'aceptado' | 'pending' | 'rechazado',
       acceptedAt: doc.acceptedAt,
       assignedAt: doc.assignedAt,
       document: doc.document // Preserve the nested document object
@@ -468,6 +480,10 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
 
   const pendingEmployees = employeesWithDocuments.filter((employee) =>
     employee.documents?.some((doc: ProcessedDocument) => doc.status === 'pending')
+  );
+
+  const rejectedEmployees = employeesWithDocuments.filter((employee) =>
+    employee.documents?.some((doc: ProcessedDocument) => doc.status === 'rechazado')
   );
 
   // Verificar si el documento existe
@@ -881,17 +897,32 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
                 <CardContent className="space-y-4">
                   <div className="text-center">
                     <div className="text-3xl font-bold">
-                      {acceptedEmployees.length}/{acceptedEmployees.length + pendingEmployees.length}
+                      {acceptedEmployees.length + rejectedEmployees.length}/{acceptedEmployees.length + pendingEmployees.length + rejectedEmployees.length}
                     </div>
-                    <p className="text-muted-foreground">Empleados aceptaron</p>
+                    <p className="text-muted-foreground">Progreso</p>
                   </div>
-                  <Progress
-                    value={(acceptedEmployees.length / (acceptedEmployees.length + pendingEmployees.length)) * 100}
-                    className="h-2"
-                  />
-                  <div className="flex justify-between text-sm">
-                    <span>{acceptedEmployees.length} aceptado</span>
-                    <span>{pendingEmployees.length} pendientes</span>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-green-600">✓ {acceptedEmployees.length} Aceptados</span>
+                      <span className="text-red-600">✗ {rejectedEmployees.length} Rechazados</span>
+                      <span className="text-yellow-600">⏳ {pendingEmployees.length} Pendientes</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                      <div className="flex h-full">
+                        <div 
+                          className="bg-green-500 h-full transition-all duration-300"
+                          style={{
+                            width: `${(acceptedEmployees.length / (acceptedEmployees.length + pendingEmployees.length + rejectedEmployees.length)) * 100}%`,
+                          }}
+                        ></div>
+                        <div 
+                          className="bg-red-500 h-full transition-all duration-300"
+                          style={{
+                            width: `${(rejectedEmployees.length / (acceptedEmployees.length + pendingEmployees.length + rejectedEmployees.length)) * 100}%`,
+                          }}
+                        ></div>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -969,7 +1000,24 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
               <CardHeader>
                 <CardTitle>Empleados</CardTitle>
                 <CardDescription>
-                  {acceptedEmployees.length} de {employeesWithDocuments.length} empleados han aceptado este documento
+                  <div className="flex flex-wrap gap-4">
+                    <span className="inline-flex items-center">
+                      <span className="w-3 h-3 rounded-full bg-green-500 mr-1"></span>
+                      {acceptedEmployees.length} Aceptados
+                    </span>
+                    <span className="inline-flex items-center">
+                      <span className="w-3 h-3 rounded-full bg-red-500 mr-1"></span>
+                      {rejectedEmployees.length} Rechazados
+                    </span>
+                    <span className="inline-flex items-center">
+                      <span className="w-3 h-3 rounded-full bg-yellow-500 mr-1"></span>
+                      {pendingEmployees.length} Pendientes
+                    </span>
+                    <span className="inline-flex items-center">
+                      <span className="w-3 h-3 rounded-full bg-gray-300 mr-1"></span>
+                      Total: {employeesWithDocuments.length} empleados
+                    </span>
+                  </div>
                 </CardDescription>
               </CardHeader>
               <CardContent>
