@@ -23,7 +23,7 @@ interface EvaluationProps {
   existingAnswers?: number[];
   employeeName?: string;
   attemptNumber?: number;
-  onUpdate?: (questions: Question[], passingScore: number) => void;
+  onUpdate?: (questions: Question[], passingScore: number, timeLimit: number) => void;
 }
 
 export function TrainingEvaluation({
@@ -45,12 +45,14 @@ export function TrainingEvaluation({
   // Estados para modo edición
   const [editableQuestions, setEditableQuestions] = useState<Question[]>(training.evaluation?.questions || []);
   const [passingScore, setPassingScore] = useState<number>(training.evaluation?.passingScore || 0);
+  const [timeLimit, setTimeLimit] = useState<number>(training.test_limit_time);
 
   // NUEVO: useEffect para sincronizar los estados editables con las props cuando está en modo edición
   useEffect(() => {
     if (mode === 'edit' && training?.evaluation) {
       setEditableQuestions(training.evaluation.questions || []);
       setPassingScore(training.evaluation.passingScore || 0);
+      // setTimeLimit(training.test_limit_time);
     }
   }, [training?.evaluation, mode]); // Dependencias para re-ejecutar el efecto
 
@@ -70,7 +72,7 @@ export function TrainingEvaluation({
 
     // Notificar al componente padre de los cambios
     if (onUpdate) {
-      onUpdate(updatedQuestions, passingScore);
+      onUpdate(updatedQuestions, passingScore, timeLimit);
     }
   };
 
@@ -81,7 +83,16 @@ export function TrainingEvaluation({
     setEditableQuestions(updatedQuestions);
 
     if (onUpdate) {
-      onUpdate(updatedQuestions, passingScore);
+      onUpdate(updatedQuestions, passingScore, timeLimit);
+    }
+  };
+  const handleUpdateTimeLimit = (timeLimit: number) => {
+    if (mode !== 'edit') return;
+
+    setTimeLimit(timeLimit);
+
+    if (onUpdate) {
+      onUpdate(editableQuestions, passingScore, timeLimit);
     }
   };
 
@@ -111,7 +122,7 @@ export function TrainingEvaluation({
     setEditableQuestions(updatedQuestions);
 
     if (onUpdate) {
-      onUpdate(updatedQuestions, passingScore);
+      onUpdate(updatedQuestions, passingScore, timeLimit);
     }
   };
 
@@ -128,7 +139,7 @@ export function TrainingEvaluation({
     setEditableQuestions(updatedQuestions);
 
     if (onUpdate) {
-      onUpdate(updatedQuestions, passingScore);
+      onUpdate(updatedQuestions, passingScore, timeLimit);
     }
   };
 
@@ -159,7 +170,7 @@ export function TrainingEvaluation({
     setEditableQuestions(updatedQuestions);
 
     if (onUpdate) {
-      onUpdate(updatedQuestions, passingScore);
+      onUpdate(updatedQuestions, passingScore, timeLimit);
     }
   };
 
@@ -170,7 +181,7 @@ export function TrainingEvaluation({
     setPassingScore(validScore);
 
     if (onUpdate) {
-      onUpdate(editableQuestions, validScore);
+      onUpdate(editableQuestions, validScore, timeLimit);
     }
   };
 
@@ -224,6 +235,7 @@ export function TrainingEvaluation({
               <Label htmlFor="passing-score">Respuestas correctas para aprobar:</Label>
               <div className="flex items-center space-x-2">
                 <Input
+                  disabled={(training?.attempts.length || 0) > 0 || false}
                   type="number"
                   id="passing-score"
                   min="0"
@@ -235,6 +247,19 @@ export function TrainingEvaluation({
                 <span className="text-sm text-muted-foreground">de {editableQuestions.length}</span>
               </div>
             </div>
+            <div className="flex items-center space-x-4">
+              <Label htmlFor="passing-score">Tiempo límite de evaluación:</Label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  disabled={(training?.attempts.length || 0) > 0 || false}
+                  type="number"
+                  id="passing-score"
+                  value={timeLimit}
+                  onChange={(e) => handleUpdateTimeLimit(Number.parseInt(e.target.value) || 0)}
+                  className="w-20"
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -242,7 +267,24 @@ export function TrainingEvaluation({
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Preguntas</h3>
 
-          {editableQuestions.length > 0 ? (
+          {training.attempts.length > 0 ? (
+            <>
+              <Card className="border-l-4 border-l-yellow-500">
+                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                  <div className="flex items-center">
+                    <XCircle className="h-5 w-5 text-yellow-500 mr-2" />
+                    <h3 className="font-medium">No se puede modificar</h3>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-0">
+                  <p className="text-muted-foreground">
+                    No se puede modificar la evaluación porque ya ha sido respondida por al menos un empleado. Crear una
+                    nueva capacitación si desea cambiar las preguntas o configuración.
+                  </p>
+                </CardContent>
+              </Card>
+            </>
+          ) : editableQuestions.length > 0 ? (
             <div className="space-y-4">
               {editableQuestions.map((question, qIndex) => (
                 <Card key={question.id} className="border-l-4 border-l-blue-500">
