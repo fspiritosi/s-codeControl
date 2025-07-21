@@ -105,26 +105,19 @@ const DocumentGrid = ({
             <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
               <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
               <span>
-                {getEmployeeCounts(document.id).accepted}/{getEmployeeCounts(document.id).rejected}/{getEmployeeCounts(document.id).total} empleados
-                <span className="text-xs text-green-600 ml-1">✓{getEmployeeCounts(document.id).accepted}</span>
-                <span className="text-xs text-red-600 ml-1">✗{getEmployeeCounts(document.id).rejected}</span>
+                {getEmployeeCounts(document.id).accepted + getEmployeeCounts(document.id).rejected}/{getEmployeeCounts(document.id).total} empleados
+                {/* <span className="text-xs text-green-600 ml-1">✓{getEmployeeCounts(document.id).accepted}</span>
+                <span className="text-xs text-red-600 ml-1">✗{getEmployeeCounts(document.id).rejected}</span> */}
               </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-              <div className="flex h-full">
+              {/* <div className="flex h-full"> */}
                 <div 
-                  className="bg-green-500 h-full transition-all duration-300"
+                  className="bg-black h-full transition-all duration-300"
                   style={{
-                    width: `${(getEmployeeCounts(document.id).accepted / getEmployeeCounts(document.id).total) * 100}%`,
+                    width: `${(getEmployeeCounts(document.id).accepted + getEmployeeCounts(document.id).rejected) / getEmployeeCounts(document.id).total * 100}%`,
                   }}
                 ></div>
-                <div 
-                  className="bg-red-500 h-full transition-all duration-300"
-                  style={{
-                    width: `${(getEmployeeCounts(document.id).rejected / getEmployeeCounts(document.id).total) * 100}%`,
-                  }}
-                ></div>
-              </div>
             </div>
             <div className="flex flex-col gap-2 pt-2">
               <div className="flex flex-wrap gap-2">
@@ -258,25 +251,12 @@ const DocumentList = ({
             <span>Fecha de vencimiento: {formatDate(doc.expiry_date) || 'sin vencimiento'}</span>
             <span className="flex items-center">
               <Users className="h-3 w-3 mr-1" />
-              {getEmployeeCounts(doc.id).accepted}/{getEmployeeCounts(doc.id).rejected}/{getEmployeeCounts(doc.id).total} empleados
-              <span className="text-xs text-green-600 ml-1">✓{getEmployeeCounts(doc.id).accepted}</span>
-              <span className="text-xs text-red-600 ml-1">✗{getEmployeeCounts(doc.id).rejected}</span>
+              {`${getEmployeeCounts(doc.id).accepted}/${getEmployeeCounts(doc.id).rejected}/${getEmployeeCounts(doc.id).total} empleados`}
+              {/* <span className="text-xs text-green-600 ml-1">✓{getEmployeeCounts(doc.id).accepted}</span>
+              <span className="text-xs text-red-600 ml-1">✗{getEmployeeCounts(doc.id).rejected}</span> */}
             </span>
             <div className="w-20 bg-gray-200 rounded-full h-1 ml-2 overflow-hidden">
-              <div className="flex h-full">
-                <div 
-                  className="bg-green-500 h-full transition-all duration-300"
-                  style={{
-                    width: `${(getEmployeeCounts(doc.id).accepted / getEmployeeCounts(doc.id).total) * 100}%`,
-                  }}
-                ></div>
-                <div 
-                  className="bg-red-500 h-full transition-all duration-300"
-                  style={{
-                    width: `${(getEmployeeCounts(doc.id).rejected / getEmployeeCounts(doc.id).total) * 100}%`,
-                  }}
-                ></div>
-              </div>
+              <div className="bg-black h-full transition-all duration-300" style={{ width: `${(getEmployeeCounts(doc.id).accepted / getEmployeeCounts(doc.id).total) * 100}%` }}></div>
             </div>
           </div>
         </div>
