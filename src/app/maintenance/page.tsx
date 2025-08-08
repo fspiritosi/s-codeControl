@@ -86,8 +86,8 @@ export default function CodeControlLogin() {
           if (error) {
             throw new Error(handleSupabaseError(error.message));
           }
-          // const { data: empleado } = await supabase.from("profile").select().eq("id", data.user.id);
-          // cookies.set('empleado_name', `${empleado?.[0].fullname || ''}`, { expires: 1 / 24 });
+          const { data: empleado } = await supabase.from("profile").select().eq("id", data.user.id);
+          cookies.set('empleado_name', `${empleado?.[0].fullname || ''}`, { expires: 1 / 24 });
           router.push(`/maintenance/${equipment_id}`);
         } else {
           const { data, error } = await supabase
