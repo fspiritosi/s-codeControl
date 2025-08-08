@@ -161,7 +161,18 @@ export default function SimpleDocument({
             });
 
           if (data?.length && data?.length > 0) {
-            setError(`documents.${index}.id_document_types`, {
+                    const { data: document, error: errorDocument } = await supabase
+            .from(tableName)
+            .select('*')
+            .eq(
+              'document_path',
+              `${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/${formatedAppliesName}/${formatedDocumentTypeName}-(${hasExpiredDate}).${fileExtension}`
+            );
+
+          console.log(document, 'document');
+
+          if (document?.length) {
+              setError(`documents.${index}.id_document_types`, {
               message: 'El documento ya ha sido subido anteriormente',
               type: 'validate',
               types: {
@@ -169,9 +180,8 @@ export default function SimpleDocument({
               },
             });
             setLoading(false);
-            hasError = true;
-
             throw new Error('El documento ya ha sido subido anteriormente');
+          }
           }
 
           if (hasError) {
@@ -187,7 +197,7 @@ export default function SimpleDocument({
               files?.[index] || document.file,
               {
                 cacheControl: '3600',
-                upsert: false,
+                upsert: true,
               }
             );
 
@@ -210,7 +220,7 @@ export default function SimpleDocument({
             const { error, data: userupdated } = await supabase
               .from(tableName)
               .update(data)
-              .eq('applies', idApplies || updateEntries[index].applies)
+              .eq('applies', typeof idApplies === 'object' ? idApplies?.id : idApplies || updateEntries[index].applies)
               .eq('id_document_types', updateEntries[index].id_document_types);
 
             if (error) {
