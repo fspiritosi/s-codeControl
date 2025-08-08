@@ -36,8 +36,6 @@ export default async function Home({
     ).then((e) => e.json());
 
     role = shared_user?.[0]?.role;
-
-    //console.log(shared_user, 'role');
   }
   const { types_of_repairs } = await fetch(`${URL}/api/repairs?actual=${equipments[0].company_id}`).then((res) =>
     res.json()
@@ -50,9 +48,6 @@ export default async function Home({
     )
     .eq('equipment_id', params.id)
     .in('state', ['Pendiente', 'Esperando repuestos', 'En reparación']);
-
-  // console.log(data, 'data');
-  // console.log(error, 'error');
 
   const vehiclesFormatted = setVehiclesToShow(equipments || []) || [];
 
@@ -73,12 +68,6 @@ export default async function Home({
   }));
   const currentEquipment = equipmentsForComboBox.find((equipment) => equipment.value === params.id);
 
-  // console.log(checklists, 'checklists');
-
-  console.log(role, 'role');
-  console.log(checklists, 'checklists');
-
-  // console.log(currentEquipment, 'currentEquipment');
   return (
     <QrActionSelector
       user={user}
