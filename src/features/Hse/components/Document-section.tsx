@@ -471,7 +471,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags, 
   //       }
   //     });
   // };
-  console.log(documents, 'DocumentsSection')
+  
   const filterAndSortDocuments = (docs: Document[]) => {
     return docs
       .filter((doc) => {
