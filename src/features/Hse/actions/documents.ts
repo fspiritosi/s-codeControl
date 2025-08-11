@@ -28,7 +28,7 @@ export interface DocumentVersion {
   expiry_date: string | null
   description: string | null
   title: string
-  status: 'active' | 'expired' | 'pending' | 'inactive' | 'borrador'
+  status: 'active' | 'vencido' | 'pending' | 'inactive' | 'borrador'
   isCurrent: boolean
   acceptedCount?: number | null
   rejectedCount?: number | null
@@ -48,7 +48,7 @@ export interface Document {
   file_type: string
   upload_date: string
   expiry_date: string | null
-  status: 'active' | 'expired' | 'pending' | 'inactive' | 'borrador'
+  status: 'active' | 'vencido' | 'pending' | 'inactive' | 'borrador'
   created_by: string
   created_at: string
   updated_at: string
@@ -118,7 +118,7 @@ export interface ProcessedEmployee {
 
 // Obtener todos los documentos con sus etiquetas
 export async function getDocuments(company_id: string, filters?: {
-  status?: 'active' | 'expired' | 'pending'
+  status?: 'active' | 'vencido' | 'pending'
   search?: string
 }) {
   const supabase = supabaseServer()
@@ -722,7 +722,7 @@ export async function createDocumentVersion(
     const versionData = {
       document_id: documentId,
       title: existingDoc.title,
-      status: "expired",
+      status: "vencido",
       version: existingDoc.version,
       file_path: existingDoc.file_path,
       file_name: existingDoc.file_name,

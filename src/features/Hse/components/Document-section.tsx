@@ -471,7 +471,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags, 
   //       }
   //     });
   // };
-
+  console.log(documents, 'DocumentsSection')
   const filterAndSortDocuments = (docs: Document[]) => {
     return docs
       .filter((doc) => {
@@ -508,7 +508,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags, 
   // }, [documents, selectedTags, selectedDocTypes]);
   const activeDocuments = documents.filter((doc) => doc.status === 'active');
   const draftDocuments = documents.filter((doc) => doc.status === 'borrador');
-  const expiredDocuments = documents.filter((doc) => doc.status === 'expired');
+  const expiredDocuments = documents.filter((doc) => doc.status === 'vencido');
   const currentTabDocuments =
     tab === 'active' ? activeDocuments : tab === 'drafts' ? draftDocuments : tab === 'expired' ? expiredDocuments : [];
 
