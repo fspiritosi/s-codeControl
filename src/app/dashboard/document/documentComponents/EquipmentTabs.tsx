@@ -5,6 +5,7 @@ import { formatVehiculesDocuments } from '@/lib/utils';
 import { ExpiredColums } from '../../colums';
 import { ColumnsMonthly } from '../../columsMonthly';
 import { ExpiredDataTable } from '../../data-table';
+import { ColumnsMonthlyEquipment } from '../../columsMonthlyEquipment';
 
 async function EquipmentTabs() {
   const monthlyDocuments = (await fetchMonthlyDocumentsEquipment()).map(formatVehiculesDocuments);
@@ -31,7 +32,7 @@ async function EquipmentTabs() {
       <TabsContent value="mensuales">
         <ExpiredDataTable
           data={monthlyDocuments || []}
-          columns={ColumnsMonthly}
+          columns={ColumnsMonthlyEquipment}
           pending={true}
           vehicles
           defaultVisibleColumnsCustom={['resource', 'documentName', 'validity', 'id', 'mandatory', 'state']}

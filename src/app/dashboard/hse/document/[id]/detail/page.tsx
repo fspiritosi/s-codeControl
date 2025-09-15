@@ -952,7 +952,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
                     <Clock className="h-4 w-4 mr-2" />
                     Extender Vigencia
                   </Button>
-                  {document?.status !== 'expired' && (
+                  {document?.status !== 'vencido' && (
                     <Button
                       variant="outline"
                       className="w-full justify-start truncate"
