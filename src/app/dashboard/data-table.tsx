@@ -84,87 +84,91 @@ export function ExpiredDataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
   const tableId = "expiredDataTable";
   // Estados para la tabla
-    const [sorting, setSorting] = useState<SortingState>(() => {
-      // Cargar desde sessionStorage al inicializar
-      if (typeof window !== "undefined") {
-        const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
-        if (savedFilters) {
-          try {
-            const parsedFilters = JSON.parse(savedFilters)
-            if (parsedFilters.sorting) return parsedFilters.sorting
-          } catch (error) {
-            console.error("Error al cargar sorting:", error)
-          }
+  const [sorting, setSorting] = useState<SortingState>(() => {
+    // Cargar desde sessionStorage al inicializar
+    if (typeof window !== "undefined") {
+      const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
+      if (savedFilters) {
+        try {
+          const parsedFilters = JSON.parse(savedFilters)
+          if (parsedFilters.sorting) return parsedFilters.sorting
+        } catch (error) {
+          console.error("Error al cargar sorting:", error)
         }
       }
-      return []
-    })
+    }
+    return []
+  })
 
-    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => {
-        // Cargar desde sessionStorage al inicializar
-        if (typeof window !== "undefined") {
-          const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
-          if (savedFilters) {
-            try {
-              const parsedFilters = JSON.parse(savedFilters)
-              if (parsedFilters.columnFilters) return parsedFilters.columnFilters
-            } catch (error) {
-              console.error("Error al cargar columnFilters:", error)
-            }
-          }
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => {
+    // Cargar desde sessionStorage al inicializar
+    if (typeof window !== "undefined") {
+      const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
+      if (savedFilters) {
+        try {
+          const parsedFilters = JSON.parse(savedFilters)
+          if (parsedFilters.columnFilters) return parsedFilters.columnFilters
+        } catch (error) {
+          console.error("Error al cargar columnFilters:", error)
         }
-        return []
-      })
+      }
+    }
+    return []
+  })
 
-      // Añadir estado para el tamaño de página
-        const [pageSize, setPageSize] = useState<number>(() => {
-          // Cargar desde sessionStorage al inicializar
-          if (typeof window !== "undefined") {
-            const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
-            if (savedFilters) {
-              try {
-                const parsedFilters = JSON.parse(savedFilters)
-                if (parsedFilters.pageSize) return parsedFilters.pageSize
-              } catch (error) {
-                console.error("Error al cargar pageSize:", error)
-              }
-            }
-          }
-          return 20 // Valor por defecto
-        })
+  // Añadir estado para el tamaño de página y el índice de página (paginación controlada)
+  const initialPageSize = (() => {
+    if (typeof window !== "undefined") {
+      const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
+      if (savedFilters) {
+        try {
+          const parsedFilters = JSON.parse(savedFilters)
+          if (parsedFilters.pageSize) return parsedFilters.pageSize as number
+        } catch (error) {
+          console.error("Error al cargar pageSize:", error)
+        }
+      }
+    }
+    return 20
+  })()
 
-        const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-          const [defaultColumns, setDefaultColumns] = useState<any[]>([])
-          const [showInactive, setShowInactive] = useState(false)
-        
-          const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(() => {
-            // Cargar desde sessionStorage al inicializar
-            if (typeof window !== "undefined") {
-              const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
-              if (savedFilters) {
-                try {
-                  const parsedFilters = JSON.parse(savedFilters)
-                  if (parsedFilters.selectValues) return parsedFilters.selectValues
-                } catch (error) {
-                  console.error("Error al cargar selectValues:", error)
-                }
-              }
-            }
-            return {}
-          })
-        
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: initialPageSize,
+  })
+
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [defaultColumns, setDefaultColumns] = useState<any[]>([])
+  const [showInactive, setShowInactive] = useState(false)
+
+  const [selectValues, setSelectValues] = useState<{ [key: string]: string }>(() => {
+    // Cargar desde sessionStorage al inicializar
+    if (typeof window !== "undefined") {
+      const savedFilters = sessionStorage.getItem(`table-filters-${tableId}`)
+      if (savedFilters) {
+        try {
+          const parsedFilters = JSON.parse(savedFilters)
+          if (parsedFilters.selectValues) return parsedFilters.selectValues
+        } catch (error) {
+          console.error("Error al cargar selectValues:", error)
+        }
+      }
+    }
+    return {}
+  })
+
   // Guardar filtros en sessionStorage cuando cambien
-    useEffect(() => {
-      if (typeof window !== "undefined") {
-        const filtersToSave = {
-          sorting,
-          columnFilters,
-          selectValues,
-          pageSize,
-        }
-        sessionStorage.setItem(`table-filters-${tableId}`, JSON.stringify(filtersToSave))
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const filtersToSave = {
+        sorting,
+        columnFilters,
+        selectValues,
+        pageSize: pagination.pageSize,
       }
-    }, [sorting, columnFilters, selectValues, pageSize])
+      sessionStorage.setItem(`table-filters-${tableId}`, JSON.stringify(filtersToSave))
+    }
+  }, [sorting, columnFilters, selectValues, pagination.pageSize])
 
 
   const loader = useLoggedUserStore((state) => state.isLoading);
@@ -217,18 +221,10 @@ export function ExpiredDataTable<TData, TValue>({
       sorting,
       columnVisibility,
       columnFilters,
-      pagination: {
-        pageIndex: 0,
-        pageSize,
-      },
+      pagination,
     },
-    // Añadir manejador para cambios en la paginación
-    onPaginationChange: (updater) => {
-      const newPagination = typeof updater === "function" ? updater(table.getState().pagination) : updater
-      if (newPagination.pageSize !== pageSize) {
-        setPageSize(newPagination.pageSize)
-      }
-    },
+    // Manejador directo de paginación: actualiza pageIndex y pageSize
+    onPaginationChange: setPagination,
     sortingFns: {
       myCustomSortingFn: (rowA, rowB, columnId) => {
         return rowA.original[columnId] > rowB.original[columnId]
@@ -242,17 +238,17 @@ export function ExpiredDataTable<TData, TValue>({
   });
 
   // Aplicar los filtros guardados cuando la tabla esté lista
-    useEffect(() => {
-      if (defaultColumns.length > 0) {
-        // Aplicar los filtros guardados a las columnas correspondientes
-        columnFilters.forEach((filter) => {
-          const column = table.getColumn(filter.id)
-          if (column) {
-            column.setFilterValue(filter.value)
-          }
-        })
-      }
-    }, [defaultColumns, table])
+  useEffect(() => {
+    if (defaultColumns.length > 0) {
+      // Aplicar los filtros guardados a las columnas correspondientes
+      columnFilters.forEach((filter) => {
+        const column = table.getColumn(filter.id)
+        if (column) {
+          column.setFilterValue(filter.value)
+        }
+      })
+    }
+  }, [defaultColumns, table])
 
   const handleColumnVisibilityChange = (columnId: string, isVisible: boolean) => {
     setColumnVisibility((prev) => ({
@@ -323,7 +319,7 @@ export function ExpiredDataTable<TData, TValue>({
   } else {
     allOptions.resource = createOptions('resource');
   }
-  const maxRows = ['2','20', '40', '60', '80', '100'];
+  const maxRows = ['10', '20', '40', '60', '80', '100'];
   const handleClearFilters = () => {
     table.getAllColumns().forEach((column) => {
       column.setFilterValue('');
@@ -350,20 +346,20 @@ export function ExpiredDataTable<TData, TValue>({
     showLastMonth();
   };
 
-  
+
   const getColorForRow = (row: any) => {
     const isNoPresented = row.getValue('state') === 'pendiente';
     if (isNoPresented) {
       return; // Clase por defecto si no está vencido
     } else {
       if (!row.original.validity) return;
-  
+
       const validityDateStr = row.original.validity; // Obtener la fecha en formato "dd/mm/yyyy"
 
       const validityDate = moment(validityDateStr);
       const currentDate = moment();
       const differenceInDays = validityDate.diff(currentDate, 'days');
-  
+
       if (differenceInDays < 0) {
         return 'bg-red-100 dark:bg-red-100/30 hover:bg-red-100/30'; // Vencido
       } else if (differenceInDays <= 7) {
@@ -566,37 +562,37 @@ export function ExpiredDataTable<TData, TValue>({
               <AlertDialogDescription className="max-h-[65vh] overflow-y-auto">
                 {table.getFilteredRowModel().rows.filter((row: any) => row.original.state === 'pendiente').length >
                   0 && (
-                  <div>
-                    <CardDescription className="underline">
-                      Alerta: Hay documentos que estan pendientes y no se descargarán
-                    </CardDescription>
-                    <Accordion type="single" collapsible>
-                      <AccordionItem value="item-1">
-                        <AccordionTrigger className="text-red-600">
-                          {
-                            table.getFilteredRowModel().rows.filter((row: any) => row.original.state === 'pendiente')
-                              .length
-                          }{' '}
-                          Documentos pendientes
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <div className="flex flex-col gap-2">
-                            {table
-                              .getFilteredRowModel()
-                              .rows.filter((row: any) => row.original.state === 'pendiente')
-                              .map((row) => (
-                                <Card className="p-2 border-red-300" key={row.id}>
-                                  <CardDescription>
-                                    {(row.original as any).resource} ({(row.original as any).documentName})
-                                  </CardDescription>
-                                </Card>
-                              ))}
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  </div>
-                )}
+                    <div>
+                      <CardDescription className="underline">
+                        Alerta: Hay documentos que estan pendientes y no se descargarán
+                      </CardDescription>
+                      <Accordion type="single" collapsible>
+                        <AccordionItem value="item-1">
+                          <AccordionTrigger className="text-red-600">
+                            {
+                              table.getFilteredRowModel().rows.filter((row: any) => row.original.state === 'pendiente')
+                                .length
+                            }{' '}
+                            Documentos pendientes
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="flex flex-col gap-2">
+                              {table
+                                .getFilteredRowModel()
+                                .rows.filter((row: any) => row.original.state === 'pendiente')
+                                .map((row) => (
+                                  <Card className="p-2 border-red-300" key={row.id}>
+                                    <CardDescription>
+                                      {(row.original as any).resource} ({(row.original as any).documentName})
+                                    </CardDescription>
+                                  </Card>
+                                ))}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    </div>
+                  )}
                 <Accordion type="single" collapsible>
                   <AccordionItem value="item-1">
                     <AccordionTrigger className="text-green-600">
@@ -652,83 +648,83 @@ export function ExpiredDataTable<TData, TValue>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.id in selectHeader ? (
-                              header.id === 'allocated_to' ? (
-                                <div className="flex justify-center">
-                                  <Input
-                                    placeholder="Buscar por afectación"
-                                    value={table.getColumn('allocated_to')?.getFilterValue() as string}
-                                    onChange={(event) =>
-                                      table.getColumn('allocated_to')?.setFilterValue(event.target.value)
-                                    }
-                                    className="max-w-sm"
-                                  />
-                                </div>
-                              ) : (
-                                <div className="flex justify-center">
-                                  <Select
-                                    value={selectValues[header.id]}
-                                    onValueChange={(event) => {
-                                      if (event === 'Todos') {
-                                        table.getColumn(header.id)?.setFilterValue('');
-                                        setSelectValues({
-                                          ...selectValues,
-                                          [header.id]: event,
-                                        });
-                                        return;
-                                      }
-                                      table.getColumn(header.id)?.setFilterValue(event);
-
+                          header.id in selectHeader ? (
+                            header.id === 'allocated_to' ? (
+                              <div className="flex justify-center">
+                                <Input
+                                  placeholder="Buscar por afectación"
+                                  value={table.getColumn('allocated_to')?.getFilterValue() as string}
+                                  onChange={(event) =>
+                                    table.getColumn('allocated_to')?.setFilterValue(event.target.value)
+                                  }
+                                  className="max-w-sm"
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex justify-center">
+                                <Select
+                                  value={selectValues[header.id]}
+                                  onValueChange={(event) => {
+                                    if (event === 'Todos') {
+                                      table.getColumn(header.id)?.setFilterValue('');
                                       setSelectValues({
                                         ...selectValues,
                                         [header.id]: event,
                                       });
-                                    }}
-                                  >
-                                    <SelectTrigger className="">
-                                      <SelectValue
-                                        placeholder={
-                                          header.column.columnDef.header === 'Empleado' && vehicles
-                                            ? 'Vehículo'
-                                            : (header.column.columnDef.header as string)
-                                        }
+                                      return;
+                                    }
+                                    table.getColumn(header.id)?.setFilterValue(event);
+
+                                    setSelectValues({
+                                      ...selectValues,
+                                      [header.id]: event,
+                                    });
+                                  }}
+                                >
+                                  <SelectTrigger className="">
+                                    <SelectValue
+                                      placeholder={
+                                        header.column.columnDef.header === 'Empleado' && vehicles
+                                          ? 'Vehículo'
+                                          : (header.column.columnDef.header as string)
+                                      }
+                                    />
+                                  </SelectTrigger>
+                                  {header.id === 'resource' && (
+                                    <div className=" grid place-content-center ml-0 pl-0">
+                                      <ArrowUpDown
+                                        onClick={() => column?.toggleSorting(column?.getIsSorted() === 'asc')}
+                                        className="ml-1 h-4 w-4 cursor-pointer"
                                       />
-                                    </SelectTrigger>
-                                    {header.id === 'resource' && (
-                                      <div className=" grid place-content-center ml-0 pl-0">
-                                        <ArrowUpDown
-                                          onClick={() => column?.toggleSorting(column?.getIsSorted() === 'asc')}
-                                          className="ml-1 h-4 w-4 cursor-pointer"
-                                        />
-                                      </div>
-                                    )}
-                                    {header.id === 'Vencimiento' && (
-                                      <div className=" grid place-content-center ml-0 pl-0">
-                                        <ArrowUpDown
-                                          onClick={() => column?.toggleSorting(column?.getIsSorted() === 'asc')}
-                                          className="ml-1 h-4 w-4 cursor-pointer"
-                                        />
-                                      </div>
-                                    )}
-                                    <SelectContent>
-                                      <SelectGroup>
-                                        {selectHeader[header.id as keyof typeof selectHeader]?.option?.map(
-                                          (option: string) => (
-                                            <SelectItem key={option} value={option}>
-                                              {option}
-                                            </SelectItem>
-                                          )
-                                        )}
-                                      </SelectGroup>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              )
-                            ) : (
-                              header.column.columnDef.header
-                            ),
-                            header.getContext()
-                          )}
+                                    </div>
+                                  )}
+                                  {header.id === 'Vencimiento' && (
+                                    <div className=" grid place-content-center ml-0 pl-0">
+                                      <ArrowUpDown
+                                        onClick={() => column?.toggleSorting(column?.getIsSorted() === 'asc')}
+                                        className="ml-1 h-4 w-4 cursor-pointer"
+                                      />
+                                    </div>
+                                  )}
+                                  <SelectContent>
+                                    <SelectGroup>
+                                      {selectHeader[header.id as keyof typeof selectHeader]?.option?.map(
+                                        (option: string) => (
+                                          <SelectItem key={option} value={option}>
+                                            {option}
+                                          </SelectItem>
+                                        )
+                                      )}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )
+                          ) : (
+                            header.column.columnDef.header
+                          ),
+                          header.getContext()
+                        )}
                     </TableHead>
                   );
                 })}
@@ -796,7 +792,3 @@ export function ExpiredDataTable<TData, TValue>({
     </div>
   );
 }
-
-// {pending
-//   ? 'No hay documentos pendientes'
-//   : 'No hay documentos a vencer'}

@@ -197,6 +197,7 @@ export const fetchEmployeeMonthlyDocuments = async () => {
     .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
     .eq('applies.company_id', company_id)
     .eq('id_document_types.is_it_montlhy', true)
+    .eq('applies.is_active', true)
     .not('id_document_types', 'is', null)
     .not('applies', 'is', null)
     .returns<EmployeeDocumentWithContractors[]>();
@@ -303,6 +304,7 @@ export const fetchEmployeePermanentDocuments = async () => {
     .from('documents_employees')
     .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
     .eq('applies.company_id', company_id)
+    .eq('applies.is_active', true)
     .not('id_document_types.is_it_montlhy', 'is', true)
     .not('id_document_types', 'is', null)
     .not('applies', 'is', null)
@@ -437,21 +439,21 @@ export const getDocumentEmployeesById = async (id: string) => {
           `
     )
     .eq('id', id);
-    return documents_employee;
-}
+  return documents_employee;
+};
 export const getDocumentEquipmentById = async (id: string) => {
   const supabase = supabaseServer();
   let { data: documents_vehicle } = await supabase
-      .from('documents_equipment')
-      .select(
-        `
+    .from('documents_equipment')
+    .select(
+      `
       *,
       document_types(*),
       applies(*,brand(name),model(name),type_of_vehicle(name), company_id(*,province_id(name)))`
-      )
-      .eq('id', id);
-      return documents_vehicle;
-}
+    )
+    .eq('id', id);
+  return documents_vehicle;
+};
 // Equipment-related actions
 export const fetchAllEquipment = async (company_equipment_id?: string) => {
   const cookiesStore = cookies();
@@ -541,6 +543,7 @@ export const fetchMonthlyDocumentsEquipment = async () => {
     .from('documents_equipment')
     .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
     .eq('id_document_types.is_it_montlhy', true)
+    .eq('applies.is_active', true)
     .eq('applies.company_id', company_id)
     .not('id_document_types', 'is', null)
     .not('applies', 'is', null)
@@ -603,6 +606,7 @@ export const fetchPermanentDocumentsEquipment = async () => {
     .from('documents_equipment')
     .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
     .eq('applies.company_id', company_id)
+    .eq('applies.is_active', true)
     .not('id_document_types.is_it_montlhy', 'is', true)
     .not('id_document_types', 'is', null)
     .not('applies', 'is', null)
@@ -621,21 +625,21 @@ export const fetchEquipmentById = async (id: string) => {
   if (!company_id) return [];
 
   const { data: vehicleData, error } = await supabase
-      .from('vehicles')
-      .select('*, brand_vehicles(name), model_vehicles(name),types_of_vehicles(name),type(name)')
-      .eq('id', id);
+    .from('vehicles')
+    .select('*, brand_vehicles(name), model_vehicles(name),types_of_vehicles(name),type(name)')
+    .eq('id', id);
 
   if (error) console.log('eroor', error);
 
   const vehicle = vehicleData?.map((item: any) => ({
-      ...item,
-      type_of_vehicle: item.types_of_vehicles.name,
-      brand: item.brand_vehicles.name,
-      model: item.model_vehicles.name,
-      type: item.type.name,
-    }));
-    return vehicle;
-}
+    ...item,
+    type_of_vehicle: item.types_of_vehicles.name,
+    brand: item.brand_vehicles.name,
+    model: item.model_vehicles.name,
+    type: item.type.name,
+  }));
+  return vehicle;
+};
 // Repair-related actions
 export const fetchAllOpenRepairRequests = async () => {
   const cookiesStore = cookies();
@@ -969,10 +973,9 @@ export const fetchDiagramsTypes = async () => {
   return data;
 };
 
-
 export async function getCompanyDetails(companyId: string) {
   const supabase = supabaseServer();
-  
+
   const { data, error } = await supabase
     .from('company')
     .select('id, company_name, website, contact_email, company_logo')
