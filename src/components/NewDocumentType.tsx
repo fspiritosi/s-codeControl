@@ -128,6 +128,29 @@ export default function NewDocumentType({
       private: values.private,
     };
 
+    // Validación de duplicados por nombre y aplica dentro del alcance (company_id actual o global)
+    const companyScope = codeControlClient ? useLoggedUserStore.getState().actualCompany?.id : null;
+    let dupQuery = supabase
+      .from('document_types')
+      .select('id')
+      .eq('name', formattedValues.name)
+      .eq('applies', values.applies);
+
+    if (companyScope) {
+      dupQuery = dupQuery.or(`company_id.eq.${companyScope},company_id.is.null`);
+    } else {
+      // Solo tipos globales cuando no hay empresa actual
+      // Nota: usamos .or con una única condición por consistencia
+      dupQuery = dupQuery.or('company_id.is.null');
+    }
+
+    const { data: existing } = await dupQuery;
+
+    if (existing && existing.length > 0) {
+      toast.error('Ya existe un tipo de documento con ese nombre para esta aplicación');
+      return;
+    }
+
     toast.promise(
       async () => {
         const { data, error } = await supabase.from('document_types').insert(formattedValues).select();
