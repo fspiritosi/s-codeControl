@@ -45,12 +45,12 @@ const DocumentsTable = ({ data, filters, children, onToggleActive }: DocumentsTa
           <TableCell className="text-center">
             <div className="flex gap-2 justify-center">
               <EditModal Equipo={doc} />
-              {onToggleActive && (
+              {onToggleActive && !doc.is_active && (
                 <Button
-                  variant={doc.is_active ? 'destructive' : 'success'}
-                  onClick={() => onToggleActive(doc, !doc.is_active)}
+                  variant="success"
+                  onClick={() => onToggleActive(doc, true)}
                 >
-                  {doc.is_active ? 'Dar de baja' : 'Reactivar'}
+                  Reactivar
                 </Button>
               )}
             </div>

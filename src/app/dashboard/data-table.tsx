@@ -69,6 +69,7 @@ interface DataTableProps<TData, TValue> {
   localStorageName: string;
   monthly?: boolean;
   permanent?: boolean;
+  tableId?: string;
 }
 
 export function ExpiredDataTable<TData, TValue>({
@@ -81,8 +82,8 @@ export function ExpiredDataTable<TData, TValue>({
   localStorageName,
   monthly,
   permanent,
+  tableId = "expiredDataTable",
 }: DataTableProps<TData, TValue>) {
-  const tableId = "expiredDataTable";
   // Estados para la tabla
   const [sorting, setSorting] = useState<SortingState>(() => {
     // Cargar desde sessionStorage al inicializar
