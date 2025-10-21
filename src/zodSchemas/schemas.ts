@@ -2,35 +2,115 @@ import { validarCUIL } from '@/lib/utils';
 import * as z from 'zod';
 import { supabase } from '../../supabase/supabase';
 
-const getAllFiles = async (legajo: string) => {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+const getAllFiles = async (legajo: string, company_id?: string) => {
+  // Obtener el company_id actual si no se proporciona
+  if (!company_id) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  const profile = await supabase.from('profile').select('*').eq('credential_id', user?.id);
-
-  const { data } = await supabase.from('company').select('*').eq('owner_id', profile.data?.[0].id);
+    const profile = await supabase.from('profile').select('*').eq('credential_id', user?.id);
+    const { data: company } = await supabase.from('company').select('*').eq('owner_id', profile.data?.[0].id);
+    company_id = company?.[0]?.id;
+  }
 
   const { data: employee } = await supabase
     .from('employees')
     .select('*')
-    // .eq('company_id', data?.[0].id)
+    .eq('company_id', company_id)
     .eq('file', legajo);
 
   if (employee && employee.length > 0) {
-    return true;
+    return false; // Ya existe
   } else {
-    return true;
+    return true; // No existe, es válido
   }
 };
 
-const validateDuplicatedCuil = async (cuil: string) => {
-  const { data: employees } = await supabase.from('company').select('*').eq('company_cuit', cuil);
+const getAllFilesForUpdate = async (legajo: string, employeeId: string, company_id?: string) => {
+  // Obtener el company_id actual si no se proporciona
+  if (!company_id) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const profile = await supabase.from('profile').select('*').eq('credential_id', user?.id);
+    const { data: company } = await supabase.from('company').select('*').eq('owner_id', profile.data?.[0].id);
+    company_id = company?.[0]?.id;
+  }
+
+  const { data: employee } = await supabase
+    .from('employees')
+    .select('*')
+    .eq('company_id', company_id)
+    .eq('file', legajo)
+    .neq('id', employeeId); // Excluir el empleado actual
+
+  if (employee && employee.length > 0) {
+    return false; // Ya existe otro empleado con este legajo
+  } else {
+    return true; // No existe, es válido
+  }
+};
+
+const validateDuplicatedCompanyCuit = async (cuit: string) => {
+  const { data: companies } = await supabase.from('company').select('*').eq('company_cuit', cuit);
+
+  if (companies && companies.length > 0) {
+    return false; // Ya existe
+  } else {
+    return true; // No existe, es válido
+  }
+};
+
+const validateDuplicatedCuil = async (cuil: string, company_id?: string) => {
+  // Obtener el company_id actual si no se proporciona
+  if (!company_id) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const profile = await supabase.from('profile').select('*').eq('credential_id', user?.id);
+    const { data: company } = await supabase.from('company').select('*').eq('owner_id', profile.data?.[0].id);
+    company_id = company?.[0]?.id;
+  }
+
+  const { data: employees } = await supabase
+    .from('employees')
+    .select('*')
+    .eq('cuil', cuil)
+    .eq('company_id', company_id);
 
   if (employees && employees.length > 0) {
-    return false;
+    return false; // Ya existe
   } else {
-    return true;
+    return true; // No existe, es válido
+  }
+};
+
+const validateDuplicatedCuilForUpdate = async (cuil: string, employeeId: string, company_id?: string) => {
+  // Obtener el company_id actual si no se proporciona
+  if (!company_id) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const profile = await supabase.from('profile').select('*').eq('credential_id', user?.id);
+    const { data: company } = await supabase.from('company').select('*').eq('owner_id', profile.data?.[0].id);
+    company_id = company?.[0]?.id;
+  }
+
+  const { data: employees } = await supabase
+    .from('employees')
+    .select('*')
+    .eq('cuil', cuil)
+    .eq('company_id', company_id)
+    .neq('id', employeeId); // Excluir el empleado actual
+
+  if (employees && employees.length > 0) {
+    return false; // Ya existe otro empleado con este CUIL
+  } else {
+    return true; // No existe, es válido
   }
 };
 
@@ -129,7 +209,7 @@ export const companySchema = z.object({
     )
     .refine(
       async (value) => {
-        return await validateDuplicatedCuil(value);
+        return await validateDuplicatedCompanyCuit(value);
       },
       {
         message: 'Ya existe una compañía con este CUIT.',
@@ -209,20 +289,14 @@ export const editCompanySchema = z.object({
       },
       { message: 'El CUIT es inválido' }
     )
-    .refine((value) => {
-      return new Promise(async (resolve, reject) => {
-        try {
-          const isDuplicated = await validateDuplicatedCuil(value);
-          if (!isDuplicated) {
-            resolve(true);
-          } else {
-            reject(new Error('Ya existe una compañía con este CUIT.'));
-          }
-        } catch (error) {
-          reject(error);
-        }
-      });
-    }),
+    .refine(
+      async (value) => {
+        return await validateDuplicatedCompanyCuit(value);
+      },
+      {
+        message: 'Ya existe una compañía con este CUIT.',
+      }
+    ),
 
   description: z
     .string()
@@ -280,6 +354,171 @@ export const editCompanySchema = z.object({
 });
 
 export const accordionSchema = z
+  .object({
+    full_name: z.string().min(2, {}).optional(),
+    lastname: z
+      .string({ required_error: 'El apellido es requerido' })
+      .min(2, {
+        message: 'El apellido debe tener al menos 2 caracteres.',
+      })
+      .max(40, { message: 'El lastname debe tener menos de 40 caracteres.' }),
+    firstname: z
+      .string({ required_error: 'El nombre es requerido' })
+      .min(2, {
+        message: 'El nombre debe tener al menos 2 caracteres.',
+      })
+      .max(40, { message: 'La nombre debe tener menos de 40 caracteres.' }),
+    nationality: z.string({
+      required_error: 'La nacionalidad es requerida',
+    }),
+    born_date: z
+      .date({
+        required_error: 'La fecha de nacimiento es requerida',
+      })
+      .or(z.string()),
+    cuil: z
+      .string({ required_error: 'El cuil es requerido' })
+      .refine((value) => /^\d{11}$/.test(value), {
+        message: 'El CUIT debe contener 11 números.',
+      })
+      .refine(
+        (cuil) => {
+          return validarCUIL(cuil);
+        },
+        { message: 'El CUIT es inválido' }
+      )
+      .refine(
+        async (value) => {
+          return await validateDuplicatedCuil(value);
+        },
+        {
+          message: 'Ya existe un empleado con este CUIL en la empresa',
+        }
+      ),
+    document_type: z.string({
+      required_error: 'El tipo de documento es requerido',
+    }),
+    document_number: z
+      .string({ required_error: 'El numero de documento es requerido' })
+      .min(7, {
+        message: 'El documento debe tener al menos 7 caracteres.',
+      })
+      .max(10, {
+        message: 'El documento debe tener menos de 11 caracteres.',
+      }),
+    birthplace: z.string({
+      required_error: 'El lugar de nacimiento es requerido',
+    }),
+    gender: z.string({
+      required_error: 'El género es requerido',
+    }),
+    marital_status: z.string({
+      required_error: 'El estado civil es requerido',
+    }),
+    level_of_education: z.string({
+      required_error: 'El nivel de educación es requerido',
+    }),
+    picture: z.string().optional(),
+    street: z
+      .string({ required_error: 'la calle es requerida' })
+      .min(2, {
+        message: 'La calle debe tener al menos 2 caracteres.',
+      })
+      .max(30, { message: 'La compañia debe tener menos de 30 caracteres.' }),
+    street_number: z
+      .string({ required_error: 'la altura es requerida' })
+      .min(1, {
+        message: 'El número debe tener al menos 1 caracteres.',
+      })
+      .max(7, { message: 'La compañia debe tener menos de 7 caracteres.' }),
+    province: z.string({
+      required_error: 'La provincia es requerida',
+    }),
+    city: z.string({
+      required_error: 'La ciudad es requerida',
+    }),
+    postal_code: z
+      .string({ required_error: 'El codigo postal es requerido' })
+      .min(4, {
+        message: 'El código postal debe tener al menos 4 caracteres.',
+      })
+      .max(15, { message: 'La compañia debe tener menos de 15 caracteres.' }),
+    phone: z
+      .string({ required_error: 'El numero de teléfono es requerido' })
+      .min(4, {
+        message: 'El teléfono debe tener al menos 4 caracteres.',
+      })
+      .max(15, {
+        message: 'El teléfono debe tener menos de 15 caracteres.',
+      }),
+    email: z
+      .string()
+      .email({
+        message: 'Email inválido',
+      })
+      .optional(),
+    file: z
+      .string({
+        required_error: 'El legajo es requerido',
+      })
+      .regex(/^[0-9]+$/, {
+        message: 'No se pueden ingresar valores negativos ni símbolos',
+      })
+      .max(10, {
+        message: 'El legajo no debe tener más de 10 caracteres',
+      })
+      .min(1, {
+        message: 'El legajo debe contener al menos un número',
+      })
+      .refine(
+        async (value) => {
+          return await getAllFiles(value);
+        },
+        {
+          message: 'Ya existe un empleado con este legajo en la empresa',
+        }
+      ),
+    hierarchical_position: z.string({
+      required_error: 'El nivel jerárquico es requerido',
+    }),
+    company_position: z
+      .string({
+        required_error: 'El cargo es requerido',
+      })
+      .min(3, {
+        message: 'El cargo debe tener al menos 3 caracteres.',
+      })
+      .max(50, { message: 'La compañia debe tener menos de 50 caracteres.' }),
+    workflow_diagram: z.string({
+      required_error: 'El diagrama de trabajo es requerido',
+    }),
+    normal_hours: z
+      .string({ required_error: 'Las horas normales son requeridas' })
+      .max(3, { message: 'La compañia debe tener menos de 3 caracteres.' }),
+    type_of_contract: z.string({
+      required_error: 'El tipo de contrato es requerido',
+    }),
+    allocated_to: z.array(z.string().optional()).optional().nullable(),
+    guild_id: z.string().optional(),
+    covenants_id: z.string().optional(),
+    category_id: z.string().optional(),
+    date_of_admission: z
+      .date({
+        required_error: 'La fecha de ingreso es requerida',
+      })
+      .or(z.string()),
+  })
+  .superRefine((data, context) => {
+    if (!data.cuil.includes(data.document_number)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['cuil'],
+        message: 'El CUIL debe contener el número de documento.',
+      });
+    }
+  });
+
+export const accordionSchemaUpdate = z
   .object({
     full_name: z.string().min(2, {}).optional(),
     lastname: z
@@ -387,15 +626,7 @@ export const accordionSchema = z
       })
       .min(1, {
         message: 'El legajo debe contener al menos un número',
-      })
-      .refine(
-        async (value) => {
-          return await getAllFiles(value);
-        },
-        {
-          message: 'El legajo ya existe',
-        }
-      ),
+      }),
     hierarchical_position: z.string({
       required_error: 'El nivel jerárquico es requerido',
     }),
@@ -704,6 +935,9 @@ export const CompanyIdSchema =
     share_company_users: z.array(ShareCompanyUserSchema) || null,
   }) || undefined;
 export type CompanyId = z.infer<typeof CompanyIdSchema>;
+
+// Exportar las funciones de validación
+export { validateDuplicatedCompanyCuit, validateDuplicatedCuil, validateDuplicatedCuilForUpdate, getAllFiles, getAllFilesForUpdate };
 
 export const SharedCompaniesSchema = z.array(
   z.object({
