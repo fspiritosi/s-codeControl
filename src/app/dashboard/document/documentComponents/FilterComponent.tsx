@@ -129,6 +129,8 @@ const FilterHeader = ({ filters, docOptions, onFilterChange }: FilterHeaderProps
         </SelectContent>
       </Select>
     </TableHead>
+    <TableHead className="w-[100px] text-center" align="center">Estado</TableHead>
+
     <TableHead className="w-[100px] text-center" align="center">
       Editar
     </TableHead>

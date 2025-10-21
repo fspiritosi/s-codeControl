@@ -2,9 +2,12 @@
 import { CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCountriesStore } from '@/store/countries';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DocumentsTable from './DocumentsTable'; // Asumo que este componente existe
 import FilterHeader from './FilterComponent';
+import { Checkbox } from '@/components/ui/checkbox';
+import { supabaseBrowser } from '@/lib/supabase/browser';
+import { useLoggedUserStore } from '@/store/loggedUser';
 
 function TypesDocumentsView({
   personas,
@@ -17,9 +20,33 @@ function TypesDocumentsView({
 }) {
   const document_types = useCountriesStore((state) => state.companyDocumentTypes);
 
-  const doc_personas = document_types?.filter((doc) => doc.applies === 'Persona').filter((e) => e.is_active);
-  const doc_equipos = document_types?.filter((doc) => doc.applies === 'Equipos').filter((e) => e.is_active);
-  const doc_empresa = document_types?.filter((doc) => doc.applies === 'Empresa').filter((e) => e.is_active);
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
+  const [documentTypes, setDocumentTypes] = useState<any[]>([]);
+  const [showInactive, setShowInactive] = useState(false);
+
+  useEffect(() => {
+    fetchDocumentTypes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actualCompany?.id]);
+
+  async function fetchDocumentTypes() {
+    const supabase = supabaseBrowser();
+    const { data } = await supabase
+      .from('document_types')
+      .select('*')
+      .or(`company_id.eq.${actualCompany?.id},company_id.is.null`);
+    setDocumentTypes(data || []);
+  }
+
+  const doc_personas = documentTypes
+    ?.filter((doc) => doc.applies === 'Persona')
+    .filter((e) => (showInactive ? true : e.is_active));
+  const doc_equipos = documentTypes
+    ?.filter((doc) => doc.applies === 'Equipos')
+    .filter((e) => (showInactive ? true : e.is_active));
+  const doc_empresa = documentTypes
+    ?.filter((doc) => doc.applies === 'Empresa')
+    .filter((e) => (showInactive ? true : e.is_active));
 
   const [filters, setFilters] = useState({
     personas: { name: '', multiresource: '', special: '', monthly: '', expired: '', mandatory: '', private: '' },
@@ -70,19 +97,33 @@ function TypesDocumentsView({
     Array.from(new Set(array?.map((val) => (val === true ? 'Si' : 'No')))).filter((val) => val !== undefined);
 
   const docOptions = {
-    multiresource: convertToOptions(document_types?.map((doc) => doc.multiresource)),
-    special: convertToOptions(document_types?.map((doc) => doc.special)),
-    monthly: convertToOptions(document_types?.map((doc) => doc.is_it_montlhy)),
-    expired: convertToOptions(document_types?.map((doc) => doc.explired)),
-    mandatory: convertToOptions(document_types?.map((doc) => doc.mandatory)),
-    private: convertToOptions(document_types?.map((doc) => doc.private)),
+    multiresource: convertToOptions(documentTypes?.map((doc) => doc.multiresource)),
+    special: convertToOptions(documentTypes?.map((doc) => doc.special)),
+    monthly: convertToOptions(documentTypes?.map((doc) => doc.is_it_montlhy)),
+    expired: convertToOptions(documentTypes?.map((doc) => doc.explired)),
+    mandatory: convertToOptions(documentTypes?.map((doc) => doc.mandatory)),
+    private: convertToOptions(documentTypes?.map((doc) => doc.private)),
   };
 
   const optionValue =
     personas && equipos && empresa ? 'Personas' : personas ? 'Personas' : equipos ? 'Equipos' : 'Empresa';
 
+  const handleToggleActive = async (doc: any, newState: boolean) => {
+    const supabase = supabaseBrowser();
+    await supabase.from('document_types').update({ is_active: newState }).eq('id', doc.id);
+    await fetchDocumentTypes();
+  };
+
   return (
     <CardContent>
+      <div className="mb-4 flex items-center gap-2">
+        <Checkbox
+          checked={showInactive}
+          onCheckedChange={(checked) => setShowInactive(Boolean(checked))}
+          id="toggle-inactive"
+        />
+        <label htmlFor="toggle-inactive">Mostrar inactivos</label>
+      </div>
       <Tabs defaultValue={optionValue} className="w-full">
         <TabsList>
           {personas && <TabsTrigger value="Personas">Personas ({filteredDocPersonas?.length})</TabsTrigger>}
@@ -91,7 +132,7 @@ function TypesDocumentsView({
         </TabsList>
         {personas && (
           <TabsContent value="Personas">
-            <DocumentsTable data={filteredDocPersonas} filters={filters.personas}>
+            <DocumentsTable data={filteredDocPersonas} filters={filters.personas} onToggleActive={handleToggleActive}>
               <FilterHeader
                 filters={filters.personas}
                 docOptions={docOptions}
@@ -102,7 +143,7 @@ function TypesDocumentsView({
         )}
         {equipos && (
           <TabsContent value="Equipos">
-            <DocumentsTable data={filteredDocEquipos} filters={filters.equipos}>
+            <DocumentsTable data={filteredDocEquipos} filters={filters.equipos} onToggleActive={handleToggleActive}>
               <FilterHeader
                 filters={filters.equipos}
                 docOptions={docOptions}
@@ -113,7 +154,7 @@ function TypesDocumentsView({
         )}
         {empresa && (
           <TabsContent value="Empresa">
-            <DocumentsTable data={filteredDocEmpresa} filters={filters.empresa}>
+            <DocumentsTable data={filteredDocEmpresa} filters={filters.empresa} onToggleActive={handleToggleActive}>
               <FilterHeader
                 filters={filters.empresa}
                 docOptions={docOptions}

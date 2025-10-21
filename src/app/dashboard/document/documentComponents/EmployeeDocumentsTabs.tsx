@@ -20,9 +20,11 @@ async function EmployeeDocumentsTabs() {
       </CardContent>
       <TabsContent value="permanentes">
         <ExpiredDataTable
+          tableId="permanentDocumentsTable"
           data={permanentDocuments || []}
           columns={ExpiredColums}
           pending={true}
+
           defaultVisibleColumnsCustom={['resource', 'documentName', 'validity', 'id', 'mandatory', 'state']}
           localStorageName={'dashboardEmployeesPermanentes'}
           permanent
@@ -30,6 +32,7 @@ async function EmployeeDocumentsTabs() {
       </TabsContent>
       <TabsContent value="mensuales">
         <ExpiredDataTable
+          tableId="monthlyDocumentsTable"
           data={monthlyDocuments || []}
           columns={ColumnsMonthly}
           pending={true}

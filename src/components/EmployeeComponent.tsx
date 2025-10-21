@@ -24,7 +24,14 @@ import {
   typeOfContractENUM,
 } from '@/types/enums';
 import { names } from '@/types/types';
-import { accordionSchema } from '@/zodSchemas/schemas';
+import { 
+  accordionSchema, 
+  accordionSchemaUpdate,
+  validateDuplicatedCuil,
+  validateDuplicatedCuilForUpdate,
+  getAllFiles,
+  getAllFilesForUpdate
+} from '@/zodSchemas/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { CalendarIcon } from '@radix-ui/react-icons';
@@ -166,7 +173,7 @@ export default function EmployeeComponent({
   const mandatoryDocuments = useCountriesStore((state) => state.mandatoryDocuments);
 
   const form = useForm<z.infer<typeof accordionSchema>>({
-    resolver: zodResolver(accordionSchema),
+    resolver: zodResolver(accion === 'new' ? accordionSchema : accordionSchemaUpdate),
     defaultValues: user || {
           lastname: '',
           firstname: '',
@@ -475,6 +482,20 @@ export default function EmployeeComponent({
   };
 
   async function onCreate(values: z.infer<typeof accordionSchema>) {
+    // Validar CUIL duplicado antes de crear
+    const isDuplicatedCuil = await validateDuplicatedCuil(values.cuil, profile?.actualCompany?.id);
+    if (!isDuplicatedCuil) {
+      toast.error('Ya existe un empleado con este CUIL en la empresa');
+      return;
+    }
+
+    // Validar legajo duplicado antes de crear
+    const isDuplicatedFile = await getAllFiles(values.file, profile?.actualCompany?.id);
+    if (!isDuplicatedFile) {
+      toast.error('Ya existe un empleado con este legajo en la empresa');
+      return;
+    }
+
     toast.promise(
       async () => {
         const { full_name, ...rest } = values;
@@ -550,6 +571,20 @@ export default function EmployeeComponent({
 
   // 2. Define a submit handler.
   async function onUpdate(values: z.infer<typeof accordionSchema>) {
+    // Validar CUIL duplicado antes de actualizar
+    const isDuplicatedCuil = await validateDuplicatedCuilForUpdate(values.cuil, user?.id, profile?.actualCompany?.id);
+    if (!isDuplicatedCuil) {
+      toast.error('Ya existe otro empleado con este CUIL en la empresa');
+      return;
+    }
+
+    // Validar legajo duplicado antes de actualizar
+    const isDuplicatedFile = await getAllFilesForUpdate(values.file, user?.id, profile?.actualCompany?.id);
+    if (!isDuplicatedFile) {
+      toast.error('Ya existe otro empleado con este legajo en la empresa');
+      return;
+    }
+
     function compareContractorEmployees(
       originalObj: z.infer<typeof accordionSchema>,
       modifiedObj: z.infer<typeof accordionSchema>

@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.0.1 (cd38da5)"
@@ -1026,6 +1026,7 @@ export type Database = {
         Row: {
           applies: Database["public"]["Enums"]["document_applies"]
           company_id: string | null
+          conditions: Json[] | null
           created_at: string
           description: string | null
           down_document: boolean | null
@@ -1042,6 +1043,7 @@ export type Database = {
         Insert: {
           applies: Database["public"]["Enums"]["document_applies"]
           company_id?: string | null
+          conditions?: Json[] | null
           created_at?: string
           description?: string | null
           down_document?: boolean | null
@@ -1058,6 +1060,7 @@ export type Database = {
         Update: {
           applies?: Database["public"]["Enums"]["document_applies"]
           company_id?: string | null
+          conditions?: Json[] | null
           created_at?: string
           description?: string | null
           down_document?: boolean | null
@@ -1815,6 +1818,7 @@ export type Database = {
       }
       hse_doc_types: {
         Row: {
+          company_id: string | null
           created_at: string
           id: string
           is_active: boolean | null
@@ -1822,6 +1826,7 @@ export type Database = {
           short_description: string | null
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           id?: string
           is_active?: boolean | null
@@ -1829,13 +1834,22 @@ export type Database = {
           short_description?: string | null
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           id?: string
           is_active?: boolean | null
           name?: string | null
           short_description?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "hse_doc_types_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hse_document_assignment_versions: {
         Row: {
@@ -3669,6 +3683,22 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      build_employee_where_alias: {
+        Args: { _conditions: Json; table_alias: string }
+        Returns: string
+      }
+      build_vehicle_where_alias: {
+        Args: { _conditions: Json; table_alias?: string }
+        Returns: string
+      }
+      check_and_expire_documents: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      check_and_expire_hse_documents: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       close_expired_exams: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -3676,6 +3706,10 @@ export type Database = {
       complete_exam_attempt: {
         Args: { attempt_id: string }
         Returns: Json
+      }
+      controlar_alertas_documentos: {
+        Args: { tipo_documento_id?: string }
+        Returns: undefined
       }
       delete_expired_subscriptions: {
         Args: Record<PropertyKey, never>
@@ -3689,8 +3723,28 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      filter_employees_by_conditions: {
+        Args: { p_company_id: string; p_filters: Json }
+        Returns: {
+          firstname: string
+          id: string
+          lastname: string
+          matching_conditions: Json
+          picture: string
+        }[]
+      }
+      filter_vehicles_by_conditions: {
+        Args: { p_company_id: string; p_filters: Json }
+        Returns: {
+          brand_name: string
+          id: string
+          matching_conditions: Json
+          model_name: string
+          picture: string
+        }[]
+      }
       find_employee_by_full_name_v2: {
-        Args: { p_full_name: string; p_company_id: string }
+        Args: { p_company_id: string; p_full_name: string }
         Returns: {
           affiliate_status:
             | Database["public"]["Enums"]["affiliate_status_enum"]
@@ -3743,52 +3797,70 @@ export type Database = {
       get_company_users_by_cuil: {
         Args: { p_company_id: string }
         Returns: {
-          user_id: string
-          email: string
-          phone: string
-          confirmed_at: string
-          last_sign_in_at: string
-          user_created_at: string
-          user_updated_at: string
-          user_cuil: string
-          employee_id: string
-          employee_cuil: string
           company_id: string
+          confirmed_at: string
+          email: string
+          employee_created_at: string
+          employee_cuil: string
+          employee_id: string
           first_name: string
           last_name: string
-          employee_created_at: string
+          last_sign_in_at: string
+          phone: string
           raw_user_meta_data: Json
+          user_created_at: string
+          user_cuil: string
+          user_id: string
+          user_updated_at: string
+        }[]
+      }
+      get_services_summary_by_type: {
+        Args: { p_company_id: string; save_to_history?: boolean }
+        Returns: {
+          percentage: number
+          service_count: number
+          type_service: string
         }[]
       }
       migrate_document: {
-        Args: { target_id: string; execute_migration?: boolean }
+        Args: { execute_migration?: boolean; target_id: string }
         Returns: {
-          old_path: string
-          new_path: string
-          success: boolean
-          error_message: string
           action_taken: string
+          error_message: string
+          new_path: string
+          old_path: string
           storage_migration_id: string
+          success: boolean
         }[]
       }
       migrate_documents_preview: {
         Args: Record<PropertyKey, never>
         Returns: {
-          old_path: string
-          new_path: string
-          success: boolean
           error_message: string
+          new_path: string
+          old_path: string
+          success: boolean
         }[]
       }
       obtener_documentos_por_vencer: {
         Args: Record<PropertyKey, never>
         Returns: {
-          tipo_documento: string
           correo_electronico: string
-          fecha_vencimiento: string
           documento_empleado: string
           dominio_vehiculo: string
+          fecha_vencimiento: string
+          tipo_documento: string
         }[]
+      }
+      process_massive_diagram_creation_v2: {
+        Args: {
+          p_conflict_resolution?: string
+          p_date_from: string
+          p_date_to: string
+          p_employee_ids: string[]
+          p_work_diagram_id: string
+        }
+        Returns: Json
       }
       pruebaemail: {
         Args: Record<PropertyKey, never>
