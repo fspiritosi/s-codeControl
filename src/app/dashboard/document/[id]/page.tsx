@@ -62,6 +62,25 @@ export default async function page({
   documentName = document?.[0]?.document_path;
   documentUrl = url.publicUrl;
   documents_employees = document;
+  
+  // Detectar extensión del archivo desde document_path en lugar de documentUrl
+  // Limpiar la extensión para manejar casos donde pueda estar duplicada (ej: pdfpdf)
+  const documentPath = document?.[0]?.document_path || '';
+  const pathParts = documentPath.split('.');
+  let fileExtension = pathParts.length > 1 ? pathParts.pop()?.toLowerCase() || '' : '';
+  
+  // Si la extensión está duplicada (ej: pdfpdf), detectar y limpiar
+  // Buscar extensiones comunes al final de la cadena
+  const validExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
+  for (const ext of validExtensions) {
+    // Si la extensión termina con una extensión válida (ej: pdfpdf -> pdf)
+    if (fileExtension.endsWith(ext) && fileExtension.length > ext.length) {
+      fileExtension = ext;
+      break;
+    }
+  }
+  
+  const isPdf = fileExtension === 'pdf';
 
   return (
     <section className="md:mx-7">
@@ -562,13 +581,23 @@ export default async function page({
             <div className="max-w-[70vw] col-span-2 px-7 pb-7">
               <Card className="mt-4">
                 <CardDescription className="p-3 flex justify-center">
-                  <embed
-                    src={`${documentUrl}#&navpanes=0&scrollbar=0&zoom=110`}
-                    className={cn(
-                      'max-w-full max-h-screen rounded-xl aspect-auto',
-                      documentUrl.split('.').pop()?.toLocaleLowerCase() === 'pdf' ? 'w-full min-h-screen' : ''
-                    )}
-                  />
+                  {isPdf ? (
+                    <div className="w-full h-[80vh] rounded-xl overflow-hidden border">
+                      <embed
+                        src={`${documentUrl}#&navpanes=0&scrollbar=0&zoom=110`}
+                        className="w-full h-full rounded-xl"
+                        type="application/pdf"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full max-w-4xl max-h-[80vh] flex items-center justify-center bg-muted rounded-xl overflow-hidden border">
+                      <img
+                        src={documentUrl}
+                        alt={documentName}
+                        className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-xl"
+                      />
+                    </div>
+                  )}
                 </CardDescription>
               </Card>
             </div>

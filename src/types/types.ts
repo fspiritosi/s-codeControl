@@ -152,9 +152,9 @@ export type Employee = {
   reason_for_termination?: string | undefined;
   termination_date?: Date | undefined | string;
   status?: 'Avalado' | 'No avalado';
-  guild?: string | null;
-  covenant?: string | null;
-  category?: string | null;
+  guild_id?: string | null;
+  covenants_id?: string | null;
+  category_id?: string | null;
 };
 
 export type Documents = {
