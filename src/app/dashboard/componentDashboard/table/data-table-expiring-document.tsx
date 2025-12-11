@@ -18,7 +18,7 @@ import * as React from 'react';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-import { DataTablePagination } from '@/components/CheckList/tables/data-table-pagination';
+import { DataTablePagination } from '@/app/dashboard/data-table-pagination';
 import { useRouter } from 'next/navigation';
 import { DataTableToolbarExpiringDocument } from './data-table-toolbar-expiring-document';
 

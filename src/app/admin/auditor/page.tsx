@@ -53,6 +53,7 @@ export default function Auditor() {
     `
       )
       .eq('state', 'presentado')
+      .eq('applies.is_active', true)
       .order('created_at', { ascending: false });
 
     const mapVehicle = (doc: any) => {
@@ -88,7 +89,7 @@ export default function Auditor() {
     `
       )
       .eq('state', 'presentado')
-      .eq('is_active', true)
+      .eq('applies.is_active', true)
       .order('created_at', { ascending: false });
 
     const mapEmployee = (doc: any) => {

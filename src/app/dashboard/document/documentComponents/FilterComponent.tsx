@@ -26,13 +26,13 @@ interface FilterHeaderProps {
 
 const FilterHeader = ({ filters, docOptions, onFilterChange }: FilterHeaderProps) => (
   <>
-    <TableHead className="pl-0">
+    <TableHead className="pl-0 w-full">
       <Input
         type="text"
         value={filters.name}
         onChange={(e) => onFilterChange('name', e.target.value)}
         placeholder="Nombre del Documento"
-        className="max-w-[400px]"
+        className="max-w-[200px] w-[200px]"
       />
     </TableHead>
     <TableHead className="w-[100px] text-center" align="center">

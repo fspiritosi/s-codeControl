@@ -115,7 +115,7 @@ function TypesDocumentsView({
   };
 
   return (
-    <CardContent>
+    <CardContent className="grid grid-cols-1">
       <div className="mb-4 flex items-center gap-2">
         <Checkbox
           checked={showInactive}
