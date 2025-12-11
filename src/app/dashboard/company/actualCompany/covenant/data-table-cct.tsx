@@ -36,6 +36,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useLoggedUserStore } from '@/store/loggedUser';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { DataTablePagination } from '@/app/dashboard/data-table-pagination';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 
 interface DataCctProps<TData, TValue> {
@@ -371,14 +372,7 @@ export function DataCct<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          Anterior
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          Siguiente
-        </Button>
-      </div>
+      <DataTablePagination table={table} />
     </div>
   );
 }

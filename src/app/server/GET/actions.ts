@@ -518,6 +518,7 @@ export const fetchEmployeeMonthlyDocuments = async () => {
     .eq('applies.company_id', company_id)
     .eq('id_document_types.is_it_montlhy', true)
     .eq('applies.is_active', true)
+    .eq('id_document_types.is_active', true)
     .not('id_document_types', 'is', null)
     .not('applies', 'is', null)
     .returns<EmployeeDocumentWithContractors[]>();
@@ -546,6 +547,7 @@ export const fetchEmployeeMonthlyDocumentsByEmployeeId = async (employeeId: stri
       .eq('applies', employeeId)
       .eq('id_document_types.is_it_montlhy', true)
       .eq('id_document_types.private', false)
+      .eq('id_document_types.is_active', true)
       .not('id_document_types', 'is', null)
       .returns<EmployeeDocumentWithContractors[]>();
 
@@ -560,6 +562,7 @@ export const fetchEmployeeMonthlyDocumentsByEmployeeId = async (employeeId: stri
       .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
       .eq('applies', employeeId)
       .eq('id_document_types.is_it_montlhy', true)
+      .eq('id_document_types.is_active', true)
       .not('id_document_types', 'is', null)
       .returns<EmployeeDocumentWithContractors[]>();
 
@@ -590,6 +593,7 @@ export const fetchEmployeePermanentDocumentsByEmployeeId = async (employeeId: st
       .eq('applies', employeeId)
       .eq('id_document_types.is_it_montlhy', false)
       .eq('id_document_types.private', false)
+      .eq('id_document_types.is_active', true)
       .not('id_document_types', 'is', null)
       .returns<EmployeeDocumentWithContractors[]>();
 
@@ -604,6 +608,7 @@ export const fetchEmployeePermanentDocumentsByEmployeeId = async (employeeId: st
       .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
       .eq('applies', employeeId)
       .eq('id_document_types.is_it_montlhy', false)
+      .eq('id_document_types.is_active', true)
       .not('id_document_types', 'is', null)
       .returns<EmployeeDocumentWithContractors[]>();
 
@@ -625,6 +630,7 @@ export const fetchEmployeePermanentDocuments = async () => {
     .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
     .eq('applies.company_id', company_id)
     .eq('applies.is_active', true)
+    .eq('id_document_types.is_active', true)
     .not('id_document_types.is_it_montlhy', 'is', true)
     .not('id_document_types', 'is', null)
     .not('applies', 'is', null)
@@ -705,6 +711,7 @@ export const getNextMonthExpiringDocumentsEmployees = async () => {
     .or(`validity.lte.${today.toISOString()},validity.lte.${nextMonth.toISOString()}`)
     .not('applies', 'is', null)
     .not('validity', 'is', null)
+    .eq('id_document_types.is_active', true)
     .order('validity', { ascending: true }) // Ordenar por fecha de validez en orden ascendente
     .returns<EmployeeDocumentWithContractors[]>();
 
@@ -712,7 +719,17 @@ export const getNextMonthExpiringDocumentsEmployees = async () => {
     console.error('Error fetching next month expiring documents:', error);
     return [];
   }
-  return data;
+  // Filtrar documentos con tipos de documento activos y nombres válidos
+  return (
+    data?.filter(
+      (doc) =>
+        doc.id_document_types?.is_active === true &&
+        doc.id_document_types?.name &&
+        doc.id_document_types?.name.trim() !== '' &&
+        !doc.id_document_types?.name.startsWith('...') &&
+        doc.applies?.is_active === true
+    ) || []
+  );
 };
 export const getNextMonthExpiringDocumentsVehicles = async () => {
   const cookiesStore = cookies();
@@ -727,11 +744,13 @@ export const getNextMonthExpiringDocumentsVehicles = async () => {
     .from('documents_equipment')
     .select('*,id_document_types(*),applies(*,type(*),brand(*),model(*))')
     .eq('applies.company_id', company_id)
+    .eq('applies.is_active', true)
     .not('id_document_types.is_it_montlhy', 'is', true)
     .not('id_document_types', 'is', null)
     .or(`validity.lte.${today.toISOString()},validity.lte.${nextMonth.toISOString()}`)
     .not('applies', 'is', null)
     .not('validity', 'is', null)
+    .eq('id_document_types.is_active', true)
     .order('validity', { ascending: true }) // Ordenar por fecha de validez en orden ascendente
     .returns<EquipmentDocumentDetailed[]>();
 
@@ -739,7 +758,17 @@ export const getNextMonthExpiringDocumentsVehicles = async () => {
     console.error('Error fetching next month expiring documents:', error);
     return [];
   }
-  return data;
+  // Filtrar documentos con tipos de documento activos y nombres válidos
+  return (
+    data?.filter(
+      (doc) =>
+        doc.id_document_types?.is_active === true &&
+        doc.id_document_types?.name &&
+        doc.id_document_types?.name.trim() !== '' &&
+        !doc.id_document_types?.name.startsWith('...') &&
+        doc.applies?.is_active === true
+    ) || []
+  );
 };
 export const getDocumentEmployeesById = async (id: string) => {
   const supabase = supabaseServer();
@@ -828,6 +857,7 @@ export const fetchMonthlyDocumentsByEquipmentId = async (equipmentId: string) =>
       .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
       .eq('id_document_types.is_it_montlhy', true)
       .eq('id_document_types.private', false)
+      .eq('id_document_types.is_active', true)
       .not('id_document_types', 'is', null)
       .eq('applies', equipmentId)
       .returns<EquipmentDocumentDetailed[]>();
@@ -842,6 +872,7 @@ export const fetchMonthlyDocumentsByEquipmentId = async (equipmentId: string) =>
       .from('documents_equipment')
       .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
       .eq('id_document_types.is_it_montlhy', true)
+      .eq('id_document_types.is_active', true)
       .not('id_document_types', 'is', null)
       .eq('applies', equipmentId)
       .returns<EquipmentDocumentDetailed[]>();
@@ -863,6 +894,7 @@ export const fetchMonthlyDocumentsEquipment = async () => {
     .from('documents_equipment')
     .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
     .eq('id_document_types.is_it_montlhy', true)
+    .eq('id_document_types.is_active', true)
     .eq('applies.is_active', true)
     .eq('applies.company_id', company_id)
     .not('id_document_types', 'is', null)
@@ -891,6 +923,7 @@ export const fetchPermanentDocumentsByEquipmentId = async (equipmentId: string) 
       .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
       .not('id_document_types.is_it_montlhy', 'is', true)
       .eq('id_document_types.private', false)
+      .eq('id_document_types.is_active', true)
       .eq('applies', equipmentId)
       .not('id_document_types', 'is', null)
       .returns<EquipmentDocumentDetailed[]>();
@@ -905,6 +938,7 @@ export const fetchPermanentDocumentsByEquipmentId = async (equipmentId: string) 
       .from('documents_equipment')
       .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
       .not('id_document_types.is_it_montlhy', 'is', true)
+      .eq('id_document_types.is_active', true)
       .eq('applies', equipmentId)
       .not('id_document_types', 'is', null)
       .returns<EquipmentDocumentDetailed[]>();
@@ -978,6 +1012,8 @@ export const fettchExistingEntries = async (applies: string, id_document_types: 
     .select('applies(*),id')
     .eq('id_document_types', id_document_types)
     .eq('applies.company_id', company_id || '')
+    .eq('applies.is_active', true)
+    .eq('id_document_types.is_active', true)
     .not('applies', 'is', null);
 
   if (existingEntriesError) {
@@ -998,6 +1034,7 @@ export const fetchPermanentDocumentsEquipment = async () => {
     .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
     .eq('applies.company_id', company_id)
     .eq('applies.is_active', true)
+    .eq('id_document_types.is_active', true)
     .not('id_document_types.is_it_montlhy', 'is', true)
     .not('id_document_types', 'is', null)
     .not('applies', 'is', null)
