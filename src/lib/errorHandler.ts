@@ -9,6 +9,8 @@ export function handleSupabaseError(error: string): string {
     'Invalid login credentials': 'Correo o contraseña inválidos',
     'User already registered': 'El usuario ya se encuentra registrado',
     'duplicate key value violates unique constraint "unique_contractor_employee"': 'Afectacion duplicada',
+    'duplicate key value violates unique constraint "unique_cuil_per_company"': 'Ya existe un empleado con este CUIL en la empresa',
+    'duplicate key value violates unique constraint "unique_document_number_per_company"': 'Ya existe un empleado con este número de documento en la empresa',
     'The resource already exists': 'El recurso ya existe',
     'El recurso ya existe': 'El recurso ya existe',
   };

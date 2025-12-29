@@ -24,7 +24,14 @@ import {
   typeOfContractENUM,
 } from '@/types/enums';
 import { names } from '@/types/types';
-import { accordionSchema } from '@/zodSchemas/schemas';
+import {
+  accordionSchema,
+  accordionSchemaUpdate,
+  validateDuplicatedCuil,
+  validateDuplicatedCuilForUpdate,
+  getAllFiles,
+  getAllFilesForUpdate
+} from '@/zodSchemas/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { CalendarIcon } from '@radix-ui/react-icons';
@@ -116,25 +123,25 @@ export default function EmployeeComponent({
   diagrams: EmployeeDiagramWithDiagramType[];
   diagrams_types: any;
   guild:
-    | {
-        value: string;
-        label: string;
-      }[]
-    | undefined;
+  | {
+    value: string;
+    label: string;
+  }[]
+  | undefined;
   covenants:
-    | {
-        id: string;
-        name: string;
-        guild_id: string;
-      }[]
-    | undefined;
+  | {
+    id: string;
+    name: string;
+    guild_id: string;
+  }[]
+  | undefined;
   categories:
-    | {
-        id: string;
-        name: string;
-        covenant_id: string;
-      }[]
-    | undefined;
+  | {
+    id: string;
+    name: string;
+    covenant_id: string;
+  }[]
+  | undefined;
   children: React.ReactNode;
 }) {
 
@@ -166,40 +173,40 @@ export default function EmployeeComponent({
   const mandatoryDocuments = useCountriesStore((state) => state.mandatoryDocuments);
 
   const form = useForm<z.infer<typeof accordionSchema>>({
-    resolver: zodResolver(accordionSchema),
+    resolver: zodResolver(accion === 'new' ? accordionSchema : accordionSchemaUpdate),
     defaultValues: user || {
-          lastname: '',
-          firstname: '',
-          nationality: undefined,
-          born_date: undefined,
-          cuil: '',
-          document_type: undefined,
-          document_number: '',
-          birthplace: undefined,
-          gender: undefined,
-          marital_status: undefined,
-          level_of_education: undefined,
-          picture: '',
-          street: '',
-          street_number: '',
-          province: undefined,
-          city: undefined,
-          postal_code: '',
-          phone: '',
-          email: '',
-          file: '',
-          hierarchical_position: undefined,
-          company_position: '',
-          workflow_diagram: undefined,
-          type_of_contract: undefined,
-          allocated_to: [],
-          date_of_admission: undefined,
-          guild_id: undefined,
-          covenants_id: undefined,
-          category_id: undefined,
-        },
+      lastname: '',
+      firstname: '',
+      nationality: undefined,
+      born_date: undefined,
+      cuil: '',
+      document_type: undefined,
+      document_number: '',
+      birthplace: undefined,
+      gender: undefined,
+      marital_status: undefined,
+      level_of_education: undefined,
+      picture: '',
+      street: '',
+      street_number: '',
+      province: undefined,
+      city: undefined,
+      postal_code: '',
+      phone: '',
+      email: '',
+      file: '',
+      hierarchical_position: undefined,
+      company_position: '',
+      workflow_diagram: undefined,
+      type_of_contract: undefined,
+      allocated_to: [],
+      date_of_admission: undefined,
+      guild_id: undefined,
+      covenants_id: undefined,
+      category_id: undefined,
+    },
   });
-  
+
   const [accordion1Errors, setAccordion1Errors] = useState(false);
   const [accordion2Errors, setAccordion2Errors] = useState(false);
   const [accordion3Errors, setAccordion3Errors] = useState(false);
@@ -475,6 +482,20 @@ export default function EmployeeComponent({
   };
 
   async function onCreate(values: z.infer<typeof accordionSchema>) {
+    // Validar CUIL duplicado antes de crear
+    const isDuplicatedCuil = await validateDuplicatedCuil(values.cuil, profile?.actualCompany?.id);
+    if (!isDuplicatedCuil) {
+      toast.error('Ya existe un empleado con este CUIL en la empresa');
+      return;
+    }
+
+    // Validar legajo duplicado antes de crear
+    const isDuplicatedFile = await getAllFiles(values.file, profile?.actualCompany?.id);
+    if (!isDuplicatedFile) {
+      toast.error('Ya existe un empleado con este legajo en la empresa');
+      return;
+    }
+
     toast.promise(
       async () => {
         const { full_name, ...rest } = values;
@@ -495,6 +516,9 @@ export default function EmployeeComponent({
           city: String(citysOptions.find((e) => e.name.trim() === values.city)?.id),
           hierarchical_position: String(hierarchyOptions.find((e) => e.name === values.hierarchical_position)?.id),
           workflow_diagram: String(workDiagramOptions.find((e) => e.name === values.workflow_diagram)?.id),
+          guild_id: values.guild_id || null,
+          covenants_id: values.covenants_id || null,
+          category_id: values.category_id || null,
           picture: fileExtension
             ? `${url}/${values.document_number}.${fileExtension}`.trim()
             : values.gender === 'Masculino'
@@ -550,6 +574,20 @@ export default function EmployeeComponent({
 
   // 2. Define a submit handler.
   async function onUpdate(values: z.infer<typeof accordionSchema>) {
+    // Validar CUIL duplicado antes de actualizar
+    const isDuplicatedCuil = await validateDuplicatedCuilForUpdate(values.cuil, user?.id, profile?.actualCompany?.id);
+    if (!isDuplicatedCuil) {
+      toast.error('Ya existe otro empleado con este CUIL en la empresa');
+      return;
+    }
+
+    // Validar legajo duplicado antes de actualizar
+    const isDuplicatedFile = await getAllFilesForUpdate(values.file, user?.id, profile?.actualCompany?.id);
+    if (!isDuplicatedFile) {
+      toast.error('Ya existe otro empleado con este legajo en la empresa');
+      return;
+    }
+
     function compareContractorEmployees(
       originalObj: z.infer<typeof accordionSchema>,
       modifiedObj: z.infer<typeof accordionSchema>
@@ -591,6 +629,9 @@ export default function EmployeeComponent({
           city: String(citysOptions.find((e) => e.name.trim() === values.city)?.id),
           hierarchical_position: String(hierarchyOptions.find((e) => e.name === values.hierarchical_position)?.id),
           workflow_diagram: String(workDiagramOptions.find((e) => e.name === values.workflow_diagram)?.id),
+          guild_id: values.guild_id || null,
+          covenants_id: values.covenants_id || null,
+          category_id: values.category_id || null,
         };
         //console.log(finalValues, 'finalValues');
         const result = compareContractorEmployees(user, finalValues as any);
@@ -1407,16 +1448,16 @@ export default function EmployeeComponent({
                             // category_id está habilitado solo si covenants_id tiene un valor
                             disabled = readOnly || !covenantsId;
                           }
-                          let selectedCovenantInfo=[{name:'',id:''}]
+                          let selectedCovenantInfo = [{ name: '', id: '' }]
                           const selectedGuildInfo =
                             guild
                               ?.filter((e) => e.value === guildId)
                               ?.map((e) => {
-                                selectedCovenantInfo=[{name:'',id:''}]
+                                selectedCovenantInfo = [{ name: '', id: '' }]
                                 return {
                                   name: e.label,
                                   id: e.value,
-                                  
+
                                 };
                               }) || [];
                           // console.log(selectedGuildInfo, 'selectedGuildInfo');
@@ -1448,11 +1489,11 @@ export default function EmployeeComponent({
                                         !field.value && 'text-muted-foreground'
                                       )}
                                     >
-                                        {field.value
-                                          ? (data?.options?.find((option: any) => option.value === field.value) as any)
+                                      {field.value
+                                        ? (data?.options?.find((option: any) => option.value === field.value) as any)
                                           ?.label || field.value
-                                          : `Seleccionar ${data.label}`
-                                        }
+                                        : `Seleccionar ${data.label}`
+                                      }
                                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 " />
                                     </Button>
                                   </FormControl>
@@ -1465,15 +1506,15 @@ export default function EmployeeComponent({
                                       <CommandGroup>
                                         {data?.options?.map((option: any) => (
                                           <CommandItem
-                                          value={option.label}
-                                          key={option.value}
-                                          onSelect={() => {
-                                            form.setValue(`${data.name as names}`, option.value);
-                                            if (field.name === 'guild_id') {
-                                              form.setValue('covenants_id', '');
-                                              form.setValue('category_id', '');
-                                            }
-                                          }}
+                                            value={option.label}
+                                            key={option.value}
+                                            onSelect={() => {
+                                              form.setValue(`${data.name as names}`, option.value);
+                                              if (field.name === 'guild_id') {
+                                                form.setValue('covenants_id', '');
+                                                form.setValue('category_id', '');
+                                              }
+                                            }}
                                           >
                                             <Check
                                               className={cn(
@@ -1809,7 +1850,7 @@ export default function EmployeeComponent({
               {children}
             </TabsContent>
             <TabsContent value="diagrams" className="px-2 py-2">
-              <DiagramDetailEmployeeView role={role} historyData={historyData} diagrams={diagrams as any} diagrams_types={diagrams_types} activeEmploees={activeEmploees}  />
+              <DiagramDetailEmployeeView role={role} historyData={historyData} diagrams={diagrams as any} diagrams_types={diagrams_types} activeEmploees={activeEmploees} />
             </TabsContent>
             <TooltipProvider delayDuration={100}>
               <Tooltip>

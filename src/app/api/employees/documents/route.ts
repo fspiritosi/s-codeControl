@@ -19,7 +19,9 @@ export async function GET(request: NextRequest) {
   `
       )
       .not('employees', 'is', null)
-      .eq('employees.company_id', company_id || '');
+      .eq('employees.company_id', company_id || '')
+      .eq('employees.is_active', true)
+      .eq('document_types.is_active', true);
 
     if (error) {
       throw new Error(JSON.stringify(error));

@@ -24,7 +24,7 @@ function TypesDocumentAction({ optionChildrenProp }: { optionChildrenProp: strin
       <AlertDialogTrigger asChild className="mr-4">
         {role !== 'Invitado' && <Button>Crear nuevo</Button>}
       </AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent className='max-w-[40vw] max-h-[80vh] overflow-auto'>
         <AlertDialogHeader>
           <AlertDialogTitle>Nuevo tipo de documento</AlertDialogTitle>
           <AlertDialogDescription asChild>

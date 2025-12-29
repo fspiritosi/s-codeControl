@@ -30,7 +30,9 @@ export async function getDocumentsEmployees() {
 `
     )
     .not('employees', 'is', null)
-    .eq('employees.company_id', actualCompany);
+    .eq('employees.company_id', actualCompany)
+    .eq('employees.is_active', true)
+    .eq('document_types.is_active', true);
 
   return data;
 }
@@ -46,6 +48,8 @@ export async function getDocumentsEquipment() {
     `
     )
     .eq('applies.company_id', actualCompany)
+    .eq('applies.is_active', true)
+    .eq('document_types.is_active', true)
     .not('applies', 'is', null);
 
   return data;

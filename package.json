@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format": "npx prettier --write ."
+    "format": "npx prettier --write .",
+    "check-types": "tsc --noEmit",
+    "gentypes": "npx supabase gen types typescript --project-id zktcbhhlcksopklpnubj --schema public > database.types.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
@@ -101,6 +103,7 @@
     "eslint-plugin-react": "^7.33.2",
     "postcss": "^8",
     "prettier": "^3.1.1",
+    "shadcn": "^3.5.1",
     "supabase": "^1.226.4",
     "tailwindcss": "^3.3.0",
     "typescript": "^5"

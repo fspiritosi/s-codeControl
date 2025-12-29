@@ -125,6 +125,7 @@ export default function ReplaceDocument({
             document_path: finalDocument?.path,
             validity: filename.validity ? new Date(filename.validity).toISOString() : null,
             created_at: new Date().toISOString(),
+            state: 'presentado'
           })
           .eq('id', appliesId || '');
 

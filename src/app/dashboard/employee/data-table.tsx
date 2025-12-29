@@ -39,6 +39,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { useLoggedUserStore } from "@/store/loggedUser"
 import { setEmployeesToShow } from "@/lib/utils/utils"
+import { DataTablePagination } from "@/app/dashboard/data-table-pagination"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
@@ -707,14 +708,7 @@ export function EmployeesTable<TData, TValue>({ columns, data, role }: DataTable
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          Anterior
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          Siguiente
-        </Button>
-      </div>
+      <DataTablePagination table={table} />
     </div>
   )
 }

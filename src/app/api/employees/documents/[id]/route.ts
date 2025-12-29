@@ -21,6 +21,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       )
       .not('employees', 'is', null)
       .eq('employees.company_id', company_id || '')
+      .eq('employees.is_active', true)
+      .eq('document_types.is_active', true)
       .eq('id', id);
 
     const data = documents;

@@ -1,6 +1,6 @@
 // 'use client';
 import { ExpiredColums } from '@/app/dashboard/colums';
-import { ColumnsMonthly } from '@/app/dashboard/columsMonthly';
+import { ColumnsMonthlyEquipment } from '@/app/dashboard/columsMonthlyEquipment';
 import { ExpiredDataTable } from '@/app/dashboard/data-table';
 import { CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -44,7 +44,7 @@ export default async function DocumentEquipmentComponent({ id, role }: { id: str
         <div className="grid  ">
           <ExpiredDataTable
             data={monthlyDocuments}
-            columns={ColumnsMonthly}
+            columns={ColumnsMonthlyEquipment}
             vehicles={true}
             pending={true}
             defaultVisibleColumnsCustom={['date', 'resource', 'documentName', 'validity', 'id', 'mandatory', 'state']}

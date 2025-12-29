@@ -15,6 +15,8 @@ export async function GET(request: NextRequest) {
   `
       )
       .eq('applies.company_id', company_id || '')
+      .eq('applies.is_active', true)
+      .eq('document_types.is_active', true)
       .not('applies', 'is', null);
 
     if (equipmentError) {

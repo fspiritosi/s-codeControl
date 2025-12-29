@@ -637,7 +637,9 @@ export const useLoggedUserStore = create<State>((set, get) => {
   `
       )
       .not('employees', 'is', null)
-      .eq('employees.company_id', get()?.actualCompany?.id);
+      .eq('employees.company_id', get()?.actualCompany?.id)
+      .eq('employees.is_active', true)
+      .eq('document_types.is_active', true);
 
     data = dataEmployes;
 
@@ -661,6 +663,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
         )
         .not('employees', 'is', null)
         .eq('employees.company_id', get()?.actualCompany?.id)
+        .eq('employees.is_active', true)
+        .eq('document_types.is_active', true)
         .range(1000, 2000);
 
       if (error2) {
@@ -687,6 +691,8 @@ export const useLoggedUserStore = create<State>((set, get) => {
         `
       )
       .eq('applies.company_id', get()?.actualCompany?.id)
+      .eq('applies.is_active', true)
+      .eq('document_types.is_active', true)
       .not('applies', 'is', null);
 
     if (equipmentError) {

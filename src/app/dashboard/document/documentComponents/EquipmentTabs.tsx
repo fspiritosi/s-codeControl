@@ -20,6 +20,7 @@ async function EquipmentTabs() {
       </CardContent>
       <TabsContent value="permanentes">
         <ExpiredDataTable
+          tableId="permanentDocumentsTableEquipment"
           data={(permanentDocuments as any) || []}
           columns={ExpiredColums}
           pending={true}
@@ -31,6 +32,7 @@ async function EquipmentTabs() {
       </TabsContent>
       <TabsContent value="mensuales">
         <ExpiredDataTable
+          tableId="monthlyDocumentsTableEquipment"
           data={monthlyDocuments || []}
           columns={ColumnsMonthlyEquipment}
           pending={true}
