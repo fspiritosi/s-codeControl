@@ -114,9 +114,9 @@ export function calculateNameOFDocument(
   file_extension: string,
   resource: string
 ) {
-  const formatedCompanyName = company_name.toLowerCase().replace(/ /g, '-');
-  const formatedAppliesName = applies.toLowerCase().replace(/ /g, '-');
-  const formatedDocumentTypeName = formatDocumentTypeName(document_name).replace(/ /g, '-');
+  const formatedCompanyName = formatDocumentTypeName(company_name);
+  const formatedAppliesName = formatDocumentTypeName(applies);
+  const formatedDocumentTypeName = formatDocumentTypeName(document_name);
   const formatedVersion = version.replace(/\./g, '-');
   const formatedFileExtension = file_extension.replace(/\./g, '-');
 
@@ -130,8 +130,8 @@ export async function verifyDuplicatedDocument(
   resource: string,
   formatedAppliesNames: string
 ) {
-  const formatedCompanyName = company_name.toLowerCase().replace(/ /g, '-');
-  const formatedAppliesName = formatedAppliesNames.toLowerCase().replace(/ /g, '-');
+  const formatedCompanyName = formatDocumentTypeName(company_name);
+  const formatedAppliesName = formatDocumentTypeName(formatedAppliesNames);
   const supabase = supabaseBrowser();
   const path = `${formatedCompanyName}-(${company_cuit})/${resource}/${formatedAppliesPath}`;
 
