@@ -129,6 +129,7 @@ export const formatDocumentTypeName = (documentType: string) => {
     .replace(/[íïìî]/g, 'i')
     .replace(/[óöòô]/g, 'o')
     .replace(/[úüùû]/g, 'u')
+    .replace(/ñ/g, 'n')
     .replace(/['"]/g, '') // Elimina apóstrofes y comillas
     .replace(/\s+/g, '-'); // Reemplaza espacios por guiones
   return formatedDocumentTypeName;
