@@ -9,6 +9,13 @@
     "lint": "next lint",
     "format": "npx prettier --write .",
     "check-types": "tsc --noEmit",
+    "genlocaltypes": "npx supabase gen types typescript --local > database.types.ts",
+    "local": "npx supabase start && next dev",
+    "pull-changes": "npx supabase db diff --linked -f",
+    "pull-data": "npx supabase db dump --linked --data-only -f supabase/seed.sql",
+    "create-migration": "npx supabase db diff -f",
+    "migration-status": "npx supabase migration list",
+    "push-migrations": "npx supabase db push",
     "gentypes": "npx supabase gen types typescript --project-id zktcbhhlcksopklpnubj --schema public > database.types.ts"
   },
   "dependencies": {

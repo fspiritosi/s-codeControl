@@ -134,9 +134,9 @@ export default function MultiResourceDocument({
         const hasExpiredDate = validity || period || 'v0';
 
         const documetType = documenTypes?.find((e) => e.id === values.id_document_types);
-        const formatedCompanyName = currentCompany?.company_name.toLowerCase().replace(/ /g, '-');
+        const formatedCompanyName = formatDocumentTypeName(currentCompany?.company_name || '');
         const formatedDocumentTypeName = formatDocumentTypeName(documetType?.name);
-        const formatedAppliesPath = documetType.applies.toLowerCase().replace(/ /g, '-');
+        const formatedAppliesPath = formatDocumentTypeName(documetType.applies);
 
         const resourceId =
           resource === 'equipo'

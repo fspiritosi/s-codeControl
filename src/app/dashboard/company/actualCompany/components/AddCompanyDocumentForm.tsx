@@ -68,12 +68,13 @@ function AddCompanyDocumentForm({
       async () => {
         const supabase = supabaseBrowser();
 
+        const formatedCompanyName = formatDocumentTypeName(actualCompany?.company_name || '');
         const formatedDocumentTypeName = formatDocumentTypeName(documentForId?.name || '');
         const hasExpiredDate = data.validity?.replace(/\//g, '-') ?? 'v0';
         const { data: DuplicatedDocument } = await supabase.storage
           .from('document_files')
           .list(
-            `${actualCompany?.company_name.toLowerCase().replace(/ /g, '-')}-(${actualCompany?.company_cuit})/empresa`,
+            `${formatedCompanyName}-(${actualCompany?.company_cuit})/empresa`,
             {
               search: `${formatedDocumentTypeName}-(${hasExpiredDate})`,
             }
@@ -86,7 +87,7 @@ function AddCompanyDocumentForm({
         await supabase.storage
           .from('document_files')
           .upload(
-            `/${actualCompany?.company_name.toLowerCase().replace(/ /g, '-')}-(${actualCompany?.company_cuit})/empresa/${formatedDocumentTypeName}-(${hasExpiredDate}).${fileExtension}`,
+            `/${formatedCompanyName}-(${actualCompany?.company_cuit})/empresa/${formatedDocumentTypeName}-(${hasExpiredDate}).${fileExtension}`,
             file,
             {
               cacheControl: '3600',
