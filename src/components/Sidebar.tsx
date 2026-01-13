@@ -14,6 +14,7 @@ import {
   Users,
   Wrench,
   HardHat,
+  BoxIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -83,6 +84,12 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
       href: '/dashboard/forms',
       icon: <ClipboardList size={sizeIcons} />,
       regex: /^\/dashboard\/forms(\/|$)/,
+    },
+    {
+      name: 'Almacenes',
+      href: '/dashboard/warehouse',
+      icon: <BoxIcon size={sizeIcons} />,
+      regex: /^\/dashboard\/warehouse(\/|$)/,
     },
     {
       name: 'HSE',

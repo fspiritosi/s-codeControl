@@ -13,6 +13,7 @@ import {
   Users,
   Wrench,
   HardHat,
+  Box,
 } from 'lucide-react';
 import { cookies } from 'next/headers';
 import SideBar from './Sidebar';
@@ -177,6 +178,12 @@ async function SideBarContainer() {
       href: '/dashboard/operations',
       icon: <Calendar size={sizeIcons} />,
       position: 8,
+    },
+     {
+      name: 'Almacenes',
+      href: '/dashboard/warehouse',
+      icon: <Box size={sizeIcons} />,
+      position: 9,
     },
     {
       name: 'Mantenimiento',
