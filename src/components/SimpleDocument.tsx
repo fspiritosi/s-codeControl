@@ -147,12 +147,12 @@ export default function SimpleDocument({
           const period = document.period;
           const hasExpiredDate = updateEntries?.[index]?.validity?.replace(/\//g, '-') || period || 'v0';
           const documetType = documenTypes?.find((e) => e.id === documents[index].id_document_types);
-          const formatedCompanyName = actualCompany?.company_name.toLowerCase().replace(/ /g, '-');
+          const formatedCompanyName = formatDocumentTypeName(actualCompany?.company_name || '');
           const formatedAppliesName = appliesName
-            ? `${appliesName?.name.toLowerCase().replace(/ /g, '-').replace('ñ', 'n')}-(${appliesName?.document})`
-            : `${idAppliesUser?.name.toLowerCase().replace(/ /g, '-').replace('ñ', 'n')}-(${idAppliesUser?.document})`;
+            ? `${formatDocumentTypeName(appliesName?.name)}-(${appliesName?.document})`
+            : `${formatDocumentTypeName(idAppliesUser?.name)}-(${idAppliesUser?.document})`;
           const formatedDocumentTypeName = formatDocumentTypeName(documetType?.name);
-          const formatedAppliesPath = documetType.applies.toLowerCase().replace(/ /g, '-');
+          const formatedAppliesPath = formatDocumentTypeName(documetType.applies);
 
           const { data } = await supabase.storage
             .from('document_files')
