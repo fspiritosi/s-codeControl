@@ -168,7 +168,6 @@ function UploadDocument({
     return resourceItem.label.split(' - ')[0].toLocaleLowerCase();
   };
 
-  //console.log('error', form.formState.errors);
   return (
     <div>
       <CardTitle className="mb-3">Documento no multirecurso</CardTitle>

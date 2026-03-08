@@ -42,7 +42,6 @@ export default function AddTypeModal({ company_id, value }: { company_id: string
   async function onSubmit(values: z.infer<typeof formSchema>) {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
-    //console.log(values);
 
     const { data, error } = await supabase
       .from('type')
@@ -55,7 +54,6 @@ export default function AddTypeModal({ company_id, value }: { company_id: string
     if (error) {
       throw new Error(handleSupabaseError(error.message));
     }
-    // console.log('data', data);
     router.refresh();
   }
   const handleNestedFormSubmit = (event: FormEvent<HTMLFormElement>) => {

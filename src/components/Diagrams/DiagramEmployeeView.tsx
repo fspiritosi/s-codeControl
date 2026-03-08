@@ -141,7 +141,6 @@ function DiagramEmployeeView({
     setSelectedResources(employeesWithDiagrams);
   }, []);
 
-  //console.log('grupedDiagrams', groupedDiagrams);
 
   return (
     <div>

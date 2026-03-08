@@ -73,8 +73,6 @@ export function DataTableFilterOptions({
     saveVisibilityState(newVisibleFilters);
   };
 
-  console.log('visibleFilters', visibleFilters);
-  console.log('filterableColumns', filterableColumns);
 
   return (
     <div className="relative" ref={menuRef}>

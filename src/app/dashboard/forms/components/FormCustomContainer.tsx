@@ -10,7 +10,6 @@ const getForms = async (company_id: string) => {
     .select('*,form_answers(form_id)')
     .eq('company_id', company_id);
   if (error) {
-    console.log(error);
   }
   if (data) {
     return data;

@@ -60,6 +60,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return Response.json({ employee: mappedEmployee });
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }

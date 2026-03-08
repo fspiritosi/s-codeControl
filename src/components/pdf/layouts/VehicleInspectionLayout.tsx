@@ -407,9 +407,6 @@ export const VehicleInspectionLayout = ({
     </View>
   );
 
-  console.log( singurl ? 'siiiii' : data.conductor ?'nooooo' : 'nulllll')
-  console.log( singurl,'singurl')
-  console.log(data.conductor,'conductor')
   const renderSignature = () => (
     <View style={styles.signatureContainer}>
       {singurl && !singurl.endsWith('_files/') ? <Image style={styles.signatureImage} src={singurl} /> : data.conductor ? <Text>Sin firma</Text> : null}

@@ -74,7 +74,6 @@ export default function SimpleDocument({
       (employee: any) => employee.document === documentResource || employee.document === numberDocument
     ) as string) || (vehicles?.find((vehicle: any) => vehicle.id === numberDocument) as string);
 
-  //console.log('numberDocument',numberDocument)
 
   const {
     control,
@@ -169,7 +168,6 @@ export default function SimpleDocument({
               `${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/${formatedAppliesName}/${formatedDocumentTypeName}-(${hasExpiredDate}).${fileExtension}`
             );
 
-          console.log(document, 'document');
 
           if (document?.length) {
               setError(`documents.${index}.id_document_types`, {
@@ -185,7 +183,6 @@ export default function SimpleDocument({
           }
 
           if (hasError) {
-            // console.log(hasError);
             return setLoading(false);
           }
 

@@ -19,7 +19,6 @@ export default async function UsersTabComponent() {
   //const { company_users } = await fetch(`${URL}/api/company/users/?actual=${company_id}`).then((res) => res.json());
   const ownerUser = await getOwnerUser();
   const company_users = await getAllUsers();
-  //console.log('usuarios', company_users);
   const owner = ownerUser?.map((user: any) => {
     return {
       email: user.email,

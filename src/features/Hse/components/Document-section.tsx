@@ -400,7 +400,6 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags, 
         }
         // Si no tiene ninguna de las dos, mostramos un mensaje de depuración
         else {
-          console.log(`Empleado ${index} tiene el documento pero no tiene posición definida o es inválida`, employee);
         }
       }
     });

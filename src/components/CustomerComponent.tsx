@@ -345,7 +345,6 @@ export default function ClientRegister({ id, equipment }: { id: string; equipmen
     setCurrentPage(1); // Reset to first page when items per page changes
   };
 
-  //console.log(filteredItems)
   return (
     <section className={cn('md:mx-7 max-w-full')}>
       {action === 'view' ? (

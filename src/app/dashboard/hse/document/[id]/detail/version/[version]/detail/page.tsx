@@ -567,7 +567,6 @@ export default function DocumentVersionDetailPage({ params }: { params: Promise<
         currentVersion={documentVersion.version}
         onVersionCreated={(newVersion:any) => {
           // Aquí actualizarías el documento con la nueva versión
-          console.log("Nueva versión creada:", newVersion)
           setShowNewVersionDialog(false)
         }}
         companyId={companyId}

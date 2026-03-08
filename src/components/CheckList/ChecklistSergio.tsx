@@ -147,7 +147,6 @@ export default function VehicleInspectionChecklist({
   const router = useRouter();
   // const params = new URLSearchParams(searchParams as any);
 
-  // console.log(
   //   'equipments?.find((equipment) => equipment.value === default_equipment_id)',
   //   equipments?.find((equipment) => equipment.value === default_equipment_id)
   // );
@@ -188,8 +187,6 @@ export default function VehicleInspectionChecklist({
     });
 
     //Comparar el kilometraje con el del equipo y si es mayor actualizarlo
-    // console.log('equipment', equipment);
-    // console.log(' data.movil', data.movil);
     if (equipment && Number(data.kilometraje) > Number(equipment.kilometer)) {
       await UpdateVehicle(equipment.value, { kilometer: data.kilometraje });
     }

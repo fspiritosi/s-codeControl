@@ -207,7 +207,6 @@ export const BaseChecklistLayout = ({
   const itemsPerPage = 30;
   const pages = Math.ceil(data.items.length / itemsPerPage);
 
-  console.log('singurl', singurl);
 
   const renderSignature = () => (
     <View style={styles.signatureContainer}>

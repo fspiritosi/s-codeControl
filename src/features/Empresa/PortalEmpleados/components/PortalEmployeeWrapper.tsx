@@ -4,7 +4,6 @@ import AcceptPage from './PortalPage';
 async function PortalEmployeeWrapper() {
   const portalUsers = await getPendingRequests();
   // const approvedUsers = await getApprovedUsers();
-  console.log(portalUsers, 'pendingRequests');
 
   return (
     <AcceptPage

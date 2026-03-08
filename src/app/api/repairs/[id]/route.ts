@@ -13,7 +13,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     return Response.json({ types_of_repairs });
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 
@@ -27,6 +27,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     return Response.json({ types_of_repairs });
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }

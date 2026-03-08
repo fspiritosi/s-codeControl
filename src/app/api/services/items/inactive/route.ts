@@ -19,7 +19,7 @@ export async function PUT(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return new NextResponse(JSON.stringify({ error: error as any }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

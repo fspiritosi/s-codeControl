@@ -15,9 +15,6 @@ export const createTraining = async (data: { title: string; description: string;
     const cookiesStore = await cookies();
     const company_id = cookiesStore.get('actualComp')?.value;
 
-    console.log('User:', user.data.user?.id);
-    console.log('Company ID:', company_id);
-    console.log('Training data:', data);
 
     if (!company_id) {
       console.error('No hay company_id en las cookies');
@@ -32,8 +29,7 @@ export const createTraining = async (data: { title: string; description: string;
     // Verificar la estructura de la tabla trainings
     const { data: tableInfo, error: tableError } = await supabase.from('trainings').select('*').limit(1);
 
-    console.log('Table info:', tableInfo);
-    console.log('Table error:', tableError);
+    console.error('Table error:', tableError);
 
     // Crear la capacitación
     const trainingPayload = {
@@ -43,11 +39,9 @@ export const createTraining = async (data: { title: string; description: string;
       company_id: company_id,
     };
 
-    console.log('Payload a insertar:', trainingPayload);
 
     const { data: trainingData, error } = await supabase.from('trainings').insert(trainingPayload).select();
 
-    console.log('Response data:', trainingData);
 
     if (error) {
       console.error('Error al crear la capacitación:', error);
@@ -322,7 +316,6 @@ export const fetchTrainings = async () => {
       .eq('company_id', company_id)
       .order('created_at', { ascending: false });
 
-    // console.log('Datos de capacitaciones recibidos:', data);
 
     if (error) {
       console.error('Error al obtener capacitaciones:', error);
@@ -336,8 +329,7 @@ export const fetchTrainings = async () => {
       .eq('company_id', company_id)
       .eq('is_active', true);
 
-    console.log('Total de empleados:', totalEmployees);
-    console.log('Error de empleados:', employeesError);
+    console.error('Error de empleados:', employeesError);
 
     // Contadores de intentos completados por training_id
     // TODO: fix training query types
@@ -346,7 +338,6 @@ export const fetchTrainings = async () => {
       .select('training_id, count(*)', { count: 'exact' })
       .eq('status', 'completed') as unknown as { data: any[] | null; error: any };
 
-    console.log('Contadores de intentos completados:', completedData);
 
     // Procesar los datos para el formato que espera el componente TrainingSection
     const formattedTrainings = data.map((training) => {
@@ -398,7 +389,6 @@ export const fetchTrainings = async () => {
       };
     });
 
-    console.log('Datos formateados:', formattedTrainings);
 
     return formattedTrainings;
   } catch (error: any) {
@@ -634,7 +624,6 @@ export const fetchTrainingById = async (id: string) => {
       },
       status: trainingData.status,
     };
-    console.log(formattedTraining);
 
     return formattedTraining;
   } catch (error) {
@@ -737,10 +726,8 @@ export const updateTrainingMaterials = async (
         .filter((path): path is string => path !== null && path.trim() !== ''); // Filtrar nulos y vacíos
 
       if (filePathsToDelete.length > 0) {
-        console.log('Archivos a eliminar del storage:', filePathsToDelete);
         try {
           await storageServer.remove('training-materials', filePathsToDelete);
-          console.log('Archivos eliminados del storage correctamente.');
         } catch (storageError) {
           console.error('Error al eliminar archivos del storage:', storageError);
           // No interrumpimos el proceso si falla la eliminación del storage
@@ -756,7 +743,6 @@ export const updateTrainingMaterials = async (
       console.error('Error al eliminar materiales existentes de la DB:', deleteError);
       return { success: false, error: `Error al eliminar materiales de la DB: ${deleteError.message}` };
     } else {
-      console.log('Registros de materiales eliminados de la DB correctamente.');
     }
 
     // Si no hay nuevos materiales para insertar, terminar aquí
@@ -829,9 +815,6 @@ export const updateTrainingQuestions = async (
     // 2. Función para actualizar opciones de una pregunta
     const updateQuestionOptions = async (questionId: string, options: string[], correctAnswer: number) => {
       try {
-        console.log(`[DEBUG] Actualizando opciones para pregunta ${questionId}`);
-        console.log(`[DEBUG] Opciones recibidas (${options.length}):`, options);
-        console.log(`[DEBUG] Respuesta correcta índice:`, correctAnswer);
 
         // Primero obtenemos las opciones existentes y sus posibles respuestas
         const { data: existingOptions, error: getOptionsError } = await supabase
@@ -844,7 +827,6 @@ export const updateTrainingQuestions = async (
           throw getOptionsError;
         }
 
-        console.log(`[DEBUG] Opciones existentes encontradas (${existingOptions?.length || 0}):`, existingOptions);
 
         // Agrupamos opciones existentes por texto normalizado para manejar duplicados
         const existingOptionsGroups: Record<
@@ -886,7 +868,6 @@ export const updateTrainingQuestions = async (
         // Procesamos las nuevas opciones
         options.forEach((optionText, index) => {
           const normalizedOptionText = optionText.toLowerCase().trim();
-          console.log(`[DEBUG] Procesando opción ${index}: "${optionText}" (normalizada: "${normalizedOptionText}")`);
 
           const optionGroup = existingOptionsGroups[normalizedOptionText];
 
@@ -904,19 +885,12 @@ export const updateTrainingQuestions = async (
             // Tomamos la primera opción del grupo para mantener/actualizar
             // Preferimos usar una sin respuestas si está disponible
             const optionToKeep = optionGroup[0];
-            console.log(`[DEBUG] Opción "${optionText}" ya existe, se usará la ID: ${optionToKeep.id}`);
 
             // Marcamos esta opción como procesada
             processedOptionIds.add(optionToKeep.id);
 
             // Verificamos si necesita actualización
             if (optionToKeep.is_correct !== (index === correctAnswer) || optionToKeep.order_index !== index) {
-              console.log(
-                `[DEBUG] Opción "${optionText}" (ID: ${optionToKeep.id}) necesita actualización. Cambios: `,
-                `is_correct: ${optionToKeep.is_correct} -> ${index === correctAnswer}, `,
-                `order_index: ${optionToKeep.order_index} -> ${index}`
-              );
-
               toUpdate.push({
                 id: optionToKeep.id,
                 is_correct: index === correctAnswer,
@@ -924,33 +898,24 @@ export const updateTrainingQuestions = async (
                 is_active: true,
               });
             } else {
-              console.log(`[DEBUG] Opción "${optionText}" (ID: ${optionToKeep.id}) no necesita actualización.`);
             }
 
             // Para el resto de las opciones duplicadas del grupo, marcarlas para eliminación o inactivación
             if (optionGroup.length > 1) {
-              console.log(`[DEBUG] Hay ${optionGroup.length - 1} opciones duplicadas adicionales para "${optionText}"`);
 
               for (let i = 1; i < optionGroup.length; i++) {
                 const duplicateOption = optionGroup[i];
                 processedOptionIds.add(duplicateOption.id);
 
                 if (duplicateOption.hasAnswers) {
-                  console.log(
-                    `[DEBUG] Opción duplicada "${duplicateOption.original_text}" (ID: ${duplicateOption.id}) tiene respuestas, se marcará como inactiva.`
-                  );
                   toMarkInactive.push(duplicateOption.id);
                 } else {
-                  console.log(
-                    `[DEBUG] Opción duplicada "${duplicateOption.original_text}" (ID: ${duplicateOption.id}) no tiene respuestas, se eliminará.`
-                  );
                   toDelete.push(duplicateOption.id);
                 }
               }
             }
           } else {
             // Es una opción nueva, la insertamos
-            console.log(`[DEBUG] Opción "${optionText}" es nueva, se insertará.`);
             toInsert.push({
               question_id: questionId,
               option_text: optionText,
@@ -962,7 +927,6 @@ export const updateTrainingQuestions = async (
         });
 
         // Procesar opciones que no fueron procesadas (ya no están en la lista nueva)
-        console.log(`[DEBUG] Verificando opciones no procesadas que ya no están en la lista nueva`);
 
         existingOptions?.forEach((option) => {
           if (!processedOptionIds.has(option.id)) {
@@ -971,33 +935,20 @@ export const updateTrainingQuestions = async (
 
             if (hasAnswers) {
               // Si tiene respuestas asociadas, la marcamos como inactiva pero no la eliminamos
-              console.log(
-                `[DEBUG] Opción "${option.option_text}" (ID: ${option.id}) ya no se usa y tiene respuestas asociadas, se marcará como inactiva.`
-              );
               toMarkInactive.push(option.id);
             } else {
               // Si no tiene respuestas, la podemos eliminar
-              console.log(
-                `[DEBUG] Opción "${option.option_text}" (ID: ${option.id}) ya no se usa y no tiene respuestas asociadas, se eliminará.`
-              );
               toDelete.push(option.id);
             }
           }
         });
 
         // Resumen de operaciones
-        console.log(`[DEBUG] RESUMEN DE OPERACIONES:`);
-        console.log(`[DEBUG] - A actualizar: ${toUpdate.length}`, toUpdate);
-        console.log(`[DEBUG] - A insertar: ${toInsert.length}`, toInsert);
-        console.log(`[DEBUG] - A marcar inactivas: ${toMarkInactive.length}`, toMarkInactive);
-        console.log(`[DEBUG] - A eliminar: ${toDelete.length}`, toDelete);
 
         // Ejecutar las operaciones de base de datos
         // 1. Actualizar opciones existentes que han cambiado
         if (toUpdate.length > 0) {
-          console.log(`[DEBUG] Ejecutando ${toUpdate.length} actualizaciones...`);
           for (const option of toUpdate) {
-            console.log(`[DEBUG] Actualizando opción ID: ${option.id}`, option);
             const { error: updateError } = await supabase
               .from('training_question_options')
               .update({
@@ -1011,13 +962,11 @@ export const updateTrainingQuestions = async (
               console.error(`Error al actualizar opción ${option.id}:`, updateError);
               throw updateError;
             }
-            console.log(`[DEBUG] Actualización exitosa para opción ID: ${option.id}`);
           }
         }
 
         // 2. Insertar nuevas opciones
         if (toInsert.length > 0) {
-          console.log(`[DEBUG] Insertando ${toInsert.length} nuevas opciones...`);
           const { data: insertedData, error: insertError } = await supabase
             .from('training_question_options')
             .insert(toInsert)
@@ -1028,14 +977,11 @@ export const updateTrainingQuestions = async (
             throw insertError;
           }
 
-          console.log(`[DEBUG] Opciones insertadas exitosamente:`, insertedData);
         }
 
         // 3. Marcar como inactivas opciones con respuestas pero que ya no se usan
         if (toMarkInactive.length > 0) {
-          console.log(`[DEBUG] Marcando ${toMarkInactive.length} opciones como inactivas...`);
           for (const optionId of toMarkInactive) {
-            console.log(`[DEBUG] Marcando como inactiva la opción ID: ${optionId}`);
             const { error: inactiveError } = await supabase
               .from('training_question_options')
               .update({ is_active: false })
@@ -1045,26 +991,21 @@ export const updateTrainingQuestions = async (
               console.error(`Error al marcar opción ${optionId} como inactiva:`, inactiveError);
               throw inactiveError;
             }
-            console.log(`[DEBUG] Opción ${optionId} marcada como inactiva exitosamente`);
           }
         }
 
         // 4. Eliminar opciones que no tienen respuestas y ya no se usan
         if (toDelete.length > 0) {
-          console.log(`[DEBUG] Eliminando ${toDelete.length} opciones...`);
           for (const optionId of toDelete) {
-            console.log(`[DEBUG] Eliminando opción ID: ${optionId}`);
             const { error: deleteError } = await supabase.from('training_question_options').delete().eq('id', optionId);
 
             if (deleteError) {
               console.error(`Error al eliminar opción ${optionId}:`, deleteError);
               throw deleteError;
             }
-            console.log(`[DEBUG] Opción ${optionId} eliminada exitosamente`);
           }
         }
 
-        console.log(`[DEBUG] Actualización de opciones para pregunta ${questionId} completada con éxito`);
         return true;
       } catch (error: any) {
         console.error(`Error al actualizar opciones para pregunta ${questionId}:`, error);

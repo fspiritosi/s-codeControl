@@ -18,7 +18,6 @@ export const getEmployeeNames = (employeeIds: string[], employees: Employee[]) =
   return employeeIds
     ?.map((id) => {
       const employee = employees?.find((emp) => emp.id === id);
-      //console.log(employee)
       return employee ? `${employee.firstname} ${employee.lastname}` : 'Unknown';
     })
     .join(', ');

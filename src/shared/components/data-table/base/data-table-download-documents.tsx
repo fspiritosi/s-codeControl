@@ -20,7 +20,7 @@
 // }
 
 // export function DataTableDownloadDocuments({ documents, onDownload }: DataTableDownloadDocumentsProps) {
-//   // console.log(documents, 'documents');
+
 
 //   const filteredRows = [];
 //   const presentedRows = [];

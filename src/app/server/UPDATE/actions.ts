@@ -25,7 +25,7 @@ export const UpdateVehicle = async (vehicleId: string, vehicleData: any) => {
       data: vehicleData,
     });
   } catch (error) {
-    console.log('error', error);
+    console.error(error);
   }
 };
 
@@ -54,7 +54,7 @@ export const UpdateDiagramsById = async (diagramData: { diagram_type: string; di
       });
       return data;
     } catch (error) {
-      console.log('error', error);
+      console.error(error);
       return null;
     }
   });
@@ -80,7 +80,7 @@ export const CreateDiagrams = async (diagramData: EmployeeDiagramInsert[]) => {
       });
       return data;
     } catch (error) {
-      console.log('error', error);
+      console.error(error);
       return null;
     }
   });

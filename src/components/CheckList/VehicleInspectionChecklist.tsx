@@ -224,8 +224,6 @@ export default function VehicleMaintenanceChecklist({
       error: 'Ocurrió un error al guardar el checklist',
     });
     //Comparar el kilometraje con el del equipo y si es mayor actualizarlo
-    // console.log('equipment', equipment);
-    // console.log(' data.movil', data.movil);
     if (equipment && Number(data.kilometraje) > Number(equipment.kilometer)) {
       await UpdateVehicle(equipment.value, { kilometer: data.kilometraje });
     }

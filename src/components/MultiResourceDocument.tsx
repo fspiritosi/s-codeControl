@@ -223,7 +223,7 @@ export default function MultiResourceDocument({
                   .eq('id_document_types', values.id_document_types);
 
                 if (error) {
-                  console.log(error);
+                  console.error(error);
                   throw new Error(handleSupabaseError(error.message));
                 }
               } else {

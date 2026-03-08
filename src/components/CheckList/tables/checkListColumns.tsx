@@ -41,9 +41,6 @@ export const checkListColumns: ColumnDef<{
       );
     },
     filterFn: (row, id, value) => {
-      // console.log('row', row);
-      // console.log('id', id);
-      // console.log('value', value);
 
       return (
         row.original.title.toLowerCase().includes(value.toLowerCase()) ||

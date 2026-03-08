@@ -10,7 +10,6 @@ export const getPendingRequests = async () => {
   if (!company_id) return [];
 
   const { data, error } = await supabase.rpc('get_company_users_by_cuil', { p_company_id: company_id });
-  console.log(company_id, 'datcompany_ida');
 
   if (error) {
     console.error('Error fetching company users:', error);
@@ -36,9 +35,8 @@ export const removeUserAccess = async (userId: string) => {
   const supabase = await adminSupabaseServer();
 
   const { error, data } = await supabase.auth.admin.updateUserById(userId, { user_metadata: { verified: false } });
-  console.log(data, 'data');
   if (error) {
-    console.log(error, 'data');
+    console.error(error);
     throw error;
   }
 

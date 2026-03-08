@@ -72,12 +72,9 @@
 //       const { repair_solicitudes } = await fetch(`${URL}/api/repair_solicitud?actual=${company_id}`).then((e) =>
 //         e.json()
 //       );
-//       console.log('solicitudes', repair_solicitudes);
 
 //       let pending = repair_solicitudes?.filter((e: any) => e.state === 'Pendiente');
-//       console.log('pending', pending);
 //       let finished = repair_solicitudes?.filter((e: any) => e.state === 'Finalizado');
-//       console.log('pending', pending);
 //       let esperandoRepuestos = repair_solicitudes?.filter((e: any) => e.state === 'Esperando repuestos');
 
 //       setData({

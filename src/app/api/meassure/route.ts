@@ -6,6 +6,6 @@ export async function GET(request: NextRequest) {
 
     return Response.json({ data });
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }

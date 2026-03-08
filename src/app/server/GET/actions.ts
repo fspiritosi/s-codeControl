@@ -333,7 +333,6 @@ export const fetchSingEmployee = async (employeesId: string) => {
 
     const publicUrl = await storageServer.getPublicUrl('document_files', employeeSingDocument?.[0]?.document_path || '');
 
-    console.log('data', publicUrl);
 
     return publicUrl || null;
   } catch (error) {
@@ -551,7 +550,6 @@ export const fetchEmployeePermanentDocumentsByEmployeeId = async (employeeId: st
   } = await supabase.auth.getUser();
   const role = await getActualRole(companyId as string, user?.id as string);
 
-  console.log(role);
 
   try {
     if (role === 'Invitado') {

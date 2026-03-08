@@ -29,7 +29,6 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
       );
     },
     filterFn: (row, columnId, filterValue) => {
-      // console.log(filterValue, 'filterValue');
       const cellValue = row.getValue(columnId);
 
       if (typeof cellValue === 'string' && Array.isArray(filterValue)) {

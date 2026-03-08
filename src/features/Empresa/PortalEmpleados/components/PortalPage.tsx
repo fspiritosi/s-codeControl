@@ -118,7 +118,6 @@ export default function AcceptPage({
           //   employeeId: selectedRequest.employee_id,
           // });
 
-          console.log('Rechazar acceso para:', selectedRequest);
         }
 
         // Mostrar mensaje de éxito
@@ -131,7 +130,6 @@ export default function AcceptPage({
         if (modalAction === 'block') {
           // Llamada a server action para bloquear usuario (a implementar)
           const data = await removeUserAccess(selectedUser?.user_id);
-          console.log(data, 'data');
           router.refresh();
         } else if (modalAction === 'unblock') {
           // Llamada a server action para desbloquear usuario (a implementar)
@@ -139,7 +137,6 @@ export default function AcceptPage({
           //   userId: selectedUser.user_id,
           // });
 
-          console.log('Desbloquear usuario:', selectedUser);
         } else if (modalAction === 'reset-password') {
           // Llamada a server action para resetear contraseña (a implementar)
           // await resetUserPassword({
@@ -147,7 +144,6 @@ export default function AcceptPage({
           //   email: selectedUser.email,
           // });
 
-          console.log('Resetear contraseña para:', selectedUser);
         }
 
         // Mostrar mensaje de éxito

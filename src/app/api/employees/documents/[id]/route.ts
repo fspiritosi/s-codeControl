@@ -49,6 +49,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return Response.json({ data });
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }

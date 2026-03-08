@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
     return Response.json({ items });
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 
@@ -83,6 +83,6 @@ export async function PUT(request: NextRequest) {
 
     return Response.json({ items });
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }

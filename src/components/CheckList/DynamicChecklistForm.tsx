@@ -285,7 +285,6 @@ export default function DynamicChecklistForm({
 
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
-  // console.log(form_Info, 'form_Info');
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     //Comparar el kilometraje con el del equipo y si es mayor actualizarlo

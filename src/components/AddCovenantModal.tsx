@@ -30,7 +30,6 @@ export default function AddCovenantModal({
 }) {
   const router = useRouter();
 
-  //console.log(guildInfo, 'guildInfo');
 
   const company_id = useLoggedUserStore((state) => state.actualCompany?.id);
   const supabase = supabaseBrowser();

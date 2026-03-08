@@ -20,7 +20,6 @@
 //     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 //     const route = useRouter();
 //     const [remitoNumber, setRemitoNumber] = useState('');
-//     console.log(rowId)
 //     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 //         if (event.target.files && event.target.files[0]) {
 //             setSelectedFile(event.target.files[0]);
@@ -66,7 +65,6 @@
 //             return;
 //         }
 //         route.refresh()
-//         console.log('Archivo subido con éxito:', data);
 //         toast.success('Archivo subido con éxito');
 //         setIsDialogOpen(false);
 //     };
@@ -170,7 +168,6 @@ const UploadDocument: React.FC<UploadDocumentProps> = ({
       }
 
       const currentFilePath = currentData.document_path;
-      //console.log('currentFilePath:', currentFilePath);
       const currentFilePathModified = currentData.document_path
         ? currentData.document_path.split('/').slice(1).join('/')
         : '';
@@ -220,7 +217,6 @@ const UploadDocument: React.FC<UploadDocumentProps> = ({
     }
 
     route.refresh();
-    // console.log('Archivo subido con éxito:', data);
     toast.success('Archivo subido con éxito');
     setIsDialogOpen(false);
   };

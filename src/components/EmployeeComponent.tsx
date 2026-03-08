@@ -633,7 +633,6 @@ export default function EmployeeComponent({
           covenants_id: values.covenants_id || null,
           category_id: values.category_id || null,
         };
-        //console.log(finalValues, 'finalValues');
         const result = compareContractorEmployees(user, finalValues as any);
         result.valuesToRemove.forEach(async (e) => {
           const { error } = await supabase
@@ -679,7 +678,6 @@ export default function EmployeeComponent({
       }
     );
   }
-  //console.log(form.formState.errors, 'errors');
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
@@ -1460,7 +1458,6 @@ export default function EmployeeComponent({
 
                                 };
                               }) || [];
-                          // console.log(selectedGuildInfo, 'selectedGuildInfo');
                           selectedCovenantInfo =
                             covenants
                               ?.filter((e) => e.id === covenantsId)
@@ -1471,7 +1468,6 @@ export default function EmployeeComponent({
                                 };
                               }) || [];
 
-                          //console.log(selectedCovenantInfo, 'selectedCovenantInfo');
 
                           return (
                             <FormItem className="flex flex-col w-[300px]">

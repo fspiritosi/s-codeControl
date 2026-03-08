@@ -104,14 +104,12 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
       .eq('id', vehicle_id);
 
     if (error) {
-      //console.log(error);
       throw new Error(error.message);
     }
     document.getElementById('close-modal-mechanic-colum2')?.click();
     router.refresh();
   };
 
-  //console.log('repairLogs', repairLogs);
 
   return (
     <Dialog>

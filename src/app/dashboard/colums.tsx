@@ -519,7 +519,6 @@ export const ExpiredColums: ColumnDef<any>[] = [
             <DropdownMenuItem
               disabled={row.original.state === 'pendiente'}
               onClick={() =>
-                // console.log('Andamo ruleta en una camioneta',row)
                 handleDownload(row.original.document_url, row.original.documentName, row.original.resource)
               }
             >
@@ -655,7 +654,6 @@ export const ExpiredColums: ColumnDef<any>[] = [
       const values = row.original.allocated_to;
       const theme = useTheme();
 
-      // console.log(values);
 
       if (!values)
         return (
@@ -729,7 +727,6 @@ export const ExpiredColums: ColumnDef<any>[] = [
     },
     cell: ({ row }) => {
       const isNoPresented = row.getValue('state') === 'pendiente';
-      //console.log(row.original.validity, 'row.original.validity');
 
       if (isNoPresented) {
         return <Badge variant={'destructive'}>Pendiente</Badge>;
@@ -737,7 +734,6 @@ export const ExpiredColums: ColumnDef<any>[] = [
         if (row.original.validity) {
           return moment(row.original.validity).format('DD/MM/YYYY');
         } else {
-          console.log('row.original.validity', row.original.validity);
           return <Badge variant={'outline'}>No vence</Badge>;
         }
       }

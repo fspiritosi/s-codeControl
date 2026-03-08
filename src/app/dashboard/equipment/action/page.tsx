@@ -25,7 +25,6 @@ export default async function EquipmentFormAction({ searchParams: searchParamsPr
 
   let vehicle;
 
-  //console.log(searchParams.id, 'searchParams.id');
 
   if (searchParams.id) {
     //const newVehicle = await fetchEquipmentById(searchParams.id);
@@ -35,7 +34,7 @@ export default async function EquipmentFormAction({ searchParams: searchParamsPr
       .eq('id', searchParams.id);
     // .eq('company_id', actualCompany?.value);
 
-    if (error) console.log('eroor', error);
+    if (error) console.error(error);
 
     vehicle = vehicleData?.map((item: any) => ({
       ...item,
@@ -44,8 +43,6 @@ export default async function EquipmentFormAction({ searchParams: searchParamsPr
       model: item.model_vehicles.name,
       type: item.type.name,
     }));
-    console.log('vehicle-old-fetch', vehicle);
-    //console.log('vehicle-new-fetch', newVehicle);
   }
 
   let { data: types, error } = await supabase
@@ -59,7 +56,6 @@ export default async function EquipmentFormAction({ searchParams: searchParamsPr
     .or(`company_id.eq.${company_id?.value},company_id.is.null`);
 
   const role = await getRole();
-  console.log('role action equipment', role);
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">
       <Card

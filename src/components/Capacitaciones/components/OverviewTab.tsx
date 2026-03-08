@@ -149,7 +149,6 @@ function OverviewTab({ training }: { training: Awaited<ReturnType<typeof fetchTr
     });
   };
 
-  console.log(training);
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <Card>

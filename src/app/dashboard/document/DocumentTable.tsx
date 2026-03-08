@@ -21,8 +21,6 @@ export default async function DocumentTable({ user, employee_id, role }: Props) 
     formatEmployeeDocuments
   );
 
-  console.log(permanentDocuments, monthlyDocuments);
-  // console.log(allDocumentsToShow.employees.filter((e) => e.document_number === document));
   return (
     <Tabs defaultValue="permanentes">
       <CardContent className="flex justify-between">

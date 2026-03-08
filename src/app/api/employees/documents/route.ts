@@ -47,6 +47,6 @@ export async function GET(request: NextRequest) {
 
     return Response.json({ documents: mappedDocuments });
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }

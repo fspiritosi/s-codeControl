@@ -490,14 +490,11 @@ export async function createDocumentWithAssignments(formData: FormData, company_
             console.error('❌ Error al asignar etiquetas al documento:', tagAssignError);
             // No lanzamos error para no fallar la creación del documento
           } else {
-            console.log('✅ Asignaciones de etiquetas creadas correctamente');
           }
         } else {
-          console.log('ℹ️ No hay etiquetas válidas para asignar');
         }
       }
     } else {
-      console.log('ℹ️ No se especificaron etiquetas para asignar');
     }
 
 
@@ -548,7 +545,6 @@ export async function createDocumentWithAssignments(formData: FormData, company_
        
         try {
           await storageServer.remove("documents-hse", [filePath])
-          console.log("Archivo temporal eliminado")
         } catch (cleanupError2) {
           console.error("Error al limpiar archivo temporal:", cleanupError2)
         }
@@ -642,9 +638,7 @@ async function createDocumentAssignments(
           throw new Error("No se pudieron crear las asignaciones por posición")
         }
 
-        console.log(
-          `Asignaciones creadas para ${employees.length} empleados en posiciones: ${selectedPositions.join(", ")}`,
-        )
+
       }
 
       // ALTERNATIVA: También crear asignaciones por tipo de posición para futuros empleados
@@ -659,7 +653,6 @@ async function createDocumentAssignments(
      
     }
 
-    console.log("Asignaciones de documento creadas exitosamente")
   } catch (error) {
     console.error("Error al crear asignaciones:", error)
     
@@ -710,7 +703,6 @@ export async function createDocumentVersion(
     const fileName = `${Date.now()}.${fileExt}`;
     filePath = `${company_id}/${fileName}`;
 
-    console.log('Subiendo archivo a storage:', { filePath, size: file.size, type: file.type });
 
     const { error: uploadError } = await supabase.storage
       .from('documents-hse')
@@ -1167,7 +1159,6 @@ export async function publishDocument(documentId: string) {
       throw new Error('No se pudo publicar el documento');
     }
 
-    console.log('✅ Documento publicado correctamente');
     return true;
   } catch (error) {
     console.error('❌ Error en publishDocument:', error);
@@ -1265,7 +1256,6 @@ export async function deleteDocument(documentId: string) {
           console.error('❌ Error al eliminar el archivo del almacenamiento:', storageError);
           // No lanzamos error para no revertir la transacción
         } else {
-          console.log('✅ Archivo eliminado del almacenamiento correctamente');
         }
       } catch (storageError) {
         console.error('❌ Error inesperado al eliminar archivo del almacenamiento:', storageError);
@@ -1385,7 +1375,6 @@ export async function deleteDocument(documentId: string) {
 //       console.error('❌ Error al eliminar asignaciones de etiquetas anteriores:', deleteTagsError);
 //       // No lanzamos error para no fallar la actualización del documento
 //     } else {
-//       console.log('✅ Asignaciones de etiquetas anteriores eliminadas');
 //     }
 
 //     // Luego creamos las nuevas asignaciones si hay etiquetas
@@ -1427,14 +1416,11 @@ export async function deleteDocument(documentId: string) {
 //           if (tagAssignError) {
 //             console.error('❌ Error al asignar etiquetas al documento:', tagAssignError);
 //           } else {
-//             console.log('✅ Asignaciones de etiquetas actualizadas correctamente');
 //           }
 //         } else {
-//           console.log('ℹ️ No hay etiquetas válidas para asignar');
 //         }
 //       }
 //     } else {
-//       console.log('ℹ️ No se especificaron etiquetas para asignar');
 //     }
 
 //     return { success: true, document };
@@ -1548,7 +1534,6 @@ export async function updateDocument(formData: FormData, companyId: string) {
       console.error('❌ Error al eliminar asignaciones de etiquetas anteriores:', deleteTagsError);
       // No lanzamos error para no fallar la actualización del documento
     } else {
-      console.log('✅ Asignaciones de etiquetas anteriores eliminadas');
     }
 
     // Luego creamos las nuevas asignaciones si hay etiquetas
@@ -1590,14 +1575,11 @@ export async function updateDocument(formData: FormData, companyId: string) {
           if (tagAssignError) {
             console.error('❌ Error al asignar etiquetas al documento:', tagAssignError);
           } else {
-            console.log('✅ Asignaciones de etiquetas actualizadas correctamente');
           }
         } else {
-          console.log('ℹ️ No hay etiquetas válidas para asignar');
         }
       }
     } else {
-      console.log('ℹ️ No se especificaron etiquetas para asignar');
     }
 
     return { success: true, document };

@@ -69,7 +69,6 @@ function CompletarChecklist({
           key={checklist.id}
           className="w-full hover:cursor-pointer hover:bg-gray-100"
           onClick={() => {
-            // console.log(checklist.name, 'checklist.name');
             setActiveFormType(checklist.name);
           }}
         >

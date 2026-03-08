@@ -120,14 +120,12 @@ export default function UpdateDocuments({
             .eq('document_path', documentName);
 
           if (updateError) {
-            //console.log(updateError);
             throw new Error(handleSupabaseError(updateError.message));
           }
 
           return;
         }
 
-        //console.log(documentName);
 
         const fileData = await storage.download('document_files', documentName);
 
@@ -148,7 +146,6 @@ export default function UpdateDocuments({
           .eq('id', id);
 
         if (updateError) {
-          //console.log(updateError);
           throw new Error(handleSupabaseError(updateError.message));
         }
 

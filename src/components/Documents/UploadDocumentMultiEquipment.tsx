@@ -261,7 +261,6 @@ function UploadDocumentMultiEquipment({
                         input.onchange = async (e) => {
                           const file = (e.target as HTMLInputElement).files?.[0];
                           setSelectedFile(file);
-                          //console.log('file', file);
                           if (file) {
                             const documentName = documenTypes.find(
                               (documentType) => documentType.id === form.getValues('id_document_types')
@@ -285,7 +284,6 @@ function UploadDocumentMultiEquipment({
                               'multirecursos'
                             );
 
-                            //console.log('documentUrl', documentUrl);
 
                             field.onChange(documentUrl);
                           }

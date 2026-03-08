@@ -56,7 +56,6 @@ export function TrainingEditDialog({ training, allTags, open, onOpenChange, sele
 
     setIsSubmitting(true);
 
-    console.log('Form data:', formData);
 
     try {
       await toast.promise(

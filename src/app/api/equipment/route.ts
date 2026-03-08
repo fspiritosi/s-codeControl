@@ -47,6 +47,6 @@ export async function PATCH(request: NextRequest, context: any) {
 
     return Response.json({ vehicles });
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }

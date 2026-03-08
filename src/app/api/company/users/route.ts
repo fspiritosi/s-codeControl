@@ -12,6 +12,6 @@ export async function GET(request: NextRequest) {
 
     return Response.json({ company_users });
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
