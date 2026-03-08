@@ -3,7 +3,7 @@ import { profileUser } from '@/types/types';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
-import { useLoggedUserStore } from './loggedUser';
+import { useAuthStore } from './authStore';
 
 export default function InitProfile({ profile }: { profile: profileUser[] | undefined | any[] }) {
   const initState = useRef(false);
@@ -20,7 +20,7 @@ export default function InitProfile({ profile }: { profile: profileUser[] | unde
         router.push('/dashboard'); // Convert router.pathname to string
       }
       if (!initState.current) {
-        useLoggedUserStore.setState({ profile: profile });
+        useAuthStore.setState({ profile: profile });
       }
     }
     initState.current = true;

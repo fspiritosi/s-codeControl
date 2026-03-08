@@ -2,7 +2,7 @@ import { Equipo } from '@/zodSchemas/schemas';
 import { create } from 'zustand';
 import { supabase } from '../../supabase/supabase';
 import { MandatoryDocuments } from './../zodSchemas/schemas';
-import { useLoggedUserStore } from './loggedUser';
+import { useCompanyStore } from './companyStore';
 
 type Province = {
   id: number;
@@ -100,7 +100,7 @@ export const useCountriesStore = create<State>((set, get) => {
     }
 
   const documentTypes = async (id: string | undefined) => {
-    const company_id = id ?? useLoggedUserStore?.getState?.()?.actualCompany?.id;
+    const company_id = id ?? useCompanyStore?.getState?.()?.actualCompany?.id;
 
     let { data: document_types } = await supabase
       .from('document_types')

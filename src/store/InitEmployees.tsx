@@ -2,7 +2,8 @@
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { useEffect, useRef } from 'react';
 import { useCountriesStore } from './countries';
-import { useLoggedUserStore } from './loggedUser';
+import { useCompanyStore } from './companyStore';
+import { useEmployeeStore } from './employeeStore';
 
 const formattedEmployees = (employees: any) => {
   const employee = employees?.map((employees: any) => {
@@ -51,7 +52,7 @@ const formattedEmployees = (employees: any) => {
 export default function InitEmployees({ active }: { active: boolean }) {
   const supabase = supabaseBrowser();
   const initState = useRef(false);
-  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
+  const actualCompany = useCompanyStore((state) => state.actualCompany);
 
   const fetchEmployees = async () => {
     let { data, error } = await supabase
@@ -82,8 +83,8 @@ export default function InitEmployees({ active }: { active: boolean }) {
       .eq('is_active', active);
 
     const employees = formattedEmployees(data);
-    useLoggedUserStore.setState({ employeesToShow: employees });
-    useLoggedUserStore.setState({ employees: employees });
+    useEmployeeStore.setState({ employeesToShow: employees });
+    useEmployeeStore.setState({ employees: employees });
   };
   const documentTypes = useCountriesStore((state) => state.documentTypes);
   useEffect(() => {

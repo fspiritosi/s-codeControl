@@ -1,17 +1,15 @@
 'use server';
 import { supabaseServer } from '@/lib/supabase/server';
+import { getActionContext, getRequiredActionContext } from '@/lib/server-action-context';
 import { getActualRole } from '@/lib/utils';
 import moment from 'moment';
-import { cookies } from 'next/headers';
 
 // Company-related actions
 export const fetchCurrentCompany = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
-  const { data, error } = await supabase.from('company').select('*').eq('id', company_id);
+  const { data, error } = await supabase.from('company').select('*').eq('id', companyId);
 
   if (error) {
     console.error('Error fetching company:', error);
@@ -20,15 +18,13 @@ export const fetchCurrentCompany = async () => {
   return data || [];
 };
 export const fetchAllEquipmentWithRelations = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase
     .from('vehicles')
     .select('*,brand(*),model(*),type(*),types_of_vehicles(*),contractor_equipment(*,contractor_id(*))')
-    .eq('company_id', company_id || '')
+    .eq('company_id', companyId || '')
     .order('domain')
     .returns<VehicleWithBrand[]>();
 
@@ -39,16 +35,14 @@ export const fetchAllEquipmentWithRelations = async () => {
   return data;
 };
 export const fetchVehicleBrands = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase
     .from('brand_vehicles')
     .select('*')
     .eq('is_active', true)
-    .eq('company_id', company_id || '');
+    .eq('company_id', companyId || '');
 
   if (error) {
     console.error('Error fetching vehicle brands:', error);
@@ -57,10 +51,8 @@ export const fetchVehicleBrands = async () => {
   return data;
 };
 export const fetchVehicleModels = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase.from('model_vehicles').select('*').eq('is_active', true);
 
@@ -71,16 +63,14 @@ export const fetchVehicleModels = async () => {
   return data;
 };
 export const fetchTypeVehicles = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase
     .from('type')
     .select('*')
     .eq('is_active', true)
-    .eq('company_id', company_id || '')
+    .eq('company_id', companyId || '')
     .order('name', { ascending: true });
 
   if (error) {
@@ -90,10 +80,8 @@ export const fetchTypeVehicles = async () => {
   return data;
 };
 export const fetchTypesOfVehicles = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase.from('types_of_vehicles').select('*').eq('is_active', true);
 
@@ -119,15 +107,13 @@ export const setVehicleDataOptions = async () => {
   };
 };
 export const fetchCustomers = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
+  const { supabase, companyId } = await getActionContext();
 
   const { data, error } = await supabase
     .from('customers')
     .select('*')
     .eq('is_active', true)
-    .eq('company_id', company_id || '');
+    .eq('company_id', companyId || '');
 
   if (error) {
     console.error('Error fetching customers:', error);
@@ -136,10 +122,8 @@ export const fetchCustomers = async () => {
   return data;
 };
 export const fetchWorkDiagrams = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase.from('work-diagram').select('id,name').eq('is_active', true);
 
@@ -150,16 +134,14 @@ export const fetchWorkDiagrams = async () => {
   return data;
 };
 export const fetchGuilds = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase
     .from('guild')
     .select('*')
     .eq('is_active', true)
-    .eq('company_id', company_id || '');
+    .eq('company_id', companyId || '');
 
   if (error) {
     console.error('Error fetching guilds:', error);
@@ -168,15 +150,13 @@ export const fetchGuilds = async () => {
   return data;
 };
 export const fetchCovenants = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
+  const { supabase, companyId } = await getActionContext();
 
   const { data, error } = await supabase
     .from('covenant')
     .select('*')
     .eq('is_active', true)
-    .eq('company_id', company_id || '');
+    .eq('company_id', companyId || '');
 
   if (error) {
     console.error('Error fetching covenants:', error);
@@ -185,9 +165,7 @@ export const fetchCovenants = async () => {
   return data;
 };
 export const fetchAllCategories = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
+  const { supabase } = await getActionContext();
 
   const { data, error } = await supabase.from('category').select('*').eq('is_active', true);
 
@@ -198,9 +176,7 @@ export const fetchAllCategories = async () => {
   return data;
 };
 export const fetchHierrarchicalPositions = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
+  const { supabase } = await getActionContext();
 
   const { data, error } = await supabase.from('hierarchy').select('*').eq('is_active', true);
 
@@ -211,9 +187,7 @@ export const fetchHierrarchicalPositions = async () => {
   return data;
 };
 export const fetchProvinces = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
+  const { supabase } = await getActionContext();
 
   const { data, error } = await supabase.from('provinces').select('id,name');
 
@@ -252,15 +226,13 @@ export const setEmployeeDataOptions = async () => {
   };
 };
 export const fetchAllEmployeesWithRelations = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
+  const { supabase, companyId } = await getActionContext();
   const user = await fetchCurrentUser();
-  if (!company_id) return [];
+  if (!companyId) return [];
 
   supabase.auth.admin.updateUserById(user?.id || '', {
     app_metadata: {
-      company: company_id,
+      company: companyId,
     },
   });
 
@@ -288,7 +260,7 @@ export const fetchAllEmployeesWithRelations = async () => {
     )
   )`
     )
-    .eq('company_id', company_id || '')
+    .eq('company_id', companyId || '')
     .order('lastname')
     .returns<EmployeeDetailed[]>();
 
@@ -299,11 +271,9 @@ export const fetchAllEmployeesWithRelations = async () => {
   return data ?? [];
 };
 export const fetchAllEmployeesWithRelationsById = async (id: string) => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
+  const { supabase, companyId } = await getActionContext();
   const user = await fetchCurrentUser();
-  if (!company_id) return [];
+  if (!companyId) return [];
 
   let { data, error } = await supabase
     .from('employees')
@@ -329,7 +299,7 @@ export const fetchAllEmployeesWithRelationsById = async (id: string) => {
     )
   )`
     )
-    .eq('company_id', company_id || '')
+    .eq('company_id', companyId || '')
     .eq('id', id)
     .returns<EmployeeDetailed[]>();
 
@@ -341,19 +311,17 @@ export const fetchAllEmployeesWithRelationsById = async (id: string) => {
 };
 export const findEmployeeByFullName = async (fullName: string) => {
   try {
-    const cookiesStore = cookies();
-    const company_id = cookiesStore.get('actualComp')?.value;
+    const { supabase, companyId } = await getActionContext();
 
-    const supabase = supabaseServer();
     const { data: employees, error } = await supabase
       .rpc('find_employee_by_full_name_v2', {
         p_full_name: fullName,
-        p_company_id: company_id || '',
+        p_company_id: companyId || '',
       })
       .returns<Employee[]>();
 
     if (error) {
-      console.log('Query params:', { fullName, company_id });
+      console.log('Query params:', { fullName, company_id: companyId });
       console.error('Error al buscar empleado por nombre completo:', error);
       return null;
     }
@@ -366,10 +334,8 @@ export const findEmployeeByFullName = async (fullName: string) => {
 };
 export const fetchSingEmployee = async (employeesId: string) => {
   //Traer el tipo de documento que se llame firma
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase
     .from('document_types')
@@ -399,15 +365,13 @@ export const fetchSingEmployee = async (employeesId: string) => {
   return data2.data.publicUrl || null;
 };
 export const fetchCompanyDocuments = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase
     .from('documents_company')
     .select('*,id_document_types(*),user_id(*)')
-    .eq('applies', company_id)
+    .eq('applies', companyId)
     .returns<CompanyDocumentDetailed[]>();
 
   if (error || !data) {
@@ -418,18 +382,16 @@ export const fetchCompanyDocuments = async () => {
 };
 // Employee-related actions
 export const fetchAllEmployees = async (role?: string) => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
+  const { supabase, companyId } = await getActionContext();
   const user = await fetchCurrentUser();
-  if (!company_id) return [];
+  if (!companyId) return [];
 
   if (role === 'Invitado') {
     const { data, error } = await supabase
       .from('share_company_users')
       .select(`*,customer_id(*,contractor_employee(*,employee_id(*)))`)
       .eq('profile_id', user?.id || '')
-      .eq('company_id', company_id)
+      .eq('company_id', companyId)
       .returns<ShareCompanyUsersWithRelations[]>();
 
     const employees = data?.[0].customer_id?.contractor_employee;
@@ -437,7 +399,7 @@ export const fetchAllEmployees = async (role?: string) => {
     return allEmployees || [];
   }
 
-  const { data, error } = await supabase.from('employees').select('*').eq('company_id', company_id);
+  const { data, error } = await supabase.from('employees').select('*').eq('company_id', companyId);
 
   if (error) {
     console.error('Error fetching employees:', error);
@@ -446,15 +408,13 @@ export const fetchAllEmployees = async (role?: string) => {
   return data;
 };
 export const fetchAllActivesEmployees = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase
     .from('employees')
     .select('*')
-    .eq('company_id', company_id)
+    .eq('company_id', companyId)
     .eq('is_active', true);
 
   if (error) {
@@ -464,10 +424,8 @@ export const fetchAllActivesEmployees = async () => {
   return data;
 };
 export const fetchAllEmployeesJUSTEXAMPLE = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase.from('employees').select('*');
 
@@ -478,10 +436,8 @@ export const fetchAllEmployeesJUSTEXAMPLE = async () => {
   return data;
 };
 export const fetchAllEquipmentJUSTEXAMPLE = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase
     .from('vehicles')
@@ -506,16 +462,14 @@ export const fetchAllRepairsJUSTEXAMPLE = async () => {
   return data;
 };
 export const fetchEmployeeMonthlyDocuments = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
+  const { supabase, companyId } = await getActionContext();
 
-  if (!company_id) return [];
+  if (!companyId) return [];
 
   const { data, error } = await supabase
     .from('documents_employees')
     .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
-    .eq('applies.company_id', company_id)
+    .eq('applies.company_id', companyId)
     .eq('id_document_types.is_it_montlhy', true)
     .eq('applies.is_active', true)
     .eq('id_document_types.is_active', true)
@@ -530,15 +484,13 @@ export const fetchEmployeeMonthlyDocuments = async () => {
   return data;
 };
 export const fetchEmployeeMonthlyDocumentsByEmployeeId = async (employeeId: string) => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const role = await getActualRole(company_id as string, user?.id as string);
+  const role = await getActualRole(companyId as string, user?.id as string);
 
   if (role === 'Invitado') {
     const { data, error } = await supabase
@@ -574,15 +526,13 @@ export const fetchEmployeeMonthlyDocumentsByEmployeeId = async (employeeId: stri
   }
 };
 export const fetchEmployeePermanentDocumentsByEmployeeId = async (employeeId: string) => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const role = await getActualRole(company_id as string, user?.id as string);
+  const role = await getActualRole(companyId as string, user?.id as string);
 
   console.log(role);
 
@@ -620,15 +570,13 @@ export const fetchEmployeePermanentDocumentsByEmployeeId = async (employeeId: st
   }
 };
 export const fetchEmployeePermanentDocuments = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase
     .from('documents_employees')
     .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
-    .eq('applies.company_id', company_id)
+    .eq('applies.company_id', companyId)
     .eq('applies.is_active', true)
     .eq('id_document_types.is_active', true)
     .not('id_document_types.is_it_montlhy', 'is', true)
@@ -657,16 +605,14 @@ export const getDiagramEmployee = async ({ employee_id }: { employee_id: string 
 
 // Document-related actions
 export const fetchAllDocumentTypes = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase
     .from('document_types')
     .select('*')
     .eq('is_active', true)
-    .or(`company_id.eq.${company_id},company_id.is.null`);
+    .or(`company_id.eq.${companyId},company_id.is.null`);
 
   if (error) {
     console.error('Error fetching document types:', error);
@@ -675,10 +621,8 @@ export const fetchAllDocumentTypes = async () => {
   return data || [];
 };
 export const fetchDocumentsByDocumentTypeId = async (documentTypeId: string) => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase
     .from('documents_employees')
@@ -693,10 +637,8 @@ export const fetchDocumentsByDocumentTypeId = async (documentTypeId: string) => 
   return data;
 };
 export const getNextMonthExpiringDocumentsEmployees = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const today = moment().startOf('day');
   const nextMonth = moment().add(1, 'month').endOf('day');
@@ -704,7 +646,7 @@ export const getNextMonthExpiringDocumentsEmployees = async () => {
   const { data, error } = await supabase
     .from('documents_employees')
     .select('*,id_document_types(*),applies(*,contractor_employee(*, customers(*)))')
-    .eq('applies.company_id', company_id)
+    .eq('applies.company_id', companyId)
     .eq('applies.is_active', true)
     // .not('id_document_types.is_it_montlhy', 'is', false)
     .neq('id_document_types.is_it_montlhy', true) // Solo traer documentos que no sean mensuales
@@ -732,10 +674,8 @@ export const getNextMonthExpiringDocumentsEmployees = async () => {
   );
 };
 export const getNextMonthExpiringDocumentsVehicles = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const today = moment().startOf('day');
   const nextMonth = moment().add(1, 'month').endOf('day');
@@ -743,7 +683,7 @@ export const getNextMonthExpiringDocumentsVehicles = async () => {
   const { data, error } = await supabase
     .from('documents_equipment')
     .select('*,id_document_types(*),applies(*,type(*),brand(*),model(*))')
-    .eq('applies.company_id', company_id)
+    .eq('applies.company_id', companyId)
     .eq('applies.is_active', true)
     .not('id_document_types.is_it_montlhy', 'is', true)
     .not('id_document_types', 'is', null)
@@ -805,21 +745,19 @@ export const getDocumentEquipmentById = async (id: string) => {
 };
 // Equipment-related actions
 export const fetchAllEquipment = async (company_equipment_id?: string) => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id && !company_equipment_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId && !company_equipment_id) return [];
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const role = await getActualRole(company_id as string, user?.id as string);
+  const role = await getActualRole(companyId as string, user?.id as string);
 
   if (role === 'Invitado') {
     const { data, error } = await supabase
       .from('share_company_users')
       .select(`*,customer_id(*,contractor_equipment(*,equipment_id(*,brand(*),model(*),type(*),types_of_vehicles(*))))`)
       .eq('profile_id', user?.id || '')
-      .eq('company_id', (company_id ?? company_equipment_id) || '')
+      .eq('company_id', (companyId ?? company_equipment_id) || '')
       .returns<ShareCompanyUsersWithEquipment[]>();
 
     const equipments = data?.[0].customer_id?.contractor_equipment;
@@ -830,7 +768,7 @@ export const fetchAllEquipment = async (company_equipment_id?: string) => {
   const { data, error } = await supabase
     .from('vehicles')
     .select('*,brand(*),model(*),type(*),types_of_vehicles(*),contractor_equipment(*,contractor_id(*))')
-    .eq('company_id', (company_id ?? company_equipment_id) || '')
+    .eq('company_id', (companyId ?? company_equipment_id) || '')
     .returns<VehicleWithBrand[]>();
 
   if (error) {
@@ -841,15 +779,13 @@ export const fetchAllEquipment = async (company_equipment_id?: string) => {
   return data;
 };
 export const fetchMonthlyDocumentsByEquipmentId = async (equipmentId: string) => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const role = await getActualRole(company_id as string, user?.id as string);
+  const role = await getActualRole(companyId as string, user?.id as string);
 
   if (role === 'Invitado') {
     const { data, error } = await supabase
@@ -885,10 +821,8 @@ export const fetchMonthlyDocumentsByEquipmentId = async (equipmentId: string) =>
   }
 };
 export const fetchMonthlyDocumentsEquipment = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase
     .from('documents_equipment')
@@ -896,7 +830,7 @@ export const fetchMonthlyDocumentsEquipment = async () => {
     .eq('id_document_types.is_it_montlhy', true)
     .eq('id_document_types.is_active', true)
     .eq('applies.is_active', true)
-    .eq('applies.company_id', company_id)
+    .eq('applies.company_id', companyId)
     .not('id_document_types', 'is', null)
     .not('applies', 'is', null)
     .returns<EquipmentDocumentDetailed[]>();
@@ -908,14 +842,12 @@ export const fetchMonthlyDocumentsEquipment = async () => {
   return data;
 };
 export const fetchPermanentDocumentsByEquipmentId = async (equipmentId: string) => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const role = await getActualRole(company_id as string, user?.id as string);
+  const role = await getActualRole(companyId as string, user?.id as string);
 
   if (role === 'Invitado') {
     const { data, error } = await supabase
@@ -952,16 +884,14 @@ export const fetchPermanentDocumentsByEquipmentId = async (equipmentId: string) 
 };
 
 export const fetchallResources = async (applies: string) => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   if (applies === 'Persona') {
     const { data, error } = await supabase
       .from('employees')
       .select('firstname,lastname, cuil,id')
-      .eq('company_id', company_id || '');
+      .eq('company_id', companyId || '');
 
     if (error) {
       console.error('Error al obtener datos adicionales:', error);
@@ -972,7 +902,7 @@ export const fetchallResources = async (applies: string) => {
     const { data, error } = await supabase
       .from('vehicles')
       .select('domain, serie, intern_number,id')
-      .eq('company_id', company_id || '');
+      .eq('company_id', companyId || '');
 
     if (error) {
       console.error('Error al obtener datos adicionales:', error);
@@ -982,10 +912,8 @@ export const fetchallResources = async (applies: string) => {
   }
 };
 export const updateDocumentType = async (id: string, data: any) => {
-  const supabase = supabaseServer();
-  const cookiesStore = cookies();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return;
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return;
 
   const { error } = await supabase.from('document_types').update(data).eq('id', id);
 
@@ -997,10 +925,8 @@ export const updateDocumentType = async (id: string, data: any) => {
 };
 
 export const fettchExistingEntries = async (applies: string, id_document_types: string) => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
   const tableNames = {
     Equipos: 'documents_equipment',
     Persona: 'documents_employees',
@@ -1011,7 +937,7 @@ export const fettchExistingEntries = async (applies: string, id_document_types: 
     .from(table as 'documents_equipment' | 'documents_employees')
     .select('applies(*),id')
     .eq('id_document_types', id_document_types)
-    .eq('applies.company_id', company_id || '')
+    .eq('applies.company_id', companyId || '')
     .eq('applies.is_active', true)
     .eq('id_document_types.is_active', true)
     .not('applies', 'is', null);
@@ -1024,15 +950,13 @@ export const fettchExistingEntries = async (applies: string, id_document_types: 
 };
 
 export const fetchPermanentDocumentsEquipment = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase
     .from('documents_equipment')
     .select(`*,id_document_types(*),applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`)
-    .eq('applies.company_id', company_id)
+    .eq('applies.company_id', companyId)
     .eq('applies.is_active', true)
     .eq('id_document_types.is_active', true)
     .not('id_document_types.is_it_montlhy', 'is', true)
@@ -1047,10 +971,8 @@ export const fetchPermanentDocumentsEquipment = async () => {
   return data;
 };
 export const fetchEquipmentById = async (id: string) => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data: vehicleData, error } = await supabase
     .from('vehicles')
@@ -1070,17 +992,15 @@ export const fetchEquipmentById = async (id: string) => {
 };
 // Repair-related actions
 export const fetchAllOpenRepairRequests = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase
     .from('repair_solicitudes')
     .select(
       '*,user_id(*),employee_id(*),equipment_id(*,type(*),brand(*),model(*)),reparation_type(*),repairlogs(*,modified_by_employee(*),modified_by_user(*))'
     )
-    .eq('equipment_id.company_id', company_id)
+    .eq('equipment_id.company_id', companyId)
     .in('state', ['Pendiente', 'Esperando repuestos', 'En reparación'])
     .returns<RepairRequestDetailed[]>();
 
@@ -1091,10 +1011,8 @@ export const fetchAllOpenRepairRequests = async () => {
   return data;
 };
 export const fetchRepairRequestsByEquipmentId = async (equipmentId: string) => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase
     .from('repair_solicitudes')
@@ -1114,14 +1032,12 @@ export const fetchRepairRequestsByEquipmentId = async (equipmentId: string) => {
 // Users-related actions
 
 export const getAllUsers = async () => {
-  const supabase = supabaseServer();
-  const cookiesStore = cookies();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
   const { data, error } = await supabase
     .from('share_company_users')
     .select('*,  profile_id(*),customer_id(*)')
-    .eq('company_id', company_id || '');
+    .eq('company_id', companyId || '');
 
   if (error) {
     console.error('Error fetching users:', error);
@@ -1130,14 +1046,12 @@ export const getAllUsers = async () => {
   return data;
 };
 export const getUsersbyId = async ({ id }: { id: string }) => {
-  const supabase = supabaseServer();
-  const cookiesStore = cookies();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
   const { data, error } = await supabase
     .from('share_company_users')
     .select('*,  profile_id(*)')
-    .eq('company_id', company_id || '')
+    .eq('company_id', companyId || '')
     .eq('id', id || '');
 
   if (error) {
@@ -1173,22 +1087,20 @@ export const fetchCurrentUser = async () => {
   return user;
 };
 export const fetchCustomForms = async (id_company?: string) => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id && !id_company) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId && !id_company) return [];
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const role = await getActualRole(company_id as string, user?.id as string);
+  const role = await getActualRole(companyId as string, user?.id as string);
 
   if (role === 'Invitado') {
     const { data: share_company_users, error: share_company_users_error } = await supabase
       .from('share_company_users')
       .select(`*,customer_id(*,contractor_equipment(*,equipment_id(*,brand(*),model(*),type(*),types_of_vehicles(*))))`)
       .eq('profile_id', user?.id || '')
-      .eq('company_id', company_id || '')
+      .eq('company_id', companyId || '')
       .returns<ShareCompanyUsersWithEquipment[]>();
 
     const equipments_id = share_company_users?.flatMap((uc) =>
@@ -1200,7 +1112,7 @@ export const fetchCustomForms = async (id_company?: string) => {
     const { data, error } = await supabase
       .from('custom_form')
       .select('*,form_answers(*)')
-      .eq('company_id', company_id || id_company || '')
+      .eq('company_id', companyId || id_company || '')
       .in('form_answers.answer->>movil', equipments_id || [])
       .returns<CheckListWithAnswer[]>();
 
@@ -1213,7 +1125,7 @@ export const fetchCustomForms = async (id_company?: string) => {
   const { data, error } = await supabase
     .from('custom_form')
     .select('*,form_answers(*)')
-    .eq('company_id', company_id || id_company || '')
+    .eq('company_id', companyId || id_company || '')
     .returns<CheckListWithAnswer[]>();
   if (error) {
     console.error('Error fetching custom forms:', error);
@@ -1232,21 +1144,19 @@ export const fetchCustomFormById = async (formId: string) => {
   return data;
 };
 export const fetchFormsAnswersByFormId = async (formId: string) => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
+  const { supabase, companyId } = await getActionContext();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const role = await getActualRole(company_id as string, user?.id as string);
+  const role = await getActualRole(companyId as string, user?.id as string);
 
   if (role === 'Invitado') {
     const { data: share_company_users, error: share_company_users_error } = await supabase
       .from('share_company_users')
       .select(`*,customer_id(*,contractor_equipment(*,equipment_id(*,brand(*),model(*),type(*),types_of_vehicles(*))))`)
       .eq('profile_id', user?.id || '')
-      .eq('company_id', company_id || '')
+      .eq('company_id', companyId || '')
       .returns<ShareCompanyUsersWithEquipment[]>();
 
     const equipments_id =
@@ -1311,17 +1221,15 @@ export const getCurrentProfile = async () => {
   return data;
 };
 export const verifyUserRoleInCompany = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return '';
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return '';
 
   const user = await fetchCurrentUser();
   const { data, error } = await supabase
     .from('share_company_users')
     .select('*')
     .eq('profile_id', user?.id || '')
-    .eq('company_id', company_id);
+    .eq('company_id', companyId);
 
   if (error) {
     console.error('Error verifying user role:', error);
@@ -1347,15 +1255,13 @@ export const fetchDiagramsHistoryByEmployeeId = async (employeeId: string) => {
   return data;
 };
 export const fetchDiagrams = async () => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase
     .from('employees_diagram')
     .select('*,diagram_type(*),employee_id(*)')
-    .eq('employee_id.company_id', company_id)
+    .eq('employee_id.company_id', companyId)
     .returns<EmployeeDiagramWithDiagramType[]>();
 
   if (error) {
@@ -1365,10 +1271,8 @@ export const fetchDiagrams = async () => {
   return data;
 };
 export const fetchDiagramsByEmployeeId = async (employeeId: string) => {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
 
   const { data, error } = await supabase
     .from('employees_diagram')
@@ -1385,14 +1289,12 @@ export const fetchDiagramsByEmployeeId = async (employeeId: string) => {
 };
 
 export const fetchDiagramsTypes = async () => {
-  const supabase = supabaseServer();
-  const cookiesStore = cookies();
-  const company_id = cookiesStore.get('actualComp')?.value;
-  if (!company_id) return [];
+  const { supabase, companyId } = await getActionContext();
+  if (!companyId) return [];
   const { data, error } = await supabase
     .from('diagram_type')
     .select('*')
-    .eq('company_id', company_id || '');
+    .eq('company_id', companyId || '');
 
   if (error) {
     console.error('Error fetching diagrams types:', error);
