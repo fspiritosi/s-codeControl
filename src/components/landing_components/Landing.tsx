@@ -7,27 +7,30 @@ import Hero from './Hero';
 
 import ScrollToTop from '@/components/landing_components/ScrollToTop';
 import Header from './Header';
+import CodeControlLanding from './Landing2';
 
 export default function Landing() {
   return (
-    <>
-      {/* <Navbar /> */}
-      <Header />
-      <>
-        <ScrollUp />
-        <Hero />
-        <Features />
-        {/* <Video /> */}
-        {/* <Brands /> */}
-        <AboutSectionOne />
-        <AboutSectionTwo />
-        {/* <Testimonials />
-        <Pricing />
-        <Blog />
-        <Contact /> */}
-      </>
-      <Footer />
-      <ScrollToTop />
-    </>
+    // <>
+    //   {/* <Navbar /> */}
+    //   <Header />
+    //   <>
+    //     <ScrollUp />
+    //     <Hero />
+    //     <Features />
+    //     {/* <Video /> */}
+    //     {/* <Brands /> */}
+    //     <AboutSectionOne />
+    //     <AboutSectionTwo />
+    //     {/* <Testimonials />
+    //     <Pricing />
+    //     <Blog />
+    //     <Contact /> */}
+    //   </>
+    //   <Footer />
+    //   <ScrollToTop />
+    // </>
+    <CodeControlLanding />
   );
 }
+
