@@ -2,7 +2,7 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function PUT(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const customer_service_id = searchParams.get('customer_service_id');
   const body = await request.json();

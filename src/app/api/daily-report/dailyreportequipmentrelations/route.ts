@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from './../../../../lib/supabase/server';
 
 export async function GET(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
   try {
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const companyId = searchParams.get('actual');
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const companyId = searchParams.get('actual');
   const { id, ...updateData } = await request.json();
@@ -99,7 +99,7 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   try {
     const body = await request.json();
     const { daily_report_row_id, equipment } = body;

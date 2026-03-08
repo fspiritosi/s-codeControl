@@ -6,13 +6,11 @@ type response = {
   resourceType: string | null;
   resource: string | null;
 };
-export async function GET(request: NextRequest, context: any) {
-  const { params } = context;
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: documentId } = await params;
   const searchParams = request.nextUrl.searchParams;
   const user_id = searchParams.get('user');
   const resource = searchParams.get('resource');
-
-  const documentId = params.id;
 
   let response: response = {
     document: null,
@@ -55,7 +53,7 @@ export async function GET(request: NextRequest, context: any) {
 }
 
 const getEmployeeDocument = async (documentId: string) => {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   let { data: documents_employee, error } = await supabase
     .from('documents_employees')
     .select(
@@ -84,7 +82,7 @@ const getEmployeeDocument = async (documentId: string) => {
 };
 
 const getEquipmentDocument = async (documentId: string) => {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   let { data: documents_vehicle, error } = await supabase
     .from('documents_equipment')
@@ -104,7 +102,7 @@ const getEquipmentDocument = async (documentId: string) => {
 };
 
 const getCompanyDocument = async (documentId: string) => {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   let { data: documents_company, error } = await supabase
     .from('documents_company')
     .select(`*,document_types:id_document_types(*)`)

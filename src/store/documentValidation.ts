@@ -19,48 +19,6 @@ interface State {
 }
 
 export const DocumentsValidation = create<State>((set, get) => {
-  set({ documentsErrors: [] });
-  set({ totalForms: 1 });
-  set({ hasErrors: true });
-  set({ loading: false });
-
-  const addDocumentsErrors = (index: number) => {
-    const allErros = get()?.documentsErrors;
-    const newValues = [...allErros, (allErros[index] = true)];
-    set({ documentsErrors: newValues });
-    allFormsValid();
-  };
-
-  const resetDocumentErrors = () => {
-    set({ documentsErrors: [] });
-    allFormsValid();
-  };
-
-  const deleteDocument = (index: number) => {
-    const allDocuments = get()?.documentsErrors;
-    const newDocuments = allDocuments.slice(index, 1);
-    set({ documentsErrors: newDocuments });
-    allFormsValid();
-  };
-
-  const updateDocumentErrors = (index: number, boolean: boolean) => {
-    const newErrors = [...get().documentsErrors];
-    newErrors[index] = boolean;
-    set({ documentsErrors: newErrors });
-    allFormsValid();
-  };
-
-  const setTotalForms = (increment: boolean) => {
-    const total = get()?.totalForms;
-    if (increment) {
-      set({ totalForms: total + 1 });
-    } else {
-      if (total === 1) return;
-      set({ totalForms: total - 1 });
-    }
-    allFormsValid();
-  };
-
   const allFormsValid = () => {
     const errorsCheck = get().documentsErrors.some((error) => error === true);
     const totalCheck = get().totalForms === get().documentsErrors.length;
@@ -72,33 +30,63 @@ export const DocumentsValidation = create<State>((set, get) => {
     }
   };
 
-  const setAllFormsValues = async (formsValues: AllDocumentsValues) => {
-    set({ AllDocumentsValues: [...get?.().AllDocumentsValues, formsValues] });
-  };
-
-  const sendAllForms = async () => {};
-
-  const resetAll = () => {
-    set({ documentsErrors: [] });
-    set({ totalForms: 1 });
-    set({ hasErrors: true });
-    set({ AllDocumentsValues: [] });
-  };
-
   return {
-    documentsErrors: get().documentsErrors,
-    addDocumentsErrors,
-    hasErrors: get().hasErrors,
-    resetDocumentErrors,
-    updateDocumentErrors,
-    deleteDocument,
-    setTotalForms,
-    totalForms: get().totalForms,
-    resetAll,
-    loading: get().loading,
+    documentsErrors: [],
+    totalForms: 1,
+    hasErrors: true,
+    loading: false,
+    AllDocumentsValues: [],
+
+    addDocumentsErrors: (index: number) => {
+      const allErros = get().documentsErrors;
+      const newValues = [...allErros, (allErros[index] = true)];
+      set({ documentsErrors: newValues });
+      allFormsValid();
+    },
+
+    resetDocumentErrors: () => {
+      set({ documentsErrors: [] });
+      allFormsValid();
+    },
+
+    deleteDocument: (index: number) => {
+      const allDocuments = get().documentsErrors;
+      const newDocuments = allDocuments.slice(index, 1);
+      set({ documentsErrors: newDocuments });
+      allFormsValid();
+    },
+
+    updateDocumentErrors: (index: number, boolean: boolean) => {
+      const newErrors = [...get().documentsErrors];
+      newErrors[index] = boolean;
+      set({ documentsErrors: newErrors });
+      allFormsValid();
+    },
+
+    setTotalForms: (increment: boolean) => {
+      const total = get().totalForms;
+      if (increment) {
+        set({ totalForms: total + 1 });
+      } else {
+        if (total === 1) return;
+        set({ totalForms: total - 1 });
+      }
+      allFormsValid();
+    },
+
+    setAllFormsValues: async (formsValues: AllDocumentsValues) => {
+      set({ AllDocumentsValues: [...get().AllDocumentsValues, formsValues] });
+    },
+
+    sendAllForms: async () => {},
+
+    resetAll: () => {
+      set({ documentsErrors: [] });
+      set({ totalForms: 1 });
+      set({ hasErrors: true });
+      set({ AllDocumentsValues: [] });
+    },
+
     setLoading: (loading: boolean) => set({ loading }),
-    AllDocumentsValues: get().AllDocumentsValues,
-    setAllFormsValues,
-    sendAllForms,
   };
 });

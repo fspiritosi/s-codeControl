@@ -131,7 +131,7 @@ interface State {
  * merges their state.
  */
 export const useLoggedUserStore = create<State>((set, get) => {
-  const syncState = () => {
+  const buildState = (): Partial<State> => {
     const auth = useAuthStore.getState();
     const company = useCompanyStore.getState();
     const employee = useEmployeeStore.getState();
@@ -139,7 +139,7 @@ export const useLoggedUserStore = create<State>((set, get) => {
     const vehicle = useVehicleStore.getState();
     const ui = useUiStore.getState();
 
-    set({
+    return {
       // Auth
       credentialUser: auth.credentialUser,
       profile: auth.profile,
@@ -205,11 +205,12 @@ export const useLoggedUserStore = create<State>((set, get) => {
       // Legacy
       isLoading: false,
       cleanup: () => {},
-    });
+    };
   };
 
-  // Initial sync
-  syncState();
+  const syncState = () => {
+    set(buildState());
+  };
 
   // Subscribe to changes in all domain stores
   useAuthStore.subscribe(syncState);
@@ -219,5 +220,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
   useVehicleStore.subscribe(syncState);
   useUiStore.subscribe(syncState);
 
-  return get();
+  // Return initial state directly (not via get() which is undefined during init in Zustand 5)
+  return buildState() as State;
 });

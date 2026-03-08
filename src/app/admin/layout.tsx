@@ -8,12 +8,12 @@ import AdminSideBar from './components/adminSidebar';
 const inter = Inter({ subsets: ['latin'] });
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const cookiesStore = cookies();
+  const cookiesStore = await cookies();
 
   const actualCompany = cookiesStore.get('actualComp');
 

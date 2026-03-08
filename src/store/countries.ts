@@ -31,25 +31,95 @@ interface State {
   subscribeToContactsChanges: () => () => void
 }
 
-export const useCountriesStore = create<State>((set, get) => {
-  const fetchCountrys = async () => {
-    const { data: fetchCountries, error } = await supabase.from('countries').select('*');
-    if (error) {
-      console.error('Error al obtener los países:', error);
-    } else {
-      set({ countries: fetchCountries || [] });
-    }
-  };
-  const fetchProvinces = async () => {
-    const { data: fetchedProvinces, error } = await supabase.from('provinces').select('*');
+const fetchCountrys = async () => {
+  const { data: fetchCountries, error } = await supabase.from('countries').select('*');
+  if (error) {
+    console.error('Error al obtener los países:', error);
+  } else {
+    useCountriesStore.setState({ countries: fetchCountries || [] });
+  }
+};
+const fetchProvinces = async () => {
+  const { data: fetchedProvinces, error } = await supabase.from('provinces').select('*');
 
-    if (error) {
-      console.error('Error al obtener las provincias:', error);
-    } else {
-      set({ provinces: fetchedProvinces || [] });
-    }
-  };
-  const fetchCities = async (provinceId: any) => {
+  if (error) {
+    console.error('Error al obtener las provincias:', error);
+  } else {
+    useCountriesStore.setState({ provinces: fetchedProvinces || [] });
+  }
+};
+const fetchHierarchy = async () => {
+  const { data: hierarchy, error } = await supabase.from('hierarchy').select('*');
+
+  if (error) {
+    console.error('Error al obtener la jerarquia:', error);
+  } else {
+    useCountriesStore.setState({ hierarchy: hierarchy || [] });
+  }
+};
+const fetchworkDiagram = async () => {
+  const { data: workDiagram, error } = await supabase.from('work-diagram').select('*');
+
+  if (error) {
+    console.error('Error al obtener el diagrama de trabajo:', error);
+  } else {
+    useCountriesStore.setState({ workDiagram: workDiagram || [] });
+  }
+};
+const fetchContractors = async () => {
+  const { data: customers, error } = await supabase.from('customers').select('*');
+
+  if (error) {
+    console.error('Error al obtener los contratistas:', error);
+  } else {
+    useCountriesStore.setState({ customers: customers || [] });
+  }
+};
+
+const fetchContacts = async () => {
+  const { data: contacts, error } = await supabase
+    .from('contacts')
+    .select('*, customers(id, name)');
+
+  if (error) {
+    console.error('Error fetching customers:', error);
+  } else {
+    useCountriesStore.setState({ contacts: contacts || [] });
+  }
+};
+
+const documentTypes = async (id: string | undefined) => {
+  const company_id = id ?? useCompanyStore?.getState?.()?.actualCompany?.id;
+
+  let { data: document_types } = await supabase
+    .from('document_types')
+    .select('*')
+    .eq('is_active', true)
+    .or(`company_id.eq.${company_id},company_id.is.null`);
+
+  const groupedData = document_types
+    ?.filter((item) => item['mandatory'] === true)
+    .reduce((acc: Record<string, any[]>, item) => {
+      (acc[item['applies']] = acc[item['applies']] || []).push(item);
+      return acc;
+    }, {}) as MandatoryDocuments;
+
+  useCountriesStore.setState({ companyDocumentTypes: document_types as Equipo });
+  useCountriesStore.setState({ mandatoryDocuments: groupedData });
+};
+
+export const useCountriesStore = create<State>((set, get) => ({
+  countries: [],
+  provinces: [],
+  cities: [],
+  hierarchy: [],
+  workDiagram: [],
+  customers: [],
+  contacts: [],
+  mandatoryDocuments: {} as MandatoryDocuments,
+  companyDocumentTypes: [] as unknown as Equipo,
+
+  fetchCities: async (provinceId: any) => {
     const { data: fetchCities, error } = await supabase.from('cities').select('*').eq('province_id', provinceId);
 
     if (error) {
@@ -57,122 +127,52 @@ export const useCountriesStore = create<State>((set, get) => {
     } else {
       set({ cities: fetchCities || [] });
     }
-  };
-  const fetchHierarchy = async () => {
-    const { data: hierarchy, error } = await supabase.from('hierarchy').select('*');
+  },
 
-    if (error) {
-      console.error('Error al obtener la jerarquia:', error);
-    } else {
-      set({ hierarchy: hierarchy || [] });
-    }
-  };
-  const fetchworkDiagram = async () => {
-    const { data: workDiagram, error } = await supabase.from('work-diagram').select('*');
+  documentTypes: (company_id?: string) => documentTypes(company_id || ''),
 
-    if (error) {
-      console.error('Error al obtener el diagrama de trabajo:', error);
-    } else {
-      set({ workDiagram: workDiagram || [] });
-    }
-  };
-  const fetchContractors = async () => {
-    const { data: customers, error } = await supabase.from('customers').select('*');
+  fetchContractors,
+  fetchContacts,
 
-    if (error) {
-      console.error('Error al obtener los contratistas:', error);
-    } else {
-      set({ customers: customers || [] });
-    }
-  };
-
-  const fetchContacts = async () => {
-      const { data:contacts, error } = await supabase
-        .from('contacts')
-        .select('*, customers(id, name)')
-        // .eq('company_id', actualCompany?.id)
-        
-      if (error) {
-        console.error('Error fetching customers:', error)
-      } else {
-        set({ contacts: contacts || [] })
-      }
-    }
-
-  const documentTypes = async (id: string | undefined) => {
-    const company_id = id ?? useCompanyStore?.getState?.()?.actualCompany?.id;
-
-    let { data: document_types } = await supabase
-      .from('document_types')
-      .select('*')
-      .eq('is_active', true)
-      // ?.filter('mandatory', 'eq', true)
-      .or(`company_id.eq.${company_id},company_id.is.null`);
-
-    const groupedData = document_types
-      ?.filter((item) => item['mandatory'] === true)
-      .reduce((acc: Record<string, any[]>, item) => {
-        (acc[item['applies']] = acc[item['applies']] || []).push(item);
-        return acc;
-      }, {}) as MandatoryDocuments;
-
-    set({ companyDocumentTypes: document_types as Equipo });
-    set({ mandatoryDocuments: groupedData });
-  };
-
-  const subscribeToCustomersChanges = () => {
+  subscribeToCustomersChanges: () => {
     const channel = supabase.channel('realtime-customers-changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'customers' },
-        (payload) => {
-          fetchContractors() // Actualiza el estado global
+        () => {
+          fetchContractors();
         }
       )
-      .subscribe()
+      .subscribe();
 
     return () => {
-      supabase.removeChannel(channel)
-    }
-  }
+      supabase.removeChannel(channel);
+    };
+  },
 
-  const subscribeToContactsChanges = () => {
+  subscribeToContactsChanges: () => {
     const channel = supabase.channel('realtime-contacts-changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'contacts' },
-        (payload) => {
-          fetchContacts() // Actualiza el estado global
+        () => {
+          fetchContacts();
         }
       )
-      .subscribe()
+      .subscribe();
 
     return () => {
-      supabase.removeChannel(channel)
-    }
-  }
+      supabase.removeChannel(channel);
+    };
+  },
+}));
 
-  fetchContractors()
-  fetchContacts()
-  fetchworkDiagram()
-  fetchHierarchy()
-  fetchCountrys()
-  fetchProvinces()
-  return {
-    countries: get()?.countries,
-    provinces: get()?.provinces,
-    cities: get()?.cities,
-    fetchCities,
-    hierarchy: get()?.hierarchy,
-    workDiagram: get()?.workDiagram,
-    customers: get()?.customers,
-    contacts: get()?.contacts || [],
-    mandatoryDocuments: get()?.mandatoryDocuments,
-    documentTypes: (company_id?: string | undefined) => documentTypes(company_id || ''),
-    companyDocumentTypes: get()?.companyDocumentTypes,
-    fetchContractors,
-    fetchContacts, 
-    subscribeToCustomersChanges, 
-    subscribeToContactsChanges,
-  }
-})
+// Initialize data fetches after store creation
+if (typeof window !== 'undefined') {
+  fetchContractors();
+  fetchContacts();
+  fetchworkDiagram();
+  fetchHierarchy();
+  fetchCountrys();
+  fetchProvinces();
+}

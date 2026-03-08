@@ -1,3 +1,4 @@
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,7 +41,7 @@ interface Training {
 interface TrainingGridProps {
   trainings: Awaited<ReturnType<typeof fetchTrainings>>;
   onDeleteClick: (id: string) => void;
-  getMaterialIcon: (type: string) => JSX.Element;
+  getMaterialIcon: (type: string) => React.JSX.Element;
   isDeleting: boolean;
   trainingToDelete: string | null;
   onViewEmployee: (id: string) => void;

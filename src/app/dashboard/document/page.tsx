@@ -12,10 +12,10 @@ import TypesDocumentAction from './documentComponents/TypesDocumentAction';
 import TypesDocumentsView from './documentComponents/TypesDocumentsView';
 
 export default async function page() {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const user = await supabase.auth.getUser();
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
-  const cookiesStore = cookies();
+  const cookiesStore = await cookies();
   const { data: userShared } = await supabase
     .from('share_company_users')
     .select('*')

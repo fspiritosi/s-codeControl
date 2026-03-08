@@ -1,9 +1,9 @@
 import { supabaseServer } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest, context: any) {
-  const supabase = supabaseServer();
-  const { params } = context;
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await supabaseServer();
   //   const searchParams = request.nextUrl.searchParams;
   //   const company_id = searchParams.get('actual');
 
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest, context: any) {
           brand_vehicles(name),
           model_vehicles(name)`
       )
-      .eq('id', params.id);
+      .eq('id', id);
 
     if (error) {
       throw new Error(JSON.stringify(error));

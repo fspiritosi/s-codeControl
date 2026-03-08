@@ -7,7 +7,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
 export async function createdCustomer(formData: FormData) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   try {
     const {
       data: { session },
@@ -36,12 +36,12 @@ export async function createdCustomer(formData: FormData) {
 
     const clientData = {
       name: client.company_name,
-      cuit: client.client_cuit,
+      cuit: client.client_cuit as unknown as number,
       client_email: client.client_email,
-      client_phone: client.client_phone,
+      client_phone: client.client_phone as unknown as number,
       address: client.address,
       // company_id: Companies?.[0].id
-      company_id: formData.get('company_id'),
+      company_id: formData.get('company_id') as string | null,
     };
 
     const { data: existingClient, error: clientError } = await supabase
@@ -50,7 +50,7 @@ export async function createdCustomer(formData: FormData) {
       .eq('name', clientData.name)
       .eq('cuit', clientData.cuit)
       .eq('client_email', clientData.client_email || '')
-      .eq('client_phone', clientData.client_phone || '')
+      .eq('client_phone', clientData.client_phone || 0)
       .eq('address', clientData.address || '')
       .eq('company_id', clientData.company_id || '')
       .single();
@@ -78,7 +78,7 @@ export async function createdCustomer(formData: FormData) {
 }
 
 export async function updateCustomer(formData: FormData) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   const {
     data: { session },
@@ -101,15 +101,15 @@ export async function updateCustomer(formData: FormData) {
 
   revalidatePath('/dashboard/company/actualCompany');
 
-  const id = formData.get('id');
+  const id = formData.get('id') as string | null;
 
   const clientData = {
-    name: formData.get('company_name'),
-    cuit: formData.get('client_cuit'),
-    client_email: formData.get('client_email'),
-    client_phone: formData.get('client_phone'),
-    address: formData.get('address'),
-    company_id: formData.get('company_id'),
+    name: formData.get('company_name') as string | null,
+    cuit: formData.get('client_cuit') as string | null,
+    client_email: formData.get('client_email') as string | null,
+    client_phone: formData.get('client_phone') as string | null,
+    address: formData.get('address') as string | null,
+    company_id: formData.get('company_id') as string | null,
   };
 
   try {

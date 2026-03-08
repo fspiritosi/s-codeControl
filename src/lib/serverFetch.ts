@@ -16,7 +16,8 @@ export async function getCompany() {
 }
 
 export async function getDocumentsEmployees() {
-  const actualCompany = cookies().get('actualCompanyId')?.value;
+  const cookieStore = await cookies();
+  const actualCompany = cookieStore.get('actualCompanyId')?.value;
   let { data, error } = await supabase
     .from('documents_employees')
     .select(
@@ -38,7 +39,8 @@ export async function getDocumentsEmployees() {
 }
 
 export async function getDocumentsEquipment() {
-  const actualCompany = cookies().get('actualCompanyId')?.value;
+  const cookieStore = await cookies();
+  const actualCompany = cookieStore.get('actualCompanyId')?.value;
   let { data, error } = await supabase
     .from('documents_equipment')
     .select(
@@ -56,10 +58,11 @@ export async function getDocumentsEquipment() {
 }
 
 export async function getEmployees() {
-  const fisrtId = cookies().get('actualCompanyId')?.value;
+  const cookieStore = await cookies();
+  const fisrtId = cookieStore.get('actualCompanyId')?.value;
   const secobndId = await getCompany();
 
-  const actualCompany = cookies().get('actualCompanyId')?.value;
+  const actualCompany = cookieStore.get('actualCompanyId')?.value;
   let { data, error } = await supabase
     .from('employees')
     .select(

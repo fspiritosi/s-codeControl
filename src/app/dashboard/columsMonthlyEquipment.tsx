@@ -587,8 +587,8 @@ export const ColumnsMonthlyEquipment: ColumnDef<Colum>[] = [
       const handleDisabled = () => {
         setDisabled(!disabled);
       };
-      const id = row.getValue('id');
-      const resource = row.getValue('applies');
+      const id = row.getValue('id') as string;
+      const resource = row.getValue('applies') as string;
       const handleSavePeriod = async () => {
         const supabase = supabaseBrowser();
         toast.promise(

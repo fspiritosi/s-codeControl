@@ -205,7 +205,7 @@ export function BaseDataTable<TData, TValue>({
         </Table>
       </div>
       {paginationComponent ? (
-        React.cloneElement(paginationComponent as React.ReactElement, { table })
+        React.cloneElement(paginationComponent as React.ReactElement<any>, { table } as any)
       ) : (
         <DataTablePagination table={table} />
       )}

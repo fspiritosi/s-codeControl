@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CheckCircle, FileText, GraduationCap, Presentation, Video } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 
 // Mock data
 const mockTrainings = [
@@ -127,7 +127,8 @@ const mockUser = {
   department: 'Logística',
 };
 
-export default function TrainingUserPage({ params }: { params: { id: string } }) {
+export default function TrainingUserPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [training, setTraining] = useState<any>(null);
   const [materials, setMaterials] = useState<any[]>([]);
   const [showMaterialViewer, setShowMaterialViewer] = useState(false);
@@ -137,7 +138,7 @@ export default function TrainingUserPage({ params }: { params: { id: string } })
 
   useEffect(() => {
     // Simular carga de datos
-    const foundTraining = mockTrainings.find((t) => t.id === params.id);
+    const foundTraining = mockTrainings.find((t) => t.id === id);
     if (foundTraining) {
       setTraining(foundTraining);
       // Ordenar materiales por orden
@@ -149,7 +150,7 @@ export default function TrainingUserPage({ params }: { params: { id: string } })
       const totalProgress = (completedMaterials / sortedMaterials.length) * 100;
       setProgress(totalProgress);
     }
-  }, [params.id]);
+  }, [id]);
 
   const getMaterialIcon = (type: string) => {
     switch (type) {

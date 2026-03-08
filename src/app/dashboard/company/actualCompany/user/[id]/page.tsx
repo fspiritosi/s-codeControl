@@ -6,10 +6,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import UserForm from '@/components/users/UserForm';
 import { cn } from '@/lib/utils';
 
-async function User({ params }: { params: { id: string } }) {
+async function User({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
 
-  const data: any = await getUsersbyId({ id: params.id });
+  const data: any = await getUsersbyId({ id });
 
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">

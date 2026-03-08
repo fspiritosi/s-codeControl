@@ -10,8 +10,8 @@ import { getActualRole } from '@/lib/utils';
 
 async function EquipmentListTabs({ inactives, actives }: { inactives?: boolean; actives?: boolean }) {
   const equipments = await fetchAllEquipment();
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
+  const cookiesStore = await cookies();
+  const supabase = await supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   const company_id = cookiesStore.get('actualComp')?.value;
   const role = await getActualRole(

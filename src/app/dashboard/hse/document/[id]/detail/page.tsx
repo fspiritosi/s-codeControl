@@ -36,7 +36,7 @@ import cookies from 'js-cookie';
 import { ArrowLeft, CheckCircle, Clock, Download, Edit, Eye, Loader2, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import Cookies from 'js-cookie';
@@ -266,7 +266,8 @@ const createFilterOptions = <T,>(
   }));
 };
 
-export default function DocumentDetailPage({ params }: { params: { id: string } }) {
+export default function DocumentDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const supabase = supabaseBrowser();
   
@@ -287,7 +288,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [allTags, setAllTags] = useState<Tag[]>([]);
   // const [savedFilters, setSavedFilters] = useState<Filter[]>([]);
-  // const cookies = cookies()
+  // const cookies = await cookies()
   // const userId = cookies['userId']
   const companyId = Cookies.get('actualComp');
 
@@ -335,7 +336,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
   useEffect(() => {
     const fetchEmployeesWithDocuments = async () => {
       try {
-        const { data, error } = (await getEmployeesWithAssignedDocuments(companyId as string, params.id)) as {
+        const { data, error } = (await getEmployeesWithAssignedDocuments(companyId as string, id)) as {
           data: ProcessedEmployee[] | null;
           error: Error | null;
         };
@@ -358,7 +359,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
     };
     fetchCompany();
     fetchEmployeesWithDocuments();
-  }, [params.id]);
+  }, [id]);
   // Función para manejar la descarga de archivos
   // Función para manejar la descarga de archivos
 
@@ -429,8 +430,8 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
       try {
         setIsLoading(true);
         const [doc, employees] = await Promise.all([
-          getDocumentById(params.id),
-          getEmployeesWithAssignedDocuments(params.id),
+          getDocumentById(id),
+          getEmployeesWithAssignedDocuments(id),
         ]);
         
 
@@ -451,7 +452,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
     };
 
     fetchData();
-  }, [params.id]);
+  }, [id]);
 
   // Ordenar versiones por fecha (más reciente primero)
   const sortedVersions = React.useMemo(() => {

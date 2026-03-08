@@ -30,7 +30,7 @@ export async function FormCustomContainer({
   company?: boolean;
   showAnswers?: boolean;
 }) {
-  const cookiesStore = cookies();
+  const cookiesStore = await cookies();
   const company_id = cookiesStore.get('actualComp');
   const createdFormsState = (await getForms(company_id?.value as string)) as FormData[] | undefined;
   return (

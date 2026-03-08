@@ -3,9 +3,9 @@ import { adminSupabaseServer, supabaseServer } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 
 export const getPendingRequests = async () => {
-  const cookiesStore = cookies();
+  const cookiesStore = await cookies();
   const company_id = cookiesStore.get('actualComp')?.value;
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   if (!company_id) return [];
 
@@ -21,7 +21,7 @@ export const getPendingRequests = async () => {
 };
 
 export const approveUserRequest = async (userId: string) => {
-  const supabase = adminSupabaseServer();
+  const supabase = await adminSupabaseServer();
 
   const { error, data } = await supabase.auth.admin.updateUserById(userId, { user_metadata: { verified: true } });
 
@@ -33,7 +33,7 @@ export const approveUserRequest = async (userId: string) => {
 };
 
 export const removeUserAccess = async (userId: string) => {
-  const supabase = adminSupabaseServer();
+  const supabase = await adminSupabaseServer();
 
   const { error, data } = await supabase.auth.admin.updateUserById(userId, { user_metadata: { verified: false } });
   console.log(data, 'data');

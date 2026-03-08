@@ -3,7 +3,8 @@ import { cn } from '@/lib/utils';
 import BackButton from '../../../../../../components/BackButton';
 import CustomerComponent from '../../../../../../components/CustomerComponent';
 
-export default async function CustomerFormAction({ searchParams, params }: { searchParams: any; params: any }) {
+export default async function CustomerFormAction({ searchParams }: { searchParams: Promise<any> }) {
+  const resolvedSearchParams = await searchParams;
   const equipment = await fetchAllEquipment();
 
   return (
@@ -15,10 +16,10 @@ export default async function CustomerFormAction({ searchParams, params }: { sea
       <div
         className={cn(
           'col-span-6 flex flex-col justify-between overflow-hidden',
-          searchParams.action === 'new' && 'col-span-8'
+          resolvedSearchParams.action === 'new' && 'col-span-8'
         )}
       >
-        <CustomerComponent equipment={equipment} id={searchParams.id} />
+        <CustomerComponent equipment={equipment} id={resolvedSearchParams.id} />
       </div>
     </section>
   );

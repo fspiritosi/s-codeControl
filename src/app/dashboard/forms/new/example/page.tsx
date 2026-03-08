@@ -2,11 +2,12 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { SubmitCustomForm } from '../../components/SubmitCustomForm';
 
-async function page({ searchParams }: { searchParams: { formid: string } }) {
-  const supabase = supabaseServer();
-  const cookiesStore = cookies();
+async function page({ searchParams }: { searchParams: Promise<{ formid: string }> }) {
+  const { formid } = await searchParams;
+  const supabase = await supabaseServer();
+  const cookiesStore = await cookies();
   const company_id = cookiesStore.get('actualComp');
-  const form = searchParams.formid;
+  const form = formid;
   const { data, error } = await supabase
     .from('custom_form')
     .select('*')

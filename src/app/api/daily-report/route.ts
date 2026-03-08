@@ -2,7 +2,7 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
   //console.log('company_id', company_id);
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const companyId = searchParams.get('actual');
   const { date, company_id } = await request.json();
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   // const companyId = searchParams.get('actual');
   const id = searchParams.get('id');
@@ -84,7 +84,7 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const companyId = searchParams.get('actual');
   const { id } = await request.json();

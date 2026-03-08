@@ -10,8 +10,9 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { getRole } from '@/lib/utils/getRole';
 import VehiclesForm, { generic } from '../../../../components/VehiclesForm';
 
-export default async function EquipmentFormAction({ searchParams }: { searchParams: any }) {
-  const supabase = supabaseServer();
+export default async function EquipmentFormAction({ searchParams: searchParamsPromise }: { searchParams: Promise<any> }) {
+  const searchParams = await searchParamsPromise;
+  const supabase = await supabaseServer();
   // const { data } = await supabase
   //   .from('documents_equipment')
   //   .select('*,id_document_types(*)')
@@ -19,7 +20,7 @@ export default async function EquipmentFormAction({ searchParams }: { searchPara
 
   revalidatePath('/dashboard/equipment/action');
 
-  const cookiesStore = cookies();
+  const cookiesStore = await cookies();
   const company_id = cookiesStore.get('actualComp');
 
   let vehicle;

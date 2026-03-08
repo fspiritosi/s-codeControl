@@ -4,8 +4,8 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 
 export default async function DocumentTabComponent() {
-  const supabase = supabaseServer();
-  const cookiesStore = cookies();
+  const supabase = await supabaseServer();
+  const cookiesStore = await cookies();
   const user = await supabase.auth.getUser();
 
   const { data: owner } = await supabase

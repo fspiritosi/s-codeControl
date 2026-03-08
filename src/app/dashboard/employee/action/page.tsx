@@ -12,7 +12,8 @@ import { getRole } from '@/lib/utils/getRole';
 import { setEmployeesToShow } from '@/lib/utils/utils';
 import moment from 'moment';
 import { cookies } from 'next/headers';
-export default async function EmployeeFormAction({ searchParams }: { searchParams: any }) {
+export default async function EmployeeFormAction({ searchParams: searchParamsPromise }: { searchParams: Promise<any> }) {
+  const searchParams = await searchParamsPromise;
   // const { data } = await supabase
 
   //   .from('documents_employees')
@@ -21,7 +22,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
   //   .not('applies', 'is', null)
   const role = await getRole();
 
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const user = await supabase.auth.getUser();
 
   // const { data: userShared } = await supabase
@@ -29,7 +30,7 @@ export default async function EmployeeFormAction({ searchParams }: { searchParam
   //   .select('*')
   //   .eq('profile_id', user?.data?.user?.id || '');
 
-  const coockiesStore = cookies();
+  const coockiesStore = await cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
 
   let formattedEmployee;

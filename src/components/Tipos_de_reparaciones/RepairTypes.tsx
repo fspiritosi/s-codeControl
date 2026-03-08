@@ -29,11 +29,11 @@ async function RepairTypes({
   equipment_id?: string;
 }) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const coockiesStore = cookies();
+  const coockiesStore = await cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
   const { types_of_repairs } = await fetch(`${URL}/api/repairs?actual=${company_id}`).then((res) => res.json());
   const { equipments } = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) =>

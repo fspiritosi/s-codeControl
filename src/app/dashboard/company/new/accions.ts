@@ -3,7 +3,7 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
 export async function AddCompany(formData: FormData, url: string) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -38,7 +38,7 @@ export async function AddCompany(formData: FormData, url: string) {
 }
 
 export async function EditCompany(formData: FormData, url: string) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();

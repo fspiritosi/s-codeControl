@@ -9,8 +9,8 @@ import { DataCct } from './data-table-cct';
 import { DataGuild } from './data-table-guild';
 
 export default async function Cct() {
-  const supabase = supabaseServer();
-  const coockiesStore = cookies();
+  const supabase = await supabaseServer();
+  const coockiesStore = await cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
 
   let { data: guild } = await supabase

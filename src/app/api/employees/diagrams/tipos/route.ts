@@ -2,7 +2,7 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
 
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const { name, color, short_description, work_active } = await request.json();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const { id, name, color, short_description, work_active } = await request.json();
   const searchParams = request.nextUrl.searchParams;
 

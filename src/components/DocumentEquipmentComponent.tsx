@@ -13,9 +13,9 @@ import DocumentNav from './DocumentNav';
 
 export default async function DocumentEquipmentComponent({ id, role }: { id: string,role: string }) {
   const monthlyDocuments = (await fetchMonthlyDocumentsByEquipmentId(id)).map(formatVehiculesDocuments);
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const permanentDocuments = (await fetchPermanentDocumentsByEquipmentId(id)).map(formatVehiculesDocuments);
-  const cookiesStore = cookies();
+  const cookiesStore = await cookies();
   const company_id = cookiesStore.get('actualComp')?.value;
 
   return (

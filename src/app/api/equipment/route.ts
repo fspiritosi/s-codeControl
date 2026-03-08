@@ -2,7 +2,7 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
 
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
   }
 }
 export async function PATCH(request: NextRequest, context: any) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   // const { params } = context
 

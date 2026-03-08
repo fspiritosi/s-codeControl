@@ -19,7 +19,8 @@ import { cn } from '@/lib/utils';
 import { Suspense } from 'react';
 import { supabase } from '../../../../../supabase/supabase';
 
-export default async function page({ params }: { params: { id: string } }) {
+export default async function page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   let documents_employees: any[] | null = [];
   // const [userEmail, setUserEmail] = useState<string | ''>('')
   let resource = '';
@@ -48,7 +49,7 @@ export default async function page({ params }: { params: { id: string } }) {
           )
           `
     )
-    .eq('id', params.id);
+    .eq('id', id);
 
   if (documents_employee?.length === 0) {
     let { data: documents_vehicle } = await supabase
@@ -59,7 +60,7 @@ export default async function page({ params }: { params: { id: string } }) {
       document_types(*),
       applies(*,brand(name),model(name),type_of_vehicle(name), company_id(*,province_id(name),owner_id(*)))`
       )
-      .eq('id', params.id);
+      .eq('id', id);
 
     document = documents_vehicle;
     resourceType = 'documentos-equipos';
@@ -582,9 +583,9 @@ export default async function page({ params }: { params: { id: string } }) {
                   <div className="p-3 text-center space-y-3">
                     <CardDescription>Aqui podras auditar el documento que se le solicita al empleado</CardDescription>
                     <div className="w-full flex justify-evenly">
-                      <ApproveDocModal id={params.id} resource={resource} />
+                      <ApproveDocModal id={id} resource={resource} />
                       <DenyDocModal
-                        id={params.id}
+                        id={id}
                         resource={resource}
                         userEmail={email as string[]}
                         emailInfo={userAndDocumentInfo}

@@ -4,7 +4,7 @@ import { getActualRole } from "../utils";
 
 
 export const getRole = async () => {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
     const currentCompany = await fetchCurrentCompany();
     const {
       data: { user },

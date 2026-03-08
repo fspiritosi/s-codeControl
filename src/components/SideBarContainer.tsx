@@ -18,7 +18,7 @@ import { cookies } from 'next/headers';
 import SideBar from './Sidebar';
 
 async function SideBarContainer() {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const user = await fetchCurrentUser();
   const company = await fetchCurrentCompany();
   const userData: any = await verifyUserRoleInCompany();
@@ -123,7 +123,7 @@ async function SideBarContainer() {
 
   let role: any;
 
-  const cookiesStore = cookies();
+  const cookiesStore = await cookies();
   const actualCompany = cookiesStore?.get('actualComp')?.value;
 
   if (actualCompany) {

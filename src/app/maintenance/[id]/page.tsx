@@ -9,12 +9,13 @@ import { redirect } from 'next/navigation';
 export default async function Home({
   params,
 }: {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }) {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
+  const { id } = await params;
+  const cookiesStore = await cookies();
+  const supabase = await supabaseServer();
   const employee = cookiesStore.get('empleado_id')?.value;
   const empleado_name = cookiesStore.get('empleado_name')?.value;
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -28,7 +29,7 @@ export default async function Home({
   }
 
   let role: any;
-  const { equipments } = await fetch(`${URL}/api/equipment/${params.id}`).then((e) => e.json());
+  const { equipments } = await fetch(`${URL}/api/equipment/${id}`).then((e) => e.json());
 
   if (user?.id) {
     const { shared_user } = await fetch(
@@ -46,7 +47,7 @@ export default async function Home({
     .select(
       '*,user_id(*),employee_id(*),equipment_id(*,type(*),brand(*),model(*)),reparation_type(*),repairlogs(*,modified_by_employee(*),modified_by_user(*))'
     )
-    .eq('equipment_id', params.id)
+    .eq('equipment_id', id)
     .in('state', ['Pendiente', 'Esperando repuestos', 'En reparación']);
 
   const vehiclesFormatted = setVehiclesToShow(equipments || []) || [];
@@ -66,7 +67,7 @@ export default async function Home({
     intern_number: equipment.intern_number,
     vehicle_type: equipment.type.name,
   }));
-  const currentEquipment = equipmentsForComboBox.find((equipment) => equipment.value === params.id);
+  const currentEquipment = equipmentsForComboBox.find((equipment) => equipment.value === id);
 
   return (
     <QrActionSelector
@@ -74,7 +75,7 @@ export default async function Home({
       employee_id={employee}
       equipment={vehiclesFormatted}
       tipo_de_mantenimiento={types_of_repairs as TypeOfRepair}
-      default_equipment_id={params.id}
+      default_equipment_id={id}
       role={role}
       pendingRequests={data as any}
       checkList={

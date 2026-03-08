@@ -34,10 +34,11 @@ export default function DeleteDocument({
       message: 'Debe ingresar la palabra ELIMINAR para eliminar el documento',
     }),
   });
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+  type FormValues = z.infer<typeof FormSchema>;
+  const form = useForm<FormValues>({
+    resolver: zodResolver(FormSchema) as any,
     defaultValues: {
-      delete_document: '',
+      delete_document: '' as any,
     },
   });
   const router = useRouter();

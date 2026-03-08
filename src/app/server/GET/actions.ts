@@ -451,7 +451,7 @@ export const fetchAllEquipmentJUSTEXAMPLE = async () => {
   return data;
 };
 export const fetchAllRepairsJUSTEXAMPLE = async () => {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   const { data, error } = await supabase.from('repair_solicitudes').select('*');
 
@@ -591,7 +591,7 @@ export const fetchEmployeePermanentDocuments = async () => {
   return data;
 };
 export const getDiagramEmployee = async ({ employee_id }: { employee_id: string }) => {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   let { data: employees_diagram, error } = await supabase
     .from('employees_diagram')
     .select('*')
@@ -711,7 +711,7 @@ export const getNextMonthExpiringDocumentsVehicles = async () => {
   );
 };
 export const getDocumentEmployeesById = async (id: string) => {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   let { data: documents_employee } = await supabase
     .from('documents_employees')
     .select(
@@ -731,7 +731,7 @@ export const getDocumentEmployeesById = async (id: string) => {
   return documents_employee;
 };
 export const getDocumentEquipmentById = async (id: string) => {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   let { data: documents_vehicle } = await supabase
     .from('documents_equipment')
     .select(
@@ -1061,7 +1061,7 @@ export const getUsersbyId = async ({ id }: { id: string }) => {
   return data;
 };
 export const getOwnerUser = async () => {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const curretUser = await fetchCurrentCompany();
   if (!curretUser) return [];
 
@@ -1079,7 +1079,7 @@ export const getOwnerUser = async () => {
 
 // Miscellaneous actions
 export const fetchCurrentUser = async () => {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -1134,7 +1134,7 @@ export const fetchCustomForms = async (id_company?: string) => {
   return data;
 };
 export const fetchCustomFormById = async (formId: string) => {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const { data, error } = await supabase.from('custom_form').select('*').eq('id', formId);
 
   if (error) {
@@ -1190,7 +1190,7 @@ export const fetchFormsAnswersByFormId = async (formId: string) => {
   return data;
 };
 export const fetchAnswerById = async (answerId: string) => {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const { data, error } = await supabase
     .from('form_answers')
     .select('*,form_id(*)')
@@ -1208,7 +1208,7 @@ export const getCurrentProfile = async () => {
   const user = await fetchCurrentUser();
 
   if (!user) return [];
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const { data, error } = await supabase
     .from('profile')
     .select('*')
@@ -1240,7 +1240,7 @@ export const verifyUserRoleInCompany = async () => {
 };
 
 export const fetchDiagramsHistoryByEmployeeId = async (employeeId: string) => {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const { data, error } = await supabase
     .from('diagrams_logs')
     .select('*,modified_by(*)')
@@ -1304,7 +1304,7 @@ export const fetchDiagramsTypes = async () => {
 };
 
 export async function getCompanyDetails(companyId: string) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   const { data, error } = await supabase
     .from('company')

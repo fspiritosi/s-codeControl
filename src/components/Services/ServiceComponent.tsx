@@ -18,13 +18,13 @@ interface customer {
 export default async function ServiceComponent() {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
 
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser();
-  const cookiesStore = cookies();
+  const cookiesStore = await cookies();
   const company_id = cookiesStore.get('actualComp')?.value || '';
   const { customers } = await fetch(`${URL}/api/company/customers?actual=${company_id}`).then((e) => e.json());
   const filterCustomers = customers.filter((client: customer) => client.is_active === true);

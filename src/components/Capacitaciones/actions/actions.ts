@@ -9,9 +9,9 @@ import { cookies } from 'next/headers';
  */
 export const createTraining = async (data: { title: string; description: string; passing_score?: number }) => {
   try {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
     const user = await supabase.auth.getUser();
-    const cookiesStore = cookies();
+    const cookiesStore = await cookies();
     const company_id = cookiesStore.get('actualComp')?.value;
 
     console.log('User:', user.data.user?.id);
@@ -93,7 +93,7 @@ export const addTrainingMaterials = async (
   }>
 ) => {
   try {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
 
     // Añadir los materiales
     const { data: materialsData, error: materialsError } = await supabase
@@ -141,7 +141,7 @@ export const addTrainingQuestions = async (
   }>
 ) => {
   try {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
 
     // Añadir las preguntas una por una para poder obtener el ID y asociarlo a las opciones
     for (const question of questions) {
@@ -193,7 +193,7 @@ export const addTrainingQuestions = async (
  */
 export const addTrainingTags = async (trainingId: string, tagIds: string[]) => {
   try {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
 
     // Asociar las etiquetas
     const { error: tagsError } = await supabase.from('training_tag_assignments').insert(
@@ -220,7 +220,7 @@ export const addTrainingTags = async (trainingId: string, tagIds: string[]) => {
  */
 export const fetchTrainingTags = async () => {
   try {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
     const { data, error } = await supabase.from('training_tags').select('*').eq('is_active', true);
 
     if (error) {
@@ -237,7 +237,7 @@ export const fetchTrainingTags = async () => {
 
 export const updateTag = async (dataToUpdate: { id: string; name: string; color: string; is_active: boolean }) => {
   try {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
     const { data, error } = await supabase
       .from('training_tags')
       .update({ name: dataToUpdate.name, color: dataToUpdate.color, is_active: dataToUpdate.is_active })
@@ -257,7 +257,7 @@ export const updateTag = async (dataToUpdate: { id: string; name: string; color:
 
 export const createArea = async (dataToCreate: { name: string; color: string }) => {
   try {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
     const { data, error } = await supabase
       .from('training_tags')
       .insert({ name: dataToCreate.name, color: dataToCreate.color });
@@ -279,7 +279,7 @@ export const createArea = async (dataToCreate: { name: string; color: string }) 
  */
 export const fetchAllTags = async () => {
   try {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
     const { data, error } = await supabase.from('training_tags').select('*');
 
     if (error) {
@@ -295,8 +295,8 @@ export const fetchAllTags = async () => {
 };
 export const fetchTrainings = async () => {
   try {
-    const supabase = supabaseServer();
-    const cookiesStore = cookies();
+    const supabase = await supabaseServer();
+    const cookiesStore = await cookies();
     const company_id = cookiesStore.get('actualComp')?.value;
 
     if (!company_id) {
@@ -339,10 +339,11 @@ export const fetchTrainings = async () => {
     console.log('Error de empleados:', employeesError);
 
     // Contadores de intentos completados por training_id
+    // TODO: fix training query types
     const { data: completedData, error: completedError } = await supabase
       .from('training_attempts')
       .select('training_id, count(*)', { count: 'exact' })
-      .eq('status', 'completed');
+      .eq('status', 'completed') as unknown as { data: any[] | null; error: any };
 
     console.log('Contadores de intentos completados:', completedData);
 
@@ -412,8 +413,8 @@ export const fetchTrainings = async () => {
  */
 export const getEmployeesCount = async () => {
   try {
-    const supabase = supabaseServer();
-    const cookiesStore = cookies();
+    const supabase = await supabaseServer();
+    const cookiesStore = await cookies();
     const company_id = cookiesStore.get('actualComp')?.value;
 
     if (!company_id) {
@@ -442,8 +443,8 @@ export const getEmployeesCount = async () => {
 
 export const fetchTrainingById = async (id: string) => {
   try {
-    const supabase = supabaseServer();
-    const cookiesStore = cookies();
+    const supabase = await supabaseServer();
+    const cookiesStore = await cookies();
     const company_id = cookiesStore.get('actualComp')?.value;
 
     if (!company_id) {
@@ -655,8 +656,8 @@ export const updateTrainingBasicInfo = async (
   }
 ) => {
   try {
-    const supabase = supabaseServer();
-    const cookiesStore = cookies();
+    const supabase = await supabaseServer();
+    const cookiesStore = await cookies();
     const company_id = cookiesStore.get('actualComp')?.value;
 
     if (!company_id) {
@@ -711,7 +712,7 @@ export const updateTrainingMaterials = async (
   }>
 ) => {
   try {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
 
     // Primero obtener todos los materiales existentes para eliminar sus archivos
     const { data: existingMaterials, error: fetchError } = await supabase
@@ -808,7 +809,7 @@ export const updateTrainingQuestions = async (
     points?: number;
   }>
 ) => {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   try {
     // 1. Obtener todas las preguntas actuales para este training
@@ -1241,8 +1242,8 @@ export const updateTrainingQuestions = async (
  */
 export const updateTrainingTags = async (trainingId: string, tagIds: string[]) => {
   try {
-    const supabase = supabaseServer();
-    const cookiesStore = cookies();
+    const supabase = await supabaseServer();
+    const cookiesStore = await cookies();
     const company_id = cookiesStore.get('actualComp')?.value;
 
     if (!company_id) {
@@ -1307,7 +1308,7 @@ export const updateTrainingEvaluation = async (
   }
 ) => {
   try {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
 
     // Primero obtenemos los datos actuales de la capacitación
     const { data: trainingData, error: fetchError } = await supabase
@@ -1439,7 +1440,7 @@ export const updateTraining = async (
 
 export const updateTrainingStatus = async (trainingId: string, status: 'Borrador' | 'Archivado' | 'Publicado') => {
   try {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
 
     const { error: updateError } = await supabase.from('trainings').update({ status }).eq('id', trainingId);
 
@@ -1464,7 +1465,7 @@ export const updateTrainingStatus = async (trainingId: string, status: 'Borrador
  */
 export const deleteTraining = async (trainingId: string) => {
   try {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
 
     // 4. Eliminar materiales
     const { data: materials, error: materialsError } = await supabase

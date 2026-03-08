@@ -1,3 +1,4 @@
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, GraduationCap, Tag as TagIcon, Users } from 'lucide-react';
@@ -39,7 +40,7 @@ interface Training {
 interface TrainingListProps {
   trainings: Awaited<ReturnType<typeof fetchTrainings>>;
   onDeleteClick: (id: string) => void;
-  getMaterialIcon: (type: string) => JSX.Element;
+  getMaterialIcon: (type: string) => React.JSX.Element;
   isDeleting: boolean;
   trainingToDelete: string | null;
   onViewEmployee: (id: string) => void;

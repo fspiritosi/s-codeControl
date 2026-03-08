@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { getDocumentById, type Document, type DocumentVersion } from '@/features/Hse/actions/documents';
 import cookies from 'js-cookie';
 import { Archive, ArrowLeft, Download, ExternalLink, FileText } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 // import { DocumentNewVersionDialog } from "@/features/Hse/components/Document-new-version-dialog"
 import { getAssignedEmployeesByDocumentVersion } from '@/features/Hse/actions/documents';
@@ -115,7 +115,8 @@ const createFilterOptions = <T,>(
   }));
 };
 
-export default function DocumentVersionDetailPage({ params }: { params: { id: string; version: string } }) {
+export default function DocumentVersionDetailPage({ params }: { params: Promise<{ id: string; version: string }> }) {
+  const { id, version } = use(params);
   const router = useRouter();
   const supabase = supabaseBrowser();
   const [showNewVersionDialog, setShowNewVersionDialog] = useState(false);
@@ -171,7 +172,7 @@ export default function DocumentVersionDetailPage({ params }: { params: { id: st
       try {
         setIsLoading(true);
         const [doc] = await Promise.all([
-          getDocumentById(params.id),
+          getDocumentById(id),
           // fetchAllActivesEmployees()
         ]);
 
@@ -211,14 +212,14 @@ export default function DocumentVersionDetailPage({ params }: { params: { id: st
 
     fetchData();
     fetchEmployees();
-  }, [params.id]);
+  }, [id]);
   
-  const filteredEmployees = activeEmployees.filter((employee) => employee.documentId === params.id);
+  const filteredEmployees = activeEmployees.filter((employee) => employee.documentId === id);
   
 
   // Obtener la versión específica del documento
-  // const documentVersion = mockDocumentVersions[params.id as keyof typeof mockDocumentVersions]?.[params.version]
-  const documentVersion = document?.versions?.find((version) => version.version === params.version);
+  // const documentVersion = mockDocumentVersions[id as keyof typeof mockDocumentVersions]?.[version]
+  const documentVersion = document?.versions?.find((v) => v.version === version);
   
   if (isLoading) {
     return (
@@ -342,7 +343,7 @@ export default function DocumentVersionDetailPage({ params }: { params: { id: st
               Descargar
             </Button>
             {!documentVersion.isCurrent && (
-              <Button variant="outline" onClick={() => router.push(`/dashboard/hse/document/${params.id}/detail`)}>
+              <Button variant="outline" onClick={() => router.push(`/dashboard/hse/document/${id}/detail`)}>
                 Ver Versión Actual
               </Button>
             )}

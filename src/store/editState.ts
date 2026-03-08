@@ -11,16 +11,10 @@ interface State {
  * @param get - A function used to access the store's state.
  * @returns An object containing the store's state properties.
  */
-export const useEditButton = create<State>((set, get) => {
-  //set({ readonly: true });
+export const useEditButton = create<State>((set, get) => ({
+  readonly: true,
 
-  const setReadOnly = (readonly: boolean) => {
+  setReadOnly: (readonly: boolean) => {
     set({ readonly: !readonly });
-  };
-
-  return {
-    readonly: true,
-    //readonly: get().readonly,
-    setReadOnly,
-  };
-});
+  },
+}));

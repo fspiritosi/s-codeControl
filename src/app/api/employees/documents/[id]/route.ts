@@ -1,10 +1,10 @@
 import { supabaseServer } from '@/lib/supabase/server';
 import { NextRequest } from 'next/server';
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = supabaseServer();
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
-  const id = params.id;
 
   try {
     let { data: documents, error } = await supabase

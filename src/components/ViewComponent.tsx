@@ -21,9 +21,9 @@ interface ViewDataObj {
 }
 
 export default async function Viewcomponent({ viewData }: { viewData: ViewDataObj }) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const user = await supabase.auth.getUser();
-  const cookiesStore = cookies();
+  const cookiesStore = await cookies();
   const actualCompany = cookiesStore.get('actualComp')?.value;
   const role = await getActualRole(actualCompany as string, user?.data?.user?.id as string);
 

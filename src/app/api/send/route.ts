@@ -42,7 +42,7 @@ type EmailRequest = {
 };
 
 export async function POST(request: Request) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   
   // Declarar variables que necesitamos en todo el ámbito
   let toEmail = 'diegodac77@gmail.com';

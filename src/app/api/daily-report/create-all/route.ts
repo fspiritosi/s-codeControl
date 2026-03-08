@@ -3,7 +3,7 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 // export async function POST(request: NextRequest) {
-//   const supabase = supabaseServer();
+//   const supabase = await supabaseServer();
 
 //   try {
 //     const { date, status, company_id, rows } = await request.json();
@@ -75,7 +75,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // src/app/api/daily-report/create-or-update.ts
 
 // export async function POST(request: NextRequest) {
-//     const supabase = supabaseServer();
+//     const supabase = await supabaseServer();
 
 //     try {
 //       // Datos recibidos del frontend
@@ -208,7 +208,7 @@ import { NextRequest, NextResponse } from 'next/server';
 //   }
 
 export async function POST(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   try {
     // Datos recibidos del frontend
@@ -246,7 +246,8 @@ export async function POST(request: NextRequest) {
         throw new Error(`Error creando parte diario: ${error?.message || 'No se pudo crear el parte diario'}`);
       }
 
-      dailyReportId = data[0].id;
+      // TODO: fix daily-report query types
+      dailyReportId = (data[0] as any).id;
     } else {
       // Si `editingId` está presente, actualizar el parte diario existente
       const { data, error } = await supabase
@@ -259,7 +260,8 @@ export async function POST(request: NextRequest) {
         throw new Error(`Error editando parte diario: ${error?.message || 'No se pudo editar el parte diario'}`);
       }
 
-      dailyReportId = data[0].id;
+      // TODO: fix daily-report query types
+      dailyReportId = (data[0] as any).id;
     }
     //console.log(dailyReportId);
     // 2. Insertar filas en la tabla dailyReportRow
@@ -288,8 +290,9 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // TODO: fix daily-report query types
       // Obtener todos los IDs de las filas insertadas
-      dailyReportRowIds = rowData.map((row) => row.id); // Almacenar todos los IDs
+      dailyReportRowIds = rowData.map((row: any) => row.id); // Almacenar todos los IDs
     }
 
     // 3. Relacionar empleados en dailyReportEmployeeRelations

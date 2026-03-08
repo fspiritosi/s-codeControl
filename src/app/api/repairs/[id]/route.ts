@@ -1,10 +1,9 @@
 import { supabaseServer } from '@/lib/supabase/server';
 import { NextRequest } from 'next/server';
 
-export async function PUT(request: NextRequest, context: any) {
-  const supabase = supabaseServer();
-  const { params } = context
-  const id = params.id;
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await supabaseServer();
   const body = await request.json();
 
   try {
@@ -22,10 +21,9 @@ export async function PUT(request: NextRequest, context: any) {
   }
 }
 
-export async function DELETE(request: NextRequest, context: any) {
-  const supabase = supabaseServer();
-  const { params } = context
-  const id = params.id;
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await supabaseServer();
 
   try {
     const { data: types_of_repairs, error } = await supabase

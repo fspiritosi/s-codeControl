@@ -10,11 +10,11 @@ import DiagramTypeComponent from './DiagramTypeComponent';
 
 async function EmployesDiagram() {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const coockiesStore = cookies();
+  const coockiesStore = await cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
   const { employees } = await fetch(`${URL}/api/employees?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
 

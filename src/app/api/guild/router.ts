@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Crear un nuevo registro en la tabla 'guild'
 export async function POST(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const { company_id, ...guildData } = await request.json();
 
   try {
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
 // Leer registros de la tabla 'guild'
 export async function GET(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('company_id');
 
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
 // Actualizar un registro existente en la tabla 'guild'
 export async function PUT(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const { id, ...guildData } = await request.json();
 
   try {
@@ -59,7 +59,7 @@ export async function PUT(request: NextRequest) {
 
 // Eliminar un registro de la tabla 'guild'
 export async function DELETE(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const { id } = await request.json();
 
   try {

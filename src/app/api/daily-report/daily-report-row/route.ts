@@ -3,7 +3,7 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual'); // ID de la compañía
 
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   try {
     const { daily_report_id, customer_id, service_id, item_id, working_day, start_time, end_time, description } =
       await request.json();
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
 }
 
 // export async function PUT(request: NextRequest) {
-//   const supabase = supabaseServer();
+//   const supabase = await supabaseServer();
 //   const { searchParams } = new URL(request.url);
 //   const id = searchParams.get('id');
 //   const updateData = await request.json();
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
 //   }
 // }
 export async function PUT(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
   const updateData = await request.json();
@@ -145,7 +145,7 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const { id } = await request.json();
   try {
     let { data, error } = await supabase

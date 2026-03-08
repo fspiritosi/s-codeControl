@@ -29,7 +29,7 @@ export const UpdateVehicle = async (vehicleId: string, vehicleData: any) => {
   //console.log('data', data);
 };
 export const updateModulesSharedUser = async ({ id, modules }: { id: string; modules: ModulosEnum[] }) => {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const { data, error } = await supabase.from('share_company_users').update({ modules: modules }).eq('id', id).select();
 
   if (error) {

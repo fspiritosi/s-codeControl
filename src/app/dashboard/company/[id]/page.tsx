@@ -12,8 +12,9 @@ import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { revalidatePath } from 'next/cache';
 import CityInput from '../new/components/CityInput';
 import EditCompanyButton from '../new/components/EditCompanyButton';
-export default async function companyRegister({ params }: { params: { id: string } }) {
-  const supabase = supabaseServer();
+export default async function companyRegister({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await supabaseServer();
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -32,7 +33,7 @@ export default async function companyRegister({ params }: { params: { id: string
     .from('company')
     .select('*,city(*),province_id(*)')
     .eq('owner_id', data?.[0]?.id || '')
-    .eq('id', params.id)
+    .eq('id', id)
     .single();
 
   let { data: share_company_users, error: sharedError } = await supabase

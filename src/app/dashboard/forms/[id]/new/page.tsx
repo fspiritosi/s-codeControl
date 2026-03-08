@@ -2,7 +2,8 @@ import { fetchAllEquipment, fetchCustomFormById, getCurrentProfile } from '@/app
 import { dailyChecklistConfig } from '@/components/CheckList/DynamicChecklistForm';
 import DynamicFormWrapper from '@/components/CheckList/DynamicFormWrapper';
 
-async function page({ params }: { params: { id: string } }) {
+async function page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const equipments = (await fetchAllEquipment()).map((equipment) => ({
     label: equipment.domain
       ? `${equipment.domain} - ${equipment.intern_number}`
@@ -19,7 +20,7 @@ async function page({ params }: { params: { id: string } }) {
   // console.log('params', params);
 
   const currentUser = await getCurrentProfile();
-  const formInfo = await fetchCustomFormById(params.id);
+  const formInfo = await fetchCustomFormById(id);
   // console.log('formInfo', formInfo?.[0].name);
   return (
     <div className="px-7">

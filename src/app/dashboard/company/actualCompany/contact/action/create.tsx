@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
 export async function createdContact(formData: FormData) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   const {
     data: { session },
@@ -30,12 +30,12 @@ export async function createdContact(formData: FormData) {
   revalidatePath('/dashboard/company/customers');
 
   const contactData = {
-    contact_name: formData.get('contact_name'),
-    constact_email: formData.get('contact_email'),
-    contact_phone: formData.get('contact_phone'),
-    contact_charge: formData.get('contact_charge'),
-    company_id: formData.get('company_id'),
-    customer_id: formData.get('customer'),
+    contact_name: formData.get('contact_name') as string | null,
+    constact_email: formData.get('contact_email') as string | null,
+    contact_phone: formData.get('contact_phone') as string | null,
+    contact_charge: formData.get('contact_charge') as string | null,
+    company_id: formData.get('company_id') as string | null,
+    customer_id: formData.get('customer') as string | null,
   };
 
   const { data: existingContact, error: contactError } = await supabase
@@ -43,7 +43,7 @@ export async function createdContact(formData: FormData) {
     .select('*')
     .eq('contact_name', contactData.contact_name || '')
     .eq('constact_email', contactData.constact_email || '')
-    .eq('contact_phone', contactData.contact_phone || '')
+    .eq('contact_phone', Number(contactData.contact_phone) || 0)
     .eq('contact_charge', contactData.contact_charge || '')
     .eq('company_id', contactData.company_id || '')
     .eq('customer_id', contactData.customer_id || '')
@@ -71,7 +71,7 @@ export async function createdContact(formData: FormData) {
 }
 
 export async function updateContact(formData: FormData) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   const {
     data: { session },
@@ -94,16 +94,16 @@ export async function updateContact(formData: FormData) {
 
   revalidatePath('/dashboard/company/actualCompany');
 
-  const id = formData.get('id');
+  const id = formData.get('id') as string | null;
 
   const contactData = {
-    contact_name: formData.get('contact_name'),
-    constact_email: formData.get('contact_email'),
-    contact_phone: formData.get('contact_phone'),
-    contact_charge: formData.get('contact_charge'),
-    company_id: formData.get('company_id'),
+    contact_name: formData.get('contact_name') as string | null,
+    constact_email: formData.get('contact_email') as string | null,
+    contact_phone: formData.get('contact_phone') as string | null,
+    contact_charge: formData.get('contact_charge') as string | null,
+    company_id: formData.get('company_id') as string | null,
     // company_id: Companies?.[0].id,
-    customer_id: formData.get('customer'),
+    customer_id: formData.get('customer') as string | null,
   };
 
   try {

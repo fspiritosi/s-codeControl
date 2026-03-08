@@ -4,9 +4,9 @@ import { cookies } from 'next/headers';
 import { TreeNode, TreeNodeData } from './TreeFile';
 
 export default async function CovenantTreeFile() {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
-  const coockiesStore = cookies();
+  const coockiesStore = await cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
   const { data: guild, error } = await supabase
     .from('guild')

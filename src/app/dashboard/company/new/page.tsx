@@ -13,7 +13,7 @@ import { revalidatePath } from 'next/cache';
 import CityInput from './components/CityInput';
 import CreateCompanyButton from './components/CreateCompanyButton';
 export default async function companyRegister() {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const {
     data: { session },
   } = await supabase.auth.getSession();

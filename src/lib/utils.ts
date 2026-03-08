@@ -38,7 +38,7 @@ export function validarCUIL(cuil: string) {
 }
 
 export const FetchSharedUsers = async (companyId: string) => {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   const { data, error } = await supabase
     .from('share_company_users')

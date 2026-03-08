@@ -6,9 +6,10 @@ import {
 } from '@/app/server/GET/actions';
 import DynamicFormWrapper from '@/components/CheckList/DynamicFormWrapper';
 
-async function page({ params }: { params: { id: string } }) {
+async function page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   // console.log('params', params);
-  const answer = await fetchAnswerById(params.id);
+  const answer = await fetchAnswerById(id);
   const equipments = (await fetchAllEquipment()).map((equipment) => ({
     label: equipment.domain
       ? `${equipment.domain} - ${equipment.intern_number}`

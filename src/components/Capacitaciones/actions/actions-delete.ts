@@ -6,7 +6,7 @@
 //  */
 // export const deleteTraining = async (trainingId: string) => {
 //   try {
-//     const supabase = supabaseServer();
+//     const supabase = await supabaseServer();
 
 //     // 4. Eliminar materiales
 //     const { data: materials, error: materialsError } = await supabase

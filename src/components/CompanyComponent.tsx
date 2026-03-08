@@ -24,7 +24,7 @@ interface Company {
 
 export default async function CompanyComponent() {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
-  const coockiesStore = cookies();
+  const coockiesStore = await cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
   const companyResponse = await fetch(`${URL}/api/company/?actual=${company_id}`);
   const companyDataResponse = companyResponse.ok ? await companyResponse.json() : null;

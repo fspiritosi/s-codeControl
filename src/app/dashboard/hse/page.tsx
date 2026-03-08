@@ -39,7 +39,7 @@ export type EmployeeType = {
 };
 async function HSEPage() {
   // Obtener los datos necesarios desde la base de datos
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const company_id = cookieStore.get('actualComp')?.value;
 
   // Si no hay company_id, redirigir o manejar el error según corresponda

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { supabaseServer } from './lib/supabase/server';
 
 export async function middleware(req: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const response = NextResponse.next({
     request: {
       headers: req.headers,

@@ -23,9 +23,10 @@ const renderForm = (activeFormType: string) => {
   }
 };
 
-async function page({ params }: { params: { id: string } }) {
-  const answers = await fetchFormsAnswersByFormId(params.id);
-  const formInfo = await fetchCustomFormById(params.id);
+async function page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const answers = await fetchFormsAnswersByFormId(id);
+  const formInfo = await fetchCustomFormById(id);
   const formName = formInfo[0].name;
 
   const viewData = {
@@ -46,7 +47,7 @@ async function page({ params }: { params: { id: string } }) {
               >
                 <div className="h-full w-full bg-white">{renderForm(formName)}</div>
               </PDFPreviewDialog>
-              <Link className={buttonVariants({ variant: 'default' })} href={`/dashboard/forms/${params.id}/new`}>
+              <Link className={buttonVariants({ variant: 'default' })} href={`/dashboard/forms/${id}/new`}>
                 Nueva respuesta
               </Link>
             </div>

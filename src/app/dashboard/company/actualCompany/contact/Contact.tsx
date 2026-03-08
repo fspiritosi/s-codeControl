@@ -5,7 +5,7 @@ import { DataContacts } from './data-table';
 import { cookies } from 'next/headers';
 
 export default async function Contact() {
-  const coockiesStore = cookies();
+  const coockiesStore = await cookies();
   const actualCompany = coockiesStore.get('actualComp')?.value;
   const { data: contacts, error } = await supabase //pasar a api
     .from('contacts')

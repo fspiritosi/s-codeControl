@@ -12,7 +12,7 @@ export default async function RepairSolicitudes({
   default_equipment_id?: string;
 }) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
-  const coockiesStore = cookies();
+  const coockiesStore = await cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
   const { repair_solicitudes } = await fetch(`${URL}/api/repair_solicitud?actual=${company_id}`).then((res) =>
     res.json()

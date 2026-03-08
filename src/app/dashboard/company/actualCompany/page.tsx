@@ -17,7 +17,7 @@ import Contacts from './contact/Contact';
 import CovenantTreeFile from './covenant/CovenantTreeFile';
 import Customers from './customers/Customers';
 export default async function CompanyPage() {
-  const coockiesStore = cookies();
+  const coockiesStore = await cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
 
   const viewData = {

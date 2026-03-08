@@ -4,7 +4,7 @@ import AutenticationLight from './AutenticationLight';
 import RefreshComponent from './RefreshComponent';
 
 async function RenderBanner() {
-  const cookiesStore = cookies();
+  const cookiesStore = await cookies();
   const theme = cookiesStore.get('theme');
   return (
     <>

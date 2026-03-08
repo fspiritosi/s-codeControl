@@ -1,6 +1,6 @@
 "use client"
 import { supabaseBrowser } from '@/lib/supabase/browser'; // Asegúrate de tener configurado tu cliente de Supabase
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableHead, TableRow, TableCell, TableBody } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,8 @@ interface MeasureUnits {
 }
 
 
-const ServiceItemsPage = ({ params }: { params: any }) => {
+const ServiceItemsPage = ({ params }: { params: Promise<{ id: string }> }) => {
+    const { id } = use(params);
     const supabase = supabaseBrowser();
     const URL = process.env.NEXT_PUBLIC_BASE_URL;
     const [items, setItems] = useState<Item[]>([]);
@@ -51,7 +52,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
     // const [selectedClient, setSelectedClient] = useState('');
     const company_id = cookies.get('actualComp');
     const modified_company_id = company_id?.replace(/"/g, '');
-    // const modified_editing_service_id = params.id?.replace(/"/g, '');
+    // const modified_editing_service_id = id?.replace(/"/g, '');
     const [filteredItems, setFilteredItems] = useState<Item[]>([]);
     const [isActiveFilter, setIsActiveFilter] = useState(true);
     const [measure_unit, setMeasureUnit] = useState<MeasureUnits[] | null>(null);
@@ -69,7 +70,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
         const fetchItems = async () => {
             try {
                 // Obtener items
-                const itemsResponse = await fetch(`${URL}/api/services/items?actual=${modified_company_id}&service=${params.id}`);
+                const itemsResponse = await fetch(`${URL}/api/services/items?actual=${modified_company_id}&service=${id}`);
                 if (!itemsResponse.ok) {
                     throw new Error('Error al obtener los items');
                 }

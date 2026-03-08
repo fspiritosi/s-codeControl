@@ -121,7 +121,7 @@ export async function getDocuments(company_id: string, filters?: {
   status?: 'active' | 'vencido' | 'pending'
   search?: string
 }) {
-  const supabase = supabaseServer()
+  const supabase = await supabaseServer()
   
   // Primero obtenemos los documentos básicos
   let query = supabase
@@ -138,7 +138,8 @@ export async function getDocuments(company_id: string, filters?: {
     query = query.ilike('title', `%${filters.search}%`)
   }
 
-  const { data: documents, error } = await query
+  // TODO: fix HSE query types
+  const { data: documents, error } = await query as unknown as { data: any[] | null; error: any }
 
   if (error) {
     console.error('Error al obtener documentos:', error)
@@ -150,7 +151,7 @@ export async function getDocuments(company_id: string, filters?: {
   }
 
   // Obtenemos los IDs de los documentos para buscar sus etiquetas
-  const documentIds = documents.map(doc => doc.id);
+  const documentIds = documents.map((doc: any) => doc.id);
 
   // Obtenemos las asignaciones de etiquetas para estos documentos
   const tagQuery = supabase
@@ -228,15 +229,16 @@ export async function getDocumentById(id: string): Promise<(Document & {
   versions: DocumentVersion[];
   tags: string[];
 }) | null> {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   
   try {
+    // TODO: fix HSE query types
     // Obtener el documento principal
     const { data: document, error: docError } = await supabase
       .from('hse_documents' as any)
       .select('*,docs_types(id, name,short_description)')
       .eq('id', id)
-      .single();
+      .single() as unknown as { data: any; error: any };
 
     if (docError || !document) {
       console.error('Error al obtener documento:', docError);
@@ -248,7 +250,7 @@ export async function getDocumentById(id: string): Promise<(Document & {
       .from('hse_document_versions' as any)
       .select('*')
       .eq('document_id', id)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false }) as unknown as { data: any[] | null; error: any };
 
     if (versionsError) {
       console.error('Error al obtener versiones del documento:', versionsError);
@@ -303,7 +305,7 @@ export async function getDocumentById(id: string): Promise<(Document & {
 
 export async function createDocumentWithAssignments(formData: FormData, company_id: string) {
   
-  const supabase = supabaseServer()
+  const supabase = await supabaseServer()
   let filePath: string | null = null
   
   try {
@@ -414,11 +416,12 @@ export async function createDocumentWithAssignments(formData: FormData, company_
 
     
 
+    // TODO: fix HSE query types
     const { data: documentData, error: insertError } = await supabase
       .from("hse_documents" as any)
       .insert([newDoc])
       .select()
-      .single()
+      .single() as unknown as { data: any; error: any }
 
     if (insertError) {
       console.error("Error al crear el documento:", insertError)
@@ -449,10 +452,11 @@ export async function createDocumentWithAssignments(formData: FormData, company_
       
       // Verificar qué etiquetas existen
       
+      // TODO: fix HSE query types
       const { data: existingTags, error: tagsError } = await supabase
         .from('training_tags' as any)
         .select('id')
-        .in('id', tagIds);
+        .in('id', tagIds) as unknown as { data: any[] | null; error: any };
       
       
       if (tagsError) {
@@ -499,6 +503,7 @@ export async function createDocumentWithAssignments(formData: FormData, company_
 
 
 
+    // TODO: fix HSE query types
     // 10. Obtener el documento actualizado con sus etiquetas
     const { data: document, error: fetchDocError } = await supabase
       .from("hse_documents" as any)
@@ -513,7 +518,7 @@ export async function createDocumentWithAssignments(formData: FormData, company_
         )
       `)
       .eq("id", documentId)
-      .single()
+      .single() as unknown as { data: any; error: any }
 
     if (fetchDocError) {
       console.error("Error al obtener el documento actualizado:", fetchDocError)
@@ -670,7 +675,7 @@ export async function createDocumentVersion(
   company_id: string,
 ) {
  
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   let filePath: string | null = null;
 
   try {
@@ -687,11 +692,12 @@ export async function createDocumentVersion(
 
     if (!file) throw new Error('El archivo es obligatorio');
 
+    // TODO: fix HSE query types
     const { data: existingDoc, error: fetchError } = await supabase
       .from('hse_documents' as any)
       .select('*')
       .eq('id', documentId)
-      .single();
+      .single() as unknown as { data: any; error: any };
 
     if (fetchError || !existingDoc) throw new Error('Documento no encontrado');
 
@@ -737,21 +743,23 @@ export async function createDocumentVersion(
 
    
 
+    // TODO: fix HSE query types
     const { data: versionInsert, error: versionError } = await supabase
       .from('hse_document_versions' as any)
       .insert(versionData)
       .select('id')
-      .single();
+      .single() as unknown as { data: any; error: any };
 
     if (versionError) console.error('Error al guardar la versión anterior:', versionError);
 
     const versionId = versionInsert?.id;
 
     // === Obtener y guardar asignaciones activas como historial ===
+    // TODO: fix HSE query types
     const { data: currentAssignments, error: assignmentError } = await supabase
       .from('hse_document_assignments' as any)
       .select('*')
-      .eq('document_id', documentId)
+      .eq('document_id', documentId) as unknown as { data: any[] | null; error: any }
       // .eq('status', 'active');
 
     if (assignmentError) {
@@ -759,8 +767,8 @@ export async function createDocumentVersion(
       throw new Error('No se pudieron obtener las asignaciones del documento');
     }
     
-    if (versionId && currentAssignments?.length > 0) {
-      const versionAssignments = currentAssignments.map((a) => ({
+    if (versionId && currentAssignments && currentAssignments.length > 0) {
+      const versionAssignments = currentAssignments.map((a: any) => ({
         assignment_id: a.id,
         document_version_id: versionId,
         assignee_id: a.assignee_id,
@@ -924,7 +932,7 @@ export async function assignDocumentsToNewEmployee(
 }
 
 export async function getAllHierarchicalPositions() {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   
   try {
     const { data, error } = await supabase
@@ -944,7 +952,7 @@ export async function getAllHierarchicalPositions() {
 }
 
 export async function getEmployeesWithAssignedDocuments(companyId: string, documentId?: string) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   try {
     // 1. Primero obtenemos los empleados de la compañía
@@ -1026,7 +1034,7 @@ export async function getEmployeesWithAssignedDocuments(companyId: string, docum
 }
 
 export async function updateDocumentExpiry(documentId: string, expiryDate: string) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   
   const { data, error } = await supabase
     .from('hse_documents' as any)
@@ -1074,7 +1082,7 @@ export interface DocumentVersionAssignment {
 export async function getAssignedEmployeesByDocumentVersion(
   documentVersionId: string
 ): Promise<DocumentVersionAssignment[]> {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   
   const { data, error } = await supabase
     .from('hse_document_assignment_versions' as any)
@@ -1103,7 +1111,7 @@ export async function getAssignedEmployeesByDocumentVersion(
 
 
 export async function createDocument(data: any) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const { error, data: inserted } = await supabase
     .from("hse_documents")
     .insert([{ ...data, status: "borrador" }])
@@ -1114,7 +1122,7 @@ export async function createDocument(data: any) {
 
 // Editar documento (solo si status === 'borrador')
 export async function editDocument(id: string, data: any) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const { error, data: updated } = await supabase
     .from("hse_documents")
     .update(data)
@@ -1127,15 +1135,16 @@ export async function editDocument(id: string, data: any) {
 
 // Publicar documento - Cambia el estado de 'borrador' a 'active'
 export async function publishDocument(documentId: string) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   
   try {
+    // TODO: fix HSE query types
     // Verificar que el documento existe y está en estado 'borrador'
     const { data: document, error: fetchError } = await supabase
       .from('hse_documents' as any)
       .select('status')
       .eq('id', documentId)
-      .single();
+      .single() as unknown as { data: any; error: any };
 
     if (fetchError) {
       console.error('❌ Error al buscar el documento:', fetchError);
@@ -1171,16 +1180,17 @@ export async function publishDocument(documentId: string) {
 // Eliminar un documento y todas sus asignaciones
 export async function deleteDocument(documentId: string) {
   
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   
   try {
     // 1. Verificar que el documento existe y está en estado 'borrador'
   
+    // TODO: fix HSE query types
     const { data: document, error: fetchError } = await supabase
       .from('hse_documents' as any)
       .select('status, file_path, title')
       .eq('id', documentId)
-      .single();
+      .single() as unknown as { data: any; error: any };
 
     if (fetchError) {
       console.error('❌ Error al buscar el documento:', fetchError);
@@ -1274,7 +1284,7 @@ export async function deleteDocument(documentId: string) {
 
 
 // export async function updateDocument(formData: FormData, companyId: string) {
-//   const supabase = supabaseServer();
+//   const supabase = await supabaseServer();
 
 //   try {
 //     const {
@@ -1436,7 +1446,7 @@ export async function deleteDocument(documentId: string) {
 //   }
 // }
 export async function updateDocument(formData: FormData, companyId: string) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   
   try {
     const {
@@ -1608,7 +1618,7 @@ export async function getTypeOfEmployeeForDocument(documentId: string): Promise<
   data: TypeOfEmployee[] | null;
   error: string | null;
 }> {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   try {
     
@@ -1672,7 +1682,7 @@ export async function getTypeOfEmployeeForDocument(documentId: string): Promise<
 }
 
 export async function fetchAllHseDocTypes(companyId: string) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   try {
     const { data: hse_doc_types, error } = await supabase.from('hse_doc_types').select('*').eq('company_id', companyId);
     
@@ -1690,7 +1700,7 @@ export async function fetchAllHseDocTypes(companyId: string) {
 };
 
 export async function fetchHseDocTypesOnlyName(companyId: string) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   try {
     const { data: hse_doc_types, error } = await supabase.from('hse_doc_types').select('id,name').eq('company_id', companyId);
     
@@ -1715,7 +1725,7 @@ export const createDocType = async (data: Database['public']['Tables']['hse_doc_
   };
   
   try {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
     const { error } = await supabase.from('hse_doc_types').insert([docType]);
 
     if (error) {
@@ -1732,7 +1742,7 @@ export const createDocType = async (data: Database['public']['Tables']['hse_doc_
 
 export const updateDocType = async (data: Database['public']['Tables']['hse_doc_types']['Update']) => {
   try {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
     const { error } = await supabase.from('hse_doc_types').update(data).eq('id', data.id || '');
 
     if (error) {

@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { EmailTemplate } from '@/components/EmailTemplate';
 import { EmailTemplateHelp } from '@/components/EmailTemplateHelp';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -49,7 +50,7 @@ export async function renderEmailTemplate(options: {
         });
 
   // In a client component, we can safely use renderToStaticMarkup
-  return renderToStaticMarkup(template);
+  return renderToStaticMarkup(template as React.ReactElement);
 }
 
 // Función auxiliar para enviar correos usando Nodemailer a través de la API

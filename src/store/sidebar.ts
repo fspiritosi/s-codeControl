@@ -11,15 +11,10 @@ interface State {
  * @param get - A function used to access the store's state.
  * @returns An object containing the store's state properties.
  */
-export const useSidebarOpen = create<State>((set, get) => {
-  set({ expanded: true });
+export const useSidebarOpen = create<State>((set, get) => ({
+  expanded: true,
 
-  const setExpanded = () => {
+  setExpanded: () => {
     set({ expanded: !get().expanded });
-  };
-
-  return {
-    expanded: get().expanded,
-    setExpanded,
-  };
-});
+  },
+}));

@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 export async function signup(formData: FormData, url: string) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   // type-casting here for convenience
   // in practice, you should validate your inputs

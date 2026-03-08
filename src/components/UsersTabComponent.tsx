@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 export default async function UsersTabComponent() {
   // const URL = process.env.NEXT_PUBLIC_BASE_URL;
 
-  // const coockiesStore = cookies();
+  // const coockiesStore = await cookies();
   // const company_id = coockiesStore.get('actualComp')?.value;
 
   //const { data: company } = await fetch(`${URL}/api/company/?actual=${company_id}`).then((res) => res.json());
