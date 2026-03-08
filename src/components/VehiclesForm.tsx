@@ -278,15 +278,19 @@ export default function VehiclesForm2({
     });
   };
 
-  supabase
-    .channel('custom-all-channel')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'brand_vehicles' }, () => {
-      fetchData();
-    })
-    .subscribe();
-
   useEffect(() => {
     fetchData();
+
+    const channel = supabase
+      .channel('realtime-brand-vehicles')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'brand_vehicles' }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
   const fetchContractors = useCountriesStore((state) => state.fetchContractors);
   const subscribeToCustomersChanges = useCountriesStore((state) => state.subscribeToCustomersChanges);

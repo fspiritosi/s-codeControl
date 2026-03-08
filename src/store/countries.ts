@@ -121,7 +121,7 @@ export const useCountriesStore = create<State>((set, get) => {
   };
 
   const subscribeToCustomersChanges = () => {
-    const channel = supabase.channel('custom-all-channel')
+    const channel = supabase.channel('realtime-customers-changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'customers' },
@@ -132,12 +132,12 @@ export const useCountriesStore = create<State>((set, get) => {
       .subscribe()
 
     return () => {
-      channel.unsubscribe()
+      supabase.removeChannel(channel)
     }
   }
 
   const subscribeToContactsChanges = () => {
-    const channel = supabase.channel('custom-all-channel')
+    const channel = supabase.channel('realtime-contacts-changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'contacts' },
@@ -148,7 +148,7 @@ export const useCountriesStore = create<State>((set, get) => {
       .subscribe()
 
     return () => {
-      channel.unsubscribe()
+      supabase.removeChannel(channel)
     }
   }
 

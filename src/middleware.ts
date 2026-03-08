@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { supabaseServer } from './lib/supabase/server';
 
 export async function middleware(req: NextRequest) {
-  // await updateSession(req)
   const supabase = supabaseServer();
   const response = NextResponse.next({
     request: {
@@ -33,22 +32,16 @@ export async function middleware(req: NextRequest) {
 
   const actualNoOwner = actualNoOwnerValue ? actualNoOwnerValue.replace(/^"|"$/g, '') : null;
 
-  const actualNow = actualNoOwner; //!== null ? parseInt(actualNoOwner as string, 10) : null
+  const actualNow = actualNoOwner;
   const { data: guestRole } = await supabase
     .from('share_company_users')
     .select('role')
     .eq('profile_id ', data?.[0]?.id || '')
     .eq('company_id', actualNow || '');
 
-  //response.cookies.set('guestRole', guestRole?.[0]?.role)
-
   if (!Companies?.length && !share_company_users?.length && !req.url.includes('/dashboard/company/new')) {
     return NextResponse.redirect(new URL('/dashboard/company/new', req.url));
   }
-
-  //const theme = response.cookies.get('theme')
-  //const actualCompanyId = req.cookies.get('actialCompanyId')
-  // const actualNoOwner :string | null = req.cookies.get('actualComp')?.value
 
   const userRole = data?.[0]?.role;
 
@@ -87,20 +80,10 @@ export async function middleware(req: NextRequest) {
       redirectUrl.pathname = '/dashboard';
       return NextResponse.redirect(redirectUrl.toString());
     }
-    //response.cookies.set('guestRole', guestRole?.[0]?.role)
     if (userRole === 'CodeControlClient' && codeControlClientUser.some((url) => req.url.includes(url))) {
       redirectUrl.pathname = '/dashboard';
       return NextResponse.redirect(redirectUrl.toString());
     }
-    // if (guestRole?.[0]?.role === 'Invitado' && !req.url.includes('/dashboard/document')) {
-    //   redirectUrl.pathname = '/dashboard/document';
-    //   return NextResponse.redirect(redirectUrl.toString());
-    // }
-
-    // if (guestRole?.[0]?.role === 'Invitado' && guestUser.some((url) => req.url.includes(url))) {
-    //   redirectUrl.pathname = '/dashboard/document/';
-    //   return NextResponse.redirect(redirectUrl.toString());
-    // }
     if (guestRole?.[0]?.role === 'Invitado') {
       // Si el usuario está en una ruta permitida, permitir la navegación
       const isAllowedPath = allowedPathsguestUser.some((path) => req.url.startsWith(path));

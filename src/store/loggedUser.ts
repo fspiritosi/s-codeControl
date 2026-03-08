@@ -91,6 +91,7 @@ interface State {
   roleActualCompany: string;
   active_sidebar: boolean;
   toggleSidebar: () => void;
+  cleanup: () => void;
 }
 
 export interface CompanyDocumentsType {
@@ -1009,32 +1010,39 @@ export const useLoggedUserStore = create<State>((set, get) => {
     }
   };
   const realTimeSharedUsers = supabase
-    .channel('custom-all-channel')
+    .channel('realtime-share-company-users')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'share_company_users' }, (payload) => {
       howManyCompanies(get()?.profile?.[0]?.id || '');
     })
     .subscribe();
 
   const realTimeNotification = supabase
-    .channel('custom-all-channel')
+    .channel('realtime-notifications')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, (payload) => {
       allNotifications();
     })
     .subscribe();
 
   const realTimeEmployees = supabase
-    .channel('custom-update-channel')
+    .channel('realtime-employees-update')
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'employees' }, (payload) => {
       setActivesEmployees();
     })
     .subscribe();
 
   const realTimeCompany = supabase
-    .channel('custom-all-channel')
+    .channel('realtime-company')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'company' }, () => {
       howManyCompanies(get()?.profile?.[0]?.id || '');
     })
     .subscribe();
+
+  const cleanup = () => {
+    supabase.removeChannel(realTimeSharedUsers);
+    supabase.removeChannel(realTimeNotification);
+    supabase.removeChannel(realTimeEmployees);
+    supabase.removeChannel(realTimeCompany);
+  };
 
   const setActivesEmployees = async () => {
     const employeesToShow = await getEmployees(true);
@@ -1130,5 +1138,6 @@ export const useLoggedUserStore = create<State>((set, get) => {
     active_and_inactive_employees: get()?.active_and_inactive_employees,
     toggleSidebar,
     active_sidebar: get()?.active_sidebar,
+    cleanup,
   };
 });

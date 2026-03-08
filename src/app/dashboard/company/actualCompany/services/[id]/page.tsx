@@ -93,7 +93,7 @@ const ServiceItemsPage = ({ params }: { params: any }) => {
         };
         fetchItems();
 
-        const channel = supabase.channel('custom-all-channel')
+        const channel = supabase.channel('realtime-service-items')
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'service_items' },

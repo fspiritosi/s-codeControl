@@ -21,21 +21,21 @@ export default function allCompany() {
 
   useEffect(() => {
     setupModalAppElement();
-    supabase
-      .channel('custom-all-channel')
+    const companyChannel = supabase
+      .channel('realtime-company-page-company')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'company' }, (payload) => {
         fetchCompanies();
       })
       .subscribe();
 
-    // return () => {
-    //   subscription.unsubscribe()
-    // }
+    return () => {
+      supabase.removeChannel(companyChannel);
+    };
   }, []);
 
   useEffect(() => {
-    const channels = supabase
-      .channel('custom-all-channel')
+    const storageChannel = supabase
+      .channel('realtime-company-page-storage')
       .on(
         'postgres_changes',
         { event: '*', schema: 'storage', table: 'objects' },
@@ -45,6 +45,10 @@ export default function allCompany() {
         }
       )
       .subscribe();
+
+    return () => {
+      supabase.removeChannel(storageChannel);
+    };
   }, []);
 
   const [modalIsOpen, setModalIsOpen] = useState(false);

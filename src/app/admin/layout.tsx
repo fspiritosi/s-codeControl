@@ -1,4 +1,3 @@
-// import { AlertComponent } from '@/components/AlertComponent'
 import { supabaseServer } from '@/lib/supabase/server';
 import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
@@ -114,42 +113,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     )
     .eq('profile_id', profile?.[0]?.id || '');
 
-  //   let { data: document, error } = await supabase
-  //     .from('documents_employees')
-  //     .select(
-  //       `
-  //   *,
-  //   employees:employees(*,contractor_employee(
-  //     contractors(
-  //       *
-  //     )
-  //   )),
-  //   document_types:document_types(*)
-  // `,
-  //     )
-  //     .not('employees', 'is', null)
-  //     .eq('employees.company_id', actualCompany?.value.replace(/^"|"$/g, ''))
-
-  //   let { data: equipmentData, error: equipmentError } = await supabase
-  //     .from('documents_equipment')
-  //     .select(
-  //       `
-  //     *,
-  //     document_types:document_types(*),
-  //     applies(*,type(*),type_of_vehicle(*),model(*),brand(*))
-  //     `,
-  //     )
-  //     .eq('applies.company_id', actualCompany?.value.replace(/^"|"$/g, ''))
-  //     .not('applies', 'is', null)
-
-  //   revalidatePath('/dashboard/document')
-
   return (
     <div>
-      {/* <InitCompanies
-          company={company}
-          share_company_users={share_company_users}
-        /> */}
       <AdminSideBar />
       <div className="flex flex-col w-full mt-1 md:mt-0">
         <AdminNavbar />
@@ -158,5 +123,3 @@ export default async function DashboardLayout({ children }: { children: React.Re
     </div>
   );
 }
-
-// className="flex"
