@@ -1,32 +1,51 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 import { NextRequest } from 'next/server';
 export async function GET(request: NextRequest) {
-  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
 
   try {
-    let { data: documents, error } = await supabase
-      .from('documents_employees')
-      .select(
-        `*,
-    employees:employees(*,contractor_employee(
-      customers(
-        *
-      )
-    )),
-    document_types:document_types(*)
-  `
-      )
-      .not('employees', 'is', null)
-      .eq('employees.company_id', company_id || '')
-      .eq('employees.is_active', true)
-      .eq('document_types.is_active', true);
+    const documents = await prisma.documents_employees.findMany({
+      where: {
+        employee: {
+          is: { company_id: company_id || '', is_active: true },
+        },
+        document_type: {
+          is: { is_active: true },
+        },
+      },
+      include: {
+        employee: {
+          include: {
+            contractor_employee: {
+              include: {
+                contractor: true,
+              },
+            },
+          },
+        },
+        document_type: true,
+      },
+    });
 
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
-    return Response.json({ documents });
+    // Remap to match previous response shape
+    const mappedDocuments = documents.map((d: any) => {
+      const { employee, document_type, ...rest } = d;
+      return {
+        ...rest,
+        employees: employee
+          ? {
+              ...employee,
+              contractor_employee: employee.contractor_employee.map((ce: any) => ({
+                customers: ce.contractor,
+              })),
+            }
+          : null,
+        document_types: document_type,
+      };
+    });
+
+    return Response.json({ documents: mappedDocuments });
   } catch (error) {
     console.log(error);
   }

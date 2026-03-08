@@ -1,22 +1,14 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
 
   try {
-    let { data: diagram_type, error } = await supabase
-      .from('diagram_type')
-      .select('*')
-      .eq('company_id', company_id || '');
-
-    const data = diagram_type;
-
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
+    const data = await prisma.diagram_type.findMany({
+      where: { company_id: company_id || '' },
+    });
 
     return Response.json({ data });
   } catch (error) {
@@ -25,40 +17,31 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await supabaseServer();
   const { name, color, short_description, work_active } = await request.json();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
 
   try {
-    const { data, error } = await supabase
-      .from('diagram_type')
-      .insert([{ name, company_id, color, short_description, work_active }] as any);
+    const data = await prisma.diagram_type.create({
+      data: { name, company_id: company_id || '', color, short_description, work_active },
+    });
 
-    if (!error) {
-      return Response.json(data);
-    }
-    console.log(error);
+    return Response.json(data);
   } catch (error) {
     console.log(error);
   }
 }
 
 export async function PUT(request: NextRequest) {
-  const supabase = await supabaseServer();
   const { id, name, color, short_description, work_active } = await request.json();
-  const searchParams = request.nextUrl.searchParams;
 
   try {
-    const { data, error } = await supabase
-      .from('diagram_type')
-      .update({ name, color, short_description, work_active })
-      .eq('id', id);
+    const data = await prisma.diagram_type.update({
+      where: { id },
+      data: { name, color, short_description, work_active },
+    });
 
-    if (!error) {
-      return Response.json(data);
-    }
-    console.log(error);
+    return Response.json(data);
   } catch (error) {
     console.log(error);
   }

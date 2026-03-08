@@ -19,8 +19,8 @@ async function EquipmentListTabs({ inactives, actives }: { inactives?: boolean; 
     user?.id as string
   );
 
-  const onlyVehicles = equipments?.filter((v) => v.types_of_vehicles.id == '1');
-  const onlyNoVehicles = equipments?.filter((v) => v.types_of_vehicles.id == '2');
+  const onlyVehicles = equipments?.filter((v: any) => v.types_of_vehicles.id == '1');
+  const onlyNoVehicles = equipments?.filter((v: any) => v.types_of_vehicles.id == '2');
   // const data = setVehiclesToShow(equipments);
 
   return (

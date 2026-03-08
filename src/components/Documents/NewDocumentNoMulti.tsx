@@ -27,13 +27,13 @@ async function NewDocumentNoMulti({
   onlyEmployees?: boolean;
   id_user?: string;
 }) {
-  const employees = (await fetchAllEmployees()).map((employee) => ({
+  const employees = (await fetchAllEmployees()).map((employee: any) => ({
     label: `${employee.firstname} ${employee.lastname}`,
     value: employee.id,
     cuit: employee.cuil,
   }));
 
-  const equipments = (await fetchAllEquipment()).map((equipment) => ({
+  const equipments = (await fetchAllEquipment()).map((equipment: any) => ({
     label: equipment.domain
       ? `${equipment.domain} - ${equipment.intern_number}`
       : `${equipment.serie} - ${equipment.intern_number}`,
@@ -70,19 +70,19 @@ async function NewDocumentNoMulti({
               default_id={id_user}
               employees={employees}
               allDocumentTypes={allDocumentTypes?.filter(
-                (document) => document.applies === 'Persona' && !document.multiresource
-              )}
-              currentCompany={currentCompany}
+                (document: any) => document.applies === 'Persona' && !document.multiresource
+              ) as any}
+              currentCompany={currentCompany as any}
               user_id={user?.id}
             />
           </TabsContent>
           <TabsContent value="equipment">
             <UploadDocumentEquipment
               default_id={id_user}
-              currentCompany={currentCompany}
+              currentCompany={currentCompany as any}
               allDocumentTypes={allDocumentTypes?.filter(
-                (document) => document.applies === 'Equipos' && !document.multiresource
-              )}
+                (document: any) => document.applies === 'Equipos' && !document.multiresource
+              ) as any}
               user_id={user?.id}
               equipments={equipments}
             />

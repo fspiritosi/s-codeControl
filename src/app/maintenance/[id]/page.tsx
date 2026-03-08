@@ -54,7 +54,7 @@ export default async function Home({
 
   const checklists = await fetchCustomForms(equipments[0].company_id);
 
-  const equipmentsForComboBox = (await fetchAllEquipment(equipments[0].company_id)).map((equipment) => ({
+  const equipmentsForComboBox = (await fetchAllEquipment(equipments[0].company_id)).map((equipment: any) => ({
     label: equipment.domain
       ? `${equipment.domain} - ${equipment.intern_number}`
       : `${equipment.serie} - ${equipment.intern_number}`,
@@ -67,7 +67,7 @@ export default async function Home({
     intern_number: equipment.intern_number,
     vehicle_type: equipment.type.name,
   }));
-  const currentEquipment = equipmentsForComboBox.find((equipment) => equipment.value === id);
+  const currentEquipment = equipmentsForComboBox.find((equipment: any) => equipment.value === id);
 
   return (
     <QrActionSelector

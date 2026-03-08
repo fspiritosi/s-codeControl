@@ -1,27 +1,50 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 import { NextRequest } from 'next/server';
 export async function GET(request: NextRequest) {
-  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
 
   try {
-    let { data: documents, error: equipmentError } = await supabase
-      .from('documents_equipment')
-      .select(
-        `*,
-      document_types(*),
-      applies(*,type(*),type_of_vehicle(*),model(*),brand(*))
-  `
-      )
-      .eq('applies.company_id', company_id || '')
-      .eq('applies.is_active', true)
-      .eq('document_types.is_active', true)
-      .not('applies', 'is', null);
+    const documentsRaw = await prisma.documents_equipment.findMany({
+      where: {
+        vehicle: {
+          is: { company_id: company_id || '', is_active: true },
+        },
+        document_type: {
+          is: { is_active: true },
+        },
+      },
+      include: {
+        document_type: true,
+        vehicle: {
+          include: {
+            type_rel: true,
+            type_of_vehicle_rel: true,
+            model_rel: true,
+            brand_rel: true,
+          },
+        },
+      },
+    });
 
-    if (equipmentError) {
-      throw new Error(JSON.stringify(equipmentError));
-    }
+    // Remap to match previous response shape
+    const documents = documentsRaw.map((d: any) => {
+      const { vehicle, document_type, ...rest } = d;
+      return {
+        ...rest,
+        document_types: document_type,
+        applies: vehicle
+          ? {
+              ...vehicle,
+              type: vehicle.type_rel,
+              type_of_vehicle: vehicle.type_of_vehicle_rel,
+              model: vehicle.model_rel,
+              brand: vehicle.brand_rel,
+            }
+          : null,
+      };
+    });
+
     return Response.json({ equipmentDocuments: documents });
   } catch (error) {
     console.log(error);

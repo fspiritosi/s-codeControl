@@ -1,37 +1,18 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function PUT(request: NextRequest) {
-  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const customer_service_id = searchParams.get('customer_service_id');
   const body = await request.json();
   const { is_active } = body;
 
   try {
-    // Obtener todos los ítems asociados al customer_service_id
-    let { data: items, error: fetchError } = await supabase
-      .from('service_items')
-      .select('id')
-      .eq('customer_service_id', customer_service_id || '');
-
-    if (fetchError) {
-      throw new Error(JSON.stringify(fetchError));
-    }
-
-    // Actualizar cada ítem individualmente
-    if (items) {
-      for (const item of items) {
-        let { error: updateError } = await supabase
-          .from('service_items')
-          .update({ is_active: is_active })
-          .eq('id', item.id);
-
-        if (updateError) {
-          throw new Error(JSON.stringify(updateError));
-        }
-      }
-    }
+    // Actualizar todos los ítems asociados al customer_service_id de una sola vez
+    await prisma.service_items.updateMany({
+      where: { customer_service_id: customer_service_id || '' },
+      data: { is_active: is_active },
+    });
 
     return new NextResponse(JSON.stringify({ message: 'Items actualizados correctamente' }), {
       status: 200,

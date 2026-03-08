@@ -16,10 +16,16 @@
     "create-migration": "npx supabase db diff -f",
     "migration-status": "npx supabase migration list",
     "push-migrations": "npx supabase db push",
-    "gentypes": "npx supabase gen types typescript --project-id zktcbhhlcksopklpnubj --schema public > database.types.ts"
+    "gentypes": "npx supabase gen types typescript --project-id zktcbhhlcksopklpnubj --schema public > database.types.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
+    "@prisma/adapter-pg": "^7.4.2",
+    "@prisma/client": "^7.4.2",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.0",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
@@ -66,7 +72,9 @@
     "next": "^16.1.0",
     "next-themes": "^0.4.0",
     "nodemailer": "^7.0.3",
+    "pg": "^8.20.0",
     "prettier-plugin-organize-imports": "^3.2.4",
+    "prisma": "^7.4.2",
     "react": "^19.0.0",
     "react-countup": "^6.5.0",
     "react-day-picker": "^9.0.0",

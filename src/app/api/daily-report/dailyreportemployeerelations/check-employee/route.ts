@@ -1,20 +1,16 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
-  const supabase = await supabaseServer();
   const { rowId, employees } = await request.json();
 
   try {
-    let { data: dailyreportemployeerelations, error } = await supabase
-      .from('dailyreportemployeerelations' as any)
-      .select(`*`)
-      .eq('daily_report_row_id', rowId)
-      .in('employee_id', employees);
-
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
+    const dailyreportemployeerelations = await prisma.dailyreportemployeerelations.findMany({
+      where: {
+        daily_report_row_id: rowId,
+        employee_id: { in: employees },
+      },
+    });
 
     const exists = dailyreportemployeerelations && dailyreportemployeerelations.length > 0;
 

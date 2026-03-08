@@ -4,7 +4,7 @@ import DynamicFormWrapper from '@/components/CheckList/DynamicFormWrapper';
 
 async function page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const equipments = (await fetchAllEquipment()).map((equipment) => ({
+  const equipments = (await fetchAllEquipment()).map((equipment: any) => ({
     label: equipment.domain
       ? `${equipment.domain} - ${equipment.intern_number}`
       : `${equipment.serie} - ${equipment.intern_number}`,
@@ -28,8 +28,8 @@ async function page({ params }: { params: Promise<{ id: string }> }) {
       <DynamicFormWrapper
         formType={formInfo?.[0].name as any} // or "dynamic"
         equipments={equipments}
-        currentUser={currentUser}
-        form_Info={formInfo}
+        currentUser={currentUser as any}
+        form_Info={formInfo as any}
         dynamicFormConfig={dailyChecklistConfig} // Pass your dynamic form configuration here
       />
     </div>

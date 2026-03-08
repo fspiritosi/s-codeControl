@@ -1,7 +1,6 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { supabaseServer } from '@/lib/supabase/server';
 
 export class ActionError extends Error {
   constructor(message: string) {
@@ -11,14 +10,13 @@ export class ActionError extends Error {
 }
 
 /**
- * Returns the common server-action context: supabase client, companyId (may be undefined), and cookies.
+ * Returns the common server-action context: companyId (may be undefined) and cookies.
  */
 export async function getActionContext() {
   const cookiesStore = await cookies();
-  const supabase = await supabaseServer();
   const companyId = cookiesStore.get('actualComp')?.value;
 
-  return { supabase, companyId, cookies: cookiesStore };
+  return { companyId, cookies: cookiesStore };
 }
 
 /**

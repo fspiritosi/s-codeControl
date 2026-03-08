@@ -10,7 +10,7 @@ async function page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   // console.log('params', params);
   const answer = await fetchAnswerById(id);
-  const equipments = (await fetchAllEquipment()).map((equipment) => ({
+  const equipments = (await fetchAllEquipment()).map((equipment: any) => ({
     label: equipment.domain
       ? `${equipment.domain} - ${equipment.intern_number}`
       : `${equipment.serie} - ${equipment.intern_number}`,
@@ -37,10 +37,10 @@ async function page({ params }: { params: Promise<{ id: string }> }) {
   return (
     <div className="px-7">
       <DynamicFormWrapper
-        formType={answer[0].form_id.name as any} // or "dynamic"
+        formType={(answer[0] as any).form?.name} // or "dynamic"
         equipments={equipments}
-        form_Info={[answer[0]?.form_id]}
-        defaultAnswer={answer}
+        form_Info={[(answer[0] as any)?.form]}
+        defaultAnswer={answer as any}
         singurl={singurl}
       />
     </div>

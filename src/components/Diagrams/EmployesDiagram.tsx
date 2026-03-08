@@ -41,7 +41,7 @@ async function EmployesDiagram() {
       </TabsContent>
       <TabsContent value="new">
         {/* <DiagramForm activeEmploees={activeEmploees} diagrams={diagrams} diagrams_types={diagrams_types} /> */}
-        <DiagramFormUpdated employees={employees2} diagrams={diagrams2} diagrams_types={diagrams_types2} />
+        <DiagramFormUpdated employees={employees2 as any} diagrams={diagrams2 as any} diagrams_types={diagrams_types2 as any} />
       </TabsContent>
       <TabsContent value="newsTypes">
         <DiagramTypeComponent diagrams_types={diagrams_types} />

@@ -1,20 +1,21 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
   try {
-    let { data: companies, error } = await supabase
-      .from('company')
-      .select('*,city(name)')
-      .eq('id', company_id || '');
-    const data = companies;
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
+    const companies = await prisma.company.findMany({
+      where: { id: company_id || '' },
+      include: { city_rel: { select: { name: true } } },
+    });
+
+    const data = companies.map((c: any) => {
+      const { city_rel, ...rest } = c;
+      return { ...rest, city: city_rel ? { name: city_rel.name } : null };
+    });
+
     return Response.json({ data });
   } catch (error) {
     console.log(error);

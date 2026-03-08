@@ -1,54 +1,62 @@
 'use server';
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 import { getActionContext } from '@/lib/server-action-context';
 
 // Users-related actions
 
 export const CreateNewFormAnswer = async (formId: string, formAnswer: any) => {
-  const { supabase } = await getActionContext();
-  // if (!company_id) return [];
-  const { data, error } = await supabase.from('form_answers').insert({
-    form_id: formId,
-    answer: formAnswer,
+  // getActionContext not needed — no companyId guard in original
+  const data = await prisma.form_answers.create({
+    data: {
+      form_id: formId,
+      answer: formAnswer,
+    },
   });
-  if (error) {
-    console.log(error, 'error');
-  }
 
   return data;
 };
 
 export const UpdateVehicle = async (vehicleId: string, vehicleData: any) => {
-  const { supabase, companyId } = await getActionContext();
+  const { companyId } = await getActionContext();
   if (!companyId) return [];
-  const { data, error } = await supabase.from('vehicles').update(vehicleData).eq('id', vehicleId);
-  if (error) {
+  try {
+    await prisma.vehicles.update({
+      where: { id: vehicleId },
+      data: vehicleData,
+    });
+  } catch (error) {
     console.log('error', error);
-    // throw error;
   }
-  //console.log('data', data);
 };
-export const updateModulesSharedUser = async ({ id, modules }: { id: string; modules: ModulosEnum[] }) => {
-  const supabase = await supabaseServer();
-  const { data, error } = await supabase.from('share_company_users').update({ modules: modules }).eq('id', id).select();
 
-  if (error) {
+export const updateModulesSharedUser = async ({ id, modules }: { id: string; modules: ModulosEnum[] }) => {
+  try {
+    const data = await prisma.share_company_users.update({
+      where: { id },
+      data: { modules } as any,
+    });
+    return [data];
+  } catch (error) {
     console.error('Error fetching users:', error);
     return [];
   }
-  return data;
 };
 
 export const UpdateDiagramsById = async (diagramData: { diagram_type: string; diagramId: string }[]) => {
-  const { supabase, companyId } = await getActionContext();
+  const { companyId } = await getActionContext();
   if (!companyId) return [];
 
   const promises = diagramData.map(async ({ diagram_type, diagramId }) => {
-    const { data, error } = await supabase.from('employees_diagram').update({ diagram_type }).eq('id', diagramId);
-    if (error) {
+    try {
+      const data = await prisma.employees_diagram.update({
+        where: { id: diagramId },
+        data: { diagram_type },
+      });
+      return data;
+    } catch (error) {
       console.log('error', error);
+      return null;
     }
-    return data;
   });
 
   const results = await Promise.all(promises);
@@ -56,15 +64,25 @@ export const UpdateDiagramsById = async (diagramData: { diagram_type: string; di
 };
 
 export const CreateDiagrams = async (diagramData: EmployeeDiagramInsert[]) => {
-  const { supabase, companyId } = await getActionContext();
+  const { companyId } = await getActionContext();
   if (!companyId) return [];
 
   const promises = diagramData.map(async (diagram) => {
-    const { data, error } = await supabase.from('employees_diagram').insert(diagram);
-    if (error) {
+    try {
+      const data = await prisma.employees_diagram.create({
+        data: {
+          employee_id: diagram.employee_id,
+          diagram_type: diagram.diagram_type,
+          day: diagram.day,
+          month: diagram.month,
+          year: diagram.year,
+        } as any,
+      });
+      return data;
+    } catch (error) {
       console.log('error', error);
+      return null;
     }
-    return data;
   });
 
   const results = await Promise.all(promises);

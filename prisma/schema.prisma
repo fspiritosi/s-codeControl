@@ -1,0 +1,1285 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [pg_cron(schema: "public")]
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum affiliate_status_enum {
+  Dentro_de_convenio @map("Dentro de convenio")
+  Fuera_de_convenio  @map("Fuera de convenio")
+}
+
+enum condition_enum {
+  operativo
+  no_operativo           @map("no operativo")
+  en_reparacion          @map("en reparacion")
+  operativo_condicionado @map("operativo condicionado")
+}
+
+enum daily_report_status {
+  pendiente
+  ejecutado
+  reprogramado
+  cancelado
+}
+
+enum document_applies {
+  Persona
+  Equipos
+  Empresa
+}
+
+enum document_type_enum {
+  DNI
+  LE
+  LC
+  PASAPORTE
+}
+
+enum gender_enum {
+  Masculino
+  Femenino
+  No_Declarado @map("No Declarado")
+}
+
+enum hse_doc_status {
+  pendiente
+  aceptado
+  rechazado
+  pending
+}
+
+enum level_of_education_enum {
+  Primario
+  Secundario
+  Terciario
+  Universitario
+  PosGrado
+}
+
+enum marital_status_enum {
+  Casado
+  Soltero
+  Divorciado
+  Viudo
+  Separado
+}
+
+enum modulos {
+  empresa
+  empleados
+  equipos
+  documentacion @map("documentación")
+  mantenimiento
+  dashboard
+  ayuda
+  operaciones
+  formularios
+}
+
+enum nationality_enum {
+  Argentina
+  Extranjero
+}
+
+enum notification_categories {
+  vencimiento
+  noticia
+  advertencia
+  aprobado
+  rechazado
+}
+
+enum reason_for_termination_enum {
+  Despido_sin_causa @map("Despido sin causa")
+  Renuncia
+  Despido_con_causa @map("Despido con causa")
+  Acuerdo_de_partes @map("Acuerdo de partes")
+  Fin_de_contrato   @map("Fin de contrato")
+  Fallecimiento
+}
+
+enum repair_state {
+  Pendiente
+  Esperando_repuestos @map("Esperando repuestos")
+  En_reparacion       @map("En reparación")
+  Finalizado
+  Rechazado
+  Cancelado
+  Programado
+}
+
+enum roles_enum {
+  Externo
+  Auditor
+}
+
+enum state {
+  presentado
+  rechazado
+  aprobado
+  vencido
+  pendiente
+}
+
+enum status_type {
+  Avalado
+  No_avalado               @map("No avalado")
+  Incompleto
+  Completo
+  Completo_con_doc_vencida @map("Completo con doc vencida")
+}
+
+enum training_status {
+  Borrador
+  Archivado
+  Publicado
+}
+
+enum type_of_contract_enum {
+  Periodo_de_prueba      @map("Período de prueba")
+  A_tiempo_indeterminado @map("A tiempo indeterminado")
+  Plazo_fijo             @map("Plazo fijo")
+}
+
+enum type_of_maintenance_ENUM {
+  Correctivo
+  Preventivo
+}
+
+// ============================================================
+// MODELS
+// ============================================================
+
+model provinces {
+  id         BigInt   @id @default(autoincrement())
+  created_at DateTime @default(now()) @db.Timestamptz
+  name       String
+
+  cities    cities[]
+  companies company[]   @relation("company_province")
+  employees employees[] @relation("employees_province")
+
+  @@unique([id], map: "provinces_id_key")
+}
+
+model cities {
+  id          BigInt   @id @default(autoincrement())
+  created_at  DateTime @default(now()) @db.Timestamptz
+  province_id BigInt
+  name        String
+
+  province  provinces   @relation(fields: [province_id], references: [id], onUpdate: Cascade)
+  companies company[]   @relation("company_city")
+  employees employees[] @relation("employees_city")
+
+  @@index([province_id])
+}
+
+model countries {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz
+  name       String
+
+  employees employees[] @relation("employees_birthplace")
+}
+
+model roles {
+  id         BigInt   @id @default(autoincrement())
+  created_at DateTime @default(now()) @db.Timestamptz
+  name       String   @unique
+  is_active  Boolean? @default(true)
+  intern     Boolean? @default(false)
+
+  profiles            profile[]
+  share_company_users share_company_users[]
+}
+
+model profile {
+  id            String    @id @db.Uuid
+  created_at    DateTime? @default(now()) @db.Timestamptz
+  credential_id String?   @unique(map: "profile_credentialId_key") @db.Uuid
+  email         String?   @unique
+  avatar        String?
+  fullname      String?
+  role          String?
+  modulos       modulos[]
+
+  role_rel                    roles?                @relation(fields: [role], references: [name])
+  owned_companies             company[]             @relation("company_owner")
+  share_company_users         share_company_users[]
+  documents_employees         documents_employees[] @relation("documents_employees_user")
+  documents_equipment         documents_equipment[] @relation("documents_equipment_user")
+  documents_company           documents_company[]   @relation("documents_company_user")
+  vehicles                    vehicles[]            @relation("vehicles_user")
+  repair_solicitudes_mechanic repair_solicitudes[]  @relation("repair_mechanic")
+  repair_solicitudes_user     repair_solicitudes[]  @relation("repair_user")
+  repairlogs                  repairlogs[]          @relation("repairlogs_user")
+  diagrams_logs               diagrams_logs[]       @relation("diagrams_logs_modified_by")
+}
+
+model company {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  company_name  String   @db.VarChar(255)
+  description   String
+  website       String?  @db.VarChar(255)
+  contact_email String   @db.VarChar(255)
+  contact_phone String   @db.VarChar(20)
+  address       String   @db.VarChar(255)
+  city          BigInt
+  country       String   @db.VarChar(100)
+  industry      String
+  company_logo  String?
+  is_active     Boolean  @default(true)
+  company_cuit  String   @unique(map: "company_compay_cuit_key")
+  province_id   BigInt?
+  owner_id      String?  @db.Uuid
+  by_defect     Boolean? @default(false)
+
+  city_rel     cities     @relation("company_city", fields: [city], references: [id])
+  province_rel provinces? @relation("company_province", fields: [province_id], references: [id])
+  owner        profile?   @relation("company_owner", fields: [owner_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  employees              employees[]
+  vehicles               vehicles[]
+  companies_employees    companies_employees[]
+  document_types         document_types[]
+  notifications          notifications[]
+  share_company_users    share_company_users[]
+  brand_vehicles         brand_vehicles[]
+  model_vehicles_company model_vehicles[]
+  contacts               contacts[]
+  customers              customers[]
+  customer_services      customer_services[]
+  custom_form            custom_form[]
+  hired_modules          hired_modules[]
+  diagram_type           diagram_type[]
+  guild                  guild[]
+  covenant               covenant[]
+  types_of_repairs       types_of_repairs[]
+  dailyreport            dailyreport[]
+  service_items          service_items[]
+  type                   type[]
+  trainings              trainings[]
+  hse_documents          hse_documents[]
+  hse_doc_types          hse_doc_types[]
+  hse_document_tags      hse_document_tags[]
+  documentsCompanies     documents_company[]
+}
+
+model industry_type {
+  id         BigInt   @id @default(autoincrement())
+  created_at DateTime @default(now()) @db.Timestamptz
+  name       String?  @unique(map: "industry_type_type_key")
+  is_active  Boolean? @default(true)
+}
+
+model hierarchy {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz
+  name       String
+  is_active  Boolean? @default(true)
+
+  employees employees[]
+}
+
+model employees {
+  id                     String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at             DateTime                     @default(now()) @db.Timestamptz
+  picture                String
+  nationality            nationality_enum
+  lastname               String
+  firstname              String
+  cuil                   String                       @unique(map: "companies_employees_cuil_key")
+  document_type          document_type_enum
+  document_number        String                       @unique(map: "companies_employees_document_number_key")
+  birthplace             String                       @db.Uuid
+  gender                 gender_enum?
+  marital_status         marital_status_enum?
+  level_of_education     level_of_education_enum?
+  street                 String
+  street_number          String
+  province               BigInt
+  postal_code            String?
+  phone                  String
+  email                  String?
+  file                   String
+  normal_hours           String?
+  date_of_admission      DateTime                     @db.Date
+  affiliate_status       affiliate_status_enum?
+  company_position       String?
+  city                   BigInt
+  hierarchical_position  String?                      @db.Uuid
+  workflow_diagram       String?                      @db.Uuid
+  type_of_contract       type_of_contract_enum
+  allocated_to           String[]                     @db.Uuid
+  company_id             String?                      @db.Uuid
+  is_active              Boolean?                     @default(true)
+  reason_for_termination reason_for_termination_enum?
+  termination_date       DateTime?                    @db.Date
+  status                 status_type?                 @default(No_avalado)
+  born_date              String?
+  category_id            String?                      @db.Uuid
+  covenants_id           String?                      @db.Uuid
+  guild_id               String?                      @db.Uuid
+
+  birthplace_rel       countries     @relation("employees_birthplace", fields: [birthplace], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  city_rel             cities        @relation("employees_city", fields: [city], references: [id])
+  company              company?      @relation(fields: [company_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  hierarchy_rel        hierarchy?    @relation(fields: [hierarchical_position], references: [id])
+  province_rel         provinces     @relation("employees_province", fields: [province], references: [id])
+  workflow_diagram_rel work_diagram? @relation(fields: [workflow_diagram], references: [id])
+  category_rel         category?     @relation(fields: [category_id], references: [id])
+  covenants_rel        covenant?     @relation(fields: [covenants_id], references: [id])
+  guild_rel            guild?        @relation(fields: [guild_id], references: [id])
+
+  companies_employees              companies_employees[]
+  documents_employees              documents_employees[]
+  contractor_employee              contractor_employee[]
+  assing_customer                  assing_customer[]
+  employees_diagram                employees_diagram[]
+  category_employee                category_employee[]
+  dailyreportemployeerelations     dailyreportemployeerelations[]
+  repair_solicitudes               repair_solicitudes[]
+  repairlogs                       repairlogs[]
+  diagrams_logs                    diagrams_logs[]
+  employee_material_progress       employee_material_progress[]
+  training_assignments             training_assignments[]
+  training_attempts                training_attempts[]
+  training_material_readings       training_material_readings[]
+  hse_document_assignments         hse_document_assignments[]
+  hse_document_assignment_versions hse_document_assignment_versions[]
+}
+
+model companies_employees {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  employee_id String  @db.Uuid
+  company_id  String? @db.Uuid
+
+  employee employees @relation(fields: [employee_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  company  company?  @relation(fields: [company_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@index([company_id])
+  @@index([employee_id])
+}
+
+model brand_vehicles {
+  id         BigInt   @id @default(autoincrement())
+  created_at DateTime @default(now()) @db.Timestamptz
+  name       String?  @unique
+  company_id String?  @db.Uuid
+  is_active  Boolean? @default(true)
+
+  company        company?         @relation(fields: [company_id], references: [id])
+  model_vehicles model_vehicles[]
+  vehicles       vehicles[]       @relation("vehicles_brand")
+}
+
+model model_vehicles {
+  id         BigInt   @id @default(autoincrement())
+  created_at DateTime @default(now()) @db.Timestamptz
+  name       String?
+  brand      BigInt?
+  is_active  Boolean? @default(true)
+  company_id String?  @db.Uuid
+
+  brand_rel brand_vehicles? @relation(fields: [brand], references: [id])
+  company   company?        @relation(fields: [company_id], references: [id])
+  vehicles  vehicles[]      @relation("vehicles_model")
+}
+
+model types_of_vehicles {
+  id         BigInt   @id @default(autoincrement())
+  created_at DateTime @default(now()) @db.Timestamptz
+  name       String?
+  is_active  Boolean? @default(true)
+
+  vehicles vehicles[]
+}
+
+model type {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz
+  name       String
+  company_id String?  @db.Uuid
+  is_active  Boolean? @default(true)
+
+  company  company?   @relation(fields: [company_id], references: [id])
+  vehicles vehicles[]
+}
+
+model vehicles {
+  id                     String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at             DateTime        @default(now()) @db.Timestamptz
+  picture                String
+  type_of_vehicle        BigInt
+  domain                 String?         @unique
+  chassis                String?
+  engine                 String
+  serie                  String?
+  intern_number          String
+  year                   String
+  brand                  BigInt
+  model                  BigInt
+  is_active              Boolean?        @default(true)
+  termination_date       DateTime?       @db.Date
+  reason_for_termination String?
+  user_id                String?         @db.Uuid
+  company_id             String?         @db.Uuid
+  type                   String          @db.Uuid
+  status                 status_type?    @default(No_avalado)
+  allocated_to           String[]        @db.Uuid
+  kilometer              String?
+  condition              condition_enum?
+
+  type_of_vehicle_rel types_of_vehicles @relation(fields: [type_of_vehicle], references: [id])
+  brand_rel           brand_vehicles    @relation("vehicles_brand", fields: [brand], references: [id])
+  model_rel           model_vehicles    @relation("vehicles_model", fields: [model], references: [id])
+  type_rel            type              @relation(fields: [type], references: [id])
+  user                profile?          @relation("vehicles_user", fields: [user_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  company             company?          @relation(fields: [company_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  documents_equipment           documents_equipment[]
+  contractor_equipment          contractor_equipment[]
+  assing_customer               assing_customer[]
+  dailyreportequipmentrelations dailyreportequipmentrelations[]
+  repair_solicitudes            repair_solicitudes[]
+}
+
+model work_diagram {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz
+  name       String
+  is_active  Boolean? @default(true)
+
+  employees employees[]
+
+  @@map("work-diagram")
+}
+
+model document_types {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at    DateTime         @default(now()) @db.Timestamptz
+  name          String           @unique
+  applies       document_applies
+  multiresource Boolean
+  mandatory     Boolean
+  explired      Boolean
+  special       Boolean
+  is_active     Boolean          @default(true)
+  description   String?
+  company_id    String?          @db.Uuid
+  private       Boolean?
+  is_it_montlhy Boolean?
+  down_document Boolean?
+  conditions    Json[]
+
+  company             company?              @relation(fields: [company_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  documents_employees documents_employees[]
+  documents_equipment documents_equipment[]
+  documents_company   documents_company[]
+}
+
+model documents_employees {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at        DateTime @default(now()) @db.Timestamptz
+  id_document_types String?  @db.Uuid
+  validity          String?
+  state             state    @default(pendiente)
+  is_active         Boolean? @default(true)
+  user_id           String?  @db.Uuid
+  applies           String?  @db.Uuid
+  deny_reason       String?
+  document_path     String?  @unique(map: "documents_employees_docoment_path_key")
+  period            String?
+
+  document_type document_types? @relation(fields: [id_document_types], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  user          profile?        @relation("documents_employees_user", fields: [user_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  employee      employees?      @relation(fields: [applies], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  logs documents_employees_logs[]
+}
+
+model documents_employees_logs {
+  id                     Int      @id @default(autoincrement())
+  documents_employees_id String   @db.Uuid
+  modified_by            String   @db.Uuid
+  updated_at             DateTime @default(now()) @db.Timestamptz
+
+  documents_employees documents_employees @relation(fields: [documents_employees_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model documents_equipment {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at        DateTime @default(now()) @db.Timestamptz
+  id_document_types String?  @db.Uuid
+  applies           String?  @db.Uuid
+  validity          String?
+  state             state?   @default(pendiente)
+  is_active         Boolean? @default(true)
+  user_id           String?  @db.Uuid
+  deny_reason       String?
+  document_path     String?  @unique
+  period            String?
+
+  document_type document_types? @relation(fields: [id_document_types], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  vehicle       vehicles?       @relation(fields: [applies], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  user          profile?        @relation("documents_equipment_user", fields: [user_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  logs documents_equipment_logs[]
+}
+
+model documents_equipment_logs {
+  id                     Int      @id @default(autoincrement())
+  documents_equipment_id String   @db.Uuid
+  modified_by            String   @db.Uuid
+  updated_at             DateTime @default(now()) @db.Timestamptz
+
+  documents_equipment documents_equipment @relation(fields: [documents_equipment_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model documents_company {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at        DateTime @default(now()) @db.Timestamptz
+  id_document_types String?  @db.Uuid
+  applies           String   @db.Uuid
+  validity          String?
+  state             state    @default(pendiente)
+  is_active         Boolean? @default(true)
+  user_id           String?  @db.Uuid
+  deny_reason       String?
+  document_path     String?
+  period            String?
+
+  document_type document_types? @relation(fields: [id_document_types], references: [id])
+  company       company         @relation(fields: [applies], references: [id])
+  user          profile?        @relation("documents_company_user", fields: [user_id], references: [id])
+}
+
+model notifications {
+  id          String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String?
+  description String?
+  category    notification_categories?
+  company_id  String?                  @db.Uuid
+  created_at  DateTime?                @default(now()) @db.Timestamptz
+  document_id String?                  @db.Uuid
+  reference   String?
+
+  company company? @relation(fields: [company_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model share_company_users {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at  DateTime  @default(now()) @db.Timestamptz
+  profile_id  String?   @db.Uuid
+  company_id  String?   @db.Uuid
+  role        String?
+  customer_id String?   @db.Uuid
+  modules     modulos[]
+
+  profile  profile?   @relation(fields: [profile_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  company  company?   @relation(fields: [company_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  role_rel roles?     @relation(fields: [role], references: [name], onUpdate: Cascade, onDelete: Cascade)
+  customer customers? @relation(fields: [customer_id], references: [id])
+}
+
+model contractors {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz
+  name       String
+
+  contractor_employee contractor_employee[]
+}
+
+model contractor_employee {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at    DateTime @default(now()) @db.Timestamptz
+  employee_id   String?  @db.Uuid
+  contractor_id String?  @db.Uuid
+
+  employee   employees?   @relation(fields: [employee_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  contractor contractors? @relation(fields: [contractor_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model contractor_equipment {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at    DateTime @default(now()) @db.Timestamptz
+  equipment_id  String?  @db.Uuid
+  contractor_id String?  @db.Uuid
+
+  vehicle    vehicles?  @relation(fields: [equipment_id], references: [id])
+  contractor customers? @relation(fields: [contractor_id], references: [id])
+}
+
+model customers {
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at             DateTime @default(now()) @db.Timestamptz
+  name                   String
+  cuit                   BigInt
+  company_id             String   @db.Uuid
+  address                String?
+  client_email           String?
+  client_phone           BigInt?
+  is_active              Boolean? @default(true)
+  reason_for_termination String?
+  termination_date       String?
+
+  company              company                @relation(fields: [company_id], references: [id])
+  contacts             contacts[]
+  customer_services    customer_services[]
+  contractor_equipment contractor_equipment[]
+  share_company_users  share_company_users[]
+  dailyreportrows      dailyreportrows[]
+}
+
+model contacts {
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at             DateTime @default(now()) @db.Timestamptz
+  contact_name           String?
+  constact_email         String?
+  contact_phone          BigInt?
+  contact_charge         String?
+  company_id             String?  @db.Uuid
+  customer_id            String?  @db.Uuid
+  is_active              Boolean? @default(true)
+  reason_for_termination String?
+  termination_date       String?
+
+  company  company?   @relation(fields: [company_id], references: [id])
+  customer customers? @relation(fields: [customer_id], references: [id])
+}
+
+model customer_services {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at       DateTime @default(now()) @db.Timestamptz
+  service_name     String?
+  company_id       String?  @db.Uuid
+  customer_id      String?  @db.Uuid
+  is_active        Boolean? @default(true)
+  service_start    String?
+  service_validity String?
+
+  company         company?          @relation(fields: [company_id], references: [id])
+  customer        customers?        @relation(fields: [customer_id], references: [id])
+  service_items   service_items[]
+  dailyreportrows dailyreportrows[]
+}
+
+model service_items {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at          DateTime @default(now()) @db.Timestamptz
+  company_id          String   @db.Uuid
+  customer_service_id String   @db.Uuid
+  item_name           String
+  item_description    String
+  item_price          Float
+  item_measure_units  Int
+  is_active           Boolean? @default(true)
+
+  company          company           @relation(fields: [company_id], references: [id])
+  customer_service customer_services @relation(fields: [customer_service_id], references: [id])
+  measure_unit     measure_units     @relation(fields: [item_measure_units], references: [id])
+  dailyreportrows  dailyreportrows[]
+}
+
+model measure_units {
+  id     Int    @id @default(autoincrement())
+  unit   String
+  simbol String
+  tipo   String
+
+  service_items service_items[]
+}
+
+model assing_customer {
+  id           Int      @id @default(autoincrement())
+  created_at   DateTime @default(now()) @db.Timestamptz
+  customer_id  String   @db.Uuid
+  employee_id  String   @db.Uuid
+  equipment_id String   @db.Uuid
+
+  employee employees @relation(fields: [employee_id], references: [id])
+  vehicle  vehicles  @relation(fields: [equipment_id], references: [id])
+}
+
+model custom_form {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz
+  company_id String   @db.Uuid
+  name       String
+  form       Json
+
+  company      company        @relation(fields: [company_id], references: [id])
+  form_answers form_answers[]
+}
+
+model form_answers {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz
+  form_id    String   @db.Uuid
+  answer     Json
+
+  form custom_form @relation(fields: [form_id], references: [id])
+}
+
+model modules {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at  DateTime @default(now()) @db.Timestamptz
+  name        String
+  description String
+  price       Float
+
+  hired_modules hired_modules[]
+}
+
+model hired_modules {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz
+  company_id String?  @db.Uuid
+  module_id  String?  @db.Uuid
+  due_to     String?
+
+  company company? @relation(fields: [company_id], references: [id])
+  module  modules? @relation(fields: [module_id], references: [id])
+}
+
+model guild {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz
+  name       String?
+  company_id String?  @db.Uuid
+  is_active  Boolean  @default(true)
+
+  company   company?    @relation(fields: [company_id], references: [id])
+  covenants covenant[]
+  employees employees[]
+}
+
+model covenant {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz
+  name       String?
+  company_id String   @db.Uuid
+  guild_id   String   @db.Uuid
+  is_active  Boolean? @default(true)
+
+  company    company     @relation(fields: [company_id], references: [id])
+  guild      guild       @relation(fields: [guild_id], references: [id])
+  categories category[]
+  employees  employees[]
+}
+
+model category {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at  DateTime @default(now()) @db.Timestamptz
+  name        String?
+  covenant_id String?  @db.Uuid
+  is_active   Boolean? @default(true)
+
+  covenant           covenant?           @relation(fields: [covenant_id], references: [id])
+  category_employees category_employee[]
+  employees          employees[]
+}
+
+model category_employee {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at  DateTime @default(now()) @db.Timestamptz
+  category_id String?  @db.Uuid
+  emplyee_id  String?  @db.Uuid
+
+  category category?  @relation(fields: [category_id], references: [id])
+  employee employees? @relation(fields: [emplyee_id], references: [id])
+}
+
+model diagram_type {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at        DateTime @default(now()) @db.Timestamptz
+  name              String?
+  color             String
+  short_description String
+  company_id        String   @db.Uuid
+  work_active       Boolean? @default(true)
+
+  company           company             @relation(fields: [company_id], references: [id])
+  employees_diagram employees_diagram[]
+  diagrams_logs     diagrams_logs[]
+}
+
+model employees_diagram {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at   DateTime @default(now()) @db.Timestamptz
+  employee_id  String   @db.Uuid
+  diagram_type String   @db.Uuid
+  day          Int
+  month        Int
+  year         Int
+
+  employee         employees    @relation(fields: [employee_id], references: [id])
+  diagram_type_rel diagram_type @relation(fields: [diagram_type], references: [id])
+}
+
+model diagrams_logs {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at  DateTime @default(now()) @db.Timestamptz
+  employee_id String   @db.Uuid
+  diagram_id  String   @db.Uuid
+  state       String
+  prev_state  String
+  prev_date   String
+  description String
+  modified_by String?  @db.Uuid
+
+  employee            employees    @relation(fields: [employee_id], references: [id])
+  diagram             diagram_type @relation(fields: [diagram_id], references: [id])
+  modified_by_profile profile?     @relation("diagrams_logs_modified_by", fields: [modified_by], references: [id])
+}
+
+model dailyreport {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at    DateTime? @default(now()) @db.Timestamptz
+  company_id    String    @db.Uuid
+  date          String
+  status        Boolean?
+  is_active     Boolean?  @default(true)
+  creation_date String?
+  updated_at    DateTime? @db.Timestamptz
+
+  company         company           @relation(fields: [company_id], references: [id])
+  dailyreportrows dailyreportrows[]
+}
+
+model dailyreportrows {
+  id              String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at      DateTime?           @default(now()) @db.Timestamptz
+  daily_report_id String?             @db.Uuid
+  customer_id     String?             @db.Uuid
+  service_id      String?             @db.Uuid
+  item_id         String?             @db.Uuid
+  description     String?
+  start_time      String?
+  end_time        String?
+  working_day     String?
+  status          daily_report_status @default(pendiente)
+  document_path   String?
+  updated_at      DateTime?           @db.Timestamptz
+
+  daily_report                  dailyreport?                    @relation(fields: [daily_report_id], references: [id])
+  customer                      customers?                      @relation(fields: [customer_id], references: [id])
+  service                       customer_services?              @relation(fields: [service_id], references: [id])
+  item                          service_items?                  @relation(fields: [item_id], references: [id])
+  dailyreportemployeerelations  dailyreportemployeerelations[]
+  dailyreportequipmentrelations dailyreportequipmentrelations[]
+}
+
+model dailyreportemployeerelations {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at          DateTime? @default(now()) @db.Timestamptz
+  daily_report_row_id String?   @db.Uuid
+  employee_id         String?   @db.Uuid
+
+  daily_report_row dailyreportrows? @relation(fields: [daily_report_row_id], references: [id])
+  employee         employees?       @relation(fields: [employee_id], references: [id])
+}
+
+model dailyreportequipmentrelations {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at          DateTime? @default(now()) @db.Timestamptz
+  daily_report_row_id String?   @db.Uuid
+  equipment_id        String?   @db.Uuid
+
+  daily_report_row dailyreportrows? @relation(fields: [daily_report_row_id], references: [id])
+  vehicle          vehicles?        @relation(fields: [equipment_id], references: [id])
+}
+
+model types_of_repairs {
+  id                  String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at          DateTime                  @default(now()) @db.Timestamptz
+  name                String
+  description         String
+  company_id          String?                   @db.Uuid
+  is_active           Boolean                   @default(true)
+  multi_equipment     Boolean                   @default(false)
+  qr_close            Boolean                   @default(false)
+  criticity           String?
+  type_of_maintenance type_of_maintenance_ENUM?
+
+  company            company?             @relation(fields: [company_id], references: [id])
+  repair_solicitudes repair_solicitudes[]
+}
+
+model repair_solicitudes {
+  id                   String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at           DateTime     @default(now()) @db.Timestamptz
+  equipment_id         String       @db.Uuid
+  reparation_type      String       @db.Uuid
+  state                repair_state
+  user_description     String?
+  mechanic_description String?
+  user_id              String?      @db.Uuid
+  mechanic_id          String?      @db.Uuid
+  employee_id          String?      @db.Uuid
+  user_images          String[]
+  mechanic_images      String[]
+  end_date             String?
+  kilometer            String?
+  scheduled            String?
+
+  equipment           vehicles         @relation(fields: [equipment_id], references: [id])
+  reparation_type_rel types_of_repairs @relation(fields: [reparation_type], references: [id])
+  user                profile?         @relation("repair_user", fields: [user_id], references: [id])
+  mechanic            profile?         @relation("repair_mechanic", fields: [mechanic_id], references: [id])
+  employee            employees?       @relation(fields: [employee_id], references: [id])
+  repairlogs          repairlogs[]
+}
+
+model repairlogs {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at           DateTime @default(now()) @db.Timestamptz
+  repair_id            String?  @db.Uuid
+  title                String?
+  description          String?
+  modified_by_user     String?  @db.Uuid
+  modified_by_employee String?  @db.Uuid
+  kilometer            String?
+
+  repair   repair_solicitudes? @relation(fields: [repair_id], references: [id])
+  user     profile?            @relation("repairlogs_user", fields: [modified_by_user], references: [id])
+  employee employees?          @relation(fields: [modified_by_employee], references: [id])
+}
+
+model debug_logs {
+  id         Int       @id @default(autoincrement())
+  created_at DateTime? @default(now()) @db.Timestamptz
+  message    String?
+  data       Json?
+}
+
+model handle_errors {
+  id         Int      @id @default(autoincrement())
+  created_at DateTime @default(now()) @db.Timestamptz
+  menssage   String
+  path       String
+}
+
+model sent_emails {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at    DateTime? @default(now()) @db.Timestamptz
+  recipient     String?
+  subject       String
+  content       String?
+  status        String
+  sent_at       DateTime? @db.Timestamptz
+  error_message String?
+  template_name String?
+  metadata      Json?
+}
+
+model storage_migrations {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at    DateTime? @default(now()) @db.Timestamptz
+  document_id   String
+  old_path      String
+  new_path      String
+  status        String?
+  error_message String?
+  executed_at   DateTime? @db.Timestamptz
+}
+
+// ============================================================
+// TRAINING MODULE
+// ============================================================
+
+model trainings {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at      DateTime?        @default(now()) @db.Timestamptz
+  company_id      String           @db.Uuid
+  title           String
+  description     String?
+  passing_score   Int              @default(0)
+  test_limit_time Int              @default(0)
+  status          training_status? @default(Borrador)
+  updated_at      DateTime?        @db.Timestamptz
+
+  company                    company                      @relation(fields: [company_id], references: [id])
+  training_materials         training_materials[]
+  training_questions         training_questions[]
+  training_assignments       training_assignments[]
+  training_attempts          training_attempts[]
+  training_tag_assignments   training_tag_assignments[]
+  training_material_readings training_material_readings[]
+}
+
+model training_materials {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at  DateTime? @default(now()) @db.Timestamptz
+  training_id String?   @db.Uuid
+  name        String
+  type        String
+  file_url    String
+  file_size   BigInt?
+  order_index Int       @default(0)
+  is_required Boolean?  @default(true)
+
+  training                   trainings?                   @relation(fields: [training_id], references: [id])
+  employee_material_progress employee_material_progress[]
+  training_material_readings training_material_readings[]
+}
+
+model training_questions {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at    DateTime? @default(now()) @db.Timestamptz
+  training_id   String?   @db.Uuid
+  question_text String
+  question_type String?
+  points        Int?
+  order_index   Int       @default(0)
+  is_active     Boolean?  @default(true)
+
+  training                  trainings?                  @relation(fields: [training_id], references: [id])
+  training_question_options training_question_options[]
+  training_attempt_answers  training_attempt_answers[]
+}
+
+model training_question_options {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at  DateTime? @default(now()) @db.Timestamptz
+  question_id String?   @db.Uuid
+  option_text String
+  is_correct  Boolean?  @default(false)
+  order_index Int       @default(0)
+  is_active   Boolean?  @default(true)
+
+  question                 training_questions?        @relation(fields: [question_id], references: [id])
+  training_attempt_answers training_attempt_answers[]
+}
+
+model training_assignments {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  employee_id  String    @db.Uuid
+  training_id  String?   @db.Uuid
+  assigned_by  String?   @db.Uuid
+  assigned_at  DateTime? @default(now()) @db.Timestamptz
+  due_date     DateTime? @db.Timestamptz
+  is_mandatory Boolean?  @default(false)
+
+  employee employees  @relation(fields: [employee_id], references: [id])
+  training trainings? @relation(fields: [training_id], references: [id])
+}
+
+model training_attempts {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  employee_id        String    @db.Uuid
+  training_id        String?   @db.Uuid
+  attempt_number     Int       @default(1)
+  started_at         DateTime? @default(now()) @db.Timestamptz
+  completed_at       DateTime? @db.Timestamptz
+  score              Int?
+  max_score          Int
+  passed             Boolean?
+  time_spent_seconds Int?
+
+  employee                 employees                  @relation(fields: [employee_id], references: [id])
+  training                 trainings?                 @relation(fields: [training_id], references: [id])
+  training_attempt_answers training_attempt_answers[]
+}
+
+model training_attempt_answers {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attempt_id         String?   @db.Uuid
+  question_id        String?   @db.Uuid
+  selected_option_id String?   @db.Uuid
+  text_answer        String?
+  is_correct         Boolean?
+  answered_at        DateTime? @db.Timestamptz
+
+  attempt  training_attempts?         @relation(fields: [attempt_id], references: [id])
+  question training_questions?        @relation(fields: [question_id], references: [id])
+  option   training_question_options? @relation(fields: [selected_option_id], references: [id])
+}
+
+model training_tags {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at DateTime? @default(now()) @db.Timestamptz
+  name       String
+  color      String?
+  is_active  Boolean   @default(true)
+
+  training_tag_assignments      training_tag_assignments[]
+  hse_document_tag_assignments  hse_document_tag_assignments[]
+  hse_document_type_assignmente hse_document_type_assignmente[]
+}
+
+model training_tag_assignments {
+  training_id String @db.Uuid
+  tag_id      String @db.Uuid
+
+  training trainings     @relation(fields: [training_id], references: [id])
+  tag      training_tags @relation(fields: [tag_id], references: [id])
+
+  @@id([training_id, tag_id])
+}
+
+model training_material_readings {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at  DateTime? @default(now()) @db.Timestamptz
+  employee_id String    @db.Uuid
+  material_id String    @db.Uuid
+  training_id String?   @db.Uuid
+  read_at     DateTime? @db.Timestamptz
+
+  employee employees          @relation(fields: [employee_id], references: [id])
+  material training_materials @relation(fields: [material_id], references: [id])
+  training trainings?         @relation(fields: [training_id], references: [id])
+}
+
+model employee_material_progress {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  employee_id        String    @db.Uuid
+  material_id        String?   @db.Uuid
+  started_at         DateTime? @db.Timestamptz
+  completed_at       DateTime? @db.Timestamptz
+  time_spent_seconds Int?
+
+  employee employees           @relation(fields: [employee_id], references: [id])
+  material training_materials? @relation(fields: [material_id], references: [id])
+}
+
+// ============================================================
+// HSE DOCUMENTS MODULE
+// ============================================================
+
+model hse_doc_types {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at        DateTime @default(now()) @db.Timestamptz
+  name              String?
+  short_description String?
+  company_id        String?  @db.Uuid
+  is_active         Boolean? @default(true)
+
+  company       company?        @relation(fields: [company_id], references: [id])
+  hse_documents hse_documents[]
+}
+
+model hse_documents {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at  DateTime @default(now()) @db.Timestamptz
+  company_id  String?  @db.Uuid
+  created_by  String   @db.Uuid
+  title       String
+  description String?
+  file_name   String
+  file_path   String
+  file_size   BigInt
+  file_type   String
+  version     String
+  status      String
+  upload_date DateTime @default(now()) @db.Timestamptz
+  updated_at  DateTime @default(now()) @db.Timestamptz
+  expiry_date String?
+  docs_types  String?  @db.Uuid
+
+  company                       company?                        @relation(fields: [company_id], references: [id])
+  docs_types_rel                hse_doc_types?                  @relation(fields: [docs_types], references: [id])
+  hse_document_assignments      hse_document_assignments[]
+  hse_document_tag_assignments  hse_document_tag_assignments[]
+  hse_document_type_assignmente hse_document_type_assignmente[]
+  hse_document_versions         hse_document_versions[]
+}
+
+model hse_document_assignments {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  document_id     String         @db.Uuid
+  assignee_id     String?        @db.Uuid
+  assignee_type   String
+  assigned_by     String         @db.Uuid
+  assigned_at     DateTime       @default(now()) @db.Timestamptz
+  status          hse_doc_status
+  accepted_at     DateTime?      @db.Timestamptz
+  declined_at     DateTime?      @db.Timestamptz
+  declined_reason String?
+
+  document                         hse_documents                      @relation(fields: [document_id], references: [id])
+  assignee                         employees?                         @relation(fields: [assignee_id], references: [id])
+  hse_document_assignment_versions hse_document_assignment_versions[]
+}
+
+model hse_document_assignment_versions {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignment_id       String    @db.Uuid
+  document_version_id String    @db.Uuid
+  assignee_id         String    @db.Uuid
+  status              String    @default("pendiente")
+  accepted_at         DateTime? @db.Timestamptz
+  declined_at         DateTime? @db.Timestamptz
+  declined_reason     String?
+  created_at          DateTime  @default(now()) @db.Timestamptz
+
+  assignment       hse_document_assignments @relation(fields: [assignment_id], references: [id])
+  document_version hse_document_versions    @relation(fields: [document_version_id], references: [id])
+  assignee         employees                @relation(fields: [assignee_id], references: [id])
+}
+
+model hse_document_versions {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at  DateTime @default(now()) @db.Timestamptz
+  document_id String   @db.Uuid
+  created_by  String   @db.Uuid
+  version     String
+  title       String?
+  description String?
+  file_name   String
+  file_path   String
+  file_size   BigInt?
+  file_type   String?
+  status      String?
+  change_log  String?
+  expiry_date String?
+
+  document                         hse_documents                      @relation(fields: [document_id], references: [id])
+  hse_document_assignment_versions hse_document_assignment_versions[]
+}
+
+model hse_document_tag_assignments {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at  DateTime? @default(now()) @db.Timestamptz
+  document_id String    @db.Uuid
+  tag_id      String    @db.Uuid
+
+  document hse_documents @relation(fields: [document_id], references: [id])
+  tag      training_tags @relation(fields: [tag_id], references: [id])
+}
+
+model hse_document_tags {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at DateTime? @default(now()) @db.Timestamptz
+  name       String
+  color      String?
+  company_id String?   @db.Uuid
+  is_active  Boolean?  @default(true)
+  updated_at DateTime? @db.Timestamptz
+
+  company company? @relation(fields: [company_id], references: [id])
+}
+
+model hse_document_type_assignmente {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at  DateTime? @default(now()) @db.Timestamptz
+  document_id String    @db.Uuid
+  docType_id  String    @db.Uuid
+
+  document hse_documents @relation(fields: [document_id], references: [id])
+  docType  training_tags @relation(fields: [docType_id], references: [id])
+}

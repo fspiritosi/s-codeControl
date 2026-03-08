@@ -1,8 +1,7 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
 
@@ -11,19 +10,25 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    let { data: equipments, error } = await supabase
-      .from('vehicles')
-      .select(
-        `*,
-        types_of_vehicles(name),
-        brand_vehicles(name),
-        model_vehicles(name)`
-      )
-      .eq('company_id', company_id);
+    const vehiclesRaw = await prisma.vehicles.findMany({
+      where: { company_id },
+      include: {
+        type_of_vehicle_rel: { select: { name: true } },
+        brand_rel: { select: { name: true } },
+        model_rel: { select: { name: true } },
+      },
+    });
 
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
+    // Remap to match previous response shape
+    const equipments = vehiclesRaw.map((v: any) => {
+      const { type_of_vehicle_rel, brand_rel, model_rel, ...rest } = v;
+      return {
+        ...rest,
+        types_of_vehicles: type_of_vehicle_rel,
+        brand_vehicles: brand_rel,
+        model_vehicles: model_rel,
+      };
+    });
 
     return NextResponse.json({ equipments });
   } catch (error) {
@@ -32,25 +37,14 @@ export async function GET(request: NextRequest) {
   }
 }
 export async function PATCH(request: NextRequest, context: any) {
-  const supabase = await supabaseServer();
-  const searchParams = request.nextUrl.searchParams;
-  // const { params } = context
-
   const body = await request.json();
 
   try {
-    const { data: vehicles, error } = await supabase
-      .from('vehicles')
-      .update({ condition: body.condition })
-      .eq('id', body.vehicle_id);
+    const vehicles = await prisma.vehicles.update({
+      where: { id: body.vehicle_id },
+      data: { condition: body.condition },
+    });
 
-    // console.log('vehicles', vehicles);
-    // console.log('error', error);
-    // console.log('id', body.vehicle_id);
-
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
     return Response.json({ vehicles });
   } catch (error) {
     console.log(error);

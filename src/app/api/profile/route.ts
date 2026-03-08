@@ -1,8 +1,7 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const userId = searchParams.get('user');
 
@@ -13,11 +12,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Obtener el perfil del usuario
-    const { data: ownerUser, error: profileError } = await supabase.from('profile').select('*').eq('id', userId);
-
-    if (profileError) {
-      throw new Error(JSON.stringify(profileError));
-    }
+    const ownerUser = await prisma.profile.findMany({
+      where: { id: userId },
+    });
 
     return NextResponse.json({ data: ownerUser });
   } catch (error) {

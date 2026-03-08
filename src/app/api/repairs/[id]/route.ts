@@ -1,20 +1,16 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 import { NextRequest } from 'next/server';
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = await supabaseServer();
   const body = await request.json();
 
   try {
-    const { data: types_of_repairs, error } = await supabase
-      .from('types_of_repairs')
-      .update(body)
-      .eq('id', id);
+    const types_of_repairs = await prisma.types_of_repairs.update({
+      where: { id },
+      data: body,
+    });
 
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
     return Response.json({ types_of_repairs });
   } catch (error) {
     console.log(error);
@@ -23,17 +19,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = await supabaseServer();
 
   try {
-    const { data: types_of_repairs, error } = await supabase
-      .from('types_of_repairs')
-      .delete()
-      .eq('id', id);
+    const types_of_repairs = await prisma.types_of_repairs.delete({
+      where: { id },
+    });
 
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
     return Response.json({ types_of_repairs });
   } catch (error) {
     console.log(error);

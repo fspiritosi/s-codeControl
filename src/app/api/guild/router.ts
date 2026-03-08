@@ -1,17 +1,14 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Crear un nuevo registro en la tabla 'guild'
 export async function POST(request: NextRequest) {
-  const supabase = await supabaseServer();
   const { company_id, ...guildData } = await request.json();
 
   try {
-    const { data, error } = await supabase.from('guild').insert([{ company_id, ...guildData }]);
-
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
+    const data = await prisma.guild.create({
+      data: { company_id, ...guildData },
+    });
 
     return NextResponse.json({ guild: data });
   } catch (error) {
@@ -22,11 +19,8 @@ export async function POST(request: NextRequest) {
 
 // Leer registros de la tabla 'guild'
 export async function GET(request: NextRequest) {
-  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('company_id');
-
-  //console.log(company_id,'company_id');
 
   try {
     if (!company_id) {
@@ -40,15 +34,13 @@ export async function GET(request: NextRequest) {
 
 // Actualizar un registro existente en la tabla 'guild'
 export async function PUT(request: NextRequest) {
-  const supabase = await supabaseServer();
   const { id, ...guildData } = await request.json();
 
   try {
-    const { data, error } = await supabase.from('guild').update(guildData).eq('id', id);
-
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
+    const data = await prisma.guild.update({
+      where: { id },
+      data: guildData,
+    });
 
     return NextResponse.json({ guild: data });
   } catch (error) {
@@ -59,15 +51,12 @@ export async function PUT(request: NextRequest) {
 
 // Eliminar un registro de la tabla 'guild'
 export async function DELETE(request: NextRequest) {
-  const supabase = await supabaseServer();
   const { id } = await request.json();
 
   try {
-    const { data, error } = await supabase.from('guild').delete().eq('id', id);
-
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
+    const data = await prisma.guild.delete({
+      where: { id },
+    });
 
     return NextResponse.json({ guild: data });
   } catch (error) {

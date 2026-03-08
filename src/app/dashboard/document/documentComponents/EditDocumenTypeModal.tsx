@@ -1028,43 +1028,43 @@ export function EditModal({ Equipo }: Props) {
         switch (accessor_key) {
           case 'workflow_diagram': {
             const data = await fetchWorkDiagrams();
-            options = data.map((d) => ({ value: String(d.id), label: d.name }));
+            options = data.map((d: any) => ({ value: String(d.id), label: d.name }));
             console.log(`[LAZY LOAD] ✅ ${options.length} opciones`);
             break;
           }
           case 'guild': {
             const data = await fetchGuilds();
-            options = data.filter((g) => g.name).map((g) => ({ value: String(g.id), label: g.name! }));
+            options = data.filter((g: any) => g.name).map((g: any) => ({ value: String(g.id), label: g.name! }));
             console.log(`[LAZY LOAD] ✅ ${options.length} opciones`);
             break;
           }
           case 'covenant': {
             const data = await fetchCovenants();
-            options = data.map((c) => ({ value: String(c.id), label: c.name! }));
+            options = data.map((c: any) => ({ value: String(c.id), label: c.name! }));
             console.log(`[LAZY LOAD] ✅ ${options.length} opciones`);
             break;
           }
           case 'category': {
             const data = await fetchAllCategories();
-            options = data.map((c) => ({ value: String(c.id), label: c.name! }));
+            options = data.map((c: any) => ({ value: String(c.id), label: c.name! }));
             console.log(`[LAZY LOAD] ✅ ${options.length} opciones`);
             break;
           }
           case 'hierarchical_position': {
             const data = await fetchHierrarchicalPositions();
-            options = data.map((h) => ({ value: String(h.id), label: h.name }));
+            options = data.map((h: any) => ({ value: String(h.id), label: h.name }));
             console.log(`[LAZY LOAD] ✅ ${options.length} opciones`);
             break;
           }
           case 'contractor_employee': {
             const data = await fetchCustomers();
-            options = data.map((c) => ({ value: String(c.id), label: c.name }));
+            options = data.map((c: any) => ({ value: String(c.id), label: c.name }));
             console.log(`[LAZY LOAD] ✅ ${options.length} opciones`);
             break;
           }
           case 'province': {
             const data = await fetchProvinces();
-            options = data.map((p) => ({ value: String(p.id), label: p.name.trim() }));
+            options = data.map((p: any) => ({ value: String(p.id), label: p.name.trim() }));
             console.log(`[LAZY LOAD] ✅ ${options.length} opciones`);
             break;
           }
@@ -1146,31 +1146,31 @@ export function EditModal({ Equipo }: Props) {
         switch (accessor_key) {
           case 'brand': {
             const data = await fetchVehicleBrands();
-            options = data.map((b) => ({ value: String(b.id), label: b.name! }));
+            options = data.map((b: any) => ({ value: String(b.id), label: b.name! }));
             console.log(`[LAZY LOAD] ✅ ${options.length} opciones`);
             break;
           }
           case 'model': {
             const data = await fetchVehicleModels();
-            options = data.map((m) => ({ value: String(m.id), label: m.name! }));
+            options = data.map((m: any) => ({ value: String(m.id), label: m.name! }));
             console.log(`[LAZY LOAD] ✅ ${options.length} opciones`);
             break;
           }
           case 'type': {
             const data = await fetchTypeVehicles();
-            options = data.map((t) => ({ value: String(t.id), label: t.name! }));
+            options = data.map((t: any) => ({ value: String(t.id), label: t.name! }));
             console.log(`[LAZY LOAD] ✅ ${options.length} opciones`);
             break;
           }
           case 'types_of_vehicles': {
             const data = await fetchTypesOfVehicles();
-            options = data.map((t) => ({ value: String(t.id), label: t.name! }));
+            options = data.map((t: any) => ({ value: String(t.id), label: t.name! }));
             console.log(`[LAZY LOAD] ✅ ${options.length} opciones`);
             break;
           }
           case 'contractor_equipment': {
             const data = await fetchCustomers();
-            options = data.map((c) => ({ value: String(c.id), label: c.name! }));
+            options = data.map((c: any) => ({ value: String(c.id), label: c.name! }));
             console.log(`[LAZY LOAD] ✅ ${options.length} opciones`);
             break;
           }

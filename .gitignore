@@ -46,3 +46,4 @@ bun.lockb
 
 cypress
 cypress.config.ts
+/src/generated/prisma

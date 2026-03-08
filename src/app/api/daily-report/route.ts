@@ -1,20 +1,13 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
-  //console.log('company_id', company_id);
   try {
-    let { data: dailyReports, error } = await supabase
-      .from('dailyreport')
-      .select(`*`)
-      .eq('company_id', company_id || '');
-
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
+    const dailyReports = await prisma.dailyreport.findMany({
+      where: { company_id: company_id || '' },
+    });
 
     return NextResponse.json({ dailyReports });
   } catch (error) {
@@ -24,31 +17,17 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await supabaseServer();
-  const searchParams = request.nextUrl.searchParams;
-  const companyId = searchParams.get('actual');
   const { date, company_id } = await request.json();
 
   try {
-    // if (company_id !== companyId) {
-    //   throw new Error('Company ID mismatch');
-    // }
+    const data = await prisma.dailyreport.create({
+      data: {
+        date,
+        company_id,
+      },
+    });
 
-    let { data, error } = await supabase
-      .from('dailyreport')
-      .insert([
-        {
-          date,
-          company_id,
-        },
-      ])
-      .select();
-
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
-
-    return NextResponse.json({ data });
+    return NextResponse.json({ data: [data] });
   } catch (error) {
     console.error('Error inserting daily report:', error);
     return NextResponse.json({ error: 'Failed to insert daily report' }, { status: 500 });
@@ -56,25 +35,15 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
-  // const companyId = searchParams.get('actual');
   const id = searchParams.get('id');
-  //console.log('id', id);
   const { date, status } = await request.json();
   const statusPayload = status === 'cerrado' ? false : status;
   try {
-    let { data, error } = await supabase
-      .from('dailyreport')
-      .update({ status: statusPayload })
-      .eq('id', id || '');
-    {
-      upsert: true;
-    }
-
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
+    const data = await prisma.dailyreport.update({
+      where: { id: id || '' },
+      data: { status: statusPayload },
+    });
 
     return NextResponse.json({ data });
   } catch (error) {
@@ -84,7 +53,6 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const companyId = searchParams.get('actual');
   const { id } = await request.json();
@@ -94,15 +62,10 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    const { data: dailyReport, error: fetchError } = await supabase
-      .from('dailyreport')
-      .select('company_id')
-      .eq('id', id)
-      .single();
-
-    if (fetchError) {
-      throw new Error(JSON.stringify(fetchError));
-    }
+    const dailyReport = await prisma.dailyreport.findUnique({
+      where: { id },
+      select: { company_id: true },
+    });
 
     if (!dailyReport) {
       return new Response(JSON.stringify({ error: 'Daily report not found' }), { status: 404 });
@@ -112,11 +75,9 @@ export async function DELETE(request: NextRequest) {
       return new Response(JSON.stringify({ error: 'Company ID mismatch' }), { status: 403 });
     }
 
-    const { data, error } = await supabase.from('dailyreport').delete().eq('id', id);
-
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
+    const data = await prisma.dailyreport.delete({
+      where: { id },
+    });
 
     return new Response(JSON.stringify({ data }), { status: 200 });
   } catch (error) {

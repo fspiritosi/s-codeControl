@@ -1,42 +1,60 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const supabase = await supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
-  //console.log('company_id', company_id);
   try {
-    let { data: dailyReports, error } = await supabase
-      .from('dailyreport')
-      .select(
-        `
-        id,
-        date,
-        company_id,
-        status,
-        dailyreportrows (
-          id,
-          item_id(id,item_name),
-          customer_id(id, name),
-          service_id(id,service_name),
-          start_time,
-          end_time,
-          status,
-          working_day,
-          description,
-          document_path,
-          dailyreportemployeerelations (employee_id(id,firstname,lastname)),
-          dailyreportequipmentrelations (equipment_id(id,intern_number))
-          )
-          `
-      )
-      .eq('company_id', company_id || '');
+    const dailyReportsRaw = await prisma.dailyreport.findMany({
+      where: { company_id: company_id || '' },
+      select: {
+        id: true,
+        date: true,
+        company_id: true,
+        status: true,
+        dailyreportrows: {
+          select: {
+            id: true,
+            item: { select: { id: true, item_name: true } },
+            customer: { select: { id: true, name: true } },
+            service: { select: { id: true, service_name: true } },
+            start_time: true,
+            end_time: true,
+            status: true,
+            working_day: true,
+            description: true,
+            document_path: true,
+            dailyreportemployeerelations: {
+              select: {
+                employee: { select: { id: true, firstname: true, lastname: true } },
+              },
+            },
+            dailyreportequipmentrelations: {
+              select: {
+                vehicle: { select: { id: true, intern_number: true } },
+              },
+            },
+          },
+        },
+      },
+    });
 
-    if (error) {
-      //console.log('Error fetching daily reports:', error);
-      throw new Error(JSON.stringify(error));
-    }
+    // Remap to match previous Supabase response shape
+    const dailyReports = dailyReportsRaw.map((dr: any) => ({
+      ...dr,
+      dailyreportrows: dr.dailyreportrows.map((row: any) => ({
+        ...row,
+        item_id: row.item,
+        customer_id: row.customer,
+        service_id: row.service,
+        dailyreportemployeerelations: row.dailyreportemployeerelations.map((er: any) => ({
+          employee_id: er.employee,
+        })),
+        dailyreportequipmentrelations: row.dailyreportequipmentrelations.map((eqr: any) => ({
+          equipment_id: eqr.vehicle,
+        })),
+      })),
+    }));
 
     return NextResponse.json({ dailyReports });
   } catch (error) {

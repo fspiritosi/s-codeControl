@@ -11,7 +11,7 @@ async function EmployeeListTabs({ inactives, actives }: { inactives?: boolean; a
   const role = await getRole()
   const employees = await fetchAllEmployees( role );
 
-  const activeEmploees = setEmployeesToShow(employees?.filter((e) => e.is_active));
+  const activeEmploees = setEmployeesToShow(employees?.filter((e: any) => e.is_active));
   const inactiveEmploees = setEmployeesToShow(employees?.filter((e: any) => !e.is_active));
 
   return (

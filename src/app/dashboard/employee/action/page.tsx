@@ -111,7 +111,7 @@ export default async function EmployeeFormAction({ searchParams: searchParamsPro
     previousStatus: item.prev_state,
     modifiedBy: item.modified_by?.fullname
       ?.split(' ')
-      .map((name) => name.charAt(0).toUpperCase() + name.slice(1))
+      .map((name: any) => name.charAt(0).toUpperCase() + name.slice(1))
       .join(' '), // Mapear las iniciales a mayúsculas
     modifiedAt: moment(item.created_at).local().format('DD/MM/YYYY HH:mm'), // Formatear a la hora local
     type: item.prev_state ? 'modified' : 'created',
