@@ -2,6 +2,7 @@ import { profileUser } from '@/types/types';
 import { User } from '@supabase/supabase-js';
 import { create } from 'zustand';
 import { supabase } from '../../supabase/supabase';
+import { fetchProfileByCredentialId } from '@/app/server/GET/actions';
 
 interface AuthState {
   credentialUser: User | null;
@@ -43,17 +44,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   profileUser: async (id: string) => {
     if (!id) return;
-    const { data, error } = await supabase.from('profile').select('*').eq('credential_id', id);
-    if (error) {
-      console.error('Error al obtener el perfil:', error);
+    const data = await fetchProfileByCredentialId(id);
+    if (!data || data.length === 0) {
+      console.error('Error al obtener el perfil');
     } else {
-      set({ profile: data || [] });
-      set({ codeControlRole: data?.[0].role });
+      set({ profile: data as unknown as profileUser[] || [] });
+      set({ codeControlRole: (data as any)?.[0]?.role });
       const { useCompanyStore } = require('./companyStore');
-      useCompanyStore.getState().howManyCompanies(data[0]?.id);
+      useCompanyStore.getState().howManyCompanies((data as any)[0]?.id);
     }
   },
 
+  // Keep supabase for auth operations
   loggedUser: async () => {
     const {
       data: { user },

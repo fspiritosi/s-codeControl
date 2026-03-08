@@ -1,13 +1,16 @@
 import { Vehicle } from '@/zodSchemas/schemas';
 import { create } from 'zustand';
-import { supabase } from '../../supabase/supabase';
+import {
+  fetchVehiclesByCompany,
+  fetchEquipmentDocsByVehicleId,
+} from '@/app/server/GET/actions';
 
 const setVehiclesToShow = (vehicles: Vehicle) => {
-  return vehicles?.map((item) => ({
+  return vehicles?.map((item: any) => ({
     ...item,
-    types_of_vehicles: item.types_of_vehicles.name,
-    brand: item.brand_vehicles.name,
-    model: item.model_vehicles.name,
+    types_of_vehicles: item.types_of_vehicles?.name || item.type_of_vehicle_rel?.name,
+    brand: item.brand_vehicles?.name || item.brand_rel?.name,
+    model: item.model_vehicles?.name || item.model_rel?.name,
   }));
 };
 
@@ -33,19 +36,9 @@ export const useVehicleStore = create<VehicleState>((set, get) => ({
     const companyId = useCompanyStore.getState().actualCompany?.id;
     if (!companyId) return;
 
-    const { data, error } = await supabase
-      .from('vehicles')
-      .select(
-        `*,
-        types_of_vehicles(name),
-        brand_vehicles(name),
-        model_vehicles(name)`
-      )
-      .eq('company_id', companyId);
+    const data = await fetchVehiclesByCompany(companyId);
 
-    if (error) {
-      console.error('Error al obtener los vehículos:', error);
-    } else {
+    if (data) {
       set({ vehicles: data || [] });
       const activesVehicles = data || [];
       set({ vehiclesToShow: setVehiclesToShow(activesVehicles as Vehicle) });
@@ -72,22 +65,21 @@ export const useVehicleStore = create<VehicleState>((set, get) => ({
       return;
     }
     const vehiclesToShow = get().vehicles?.filter(
-      (vehicle) => vehicle?.types_of_vehicles?.name === type
+      (vehicle: any) => (vehicle?.types_of_vehicles?.name || vehicle?.type_of_vehicle_rel?.name) === type
     );
     set({ vehiclesToShow: setVehiclesToShow(vehiclesToShow) });
   },
 
   documentDrawerVehicles: async (id: string) => {
-    let { data: equipmentData, error: equipmentError } = await supabase
-      .from('documents_equipment')
-      .select(
-        `*,
-        document_types:document_types(*),
-        applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`
-      )
-      .eq('applies.id', id)
-      .not('applies', 'is', null);
+    const equipmentData = await fetchEquipmentDocsByVehicleId(id);
 
-    set({ DrawerVehicles: equipmentData });
+    // Map Prisma relation names to expected format
+    const mapped = equipmentData?.map((d: any) => ({
+      ...d,
+      document_types: d.document_type || d.document_types,
+      applies: d.vehicle || d.applies,
+    }));
+
+    set({ DrawerVehicles: mapped });
   },
 }));

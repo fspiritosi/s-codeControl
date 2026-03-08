@@ -1,6 +1,10 @@
 import { Notifications } from '@/types/types';
 import { create } from 'zustand';
 import { supabase } from '../../supabase/supabase';
+import {
+  fetchNotificationsByCompany,
+  deleteNotificationsByCompany,
+} from '@/app/server/GET/actions';
 
 interface UiState {
   active_sidebar: boolean;
@@ -26,10 +30,7 @@ export const useUiStore = create<UiState>((set, get) => ({
     const { useDocumentStore } = require('./documentStore');
     const companyId = useCompanyStore.getState().actualCompany?.id;
 
-    let { data: notifications, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('company_id', companyId);
+    const notifications = await fetchNotificationsByCompany(companyId);
 
     await useDocumentStore.getState().documetsFetch();
 
@@ -46,12 +47,8 @@ export const useUiStore = create<UiState>((set, get) => ({
       }
     });
 
-    if (error) {
-      console.error('Error al obtener las notificaciones:', error);
-    }
-
     const tipedData = document?.sort(
-      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      (a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     ) as Notifications[];
 
     set({ notifications: tipedData });
@@ -61,19 +58,17 @@ export const useUiStore = create<UiState>((set, get) => ({
     const { useCompanyStore } = require('./companyStore');
     const companyId = useCompanyStore.getState().actualCompany?.id;
 
-    const { error } = await supabase
-      .from('notifications')
-      .delete()
-      .eq('company_id', companyId);
+    const result = await deleteNotificationsByCompany(companyId);
 
-    if (error) {
-      console.error('Error al marcar todas las notificaciones como leídas:', error);
+    if (result.error) {
+      console.error('Error al marcar todas las notificaciones como leídas:', result.error);
     } else {
       get().allNotifications();
     }
   },
 }));
 
+// TODO: Phase 5 - replace with polling/SSE
 // Real-time subscription for notifications
 if (typeof window !== 'undefined') {
   supabase

@@ -4,6 +4,13 @@ import cookies from 'js-cookie';
 import { create } from 'zustand';
 import { supabase } from '../../supabase/supabase';
 import { useCountriesStore } from './countries';
+import {
+  fetchCompaniesByOwner,
+  fetchSharedCompaniesByProfile,
+  fetchSharedUsersByCompany,
+  resetCompanyDefect,
+  setCompanyAsDefect,
+} from '@/app/server/GET/actions';
 
 interface CompanyState {
   allCompanies: Company;
@@ -20,35 +27,6 @@ interface CompanyState {
   setNewDefectCompany: (company: Company[0]) => void;
   resetDefectCompanies: (company: Company[0]) => void;
 }
-
-const COMPANY_EMPLOYEES_SELECT = `
-  *,
-  owner_id(*),
-  share_company_users(*,
-    profile(*)
-  ),
-  city (
-    name,
-    id
-  ),
-  province_id (
-    name,
-    id
-  ),
-  companies_employees (
-    employees(
-      *,
-      city ( name ),
-      province( name ),
-      workflow_diagram( name ),
-      hierarchical_position( name ),
-      birthplace( name ),
-      contractor_employee(
-        customers( * )
-      )
-    )
-  )
-`;
 
 export const useCompanyStore = create<CompanyState>((set, get) => ({
   allCompanies: [] as unknown as Company,
@@ -84,23 +62,16 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
 
   howManyCompanies: async (id: string) => {
     if (!id) return;
-    const { data, error } = await supabase
-      .from('company')
-      .select(COMPANY_EMPLOYEES_SELECT)
-      .eq('owner_id', id);
-
-    let { data: share_company_users, error: sharedError } = await supabase
-      .from('share_company_users')
-      .select(`*,company_id(${COMPANY_EMPLOYEES_SELECT})`)
-      .eq('profile_id', id);
+    const data = await fetchCompaniesByOwner(id);
+    const share_company_users = await fetchSharedCompaniesByProfile(id);
 
     get().FetchSharedUsers();
     set({ sharedCompanies: share_company_users as SharedCompanies });
 
-    if (error) {
-      console.error('Error al obtener el perfil:', error);
+    if (!data) {
+      console.error('Error al obtener el perfil');
     } else {
-      const user = share_company_users?.find((e) => e.profile_id === id);
+      const user = share_company_users?.find((e: any) => e.profile_id === id);
 
       const { useAuthStore } = require('./authStore');
       const { useDocumentStore } = require('./documentStore');
@@ -118,7 +89,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
 
       if (savedCompany) {
         const company = share_company_users?.find(
-          (company) => company.company_id.id === JSON.parse(savedCompany)
+          (company: any) => company.company_id.id === JSON.parse(savedCompany)
         )?.company_id;
 
         if (company) {
@@ -158,12 +129,8 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
 
   FetchSharedUsers: async () => {
     const companyId = get().actualCompany?.id;
-    const { data, error } = await supabase
-      .from('share_company_users')
-      .select(
-        `*,customer_id(*),profile_id(*),company_id(${COMPANY_EMPLOYEES_SELECT})`
-      )
-      .eq('company_id', companyId);
+    if (!companyId) return;
+    const data = await fetchSharedUsersByCompany(companyId);
 
     set({ sharedUsers: data as SharedUser[] });
     const { useAuthStore } = require('./authStore');
@@ -172,13 +139,10 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
 
   resetDefectCompanies: async (company: Company[0]) => {
     const { useAuthStore } = require('./authStore');
-    const { data, error } = await supabase
-      .from('company')
-      .update({ by_defect: false })
-      .eq('owner_id', useAuthStore.getState().profile?.[0]?.id);
+    const result = await resetCompanyDefect(useAuthStore.getState().profile?.[0]?.id);
 
-    if (error) {
-      console.error('Error al actualizar la empresa por defecto:', error);
+    if (result.error) {
+      console.error('Error al actualizar la empresa por defecto:', result.error);
     }
     get().setActualCompany(company);
   },
@@ -192,21 +156,15 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
       return;
     }
     localStorage.removeItem('company_id');
-    const { data, error } = await supabase
-      .from('company')
-      .update({ by_defect: false })
-      .eq('owner_id', profileId);
+    const result = await resetCompanyDefect(profileId);
 
-    if (error) {
-      console.error('Error al actualizar la empresa por defecto:', error);
+    if (result.error) {
+      console.error('Error al actualizar la empresa por defecto:', result.error);
     } else {
-      const { data, error } = await supabase
-        .from('company')
-        .update({ by_defect: true })
-        .eq('id', company.id);
+      const result2 = await setCompanyAsDefect(company.id);
 
-      if (error) {
-        console.error('Error al actualizar la empresa por defecto:', error);
+      if (result2.error) {
+        console.error('Error al actualizar la empresa por defecto:', result2.error);
       } else {
         get().setActualCompany(company);
       }
@@ -214,6 +172,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
   },
 }));
 
+// TODO: Phase 5 - replace with polling/SSE
 // Real-time subscriptions
 const setupCompanyRealtime = () => {
   supabase

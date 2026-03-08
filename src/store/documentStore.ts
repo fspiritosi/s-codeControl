@@ -1,7 +1,11 @@
 import { VehiclesAPI } from '@/types/types';
 import moment from 'moment';
 import { create } from 'zustand';
-import { supabase } from '../../supabase/supabase';
+import {
+  fetchAllDocumentsEmployeesByCompany,
+  fetchAllDocumentsEquipmentByCompany,
+  fetchCompanyDocuments,
+} from '@/app/server/GET/actions';
 
 interface Document {
   date: string;
@@ -81,47 +85,56 @@ interface DocumentState {
 
 const emptyDocs: DocumentsCollection = { employees: [], vehicles: [] };
 
-const mapDocument = (doc: any) => ({
-  date: moment(doc.created_at).format('DD/MM/YYYY'),
-  allocated_to: doc.employees?.contractor_employee?.map((doc: any) => doc.contractors?.name).join(', '),
-  documentName: doc.document_types?.name,
-  state: doc.state,
-  multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
-  isItMonthly: doc.document_types?.is_it_montlhy,
-  validity: doc.validity,
-  mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
-  id: doc.id,
-  resource: `${doc.employees?.lastname?.charAt(0)?.toUpperCase()}${doc?.employees?.lastname.slice(1)} ${doc.employees?.firstname?.charAt(0)?.toUpperCase()}${doc?.employees?.firstname.slice(1)}`,
-  document_number: doc.employees?.document_number,
-  employee_id: doc.employees?.id,
-  document_url: doc.document_path,
-  is_active: doc.employees?.is_active,
-  period: doc.period,
-  applies: doc.document_types.applies,
-  id_document_types: doc.document_types.id,
-  intern_number: null,
-});
+const mapDocument = (doc: any) => {
+  // Support both Supabase and Prisma relation names
+  const docType = doc.document_types || doc.document_type;
+  const emp = doc.employees || doc.employee;
+  return {
+    date: moment(doc.created_at).format('DD/MM/YYYY'),
+    allocated_to: emp?.contractor_employee?.map((ce: any) => (ce.contractors || ce.contractor)?.name).join(', '),
+    documentName: docType?.name,
+    state: doc.state,
+    multiresource: docType?.multiresource ? 'Si' : 'No',
+    isItMonthly: docType?.is_it_montlhy,
+    validity: doc.validity,
+    mandatory: docType?.mandatory ? 'Si' : 'No',
+    id: doc.id,
+    resource: `${emp?.lastname?.charAt(0)?.toUpperCase()}${emp?.lastname.slice(1)} ${emp?.firstname?.charAt(0)?.toUpperCase()}${emp?.firstname.slice(1)}`,
+    document_number: emp?.document_number,
+    employee_id: emp?.id,
+    document_url: doc.document_path,
+    is_active: emp?.is_active,
+    period: doc.period,
+    applies: docType?.applies,
+    id_document_types: docType?.id,
+    intern_number: null,
+  };
+};
 
-const mapVehicle = (doc: any) => ({
-  date: doc.created_at ? moment(doc.created_at).format('DD/MM/YYYY') : 'No vence',
-  allocated_to: doc.applies?.type_of_vehicle?.name,
-  documentName: doc.document_types?.name,
-  state: doc.state,
-  multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
-  isItMonthly: doc.document_types?.is_it_montlhy,
-  validity: doc.validity,
-  mandatory: doc.document_types?.mandatory ? 'Si' : 'No',
-  id: doc.id,
-  resource: `${doc.applies?.domain}`,
-  vehicle_id: doc.applies?.id,
-  is_active: doc.applies?.is_active,
-  period: doc.period,
-  applies: doc.document_types.applies,
-  resource_id: doc.applies?.id,
-  id_document_types: doc.document_types.id,
-  intern_number: `${doc.applies?.intern_number}`,
-  serie: doc.applies?.serie,
-});
+const mapVehicle = (doc: any) => {
+  const docType = doc.document_types || doc.document_type;
+  const veh = doc.applies || doc.vehicle;
+  return {
+    date: doc.created_at ? moment(doc.created_at).format('DD/MM/YYYY') : 'No vence',
+    allocated_to: (veh?.type_of_vehicle?.name || veh?.type_of_vehicle_rel?.name),
+    documentName: docType?.name,
+    state: doc.state,
+    multiresource: docType?.multiresource ? 'Si' : 'No',
+    isItMonthly: docType?.is_it_montlhy,
+    validity: doc.validity,
+    mandatory: docType?.mandatory ? 'Si' : 'No',
+    id: doc.id,
+    resource: `${veh?.domain}`,
+    vehicle_id: veh?.id,
+    is_active: veh?.is_active,
+    period: doc.period,
+    applies: docType?.applies,
+    resource_id: veh?.id,
+    id_document_types: docType?.id,
+    intern_number: `${veh?.intern_number}`,
+    serie: veh?.serie,
+  };
+};
 
 export const useDocumentStore = create<DocumentState>((set, get) => ({
   allDocumentsToShow: emptyDocs,
@@ -145,66 +158,35 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     const companyId = useCompanyStore.getState().actualCompany?.id;
     if (!companyId) return;
 
-    let data;
+    // Fetch employee documents via server action
+    let data = await fetchAllDocumentsEmployeesByCompany(companyId);
 
-    let { data: dataEmployes, error } = await supabase
-      .from('documents_employees')
-      .select(
-        `*,
-        employees:employees(*,contractor_employee(customers(*))),
-        document_types:document_types(*)`
-      )
-      .not('employees', 'is', null)
-      .eq('employees.company_id', companyId)
-      .eq('employees.is_active', true)
-      .eq('document_types.is_active', true);
+    // Map Prisma relation names to expected format
+    data = data?.map((d: any) => ({
+      ...d,
+      employees: d.employee || d.employees,
+      document_types: d.document_type || d.document_types,
+    }));
 
-    data = dataEmployes;
+    // Fetch company documents via server action
+    let documents_company = await fetchCompanyDocuments();
 
-    if (error) {
-      console.error('Error al obtener los empleados:', error);
-    }
+    // Map Prisma relation names for company documents
+    documents_company = documents_company?.map((d: any) => ({
+      ...d,
+      id_document_types: d.document_type || d.id_document_types,
+      user_id: d.user || d.user_id,
+    }));
 
-    if (dataEmployes?.length === 1000) {
-      const { data: data2, error: error2 } = await supabase
-        .from('documents_employees')
-        .select(
-          `*,
-          employees:employees(*,contractor_employee(customers(*))),
-          document_types:document_types(*)`
-        )
-        .not('employees', 'is', null)
-        .eq('employees.company_id', companyId)
-        .eq('employees.is_active', true)
-        .eq('document_types.is_active', true)
-        .range(1000, 2000);
+    // Fetch equipment documents via server action
+    let equipmentData = await fetchAllDocumentsEquipmentByCompany(companyId);
 
-      if (error2) console.error('Error al obtener los empleados:', error2);
-      if (data2) data = data ? [...data, ...data2] : data2;
-    }
-
-    let { data: documents_company, error: documents_company_error } = await supabase
-      .from('documents_company')
-      .select('*,id_document_types(*),user_id(*)')
-      .eq('applies', companyId);
-
-    if (documents_company_error) {
-      console.error('Error al obtener los documentos de la empresa:', documents_company_error);
-    }
-
-    let { data: equipmentData, error: equipmentError } = await supabase
-      .from('documents_equipment')
-      .select(
-        `*,
-        document_types:document_types(*),
-        applies(*,type(*),type_of_vehicle(*),model(*),brand(*))`
-      )
-      .eq('applies.company_id', companyId)
-      .eq('applies.is_active', true)
-      .eq('document_types.is_active', true)
-      .not('applies', 'is', null);
-
-    if (equipmentError) console.error('Error al obtener los equipos:', equipmentError);
+    // Map Prisma relation names to expected format
+    equipmentData = equipmentData?.map((d: any) => ({
+      ...d,
+      document_types: d.document_type || d.document_types,
+      applies: d.vehicle || d.applies,
+    }));
 
     useAuthStore.getState().handleActualCompanyRole();
 
@@ -220,11 +202,9 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         ? typedDataCompany?.filter((e) => !e.id_document_types.private)
         : typedDataCompany;
     const employeesData =
-      roleActualCompany === 'Invitado' ? data?.filter((e) => !e.document_types.private) : data;
+      roleActualCompany === 'Invitado' ? data?.filter((e: any) => !e.document_types.private) : data;
 
     set({ companyDocuments: companyData as CompanyDocumentsType[] });
-
-    if (error) return;
 
     const today = moment().startOf('day');
     const nextMonth = moment().add(1, 'month').endOf('day');
@@ -252,7 +232,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     const lastMonthValues: DocumentsCollection = {
       employees:
         filteredData
-          ?.filter((e) => filterActiveDoc(e))
+          ?.filter((e: any) => filterActiveDoc(e))
           ?.filter((doc: any) => {
             if (!doc.validity) return false;
             return doc.state !== 'pendiente' && (doc.validity !== 'No vence' || doc.validity !== null);
@@ -260,7 +240,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           ?.map(mapDocument) || [],
       vehicles:
         filteredVehiclesData
-          ?.filter((e) => filterActiveDoc(e, true))
+          ?.filter((e: any) => filterActiveDoc(e, true))
           .filter((doc: any) => {
             if (!doc.validity || doc.validity === 'No vence') return false;
             return doc.state !== 'pendiente' && (doc.validity !== 'No vence' || doc.validity !== null);
@@ -271,12 +251,12 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     const pendingDocuments: DocumentsCollection = {
       employees:
         employeesData
-          ?.filter((e) => filterActiveDoc(e))
+          ?.filter((e: any) => filterActiveDoc(e))
           .filter((doc: any) => doc.state === 'presentado')
           ?.map(mapDocument) || [],
       vehicles:
         equipmentData1
-          ?.filter((e) => filterActiveDoc(e, true))
+          ?.filter((e: any) => filterActiveDoc(e, true))
           .filter((doc: any) => doc.state === 'presentado')
           ?.map(mapVehicle) || [],
     };
@@ -284,7 +264,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     const Allvalues: DocumentsCollection = {
       employees:
         employeesData
-          ?.filter((e) => filterActiveDoc(e))
+          ?.filter((e: any) => filterActiveDoc(e))
           ?.filter((doc: any) => {
             if (!doc.validity || doc.validity === 'No vence') return false;
             return doc.state !== 'presentado' && (doc.validity !== 'No vence' || doc.validity !== null);
@@ -292,7 +272,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           ?.map(mapDocument) || [],
       vehicles:
         equipmentData1
-          ?.filter((e) => filterActiveDoc(e, true))
+          ?.filter((e: any) => filterActiveDoc(e, true))
           ?.filter((doc: any) => {
             if (!doc.validity || doc.validity === 'No vence') return false;
             return doc.state !== 'presentado' && (doc.validity !== 'No vence' || doc.validity !== null);
@@ -303,11 +283,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     const AllvaluesToShow: DocumentsCollection = {
       employees:
         employeesData
-          ?.filter((e) => filterActiveDoc(e))
+          ?.filter((e: any) => filterActiveDoc(e))
           .map(mapDocument) || [],
       vehicles:
         equipmentData1
-          ?.filter((e) => filterActiveDoc(e, true))
+          ?.filter((e: any) => filterActiveDoc(e, true))
           .map(mapVehicle) || [],
     };
 

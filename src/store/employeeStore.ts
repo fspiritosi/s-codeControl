@@ -1,53 +1,10 @@
 import { create } from 'zustand';
 import { supabase } from '../../supabase/supabase';
-
-const EMPLOYEE_SELECT = `*, city (
-    name
-  ),
-  province(
-    name
-  ),
-  workflow_diagram(
-    name
-  ),
-  hierarchical_position(
-    name
-  ),
-  birthplace(
-    name
-  ),
-  contractor_employee(
-    customers(
-      *
-    )
-  )`;
-
-const EMPLOYEE_WITH_DOCS_SELECT = `*, city (
-    name
-  ),
-  province(
-    name
-  ),
-  workflow_diagram(
-    name
-  ),
-  hierarchical_position(
-    name
-  ),
-  birthplace(
-    name
-  ),
-  documents_employees(
-    *,id_document_types(*)
-  ),
-  guild(id,name),
-  covenant(id,name),
-  category(id,name),
-  contractor_employee(
-    customers(
-      *
-    )
-  )`;
+import {
+  fetchEmployeesWithDocs,
+  fetchEmployeesByCompanyAndStatus,
+  fetchDocumentEmployeesByDocNumber,
+} from '@/app/server/GET/actions';
 
 const setEmployeesToShow = (employees: any) => {
   return employees?.map((e: any) => ({
@@ -56,7 +13,7 @@ const setEmployeesToShow = (employees: any) => {
     email: e?.email,
     cuil: e?.cuil,
     document_number: e?.document_number,
-    hierarchical_position: e?.hierarchical_position?.name,
+    hierarchical_position: e?.hierarchical_position?.name || e?.hierarchy_rel?.name,
     company_position: e?.company_position,
     normal_hours: e?.normal_hours,
     type_of_contract: e?.type_of_contract,
@@ -66,30 +23,30 @@ const setEmployeesToShow = (employees: any) => {
     lastname: `${e?.lastname?.charAt(0)?.toUpperCase()}${e?.lastname.slice(1)}`,
     firstname: `${e?.firstname?.charAt(0)?.toUpperCase()}${e?.firstname.slice(1)}`,
     document_type: e?.document_type,
-    birthplace: e?.birthplace?.name?.trim(),
+    birthplace: (e?.birthplace?.name || e?.birthplace_rel?.name)?.trim(),
     gender: e?.gender,
     marital_status: e?.marital_status,
     level_of_education: e?.level_of_education,
     street: e?.street,
     street_number: e?.street_number,
-    province: e?.province?.name?.trim(),
+    province: (e?.province?.name || e?.province_rel?.name)?.trim(),
     postal_code: e?.postal_code,
     phone: e?.phone,
     file: e?.file,
     date_of_admission: e?.date_of_admission,
     affiliate_status: e?.affiliate_status,
-    city: e?.city?.name?.trim(),
-    hierrl_position: e?.hierarchical_position?.name,
-    workflow_diagram: e?.workflow_diagram?.name,
-    contractor_employee: e?.contractor_employee?.map(({ customers }: any) => customers?.id),
-    contractor_name: e?.contractor_employee?.map(({ customers }: any) => customers?.name),
+    city: (e?.city?.name || e?.city_rel?.name)?.trim(),
+    hierrl_position: e?.hierarchical_position?.name || e?.hierarchy_rel?.name,
+    workflow_diagram: e?.workflow_diagram?.name || e?.workflow_diagram_rel?.name,
+    contractor_employee: e?.contractor_employee?.map(({ customers, contractor }: any) => (customers || contractor)?.id),
+    contractor_name: e?.contractor_employee?.map(({ customers, contractor }: any) => (customers || contractor)?.name),
     is_active: e?.is_active,
     reason_for_termination: e?.reason_for_termination,
     termination_date: e?.termination_date,
     status: e?.status,
-    guild: e?.guild,
-    covenants: e?.covenants,
-    category: e?.category,
+    guild: e?.guild || e?.guild_rel,
+    covenants: e?.covenants || e?.covenants_rel,
+    category: e?.category || e?.category_rel,
     documents_employees: e.documents_employees,
   }));
 };
@@ -124,25 +81,31 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
     const { useCompanyStore } = require('./companyStore');
     const companyId = useCompanyStore.getState().actualCompany?.id;
 
-    let { data: employees, error } = await supabase
-      .from('employees')
-      .select(EMPLOYEE_WITH_DOCS_SELECT)
-      .eq('company_id', companyId);
+    const employees = await fetchEmployeesWithDocs(companyId);
 
-    set({ active_and_inactive_employees: setEmployeesToShow(employees) });
+    // Map Prisma relation names to the format the UI expects
+    const mappedEmployees = employees?.map((e: any) => ({
+      ...e,
+      documents_employees: e.documents_employees?.map((d: any) => ({
+        ...d,
+        id_document_types: d.document_type || d.id_document_types,
+      })),
+    }));
 
-    const activeEmployees = employees?.filter((e) => {
+    set({ active_and_inactive_employees: setEmployeesToShow(mappedEmployees) });
+
+    const activeEmployees = mappedEmployees?.filter((e: any) => {
       if (e.is_active) return true;
       return e.documents_employees
-        ?.filter((e: any) => e.id_document_types.down_document)
+        ?.filter((d: any) => (d.document_type || d.id_document_types)?.down_document)
         ?.some((doc: any) => doc.state === 'pendiente');
     });
 
-    const inactiveEmployees = employees?.filter((e) => {
+    const inactiveEmployees = mappedEmployees?.filter((e: any) => {
       return (
         !e.is_active &&
         e.documents_employees
-          .filter((e: any) => e.id_document_types.down_document)
+          .filter((d: any) => (d.document_type || d.id_document_types)?.down_document)
           .every((doc: any) => doc.state === 'presentado')
       );
     });
@@ -168,47 +131,33 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
     const { useCompanyStore } = require('./companyStore');
     const companyId = useCompanyStore.getState().actualCompany?.id;
 
-    const { data, error } = await supabase
-      .from('employees')
-      .select(EMPLOYEE_SELECT)
-      .eq('company_id', companyId)
-      .eq('status', 'Avalado');
-
-    if (error) {
-      console.error('Error al obtener los empleados avalados:', error);
-    } else {
-      set({ employeesToShow: setEmployeesToShow(data) || [] });
-    }
+    const data = await fetchEmployeesByCompanyAndStatus(companyId, 'Avalado');
+    set({ employeesToShow: setEmployeesToShow(data) || [] });
   },
 
   noEndorsedEmployees: async () => {
     const { useCompanyStore } = require('./companyStore');
     const companyId = useCompanyStore.getState().actualCompany?.id;
 
-    const { data, error } = await supabase
-      .from('employees')
-      .select(EMPLOYEE_SELECT)
-      .eq('company_id', companyId)
-      .eq('status', 'Incompleto');
-
-    if (error) {
-      console.error('Error al obtener los empleados no avalados:', error);
-    } else {
-      set({ employeesToShow: setEmployeesToShow(data) || [] });
-    }
+    const data = await fetchEmployeesByCompanyAndStatus(companyId, 'Incompleto');
+    set({ employeesToShow: setEmployeesToShow(data) || [] });
   },
 
   documentDrawerEmployees: async (document: string) => {
-    const { data } = await supabase
-      .from('documents_employees')
-      .select('*,applies(*),id_document_types(*)')
-      .eq('applies.document_number', document)
-      .not('applies', 'is', null);
+    const data = await fetchDocumentEmployeesByDocNumber(document);
 
-    set({ DrawerEmployees: data });
+    // Map to expected format
+    const mapped = data?.map((d: any) => ({
+      ...d,
+      applies: d.employee || d.applies,
+      id_document_types: d.document_type || d.id_document_types,
+    }));
+
+    set({ DrawerEmployees: mapped });
   },
 }));
 
+// TODO: Phase 5 - replace with polling/SSE
 // Real-time subscription for employee updates
 if (typeof window !== 'undefined') {
   supabase

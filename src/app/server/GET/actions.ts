@@ -1588,3 +1588,409 @@ export async function getCompanyDetails(companyId: string) {
     return null;
   }
 }
+
+// ── Phase 3.6: Server actions for store migration ──
+
+export const fetchCompaniesByOwner = async (ownerId: string) => {
+  if (!ownerId) return [];
+  try {
+    const data = await prisma.company.findMany({
+      where: { owner_id: ownerId },
+      include: {
+        owner: true,
+        share_company_users: { include: { profile: true } },
+        city_rel: { select: { name: true, id: true } },
+        province_rel: { select: { name: true, id: true } },
+        employees: {
+          include: {
+            city_rel: { select: { name: true } },
+            province_rel: { select: { name: true } },
+            workflow_diagram_rel: { select: { name: true } },
+            hierarchy_rel: { select: { name: true } },
+            birthplace_rel: { select: { name: true } },
+            contractor_employee: { include: { contractor: true } },
+          },
+        },
+      },
+    });
+    return (data ?? []) as any[];
+  } catch (error) {
+    console.error('Error fetching companies by owner:', error);
+    return [];
+  }
+};
+
+export const fetchSharedCompaniesByProfile = async (profileId: string) => {
+  if (!profileId) return [];
+  try {
+    const data = await prisma.share_company_users.findMany({
+      where: { profile_id: profileId },
+      include: {
+        company: {
+          include: {
+            owner: true,
+            share_company_users: { include: { profile: true } },
+            city_rel: { select: { name: true, id: true } },
+            province_rel: { select: { name: true, id: true } },
+            employees: {
+              include: {
+                city_rel: { select: { name: true } },
+                province_rel: { select: { name: true } },
+                workflow_diagram_rel: { select: { name: true } },
+                hierarchy_rel: { select: { name: true } },
+                birthplace_rel: { select: { name: true } },
+                contractor_employee: { include: { contractor: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    return (data ?? []) as any[];
+  } catch (error) {
+    console.error('Error fetching shared companies:', error);
+    return [];
+  }
+};
+
+export const fetchSharedUsersByCompany = async (companyId: string) => {
+  if (!companyId) return [];
+  try {
+    const data = await prisma.share_company_users.findMany({
+      where: { company_id: companyId },
+      include: {
+        customer: true,
+        profile: true,
+        company: {
+          include: {
+            owner: true,
+            share_company_users: { include: { profile: true } },
+            city_rel: { select: { name: true, id: true } },
+            province_rel: { select: { name: true, id: true } },
+            employees: {
+              include: {
+                city_rel: { select: { name: true } },
+                province_rel: { select: { name: true } },
+                workflow_diagram_rel: { select: { name: true } },
+                hierarchy_rel: { select: { name: true } },
+                birthplace_rel: { select: { name: true } },
+                contractor_employee: { include: { contractor: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    return (data ?? []) as any[];
+  } catch (error) {
+    console.error('Error fetching shared users:', error);
+    return [];
+  }
+};
+
+export const fetchProfileByCredentialId = async (credentialId: string) => {
+  if (!credentialId) return [];
+  try {
+    const data = await prisma.profile.findMany({
+      where: { credential_id: credentialId },
+    });
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    return [];
+  }
+};
+
+export const fetchEmployeesWithDocs = async (companyId: string) => {
+  if (!companyId) return [];
+  try {
+    const data = await prisma.employees.findMany({
+      where: { company_id: companyId },
+      include: {
+        city_rel: { select: { name: true } },
+        province_rel: { select: { name: true } },
+        workflow_diagram_rel: { select: { name: true } },
+        hierarchy_rel: { select: { name: true } },
+        birthplace_rel: { select: { name: true } },
+        documents_employees: { include: { document_type: true } },
+        guild_rel: true,
+        covenants_rel: true,
+        category_rel: true,
+        contractor_employee: { include: { contractor: true } },
+      },
+    });
+    return (data ?? []) as any[];
+  } catch (error) {
+    console.error('Error fetching employees with docs:', error);
+    return [];
+  }
+};
+
+export const fetchEmployeesByCompanyAndStatus = async (companyId: string, status: string) => {
+  if (!companyId) return [];
+  try {
+    const data = await prisma.employees.findMany({
+      where: { company_id: companyId, status: status as any },
+      include: {
+        city_rel: { select: { name: true } },
+        province_rel: { select: { name: true } },
+        workflow_diagram_rel: { select: { name: true } },
+        hierarchy_rel: { select: { name: true } },
+        birthplace_rel: { select: { name: true } },
+        contractor_employee: { include: { contractor: true } },
+      },
+    });
+    return (data ?? []) as any[];
+  } catch (error) {
+    console.error('Error fetching employees by status:', error);
+    return [];
+  }
+};
+
+export const fetchDocumentEmployeesByDocNumber = async (documentNumber: string) => {
+  if (!documentNumber) return [];
+  try {
+    const data = await prisma.documents_employees.findMany({
+      where: {
+        employee: { document_number: documentNumber },
+      },
+      include: {
+        employee: true,
+        document_type: true,
+      },
+    });
+    return (data ?? []) as any[];
+  } catch (error) {
+    console.error('Error fetching document employees:', error);
+    return [];
+  }
+};
+
+export const fetchVehiclesByCompany = async (companyId: string) => {
+  if (!companyId) return [];
+  try {
+    const data = await prisma.vehicles.findMany({
+      where: { company_id: companyId },
+      include: {
+        type_of_vehicle_rel: { select: { name: true } },
+        brand_rel: { select: { name: true } },
+        model_rel: { select: { name: true } },
+      },
+    });
+    return (data ?? []) as any[];
+  } catch (error) {
+    console.error('Error fetching vehicles:', error);
+    return [];
+  }
+};
+
+export const fetchEquipmentDocsByVehicleId = async (vehicleId: string) => {
+  if (!vehicleId) return [];
+  try {
+    const data = await prisma.documents_equipment.findMany({
+      where: {
+        vehicle: { id: vehicleId },
+      },
+      include: {
+        document_type: true,
+        vehicle: {
+          include: {
+            type_rel: true,
+            type_of_vehicle_rel: true,
+            model_rel: true,
+            brand_rel: true,
+          },
+        },
+      },
+    });
+    return (data ?? []) as any[];
+  } catch (error) {
+    console.error('Error fetching equipment docs:', error);
+    return [];
+  }
+};
+
+export const fetchNotificationsByCompany = async (companyId: string) => {
+  if (!companyId) return [];
+  try {
+    const data = await prisma.notifications.findMany({
+      where: { company_id: companyId },
+    });
+    return (data ?? []) as any[];
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    return [];
+  }
+};
+
+export const deleteNotificationsByCompany = async (companyId: string) => {
+  if (!companyId) return { error: 'No company ID' };
+  try {
+    await prisma.notifications.deleteMany({
+      where: { company_id: companyId },
+    });
+    return { error: null };
+  } catch (error) {
+    console.error('Error deleting notifications:', error);
+    return { error: String(error) };
+  }
+};
+
+export const fetchAllDocumentsEmployeesByCompany = async (companyId: string) => {
+  if (!companyId) return [];
+  try {
+    const data = await prisma.documents_employees.findMany({
+      where: {
+        employee: { company_id: companyId, is_active: true },
+        document_type: { is_active: true },
+      },
+      include: {
+        employee: {
+          include: {
+            contractor_employee: { include: { contractor: true } },
+          },
+        },
+        document_type: true,
+      },
+    });
+    return (data ?? []) as any[];
+  } catch (error) {
+    console.error('Error fetching employee documents:', error);
+    return [];
+  }
+};
+
+export const fetchAllDocumentsEquipmentByCompany = async (companyId: string) => {
+  if (!companyId) return [];
+  try {
+    const data = await prisma.documents_equipment.findMany({
+      where: {
+        vehicle: { company_id: companyId, is_active: true },
+        document_type: { is_active: true },
+      },
+      include: {
+        document_type: true,
+        vehicle: {
+          include: {
+            type_rel: true,
+            type_of_vehicle_rel: true,
+            model_rel: true,
+            brand_rel: true,
+          },
+        },
+      },
+    });
+    return (data ?? []) as any[];
+  } catch (error) {
+    console.error('Error fetching equipment documents:', error);
+    return [];
+  }
+};
+
+export const fetchCountries = async () => {
+  try {
+    const data = await prisma.countries.findMany();
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching countries:', error);
+    return [];
+  }
+};
+
+export const fetchCitiesByProvince = async (provinceId: number) => {
+  try {
+    const data = await prisma.cities.findMany({
+      where: { province_id: provinceId },
+    });
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching cities:', error);
+    return [];
+  }
+};
+
+export const fetchHierarchy = async () => {
+  try {
+    const data = await prisma.hierarchy.findMany();
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching hierarchy:', error);
+    return [];
+  }
+};
+
+export const fetchAllWorkDiagrams = async () => {
+  try {
+    const data = await prisma.work_diagram.findMany();
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching work diagrams:', error);
+    return [];
+  }
+};
+
+export const fetchAllCustomers = async () => {
+  try {
+    const data = await prisma.customers.findMany();
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching customers:', error);
+    return [];
+  }
+};
+
+export const fetchContactsWithCustomers = async () => {
+  try {
+    const data = await prisma.contacts.findMany({
+      include: { customer: { select: { id: true, name: true } } },
+    });
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching contacts:', error);
+    return [];
+  }
+};
+
+export const fetchDocumentTypesByCompany = async (companyId: string) => {
+  if (!companyId) return [];
+  try {
+    const data = await prisma.document_types.findMany({
+      where: {
+        is_active: true,
+        OR: [{ company_id: companyId }, { company_id: null }],
+      },
+    });
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching document types:', error);
+    return [];
+  }
+};
+
+export const resetCompanyDefect = async (ownerId: string) => {
+  if (!ownerId) return { error: 'No owner ID' };
+  try {
+    await prisma.company.updateMany({
+      where: { owner_id: ownerId },
+      data: { by_defect: false },
+    });
+    return { error: null };
+  } catch (error) {
+    console.error('Error resetting default company:', error);
+    return { error: String(error) };
+  }
+};
+
+export const setCompanyAsDefect = async (companyId: string) => {
+  if (!companyId) return { error: 'No company ID' };
+  try {
+    await prisma.company.update({
+      where: { id: companyId },
+      data: { by_defect: true },
+    });
+    return { error: null };
+  } catch (error) {
+    console.error('Error setting default company:', error);
+    return { error: String(error) };
+  }
+};
