@@ -1,5 +1,6 @@
 'use server';
 import { prisma } from '@/lib/prisma';
+import { storageServer } from '@/lib/storage-server';
 import { supabaseServer } from '@/lib/supabase/server';
 import { getActionContext } from '@/lib/server-action-context';
 import { getActualRole } from '@/lib/utils';
@@ -330,13 +331,11 @@ export const fetchSingEmployee = async (employeesId: string) => {
       },
     });
 
-    // Still need supabase for storage public URL
-    const supabase = await supabaseServer();
-    const data2 = supabase.storage.from('document_files').getPublicUrl(employeeSingDocument?.[0]?.document_path || '');
+    const publicUrl = await storageServer.getPublicUrl('document_files', employeeSingDocument?.[0]?.document_path || '');
 
-    console.log('data', data2);
+    console.log('data', publicUrl);
 
-    return data2.data.publicUrl || null;
+    return publicUrl || null;
   } catch (error) {
     console.error('Error fetching document type:', error);
     return null;

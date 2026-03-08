@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { supabase } from '../../supabase/supabase';
 import {
   fetchEmployeesWithDocs,
   fetchEmployeesByCompanyAndStatus,
@@ -157,13 +156,25 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
   },
 }));
 
-// TODO: Phase 5 - replace with polling/SSE
-// Real-time subscription for employee updates
-if (typeof window !== 'undefined') {
-  supabase
-    .channel('realtime-employees-update')
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'employees' }, () => {
-      useEmployeeStore.getState().setActivesEmployees();
-    })
-    .subscribe();
+// Polling replacement for real-time subscription
+let employeePollInterval: NodeJS.Timeout | null = null;
+
+function startEmployeePolling() {
+  if (employeePollInterval) return;
+  employeePollInterval = setInterval(() => {
+    useEmployeeStore.getState().setActivesEmployees();
+  }, 30000);
 }
+
+function stopEmployeePolling() {
+  if (employeePollInterval) {
+    clearInterval(employeePollInterval);
+    employeePollInterval = null;
+  }
+}
+
+if (typeof window !== 'undefined') {
+  startEmployeePolling();
+}
+
+export { startEmployeePolling, stopEmployeePolling };

@@ -1,5 +1,4 @@
 "use client"
-import { supabaseBrowser } from '@/lib/supabase/browser'; // Asegúrate de tener configurado tu cliente de Supabase
 import { use, useEffect, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableHead, TableRow, TableCell, TableBody } from '@/components/ui/table';
@@ -41,7 +40,6 @@ interface MeasureUnits {
 
 const ServiceItemsPage = ({ params }: { params: Promise<{ id: string }> }) => {
     const { id } = use(params);
-    const supabase = supabaseBrowser();
     const URL = process.env.NEXT_PUBLIC_BASE_URL;
     const [items, setItems] = useState<Item[]>([]);
     const [loading, setLoading] = useState(true);
@@ -93,22 +91,8 @@ const ServiceItemsPage = ({ params }: { params: Promise<{ id: string }> }) => {
             }
         };
         fetchItems();
-
-        const channel = supabase.channel('realtime-service-items')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'service_items' },
-                async (payload) => {
-                    
-                    fetchItems(); 
-                }
-            )
-            .subscribe();
-
-        
-        return () => {
-            supabase.removeChannel(channel);
-        };
+        const interval = setInterval(fetchItems, 30000);
+        return () => clearInterval(interval);
     }, []);
 
     if (loading) {

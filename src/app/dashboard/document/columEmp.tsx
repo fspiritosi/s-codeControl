@@ -50,6 +50,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { storage } from '@/lib/storage';
 import { supabase } from '../../../../supabase/supabase';
 import { handleSupabaseError } from '@/lib/errorHandler';
 
@@ -98,11 +99,7 @@ export const columEmp: ColumnDef<Colum>[] = [
 
         toast.promise(
           async () => {
-            const { data, error } = await supabase.storage.from('document_files').download(path);
-
-            if (error) {
-              throw new Error(handleSupabaseError(error.message));
-            }
+            const data = await storage.download('document_files', path);
 
             // Extrae la extensión del archivo del path
             const extension = path.split('.').pop();

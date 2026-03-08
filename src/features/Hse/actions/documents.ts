@@ -1,6 +1,7 @@
 'use server'
 
 import { supabaseServer } from '@/lib/supabase/server'
+import { storageServer } from '@/lib/storage-server'
 
 
 // Tipos
@@ -370,17 +371,15 @@ export async function createDocumentWithAssignments(formData: FormData, company_
 
     
 
-    const { error: uploadError } = await supabase.storage.from("documents-hse").upload(filePath, file)
-
-    if (uploadError) {
+    try {
+      await storageServer.upload("documents-hse", filePath, file)
+    } catch (uploadError) {
       console.error("Error al subir el archivo:", uploadError)
       throw new Error("No se pudo subir el archivo")
     }
 
     // 6. Obtener URL pública del archivo
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("documents-hse").getPublicUrl(filePath)
+    const publicUrl = await storageServer.getPublicUrl("documents-hse", filePath)
 
     let documentId: string
 
@@ -428,8 +427,8 @@ export async function createDocumentWithAssignments(formData: FormData, company_
       // Limpiar el archivo subido si falla la creación
       if (filePath) {
         try {
-          await supabase.storage.from("documents-hse").remove([filePath])
-          
+          await storageServer.remove("documents-hse", [filePath])
+
         } catch (cleanupError) {
           console.error("Error al limpiar archivo temporal:", cleanupError)
         }
@@ -547,12 +546,11 @@ export async function createDocumentWithAssignments(formData: FormData, company_
     if (filePath) {
       try {
        
-        const { error: cleanupError } = await supabase.storage.from("documents-hse").remove([filePath])
-
-        if (cleanupError) {
-          console.error("Error al limpiar archivo temporal:", cleanupError)
-        } else {
+        try {
+          await storageServer.remove("documents-hse", [filePath])
           console.log("Archivo temporal eliminado")
+        } catch (cleanupError2) {
+          console.error("Error al limpiar archivo temporal:", cleanupError2)
         }
       } catch (cleanupError) {
         console.error("Excepción al limpiar archivo temporal:", cleanupError)
@@ -844,8 +842,8 @@ export async function createDocumentVersion(
 
     if (filePath) {
       try {
-        await supabase.storage.from('documents-hse').remove([filePath]);
-        
+        await storageServer.remove('documents-hse', [filePath]);
+
       } catch (cleanupError) {
         console.error('Error al limpiar archivo temporal:', cleanupError);
       }

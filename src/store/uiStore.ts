@@ -1,6 +1,5 @@
 import { Notifications } from '@/types/types';
 import { create } from 'zustand';
-import { supabase } from '../../supabase/supabase';
 import {
   fetchNotificationsByCompany,
   deleteNotificationsByCompany,
@@ -68,13 +67,25 @@ export const useUiStore = create<UiState>((set, get) => ({
   },
 }));
 
-// TODO: Phase 5 - replace with polling/SSE
-// Real-time subscription for notifications
-if (typeof window !== 'undefined') {
-  supabase
-    .channel('realtime-notifications')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
-      useUiStore.getState().allNotifications();
-    })
-    .subscribe();
+// Polling replacement for real-time subscription (15s for notifications - more time-sensitive)
+let notificationPollInterval: NodeJS.Timeout | null = null;
+
+function startNotificationPolling() {
+  if (notificationPollInterval) return;
+  notificationPollInterval = setInterval(() => {
+    useUiStore.getState().allNotifications();
+  }, 15000);
 }
+
+function stopNotificationPolling() {
+  if (notificationPollInterval) {
+    clearInterval(notificationPollInterval);
+    notificationPollInterval = null;
+  }
+}
+
+if (typeof window !== 'undefined') {
+  startNotificationPolling();
+}
+
+export { startNotificationPolling, stopNotificationPolling };

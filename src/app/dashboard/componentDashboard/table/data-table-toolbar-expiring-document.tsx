@@ -17,7 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription } from '@/components/ui/card';
 import { handleSupabaseError } from '@/lib/errorHandler';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { storage } from '@/lib/storage';
 import { Cross2Icon, PersonIcon } from '@radix-ui/react-icons';
 import { Table } from '@tanstack/react-table';
 import { saveAs } from 'file-saver';
@@ -32,7 +32,6 @@ interface DataTableToolbarProps<TData> {
 
 export function DataTableToolbarExpiringDocument<TData>({ table }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
-  const supabase = supabaseBrowser();
   const handleDownloadAll = async () => {
     toast.promise(
       async () => {
@@ -45,12 +44,7 @@ export function DataTableToolbarExpiringDocument<TData>({ table }: DataTableTool
 
         const files = await Promise.all(
           documentToDownload?.map(async (doc: any) => {
-            const { data, error } = await supabase.storage.from('document_files').download(doc.document_url);
-
-            if (error) {
-              // console.log('Salio este error', error);
-              throw new Error(handleSupabaseError(error.message));
-            }
+            const data = await storage.download('document_files', doc.document_url);
 
             // Extrae la extensión del archivo del document_path
             const extension = doc.document_url.split('.').pop();

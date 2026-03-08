@@ -17,6 +17,7 @@ import BackButton from '@/components/BackButton';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { Suspense } from 'react';
+import { storage } from '@/lib/storage';
 import { supabase } from '../../../../../supabase/supabase';
 
 export default async function page({ params }: { params: Promise<{ id: string }> }) {
@@ -86,14 +87,14 @@ export default async function page({ params }: { params: Promise<{ id: string }>
   documentType = document?.[0]?.document_types?.id;
 
   const resorceId = document?.[0]?.applies?.id;
-  const { data } = await supabase.storage.from('document_files').list(resourceType, {
+  const data = await storage.list('document_files', resourceType ?? undefined, {
     search: `document-${documentType}-${resorceId}`,
   });
 
-  const { data: url } = supabase.storage.from('document_files').getPublicUrl(document?.[0]?.document_path);
+  const publicUrl = storage.getPublicUrl('document_files', document?.[0]?.document_path);
 
   documentName = document?.[0]?.document_path;
-  documentUrl = url.publicUrl;
+  documentUrl = publicUrl;
   documents_employees = document;
 
   const expireInLastMonth = () => {

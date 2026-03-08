@@ -36,6 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { handleSupabaseError } from '@/lib/errorHandler';
+import { storage } from '@/lib/storage';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -202,15 +203,10 @@ export function DataTableOptions({ row }: any) {
     return year;
   });
   const [years, setYear] = useState(today.getFullYear().toString());
-  const supabase = supabaseBrowser();
   const handleDownload = async (path: string, fileName: string, resourceName: string) => {
     toast.promise(
       async () => {
-        const { data, error } = await supabase.storage.from('document_files').download(path);
-
-        if (error) {
-          throw new Error(handleSupabaseError(error.message));
-        }
+        const data = await storage.download('document_files', path);
 
         // Extrae la extensión del archivo del path
         const extension = path.split('.').pop();

@@ -5,6 +5,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { storage } from '@/lib/storage';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 
@@ -207,11 +208,7 @@ export default function RepairNewEntry({
     const formatedDomain = formatDocumentTypeName(domain);
     const url = `/${formatedDomain}/${maintenanceName}-(${formattedToday.replaceAll('/', '-')})/user-image/${index}`;
 
-    const { data, error } = await supabase.storage.from('repair_images').upload(url, image);
-
-    if (error) {
-      throw new Error(`${error.message}`);
-    }
+    const data = await storage.upload('repair_images', url, image);
     return data?.path;
   };
 

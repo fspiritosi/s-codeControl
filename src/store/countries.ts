@@ -1,6 +1,5 @@
 import { Equipo } from '@/zodSchemas/schemas';
 import { create } from 'zustand';
-import { supabase } from '../../supabase/supabase';
 import { MandatoryDocuments } from './../zodSchemas/schemas';
 import { useCompanyStore } from './companyStore';
 import {
@@ -37,8 +36,10 @@ interface State {
   companyDocumentTypes: Equipo
   fetchContractors: () => void
   fetchContacts: () => void
-  subscribeToCustomersChanges: () => () => void
-  subscribeToContactsChanges: () => () => void
+  startCustomersPolling: () => void
+  stopCustomersPolling: () => void
+  startContactsPolling: () => void
+  stopContactsPolling: () => void
 }
 
 const fetchCountrys = async () => {
@@ -93,6 +94,9 @@ const documentTypes = async (id: string | undefined) => {
   useCountriesStore.setState({ mandatoryDocuments: groupedData });
 };
 
+let customersPollInterval: NodeJS.Timeout | null = null;
+let contactsPollInterval: NodeJS.Timeout | null = null;
+
 export const useCountriesStore = create<State>((set, get) => ({
   countries: [],
   provinces: [],
@@ -114,38 +118,33 @@ export const useCountriesStore = create<State>((set, get) => ({
   fetchContractors,
   fetchContacts,
 
-  // TODO: Phase 5 - replace with polling/SSE
-  subscribeToCustomersChanges: () => {
-    const channel = supabase.channel('realtime-customers-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'customers' },
-        () => {
-          fetchContractors();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+  // Polling replacement for real-time subscriptions
+  startCustomersPolling: () => {
+    if (customersPollInterval) return;
+    customersPollInterval = setInterval(() => {
+      fetchContractors();
+    }, 30000);
   },
 
-  // TODO: Phase 5 - replace with polling/SSE
-  subscribeToContactsChanges: () => {
-    const channel = supabase.channel('realtime-contacts-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'contacts' },
-        () => {
-          fetchContacts();
-        }
-      )
-      .subscribe();
+  stopCustomersPolling: () => {
+    if (customersPollInterval) {
+      clearInterval(customersPollInterval);
+      customersPollInterval = null;
+    }
+  },
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+  startContactsPolling: () => {
+    if (contactsPollInterval) return;
+    contactsPollInterval = setInterval(() => {
+      fetchContacts();
+    }, 30000);
+  },
+
+  stopContactsPolling: () => {
+    if (contactsPollInterval) {
+      clearInterval(contactsPollInterval);
+      contactsPollInterval = null;
+    }
   },
 }));
 

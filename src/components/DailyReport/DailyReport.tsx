@@ -22,7 +22,7 @@ import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import MultiSelect from './MultiSelect';
 // import { id } from 'date-fns/locale'
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { storage } from '@/lib/storage';
 import { dailyReportSchema } from '@/zodSchemas/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import moment from 'moment';
@@ -246,7 +246,6 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
   const [companyData, setCompanyData] = useState<any>(null);
   const [filaId, setFilaId] = useState<string | null>(null);
   const [filteredRow, setFilteredRow] = useState<DailyReportItem | null>(null);
-  const supabase = supabaseBrowser();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const formMethods = useForm<DailyReportItem>({
@@ -334,9 +333,9 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
   const [isDialogOpen2, setIsDialogOpen2] = useState(false);
 
   async function fetchDocument(document_path: string) {
-    const { data: url } = supabase.storage.from('daily_reports').getPublicUrl(document_path);
-    setDocumentUrl(url.publicUrl);
-    return url.publicUrl;
+    const publicUrl = storage.getPublicUrl('daily_reports', document_path);
+    setDocumentUrl(publicUrl);
+    return publicUrl;
   }
 
   const handleViewDocument = async (documentPath: string, row_id?: string) => {

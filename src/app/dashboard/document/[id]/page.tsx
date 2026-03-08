@@ -8,7 +8,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/ca
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabaseServer } from '@/lib/supabase/server';
+import { storageServer } from '@/lib/storage-server';
 import { cn } from '@/lib/utils';
 import { formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -33,8 +33,6 @@ export default async function page({
   let document: any[] | null = [];
   let documentType: string | null = null;
   let resourceType: string | null = null;
-  const supabase = await supabaseServer();
-
   const role = await getRole();
 
   if(resolvedSearchParams.resource === 'Persona'){
@@ -59,10 +57,10 @@ export default async function page({
   //   search: `document-${documentType ?? ''}-${resorceId ?? ''}`,
   // });
 
-  const { data: url } = supabase.storage.from('document_files').getPublicUrl(document?.[0]?.document_path);
+  const publicUrl = await storageServer.getPublicUrl('document_files', document?.[0]?.document_path);
 
   documentName = document?.[0]?.document_path;
-  documentUrl = url.publicUrl;
+  documentUrl = publicUrl;
   documents_employees = document;
   
   // Detectar extensión del archivo desde document_path en lugar de documentUrl

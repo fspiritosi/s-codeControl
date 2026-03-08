@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useImageUpload } from '@/hooks/useUploadImage';
 import { handleSupabaseError } from '@/lib/errorHandler';
+import { storage } from '@/lib/storage';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { companySchema } from '@/zodSchemas/schemas';
@@ -57,11 +58,11 @@ export default function EditCompanyButton({ defaultImage = null }: EditCompanyBu
 
         // Verificar si se ha seleccionado un archivo de imagen
         if (imageFile) {
-          const { data } = await supabase.storage.from('logo').list('', { search: cuit });
-          if (data?.length) {
-            data.forEach(async (element: any) => {
+          const logoFiles = await storage.list('logo', '', { search: cuit });
+          if (logoFiles?.length) {
+            logoFiles.forEach(async (element: any) => {
               const extension = element.name.split('.').pop();
-              const { data, error } = await supabase.storage.from('logo').remove([cuit + '.' + extension]);
+              await storage.remove('logo', [cuit + '.' + extension]);
             });
           }
           //subir nueva imagen
@@ -69,16 +70,11 @@ export default function EditCompanyButton({ defaultImage = null }: EditCompanyBu
           const renamedFile = new File([imageFile], `${cuit}.${fileExtension}`, {
             type: `image/${fileExtension?.replace(/\s/g, '')}`,
           });
-          const { error, data: createdLogo } = await supabase.storage
-            .from('logo')
-            .upload(cuit + '.' + fileExtension, renamedFile);
-          if (error) {
-            throw new Error(handleSupabaseError(error.message));
-          }
-          const { data: fullUrl } = supabase.storage.from('logo').getPublicUrl(createdLogo?.path || '');
+          const createdLogo = await storage.upload('logo', cuit + '.' + fileExtension, renamedFile);
+          const logoPublicUrl = storage.getPublicUrl('logo', createdLogo?.path || '');
           const { data: newLogo, error: dataerror } = await supabase
             .from('company')
-            .update({ company_logo: fullUrl.publicUrl })
+            .update({ company_logo: logoPublicUrl })
             .eq('company_cuit', cuit);
           if (dataerror) {
             throw new Error(handleSupabaseError(dataerror.message));

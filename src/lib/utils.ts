@@ -4,6 +4,7 @@ import moment from 'moment';
 import { twMerge } from 'tailwind-merge';
 import { supabaseBrowser } from './supabase/browser';
 import { supabaseServer } from './supabase/server';
+import { storage } from './storage';
 import { formatDocumentTypeName } from './utils/utils';
 // eslint-disable-next-line react-hooks/rules-of-hooks
 export function cn(...inputs: ClassValue[]) {
@@ -132,17 +133,14 @@ export async function verifyDuplicatedDocument(
 ) {
   const formatedCompanyName = formatDocumentTypeName(company_name);
   const formatedAppliesName = formatDocumentTypeName(formatedAppliesNames);
-  const supabase = supabaseBrowser();
   const path = `${formatedCompanyName}-(${company_cuit})/${resource}/${formatedAppliesPath}`;
 
   //console.log(path, 'Ruta completa');
 
-  const { data, error } = await supabase.storage.from('document_files').list(path);
-  //     transporte-sp-srl-(30714153974)/persona/franco-ivan-andres-paratore
-
-  //console.log(data, 'Archivos listados');
-
-  if (error) {
+  let data;
+  try {
+    data = await storage.list('document_files', path);
+  } catch (error) {
     console.error('error', error);
     return true;
   }
@@ -158,18 +156,18 @@ export async function verifyDuplicatedDocument(
   return false;
 }
 export const uploadDocumentFile = async (file: File, path: string) => {
-  const supabase = supabaseBrowser();
   //console.log('file', file);
-  const { data, error } = await supabase.storage.from('document_files').upload(path, file, {
-    cacheControl: '3600',
-    upsert: false,
-    contentType: file.type,
-  });
-  if (error) {
+  try {
+    const data = await storage.upload('document_files', path, file, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: file.type,
+    });
+    return data;
+  } catch (error) {
     console.error('error', error);
     return [];
   }
-  return data;
 };
 export const uploadDocument = async (
   dataToUpdate: {

@@ -280,29 +280,19 @@ export default function VehiclesForm2({
 
   useEffect(() => {
     fetchData();
-
-    const channel = supabase
-      .channel('realtime-brand-vehicles')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'brand_vehicles' }, () => {
-        fetchData();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
   }, []);
   const fetchContractors = useCountriesStore((state) => state.fetchContractors);
-  const subscribeToCustomersChanges = useCountriesStore((state) => state.subscribeToCustomersChanges);
+  const startCustomersPolling = useCountriesStore((state) => state.startCustomersPolling);
+  const stopCustomersPolling = useCountriesStore((state) => state.stopCustomersPolling);
   useEffect(() => {
     fetchContractors();
-
-    const unsubscribe = subscribeToCustomersChanges();
-
+    startCustomersPolling();
     return () => {
-      unsubscribe();
+      stopCustomersPolling();
     };
-  }, [fetchContractors, subscribeToCustomersChanges]);
+  }, [fetchContractors, startCustomersPolling, stopCustomersPolling]);
 
   const contractorCompanies = useCountriesStore((state) =>
     state.customers?.filter((company: any) => company.company_id.toString() === actualCompany?.id && company.is_active)

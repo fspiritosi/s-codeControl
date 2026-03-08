@@ -16,7 +16,7 @@ import JSZip from 'jszip';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '../../supabase/supabase';
+import { storage } from '@/lib/storage';
 import SimpleDocument from './SimpleDocument';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTrigger } from './ui/alert-dialog';
 import { Button, buttonVariants } from './ui/button';
@@ -95,11 +95,7 @@ export const DocumentationDrawer = ({ resource, document, id }: Props) => {
 
         const files = await Promise.all(
           documentToDownload?.map(async (doc) => {
-            const { data, error } = await supabase.storage.from('document_files').download(doc.document_path);
-
-            if (error) {
-              throw new Error(handleSupabaseError(error.message));
-            }
+            const data = await storage.download('document_files', doc.document_path);
 
             // Extrae la extensión del archivo del document_path
             const extension = doc.document_path.split('.').pop();

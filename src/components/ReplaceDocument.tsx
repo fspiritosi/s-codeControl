@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { handleSupabaseError } from '@/lib/errorHandler';
+import { storage } from '@/lib/storage';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 import { CalendarIcon, InfoCircledIcon } from '@radix-ui/react-icons';
@@ -97,22 +98,13 @@ export default function ReplaceDocument({
           newDocumentName = newDocumentName + `.${newExtension}`;
         }
 
-        const { error, data: response } = await supabase.storage.from('document_files').remove([documentName]);
+        await storage.remove('document_files', [documentName]);
 
-        const { data: respons2e } = await supabase.storage
-          .from('document_files')
-          .list(documentName?.split('/')?.slice(0, 2).join('/'), {
+        await storage.list('document_files', documentName?.split('/')?.slice(0, 2).join('/'), {
             search: `/${documentName?.split('/')?.slice(3).join('/').split('.')[0]}`,
           });
 
-        if (error) {
-          console.log(error);
-          throw new Error(handleSupabaseError(error.message));
-        }
-
-        const { error: finalerror, data: finalDocument } = await supabase.storage
-          .from('document_files')
-          .upload(newDocumentName, file, {
+        const finalDocument = await storage.upload('document_files', newDocumentName, file, {
             cacheControl: '3600',
             upsert: true,
           });
@@ -132,11 +124,6 @@ export default function ReplaceDocument({
         if (updateError) {
           //console.log(updateError);
           throw new Error(handleSupabaseError(updateError?.message));
-        }
-
-        if (finalerror) {
-          //console.log(finalerror);
-          throw new Error(handleSupabaseError(finalerror?.message));
         }
 
         router.refresh();

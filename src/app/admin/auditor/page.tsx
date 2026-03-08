@@ -122,17 +122,8 @@ export default function Auditor() {
   useEffect(() => {
     fetchDocumentTypes();
     fetchDocumentsEmployees();
-
-    const channel = supabase
-      .channel('realtime-auditor-documents-employees')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'documents_employees' }, (payload) => {
-        fetchDocumentsEmployees();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    const interval = setInterval(fetchDocumentsEmployees, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const filteredData = documents_employees as AuditorDocument[];

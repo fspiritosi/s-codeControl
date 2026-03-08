@@ -2,7 +2,6 @@ import { SharedUser } from '@/types/types';
 import { Company, SharedCompanies } from '@/zodSchemas/schemas';
 import cookies from 'js-cookie';
 import { create } from 'zustand';
-import { supabase } from '../../supabase/supabase';
 import { useCountriesStore } from './countries';
 import {
   fetchCompaniesByOwner,
@@ -172,26 +171,29 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
   },
 }));
 
-// TODO: Phase 5 - replace with polling/SSE
-// Real-time subscriptions
-const setupCompanyRealtime = () => {
-  supabase
-    .channel('realtime-share-company-users')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'share_company_users' }, () => {
-      const { useAuthStore } = require('./authStore');
-      useCompanyStore.getState().howManyCompanies(useAuthStore.getState().profile?.[0]?.id || '');
-    })
-    .subscribe();
+// Polling replacement for real-time subscriptions
+let companyPollInterval: NodeJS.Timeout | null = null;
 
-  supabase
-    .channel('realtime-company')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'company' }, () => {
-      const { useAuthStore } = require('./authStore');
-      useCompanyStore.getState().howManyCompanies(useAuthStore.getState().profile?.[0]?.id || '');
-    })
-    .subscribe();
-};
+function startCompanyPolling() {
+  if (companyPollInterval) return;
+  companyPollInterval = setInterval(() => {
+    const { useAuthStore } = require('./authStore');
+    const profileId = useAuthStore.getState().profile?.[0]?.id;
+    if (profileId) {
+      useCompanyStore.getState().howManyCompanies(profileId);
+    }
+  }, 30000);
+}
+
+function stopCompanyPolling() {
+  if (companyPollInterval) {
+    clearInterval(companyPollInterval);
+    companyPollInterval = null;
+  }
+}
 
 if (typeof window !== 'undefined') {
-  setupCompanyRealtime();
+  startCompanyPolling();
 }
+
+export { startCompanyPolling, stopCompanyPolling };

@@ -17,6 +17,7 @@ import moment from 'moment';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { storage } from '@/lib/storage';
 import { supabase } from '../../supabase/supabase';
 import { Calendar } from './ui/calendar';
 import { Input } from './ui/input';
@@ -106,14 +107,12 @@ export default function UpdateDocuments({
         }
 
         if (montly) {
-          const { error: newDocumentError, data } = await supabase.storage
-            .from('document_files')
-            .upload(newDocumentName, file, { upsert: true });
+          const uploadData = await storage.upload('document_files', newDocumentName, file, { upsert: true });
 
           const { error: updateError } = await supabase
             .from(tableName)
             .update({
-              document_path: data?.path,
+              document_path: uploadData?.path,
               period: filename.period,
               created_at: new Date(),
               state:'presentado'
@@ -125,43 +124,18 @@ export default function UpdateDocuments({
             throw new Error(handleSupabaseError(updateError.message));
           }
 
-          if (newDocumentError) {
-            // console.log(newDocumentError);
-            throw new Error(handleSupabaseError(newDocumentError.message));
-          }
           return;
         }
 
         //console.log(documentName);
 
-        const { data: fileData, error: downloadError } = await supabase.storage
-          .from('document_files')
-          .download(documentName);
+        const fileData = await storage.download('document_files', documentName);
 
-        if (downloadError) {
-          // console.log(downloadError);
-          throw new Error(handleSupabaseError(downloadError.message));
-        }
+        await storage.upload('document_files_expired', documentName, fileData, { upsert: true });
 
-        const { error: uploadError } = await supabase.storage
-          .from('document_files_expired')
-          .upload(documentName, fileData, { upsert: true });
+        await storage.remove('document_files', [documentName]);
 
-        if (uploadError) {
-          // console.log(uploadError);
-          throw new Error(handleSupabaseError(uploadError.message));
-        }
-
-        const { error: deleteError } = await supabase.storage.from('document_files').remove([documentName]);
-
-        if (deleteError) {
-          //  console.log(deleteError);
-          throw new Error(handleSupabaseError(deleteError.message));
-        }
-
-        const { error: newDocumentError, data: finalDocument } = await supabase.storage
-          .from('document_files')
-          .upload(newDocumentName, file, { upsert: true });
+        const finalDocument = await storage.upload('document_files', newDocumentName, file, { upsert: true });
 
         const { error: updateError } = await supabase
           .from(tableName)
@@ -176,10 +150,6 @@ export default function UpdateDocuments({
         if (updateError) {
           //console.log(updateError);
           throw new Error(handleSupabaseError(updateError.message));
-        }
-        if (newDocumentError) {
-          // console.log(newDocumentError);
-          throw new Error(handleSupabaseError(newDocumentError.message));
         }
 
         router.refresh();

@@ -50,7 +50,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { handleSupabaseError } from '@/lib/errorHandler';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { storage } from '@/lib/storage';
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import JSZip from 'jszip';
@@ -372,7 +372,6 @@ export function ExpiredDataTable<TData, TValue>({
     }
   };
 
-  const supabase = supabaseBrowser();
   const handleDownloadAll = async () => {
     toast.promise(
       async () => {
@@ -384,12 +383,7 @@ export function ExpiredDataTable<TData, TValue>({
 
         const files = await Promise.all(
           documentToDownload?.map(async (doc: any) => {
-            const { data, error } = await supabase.storage.from('document_files').download(doc.document_url);
-
-            if (error) {
-              // console.log('Salio este error', error);
-              throw new Error(handleSupabaseError(error.message));
-            }
+            const data = await storage.download('document_files', doc.document_url);
 
             // Extrae la extensión del archivo del document_path
             const extension = doc.document_url.split('.').pop();

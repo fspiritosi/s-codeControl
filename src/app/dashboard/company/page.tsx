@@ -6,7 +6,6 @@ import { company } from '@/types/types';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Modal from 'react-modal';
-import { supabase } from '../../../../supabase/supabase';
 import { CardsGrid } from '../../../components/CardsGrid';
 
 function setupModalAppElement() {
@@ -21,34 +20,9 @@ export default function allCompany() {
 
   useEffect(() => {
     setupModalAppElement();
-    const companyChannel = supabase
-      .channel('realtime-company-page-company')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'company' }, (payload) => {
-        fetchCompanies();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(companyChannel);
-    };
-  }, []);
-
-  useEffect(() => {
-    const storageChannel = supabase
-      .channel('realtime-company-page-storage')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'storage', table: 'objects' },
-
-        (payload) => {
-          fetchCompanies();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(storageChannel);
-    };
+    fetchCompanies();
+    const interval = setInterval(fetchCompanies, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const [modalIsOpen, setModalIsOpen] = useState(false);

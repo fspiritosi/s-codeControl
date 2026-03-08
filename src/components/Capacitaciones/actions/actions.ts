@@ -1,5 +1,6 @@
 'use server';
 
+import { storageServer } from '@/lib/storage-server';
 import { supabaseServer } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
@@ -737,14 +738,13 @@ export const updateTrainingMaterials = async (
 
       if (filePathsToDelete.length > 0) {
         console.log('Archivos a eliminar del storage:', filePathsToDelete);
-        const { error: storageError } = await supabase.storage.from('training-materials').remove(filePathsToDelete);
-
-        if (storageError) {
+        try {
+          await storageServer.remove('training-materials', filePathsToDelete);
+          console.log('Archivos eliminados del storage correctamente.');
+        } catch (storageError) {
           console.error('Error al eliminar archivos del storage:', storageError);
           // No interrumpimos el proceso si falla la eliminación del storage
           // pero registramos el error para depuración
-        } else {
-          console.log('Archivos eliminados del storage correctamente.');
         }
       }
     }
@@ -1479,7 +1479,7 @@ export const deleteTraining = async (trainingId: string) => {
     }
 
     const documentsUrl = materials.map((material) => material.file_url);
-    await supabase.storage.from('documents').remove(documentsUrl);
+    await storageServer.remove('documents', documentsUrl);
     await supabase.from('training_materials').delete().eq('training_id', trainingId);
 
     // 5. Finalmente eliminar la capacitación

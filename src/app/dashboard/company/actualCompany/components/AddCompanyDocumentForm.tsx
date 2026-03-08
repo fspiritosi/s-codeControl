@@ -12,6 +12,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { storage } from '@/lib/storage';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 import { formatDocumentTypeName } from '@/lib/utils/utils';
@@ -71,9 +72,8 @@ function AddCompanyDocumentForm({
         const formatedCompanyName = formatDocumentTypeName(actualCompany?.company_name || '');
         const formatedDocumentTypeName = formatDocumentTypeName(documentForId?.name || '');
         const hasExpiredDate = data.validity?.replace(/\//g, '-') ?? 'v0';
-        const { data: DuplicatedDocument } = await supabase.storage
-          .from('document_files')
-          .list(
+        const DuplicatedDocument = await storage.list(
+            'document_files',
             `${formatedCompanyName}-(${actualCompany?.company_cuit})/empresa`,
             {
               search: `${formatedDocumentTypeName}-(${hasExpiredDate})`,
@@ -84,9 +84,8 @@ function AddCompanyDocumentForm({
         }
         const fileExtension = data.file.split('.').pop();
         if (!file) throw new Error('No se ha subido el archivo');
-        await supabase.storage
-          .from('document_files')
-          .upload(
+        await storage.upload(
+            'document_files',
             `/${formatedCompanyName}-(${actualCompany?.company_cuit})/empresa/${formatedDocumentTypeName}-(${hasExpiredDate}).${fileExtension}`,
             file,
             {
@@ -94,7 +93,7 @@ function AddCompanyDocumentForm({
               upsert: false,
             }
           )
-          .then(async (response) => {
+          .then(async (uploadResult: any) => {
             const { file, ...rest } = data;
             const allData = {
               ...rest,
@@ -102,7 +101,7 @@ function AddCompanyDocumentForm({
               user_id: user,
               created_at: new Date().toISOString(),
               state: 'presentado',
-              document_path: response.data?.path,
+              document_path: uploadResult?.path,
             };
 
             const { error } = await supabase
@@ -112,7 +111,7 @@ function AddCompanyDocumentForm({
               .eq('id_document_types', documentId);
 
             if (error) {
-              await supabase.storage.from('document_files').remove([response.data?.path || '']);
+              await storage.remove('document_files', [uploadResult?.path || '']);
             }
             fetchDocuments();
             router.refresh();

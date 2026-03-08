@@ -4,16 +4,12 @@ import { handleSupabaseError } from '@/lib/errorHandler';
 import { DownloadIcon } from '@radix-ui/react-icons';
 import { saveAs } from 'file-saver';
 import { toast } from 'sonner';
-import { supabase } from '../../../../../supabase/supabase';
+import { storage } from '@/lib/storage';
 function DownloadButton({ path, fileName }: { path: string; fileName: string }) {
   const handleDownload = async (path: string, fileName: string) => {
     toast.promise(
       async () => {
-        const { data, error } = await supabase.storage.from('document_files').download(path);
-
-        if (error) {
-          throw new Error(handleSupabaseError(error.message));
-        }
+        const data = await storage.download('document_files', path);
 
         // Extrae la extensión del archivo del path
         const extension = path.split('.').pop();

@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Document } from '@/features/Hse/actions/documents';
 import { DocumentUploadDialog } from '@/features/Hse/components/Document-upload-dialog';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { storage } from '@/lib/storage';
 import Cookies from 'js-cookie';
 import { Calendar, Download, Eye, FileText, LayoutGrid, List, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -338,7 +338,6 @@ type EmployeeCounts = {
 
 export function DocumentsSection({ initialDocuments, initialEmployees, allTags, docTypes }: DocumentsSectionProps) {
   const company_id = Cookies.get('actualComp');
-  const supabase = supabaseBrowser();
   const router = useRouter();
   const [documents, setDocuments] = useState<Document[]>(initialDocuments);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
@@ -514,9 +513,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags, 
 
   const handleDownload = async (file_path: string, file_name: string) => {
     try {
-      const { data, error } = await supabase.storage.from('documents-hse').download(file_path);
-
-      if (error) throw error;
+      const data = await storage.download('documents-hse', file_path);
 
       const url = window.URL.createObjectURL(data);
       const a = document.createElement('a');
