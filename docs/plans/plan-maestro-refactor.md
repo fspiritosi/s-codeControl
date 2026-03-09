@@ -1,145 +1,357 @@
 # Plan Maestro de Refactorización — CodeControl
 
-**Fecha:** 2026-03-08
-**Alcance:** Estabilización, refactor arquitectónico, upgrade Next.js 16, migración Supabase → Prisma
-**Estado:** Planificación
+**Fecha inicio:** 2026-03-08
+**Última actualización:** 2026-03-08
+**Rama:** `refactor/plan-maestro`
 
 ---
 
-## Resumen Ejecutivo
+## >>> PUNTO DE CONTINUACIÓN <<<
 
-El proyecto tiene 563 archivos TypeScript/TSX, 187 archivos con queries directas a Supabase, un store monolítico de 1,134 líneas, y componentes de hasta 1,878 líneas mezclando lógica de negocio con UI. Este plan aborda las mejoras en 6 fases secuenciales con dependencias claras entre ellas.
+**Continuar en: FASE 7 — Migración completa de Auth (línea 295)**
 
-### Métricas actuales del proyecto
+### Fases completadas:
+| Fase | Estado | Commit |
+|------|--------|--------|
+| 0 — Estabilización | ✅ COMPLETADA | `fb148446` |
+| 1 — Refactor Arquitectónico | ✅ COMPLETADA | `2c1b182f` |
+| 2 — Upgrade Next.js 16 | ✅ COMPLETADA | `f5f2e39e` |
+| 3 — Migración a Prisma | ✅ COMPLETADA | `f4073376` |
+| 4 — NextAuth setup + stores a Prisma | ✅ COMPLETADA | `01c91002` |
+| 5 — Storage abstraction + RT → polling | ✅ COMPLETADA | `07eb8749` |
+| 6 — Limpieza console.log + ESLint 9 | ✅ COMPLETADA | `a1899eb6` |
 
-| Métrica | Valor |
-|---------|-------|
-| Archivos TS/TSX | 563 |
-| Archivos con queries Supabase (.from) | 187 |
-| API Routes | 38 endpoints |
-| Server Actions | 17 archivos |
-| Componentes client-side | 274 (60%) |
-| Usos de `any` | ~1,100 |
-| `console.log` en producción | 897 |
-| Suscripciones real-time | 12 |
-| Archivos de storage | 27 |
-| Migraciones SQL | 40 |
-| Buckets de storage | 4 (documents-hse, repair_images, document_files, training-materials) |
+### Fases pendientes:
+| Fase | Línea | Descripción |
+|------|-------|-------------|
+| 7 — Auth completa | 295 | Verificación real de passwords, migración híbrida gradual |
+| 8 — Eliminar Supabase | 395 | Desinstalar SDK, eliminar archivos, limpiar imports |
+| 9 — Dividir server actions por dominio | 445 | Separar GET/actions.ts monolítico en archivos por dominio |
+| 10 — Refactorizar componentes gigantes | 505 | Dividir componentes de 1000+ líneas |
+| 11 — Migrar moment → date-fns | 555 | Reemplazar moment por date-fns en todo el proyecto |
+| 12 — Campaña de eliminación de `any` | 595 | Reducir ~1,100 usos de `any` a < 50 |
+| 13 — Reducir componentes client-side | 650 | Convertir a Server Components donde sea posible |
+| 14 — Estandarizar API routes con utility | 690 | Aplicar apiSuccess/apiError a los 38 endpoints |
+| 15 — Migrar queries browser a server actions | 725 | Eliminar supabaseBrowser() para queries directas en componentes |
 
 ---
 
-## FASE 0 — Preparación y Estabilización
+## Resumen de lo completado
 
-**Objetivo:** Corregir bugs críticos y crear la base para los cambios futuros.
-**Riesgo:** Bajo
-**Archivos estimados:** ~15
+### Métricas antes → después
 
-### 0.1 — Corregir memory leaks en suscripciones real-time
+| Métrica | Antes | Después |
+|---------|-------|---------|
+| Next.js | 14.0.4 | 16.1.x |
+| React | 18 | 19 |
+| ORM | Supabase client | Prisma |
+| Auth | Supabase Auth only | Supabase + NextAuth (coexistencia) |
+| God Store | 1,134 líneas, 61 campos | 6 stores de 68-321 líneas |
+| Real-time | 12 suscripciones sin cleanup | Polling 15-30s con cleanup |
+| Storage | Acoplado a Supabase | Abstracción `src/lib/storage.ts` |
+| Error boundaries | 0 | 3 (app, dashboard, admin) + not-found |
+| console.log | 897 | 0 |
+| ESLint | v8 + .eslintrc.json | v9 + eslint.config.mjs flat config |
+| TypeScript errors | 875 (post-upgrade) | 0 |
+| Archivos modificados total | 230 | +13,554 / -9,779 líneas |
 
-**Problema:** 12 suscripciones Supabase en stores sin `.unsubscribe()`. Se acumulan en cada navegación.
+### Qué permanece de Supabase (a eliminar en fases 7-8):
+- `supabase.auth.*` — Login, registro, getUser (coexiste con NextAuth)
+- `supabaseBrowser()` — Usado en ~120 componentes para queries directas (fase 15)
+- `src/lib/supabase/server.ts` y `browser.ts` — Clientes aún importados
+- `database.types.ts` — Tipos Supabase aún referenciados en `colections.ts`
+- Storage internamente usa Supabase detrás de `src/lib/storage.ts`
 
-**Archivos a modificar:**
-- `src/stores/loggedUser.ts` — 4 suscripciones (share_company_users, notifications, employees, company)
-- `src/stores/countries.ts` — 2 suscripciones
-- `src/components/VehiclesForm.tsx` — 1 suscripción
-- `src/app/admin/auditor/page.tsx` — 1 suscripción
-- `src/app/dashboard/company/page.tsx` — 2 suscripciones
-- `src/app/dashboard/company/actualCompany/services/[id]/page.tsx` — 1 suscripción
+---
 
-**Acción:** Mover suscripciones a `useEffect` con cleanup en componentes, o agregar mecanismo de unsubscribe en stores.
+## FASES COMPLETADAS (referencia)
 
-### 0.2 — Agregar Error Boundaries
+<details>
+<summary>Fase 0 — Estabilización (click para expandir)</summary>
 
-**Problema:** 0 archivos `error.tsx` en todo el proyecto.
+- Memory leaks arreglados en 12 suscripciones real-time
+- Error boundaries creados: `error.tsx` (app, dashboard, admin) + `not-found.tsx`
+- Código muerto eliminado: InitDocuments, InitCompanies, vehicles store
+- Utility `src/lib/api-response.ts` creado (pendiente aplicar en Fase 14)
 
-**Archivos a crear:**
-- `src/app/error.tsx` — Error boundary global
-- `src/app/dashboard/error.tsx` — Error boundary del dashboard
-- `src/app/admin/error.tsx` — Error boundary del admin
+</details>
 
-### 0.3 — Eliminar código muerto
+<details>
+<summary>Fase 1 — Refactor Arquitectónico (click para expandir)</summary>
 
-**Archivos a eliminar/limpiar:**
-- `src/stores/InitDocuments.tsx` — 173 líneas completamente comentadas
-- `src/stores/InitCompanies.tsx` — 16 líneas, componente vacío
-- `src/stores/vehicles.ts` — 90 líneas mayormente comentadas
-- Bloques comentados en `src/middleware.ts` (líneas 95-103)
-- Bloques comentados en API routes de daily-report
+- God store dividido: authStore, companyStore, employeeStore, documentStore, vehicleStore, uiStore
+- loggedUser.ts mantenido como facade para backward compatibility
+- Boilerplate extraído a `src/lib/server-action-context.ts`
+- Componentes genéricos de documentos: ShowDocument.tsx, UploadDocument.tsx
 
-### 0.4 — Estandarizar respuestas de error en API Routes
+</details>
 
-**Problema:** Formatos inconsistentes — algunos retornan `{ error: ['msg'] }`, otros `{ error: 'msg' }`, otros no retornan nada.
+<details>
+<summary>Fase 2 — Next.js 16 (click para expandir)</summary>
 
-**Acción:** Crear utility `src/lib/api-response.ts`:
+- Next 14→16, React 18→19, Zustand 4→5, framer-motion 10→12
+- react-day-picker 8→9, cmdk 0.2→1.1, sonner 1→2, vaul 0.9→1.1
+- Supabase SSR 0.0.10→0.8.0 con nuevo cookie adapter
+- 77+ archivos actualizados para async cookies/headers/params
+- ESLint 8→9, eliminados paquetes obsoletos
+
+</details>
+
+<details>
+<summary>Fase 3 — Prisma (click para expandir)</summary>
+
+- Schema Prisma: 1,285 líneas, 60+ modelos, 18 enums
+- 62 GET actions + 5 UPDATE actions migradas a Prisma
+- 39 API routes migradas a Prisma
+- Supabase retenido solo para auth, storage y real-time
+
+</details>
+
+<details>
+<summary>Fase 4 — NextAuth + Stores (click para expandir)</summary>
+
+- NextAuth v5 configurado con Google + Credentials providers
+- Modelos Auth agregados a Prisma schema (Account, AuthUser, Session, VerificationToken)
+- Middleware actualizado: NextAuth check → fallback Supabase
+- 6 domain stores migrados de supabase.from() a server actions
+- 18 nuevas server actions creadas para stores
+
+</details>
+
+<details>
+<summary>Fase 5 — Storage + Real-time (click para expandir)</summary>
+
+- Abstracción `src/lib/storage.ts` (client) y `storage-server.ts` (server)
+- 25 archivos migrados a usar abstracción de storage
+- 12 suscripciones real-time reemplazadas por polling (15-30s)
+- Stores exponen startPolling/stopPolling para control de lifecycle
+
+</details>
+
+<details>
+<summary>Fase 6 — Limpieza (click para expandir)</summary>
+
+- 368 console.log eliminados de 95 archivos
+- console.log en contexto de error convertidos a console.error
+- ESLint migrado a flat config (eslint.config.mjs)
+- Regla no-console: warn (permite console.error y console.warn)
+
+</details>
+
+---
+
+## FASE 7 — Migración Completa de Auth
+
+**Objetivo:** Implementar verificación real de passwords en NextAuth y migrar gradualmente desde Supabase Auth.
+**Riesgo:** Alto
+**Pre-requisito:** Fases 4-6 completadas
+
+### 7.1 — Migración híbrida de passwords (Opción C)
+
+**Contexto:** Las contraseñas están en `auth.users` de Supabase GoTrue (tabla interna, bcrypt). La tabla `profile` no tiene campo password. Los usuarios NO tendrán que cambiar sus contraseñas.
+
+**Estrategia:** En cada login exitoso, capturar el password, hashearlo y guardarlo en `profile.password_hash`. Logins futuros verifican primero contra el hash propio; si no existe, delegan a Supabase Auth y guardan el hash para la próxima vez.
+
+**Acciones:**
+
+1. Agregar campo `password_hash` al modelo `profile` en `prisma/schema.prisma`:
+   ```prisma
+   model profile {
+     // ... campos existentes
+     password_hash String?   @db.Text
+   }
+   ```
+
+2. Instalar bcryptjs:
+   ```bash
+   npm install bcryptjs @types/bcryptjs
+   ```
+
+3. Actualizar `src/auth.ts` — lógica del Credentials provider:
+   ```typescript
+   async authorize(credentials) {
+     const { email, password } = credentials
+     const profile = await prisma.profile.findFirst({ where: { email } })
+     if (!profile) return null
+
+     // Paso 1: Intentar verificar con hash propio
+     if (profile.password_hash) {
+       const valid = await bcrypt.compare(password, profile.password_hash)
+       if (valid) return { id: profile.id, email: profile.email, name: profile.fullname }
+       return null // password incorrecto
+     }
+
+     // Paso 2: No tiene hash propio → verificar con Supabase Auth
+     const supabase = await supabaseServer()
+     const { error } = await supabase.auth.signInWithPassword({ email, password })
+     if (error) return null
+
+     // Paso 3: Supabase validó OK → guardar hash para futuro
+     const hash = await bcrypt.hash(password, 12)
+     await prisma.profile.update({
+       where: { id: profile.id },
+       data: { password_hash: hash }
+     })
+
+     return { id: profile.id, email: profile.email, name: profile.fullname }
+   }
+   ```
+
+4. Actualizar `src/app/register/actions.ts` — guardar hash al registrar:
+   ```typescript
+   const hash = await bcrypt.hash(password, 12)
+   await prisma.profile.create({
+     data: { ..., password_hash: hash }
+   })
+   ```
+
+5. Actualizar `src/app/reset_password/` — al resetear password, actualizar `password_hash`
+
+### 7.2 — Enriquecer JWT con datos de rol y empresa
+
+**Problema:** El middleware actual hace 4-5 queries a DB en cada request para obtener rol y empresa.
+
+**Acción:** Incluir `role`, `companyId`, y `profileId` en el JWT token de NextAuth:
+
 ```typescript
-// Formato estándar
-type ApiResponse<T> = { success: true; data: T } | { success: false; error: string; code?: string }
-```
-
-**Archivos a modificar:** 38 API routes en `src/app/api/`
-
----
-
-## FASE 1 — Refactor Arquitectónico
-
-**Objetivo:** Dividir monolitos, eliminar duplicación, estandarizar patrones.
-**Riesgo:** Medio
-**Archivos estimados:** ~60
-**Pre-requisito:** Fase 0 completada
-
-### 1.1 — Dividir God Store
-
-**Problema:** `src/stores/loggedUser.ts` tiene 1,134 líneas y 61 campos.
-
-**Stores nuevos a crear:**
-
-| Store | Responsabilidad | Campos estimados |
-|-------|----------------|-----------------|
-| `src/stores/authStore.ts` | credentialUser, profile, codeControlRole, roleActualCompany | ~8 |
-| `src/stores/companyStore.ts` | allCompanies, actualCompany, sharedCompanies, sharedUsers, alerts | ~10 |
-| `src/stores/employeeStore.ts` | employees, employeesToShow, active_and_inactive, DrawerEmployees | ~8 |
-| `src/stores/documentStore.ts` | documents (fuente única), filtros derivados con selectors | ~6 |
-| `src/stores/vehicleStore.ts` | vehicles, vehiclesToShow, DrawerVehicles | ~6 |
-| `src/stores/uiStore.ts` | active_sidebar, notifications, modals | ~5 |
-
-**Eliminar estado duplicado:**
-- Mantener `employees` como fuente única → derivar `employeesToShow` y `active_and_inactive` con selectors de Zustand
-- Mantener `documents` como fuente única → derivar `lastMonthDocuments`, `pendingDocuments`, etc. con selectors
-- Misma lógica para `vehicles`/`vehiclesToShow`
-
-**Archivos a actualizar:** 29 componentes que importan `useLoggedUserStore`
-
-### 1.2 — Extraer boilerplate de Server Actions
-
-**Problema:** 49 funciones repiten cookie + supabase client + company_id (500+ líneas duplicadas).
-
-**Acción:** Crear utility `src/lib/server-action-context.ts`:
-```typescript
-async function getActionContext() {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
-  const companyId = cookiesStore.get('actualComp')?.value;
-  if (!companyId) throw new ActionError('No company selected');
-  return { supabase, companyId };
+// src/auth.ts callbacks
+callbacks: {
+  async jwt({ token, user }) {
+    if (user) {
+      const profile = await prisma.profile.findFirst({ where: { email: user.email } })
+      const company = await prisma.company.findFirst({ where: { owner_id: profile?.id } })
+      token.role = profile?.role
+      token.profileId = profile?.id
+      token.companyId = company?.id
+    }
+    return token
+  },
+  async session({ session, token }) {
+    session.user.role = token.role
+    session.user.profileId = token.profileId
+    session.user.companyId = token.companyId
+    return session
+  }
 }
 ```
 
-**Archivos a refactorizar:**
-- `src/app/server/GET/actions.ts` — 62 funciones
-- `src/app/server/UPDATE/actions.ts` — 5 funciones
-- `src/components/Capacitaciones/actions/actions.ts` — 19 funciones
-- `src/features/Hse/actions/documents.ts` — 19 funciones
+### 7.3 — Migrar middleware a NextAuth puro
 
-### 1.3 — Dividir archivos monolíticos de Server Actions por dominio
+**Archivo:** `src/middleware.ts`
 
-**Estructura propuesta:**
+**Acción:** Eliminar las queries a Supabase del middleware. Usar solo el JWT de NextAuth para autorización:
+- Verificar sesión con `auth()`
+- Leer role, companyId del token (sin queries)
+- Mantener lógica de redirección por roles (Admin, Auditor, Invitado, etc.)
+- Eliminar import de `supabaseServer` del middleware
+
+### 7.4 — Migrar componentes de login/registro a NextAuth puro
+
+**Archivos a modificar:**
+
+| Archivo | Acción |
+|---------|--------|
+| `src/app/login/actions.ts` | Eliminar flujo Supabase, usar solo NextAuth signIn |
+| `src/app/register/actions.ts` | Crear usuario con Prisma + hash, luego NextAuth signIn |
+| `src/hooks/useAuthData.ts` | Reemplazar por `useSession()` de NextAuth |
+| `src/components/LoginForm.tsx` | Actualizar formulario para usar actions NextAuth |
+| `src/components/RegisterForm.tsx` | Actualizar formulario |
+| `src/components/LogOutButton.tsx` | Usar solo `signOut()` de NextAuth |
+| `src/app/login/auth/callback/route.ts` | Eliminar (NextAuth maneja callbacks) |
+| `src/app/login/auth/confirm/route.ts` | Eliminar o adaptar |
+| `src/app/reset_password/*` | Implementar reset con token propio + actualizar password_hash |
+
+### 7.5 — Testing de auth
+
+**Checklist:**
+- [ ] Login con email + password (usuarios existentes, sin cambio de password)
+- [ ] Login con Google OAuth
+- [ ] Registro de nuevo usuario
+- [ ] Logout
+- [ ] Reset de password
+- [ ] Middleware protege rutas correctamente
+- [ ] Roles funcionan (Admin, Auditor, Invitado, CodeControlClient)
+- [ ] Cambio de empresa funciona
+- [ ] Sesión persiste entre recargas
+
+---
+
+## FASE 8 — Eliminar Supabase SDK
+
+**Objetivo:** Remover completamente el SDK de Supabase del proyecto.
+**Riesgo:** Medio
+**Pre-requisito:** Fase 7 completada y testeada
+
+### 8.1 — Verificar que no quedan usos de Supabase Auth
+
+```bash
+grep -rn "supabase.auth\." src/ --include="*.ts" --include="*.tsx"
+```
+
+Todos los resultados deben ser eliminados o migrados antes de continuar.
+
+### 8.2 — Migrar storage a proveedor final
+
+**Decisión pendiente:** Elegir proveedor de storage definitivo.
+
+**Acción:** Actualizar las implementaciones internas de `src/lib/storage.ts` y `storage-server.ts` para usar el proveedor elegido (S3, R2, Vercel Blob, etc.) en lugar de Supabase Storage.
+
+### 8.3 — Desinstalar paquetes Supabase
+
+```bash
+npm uninstall @supabase/ssr @supabase/supabase-js @supabase/gotrue-js supabase
+```
+
+### 8.4 — Eliminar archivos Supabase
+
+- `src/lib/supabase/browser.ts`
+- `src/lib/supabase/server.ts`
+- `src/lib/utils/middleware.ts` (updateSession de Supabase)
+- `supabase/supabase.ts`
+- `supabase/config.toml`
+- `supabase/seed.sql`
+- `database.types.ts`
+- `scripts/generate-types.ts`
+
+**Mantener como backup (en rama legacy):**
+- `supabase/migrations/` — 40 archivos de migraciones SQL
+
+### 8.5 — Limpiar package.json
+
+Eliminar scripts de Supabase:
+- `genlocaltypes`, `gentypes`, `local`, `pull-changes`, `pull-data`, `create-migration`, `migration-status`, `push-migrations`
+
+### 8.6 — Limpiar variables de entorno
+
+Eliminar de `.env` / `.env.example`:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `RESEND_SUPABASE_API_KEY`
+
+Agregar:
+- `DATABASE_URL`
+- `AUTH_SECRET`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+
+---
+
+## FASE 9 — Dividir Server Actions por Dominio
+
+**Objetivo:** Separar `src/app/server/GET/actions.ts` (1,300+ líneas, 80+ funciones) en archivos por dominio.
+**Riesgo:** Bajo
+**Pre-requisito:** Fase 8 completada
+
+### 9.1 — Crear estructura por dominio
+
 ```
 src/app/server/
 ├── lib/
-│   └── context.ts              # getActionContext() utility
+│   └── context.ts                  # getActionContext() (ya existe)
 ├── employees/
-│   ├── queries.ts              # GET: fetchAllEmployees, fetchActiveEmployees, etc.
-│   └── mutations.ts            # CREATE/UPDATE/DELETE
+│   ├── queries.ts                  # fetchAllEmployees, fetchActiveEmployees, etc.
+│   └── mutations.ts
 ├── documents/
 │   ├── queries.ts
 │   └── mutations.ts
@@ -155,298 +367,118 @@ src/app/server/
 ├── daily-reports/
 │   ├── queries.ts
 │   └── mutations.ts
+├── hse/
+│   ├── queries.ts
+│   └── mutations.ts
 └── shared/
-    ├── queries.ts              # Queries compartidas cross-domain
-    └── mutations.ts
+    └── queries.ts                  # Queries cross-domain (countries, lookup data)
 ```
 
-**Archivos fuente (a dividir):**
-- `src/app/server/GET/actions.ts` (1,419 líneas → ~8 archivos de ~100-150 líneas)
-- `src/app/server/UPDATE/actions.ts` (80 líneas → distribuir por dominio)
+### 9.2 — Mover funciones y actualizar imports
 
-### 1.4 — Componente genérico de documentos
-
-**Problema:** ~1,500 líneas duplicadas entre variantes Employee/Equipment.
-
-**Archivos duplicados a consolidar:**
-
-| Actual | Líneas |
-|--------|--------|
-| ShowEmployeeDocument.tsx | 468 |
-| ShowEquipmentDocument.tsx | 452 |
-| UploadDocumentEmployee.tsx | 424 |
-| UploadDocumentEquipment.tsx | 435 |
-| UploadDocumentMultiEmployee.tsx | 342 |
-| UploadDocumentMultiEquipment.tsx | 325 |
-
-**Resultado:** 3 componentes genéricos parametrizados:
-- `ShowDocument.tsx<T>` — con prop `entityType: 'employee' | 'equipment'`
-- `UploadDocument.tsx<T>` — genérico por tipo de entidad
-- `UploadDocumentMulti.tsx<T>` — genérico para multi-documentos
-
-### 1.5 — Refactorizar componentes gigantes
-
-**Componentes a dividir:**
-
-| Componente | Líneas | Estrategia |
-|------------|--------|------------|
-| EmployeeComponent.tsx | 1,878 | Extraer: EmployeeForm, EmployeeDocuments, EmployeeActions |
-| DailyReport.tsx | 1,596 | Extraer: DailyReportForm, DailyReportTable, DailyReportFilters |
-| NewDocumentType.tsx | 1,429 | Extraer: DocumentTypeConfig, DocumentTypeForm, DocumentTypePreview |
-| VehiclesForm.tsx | 1,287 | Extraer: VehicleBasicInfo, VehicleDocuments, VehicleQR |
-
-**Criterio:** Cada componente resultante ≤ 300 líneas. Separar lógica de negocio (hooks custom) de presentación (componentes).
+- Distribuir las 80+ funciones de `GET/actions.ts` por dominio
+- Distribuir funciones de `UPDATE/actions.ts` por dominio
+- Actualizar todos los imports en stores, componentes y páginas
+- Eliminar archivos originales `GET/actions.ts` y `UPDATE/actions.ts`
+- Cada archivo resultante debe tener < 200 líneas
 
 ---
 
-## FASE 2 — Upgrade a Next.js 16
+## FASE 10 — Refactorizar Componentes Gigantes
 
-**Objetivo:** Actualizar Next.js y todas las dependencias.
-**Riesgo:** Alto
-**Pre-requisito:** Fase 1 completada (para no tener que refactorizar monolitos sobre APIs nuevas)
+**Objetivo:** Dividir componentes de 1,000+ líneas en piezas manejables.
+**Riesgo:** Medio
+**Pre-requisito:** Fase 9 (para tener imports limpios)
 
-### 2.1 — Actualizar dependencias core
+### 10.1 — EmployeeComponent.tsx (1,878 líneas)
 
-**Upgrades principales:**
+**Dividir en:**
+- `EmployeeForm.tsx` — Formulario de datos personales
+- `EmployeeDocuments.tsx` — Sección de documentos
+- `EmployeeActions.tsx` — Botones de acción y lógica
+- `useEmployeeForm.ts` — Hook custom con lógica de negocio
 
-| Paquete | Actual | Target |
-|---------|--------|--------|
-| next | 14.0.4 | 16.x |
-| react | ^18 | ^19 |
-| react-dom | ^18 | ^19 |
-| @types/react | ^18.2.53 | ^19.x |
-| @types/react-dom | ^18 | ^19.x |
-| eslint-config-next | 14.0.4 | 16.x |
-| typescript | ^5 | ^5.7+ |
+### 10.2 — DailyReport.tsx (1,596 líneas)
 
-### 2.2 — Adaptar breaking changes de React 19
+**Dividir en:**
+- `DailyReportForm.tsx` — Formulario de creación
+- `DailyReportTable.tsx` — Tabla de registros
+- `DailyReportFilters.tsx` — Filtros y búsqueda
+- `useDailyReport.ts` — Hook custom
 
-**Cambios necesarios:**
-- `forwardRef` ya no es necesario — React 19 pasa ref como prop
-  - Impacta: componentes Shadcn/ui en `src/components/ui/`
-- `useFormStatus` / `useActionState` reemplazan patrones actuales de `useFormState`
-- `ref` callbacks reciben cleanup function
-- Verificar compatibilidad de todas las librerías Radix UI con React 19
+### 10.3 — NewDocumentType.tsx (1,429 líneas)
 
-### 2.3 — Adaptar breaking changes de Next.js 15 → 16
+**Dividir en:**
+- `DocumentTypeConfig.tsx` — Configuración de campos
+- `DocumentTypeForm.tsx` — Formulario principal
+- `DocumentTypePreview.tsx` — Vista previa
+- `useDocumentType.ts` — Hook custom
 
-**Cambios críticos (acumulados desde Next 14):**
+### 10.4 — VehiclesForm.tsx (1,287 líneas)
 
-1. **`cookies()` y `headers()` ahora son async** (desde Next 15)
-   - Impacto: 49+ funciones en server actions + middleware
-   - Acción: agregar `await` a todas las llamadas a `cookies()`
+**Dividir en:**
+- `VehicleBasicInfo.tsx` — Datos básicos del vehículo
+- `VehicleDocuments.tsx` — Sección de documentos
+- `VehicleQR.tsx` — Generación de QR
+- `useVehicleForm.ts` — Hook custom
 
-2. **`params` y `searchParams` ahora son async** (desde Next 15)
-   - Impacta: todas las pages y API routes con params dinámicos
-   - Archivos: `src/app/api/*/[id]/route.ts`, pages con params
-
-3. **Nuevo `next.config.ts`** (migrar desde .js)
-   - Migrar `next.config.js` → `next.config.ts`
-
-4. **`fetch` caching por defecto: `no-store`** (desde Next 15)
-   - Revisar si hay dependencia del cache implícito
-
-5. **Turbopack como default** (Next 16)
-   - Verificar compatibilidad con PostCSS + Tailwind config
-
-### 2.4 — Actualizar dependencias secundarias
-
-**Librerías a verificar compatibilidad con React 19:**
-
-| Librería | Actual | Notas |
-|----------|--------|-------|
-| @radix-ui/* | v1.x | Necesita upgrade a v2.x para React 19 |
-| framer-motion | ^10.18.0 | Necesita upgrade a v11+ (renombrada a `motion`) |
-| react-hook-form | ^7.49.3 | Verificar compat React 19 |
-| zustand | 4.5.0 | Upgrade a 5.x |
-| @tanstack/react-table | ^8.11.7 | Verificar compat |
-| recharts | ^2.13.3 | Verificar compat |
-| react-day-picker | ^8.10.0 | Upgrade a v9 |
-| cmdk | ^0.2.1 | Upgrade a v1.x |
-| sonner | ^1.4.41 | Verificar compat |
-| vaul | ^0.9.0 | Verificar compat |
-| swiper | ^11.0.5 | Verificar compat |
-| embla-carousel-react | ^8.2.0 | Verificar compat |
-| react-modal | ^3.16.1 | Considerar reemplazar por Radix Dialog |
-| shadcn | ^3.5.1 | Verificar nueva CLI |
-
-**Eliminar paquetes duplicados/obsoletos:**
-- `@supabase/auth-helpers-nextjs` — deprecado en favor de `@supabase/ssr` (ya lo usan)
-- `next-cookies` — reemplazable por `cookies()` de Next.js
-- `next-theme` — duplicado con `next-themes`
-- `moment` — reemplazar con `date-fns` (ya incluido)
-- `punycode` — incluido en Node.js core
-
-### 2.5 — Testing post-upgrade
-
-**Checklist de verificación:**
-- [ ] Build sin errores (`npm run build`)
-- [ ] Type check sin errores (`npm run check-types`)
-- [ ] Lint sin errores (`npm run lint`)
-- [ ] Login/registro funcionando
-- [ ] Navegación dashboard completa
-- [ ] Carga de documentos
-- [ ] Reportes diarios
-- [ ] Suscripciones real-time
-- [ ] Generación de PDF/Excel
-- [ ] Responsive en mobile
+**Criterio:** Cada componente resultante ≤ 300 líneas. Separar lógica (hooks) de presentación (componentes).
 
 ---
 
-## FASE 3 — Migración Supabase → Prisma (Capa de Base de Datos)
+## FASE 11 — Migrar moment → date-fns
 
-**Objetivo:** Reemplazar todas las queries Supabase (`supabase.from().select()`) por Prisma Client.
-**Riesgo:** Alto
-**Pre-requisito:** Fase 2 completada
-**Archivos impactados:** 187 archivos con queries directas
+**Objetivo:** Eliminar `moment` (66KB gzipped) — el proyecto ya tiene `date-fns`.
+**Riesgo:** Bajo
+**Pre-requisito:** Ninguno específico (puede hacerse en paralelo)
 
-### 3.1 — Setup de Prisma
+### 11.1 — Buscar y mapear usos de moment
 
-**Acciones:**
-1. Instalar dependencias:
-   ```bash
-   npm install prisma @prisma/client
-   npx prisma init
-   ```
-2. Introspeccionar la base de datos existente (Supabase PostgreSQL):
-   ```bash
-   npx prisma db pull
-   ```
-   Esto genera `prisma/schema.prisma` a partir de las 30+ tablas existentes.
-
-3. Generar Prisma Client:
-   ```bash
-   npx prisma generate
-   ```
-
-4. Crear cliente singleton:
-   ```typescript
-   // src/lib/prisma.ts
-   import { PrismaClient } from '@prisma/client'
-   const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
-   export const prisma = globalForPrisma.prisma || new PrismaClient()
-   if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
-   ```
-
-**Archivos a crear:**
-- `prisma/schema.prisma` — generado desde DB existente
-- `src/lib/prisma.ts` — singleton client
-
-**Variables de entorno a agregar:**
-- `DATABASE_URL` — connection string de PostgreSQL (puede ser la misma URL de Supabase PostgreSQL)
-
-### 3.2 — Migrar Server Actions (prioridad alta)
-
-**Orden de migración por dominio (de menor a mayor complejidad):**
-
-| # | Dominio | Archivos | Queries | Complejidad |
-|---|---------|----------|---------|-------------|
-| 1 | Company | queries.ts, mutations.ts | ~8 | Baja |
-| 2 | Vehicles | queries.ts, mutations.ts | ~10 | Baja |
-| 3 | Employees | queries.ts, mutations.ts | ~15 | Media |
-| 4 | Documents | queries.ts, mutations.ts | ~20 | Media |
-| 5 | Repairs | queries.ts, mutations.ts | ~8 | Media |
-| 6 | Daily Reports | queries.ts, mutations.ts | ~12 | Alta |
-| 7 | HSE/Capacitaciones | queries.ts, mutations.ts | ~38 | Alta |
-
-**Ejemplo de transformación:**
-```typescript
-// ANTES (Supabase)
-const { data, error } = await supabase
-  .from('employees')
-  .select('*, city(name), province(name)')
-  .eq('company_id', companyId)
-  .eq('is_active', true);
-
-// DESPUÉS (Prisma)
-const data = await prisma.employees.findMany({
-  where: { company_id: companyId, is_active: true },
-  include: { city: { select: { name: true } }, province: { select: { name: true } } }
-});
+```bash
+grep -rn "from 'moment'" src/ --include="*.ts" --include="*.tsx"
 ```
 
-### 3.3 — Migrar API Routes
+### 11.2 — Tabla de equivalencias
 
-**38 endpoints a migrar en `src/app/api/`:**
+| moment | date-fns |
+|--------|----------|
+| `moment(date).format('DD/MM/YYYY')` | `format(new Date(date), 'dd/MM/yyyy')` |
+| `moment(date).format('YYYY-MM-DD')` | `format(new Date(date), 'yyyy-MM-dd')` |
+| `moment(date).fromNow()` | `formatDistanceToNow(new Date(date), { locale: es })` |
+| `moment(date).diff(other, 'days')` | `differenceInDays(new Date(date), new Date(other))` |
+| `moment(date).isBefore(other)` | `isBefore(new Date(date), new Date(other))` |
+| `moment(date).add(n, 'days')` | `addDays(new Date(date), n)` |
+| `moment(date).subtract(n, 'months')` | `subMonths(new Date(date), n)` |
+| `moment().startOf('month')` | `startOfMonth(new Date())` |
 
-| Grupo | Endpoints | Prioridad |
-|-------|-----------|-----------|
-| /api/company/* | 4 | Media |
-| /api/employees/* | 4 | Alta |
-| /api/equipment/* | 3 | Alta |
-| /api/daily-report/* | 7 | Alta |
-| /api/services/* | 5 | Media |
-| /api/repairs/* | 3 | Media |
-| /api/document/* | 1 | Media |
-| /api/profile | 1 | Baja |
-| /api/send | 1 | Baja (no usa DB) |
-| Otros | 9 | Baja |
+### 11.3 — Reemplazar en todos los archivos
 
-**Decisión arquitectónica:** Evaluar si migrar API routes a server actions donde sea posible, reduciendo los 38 endpoints. Las API routes deben mantenerse solo para:
-- Webhooks externos
-- Endpoints consumidos por terceros
-- Operaciones que requieren streaming
-
-### 3.4 — Migrar queries en componentes browser
-
-**Problema:** 120+ componentes cliente usan `supabaseBrowser()` para queries directas.
-
-**Estrategia:** Reemplazar queries client-side por server actions:
-```typescript
-// ANTES: query directa desde el browser
-const supabase = supabaseBrowser();
-const { data } = await supabase.from('covenant').select('*').eq('company_id', id);
-
-// DESPUÉS: server action
-const data = await getCovenantsByCompany(id);
+### 11.4 — Desinstalar moment
+```bash
+npm uninstall moment
 ```
 
-**Archivos clave a migrar:**
-- `src/components/CovenantComponent.tsx`
-- `src/components/Tipos_de_reparaciones/RepairEntry.tsx`
-- `src/components/AddCovenantModal.tsx`
-- `src/hooks/useEmployeesData.ts`
-- `src/hooks/useCompanyData.ts`
-- ~115 componentes adicionales
+---
 
-### 3.5 — Migrar RPC calls a Prisma raw queries o lógica de aplicación
+## FASE 12 — Campaña de Eliminación de `any`
 
-**4 funciones RPC a reemplazar:**
+**Objetivo:** Reducir ~1,100 usos de `any` a < 50.
+**Riesgo:** Bajo
+**Pre-requisito:** Fases 7-9 (para tener tipos Prisma estables y auth migrado)
 
-| Función RPC | Ubicación | Estrategia |
-|-------------|-----------|------------|
-| `get_company_users_by_cuil` | PortalEmpleados/actions.ts | Prisma query con where |
-| `find_employee_by_full_name_v2` | GET/actions.ts | Prisma fulltext search o raw query |
-| `filter_employees_by_conditions` | documentFilters.ts | Prisma where con condiciones dinámicas |
-| `filter_vehicles_by_conditions` | documentFilters.ts | Prisma where con condiciones dinámicas |
+### 12.1 — Prioridad de corrección
 
-### 3.6 — Migrar stores (Zustand)
+| Prioridad | Área | Estrategia |
+|-----------|------|------------|
+| 1 | Server actions y API routes | Usar tipos Prisma generados (`Prisma.employeesGetPayload<>`) |
+| 2 | Stores | Inferir tipos de las server actions |
+| 3 | Hooks | Tipar parámetros y retornos |
+| 4 | Componentes | Tipar props, callbacks y event handlers |
+| 5 | Zod schemas | Reemplazar `z.any()` por schemas específicos |
 
-**Archivos críticos:**
-- `src/stores/loggedUser.ts` (o los stores divididos en Fase 1) — 56+ queries Supabase
-- `src/stores/countries.ts` — queries de lookup data
+### 12.2 — Tipos Prisma como fuente de verdad
 
-**Estrategia:** Los stores NO deben hacer queries directamente. Mover toda la lógica de fetching a server actions y que los stores solo almacenen estado.
-
-### 3.7 — Actualizar middleware
-
-**Archivo:** `src/middleware.ts` — CRÍTICO
-
-**Problema:** Middleware ejecuta 4-5 queries Supabase en cada request.
-
-**Nota importante:** Prisma Client NO funciona en Edge Runtime (middleware de Next.js). Opciones:
-
-1. **Opción A — JWT + datos en token:** Almacenar role y company_id en el JWT/session token. Middleware solo verifica el token sin queries a DB.
-2. **Opción B — Prisma con driver adapter:** Usar `@prisma/adapter-neon` o similar para edge-compatible queries.
-3. **Opción C — Mover lógica a layout:** Sacar las queries del middleware y moverlas a `layout.tsx` del dashboard (server component).
-
-**Recomendación:** Opción A (JWT) para máximo rendimiento + Opción C para lógica de roles compleja.
-
-### 3.8 — Reemplazar tipos globales
-
-**Archivo:** `src/app/server/colections.ts` (254 líneas)
-
-**Acción:** Reemplazar tipos manuales por los generados por Prisma:
+Reemplazar tipos globales en `src/app/server/colections.ts`:
 ```typescript
 // ANTES
 declare global {
@@ -454,229 +486,147 @@ declare global {
 }
 
 // DESPUÉS
-import { employees as Employee } from '@prisma/client';
-// O usar los tipos generados directamente
+import type { employees, vehicles, company, profile } from '@prisma/client'
+declare global {
+  type Employee = employees
+  type Vehicle = vehicles
+  type Company = company
+  type Profile = profile
+}
 ```
 
-**Archivo:** `database.types.ts` — Se elimina completamente (reemplazado por Prisma generate).
+### 12.3 — Configurar ESLint para prevenir nuevos `any`
 
-**Scripts a actualizar en package.json:**
-- Eliminar `gentypes` y `genlocaltypes`
-- Agregar `"prisma:generate": "prisma generate"`
-- Agregar `"prisma:push": "prisma db push"`
-- Agregar `"prisma:migrate": "prisma migrate dev"`
+Agregar regla a `eslint.config.mjs`:
+```javascript
+"@typescript-eslint/no-explicit-any": "warn"
+```
 
 ---
 
-## FASE 4 — Migración de Auth (Supabase Auth → NextAuth.js / Auth.js)
+## FASE 13 — Reducir Componentes Client-Side
 
-**Objetivo:** Reemplazar Supabase Auth por una solución independiente.
-**Riesgo:** Alto
-**Pre-requisito:** Fase 3 en progreso o completada
+**Objetivo:** Reducir de 60% a < 40% de componentes con `'use client'`.
+**Riesgo:** Bajo
+**Pre-requisito:** Fase 10 (componentes ya refactorizados)
 
-### 4.1 — Setup de Auth.js (NextAuth v5)
+### 13.1 — Identificar candidatos a Server Component
 
-**Instalar:**
-```bash
-npm install next-auth@beta @auth/prisma-adapter
-```
+Criterios para convertir a Server Component:
+- Solo renderiza datos (sin `useState`, `useEffect`, `useRef`)
+- Hace data fetching y pasa props a children
+- No usa event handlers (onClick, onChange, etc.)
+- No usa hooks de terceros (useForm, useTable, etc.)
 
-**Archivos a crear:**
-- `src/auth.ts` — Configuración principal de Auth.js
-- `src/app/api/auth/[...nextauth]/route.ts` — API route handler
-- `prisma/schema.prisma` — Agregar modelos Account, Session, User, VerificationToken
+### 13.2 — Convertir gradualmente
 
-**Providers a configurar:**
-- Credentials (email + password) — reemplaza `signInWithPassword()`
-- Google OAuth — reemplaza `signInWithOAuth({ provider: 'google' })`
-- Email (Magic Link/OTP) — reemplaza flujo OTP actual
+Empezar por:
+- Páginas (`page.tsx`) que actualmente tienen `'use client'`
+- Layouts que no necesitan interactividad
+- Componentes wrapper que solo pasan datos
 
-### 4.2 — Migrar flujos de autenticación
-
-**Archivos a modificar:**
-
-| Archivo actual | Acción |
-|----------------|--------|
-| `src/app/login/actions.ts` | Reemplazar signIn/signOut/signUp por Auth.js |
-| `src/app/register/actions.ts` | Adaptar registro a Auth.js |
-| `src/hooks/useAuthData.ts` | Reemplazar por `useSession()` de Auth.js |
-| `src/components/LoginForm.tsx` | Actualizar formulario |
-| `src/components/RegisterForm.tsx` | Actualizar formulario |
-| `src/components/RegisterWithRole.tsx` | Actualizar registro con rol |
-| `src/components/LogOutButton.tsx` | Usar `signOut()` de Auth.js |
-| `src/app/login/auth/callback/route.ts` | Reemplazar por callback de Auth.js |
-| `src/app/login/auth/confirm/route.ts` | Adaptar o eliminar |
-| `src/app/reset_password/*` | Implementar con Auth.js |
-
-### 4.3 — Migrar middleware de auth
-
-**Archivo:** `src/middleware.ts`
-
-**Antes:** 5 queries a Supabase para validar sesión + rol.
-**Después:** Verificación de JWT token de Auth.js (sin queries a DB):
+### 13.3 — Patrón: Server Component + Client Island
 
 ```typescript
-import { auth } from '@/auth';
+// ServerWrapper.tsx (Server Component — sin 'use client')
+export default async function ServerWrapper() {
+  const data = await fetchData()
+  return <ClientInteractive data={data} />
+}
 
-export default auth((req) => {
-  const { role, companyId } = req.auth; // Del token JWT
-  // Lógica de roles sin queries
-});
+// ClientInteractive.tsx ('use client')
+export function ClientInteractive({ data }) {
+  // Hooks y interactividad aquí
+}
 ```
 
-### 4.4 — Migrar tabla de profiles
-
-**Situación actual:** La tabla `profile` en Supabase almacena datos extendidos del usuario.
-
-**Acción:** Mantener tabla `profile` en PostgreSQL, vincularla al modelo `User` de Auth.js via Prisma.
-
 ---
 
-## FASE 5 — Migración de Storage y Real-time
+## FASE 14 — Estandarizar API Routes con Utility
 
-**Objetivo:** Reemplazar Supabase Storage y suscripciones real-time.
-**Riesgo:** Medio
-**Pre-requisito:** Fases 3-4 completadas
-
-### 5.1 — Migrar Storage
-
-**4 buckets a migrar:**
-
-| Bucket | Uso | Archivos impactados |
-|--------|-----|---------------------|
-| document_files | Documentos de empleados/equipos | ~15 archivos |
-| documents-hse | Documentos HSE | ~5 archivos |
-| repair_images | Imágenes de solicitudes de reparación | ~3 archivos |
-| training-materials | Material de capacitaciones | ~4 archivos |
-
-**Opciones de reemplazo:**
-
-| Opción | Pros | Contras |
-|--------|------|---------|
-| AWS S3 + presigned URLs | Estándar industria, escalable | Costo, setup IAM |
-| Cloudflare R2 | Sin egress fees, compatible S3 | Menos features |
-| Vercel Blob | Integrado con Vercel | Vendor lock-in |
-| UploadThing | Simple para Next.js | Menos control |
-| MinIO (self-hosted) | Open source, compatible S3 | Requiere infra |
-
-**Archivos a modificar (27 total):**
-- Crear `src/lib/storage.ts` — abstracción del servicio de storage
-- Reemplazar `supabase.storage.from('bucket')` por nueva abstracción
-- Operaciones a migrar: `.upload()`, `.download()`, `.remove()`, `.getPublicUrl()`
-
-### 5.2 — Migrar o eliminar Real-time
-
-**12 suscripciones actuales — evaluar necesidad real:**
-
-| Suscripción | Tabla | Necesidad real |
-|-------------|-------|---------------|
-| share_company_users (INSERT/UPDATE/DELETE) | Alta — permisos | Evaluar: ¿polling cada 30s? |
-| notifications (INSERT/UPDATE/DELETE) | Alta — UX | Mantener real-time |
-| employees (UPDATE) | Media | Polling suficiente |
-| company (INSERT/UPDATE/DELETE) | Baja | Polling suficiente |
-| countries lookups | Baja — datos estáticos | Eliminar, cachear |
-| VehiclesForm | Baja | Eliminar |
-| Auditor page | Media | Polling |
-| Company pages | Media | Polling |
-
-**Opciones de reemplazo para real-time:**
-
-| Opción | Complejidad | Costo |
-|--------|-------------|-------|
-| Polling con SWR/React Query | Baja | Gratis |
-| Server-Sent Events (SSE) | Media | Gratis |
-| Pusher | Baja | Pago |
-| Ably | Baja | Pago |
-| Socket.io + server custom | Alta | Infra |
-| PostgreSQL LISTEN/NOTIFY | Media | Gratis |
-
-**Recomendación:** Para la mayoría de los casos, **polling con React Query** (revalidación cada 15-30s) es suficiente. Mantener real-time solo para notificaciones, usando SSE o un servicio como Pusher.
-
----
-
-## FASE 6 — Limpieza y Calidad de Código
-
-**Objetivo:** Mejorar calidad general post-migración.
+**Objetivo:** Aplicar `apiSuccess`/`apiError` de `src/lib/api-response.ts` a los 38 endpoints.
 **Riesgo:** Bajo
-**Pre-requisito:** Fases anteriores completadas
+**Pre-requisito:** Fase 9 (estructura limpia)
 
-### 6.1 — Eliminar dependencias de Supabase
+### 14.1 — Migrar respuestas de API routes
 
-**Paquetes a desinstalar:**
-```bash
-npm uninstall @supabase/auth-helpers-nextjs @supabase/gotrue-js @supabase/ssr @supabase/supabase-js supabase
+Para cada route.ts en `src/app/api/`:
+
+```typescript
+// ANTES
+return Response.json({ employees })
+// catch: console.error(error) // sin respuesta
+
+// DESPUÉS
+return apiSuccess(employees)
+// catch: return apiError('Error fetching employees', 500)
 ```
 
-**Archivos a eliminar:**
-- `src/lib/supabase/browser.ts`
-- `src/lib/supabase/server.ts`
-- `supabase/supabase.ts`
-- `supabase/config.toml`
-- `supabase/seed.sql`
-- `database.types.ts`
-- Directorio `supabase/migrations/` (mantener backup)
+### 14.2 — Estandarizar códigos HTTP
 
-### 6.2 — Campaña de eliminación de `any`
-
-**~1,100 instancias → objetivo: < 50**
-
-**Prioridad de corrección:**
-1. Server actions y API routes — tipado con tipos Prisma
-2. Stores — tipos inferidos de Prisma
-3. Hooks — parámetros y retornos tipados
-4. Componentes — props y event handlers
-
-### 6.3 — Limpiar console.log
-
-**897 instancias → objetivo: 0 en producción**
-
-**Acción:** Configurar ESLint rule `no-console: 'warn'` y reemplazar por logger estructurado donde sea necesario.
-
-### 6.4 — Migrar de moment a date-fns
-
-**Eliminar `moment` (66KB gzipped) — ya tienen `date-fns` instalado.**
-
-Buscar todos los imports de `moment` y reemplazar por equivalentes de `date-fns`.
-
-### 6.5 — Reducir componentes client-side
-
-**Actual:** 274 (60%) client → **Objetivo:** <40% client
-
-**Estrategia:** Convertir a Server Components todos los componentes que:
-- Solo renderizan datos (sin interactividad)
-- Hacen data fetching y pasan props
-- No usan hooks de estado/efectos
+- 200: GET exitoso
+- 201: POST/CREATE exitoso
+- 400: Validación fallida
+- 401: No autenticado
+- 403: No autorizado
+- 404: Recurso no encontrado
+- 500: Error interno
 
 ---
 
-## Dependencias entre Fases
+## FASE 15 — Migrar Queries Browser a Server Actions
+
+**Objetivo:** Eliminar `supabaseBrowser()` para queries directas en componentes cliente.
+**Riesgo:** Medio
+**Pre-requisito:** Fases 8-9 completadas
+
+### 15.1 — Identificar componentes con queries browser
+
+```bash
+grep -rn "supabaseBrowser" src/components/ --include="*.tsx" -l
+grep -rn "supabaseBrowser" src/hooks/ --include="*.ts" -l
+```
+
+### 15.2 — Para cada componente
+
+1. Identificar la query Supabase
+2. Buscar si existe una server action equivalente
+3. Si no existe, crear la server action en el archivo de dominio correspondiente (Fase 9)
+4. Reemplazar la query directa por la llamada a server action
+5. Si el componente ya no necesita `supabaseBrowser`, eliminar el import
+
+### 15.3 — Hooks a migrar
+
+| Hook | Acción |
+|------|--------|
+| `useEmployeesData.ts` | Reemplazar queries por server actions |
+| `useCompanyData.ts` | Reemplazar queries por server actions |
+| `useDocuments.ts` | Verificar si aún usa supabaseBrowser |
+| `useEdgeFunctions.ts` | Evaluar si migrar a API route o eliminar |
+
+---
+
+## Dependencias entre Fases Pendientes
 
 ```
-FASE 0 (Estabilización)
-  └──► FASE 1 (Refactor Arquitectónico)
-         └──► FASE 2 (Next.js 16)
-                └──► FASE 3 (Prisma) ◄── Puede iniciar en paralelo con Fase 4
-                └──► FASE 4 (Auth)   ◄── Puede iniciar en paralelo con Fase 3
-                       └──► FASE 5 (Storage + Real-time)
-                              └──► FASE 6 (Limpieza)
+FASE 7 (Auth completa)
+  └──► FASE 8 (Eliminar Supabase SDK)
+         └──► FASE 9 (Dividir server actions)
+         │      └──► FASE 14 (Estandarizar API routes)
+         │      └──► FASE 15 (Migrar queries browser)
+         └──► FASE 12 (Eliminar `any`)
+
+FASE 10 (Refactorizar componentes) ◄── Puede iniciar después de Fase 9
+  └──► FASE 13 (Reducir client-side)
+
+FASE 11 (moment → date-fns) ◄── Independiente, puede hacerse en cualquier momento
 ```
-
-## Estimación de Impacto por Fase
-
-| Fase | Archivos impactados | Complejidad | Riesgo de regresión |
-|------|---------------------|-------------|---------------------|
-| 0 — Estabilización | ~20 | Baja | Bajo |
-| 1 — Refactor | ~60 | Media | Medio |
-| 2 — Next.js 16 | ~100+ | Alta | Alto |
-| 3 — Prisma | ~187 | Alta | Alto |
-| 4 — Auth | ~15 | Alta | Alto |
-| 5 — Storage/RT | ~30 | Media | Medio |
-| 6 — Limpieza | ~200 | Baja | Bajo |
 
 ## Notas Importantes
 
-1. **Backup:** Crear rama `legacy/supabase` antes de iniciar Fase 3 para preservar el estado actual.
-2. **Base de datos:** Supabase PostgreSQL puede seguir siendo el proveedor de DB — Prisma se conecta directamente a PostgreSQL. La migración es del SDK/ORM, no necesariamente del hosting.
-3. **Migraciones:** Las 40 migraciones SQL existentes se convierten al esquema Prisma via `prisma db pull`. Las futuras migraciones se gestionan con `prisma migrate dev`.
-4. **Feature flags:** Considerar implementar flags para migrar endpoints gradualmente (Supabase query → Prisma query) sin big-bang.
-5. **Testing:** Cada fase debe incluir testing de regresión antes de mergearse a main.
+1. **Backup:** La rama `main` preserva el estado original. Considerar crear `legacy/supabase` antes de mergear.
+2. **Base de datos:** Supabase PostgreSQL sigue siendo el hosting de la DB. Prisma se conecta directo al mismo PostgreSQL. Solo cambia el SDK de acceso.
+3. **Migraciones futuras:** Usar `prisma migrate dev` en lugar de `supabase db diff`.
+4. **Passwords:** La migración de auth (Fase 7) es transparente para usuarios — no necesitan cambiar contraseñas. El hash se captura en el primer login post-migración.
+5. **Testing:** Cada fase debe incluir testing de regresión antes de mergearse.
+6. **Variables de entorno necesarias post-migración:** `DATABASE_URL`, `AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
