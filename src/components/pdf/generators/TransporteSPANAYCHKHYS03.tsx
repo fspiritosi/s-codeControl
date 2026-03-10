@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { checklistItems } from '@/components/CheckList/ChecklistSergio';
 import { DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import moment from 'moment';
+import { format } from 'date-fns';
 import { pdf } from '@react-pdf/renderer';
 
 // Importación dinámica del PDFViewer
@@ -434,7 +434,7 @@ export const TransporteSPANAYCHKHYS03 = ({ data, preview = true, companyLogo, si
     link.href = url;
     // Generar nombre personalizado
     const fileName =
-      `${title}_${data?.dominio || ''}-(${moment(data?.fecha).format('DD-MM-YYYY') ? moment(data?.fecha).format('DD-MM-YYYY') : ''}).pdf`.replace(
+      `${title}_${data?.dominio || ''}-(${format(new Date(data?.fecha as string), 'dd-MM-yyyy') ? format(new Date(data?.fecha as string), 'dd-MM-yyyy') : ''}).pdf`.replace(
         /\s+/g,
         '_'
       );

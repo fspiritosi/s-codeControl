@@ -21,10 +21,21 @@ import { FormattedSolicitudesRepair } from '@/types/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PersonIcon } from '@radix-ui/react-icons';
 import { ColumnDef } from '@tanstack/react-table';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
-import moment from 'moment';
+import { format, format as formatDateFns, isToday, isTomorrow, isYesterday, differenceInDays, startOfDay } from 'date-fns';
+import { es } from 'date-fns/locale';
+
+function formatCalendar(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  if (isToday(date)) return `Hoy, ${formatDateFns(date, 'h:mm a')}`;
+  if (isTomorrow(date)) return `Mañana, ${formatDateFns(date, 'h:mm a')}`;
+  if (isYesterday(date)) return `Ayer, ${formatDateFns(date, 'h:mm a')}`;
+  const daysDiff = differenceInDays(startOfDay(now), startOfDay(date));
+  if (daysDiff > 0 && daysDiff < 7) return `El ${formatDateFns(date, 'EEEE', { locale: es })} pasado a las ${formatDateFns(date, 'h:mm a')}`;
+  if (daysDiff < 0 && daysDiff > -7) return `${formatDateFns(date, 'EEEE', { locale: es })} a las ${formatDateFns(date, 'h:mm a')}`;
+  return formatDateFns(date, 'dd/MM/yyyy');
+}
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -142,7 +153,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
     accessorKey: 'fecha',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Fecha" />,
     cell: ({ row }) => {
-      return <div className="flex items-center">{moment(row.original.created_at).format('DD/MM/YYYY')}</div>;
+      return <div className="flex items-center">{formatDateFns(new Date(row.original.created_at), 'dd/MM/yyyy')}</div>;
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
@@ -825,14 +836,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                               </Badge>
                               <CardDescription>
                                 {' '}
-                                {moment(log.created_at).calendar(null, {
-                                  sameDay: '[Hoy,] h:mm A', // Hoy a las 2:30 PM
-                                  nextDay: '[Mañana,] h:mm A', // Mañana a las 2:30 PM
-                                  nextWeek: 'dddd [a las] h:mm A', // Sábado a las 2:30 PM
-                                  lastDay: '[Ayer,] h:mm A', // Ayer a las 2:30 PM
-                                  lastWeek: '[El] dddd [pasado a las] h:mm A', // El sábado pasado a las 2:30 PM
-                                  sameElse: 'DD/MM/YYYY', // 07/10/2021
-                                })}
+                                {formatCalendar(log.created_at)}
                               </CardDescription>
                             </div>
                           </div>

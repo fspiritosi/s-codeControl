@@ -1,5 +1,5 @@
 import { VehiclesAPI } from '@/types/types';
-import moment from 'moment';
+import { format, startOfDay, endOfDay, addMonths, parse, isBefore } from 'date-fns';
 import { create } from 'zustand';
 import {
   fetchAllDocumentsEmployeesByCompany,
@@ -90,7 +90,7 @@ const mapDocument = (doc: any) => {
   const docType = doc.document_types || doc.document_type;
   const emp = doc.employees || doc.employee;
   return {
-    date: moment(doc.created_at).format('DD/MM/YYYY'),
+    date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
     allocated_to: emp?.contractor_employee?.map((ce: any) => (ce.contractors || ce.contractor)?.name).join(', '),
     documentName: docType?.name,
     state: doc.state,
@@ -115,7 +115,7 @@ const mapVehicle = (doc: any) => {
   const docType = doc.document_types || doc.document_type;
   const veh = doc.applies || doc.vehicle;
   return {
-    date: doc.created_at ? moment(doc.created_at).format('DD/MM/YYYY') : 'No vence',
+    date: doc.created_at ? format(new Date(doc.created_at), 'dd/MM/yyyy') : 'No vence' as string,
     allocated_to: (veh?.type_of_vehicle?.name || veh?.type_of_vehicle_rel?.name),
     documentName: docType?.name,
     state: doc.state,
@@ -206,19 +206,19 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
     set({ companyDocuments: companyData as CompanyDocumentsType[] });
 
-    const today = moment().startOf('day');
-    const nextMonth = moment().add(1, 'month').endOf('day');
+    const today = startOfDay(new Date());
+    const nextMonth = endOfDay(addMonths(new Date(), 1));
 
     const filteredData = employeesData?.filter((doc: any) => {
       if (!doc.validity) return false;
-      const date = moment(doc.validity, 'DD/MM/YYYY');
-      return date.isBefore(today) || date.isBefore(nextMonth) || doc.state === 'Vencido';
+      const date = parse(doc.validity, 'dd/MM/yyyy', new Date());
+      return isBefore(date, today) || isBefore(date, nextMonth) || doc.state === 'Vencido';
     });
 
     const filteredVehiclesData = equipmentData1?.filter((doc: any) => {
       if (!doc.validity) return false;
-      const date = moment(doc.validity, 'DD/MM/YYYY');
-      return date.isBefore(today) || date.isBefore(nextMonth) || doc.state === 'Vencido';
+      const date = parse(doc.validity, 'dd/MM/yyyy', new Date());
+      return isBefore(date, today) || isBefore(date, nextMonth) || doc.state === 'Vencido';
     });
 
     const filterActiveDoc = (e: any, isVehicle = false) => {

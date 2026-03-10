@@ -12,7 +12,20 @@ import { storage } from '@/lib/storage';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 import { PersonIcon } from '@radix-ui/react-icons';
-import moment from 'moment';
+import { format, isToday, isTomorrow, isYesterday, differenceInDays, startOfDay } from 'date-fns';
+import { es } from 'date-fns/locale';
+
+function formatCalendar(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  if (isToday(date)) return `Hoy, ${format(date, 'h:mm a')}`;
+  if (isTomorrow(date)) return `Mañana, ${format(date, 'h:mm a')}`;
+  if (isYesterday(date)) return `Ayer, ${format(date, 'h:mm a')}`;
+  const daysDiff = differenceInDays(startOfDay(now), startOfDay(date));
+  if (daysDiff > 0 && daysDiff < 7) return `El ${format(date, 'EEEE', { locale: es })} pasado a las ${format(date, 'h:mm a')}`;
+  if (daysDiff < 0 && daysDiff > -7) return `${format(date, 'EEEE', { locale: es })} a las ${format(date, 'h:mm a')}`;
+  return format(date, 'dd/MM/yyyy');
+}
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
@@ -283,14 +296,7 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
                           </Badge>
                         </div>
                         <div className="text-muted-foreground text-sm">
-                          {moment(log.created_at).calendar(null, {
-                            sameDay: '[Hoy,] h:mm A', // Hoy a las 2:30 PM
-                            nextDay: '[Mañana,] h:mm A', // Mañana a las 2:30 PM
-                            nextWeek: 'dddd [a las] h:mm A', // Sábado a las 2:30 PM
-                            lastDay: '[Ayer,] h:mm A', // Ayer a las 2:30 PM
-                            lastWeek: '[El] dddd [pasado a las] h:mm A', // El sábado pasado a las 2:30 PM
-                            sameElse: 'DD/MM/YYYY', // 07/10/2021
-                          })}
+                          {formatCalendar(log.created_at)}
                         </div>
                       </div>
                       <CardDescription>

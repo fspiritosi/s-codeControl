@@ -22,7 +22,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { ChevronLeft, ChevronRight, History } from 'lucide-react';
-import moment from 'moment';
+import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { DataTableToolbarDiagramDetail } from './DataTableToolbarDiagramDetail';
 
@@ -84,7 +84,7 @@ export function DiagramDetailTable<TData, TValue>({ columns, data, historyData }
 
   useEffect(() => {
     if (selectedRows.length > 0) {
-      const selectedDates = selectedRows.map((date) => moment(date).format('DD/MM/YYYY'));
+      const selectedDates = selectedRows.map((date) => format(new Date(date), 'dd/MM/yyyy'));
       const filteredData = historyData.filter((item: any) => selectedDates.includes(item.date));
       setFilteredHistoryData(filteredData);
     } else {

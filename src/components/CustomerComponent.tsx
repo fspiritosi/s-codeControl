@@ -30,7 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { setEmployeesToShow } from '@/lib/utils/utils';
 import cookie from 'js-cookie';
-import moment from 'moment';
+import { format } from 'date-fns';
 import { Badge } from './ui/badge';
 interface Service {
   id: string;
@@ -445,8 +445,8 @@ export default function ClientRegister({ id, equipment }: { id: string; equipmen
                                 {service.is_active ? 'Activo' : 'Inactivo'}
                               </Badge>
                             </TableCell>
-                            <TableCell>{moment(service.service_start).format('DD/MM/YYYY')}</TableCell>
-                            <TableCell>{moment(service.service_validity).format('DD/MM/YYYY')}</TableCell>
+                            <TableCell>{format(new Date(service.service_start), 'dd/MM/yyyy')}</TableCell>
+                            <TableCell>{format(new Date(service.service_validity), 'dd/MM/yyyy')}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

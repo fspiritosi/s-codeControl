@@ -50,7 +50,7 @@ import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
 import { addMonths, format, formatRelative } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ArrowUpDown } from 'lucide-react';
-import moment from 'moment';
+// moment removed - using date-fns format imported above
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -732,7 +732,7 @@ export const ExpiredColums: ColumnDef<any>[] = [
         return <Badge variant={'destructive'}>Pendiente</Badge>;
       } else {
         if (row.original.validity) {
-          return moment(row.original.validity).format('DD/MM/YYYY');
+          return format(new Date(row.original.validity), 'dd/MM/yyyy');
         } else {
           return <Badge variant={'outline'}>No vence</Badge>;
         }

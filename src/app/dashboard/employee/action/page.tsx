@@ -10,7 +10,7 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { cn } from '@/lib/utils';
 import { getRole } from '@/lib/utils/getRole';
 import { setEmployeesToShow } from '@/lib/utils/utils';
-import moment from 'moment';
+import { format, parseISO } from 'date-fns';
 import { cookies } from 'next/headers';
 export default async function EmployeeFormAction({ searchParams: searchParamsPromise }: { searchParams: Promise<any> }) {
   const searchParams = await searchParamsPromise;
@@ -104,7 +104,7 @@ export default async function EmployeeFormAction({ searchParams: searchParamsPro
   });
 
   const historyData = (await fetchDiagramsHistoryByEmployeeId(searchParams.employee_id)).map((item) => ({
-    date: moment.utc(item.prev_date).format('DD/MM/YYYY'),
+    date: format(parseISO(item.prev_date), 'dd/MM/yyyy'),
     description: item.description,
     status: item.state,
     previousStatus: item.prev_state,
@@ -112,7 +112,7 @@ export default async function EmployeeFormAction({ searchParams: searchParamsPro
       ?.split(' ')
       .map((name: any) => name.charAt(0).toUpperCase() + name.slice(1))
       .join(' '), // Mapear las iniciales a mayúsculas
-    modifiedAt: moment(item.created_at).local().format('DD/MM/YYYY HH:mm'), // Formatear a la hora local
+    modifiedAt: format(new Date(item.created_at), 'dd/MM/yyyy HH:mm'), // Formatear a la hora local
     type: item.prev_state ? 'modified' : 'created',
   }));
 

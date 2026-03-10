@@ -57,7 +57,7 @@ import JSZip from 'jszip';
 import { ArrowUpDown, DownloadIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import moment from 'moment';
+import { differenceInDays } from 'date-fns';
 import { DataTablePagination } from './data-table-pagination';
 
 interface DataTableProps<TData, TValue> {
@@ -358,13 +358,13 @@ export function ExpiredDataTable<TData, TValue>({
 
       const validityDateStr = row.original.validity; // Obtener la fecha en formato "dd/mm/yyyy"
 
-      const validityDate = moment(validityDateStr);
-      const currentDate = moment();
-      const differenceInDays = validityDate.diff(currentDate, 'days');
+      const validityDate = new Date(validityDateStr);
+      const currentDate = new Date();
+      const daysDiff = differenceInDays(validityDate, currentDate);
 
-      if (differenceInDays < 0) {
+      if (daysDiff < 0) {
         return 'bg-red-100 dark:bg-red-100/30 hover:bg-red-100/30'; // Vencido
-      } else if (differenceInDays <= 7) {
+      } else if (daysDiff <= 7) {
         return 'bg-yellow-100 dark:bg-yellow-100/30 hover:bg-yellow-100/30'; // Próximo a vencer en los próximos 7 días
       } else {
         return;

@@ -3,8 +3,8 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartConfig, ChartContainer } from '@/components/ui/chart';
 import { TrendingUp } from 'lucide-react';
-import moment from 'moment';
-import 'moment/locale/es'; // Asegúrate de importar el locale en español
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { Area, AreaChart, CartesianGrid, Legend, Tooltip, XAxis, YAxis } from 'recharts';
 
 interface TotalDeVisitoresProps {
@@ -22,7 +22,7 @@ export function TotalDeVisitores({ employees }: TotalDeVisitoresProps) {
   // Procesar los datos para obtener las fechas de ingreso
   const admissionData = employees.reduce(
     (acc, employee) => {
-      const month = moment(employee.date_of_admission).locale('es').format('MMMM'); // Asegurando que el mes esté en español
+      const month = format(new Date(employee.date_of_admission), 'MMMM', { locale: es }); // Asegurando que el mes esté en español
       if (!acc[month]) {
         acc[month] = { mes: month, cantidad: 0 };
       }

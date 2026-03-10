@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, ChevronsUpDown } from 'lucide-react';
-import moment from 'moment';
+import { format } from 'date-fns';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -199,12 +199,12 @@ export default function VehicleMaintenanceChecklist({
               equipments?.find((equipment) => equipment.value === default_equipment_id)?.serie,
             kilometraje: equipments?.find((equipment) => equipment.value === default_equipment_id)?.kilometer ?? '0',
             chofer: empleado_name?.toLocaleUpperCase(),
-            fecha: moment().format('YYYY-MM-DD'),
-            hora: moment().format('HH:mm'),
+            fecha: format(new Date(), 'yyyy-MM-dd'),
+            hora: format(new Date(), 'HH:mm'),
           }
         : {
-            fecha: moment().format('YYYY-MM-DD'),
-            hora: moment().format('HH:mm'),
+            fecha: format(new Date(), 'yyyy-MM-dd'),
+            hora: format(new Date(), 'HH:mm'),
             chofer: currentUser?.[0].fullname?.toLocaleUpperCase(),
           },
   });

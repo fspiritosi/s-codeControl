@@ -13,7 +13,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { Check, ChevronsUpDown } from 'lucide-react';
-import moment from 'moment';
+// date-fns format is already imported above
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -270,7 +270,7 @@ function UploadDocumentMultiEquipment({
                             setSelectedFileName(file.name);
                             const period = form.getValues('period');
                             const expiredDate = form.getValues('validity')
-                              ? moment(form.getValues('validity')).format('DD-MM-YYYY')
+                              ? format(new Date(form.getValues('validity') as string), 'dd-MM-yyyy')
                               : null;
                             const hasExpiredDate = expiredDate || period || 'v0';
 

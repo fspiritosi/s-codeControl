@@ -1,4 +1,4 @@
-import moment from 'moment';
+import { format } from 'date-fns';
 import Image from 'next/image';
 import { useState } from 'react';
 import { FiArrowLeft } from 'react-icons/fi';
@@ -76,7 +76,7 @@ function CompletarChecklist({
             <CardTitle className="text-lg">{(checklist.form as { description: string }).description}</CardTitle>
             <div className="flex justify-between items-center">
               <Badge variant="secondary">{(checklist.form as { frequency: string }).frequency}</Badge>
-              <span className="text-sm text-gray-500">{moment(checklist.created_at).format('DD/MM/YYYY')}</span>
+              <span className="text-sm text-gray-500">{format(new Date(checklist.created_at), 'dd/MM/yyyy')}</span>
             </div>
           </CardHeader>
           <CardContent>

@@ -3,7 +3,7 @@
 import { DataTableColumnHeader } from '@/components/CheckList/tables/data-table-column-header';
 import { Button } from '@/components/ui/button';
 import { ColumnDef } from '@tanstack/react-table';
-import moment from 'moment';
+import { format } from 'date-fns';
 import { DailyReportItem } from '../DailyReport';
 import { FilePenLine, Trash2 } from 'lucide-react';
 import  UploadDocument  from '@/components/DailyReport/UploadDocument';
@@ -106,7 +106,7 @@ export const dailyColumns = (
     cell: ({ row }) => {
       return (
         <div className="flex items-center">
-          <span>{moment(row.getValue('Hora inicio')).format('DD/MM/YYYY')}</span>
+          <span>{format(new Date(row.getValue('Hora inicio')), 'dd/MM/yyyy')}</span>
         </div>
       );
     },
@@ -121,7 +121,7 @@ export const dailyColumns = (
     cell: ({ row }) => {
       return (
         <div className="flex items-center">
-          <span>{moment(row.getValue('Hora fin')).format('DD/MM/YYYY')}</span>
+          <span>{format(new Date(row.getValue('Hora fin')), 'dd/MM/yyyy')}</span>
         </div>
       );
     },

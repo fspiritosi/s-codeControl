@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { pdf } from '@react-pdf/renderer';
-import moment from 'moment';
+import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { BaseChecklistLayout } from '../layouts/BaseChecklistLayout';
@@ -139,7 +139,7 @@ export const TransporteSPANAYCHKHYS04 = ({
   const pdfContent = (
     <BaseChecklistLayout
       data={{
-        fecha: data?.fecha?moment(data?.fecha).format('DD-MM-YYYY'):undefined,
+        fecha: data?.fecha?format(new Date(data?.fecha as string), 'dd-MM-yyyy'):undefined,
         conductor: data?.chofer,
         interno: data?.interno,
         dominio: data?.dominio,
@@ -162,7 +162,7 @@ export const TransporteSPANAYCHKHYS04 = ({
     link.href = url;
     // Generar nombre personalizado
     const fileName =
-      `${title}_${data?.dominio || ''}-(${moment(data?.fecha).format('DD-MM-YYYY') ? moment(data?.fecha).format('DD-MM-YYYY') : ''}).pdf`.replace(
+      `${title}_${data?.dominio || ''}-(${format(new Date(data?.fecha as string), 'dd-MM-yyyy') ? format(new Date(data?.fecha as string), 'dd-MM-yyyy') : ''}).pdf`.replace(
         /\s+/g,
         '_'
       );

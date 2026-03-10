@@ -28,7 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { startOfMonth, endOfMonth } from 'date-fns';
-import moment, { Moment } from 'moment';
+import { format as formatDateFns, startOfDay } from 'date-fns';
 import InfoComponent from '../InfoComponent';
 import { useRouter } from 'next/navigation';
 interface DailyReportItem {
@@ -84,9 +84,9 @@ export default function ViewDailysReports() {
   // });
   const filteredReports = dailyReports.filter((report: any) => {
     
-    const reportDate = moment(report.date).startOf('day');
-    const matchesDateRange = (!startDate || reportDate.isSameOrAfter(moment(startDate).startOf('day'))) &&
-      (!endDate || reportDate.isSameOrBefore(moment(endDate).startOf('day')));
+    const reportDate = startOfDay(new Date(report.date));
+    const matchesDateRange = (!startDate || reportDate >= startOfDay(startDate)) &&
+      (!endDate || reportDate <= startOfDay(endDate));
     const matchesStatus = statusFilter === 'todos' || (statusFilter === 'abierto' && report.status) || (statusFilter === 'cerrado' && !report.status);
     return matchesDateRange && matchesStatus;
   });
@@ -355,7 +355,7 @@ const [allReport, setAllreport] = useState<DailyReportData[]>([]);
             <TableBody>
               {currentReports.map((report) => (
                 <TableRow key={report.id}>
-                  <TableCell>{moment(report.date).format("DD/MM/YYYY")}</TableCell>
+                  <TableCell>{formatDateFns(new Date(report.date), 'dd/MM/yyyy')}</TableCell>
                   <TableCell>
                     <Select
                       value={report.status ? 'true' : 'false'}
@@ -400,7 +400,7 @@ const [allReport, setAllreport] = useState<DailyReportData[]>([]);
           <DialogHeader>
             <DialogTitle>Parte Diario</DialogTitle>
             <DialogDescription className="flex items-center space-x-4">
-  <span>Fecha: {selectedReport?.date ? moment(selectedReport.date).format('DD/MM/YYYY') : ''}</span>
+  <span>Fecha: {selectedReport?.date ? formatDateFns(new Date(selectedReport.date), 'dd/MM/yyyy') : ''}</span>
   <div className="grid grid-cols-3 y gap-4 w-full">
     <div className="col-span-1 flex">
       <InfoComponent

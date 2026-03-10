@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ColumnDef } from '@tanstack/react-table';
 import { ClipboardList } from 'lucide-react';
-import moment from 'moment';
+import { format } from 'date-fns';
 import { frecuencias } from './data';
 import { DataTableColumnHeader } from './data-table-column-header';
 
@@ -91,7 +91,7 @@ export const checkListColumns: ColumnDef<{
     cell: ({ row }) => {
       return (
         <div className="flex items-center">
-          <span>{moment(row.getValue('Creación')).format('DD/MM/YYYY')}</span>
+          <span>{format(new Date(row.getValue('Creación')), 'dd/MM/yyyy')}</span>
         </div>
       );
     },

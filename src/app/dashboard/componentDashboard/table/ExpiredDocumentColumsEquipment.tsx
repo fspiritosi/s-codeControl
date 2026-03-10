@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { ExclamationTriangleIcon, PersonIcon } from '@radix-ui/react-icons';
 import { ColumnDef } from '@tanstack/react-table';
-import moment from 'moment';
+import { format, differenceInDays } from 'date-fns';
 import Link from 'next/link';
 import { useState } from 'react';
 import { DataTableOptions } from './data-table-options';
@@ -75,9 +75,9 @@ export const ExpiredDocumentColumsEquipment: ColumnDef<Colum>[] = [
     id: 'Vencimiento',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Vencimiento" />,
     cell: ({ row }) => {
-      const expirationDate = moment(row.getValue('Vencimiento'));
-      const currentDate = moment();
-      const daysDifference = expirationDate.diff(currentDate, 'days');
+      const expirationDate = new Date(row.getValue('Vencimiento'));
+      const currentDate = new Date();
+      const daysDifference = differenceInDays(expirationDate, currentDate);
 
       let iconColor = '';
 
@@ -91,7 +91,7 @@ export const ExpiredDocumentColumsEquipment: ColumnDef<Colum>[] = [
         <div className="flex gap-2 items-center">
           {' '}
           {iconColor && <ExclamationTriangleIcon style={{ color: iconColor }} />}
-          {expirationDate.format('DD/MM/YYYY')}
+          {format(expirationDate, 'dd/MM/yyyy')}
         </div>
       );
     },
@@ -103,7 +103,7 @@ export const ExpiredDocumentColumsEquipment: ColumnDef<Colum>[] = [
     accessorKey: 'created_at',
     id: 'Subido el',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Subido el" />,
-    cell: ({ row }) => <div>{moment(row.getValue('Subido el')).format('DD/MM/YYYY')}</div>,
+    cell: ({ row }) => <div>{format(new Date(row.getValue('Subido el')), 'dd/MM/yyyy')}</div>,
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },

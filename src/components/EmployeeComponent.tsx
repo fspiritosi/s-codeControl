@@ -60,7 +60,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import moment from 'moment';
+import { parse as dateFnsParse } from 'date-fns';
 
 type Province = {
   id: number;
@@ -1016,7 +1016,7 @@ export default function EmployeeComponent({
                                         )}
                                       >
                                         {field.value ? (
-                                          moment(field.value, 'YYYY-MM-DD').format('DD/MM/YYYY')
+                                          format(dateFnsParse(String(field.value), 'yyyy-MM-dd', new Date()), 'dd/MM/yyyy')
                                         ) : (
                                           <span>Elegir fecha</span>
                                         )}
@@ -1063,7 +1063,7 @@ export default function EmployeeComponent({
                                       // selected={new Date(field.value) || today}
                                       selected={
                                         field.value
-                                          ? moment(field.value, 'YYYY-MM-DD').toDate() // esto mantiene la fecha tal cual sin shift
+                                          ? dateFnsParse(String(field.value), 'yyyy-MM-dd', new Date()) // esto mantiene la fecha tal cual sin shift
                                           : today
                                       }
                                       onSelect={(e) => {
@@ -1302,7 +1302,7 @@ export default function EmployeeComponent({
                                           <span>Elegir fecha</span>
                                         )} */}
                                         {field.value ? (
-                                          moment(field.value, 'YYYY-MM-DD').format('DD/MM/YYYY')
+                                          format(dateFnsParse(String(field.value), 'yyyy-MM-dd', new Date()), 'dd/MM/yyyy')
                                         ) : (
                                           <span>Elegir fecha</span>
                                         )}
@@ -1349,7 +1349,7 @@ export default function EmployeeComponent({
                                       // selected={new Date(field.value) || today}
                                       selected={
                                         field.value
-                                          ? moment(field.value, 'YYYY-MM-DD').toDate() // esto mantiene la fecha tal cual sin shift
+                                          ? dateFnsParse(String(field.value), 'yyyy-MM-dd', new Date()) // esto mantiene la fecha tal cual sin shift
                                           : today
                                       }
                                       onSelect={(e) => {

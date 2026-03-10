@@ -25,7 +25,7 @@ import MultiSelect from './MultiSelect';
 import { storage } from '@/lib/storage';
 import { dailyReportSchema } from '@/zodSchemas/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
-import moment from 'moment';
+import { format, isAfter } from 'date-fns';
 import { Card, CardDescription } from '../ui/card';
 import GenericDialog from './GenericDialog';
 // import { cn } from '@/lib/utils'
@@ -364,9 +364,9 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
   useEffect(() => {
     // Filtrar servicios válidos en la fecha del parte diario
     const validServices = services.filter((service) => {
-      const serviceStartDate = moment(service.service_start).toDate();
-      const serviceValidityDate = moment(service.service_validity).toDate();
-      const reportDate = moment(reportData?.date).toDate();
+      const serviceStartDate = new Date(service.service_start);
+      const serviceValidityDate = new Date(service.service_validity);
+      const reportDate = new Date(reportData?.date as string);
 
       return service.is_active && reportDate >= serviceStartDate && reportDate <= serviceValidityDate;
     });
@@ -967,7 +967,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
       const currentReport = dailyReport.find((report: DailyReportItem) => report.id === editingId);
 
       if (currentReport) {
-        const futureReports = allReport?.filter((report) => moment(report.date).isAfter(moment(currentReport?.date)));
+        const futureReports = allReport?.filter((report) => isAfter(new Date(report.date), new Date(currentReport?.date)));
 
         setFutureReports(futureReports as any);
         setSelectedReport(currentReport as any);
@@ -1352,7 +1352,7 @@ export default function DailyReport({ reportData, allReport }: DailyReportProps)
                                     <SelectGroup>
                                       {futureReports.map((futureReport) => (
                                         <SelectItem key={futureReport.id} value={futureReport.id}>
-                                          {moment(futureReport.date).format('DD/MM/YYYY')}
+                                          {format(new Date(futureReport.date), 'dd/MM/yyyy')}
                                         </SelectItem>
                                       ))}
                                     </SelectGroup>

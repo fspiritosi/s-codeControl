@@ -13,7 +13,7 @@ import {
 } from '@radix-ui/react-icons';
 import { Table } from '@tanstack/react-table';
 import { useState, useEffect } from 'react';
-import moment from 'moment';
+import { format } from 'date-fns';
 import { DatePicker } from '@/components/DailyReport/DatePicker';
 
 interface DataTableToolbarProps<TData> {
@@ -107,8 +107,8 @@ export function DataTableToolbarDetailReport<TData>({
 
   const handleDateChange = () => {
     if (startDate && endDate) {
-      const formattedStartDate = moment(startDate).format('DD/MM/YYYY');
-      const formattedEndDate = moment(endDate).format('DD/MM/YYYY');
+      const formattedStartDate = format(startDate, 'dd/MM/yyyy');
+      const formattedEndDate = format(endDate, 'dd/MM/yyyy');
       table.getColumn('Fecha')?.setFilterValue([formattedStartDate, formattedEndDate]);
     }
   };

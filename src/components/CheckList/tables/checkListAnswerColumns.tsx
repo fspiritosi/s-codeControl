@@ -4,7 +4,7 @@ import { PDFPreviewDialog } from '@/components/pdf-preview-dialog';
 import { TransporteSPANAYCHKHYS04 } from '@/components/pdf/generators/TransporteSPANAYCHKHYS04';
 import { PersonIcon } from '@radix-ui/react-icons';
 import { ColumnDef } from '@tanstack/react-table';
-import moment from 'moment';
+import { format } from 'date-fns';
 import { DataTableColumnHeader } from './data-table-column-header';
 
 export const checkListAnswerColumns: ColumnDef<{
@@ -67,7 +67,7 @@ export const checkListAnswerColumns: ColumnDef<{
     cell: ({ row }) => {
       return (
         <div className="flex items-center">
-          <span>{moment(row.getValue('Fecha')).format('DD/MM/YYYY')}</span>
+          <span>{format(new Date(row.getValue('Fecha')), 'dd/MM/yyyy')}</span>
         </div>
       );
     },

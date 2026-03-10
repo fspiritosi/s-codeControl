@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { supabaseServer } from '@/lib/supabase/server';
 import { getActionContext } from '@/lib/server-action-context';
 import { getActualRole } from '@/lib/utils';
-import moment from 'moment';
+import { startOfDay, endOfDay, addMonths } from 'date-fns';
 
 // Document-related queries
 
@@ -47,8 +47,8 @@ export const getNextMonthExpiringDocumentsEmployees = async () => {
   const { companyId } = await getActionContext();
   if (!companyId) return [];
 
-  const today = moment().startOf('day');
-  const nextMonth = moment().add(1, 'month').endOf('day');
+  const today = startOfDay(new Date());
+  const nextMonth = endOfDay(addMonths(new Date(), 1));
 
   try {
     const data = await prisma.documents_employees.findMany({
@@ -98,8 +98,8 @@ export const getNextMonthExpiringDocumentsVehicles = async () => {
   const { companyId } = await getActionContext();
   if (!companyId) return [];
 
-  const today = moment().startOf('day');
-  const nextMonth = moment().add(1, 'month').endOf('day');
+  const today = startOfDay(new Date());
+  const nextMonth = endOfDay(addMonths(new Date(), 1));
 
   try {
     const data = await prisma.documents_equipment.findMany({

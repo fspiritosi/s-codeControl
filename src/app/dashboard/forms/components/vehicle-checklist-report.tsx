@@ -1,9 +1,8 @@
 'use client';
 
-import { format } from 'date-fns';
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, addDays, addWeeks, isSameDay, isWithinInterval } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { CalendarIcon, CheckCircle2, Clock, FileDown, Truck } from 'lucide-react';
-import moment from 'moment';
-import 'moment/locale/es';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +15,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { es } from 'date-fns/locale';
 import BtnXlsDownload from '@/components/BtnXlsDownload';
 
 interface VehicleChecklistReportProps {
@@ -26,7 +24,7 @@ interface VehicleChecklistReportProps {
 }
 
 export function VehicleChecklistReport({ checklists, vehicles }: VehicleChecklistReportProps) {
-  moment.locale('es'); // Configurar español globalmente
+  // date-fns uses locale per-call via { locale: es }
   const [selectedForm, setSelectedForm] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState<{
@@ -59,12 +57,16 @@ export function VehicleChecklistReport({ checklists, vehicles }: VehicleChecklis
   // Función para generar fechas en el rango según la frecuencia
   const generateDatesInRange = (startDate: Date, endDate: Date, frequency: 'daily' | 'weekly') => {
     const dates: Date[] = [];
-    let currentDate = moment(startDate).startOf(frequency === 'weekly' ? 'isoWeek' : 'day');
-    const lastDate = moment(endDate).endOf(frequency === 'weekly' ? 'isoWeek' : 'day');
+    let currentDate = frequency === 'weekly'
+      ? startOfWeek(startDate, { weekStartsOn: 1 })
+      : startOfDay(startDate);
+    const lastDate = frequency === 'weekly'
+      ? endOfWeek(endDate, { weekStartsOn: 1 })
+      : endOfDay(endDate);
 
     while (currentDate <= lastDate) {
-      dates.push(currentDate.toDate());
-      currentDate = frequency === 'daily' ? currentDate.add(1, 'days') : currentDate.add(1, 'weeks');
+      dates.push(currentDate);
+      currentDate = frequency === 'daily' ? addDays(currentDate, 1) : addWeeks(currentDate, 1);
     }
     return dates;
   };
@@ -84,23 +86,22 @@ export function VehicleChecklistReport({ checklists, vehicles }: VehicleChecklis
     frequency: 'daily' | 'weekly'
   ) => {
     if (frequency === 'daily') {
-      const dateStr = moment(date).format('YYYY-MM-DD');
       return responses.find((checklist) =>
         checklist.form_answers.some((answer) => {
-          const answerDate = moment((answer.answer as { fecha: string }).fecha);
+          const answerDate = new Date((answer.answer as { fecha: string }).fecha);
           const answerDomain = (answer.answer as { dominio: string }).dominio;
-          return answerDomain === vehicle.domain && answerDate.isSame(dateStr, 'day');
+          return answerDomain === vehicle.domain && isSameDay(answerDate, date);
         })
       );
     } else {
-      const weekStart = moment(date).startOf('isoWeek');
-      const weekEnd = moment(date).endOf('isoWeek');
+      const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
 
       return responses.find((checklist) =>
         checklist.form_answers.some((answer) => {
-          const answerDate = moment((answer.answer as { fecha: string }).fecha);
+          const answerDate = new Date((answer.answer as { fecha: string }).fecha);
           const answerDomain = (answer.answer as { dominio: string }).dominio;
-          return answerDomain === vehicle.domain && answerDate.isBetween(weekStart, weekEnd, 'day', '[]');
+          return answerDomain === vehicle.domain && isWithinInterval(answerDate, { start: weekStart, end: weekEnd });
         })
       );
     }
@@ -109,11 +110,11 @@ export function VehicleChecklistReport({ checklists, vehicles }: VehicleChecklis
   // Función para formatear la fecha según la frecuencia
   const formatPeriodDate = (date: Date, frequency: 'daily' | 'weekly') => {
     if (frequency === 'daily') {
-      return moment(date).format('YYYY-MM-DD');
+      return format(date, 'yyyy-MM-dd');
     } else {
-      const weekStart = moment(date).startOf('isoWeek');
-      const weekEnd = moment(date).endOf('isoWeek');
-      return `${weekStart.format('D')}-${weekEnd.format('D')} ${weekStart.format('MMM')} ${weekStart.format('YYYY')}`;
+      const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
+      return `${format(weekStart, 'd')}-${format(weekEnd, 'd')} ${format(weekStart, 'MMM', { locale: es })} ${format(weekStart, 'yyyy')}`;
     }
   };
 
@@ -151,7 +152,7 @@ export function VehicleChecklistReport({ checklists, vehicles }: VehicleChecklis
           (filterOption === 'pending' && !hasResponse)
         ) {
           reportData.push({
-            id: `${vehicle.id}-${moment(date).format('YYYY-MM-DD')}`,
+            id: `${vehicle.id}-${format(date, 'yyyy-MM-dd')}`,
             fecha: formatPeriodDate(date, frequency),
             dominio: vehicle.domain,
             kilometraje: vehicle.kilometer || 'N/A',
@@ -272,7 +273,7 @@ export function VehicleChecklistReport({ checklists, vehicles }: VehicleChecklis
             <div className="flex items-center gap-2">
               <BtnXlsDownload
                 dataToDownload={filteredData}
-                nameFile={`reporte_checklist_${moment().format('YYYY-MM-DD')}`}
+                nameFile={`reporte_checklist_${format(new Date(), 'yyyy-MM-dd')}`}
                 fn={(data: any) =>
                   data.map((item: any) => ({
                     Fecha: item.fecha,

@@ -1,6 +1,6 @@
 'use strict';
 import { clsx, type ClassValue } from 'clsx';
-import moment from 'moment';
+import { format } from 'date-fns';
 import { twMerge } from 'tailwind-merge';
 import { supabaseBrowser } from './supabase/browser';
 import { supabaseServer } from './supabase/server';
@@ -282,7 +282,7 @@ export const getOpenRepairsSolicitudesByArrayClientSide = async (
 
 export const formatEmployeeDocuments = (doc: EmployeeDocumentWithContractors) => {
   return {
-    date: moment(doc.created_at).format('DD/MM/YYYY'),
+    date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
     allocated_to: doc.applies?.contractor_employee?.map((doc: any) => doc.contractors?.name).join(', '),
     documentName: doc.id_document_types?.name,
     state: doc.state,
@@ -308,7 +308,7 @@ export const formatEmployeeDocuments = (doc: EmployeeDocumentWithContractors) =>
 
 export const formatVehiculesDocuments = (doc: EquipmentDocumentDetailed) => {
   return {
-    date: moment(doc.created_at).format('DD/MM/YYYY'),
+    date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
     allocated_to: doc.applies?.type_of_vehicle?.name,
     documentName: doc.id_document_types?.name,
     state: doc.state,

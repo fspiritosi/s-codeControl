@@ -13,7 +13,7 @@ import { useLoggedUserStore } from '@/store/loggedUser';
 import { CalendarIcon, InfoCircledIcon } from '@radix-ui/react-icons';
 import { addMonths, format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import moment from 'moment';
+// date-fns format is already imported above
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -99,7 +99,7 @@ export default function UpdateDocuments({
             newDocumentName = name.replace(versionRegex, `(v${newVersion})`) + `.${newExtension}`;
           }
         } else if (dateRegex.test(documentName)) {
-          const newDate = moment(filename.validity).format('DD-MM-YYYY');
+          const newDate = format(new Date(filename.validity as string), 'dd-MM-yyyy');
           newDocumentName = documentName.replace(dateRegex, `(${newDate})` + `.${newExtension}`);
         } else if (periodRegex.test(documentName)) {
           const newPeriod = filename.period;

@@ -3,7 +3,7 @@
 import { DataTableColumnHeader } from '@/components/CheckList/tables/data-table-column-header';
 // import { Button } from '@/components/ui/button';
 import { ColumnDef } from '@tanstack/react-table';
-import moment from 'moment';
+import { format, parse, isWithinInterval } from 'date-fns';
 // import { DailyReportItem } from '../DailyReport';
 // import { FilePenLine, Trash2 } from 'lucide-react';
 // import  UploadDocument  from '@/components/DailyReport/UploadDocument';
@@ -31,15 +31,15 @@ ColumnDef<any>[] =
     cell: ({ row }) => {
       return (
         <div className="flex items-center">
-          <span>{moment(row.getValue('Fecha')).format('DD/MM/YYYY')}</span>
+          <span>{format(new Date(row.getValue('Fecha')), 'dd/MM/yyyy')}</span>
         </div>
       );
     },
     filterFn: (row, id, value) => {
-      const rowDate = moment(row.getValue(id), 'DD/MM/YYYY');
-      const startDate = moment(value[0], 'DD/MM/YYYY');
-      const endDate = moment(value[1], 'DD/MM/YYYY');
-      return rowDate.isBetween(startDate, endDate, undefined, '[]');
+      const rowDate = parse(format(new Date(row.getValue(id)), 'dd/MM/yyyy'), 'dd/MM/yyyy', new Date());
+      const startDate = parse(value[0], 'dd/MM/yyyy', new Date());
+      const endDate = parse(value[1], 'dd/MM/yyyy', new Date());
+      return isWithinInterval(rowDate, { start: startDate, end: endDate });
     },
   },
   {
@@ -116,7 +116,7 @@ ColumnDef<any>[] =
     cell: ({ row }) => {
       return (
         <div className="flex items-center">
-          <span>{moment(row.getValue('Hora inicio')).format('DD/MM/YYYY')}</span>
+          <span>{format(new Date(row.getValue('Hora inicio')), 'dd/MM/yyyy')}</span>
         </div>
       );
     },
@@ -131,7 +131,7 @@ ColumnDef<any>[] =
     cell: ({ row }) => {
       return (
         <div className="flex items-center">
-          <span>{moment(row.getValue('Hora fin')).format('DD/MM/YYYY')}</span>
+          <span>{format(new Date(row.getValue('Hora fin')), 'dd/MM/yyyy')}</span>
         </div>
       );
     },

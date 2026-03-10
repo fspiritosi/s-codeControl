@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { CardTitle } from '@/components/ui/card';
 import { FormattedSolicitudesRepair } from '@/types/types';
 import { ColumnDef } from '@tanstack/react-table';
-import moment from 'moment';
+import { format } from 'date-fns';
 import { criticidad, labels, statuses } from '../data';
 import RepairModal from './RepairModal';
 import { DataTableColumnHeader } from './data-table-column-header';
@@ -122,7 +122,7 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
     accessorKey: 'fecha',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Fecha" />,
     cell: ({ row }) => {
-      return <div className="flex items-center">{moment(row.original.created_at).format('DD/MM/YYYY')}</div>;
+      return <div className="flex items-center">{format(new Date(row.original.created_at), 'dd/MM/yyyy')}</div>;
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));

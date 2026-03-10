@@ -10,7 +10,7 @@ import { Download, ArrowLeft } from 'lucide-react'
 import cookies from 'js-cookie'
 import UploadDocument from './UploadDocument'
 import InfoComponent from '../InfoComponent'
-import moment from 'moment'
+import { format } from 'date-fns'
 
 interface DailyReportItem {
     id: string
@@ -159,7 +159,7 @@ export default function DocumentView({ documentUrl, row, rowId, customerName, co
                                 <h3 className="text-lg text-center font-semibold">Operaciones</h3>
                                 <div className="space-y-2 ml-4 mb-4 gap-2">
                                     <p><strong>N° de Remito:</strong> {documentUrl.substring(documentUrl.lastIndexOf('-') + 1, documentUrl.lastIndexOf('.'))}</p>
-                                    <p><strong>Fecha:</strong> {row?.date ? moment(row.date).format('DD/MM/YYYY') : 'N/A'}</p>
+                                    <p><strong>Fecha:</strong> {row?.date ? format(new Date(row.date), 'dd/MM/yyyy') : 'N/A'}</p>
                                     <p><strong>Cliente:</strong> {decodedCustomerName}</p>
                                     <p><strong>Servicio:</strong> {decodedServiceName}</p>
                                     <p><strong>Item:</strong> {itemName}</p>

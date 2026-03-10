@@ -12,7 +12,7 @@ import { storageServer } from '@/lib/storage-server';
 import { cn } from '@/lib/utils';
 import { formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
-import moment from 'moment';
+import { format as formatDateFn } from 'date-fns';
 import { Suspense } from 'react';
 import DownloadButton from '../documentComponents/DownloadButton';
 import { getRole } from '@/lib/utils/getRole';
@@ -499,7 +499,7 @@ export default async function page({
                           <TableCell>
                             <CardDescription>
                               {documents_employees?.[0]?.document_types?.explired
-                                ? 'Vence el ' + moment(documents_employees?.[0]?.validity).format('DD/MM/YYYY')
+                                ? 'Vence el ' + formatDateFn(new Date(documents_employees?.[0]?.validity), 'dd/MM/yyyy')
                                 : 'No tiene vencimiento'}
                             </CardDescription>
                           </TableCell>

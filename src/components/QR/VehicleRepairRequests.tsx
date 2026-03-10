@@ -14,7 +14,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RepairsSolicituds } from '@/types/types';
-import moment from 'moment';
+import { format, parse } from 'date-fns';
 import Image from 'next/image';
 import { useState } from 'react';
 import { FiArrowLeft } from 'react-icons/fi';
@@ -80,7 +80,7 @@ export default function VehicleRepairRequests({
                   </div>
                   <div>
                     <strong>Fecha:</strong>{' '}
-                    {moment(request.created_at, 'YYYY-MM-DD').format('DD/MM/YYYY')}
+                    {format(new Date(request.created_at), 'dd/MM/yyyy')}
                   </div>
                   <div>
                     <strong>Estado de la solicitud:</strong> <Badge variant={'outline'}>{request.state}</Badge>

@@ -3,7 +3,7 @@
 import { DataTableColumnHeader } from '@/components/CheckList/tables/data-table-column-header';
 import { Badge } from '@/components/ui/badge';
 import { ColumnDef } from '@tanstack/react-table';
-import moment from 'moment';
+import { format } from 'date-fns';
 
 type Colum = {
   id: string;
@@ -26,7 +26,7 @@ export const DetailDiagramColums: ColumnDef<Colum>[] = [
     id: 'Fecha',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Fecha" />,
     cell: ({ row }) => {
-      return moment(row.original.created_at).format('DD/MM/YYYY');
+      return format(new Date(row.original.created_at), 'dd/MM/yyyy');
     },
     enableHiding: false,
     filterFn: (row, id, value) => {

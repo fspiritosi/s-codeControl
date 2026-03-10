@@ -5,7 +5,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/comp
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { zodResolver } from '@hookform/resolvers/zod';
-import moment from 'moment';
+import { getDate, getMonth, getYear, addDays, isBefore, isEqual } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -90,17 +90,17 @@ function DiagramFormUpdated({
     const employeeDiagrams = diagrams.filter((diagram) => diagram.employee_id?.id === employee_id);
 
     // Generar todas las fechas entre dateRange.from y dateRange.to
-    const startDate = moment(dateRange.from);
-    const endDate = moment(dateRange.to);
+    let currentDate = new Date(dateRange.from);
+    const endDate = new Date(dateRange.to);
     const dates = [];
 
-    while (startDate.isSameOrBefore(endDate)) {
+    while (isBefore(currentDate, endDate) || isEqual(currentDate, endDate)) {
       dates.push({
-        day: startDate.date(),
-        month: startDate.month() + 1, // Los meses en moment.js son 0-indexed
-        year: startDate.year(),
+        day: getDate(currentDate),
+        month: getMonth(currentDate) + 1, // Los meses en date-fns son 0-indexed
+        year: getYear(currentDate),
       });
-      startDate.add(1, 'day');
+      currentDate = addDays(currentDate, 1);
     }
 
     // Consultar diagramas existentes y agruparlos
@@ -284,17 +284,17 @@ function DiagramFormUpdated({
       const employeeDiagrams = diagrams.filter((diagram) => diagram.employee_id?.id === employee_id);
 
       // Generar todas las fechas entre dateRange.from y dateRange.to
-      const startDate = moment(dateRange?.from);
-      const endDate = moment(dateRange.to);
+      let currentDate = new Date(dateRange?.from);
+      const endDate = new Date(dateRange.to);
       const dates = [];
 
-      while (startDate.isSameOrBefore(endDate)) {
+      while (isBefore(currentDate, endDate) || isEqual(currentDate, endDate)) {
         dates.push({
-          day: startDate.date(),
-          month: startDate.month() + 1, // Los meses en moment.js son 0-indexed
-          year: startDate.year(),
+          day: getDate(currentDate),
+          month: getMonth(currentDate) + 1, // Los meses en date-fns son 0-indexed
+          year: getYear(currentDate),
         });
-        startDate.add(1, 'day');
+        currentDate = addDays(currentDate, 1);
       }
 
       // Consultar diagramas existentes y agruparlos

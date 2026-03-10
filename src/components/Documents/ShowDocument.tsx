@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
-import moment from 'moment';
+import { format as formatDateFn } from 'date-fns';
 import { Suspense } from 'react';
 
 type EntityType = 'employee' | 'equipment';
@@ -396,7 +396,7 @@ function ShowDocument({
                               <span className="font-bold">Fecha de alta:</span>{' '}
                               {companyDateField &&
                                 (entityType === 'employee'
-                                  ? moment(companyDateField).format('DD/MM/YYYY')
+                                  ? formatDateFn(new Date(companyDateField), 'dd/MM/yyyy')
                                   : formatDate(companyDateField, 'dd/MM/yyyy', { locale: es }))}
                             </CardDescription>
                           </TableCell>
@@ -472,8 +472,8 @@ function ShowDocument({
                             <CardDescription>
                               {doc?.id_document_types?.explired
                                 ? resource === 'company'
-                                  ? `Vence el ${moment(doc?.validity).format('DD/MM/YYYY')}`
-                                  : `Vence el ${moment(doc?.validity).format('DD/MM/YYYY')}`
+                                  ? `Vence el ${formatDateFn(new Date(doc?.validity as string), 'dd/MM/yyyy')}`
+                                  : `Vence el ${formatDateFn(new Date(doc?.validity as string), 'dd/MM/yyyy')}`
                                 : 'No tiene vencimiento'}
                             </CardDescription>
                           </TableCell>

@@ -7,7 +7,7 @@ import { BaseDataTable } from '@/shared/components/data-table/base/data-table';
 import { DataTableColumnHeader } from '@/shared/components/data-table/base/data-table-column-header';
 import { createFilterOptions } from '@/shared/components/utils/utils';
 import { ColumnDef } from '@tanstack/react-table';
-import moment from 'moment';
+import { format } from 'date-fns';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { fetchTrainingById } from '../actions/actions';
@@ -80,7 +80,7 @@ export function getAreaColums(handleEdit: (email: string) => Promise<void>): Col
       header: ({ column }) => <DataTableColumnHeader column={column} title="Fecha" />,
       cell: ({ row }) => {
         const date = row.original.lastAttempt?.date;
-        return date ? moment(date).format('DD/MM/YYYY') : 'N/A';
+        return date ? format(new Date(date), 'dd/MM/yyyy') : 'N/A';
       },
       filterFn: (row, id, value) => {
         return value.includes(row.getValue(id));

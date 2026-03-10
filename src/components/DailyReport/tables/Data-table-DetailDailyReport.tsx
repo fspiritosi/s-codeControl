@@ -26,7 +26,7 @@ import { getCustomerName, getServiceName, getItemName, getEmployeeNames, getEqui
 import { Badge } from '@/components/ui/badge';
 import { se } from 'date-fns/locale';
 import { serialize } from 'v8';
-import moment from 'moment';
+// date-fns imported where needed
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];

@@ -6,7 +6,7 @@ import { detailColumns } from '@/components/DailyReport/tables/DetailReportColum
 import { DatePicker } from '@/components/DailyReport/DatePicker';
 // import { cookies } from 'next/headers';
 import  cookies  from 'js-cookie';
-import moment from 'moment';
+import { parseISO } from 'date-fns';
 
 export default function DailyReportDetail() {
   // Estado para las fechas con posibilidad de `undefined`
@@ -29,7 +29,7 @@ export default function DailyReportDetail() {
       const data = await response.json();
 
       const formattedData = data.dailyreportrows?.map((row: any) => ({
-        date: moment(row.daily_report_id?.date).toDate(),
+        date: new Date(row.daily_report_id?.date),
         customer_name: row.customer_id.name,
         service_name: row.service_id.service_name,
         working_day: row.working_day,
