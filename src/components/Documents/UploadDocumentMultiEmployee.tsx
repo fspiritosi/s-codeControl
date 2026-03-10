@@ -141,7 +141,7 @@ function UploadDocumentMultiEmployee({
                                   selectedValue,
                                   documentType.company_id ?? ''
                                 );
-                                setSelectedResourceDocuments(data);
+                                setSelectedResourceDocuments(data as any);
                                 form.setValue('id_document_types', documentType.id);
                                 setSelectedDocumentType(documentType);
                                 form.setValue('validity', undefined);

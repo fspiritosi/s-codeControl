@@ -192,7 +192,7 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
         try {
           const applies = await createEmployee(finalValues);
           const documentsMissing: {
-            applies: number;
+            applies: string;
             id_document_types: string;
             validity: string | null;
             user_id: string | undefined;
@@ -200,7 +200,7 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
 
           mandatoryDocuments?.Persona?.forEach(async (document: any) => {
             documentsMissing.push({
-              applies: applies[0].id,
+              applies: applies?.[0]?.id ?? '',
               id_document_types: document.id,
               validity: null,
               user_id: loggedUser,

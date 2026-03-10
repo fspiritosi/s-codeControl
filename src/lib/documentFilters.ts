@@ -1,4 +1,7 @@
-import { supabaseBrowser } from './supabase/browser';
+import {
+  filterEmployeesByConditions,
+  filterVehiclesByConditions,
+} from '@/app/server/GET/actions';
 
 export type RpcFilter = {
   property: string;
@@ -6,22 +9,12 @@ export type RpcFilter = {
 };
 
 export async function fetchEmployeesWithFilters(companyId: string, filters: RpcFilter[]) {
-  const supabase = supabaseBrowser();
-  const { data, error } = await supabase.rpc('filter_employees_by_conditions', {
-    p_company_id: companyId,
-    p_filters: filters,
-  });
-  if (error) throw error;
+  const data = await filterEmployeesByConditions(companyId, filters);
   return data ?? [];
 }
 
 export async function fetchVehiclesWithFilters(companyId: string, filters: RpcFilter[]) {
-  const supabase = supabaseBrowser();
-  const { data, error } = await supabase.rpc('filter_vehicles_by_conditions', {
-    p_company_id: companyId,
-    p_filters: filters,
-  });
-  if (error) throw error;
+  const data = await filterVehiclesByConditions(companyId, filters);
   return data ?? [];
 }
 

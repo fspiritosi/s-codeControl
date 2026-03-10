@@ -1,7 +1,8 @@
 import { profileUser } from '@/types/types';
 import { User } from '@supabase/supabase-js';
 import { create } from 'zustand';
-import { supabase } from '../../supabase/supabase';
+// TODO: Phase 8+ — Remove supabase import once .auth.getUser() is replaced with NextAuth session
+import { supabaseBrowser } from '@/lib/supabase/browser';
 import { fetchProfileByCredentialId } from '@/app/server/GET/actions';
 
 interface AuthState {
@@ -55,8 +56,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  // Keep supabase for auth operations
+  // TODO: Phase 8+ — Replace with NextAuth session
   loggedUser: async () => {
+    const supabase = supabaseBrowser();
     const {
       data: { user },
     } = await supabase.auth.getUser();

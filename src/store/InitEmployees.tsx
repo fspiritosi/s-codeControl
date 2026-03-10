@@ -1,5 +1,5 @@
 'use client';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { fetchEmployeesForInitStore } from '@/app/server/GET/actions';
 import { useEffect, useRef } from 'react';
 import { useCountriesStore } from './countries';
 import { useCompanyStore } from './companyStore';
@@ -13,32 +13,32 @@ const formattedEmployees = (employees: any) => {
       email: employees?.email,
       cuil: employees?.cuil,
       document_number: employees?.document_number,
-      hierarchical_position: employees?.hierarchical_position?.name,
+      hierarchical_position: employees?.hierarchy_rel?.name || employees?.hierarchical_position?.name,
       company_position: employees?.company_position,
       normal_hours: employees?.normal_hours,
       type_of_contract: employees?.type_of_contract,
-      allocated_to: employees?.contractor_employee?.map(({ contractors }: any) => contractors?.name)?.join(', '),
+      allocated_to: employees?.contractor_employee?.map(({ contractor, customers }: any) => (contractor?.name || customers?.name))?.join(', '),
       picture: employees?.picture,
       nationality: employees?.nationality,
       lastname: employees?.lastname,
       firstname: employees?.firstname,
       document_type: employees?.document_type,
-      birthplace: employees?.birthplace?.name?.trim(),
+      birthplace: (employees?.birthplace_rel?.name || employees?.birthplace?.name)?.trim(),
       gender: employees?.gender,
       marital_status: employees?.marital_status,
       level_of_education: employees?.level_of_education,
       street: employees?.street,
       street_number: employees?.street_number,
-      province: employees?.province?.name?.trim(),
+      province: (employees?.province_rel?.name || employees?.province?.name)?.trim(),
       postal_code: employees?.postal_code,
       phone: employees?.phone,
       file: employees?.file,
       date_of_admission: employees?.date_of_admission,
       affiliate_status: employees?.affiliate_status,
-      city: employees?.city?.name?.trim(),
-      hierrical_position: employees?.hierarchical_position?.name,
-      workflow_diagram: employees?.workflow_diagram?.name,
-      contractor_employee: employees?.contractor_employee?.map(({ contractors }: any) => contractors?.id),
+      city: (employees?.city_rel?.name || employees?.city?.name)?.trim(),
+      hierrical_position: employees?.hierarchy_rel?.name || employees?.hierarchical_position?.name,
+      workflow_diagram: employees?.workflow_diagram_rel?.name || employees?.workflow_diagram?.name,
+      contractor_employee: employees?.contractor_employee?.map(({ contractor, customers }: any) => (contractor?.id || customers?.id)),
       is_active: employees?.is_active,
       reason_for_termination: employees?.reason_for_termination,
       termination_date: employees?.termination_date,
@@ -50,38 +50,11 @@ const formattedEmployees = (employees: any) => {
 };
 
 export default function InitEmployees({ active }: { active: boolean }) {
-  const supabase = supabaseBrowser();
   const initState = useRef(false);
   const actualCompany = useCompanyStore((state) => state.actualCompany);
 
   const fetchEmployees = async () => {
-    let { data, error } = await supabase
-      .from('employees')
-      .select(
-        `*, city (
-              name
-            ),
-            province(
-              name
-            ),
-            workflow_diagram(
-              name
-            ),
-            hierarchical_position(
-              name
-            ),
-            birthplace(
-              name
-            ),
-            contractor_employee(
-              customers(
-                *
-              )
-            )`
-      )
-      .eq('company_id', actualCompany?.id || '')
-      .eq('is_active', active);
-
+    const data = await fetchEmployeesForInitStore(actualCompany?.id || '', active);
     const employees = formattedEmployees(data);
     useEmployeeStore.setState({ employeesToShow: employees });
     useEmployeeStore.setState({ employees: employees });

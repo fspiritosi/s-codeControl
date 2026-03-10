@@ -1,94 +1,77 @@
 'use client';
 import { useLoggedUserStore } from '@/store/loggedUser';
-import { supabase } from '../../supabase/supabase';
 import { company } from './../types/types';
 import { useEdgeFunctions } from './useEdgeFunctions';
-//import { industry } from './../types/types';
+import {
+  fetchAllCompaniesWithRelations,
+  fetchCompaniesByOwnerId,
+  fetchIndustryTypes,
+} from '@/app/server/GET/actions';
+import {
+  insertCompany as insertCompanyAction,
+  updateCompanyById,
+  logicDeleteCompanyById,
+  deleteCompanyById,
+} from '@/app/server/UPDATE/actions';
 
 export const useCompanyData = () => {
   const { errorTranslate } = useEdgeFunctions();
-  //const [industry, setIndustry] = useState<any[]>([])
 
   return {
     fetchAllCompany: async () => {
-      let { data: company, error } = await supabase.from('company').select('*');
-
-      if (error) {
-        const message = await errorTranslate(error?.message);
-        throw new Error(String(message).replaceAll('"', ''));
-      }
-      return company;
+      const data = await fetchAllCompaniesWithRelations();
+      return data;
     },
 
     findByOwner: async (owner: string) => {
-      let { data: company, error } = await supabase.from('company').select('*').eq('owner_id', 'owner');
-
-      if (error) {
-        const message = await errorTranslate(error?.message);
-        throw new Error(String(message).replaceAll('"', ''));
-      }
-      return company;
+      const data = await fetchCompaniesByOwnerId(owner);
+      return data;
     },
     insertCompany: async (company: company) => {
-      const { data, error } = await supabase.from('company').insert(company).select();
+      const { data, error } = await insertCompanyAction(company as any);
 
       if (error) {
-        const message = await errorTranslate(error?.message);
+        const message = await errorTranslate(error);
         throw new Error(String(message).replaceAll('"', ''));
       }
       return data;
     },
 
     updateCompany: async (companyId: string, company: company) => {
-      const { data, error } = await supabase.from('company').update(company).eq('id', companyId).select();
+      const { data, error } = await updateCompanyById(companyId, company as any);
 
       if (error) {
-        const message = await errorTranslate(error.message);
+        const message = await errorTranslate(error);
         throw new Error(String(message).replaceAll('"', ''));
       }
       return data;
     },
     LogicDeleteCompany: async (companyId: string) => {
-      const { data, error } = await supabase
-        .from('company')
-        .update({ is_Active: false }) // Establece is_Active en false para el borrado lógico
-        .eq('id', companyId)
-        .select();
+      const { data, error } = await logicDeleteCompanyById(companyId);
       if (error) {
-        const message = await errorTranslate(error.message);
+        const message = await errorTranslate(error);
         throw new Error(String(message).replaceAll('"', ''));
       }
       return data;
     },
 
     deleteCompany: async (companyId: string) => {
-      const { error } = await supabase.from('company').delete().eq('id', 'companyId');
+      const { error } = await deleteCompanyById(companyId);
 
       if (error) {
-        const message = await errorTranslate(error.message);
+        const message = await errorTranslate(error);
         throw new Error(String(message).replaceAll('"', ''));
       }
     },
 
     fetchIndustryType: async () => {
-      const { data, error } = await supabase.from('industry_type').select('*');
-
-      if (error) {
-        console.error('Error al obtener las industrias:', error);
-      }
-
+      const data = await fetchIndustryTypes();
       return data;
     },
 
     fetchCompanies: async () => {
-      // Obtener las compañías actualizadas de Supabase
-      const { data, error } = await supabase.from('company').select('*, province_id(id, name), city(id, name)');
-      if (error) {
-        console.error('Error al obtener las compañías:', error);
-      } else {
-        // Actualizar el estado global con las nuevas compañías
-        useLoggedUserStore.setState({ allCompanies: data || [] });
-      }
+      const data = await fetchAllCompaniesWithRelations();
+      useLoggedUserStore.setState({ allCompanies: data || [] });
     },
   };
 };

@@ -1,94 +1,36 @@
 import { cookies } from 'next/headers';
-import { supabase } from '../../supabase/supabase';
+import {
+  fetchAllDocumentsEmployeesByCompany,
+  fetchAllDocumentsEquipmentByCompany,
+} from '@/app/server/GET/actions';
+import {
+  fetchAllEmployeesWithRelations,
+} from '@/app/server/GET/actions';
 
 export async function getCompany() {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  const { data } = await supabase.from('profile').select('*').eq('email', session?.user.email);
-
-  const { data: Companies, error } = await supabase.from('company').select(`*`).eq('owner_id', data?.[0]?.id);
-
-  const companiesId = Companies?.filter((company) => company.by_defect === true)[0]?.id;
-
-  return companiesId;
+  // This function is largely unused now since company context comes from cookies.
+  // Keeping for backward compatibility.
+  const cookieStore = await cookies();
+  return cookieStore.get('actualCompanyId')?.value;
 }
 
 export async function getDocumentsEmployees() {
   const cookieStore = await cookies();
   const actualCompany = cookieStore.get('actualCompanyId')?.value;
-  let { data, error } = await supabase
-    .from('documents_employees')
-    .select(
-      `*,
-  employees:employees(*,contractor_employee(
-    customers(
-      *
-    )
-  )),
-  document_types:document_types(*)
-`
-    )
-    .not('employees', 'is', null)
-    .eq('employees.company_id', actualCompany)
-    .eq('employees.is_active', true)
-    .eq('document_types.is_active', true);
-
+  if (!actualCompany) return [];
+  const data = await fetchAllDocumentsEmployeesByCompany(actualCompany);
   return data;
 }
 
 export async function getDocumentsEquipment() {
   const cookieStore = await cookies();
   const actualCompany = cookieStore.get('actualCompanyId')?.value;
-  let { data, error } = await supabase
-    .from('documents_equipment')
-    .select(
-      `*,
-    document_types:document_types(*),
-    applies(*,type(*),type_of_vehicle(*),model(*),brand(*))
-    `
-    )
-    .eq('applies.company_id', actualCompany)
-    .eq('applies.is_active', true)
-    .eq('document_types.is_active', true)
-    .not('applies', 'is', null);
-
+  if (!actualCompany) return [];
+  const data = await fetchAllDocumentsEquipmentByCompany(actualCompany);
   return data;
 }
 
 export async function getEmployees() {
-  const cookieStore = await cookies();
-  const fisrtId = cookieStore.get('actualCompanyId')?.value;
-  const secobndId = await getCompany();
-
-  const actualCompany = cookieStore.get('actualCompanyId')?.value;
-  let { data, error } = await supabase
-    .from('employees')
-    .select(
-      `*, city (
-        name
-      ),
-      province(
-        name
-      ),
-      workflow_diagram(
-        name
-      ),
-      hierarchical_position(
-        name
-      ),
-      birthplace(
-        name
-      ),
-      contractor_employee(
-        customers(
-          *
-        )
-      )`
-    )
-    .eq('company_id', actualCompany)
-    .eq('is_active', true);
-
+  const data = await fetchAllEmployeesWithRelations();
   return data;
 }

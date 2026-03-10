@@ -62,6 +62,7 @@ import {
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { fetchEmployeesWithFilters, fetchVehiclesWithFilters, RpcFilter } from '@/lib/documentFilters';
 import { handleSupabaseError } from '@/lib/errorHandler';
+// TODO: Phase 8+ — Remove supabase import once auth.getUser() is replaced with NextAuth session
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import {
   fetchPendingAlertsByTypeAndApplies,
@@ -926,7 +927,7 @@ export function EditModal({ Equipo }: Props) {
 
         setVehicleCount(filtered.length);
         setPreviewVehicles(filtered);
-        setMatchingVehicles(filtered); // ← Actualizar matchingVehicles con los vehículos filtrados
+        setMatchingVehicles(filtered as any); // ← Actualizar matchingVehicles con los vehículos filtrados
         setIsCalculatingCount(false); // ← Resetear estado de cálculo
         abortControllerRef.current = null;
       }

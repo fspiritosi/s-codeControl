@@ -1,6 +1,11 @@
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { Employee } from '@/types/types';
-import { supabase } from '../../supabase/supabase';
+import {
+  createEmployee as createEmployeeAction,
+  updateEmployeeByDocNumberFull,
+  deleteContractorEmployee,
+  insertContractorEmployee,
+} from '@/app/server/UPDATE/actions';
 import { useEdgeFunctions } from './useEdgeFunctions';
 
 export const useEmployeesData = () => {
@@ -9,13 +14,14 @@ export const useEmployeesData = () => {
 
   return {
     createEmployee: async (employee: Employee) => {
-      const { data, error } = await supabase
-        .from('employees')
-        .insert({ ...employee, company_id: company?.id, allocated_to: employee.allocated_to ?? [] })
-        .select();
+      const { data, error } = await createEmployeeAction({
+        ...employee,
+        company_id: company?.id,
+        allocated_to: employee.allocated_to ?? [],
+      });
 
       if (error) {
-        const message = await errorTranslate(error.message);
+        const message = await errorTranslate(error);
         throw new Error(String(message).replaceAll('"', ''));
       }
       return data;
@@ -26,19 +32,21 @@ export const useEmployeesData = () => {
           return { contractor_id: item, employee_id: id };
         });
 
-        await supabase.from('contractor_employee').delete().eq('employee_id', id);
-
-        const { data, error } = await supabase.from('contractor_employee').insert(allocated_to).select();
+        if (id) {
+          // Delete existing allocations and re-insert
+          for (const alloc of allocated_to) {
+            await deleteContractorEmployee(id, alloc.contractor_id);
+          }
+          for (const alloc of allocated_to) {
+            await insertContractorEmployee(id, alloc.contractor_id);
+          }
+        }
       }
 
-      const { data, error } = await supabase
-        .from('employees')
-        .update(employee)
-        .eq('document_number', employee.document_number)
-        .select();
+      const { data, error } = await updateEmployeeByDocNumberFull(employee.document_number, employee);
 
       if (error) {
-        const message = await errorTranslate(error.message);
+        const message = await errorTranslate(error);
         throw new Error(String(message).replaceAll('"', ''));
       }
       return data;

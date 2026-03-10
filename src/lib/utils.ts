@@ -2,10 +2,17 @@
 import { clsx, type ClassValue } from 'clsx';
 import { format } from 'date-fns';
 import { twMerge } from 'tailwind-merge';
-import { supabaseBrowser } from './supabase/browser';
 import { supabaseServer } from './supabase/server';
 import { storage } from './storage';
 import { formatDocumentTypeName } from './utils/utils';
+import {
+  updateDocumentByAppliesAndType,
+  updateDocumentsByAppliesArrayAndType,
+  insertMultipleDocuments,
+  insertSingleDocumentEmployee,
+  fetchRepairSolicitudesByArrayAndType,
+} from '@/app/server/UPDATE/actions';
+import { fetchDocumentsByDocumentTypeId } from '@/app/server/GET/actions';
 // eslint-disable-next-line react-hooks/rules-of-hooks
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -180,82 +187,57 @@ export const uploadDocument = async (
   tableName: 'documents_equipment' | 'documents_employees',
   multipleResources: boolean
 ) => {
-  const supabase = supabaseBrowser();
   if (mandatory) {
     if (multipleResources) {
-      //Hacer un update de todos los registros donde coincida el algun elemento del array de applies y el valor de id_document_types
       const { applies, ...rest } = dataToUpdate;
-      const { data, error } = await supabase
-        .from(tableName)
-        .update(rest)
-        .in('applies', applies)
-        .eq('id_document_types', dataToUpdate.id_document_types);
+      const { error } = await updateDocumentsByAppliesArrayAndType(
+        tableName,
+        applies,
+        dataToUpdate.id_document_types,
+        rest
+      );
       if (error) {
-        //console.error('error', error);
         return [];
       }
     } else {
       const { applies, ...rest } = dataToUpdate;
-      const { data, error } = await supabase
-        .from(tableName)
-        .update(rest)
-        .eq('applies', applies)
-        .eq('id_document_types', dataToUpdate.id_document_types);
-
+      const { error } = await updateDocumentByAppliesAndType(
+        tableName,
+        applies,
+        dataToUpdate.id_document_types,
+        rest
+      );
       if (error) {
-        //console.error('error', error);
         return [];
       }
     }
-
-    // await uploadDocumentFile(file, dataToUpdate.document_path);
   } else {
-    // Crear el documento
-
     if (multipleResources) {
-      //Insertar un nuevo registro por cada elemento del array de applies sin hacer un bucle, formatear y luego hacer un insert del array de objetos
       const { applies, ...rest } = dataToUpdate;
       const dataToInsert = applies.map((apply: any) => ({
         ...rest,
         applies: apply,
       }));
-      const { data, error } = await supabase.from(tableName).insert(dataToInsert);
+      const { error } = await insertMultipleDocuments(tableName, dataToInsert);
       if (error) {
-        //console.error('error', error);
         return [];
       }
     } else {
-      const { applies, ...rest } = dataToUpdate;
-      const { data, error } = await supabase
-        .from(tableName)
-        .insert({
-          ...dataToUpdate,
-          state: 'presentado',
-        })
-        .select('*');
+      const { error } = await insertSingleDocumentEmployee({
+        ...dataToUpdate,
+        state: 'presentado',
+      });
       if (error) {
-        //console.error('error', error);
         return [];
       }
     }
-    // await uploadDocumentFile(file, dataToUpdate.document_path);
   }
 };
 
 export const getAllDocumentsByIdDocumentTypeCientSide = async (selectedValue: string, company_id: string) => {
   if (!company_id) return [];
-  const supabase = supabaseBrowser();
-  const { data, error } = await supabase
-    .from('documents_employees')
-    .select('*')
-    .eq('id_document_types', selectedValue)
-    .neq('document_path', null);
-
-  if (error) {
-    //console.error('error', error);
-    return [];
-  }
-  return data;
+  const data = await fetchDocumentsByDocumentTypeId(selectedValue);
+  return data ?? [];
 };
 
 export const getOpenRepairsSolicitudesByArrayClientSide = async (
@@ -264,20 +246,12 @@ export const getOpenRepairsSolicitudesByArrayClientSide = async (
   company_id: string
 ) => {
   if (!company_id) return [];
-  const supabase = supabaseBrowser();
-  let { data, error } = await supabase
-    .from('repair_solicitudes')
-    .select('*,equipment_id(*)')
-    .in('equipment_id', vehiclesIds)
-    .eq('reparation_type', repairTypeId)
-    .in('state', ['Pendiente', 'Esperando repuestos', 'En reparación'])
-    .returns<RepairRequestWithVehicle[]>();
-
-  if (error || !data) {
-    //console.error('error', error);
-    return [];
-  }
-  return data;
+  const data = await fetchRepairSolicitudesByArrayAndType(
+    vehiclesIds,
+    repairTypeId,
+    ['Pendiente', 'Esperando repuestos', 'En reparación']
+  );
+  return (data ?? []) as unknown as RepairRequestWithVehicle[];
 };
 
 export const formatEmployeeDocuments = (doc: EmployeeDocumentWithContractors) => {

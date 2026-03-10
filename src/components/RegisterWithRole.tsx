@@ -20,7 +20,8 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { supabase } from '../../supabase/supabase';
+// TODO: Phase 8+ — Remove supabase import once auth.admin.createUser() is replaced with server action
+import { supabaseBrowser } from '@/lib/supabase/browser';
 import {
   fetchRoles,
   fetchProfileByEmail,
@@ -181,6 +182,7 @@ export const RegisterWithRole = () => {
           
           // });
           
+          const supabase = supabaseBrowser();
           const { data, error } = await supabase.auth.admin.createUser({
             email: values.email,
             password: values.password!,

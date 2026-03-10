@@ -1,5 +1,6 @@
 'use client';
 import { Button } from '@/components/ui/button';
+// TODO: Phase 8+ — Remove supabase import once auth calls (.signOut) are replaced
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { setVehiclesToShow } from '@/lib/utils/utils';
 import { RepairsSolicituds, TypeOfRepair } from '@/types/types';

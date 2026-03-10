@@ -1,3 +1,4 @@
+// TODO: Phase 8+ — Remove supabase browser import once all .auth.* calls are migrated
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { login, singUp } from '@/types/types';
 import { useEdgeFunctions } from './useEdgeFunctions';

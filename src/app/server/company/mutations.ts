@@ -293,6 +293,76 @@ export const updateCompanyLogoByCuit = async (cuit: string, logoUrl: string) => 
   }
 };
 
+export const insertCompany = async (company: Record<string, unknown>) => {
+  try {
+    const data = await prisma.company.create({ data: company as any });
+    return { data: [data], error: null };
+  } catch (error) {
+    console.error('Error inserting company:', error);
+    return { data: null, error: String(error) };
+  }
+};
+
+export const updateCompanyById = async (companyId: string, company: Record<string, unknown>) => {
+  try {
+    const data = await prisma.company.update({ where: { id: companyId }, data: company as any });
+    return { data: [data], error: null };
+  } catch (error) {
+    console.error('Error updating company:', error);
+    return { data: null, error: String(error) };
+  }
+};
+
+export const deleteCompanyById = async (companyId: string) => {
+  try {
+    await prisma.company.delete({ where: { id: companyId } });
+    return { error: null };
+  } catch (error) {
+    console.error('Error deleting company:', error);
+    return { error: String(error) };
+  }
+};
+
+export const logicDeleteCompanyById = async (companyId: string) => {
+  try {
+    const data = await prisma.company.update({ where: { id: companyId }, data: { is_active: false } as any });
+    return { data: [data], error: null };
+  } catch (error) {
+    console.error('Error logic deleting company:', error);
+    return { data: null, error: String(error) };
+  }
+};
+
+export const insertProfileServer = async (profileData: Record<string, unknown>) => {
+  try {
+    const data = await prisma.profile.create({ data: profileData as any });
+    return { data: [data], error: null };
+  } catch (error) {
+    console.error('Error inserting profile:', error);
+    return { data: null, error: String(error) };
+  }
+};
+
+export const fetchProfileByEmailServer = async (email: string) => {
+  try {
+    const data = await prisma.profile.findMany({ where: { email } });
+    return data;
+  } catch (error) {
+    console.error('Error fetching profile by email:', error);
+    return [];
+  }
+};
+
+export const logErrorMessage = async (message: string, path: string) => {
+  try {
+    await prisma.handle_errors.create({ data: { menssage: message, path } as any });
+    return { error: null };
+  } catch (error) {
+    console.error('Error logging error message:', error);
+    return { error: String(error) };
+  }
+};
+
 export const fetchCompanyWithRelationsByOwner = async (ownerId: string) => {
   try {
     const data = await prisma.company.findMany({

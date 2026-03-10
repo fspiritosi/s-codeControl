@@ -1,6 +1,6 @@
 "use client"
 
-import { supabaseBrowser } from "./supabase/browser"
+import { storage } from "./storage"
 
 export async function downloadFile(filePath: string, fileName: string) {
   // Verificar si estamos en el navegador
@@ -10,15 +10,7 @@ export async function downloadFile(filePath: string, fileName: string) {
   }
 
   try {
-    const supabase = supabaseBrowser()
-    const { data, error } = await supabase.storage
-      .from('documents-hse')
-      .download(filePath)
-
-    if (error) {
-      console.error('Error al descargar el archivo:', error)
-      throw error
-    }
+    const data = await storage.download('documents-hse', filePath)
 
     const url = window.URL.createObjectURL(new Blob([data]))
     const link = document.createElement('a')
@@ -26,7 +18,7 @@ export async function downloadFile(filePath: string, fileName: string) {
     link.setAttribute('download', fileName)
     document.body.appendChild(link)
     link.click()
-    
+
     // Limpiar después de la descarga
     window.URL.revokeObjectURL(url)
     link.remove()

@@ -1,5 +1,8 @@
 import { profileUser } from '@/types/types';
-import { supabase } from '../../supabase/supabase';
+import {
+  insertProfileServer,
+  fetchProfileByEmailServer,
+} from '@/app/server/UPDATE/actions';
 import { useEdgeFunctions } from './useEdgeFunctions';
 
 export const useProfileData = () => {
@@ -7,28 +10,20 @@ export const useProfileData = () => {
   return {
     insertProfile: async (credentials: profileUser) => {
       const { firstname, lastname, ...rest } = credentials;
-      const { data, error } = await supabase
-        .from('profile')
-        .insert({
-          ...rest,
-          fullname: `${lastname} ${firstname}`,
-        })
-        .select();
+      const { data, error } = await insertProfileServer({
+        ...rest,
+        fullname: `${lastname} ${firstname}`,
+      });
 
       if (error) {
-        const message = await errorTranslate(error.message);
+        const message = await errorTranslate(error);
         throw new Error(String(message).replaceAll('"', ''));
       }
       return data;
     },
     filterByEmail: async (email: string | null) => {
-      const { data, error } = await supabase.from('profile').select('*').eq('email', email);
-
-      if (error) {
-        const message = await errorTranslate(error.message);
-        throw new Error(String(message).replaceAll('"', ''));
-      }
-
+      if (!email) return [];
+      const data = await fetchProfileByEmailServer(email);
       return data;
     },
   };

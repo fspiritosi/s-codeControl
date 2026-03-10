@@ -405,3 +405,32 @@ export const fetchIndustryTypes = async () => {
     return [];
   }
 };
+
+export const fetchAllCompaniesWithRelations = async () => {
+  try {
+    const data = await prisma.company.findMany({
+      include: {
+        province_rel: { select: { id: true, name: true } },
+        city_rel: { select: { id: true, name: true } },
+        companies_employees: true,
+        share_company_users: true,
+      },
+    });
+    return data as any ?? [];
+  } catch (error) {
+    console.error('Error fetching all companies:', error);
+    return [];
+  }
+};
+
+export const fetchCompaniesByOwnerId = async (ownerId: string) => {
+  try {
+    const data = await prisma.company.findMany({
+      where: { owner_id: ownerId },
+    });
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching companies by owner:', error);
+    return [];
+  }
+};

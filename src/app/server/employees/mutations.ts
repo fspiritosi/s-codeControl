@@ -133,6 +133,29 @@ export const resetDocumentEmployeesForReintegration = async (documentIds: string
   }
 };
 
+export const createEmployee = async (employee: Record<string, unknown>) => {
+  try {
+    const data = await prisma.employees.create({ data: employee as any });
+    return { data: [data], error: null };
+  } catch (error) {
+    console.error('Error creating employee:', error);
+    return { data: null, error: String(error) };
+  }
+};
+
+export const updateEmployeeByDocNumberFull = async (documentNumber: string, employee: Record<string, unknown>) => {
+  try {
+    const data = await prisma.employees.updateMany({
+      where: { document_number: documentNumber },
+      data: employee as any,
+    });
+    return { data: [data], error: null };
+  } catch (error) {
+    console.error('Error updating employee:', error);
+    return { data: null, error: String(error) };
+  }
+};
+
 export const updateEmployeeAllocatedTo = async (employeeId: string, allocatedTo: string[]) => {
   try {
     const data = await prisma.employees.update({

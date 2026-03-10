@@ -1,4 +1,4 @@
-import { supabaseBrowser } from './supabase/browser';
+import { logErrorMessage } from '@/app/server/UPDATE/actions';
 
 export function handleSupabaseError(error: string): string {
   const errorMessages: { [code: string]: string } = {
@@ -16,17 +16,15 @@ export function handleSupabaseError(error: string): string {
   };
 
   if (!errorMessages[error]) {
-    //Aqui podemos guardar este error en alguna tabla para poder manejarlo mas adelante
-    const supabase = supabaseBrowser();
-
-    const saveErrorMenssage = async () => {
-      await supabase.from('handle_errors').insert({
-        menssage: error,
-        path: window.location.pathname,
-      });
+    // Save unhandled error to the database for later review
+    const saveErrorMessage = async () => {
+      await logErrorMessage(
+        error,
+        typeof window !== 'undefined' ? window.location.pathname : 'unknown',
+      );
     };
 
-    saveErrorMenssage();
+    saveErrorMessage();
   }
 
   const errorMessage = errorMessages[error] || 'Ha ocurrido un error al procesar la solicitud';

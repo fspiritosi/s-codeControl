@@ -441,3 +441,132 @@ export const fetchAllCustomers = async () => {
     return [];
   }
 };
+
+// Validation queries for schemas (replacing client-side supabase calls)
+
+export const validateEmployeeFileExists = async (legajo: string, companyId?: string) => {
+  const ctx = await getActionContext();
+  const cid = companyId || ctx.companyId;
+  if (!cid) return true; // Allow if no company context
+
+  try {
+    const employee = await prisma.employees.findFirst({
+      where: { company_id: cid, file: legajo },
+    });
+    return !employee; // true = valid (no duplicate), false = duplicate exists
+  } catch (error) {
+    console.error('Error validating employee file:', error);
+    return true;
+  }
+};
+
+export const validateEmployeeFileExistsForUpdate = async (legajo: string, employeeId: string, companyId?: string) => {
+  const ctx = await getActionContext();
+  const cid = companyId || ctx.companyId;
+  if (!cid) return true;
+
+  try {
+    const employee = await prisma.employees.findFirst({
+      where: { company_id: cid, file: legajo, NOT: { id: employeeId } },
+    });
+    return !employee;
+  } catch (error) {
+    console.error('Error validating employee file for update:', error);
+    return true;
+  }
+};
+
+export const validateDuplicatedCompanyCuitServer = async (cuit: string) => {
+  try {
+    const company = await prisma.company.findFirst({
+      where: { company_cuit: cuit },
+    });
+    return !company; // true = valid (no duplicate)
+  } catch (error) {
+    console.error('Error validating company cuit:', error);
+    return true;
+  }
+};
+
+export const validateDuplicatedCuilServer = async (cuil: string, companyId?: string) => {
+  const ctx = await getActionContext();
+  const cid = companyId || ctx.companyId;
+  if (!cid) return true;
+
+  try {
+    const employee = await prisma.employees.findFirst({
+      where: { cuil, company_id: cid },
+    });
+    return !employee;
+  } catch (error) {
+    console.error('Error validating cuil:', error);
+    return true;
+  }
+};
+
+export const validateDuplicatedCuilForUpdateServer = async (cuil: string, employeeId: string, companyId?: string) => {
+  const ctx = await getActionContext();
+  const cid = companyId || ctx.companyId;
+  if (!cid) return true;
+
+  try {
+    const employee = await prisma.employees.findFirst({
+      where: { cuil, company_id: cid, NOT: { id: employeeId } },
+    });
+    return !employee;
+  } catch (error) {
+    console.error('Error validating cuil for update:', error);
+    return true;
+  }
+};
+
+// RPC filter replacements (replacing supabase.rpc calls)
+
+export const filterEmployeesByConditions = async (companyId: string, filters: { property: string; values: string[] }[]) => {
+  try {
+    // Build dynamic where conditions
+    let where: any = { company_id: companyId };
+    for (const filter of filters) {
+      where[filter.property] = { in: filter.values };
+    }
+    const data = await prisma.employees.findMany({ where });
+    return data ?? [];
+  } catch (error) {
+    console.error('Error filtering employees:', error);
+    return [];
+  }
+};
+
+export const filterVehiclesByConditions = async (companyId: string, filters: { property: string; values: string[] }[]) => {
+  try {
+    let where: any = { company_id: companyId };
+    for (const filter of filters) {
+      where[filter.property] = { in: filter.values };
+    }
+    const data = await prisma.vehicles.findMany({ where });
+    return data ?? [];
+  } catch (error) {
+    console.error('Error filtering vehicles:', error);
+    return [];
+  }
+};
+
+export const fetchEmployeesForInitStore = async (companyId: string, active: boolean) => {
+  try {
+    const data = await prisma.employees.findMany({
+      where: { company_id: companyId, is_active: active },
+      include: {
+        city_rel: { select: { name: true } },
+        province_rel: { select: { name: true } },
+        workflow_diagram_rel: { select: { name: true } },
+        hierarchy_rel: { select: { name: true } },
+        birthplace_rel: { select: { name: true } },
+        contractor_employee: { include: { contractor: true } },
+      },
+    });
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching employees for init store:', error);
+    return [];
+  }
+};

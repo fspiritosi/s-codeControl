@@ -1,9 +1,21 @@
 'use client';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { Documents, DocumentsTable } from '@/types/types';
-import { supabase } from '../../supabase/supabase';
+import { storage, type StorageBucket } from '@/lib/storage';
 import { useEdgeFunctions } from './useEdgeFunctions';
-require('dotenv').config();
+import {
+  insertSingleDocumentEmployee,
+  insertSingleDocumentEquipment,
+  updateDocumentById,
+  fetchDocumentEmployeesForCompany,
+  fetchDocumentEquipmentForCompany,
+} from '@/app/server/UPDATE/actions';
+import {
+  fetchAllDocumentTypes,
+  fetchDocumentEmployeesByDocNumber,
+  fetchEquipmentDocsByVehicleId,
+} from '@/app/server/GET/actions';
+
 export const useDocument = () => {
   const { errorTranslate } = useEdgeFunctions();
   const { actualCompany } = useLoggedUserStore();
@@ -11,87 +23,77 @@ export const useDocument = () => {
 
   return {
     insertDocumentEmployees: async (documents: Record<string, unknown>) => {
-      const { data, error } = await supabase.from('documents_employees').insert(documents).select();
+      const { data, error } = await insertSingleDocumentEmployee(documents);
 
       if (error) {
-        console.error();
-        const message = await errorTranslate(error?.message);
+        const message = await errorTranslate(error);
         throw new Error(String(message).replaceAll('"', ''));
       }
-      return data;
+      return data ? [data] : [];
     },
 
     insertDocumentEquipment: async (documents: Record<string, unknown>) => {
-      const { data, error } = await supabase.from('documents_equipment').insert(documents).select();
-
+      const { data, error } = await insertSingleDocumentEquipment(documents);
       if (error) {
-        console.error();
+        console.error(error);
       }
-      return data;
+      return data ? [data] : [];
     },
 
     insertMultiDocumentEmployees: async (documents: Record<string, unknown> & { applies: string[] }) => {
-      const { applies, ...rest } = documents; // documents contiene todos los datos excepto los IDs a los que aplica
+      const { applies, ...rest } = documents;
 
       const insertedRows = [];
 
-      // Iterar sobre cada id al que aplica
       for (const id of applies) {
-        // Combinar los datos restantes con el id actual
         const dataWithId = { ...rest, applies: id };
-
-        // Insertar en la tabla documents_employees
-        const { data, error } = await supabase.from('documents_employees').insert(dataWithId).select();
+        const { data, error } = await insertSingleDocumentEmployee(dataWithId);
 
         if (error) {
-          console.error();
-          const message = await errorTranslate(error?.message);
+          const message = await errorTranslate(error);
           throw new Error(String(message).replaceAll('"', ''));
         }
 
-        insertedRows.push(data[0]); // Añadir los datos insertados al array de resultados
+        if (data) insertedRows.push(data);
       }
 
       return insertedRows;
     },
 
     insertMultiDocumentEquipment: async (documents: Record<string, unknown> & { applies: string[] }) => {
-      const { applies, ...rest } = documents; // documents contiene todos los datos excepto los IDs a los que aplica
+      const { applies, ...rest } = documents;
 
       const insertedRows = [];
 
-      // Iterar sobre cada id al que aplica
       for (const id of applies) {
         const dataWithId = { ...rest, applies: id };
-
-        const { data, error } = await supabase.from('documents_equipment').insert(dataWithId).select();
+        const { data, error } = await insertSingleDocumentEquipment(dataWithId);
 
         if (error) {
-          console.error();
-          const message = await errorTranslate(error?.message);
+          const message = await errorTranslate(error);
           throw new Error(String(message).replaceAll('"', ''));
         }
 
-        insertedRows.push(data[0]); // Añadir los datos insertados al array de resultados
+        if (data) insertedRows.push(data);
       }
 
       return insertedRows;
     },
 
     updateDocumentEquipment: async (id: string, documents: Documents) => {
-      const { data, error } = await supabase.from('documents_equipment').update(documents).eq('id', id).select();
+      const { data, error } = await updateDocumentById('documents_equipment', id, documents as any);
 
       if (error) {
-        const message = await errorTranslate(error.message);
+        const message = await errorTranslate(error);
         throw new Error(String(message).replaceAll('"', ''));
       }
-      return data;
+      return data ? [data] : [];
     },
 
     updateDocumentEmployees: async (id: string, documents: Documents) => {
-      const { data, error } = await supabase.from('documents_employees').update(documents).eq('id', id);
+      const { data, error } = await updateDocumentById('documents_employees', id, documents as any);
       if (error) {
-        const message = await errorTranslate(error.message);
+        const message = await errorTranslate(error);
         throw new Error(String(message).replaceAll('"', ''));
       }
       return data;
@@ -99,14 +101,7 @@ export const useDocument = () => {
 
     fetchDocumentTypes: async () => {
       try {
-        // Consulta los tipos de documento
-        const { data: documentTypesData, error: typesError } = await supabase
-          .from('document_types')
-          .select('*')
-          .or(`company_id.eq.${useLoggedUserStore?.getState?.()?.actualCompany?.id},company_id.is.null`);
-        if (typesError) {
-          throw typesError;
-        }
+        const documentTypesData = await fetchAllDocumentTypes();
         return documentTypesData;
       } catch (error) {
         console.error('Error al obtener datos:', error);
@@ -114,24 +109,7 @@ export const useDocument = () => {
     },
     fetchDocumentEmployeesByCompany: async () => {
       if (actualCompany) {
-        let { data: documents, error } = await supabase
-          .from('documents_employees')
-          .select(
-            `
-            *,
-            employees:employees(id,company_id, document_number, lastname, firstname ),
-            document_types:document_types(id, name)
-        `
-          )
-          .not('employees', 'is', null)
-          .not('document_types', 'is', null)
-          .eq('employees.company_id', actualCompany?.id);
-
-        if (error) {
-          const message = await errorTranslate(error?.message);
-          throw new Error(String(message).replaceAll('"', ''));
-        }
-
+        const documents = await fetchDocumentEmployeesForCompany(actualCompany.id);
         return documents;
       }
     },
@@ -139,31 +117,15 @@ export const useDocument = () => {
     fetchDocumentEquipmentByCompany: async () => {
       try {
         if (actualCompany) {
-          let { data: documents, error } = await supabase
-            .from('documents_equipment')
-            .select(
-              `
-            *,
-            vehicles:vehicles(id,company_id, intern_number, domain),
-            document_types:document_types(id, name)
-        `
-            )
-            .not('vehicles', 'is', null)
-            .not('document_types', 'is', null)
-            .eq('vehicles.company_id', actualCompany?.id);
+          const documents = await fetchDocumentEquipmentForCompany(actualCompany.id);
 
-          const transformedData = documents?.map((item) => ({
+          const transformedData = documents?.map((item: any) => ({
             ...item,
-            id_document_types: item.document_types.name,
-            applies: item.vehicles.intern_number,
-            domain: item.vehicles.domain || 'No disponible',
+            id_document_types: item.document_type?.name,
+            applies: item.vehicle?.intern_number,
+            domain: item.vehicle?.domain || 'No disponible',
             validity: item.validity || 'No vence',
           })) as DocumentsTable[];
-
-          if (error) {
-            const message = await errorTranslate(error?.message);
-            throw new Error(String(message).replaceAll('"', ''));
-          }
 
           return transformedData;
         }
@@ -173,58 +135,49 @@ export const useDocument = () => {
     },
 
     uploadDocumentFile: async (file: File, imageBucket: string): Promise<string> => {
-      // Subir el documento a Supabase Storage
-      const { data, error } = await supabase.storage
-        .from(imageBucket)
-        .upload(`${file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`, file, {
+      await storage.upload(
+        imageBucket as StorageBucket,
+        `${file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`,
+        file,
+        {
           cacheControl: '1',
           upsert: true,
-        });
+        }
+      );
 
-      if (error) {
-      }
-
-      // Obtener la URL de la imagen cargada
-
-      const imageUrl = `${url}/${imageBucket}/${data?.path}`.trim().replace(/\s/g, '');
+      const imageUrl = `${url}/${imageBucket}/${file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`
+        .trim()
+        .replace(/\s/g, '');
 
       return imageUrl;
     },
 
     updateDocumentFile: async (file: File, imageBucket: string): Promise<string> => {
-      // Subir el documento a Supabase Storage
-      const { data, error } = await supabase.storage
-        .from(imageBucket)
-        .update(`${file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`, file, {
-          cacheControl: '1',
-          upsert: true,
-        });
-
-      if (error) {
-        const message = await errorTranslate(error?.message);
+      try {
+        await storage.upload(
+          imageBucket as StorageBucket,
+          `${file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`,
+          file,
+          {
+            cacheControl: '1',
+            upsert: true,
+          }
+        );
+      } catch (error: any) {
+        const message = await errorTranslate(error?.message || String(error));
         throw new Error(String(message).replaceAll('"', ''));
       }
 
-      // Obtener la URL de la imagen cargada
-
-      const imageUrl = `${url}/${imageBucket}/${data?.path}`.trim().replace(/\s/g, '');
+      const imageUrl = `${url}/${imageBucket}/${file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`
+        .trim()
+        .replace(/\s/g, '');
 
       return imageUrl;
     },
 
     fetchEmployeeByDocument: async (document: string) => {
       try {
-        let { data: documents_employees, error } = await supabase
-          .from('documents_employees')
-          .select('*, employees:employees(id, document_number ),  document_types:document_types(name)')
-          .not('employees', 'is', null)
-          .not('document_types', 'is', null)
-          .eq('employees.document_number', document);
-
-        if (error) {
-          const message = await errorTranslate(error?.message);
-          throw new Error(String(message).replaceAll('"', ''));
-        }
+        const documents_employees = await fetchDocumentEmployeesByDocNumber(document);
         return documents_employees;
       } catch (error) {
         console.error('Error al obtener documentos de empleado:', error);
@@ -233,17 +186,7 @@ export const useDocument = () => {
 
     fetchEquipmentByDocument: async (id: string) => {
       try {
-        let { data: documents_equipment, error } = await supabase
-          .from('documents_equipment')
-          .select('*, vehicles:vehicles(id, intern_number ),  document_types:document_types(name)')
-          .not('vehicles', 'is', null)
-          .not('document_types', 'is', null)
-          .eq('vehicles.id', id);
-        if (error) {
-          const message = await errorTranslate(error?.message);
-          throw new Error(String(message).replaceAll('"', ''));
-        }
-
+        const documents_equipment = await fetchEquipmentDocsByVehicleId(id);
         return documents_equipment;
       } catch (error) {
         console.error('Error al obtener documentos de equipo:', error);

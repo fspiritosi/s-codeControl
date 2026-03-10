@@ -19,6 +19,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Toaster, toast } from 'sonner';
 import { z } from 'zod';
+// TODO: Phase 8+ — Remove supabase import once auth.getUser() is replaced with NextAuth session
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { fetchCustomerById } from '@/app/server/UPDATE/actions';
 // import { columns } from '../app/dashboard/company/customers/action/columnsCustomers';

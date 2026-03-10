@@ -1,8 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { supabase } from '../../supabase/supabase';
+import { storage, type StorageBucket } from '@/lib/storage';
 import { useEdgeFunctions } from './useEdgeFunctions';
-require('dotenv').config();
 
 export const useImageUpload = () => {
   const [loading, setLoading] = useState(false);
@@ -13,25 +12,25 @@ export const useImageUpload = () => {
     try {
       setLoading(true);
 
-      // Subir la imagen a Supabase Storage
-      const { data, error } = await supabase.storage
-        .from(imageBucket)
-        .upload(`${file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`, file, {
-          //.upload('public/image.png', file, {
+      const data = await storage.upload(
+        imageBucket as StorageBucket,
+        `${file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`,
+        file,
+        {
           cacheControl: '1',
           upsert: true,
-        });
-
-      if (error) {
-        const message = await errorTranslate(error?.message);
-        throw new Error(String(message).replaceAll('"', ''));
-      }
+        }
+      );
 
       // Obtener la URL de la imagen cargada
-
-      const imageUrl = `${url}/${imageBucket}/${data?.path}`.trim().replace(/\s/g, '');
+      const imageUrl = `${url}/${imageBucket}/${(data as any)?.path || file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`
+        .trim()
+        .replace(/\s/g, '');
 
       return imageUrl;
+    } catch (error: any) {
+      const message = await errorTranslate(error?.message || String(error));
+      throw new Error(String(message).replaceAll('"', ''));
     } finally {
       setLoading(false);
     }

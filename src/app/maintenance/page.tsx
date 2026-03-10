@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/co
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { handleSupabaseError } from '@/lib/errorHandler';
+// TODO: Phase 8+ — Remove supabase import once auth calls (.signOut, .signInWithPassword) are replaced
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { fetchEmployeeByCuil, fetchProfileBySupabaseUserId } from '@/app/server/shared/queries';
 import { validarCUIL } from '@/lib/utils';

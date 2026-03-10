@@ -1,117 +1,31 @@
 import { validarCUIL } from '@/lib/utils';
 import * as z from 'zod';
-import { supabase } from '../../supabase/supabase';
+import {
+  validateEmployeeFileExists,
+  validateEmployeeFileExistsForUpdate,
+  validateDuplicatedCompanyCuitServer,
+  validateDuplicatedCuilServer,
+  validateDuplicatedCuilForUpdateServer,
+} from '@/app/server/GET/actions';
 
 const getAllFiles = async (legajo: string, company_id?: string) => {
-  // Obtener el company_id actual si no se proporciona
-  if (!company_id) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    const profile = await supabase.from('profile').select('*').eq('credential_id', user?.id);
-    const { data: company } = await supabase.from('company').select('*').eq('owner_id', profile.data?.[0].id);
-    company_id = company?.[0]?.id;
-  }
-
-  const { data: employee } = await supabase
-    .from('employees')
-    .select('*')
-    .eq('company_id', company_id)
-    .eq('file', legajo);
-
-  if (employee && employee.length > 0) {
-    return false; // Ya existe
-  } else {
-    return true; // No existe, es válido
-  }
+  return await validateEmployeeFileExists(legajo, company_id);
 };
 
 const getAllFilesForUpdate = async (legajo: string, employeeId: string, company_id?: string) => {
-  // Obtener el company_id actual si no se proporciona
-  if (!company_id) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    const profile = await supabase.from('profile').select('*').eq('credential_id', user?.id);
-    const { data: company } = await supabase.from('company').select('*').eq('owner_id', profile.data?.[0].id);
-    company_id = company?.[0]?.id;
-  }
-
-  const { data: employee } = await supabase
-    .from('employees')
-    .select('*')
-    .eq('company_id', company_id)
-    .eq('file', legajo)
-    .neq('id', employeeId); // Excluir el empleado actual
-
-  if (employee && employee.length > 0) {
-    return false; // Ya existe otro empleado con este legajo
-  } else {
-    return true; // No existe, es válido
-  }
+  return await validateEmployeeFileExistsForUpdate(legajo, employeeId, company_id);
 };
 
 const validateDuplicatedCompanyCuit = async (cuit: string) => {
-  const { data: companies } = await supabase.from('company').select('*').eq('company_cuit', cuit);
-
-  if (companies && companies.length > 0) {
-    return false; // Ya existe
-  } else {
-    return true; // No existe, es válido
-  }
+  return await validateDuplicatedCompanyCuitServer(cuit);
 };
 
 const validateDuplicatedCuil = async (cuil: string, company_id?: string) => {
-  // Obtener el company_id actual si no se proporciona
-  if (!company_id) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    const profile = await supabase.from('profile').select('*').eq('credential_id', user?.id);
-    const { data: company } = await supabase.from('company').select('*').eq('owner_id', profile.data?.[0].id);
-    company_id = company?.[0]?.id;
-  }
-
-  const { data: employees } = await supabase
-    .from('employees')
-    .select('*')
-    .eq('cuil', cuil)
-    .eq('company_id', company_id);
-
-  if (employees && employees.length > 0) {
-    return false; // Ya existe
-  } else {
-    return true; // No existe, es válido
-  }
+  return await validateDuplicatedCuilServer(cuil, company_id);
 };
 
 const validateDuplicatedCuilForUpdate = async (cuil: string, employeeId: string, company_id?: string) => {
-  // Obtener el company_id actual si no se proporciona
-  if (!company_id) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    const profile = await supabase.from('profile').select('*').eq('credential_id', user?.id);
-    const { data: company } = await supabase.from('company').select('*').eq('owner_id', profile.data?.[0].id);
-    company_id = company?.[0]?.id;
-  }
-
-  const { data: employees } = await supabase
-    .from('employees')
-    .select('*')
-    .eq('cuil', cuil)
-    .eq('company_id', company_id)
-    .neq('id', employeeId); // Excluir el empleado actual
-
-  if (employees && employees.length > 0) {
-    return false; // Ya existe otro empleado con este CUIL
-  } else {
-    return true; // No existe, es válido
-  }
+  return await validateDuplicatedCuilForUpdateServer(cuil, employeeId, company_id);
 };
 
 // const AllFiles =
