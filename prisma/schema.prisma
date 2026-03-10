@@ -216,6 +216,7 @@ model profile {
   fullname      String?
   role          String?
   modulos       modulos[]
+  password_hash String?       @db.Text
 
   role_rel                    roles?                @relation(fields: [role], references: [name])
   owned_companies             company[]             @relation("company_owner")

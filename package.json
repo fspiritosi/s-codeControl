@@ -54,6 +54,7 @@
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.49.0",
     "@tanstack/react-table": "^8.11.7",
+    "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "cmdk": "^1.1.0",
@@ -99,6 +100,7 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/file-saver": "^2.0.7",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^22",

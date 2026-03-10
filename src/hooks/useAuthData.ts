@@ -1,49 +1,59 @@
 import { supabaseBrowser } from '@/lib/supabase/browser';
-import { login, profileUser, singUp } from '@/types/types';
+import { login, singUp } from '@/types/types';
 import { useEdgeFunctions } from './useEdgeFunctions';
-import { useProfileData } from './useProfileData';
+import { useSession } from 'next-auth/react';
 
 /**
  * Custom hook for handling authentication data.
- * Provides functions for signing up, logging in, password recovery, updating user password,
- * Google login, logging in with email only, and getting user session.
+ * Uses NextAuth as primary auth with Supabase fallback for password recovery flows.
  *
  * @returns An object containing the authentication functions.
  */
 export const useAuthData = () => {
-  const { filterByEmail } = useProfileData();
   const { errorTranslate } = useEdgeFunctions();
   const supabase = supabaseBrowser();
+  const { data: session } = useSession();
 
   return {
     singUp: async (credentials: singUp) => {
-      let { data, error } = await supabase.auth.signUp({
-        email: credentials.email,
-        password: credentials.password,
-        options: {
-          emailRedirectTo: '/login',
-        },
+      // Registration is now handled by server action (src/app/register/actions.ts)
+      // This is kept for backward compatibility with RegisterForm
+      const formData = new FormData();
+      formData.append('email', credentials.email);
+      formData.append('password', credentials.password);
+
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        body: formData,
       });
 
-      if (error) {
-        const message = await errorTranslate(error.message);
-        throw new Error(String(message).replaceAll('"', ''));
+      if (!res.ok) {
+        throw new Error('Error al registrar usuario');
       }
-      return data;
+
+      return { user: { id: '' } };
     },
     login: async (credentials: login) => {
-      let { data, error } = await supabase.auth.signInWithPassword(credentials);
+      // Login is now handled by server action (src/app/login/actions.ts)
+      // This is kept for backward compatibility with LoginForm
+      const { signIn } = await import('next-auth/react');
+      const result = await signIn('credentials', {
+        email: credentials.email,
+        password: credentials.password,
+        redirect: false,
+      });
 
-      if (error) {
-        const message = await errorTranslate(error.message);
-        throw new Error(String(message).replaceAll('"', ''));
+      if (result?.error) {
+        throw new Error('Credenciales invalidas');
       }
-      return data;
+
+      return result;
     },
+    // TODO: Phase 8+ — Replace Supabase password recovery with custom token-based flow
     recoveryPassword: async (email: string) => {
       localStorage.setItem('email', email);
 
-      let { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL!}/reset_password/update-user`,
       });
       if (error) {
@@ -52,35 +62,30 @@ export const useAuthData = () => {
       }
       return data;
     },
+    // TODO: Phase 8+ — Replace Supabase password update with bcrypt hash update via server action
     updateUser: async ({ password }: { password: string }) => {
       const email = localStorage.getItem('email');
-      const user = (await filterByEmail(email)) as profileUser[];
+      if (!email) throw new Error('Email no encontrado');
 
-      if (user.length === 0) throw new Error('Usuario no encontrado');
-      localStorage.removeItem('email');
-
-      const { data, error } = await supabase.auth.admin.updateUserById(user[0].credential_id, { password });
+      // Use Supabase admin API for now (password reset flow)
+      const { data, error } = await supabase.auth.updateUser({ password });
       if (error) {
         const message = await errorTranslate(error.message);
         throw new Error(String(message).replaceAll('"', ''));
       }
+      localStorage.removeItem('email');
       return data;
     },
     googleLogin: async () => {
-      let { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin + '/login/auth/callback',
-        },
+      const { signIn } = await import('next-auth/react');
+      const result = await signIn('google', {
+        callbackUrl: '/dashboard',
       });
-      if (error) {
-        const message = await errorTranslate(error.message);
-        throw new Error(String(message).replaceAll('"', ''));
-      }
-      return data;
+      return result;
     },
     loginOnlyEmail: async (email: string) => {
-      let { data, error } = await supabase.auth.signInWithOtp({
+      // TODO: Phase 8+ — Implement magic link via NextAuth Email provider
+      const { data, error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: window.location.origin + '/login/auth/callback',
@@ -93,17 +98,8 @@ export const useAuthData = () => {
       }
       return data;
     },
-    getSession: async (token: string) => {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser(token);
-
-      if (error) {
-        const message = await errorTranslate(error.message);
-        throw new Error(String(message).replaceAll('"', ''));
-      }
-      return user;
+    getSession: async () => {
+      return session?.user ?? null;
     },
   };
 };

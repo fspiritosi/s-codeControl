@@ -1,3 +1,12 @@
+/**
+ * Legacy Supabase OTP verification route.
+ *
+ * This handles email confirmation and magic link verification via Supabase.
+ * Kept for backward compatibility with existing password reset flows.
+ *
+ * TODO: Phase 8+ — Replace with custom token-based verification once
+ * password recovery is fully migrated away from Supabase.
+ */
 import { supabaseServer } from '@/lib/supabase/server';
 import { type EmailOtpType } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';

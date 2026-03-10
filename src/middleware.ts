@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { auth } from '@/auth';
-import { supabaseServer } from './lib/supabase/server';
+import { prisma } from '@/lib/prisma';
+
+export const runtime = 'nodejs';
 
 export async function middleware(req: NextRequest) {
   const response = NextResponse.next({
@@ -9,55 +11,47 @@ export async function middleware(req: NextRequest) {
     },
   });
 
-  // --- Phase 1: Try NextAuth session first ---
-  const nextAuthSession = await auth();
+  // --- NextAuth session (primary auth) ---
+  const session = await auth();
 
-  // --- Phase 2: Fall back to Supabase session ---
-  const supabase = await supabaseServer();
-  const {
-    data: { session: supabaseSession },
-  } = await supabase.auth.getSession();
-
-  // Use NextAuth session user email if available, otherwise Supabase
-  const userEmail = nextAuthSession?.user?.email ?? supabaseSession?.user.email;
-
-  // If neither auth system has a session, redirect to login
-  if (!nextAuthSession && !supabaseSession) {
+  if (!session?.user) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
-  // --- Existing authorization logic (unchanged) ---
-  const { data } = await supabase
-    .from('profile')
-    .select('*')
-    .eq('email', userEmail || '');
+  const userRole = session.user.role;
+  const profileId = session.user.profileId;
+  const companyId = session.user.companyId;
 
-  const { data: Companies, error } = await supabase
-    .from('company')
-    .select(`*`)
-    .eq('owner_id', data?.[0]?.id || '');
-
-  let { data: share_company_users, error: sharedError } = await supabase
-    .from('share_company_users')
-    .select(`*`)
-    .eq('profile_id', data?.[0]?.id || '');
-
+  // Read actualComp cookie for guest role check
   const actualNoOwnerValue: string | null = req.cookies.get('actualComp')?.value ?? null;
   const actualNoOwner = actualNoOwnerValue ? actualNoOwnerValue.replace(/^"|"$/g, '') : null;
   const actualNow = actualNoOwner;
 
-  const { data: guestRole } = await supabase
-    .from('share_company_users')
-    .select('role')
-    .eq('profile_id ', data?.[0]?.id || '')
-    .eq('company_id', actualNow || '');
+  // Query shared company role (the one remaining DB query)
+  let guestRoleValue: string | null = null;
+  if (profileId && actualNow) {
+    const sharedUser = await prisma.share_company_users.findFirst({
+      where: { profile_id: profileId, company_id: actualNow },
+      select: { role: true },
+    });
+    guestRoleValue = sharedUser?.role ?? null;
+  }
 
-  if (!Companies?.length && !share_company_users?.length && !req.url.includes('/dashboard/company/new')) {
+  // Check if user has any company (owned or shared)
+  const hasOwnedCompany = !!companyId;
+  let hasSharedCompany = false;
+  if (!hasOwnedCompany && profileId) {
+    const sharedCount = await prisma.share_company_users.count({
+      where: { profile_id: profileId },
+    });
+    hasSharedCompany = sharedCount > 0;
+  }
+
+  if (!hasOwnedCompany && !hasSharedCompany && !req.url.includes('/dashboard/company/new')) {
     return NextResponse.redirect(new URL('/dashboard/company/new', req.url));
   }
 
-  const userRole = data?.[0]?.role;
-
+  // --- Role-based routing logic ---
   const guestUser = [
     '/dashboard/employee/action?action=edit&',
     '/dashboard/employee/action?action=new',
@@ -68,11 +62,10 @@ export async function middleware(req: NextRequest) {
   ];
   const allowedPathsguestUser = ['/dashboard/document', '/dashboard/employees', '/dashboard/equipment'];
   const usuarioUser = ['/dashboard/company/actualCompany', 'admin/auditor'];
-
   const administradorUser = ['admin/auditor'];
   const codeControlClientUser = ['admin/auditor'];
 
-  const isAuditor = data?.[0]?.role === 'Auditor';
+  const isAuditor = userRole === 'Auditor';
 
   if (userRole === 'Admin') {
     return response;
@@ -93,7 +86,7 @@ export async function middleware(req: NextRequest) {
       redirectUrl.pathname = '/dashboard';
       return NextResponse.redirect(redirectUrl.toString());
     }
-    if (guestRole?.[0]?.role === 'Invitado') {
+    if (guestRoleValue === 'Invitado') {
       const isAllowedPath = allowedPathsguestUser.some((path) => req.url.startsWith(path));
 
       if (isAllowedPath) {
@@ -108,11 +101,11 @@ export async function middleware(req: NextRequest) {
       }
     }
 
-    if (guestRole?.[0]?.role === 'Administrador' && administradorUser.some((url) => req.url.includes(url))) {
+    if (guestRoleValue === 'Administrador' && administradorUser.some((url) => req.url.includes(url))) {
       redirectUrl.pathname = '/dashboard';
       return NextResponse.redirect(redirectUrl.toString());
     }
-    if (guestRole?.[0]?.role === 'Usuario' && usuarioUser.some((url) => req.url.includes(url))) {
+    if (guestRoleValue === 'Usuario' && usuarioUser.some((url) => req.url.includes(url))) {
       redirectUrl.pathname = '/dashboard';
       return NextResponse.redirect(redirectUrl.toString());
     }

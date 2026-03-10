@@ -1,3 +1,4 @@
+import { AuthProvider } from '@/components/AuthProvider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { Toaster } from '@/components/ui/toaster';
@@ -13,20 +14,22 @@ const popinsFont = Poppins({
 
 export const metadata: Metadata = {
   title: 'CodeControl',
-  description: 'Gestión para las empresas',
+  description: 'Gestion para las empresas',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
       <body className={popinsFont.className}>
-        <ThemeProvider attribute="class" defaultTheme="ligth" enableSystem disableTransitionOnChange>
-          <div>
-            <Toaster />
-            <Sonner richColors={true} />
-            <main>{children}</main>
-          </div>
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider attribute="class" defaultTheme="ligth" enableSystem disableTransitionOnChange>
+            <div>
+              <Toaster />
+              <Sonner richColors={true} />
+              <main>{children}</main>
+            </div>
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );
