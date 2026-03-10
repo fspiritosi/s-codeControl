@@ -1,12 +1,13 @@
 import { prisma } from '@/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
+import { apiSuccess, apiError } from '@/lib/api-response';
+import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
 
   if (!company_id) {
-    return NextResponse.json({ error: ['Company not found'] });
+    return apiError('Company not found', 400);
   }
 
   try {
@@ -30,10 +31,10 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({ equipments });
+    return apiSuccess({ equipments });
   } catch (error) {
     console.error('Error fetching equipments:', error);
-    return NextResponse.json({ error: ['An error occurred while fetching equipments'] });
+    return apiError('An error occurred while fetching equipments', 500);
   }
 }
 export async function PATCH(request: NextRequest, context: any) {
@@ -45,8 +46,9 @@ export async function PATCH(request: NextRequest, context: any) {
       data: { condition: body.condition },
     });
 
-    return Response.json({ vehicles });
+    return apiSuccess({ vehicles });
   } catch (error) {
     console.error(error);
+    return apiError('Failed to update vehicle condition', 500);
   }
 }

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { apiSuccess, apiError } from '@/lib/api-response';
 import { NextRequest } from 'next/server';
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -15,8 +16,9 @@ export async function GET(request: NextRequest) {
       return { ...rest, city: city_rel ? { name: city_rel.name } : null };
     });
 
-    return Response.json({ data });
+    return apiSuccess({ data });
   } catch (error) {
     console.error(error);
+    return apiError('Failed to fetch companies', 500);
   }
 }

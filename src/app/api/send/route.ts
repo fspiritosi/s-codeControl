@@ -2,7 +2,7 @@
 
 import nodemailer from 'nodemailer';
 import { renderDocumentEmailTemplate, renderHelpEmailTemplate } from '@/lib/emailTemplates';
-import { NextResponse } from 'next/server';
+import { apiSuccess, apiError } from '@/lib/api-response';
 import { prisma } from '@/lib/prisma';
 
 // Validar variables de entorno requeridas
@@ -106,8 +106,7 @@ export async function POST(request: Request) {
         console.error('Error al guardar el registro de envío:', dbError);
       }
 
-      return NextResponse.json({
-        success: true,
+      return apiSuccess({
         messageId: info.messageId || '',
         accepted: info.accepted || [],
         rejected: info.rejected || []
@@ -147,18 +146,14 @@ export async function POST(request: Request) {
         console.error('Error al guardar el registro de envío:', dbError);
       }
 
-      return NextResponse.json({
-        success: true,
+      return apiSuccess({
         messageId: info.messageId || '',
         accepted: info.accepted || [],
         rejected: info.rejected || []
       });
     }
 
-    return NextResponse.json(
-      { error: 'Se requiere un template o contenido HTML/Texto' },
-      { status: 400 }
-    );
+    return apiError('Se requiere un template o contenido HTML/Texto', 400);
   } catch (error: unknown) {
     console.error('Error al enviar el correo:', error);
     const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
@@ -184,12 +179,6 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json(
-      {
-        error: 'Error al enviar el correo',
-        message: errorMessage,
-      },
-      { status: 500 }
-    );
+    return apiError(`Error al enviar el correo: ${errorMessage}`, 500);
   }
 }

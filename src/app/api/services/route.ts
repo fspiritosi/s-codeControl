@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { apiSuccess, apiError } from '@/lib/api-response';
 import { NextRequest } from 'next/server';
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -9,9 +10,10 @@ export async function GET(request: NextRequest) {
       where: { company_id: company_id || '' },
     });
 
-    return Response.json({ services });
+    return apiSuccess({ services });
   } catch (error) {
     console.error(error);
+    return apiError('Failed to fetch services', 500);
   }
 }
 
@@ -43,9 +45,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return Response.json({ services });
+    return apiSuccess({ services }, 201);
   } catch (error) {
     console.error(error);
+    return apiError('Failed to create service', 500);
   }
 }
 
@@ -67,8 +70,9 @@ export async function PUT(request: NextRequest) {
       },
     });
 
-    return Response.json({ services });
+    return apiSuccess({ services });
   } catch (error) {
     console.error(error);
+    return apiError('Failed to update service', 500);
   }
 }

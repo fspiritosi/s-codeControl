@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { apiSuccess, apiError } from '@/lib/api-response';
 import { NextRequest } from 'next/server';
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -13,8 +14,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       },
     });
 
-    return Response.json({ service });
+    return apiSuccess({ service });
   } catch (error) {
     console.error(error);
+    return apiError('Failed to fetch service', 500);
   }
 }

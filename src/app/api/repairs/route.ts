@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { apiSuccess, apiError } from '@/lib/api-response';
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -10,9 +11,10 @@ export async function GET(request: NextRequest) {
       where: { company_id: company_id || '' },
     });
 
-    return Response.json({ types_of_repairs: data });
+    return apiSuccess({ types_of_repairs: data });
   } catch (error) {
     console.error(error);
+    return apiError('Failed to fetch repair types', 500);
   }
 }
 
@@ -24,9 +26,10 @@ export async function POST(request: NextRequest) {
       data: body,
     });
 
-    return Response.json({ types_of_repairs: [types_of_repairs] });
+    return apiSuccess({ types_of_repairs: [types_of_repairs] }, 201);
   } catch (error) {
     console.error(error);
+    return apiError('Failed to create repair type', 500);
   }
 }
 
@@ -41,9 +44,10 @@ export async function PUT(request: NextRequest) {
       data: body,
     });
 
-    return Response.json({ types_of_repairs });
+    return apiSuccess({ types_of_repairs });
   } catch (error) {
     console.error(error);
+    return apiError('Failed to update repair type', 500);
   }
 }
 
@@ -56,8 +60,9 @@ export async function DELETE(request: NextRequest) {
       where: { id: id || '' },
     });
 
-    return Response.json({ types_of_repairs });
+    return apiSuccess({ types_of_repairs });
   } catch (error) {
     console.error(error);
+    return apiError('Failed to delete repair type', 500);
   }
 }

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { apiSuccess, apiError } from '@/lib/api-response';
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -59,9 +60,10 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return Response.json({ repair_solicitudes });
+    return apiSuccess({ repair_solicitudes });
   } catch (error) {
     console.error(error);
+    return apiError('Failed to fetch repair solicitudes', 500);
   }
 }
 
@@ -73,9 +75,10 @@ export async function POST(request: NextRequest) {
       data: body,
     });
 
-    return Response.json({ repair_solicitudes: repair_solicitudes ?? {} });
+    return apiSuccess({ repair_solicitudes: repair_solicitudes ?? {} }, 201);
   } catch (error) {
     console.error(error);
+    return apiError('Failed to create repair solicitud', 500);
   }
 }
 
@@ -90,9 +93,10 @@ export async function PUT(request: NextRequest) {
       data: body,
     });
 
-    return Response.json({ repair_solicitudes });
+    return apiSuccess({ repair_solicitudes });
   } catch (error) {
     console.error(error);
+    return apiError('Failed to update repair solicitud', 500);
   }
 }
 
@@ -105,8 +109,9 @@ export async function DELETE(request: NextRequest) {
       where: { id: id || '' },
     });
 
-    return Response.json({ repair_solicitudes });
+    return apiSuccess({ repair_solicitudes });
   } catch (error) {
     console.error(error);
+    return apiError('Failed to delete repair solicitud', 500);
   }
 }

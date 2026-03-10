@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { apiSuccess, apiError } from '@/lib/api-response';
 import { NextRequest } from 'next/server';
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -11,9 +12,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       data: body,
     });
 
-    return Response.json({ types_of_repairs });
+    return apiSuccess({ types_of_repairs });
   } catch (error) {
     console.error(error);
+    return apiError('Failed to update repair type', 500);
   }
 }
 
@@ -25,8 +27,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       where: { id },
     });
 
-    return Response.json({ types_of_repairs });
+    return apiSuccess({ types_of_repairs });
   } catch (error) {
     console.error(error);
+    return apiError('Failed to delete repair type', 500);
   }
 }

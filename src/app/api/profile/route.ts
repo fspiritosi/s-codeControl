@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
+import { apiSuccess, apiError } from '@/lib/api-response';
+import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -8,7 +9,7 @@ export async function GET(request: NextRequest) {
   try {
     // Verificar si el userId está presente en los parámetros de búsqueda
     if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+      return apiError('User ID is required', 400);
     }
 
     // Obtener el perfil del usuario
@@ -16,9 +17,9 @@ export async function GET(request: NextRequest) {
       where: { id: userId },
     });
 
-    return NextResponse.json({ data: ownerUser });
+    return apiSuccess({ data: ownerUser });
   } catch (error) {
     console.error('Error fetching user profile:', error);
-    return NextResponse.json({ error: (error as any).message }, { status: 500 });
+    return apiError((error as any).message, 500);
   }
 }

@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
+import { apiSuccess, apiError } from '@/lib/api-response';
+import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -16,9 +17,9 @@ export async function GET(request: NextRequest) {
 
     const exists = !!existingReport;
 
-    return NextResponse.json({ exists });
+    return apiSuccess({ exists });
   } catch (error) {
     console.error('Error checking daily report date:', error);
-    return NextResponse.json({ error: 'Failed to check daily report date' }, { status: 500 });
+    return apiError('Failed to check daily report date', 500);
   }
 }

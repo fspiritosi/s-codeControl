@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
+import { apiSuccess, apiError } from '@/lib/api-response';
+import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -9,10 +10,10 @@ export async function GET(request: NextRequest) {
       where: { company_id: company_id || '' },
     });
 
-    return NextResponse.json({ dailyReports });
+    return apiSuccess({ dailyReports });
   } catch (error) {
     console.error('Error fetching daily reports:', error);
-    return NextResponse.json({ error: 'Failed to fetch daily reports' }, { status: 500 });
+    return apiError('Failed to fetch daily reports', 500);
   }
 }
 
@@ -27,10 +28,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ data: [data] });
+    return apiSuccess({ data: [data] }, 201);
   } catch (error) {
     console.error('Error inserting daily report:', error);
-    return NextResponse.json({ error: 'Failed to insert daily report' }, { status: 500 });
+    return apiError('Failed to insert daily report', 500);
   }
 }
 
@@ -45,10 +46,10 @@ export async function PUT(request: NextRequest) {
       data: { status: statusPayload },
     });
 
-    return NextResponse.json({ data });
+    return apiSuccess({ data });
   } catch (error) {
     console.error('Error updating daily report:', error);
-    return NextResponse.json({ error: 'Failed to update daily report' }, { status: 500 });
+    return apiError('Failed to update daily report', 500);
   }
 }
 
@@ -58,7 +59,7 @@ export async function DELETE(request: NextRequest) {
   const { id } = await request.json();
 
   if (!companyId) {
-    return new Response(JSON.stringify({ error: 'Company ID is required' }), { status: 400 });
+    return apiError('Company ID is required', 400);
   }
 
   try {
@@ -68,19 +69,19 @@ export async function DELETE(request: NextRequest) {
     });
 
     if (!dailyReport) {
-      return new Response(JSON.stringify({ error: 'Daily report not found' }), { status: 404 });
+      return apiError('Daily report not found', 404);
     }
 
     if (dailyReport.company_id !== companyId) {
-      return new Response(JSON.stringify({ error: 'Company ID mismatch' }), { status: 403 });
+      return apiError('Company ID mismatch', 403);
     }
 
     const data = await prisma.dailyreport.delete({
       where: { id },
     });
 
-    return new Response(JSON.stringify({ data }), { status: 200 });
+    return apiSuccess({ data });
   } catch (error) {
-    return new Response(JSON.stringify({ error: (error as any).message }), { status: 500 });
+    return apiError((error as any).message, 500);
   }
 }

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { apiSuccess, apiError } from '@/lib/api-response';
 import { NextRequest } from 'next/server';
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -53,9 +54,9 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return Response.json({ employees });
+    return apiSuccess({ employees });
   } catch (error) {
     console.error(error);
-    return Response.json({ error });
+    return apiError('Failed to fetch employees', 500);
   }
 }

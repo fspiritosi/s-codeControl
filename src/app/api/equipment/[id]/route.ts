@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
+import { apiSuccess, apiError } from '@/lib/api-response';
+import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -25,9 +26,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       };
     });
 
-    return NextResponse.json({ equipments });
+    return apiSuccess({ equipments });
   } catch (error) {
     console.error('Error fetching equipments:', error);
-    return NextResponse.json({ error: ['An error occurred while fetching equipments'] });
+    return apiError('An error occurred while fetching equipments', 500);
   }
 }

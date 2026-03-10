@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
+import { apiSuccess, apiError } from '@/lib/api-response';
+import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -7,7 +8,7 @@ export async function GET(request: NextRequest) {
   const profile_id = searchParams.get('profile_id');
 
   if (!company_id) {
-    return NextResponse.json({ error: ['Company not found'] });
+    return apiError('Company not found', 400);
   }
 
   try {
@@ -18,9 +19,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ shared_user });
+    return apiSuccess({ shared_user });
   } catch (error) {
     console.error('Error fetching equipments:', error);
-    return NextResponse.json({ error: ['An error occurred while fetching equipments'] });
+    return apiError('An error occurred while fetching shared company role', 500);
   }
 }

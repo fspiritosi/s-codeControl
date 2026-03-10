@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
+import { apiSuccess, apiError } from '@/lib/api-response';
+import { NextRequest } from 'next/server';
 
 export async function PUT(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -14,15 +15,9 @@ export async function PUT(request: NextRequest) {
       data: { is_active: is_active },
     });
 
-    return new NextResponse(JSON.stringify({ message: 'Items actualizados correctamente' }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiSuccess({ message: 'Items actualizados correctamente' });
   } catch (error) {
     console.error(error);
-    return new NextResponse(JSON.stringify({ error: error as any }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiError('Failed to update items', 500);
   }
 }

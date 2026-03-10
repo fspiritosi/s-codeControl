@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
+import { apiSuccess, apiError } from '@/lib/api-response';
+import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -31,10 +32,10 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return new Response(JSON.stringify({ dailyreportrows }), { status: 200 });
+    return apiSuccess({ dailyreportrows });
   } catch (error) {
     console.error('Error fetching daily report rows:', error);
-    return new Response(JSON.stringify({ error: (error as any).message }), { status: 500 });
+    return apiError((error as any).message, 500);
   }
 }
 
@@ -64,10 +65,10 @@ export async function POST(request: NextRequest) {
       data: insertData,
     });
 
-    return new Response(JSON.stringify({ data: [data] }), { status: 201 });
+    return apiSuccess({ data: [data] }, 201);
   } catch (error) {
     console.error('Error inserting daily report row:', error);
-    return new Response(JSON.stringify({ error: (error as any).message }), { status: 500 });
+    return apiError((error as any).message, 500);
   }
 }
 
@@ -76,9 +77,7 @@ export async function PUT(request: NextRequest) {
   const id = searchParams.get('id');
   const updateData = await request.json();
   if (!id) {
-    return new NextResponse(JSON.stringify({ error: 'ID is required for updating the daily report row.' }), {
-      status: 400,
-    });
+    return apiError('ID is required for updating the daily report row.', 400);
   }
 
   try {
@@ -98,12 +97,10 @@ export async function PUT(request: NextRequest) {
       data: updateFields,
     });
 
-    return new NextResponse(JSON.stringify({ data }), { status: 200 });
+    return apiSuccess({ data });
   } catch (error) {
     console.error('Error inesperado al actualizar la fila de reporte diario:', error);
-    return new NextResponse(JSON.stringify({ error: (error as any).message || 'Unexpected error occurred.' }), {
-      status: 500,
-    });
+    return apiError((error as any).message || 'Unexpected error occurred.', 500);
   }
 }
 
@@ -114,9 +111,9 @@ export async function DELETE(request: NextRequest) {
       where: { id },
     });
 
-    return new Response(JSON.stringify({ data }), { status: 200 });
+    return apiSuccess({ data });
   } catch (error) {
     console.error('Error deleting daily report row:', error);
-    return new Response(JSON.stringify({ error: (error as any).message }), { status: 500 });
+    return apiError((error as any).message, 500);
   }
 }

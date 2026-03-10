@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { apiSuccess, apiError } from '@/lib/api-response';
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -10,9 +11,10 @@ export async function GET(request: NextRequest) {
       where: { company_id: company_id || '' },
     });
 
-    return Response.json({ data });
+    return apiSuccess({ data });
   } catch (error) {
     console.error(error);
+    return apiError('Failed to fetch diagram types', 500);
   }
 }
 
@@ -26,9 +28,10 @@ export async function POST(request: NextRequest) {
       data: { name, company_id: company_id || '', color, short_description, work_active },
     });
 
-    return Response.json(data);
+    return apiSuccess(data, 201);
   } catch (error) {
     console.error(error);
+    return apiError('Failed to create diagram type', 500);
   }
 }
 
@@ -41,8 +44,9 @@ export async function PUT(request: NextRequest) {
       data: { name, color, short_description, work_active },
     });
 
-    return Response.json(data);
+    return apiSuccess(data);
   } catch (error) {
     console.error(error);
+    return apiError('Failed to update diagram type', 500);
   }
 }

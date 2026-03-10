@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { apiSuccess, apiError } from '@/lib/api-response';
 import { NextRequest } from 'next/server';
 
 type response = {
@@ -46,9 +47,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       };
     }
 
-    return Response.json({ response });
+    return apiSuccess({ response });
   } catch (error) {
     console.error(error);
+    return apiError('Failed to fetch document', 500);
   }
 }
 

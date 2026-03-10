@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
+import { apiSuccess, apiError } from '@/lib/api-response';
+import { NextRequest } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -88,15 +89,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Responder con éxito
-    return NextResponse.json(
+    return apiSuccess(
       {
         message: editingId ? 'Parte diario editado exitosamente' : 'Parte diario creado exitosamente',
         report_id: dailyReportId,
       },
-      { status: 200 }
+      editingId ? 200 : 201
     );
   } catch (error) {
     console.error('Error procesando el parte diario:', error);
-    return NextResponse.json({ error: (error as any).message }, { status: 500 });
+    return apiError((error as any).message, 500);
   }
 }

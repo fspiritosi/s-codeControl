@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
+import { apiSuccess, apiError } from '@/lib/api-response';
+import { NextRequest } from 'next/server';
 
 // Crear un nuevo registro en la tabla 'guild'
 export async function POST(request: NextRequest) {
@@ -10,10 +11,10 @@ export async function POST(request: NextRequest) {
       data: { company_id, ...guildData },
     });
 
-    return NextResponse.json({ guild: data });
+    return apiSuccess({ guild: data }, 201);
   } catch (error) {
     console.error('Error creating guild:', error);
-    return NextResponse.json({ error: (error as any).message }, { status: 500 });
+    return apiError((error as any).message, 500);
   }
 }
 
@@ -24,11 +25,11 @@ export async function GET(request: NextRequest) {
 
   try {
     if (!company_id) {
-      return NextResponse.json({ error: 'Company ID is required' }, { status: 400 });
+      return apiError('Company ID is required', 400);
     }
   } catch (error) {
     console.error('Error fetching guild:', error);
-    return NextResponse.json({ error: (error as any).message }, { status: 500 });
+    return apiError((error as any).message, 500);
   }
 }
 
@@ -42,10 +43,10 @@ export async function PUT(request: NextRequest) {
       data: guildData,
     });
 
-    return NextResponse.json({ guild: data });
+    return apiSuccess({ guild: data });
   } catch (error) {
     console.error('Error updating guild:', error);
-    return NextResponse.json({ error: (error as any).message }, { status: 500 });
+    return apiError((error as any).message, 500);
   }
 }
 
@@ -58,9 +59,9 @@ export async function DELETE(request: NextRequest) {
       where: { id },
     });
 
-    return NextResponse.json({ guild: data });
+    return apiSuccess({ guild: data });
   } catch (error) {
     console.error('Error deleting guild:', error);
-    return NextResponse.json({ error: (error as any).message }, { status: 500 });
+    return apiError((error as any).message, 500);
   }
 }

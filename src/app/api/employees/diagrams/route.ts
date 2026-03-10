@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { apiSuccess, apiError } from '@/lib/api-response';
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -16,9 +17,10 @@ export async function GET(request: NextRequest) {
         return { ...rest, diagram_type: diagram_type_rel };
       });
 
-      return Response.json({ data });
+      return apiSuccess({ data });
     } catch (error) {
       console.error(error);
+      return apiError('Failed to fetch employee diagrams', 500);
     }
   }
 
@@ -35,9 +37,10 @@ export async function GET(request: NextRequest) {
       return { ...rest, employees: employee, diagram_type: diagram_type_rel };
     });
 
-    return Response.json({ data });
+    return apiSuccess({ data });
   } catch (error) {
     console.error(error);
+    return apiError('Failed to fetch diagrams', 500);
   }
 }
 
@@ -55,8 +58,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return Response.json(data);
+    return apiSuccess(data, 201);
   } catch (error) {
+    console.error(error);
+    return apiError('Failed to create diagram', 500);
   }
 }
 
@@ -74,7 +79,9 @@ export async function PUT(request: NextRequest) {
       },
     });
 
-    return Response.json(data);
+    return apiSuccess(data);
   } catch (error) {
+    console.error(error);
+    return apiError('Failed to update diagram', 500);
   }
 }

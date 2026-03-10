@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
+import { apiSuccess, apiError } from '@/lib/api-response';
+import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -56,9 +57,9 @@ export async function GET(request: NextRequest) {
       })),
     }));
 
-    return NextResponse.json({ dailyReports });
+    return apiSuccess({ dailyReports });
   } catch (error) {
     console.error('Error fetching daily reports:', error);
-    return NextResponse.json({ error: 'Failed to fetch daily reports' }, { status: 500 });
+    return apiError('Failed to fetch daily reports', 500);
   }
 }

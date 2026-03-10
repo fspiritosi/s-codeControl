@@ -1,15 +1,16 @@
 import { prisma } from '@/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
+import { apiSuccess, apiError } from '@/lib/api-response';
+import { NextRequest } from 'next/server';
 
 export async function PUT(request: NextRequest) {
   let { rows, daily_report_id } = await request.json();
 
   if (!rows || rows.length === 0) {
-    return new Response(JSON.stringify({ error: 'No se enviaron filas de reporte.' }), { status: 400 });
+    return apiError('No se enviaron filas de reporte.', 400);
   }
 
   if (!daily_report_id) {
-    return new Response(JSON.stringify({ error: 'daily_report_id es requerido.' }), { status: 400 });
+    return apiError('daily_report_id es requerido.', 400);
   }
 
   try {
@@ -54,11 +55,11 @@ export async function PUT(request: NextRequest) {
 
     await Promise.all(rowsPromises);
 
-    return new Response(JSON.stringify({ message: 'Reporte diario actualizado exitosamente.' }), { status: 200 });
+    return apiSuccess({ message: 'Reporte diario actualizado exitosamente.' });
   } catch (error) {
     console.error('Error en la transacción:', error);
     const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-    return new Response(JSON.stringify({ error: `Error al actualizar el reporte diario: ${errorMessage}` }), { status: 500 });
+    return apiError(`Error al actualizar el reporte diario: ${errorMessage}`, 500);
   }
 }
 
