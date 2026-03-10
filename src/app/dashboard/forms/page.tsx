@@ -18,8 +18,8 @@ async function MantenimientoPage() {
           title: 'Tipos de checklist',
           description: 'Aqui encontraras los checkList de mantenimiento',
           buttonActioRestricted: ['Invitado'],
-          buttonAction: <ReportModal vehicles={vehicles} checklists={checklists} />,
-          component: <ChecklistTable checklists={checklists} />,
+          buttonAction: <ReportModal vehicles={vehicles as unknown as VehicleWithBrand[]} checklists={checklists as unknown as CheckListWithAnswer[]} />,
+          component: <ChecklistTable checklists={checklists as unknown as CheckListWithAnswer[]} />,
         },
       },
       // {

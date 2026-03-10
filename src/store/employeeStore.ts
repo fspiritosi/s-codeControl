@@ -5,8 +5,8 @@ import {
   fetchDocumentEmployeesByDocNumber,
 } from '@/app/server/GET/actions';
 
-const setEmployeesToShow = (employees: any) => {
-  return employees?.map((e: any) => ({
+const setEmployeesToShow = (employees: Record<string, any>[] | undefined) => {
+  return employees?.map((e: Record<string, any>) => ({
     full_name: `${e?.lastname?.charAt(0)?.toUpperCase()}${e?.lastname?.slice(1)} ${e?.firstname?.charAt(0)?.toUpperCase()}${e?.firstname?.slice(1)}`,
     id: e?.id,
     email: e?.email,
@@ -37,8 +37,8 @@ const setEmployeesToShow = (employees: any) => {
     city: (e?.city?.name || e?.city_rel?.name)?.trim(),
     hierrl_position: e?.hierarchical_position?.name || e?.hierarchy_rel?.name,
     workflow_diagram: e?.workflow_diagram?.name || e?.workflow_diagram_rel?.name,
-    contractor_employee: e?.contractor_employee?.map(({ customers, contractor }: any) => (customers || contractor)?.id),
-    contractor_name: e?.contractor_employee?.map(({ customers, contractor }: any) => (customers || contractor)?.name),
+    contractor_employee: e?.contractor_employee?.map(({ customers, contractor }: Record<string, any>) => (customers || contractor)?.id),
+    contractor_name: e?.contractor_employee?.map(({ customers, contractor }: Record<string, any>) => (customers || contractor)?.name),
     is_active: e?.is_active,
     reason_for_termination: e?.reason_for_termination,
     termination_date: e?.termination_date,
@@ -51,18 +51,18 @@ const setEmployeesToShow = (employees: any) => {
 };
 
 interface EmployeeState {
-  employees: any;
-  employeesToShow: any;
-  active_and_inactive_employees: any;
+  employees: Record<string, any>[] | undefined;
+  employeesToShow: Record<string, any>[] | undefined;
+  active_and_inactive_employees: Record<string, any>[] | undefined;
   showDeletedEmployees: boolean;
-  DrawerEmployees: any[] | null;
-  setEmployees: (employees: any) => void;
+  DrawerEmployees: Record<string, any>[] | null;
+  setEmployees: (employees: Record<string, any>[] | undefined) => void;
   setActivesEmployees: () => void;
   setInactiveEmployees: () => void;
   setShowDeletedEmployees: (show: boolean) => void;
   endorsedEmployees: () => void;
   noEndorsedEmployees: () => void;
-  getEmployees: (active: boolean) => any;
+  getEmployees: (active: boolean) => Promise<Record<string, any>[] | undefined>;
   documentDrawerEmployees: (document: string) => void;
 }
 
@@ -83,9 +83,9 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
     const employees = await fetchEmployeesWithDocs(companyId);
 
     // Map Prisma relation names to the format the UI expects
-    const mappedEmployees = employees?.map((e: any) => ({
+    const mappedEmployees = employees?.map((e: Record<string, any>) => ({
       ...e,
-      documents_employees: e.documents_employees?.map((d: any) => ({
+      documents_employees: e.documents_employees?.map((d: Record<string, any>) => ({
         ...d,
         id_document_types: d.document_type || d.id_document_types,
       })),
@@ -93,19 +93,19 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
 
     set({ active_and_inactive_employees: setEmployeesToShow(mappedEmployees) });
 
-    const activeEmployees = mappedEmployees?.filter((e: any) => {
+    const activeEmployees = mappedEmployees?.filter((e: Record<string, any>) => {
       if (e.is_active) return true;
       return e.documents_employees
-        ?.filter((d: any) => (d.document_type || d.id_document_types)?.down_document)
-        ?.some((doc: any) => doc.state === 'pendiente');
+        ?.filter((d: Record<string, any>) => (d.document_type || d.id_document_types)?.down_document)
+        ?.some((doc: Record<string, any>) => doc.state === 'pendiente');
     });
 
-    const inactiveEmployees = mappedEmployees?.filter((e: any) => {
+    const inactiveEmployees = mappedEmployees?.filter((e: Record<string, any>) => {
       return (
         !e.is_active &&
         e.documents_employees
-          .filter((d: any) => (d.document_type || d.id_document_types)?.down_document)
-          .every((doc: any) => doc.state === 'presentado')
+          .filter((d: Record<string, any>) => (d.document_type || d.id_document_types)?.down_document)
+          .every((doc: Record<string, any>) => doc.state === 'presentado')
       );
     });
 
@@ -146,7 +146,7 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
     const data = await fetchDocumentEmployeesByDocNumber(document);
 
     // Map to expected format
-    const mapped = data?.map((d: any) => ({
+    const mapped = data?.map((d: Record<string, any>) => ({
       ...d,
       applies: d.employee || d.applies,
       id_document_types: d.document_type || d.id_document_types,

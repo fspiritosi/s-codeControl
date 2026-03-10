@@ -440,7 +440,7 @@ export function EditModal({ Equipo }: Props) {
     try {
       // 2. Actualizar el documento
       // const { error: updateError } = await supabase.from('document_types').update(formattedValues).eq('id', Equipo.id);
-      const updateError = await updateDocumentType(Equipo.id, formattedValues);
+      const updateError = await updateDocumentType(Equipo.id, formattedValues as Record<string, unknown>);
 
       if (updateError) {
         console.error(updateError);

@@ -46,7 +46,7 @@ export const fetchCompanyDocuments = async () => {
         user: true,
       },
     });
-    return (data || []) as any[];
+    return (data || []);
   } catch (error) {
     console.error('Error fetching company documents:', error);
     return [];
@@ -88,7 +88,7 @@ export const fetchCompaniesByOwner = async (ownerId: string) => {
         },
       },
     });
-    return (data ?? []) as any[];
+    return (data ?? []);
   } catch (error) {
     console.error('Error fetching companies by owner:', error);
     return [];
@@ -121,7 +121,7 @@ export const fetchSharedCompaniesByProfile = async (profileId: string) => {
         },
       },
     });
-    return (data ?? []) as any[];
+    return (data ?? []);
   } catch (error) {
     console.error('Error fetching shared companies:', error);
     return [];
@@ -156,7 +156,7 @@ export const fetchSharedUsersByCompany = async (companyId: string) => {
         },
       },
     });
-    return (data ?? []) as any[];
+    return (data ?? []);
   } catch (error) {
     console.error('Error fetching shared users:', error);
     return [];
@@ -169,7 +169,7 @@ export const fetchNotificationsByCompany = async (companyId: string) => {
     const data = await prisma.notifications.findMany({
       where: { company_id: companyId },
     });
-    return (data ?? []) as any[];
+    return (data ?? []);
   } catch (error) {
     console.error('Error fetching notifications:', error);
     return [];
@@ -331,7 +331,7 @@ export const getAllUsers = async () => {
         customer: true,
       },
     });
-    return data as any[];
+    return data;
   } catch (error) {
     console.error('Error fetching users:', error);
     return [];
@@ -347,7 +347,7 @@ export const getUsersbyId = async ({ id }: { id: string }) => {
       where: { company_id: companyId, id: id || '' },
       include: { profile: true },
     });
-    return data as any[];
+    return data;
   } catch (error) {
     console.error('Error fetching users:', error);
     return [];
@@ -360,7 +360,7 @@ export const getOwnerUser = async () => {
 
   try {
     const data = await prisma.profile.findMany({
-      where: { id: (curretUser as any)[0]?.owner_id || '' },
+      where: { id: curretUser[0]?.owner_id || '' },
     });
     return data;
   } catch (error) {

@@ -19,7 +19,7 @@ export default async function CustomerFormAction({ searchParams }: { searchParam
           resolvedSearchParams.action === 'new' && 'col-span-8'
         )}
       >
-        <CustomerComponent equipment={equipment} id={resolvedSearchParams.id} />
+        <CustomerComponent equipment={equipment as unknown as VehicleWithBrand[]} id={resolvedSearchParams.id} />
       </div>
     </section>
   );

@@ -43,8 +43,8 @@ export const fetchCustomForms = async (id_company?: string) => {
         },
       });
 
-      const equipments_id = (share_company_users as any[])?.flatMap((uc) =>
-        uc.customer?.contractor_equipment?.map((ce: any) => ce.vehicle.id)
+      const equipments_id = (share_company_users)?.flatMap((uc) =>
+        uc.customer?.contractor_equipment?.map((ce) => ce.vehicle?.id)
       );
 
       // For filtering form_answers by JSON field, we need to fetch all and filter in JS
@@ -54,14 +54,14 @@ export const fetchCustomForms = async (id_company?: string) => {
       });
 
       // Filter form_answers where answer.movil is in equipments_id
-      const filtered = data.map((form: any) => ({
+      const filtered = data.map((form) => ({
         ...form,
-        form_answers: form.form_answers.filter((answer: any) =>
-          equipments_id?.includes((answer.answer as any)?.movil)
+        form_answers: form.form_answers.filter((answer) =>
+          equipments_id?.includes((answer.answer as Record<string, unknown>)?.movil as string)
         ),
       }));
 
-      return filtered as any[];
+      return filtered;
     } catch (error) {
       console.error('Error fetching custom forms:', error);
       return [];
@@ -73,7 +73,7 @@ export const fetchCustomForms = async (id_company?: string) => {
       where: { company_id: companyId || id_company || '' },
       include: { form_answers: true },
     });
-    return data as any[];
+    return data;
   } catch (error) {
     console.error('Error fetching custom forms:', error);
     return [];
@@ -129,8 +129,8 @@ export const fetchFormsAnswersByFormId = async (formId: string) => {
       });
 
       const equipments_id =
-        (share_company_users as any[])?.flatMap((uc) =>
-          uc.customer?.contractor_equipment?.map((ce: any) => ce.vehicle.id)
+        (share_company_users)?.flatMap((uc) =>
+          uc.customer?.contractor_equipment?.map((ce) => ce.vehicle?.id)
         ) || [];
 
       // Fetch all form answers and filter by JSON field in JS
@@ -138,11 +138,11 @@ export const fetchFormsAnswersByFormId = async (formId: string) => {
         where: { form_id: formId },
       });
 
-      const data = allAnswers.filter((answer: any) =>
-        equipments_id.includes((answer.answer as any)?.movil)
+      const data = allAnswers.filter((answer) =>
+        equipments_id.includes((answer.answer as Record<string, unknown>)?.movil as string)
       );
 
-      return data as any[];
+      return data;
     } catch (error) {
       console.error('Error fetching form answers:', error);
       return [];
@@ -154,7 +154,7 @@ export const fetchFormsAnswersByFormId = async (formId: string) => {
     const data = await prisma.form_answers.findMany({
       where: { form_id: formId },
     });
-    return data as any[];
+    return data;
   } catch (error) {
     console.error('Error fetching form answers:', error);
     return [];

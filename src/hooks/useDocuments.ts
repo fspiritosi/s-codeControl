@@ -10,7 +10,7 @@ export const useDocument = () => {
   const url = process.env.NEXT_PUBLIC_PROJECT_URL;
 
   return {
-    insertDocumentEmployees: async (documents: any) => {
+    insertDocumentEmployees: async (documents: Record<string, unknown>) => {
       const { data, error } = await supabase.from('documents_employees').insert(documents).select();
 
       if (error) {
@@ -21,7 +21,7 @@ export const useDocument = () => {
       return data;
     },
 
-    insertDocumentEquipment: async (documents: any) => {
+    insertDocumentEquipment: async (documents: Record<string, unknown>) => {
       const { data, error } = await supabase.from('documents_equipment').insert(documents).select();
 
       if (error) {
@@ -30,7 +30,7 @@ export const useDocument = () => {
       return data;
     },
 
-    insertMultiDocumentEmployees: async (documents: any) => {
+    insertMultiDocumentEmployees: async (documents: Record<string, unknown> & { applies: string[] }) => {
       const { applies, ...rest } = documents; // documents contiene todos los datos excepto los IDs a los que aplica
 
       const insertedRows = [];
@@ -55,7 +55,7 @@ export const useDocument = () => {
       return insertedRows;
     },
 
-    insertMultiDocumentEquipment: async (documents: any) => {
+    insertMultiDocumentEquipment: async (documents: Record<string, unknown> & { applies: string[] }) => {
       const { applies, ...rest } = documents; // documents contiene todos los datos excepto los IDs a los que aplica
 
       const insertedRows = [];

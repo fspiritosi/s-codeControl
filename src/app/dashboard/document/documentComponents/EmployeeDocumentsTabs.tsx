@@ -7,8 +7,8 @@ import { ColumnsMonthly } from '../../columsMonthly';
 import { ExpiredDataTable } from '../../data-table';
 
 async function EmployeeDocumentsTabs() {
-  const monthlyDocuments = (await fetchEmployeeMonthlyDocuments()).map(formatEmployeeDocuments);
-  const permanentDocuments = (await fetchEmployeePermanentDocuments()).map(formatEmployeeDocuments);
+  const monthlyDocuments = (await fetchEmployeeMonthlyDocuments()).map((d) => formatEmployeeDocuments(d as unknown as EmployeeDocumentWithContractors));
+  const permanentDocuments = (await fetchEmployeePermanentDocuments()).map((d) => formatEmployeeDocuments(d as unknown as EmployeeDocumentWithContractors));
 
   return (
     <Tabs defaultValue="permanentes">

@@ -52,7 +52,7 @@ export default async function Home({
 
   const vehiclesFormatted = setVehiclesToShow(equipments || []) || [];
 
-  const checklists = await fetchCustomForms(equipments[0].company_id);
+  const checklists = (await fetchCustomForms(equipments[0].company_id)) as unknown as CheckListWithAnswer[];
 
   const equipmentsForComboBox = (await fetchAllEquipment(equipments[0].company_id)).map((equipment: any) => ({
     label: equipment.domain

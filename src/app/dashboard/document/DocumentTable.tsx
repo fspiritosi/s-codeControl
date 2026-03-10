@@ -16,9 +16,9 @@ type Props = { user: Employee[]; employee_id: string; role: string };
 
 export default async function DocumentTable({ user, employee_id, role }: Props) {
   // const { allDocumentsToShow } = useLoggedUserStore();
-  const monthlyDocuments = (await fetchEmployeeMonthlyDocumentsByEmployeeId(employee_id)).map(formatEmployeeDocuments);
+  const monthlyDocuments = (await fetchEmployeeMonthlyDocumentsByEmployeeId(employee_id)).map((d) => formatEmployeeDocuments(d as unknown as EmployeeDocumentWithContractors));
   const permanentDocuments = (await fetchEmployeePermanentDocumentsByEmployeeId(employee_id)).map(
-    formatEmployeeDocuments
+    (d) => formatEmployeeDocuments(d as unknown as EmployeeDocumentWithContractors)
   );
 
   return (

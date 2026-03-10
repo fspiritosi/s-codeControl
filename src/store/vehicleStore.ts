@@ -39,9 +39,9 @@ export const useVehicleStore = create<VehicleState>((set, get) => ({
     const data = await fetchVehiclesByCompany(companyId);
 
     if (data) {
-      set({ vehicles: data || [] });
-      const activesVehicles = data || [];
-      set({ vehiclesToShow: setVehiclesToShow(activesVehicles as Vehicle) });
+      set({ vehicles: (data || []) as unknown as Vehicle });
+      const activesVehicles = (data || []) as unknown as Vehicle;
+      set({ vehiclesToShow: setVehiclesToShow(activesVehicles) });
     }
   },
 

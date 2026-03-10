@@ -65,7 +65,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
     const share_company_users = await fetchSharedCompaniesByProfile(id);
 
     get().FetchSharedUsers();
-    set({ sharedCompanies: share_company_users as SharedCompanies });
+    set({ sharedCompanies: share_company_users as unknown as SharedCompanies });
 
     if (!data) {
       console.error('Error al obtener el perfil');
@@ -82,13 +82,13 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
         useAuthStore.getState().setRoleActualCompany(undefined);
       }
 
-      set({ allCompanies: data });
+      set({ allCompanies: data as unknown as Company });
 
       const savedCompany = localStorage.getItem('company_id') || '';
 
       if (savedCompany) {
-        const company = share_company_users?.find(
-          (company: any) => company.company_id.id === JSON.parse(savedCompany)
+        const company = (share_company_users as unknown as Array<Record<string, any>>)?.find(
+          (company) => company.company_id?.id === JSON.parse(savedCompany)
         )?.company_id;
 
         if (company) {
@@ -109,11 +109,11 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
 
       if (data.length === 1) {
         set({ showMultiplesCompaniesAlert: false });
-        get().setActualCompany(data[0]);
+        get().setActualCompany(data[0] as unknown as Company[0]);
       }
 
       if (data.length === 0 && share_company_users?.length! > 0) {
-        get().setActualCompany(share_company_users?.[0]?.company_id);
+        get().setActualCompany(share_company_users?.[0]?.company_id as unknown as Company[0]);
       }
 
       if (data.length === 0 && share_company_users?.length === 0) {
@@ -131,7 +131,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
     if (!companyId) return;
     const data = await fetchSharedUsersByCompany(companyId);
 
-    set({ sharedUsers: data as SharedUser[] });
+    set({ sharedUsers: data as unknown as SharedUser[] });
     const { useAuthStore } = require('./authStore');
     useAuthStore.getState().handleActualCompanyRole();
   },

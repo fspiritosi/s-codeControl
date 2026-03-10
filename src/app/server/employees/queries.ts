@@ -4,6 +4,7 @@ import { storageServer } from '@/lib/storage-server';
 import { supabaseServer } from '@/lib/supabase/server';
 import { getActionContext } from '@/lib/server-action-context';
 import { fetchCurrentUser, fetchCustomers, fetchProvinces } from '../company/queries';
+import type { status_type } from '@/generated/prisma/client';
 
 // Employee-related queries
 
@@ -86,13 +87,13 @@ export const setEmployeeDataOptions = async () => {
   const provinces = await fetchProvinces();
 
   return {
-    workflow_diagram: workDiagrams.map((diagram: any) => diagram.name),
-    guild: guilds.map((guild: any) => guild.name!) || [],
-    covenant: covenants.map((covenant: any) => covenant.name!),
-    category: categories.map((category: any) => category.name!),
-    hierarchical_position: hierarchicalPositions.map((position: any) => position.name),
-    contractor_employee: customers.map((customer: any) => customer.name),
-    province: provinces.map((province: any) => province.name.trim()),
+    workflow_diagram: workDiagrams.map((diagram) => diagram.name),
+    guild: guilds.map((guild) => guild.name!) || [],
+    covenant: covenants.map((covenant) => covenant.name!),
+    category: categories.map((category) => category.name!),
+    hierarchical_position: hierarchicalPositions.map((position) => position.name),
+    contractor_employee: customers.map((customer) => customer.name),
+    province: provinces.map((province) => province.name.trim()),
     gender: ['Masculino', 'Femenino', 'No Declarado'],
     marital_status: ['Soltero', 'Casado', 'Viudo', 'Divorciado', 'Separado'],
     nationality: ['Argentina', 'Extranjero'],
@@ -134,7 +135,7 @@ export const fetchAllEmployeesWithRelations = async () => {
       },
       orderBy: { lastname: 'asc' },
     });
-    return (data ?? []) as any[];
+    return (data ?? []);
   } catch (error) {
     console.error('Error fetching employees:', error);
     return [];
@@ -162,7 +163,7 @@ export const fetchAllEmployeesWithRelationsById = async (id: string) => {
         },
       },
     });
-    return (data ?? []) as any[];
+    return (data ?? []);
   } catch (error) {
     console.error('Error fetching employees:', error);
     return [];
@@ -173,7 +174,7 @@ export const findEmployeeByFullName = async (fullName: string) => {
   try {
     const { companyId } = await getActionContext();
 
-    const employees = await prisma.$queryRaw<any[]>`
+    const employees = await prisma.$queryRaw<Record<string, unknown>[]>`
       SELECT * FROM find_employee_by_full_name_v2(${fullName}, ${companyId || ''})
     `;
 
@@ -234,8 +235,8 @@ export const fetchAllEmployees = async (role?: string) => {
         },
       });
 
-      const employees_raw = (data as any)?.[0]?.customer?.contractor_equipment;
-      const allEmployees = employees_raw?.map((item: any) => item.vehicle);
+      const employees_raw = data?.[0]?.customer?.contractor_equipment;
+      const allEmployees = employees_raw?.map((item) => item.vehicle);
       return allEmployees || [];
     } catch (error) {
       console.error('Error fetching employees:', error);
@@ -301,7 +302,7 @@ export const fetchDiagramsHistoryByEmployeeId = async (employeeId: string) => {
       include: { modified_by_profile: true },
       orderBy: { created_at: 'desc' },
     });
-    return data as any[];
+    return data;
   } catch (error) {
     console.error('Error fetching diagrams history:', error);
     return [];
@@ -322,7 +323,7 @@ export const fetchDiagrams = async () => {
         employee: true,
       },
     });
-    return data as any[];
+    return data;
   } catch (error) {
     console.error('Error fetching diagrams:', error);
     return [];
@@ -343,7 +344,7 @@ export const fetchDiagramsByEmployeeId = async (employeeId: string) => {
         employee: true,
       },
     });
-    return data as any[];
+    return data;
   } catch (error) {
     console.error('Error fetching diagrams:', error);
     return [];
@@ -383,7 +384,7 @@ export const fetchEmployeesWithDocs = async (companyId: string) => {
         contractor_employee: { include: { contractor: true } },
       },
     });
-    return (data ?? []) as any[];
+    return (data ?? []);
   } catch (error) {
     console.error('Error fetching employees with docs:', error);
     return [];
@@ -394,7 +395,7 @@ export const fetchEmployeesByCompanyAndStatus = async (companyId: string, status
   if (!companyId) return [];
   try {
     const data = await prisma.employees.findMany({
-      where: { company_id: companyId, status: status as any },
+      where: { company_id: companyId, status: status as status_type },
       include: {
         city_rel: { select: { name: true } },
         province_rel: { select: { name: true } },
@@ -404,7 +405,7 @@ export const fetchEmployeesByCompanyAndStatus = async (companyId: string, status
         contractor_employee: { include: { contractor: true } },
       },
     });
-    return (data ?? []) as any[];
+    return (data ?? []);
   } catch (error) {
     console.error('Error fetching employees by status:', error);
     return [];

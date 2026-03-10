@@ -25,7 +25,7 @@ export const fetchAllEquipmentWithRelations = async () => {
       },
       orderBy: { domain: 'asc' },
     });
-    return data as any[];
+    return data;
   } catch (error) {
     console.error('Error fetching vehicles:', error);
     return [];
@@ -101,11 +101,11 @@ export const setVehicleDataOptions = async () => {
   const customers = await fetchCustomers();
 
   return {
-    brand: brands.map((brand: any) => brand.name!),
-    model: models.map((model: any) => model.name!),
-    type: types.map((type: any) => type.name!),
-    types_of_vehicles: typesOfVehicles.map((type: any) => type.name!),
-    contractor_equipment: customers.map((customer: any) => customer.name!),
+    brand: brands.map((brand) => brand.name!),
+    model: models.map((model) => model.name!),
+    type: types.map((type) => type.name!),
+    types_of_vehicles: typesOfVehicles.map((type) => type.name!),
+    contractor_equipment: customers.map((customer) => customer.name!),
   };
 };
 
@@ -146,8 +146,8 @@ export const fetchAllEquipment = async (company_equipment_id?: string) => {
         },
       });
 
-      const equipments = (data as any)?.[0]?.customer?.contractor_equipment;
-      const allEquipments = equipments?.map((equipment: any) => equipment.vehicle);
+      const equipments = data?.[0]?.customer?.contractor_equipment;
+      const allEquipments = equipments?.map((equipment) => equipment.vehicle);
       return allEquipments || [];
     } catch (error) {
       console.error('Error fetching equipment:', error);
@@ -168,7 +168,7 @@ export const fetchAllEquipment = async (company_equipment_id?: string) => {
         },
       },
     });
-    return data as any[];
+    return data;
   } catch (error) {
     console.error('Error fetching equipment:', error);
     return [];
@@ -187,7 +187,7 @@ export const fetchAllEquipmentJUSTEXAMPLE = async () => {
         model_rel: true,
       },
     });
-    return data as any[];
+    return data;
   } catch (error) {
     console.error('Error fetching employees:', error);
     return [];
@@ -209,7 +209,7 @@ export const fetchEquipmentById = async (id: string) => {
       },
     });
 
-    const vehicle = vehicleData?.map((item: any) => ({
+    const vehicle = vehicleData?.map((item) => ({
       ...item,
       type_of_vehicle: item.type_of_vehicle_rel.name,
       brand: item.brand_rel.name,
@@ -234,7 +234,7 @@ export const fetchVehiclesByCompany = async (companyId: string) => {
         model_rel: { select: { name: true } },
       },
     });
-    return (data ?? []) as any[];
+    return (data ?? []);
   } catch (error) {
     console.error('Error fetching vehicles:', error);
     return [];

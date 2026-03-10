@@ -108,9 +108,9 @@ export default async function EmployeeFormAction({ searchParams: searchParamsPro
     description: item.description,
     status: item.state,
     previousStatus: item.prev_state,
-    modifiedBy: item.modified_by?.fullname
+    modifiedBy: (item.modified_by_profile as Record<string, string> | null)?.fullname
       ?.split(' ')
-      .map((name: any) => name.charAt(0).toUpperCase() + name.slice(1))
+      .map((name: string) => name.charAt(0).toUpperCase() + name.slice(1))
       .join(' '), // Mapear las iniciales a mayúsculas
     modifiedAt: format(new Date(item.created_at), 'dd/MM/yyyy HH:mm'), // Formatear a la hora local
     type: item.prev_state ? 'modified' : 'created',
@@ -127,7 +127,7 @@ export default async function EmployeeFormAction({ searchParams: searchParamsPro
           categories={categories}
           user={formattedEmployee}
           role={role}
-          diagrams={diagrams2}
+          diagrams={diagrams2 as unknown as EmployeeDiagramWithDiagramType[]}
           diagrams_types={diagrams_types2}
           activeEmploees={[formattedEmployee]}
           historyData={historyData}

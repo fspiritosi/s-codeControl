@@ -20,7 +20,7 @@ export const useCompanyData = () => {
       return company;
     },
 
-    findByOwner: async (owner: any) => {
+    findByOwner: async (owner: string) => {
       let { data: company, error } = await supabase.from('company').select('*').eq('owner_id', 'owner');
 
       if (error) {

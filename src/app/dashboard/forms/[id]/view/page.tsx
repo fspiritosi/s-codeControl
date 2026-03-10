@@ -27,7 +27,7 @@ async function page({ params }: { params: Promise<{ id: string }> }) {
   if (choferName) {
     const data = await findEmployeeByFullName(choferName);
     if (data?.id) {
-      const singEmployee = await fetchSingEmployee(data?.id);
+      const singEmployee = await fetchSingEmployee(data?.id as string);
       singurl = singEmployee  || ''
     }
   }

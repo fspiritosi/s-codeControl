@@ -4,6 +4,7 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { getActionContext } from '@/lib/server-action-context';
 import { getActualRole } from '@/lib/utils';
 import { startOfDay, endOfDay, addMonths } from 'date-fns';
+import type { Prisma } from '@/generated/prisma/client';
 
 // Document-related queries
 
@@ -79,8 +80,8 @@ export const getNextMonthExpiringDocumentsEmployees = async () => {
 
     // Filter documents with active document types and valid names
     return (
-      (data as any[])?.filter(
-        (doc: any) =>
+      (data)?.filter(
+        (doc) =>
           doc.document_type?.is_active === true &&
           doc.document_type?.name &&
           doc.document_type?.name.trim() !== '' &&
@@ -130,8 +131,8 @@ export const getNextMonthExpiringDocumentsVehicles = async () => {
 
     // Filter documents with active document types and valid names
     return (
-      (data as any[])?.filter(
-        (doc: any) =>
+      (data)?.filter(
+        (doc) =>
           doc.document_type?.is_active === true &&
           doc.document_type?.name &&
           doc.document_type?.name.trim() !== '' &&
@@ -165,7 +166,7 @@ export const getDocumentEmployeesById = async (id: string) => {
         },
       },
     });
-    return data as any[];
+    return data;
   } catch (error) {
     console.error('Error fetching document employees by id:', error);
     return [];
@@ -190,7 +191,7 @@ export const getDocumentEquipmentById = async (id: string) => {
         },
       },
     });
-    return data as any[];
+    return data;
   } catch (error) {
     console.error('Error fetching document equipment by id:', error);
     return [];
@@ -223,7 +224,7 @@ export const fetchEmployeeMonthlyDocuments = async () => {
         },
       },
     });
-    return data as any[];
+    return data;
   } catch (error) {
     console.error('Error fetching employee monthly documents:', error);
     return [];
@@ -260,7 +261,7 @@ export const fetchEmployeeMonthlyDocumentsByEmployeeId = async (employeeId: stri
           },
         },
       });
-      return data as any[];
+      return data;
     } else {
       const data = await prisma.documents_employees.findMany({
         where: {
@@ -280,7 +281,7 @@ export const fetchEmployeeMonthlyDocumentsByEmployeeId = async (employeeId: stri
           },
         },
       });
-      return data as any[];
+      return data;
     }
   } catch (error) {
     console.error('Error fetching employee monthly documents:', error);
@@ -319,7 +320,7 @@ export const fetchEmployeePermanentDocumentsByEmployeeId = async (employeeId: st
           },
         },
       });
-      return data as any[];
+      return data;
     } else {
       const data = await prisma.documents_employees.findMany({
         where: {
@@ -339,7 +340,7 @@ export const fetchEmployeePermanentDocumentsByEmployeeId = async (employeeId: st
           },
         },
       });
-      return data as any[];
+      return data;
     }
   } catch (error) {
     console.error('Error fetching employee permanent documents:', error);
@@ -372,7 +373,7 @@ export const fetchEmployeePermanentDocuments = async () => {
         },
       },
     });
-    return data as any[];
+    return data;
   } catch (error) {
     console.error('Error fetching employee permanent documents:', error);
     return [];
@@ -410,7 +411,7 @@ export const fetchMonthlyDocumentsByEquipmentId = async (equipmentId: string) =>
           },
         },
       });
-      return data as any[];
+      return data;
     } else {
       const data = await prisma.documents_equipment.findMany({
         where: {
@@ -431,7 +432,7 @@ export const fetchMonthlyDocumentsByEquipmentId = async (equipmentId: string) =>
           },
         },
       });
-      return data as any[];
+      return data;
     }
   } catch (error) {
     console.error('Error fetching equipment monthly documents:', error);
@@ -465,7 +466,7 @@ export const fetchMonthlyDocumentsEquipment = async () => {
         },
       },
     });
-    return data as any[];
+    return data;
   } catch (error) {
     console.error('Error fetching equipment monthly documents:', error);
     return [];
@@ -503,7 +504,7 @@ export const fetchPermanentDocumentsByEquipmentId = async (equipmentId: string) 
           },
         },
       });
-      return data as any[];
+      return data;
     } else {
       const data = await prisma.documents_equipment.findMany({
         where: {
@@ -524,7 +525,7 @@ export const fetchPermanentDocumentsByEquipmentId = async (equipmentId: string) 
           },
         },
       });
-      return data as any[];
+      return data;
     }
   } catch (error) {
     console.error('Error fetching equipment permanent documents:', error);
@@ -555,14 +556,14 @@ export const fetchallResources = async (applies: string) => {
   }
 };
 
-export const updateDocumentType = async (id: string, data: any): Promise<{ message: string } | null> => {
+export const updateDocumentType = async (id: string, data: Prisma.document_typesUpdateInput | Record<string, unknown>): Promise<{ message: string } | null> => {
   const { companyId } = await getActionContext();
   if (!companyId) return { message: 'No company context' };
 
   try {
     await prisma.document_types.update({
       where: { id },
-      data,
+      data: data as Prisma.document_typesUpdateInput,
     });
     return null;
   } catch (error) {
@@ -586,7 +587,7 @@ export const fettchExistingEntries = async (applies: string, id_document_types: 
         include: { vehicle: true },
         // Return id and applies (vehicle)
       });
-      return data.map((d: any) => ({ id: d.id, applies: d.vehicle })) as any[];
+      return data.map((d) => ({ id: d.id, applies: d.vehicle }));
     } else if (applies === 'Persona') {
       const data = await prisma.documents_employees.findMany({
         where: {
@@ -597,7 +598,7 @@ export const fettchExistingEntries = async (applies: string, id_document_types: 
         },
         include: { employee: true },
       });
-      return data.map((d: any) => ({ id: d.id, applies: d.employee })) as any[];
+      return data.map((d) => ({ id: d.id, applies: d.employee }));
     }
     return [];
   } catch (error) {
@@ -632,7 +633,7 @@ export const fetchPermanentDocumentsEquipment = async () => {
         },
       },
     });
-    return data as any[];
+    return data;
   } catch (error) {
     console.error('Error fetching equipment permanent documents:', error);
     return [];
@@ -651,7 +652,7 @@ export const fetchDocumentEmployeesByDocNumber = async (documentNumber: string) 
         document_type: true,
       },
     });
-    return (data ?? []) as any[];
+    return (data ?? []);
   } catch (error) {
     console.error('Error fetching document employees:', error);
     return [];
@@ -677,7 +678,7 @@ export const fetchEquipmentDocsByVehicleId = async (vehicleId: string) => {
         },
       },
     });
-    return (data ?? []) as any[];
+    return (data ?? []);
   } catch (error) {
     console.error('Error fetching equipment docs:', error);
     return [];
@@ -701,7 +702,7 @@ export const fetchAllDocumentsEmployeesByCompany = async (companyId: string) => 
         document_type: true,
       },
     });
-    return (data ?? []) as any[];
+    return (data ?? []);
   } catch (error) {
     console.error('Error fetching employee documents:', error);
     return [];
@@ -728,7 +729,7 @@ export const fetchAllDocumentsEquipmentByCompany = async (companyId: string) => 
         },
       },
     });
-    return (data ?? []) as any[];
+    return (data ?? []);
   } catch (error) {
     console.error('Error fetching equipment documents:', error);
     return [];

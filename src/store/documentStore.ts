@@ -85,13 +85,13 @@ interface DocumentState {
 
 const emptyDocs: DocumentsCollection = { employees: [], vehicles: [] };
 
-const mapDocument = (doc: any) => {
+const mapDocument = (doc: Record<string, any>) => {
   // Support both Supabase and Prisma relation names
   const docType = doc.document_types || doc.document_type;
   const emp = doc.employees || doc.employee;
   return {
     date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
-    allocated_to: emp?.contractor_employee?.map((ce: any) => (ce.contractors || ce.contractor)?.name).join(', '),
+    allocated_to: emp?.contractor_employee?.map((ce: Record<string, any>) => (ce.contractors || ce.contractor)?.name).join(', '),
     documentName: docType?.name,
     state: doc.state,
     multiresource: docType?.multiresource ? 'Si' : 'No',
@@ -111,7 +111,7 @@ const mapDocument = (doc: any) => {
   };
 };
 
-const mapVehicle = (doc: any) => {
+const mapVehicle = (doc: Record<string, any>) => {
   const docType = doc.document_types || doc.document_type;
   const veh = doc.applies || doc.vehicle;
   return {
@@ -159,30 +159,30 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     if (!companyId) return;
 
     // Fetch employee documents via server action
-    let data = await fetchAllDocumentsEmployeesByCompany(companyId);
+    const dataRaw = await fetchAllDocumentsEmployeesByCompany(companyId);
 
     // Map Prisma relation names to expected format
-    data = data?.map((d: any) => ({
+    const data = dataRaw?.map((d: Record<string, any>) => ({
       ...d,
       employees: d.employee || d.employees,
       document_types: d.document_type || d.document_types,
     }));
 
     // Fetch company documents via server action
-    let documents_company = await fetchCompanyDocuments();
+    const documentsCompanyRaw = await fetchCompanyDocuments();
 
     // Map Prisma relation names for company documents
-    documents_company = documents_company?.map((d: any) => ({
+    const documents_company = documentsCompanyRaw?.map((d: Record<string, any>) => ({
       ...d,
       id_document_types: d.document_type || d.id_document_types,
       user_id: d.user || d.user_id,
     }));
 
     // Fetch equipment documents via server action
-    let equipmentData = await fetchAllDocumentsEquipmentByCompany(companyId);
+    const equipmentDataRaw = await fetchAllDocumentsEquipmentByCompany(companyId);
 
     // Map Prisma relation names to expected format
-    equipmentData = equipmentData?.map((d: any) => ({
+    const equipmentData = equipmentDataRaw?.map((d: Record<string, any>) => ({
       ...d,
       document_types: d.document_type || d.document_types,
       applies: d.vehicle || d.applies,
@@ -190,8 +190,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
     useAuthStore.getState().handleActualCompanyRole();
 
-    const typedData: VehiclesAPI[] | null = equipmentData as VehiclesAPI[];
-    const typedDataCompany: CompanyDocumentsType[] | null = documents_company as CompanyDocumentsType[];
+    const typedData: VehiclesAPI[] | null = equipmentData as unknown as VehiclesAPI[];
+    const typedDataCompany: CompanyDocumentsType[] | null = documents_company as unknown as CompanyDocumentsType[];
 
     const roleActualCompany = useAuthStore.getState().roleActualCompany;
 
@@ -202,26 +202,26 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         ? typedDataCompany?.filter((e) => !e.id_document_types.private)
         : typedDataCompany;
     const employeesData =
-      roleActualCompany === 'Invitado' ? data?.filter((e: any) => !e.document_types.private) : data;
+      roleActualCompany === 'Invitado' ? data?.filter((e: Record<string, any>) => !e.document_types.private) : data;
 
     set({ companyDocuments: companyData as CompanyDocumentsType[] });
 
     const today = startOfDay(new Date());
     const nextMonth = endOfDay(addMonths(new Date(), 1));
 
-    const filteredData = employeesData?.filter((doc: any) => {
+    const filteredData = employeesData?.filter((doc: Record<string, any>) => {
       if (!doc.validity) return false;
       const date = parse(doc.validity, 'dd/MM/yyyy', new Date());
       return isBefore(date, today) || isBefore(date, nextMonth) || doc.state === 'Vencido';
     });
 
-    const filteredVehiclesData = equipmentData1?.filter((doc: any) => {
+    const filteredVehiclesData = equipmentData1?.filter((doc: Record<string, any>) => {
       if (!doc.validity) return false;
       const date = parse(doc.validity, 'dd/MM/yyyy', new Date());
       return isBefore(date, today) || isBefore(date, nextMonth) || doc.state === 'Vencido';
     });
 
-    const filterActiveDoc = (e: any, isVehicle = false) => {
+    const filterActiveDoc = (e: Record<string, any>, isVehicle = false) => {
       const resource = isVehicle ? e.applies : e.employees;
       return (
         (!resource?.termination_date && !e.document_types.down_document) ||
@@ -232,16 +232,16 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     const lastMonthValues: DocumentsCollection = {
       employees:
         filteredData
-          ?.filter((e: any) => filterActiveDoc(e))
-          ?.filter((doc: any) => {
+          ?.filter((e: Record<string, any>) => filterActiveDoc(e))
+          ?.filter((doc: Record<string, any>) => {
             if (!doc.validity) return false;
             return doc.state !== 'pendiente' && (doc.validity !== 'No vence' || doc.validity !== null);
           })
           ?.map(mapDocument) || [],
       vehicles:
         filteredVehiclesData
-          ?.filter((e: any) => filterActiveDoc(e, true))
-          .filter((doc: any) => {
+          ?.filter((e: Record<string, any>) => filterActiveDoc(e, true))
+          .filter((doc: Record<string, any>) => {
             if (!doc.validity || doc.validity === 'No vence') return false;
             return doc.state !== 'pendiente' && (doc.validity !== 'No vence' || doc.validity !== null);
           })
@@ -251,29 +251,29 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     const pendingDocuments: DocumentsCollection = {
       employees:
         employeesData
-          ?.filter((e: any) => filterActiveDoc(e))
-          .filter((doc: any) => doc.state === 'presentado')
+          ?.filter((e: Record<string, any>) => filterActiveDoc(e))
+          .filter((doc: Record<string, any>) => doc.state === 'presentado')
           ?.map(mapDocument) || [],
       vehicles:
         equipmentData1
-          ?.filter((e: any) => filterActiveDoc(e, true))
-          .filter((doc: any) => doc.state === 'presentado')
+          ?.filter((e: Record<string, any>) => filterActiveDoc(e, true))
+          .filter((doc: Record<string, any>) => doc.state === 'presentado')
           ?.map(mapVehicle) || [],
     };
 
     const Allvalues: DocumentsCollection = {
       employees:
         employeesData
-          ?.filter((e: any) => filterActiveDoc(e))
-          ?.filter((doc: any) => {
+          ?.filter((e: Record<string, any>) => filterActiveDoc(e))
+          ?.filter((doc: Record<string, any>) => {
             if (!doc.validity || doc.validity === 'No vence') return false;
             return doc.state !== 'presentado' && (doc.validity !== 'No vence' || doc.validity !== null);
           })
           ?.map(mapDocument) || [],
       vehicles:
         equipmentData1
-          ?.filter((e: any) => filterActiveDoc(e, true))
-          ?.filter((doc: any) => {
+          ?.filter((e: Record<string, any>) => filterActiveDoc(e, true))
+          ?.filter((doc: Record<string, any>) => {
             if (!doc.validity || doc.validity === 'No vence') return false;
             return doc.state !== 'presentado' && (doc.validity !== 'No vence' || doc.validity !== null);
           })
@@ -283,11 +283,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     const AllvaluesToShow: DocumentsCollection = {
       employees:
         employeesData
-          ?.filter((e: any) => filterActiveDoc(e))
+          ?.filter((e: Record<string, any>) => filterActiveDoc(e))
           .map(mapDocument) || [],
       vehicles:
         equipmentData1
-          ?.filter((e: any) => filterActiveDoc(e, true))
+          ?.filter((e: Record<string, any>) => filterActiveDoc(e, true))
           .map(mapVehicle) || [],
     };
 

@@ -53,9 +53,9 @@ async function page({ params }: { params: Promise<{ id: string }> }) {
             </div>
           ),
           title: formName,
-          description: `${(answers[0]?.form_id?.form as any)?.description ?? ''}`,
+          description: `${((answers[0] as unknown as CheckListAnswerWithForm)?.form_id?.form as Record<string, unknown>)?.description ?? ''}`,
           buttonActioRestricted: [''],
-          component: <CheckListAnwersTable answers={answers} />,
+          component: <CheckListAnwersTable answers={answers as unknown as CheckListAnswerWithForm[]} />,
         },
       },
     ],
