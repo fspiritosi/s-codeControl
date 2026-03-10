@@ -8,7 +8,7 @@
 
 ## >>> PUNTO DE CONTINUACIÓN <<<
 
-**Continuar en: FASE 8 — Eliminar Supabase SDK (línea 395)**
+**Continuar en: FASE 10 — Refactorizar componentes gigantes (línea 505)**
 
 ### Fases completadas:
 | Fase | Estado | Commit |
@@ -21,6 +21,8 @@
 | 5 — Storage abstraction + RT → polling | ✅ COMPLETADA | `07eb8749` |
 | 6 — Limpieza console.log + ESLint 9 | ✅ COMPLETADA | `a1899eb6` |
 | 7 — Auth completa (hybrid passwords) | ✅ COMPLETADA | `0a5c9541` |
+| 9 — Dividir server actions por dominio | ✅ COMPLETADA | `7aae5447` |
+| 11 — Migrar moment → date-fns | ✅ COMPLETADA | `b624d013` |
 
 ### Fases pendientes:
 | Fase | Línea | Descripción |
