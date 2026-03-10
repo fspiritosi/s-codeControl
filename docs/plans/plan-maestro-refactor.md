@@ -8,7 +8,7 @@
 
 ## >>> PUNTO DE CONTINUACIÓN <<<
 
-**Continuar en: FASE 10 — Refactorizar componentes gigantes (línea 505)**
+**Continuar en: FASE 13 — Reducir componentes client-side (línea 650)**
 
 ### Fases completadas:
 | Fase | Estado | Commit |
@@ -22,7 +22,10 @@
 | 6 — Limpieza console.log + ESLint 9 | ✅ COMPLETADA | `a1899eb6` |
 | 7 — Auth completa (hybrid passwords) | ✅ COMPLETADA | `0a5c9541` |
 | 9 — Dividir server actions por dominio | ✅ COMPLETADA | `7aae5447` |
+| 10 — Refactorizar componentes gigantes | ✅ COMPLETADA | `eb816a6d` |
 | 11 — Migrar moment → date-fns | ✅ COMPLETADA | `b624d013` |
+| 12 — Eliminación de any (core) | ✅ COMPLETADA | `444416c3` |
+| 14 — Estandarizar API routes | ✅ COMPLETADA | `e688c8a9` |
 
 ### Fases pendientes:
 | Fase | Línea | Descripción |
