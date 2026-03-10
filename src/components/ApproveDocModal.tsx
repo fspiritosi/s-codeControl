@@ -12,18 +12,14 @@ import {
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '../../supabase/supabase';
+import { updateDocumentEmployeeState, updateDocumentEquipmentState } from '@/app/server/UPDATE/actions';
 
 export default function ApproveDocModal({ id, resource }: { id: string; resource: string | null }) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const handleApprove = async () => {
     if (resource === 'employee') {
-      const { data, error } = await supabase
-        .from('documents_employees')
-        .update({ state: 'aprobado' })
-        .eq('id', id)
-        .select();
+      const { error } = await updateDocumentEmployeeState(id, 'aprobado');
 
       if (error) {
         return toast.error('Ocurrio un error al aprobar el documento');
@@ -31,11 +27,7 @@ export default function ApproveDocModal({ id, resource }: { id: string; resource
 
       toast.success('El documento ha sido aprobado correctamente');
     } else {
-      const { data, error } = await supabase
-        .from('documents_equipment')
-        .update({ state: 'aprobado' })
-        .eq('id', id)
-        .select();
+      const { error } = await updateDocumentEquipmentState(id, 'aprobado');
 
       if (error) {
         return toast.error('Ocurrio un error al aprobar el documento');

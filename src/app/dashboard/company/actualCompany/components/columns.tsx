@@ -24,7 +24,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '../../../../../../supabase/supabase';
+import { deleteShareCompanyUser, updateShareCompanyUserRole, fetchRoles } from '@/app/server/company/mutations';
 import { DataTableColumnHeader } from './data-table-column-header';
 
 export const columns: ColumnDef<SharedUser>[] = [
@@ -77,11 +77,7 @@ export const columns: ColumnDef<SharedUser>[] = [
       const [roles, setRoles] = useState<any[] | null>([]);
 
       const getRoles = async () => {
-        let { data: roles, error } = await supabase
-          .from('roles')
-          .select('*')
-          .eq('intern', false)
-          .neq('name', 'Invitado');
+        const roles = await fetchRoles();
         setRoles(roles);
       };
 
@@ -92,14 +88,10 @@ export const columns: ColumnDef<SharedUser>[] = [
       const changeRole = async (role: string) => {
         toast.promise(
           async () => {
-            const { data, error } = await supabase
-              .from('share_company_users')
-              .update({ role })
-              .eq('id', row.getValue('id'))
-              .select();
+            const { error } = await updateShareCompanyUserRole(row.getValue('id'), role);
 
             if (error) {
-              throw new Error(handleSupabaseError(error.message));
+              throw new Error(handleSupabaseError(error));
             }
           },
           {
@@ -169,14 +161,10 @@ export const columns: ColumnDef<SharedUser>[] = [
       const handleDelete = async () => {
         toast.promise(
           async () => {
-            const { data, error } = await supabase
-              .from('share_company_users')
-              .delete()
-              .eq('id', row.getValue('id'))
-              .select();
+            const { error } = await deleteShareCompanyUser(row.getValue('id'));
 
             if (error) {
-              throw new Error(handleSupabaseError(error.message));
+              throw new Error(handleSupabaseError(error));
             }
           },
           {

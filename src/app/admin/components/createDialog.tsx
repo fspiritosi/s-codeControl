@@ -11,20 +11,25 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle } from 'lucide-react';
-import { supabase } from '../../../../supabase/supabase';
+import { prisma } from '@/lib/prisma';
 
 export function CreateDialog({ title, dbName }: any) {
   async function createDiagram(formData: FormData) {
     'use server';
 
-    const diagramFormData = {
-      name: formData.get('name'),
+    const name = formData.get('name') as string;
+
+    const tableMap: Record<string, any> = {
+      'work-diagram': prisma.work_diagram,
+      'industry_type': prisma.industry_type,
+      'hierarchy': prisma.hierarchy,
+      'types_of_vehicles': prisma.types_of_vehicles,
     };
 
-    const { data, error } = await supabase
-      .from(dbName)
-      .insert([{ name: diagramFormData.name }])
-      .select();
+    const table = tableMap[dbName];
+    if (table) {
+      await table.create({ data: { name } });
+    }
     //TODO falta la notificación y que cierre el dialogo de manera automática
   }
 

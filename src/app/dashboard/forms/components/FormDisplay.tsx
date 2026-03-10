@@ -20,7 +20,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { createCustomForm } from '@/app/server/shared/mutations';
 import { COMPANIES_TABLE, DOCUMENTS_TABLE, EMPLOYEES_TABLE, VEHICLES_TABLE } from '@/lib/utils/utils';
 import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
@@ -40,7 +40,6 @@ interface FormDisplayProps {
 }
 
 export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, created }: FormDisplayProps) {
-  const supabase = supabaseBrowser();
   const vehicles = useLoggedUserStore((state) => state.vehicles);
   const employees = useLoggedUserStore((state) => state.employees);
   const currentCompany: any = [useLoggedUserStore((state) => state.actualCompany)].map((e) => {
@@ -410,14 +409,14 @@ export function FormDisplay({ campos, setCampos, fetchForms, selectedForm, creat
         }
 
         document.getElementById('MissingName')?.style.setProperty('color', 'black');
-        const { data, error } = await supabase.from('custom_form').insert({
+        const { data, error } = await createCustomForm({
           company_id: actualCompany?.id,
           form: campos,
           name: campos.find((e) => e.tipo === types.NombreFormulario)?.value,
-        } as any);
+        });
 
         if (error) {
-          throw new Error(error.message);
+          throw new Error(error);
         } else {
           if (fetchForms && setCampos) {
             fetchForms();

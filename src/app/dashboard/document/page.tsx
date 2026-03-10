@@ -1,6 +1,7 @@
 import DocumentNav from '@/components/DocumentNav';
 import PageTableSkeleton from '@/components/Skeletons/PageTableSkeleton';
 import Viewcomponent from '@/components/ViewComponent';
+import { prisma } from '@/lib/prisma';
 import { supabaseServer } from '@/lib/supabase/server';
 import { CompanyDocumentsType } from '@/store/loggedUser';
 import { cookies } from 'next/headers';
@@ -16,19 +17,24 @@ export default async function page() {
   const user = await supabase.auth.getUser();
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const cookiesStore = await cookies();
-  const { data: userShared } = await supabase
-    .from('share_company_users')
-    .select('*')
-    .eq('profile_id', user?.data?.user?.id || '');
+  const userShared = await prisma.share_company_users.findMany({
+    where: { profile_id: user?.data?.user?.id || '' },
+  });
   const role: string | null = userShared?.[0]?.role || null;
   const actualCompany = cookiesStore.get('actualComp')?.value;
 
-  let { data: documents_company, error: documents_company_error } = await supabase
-    .from('documents_company')
-    .select('*,id_document_types(*),user_id(*)')
-    .eq('applies', actualCompany || '');
+  const documents_company_raw = await prisma.documents_company.findMany({
+    where: { applies: actualCompany || '' },
+    include: { document_type: true, user: true },
+  });
+  // Reshape to match Supabase shape expected by template
+  const documents_company = documents_company_raw.map((doc) => ({
+    ...doc,
+    id_document_types: doc.document_type,
+    user_id: doc.user,
+  }));
 
-  const typedDataCompany: CompanyDocumentsType[] | null = documents_company as CompanyDocumentsType[] | null;
+  const typedDataCompany: CompanyDocumentsType[] | null = documents_company as unknown as CompanyDocumentsType[] | null;
 
   const companyData =
     role === 'Invitado' ? typedDataCompany?.filter((e) => !e.id_document_types.private) : typedDataCompany;

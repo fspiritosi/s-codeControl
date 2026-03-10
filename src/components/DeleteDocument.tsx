@@ -8,7 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { handleSupabaseError } from '@/lib/errorHandler';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import {
+  updateDocumentEmployeeByPath,
+  updateDocumentEquipmentByPath,
+  updateDocumentCompanyByPath,
+  removeDocumentFile,
+} from '@/app/server/UPDATE/actions';
 import { cn } from '@/lib/utils';
 import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { useRouter } from 'next/navigation';
@@ -27,7 +32,6 @@ export default function DeleteDocument({
   id: string;
   expires: boolean;
 }) {
-  const supabase = supabaseBrowser();
   const [isOpen, setIsOpen] = useState(false);
   const FormSchema = z.object({
     delete_document: z.string({ required_error: 'El documento es requerido' }).refine((value) => value === 'ELIMINAR', {
@@ -48,55 +52,34 @@ export default function DeleteDocument({
       async () => {
         if (!documentName) return;
 
-        await supabase.storage
-          .from('document_files')
-          .remove([documentName])
-          .then(async () => {
-            if (resource === 'employee') {
-              const { data, error } = await supabase
-                .from('documents_employees')
-                .update({
-                  validity: null,
-                  document_path: null,
-                  state: 'pendiente',
-                  period: null,
-                })
-                .eq('document_path', documentName);
-              if (error) {
-                throw new Error(handleSupabaseError(error.message));
-              }
-            } else if (resource === 'vehicle') {
-              const { data, error } = await supabase
-                .from('documents_equipment')
-                .update({
-                  validity: null,
-                  document_path: null,
-                  state: 'pendiente',
-                  period: null,
-                })
-                .eq('document_path', documentName);
-              if (error) {
-                throw new Error(handleSupabaseError(error.message));
-              }
-            } else {
-              const { data, error } = await supabase
-                .from('documents_company')
-                .update({
-                  validity: null,
-                  document_path: null,
-                  state: 'pendiente',
-                  period: null,
-                  user_id: null,
-                })
-                .eq('document_path', documentName);
-              if (error) {
-                throw new Error(handleSupabaseError(error.message));
-              }
-            }
-          })
-          .catch((error: any) => {
-            throw new Error(handleSupabaseError(error.message));
-          });
+        const removeResult = await removeDocumentFile('document_files', [documentName]);
+        if (removeResult.error) {
+          throw new Error(handleSupabaseError(removeResult.error));
+        }
+
+        const resetData = {
+          validity: null,
+          document_path: null,
+          state: 'pendiente',
+          period: null,
+        };
+
+        if (resource === 'employee') {
+          const { error } = await updateDocumentEmployeeByPath(documentName, resetData);
+          if (error) {
+            throw new Error(handleSupabaseError(error));
+          }
+        } else if (resource === 'vehicle') {
+          const { error } = await updateDocumentEquipmentByPath(documentName, resetData);
+          if (error) {
+            throw new Error(handleSupabaseError(error));
+          }
+        } else {
+          const { error } = await updateDocumentCompanyByPath(documentName, { ...resetData, user_id: null });
+          if (error) {
+            throw new Error(handleSupabaseError(error));
+          }
+        }
 
         router.refresh();
         if (resource === 'company') {

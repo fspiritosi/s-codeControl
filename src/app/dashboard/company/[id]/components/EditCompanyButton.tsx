@@ -4,14 +4,12 @@ import { CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useImageUpload } from '@/hooks/useUploadImage';
-import { supabaseBrowser } from '@/lib/supabase/browser';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, useRef, useState } from 'react';
 
 export default function EditCompanyButton() {
   const url = process.env.NEXT_PUBLIC_PROJECT_URL;
   const router = useRouter();
-  const supabase = supabaseBrowser();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | undefined>();
   const [required, setRequired] = useState(false);

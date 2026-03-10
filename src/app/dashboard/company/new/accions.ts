@@ -1,4 +1,5 @@
 'use server';
+import { prisma } from '@/lib/prisma';
 import { supabaseServer } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
@@ -8,10 +9,9 @@ export async function AddCompany(formData: FormData, url: string) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let { data: profile, error } = await supabase
-    .from('profile')
-    .select('*')
-    .eq('email', user?.email || '');
+  const profile = await prisma.profile.findMany({
+    where: { email: user?.email || '' },
+  });
 
   const formattedData = {
     city: parseInt(formData.get('city') as string),
@@ -30,11 +30,14 @@ export async function AddCompany(formData: FormData, url: string) {
     company_logo: url ?? '',
   };
 
-  const { data, error: companyError } = await supabase.from('company').insert([formattedData]).select();
-  revalidatePath('/dashboard', 'layout');
-  revalidatePath('/dashboard');
-  return { error: companyError, data };
-  //redirijir al dashboard
+  try {
+    const data = await prisma.company.create({ data: formattedData as any });
+    revalidatePath('/dashboard', 'layout');
+    revalidatePath('/dashboard');
+    return { error: null, data: [data] };
+  } catch (companyError: any) {
+    return { error: { message: companyError.message }, data: null };
+  }
 }
 
 export async function EditCompany(formData: FormData, url: string) {
@@ -43,10 +46,9 @@ export async function EditCompany(formData: FormData, url: string) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let { data: profile, error } = await supabase
-    .from('profile')
-    .select('*')
-    .eq('email', user?.email || '');
+  const profile = await prisma.profile.findMany({
+    where: { email: user?.email || '' },
+  });
 
   const formattedData = {
     city: parseInt(formData.get('city') as string),
@@ -64,20 +66,22 @@ export async function EditCompany(formData: FormData, url: string) {
     by_defect: true,
     company_logo: url ?? '',
   };
-  let { data: companyId } = await supabase.from('company').select('id').eq('company_cuit', formattedData.company_cuit);
 
-  const { data, error: companyError } = await supabase
-    .from('company')
-    .update(formattedData)
-    //.select()
-    .eq('id', companyId?.[0].id || '')
-    .select('*');
+  const companyRecord = await prisma.company.findFirst({
+    where: { company_cuit: formattedData.company_cuit },
+    select: { id: true },
+  });
 
-  revalidatePath('/dashboard', 'layout');
+  try {
+    const data = await prisma.company.update({
+      where: { id: companyRecord?.id || '' },
+      data: formattedData as any,
+    });
 
-  // revalidatePath('/dashboard')
+    revalidatePath('/dashboard', 'layout');
 
-  return { error: companyError, data };
-  //return data
-  //redirijir al dashboard
+    return { error: null, data: [data] };
+  } catch (companyError: any) {
+    return { error: { message: companyError.message }, data: null };
+  }
 }

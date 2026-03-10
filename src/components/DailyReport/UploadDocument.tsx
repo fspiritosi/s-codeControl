@@ -102,7 +102,8 @@
 // export default UploadDocument;
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent } from '@/components/ui/alert-dialog';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { storage } from '@/lib/storage';
+import { fetchDailyReportRowById, updateDailyReportRow } from '@/app/server/UPDATE/actions';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -126,7 +127,6 @@ const UploadDocument: React.FC<UploadDocumentProps> = ({
   itemNames,
   isReplacing,
 }) => {
-  const supabase = supabaseBrowser();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const route = useRouter();
@@ -155,21 +155,17 @@ const UploadDocument: React.FC<UploadDocumentProps> = ({
 
     if (isReplacing) {
       // Mover el archivo actual a la carpeta erroneos
-      const { data: currentData, error: currentError } = await supabase
-        .from('dailyreportrows')
-        .select('document_path')
-        .eq('id', rowId)
-        .single();
+      const currentData = await fetchDailyReportRowById(rowId);
 
-      if (currentError) {
-        console.error('Error al obtener la ruta del documento actual:', currentError);
+      if (!currentData) {
+        console.error('Error al obtener la ruta del documento actual');
         toast.error('Error al obtener la ruta del documento actual');
         return;
       }
 
-      const currentFilePath = currentData.document_path;
-      const currentFilePathModified = currentData.document_path
-        ? currentData.document_path.split('/').slice(1).join('/')
+      const currentFilePath = (currentData as any).document_path;
+      const currentFilePathModified = currentFilePath
+        ? currentFilePath.split('/').slice(1).join('/')
         : '';
       if (!currentFilePath) {
         console.error('La ruta del archivo actual es nula');
@@ -178,37 +174,28 @@ const UploadDocument: React.FC<UploadDocumentProps> = ({
       }
       const timestamp = new Date().getTime();
       const erroneousFilePath = `${companyName}/erroneos/${currentFilePathModified.split('/').slice(0, -1).join('/')}/${timestamp}-${currentFilePath.split('/').pop()}`;
-      // const timestamp = new Date().getTime();
-      // const erroneousFilePath = `${companyName}/erroneos/${currentFilePath}`;
 
-      const { error: moveError } = await supabase.storage
-        .from('daily_reports')
-        .move(currentFilePath!, erroneousFilePath);
-      {
-        upsert: true;
-      }
-
-      if (moveError) {
+      try {
+        // Use storage abstraction to move: download + upload to new location + remove old
+        const fileBlob = await storage.download('daily_reports', currentFilePath);
+        await storage.upload('daily_reports', erroneousFilePath, fileBlob, { upsert: true });
+        await storage.remove('daily_reports', [currentFilePath]);
+      } catch (moveError) {
         console.error('Error al mover el archivo actual a la carpeta erroneos:', moveError);
         toast.error('Error al mover el archivo actual a la carpeta erroneos');
         return;
       }
     }
 
-    const { data, error } = await supabase.storage
-      .from('daily_reports')
-      .upload(`${filePath}/${fileName}`, selectedFile, { cacheControl: '10', upsert: true });
-
-    if (error) {
+    try {
+      await storage.upload('daily_reports', `${filePath}/${fileName}`, selectedFile, { cacheControl: '10', upsert: true });
+    } catch (error) {
       console.error('Error al subir el archivo:', error);
       toast.error('Error al subir el archivo');
       return;
     }
 
-    const { error: updateError } = await supabase
-      .from('dailyreportrows')
-      .update({ document_path: `${filePath}/${fileName}` })
-      .eq('id', rowId);
+    const { error: updateError } = await updateDailyReportRow(rowId, { document_path: `${filePath}/${fileName}` });
 
     if (updateError) {
       console.error('Error al actualizar la ruta del documento:', updateError);

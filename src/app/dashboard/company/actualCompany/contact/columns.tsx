@@ -37,7 +37,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { handleSupabaseError } from '@/lib/errorHandler';
-import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -51,7 +50,8 @@ import { Fragment, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { supabase } from '../../../../../../supabase/supabase';
+import { updateContactById, updateContactDeactivate, reactivateContact } from '@/app/server/company/mutations';
+import { fetchContactsByCompany } from '@/app/server/company/queries';
 const formSchema = z.object({
   reason_for_termination: z.string({
     required_error: 'La razón de la baja es requerida.',
@@ -98,16 +98,7 @@ export const columns: ColumnDef<Colum>[] = [
 
       const fetchInactiveContacts = async () => {
         try {
-          const { data, error } = await supabase
-            .from('contacts')
-            .select('*')
-            //.eq('is_active', false)
-            .eq('company_id', actualCompany?.id)
-            .select();
-
-          if (error) {
-            toast.error(`${handleSupabaseError(error.message)}`);
-          }
+          const data = await fetchContactsByCompany(actualCompany?.id || '');
         } catch (error) {
           toast.error(handleSupabaseError(`${error}`));
         }
@@ -132,25 +123,13 @@ export const columns: ColumnDef<Colum>[] = [
       async function reintegerContact() {
         toast.promise(
           async () => {
-            const supabase = supabaseBrowser();
-
-            const { data, error } = await supabase
-              .from('contacts')
-              .update({
-                is_active: true,
-                termination_date: null,
-                reason_for_termination: null,
-              })
-              .eq('id', contacts.id)
-              //.eq('company_id', actualCompany?.id)
-              .select();
+            const { error } = await reactivateContact(contacts.id);
 
             setIntegerModal(!integerModal);
-            //setInactive(data as any)
             setShowDeletedContact(false);
 
             if (error) {
-              throw new Error(handleSupabaseError(error.message));
+              throw new Error(handleSupabaseError(error));
             }
           },
           {
@@ -171,21 +150,16 @@ export const columns: ColumnDef<Colum>[] = [
               termination_date: format(values.termination_date, 'yyyy-MM-dd'),
             };
 
-            const supabase = supabaseBrowser();
-            const { error } = await supabase
-              .from('contacts')
-              .update({
-                is_active: false,
-                termination_date: data.termination_date,
-                reason_for_termination: data.reason_for_termination,
-              })
-              .eq('id', contacts.id)
-              .eq('company_id', actualCompany?.id || '')
-              .select();
+            const { error } = await updateContactDeactivate(
+              contacts.id,
+              actualCompany?.id || '',
+              data.termination_date,
+              data.reason_for_termination
+            );
 
             setShowModal(!showModal);
             if (error) {
-              throw new Error(handleSupabaseError(error.message));
+              throw new Error(handleSupabaseError(error));
             }
           },
           {

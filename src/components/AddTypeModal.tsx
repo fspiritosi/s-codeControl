@@ -11,7 +11,7 @@ import {
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { handleSupabaseError } from '@/lib/errorHandler';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { insertTypeVehicle } from '@/app/server/UPDATE/actions';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusCircledIcon } from '@radix-ui/react-icons';
 import { useRouter } from 'next/navigation';
@@ -36,23 +36,13 @@ export default function AddTypeModal({ company_id, value }: { company_id: string
     },
   });
 
-  const supabase = supabaseBrowser();
   const router = useRouter();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-
-    const { data, error } = await supabase
-      .from('type')
-      .insert({
-        name: values.name ?? value,
-        company_id: values.company_id,
-      })
-      .select();
+    const { error } = await insertTypeVehicle(values.name ?? value, values.company_id);
 
     if (error) {
-      throw new Error(handleSupabaseError(error.message));
+      throw new Error(handleSupabaseError(error));
     }
     router.refresh();
   }

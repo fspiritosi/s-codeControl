@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { fetchDocumentsByApplies } from '@/app/server/GET/actions';
 import { calculateNameOFDocument, cn, uploadDocument, uploadDocumentFile } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
@@ -70,7 +70,6 @@ function UploadDocument({
   user_id,
 }: UploadDocumentProps) {
   const config = ENTITY_CONFIG[entityType];
-  const supabase = supabaseBrowser();
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
   const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentTypes | undefined>(undefined);
   const uploadDocumentSchema = z.object({
@@ -143,18 +142,12 @@ function UploadDocument({
 
   const fetchSelectedResourceDocuments = async () => {
     if (default_id) {
-      const { data, error } = await supabase
-        .from(config.tableName)
-        .select('*')
-        .eq('applies', default_id)
-        .neq('document_path', null);
-
-      if (error) {
+      try {
+        const data = await fetchDocumentsByApplies(config.tableName, default_id);
+        setSelectedResourceDocuments(data as any);
+      } catch (error) {
         console.error('error', error);
-        return;
       }
-
-      setSelectedResourceDocuments(data as any);
     }
   };
   useEffect(() => {
@@ -207,18 +200,12 @@ function UploadDocument({
                               key={resourceItem.value}
                               onSelect={async () => {
                                 form.setValue('applies', resourceItem.value);
-                                const { data, error } = await supabase
-                                  .from(config.tableName)
-                                  .select('*')
-                                  .eq('applies', resourceItem.value)
-                                  .neq('document_path', null);
-
-                                if (error) {
+                                try {
+                                  const data = await fetchDocumentsByApplies(config.tableName, resourceItem.value);
+                                  setSelectedResourceDocuments(data as any);
+                                } catch (error) {
                                   console.error('error', error);
-                                  return;
                                 }
-
-                                setSelectedResourceDocuments(data as any);
                               }}
                             >
                               <Check

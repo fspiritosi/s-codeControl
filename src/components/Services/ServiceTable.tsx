@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableRow } from '@/components/ui/table'; 
-import { supabaseBrowser } from '@/lib/supabase/browser';
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { z } from 'zod';
@@ -47,7 +46,6 @@ const dateSchema = z
   });
 
 const ServiceTable = ({ services, customers, company_id }: ServiceTableProps) => {
-  const supabase = supabaseBrowser();
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const [servicesData, setServicesData] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);

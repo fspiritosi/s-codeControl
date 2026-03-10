@@ -21,7 +21,13 @@ import { ChangeEvent, useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { supabase } from '../../../supabase/supabase';
+import {
+  insertDocumentsEmployees,
+  updateEmployeeByDocNumber,
+  deactivateEmployee,
+  deleteContractorEmployee,
+  insertContractorEmployee,
+} from '@/app/server/UPDATE/actions';
 import { Province } from './types';
 import { getPersonalDataFields, getContactDataFields, getLaboralDataFields } from './fieldDefinitions';
 
@@ -201,10 +207,10 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
             });
           });
 
-          const { data, error } = await supabase.from('documents_employees').insert(documentsMissing).select();
+          const { error } = await insertDocumentsEmployees(documentsMissing);
 
           if (error) {
-            throw new Error(handleSupabaseError(error.message));
+            throw new Error(handleSupabaseError(error));
           }
 
           try {
@@ -278,21 +284,17 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
         };
         const result = compareContractorEmployees(user, finalValues as any);
         result.valuesToRemove.forEach(async (e) => {
-          const { error } = await supabase
-            .from('contractor_employee')
-            .delete()
-            .eq('employee_id', user.id)
-            .eq('contractor_id', e);
-          if (error) return handleSupabaseError(error.message);
+          if (!e) return;
+          const { error } = await deleteContractorEmployee(user.id, e);
+          if (error) return handleSupabaseError(error);
         });
 
         const error2 = await Promise.all(
           result.valuesToAdd.map(async (e) => {
+            if (!e) return;
             if (!result.valuesToKeep.includes(e)) {
-              const { error } = await supabase
-                .from('contractor_employee')
-                .insert({ employee_id: user.id, contractor_id: e });
-              if (error) return handleSupabaseError(error.message);
+              const { error } = await insertContractorEmployee(user.id, e);
+              if (error) return handleSupabaseError(error);
             }
           })
         );
@@ -346,10 +348,7 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
         const employeeImage = `${url}/employee_photos/${document_number}.${fileExtension}?timestamp=${Date.now()}`
           .trim()
           .replace(/\s/g, '');
-        const { data, error } = await supabase
-          .from('employees')
-          .update({ picture: employeeImage })
-          .eq('document_number', document_number);
+        await updateEmployeeByDocNumber(document_number, { picture: employeeImage });
       } catch (error: any) {
         // silently fail image upload
       }
@@ -383,15 +382,7 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
     };
 
     try {
-      await supabase
-        .from('employees')
-        .update({
-          is_active: false,
-          termination_date: data.termination_date,
-          reason_for_termination: data.reason_for_termination,
-        })
-        .eq('document_number', user.document_number)
-        .select();
+      await deactivateEmployee(user.document_number, data.termination_date, data.reason_for_termination);
 
       setShowModal(!showModal);
       toast('Emplead@ eliminado', { description: `El emplead@ ${user.full_name} ha sido eliminado` });

@@ -63,6 +63,14 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { fetchEmployeesWithFilters, fetchVehiclesWithFilters, RpcFilter } from '@/lib/documentFilters';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseBrowser } from '@/lib/supabase/browser';
+import {
+  fetchPendingAlertsByTypeAndApplies,
+  deleteDocumentAlertsByIds,
+  fetchDocumentAlertsByTypeAndApplies,
+  insertDocumentAlertsGeneric,
+  deletePendingAlertsByIds,
+  deleteAllPendingAlertsByType,
+} from '@/app/server/documents/mutations';
 import { useCountriesStore } from '@/store/countries';
 import { Equipo } from '@/zodSchemas/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -462,22 +470,21 @@ export function EditModal({ Equipo }: Props) {
           const resourceIds = resourcesNeedingDeletion.map((resource) => resource.id);
 
           // Primero obtenemos los IDs de las alertas con document_path null
-          const { data: alertsToDelete } = await supabase
-            .from(table as 'documents_equipment' | 'documents_employees' | 'documents_company')
-            .select('id')
-            .eq('id_document_types', Equipo.id)
-            .in('applies', resourceIds)
-            .is('document_path', null);
+          const { data: alertsToDelete } = await fetchPendingAlertsByTypeAndApplies(
+            table as 'documents_equipment' | 'documents_employees' | 'documents_company',
+            Equipo.id,
+            resourceIds
+          );
 
           if (alertsToDelete && alertsToDelete.length > 0) {
             // Extraemos los IDs de las alertas a eliminar
             const alertIds = alertsToDelete.map((alert) => alert.id);
 
             // Eliminamos todas las alertas en una sola operación
-            const { error: deleteError } = await supabase
-              .from(table as 'documents_equipment' | 'documents_employees' | 'documents_company')
-              .delete()
-              .in('id', alertIds);
+            const { error: deleteError } = await deleteDocumentAlertsByIds(
+              table as 'documents_equipment' | 'documents_employees' | 'documents_company',
+              alertIds
+            );
 
             if (deleteError) {
               console.error('Error al eliminar alertas en bulk:', deleteError);
@@ -491,11 +498,11 @@ export function EditModal({ Equipo }: Props) {
           const resourceIds = resourcesNeedingAlerts.map((resource) => resource.id);
 
           // Verificamos qué recursos ya tienen alertas para no duplicar
-          const { data: existingAlerts } = await supabase
-            .from(table as 'documents_equipment' | 'documents_employees' | 'documents_company')
-            .select('applies')
-            .eq('id_document_types', Equipo.id)
-            .in('applies', resourceIds);
+          const { data: existingAlerts } = await fetchDocumentAlertsByTypeAndApplies(
+            table as 'documents_equipment' | 'documents_employees' | 'documents_company',
+            Equipo.id,
+            resourceIds
+          );
 
           const existingAlertIds = existingAlerts?.map((alert) => alert.applies) || [];
 
@@ -511,15 +518,15 @@ export function EditModal({ Equipo }: Props) {
               id_document_types: Equipo.id,
               applies: resource.id,
               is_active: true,
-              // insertedAt: new Date().toISOString(),
               document_path: null,
               user_id: user?.data.user?.id,
             }));
 
             // Insertamos todas las alertas nuevas en una sola operación
-            const { error: insertError } = await supabase
-              .from(table as 'documents_equipment' | 'documents_employees' | 'documents_company')
-              .insert(newEntries);
+            const { error: insertError } = await insertDocumentAlertsGeneric(
+              table as 'documents_equipment' | 'documents_employees' | 'documents_company',
+              newEntries
+            );
 
             if (insertError) {
               console.error('Error al generar alertas en bulk:', insertError);
@@ -704,10 +711,13 @@ export function EditModal({ Equipo }: Props) {
             applies: resource.id,
           }));
 
-          const { error: insertError } = await supabase.from(table as any).insert(alerts);
+          const { error: insertError } = await insertDocumentAlertsGeneric(
+            table as 'documents_employees' | 'documents_equipment',
+            alerts
+          );
 
           if (insertError) {
-            throw new Error(handleSupabaseError(insertError.message));
+            throw new Error(handleSupabaseError(insertError));
           }
         } else {
           throw new Error('No hay recursos a los que se les deba generar una alerta');
@@ -756,24 +766,22 @@ export function EditModal({ Equipo }: Props) {
         const nonMatchingResourceIds = nonMatchingEntries.map((entry) => entry.id);
 
         // Eliminar solo las alertas de recursos que no cumplen con las condiciones actuales
-        const { error } = await supabase
-          .from(table as any)
-          .delete()
-          .in('id', nonMatchingResourceIds)
-          .is('document_path', null);
+        const { error } = await deletePendingAlertsByIds(
+          table as 'documents_employees' | 'documents_equipment' | 'documents_company',
+          nonMatchingResourceIds
+        );
 
         if (error) {
-          throw new Error(handleSupabaseError(error.message));
+          throw new Error(handleSupabaseError(error));
         }
       } else {
-        const { error } = await supabase
-          .from(table as any)
-          .delete()
-          .eq('id_document_types', Equipo.id)
-          .is('document_path', null);
+        const { error } = await deleteAllPendingAlertsByType(
+          table as 'documents_employees' | 'documents_equipment' | 'documents_company',
+          Equipo.id
+        );
 
         if (error) {
-          throw new Error(handleSupabaseError(error.message));
+          throw new Error(handleSupabaseError(error));
         }
       }
 

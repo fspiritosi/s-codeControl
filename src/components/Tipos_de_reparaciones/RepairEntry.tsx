@@ -6,7 +6,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { storage } from '@/lib/storage';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { fetchOpenRepairsByEquipmentAndType, updateVehicleById } from '@/app/server/UPDATE/actions';
 import { cn } from '@/lib/utils';
 
 import { formatDocumentTypeName, setVehiclesToShow } from '@/lib/utils/utils';
@@ -130,14 +130,7 @@ export default function RepairNewEntry({
         return true;
       }
 
-      const { data: repair_solicitudes, error } = await supabase
-        .from('repair_solicitudes')
-        .select('*')
-        .eq('equipment_id', vehicle_id?.id)
-        .eq('reparation_type', repairTypeId)
-        .neq('state', 'Cancelado')
-        .neq('state', 'Finalizado')
-        .neq('state', 'Rechazado');
+      const repair_solicitudes = await fetchOpenRepairsByEquipmentAndType(vehicle_id?.id, repairTypeId);
 
       if (repair_solicitudes?.length ?? 0 > 0) {
         toast.error(
@@ -198,7 +191,6 @@ export default function RepairNewEntry({
   };
   const [formattedToday] = useState(formatDocumentTypeName(new Date().toISOString()));
 
-  const supabase = supabaseBrowser();
   const formatImagesUrl = async (image: File | undefined, domain: string, repair_id: string, index: number) => {
     if (!image) return;
     const maintenanceName = formatDocumentTypeName(tipo_de_mantenimiento.find((e) => e.id === repair_id)?.name || '');
@@ -266,20 +258,11 @@ export default function RepairNewEntry({
           });
 
           if (hasHighCriticity && condition !== 'no operativo' && condition !== 'en reparación') {
-            const { data: vehicles, error } = await supabase
-              .from('vehicles')
-              .update({ condition: 'no operativo', kilometer: allRepairs[0].kilometer })
-              .eq('id', vehicle_id?.id || '');
+            await updateVehicleById(vehicle_id?.id || '', { condition: 'no operativo', kilometer: allRepairs[0].kilometer });
           } else if (hasMediumCriticity && condition !== 'no operativo' && condition !== 'en reparación') {
-            const { data: vehicles, error } = await supabase
-              .from('vehicles')
-              .update({ condition: 'operativo condicionado', kilometer: allRepairs[0].kilometer })
-              .eq('id', vehicle_id?.id || '');
+            await updateVehicleById(vehicle_id?.id || '', { condition: 'operativo condicionado', kilometer: allRepairs[0].kilometer });
           } else {
-            const { data: vehicles, error } = await supabase
-              .from('vehicles')
-              .update({ kilometer: allRepairs[0].kilometer })
-              .eq('id', vehicle_id?.id || '');
+            await updateVehicleById(vehicle_id?.id || '', { kilometer: allRepairs[0].kilometer });
           }
 
           await fetch(`${URL}/api/repair_solicitud`, {

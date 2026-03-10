@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { supabaseBrowser } from '@/lib/supabase/browser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Item } from '@radix-ui/react-dropdown-menu';
 import { useRouter } from 'next/navigation';
@@ -88,7 +87,6 @@ export default function ServiceItemsForm({
 
   const [loading, setLoading] = useState(true);
   const modified_company_id = company_id?.replace(/"/g, '');
-  const supabase = supabaseBrowser();
   // const { services } = await fetch(`${URL}/api/services?actual=${company_id}`).then((e) => e.json());
   const form = useForm<Service>({
     resolver: zodResolver(isEditing ? EditItemSchema : ItemsSchema),

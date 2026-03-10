@@ -37,7 +37,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { handleSupabaseError } from '@/lib/errorHandler';
-import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -50,7 +49,8 @@ import { Fragment, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { supabase } from '../../../../../../supabase/supabase';
+import { reactivateCovenant, deactivateCovenantAndCategories, updateCovenantById } from '@/app/server/covenant/mutations';
+import { fetchCovenantsByCompany } from '@/app/server/covenant/queries';
 
 const editCovenantSchema = z.object({
   covenant: z.string().nonempty('El nombre del convenio es requerido.'),
@@ -100,15 +100,10 @@ export const columns: ColumnDef<Colum>[] = [
 
       const fetchCovenant = async () => {
         try {
-          const { data, error } = await supabase
-            .from('covenant')
-            .select('*')
-            //.eq('is_active', false)
-            .eq('company_id', actualCompany?.id)
-            .select();
+          const { error } = await fetchCovenantsByCompany(actualCompany?.id || '');
 
           if (error) {
-            toast.error(`${handleSupabaseError(error.message)}`);
+            toast.error(`${handleSupabaseError(error)}`);
           }
         } catch (error) {
           toast.error(handleSupabaseError(`${error}`));
@@ -141,21 +136,12 @@ export const columns: ColumnDef<Colum>[] = [
       async function reintegerCct() {
         toast.promise(
           async () => {
-            const supabase = supabaseBrowser();
-
-            const { data, error } = await supabase
-              .from('covenant')
-              .update({
-                is_active: true,
-              })
-              .eq('id', covenant.id)
-              //.eq('company_id', actualCompany?.id)
-              .select();
+            const { error } = await reactivateCovenant(covenant.id);
 
             setIntegerModal(!integerModal);
 
             if (error) {
-              throw new Error(handleSupabaseError(error.message));
+              throw new Error(handleSupabaseError(error));
             }
           },
           {
@@ -176,31 +162,11 @@ export const columns: ColumnDef<Colum>[] = [
               termination_date: format(values.termination_date, 'yyyy-MM-dd'),
             };
 
-            const supabase = supabaseBrowser();
-            const { error } = await supabase
-              .from('covenant')
-              .update({
-                is_active: false,
-              })
-              .eq('id', covenant.id)
-              .eq('company_id', actualCompany?.id || '')
-              .select();
-
-            const { error: categoryError } = await supabase
-              .from('category')
-              .update({
-                is_active: false,
-              })
-              .eq('covenant_id', covenant.id);
-            // .eq('company_id', actualCompany?.id);
-
-            if (categoryError) {
-              throw new Error(handleSupabaseError(categoryError.message));
-            }
+            const { error } = await deactivateCovenantAndCategories(covenant.id, actualCompany?.id || '');
 
             setShowModal(!showModal);
             if (error) {
-              throw new Error(handleSupabaseError(error.message));
+              throw new Error(handleSupabaseError(error));
             }
           },
           {
@@ -216,21 +182,12 @@ export const columns: ColumnDef<Colum>[] = [
       async function editCovenant(values: z.infer<typeof editCovenantSchema>) {
         toast.promise(
           async () => {
-            const supabase = supabaseBrowser();
-
-            const { data, error } = await supabase
-              .from('covenant')
-              .update({
-                name: values.covenant,
-              })
-              .eq('id', covenant.id)
-              .eq('company_id', actualCompany?.id || '')
-              .select();
+            const { error } = await updateCovenantById(covenant.id, { name: values.covenant });
 
             setShowCovenantModal(!showCovenantModal);
 
             if (error) {
-              throw new Error(handleSupabaseError(error.message));
+              throw new Error(handleSupabaseError(error));
             }
           },
           {

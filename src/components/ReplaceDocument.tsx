@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { storage } from '@/lib/storage';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { updateDocumentById } from '@/app/server/UPDATE/actions';
 import { cn } from '@/lib/utils';
 import { CalendarIcon, InfoCircledIcon } from '@radix-ui/react-icons';
 import { addMonths, format } from 'date-fns';
@@ -59,7 +59,6 @@ export default function ReplaceDocument({
   const today = new Date();
   const nextMonth = addMonths(new Date(), 1);
   const [month, setMonth] = useState<Date>(nextMonth);
-  const supabase = supabaseBrowser();
 
   const yearsAhead = Array.from({ length: 20 }, (_, index) => {
     const year = today.getFullYear() + index + 1;
@@ -110,18 +109,15 @@ export default function ReplaceDocument({
           });
 
 
-        const { error: updateError } = await supabase
-          .from(tableName)
-          .update({
-            document_path: finalDocument?.path,
-            validity: filename.validity ? new Date(filename.validity).toISOString() : null,
-            created_at: new Date().toISOString(),
-            state: 'presentado'
-          })
-          .eq('id', appliesId || '');
+        const { error: updateError } = await updateDocumentById(tableName, appliesId || '', {
+          document_path: finalDocument?.path,
+          validity: filename.validity ? new Date(filename.validity).toISOString() : null,
+          created_at: new Date().toISOString(),
+          state: 'presentado',
+        });
 
         if (updateError) {
-          throw new Error(handleSupabaseError(updateError?.message));
+          throw new Error(handleSupabaseError(updateError));
         }
 
         router.refresh();

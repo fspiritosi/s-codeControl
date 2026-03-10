@@ -2,7 +2,7 @@
 import { CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { fetchCitiesByProvince } from '@/app/server/company/queries';
 import { useEffect, useState } from 'react';
 
 interface Props {
@@ -18,14 +18,9 @@ export default function CityInput({ provinces, defaultProvince, defaultCity }: P
   const [selectedCity, setSelectedCity] = useState<string | null>(defaultCity?.id?.toString() || null);
 
   const handleFetchCities = async (id: string) => {
-    const supabase = supabaseBrowser();
+    const cities = await fetchCitiesByProvince(parseInt(id));
 
-    let { data: cities, error: citiesError } = await supabase
-      .from('cities')
-      .select('*')
-      .eq('province_id', parseInt(id));
-
-    const filteredCities = cities?.filter((city) => city?.province_id == parseInt(id));
+    const filteredCities = cities?.filter((city: any) => city?.province_id == parseInt(id));
 
     setCities(cities);
     return filteredCities;

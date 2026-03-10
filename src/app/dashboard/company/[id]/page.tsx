@@ -3,6 +3,7 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { prisma } from '@/lib/prisma';
 import { supabaseServer } from '@/lib/supabase/server';
 
 import { Checkbox } from '@/components/ui/checkbox';
@@ -19,35 +20,40 @@ export default async function companyRegister({ params }: { params: Promise<{ id
     data: { session },
   } = await supabase.auth.getSession();
 
-  const { data } = await supabase
-    .from('profile')
-    .select('*')
-    .eq('email', session?.user.email || '');
+  const profileData = await prisma.profile.findMany({
+    where: { email: session?.user.email || '' },
+  });
 
-  const { data: Companies, error } = await supabase
-    .from('company')
-    .select(`*`)
-    .eq('owner_id', data?.[0]?.id || '');
+  const Companies = await prisma.company.findMany({
+    where: { owner_id: profileData?.[0]?.id || '' },
+  });
 
-  const { data: companyData, error: companyError } = await supabase
-    .from('company')
-    .select('*,city(*),province_id(*)')
-    .eq('owner_id', data?.[0]?.id || '')
-    .eq('id', id)
-    .single();
+  const companyData = await prisma.company.findFirst({
+    where: { owner_id: profileData?.[0]?.id || '', id },
+    include: {
+      city_rel: true,
+      province_rel: true,
+    },
+  });
 
-  let { data: share_company_users, error: sharedError } = await supabase
-    .from('share_company_users')
-    .select(`*`)
-    .eq('profile_id', data?.[0]?.id || '');
+  // Reshape to match old Supabase shape
+  const companyDataShaped = companyData ? {
+    ...companyData,
+    city: companyData.city_rel,
+    province_id: companyData.province_rel,
+  } : null;
+
+  const share_company_users = await prisma.share_company_users.findMany({
+    where: { profile_id: profileData?.[0]?.id || '' },
+  });
 
   revalidatePath('/dashboard/company/new');
 
   const showAlert = !Companies?.[0] && !share_company_users?.[0];
 
-  let { data: provinces, error: provincesError } = await supabase.from('provinces').select('*');
+  const provinces = await prisma.provinces.findMany();
 
-  let { data: industry_type, error: industryError } = await supabase.from('industry_type').select('*');
+  const industry_type = await prisma.industry_type.findMany();
 
   return (
     <section className={cn('md:mx-7')}>
@@ -70,8 +76,8 @@ export default async function companyRegister({ params }: { params: Promise<{ id
               <div>
                 <Label htmlFor="company_name">Nombre de la compañía</Label>
                 <Input
-                  defaultValue={companyData?.company_name}
-                  value={companyData?.company_name}
+                  defaultValue={companyDataShaped?.company_name}
+                  value={companyDataShaped?.company_name}
                   id="company_name"
                   name="company_name"
                   className="max-w-[350px] w-[300px]"
@@ -82,7 +88,7 @@ export default async function companyRegister({ params }: { params: Promise<{ id
               <div>
                 <Label htmlFor="company_cuit">CUIT de la compañía</Label>
                 <Input
-                  defaultValue={companyData?.company_cuit}
+                  defaultValue={companyDataShaped?.company_cuit}
                   name="company_cuit"
                   id="company_cuit"
                   className="max-w-[350px] w-[300px]"
@@ -93,7 +99,7 @@ export default async function companyRegister({ params }: { params: Promise<{ id
               <div>
                 <Label htmlFor="website">Sitio Web</Label>
                 <Input
-                  defaultValue={companyData?.website || ''}
+                  defaultValue={companyDataShaped?.website || ''}
                   id="website"
                   name="website"
                   className="max-w-[350px] w-[300px]"
@@ -106,7 +112,7 @@ export default async function companyRegister({ params }: { params: Promise<{ id
               <div>
                 <Label htmlFor="contact_email">Email</Label>
                 <Input
-                  defaultValue={companyData?.contact_email}
+                  defaultValue={companyDataShaped?.contact_email}
                   id="contact_email"
                   name="contact_email"
                   className="max-w-[350px] w-[300px]"
@@ -117,7 +123,7 @@ export default async function companyRegister({ params }: { params: Promise<{ id
               <div>
                 <Label htmlFor="contact_phone">Número de teléfono</Label>
                 <Input
-                  defaultValue={companyData?.contact_phone}
+                  defaultValue={companyDataShaped?.contact_phone}
                   id="contact_phone"
                   name="contact_phone"
                   className="max-w-[350px] w-[300px]"
@@ -128,7 +134,7 @@ export default async function companyRegister({ params }: { params: Promise<{ id
               <div>
                 <Label htmlFor="address">Dirección</Label>
                 <Input
-                  defaultValue={companyData?.address}
+                  defaultValue={companyDataShaped?.address}
                   id="address"
                   name="address"
                   className="max-w-[350px] w-[300px]"
@@ -138,7 +144,7 @@ export default async function companyRegister({ params }: { params: Promise<{ id
               </div>
               <div>
                 <Label htmlFor="country">Seleccione un país</Label>
-                <Select defaultValue={companyData?.country} name="country">
+                <Select defaultValue={companyDataShaped?.country} name="country">
                   <SelectTrigger id="country" name="country" className="max-w-[350px]  w-[300px]">
                     <SelectValue placeholder="Seleccionar país" />
                   </SelectTrigger>
@@ -151,12 +157,12 @@ export default async function companyRegister({ params }: { params: Promise<{ id
               </div>
               <CityInput
                 provinces={provinces}
-                defaultProvince={companyData?.province_id}
-                defaultCity={companyData?.city}
+                defaultProvince={companyDataShaped?.province_id}
+                defaultCity={companyDataShaped?.city}
               />
               <div>
                 <Label htmlFor="industry">Seleccione una Industria</Label>
-                <Select defaultValue={companyData?.industry} name="industry">
+                <Select defaultValue={companyDataShaped?.industry} name="industry">
                   <SelectTrigger id="industry" name="industry" className="max-w-[350px] w-[300px]">
                     <SelectValue id="industry" placeholder="Seleccionar Industria" />
                   </SelectTrigger>
@@ -175,7 +181,7 @@ export default async function companyRegister({ params }: { params: Promise<{ id
                 <Label htmlFor="description">Descripción</Label>
                 <Textarea
                   // disabled={!formEnabledProp}
-                  defaultValue={companyData?.description}
+                  defaultValue={companyDataShaped?.description}
                   id="description"
                   name="description"
                   className="max-w-[350px] w-[300px]"
@@ -189,7 +195,7 @@ export default async function companyRegister({ params }: { params: Promise<{ id
                 <Checkbox id="by_defect" name="by_defect" />
               </div>
             </div>
-            <EditCompanyButton defaultImage={companyData?.company_logo} />
+            <EditCompanyButton defaultImage={companyDataShaped?.company_logo} />
           </form>
         </div>
       </Card>

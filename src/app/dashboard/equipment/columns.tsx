@@ -51,7 +51,7 @@ import { useForm } from 'react-hook-form';
 import { RiToolsFill } from 'react-icons/ri';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { supabase } from '../../../../supabase/supabase';
+import { reactivateVehicle, deactivateVehicle } from '@/app/server/vehicles/mutations';
 const formSchema = z.object({
   reason_for_termination: z.string({
     required_error: 'La razón de la baja es requerida.',
@@ -147,16 +147,7 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
 
       async function reintegerEquipment() {
         try {
-          const { data, error } = await supabase
-            .from('vehicles')
-            .update({
-              is_active: true,
-              termination_date: null,
-              reason_for_termination: null,
-            })
-            .eq('id', equipment.id)
-            .eq('company_id', actualCompany?.id)
-            .select();
+          await reactivateVehicle(equipment.id, actualCompany?.id || '');
 
           setIntegerModal(!integerModal);
 
@@ -177,16 +168,7 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
         };
 
         try {
-          await supabase
-            .from('vehicles')
-            .update({
-              is_active: false,
-              termination_date: data.termination_date,
-              reason_for_termination: data.reason_for_termination,
-            })
-            .eq('id', equipment.id)
-            .eq('company_id', actualCompany?.id)
-            .select();
+          await deactivateVehicle(equipment.id, actualCompany?.id || '', data.termination_date, data.reason_for_termination);
 
           setShowModal(!showModal);
 

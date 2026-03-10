@@ -50,7 +50,7 @@ import { Fragment, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { supabase } from '../../../../../../../supabase/supabase';
+import { reactivateEmployeeByDocNumber, deactivateEmployeeByDocNumber } from '@/app/server/company/customers-mutations';
 
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -167,19 +167,12 @@ export const columns: ColumnDef<Colum>[] = [
 
       async function reintegerEmployee() {
         try {
-          await supabase
-            .from('employees')
-            .update({
-              is_active: true,
-              termination_date: null,
-              reason_for_termination: null,
-            })
-            .eq('document_number', document)
-            .select();
+          const { error } = await reactivateEmployeeByDocNumber(document);
 
           setIntegerModal(!integerModal);
           setInactiveEmployees();
           setShowDeletedEmployees(false);
+          if (error) throw new Error(error);
           toast('Empleado reintegrado', { description: `El empleado ${user.full_name} ha sido reintegrado` });
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
@@ -194,18 +187,15 @@ export const columns: ColumnDef<Colum>[] = [
         };
 
         try {
-          await supabase
-            .from('employees')
-            .update({
-              is_active: false,
-              termination_date: data.termination_date,
-              reason_for_termination: data.reason_for_termination,
-            })
-            .eq('document_number', document)
-            .select();
+          const { error } = await deactivateEmployeeByDocNumber(
+            document,
+            data.termination_date,
+            data.reason_for_termination
+          );
 
           setShowModal(!showModal);
 
+          if (error) throw new Error(error);
           toast('Empleado eliminado', { description: `El empleado ${user.full_name} ha sido eliminado` });
         } catch (error: any) {
           const message = await errorTranslate(error?.message);

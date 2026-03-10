@@ -15,7 +15,7 @@ import { use, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 // import { DocumentNewVersionDialog } from "@/features/Hse/components/Document-new-version-dialog"
 import { getAssignedEmployeesByDocumentVersion } from '@/features/Hse/actions/documents';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { storage } from '@/lib/storage';
 import { format } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
@@ -118,7 +118,6 @@ const createFilterOptions = <T,>(
 export default function DocumentVersionDetailPage({ params }: { params: Promise<{ id: string; version: string }> }) {
   const { id, version } = use(params);
   const router = useRouter();
-  const supabase = supabaseBrowser();
   const [showNewVersionDialog, setShowNewVersionDialog] = useState(false);
   const [document, setDocument] = useState<ExtendedDocument | null>(null);
   const [activeEmployees, setActiveEmployees] = useState<any[]>([]);
@@ -252,10 +251,7 @@ export default function DocumentVersionDetailPage({ params }: { params: Promise<
   }
   const getDocumentUrl = (filePath: string) => {
     if (!filePath) return '';
-    const { data } = supabase.storage
-      .from('documents-hse') // Asegúrate de que este sea el nombre correcto de tu bucket
-      .getPublicUrl(filePath);
-    return data.publicUrl;
+    return storage.getPublicUrl('documents-hse', filePath);
   };
   const getStatusColor = (status: string) => {
     switch (status) {

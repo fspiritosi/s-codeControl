@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCaption, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { fetchFormAnswersByFormId } from '@/app/server/shared/queries';
 import { FormData } from '@/types/types';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -136,14 +136,10 @@ function FormCardContainer({
   };
 
   const [forms, setForms] = useState<any[] | null>([]);
-  const supabase = supabaseBrowser();
 
   const fetchAnswers = async () => {
-    let { data: form_answers, error } = await supabase
-      .from('form_answers')
-      .select('*,form_id(*)')
-      .eq('form_id', formId || '');
-    setForms(form_answers);
+    const form_answers = await fetchFormAnswersByFormId(formId || '');
+    setForms(form_answers as any);
   };
 
   useEffect(() => {

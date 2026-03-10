@@ -7,7 +7,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 
 import { buttonVariants } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { fetchActiveDocumentTypesGlobal, fetchPresentedDocumentsForAuditor } from '@/app/server/shared/queries';
 import { AuditorDocument } from '@/types/types';
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
@@ -15,7 +15,6 @@ import { AuditorColums } from './columns';
 import { AuditorDataTable } from './data-table';
 
 export default function Auditor() {
-  const supabase = supabaseBrowser();
   const [document_types, setDocumentTypes] = useState<any[] | null>([]);
   const [documents_employees, setDocumentsEmployees] = useState<any[] | null>([]);
 
@@ -27,91 +26,44 @@ export default function Auditor() {
   };
 
   const fetchDocumentTypes = async () => {
-    let { data: document_types, error } = await supabase
-      .from('document_types')
-      .select('*')
-      ?.filter('is_active', 'eq', true)
-      ?.filter('company_id', 'is', null);
-    // .or(`company_id.eq.${actualCompany?.id},company_id.is.null`)
-
-    if (error) {
-      console.error('Error fetching document types:', error.message);
-      return;
-    }
-
-    setDocumentTypes(document_types);
+    const data = await fetchActiveDocumentTypesGlobal();
+    setDocumentTypes(data as any);
   };
 
   const fetchDocumentsEmployees = async () => {
-    let { data: equipmentData, error: equipmentError } = await supabase
-      .from('documents_equipment')
-      .select(
-        `
-    *,
-    document_types:document_types(*),
-    applies(*,type(*),type_of_vehicle(*),model(*),brand(*),company_id(*))
-    `
-      )
-      .eq('state', 'presentado')
-      .eq('applies.is_active', true)
-      .order('created_at', { ascending: false });
+    const { equipmentDocs, employeeDocs } = await fetchPresentedDocumentsForAuditor();
 
     const mapVehicle = (doc: any) => {
       const formattedDate = formatDate(doc.validity);
       return {
         date: doc.created_at ? format(new Date(doc.created_at), 'dd/MM/yyyy') : 'No vence',
-        allocated_to: doc.applies?.type_of_vehicle?.name,
-        documentName: doc.document_types?.name,
+        allocated_to: doc.vehicle?.type_of_vehicle_rel?.name,
+        documentName: doc.document_type?.name,
         state: doc.state,
-        multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+        multiresource: doc.document_type?.multiresource ? 'Si' : 'No',
         validity: formattedDate,
         id: doc.id,
-        resource: doc.applies?.domain || doc.applies?.intern_number,
-        companyName: doc.applies?.company_id?.company_name,
+        resource: doc.vehicle?.domain || doc.vehicle?.intern_number,
+        companyName: doc.vehicle?.company?.company_name,
       };
     };
-    const mappedVehicles = equipmentData?.map(mapVehicle);
-
-    let { data: documents_employees, error } = await supabase
-      .from('documents_employees')
-      .select(
-        `
-      *,
-      document_types(*),
-      applies(*,
-        contractor_employee(
-          customers(
-            *
-          )
-        ),
-        company_id(*)
-      )
-    `
-      )
-      .eq('state', 'presentado')
-      .eq('applies.is_active', true)
-      .order('created_at', { ascending: false });
+    const mappedVehicles = equipmentDocs?.map(mapVehicle);
 
     const mapEmployee = (doc: any) => {
       const formattedDate = formatDate(doc.validity);
       return {
         date: doc.created_at ? format(new Date(doc.created_at), 'dd/MM/yyyy') : 'No vence',
-        companyName: doc.applies?.company_id?.company_name,
-        allocated_to: doc.applies?.contractor_employee?.map((doc: any) => doc.contractors?.name).join(', '),
-        documentName: doc.document_types?.name,
+        companyName: doc.employee?.company?.company_name,
+        allocated_to: doc.employee?.contractor_employee?.map((ce: any) => ce.customers?.name).join(', '),
+        documentName: doc.document_type?.name,
         state: doc.state,
-        multiresource: doc.document_types?.multiresource ? 'Si' : 'No',
+        multiresource: doc.document_type?.multiresource ? 'Si' : 'No',
         validity: formattedDate || 'No vence',
         id: doc.id,
-        resource: `${doc.applies?.lastname} ${doc.applies?.firstname}`,
+        resource: `${doc.employee?.lastname} ${doc.employee?.firstname}`,
       };
     };
-    const mappedEmployees = documents_employees?.map(mapEmployee);
-
-    if (error) {
-      console.error('Error fetching document types:', error.message);
-      return;
-    }
+    const mappedEmployees = employeeDocs?.map(mapEmployee);
 
     setDocumentsEmployees([...(mappedVehicles || []), ...(mappedEmployees || [])]);
   };

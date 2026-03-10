@@ -1,5 +1,6 @@
 import { fetchAllEquipment, fetchCustomForms } from '@/app/server/GET/actions';
 import QrActionSelector from '@/components/QR/AcctionSelector';
+import { prisma } from '@/lib/prisma';
 import { supabaseServer } from '@/lib/supabase/server';
 import { setVehiclesToShow } from '@/lib/utils/utils';
 import { TypeOfRepair } from '@/types/types';
@@ -42,13 +43,30 @@ export default async function Home({
     res.json()
   );
 
-  const { data, error } = await supabase
-    .from('repair_solicitudes')
-    .select(
-      '*,user_id(*),employee_id(*),equipment_id(*,type(*),brand(*),model(*)),reparation_type(*),repairlogs(*,modified_by_employee(*),modified_by_user(*))'
-    )
-    .eq('equipment_id', id)
-    .in('state', ['Pendiente', 'Esperando repuestos', 'En reparación']);
+  const data = await prisma.repair_solicitudes.findMany({
+    where: {
+      equipment_id: id,
+      state: { in: ['Pendiente', 'Esperando_repuestos', 'En_reparacion'] },
+    },
+    include: {
+      user: true,
+      employee: true,
+      equipment: {
+        include: {
+          type_rel: true,
+          brand_rel: true,
+          model_rel: true,
+        },
+      },
+      reparation_type_rel: true,
+      repairlogs: {
+        include: {
+          employee: true,
+          user: true,
+        },
+      },
+    },
+  });
 
   const vehiclesFormatted = setVehiclesToShow(equipments || []) || [];
 

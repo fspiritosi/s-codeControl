@@ -1,17 +1,15 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 import { FormattedOutput, Guild } from '@/types/types';
 import { cookies } from 'next/headers';
 import { TreeNode, TreeNodeData } from './TreeFile';
 
 export default async function CovenantTreeFile() {
-  const supabase = await supabaseServer();
-  const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const coockiesStore = await cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
-  const { data: guild, error } = await supabase
-    .from('guild')
-    .select('*,covenant(*,category(*))')
-    .eq('company_id', company_id || '');
+  const guild = await prisma.guild.findMany({
+    where: { company_id: company_id || '' },
+    include: { covenants: { include: { categories: true } } },
+  });
 
   function formatData(input: Guild[] | null): FormattedOutput {
     return input?.map((guild) => ({
@@ -36,7 +34,7 @@ export default async function CovenantTreeFile() {
     name: 'Sindicatos',
     type: 'sindicatoPadre',
     id: '0',
-    children: formatData(guild as Guild[]),
+    children: formatData(guild as unknown as Guild[]),
   };
 
   return (

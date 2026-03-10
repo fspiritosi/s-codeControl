@@ -8,7 +8,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { insertGuild } from '@/app/server/UPDATE/actions';
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -24,7 +24,6 @@ import { FormEvent } from 'react';
 
 export default function AddGuildModal({ fromEmployee: fromEmployee = false }) {
   const company_id = useLoggedUserStore((state) => state.actualCompany?.id);
-  const supabase = supabaseBrowser();
   const router = useRouter();
   const formSchema = z.object({
     name: z.string({ required_error: 'El nombre es requerido' }).min(2, {
@@ -45,11 +44,8 @@ export default function AddGuildModal({ fromEmployee: fromEmployee = false }) {
   async function onSubmit({ name, company_id }: z.infer<typeof formSchema>) {
     toast.promise(
       async () => {
-        const { data, error } = await supabase
-          .from('guild')
-          .insert([{ name: name.slice(0, 1).toUpperCase() + name.slice(1), company_id }])
-          .select();
-        if (error) throw new Error(error.message);
+        const { error } = await insertGuild(name.slice(0, 1).toUpperCase() + name.slice(1), company_id || '');
+        if (error) throw new Error(error);
         document.getElementById('close-guild-modal')?.click();
         router.refresh();
 

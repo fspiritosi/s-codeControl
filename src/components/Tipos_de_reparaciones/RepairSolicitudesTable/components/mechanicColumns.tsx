@@ -14,7 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { storage } from '@/lib/storage';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { fetchRepairSolicitudesByEquipment, updateRepairSolicitude, updateVehicleById } from '@/app/server/UPDATE/actions';
 import { cn } from '@/lib/utils';
 import { formatDocumentTypeName } from '@/lib/utils/utils';
 import { FormattedSolicitudesRepair } from '@/types/types';
@@ -162,7 +162,6 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
   {
     id: 'actions',
     cell: ({ row }) => {
-      const supabase = supabaseBrowser();
       const [imageUrl, setImageUrl] = useState<string[]>([]);
       const [imagesMechanic, setImagesMechanic] = useState<(string | null)[]>([null, null, null]);
       const [images, setImages] = useState<(string | null)[]>([null, null, null]);
@@ -208,15 +207,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
       }, [row.original.repairlogs]);
 
       const fetchRepairsLogs = async () => {
-        const { data, error } = await supabase
-          .from('repair_solicitudes')
-          .select('*,reparation_type(*),user_id(*),employee_id(*)')
-          .eq('equipment_id', row.original.vehicle_id);
-
-        if (error) {
-          throw new Error(handleSupabaseError(error.message));
-        }
-
+        const data = await fetchRepairSolicitudesByEquipment(row.original.vehicle_id);
         setRepairSolicitudes(data);
       };
 
@@ -295,17 +286,13 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
           const mechanic_description = form.getValues('mechanic_description');
 
 
-          const { data, error } = await supabase
-            .from('repair_solicitudes')
-            .update({
+          const { data, error } = await updateRepairSolicitude(row.original.id, {
               state: status,
               mechanic_description,
               mechanic_images,
               kilometer: form.getValues('kilometer'),
               scheduled: form.getValues('scheduled'),
-            } as any)
-            .eq('id', row.original.id)
-            .select();
+            });
 
 
           mechanic_imagesData
@@ -316,7 +303,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
             });
           if (error) {
             console.error(error);
-            throw new Error(handleSupabaseError(error.message));
+            throw new Error(handleSupabaseError(error));
           }
 
           const pendingRepairs = repairSolicitudes
@@ -371,10 +358,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
             }
           }
 
-          const { data: vehicles, error: vehicleerror } = await supabase
-            .from('vehicles')
-            .update({ condition: newStatus } as any)
-            .eq('id', vehicle_id);
+          await updateVehicleById(vehicle_id, { condition: newStatus });
         } else if (shouldUpdateStatus) {
           await saveNewStatus();
         } else if (shouldUpdateFiles) {
@@ -387,14 +371,15 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
         const vehicle_id = row.original.vehicle_id;
         const mechanic_description = form.getValues('mechanic_description');
 
-        const { data, error } = await supabase
-          .from('repair_solicitudes')
-          .update({ state: status, mechanic_description, kilometer: form.getValues('kilometer') } as any)
-          .eq('id', row.original.id);
+        const { data, error } = await updateRepairSolicitude(row.original.id, {
+          state: status,
+          mechanic_description,
+          kilometer: form.getValues('kilometer'),
+        });
 
         if (error) {
           console.error(error);
-          throw new Error(handleSupabaseError(error.message));
+          throw new Error(handleSupabaseError(error));
         }
 
         const pendingRepairs = repairSolicitudes
@@ -449,10 +434,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
           }
         }
 
-        const { data: vehicles, error: vehicleerror } = await supabase
-          .from('vehicles')
-          .update({ condition: newStatus } as any)
-          .eq('id', vehicle_id);
+        await updateVehicleById(vehicle_id, { condition: newStatus });
       };
 
 
@@ -463,10 +445,10 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
 
         const mechanic_images = mechanic_imagesData.map((e) => e?.url);
 
-        const { data, error } = await supabase
-          .from('repair_solicitudes')
-          .update({ mechanic_images, kilometer: form.getValues('kilometer') } as any)
-          .eq('id', row.original.id);
+        await updateRepairSolicitude(row.original.id, {
+          mechanic_images,
+          kilometer: form.getValues('kilometer'),
+        });
 
         mechanic_imagesData
           .filter((e) => e)

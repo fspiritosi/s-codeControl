@@ -52,7 +52,7 @@ import { Fragment, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { supabase } from '../../../../supabase/supabase';
+import { reactivateEmployeeByDocNumber, resetDocumentEmployeesForReintegration, deactivateEmployee } from '@/app/server/employees/mutations';
 
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -195,24 +195,11 @@ export const EmployeesListColumns: ColumnDef<Colum>[] = [
           ?.map((e: any) => e.id);
 
         try {
-          await supabase
-            .from('employees')
-            .update({
-              is_active: true,
-              termination_date: null,
-              reason_for_termination: null,
-            })
-            .eq('document_number', document);
+          await reactivateEmployeeByDocNumber(document);
 
-          documentToUpdate.forEach(async (element: string) => {
-            const { data, error } = await supabase
-              .from('documents_employees')
-              .update({
-                document_path: null,
-                state: 'pendiente',
-              })
-              .eq('id', element);
-          });
+          if (documentToUpdate?.length) {
+            await resetDocumentEmployeesForReintegration(documentToUpdate);
+          }
 
           setIntegerModal(!integerModal);
           setActivesEmployees();
@@ -233,15 +220,7 @@ export const EmployeesListColumns: ColumnDef<Colum>[] = [
         };
 
         try {
-          await supabase
-            .from('employees')
-            .update({
-              is_active: false,
-              termination_date: data.termination_date,
-              reason_for_termination: data.reason_for_termination,
-            })
-            .eq('document_number', document)
-            .select();
+          await deactivateEmployee(document, data.termination_date, data.reason_for_termination);
 
           setShowModal(!showModal);
 

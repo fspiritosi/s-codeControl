@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { insertFormAnswer } from '@/app/server/shared/mutations';
 import { FormField } from '@/types/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -28,13 +28,9 @@ export function SubmitCustomForm({ campos, fetchAnswers }: Props) {
   async function handleCustomFormSubmit(data: z.infer<typeof FormSchema>) {
     toast.promise(
       async () => {
-        const supabase = supabaseBrowser();
-        const { error } = await supabase.from('form_answers').insert({
-          form_id: campos?.[0]?.id,
-          answer: JSON.stringify(data),
-        });
+        const { error } = await insertFormAnswer(campos?.[0]?.id, JSON.stringify(data));
         if (error) {
-          throw new Error(error.message);
+          throw new Error(error);
         }
         if (fetchAnswers) await fetchAnswers();
       },

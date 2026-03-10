@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/drawer';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { Table, TableBody, TableCaption, TableCell, TableHeader, TableRow } from '@/components/ui/table';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { fetchCustomFormsByCompany, fetchFormAnswersByFormId } from '@/app/server/shared/queries';
 import { Campo } from '@/types/types';
 import { useEffect, useState } from 'react';
 
@@ -75,7 +75,6 @@ const generateChartData = (categoryConfig: any, forms: any[]) => {
 };
 function CreatedForm() {
   const [createdFormsState, setCreatedFormsState] = useState<any[] | undefined>(undefined);
-  const supabase = supabaseBrowser();
   const [forms, setForms] = useState<any[] | null>([]);
   const [campos, setCampos] = useState<Campo[]>([
     {
@@ -90,11 +89,9 @@ function CreatedForm() {
   const companyId = cookie.get('actualComp');
   const fetchForms = async () => {
     if (!companyId) return;
-    const { data, error } = await supabase.from('custom_form').select('*').eq('company_id', companyId);
-    if (error) {
-    }
+    const data = await fetchCustomFormsByCompany(companyId);
     if (data) {
-      setCreatedFormsState(data);
+      setCreatedFormsState(data as any);
     }
   };
 
@@ -109,12 +106,8 @@ function CreatedForm() {
   const formId = params.get('form_id');
 
   const fetchAnswers = async () => {
-    let { data: form_answers } = await supabase
-      .from('form_answers')
-      .select('*,form_id(*)')
-      .eq('form_id', formId || '');
-
-    setForms(form_answers);
+    const form_answers = await fetchFormAnswersByFormId(formId || '');
+    setForms(form_answers as any);
   };
 
   useEffect(() => {

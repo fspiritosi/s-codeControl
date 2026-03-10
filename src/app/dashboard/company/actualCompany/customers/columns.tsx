@@ -48,7 +48,15 @@ import { Fragment, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { supabase } from '../../../../../../supabase/supabase';
+import {
+  reactivateCustomer,
+  reactivateContactsByCustomer,
+  deactivateCustomer,
+  deactivateContactsByCustomer,
+  fetchCustomersByCompany,
+} from '@/app/server/company/customers-mutations';
+import { updateEmployeeAllocatedTo } from '@/app/server/employees/mutations';
+import { updateVehicleAllocatedTo } from '@/app/server/vehicles/mutations';
 const formSchema = z.object({
   reason_for_termination: z.string({
     required_error: 'La razón de la baja es requerida.',
@@ -100,12 +108,7 @@ export const columns: ColumnDef<Colum>[] = [
 
       const fetchInactiveCustomer = async () => {
         try {
-          const { data, error } = await supabase
-            .from('customers')
-            .select('*')
-            //.eq('is_active', false)
-            .eq('company_id', actualCompany?.id);
-
+          const { error } = await fetchCustomersByCompany(actualCompany?.id || '');
           if (error) {
             console.error(error);
           }
@@ -132,19 +135,8 @@ export const columns: ColumnDef<Colum>[] = [
 
       async function reintegerCustomer() {
         try {
-          const { data, error } = await supabase
-            .from('customers')
-            .update({
-              is_active: true,
-              // termination_date: null,
-              // reason_for_termination: null,
-            })
-            .eq('id', customers.id)
-            .eq('company_id', actualCompany?.id)
-            .select();
-
+          await reactivateCustomer(customers.id, actualCompany?.id || '');
           setIntegerModal(!integerModal);
-          //setInactive(data as any)
           setShowDeletedCustomer(false);
           toast('Cliente reintegrado', { description: `El cliente ${customers?.name} ha sido reintegrado` });
         } catch (error: any) {
@@ -153,19 +145,8 @@ export const columns: ColumnDef<Colum>[] = [
         }
 
         try {
-          const { data, error } = await supabase
-            .from('contacts')
-            .update({
-              is_active: true,
-              // termination_date: null,
-              // reason_for_termination: null,
-            })
-            .eq('customer_id', customers.id)
-            .eq('company_id', actualCompany?.id)
-            .select();
-
+          await reactivateContactsByCustomer(customers.id, actualCompany?.id || '');
           setIntegerModal(!integerModal);
-          //setInactive(data as any)
           setShowDeletedCustomer(false);
           toast('Contacto reintegrado');
         } catch (error: any) {
@@ -181,19 +162,8 @@ export const columns: ColumnDef<Colum>[] = [
         };
 
         try {
-          await supabase
-            .from('customers')
-            .update({
-              is_active: false,
-              termination_date: data.termination_date,
-              reason_for_termination: data.reason_for_termination,
-            })
-            .eq('id', customers.id)
-            .eq('company_id', actualCompany?.id)
-            .select();
-
+          await deactivateCustomer(customers.id, actualCompany?.id || '', data.termination_date, data.reason_for_termination);
           setShowModal(!showModal);
-
           toast('Cliente eliminado');
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
@@ -201,42 +171,26 @@ export const columns: ColumnDef<Colum>[] = [
         }
 
         try {
-          await supabase
-            .from('contacts')
-            .update({
-              is_active: false,
-              // termination_date: data.termination_date,
-              // reason_for_termination: data.reason_for_termination,
-            })
-            .eq('customer_id', customers.id)
-            .eq('company_id', actualCompany?.id)
-            .select();
-
+          await deactivateContactsByCustomer(customers.id, actualCompany?.id || '');
           setShowModal(!showModal);
-
           toast('Contacto eliminado');
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
           toast('Error al dar de baja el contacto', { description: message });
         }
+
         const updatedEmployeesPromises = employ.map((employee: any) => {
           const updatedAllocatedTo = employee.allocated_to?.filter((clientId: string) => clientId !== customers.id);
-          return supabase.from('employees').update({ allocated_to: updatedAllocatedTo }).eq('id', employee.id);
+          return updateEmployeeAllocatedTo(employee.id, updatedAllocatedTo);
         });
-
-        // Esperar a que todas las actualizaciones de empleados se completen
         await Promise.all(updatedEmployeesPromises);
-
         toast('Empleados actualizados', { description: `Los empleados afectados han sido actualizados` });
 
         const updatedEquipmentPromises = equip.map((equipment: any) => {
           const updatedAllocatedTo = equipment.allocated_to?.filter((clientId: string) => clientId !== customers.id);
-          return supabase.from('vehicles').update({ allocated_to: updatedAllocatedTo }).eq('id', equipment.id);
+          return updateVehicleAllocatedTo(equipment.id, updatedAllocatedTo);
         });
-
-        // Esperar a que todas las actualizaciones de empleados se completen
         await Promise.all(updatedEquipmentPromises);
-
         toast('Equipos actualizados', { description: `Los equipos afectados han sido actualizados` });
       }
 

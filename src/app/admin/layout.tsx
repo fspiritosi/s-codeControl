@@ -1,3 +1,4 @@
+import { prisma } from '@/lib/prisma';
 import { supabaseServer } from '@/lib/supabase/server';
 import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
@@ -17,101 +18,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const actualCompany = cookiesStore.get('actualComp');
 
-  const { data: profile, error: profileError } = await supabase
-    .from('profile')
-    .select('*')
-    .eq('credential_id', user?.id || '');
+  const profile = await prisma.profile.findMany({
+    where: { credential_id: user?.id || '' },
+  });
 
-  const { data: company, error: companyError } = await supabase
-    .from('company')
-    .select(
-      `
-        *,
-        owner_id(*),
-        share_company_users(*,
-          profile(*)
-        ),
-        city (
-          name,
-          id
-        ),
-        province_id (
-          name,
-          id
-        ),
-        companies_employees (
-          employees(
-            *,
-            city (
-              name
-            ),
-            province(
-              name
-            ),
-            workflow_diagram(
-              name
-            ),
-            hierarchical_position(
-              name
-            ),
-            birthplace(
-              name
-            ),
-            contractor_employee(
-              customers(
-                *
-              )
-            )
-          )
-        )
-      `
-    )
-    .eq('owner_id', profile?.[0]?.id || '');
+  // Note: company and share_company_users data is fetched but not used in the layout template
+  // Keeping the queries for potential child component usage via props
+  const company = await prisma.company.findMany({
+    where: { owner_id: profile?.[0]?.id || '' },
+  });
 
-  let { data: share_company_users, error: sharedError } = await supabase
-    .from('share_company_users')
-    .select(
-      `*,company_id(*,
-          owner_id(*),
-        share_company_users(*,
-          profile(*)
-        ),
-        city (
-          name,
-          id
-        ),
-        province_id (
-          name,
-          id
-        ),
-        companies_employees (
-          employees(
-            *,
-            city (
-              name
-            ),
-            province(
-              name
-            ),
-            workflow_diagram(
-              name
-            ),
-            hierarchical_position(
-              name
-            ),
-            birthplace(
-              name
-            ),
-            contractor_employee(
-              customers(
-                *
-              )
-            )
-          )
-        )
-      )`
-    )
-    .eq('profile_id', profile?.[0]?.id || '');
+  const share_company_users = await prisma.share_company_users.findMany({
+    where: { profile_id: profile?.[0]?.id || '' },
+  });
 
   return (
     <div>

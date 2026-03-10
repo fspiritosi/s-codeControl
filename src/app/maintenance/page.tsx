@@ -5,6 +5,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { supabaseBrowser } from '@/lib/supabase/browser';
+import { fetchEmployeeByCuil, fetchProfileBySupabaseUserId } from '@/app/server/shared/queries';
 import { validarCUIL } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import cookies from 'js-cookie';
@@ -86,17 +87,14 @@ export default function CodeControlLogin() {
           if (error) {
             throw new Error(handleSupabaseError(error.message));
           }
-          const { data: empleado } = await supabase.from("profile").select().eq("id", data.user.id);
-          cookies.set('empleado_name', `${empleado?.[0].fullname || ''}`, { expires: 1 / 24 });
+          const empleado = await fetchProfileBySupabaseUserId(data.user.id);
+          cookies.set('empleado_name', `${empleado?.[0]?.fullname || ''}`, { expires: 1 / 24 });
           router.push(`/maintenance/${equipment_id}`);
         } else {
-          const { data, error } = await supabase
-            .from('employees')
-            .select()
-            .eq('cuil', cuil || '');
+          const employeeData = await fetchEmployeeByCuil(cuil || '');
 
-          if (data && data.length > 0) {
-            const empleado = data[0];
+          if (employeeData && employeeData.length > 0) {
+            const empleado = employeeData[0];
             //Setear una cookie con el id del empleado que se borre en 1 hora
             cookies.set('empleado_id', empleado.id, { expires: 1 / 24 });
             cookies.set('empleado_name', `${empleado.firstname} ${empleado.lastname}`, { expires: 1 / 24 });

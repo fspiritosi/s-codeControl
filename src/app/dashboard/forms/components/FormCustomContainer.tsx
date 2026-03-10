@@ -1,20 +1,7 @@
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { prisma } from '@/lib/prisma';
 import { FormData } from '@/types/types';
 import { cookies } from 'next/headers';
 import FormCardContainer from './FormCardContainer';
-
-const getForms = async (company_id: string) => {
-  const supabase = supabaseBrowser();
-  const { data, error } = await supabase
-    .from('custom_form')
-    .select('*,form_answers(form_id)')
-    .eq('company_id', company_id);
-  if (error) {
-  }
-  if (data) {
-    return data;
-  }
-};
 
 export async function FormCustomContainer({
   employees,
@@ -31,7 +18,10 @@ export async function FormCustomContainer({
 }) {
   const cookiesStore = await cookies();
   const company_id = cookiesStore.get('actualComp');
-  const createdFormsState = (await getForms(company_id?.value as string)) as FormData[] | undefined;
+  const createdFormsState = await prisma.custom_form.findMany({
+    where: { company_id: company_id?.value || '' },
+    include: { form_answers: { select: { form_id: true } } },
+  }) as unknown as FormData[] | undefined;
   return (
     <FormCardContainer
       form={createdFormsState || []}

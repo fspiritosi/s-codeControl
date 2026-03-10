@@ -18,7 +18,13 @@ import { addMonths, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '../../supabase/supabase';
+import { storage } from '@/lib/storage';
+import {
+  fetchDocumentTypesByAppliesForClient,
+  updateDocumentByAppliesAndType,
+  insertSingleDocumentEmployee,
+  insertSingleDocumentEquipment,
+} from '@/app/server/UPDATE/actions';
 import { Badge } from './ui/badge';
 import { Calendar } from './ui/calendar';
 import { Input } from './ui/input';
@@ -65,14 +71,9 @@ export default function MultiResourceDocument({
 
   const fetchDocumentTypes = async () => {
     const applies = resource === 'empleado' ? 'Persona' : 'Equipos';
-    let { data: document_types, error } = await supabase
-      .from('document_types')
-      .select('*')
-      .eq('applies', applies)
-      .eq('is_active', true)
-      .eq('multiresource', true)
-      .or(`company_id.eq.${useLoggedUserStore?.getState?.()?.actualCompany?.id},company_id.is.null`);
-
+    const companyId = useLoggedUserStore?.getState?.()?.actualCompany?.id;
+    if (!companyId) return;
+    const document_types = await fetchDocumentTypesByAppliesForClient(applies, companyId, true);
     setDocumentTypes(document_types);
   };
 
@@ -156,9 +157,7 @@ export default function MultiResourceDocument({
         const fileExtension = file?.name.split('.').pop();
         const tableName = resource === 'equipo' ? 'documents_equipment' : 'documents_employees';
 
-        const { data } = await supabase.storage
-          .from('document_files')
-          .list(`${formatedCompanyName}-(${currentCompany?.company_cuit})/multirecursos/${formatedAppliesPath}/`, {
+        const data = await storage.list('document_files', `${formatedCompanyName}-(${currentCompany?.company_cuit})/multirecursos/${formatedAppliesPath}/`, {
             search: `${formatedDocumentTypeName}`,
           });
 
@@ -196,55 +195,48 @@ export default function MultiResourceDocument({
           };
         });
 
-        await supabase.storage
-          .from('document_files')
-          .upload(
-            `${formatedCompanyName}-(${currentCompany?.company_cuit})/multirecursos/${formatedAppliesPath}/${formatedDocumentTypeName}-(${hasExpiredDate}).${fileExtension}`,
-            file,
-            {
-              cacheControl: '3600',
-              upsert: false,
-            }
-          )
-          .then(async (response) => {
-            const isMandatory = documenTypes?.find((doc) => doc.id === values.id_document_types)?.mandatory;
-            resourceId.forEach(async (id, index) => {
-              if (isMandatory) {
-                const { error } = await supabase
-                  .from(tableName)
-                  .update({
-                    validity: tableEntries[index].validity,
-                    document_path: response.data?.path,
-                    created_at: new Date(),
-                    state: 'presentado',
-                    period: tableEntries[index].period || null,
-                  })
-                  .eq('applies', id)
-                  .eq('id_document_types', values.id_document_types);
+        const uploadPath = `${formatedCompanyName}-(${currentCompany?.company_cuit})/multirecursos/${formatedAppliesPath}/${formatedDocumentTypeName}-(${hasExpiredDate}).${fileExtension}`;
+        await storage.upload('document_files', uploadPath, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
 
-                if (error) {
-                  console.error(error);
-                  throw new Error(handleSupabaseError(error.message));
-                }
-              } else {
-                const { error } = await supabase
-                  .from(tableName)
-                  .insert({
-                    ...tableEntries[index],
-                    state: 'presentado',
-                    document_path: response.data?.path,
-                    validity: tableEntries[index].validity ?? null,
-                    period: tableEntries[index].period || null,
-                  })
-                  .select();
-
-                if (error) {
-                  throw new Error(handleSupabaseError(error.message));
-                }
+        const isMandatory = documenTypes?.find((doc) => doc.id === values.id_document_types)?.mandatory;
+        for (let index = 0; index < resourceId.length; index++) {
+          const id = resourceId[index];
+          if (isMandatory) {
+            const { error } = await updateDocumentByAppliesAndType(
+              tableName as 'documents_employees' | 'documents_equipment',
+              id,
+              values.id_document_types,
+              {
+                validity: tableEntries[index].validity,
+                document_path: uploadPath,
+                created_at: new Date(),
+                state: 'presentado',
+                period: tableEntries[index].period || null,
               }
+            );
+
+            if (error) {
+              console.error(error);
+              throw new Error(handleSupabaseError(error));
+            }
+          } else {
+            const insertFn = tableName === 'documents_employees' ? insertSingleDocumentEmployee : insertSingleDocumentEquipment;
+            const { error } = await insertFn({
+              ...tableEntries[index],
+              state: 'presentado',
+              document_path: uploadPath,
+              validity: tableEntries[index].validity ?? null,
+              period: tableEntries[index].period || null,
             });
-          })
-          .catch((error) => {});
+
+            if (error) {
+              throw new Error(handleSupabaseError(error));
+            }
+          }
+        }
       },
       {
         loading: 'Subiendo documento...',

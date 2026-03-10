@@ -6,7 +6,8 @@ import { useState, useEffect } from 'react';
 import DocumentsTable from './DocumentsTable'; // Asumo que este componente existe
 import FilterHeader from './FilterComponent';
 import { Checkbox } from '@/components/ui/checkbox';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { fetchDocumentTypesByCompanyIncludingInactive } from '@/app/server/documents/queries';
+import { updateDocumentTypeActive } from '@/app/server/documents/mutations';
 import { useLoggedUserStore } from '@/store/loggedUser';
 
 function TypesDocumentsView({
@@ -30,11 +31,7 @@ function TypesDocumentsView({
   }, [actualCompany?.id]);
 
   async function fetchDocumentTypes() {
-    const supabase = supabaseBrowser();
-    const { data } = await supabase
-      .from('document_types')
-      .select('*')
-      .or(`company_id.eq.${actualCompany?.id},company_id.is.null`);
+    const data = await fetchDocumentTypesByCompanyIncludingInactive(actualCompany?.id || '');
     setDocumentTypes(data || []);
   }
 
@@ -109,8 +106,7 @@ function TypesDocumentsView({
     personas && equipos && empresa ? 'Personas' : personas ? 'Personas' : equipos ? 'Equipos' : 'Empresa';
 
   const handleToggleActive = async (doc: any, newState: boolean) => {
-    const supabase = supabaseBrowser();
-    await supabase.from('document_types').update({ is_active: newState }).eq('id', doc.id);
+    await updateDocumentTypeActive(doc.id, newState);
     await fetchDocumentTypes();
   };
 

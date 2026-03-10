@@ -7,9 +7,8 @@ import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/c
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { handleSupabaseError } from '@/lib/errorHandler';
 import { storage } from '@/lib/storage';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { fetchRepairSolicitudesByEquipment, updateRepairSolicitude, updateVehicleById } from '@/app/server/UPDATE/actions';
 import { cn } from '@/lib/utils';
 import { PersonIcon } from '@radix-ui/react-icons';
 import { format, isToday, isTomorrow, isYesterday, differenceInDays, startOfDay } from 'date-fns';
@@ -33,21 +32,12 @@ import { statuses } from '../data';
 
 function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; action?: React.ReactNode }) {
   const state = statuses.find((status) => status.value === row.original.state);
-  const supabase = supabaseBrowser();
   const [imageUrl, setImageUrl] = useState<string[]>([]);
   const [imagesMechanic, setImagesMechanic] = useState<(string | null)[]>([null, null, null]);
   const [repairSolicitudes, setRepairSolicitudes] = useState<any>([]);
   const [repairLogs, setRepairLogs] = useState(row.original.repairlogs);
   const fetchRepairsLogs = async () => {
-    const { data, error } = await supabase
-      .from('repair_solicitudes')
-      .select('*,reparation_type(*)')
-      .eq('equipment_id', row.original.vehicle_id);
-
-    if (error) {
-      throw new Error(handleSupabaseError(error.message));
-    }
-
+    const data = await fetchRepairSolicitudesByEquipment(row.original.vehicle_id);
     setRepairSolicitudes(data);
   };
   useEffect(() => {
@@ -79,10 +69,7 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
   const router = useRouter();
 
   const handleCancelSolicitud = async () => {
-    const { data, error } = await supabase
-      .from('repair_solicitudes')
-      .update({ state: 'Cancelado' })
-      .eq('id', row.original.id);
+    const { error } = await updateRepairSolicitude(row.original.id, { state: 'Cancelado' });
 
     const vehicle_id = row.original.vehicle_id;
 
@@ -111,13 +98,10 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
       }
     }
 
-    const { data: vehicles, error: vehicleerror } = await supabase
-      .from('vehicles')
-      .update({ condition: newStatus } as any)
-      .eq('id', vehicle_id);
+    await updateVehicleById(vehicle_id, { condition: newStatus });
 
     if (error) {
-      throw new Error(error.message);
+      throw new Error(error);
     }
     document.getElementById('close-modal-mechanic-colum2')?.click();
     router.refresh();

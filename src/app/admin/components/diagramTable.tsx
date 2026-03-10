@@ -11,11 +11,11 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
 import { MoreHorizontal } from 'lucide-react';
-import { supabase } from '../../../../supabase/supabase';
+import { prisma } from '@/lib/prisma';
 import { CreateDialog } from './createDialog';
 
 export default async function DiagramTable() {
-  let { data: diagrams, error } = await supabase.from('work-diagram').select('*');
+  const diagrams = await prisma.work_diagram.findMany();
 
   return (
     <Card x-chunk="dashboard-06-chunk-0">
@@ -47,7 +47,7 @@ export default async function DiagramTable() {
                 <TableCell className="hidden sm:table-cell">{index + 1}</TableCell>
                 <TableCell className="font-medium">{diagramType.name}</TableCell>
                 <TableCell>
-                  {diagramType.isActive ? (
+                  {diagramType.is_active ? (
                     <Badge variant="outline">Activo</Badge>
                   ) : (
                     <Badge variant="default">Inactivo</Badge>
@@ -76,8 +76,8 @@ export default async function DiagramTable() {
       </CardContent>
       <CardFooter>
         <div className="text-xs text-muted-foreground">
-          Mostrando <strong>1-{diagrams!.length < 10 ? diagrams?.length : '10'}</strong> of{' '}
-          <strong>{diagrams?.length}</strong> diagramas
+          Mostrando <strong>1-{diagrams.length < 10 ? diagrams.length : '10'}</strong> of{' '}
+          <strong>{diagrams.length}</strong> diagramas
         </div>
       </CardFooter>
     </Card>

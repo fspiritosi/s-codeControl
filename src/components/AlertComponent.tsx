@@ -12,7 +12,7 @@ import { useLoggedUserStore } from '@/store/loggedUser';
 import { Company } from '@/zodSchemas/schemas';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { supabase } from '../../supabase/supabase';
+import { setCompanyByDefect } from '@/app/server/UPDATE/actions';
 
 export const AlertComponent = () => {
   const showAlert = useLoggedUserStore((state) => state.showNoCompanyAlert);
@@ -24,7 +24,7 @@ export const AlertComponent = () => {
   router.prefetch('/dashboard/company/new');
 
   const handleAlertClose = async (company: Company[0]) => {
-    await supabase.from('company').update({ by_defect: true }).eq('id', company.id);
+    await setCompanyByDefect(company.id);
     setActualCompany(company);
 
     router.push('/dashboard');

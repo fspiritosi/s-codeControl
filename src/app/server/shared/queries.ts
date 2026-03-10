@@ -174,3 +174,174 @@ export const fetchAnswerById = async (answerId: string) => {
     return [];
   }
 };
+
+export const fetchAllCompanies = async () => {
+  try {
+    const data = await prisma.company.findMany();
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching all companies:', error);
+    return [];
+  }
+};
+
+export const fetchAllWorkDiagramsAdmin = async () => {
+  try {
+    const data = await prisma.work_diagram.findMany();
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching work diagrams:', error);
+    return [];
+  }
+};
+
+export const fetchAllIndustryTypes = async () => {
+  try {
+    const data = await prisma.industry_type.findMany();
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching industry types:', error);
+    return [];
+  }
+};
+
+export const fetchAllTypesOfVehicles = async () => {
+  try {
+    const data = await prisma.types_of_vehicles.findMany();
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching types of vehicles:', error);
+    return [];
+  }
+};
+
+export const fetchCustomFormsByCompany = async (companyId: string) => {
+  if (!companyId) return [];
+  try {
+    const data = await prisma.custom_form.findMany({
+      where: { company_id: companyId },
+    });
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching custom forms by company:', error);
+    return [];
+  }
+};
+
+export const fetchProfileById = async (userId: string) => {
+  if (!userId) return null;
+  try {
+    const data = await prisma.profile.findUnique({
+      where: { id: userId },
+    });
+    return data;
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    return null;
+  }
+};
+
+export const fetchFormAnswersByFormId = async (formId: string) => {
+  try {
+    const data = await prisma.form_answers.findMany({
+      where: { form_id: formId },
+      include: { form: true },
+    });
+    return data;
+  } catch (error) {
+    console.error('Error fetching form answers:', error);
+    return [];
+  }
+};
+
+export const fetchEmployeeByCuil = async (cuil: string) => {
+  try {
+    const data = await prisma.employees.findMany({
+      where: { cuil },
+    });
+    return data;
+  } catch (error) {
+    console.error('Error fetching employee by cuil:', error);
+    return [];
+  }
+};
+
+export const fetchProfileBySupabaseUserId = async (userId: string) => {
+  try {
+    const data = await prisma.profile.findMany({
+      where: { id: userId },
+    });
+    return data;
+  } catch (error) {
+    console.error('Error fetching profile by user id:', error);
+    return [];
+  }
+};
+
+export const fetchCustomFormsByCompanyWithAnswers = async (companyId: string) => {
+  if (!companyId) return [];
+  try {
+    const data = await prisma.custom_form.findMany({
+      where: { company_id: companyId },
+      include: { form_answers: { select: { form_id: true } } },
+    });
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching custom forms with answers:', error);
+    return [];
+  }
+};
+
+export const fetchActiveDocumentTypesGlobal = async () => {
+  try {
+    const data = await prisma.document_types.findMany({
+      where: { is_active: true, company_id: null },
+    });
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching document types:', error);
+    return [];
+  }
+};
+
+export const fetchPresentedDocumentsForAuditor = async () => {
+  try {
+    const equipmentDocs = await prisma.documents_equipment.findMany({
+      where: { state: 'presentado' },
+      include: {
+        document_type: true,
+        vehicle: {
+          include: {
+            type_rel: true,
+            type_of_vehicle_rel: true,
+            model_rel: true,
+            brand_rel: true,
+            company: true,
+          },
+        },
+      },
+      orderBy: { created_at: 'desc' },
+    });
+
+    const employeeDocs = await prisma.documents_employees.findMany({
+      where: { state: 'presentado' },
+      include: {
+        document_type: true,
+        employee: {
+          include: {
+            contractor_employee: {
+              include: { contractor: true },
+            },
+            company: true,
+          },
+        },
+      },
+      orderBy: { created_at: 'desc' },
+    });
+
+    return { equipmentDocs, employeeDocs };
+  } catch (error) {
+    console.error('Error fetching presented documents:', error);
+    return { equipmentDocs: [], employeeDocs: [] };
+  }
+};

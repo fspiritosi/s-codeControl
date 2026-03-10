@@ -23,7 +23,7 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { ZodError, z } from 'zod';
-import { supabase } from '../../supabase/supabase';
+import { insertModelVehicle } from '@/app/server/UPDATE/actions';
 import { generic } from './VehiclesForm';
 
 const schema = z
@@ -58,18 +58,10 @@ export default function AddModelModal({
     }
     const brand_id = brandOptions?.find((brandOption) => brandOption.name === brand)?.id;
 
-    const { data, error } = await supabase
-      .from('model_vehicles')
-      .insert([
-        {
-          name: name.slice(0, 1)?.toUpperCase() + name.slice(1),
-          brand: brand_id,
-        },
-      ])
-      .select();
+    const { error } = await insertModelVehicle(name.slice(0, 1)?.toUpperCase() + name.slice(1), `${brand_id}`);
     if (error) {
       toast('Error al agregar el modelo', {
-        description: error.message,
+        description: error,
       });
       return;
     }

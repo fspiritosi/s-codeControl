@@ -5,19 +5,12 @@ import { TabsContent } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
-// import { supabase } from '../../../../../supabase/supabase';
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 import { getRole } from '@/lib/utils/getRole';
 import VehiclesForm, { generic } from '../../../../components/VehiclesForm';
 
 export default async function EquipmentFormAction({ searchParams: searchParamsPromise }: { searchParams: Promise<any> }) {
   const searchParams = await searchParamsPromise;
-  const supabase = await supabaseServer();
-  // const { data } = await supabase
-  //   .from('documents_equipment')
-  //   .select('*,id_document_types(*)')
-  //   .eq('applies', searchParams.id);
-
   revalidatePath('/dashboard/equipment/action');
 
   const cookiesStore = await cookies();
@@ -25,35 +18,53 @@ export default async function EquipmentFormAction({ searchParams: searchParamsPr
 
   let vehicle;
 
-
   if (searchParams.id) {
-    //const newVehicle = await fetchEquipmentById(searchParams.id);
-    const { data: vehicleData, error } = await supabase
-      .from('vehicles')
-      .select('*, brand_vehicles(name), model_vehicles(name),types_of_vehicles(name),type(name)')
-      .eq('id', searchParams.id);
-    // .eq('company_id', actualCompany?.value);
+    try {
+      const vehicleData = await prisma.vehicles.findMany({
+        where: { id: searchParams.id },
+        include: {
+          brand_rel: { select: { name: true } },
+          model_rel: { select: { name: true } },
+          type_of_vehicle_rel: { select: { name: true } },
+          type_rel: { select: { name: true } },
+        },
+      });
 
-    if (error) console.error(error);
-
-    vehicle = vehicleData?.map((item: any) => ({
-      ...item,
-      type_of_vehicle: item.types_of_vehicles.name,
-      brand: item.brand_vehicles.name,
-      model: item.model_vehicles.name,
-      type: item.type.name,
-    }));
+      vehicle = vehicleData?.map((item: any) => ({
+        ...item,
+        type_of_vehicle: item.type_of_vehicle_rel?.name,
+        brand: item.brand_rel?.name,
+        model: item.model_rel?.name,
+        type: item.type_rel?.name,
+      }));
+    } catch (error) {
+      console.error(error);
+    }
   }
 
-  let { data: types, error } = await supabase
-    .from('type')
-    .select('*')
-    .or(`company_id.eq.${company_id?.value},company_id.is.null`);
+  let types: any[] = [];
+  let brand_vehicles: any[] = [];
+  try {
+    types = await prisma.type.findMany({
+      where: {
+        OR: [
+          { company_id: company_id?.value },
+          { company_id: null },
+        ],
+      },
+    });
 
-  let { data: brand_vehicles, error: errorError } = await supabase
-    .from('brand_vehicles')
-    .select('*')
-    .or(`company_id.eq.${company_id?.value},company_id.is.null`);
+    brand_vehicles = await prisma.brand_vehicles.findMany({
+      where: {
+        OR: [
+          { company_id: company_id?.value },
+          { company_id: null },
+        ],
+      },
+    });
+  } catch (error) {
+    console.error(error);
+  }
 
   const role = await getRole();
   return (

@@ -20,7 +20,14 @@ import { formatDocumentTypeName } from '@/lib/utils/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
-import { supabase } from '../../supabase/supabase';
+import { storage } from '@/lib/storage';
+import {
+  fetchDocumentTypesByAppliesForClient,
+  selectDocumentsByPath,
+  updateDocumentByAppliesAndType,
+  insertSingleDocumentEmployee,
+  insertSingleDocumentEquipment,
+} from '@/app/server/UPDATE/actions';
 import { AlertDialogCancel } from './ui/alert-dialog';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from './ui/command';
 
@@ -153,23 +160,15 @@ export default function SimpleDocument({
           const formatedDocumentTypeName = formatDocumentTypeName(documetType?.name);
           const formatedAppliesPath = formatDocumentTypeName(documetType.applies);
 
-          const { data } = await supabase.storage
-            .from('document_files')
-            .list(`${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/`, {
+          const listData = await storage.list('document_files', `${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/`, {
               search: `${formatedAppliesName}/${formatedDocumentTypeName}`,
             });
 
-          if (data?.length && data?.length > 0) {
-                    const { data: document, error: errorDocument } = await supabase
-            .from(tableName)
-            .select('*')
-            .eq(
-              'document_path',
-              `${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/${formatedAppliesName}/${formatedDocumentTypeName}-(${hasExpiredDate}).${fileExtension}`
-            );
+          if (listData?.length && listData?.length > 0) {
+            const docPath = `${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/${formatedAppliesName}/${formatedDocumentTypeName}-(${hasExpiredDate}).${fileExtension}`;
+            const existingDoc = await selectDocumentsByPath(tableName as any, docPath);
 
-
-          if (document?.length) {
+          if (existingDoc?.length) {
               setError(`documents.${index}.id_document_types`, {
               message: 'El documento ya ha sido subido anteriormente',
               type: 'validate',
@@ -187,56 +186,56 @@ export default function SimpleDocument({
           }
 
           //! la extnsion en el equipo no se cambia bien
-          const { data: response, error } = await supabase.storage
-            .from('document_files')
-            .upload(
-              `${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/${formatedAppliesName}/${formatedDocumentTypeName}-(${hasExpiredDate}).${fileExtension}`,
-              files?.[index] || document.file,
-              {
-                cacheControl: '3600',
-                upsert: true,
-              }
-            );
-
-          if (error) {
+          const uploadPath = `${formatedCompanyName}-(${actualCompany?.company_cuit})/${formatedAppliesPath}/${formatedAppliesName}/${formatedDocumentTypeName}-(${hasExpiredDate}).${fileExtension}`;
+          let responsePath: string | undefined;
+          try {
+            await storage.upload('document_files', uploadPath, files?.[index] || document.file, {
+              cacheControl: '3600',
+              upsert: true,
+            });
+            responsePath = uploadPath;
+          } catch (uploadError: any) {
             setLoading(false);
             hasError = true;
-            throw new Error(handleSupabaseError(error.message));
+            throw new Error(handleSupabaseError(uploadError.message || uploadError));
           }
 
           const isMandatory = documenTypes?.find((doc) => doc.id === updateEntries[index].id_document_types)?.mandatory;
 
           if (isMandatory) {
-            const data = {
+            const updateData = {
               validity: updateEntries[index].validity,
-              document_path: response?.path,
+              document_path: responsePath,
               created_at: new Date(),
               state: 'presentado',
               period: updateEntries[index].period || null,
             };
-            const { error, data: userupdated } = await supabase
-              .from(tableName)
-              .update(data)
-              .eq('applies', typeof idApplies === 'object' ? idApplies?.id : idApplies || updateEntries[index].applies)
-              .eq('id_document_types', updateEntries[index].id_document_types);
+            const appliesValue = typeof idApplies === 'object' ? idApplies?.id : idApplies || updateEntries[index].applies;
+            const { error } = await updateDocumentByAppliesAndType(
+              tableName as 'documents_employees' | 'documents_equipment',
+              appliesValue,
+              updateEntries[index].id_document_types,
+              updateData
+            );
 
             if (error) {
               setLoading(false);
               hasError = true;
-
               throw new Error('Hubo un error al subir los documentos a la base de datos');
             }
           } else {
-            const { error } = await supabase.from(tableName).insert({
+            const insertData = {
               validity: updateEntries[index].validity,
-              document_path: response?.path,
+              document_path: responsePath,
               created_at: new Date(),
               state: 'presentado',
               applies: idApplies || updateEntries[index].applies,
               id_document_types: updateEntries[index].id_document_types,
               user_id: user,
               period: updateEntries[index].period || null,
-            });
+            };
+            const insertFn = tableName === 'documents_employees' ? insertSingleDocumentEmployee : insertSingleDocumentEquipment;
+            const { error } = await insertFn(insertData);
 
             if (error) {
               setLoading(false);
@@ -280,13 +279,9 @@ export default function SimpleDocument({
 
   const fetchDocumentTypes = async () => {
     const applies = resource === 'empleado' ? 'Persona' : 'Equipos';
-    let { data: document_types, error } = await supabase
-      .from('document_types')
-      .select('*')
-      .eq('applies', applies)
-      .eq('is_active', true)
-      .or(`company_id.eq.${useLoggedUserStore?.getState?.()?.actualCompany?.id},company_id.is.null`);
-
+    const companyId = useLoggedUserStore?.getState?.()?.actualCompany?.id;
+    if (!companyId) return;
+    const document_types = await fetchDocumentTypesByAppliesForClient(applies, companyId);
     setDocumentTypes(document_types);
     setAllTypesDocuments(document_types);
   };

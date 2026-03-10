@@ -5,7 +5,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { fetchOpenRepairsByEquipmentIdsAndType, updateVehicleById } from '@/app/server/UPDATE/actions';
 import { cn } from '@/lib/utils';
 
 import { setVehiclesToShow } from '@/lib/utils/utils';
@@ -103,18 +103,7 @@ export default function RepairNewEntryMultiple({
     }
 
     //Consultar en la base de datos si ya existe una solicitud de reparacion abierta para alguno de los vehiculos
-    const { data, error: errorAllRepairs } = await supabase
-      .from('repair_solicitudes')
-      .select('*,equipment_id(*)')
-      .in('equipment_id', vehiclesIds)
-      .eq('reparation_type', repairTypeId)
-      .neq('state', 'Cancelado')
-      .neq('state', 'Finalizado')
-      .neq('state', 'Rechazado');
-
-    if (errorAllRepairs) {
-      console.error(errorAllRepairs);
-    }
+    const data = await fetchOpenRepairsByEquipmentIdsAndType(vehiclesIds, repairTypeId);
 
     if (data?.length ?? 0 > 0) {
       toast.error(
@@ -175,7 +164,6 @@ export default function RepairNewEntryMultiple({
     input.click();
   };
 
-  const supabase = supabaseBrowser();
   const createRepair = async () => {
     toast.promise(
       async () => {
@@ -213,15 +201,9 @@ export default function RepairNewEntryMultiple({
             const condition = equipmentItem?.condition;
 
             if (hasHighCriticity && condition !== 'no operativo' && condition !== 'en reparación') {
-              await supabase
-                .from('vehicles')
-                .update({ condition: 'no operativo', kilometer: currentEquipmentKilometer })
-                .eq('id', equipmentId);
+              await updateVehicleById(equipmentId, { condition: 'no operativo', kilometer: currentEquipmentKilometer });
             } else if (hasMediumCriticity && condition !== 'no operativo' && condition !== 'en reparación') {
-              await supabase
-                .from('vehicles')
-                .update({ condition: 'operativo condicionado', kilometer: currentEquipmentKilometer })
-                .eq('id', equipmentId);
+              await updateVehicleById(equipmentId, { condition: 'operativo condicionado', kilometer: currentEquipmentKilometer });
             }
           }
 

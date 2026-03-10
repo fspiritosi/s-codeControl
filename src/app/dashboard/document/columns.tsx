@@ -52,7 +52,8 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { storage } from '@/lib/storage';
-import { supabase } from '../../../../supabase/supabase';
+import { updateDocumentById } from '@/app/server/documents/mutations';
+import { fetchDocumentEquipmentLogs } from '@/app/server/documents/queries';
 
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -144,19 +145,13 @@ export const columns: ColumnDef<Colum>[] = [
 
       async function reintegerDocumentEquipment() {
         try {
-          const { data, error } = await supabase
-            .from('documents_equipment')
-            .update({
-              is_active: true,
-              // termination_date: null,
-              // reason_for_termination: null,
-            })
-            .eq('id', document.id)
-            .select();
+          const { error } = await updateDocumentById('documents_equipment', document.id, {
+            is_active: true,
+          });
 
           setIntegerModal(!integerModal);
-          //setInactive(data as any)
           setShowDeletedEquipment(false);
+          if (error) throw new Error(error);
           toast('Documento reintegrado', {
             description: `El documento ${document?.id_document_types} ha sido reintegrado`,
           });
@@ -167,24 +162,14 @@ export const columns: ColumnDef<Colum>[] = [
       }
 
       async function onSubmit(values: z.infer<typeof formSchema>) {
-        const data = {
-          ...values,
-          termination_date: format(values.termination_date, 'yyyy-MM-dd'),
-        };
-
         try {
-          await supabase
-            .from('documents_equipment')
-            .update({
-              is_active: false,
-              // termination_date: data.termination_date,
-              // reason_for_termination: data.reason_for_termination,
-            })
-            .eq('id', document.id)
-            .select();
+          const { error } = await updateDocumentById('documents_equipment', document.id, {
+            is_active: false,
+          });
 
           setShowModal(!showModal);
 
+          if (error) throw new Error(error);
           toast('Documento eliminado', {
             description: `El documento ${document.id_document_types} ha sido dado de baja`,
           });
@@ -199,13 +184,9 @@ export const columns: ColumnDef<Colum>[] = [
 
       async function viewDocumentEquipment() {
         try {
-          const { data, error } = await supabase
-            .from('documents_equipment_logs')
-            .select('*, documents_equipment(id,user_id(email))')
-            .eq('documents_equipment_id', document.id);
-
+          const data = await fetchDocumentEquipmentLogs(document.id);
           if (data) {
-            setDocumentHistory(data);
+            setDocumentHistory(data as any);
           }
         } catch (error: any) {
           const message = await errorTranslate(error?.message);

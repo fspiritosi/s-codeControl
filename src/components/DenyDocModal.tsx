@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { supabase } from '../../supabase/supabase';
+import { updateDocumentEmployeeState, updateDocumentEquipmentState } from '@/app/server/UPDATE/actions';
 import { Textarea } from './ui/textarea';
 
 type EmailInfo = {
@@ -50,11 +50,7 @@ export default function DenyDocModal({
 
   async function onSubmit(menssaje: z.infer<typeof FormSchema>) {
     if (resource === 'employee') {
-      const { data, error } = await supabase
-        .from('documents_employees')
-        .update({ state: 'rechazado', deny_reason: menssaje.reason })
-        .eq('id', id)
-        .select();
+      const { error } = await updateDocumentEmployeeState(id, 'rechazado', { deny_reason: menssaje.reason });
 
       if (error) {
         setIsOpen(false);
@@ -81,11 +77,7 @@ export default function DenyDocModal({
 
       toast('Documento rechazado', { description: 'El documento ha sido rechazado correctamente' });
     } else {
-      const { data, error } = await supabase
-        .from('documents_equipment')
-        .update({ state: 'rechazado', deny_reason: menssaje.reason, id })
-        .eq('id', id)
-        .select();
+      const { error } = await updateDocumentEquipmentState(id, 'rechazado', { deny_reason: menssaje.reason });
 
       if (error) {
         setIsOpen(false);

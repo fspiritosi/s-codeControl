@@ -37,7 +37,6 @@ import { useLoggedUserStore } from '@/store/loggedUser';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { DataTablePagination } from '@/app/dashboard/data-table-pagination';
-import { supabaseBrowser } from '@/lib/supabase/browser';
 
 interface DataCctProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any;
@@ -51,7 +50,6 @@ export function DataCct<TData, TValue>({
   data,
   localStorageName,
 }: DataCctProps<TData, TValue>) {
-  const supabase = supabaseBrowser();
   const [sorting, setSorting] = useState<SortingState>([]);
   const defaultVisibleColumns = ['name', 'guild_id'];
   const [showInactive, setShowInactive] = useState(false);

@@ -20,7 +20,6 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { supabaseBrowser } from '@/lib/supabase/browser';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { InfoCircledIcon, PlusCircledIcon, TrashIcon } from '@radix-ui/react-icons';
 import { Reorder } from 'framer-motion';
@@ -463,8 +462,6 @@ interface MailDisplayProps {
 }
 
 export function FormDisplay({ campos }: MailDisplayProps) {
-  const supabase = supabaseBrowser();
-
   const vehicles = useLoggedUserStore((state) => state.vehicles);
 
   const renderizarCampo = (campo: Campo, index: number) => {

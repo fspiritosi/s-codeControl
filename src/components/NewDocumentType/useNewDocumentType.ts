@@ -24,7 +24,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { supabase } from '../../../supabase/supabase';
+import { insertDocumentType } from '@/app/server/UPDATE/actions';
 import { baseEmployeePropertiesConfig, baseVehiclePropertiesConfig, relationMeta, defaultValues } from './constants';
 import { formatName, formatDescription } from './helpers';
 
@@ -172,10 +172,10 @@ export function useNewDocumentType(codeControlClient?: boolean, optionChildrenPr
     };
     toast.promise(
       async () => {
-        const { data, error } = await supabase.from('document_types').insert(formattedValues).select();
+        const { error } = await insertDocumentType(formattedValues);
         if (error) {
           console.error(error);
-          throw new Error(handleSupabaseError(error.message));
+          throw new Error(handleSupabaseError(error));
         }
       },
       {

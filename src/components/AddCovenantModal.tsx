@@ -8,7 +8,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { insertCovenant } from '@/app/server/UPDATE/actions';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus } from 'lucide-react';
@@ -32,7 +32,6 @@ export default function AddCovenantModal({
 
 
   const company_id = useLoggedUserStore((state) => state.actualCompany?.id);
-  const supabase = supabaseBrowser();
   const formSchema = z.object({
     name: z.string({ required_error: 'El nombre es requerido' }).min(2, {
       message: 'El nombre del convenio debe tener al menos 2 caracteres',
@@ -54,11 +53,8 @@ export default function AddCovenantModal({
   async function onSubmit({ name, company_id, guild_id }: z.infer<typeof formSchema>) {
     toast.promise(
       async () => {
-        const { data, error } = await supabase
-          .from('covenant')
-          .insert([{ name: name, company_id, guild_id }] as any)
-          .select();
-        if (error) throw new Error(error.message);
+        const { error } = await insertCovenant(name, company_id, guild_id);
+        if (error) throw new Error(error);
         document.getElementById('close-covenant-modal')?.click();
         router.refresh();
         // return { data, error };

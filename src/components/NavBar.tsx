@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { updateProfileAvatar as updateProfileAvatarAction } from '@/app/server/UPDATE/actions';
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { Company } from '@/zodSchemas/schemas';
@@ -57,7 +57,6 @@ export default function NavBar() {
   const allCompanies = useLoggedUserStore((state) => state.allCompanies);
   const actualCompany = useLoggedUserStore((state) => state.actualCompany)
   const setNewDefectCompany = useLoggedUserStore((state) => state.setNewDefectCompany);
-  const supabase = supabaseBrowser();
   const actualUser = useLoggedUserStore((state) => state.profile);
   const notifications = useLoggedUserStore((state) => state.notifications);
   const avatarUrl = actualUser && actualUser.length > 0 ? actualUser[0] : '';
@@ -89,14 +88,9 @@ export default function NavBar() {
 
   const updateProfileAvatar = async (imageUrl: string) => {
     try {
-      // Realiza la actualización en la tabla profile usando Supabase
-      const { data, error } = await supabase
-        .from('profile')
-        .update({ avatar: imageUrl })
-        .eq('id', actualUser[0].id || '');
-
+      const { error } = await updateProfileAvatarAction(actualUser[0].id || '', imageUrl);
       if (error) {
-        throw error;
+        throw new Error(error);
       }
     } catch (error) {
       console.error('Error al actualizar la URL de la imagen:', error);

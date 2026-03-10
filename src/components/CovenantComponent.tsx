@@ -4,7 +4,7 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { fetchCovenantsByCompany, fetchCategoryById } from '@/app/server/UPDATE/actions';
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { covenantSchema } from '@/zodSchemas/schemas';
@@ -25,7 +25,6 @@ export default function CovenantComponent({ id }: { id: string }) {
   const functionAction = id ? updateContact : createdContact;
   const searchParams = useSearchParams();
   const actualCompany = useLoggedUserStore((state) => state.actualCompany?.id);
-  const supabase = supabaseBrowser();
   const [action, setAction] = useState<Action>(searchParams.get('action') as Action);
   const [readOnly, setReadOnly] = useState(action === 'edit' ? false : true);
   const [categoryData, setCategoryData] = useState<any>(null);
@@ -59,25 +58,18 @@ export default function CovenantComponent({ id }: { id: string }) {
     }
 
     const fetchCovenant = async () => {
-      const { data, error } = await supabase
-        .from('covenant')
-        .select('*')
-        .eq('is_active', true)
-        .eq('company_id', actualCompany || '');
-      if (error) {
-        console.error('Error fetching covenants:', error);
-      } else {
+      try {
+        const data = await fetchCovenantsByCompany(actualCompany || '');
         setCovenantData(data);
+      } catch (error) {
+        console.error('Error fetching covenants:', error);
       }
     };
 
     const fetchCategory = async () => {
       if (id) {
-        const { data, error } = await supabase.from('category').select('*').eq('id', id);
-
-        if (error) {
-          console.error('Error fetching category:', error);
-        } else {
+        try {
+          const data = await fetchCategoryById(id);
           if (data && data.length > 0) {
             const category = data[0];
             setCategoryData(category);
@@ -85,6 +77,8 @@ export default function CovenantComponent({ id }: { id: string }) {
           } else {
             console.error('No se encontró ningún contacto con el id proporcionado.');
           }
+        } catch (error) {
+          console.error('Error fetching category:', error);
         }
       }
     };

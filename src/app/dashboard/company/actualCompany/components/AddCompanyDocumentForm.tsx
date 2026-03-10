@@ -13,7 +13,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { storage } from '@/lib/storage';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { updateDocumentCompanyByAppliesAndType } from '@/app/server/company/mutations';
 import { cn } from '@/lib/utils';
 import { formatDocumentTypeName } from '@/lib/utils/utils';
 import { useCountriesStore } from '@/store/countries';
@@ -67,8 +67,6 @@ function AddCompanyDocumentForm({
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     toast.promise(
       async () => {
-        const supabase = supabaseBrowser();
-
         const formatedCompanyName = formatDocumentTypeName(actualCompany?.company_name || '');
         const formatedDocumentTypeName = formatDocumentTypeName(documentForId?.name || '');
         const hasExpiredDate = data.validity?.replace(/\//g, '-') ?? 'v0';
@@ -104,11 +102,11 @@ function AddCompanyDocumentForm({
               document_path: uploadResult?.path,
             };
 
-            const { error } = await supabase
-              .from('documents_company')
-              .update(allData as any)
-              .eq('applies', companyId || '')
-              .eq('id_document_types', documentId);
+            const { error } = await updateDocumentCompanyByAppliesAndType(
+              companyId || '',
+              documentId,
+              allData as Record<string, unknown>
+            );
 
             if (error) {
               await storage.remove('document_files', [uploadResult?.path || '']);

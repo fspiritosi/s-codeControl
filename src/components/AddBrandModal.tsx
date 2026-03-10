@@ -15,7 +15,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { ZodError, z } from 'zod';
-import { supabase } from '../../supabase/supabase';
+import { insertBrandVehicle } from '@/app/server/UPDATE/actions';
 
 const schema = z
   .string()
@@ -44,12 +44,9 @@ export default function AddBrandModal({
       return;
     }
 
-    const { data, error } = await supabase
-      .from('brand_vehicles')
-      .insert([{ name: name.slice(0, 1)?.toUpperCase() + name.slice(1) }])
-      .select();
+    const { error } = await insertBrandVehicle(name.slice(0, 1)?.toUpperCase() + name.slice(1));
     if (error) {
-      toast('Error al agregar la marca', { description: error.message });
+      toast('Error al agregar la marca', { description: error });
       return;
     }
     toast('Marca agregada', { description: 'La marca ha sido agregada correctamente' });

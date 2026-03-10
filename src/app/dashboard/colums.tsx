@@ -40,7 +40,9 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { storage } from '@/lib/storage';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { updateDocumentById } from '@/app/server/documents/mutations';
+import { deleteDocumentEmployeeById, deleteDocumentEquipmentById } from '@/app/server/documents/mutations';
+import { fetchDocumentEmployeesLogs } from '@/app/server/documents/queries';
 import { cn } from '@/lib/utils';
 import { useCountriesStore } from '@/store/countries';
 import { useLoggedUserStore } from '@/store/loggedUser';
@@ -193,22 +195,14 @@ export const ExpiredColums: ColumnDef<any>[] = [
       async function reintegerDocumentEmployees() {
         toast.promise(
           async () => {
-            const supabase = supabaseBrowser();
-            const { data, error } = await supabase
-              .from('documents_employees')
-              .update({
-                is_active: true,
-                // termination_date: null,
-                // reason_for_termination: null,
-              })
-              .eq('id', document.id)
-              .select();
+            const { error } = await updateDocumentById('documents_employees', document.id, {
+              is_active: true,
+            });
 
             setIntegerModal(!integerModal);
-            //setInactive(data as any)
             setShowDeletedEquipment(false);
             if (error) {
-              throw new Error(error.message);
+              throw new Error(error);
             }
           },
           {
@@ -224,27 +218,14 @@ export const ExpiredColums: ColumnDef<any>[] = [
       async function onSubmit(values: z.infer<typeof formSchema>) {
         toast.promise(
           async () => {
-            const data = {
-              ...values,
-              termination_date: format(values.termination_date, 'yyyy-MM-dd'),
-            };
-
-            const supabase = supabaseBrowser();
-
-            const { error } = await supabase
-              .from('documents_employees')
-              .update({
-                is_active: false,
-                //termination_date: data.termination_date,
-                //reason_for_termination: data.reason_for_termination,
-              })
-              .eq('id', document.id)
-              .select();
+            const { error } = await updateDocumentById('documents_employees', document.id, {
+              is_active: false,
+            });
 
             setShowModal(!showModal);
 
             if (error) {
-              throw new Error(error.message);
+              throw new Error(error);
             }
           },
           {
@@ -263,17 +244,13 @@ export const ExpiredColums: ColumnDef<any>[] = [
       const router = useRouter();
 
       async function viewDocumentEmployees() {
-        const supabase = supabaseBrowser();
-        const { data, error } = await supabase
-          .from('documents_employees_logs')
-          .select('*, documents_employees(user_id(email))')
-          .eq('documents_employees_id', document.id);
-
-        if (error) {
-          toast.error(`${handleSupabaseError(error.message)}`);
-        }
-        if (data) {
-          setDocumentHistory(data);
+        try {
+          const data = await fetchDocumentEmployeesLogs(document.id);
+          if (data) {
+            setDocumentHistory(data as any);
+          }
+        } catch (error: any) {
+          toast.error(`Error al obtener historial`);
         }
       }
       // useEffect(() => {
@@ -288,7 +265,6 @@ export const ExpiredColums: ColumnDef<any>[] = [
         return year;
       });
       const [years, setYear] = useState(today.getFullYear().toString());
-      const supabase = supabaseBrowser();
       const handleDownload = async (path: string, fileName: string, resourceName: string) => {
         toast.promise(
           async () => {
@@ -542,17 +518,17 @@ export const ExpiredColums: ColumnDef<any>[] = [
 
                       // Perform the deletion based on the type of document
                       if (row.original.applies === 'Persona') {
-                        const { error } = await supabase.from('documents_employees').delete().eq('id', row.original.id);
+                        const { error } = await deleteDocumentEmployeeById(row.original.id);
 
                         if (error) {
-                          throw new Error(handleSupabaseError(error.message));
+                          throw new Error(error);
                         }
                       } else {
                         // Delete equipment document
-                        const { error } = await supabase.from('documents_equipment').delete().eq('id', row.original.id);
+                        const { error } = await deleteDocumentEquipmentById(row.original.id);
 
                         if (error) {
-                          throw new Error(handleSupabaseError(error.message));
+                          throw new Error(error);
                         }
                       }
 

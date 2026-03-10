@@ -8,7 +8,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { insertCategory } from '@/app/server/UPDATE/actions';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -28,8 +28,6 @@ export default function AddCategoryModal({
   fromEmployee?: boolean;
 }) {
   const router = useRouter();
-
-  const supabase = supabaseBrowser();
   const formSchema = z.object({
     name: z.string({ required_error: 'El nombre es requerido' }).min(2, {
       message: 'El nombre de la categoria debe tener al menos 2 caracteres',
@@ -49,16 +47,8 @@ export default function AddCategoryModal({
   async function onSubmit({ name, covenant_id }: z.infer<typeof formSchema>) {
     toast.promise(
       async () => {
-        const { data, error } = await supabase
-          .from('category')
-          .insert([
-            {
-              name: name.slice(0, 1).toUpperCase() + name.slice(1),
-              covenant_id,
-            },
-          ])
-          .select();
-        if (error) throw new Error(error.message);
+        const { error } = await insertCategory(name.slice(0, 1).toUpperCase() + name.slice(1), covenant_id);
+        if (error) throw new Error(error);
         document.getElementById('close-category-modal')?.click();
         router.refresh();
       },

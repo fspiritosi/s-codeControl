@@ -5,8 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useImageUpload } from '@/hooks/useUploadImage';
 import { handleSupabaseError } from '@/lib/errorHandler';
-import { supabaseBrowser } from '@/lib/supabase/browser';
 import { useLoggedUserStore } from '@/store/loggedUser';
+import { fetchCompanyWithRelationsByOwner } from '@/app/server/company/mutations';
 import { companySchema } from '@/zodSchemas/schemas';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, useRef, useState } from 'react';
@@ -16,7 +16,6 @@ import { AddCompany } from '../accions';
 export default function CreateCompanyButton() {
   const url = process.env.NEXT_PUBLIC_PROJECT_URL;
   const router = useRouter();
-  const supabase = supabaseBrowser();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | undefined>();
   const [required, setRequired] = useState(false);
@@ -92,54 +91,12 @@ export default function CreateCompanyButton() {
             await uploadImage(renamedFile, 'logo');
           }
 
-          const { data: company, error: companyError } = await supabase
-            .from('company')
-            .select(
-              `
-            *,
-            owner_id(*),
-            share_company_users(*,
-              profile(*)
-            ),
-            city (
-              name,
-              id
-            ),
-            province_id (
-              name,
-              id
-            ),
-            companies_employees (
-              employees(
-                *,
-                city (
-                  name
-                ),
-                province(
-                  name
-                ),
-                workflow_diagram(
-                  name
-                ),
-                hierarchical_position(
-                  name
-                ),
-                birthplace(
-                  name
-                ),
-                contractor_employee(
-                  customers(
-                    *
-                  )
-                )
-              )
-            )
-          `
-            )
-            .eq('owner_id', data?.[0]?.owner_id || '');
+          const { data: company, error: companyError } = await fetchCompanyWithRelationsByOwner(
+            data?.[0]?.owner_id || ''
+          );
 
           if (companyError) {
-            throw new Error(handleSupabaseError(companyError.message));
+            throw new Error(handleSupabaseError(companyError));
           }
 
           const actualCompany = company?.filter((company) => company.id === data?.[0]?.id);

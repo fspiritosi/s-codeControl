@@ -51,8 +51,8 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { storage } from '@/lib/storage';
-import { supabase } from '../../../../supabase/supabase';
-import { handleSupabaseError } from '@/lib/errorHandler';
+import { updateDocumentById } from '@/app/server/documents/mutations';
+import { fetchDocumentEmployeesLogs } from '@/app/server/documents/queries';
 
 const formSchema = z.object({
   reason_for_termination: z.string({
@@ -149,19 +149,13 @@ export const columEmp: ColumnDef<Colum>[] = [
 
       async function reintegerDocumentEmployees() {
         try {
-          const { data, error } = await supabase
-            .from('documents_employees')
-            .update({
-              is_active: true,
-              // termination_date: null,
-              // reason_for_termination: null,
-            })
-            .eq('id', document.id)
-            .select();
+          const { error } = await updateDocumentById('documents_employees', document.id, {
+            is_active: true,
+          });
 
           setIntegerModal(!integerModal);
-          //setInactive(data as any)
           setShowDeletedEquipment(false);
+          if (error) throw new Error(error);
           toast('Equipo reintegrado', { description: `El equipo ${equipment?.engine} ha sido reintegrado` });
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
@@ -176,18 +170,13 @@ export const columEmp: ColumnDef<Colum>[] = [
         };
 
         try {
-          await supabase
-            .from('documents_employees')
-            .update({
-              is_active: false,
-              //termination_date: data.termination_date,
-              //reason_for_termination: data.reason_for_termination,
-            })
-            .eq('id', document.id)
-            .select();
+          const { error } = await updateDocumentById('documents_employees', document.id, {
+            is_active: false,
+          });
 
           setShowModal(!showModal);
 
+          if (error) throw new Error(error);
           toast('Documento eliminado', { description: `El documento ${document.name} ha sido dado de baja` });
         } catch (error: any) {
           const message = await errorTranslate(error?.message);
@@ -200,13 +189,9 @@ export const columEmp: ColumnDef<Colum>[] = [
 
       async function viewDocumentEmployees() {
         try {
-          const { data, error } = await supabase
-            .from('documents_employees_logs')
-            .select('*, documents_employees(user_id(email))')
-            .eq('documents_employees_id', document.id);
-
+          const data = await fetchDocumentEmployeesLogs(document.id);
           if (data) {
-            setDocumentHistory(data);
+            setDocumentHistory(data as any);
           }
         } catch (error: any) {
           const message = await errorTranslate(error?.message);

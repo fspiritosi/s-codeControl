@@ -21,6 +21,14 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../supabase/supabase';
+import {
+  fetchRoles,
+  fetchProfileByEmail,
+  fetchShareCompanyUsersByProfileAndCompany,
+  insertShareCompanyUser,
+  insertProfile,
+  fetchCustomersByCompany,
+} from '@/app/server/UPDATE/actions';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -110,25 +118,18 @@ export const RegisterWithRole = () => {
   const [roles, setRoles] = useState<any[] | null>([]);
 
   const getRoles = async () => {
-    let { data: roles, error } = await supabase.from('roles').select('*').eq('intern', false).neq('name', 'Invitado');
+    const roles = await fetchRoles();
     setRoles(roles);
   };
 
   useEffect(() => {
-    const fetchCustomers = async () => {
-      const { data, error } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('is_active', true)
-        .eq('company_id', company?.id);
-      if (error) {
-        console.error('Error fetching customers:', error);
-      } else {
-        setClientData(data);
-      }
+    const fetchCustomersData = async () => {
+      if (!company?.id) return;
+      const data = await fetchCustomersByCompany(company.id);
+      setClientData(data);
     };
     getRoles();
-    fetchCustomers();
+    fetchCustomersData();
   }, []);
 
   const FetchSharedUsers = useLoggedUserStore((state) => state.FetchSharedUsers);
@@ -146,35 +147,25 @@ export const RegisterWithRole = () => {
           throw new Error('No se encontró la empresa');
         }
 
-        let { data: profile, error } = await supabase.from('profile').select('*').eq('email', values.email);
-
-        if (error) {
-          throw new Error(handleSupabaseError(error.message));
-        }
+        const profile = await fetchProfileByEmail(values.email);
 
         if (profile && profile?.length > 0) {
-          const { error: duplicatedError, data: sharedCompany } = await supabase
-            .from('share_company_users')
-            .select('*')
-            .eq('profile_id', profile[0].id)
-            .eq('company_id', company?.id);
+          const sharedCompany = await fetchShareCompanyUsersByProfileAndCompany(profile[0].id, company?.id);
 
           if (sharedCompany && sharedCompany?.length > 0) {
             throw new Error('El usuario ya tiene acceso a la empresa');
           }
 
           //Compartir la empresa con el usuario
-          const { data, error } = await supabase.from('share_company_users').insert([
-            {
+          const { error } = await insertShareCompanyUser({
               company_id: company?.id,
               profile_id: profile[0].id,
               role: values?.role,
               customer_id: values?.customer ? values?.customer : null,
-            },
-          ]);
+          });
 
           if (error) {
-            throw new Error(handleSupabaseError(error.message));
+            throw new Error(handleSupabaseError(error));
           }
 
           return 'Usuario registrado correctamente';
@@ -201,37 +192,27 @@ export const RegisterWithRole = () => {
           }
 
           if (data) {
-            const { data: user, error } = await supabase
-              .from('profile')
-              .insert([
-                {
+            const { data: profileData, error: profileError } = await insertProfile({
                   id: data.user?.id,
                   email: values.email,
                   fullname: `${values.firstname} ${values.lastname}`,
                   role: 'CodeControlClient',
                   credential_id: data.user?.id,
-                },
-              ])
-              .select();
+            });
 
-            if (error) {
-              throw new Error(handleSupabaseError(error.message));
+            if (profileError) {
+              throw new Error(handleSupabaseError(profileError));
             }
 
-            if (user) {
-              const { data, error } = await supabase.from('share_company_users').insert([
-                {
+            if (profileData) {
+              const { error: shareError } = await insertShareCompanyUser({
                   company_id: company?.id,
-                  profile_id: user?.[0].id,
+                  profile_id: profileData?.[0].id,
                   role: values?.role,
                   customer_id: values?.customer ? values?.customer : null,
-                },
-              ]);
-              if (error) {
-                throw new Error(handleSupabaseError(error.message));
-              }
-              if (data) {
-                return 'Usuario registrado correctamente';
+              });
+              if (shareError) {
+                throw new Error(handleSupabaseError(shareError));
               }
             }
           }

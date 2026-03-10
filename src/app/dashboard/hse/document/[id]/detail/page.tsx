@@ -26,7 +26,7 @@ import {
 } from '@/features/Hse/actions/documents';
 import { DocumentNewVersionDialog } from '@/features/Hse/components/Document-new-version-dialog';
 import { DocumentUploadDialog } from '@/features/Hse/components/Document-upload-dialog';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { storage } from '@/lib/storage';
 import { BaseDataTable } from '@/shared/components/data-table/base/data-table';
 import { DataTableColumnHeader } from '@/shared/components/data-table/base/data-table-column-header';
 import { ColumnDef, VisibilityState } from '@tanstack/react-table';
@@ -269,8 +269,6 @@ const createFilterOptions = <T,>(
 export default function DocumentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const supabase = supabaseBrowser();
-  
   const [showNewVersionDialog, setShowNewVersionDialog] = useState(false);
   const [document, setDocument] = useState<ExtendedDocument | null>(null);
   const [activeEmployees, setActiveEmployees] = useState<Employee[]>([]);
@@ -498,10 +496,7 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
 
   const getDocumentUrl = (filePath: string) => {
     if (!filePath) return '';
-    const { data } = supabase.storage
-      .from('documents-hse') // Asegúrate de que este sea el nombre correcto de tu bucket
-      .getPublicUrl(filePath);
-    return data.publicUrl;
+    return storage.getPublicUrl('documents-hse', filePath);
   };
   const getStatusColor = (status: string) => {
     switch (status) {

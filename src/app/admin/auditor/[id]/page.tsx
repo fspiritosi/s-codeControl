@@ -18,7 +18,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components
 import { cn } from '@/lib/utils';
 import { Suspense } from 'react';
 import { storage } from '@/lib/storage';
-import { supabase } from '../../../../../supabase/supabase';
+import { prisma } from '@/lib/prisma';
 
 export default async function page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -32,54 +32,108 @@ export default async function page({ params }: { params: Promise<{ id: string }>
   let documentType: string | null = null;
   let resourceType: string | null = null;
 
-  let { data: documents_employee } = await supabase
-    .from('documents_employees')
-    .select(
-      `
-    *,
-    document_types(*),
-    applies(*,
-      city(name),
-      province(name),
-      contractor_employee(
-        customers(
-          *
-          )
-          ),
-          company_id(*,province_id(name),owner_id(*))
-          )
-          `
-    )
-    .eq('id', id);
+  const documents_employee = await prisma.documents_employees.findMany({
+    where: { id },
+    include: {
+      document_type: true,
+      employee: {
+        include: {
+          city_rel: { select: { name: true } },
+          province_rel: { select: { name: true } },
+          contractor_employee: {
+            include: { contractor: true },
+          },
+          company: {
+            include: {
+              province_rel: { select: { name: true } },
+              owner: true,
+            },
+          },
+        },
+      },
+    },
+  });
 
   if (documents_employee?.length === 0) {
-    let { data: documents_vehicle } = await supabase
-      .from('documents_equipment')
-      .select(
-        `
-      *,
-      document_types(*),
-      applies(*,brand(name),model(name),type_of_vehicle(name), company_id(*,province_id(name),owner_id(*)))`
-      )
-      .eq('id', id);
+    const documents_vehicle = await prisma.documents_equipment.findMany({
+      where: { id },
+      include: {
+        document_type: true,
+        vehicle: {
+          include: {
+            brand_rel: { select: { name: true } },
+            model_rel: { select: { name: true } },
+            type_of_vehicle_rel: { select: { name: true } },
+            company: {
+              include: {
+                province_rel: { select: { name: true } },
+                owner: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
-    document = documents_vehicle;
+    document = documents_vehicle as any;
     resourceType = 'documentos-equipos';
     resource = 'vehicle';
   } else {
-    document = documents_employee;
+    document = documents_employee as any;
     resourceType = 'documentos-empleados';
     resource = 'employee';
   }
-  const sharedUsersEmail = document?.[0]?.applies?.company_id.owner_id.email; //->
+  // Reshape Prisma data to match the old Supabase shape used in the template
+  const reshapeEmployee = (doc: any) => ({
+    ...doc,
+    document_types: doc.document_type,
+    applies: {
+      ...doc.employee,
+      city: doc.employee?.city_rel,
+      province: doc.employee?.province_rel,
+      company_id: {
+        ...doc.employee?.company,
+        province_id: doc.employee?.company?.province_rel,
+        owner_id: doc.employee?.company?.owner,
+      },
+    },
+  });
+  const reshapeVehicle = (doc: any) => ({
+    ...doc,
+    document_types: doc.document_type,
+    applies: {
+      ...doc.vehicle,
+      brand: doc.vehicle?.brand_rel,
+      model: doc.vehicle?.model_rel,
+      type_of_vehicle: doc.vehicle?.type_of_vehicle_rel,
+      company_id: {
+        ...doc.vehicle?.company,
+        province_id: doc.vehicle?.company?.province_rel,
+        owner_id: doc.vehicle?.company?.owner,
+      },
+    },
+  });
 
-  const { data: sharedCompanies, error } = await supabase
-    .from('share_company_users')
-    .select('*,profile_id(email),company_id(company_name)')
-    .eq('company_id', document?.[0]?.applies?.company_id.id)
-    .neq('role', 'Invitado');
+  if (resource === 'vehicle') {
+    document = document?.map(reshapeVehicle) ?? null;
+  } else {
+    document = document?.map(reshapeEmployee) ?? null;
+  }
 
-  const email = sharedCompanies?.map((company: any) => company.profile_id.email);
+  const sharedUsersEmail = document?.[0]?.applies?.company_id?.owner_id?.email;
+
+  const sharedCompanies = await prisma.share_company_users.findMany({
+    where: {
+      company_id: document?.[0]?.applies?.company_id?.id || '',
+      role: { not: 'Invitado' },
+    },
+    include: {
+      profile: { select: { email: true } },
+      customer: { select: { name: true } },
+    },
+  });
+
+  const email = sharedCompanies?.map((company: any) => company.profile?.email);
   email?.push(sharedUsersEmail);
 
   //! incluir al dueño inicialmente

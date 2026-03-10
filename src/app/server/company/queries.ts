@@ -368,3 +368,40 @@ export const getOwnerUser = async () => {
     return [];
   }
 };
+
+export const fetchContactsByCompany = async (companyId: string) => {
+  if (!companyId) return [];
+  try {
+    const data = await prisma.contacts.findMany({
+      where: { company_id: companyId },
+      include: { customer: { select: { id: true, name: true } } },
+    });
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching contacts by company:', error);
+    return [];
+  }
+};
+
+export const fetchCustomersByCompanyAll = async (companyId: string) => {
+  if (!companyId) return [];
+  try {
+    const data = await prisma.customers.findMany({
+      where: { company_id: companyId },
+    });
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching customers:', error);
+    return [];
+  }
+};
+
+export const fetchIndustryTypes = async () => {
+  try {
+    const data = await prisma.industry_type.findMany();
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching industry types:', error);
+    return [];
+  }
+};

@@ -4,7 +4,7 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { fetchCustomersByCompany, fetchContactById } from '@/app/server/UPDATE/actions';
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { contactSchema } from '@/zodSchemas/schemas';
@@ -25,7 +25,6 @@ export default function ContactRegister({ id }: { id: string }) {
   const functionAction = id ? updateContact : createdContact;
   const searchParams = useSearchParams();
   const actualCompany = useLoggedUserStore((state) => state.actualCompany?.id);
-  const supabase = supabaseBrowser();
   const [action, setAction] = useState<Action>(searchParams.get('action') as Action);
   const [readOnly, setReadOnly] = useState(action === 'edit' ? false : true);
   const [clientData, setClientData] = useState<any>(null);
@@ -61,28 +60,21 @@ export default function ContactRegister({ id }: { id: string }) {
       setReadOnly(false);
     }
 
-    const fetchCustomers = async () => {
-      const { data, error } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('is_active', true)
-        .eq('company_id', actualCompany || '');
-      if (error) {
-        console.error('Error fetching customers:', error);
-      } else {
+    const fetchCustomersData = async () => {
+      try {
+        const data = await fetchCustomersByCompany(actualCompany || '');
         setClientData(data);
+      } catch (error) {
+        console.error('Error fetching customers:', error);
       }
     };
 
     const fetchContact = async () => {
       if (id) {
-        const { data, error } = await supabase.from('contacts').select('*').eq('id', id);
-
-        if (error) {
-          console.error('Error fetching contact:', error);
-        } else {
+        try {
+          const data = await fetchContactById(id);
           if (data && data.length > 0) {
-            const contact = data[0];
+            const contact = data[0] as any;
             setContactData(contact);
             setValue('contact_name', contact.contact_name || '');
             setValue('contact_email', contact.constact_email || '');
@@ -92,11 +84,13 @@ export default function ContactRegister({ id }: { id: string }) {
           } else {
             console.error('No se encontró ningún contacto con el id proporcionado.');
           }
+        } catch (error) {
+          console.error('Error fetching contact:', error);
         }
       }
     };
 
-    fetchCustomers();
+    fetchCustomersData();
     fetchContact();
   }, [action, id]);
 

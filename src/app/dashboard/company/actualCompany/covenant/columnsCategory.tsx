@@ -37,7 +37,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { handleSupabaseError } from '@/lib/errorHandler';
-import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -51,7 +50,7 @@ import { Fragment, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { supabase } from '../../../../../../supabase/supabase';
+import { reactivateCategory, deactivateCategory, updateCategoryById } from '@/app/server/covenant/mutations';
 
 const editCategorySchema = z.object({
   category: z.string().nonempty('El nombre de la categoría es requerido.'),
@@ -124,22 +123,12 @@ export const columnsCategory: ColumnDef<Colum>[] = [
       async function reintegerCategory() {
         toast.promise(
           async () => {
-            const supabase = supabaseBrowser();
-
-            const { data, error } = await supabase
-              .from('category')
-              .update({
-                is_active: true,
-                
-              })
-              .eq('id', category.id)
-              //.eq('company_id', actualCompany?.id)
-              .select();
+            const { error } = await reactivateCategory(category.id);
 
             setIntegerModal(!integerModal);
-            
+
             if (error) {
-              throw new Error(handleSupabaseError(error.message));
+              throw new Error(handleSupabaseError(error));
             }
           },
           {
@@ -160,19 +149,11 @@ export const columnsCategory: ColumnDef<Colum>[] = [
               termination_date: format(values.termination_date, 'yyyy-MM-dd'),
             };
 
-            const supabase = supabaseBrowser();
-            const { error } = await supabase
-              .from('category')
-              .update({
-                is_active: false,
-                
-              })
-              .eq('id', category.id)
-              
+            const { error } = await deactivateCategory(category.id);
 
             setShowModal(!showModal);
             if (error) {
-              throw new Error(handleSupabaseError(error.message));
+              throw new Error(handleSupabaseError(error));
             }
           },
           {
@@ -188,21 +169,12 @@ export const columnsCategory: ColumnDef<Colum>[] = [
       async function editCategory(values: z.infer<typeof editCategorySchema>) {
         toast.promise(
           async () => {
-            const supabase = supabaseBrowser();
-
-            const { data, error } = await supabase
-              .from('category')
-              .update({
-                name: values.category, 
-              })
-              .eq('id', category.id)
-              
-              .select();
+            const { error } = await updateCategoryById(category.id, { name: values.category });
 
             setShowCategoryModal(!showCategoryModal);
 
             if (error) {
-              throw new Error(handleSupabaseError(error.message));
+              throw new Error(handleSupabaseError(error));
             }
           },
           {

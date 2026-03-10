@@ -21,7 +21,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { formatRelative } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
-import { supabase } from '../../../../../../supabase/supabase';
+import { deleteShareCompanyUser } from '@/app/server/company/mutations';
 import { DataTableColumnHeader } from './data-table-column-header';
 import { useRouter } from 'next/navigation';
 
@@ -162,14 +162,10 @@ export const columnsGuests: ColumnDef<SharedUser>[] = [
       const handleDelete = async () => {
         toast.promise(
           async () => {
-            const { data, error } = await supabase
-              .from('share_company_users')
-              .delete()
-              .eq('id', row.getValue('id'))
-              .select();
+            const { error } = await deleteShareCompanyUser(row.getValue('id'));
 
             if (error) {
-              throw new Error(handleSupabaseError(error.message));
+              throw new Error(handleSupabaseError(error));
             }
           },
           {

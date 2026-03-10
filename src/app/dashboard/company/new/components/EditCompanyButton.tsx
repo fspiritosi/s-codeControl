@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label';
 import { useImageUpload } from '@/hooks/useUploadImage';
 import { handleSupabaseError } from '@/lib/errorHandler';
 import { storage } from '@/lib/storage';
-import { supabaseBrowser } from '@/lib/supabase/browser';
 import { useLoggedUserStore } from '@/store/loggedUser';
+import { updateCompanyLogoByCuit } from '@/app/server/company/mutations';
 import { companySchema } from '@/zodSchemas/schemas';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, useRef, useState } from 'react';
@@ -20,7 +20,6 @@ interface EditCompanyButtonProps {
 export default function EditCompanyButton({ defaultImage = null }: EditCompanyButtonProps) {
   const url = process.env.NEXT_PUBLIC_PROJECT_URL;
   const router = useRouter();
-  const supabase = supabaseBrowser();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | undefined>();
   const [required, setRequired] = useState(false);
@@ -72,12 +71,9 @@ export default function EditCompanyButton({ defaultImage = null }: EditCompanyBu
           });
           const createdLogo = await storage.upload('logo', cuit + '.' + fileExtension, renamedFile);
           const logoPublicUrl = storage.getPublicUrl('logo', createdLogo?.path || '');
-          const { data: newLogo, error: dataerror } = await supabase
-            .from('company')
-            .update({ company_logo: logoPublicUrl })
-            .eq('company_cuit', cuit);
+          const { error: dataerror } = await updateCompanyLogoByCuit(cuit, logoPublicUrl);
           if (dataerror) {
-            throw new Error(handleSupabaseError(dataerror.message));
+            throw new Error(handleSupabaseError(dataerror));
           }
         } else {
           // Si no se ha seleccionado un archivo de imagen, solo actualizar la compañía sin URL de imagen

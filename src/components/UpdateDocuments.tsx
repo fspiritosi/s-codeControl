@@ -18,7 +18,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { storage } from '@/lib/storage';
-import { supabase } from '../../supabase/supabase';
+import { updateDocumentById } from '@/app/server/UPDATE/actions';
 import { Calendar } from './ui/calendar';
 import { Input } from './ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -109,18 +109,15 @@ export default function UpdateDocuments({
         if (montly) {
           const uploadData = await storage.upload('document_files', newDocumentName, file, { upsert: true });
 
-          const { error: updateError } = await supabase
-            .from(tableName)
-            .update({
-              document_path: uploadData?.path,
-              period: filename.period,
-              created_at: new Date(),
-              state:'presentado'
-            })
-            .eq('document_path', documentName);
+          const { error: updateError } = await updateDocumentById(tableName, id, {
+            document_path: uploadData?.path,
+            period: filename.period,
+            created_at: new Date(),
+            state: 'presentado',
+          });
 
           if (updateError) {
-            throw new Error(handleSupabaseError(updateError.message));
+            throw new Error(handleSupabaseError(updateError));
           }
 
           return;
@@ -135,18 +132,15 @@ export default function UpdateDocuments({
 
         const finalDocument = await storage.upload('document_files', newDocumentName, file, { upsert: true });
 
-        const { error: updateError } = await supabase
-          .from(tableName)
-          .update({
-            document_path: finalDocument?.path,
-            validity: filename.validity ? new Date(filename.validity).toISOString() : null,
-            created_at: new Date(),
-            state:'presentado'
-          })
-          .eq('id', id);
+        const { error: updateError } = await updateDocumentById(tableName, id, {
+          document_path: finalDocument?.path,
+          validity: filename.validity ? new Date(filename.validity).toISOString() : null,
+          created_at: new Date(),
+          state: 'presentado',
+        });
 
         if (updateError) {
-          throw new Error(handleSupabaseError(updateError.message));
+          throw new Error(handleSupabaseError(updateError));
         }
 
         router.refresh();

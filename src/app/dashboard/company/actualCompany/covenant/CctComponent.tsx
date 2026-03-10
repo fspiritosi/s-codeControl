@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import { columnsCategory } from './columnsCategory';
 import { columns } from './columnsCct';
@@ -9,15 +9,12 @@ import { DataCct } from './data-table-cct';
 import { DataGuild } from './data-table-guild';
 
 export default async function Cct() {
-  const supabase = await supabaseServer();
   const coockiesStore = await cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
 
-  let { data: guild } = await supabase
-    .from('guild')
-    .select('*')
-    .eq('company_id', company_id || '')
-    .select();
+  const guild = await prisma.guild.findMany({
+    where: { company_id: company_id || '' },
+  });
 
   const guildData = {
     ...guild,
@@ -26,10 +23,10 @@ export default async function Cct() {
     }),
   };
 
-  let { data: covenants } = await supabase
-    .from('covenant')
-    .select('*, guild_id(name)')
-    .eq('company_id', company_id || '');
+  const covenants = await prisma.covenant.findMany({
+    where: { company_id: company_id || '' },
+    include: { guild: { select: { name: true } } },
+  });
   const covenantsId = covenants?.map((e) => e.id);
 
   const convenantsData = {
@@ -39,16 +36,16 @@ export default async function Cct() {
         name: e.name as string,
         id: e.id as string,
         number: e.number as string,
-        guild_id: e.guild_id?.name ?? '',
+        guild_id: e.guild?.name ?? '',
         is_active: e.is_active,
       };
     }),
   };
 
-  let { data: category, error } = await supabase
-    .from('category')
-    .select('*, covenant_id(name,guild_id(name))')
-    .in('covenant_id', covenantsId as string[]);
+  const category = await prisma.category.findMany({
+    where: { covenant_id: { in: covenantsId } },
+    include: { covenant: { select: { name: true, guild: { select: { name: true } } } } },
+  });
 
   const categoryData = {
     ...category,
@@ -57,8 +54,8 @@ export default async function Cct() {
         name: e.name as string,
         id: e.id as string,
         number: e.number as string,
-        covenant_id: e.covenant_id.name as string,
-        guild_id: e.covenant_id.guild_id.name as string,
+        covenant_id: e.covenant?.name as string,
+        guild_id: e.covenant?.guild?.name as string,
         is_active: e.is_active,
       };
     }),

@@ -37,7 +37,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { handleSupabaseError } from '@/lib/errorHandler';
-import { supabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -50,7 +49,8 @@ import { Fragment, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { supabase } from '../../../../../../supabase/supabase';
+import { reactivateGuild, deactivateGuildCascade, updateGuildById } from '@/app/server/covenant/mutations';
+import { fetchCovenantsByCompany } from '@/app/server/covenant/queries';
 
 const editGuildSchema = z.object({
   guild: z.string().nonempty('El nombre del sindicato es requerido.'),
@@ -102,15 +102,10 @@ export const columnsGuild: ColumnDef<Colum>[] = [
 
       const fetchCovenant = async () => {
         try {
-          const { data, error } = await supabase
-            .from('covenant')
-            .select('*')
-            //.eq('is_active', false)
-            .eq('company_id', actualCompany?.id)
-            .select();
+          const { error } = await fetchCovenantsByCompany(actualCompany?.id || '');
 
           if (error) {
-            toast.error(`${handleSupabaseError(error.message)}`);
+            toast.error(`${handleSupabaseError(error)}`);
           }
         } catch (error) {
           toast.error(handleSupabaseError(`${error}`));
@@ -142,21 +137,12 @@ export const columnsGuild: ColumnDef<Colum>[] = [
       async function reintegerGuild() {
         toast.promise(
           async () => {
-            const supabase = supabaseBrowser();
-
-            const { data, error } = await supabase
-              .from('guild')
-              .update({
-                is_active: true,
-              })
-              .eq('id', guild.id)
-              .eq('company_id', actualCompany?.id || '')
-              .select();
+            const { error } = await reactivateGuild(guild.id);
 
             setIntegerModal(!integerModal);
 
             if (error) {
-              throw new Error(handleSupabaseError(error.message));
+              throw new Error(handleSupabaseError(error));
             }
           },
           {
@@ -177,47 +163,11 @@ export const columnsGuild: ColumnDef<Colum>[] = [
               termination_date: format(values.termination_date, 'yyyy-MM-dd'),
             };
 
-            const supabase = supabaseBrowser();
-            const { error } = await supabase
-              .from('guild')
-              .update({
-                is_active: false,
-              })
-              .eq('id', guild.id)
-              .eq('company_id', actualCompany?.id || '');
-
-            const { data: covenant, error: covenantError } = await supabase
-              .from('covenant')
-              .select('*')
-              .eq('guild_id', guild.id)
-              // .eq('company_id', actualCompany?.id)
-              .select();
-            const covenantIds = covenant?.map((covenant) => covenant.id);
-
-            const { error: coveError } = await supabase
-              .from('covenant')
-              .update({
-                is_active: false,
-              })
-              .eq('guild_id', guild.id)
-              // .eq('company_id', actualCompany?.id)
-              .select();
-
-            const { error: categoryError } = await supabase
-              .from('category')
-              .update({
-                is_active: false,
-              })
-              .in('covenant_id', covenantIds || []);
-            // .eq('company_id', actualCompany?.id);
-
-            if (categoryError) {
-              throw new Error(handleSupabaseError(categoryError.message));
-            }
+            const { error } = await deactivateGuildCascade(guild.id);
 
             setShowModal(!showModal);
             if (error) {
-              throw new Error(handleSupabaseError(error.message));
+              throw new Error(handleSupabaseError(error));
             }
           },
 
@@ -234,21 +184,12 @@ export const columnsGuild: ColumnDef<Colum>[] = [
       async function editGuild(values: z.infer<typeof editGuildSchema>) {
         toast.promise(
           async () => {
-            const supabase = supabaseBrowser();
-
-            const { data, error } = await supabase
-              .from('guild')
-              .update({
-                name: values.guild,
-              })
-              .eq('id', guild.id)
-              .eq('company_id', actualCompany?.id || '')
-              .select();
+            const { error } = await updateGuildById(guild.id, { name: values.guild });
 
             setShowGuildModal(!showGuildModal);
 
             if (error) {
-              throw new Error(handleSupabaseError(error.message));
+              throw new Error(handleSupabaseError(error));
             }
           },
           {

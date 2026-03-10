@@ -736,6 +736,28 @@ export const fetchAllDocumentsEquipmentByCompany = async (companyId: string) => 
   }
 };
 
+export const fetchDocumentsByApplies = async (
+  tableName: 'documents_employees' | 'documents_equipment',
+  appliesId: string
+) => {
+  try {
+    if (tableName === 'documents_employees') {
+      const data = await prisma.documents_employees.findMany({
+        where: { applies: appliesId, document_path: { not: null } },
+      });
+      return data;
+    } else {
+      const data = await prisma.documents_equipment.findMany({
+        where: { applies: appliesId, document_path: { not: null } },
+      });
+      return data;
+    }
+  } catch (error) {
+    console.error('Error fetching documents by applies:', error);
+    return [];
+  }
+};
+
 export const fetchDocumentTypesByCompany = async (companyId: string) => {
   if (!companyId) return [];
   try {
@@ -748,6 +770,57 @@ export const fetchDocumentTypesByCompany = async (companyId: string) => {
     return data ?? [];
   } catch (error) {
     console.error('Error fetching document types:', error);
+    return [];
+  }
+};
+
+export const fetchDocumentTypesByCompanyIncludingInactive = async (companyId: string) => {
+  if (!companyId) return [];
+  try {
+    const data = await prisma.document_types.findMany({
+      where: {
+        OR: [{ company_id: companyId }, { company_id: null }],
+      },
+    });
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching document types:', error);
+    return [];
+  }
+};
+
+export const fetchDocumentEmployeesLogs = async (documentId: string) => {
+  if (!documentId) return [];
+  try {
+    const data = await prisma.documents_employees_logs.findMany({
+      where: { documents_employees_id: documentId },
+      include: {
+        documents_employees: {
+          include: { user: { select: { email: true } } },
+        },
+      },
+    });
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching document employees logs:', error);
+    return [];
+  }
+};
+
+export const fetchDocumentEquipmentLogs = async (documentId: string) => {
+  if (!documentId) return [];
+  try {
+    const data = await prisma.documents_equipment_logs.findMany({
+      where: { documents_equipment_id: documentId },
+      include: {
+        documents_equipment: {
+          include: { user: { select: { email: true } } },
+        },
+      },
+    });
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching document equipment logs:', error);
     return [];
   }
 };

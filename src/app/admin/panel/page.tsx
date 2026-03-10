@@ -18,12 +18,12 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabase } from '../../../../supabase/supabase';
+import { prisma } from '@/lib/prisma';
 import { CompanieChart } from '../components/Graficos/CompaniesChart';
 import CreateUser from '../components/createUser';
 
 export default async function Dashboard() {
-  let { data: company, error } = await supabase.from('company').select('*');
+  const company = await prisma.company.findMany();
 
   return (
     <div className="min-h-screen w-full bg-muted/40">

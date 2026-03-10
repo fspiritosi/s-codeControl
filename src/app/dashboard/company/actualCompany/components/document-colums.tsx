@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { handleSupabaseError } from '@/lib/errorHandler';
-import { supabaseBrowser } from '@/lib/supabase/browser';
+import { updateDocumentTypePrivate } from '@/app/server/company/mutations';
 import { useLoggedUserStore } from '@/store/loggedUser';
 import { SharedUser } from '@/zodSchemas/schemas';
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
@@ -136,15 +136,11 @@ export const columnsDocuments: ColumnDef<SharedUser>[] = [
         const handlePrivateChange = async (selected: string) => {
           toast.promise(
             async () => {
-              const supabase = supabaseBrowser();
               const documetsFetch = useLoggedUserStore?.getState?.().documetsFetch;
-              const { error } = await supabase
-                .from('document_types')
-                .update({ private: selected === 'Privado' })
-                .eq('id', row.original.id);
+              const { error } = await updateDocumentTypePrivate(row.original.id, selected === 'Privado');
 
               if (error) {
-                throw new Error(handleSupabaseError(error.message));
+                throw new Error(handleSupabaseError(error));
               }
               documetsFetch();
               router.refresh();

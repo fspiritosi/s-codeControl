@@ -11,7 +11,16 @@ import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { supabase } from '../../../supabase/supabase';
+import {
+  insertVehicle,
+  updateVehicleByIdAndCompany,
+  checkVehicleDomainExists,
+  deleteContractorEquipment,
+  insertContractorEquipment,
+  fetchVehicleModelsByBrand,
+  insertDocumentsEquipment,
+} from '@/app/server/UPDATE/actions';
+import { fetchTypesOfVehicles } from '@/app/server/GET/actions';
 import { dataType, generic, VehicleType } from './types';
 
 export function useVehicleForm(
@@ -68,7 +77,7 @@ export function useVehicleForm(
           .refine((e) => { const year = Number(form.getValues('year')); const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/; if (year !== undefined) { if (year <= 2015) return oldRegex.test(e); return true; } return 0; }, { message: 'El dominio debe tener el formato AAA000. (verificar año)' })
           .refine((e) => { const year = Number(form.getValues('year')); const newRegex = /^[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$/; if (year !== undefined) { if (year >= 2017) return newRegex.test(e); return true; } return 0; }, { message: 'El dominio debe tener el formato AA000AA. (verificar año)' })
           .refine((e) => { const year = Number(form.getValues('year')); const newRegex = /^[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$/; const oldRegex = /^[A-Za-z]{3}[0-9]{3}$/; if (year !== undefined) { if (year === 2016 || year === 2015) return newRegex.test(e) || oldRegex.test(e); return true; } return 0; }, { message: 'El dominio debe tener uno de los siguientes formatos AA000AA o AAA000' })
-          .refine(async (domain: string) => { let { data: vehicles } = await supabase.from('vehicles').select('*').eq('domain', domain.toUpperCase()); if (vehicles?.[0] && window.location.href.includes('/dashboard/equipment/action?action=new')) return false; return true; }, { message: 'El dominio ya existe' })
+          .refine(async (domain: string) => { const vehicles = await checkVehicleDomainExists(domain.toUpperCase()); if (vehicles?.[0] && window.location.href.includes('/dashboard/equipment/action?action=new')) return false; return true; }, { message: 'El dominio ya existe' })
       : z.string().optional().nullable(),
     serie: hideInput
       ? z.string().optional()
@@ -99,8 +108,8 @@ export function useVehicleForm(
   });
 
   const fetchData = async () => {
-    let { data: types_of_vehicles } = await supabase.from('types_of_vehicles').select('*');
-    setData({ ...data, tipe_of_vehicles: types_of_vehicles as generic[] });
+    const types_of_vehicles = await fetchTypesOfVehicles();
+    setData({ ...data, tipe_of_vehicles: types_of_vehicles as unknown as generic[] });
   };
 
   useEffect(() => {
@@ -127,8 +136,8 @@ export function useVehicleForm(
   const vehicleModels = data.models;
 
   const fetchModels = async (brand_id: string) => {
-    let { data: model_vehicles } = await supabase.from('model_vehicles').select('*').eq('brand', brand_id);
-    setData({ ...data, models: model_vehicles as generic[] });
+    const model_vehicles = await fetchVehicleModelsByBrand(brand_id);
+    setData({ ...data, models: model_vehicles as unknown as generic[] });
   };
 
   async function onCreate(values: z.infer<typeof vehicleSchema>) {
@@ -136,9 +145,7 @@ export function useVehicleForm(
       async () => {
         const { type_of_vehicle, brand, model, domain } = values;
         try {
-          const { data: vehicleData, error } = await supabase
-            .from('vehicles')
-            .insert([{
+          const { data: vehicleData, error } = await insertVehicle({
               ...values,
               domain: domain?.toUpperCase() || null,
               type_of_vehicle: data.tipe_of_vehicles.find((e) => e.name === type_of_vehicle)?.id,
@@ -148,24 +155,23 @@ export function useVehicleForm(
               company_id: actualCompany?.id,
               condition: 'operativo',
               kilometer: values.kilometer || 0,
-            }])
-            .select();
-          const documentsMissing: { applies: number; id_document_types: string; validity: string | null; user_id: string | undefined }[] = [];
+            });
+          if (error) throw new Error(handleSupabaseError(error));
+          const documentsMissing: { applies: string; id_document_types: string; validity: string | null; user_id: string | undefined }[] = [];
           mandatoryDocuments?.Equipos?.forEach((document: any) => {
-            documentsMissing.push({ applies: vehicleData?.[0]?.id, id_document_types: document.id, validity: null, user_id: loggedUser });
+            documentsMissing.push({ applies: vehicleData?.id || '', id_document_types: document.id, validity: null, user_id: loggedUser });
           });
-          const { error: documentError } = await supabase.from('documents_equipment').insert(documentsMissing).select();
-          if (documentError) throw new Error(handleSupabaseError(documentError.message));
-          if (error) throw new Error(handleSupabaseError(error.message));
-          const id = vehicleData?.[0].id;
+          const { error: documentError } = await insertDocumentsEquipment(documentsMissing);
+          if (documentError) throw new Error(handleSupabaseError(documentError));
+          const id = vehicleData?.id;
           const fileExtension = imageFile?.name.split('.').pop();
-          if (imageFile) {
+          if (imageFile && id) {
             try {
               const renamedFile = new File([imageFile], `${id.replace(/\s/g, '')}.${fileExtension}`, { type: `image/${fileExtension}` });
               await uploadImage(renamedFile, 'vehicle_photos');
               try {
                 const vehicleImage = `${url}/vehicle_photos/${id}.${fileExtension}`.trim().replace(/\s/g, '');
-                await supabase.from('vehicles').update({ picture: vehicleImage }).eq('id', id).eq('company_id', actualCompany?.id);
+                await updateVehicleByIdAndCompany(id, actualCompany?.id || '', { picture: vehicleImage });
               } catch (error) {}
             } catch (error: any) {
               throw new Error(handleSupabaseError(error.message));
@@ -199,14 +205,14 @@ export function useVehicleForm(
         const { brand_vehicles: brandd, model_vehicles, types_of_vehicles, ...rest } = vehicle;
         const result = compareContractorEmployees(rest, values);
         result.valuesToRemove.forEach(async (e) => {
-          const { error } = await supabase.from('contractor_equipment').delete().eq('equipment_id', vehicle?.id).eq('contractor_id', e);
-          if (error) return handleSupabaseError(error.message);
+          const { error } = await deleteContractorEquipment(vehicle?.id, e);
+          if (error) return handleSupabaseError(error);
         });
         const error2 = await Promise.all(
           result.valuesToAdd.map(async (e) => {
             if (!result.valuesToKeep.includes(e)) {
-              const { error } = await supabase.from('contractor_equipment').insert({ equipment_id: vehicle?.id, contractor_id: e });
-              if (error) return handleSupabaseError(error.message);
+              const { error } = await insertContractorEquipment(vehicle?.id, e);
+              if (error) return handleSupabaseError(error);
             }
           })
         );
@@ -220,7 +226,7 @@ export function useVehicleForm(
           type: vehicleType.find((e) => e.name === values.type)?.id,
         });
         try {
-          const { error: updatedERROR } = await supabase.from('vehicles').update(updatedFields).eq('id', vehicle?.id).eq('company_id', actualCompany?.id);
+          const { error: updatedERROR } = await updateVehicleByIdAndCompany(vehicle?.id, actualCompany?.id || '', updatedFields);
           if (updatedERROR) console.error(updatedERROR);
           const id = vehicle?.id;
           const fileExtension = imageFile?.name.split('.').pop();
@@ -230,7 +236,7 @@ export function useVehicleForm(
               await uploadImage(renamedFile, 'vehicle_photos');
               try {
                 const vehicleImage = `${url}/vehicle_photos/${id}.${fileExtension}?timestamp=${Date.now()}`.trim().replace(/\s/g, '');
-                await supabase.from('vehicles').update({ picture: vehicleImage }).eq('id', id).eq('company_id', actualCompany?.id);
+                await updateVehicleByIdAndCompany(id, actualCompany?.id || '', { picture: vehicleImage });
               } catch (error) {}
             } catch (error: any) {
               throw new Error('Error al subir la imagen');

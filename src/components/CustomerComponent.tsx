@@ -19,7 +19,8 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Toaster, toast } from 'sonner';
 import { z } from 'zod';
-import { supabase } from '../../supabase/supabase';
+import { supabaseBrowser } from '@/lib/supabase/browser';
+import { fetchCustomerById } from '@/app/server/UPDATE/actions';
 // import { columns } from '../app/dashboard/company/customers/action/columnsCustomers';
 import { EmployeesListColumns } from '@/app/dashboard/employee/columns';
 import { EmployeesTable } from '@/app/dashboard/employee/data-table';
@@ -81,6 +82,7 @@ export default function ClientRegister({ id, equipment }: { id: string; equipmen
   const filteredItems = items?.filter((item: any) => item.customer_service_id?.id === selectedService?.id);
 
   const fetchUser = async () => {
+    const supabase = supabaseBrowser();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -156,17 +158,18 @@ export default function ClientRegister({ id, equipment }: { id: string; equipmen
 
     const id = searchParams.get('id');
     const fetchCustomerData = async () => {
-      const { data, error } = await supabase.from('customers').select('*').eq('id', id).single();
-
-      if (error) {
+      try {
+        const data = await fetchCustomerById(id!) as any;
+        if (data) {
+          setClientData(data);
+          setValue('company_name', data?.name);
+          setValue('client_cuit', data?.cuit?.toString());
+          setValue('client_email', data?.client_email);
+          setValue('client_phone', data?.client_phone?.toString());
+          setValue('address', data?.address);
+        }
+      } catch (error) {
         console.error('Error fetching customer data:', error);
-      } else {
-        setClientData(data);
-        setValue('company_name', data?.name);
-        setValue('client_cuit', data?.cuit.toString());
-        setValue('client_email', data?.client_email);
-        setValue('client_phone', data?.client_phone.toString());
-        setValue('address', data?.address);
       }
     };
 
