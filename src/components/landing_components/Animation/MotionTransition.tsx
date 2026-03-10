@@ -1,3 +1,4 @@
+'use client';
 import { fadeIn } from '@/lib/transitions';
 import { MotionTransitionProps } from '@/types/types';
 import { motion, useAnimation, useInView } from 'framer-motion';

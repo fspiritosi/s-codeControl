@@ -1,4 +1,3 @@
-'use client';
 import LogoBlanco from '@/images/logoLetrasBlancas.png';
 import Logo from '@/images/logoLetrasNegras.png';
 import Image from 'next/image';

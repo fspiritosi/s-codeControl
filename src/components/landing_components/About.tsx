@@ -1,5 +1,3 @@
-'use client';
-
 import { LightBulbIcon, MapIcon, MedalIcon } from '@/components/Icons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import MotionTransition from './Animation/MotionTransition';
