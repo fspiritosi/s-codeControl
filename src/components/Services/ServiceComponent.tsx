@@ -1,3 +1,4 @@
+// TODO: Phase 8 — migrate .from() queries to Prisma server actions and .auth to NextAuth
 import { supabaseServer } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';

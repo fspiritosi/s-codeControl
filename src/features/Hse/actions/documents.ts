@@ -1,5 +1,6 @@
 'use server'
 
+// TODO: Phase 8 — migrate .from() queries to Prisma server actions and .auth to NextAuth
 import { supabaseServer } from '@/lib/supabase/server'
 import { storageServer } from '@/lib/storage-server'
 

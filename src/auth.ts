@@ -5,6 +5,7 @@ import Credentials from 'next-auth/providers/credentials'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+// TODO: Phase 8 — migrate auth to NextAuth (remove supabase signInWithPassword)
 import { supabaseServer } from '@/lib/supabase/server'
 
 declare module 'next-auth' {

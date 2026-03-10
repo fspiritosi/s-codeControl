@@ -1,4 +1,5 @@
 import { fetchCurrentCompany, fetchCurrentUser, verifyUserRoleInCompany } from '@/app/server/GET/actions';
+// TODO: Phase 8 — migrate .from() queries to Prisma server actions
 import { supabaseServer } from '@/lib/supabase/server';
 import InitState from '@/store/InitUser';
 import {

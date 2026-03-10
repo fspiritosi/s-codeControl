@@ -52,8 +52,6 @@ function TabsDocuments({
     router.refresh();
   }, [actualComp]);
 
-  // const supabase = supabaseBrowser();
-
   const profile = useLoggedUserStore((state) => state);
   const sharedUsersAll = useLoggedUserStore((state) => state.sharedUsers);
   const role = serverRole ?? useLoggedUserStore((state) => state.roleActualCompany);

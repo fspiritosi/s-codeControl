@@ -1,4 +1,5 @@
 'use server';
+// TODO: Phase 8 — migrate .rpc() and .auth.admin to Prisma server actions and NextAuth
 import { adminSupabaseServer, supabaseServer } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 

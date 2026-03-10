@@ -1,5 +1,6 @@
 import { DataTable } from '@/app/dashboard/company/actualCompany/components/data-table';
 import { columnsDocuments } from '@/app/dashboard/company/actualCompany/components/document-colums';
+// TODO: Phase 8 — migrate .from() queries to Prisma server actions and .auth to NextAuth
 import { supabaseServer } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 

@@ -1,4 +1,5 @@
 import { fetchAllActivesEmployees, fetchDiagrams, fetchDiagramsTypes } from '@/app/server/GET/actions';
+// TODO: Phase 8 — migrate auth to NextAuth
 import { supabaseServer } from '@/lib/supabase/server';
 import { setEmployeesToShow } from '@/lib/utils/utils';
 import { cookies } from 'next/headers';

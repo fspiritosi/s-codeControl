@@ -1,6 +1,7 @@
 import { fetchAllEquipment, fetchCustomForms } from '@/app/server/GET/actions';
 import QrActionSelector from '@/components/QR/AcctionSelector';
 import { prisma } from '@/lib/prisma';
+// TODO: Phase 8 — migrate auth to NextAuth
 import { supabaseServer } from '@/lib/supabase/server';
 import { setVehiclesToShow } from '@/lib/utils/utils';
 import { TypeOfRepair } from '@/types/types';

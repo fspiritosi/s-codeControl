@@ -2,6 +2,7 @@ import DocumentNav from '@/components/DocumentNav';
 import PageTableSkeleton from '@/components/Skeletons/PageTableSkeleton';
 import Viewcomponent from '@/components/ViewComponent';
 import { prisma } from '@/lib/prisma';
+// TODO: Phase 8 — migrate auth to NextAuth
 import { supabaseServer } from '@/lib/supabase/server';
 import { CompanyDocumentsType } from '@/store/loggedUser';
 import { cookies } from 'next/headers';

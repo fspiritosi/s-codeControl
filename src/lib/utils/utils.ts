@@ -1,4 +1,3 @@
-import { id } from 'date-fns/locale';
 import {
   CompaniesTableOptions,
   DocumentsTableOptions,
@@ -6,7 +5,6 @@ import {
   VehiclesTableOptions,
 } from '@/types/types';
 import { Vehicle } from '@/zodSchemas/schemas';
-import { supabaseServer } from '../supabase/server';
 export const formatDate = (dateString: string) => {
   if (!dateString) return 'No vence';
   const [day, month, year] = dateString.split('/');
@@ -108,18 +106,6 @@ export const setEmployeesToShow = (employees: any) => {
   });
 
   return employee;
-};
-export const getUser = async () => {
-  const supabase = await supabaseServer();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (user) {
-    return user;
-  }
-  return error;
 };
 export const formatDocumentTypeName = (documentType: string) => {
   const formatedDocumentTypeName = documentType

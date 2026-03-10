@@ -2,6 +2,7 @@
 import { clsx, type ClassValue } from 'clsx';
 import { format } from 'date-fns';
 import { twMerge } from 'tailwind-merge';
+// TODO: Phase 8 — migrate FetchSharedUsers .from() query to Prisma server action
 import { supabaseServer } from './supabase/server';
 import { storage } from './storage';
 import { formatDocumentTypeName } from './utils/utils';

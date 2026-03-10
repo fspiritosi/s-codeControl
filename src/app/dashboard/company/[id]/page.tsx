@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { prisma } from '@/lib/prisma';
+// TODO: Phase 8 — migrate auth to NextAuth
 import { supabaseServer } from '@/lib/supabase/server';
 
 import { Checkbox } from '@/components/ui/checkbox';

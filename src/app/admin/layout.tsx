@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+// TODO: Phase 8 — migrate auth to NextAuth
 import { supabaseServer } from '@/lib/supabase/server';
 import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';

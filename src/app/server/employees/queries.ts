@@ -1,6 +1,7 @@
 'use server';
 import { prisma } from '@/lib/prisma';
 import { storageServer } from '@/lib/storage-server';
+// TODO: Phase 8 — migrate auth.admin to NextAuth
 import { supabaseServer } from '@/lib/supabase/server';
 import { getActionContext } from '@/lib/server-action-context';
 import { fetchCurrentUser, fetchCustomers, fetchProvinces } from '../company/queries';

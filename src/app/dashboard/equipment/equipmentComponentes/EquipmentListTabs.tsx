@@ -5,6 +5,7 @@ import { fetchAllEquipment } from '@/app/server/GET/actions';
 import { EquipmentColums } from '../columns';
 import { EquipmentTable } from '../data-equipment';
 import { cookies } from 'next/headers';
+// TODO: Phase 8 — migrate auth to NextAuth
 import { supabaseServer } from '@/lib/supabase/server';
 import { getActualRole } from '@/lib/utils';
 

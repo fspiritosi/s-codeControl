@@ -1,4 +1,5 @@
 import { fetchCurrentCompany } from "@/app/server/GET/actions";
+// TODO: Phase 8 — migrate auth to NextAuth
 import { supabaseServer } from "../supabase/server";
 import { getActualRole } from "../utils";
 

@@ -1,3 +1,4 @@
+// TODO: Phase 8 — migrate auth to NextAuth
 import { supabaseServer } from '@/lib/supabase/server';
 import { setVehiclesToShow } from '@/lib/utils/utils';
 import { TypeOfRepair } from '@/types/types';

@@ -6,14 +6,12 @@ import { CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 // import { useLoggedUserStore } from '@/store/loggedUser';
 import { fetchMonthlyDocumentsByEquipmentId, fetchPermanentDocumentsByEquipmentId } from '@/app/server/GET/actions';
-import { supabaseServer } from '@/lib/supabase/server';
 import { formatVehiculesDocuments, getActualRole } from '@/lib/utils';
 import { cookies } from 'next/headers';
 import DocumentNav from './DocumentNav';
 
 export default async function DocumentEquipmentComponent({ id, role }: { id: string,role: string }) {
   const monthlyDocuments = (await fetchMonthlyDocumentsByEquipmentId(id)).map((d) => formatVehiculesDocuments(d as unknown as EquipmentDocumentDetailed));
-  const supabase = await supabaseServer();
   const permanentDocuments = (await fetchPermanentDocumentsByEquipmentId(id)).map((d) => formatVehiculesDocuments(d as unknown as EquipmentDocumentDetailed));
   const cookiesStore = await cookies();
   const company_id = cookiesStore.get('actualComp')?.value;

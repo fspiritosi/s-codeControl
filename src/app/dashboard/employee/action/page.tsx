@@ -6,6 +6,7 @@ import {
 } from '@/app/server/GET/actions';
 import EmployeeComponent from '@/components/EmployeeComponent';
 import { Card, CardFooter } from '@/components/ui/card';
+// TODO: Phase 8 — migrate .from() queries to Prisma server actions and .auth to NextAuth
 import { supabaseServer } from '@/lib/supabase/server';
 import { cn } from '@/lib/utils';
 import { getRole } from '@/lib/utils/getRole';
