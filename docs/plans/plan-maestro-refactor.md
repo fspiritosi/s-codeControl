@@ -8,7 +8,7 @@
 
 ## >>> PUNTO DE CONTINUACIÓN <<<
 
-**Continuar en: FASE 7 — Migración completa de Auth (línea 295)**
+**Continuar en: FASE 8 — Eliminar Supabase SDK (línea 395)**
 
 ### Fases completadas:
 | Fase | Estado | Commit |
@@ -20,11 +20,11 @@
 | 4 — NextAuth setup + stores a Prisma | ✅ COMPLETADA | `01c91002` |
 | 5 — Storage abstraction + RT → polling | ✅ COMPLETADA | `07eb8749` |
 | 6 — Limpieza console.log + ESLint 9 | ✅ COMPLETADA | `a1899eb6` |
+| 7 — Auth completa (hybrid passwords) | ✅ COMPLETADA | `0a5c9541` |
 
 ### Fases pendientes:
 | Fase | Línea | Descripción |
 |------|-------|-------------|
-| 7 — Auth completa | 295 | Verificación real de passwords, migración híbrida gradual |
 | 8 — Eliminar Supabase | 395 | Desinstalar SDK, eliminar archivos, limpiar imports |
 | 9 — Dividir server actions por dominio | 445 | Separar GET/actions.ts monolítico en archivos por dominio |
 | 10 — Refactorizar componentes gigantes | 505 | Dividir componentes de 1000+ líneas |
