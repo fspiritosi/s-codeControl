@@ -1,10 +1,8 @@
-import {
-  fetchAllEquipment,
-  fetchAnswerById,
-  fetchSingEmployee,
-  findEmployeeByFullName,
-} from '@/app/server/GET/actions';
-import DynamicFormWrapper from '@/components/CheckList/DynamicFormWrapper';
+import { fetchSingEmployee } from '@/modules/employees/features/detail/actions.server';
+import { findEmployeeByFullName } from '@/modules/employees/features/list/actions.server';
+import { fetchAllEquipment } from '@/modules/equipment/features/list/actions.server';
+import { fetchAnswerById } from '@/modules/forms/features/answers/actions.server';
+import DynamicFormWrapper from '@/modules/hse/features/checklist/components/DynamicFormWrapper';
 
 async function page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

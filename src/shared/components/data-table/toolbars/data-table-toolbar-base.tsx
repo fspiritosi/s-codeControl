@@ -1,8 +1,7 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-// import { PermanentDocumentsDownloadButton } from '@/features/Employees/Empleados/DocumentosEmpleados/PermanentDocumentsDownloadButton';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import { Table } from '@tanstack/react-table';
 import { X } from 'lucide-react';
 import * as React from 'react';
@@ -101,8 +100,6 @@ export function DataTableToolbarBase<TData>({
     }
   );
 
-  // Importa tu DatePicker aquí (ajusta el import según tu proyecto)
-  // import DatePicker from '@/components/DatePicker';
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const hasSelectedRows = selectedRows.length > 0;
   return (

@@ -1,10 +1,10 @@
-import { getUsersbyId } from '@/app/server/GET/actions';
-import BackButton from '@/components/BackButton';
-import EditButton from '@/components/EditButton';
-import { Avatar, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import UserForm from '@/components/users/UserForm';
-import { cn } from '@/lib/utils';
+import { getUsersbyId } from '@/modules/company/features/users/actions.server';
+import BackButton from '@/shared/components/common/BackButton';
+import EditButton from '@/shared/components/common/EditButton';
+import { Avatar, AvatarImage } from '@/shared/components/ui/avatar';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import UserForm from '@/modules/company/features/users/components/UserForm';
+import { cn } from '@/shared/lib/utils';
 
 async function User({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

@@ -1,9 +1,9 @@
 import { ChevronLeft, ChevronRight, Copy, CreditCard, File, ListFilter, MoreVertical, Truck } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/shared/components/ui/badge';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/shared/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -12,15 +12,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Pagination, PaginationContent, PaginationItem } from '@/components/ui/pagination';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { prisma } from '@/lib/prisma';
-import { CompanieChart } from '../components/Graficos/CompaniesChart';
-import CreateUser from '../components/createUser';
+} from '@/shared/components/ui/dropdown-menu';
+import { Pagination, PaginationContent, PaginationItem } from '@/shared/components/ui/pagination';
+import { Progress } from '@/shared/components/ui/progress';
+import { Separator } from '@/shared/components/ui/separator';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { prisma } from '@/shared/lib/prisma';
+import { CompanieChart } from '@/modules/admin/features/panel/components/CompaniesChart';
+import CreateUser from '@/modules/admin/features/panel/components/CreateUser';
 
 export default async function Dashboard() {
   const company = await prisma.company.findMany();

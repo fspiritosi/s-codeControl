@@ -1,12 +1,12 @@
 'use client';
-import ModalCompany from '@/components/ModalCompany';
-import { useCompanyData } from '@/hooks/useCompanyData';
-import { useLoggedUserStore } from '@/store/loggedUser';
-import { company } from '@/types/types';
+import ModalCompany from '@/modules/company/features/detail/components/ModalCompany';
+import { useCompanyData } from '@/shared/hooks/useCompanyData';
+import { useLoggedUserStore } from '@/shared/store/loggedUser';
+import { company } from '@/shared/types/types';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Modal from 'react-modal';
-import { CardsGrid } from '../../../components/CardsGrid';
+import { CardsGrid } from '@/shared/components/common/CardsGrid';
 
 function setupModalAppElement() {
   if (window.document) {

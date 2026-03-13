@@ -1,6 +1,6 @@
-// import { AlertComponent } from '@/components/AlertComponent'
-import NavBar from '@/components/NavBar';
-import SideBarContainer from '@/components/SideBarContainer';
+// import { AlertComponent } from '@/shared/components/common/AlertComponent'
+import NavBar from '@/shared/components/layout/NavBar';
+import SideBarContainer from '@/shared/components/layout/SideBarContainer';
 import { Inter } from 'next/font/google';
 import '../globals.css';
 const font = Inter({ subsets: ['latin'] });

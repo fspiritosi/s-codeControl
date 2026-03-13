@@ -1,13 +1,13 @@
-import { fetchAllTags, fetchTrainings } from '@/components/Capacitaciones/actions/actions';
-import TagTab from '@/components/Capacitaciones/components/tags/TagTab';
-import { TrainingCreateDialog } from '@/components/Capacitaciones/training-create-dialog';
-import TrainingSection from '@/components/Capacitaciones/training-section';
-import Viewcomponent from '@/components/ViewComponent';
-import type { Document } from '@/features/Hse/actions/documents'; // <-- ¡SÍ!
-import { fetchAllHseDocTypes, getDocuments, getEmployeesWithAssignedDocuments } from '@/features/Hse/actions/documents';
-import { DocumentsSection } from '@/features/Hse/components/Document-section';
-import { DocumentUploadDialog } from '@/features/Hse/components/Document-upload-dialog';
-import DocTypeTab from '@/features/Hse/doc_types/DocTypeTab';
+import { fetchAllTags, fetchTrainings } from '@/modules/hse/features/training/actions.server';
+import TagTab from '@/modules/hse/features/training/components/tags/TagTab';
+import { TrainingCreateDialog } from '@/modules/hse/features/training/components/training-create-dialog';
+import TrainingSection from '@/modules/hse/features/training/components/training-section';
+import Viewcomponent from '@/shared/components/common/ViewComponent';
+import type { Document } from '@/modules/hse/features/documents/actions.server';
+import { fetchAllHseDocTypes, getDocuments, getEmployeesWithAssignedDocuments } from '@/modules/hse/features/documents/actions.server';
+import { DocumentsSection } from '@/modules/hse/features/documents/components/Document-section';
+import { DocumentUploadDialog } from '@/modules/hse/features/documents/components/Document-upload-dialog';
+import DocTypeTab from '@/modules/hse/features/documents/components/doc_types/DocTypeTab';
 import { cookies } from 'next/headers';
 
 export type TagType = {

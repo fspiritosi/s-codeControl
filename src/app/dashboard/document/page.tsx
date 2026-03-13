@@ -1,17 +1,17 @@
-import DocumentNav from '@/components/DocumentNav';
-import PageTableSkeleton from '@/components/Skeletons/PageTableSkeleton';
-import Viewcomponent from '@/components/ViewComponent';
-import { prisma } from '@/lib/prisma';
+import DocumentNav from '@/shared/components/common/DocumentNav';
+import PageTableSkeleton from '@/shared/components/common/Skeletons/PageTableSkeleton';
+import Viewcomponent from '@/shared/components/common/ViewComponent';
+import { prisma } from '@/shared/lib/prisma';
 // TODO: Phase 8 — migrate auth to NextAuth
-import { supabaseServer } from '@/lib/supabase/server';
-import { CompanyDocumentsType } from '@/store/loggedUser';
+import { supabaseServer } from '@/shared/lib/supabase/server';
+import { CompanyDocumentsType } from '@/shared/store/loggedUser';
 import { cookies } from 'next/headers';
 import { Suspense } from 'react';
-import CompanyTabs from './documentComponents/CompanyTabs';
-import EmployeeDocumentsTabs from './documentComponents/EmployeeDocumentsTabs';
-import EquipmentTabs from './documentComponents/EquipmentTabs';
-import TypesDocumentAction from './documentComponents/TypesDocumentAction';
-import TypesDocumentsView from './documentComponents/TypesDocumentsView';
+import CompanyTabs from '@/modules/documents/features/list/components/CompanyTabs';
+import EmployeeDocumentsTabs from '@/modules/documents/features/list/components/EmployeeDocumentsTabs';
+import EquipmentTabs from '@/modules/documents/features/list/components/EquipmentTabs';
+import TypesDocumentAction from '@/modules/documents/features/types/components/TypesDocumentAction';
+import TypesDocumentsView from '@/modules/documents/features/types/components/TypesDocumentsView';
 
 export default async function page() {
   const supabase = await supabaseServer();

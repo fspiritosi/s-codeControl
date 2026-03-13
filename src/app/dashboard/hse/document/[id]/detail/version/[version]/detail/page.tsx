@@ -1,21 +1,20 @@
 'use client';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { useRouter } from 'next/navigation';
-// import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
-// import { Separator } from "@/components/ui/separator"
-import { Progress } from '@/components/ui/progress';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getDocumentById, type Document, type DocumentVersion } from '@/features/Hse/actions/documents';
+// import { Separator } from "@/shared/components/ui/separator"
+import { Progress } from '@/shared/components/ui/progress';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
+import { getDocumentById, type Document, type DocumentVersion } from '@/modules/hse/features/documents/actions.server';
 import cookies from 'js-cookie';
 import { Archive, ArrowLeft, Download, ExternalLink, FileText } from 'lucide-react';
 import { use, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-// import { DocumentNewVersionDialog } from "@/features/Hse/components/Document-new-version-dialog"
-import { getAssignedEmployeesByDocumentVersion } from '@/features/Hse/actions/documents';
-import { storage } from '@/lib/storage';
+
+import { getAssignedEmployeesByDocumentVersion } from '@/modules/hse/features/documents/actions.server';
+import { storage } from '@/shared/lib/storage';
 import { format } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';

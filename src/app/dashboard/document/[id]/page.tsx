@@ -1,22 +1,22 @@
-import BackButton from '@/components/BackButton';
-import DeleteDocument from '@/components/DeleteDocument';
-import ReplaceDocument from '@/components/ReplaceDocument';
-import UpdateDocuments from '@/components/UpdateDocuments';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { storageServer } from '@/lib/storage-server';
-import { cn } from '@/lib/utils';
+import BackButton from '@/shared/components/common/BackButton';
+import DeleteDocument from '@/modules/documents/features/manage/components/DeleteDocument';
+import ReplaceDocument from '@/modules/documents/features/manage/components/ReplaceDocument';
+import UpdateDocuments from '@/modules/documents/features/manage/components/UpdateDocuments';
+import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
+import { Badge } from '@/shared/components/ui/badge';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Skeleton } from '@/shared/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { storageServer } from '@/shared/lib/storage-server';
+import { cn } from '@/shared/lib/utils';
 import { formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { format as formatDateFn } from 'date-fns';
 import { Suspense } from 'react';
-import DownloadButton from '../documentComponents/DownloadButton';
-import { getRole } from '@/lib/utils/getRole';
-import { getDocumentEmployeesById, getDocumentEquipmentById } from '@/app/server/GET/actions';
+import DownloadButton from '@/modules/documents/features/list/components/DownloadButton';
+import { getRole } from '@/shared/lib/utils/getRole';
+import { getDocumentEmployeesById, getDocumentEquipmentById } from '@/modules/documents/features/list/actions.server';
 export default async function page({
   params,
   searchParams,

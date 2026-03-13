@@ -1,6 +1,6 @@
-import { cn } from '@/lib/utils';
-import BackButton from '../../../../../../components/BackButton';
-import ContactComponent from '../../../../../../components/ContactComponent';
+import { cn } from '@/shared/lib/utils';
+import BackButton from '@/shared/components/common/BackButton';
+import ContactComponent from '@/modules/company/features/contacts/components/ContactComponent';
 export default async function CustomerFormAction({ searchParams }: { searchParams: Promise<any> }) {
   const resolvedSearchParams = await searchParams;
   // const { data } = await supabase

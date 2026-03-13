@@ -1,0 +1,177 @@
+import { create } from 'zustand';
+import { fetchDocumentEmployeesByDocNumber } from '@/modules/documents/features/list/actions.server';
+import { fetchEmployeesWithDocs, fetchEmployeesByCompanyAndStatus } from '@/modules/employees/features/list/actions.server';
+
+const setEmployeesToShow = (employees: Record<string, any>[] | undefined) => {
+  return employees?.map((e: Record<string, any>) => ({
+    full_name: `${e?.lastname?.charAt(0)?.toUpperCase()}${e?.lastname?.slice(1)} ${e?.firstname?.charAt(0)?.toUpperCase()}${e?.firstname?.slice(1)}`,
+    id: e?.id,
+    email: e?.email,
+    cuil: e?.cuil,
+    document_number: e?.document_number,
+    hierarchical_position: e?.hierarchical_position?.name || e?.hierarchy_rel?.name,
+    company_position: e?.company_position,
+    normal_hours: e?.normal_hours,
+    type_of_contract: e?.type_of_contract,
+    allocated_to: e?.allocated_to,
+    picture: e?.picture,
+    nationality: e?.nationality,
+    lastname: `${e?.lastname?.charAt(0)?.toUpperCase()}${e?.lastname.slice(1)}`,
+    firstname: `${e?.firstname?.charAt(0)?.toUpperCase()}${e?.firstname.slice(1)}`,
+    document_type: e?.document_type,
+    birthplace: (e?.birthplace?.name || e?.birthplace_rel?.name)?.trim(),
+    gender: e?.gender,
+    marital_status: e?.marital_status,
+    level_of_education: e?.level_of_education,
+    street: e?.street,
+    street_number: e?.street_number,
+    province: (e?.province?.name || e?.province_rel?.name)?.trim(),
+    postal_code: e?.postal_code,
+    phone: e?.phone,
+    file: e?.file,
+    date_of_admission: e?.date_of_admission,
+    affiliate_status: e?.affiliate_status,
+    city: (e?.city?.name || e?.city_rel?.name)?.trim(),
+    hierrl_position: e?.hierarchical_position?.name || e?.hierarchy_rel?.name,
+    workflow_diagram: e?.workflow_diagram?.name || e?.workflow_diagram_rel?.name,
+    contractor_employee: e?.contractor_employee?.map(({ customers, contractor }: Record<string, any>) => (customers || contractor)?.id),
+    contractor_name: e?.contractor_employee?.map(({ customers, contractor }: Record<string, any>) => (customers || contractor)?.name),
+    is_active: e?.is_active,
+    reason_for_termination: e?.reason_for_termination,
+    termination_date: e?.termination_date,
+    status: e?.status,
+    guild: e?.guild || e?.guild_rel,
+    covenants: e?.covenants || e?.covenants_rel,
+    category: e?.category || e?.category_rel,
+    documents_employees: e.documents_employees,
+  }));
+};
+
+interface EmployeeState {
+  employees: Record<string, any>[] | undefined;
+  employeesToShow: Record<string, any>[] | undefined;
+  active_and_inactive_employees: Record<string, any>[] | undefined;
+  showDeletedEmployees: boolean;
+  DrawerEmployees: Record<string, any>[] | null;
+  setEmployees: (employees: Record<string, any>[] | undefined) => void;
+  setActivesEmployees: () => void;
+  setInactiveEmployees: () => void;
+  setShowDeletedEmployees: (show: boolean) => void;
+  endorsedEmployees: () => void;
+  noEndorsedEmployees: () => void;
+  getEmployees: (active: boolean) => Promise<Record<string, any>[] | undefined>;
+  documentDrawerEmployees: (document: string) => void;
+}
+
+export const useEmployeeStore = create<EmployeeState>((set, get) => ({
+  employees: undefined,
+  employeesToShow: undefined,
+  active_and_inactive_employees: undefined,
+  showDeletedEmployees: false,
+  DrawerEmployees: null,
+
+  setEmployees: (employees) => set({ employees }),
+  setShowDeletedEmployees: (show) => set({ showDeletedEmployees: show }),
+
+  getEmployees: async (active: boolean) => {
+    const { useCompanyStore } = require('./companyStore');
+    const companyId = useCompanyStore.getState().actualCompany?.id;
+
+    const employees = await fetchEmployeesWithDocs(companyId);
+
+    // Map Prisma relation names to the format the UI expects
+    const mappedEmployees = employees?.map((e: Record<string, any>) => ({
+      ...e,
+      documents_employees: e.documents_employees?.map((d: Record<string, any>) => ({
+        ...d,
+        id_document_types: d.document_type || d.id_document_types,
+      })),
+    }));
+
+    set({ active_and_inactive_employees: setEmployeesToShow(mappedEmployees) });
+
+    const activeEmployees = mappedEmployees?.filter((e: Record<string, any>) => {
+      if (e.is_active) return true;
+      return e.documents_employees
+        ?.filter((d: Record<string, any>) => (d.document_type || d.id_document_types)?.down_document)
+        ?.some((doc: Record<string, any>) => doc.state === 'pendiente');
+    });
+
+    const inactiveEmployees = mappedEmployees?.filter((e: Record<string, any>) => {
+      return (
+        !e.is_active &&
+        e.documents_employees
+          .filter((d: Record<string, any>) => (d.document_type || d.id_document_types)?.down_document)
+          .every((doc: Record<string, any>) => doc.state === 'presentado')
+      );
+    });
+
+    if (active) {
+      return setEmployeesToShow(activeEmployees);
+    } else {
+      return setEmployeesToShow(inactiveEmployees);
+    }
+  },
+
+  setActivesEmployees: async () => {
+    const employeesToShow = await get().getEmployees(true);
+    set({ employeesToShow, employees: employeesToShow });
+  },
+
+  setInactiveEmployees: async () => {
+    const employeesToShow = await get().getEmployees(false);
+    set({ employeesToShow });
+  },
+
+  endorsedEmployees: async () => {
+    const { useCompanyStore } = require('./companyStore');
+    const companyId = useCompanyStore.getState().actualCompany?.id;
+
+    const data = await fetchEmployeesByCompanyAndStatus(companyId, 'Avalado');
+    set({ employeesToShow: setEmployeesToShow(data) || [] });
+  },
+
+  noEndorsedEmployees: async () => {
+    const { useCompanyStore } = require('./companyStore');
+    const companyId = useCompanyStore.getState().actualCompany?.id;
+
+    const data = await fetchEmployeesByCompanyAndStatus(companyId, 'Incompleto');
+    set({ employeesToShow: setEmployeesToShow(data) || [] });
+  },
+
+  documentDrawerEmployees: async (document: string) => {
+    const data = await fetchDocumentEmployeesByDocNumber(document);
+
+    // Map to expected format
+    const mapped = data?.map((d: Record<string, any>) => ({
+      ...d,
+      applies: d.employee || d.applies,
+      id_document_types: d.document_type || d.id_document_types,
+    }));
+
+    set({ DrawerEmployees: mapped });
+  },
+}));
+
+// Polling replacement for real-time subscription
+let employeePollInterval: NodeJS.Timeout | null = null;
+
+function startEmployeePolling() {
+  if (employeePollInterval) return;
+  employeePollInterval = setInterval(() => {
+    useEmployeeStore.getState().setActivesEmployees();
+  }, 30000);
+}
+
+function stopEmployeePolling() {
+  if (employeePollInterval) {
+    clearInterval(employeePollInterval);
+    employeePollInterval = null;
+  }
+}
+
+if (typeof window !== 'undefined') {
+  startEmployeePolling();
+}
+
+export { startEmployeePolling, stopEmployeePolling };

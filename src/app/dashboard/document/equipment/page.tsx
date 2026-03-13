@@ -1,10 +1,10 @@
 'use client';
-import { CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useLoggedUserStore } from '@/store/loggedUser';
-import { ExpiredColums } from '../../colums';
-import { ColumnsMonthly } from '../../columsMonthly';
-import { ExpiredDataTable } from '../../data-table';
+import { CardContent } from '@/shared/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { useLoggedUserStore } from '@/shared/store/loggedUser';
+import { ExpiredColums } from '@/modules/dashboard/features/tables/components/columns';
+import { ColumnsMonthly } from '@/modules/dashboard/features/tables/components/columnsMonthly';
+import { ExpiredDataTable } from '@/modules/dashboard/features/tables/components/data-table';
 
 function page() {
   const { allDocumentsToShow } = useLoggedUserStore();

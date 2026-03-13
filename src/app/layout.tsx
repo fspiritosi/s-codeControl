@@ -1,7 +1,7 @@
-import { AuthProvider } from '@/components/AuthProvider';
-import { ThemeProvider } from '@/components/theme-provider';
-import { Toaster as Sonner } from '@/components/ui/sonner';
-import { Toaster } from '@/components/ui/toaster';
+import { AuthProvider } from '@/shared/components/auth/AuthProvider';
+import { ThemeProvider } from '@/shared/components/common/theme-provider';
+import { Toaster as Sonner } from '@/shared/components/ui/sonner';
+import { Toaster } from '@/shared/components/ui/toaster';
 import type { Metadata } from 'next';
 import { Inter, Poppins } from 'next/font/google';
 

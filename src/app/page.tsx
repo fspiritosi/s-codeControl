@@ -1,4 +1,4 @@
-import Landing from '@/components/landing_components/Landing';
+import Landing from '@/modules/landing/features/home/components/Landing';
 
 // export const metadata: Metadata = {
 //   title: 'Free Next.js Template for Startup and SaaS',

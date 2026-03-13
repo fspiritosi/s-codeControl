@@ -1,4 +1,4 @@
-// import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+// import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/shared/components/ui/accordion';
 // import {
 //   AlertDialog,
 //   AlertDialogAction,
@@ -9,9 +9,9 @@
 //   AlertDialogHeader,
 //   AlertDialogTitle,
 //   AlertDialogTrigger,
-// } from '@/components/ui/alert-dialog';
-// import { Button } from '@/components/ui/button';
-// import { Card, CardDescription } from '@/components/ui/card';
+// } from '@/shared/components/ui/alert-dialog';
+// import { Button } from '@/shared/components/ui/button';
+// import { Card, CardDescription } from '@/shared/components/ui/card';
 // import { DownloadIcon } from 'lucide-react';
 
 // interface DataTableDownloadDocumentsProps {

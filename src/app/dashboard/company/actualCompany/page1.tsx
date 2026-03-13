@@ -1,7 +1,7 @@
 'use client';
-import { RegisterWithRole } from '@/components/RegisterWithRole';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { RegisterWithRole } from '@/modules/company/features/users/components/RegisterWithRole';
+import { Button, buttonVariants } from '@/shared/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import {
   Dialog,
   DialogClose,
@@ -11,22 +11,22 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useLoggedUserStore } from '@/store/loggedUser';
+} from '@/shared/components/ui/dialog';
+import { Input } from '@/shared/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { useLoggedUserStore } from '@/shared/store/loggedUser';
 import cookies from 'js-cookie';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import Contact from './contact/Contact';
-import Customers from './customers/Customers';
-import { columns } from './components/columns';
-import { columnsGuests } from './components/columnsGuests';
-import { DataTable } from './components/data-table';
-import { columnsDocuments } from './components/document-colums';
-import { ItemCompany } from './components/itemCompany';
-import Cct from './covenant/CctComponent';
+import Contact from '@/modules/company/features/contacts/components/Contact';
+import Customers from '@/modules/company/features/customers/components/Customers';
+import { columns } from '@/modules/company/features/detail/components/columns';
+import { columnsGuests } from '@/modules/company/features/detail/components/columnsGuests';
+import { DataTable } from '@/modules/company/features/detail/components/data-table';
+import { columnsDocuments } from '@/modules/company/features/detail/components/document-columns';
+import { ItemCompany } from '@/modules/company/features/detail/components/itemCompany';
+import Cct from '@/modules/company/features/covenants/components/CctComponent';
 export default function page() {
   const router = useRouter();
   const company = useLoggedUserStore((state) => state.actualCompany);

@@ -1,9 +1,9 @@
 'use server';
 
 import nodemailer from 'nodemailer';
-import { renderDocumentEmailTemplate, renderHelpEmailTemplate } from '@/lib/emailTemplates';
-import { apiSuccess, apiError } from '@/lib/api-response';
-import { prisma } from '@/lib/prisma';
+import { renderDocumentEmailTemplate, renderHelpEmailTemplate } from '@/shared/lib/emailTemplates';
+import { apiSuccess, apiError } from '@/shared/lib/api-response';
+import { prisma } from '@/shared/lib/prisma';
 
 // Validar variables de entorno requeridas
 const requiredEnvVars = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS'];

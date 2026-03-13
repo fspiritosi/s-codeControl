@@ -1,0 +1,85 @@
+import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
+import { format } from 'date-fns';
+import { MoreHorizontal } from 'lucide-react';
+import { prisma } from '@/shared/lib/prisma';
+import { CreateDialog } from '@/modules/admin/features/tables/components/CreateDialog';
+
+export default async function DiagramTable() {
+  const diagrams = await prisma.work_diagram.findMany();
+
+  return (
+    <Card x-chunk="dashboard-06-chunk-0">
+      <CardHeader>
+        <div className="flex justify-between">
+          <CardTitle>Diagramas de Trabajo</CardTitle>
+          <CreateDialog />
+        </div>
+        <CardDescription>
+          Crea, edita o elimina los distintos tipos de diagrama de trabajo que tendrán disponibles los usuarios
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Index</TableHead>
+              <TableHead>Nombre</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead className="hidden md:table-cell">Creado</TableHead>
+              <TableHead>
+                <span className="sr-only">Actions</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {diagrams?.map((diagramType, index) => (
+              <TableRow key={crypto.randomUUID()}>
+                <TableCell className="hidden sm:table-cell">{index + 1}</TableCell>
+                <TableCell className="font-medium">{diagramType.name}</TableCell>
+                <TableCell>
+                  {diagramType.is_active ? (
+                    <Badge variant="outline">Activo</Badge>
+                  ) : (
+                    <Badge variant="default">Inactivo</Badge>
+                  )}
+                </TableCell>
+                <TableCell className="hidden md:table-cell">{format(diagramType.created_at, 'yyyy')}</TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button aria-haspopup="true" size="icon" variant="ghost">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Toggle menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem>Edit</DropdownMenuItem>
+                      <DropdownMenuItem>Delete</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+      <CardFooter>
+        <div className="text-xs text-muted-foreground">
+          Mostrando <strong>1-{diagrams.length < 10 ? diagrams.length : '10'}</strong> of{' '}
+          <strong>{diagrams.length}</strong> diagramas
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}

@@ -7,7 +7,7 @@
  * TODO: Phase 8+ — Replace with custom token-based verification once
  * password recovery is fully migrated away from Supabase.
  */
-import { supabaseServer } from '@/lib/supabase/server';
+import { supabaseServer } from '@/shared/lib/supabase/server';
 import { type EmailOtpType } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 

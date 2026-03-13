@@ -1,15 +1,15 @@
 "use client"
 import { use, useEffect, useState } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableHead, TableRow, TableCell, TableBody } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import EditModal from '@/components/EditModal';
-import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import { Table, TableHead, TableRow, TableCell, TableBody } from '@/shared/components/ui/table';
+import { Button } from '@/shared/components/ui/button';
+import EditModal from '@/shared/components/common/EditModal';
+import { Input } from '@/shared/components/ui/input';
 import { toast } from 'sonner';
 import cookies from 'js-cookie';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import BackButton from '@/components/BackButton';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import BackButton from '@/shared/components/common/BackButton';
+import { Badge } from '@/shared/components/ui/badge';
 
 interface Item {
     id: string;

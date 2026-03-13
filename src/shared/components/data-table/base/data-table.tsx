@@ -1,6 +1,6 @@
 'use client';
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -46,7 +46,7 @@ interface SearchableColumn {
   placeholder?: string;
 }
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/lib/utils';
 import type { Table as TableType, Updater } from '@tanstack/react-table';
 export interface BulkActionProps<TData> {
   enabled?: boolean; // Activar/desactivar funcionalidad

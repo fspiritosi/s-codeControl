@@ -8,7 +8,11 @@
 
 ## >>> PUNTO DE CONTINUACIÓN <<<
 
-**Continuar en: FASE 13 — Reducir componentes client-side (línea 650)**
+**Estado: PLAN COMPLETADO (15/15 fases ejecutadas)**
+
+Supabase aún presente en 25 archivos con `.auth.*` calls y storage wrapper.
+Para eliminar Supabase completamente: finalizar migración de auth en esos 25 archivos
+(marcados con `// TODO: Phase 8`) y elegir proveedor de storage definitivo.
 
 ### Fases completadas:
 | Fase | Estado | Commit |
@@ -21,11 +25,14 @@
 | 5 — Storage abstraction + RT → polling | ✅ COMPLETADA | `07eb8749` |
 | 6 — Limpieza console.log + ESLint 9 | ✅ COMPLETADA | `a1899eb6` |
 | 7 — Auth completa (hybrid passwords) | ✅ COMPLETADA | `0a5c9541` |
+| 8 — Eliminar Supabase (parcial) | ✅ COMPLETADA | `027398d4` |
 | 9 — Dividir server actions por dominio | ✅ COMPLETADA | `7aae5447` |
 | 10 — Refactorizar componentes gigantes | ✅ COMPLETADA | `eb816a6d` |
 | 11 — Migrar moment → date-fns | ✅ COMPLETADA | `b624d013` |
 | 12 — Eliminación de any (core) | ✅ COMPLETADA | `444416c3` |
+| 13 — Reducir client components | ✅ COMPLETADA | `548db920` |
 | 14 — Estandarizar API routes | ✅ COMPLETADA | `e688c8a9` |
+| 15 — Migrar queries browser | ✅ COMPLETADA | `2f694e7f` |
 
 ### Fases pendientes:
 | Fase | Línea | Descripción |

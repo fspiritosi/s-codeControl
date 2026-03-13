@@ -1,6 +1,6 @@
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/shared/lib/prisma';
 import { cookies } from 'next/headers';
-import { SubmitCustomForm } from '../../components/SubmitCustomForm';
+import { SubmitCustomForm } from '@/modules/forms/features/custom-forms/components/SubmitCustomForm';
 
 async function page({ searchParams }: { searchParams: Promise<{ formid: string }> }) {
   const { formid } = await searchParams;

@@ -1,6 +1,6 @@
-import { cn } from '@/lib/utils';
-import BackButton from '@/components/BackButton';
-import ConvenantComponent from '@/components/CovenantComponent';
+import { cn } from '@/shared/lib/utils';
+import BackButton from '@/shared/components/common/BackButton';
+import ConvenantComponent from '@/modules/company/features/covenants/components/CovenantComponent';
 export default async function CovenantFormAction({ searchParams }: { searchParams: Promise<any> }) {
   const resolvedSearchParams = await searchParams;
 

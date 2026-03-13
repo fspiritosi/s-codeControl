@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma';
-import { apiSuccess, apiError } from '@/lib/api-response';
+import { prisma } from '@/shared/lib/prisma';
+import { apiSuccess, apiError } from '@/shared/lib/api-response';
 import { NextRequest } from 'next/server';
 
 type response = {

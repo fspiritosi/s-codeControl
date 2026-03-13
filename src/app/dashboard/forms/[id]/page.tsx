@@ -1,14 +1,15 @@
-import { fetchCustomFormById, fetchFormsAnswersByFormId } from '@/app/server/GET/actions';
-import BackButton from '@/components/BackButton';
-import Viewcomponent from '@/components/ViewComponent';
-import { PDFPreviewDialog } from '@/components/pdf-preview-dialog';
+import { fetchFormsAnswersByFormId } from '@/modules/forms/features/answers/actions.server';
+import { fetchCustomFormById } from '@/modules/forms/features/custom-forms/actions.server';
+import BackButton from '@/shared/components/common/BackButton';
+import Viewcomponent from '@/shared/components/common/ViewComponent';
+import { PDFPreviewDialog } from '@/shared/components/pdf/PDFPreviewDialog';
 
-import { TransporteSPANAYCHKHYS01 } from '@/components/pdf/generators/TransporteSPANAYCHKHYS01';
-import { TransporteSPANAYCHKHYS03 } from '@/components/pdf/generators/TransporteSPANAYCHKHYS03';
-import { TransporteSPANAYCHKHYS04 } from '@/components/pdf/generators/TransporteSPANAYCHKHYS04';
-import { buttonVariants } from '@/components/ui/button';
+import { TransporteSPANAYCHKHYS01 } from '@/modules/hse/features/checklist/components/pdf/generators/TransporteSPANAYCHKHYS01';
+import { TransporteSPANAYCHKHYS03 } from '@/modules/hse/features/checklist/components/pdf/generators/TransporteSPANAYCHKHYS03';
+import { TransporteSPANAYCHKHYS04 } from '@/modules/hse/features/checklist/components/pdf/generators/TransporteSPANAYCHKHYS04';
+import { buttonVariants } from '@/shared/components/ui/button';
 import Link from 'next/link';
-import CheckListAnwersTable from '../components/CheckListAnwersTable';
+import CheckListAnwersTable from '@/modules/forms/features/custom-forms/components/CheckListAnwersTable';
 
 const renderForm = (activeFormType: string) => {
   switch (activeFormType) {

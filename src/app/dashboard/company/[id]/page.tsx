@@ -1,19 +1,19 @@
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardDescription, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { prisma } from '@/lib/prisma';
+import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/alert';
+import { Card, CardDescription, CardTitle } from '@/shared/components/ui/card';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import { prisma } from '@/shared/lib/prisma';
 // TODO: Phase 8 — migrate auth to NextAuth
-import { supabaseServer } from '@/lib/supabase/server';
+import { supabaseServer } from '@/shared/lib/supabase/server';
 
-import { Checkbox } from '@/components/ui/checkbox';
-import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Textarea } from '@/shared/components/ui/textarea';
+import { cn } from '@/shared/lib/utils';
 import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { revalidatePath } from 'next/cache';
-import CityInput from '../new/components/CityInput';
-import EditCompanyButton from '../new/components/EditCompanyButton';
+import CityInput from '@/modules/company/features/create/components/CityInput';
+import EditCompanyButton from '@/modules/company/features/create/components/EditCompanyButton';
 export default async function companyRegister({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await supabaseServer();

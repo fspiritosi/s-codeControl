@@ -1,8 +1,8 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { CardDescription } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/shared/components/ui/button';
+import { CardDescription } from '@/shared/components/ui/card';
+import { Checkbox } from '@/shared/components/ui/checkbox';
 import cookiejs from 'js-cookie';
 import { Filter, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';

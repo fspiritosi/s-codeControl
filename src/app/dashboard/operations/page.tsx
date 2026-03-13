@@ -1,7 +1,7 @@
-import Create from '@/components/DailyReport/Create';
-import DailyReportDetail from '@/components/DailyReport/DailyReportDetail';
-import ViewDailyReports from '@/components/DailyReport/ViewDailysReports';
-import Viewcomponent from '@/components/ViewComponent';
+import Create from '@/modules/operations/features/daily-reports/components/Create';
+import DailyReportDetail from '@/modules/operations/features/daily-reports/components/DailyReportDetail';
+import ViewDailyReports from '@/modules/operations/features/daily-reports/components/ViewDailysReports';
+import Viewcomponent from '@/shared/components/common/ViewComponent';
 function OperationsPage() {
   const viewData = {
     defaultValue: 'dailyReportsTable',

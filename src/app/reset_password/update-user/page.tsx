@@ -1,7 +1,7 @@
-import { UpdateUserPasswordForm } from '@/components/UpdateUserPasswordForm';
+import { UpdateUserPasswordForm } from '@/shared/components/auth/UpdateUserPasswordForm';
 
-import RenderBanner from '@/components/RenderBanner';
-import { CardDescription, CardTitle } from '@/components/ui/card';
+import RenderBanner from '@/shared/components/auth/RenderBanner';
+import { CardDescription, CardTitle } from '@/shared/components/ui/card';
 import Image from 'next/image';
 import Link from 'next/link';
 export default function UpdateUserPassword() {

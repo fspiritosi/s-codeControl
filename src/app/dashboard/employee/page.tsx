@@ -1,15 +1,15 @@
-import EmployesDiagram from '@/components/Diagrams/EmployesDiagram';
-import DocumentNav from '@/components/DocumentNav';
-import PageTableSkeleton from '@/components/Skeletons/PageTableSkeleton';
-import Viewcomponent from '@/components/ViewComponent';
-import { buttonVariants } from '@/components/ui/button';
+import EmployesDiagram from '@/modules/employees/features/diagrams/components/EmployesDiagram';
+import DocumentNav from '@/shared/components/common/DocumentNav';
+import PageTableSkeleton from '@/shared/components/common/Skeletons/PageTableSkeleton';
+import Viewcomponent from '@/shared/components/common/ViewComponent';
+import { buttonVariants } from '@/shared/components/ui/button';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import CovenantTreeFile from '../company/actualCompany/covenant/CovenantTreeFile';
-import EmployeeDocumentsTabs from '../document/documentComponents/EmployeeDocumentsTabs';
-import EmployeeListTabs from '../document/documentComponents/EmployeeListTabs';
-import TypesDocumentAction from '../document/documentComponents/TypesDocumentAction';
-import TypesDocumentsView from '../document/documentComponents/TypesDocumentsView';
+import CovenantTreeFile from '@/modules/company/features/covenants/components/CovenantTreeFile';
+import EmployeeDocumentsTabs from '@/modules/documents/features/list/components/EmployeeDocumentsTabs';
+import EmployeeListTabs from '@/modules/documents/features/list/components/EmployeeListTabs';
+import TypesDocumentAction from '@/modules/documents/features/types/components/TypesDocumentAction';
+import TypesDocumentsView from '@/modules/documents/features/types/components/TypesDocumentsView';
 
 const EmployeePage = async () => {
   const viewData = {

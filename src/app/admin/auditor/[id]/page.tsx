@@ -1,24 +1,24 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-import ApproveDocModal from '@/components/ApproveDocModal';
-import DenyDocModal from '@/components/DenyDocModal';
-import { Skeleton } from '@/components/ui/skeleton';
+import ApproveDocModal from '@/modules/documents/features/manage/components/ApproveDocModal';
+import DenyDocModal from '@/modules/documents/features/manage/components/DenyDocModal';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 
 //imports de la vista copiada
 
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/shared/components/ui/badge';
 
-import DownloadButton from '@/app/dashboard/document/documentComponents/DownloadButton';
-import BackButton from '@/components/BackButton';
-import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
-import { cn } from '@/lib/utils';
+import DownloadButton from '@/modules/documents/features/list/components/DownloadButton';
+import BackButton from '@/shared/components/common/BackButton';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/ui/table';
+import { cn } from '@/shared/lib/utils';
 import { Suspense } from 'react';
-import { storage } from '@/lib/storage';
-import { prisma } from '@/lib/prisma';
+import { storage } from '@/shared/lib/storage';
+import { prisma } from '@/shared/lib/prisma';
 
 export default async function page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

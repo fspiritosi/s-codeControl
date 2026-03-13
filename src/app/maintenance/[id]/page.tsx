@@ -1,10 +1,11 @@
-import { fetchAllEquipment, fetchCustomForms } from '@/app/server/GET/actions';
-import QrActionSelector from '@/components/QR/AcctionSelector';
-import { prisma } from '@/lib/prisma';
+import { fetchAllEquipment } from '@/modules/equipment/features/list/actions.server';
+import { fetchCustomForms } from '@/modules/forms/features/custom-forms/actions.server';
+import QrActionSelector from '@/modules/equipment/features/qr/components/AcctionSelector';
+import { prisma } from '@/shared/lib/prisma';
 // TODO: Phase 8 — migrate auth to NextAuth
-import { supabaseServer } from '@/lib/supabase/server';
-import { setVehiclesToShow } from '@/lib/utils/utils';
-import { TypeOfRepair } from '@/types/types';
+import { supabaseServer } from '@/shared/lib/supabase/server';
+import { setVehiclesToShow } from '@/shared/lib/utils/utils';
+import { TypeOfRepair } from '@/shared/types/types';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 

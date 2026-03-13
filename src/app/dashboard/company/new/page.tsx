@@ -1,37 +1,31 @@
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardDescription, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { prisma } from '@/lib/prisma';
-// TODO: Phase 8 — migrate auth to NextAuth
-import { supabaseServer } from '@/lib/supabase/server';
+import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/alert';
+import { Card, CardDescription, CardTitle } from '@/shared/components/ui/card';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import { Textarea } from '@/shared/components/ui/textarea';
+import { auth } from '@/auth';
+import { prisma } from '@/shared/lib/prisma';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/lib/utils';
 import { InfoCircledIcon } from '@radix-ui/react-icons';
-import { revalidatePath } from 'next/cache';
-import CityInput from './components/CityInput';
-import CreateCompanyButton from './components/CreateCompanyButton';
+import { redirect } from 'next/navigation';
+import CityInput from '@/modules/company/features/create/components/CityInput';
+import CreateCompanyButton from '@/modules/company/features/create/components/CreateCompanyButton';
 export default async function companyRegister() {
-  const supabase = await supabaseServer();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const session = await auth();
+  if (!session?.user) redirect('/login');
 
-  const profileData = await prisma.profile.findMany({
-    where: { email: session?.user.email || '' },
-  });
+  const profileId = session.user.profileId;
 
-  const Companies = await prisma.company.findMany({
-    where: { owner_id: profileData?.[0]?.id || '' },
-  });
+  const Companies = profileId
+    ? await prisma.company.findMany({ where: { owner_id: profileId } })
+    : [];
 
-  const share_company_users = await prisma.share_company_users.findMany({
-    where: { profile_id: profileData?.[0]?.id || '' },
-  });
-  revalidatePath('/dashboard/company/new');
+  const share_company_users = profileId
+    ? await prisma.share_company_users.findMany({ where: { profile_id: profileId } })
+    : [];
 
   const showAlert = !Companies?.[0] && !share_company_users?.[0];
 

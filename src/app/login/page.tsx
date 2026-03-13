@@ -1,12 +1,12 @@
-import RenderBanner from '@/components/RenderBanner';
-import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
+import RenderBanner from '@/shared/components/auth/RenderBanner';
+import { CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import { Separator } from '@/shared/components/ui/separator';
 import Image from 'next/image';
 import Link from 'next/link';
-import GoogleButton from './componentsLogin/GoogleButton';
-import { LoginButton } from './componentsLogin/LoginButton';
+import GoogleButton from '@/modules/landing/features/auth/components/GoogleButton';
+import { LoginButton } from '@/modules/landing/features/auth/components/LoginButton';
 export default async function Login() {
   return (
     <section className="min-h-screen overflow-hidden bg-white dark:bg-transparent">

@@ -1,9 +1,9 @@
 'use client';
-import { getCompanyDetails } from '@/app/server/GET/actions';
-import { fetchAllTags } from '@/components/Capacitaciones/actions/actions';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { getCompanyDetails } from '@/modules/company/features/detail/actions.server';
+import { fetchAllTags } from '@/modules/hse/features/training/actions.server';
+import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -11,22 +11,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from '@/shared/components/ui/dialog';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import { Progress } from '@/shared/components/ui/progress';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import {
   getDocumentById,
   getEmployeesWithAssignedDocuments,
   updateDocumentExpiry,
   type Document,
   type DocumentVersion,
-} from '@/features/Hse/actions/documents';
-import { DocumentNewVersionDialog } from '@/features/Hse/components/Document-new-version-dialog';
-import { DocumentUploadDialog } from '@/features/Hse/components/Document-upload-dialog';
-import { storage } from '@/lib/storage';
+} from '@/modules/hse/features/documents/actions.server';
+import { DocumentNewVersionDialog } from '@/modules/hse/features/documents/components/Document-new-version-dialog';
+import { DocumentUploadDialog } from '@/modules/hse/features/documents/components/Document-upload-dialog';
+import { storage } from '@/shared/lib/storage';
 import { BaseDataTable } from '@/shared/components/data-table/base/data-table';
 import { DataTableColumnHeader } from '@/shared/components/data-table/base/data-table-column-header';
 import { ColumnDef, VisibilityState } from '@tanstack/react-table';

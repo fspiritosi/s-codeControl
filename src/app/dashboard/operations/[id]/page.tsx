@@ -1,6 +1,6 @@
 'use client';
 
-import { TrainingEvaluation } from '@/components/Capacitaciones/training-evaluation';
+import { TrainingEvaluation } from '@/modules/hse/features/training/components/training-evaluation';
 
 const mockTraining = {
   id: '1',

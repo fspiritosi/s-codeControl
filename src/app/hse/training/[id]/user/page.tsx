@@ -1,13 +1,13 @@
 'use client';
 
-import { MaterialViewer } from '@/components/Capacitaciones/material-viewer';
-import { TrainingEvaluation } from '@/components/Capacitaciones/training-evaluation';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MaterialViewer } from '@/modules/hse/features/training/components/material-viewer';
+import { TrainingEvaluation } from '@/modules/hse/features/training/components/training-evaluation';
+import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Progress } from '@/shared/components/ui/progress';
+import { Separator } from '@/shared/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { CheckCircle, FileText, GraduationCap, Presentation, Video } from 'lucide-react';
 import { use, useEffect, useState } from 'react';
 

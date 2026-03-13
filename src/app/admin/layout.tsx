@@ -1,11 +1,11 @@
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/shared/lib/prisma';
 // TODO: Phase 8 — migrate auth to NextAuth
-import { supabaseServer } from '@/lib/supabase/server';
+import { supabaseServer } from '@/shared/lib/supabase/server';
 import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
 import '../globals.css';
-import AdminNavbar from './components/adminNavbar';
-import AdminSideBar from './components/adminSidebar';
+import AdminNavbar from '@/modules/admin/features/layout/components/AdminNavbar';
+import AdminSideBar from '@/modules/admin/features/layout/components/AdminSidebar';
 
 const inter = Inter({ subsets: ['latin'] });
 

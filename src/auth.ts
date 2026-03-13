@@ -3,10 +3,10 @@ import type { DefaultSession } from 'next-auth'
 import Google from 'next-auth/providers/google'
 import Credentials from 'next-auth/providers/credentials'
 import { PrismaAdapter } from '@auth/prisma-adapter'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/shared/lib/prisma'
 import bcrypt from 'bcryptjs'
 // TODO: Phase 8 — migrate auth to NextAuth (remove supabase signInWithPassword)
-import { supabaseServer } from '@/lib/supabase/server'
+import { supabaseServer } from '@/shared/lib/supabase/server'
 
 declare module 'next-auth' {
   interface Session {

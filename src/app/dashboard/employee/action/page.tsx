@@ -1,16 +1,12 @@
-import DocumentTable from '@/app/dashboard/document/DocumentTable';
-import {
-  fetchDiagramsByEmployeeId,
-  fetchDiagramsHistoryByEmployeeId,
-  fetchDiagramsTypes,
-} from '@/app/server/GET/actions';
-import EmployeeComponent from '@/components/EmployeeComponent';
-import { Card, CardFooter } from '@/components/ui/card';
+import DocumentTable from '@/modules/documents/features/list/components/DocumentTable';
+import { fetchDiagramsByEmployeeId, fetchDiagramsHistoryByEmployeeId, fetchDiagramsTypes } from '@/modules/employees/features/diagrams/actions.server';
+import EmployeeComponent from '@/modules/employees/features/create/components/EmployeeComponent';
+import { Card, CardFooter } from '@/shared/components/ui/card';
 // TODO: Phase 8 — migrate .from() queries to Prisma server actions and .auth to NextAuth
-import { supabaseServer } from '@/lib/supabase/server';
-import { cn } from '@/lib/utils';
-import { getRole } from '@/lib/utils/getRole';
-import { setEmployeesToShow } from '@/lib/utils/utils';
+import { supabaseServer } from '@/shared/lib/supabase/server';
+import { cn } from '@/shared/lib/utils';
+import { getRole } from '@/shared/lib/utils/getRole';
+import { setEmployeesToShow } from '@/shared/lib/utils/utils';
 import { format, parseISO } from 'date-fns';
 import { cookies } from 'next/headers';
 export default async function EmployeeFormAction({ searchParams: searchParamsPromise }: { searchParams: Promise<any> }) {

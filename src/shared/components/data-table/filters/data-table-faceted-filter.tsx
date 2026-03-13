@@ -1,7 +1,7 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
 import {
   Command,
   CommandEmpty,
@@ -10,10 +10,10 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+} from '@/shared/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
+import { Separator } from '@/shared/components/ui/separator';
+import { cn } from '@/shared/lib/utils';
 import { Column } from '@tanstack/react-table';
 import { CheckIcon, PlusCircleIcon } from 'lucide-react';
 import * as React from 'react';

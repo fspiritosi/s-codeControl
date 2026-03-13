@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma';
-import CardTable from '../components/tableCard';
+import { prisma } from '@/shared/lib/prisma';
+import CardTable from '@/modules/admin/features/tables/components/TableCard';
 
 export default async function TablasPage() {
   const diagrams = await prisma.work_diagram.findMany();

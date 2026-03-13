@@ -1,13 +1,13 @@
-import DocumentEquipmentComponent from '@/components/DocumentEquipmentComponent';
-import RepairTypes from '@/components/Tipos_de_reparaciones/RepairTypes';
-import { Card, CardFooter } from '@/components/ui/card';
-import { TabsContent } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
+import DocumentEquipmentComponent from '@/modules/documents/features/manage/components/DocumentEquipmentComponent';
+import RepairTypes from '@/modules/maintenance/features/repairs/components/RepairTypes';
+import { Card, CardFooter } from '@/shared/components/ui/card';
+import { TabsContent } from '@/shared/components/ui/tabs';
+import { cn } from '@/shared/lib/utils';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
-import { prisma } from '@/lib/prisma';
-import { getRole } from '@/lib/utils/getRole';
-import VehiclesForm, { generic } from '../../../../components/VehiclesForm';
+import { prisma } from '@/shared/lib/prisma';
+import { getRole } from '@/shared/lib/utils/getRole';
+import VehiclesForm, { generic } from '@/modules/equipment/features/create/components/VehiclesForm';
 
 export default async function EquipmentFormAction({ searchParams: searchParamsPromise }: { searchParams: Promise<any> }) {
   const searchParams = await searchParamsPromise;

@@ -1,13 +1,13 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/shared/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
+} from '@/shared/components/ui/dropdown-menu';
+import { cn } from '@/shared/lib/utils';
 import { Column } from '@tanstack/react-table';
 import { ArrowDownIcon, ArrowUpIcon, SortAscIcon } from 'lucide-react';
 

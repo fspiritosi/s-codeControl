@@ -1,6 +1,8 @@
-import { fetchAllEquipment, fetchCustomFormById, getCurrentProfile } from '@/app/server/GET/actions';
-import { dailyChecklistConfig } from '@/components/CheckList/DynamicChecklistForm';
-import DynamicFormWrapper from '@/components/CheckList/DynamicFormWrapper';
+import { fetchAllEquipment } from '@/modules/equipment/features/list/actions.server';
+import { fetchCustomFormById } from '@/modules/forms/features/custom-forms/actions.server';
+import { getCurrentProfile } from '@/shared/actions/auth';
+import { dailyChecklistConfig } from '@/modules/hse/features/checklist/components/DynamicChecklistForm';
+import DynamicFormWrapper from '@/modules/hse/features/checklist/components/DynamicFormWrapper';
 
 async function page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
