@@ -1,8 +1,8 @@
 import { RepairsSolicituds } from '@/shared/types/types';
 import { cookies } from 'next/headers';
 import { repairSolicitudesColums } from './components/columns';
-import { DataTable } from './components/data-table';
 import { mechanicColums } from './components/mechanicColumns';
+import { RepairSolicitudesClient } from './RepairSolicitudesClient';
 
 export default async function RepairSolicitudes({
   mechanic,
@@ -57,5 +57,5 @@ export default async function RepairSolicitudes({
     };
   });
 
-  return <DataTable data={repairsFormatted} columns={mechanic ? mechanicColums : repairSolicitudesColums} />;
+  return <RepairSolicitudesClient data={repairsFormatted as any} columns={(mechanic ? mechanicColums : repairSolicitudesColums) as any} />;
 }

@@ -538,6 +538,10 @@ export const columns: ColumnDef<Colum>[] = [
   {
     accessorKey: 'date_of_admission',
     header: 'Fecha de ingreso',
+    cell: ({ row }) => {
+      const value = row.getValue('date_of_admission') as string;
+      return value ? format(new Date(value), 'dd/MM/yyyy') : '';
+    },
   },
   {
     accessorKey: 'affiliate_status',

@@ -29,7 +29,7 @@ export default async function CompanyComponent() {
   const companyResponse = await fetch(`${URL}/api/company/?actual=${company_id}`);
   const companyDataResponse = companyResponse.ok ? await companyResponse.json() : null;
 
-  const companyData = companyDataResponse.data[0];
+  const companyData = companyDataResponse?.data?.[0];
 
   return (
     <div>

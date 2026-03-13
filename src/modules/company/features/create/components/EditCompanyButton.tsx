@@ -8,11 +8,11 @@ import { handleSupabaseError } from '@/shared/lib/errorHandler';
 import { storage } from '@/shared/lib/storage';
 import { useLoggedUserStore } from '@/shared/store/loggedUser';
 import { updateCompanyLogoByCuit } from '@/modules/company/features/detail/actions.server';
-import { companySchema } from '@/shared/zodSchemas/schemas';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { EditCompany } from '@/modules/company/features/create/actions.server';
+import { editCompanySchema } from '@/shared/zodSchemas/schemas';
 
 interface EditCompanyButtonProps {
   defaultImage?: string | null;
@@ -47,9 +47,13 @@ export default function EditCompanyButton({ defaultImage = null }: EditCompanyBu
 
   const clientAccion = async (formData: FormData) => {
     const values = Object.fromEntries(formData.entries());
-    const result = await companySchema.safeParseAsync(values);
+    const result = await editCompanySchema.safeParseAsync(values);
 
-    // Resto del código de validación y manejo de errores...
+    if (!result.success) {
+      const firstError = result.error.errors[0]?.message || 'Error de validación';
+      toast.error(firstError);
+      return;
+    }
 
     toast.promise(
       async () => {
@@ -88,7 +92,7 @@ export default function EditCompanyButton({ defaultImage = null }: EditCompanyBu
         loading: 'Actualiazando Compañía',
         success: 'Actualización exitosa, algunos cambios pueden tardar unos minutos en reflejarse',
         error: (error) => {
-          return error;
+          return error instanceof Error ? error.message : String(error);
         },
       }
     );

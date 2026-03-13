@@ -7,7 +7,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { criticidad, labels, statuses } from '../data';
 import RepairModal from './RepairModal';
-import { DataTableColumnHeader } from './data-table-column-header';
+import { DataTableColumnHeader } from '@/shared/components/data-table';
 
 export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
   {

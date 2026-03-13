@@ -1,20 +1,28 @@
-import { checkListAnswerColumns } from '@/modules/hse/features/checklist/components/tables/checkListAnswerColumns';
-import { CheckListAnswerTable } from '@/modules/hse/features/checklist/components/tables/data-table-answer';
+'use client';
 
-async function CheckListAnwersTable({ answers }: { answers: CheckListAnswerWithForm[] }) {
+import { checkListAnswerColumns } from '@/modules/hse/features/checklist/components/tables/checkListAnswerColumns';
+import { DataTable } from '@/shared/components/data-table';
+import { useRouter } from 'next/navigation';
+
+function CheckListAnwersTable({ answers }: { answers: CheckListAnswerWithForm[] }) {
+  const router = useRouter();
+
   return (
-    <CheckListAnswerTable
+    <DataTable
       columns={checkListAnswerColumns}
-      data={answers.map((e) => {
-        return {
-          chofer: (e.answer as { chofer: string })?.chofer,
-          id: e.id,
-          name: (e.answer as { dominio: string })?.dominio,
-          kilometer: (e.answer as { kilometraje: string })?.kilometraje,
-          created_at: e.created_at,
-          domain: (e.answer as { dominio: string })?.dominio,
-        };
-      })}
+      data={answers.map((e) => ({
+        chofer: (e.answer as { chofer: string })?.chofer,
+        id: e.id,
+        name: (e.answer as { dominio: string })?.dominio,
+        kilometer: (e.answer as { kilometraje: string })?.kilometraje,
+        created_at: e.created_at,
+        domain: (e.answer as { dominio: string })?.dominio,
+      }))}
+      showColumnToggle={true}
+      onRowClick={(row) => router.push(`/dashboard/forms/${(row as any).id}/view`)}
+      rowClassName="hover:cursor-pointer"
+      emptyMessage="Sin resultados"
+      tableId="checklist-answers"
     />
   );
 }

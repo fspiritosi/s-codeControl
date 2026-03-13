@@ -13,6 +13,10 @@ import { fetchDocumentsByDocumentTypeId } from '@/modules/documents/features/lis
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export function serializeBigInt(obj: any): any {
+  return JSON.parse(JSON.stringify(obj, (_, v) => (typeof v === 'bigint' ? Number(v) : v)));
+}
 export function formatCompanyName(companyName: string): string {
   // Transforma el nombre de la empresa eliminando los guiones bajos y convirtiendo a mayúsculas
   return companyName.replace(/_/g, ' ')?.toUpperCase();

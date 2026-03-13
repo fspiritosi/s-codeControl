@@ -1,10 +1,8 @@
 'use client';
 import { Button } from '@/shared/components/ui/button';
-import { BaseDataTable } from '@/shared/components/data-table/base/data-table';
-import { DataTableColumnHeader } from '@/shared/components/data-table/base/data-table-column-header';
+import { DataTable, DataTableColumnHeader } from '@/shared/components/data-table';
 import { createFilterOptions } from '@/shared/components/utils/utils';
 import { ColumnDef } from '@tanstack/react-table';
-import Cookies from 'js-cookie';
 import { fetchAllHseDocTypes } from '../../actions.server';
 
 
@@ -68,53 +66,47 @@ export function getTagColums(handleEdit: (hse_doc_types:  DocTypeTableProp['hse_
 
 
 function DocTypeTable({ hse_doc_types, selectedHse_Doc_type, setSelectedHse_Doc_type, setMode }: DocTypeTableProp) {
-  const cookies = Cookies.get('areaTable');
   const handleEdit = (HseDocType: DocTypeTableProp['hse_doc_types'][number]) => {
     setSelectedHse_Doc_type(HseDocType);
     setMode('edit');
   };
- 
-  const savedVisibility = cookies ? JSON.parse(cookies) : {};
 
-
-    const names = createFilterOptions(hse_doc_types, (tag) => tag.name);
+  const names = createFilterOptions(hse_doc_types, (tag) => tag.name);
   const short_descriptions = createFilterOptions(hse_doc_types, (tag) => tag.short_description || '');
   const isActive = createFilterOptions(hse_doc_types, (tag) => (tag.is_active ? 'Sí' : 'No'));
 
   return (
     <div className="flex flex-col gap-4 p-4 pt-0">
       <h2 className="text-xl font-bold ">Tipos de Documentos</h2>
-      
-      <BaseDataTable
-        columns={getTagColums(handleEdit)}
-        data={hse_doc_types || []}
-        savedVisibility={savedVisibility}
+
+      <DataTable
+        columns={getTagColums(handleEdit) as ColumnDef<Record<string, unknown>>[]}
+        data={(hse_doc_types || []) as unknown as Record<string, unknown>[]}
         tableId="tagTable"
-        toolbarOptions={{
-          initialVisibleFilters: ['Nombre', 'Descripción corta', 'Activo'],
-          filterableColumns: [
-            {
-              columnId: 'Nombre',
-              title: 'Nombre',
-              options: names,
-            },
-            {
-              columnId: 'short_description',
-              title: 'Descripción corta',
-              options: short_descriptions,
-            },
-            {
-              columnId: 'Activo',
-              title: 'Activo',
-              options: isActive,
-            },
-          ],
-        }}
+        showFilterToggle
+        initialFilterVisibility={{ Nombre: true, 'Descripción corta': true, Activo: true }}
+        facetedFilters={[
+          {
+            columnId: 'Nombre',
+            title: 'Nombre',
+            options: names,
+          },
+          {
+            columnId: 'short_description',
+            title: 'Descripción corta',
+            options: short_descriptions,
+          },
+          {
+            columnId: 'Activo',
+            title: 'Activo',
+            options: isActive,
+          },
+        ]}
       />
 
     </div>
   );
 }
-  
+
 
 export default DocTypeTable;

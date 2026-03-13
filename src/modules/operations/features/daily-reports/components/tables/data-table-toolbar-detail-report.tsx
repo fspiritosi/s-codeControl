@@ -1,7 +1,6 @@
 'use client';
 
-import { DataTableFacetedFilter } from './data-table-faceted-filter';
-import { DataTableViewOptions } from '@/modules/hse/features/checklist/components/tables/data-table-view-options';
+import { DataTableFacetedFilter, DataTableViewOptions } from '@/shared/components/data-table';
 import { Button } from '@/shared/components/ui/button';
 import {
   CalendarIcon,

@@ -1,7 +1,7 @@
 'use client';
 import { useLoggedUserStore } from '@/shared/store/loggedUser';
-import { ExpiredColums } from '@/modules/dashboard/features/tables/components/columns';
-import { ExpiredDataTable } from '@/modules/dashboard/features/tables/components/data-table';
+import { ExpiredColums } from '@/modules/documents/shared/columns/ExpiredColumns';
+import { ExpiredDataTable } from '@/shared/components/documents/ExpiredDataTable';
 
 function VPendingDocumentTable() {
   const vehicles = useLoggedUserStore((state) => state.pendingDocuments)?.vehicles;

@@ -1,7 +1,7 @@
 //'use client';
 import { columns } from '@/modules/company/features/detail/components/columns';
 import { columnsGuests } from '@/modules/company/features/detail/components/columnsGuests';
-import { DataTable } from '@/modules/company/features/detail/components/data-table';
+import { DataTable } from '@/shared/components/data-table';
 import { getAllUsers, getOwnerUser } from '@/modules/company/features/users/actions.server';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 
@@ -71,12 +71,12 @@ export default async function UsersTabComponent() {
         </TabsList>
         <TabsContent value="employ">
           <div className="p-8">
-            <DataTable data={data || []} columns={columns} />
+            <DataTable data={data || []} columns={columns} searchColumn="fullname" searchPlaceholder="Filtrar Nombre" showSearch />
           </div>
         </TabsContent>
         <TabsContent value="guests">
           <div className="p-8">
-            <DataTable data={guestsData || []} columns={columnsGuests} />
+            <DataTable data={guestsData || []} columns={columnsGuests} searchColumn="fullname" searchPlaceholder="Filtrar Nombre" showSearch />
           </div>
         </TabsContent>
       </Tabs>

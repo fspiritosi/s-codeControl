@@ -484,6 +484,10 @@ export const EmployeesListColumns: ColumnDef<Colum>[] = [
   {
     accessorKey: 'born_date',
     header: 'Fecha de nacimiento',
+    cell: ({ row }) => {
+      const value = row.getValue('born_date') as string;
+      return value ? format(new Date(value), 'dd/MM/yyyy') : '';
+    },
   },
 
   {
@@ -525,6 +529,10 @@ export const EmployeesListColumns: ColumnDef<Colum>[] = [
   {
     accessorKey: 'date_of_admission',
     header: 'Fecha de ingreso',
+    cell: ({ row }) => {
+      const value = row.getValue('date_of_admission') as string;
+      return value ? format(new Date(value), 'dd/MM/yyyy') : '';
+    },
   },
   {
     accessorKey: 'hierarchical_position',

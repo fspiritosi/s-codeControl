@@ -1,7 +1,7 @@
 // 'use client';
-import { ExpiredColums } from '@/modules/dashboard/features/tables/components/columns';
-import { ColumnsMonthlyEquipment } from '@/modules/dashboard/features/tables/components/columnsMonthlyEquipment';
-import { ExpiredDataTable } from '@/modules/dashboard/features/tables/components/data-table';
+import { ExpiredColums } from '@/modules/documents/shared/columns/ExpiredColumns';
+import { ColumnsMonthlyEquipment } from '@/modules/documents/shared/columns/ColumnsMonthlyEquipment';
+import { ExpiredDataTable } from '@/shared/components/documents/ExpiredDataTable';
 import { CardContent } from '@/shared/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 // import { useLoggedUserStore } from '@/shared/store/loggedUser';

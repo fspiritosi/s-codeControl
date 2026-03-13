@@ -1,7 +1,7 @@
 'use client';
 
 import { columnsGuests } from '@/modules/company/features/detail/components/columnsGuests';
-import { DataTable as DataTableInvited } from '@/modules/company/features/detail/components/data-table';
+import { DataTable as DataTableInvited } from '@/shared/components/data-table';
 import { createdCustomer, updateCustomer } from '@/modules/company/features/customers/components/action/create';
 import { EquipmentTable } from '@/modules/equipment/features/list/components/data-equipment';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/shared/components/ui/accordion';
@@ -475,7 +475,7 @@ export default function ClientRegister({ id, equipment }: { id: string; equipmen
             <TabsContent value="invitados">
               <Card>
                 <CardContent className="p-4">
-                  <DataTableInvited data={guestsData || []} columns={columnsGuests} />
+                  <DataTableInvited data={guestsData || []} columns={columnsGuests} searchColumn="fullname" searchPlaceholder="Filtrar Nombre" showSearch />
                 </CardContent>
               </Card>
             </TabsContent>

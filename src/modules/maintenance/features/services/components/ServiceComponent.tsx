@@ -1,15 +1,8 @@
-// TODO: Phase 8 — migrate .from() queries to Prisma server actions and .auth to NextAuth
-import { supabaseServer } from '@/shared/lib/supabase/server';
+import { prisma } from '@/shared/lib/prisma';
 import { cookies } from 'next/headers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import ServiceItemsTable from './ServiceItemsTable';
 import ServiceTable from './ServiceTable';
-interface measure_unit {
-  id: number;
-  unit: string;
-  simbol: string;
-  tipo: string;
-}
 interface customer {
   id: string;
   name: string;
@@ -19,21 +12,20 @@ interface customer {
 export default async function ServiceComponent() {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
 
-  const supabase = await supabaseServer();
-
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
   const cookiesStore = await cookies();
   const company_id = cookiesStore.get('actualComp')?.value || '';
-  const { customers } = await fetch(`${URL}/api/company/customers?actual=${company_id}`).then((e) => e.json());
-  const filterCustomers = customers.filter((client: customer) => client.is_active === true);
-  const { services } = await fetch(`${URL}/api/services?actual=${company_id}`).then((e) => e.json());
-  // const {measure_units}= await fetch(`${URL}/api/meassure`).then((e) => e.json());
-  const { items } = await fetch(`${URL}/api/services/items?actual=${company_id}`).then((e) => e.json());
 
-  const { data: measure_units } = await supabase.from('measure_units').select('*');
+  const customersRes = await fetch(`${URL}/api/company/customers?actual=${company_id}`).then((e) => e.json());
+  const customers = customersRes?.data?.customers ?? [];
+  const filterCustomers = customers.filter((client: customer) => client.is_active === true);
+
+  const servicesRes = await fetch(`${URL}/api/services?actual=${company_id}`).then((e) => e.json());
+  const services = servicesRes?.data?.services ?? [];
+
+  const itemsRes = await fetch(`${URL}/api/services/items?actual=${company_id}`).then((e) => e.json());
+  const items = itemsRes?.data?.items ?? [];
+
+  const measure_units = await prisma.measure_units.findMany();
 
   //     const channels = supabase.channel('custom-all-channel')
   // .on(

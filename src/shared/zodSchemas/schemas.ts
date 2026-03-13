@@ -202,14 +202,6 @@ export const editCompanySchema = z.object({
         return validarCUIL(cuil);
       },
       { message: 'El CUIT es inválido' }
-    )
-    .refine(
-      async (value) => {
-        return await validateDuplicatedCompanyCuit(value);
-      },
-      {
-        message: 'Ya existe una compañía con este CUIT.',
-      }
     ),
 
   description: z

@@ -4,33 +4,26 @@ import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { prisma } from '@/shared/lib/prisma';
-// TODO: Phase 8 — migrate auth to NextAuth
-import { supabaseServer } from '@/shared/lib/supabase/server';
+import { fetchCurrentUser } from '@/shared/actions/auth';
 
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { cn } from '@/shared/lib/utils';
 import { InfoCircledIcon } from '@radix-ui/react-icons';
-import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import CityInput from '@/modules/company/features/create/components/CityInput';
 import EditCompanyButton from '@/modules/company/features/create/components/EditCompanyButton';
 export default async function companyRegister({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = await supabaseServer();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  const profileData = await prisma.profile.findMany({
-    where: { email: session?.user.email || '' },
-  });
+  const user = await fetchCurrentUser();
+  if (!user?.id) redirect('/login');
 
   const Companies = await prisma.company.findMany({
-    where: { owner_id: profileData?.[0]?.id || '' },
+    where: { owner_id: user.id },
   });
 
   const companyData = await prisma.company.findFirst({
-    where: { owner_id: profileData?.[0]?.id || '', id },
+    where: { owner_id: user.id, id },
     include: {
       city_rel: true,
       province_rel: true,
@@ -45,10 +38,8 @@ export default async function companyRegister({ params }: { params: Promise<{ id
   } : null;
 
   const share_company_users = await prisma.share_company_users.findMany({
-    where: { profile_id: profileData?.[0]?.id || '' },
+    where: { profile_id: user.id },
   });
-
-  revalidatePath('/dashboard/company/new');
 
   const showAlert = !Companies?.[0] && !share_company_users?.[0];
 

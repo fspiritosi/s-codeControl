@@ -6,7 +6,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { ClipboardList } from 'lucide-react';
 import { format } from 'date-fns';
 import { frecuencias } from './data';
-import { DataTableColumnHeader } from './data-table-column-header';
+import { DataTableColumnHeader } from '@/shared/components/data-table';
 
 export const checkListColumns: ColumnDef<{
   title: string;

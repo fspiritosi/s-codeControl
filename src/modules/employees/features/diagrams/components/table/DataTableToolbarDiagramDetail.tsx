@@ -1,10 +1,9 @@
 'use client';
-import { DataTableViewOptions } from '@/modules/hse/features/checklist/components/tables/data-table-view-options';
+import { DataTableViewOptions, DataTableFacetedFilter } from '@/shared/components/data-table';
 import { Button } from '@/shared/components/ui/button';
 import { Cross2Icon } from '@radix-ui/react-icons';
 import { Table } from '@tanstack/react-table';
 import { LampDesk } from 'lucide-react';
-import { DataTableFacetedFilterDiagramDetail } from './data-table-faceted-diagramDetail';
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -40,14 +39,14 @@ export function DataTableToolbarDiagramDetail<TData>({ table }: DataTableToolbar
     <div className="flex items-center justify-between">
       <div className="flex flex-1 items-center space-x-2">
         {table.getColumn('Descripción') && (
-          <DataTableFacetedFilterDiagramDetail
+          <DataTableFacetedFilter
             column={table.getColumn('Descripción')}
             title="Descripcion"
             options={short_descriptionOptions}
           />
         )}
         {table.getColumn('Estado') && (
-          <DataTableFacetedFilterDiagramDetail
+          <DataTableFacetedFilter
             column={table.getColumn('Estado')}
             title="Estado"
             options={EstadoOptions}

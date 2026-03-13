@@ -47,5 +47,3 @@ export { TypesOfCheckListTable } from './features/daily-reports/components/table
 export { DetailTable } from './features/daily-reports/components/tables/Data-table-DetailDailyReport';
 export { DataTableToolbarDailyReport } from './features/daily-reports/components/tables/data-table-toolbar-daily-report';
 export { DataTableToolbarDetailReport } from './features/daily-reports/components/tables/data-table-toolbar-detail-report';
-export { DataTableFacetedFilter } from './features/daily-reports/components/tables/data-table-faceted-filter';
-export { DataTableFacetedFilter as DataTableFacetedFilter2 } from './features/daily-reports/components/tables/data-table-faceted-filter2';

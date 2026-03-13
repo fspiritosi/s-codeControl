@@ -2,9 +2,9 @@ import { fetchEmployeeMonthlyDocuments, fetchEmployeePermanentDocuments } from '
 import { CardContent } from '@/shared/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { formatEmployeeDocuments } from '@/shared/lib/utils';
-import { ExpiredColums } from '@/modules/dashboard/features/tables/components/columns';
-import { ColumnsMonthly } from '@/modules/dashboard/features/tables/components/columnsMonthly';
-import { ExpiredDataTable } from '@/modules/dashboard/features/tables/components/data-table';
+import { ExpiredColums } from '@/modules/documents/shared/columns/ExpiredColumns';
+import { ColumnsMonthly } from '@/modules/documents/shared/columns/ColumnsMonthly';
+import { ExpiredDataTable } from '@/shared/components/documents/ExpiredDataTable';
 
 async function EmployeeDocumentsTabs() {
   const monthlyDocuments = (await fetchEmployeeMonthlyDocuments()).map((d) => formatEmployeeDocuments(d as unknown as EmployeeDocumentWithContractors));

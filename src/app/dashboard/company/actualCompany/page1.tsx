@@ -23,7 +23,7 @@ import Contact from '@/modules/company/features/contacts/components/Contact';
 import Customers from '@/modules/company/features/customers/components/Customers';
 import { columns } from '@/modules/company/features/detail/components/columns';
 import { columnsGuests } from '@/modules/company/features/detail/components/columnsGuests';
-import { DataTable } from '@/modules/company/features/detail/components/data-table';
+import { DataTable } from '@/shared/components/data-table';
 import { columnsDocuments } from '@/modules/company/features/detail/components/document-columns';
 import { ItemCompany } from '@/modules/company/features/detail/components/itemCompany';
 import Cct from '@/modules/company/features/covenants/components/CctComponent';
@@ -228,12 +228,12 @@ export default function page() {
                 </TabsList>
                 <TabsContent value="employ">
                   <div className="p-8">
-                    <DataTable data={data || []} columns={columns} />
+                    <DataTable data={data || []} columns={columns} searchColumn="fullname" searchPlaceholder="Filtrar Nombre" showSearch />
                   </div>
                 </TabsContent>
                 <TabsContent value="guests">
                   <div className="p-8">
-                    <DataTable data={guestsData || []} columns={columnsGuests} />
+                    <DataTable data={guestsData || []} columns={columnsGuests} searchColumn="fullname" searchPlaceholder="Filtrar Nombre" showSearch />
                   </div>
                 </TabsContent>
               </Tabs>
@@ -262,7 +262,7 @@ export default function page() {
                 </Link>
               </CardHeader>
               <div className="px-8 pb-8">
-                <DataTable isDocuments data={documentCompany || []} columns={columnsDocuments} />
+                <DataTable data={documentCompany || []} columns={columnsDocuments} searchColumn="fullname" searchPlaceholder="Filtrar Nombre" showSearch />
               </div>
             </div>
             <CardFooter className="flex flex-row items-center border-t bg-muted dark:bg-muted/50 px-6 py-3"></CardFooter>

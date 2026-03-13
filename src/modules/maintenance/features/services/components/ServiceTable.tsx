@@ -82,7 +82,7 @@ const ServiceTable = ({ services, customers, company_id }: ServiceTableProps) =>
         throw new Error('Error al obtener los servicios');
       }
       const responseData = await servicesResponse.json();
-      const services = Array.isArray(responseData) ? responseData : responseData.services;
+      const services = responseData?.data?.services ?? (Array.isArray(responseData) ? responseData : []);
       setServicesData(services);
     } catch (error) {
       console.error(error);

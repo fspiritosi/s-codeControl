@@ -18,14 +18,11 @@ import * as React from 'react';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 
-import { DataTablePagination } from '@/modules/hse/features/checklist/components/tables/data-table-pagination';
-import { useRouter } from 'next/navigation';
+import { DataTablePagination } from '@/shared/components/data-table';
 import { DataTableToolbarDailyReport } from './data-table-toolbar-daily-report';
 import { Customers, Services, Items, Employee, Equipment } from '../types';
 import { getCustomerName, getServiceName, getItemName, getEmployeeNames, getEquipmentNames, formatTime } from '../utils/utils';
 import { Badge } from '@/shared/components/ui/badge';
-import { se } from 'date-fns/locale';
-import { serialize } from 'v8';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -66,9 +63,6 @@ export function TypesOfCheckListTable<TData, TValue>({ columns, data, customers,
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
-
-  const router = useRouter();
-
 
   return (
     <div className="space-y-4 mt-4">
@@ -144,7 +138,7 @@ export function TypesOfCheckListTable<TData, TValue>({ columns, data, customers,
           </TableBody>
         </Table>
       </div>
-      <DataTablePagination table={table} />
+      <DataTablePagination table={table} totalRows={table.getFilteredRowModel().rows.length} />
     </div>
   );
 }

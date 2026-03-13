@@ -5,7 +5,7 @@ import { TransporteSPANAYCHKHYS04 } from '@/modules/hse/features/checklist/compo
 import { PersonIcon } from '@radix-ui/react-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { DataTableColumnHeader } from './data-table-column-header';
+import { DataTableColumnHeader } from '@/shared/components/data-table';
 
 export const checkListAnswerColumns: ColumnDef<{
   id: string;

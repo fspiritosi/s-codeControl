@@ -18,15 +18,15 @@ import { handleSupabaseError } from '@/shared/lib/errorHandler';
 import { useLoggedUserStore } from '@/shared/store/loggedUser';
 import { SharedUser } from '@/shared/zodSchemas/schemas';
 import { ColumnDef } from '@tanstack/react-table';
-import { formatRelative } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { format } from 'date-fns';
+
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { deleteShareCompanyUser, updateShareCompanyUserRole } from '@/modules/company/features/users/actions.server';
 import { fetchRoles } from '@/shared/actions/auth';
-import { DataTableColumnHeader } from './data-table-column-header';
+import { DataTableColumnHeader } from '@/shared/components/data-table';
 
 export const columns: ColumnDef<SharedUser>[] = [
   {
@@ -143,9 +143,7 @@ export const columns: ColumnDef<SharedUser>[] = [
       return (
         <div className="flex items-center">
           <span>
-            {formatRelative(new Date(row.getValue('alta')), new Date(), {
-              locale: es,
-            })}
+            {format(new Date(row.getValue('alta')), 'dd/MM/yyyy')}
           </span>
         </div>
       );

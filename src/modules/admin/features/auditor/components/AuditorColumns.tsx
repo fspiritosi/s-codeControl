@@ -3,6 +3,7 @@
 import { Badge } from '@/shared/components/ui/badge';
 import { Button, buttonVariants } from '@/shared/components/ui/button';
 import { ColumnDef } from '@tanstack/react-table';
+import { format } from 'date-fns';
 import { ArrowUpDown } from 'lucide-react';
 import Link from 'next/link';
 
@@ -29,6 +30,10 @@ export const AuditorColums: ColumnDef<Colum>[] = [
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
+    },
+    cell: ({ row }) => {
+      const value = row.getValue('date') as string;
+      return value ? format(new Date(value), 'dd/MM/yyyy') : '';
     },
   },
   {
@@ -70,6 +75,10 @@ export const AuditorColums: ColumnDef<Colum>[] = [
   {
     accessorKey: 'validity',
     header: 'Vence',
+    cell: ({ row }) => {
+      const value = row.getValue('validity') as string;
+      return value ? format(new Date(value), 'dd/MM/yyyy') : '';
+    },
   },
   {
     accessorKey: 'id',

@@ -101,10 +101,10 @@ export default function CreateCompanyButton() {
 
           const actualCompany = company?.filter((company) => company.id === data?.[0]?.id);
 
-          useLoggedUserStore.setState({
-            actualCompany: actualCompany?.[0] as any[0],
-          });
           useLoggedUserStore.setState({ allCompanies: company as any });
+          if (actualCompany?.[0]) {
+            useLoggedUserStore.getState().setActualCompany(actualCompany[0] as any);
+          }
 
           router.push('/dashboard');
         }

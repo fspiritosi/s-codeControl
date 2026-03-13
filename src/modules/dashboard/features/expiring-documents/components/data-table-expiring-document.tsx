@@ -1,105 +1,71 @@
 'use client';
 
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
 import * as React from 'react';
+import { ColumnDef } from '@tanstack/react-table';
+import { DataTable } from '@/shared/components/data-table';
+import type { DataTableFacetedFilterConfig } from '@/shared/components/data-table';
+import { ExpiringDocumentDownloadButton } from './data-table-toolbar-expiring-document';
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
-
-import { DataTablePagination } from '@/modules/dashboard/features/tables/components/data-table-pagination';
-import { useRouter } from 'next/navigation';
-import { DataTableToolbarExpiringDocument } from './data-table-toolbar-expiring-document';
-
-interface DataTableProps<TData, TValue> {
+interface DataTableProps<TData extends Record<string, unknown>, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
 }
 
-export function ExpiringDocumentTable<TData, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
-  const [rowSelection, setRowSelection] = React.useState({});
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  React.useEffect(() => {
-    if (localStorage.getItem('dashboardEmployeesColumns') || localStorage.getItem('dashboardVehiclesColumns')) {
-      localStorage.removeItem('dashboardEmployeesColumns');
-      localStorage.removeItem('dashboardVehiclesColumns');
+export function ExpiringDocumentTable<TData extends Record<string, unknown>, TValue>({
+  columns,
+  data,
+}: DataTableProps<TData, TValue>) {
+  const facetedFilters = React.useMemo(() => {
+    const filters: DataTableFacetedFilterConfig[] = [];
+
+    // Build dynamic options from data for each potential filter column
+    const columnIds = ['Empleados', 'Equipment', 'Documentos'] as const;
+    const columnTitles: Record<string, string> = {
+      Empleados: 'Empleados',
+      Equipment: 'Equipos',
+      Documentos: 'Documentos',
+    };
+
+    for (const colId of columnIds) {
+      const uniqueValues = new Set<string>();
+      for (const row of data) {
+        // Check if the column accessor exists in the data
+        const val =
+          colId === 'Empleados'
+            ? (row as any).resource && (row as any).employee_id
+              ? (row as any).resource
+              : null
+            : colId === 'Equipment'
+              ? (row as any).resource && (row as any).vehicle_id && !(row as any).employee_id
+                ? (row as any).resource
+                : null
+              : colId === 'Documentos'
+                ? (row as any).documentName
+                : null;
+        if (val) uniqueValues.add(val);
+      }
+
+      if (uniqueValues.size > 0) {
+        filters.push({
+          columnId: colId,
+          title: columnTitles[colId],
+          options: Array.from(uniqueValues).map((v) => ({ label: v, value: v })),
+        });
+      }
     }
-  }, []);
 
-  const table = useReactTable({
-    data,
-    columns,
-    state: {
-      sorting,
-      columnVisibility,
-      rowSelection,
-      columnFilters,
-    },
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-  });
+    return filters;
+  }, [data]);
 
-  const router = useRouter();
   return (
-    <div className="space-y-4">
-      <DataTableToolbarExpiringDocument table={table} />
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id} colSpan={header.colSpan}>
-                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  Sin resultados
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <DataTablePagination table={table} />
-    </div>
+    <DataTable
+      columns={columns}
+      data={data}
+      emptyMessage="Sin resultados"
+      facetedFilters={facetedFilters}
+      showColumnToggle={true}
+      toolbarActions={<ExpiringDocumentDownloadButton data={data} />}
+      tableId="expiring-documents"
+    />
   );
 }

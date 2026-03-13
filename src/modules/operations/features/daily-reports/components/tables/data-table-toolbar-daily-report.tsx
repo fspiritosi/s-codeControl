@@ -1,7 +1,6 @@
 'use client';
 
-import { DataTableFacetedFilter } from './data-table-faceted-filter2';
-import { DataTableViewOptions } from '@/modules/hse/features/checklist/components/tables/data-table-view-options';
+import { DataTableFacetedFilter, DataTableViewOptions } from '@/shared/components/data-table';
 import { Customers, Employee, Equipment, Items, Services } from '../types';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -105,7 +104,6 @@ export function DataTableToolbarDailyReport<TData>({
       <div className="flex flex-1 items-center space-x-2">
         {table.getColumn('Cliente') && (
           <DataTableFacetedFilter
-            customers={customers}
             column={table.getColumn('Cliente')}
             title="Clientes"
             options={clientOptions}
@@ -113,18 +111,16 @@ export function DataTableToolbarDailyReport<TData>({
         )}
         {table.getColumn('Servicios') && (
           <DataTableFacetedFilter
-            services={services}
             column={table.getColumn('Servicios')}
             title="Servicios"
             options={servicesOptions}
           />
         )}
         {table.getColumn('Item') && (
-          <DataTableFacetedFilter items={items} column={table.getColumn('Item')} title="Items" options={itemOptions} />
+          <DataTableFacetedFilter column={table.getColumn('Item')} title="Items" options={itemOptions} />
         )}
         {table.getColumn('Empleados') && (
           <DataTableFacetedFilter
-            employees={employees}
             column={table.getColumn('Empleados')}
             title="Empleados"
             options={employeesOptions}
@@ -132,7 +128,6 @@ export function DataTableToolbarDailyReport<TData>({
         )}
         {table.getColumn('Equipos') && (
           <DataTableFacetedFilter
-            equipment={equipment}
             column={table.getColumn('Equipos')}
             title="Equipos"
             options={equipmentOptions}
@@ -140,29 +135,18 @@ export function DataTableToolbarDailyReport<TData>({
         )}
         {table.getColumn('Jornada') && (
           <DataTableFacetedFilter
-            customers={customers}
             column={table.getColumn('Jornada')}
             title="Jornada"
             options={workingDayOptions}
           />
         )}
-        {/* {table.getColumn('Hora inicio') && (
-          <DataTableFacetedFilter customers={customers} column={table.getColumn('Hora inicio')} title="Hora inicio" options={startTimeOptions} />
-        )}
-        {table.getColumn('Hora fin') && (
-          <DataTableFacetedFilter customers={customers} column={table.getColumn('Hora fin')} title="Hora fin" options={endTimeOptions} />
-        )} */}
         {table.getColumn('Estado') && (
           <DataTableFacetedFilter
-            customers={customers}
             column={table.getColumn('Estado')}
             title="Estado"
             options={statusOptions}
           />
         )}
-        {/* {table.getColumn('Descripción') && (
-          <DataTableFacetedFilter customers={customers} column={table.getColumn('Descripción')} title="Descripción" options={descriptionOptions} />
-        )} */}
         {isFiltered && (
           <Button variant="ghost" onClick={() => table.resetColumnFilters()} className="h-8 px-2 lg:px-3">
             Limpiar filtros

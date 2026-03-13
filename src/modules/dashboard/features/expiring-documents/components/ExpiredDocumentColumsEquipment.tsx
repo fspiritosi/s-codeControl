@@ -1,6 +1,6 @@
 'use client';
 
-import { DataTableColumnHeader } from '@/modules/hse/features/checklist/components/tables/data-table-column-header';
+import { DataTableColumnHeader } from '@/shared/components/data-table';
 import SimpleDocument from '@/modules/documents/features/upload/components/SimpleDocument';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTrigger } from '@/shared/components/ui/alert-dialog';
 import { Button } from '@/shared/components/ui/button';

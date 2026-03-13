@@ -1,4 +1,5 @@
 import { prisma } from '@/shared/lib/prisma';
+import { serializeBigInt } from '@/shared/lib/utils';
 import { apiSuccess, apiError } from '@/shared/lib/api-response';
 import { NextRequest } from 'next/server';
 export async function GET(request: NextRequest) {
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest) {
       where: { company_id: company_id || '' },
     });
 
-    return apiSuccess({ customers });
+    return apiSuccess({ customers: serializeBigInt(customers) });
   } catch (error) {
     console.error(error);
     return apiError('Failed to fetch customers', 500);

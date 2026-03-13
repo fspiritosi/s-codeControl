@@ -396,6 +396,10 @@ export const columns: ColumnDef<Colum>[] = [
   {
     accessorKey: 'validity',
     header: 'Fecha de validez',
+    cell: ({ row }) => {
+      const value = row.getValue('validity') as string;
+      return value ? format(new Date(value), 'dd/MM/yyyy') : '';
+    },
   },
 
   {

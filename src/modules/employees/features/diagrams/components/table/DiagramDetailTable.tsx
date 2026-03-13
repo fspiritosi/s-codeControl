@@ -1,6 +1,6 @@
 'use client';
 
-import { DataTablePagination } from '@/modules/hse/features/checklist/components/tables/data-table-pagination';
+import { DataTablePagination } from '@/shared/components/data-table';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
@@ -153,7 +153,7 @@ export function DiagramDetailTable<TData, TValue>({ columns, data, historyData }
             </TableBody>
           </Table>
         </div>
-        <DataTablePagination table={table} />
+        <DataTablePagination table={table} totalRows={table.getFilteredRowModel().rows.length} />
       </div>
       <div className="col-span-5 mt-3">
         <Card className="w-full">

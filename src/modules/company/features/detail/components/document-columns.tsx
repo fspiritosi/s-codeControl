@@ -15,7 +15,7 @@ import { es } from 'date-fns/locale';
 import { usePathname, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import AddCompanyDocumentForm from './AddCompanyDocumentForm';
-import { DataTableColumnHeader } from './data-table-column-header';
+import { DataTableColumnHeader } from '@/shared/components/data-table';
 
 export const columnsDocuments: ColumnDef<SharedUser>[] = [
   {

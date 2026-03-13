@@ -1,4 +1,4 @@
-import { DataTable } from '@/modules/company/features/detail/components/data-table';
+import { DataTable } from '@/shared/components/data-table';
 import { columnsDocuments } from '@/modules/company/features/detail/components/document-columns';
 // TODO: Phase 8 — migrate .from() queries to Prisma server actions and .auth to NextAuth
 import { supabaseServer } from '@/shared/lib/supabase/server';
@@ -88,7 +88,7 @@ export default async function DocumentTabComponent() {
   return (
     <div>
       <div className="px-8 pb-8">
-        <DataTable isDocuments data={documentCompany || []} columns={columnsDocuments} />
+        <DataTable data={documentCompany || []} columns={columnsDocuments} searchColumn="fullname" searchPlaceholder="Filtrar Nombre" showSearch />
       </div>
     </div>
   );

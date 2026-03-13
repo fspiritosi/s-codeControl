@@ -39,7 +39,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton"
 import { cn } from "@/shared/lib/utils"
 import { useLoggedUserStore } from "@/shared/store/loggedUser"
 import { setEmployeesToShow } from "@/shared/lib/utils/utils"
-import { DataTablePagination } from "@/modules/dashboard/features/tables/components/data-table-pagination"
+import { DataTablePagination } from "@/shared/components/data-table"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
@@ -708,7 +708,7 @@ export function EmployeesTable<TData, TValue>({ columns, data, role }: DataTable
           </TableBody>
         </Table>
       </div>
-      <DataTablePagination table={table} />
+      <DataTablePagination table={table} totalRows={table.getFilteredRowModel().rows.length} />
     </div>
   )
 }

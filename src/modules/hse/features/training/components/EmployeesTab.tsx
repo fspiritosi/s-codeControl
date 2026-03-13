@@ -3,8 +3,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { sendEmail } from '@/shared/lib/renderEmail';
-import { BaseDataTable } from '@/shared/components/data-table/base/data-table';
-import { DataTableColumnHeader } from '@/shared/components/data-table/base/data-table-column-header';
+import { DataTable, DataTableColumnHeader } from '@/shared/components/data-table';
 import { createFilterOptions } from '@/shared/components/utils/utils';
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
@@ -367,62 +366,56 @@ function EmployeesTab({ training }: EmployeesTabProps) {
 
           <TabsContent value="completed" className="pt-4">
             <div className="">
-              <BaseDataTable
-                columns={getAreaColums(handleSendInvitation) as any}
-                data={completedEmployees}
-                savedVisibility={{}}
+              <DataTable
+                columns={getAreaColums(handleSendInvitation) as ColumnDef<Record<string, unknown>>[]}
+                data={completedEmployees as unknown as Record<string, unknown>[]}
                 tableId="areaTable"
-                toolbarOptions={{
-                  initialVisibleFilters: [],
-                  filterableColumns: [
-                    {
-                      columnId: 'Nombre',
-                      title: 'Nombre',
-                      options: namesCompleted,
-                    },
-                    {
-                      columnId: 'cuil',
-                      title: 'CUIL',
-                      options: cuilCompleted,
-                    },
-                    {
-                      columnId: 'Posición',
-                      title: 'Posición',
-                      options: departmentCompleted,
-                    },
-                  ],
-                }}
+                facetedFilters={[
+                  {
+                    columnId: 'Nombre',
+                    title: 'Nombre',
+                    options: namesCompleted,
+                  },
+                  {
+                    columnId: 'cuil',
+                    title: 'CUIL',
+                    options: cuilCompleted,
+                  },
+                  {
+                    columnId: 'Posición',
+                    title: 'Posición',
+                    options: departmentCompleted,
+                  },
+                ]}
               />
             </div>
           </TabsContent>
 
           <TabsContent value="pending" className="pt-4">
             <div className="">
-              <BaseDataTable
-                columns={getPendingColums(handleSendInvitation) as any}
-                data={pendingEmployees}
-                savedVisibility={{}}
+              <DataTable
+                columns={getPendingColums(handleSendInvitation) as ColumnDef<Record<string, unknown>>[]}
+                data={pendingEmployees as unknown as Record<string, unknown>[]}
                 tableId="areaTable"
-                toolbarOptions={{
-                  initialVisibleFilters: ['Nombre', 'CUIL', 'Posición', 'Estado'],
-                  filterableColumns: [
-                    {
-                      columnId: 'Nombre',
-                      title: 'Nombre',
-                      options: namesPending,
-                    },
-                    {
-                      columnId: 'CUIL',
-                      title: 'CUIL',
-                      options: cuilPending,
-                    },
-                    {
-                      columnId: 'Posición',
-                      title: 'Posición',
-                      options: departmentPending,
-                    },
-                  ],
-                }}
+                showFilterToggle
+                initialFilterVisibility={{ Nombre: true, CUIL: true, 'Posición': true, Estado: true }}
+                facetedFilters={[
+                  {
+                    columnId: 'Nombre',
+                    title: 'Nombre',
+                    options: namesPending,
+                  },
+                  {
+                    columnId: 'CUIL',
+                    title: 'CUIL',
+                    options: cuilPending,
+                  },
+                  {
+                    columnId: 'Posición',
+                    title: 'Posición',
+                    options: departmentPending,
+                  },
+                ]}
               />
             </div>
           </TabsContent>

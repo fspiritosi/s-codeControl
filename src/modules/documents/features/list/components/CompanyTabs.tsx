@@ -1,7 +1,7 @@
 import { CardContent } from '@/shared/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { CompanyDocumentsType, useLoggedUserStore } from '@/shared/store/loggedUser';
-import { DataTable } from '@/modules/company/features/detail/components/data-table';
+import { DataTable } from '@/shared/components/data-table';
 import { columnsDocuments } from '@/modules/company/features/detail/components/document-columns';
 
 function CompanyTabs({ companyData }: { companyData: CompanyDocumentsType[] }) {
@@ -86,12 +86,12 @@ function CompanyTabs({ companyData }: { companyData: CompanyDocumentsType[] }) {
       </CardContent>
       <TabsContent value="permanentes">
         <div className="p-4">
-          <DataTable isDocuments data={documentCompany || []} columns={columnsDocuments} />
+          <DataTable data={documentCompany || []} columns={columnsDocuments} searchColumn="fullname" searchPlaceholder="Filtrar Nombre" showSearch />
         </div>
       </TabsContent>
       <TabsContent value="mensuales">
         <div className="p-4">
-          <DataTable isDocuments data={documentCompanyMensual || []} columns={columnsDocuments} />
+          <DataTable data={documentCompanyMensual || []} columns={columnsDocuments} searchColumn="fullname" searchPlaceholder="Filtrar Nombre" showSearch />
         </div>
       </TabsContent>
     </Tabs>

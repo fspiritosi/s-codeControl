@@ -1,7 +1,6 @@
-import { fetchCurrentCompany } from '@/modules/company/features/detail/actions.server';
 import { fetchCurrentUser, verifyUserRoleInCompany } from '@/shared/actions/auth';
-// TODO: Phase 8 — migrate .from() queries to Prisma server actions
-import { supabaseServer } from '@/shared/lib/supabase/server';
+import { fetchCompaniesByOwner, fetchSharedCompaniesByProfile } from '@/modules/company/features/list/actions.server';
+import { prisma } from '@/shared/lib/prisma';
 import InitState from '@/shared/store/InitUser';
 import {
   Building2,
@@ -14,113 +13,24 @@ import {
   Truck,
   Users,
   Wrench,
-  HardHat,
 } from 'lucide-react';
 import { cookies } from 'next/headers';
 import SideBar from '@/shared/components/layout/Sidebar';
 
 async function SideBarContainer() {
-  const supabase = await supabaseServer();
   const user = await fetchCurrentUser();
-  const company = await fetchCurrentCompany();
   const userData: any = await verifyUserRoleInCompany();
-  const { data: credentialUser, error: profileError } = await supabase
-    .from('profile')
-    .select('*')
-    .eq('credential_id', user?.id || '');
 
-  const { data: companies, error } = await supabase
-    .from('company')
-    .select(
-      `
-    *,
-    owner_id(*),
-    share_company_users(*,
-      profile(*)
-    ),
-    city (
-      name,
-      id
-    ),
-    province_id (
-      name,
-      id
-    ),
-    companies_employees (
-      employees(
-        *,
-        city (
-          name
-        ),
-        province(
-          name
-        ),
-        workflow_diagram(
-          name
-        ),
-        hierarchical_position(
-          name
-        ),
-        birthplace(
-          name
-        ),
-        contractor_employee(
-          customers(
-            *
-          )
-        )
-      )
-    )
-  `
-    )
-    .eq('owner_id', user?.id || '');
-  if (error) console.error(error);
-  let { data: share_company_users, error: sharedError } = await supabase
-    .from('share_company_users')
-    .select(
-      `*,company_id(*,
-      owner_id(*),
-    share_company_users(*,
-      profile(*)
-    ),
-    city (
-      name,
-      id
-    ),
-    province_id (
-      name,
-      id
-    ),
-    companies_employees (
-      employees(
-        *,
-        city (
-          name
-        ),
-        province(
-          name
-        ),
-        workflow_diagram(
-          name
-        ),
-        hierarchical_position(
-          name
-        ),
-        birthplace(
-          name
-        ),
-        contractor_employee(
-          customers(
-            *
-          )
-        )
-      )
-    )
-  )`
-    )
-    .eq('profile_id', user?.id || '');
+  // Fetch profile by id (replaces supabase .from('profile').eq('credential_id', ...))
+  const credentialUser = user?.id
+    ? await prisma.profile.findMany({ where: { id: user.id } })
+    : [];
 
-  if (sharedError) console.error(sharedError);
+  // Fetch owned companies with relations (replaces supabase .from('company') query)
+  const companies = await fetchCompaniesByOwner(user?.id || '');
+
+  // Fetch shared companies (replaces supabase .from('share_company_users') query)
+  const share_company_users = await fetchSharedCompaniesByProfile(user?.id || '');
 
   let role: any;
 
@@ -128,11 +38,12 @@ async function SideBarContainer() {
   const actualCompany = cookiesStore?.get('actualComp')?.value;
 
   if (actualCompany) {
-    const is_owner = (companies?.find((company) => company.id === actualCompany) as any)?.owner_id.id === user?.id;
+    const ownedCompany = companies?.find((company: any) => company.id === actualCompany);
+    const is_owner = ownedCompany && (ownedCompany as any).owner_id === user?.id;
     const is_shared = share_company_users?.find(
-      (company: any) => company.company_id.id === actualCompany && company.profile_id === user?.id
+      (entry: any) => (entry.company_id === actualCompany || entry.company?.id === actualCompany) && entry.profile_id === user?.id
     );
-    role = is_owner ? 'owner' : is_shared?.role;
+    role = is_owner ? 'owner' : (is_shared as any)?.role;
   }
 
   const sizeIcons = 24;
@@ -142,35 +53,30 @@ async function SideBarContainer() {
       href: '/dashboard',
       icon: <LayoutDashboard size={sizeIcons} />,
       position: 1,
-      // regex: /^\/dashboard(\/|$)/,
     },
     {
       name: 'Empresa',
       href: '/dashboard/company/actualCompany',
       icon: <Building2 size={sizeIcons} />,
       position: 2,
-      // regex: /^\/dashboard\/company\/actualCompany(\/|$)/,
     },
     {
       name: 'Empleados',
       href: '/dashboard/employee',
       icon: <Users size={sizeIcons} />,
       position: 3,
-      // regex: /^\/dashboard\/employee(\/|$)/,
     },
     {
       name: 'Equipos',
       href: '/dashboard/equipment',
       icon: <Truck size={sizeIcons} />,
       position: 4,
-      // regex: /^\/dashboard\/equipment(\/|$)/,
     },
     {
       name: 'Documentación',
       href: '/dashboard/document',
       icon: <FileText size={sizeIcons} />,
       position: 5,
-      // regex: /^\/dashboard\/document(\/|$)/,
     },
     {
       name: 'Operaciones',
@@ -183,7 +89,6 @@ async function SideBarContainer() {
       href: '/dashboard/maintenance',
       icon: <Wrench size={sizeIcons} />,
       position: 6,
-      // regex: /^\/dashboard\/maintenance(\/|$)/,
     },
     {
       name: 'Formularios',
@@ -196,20 +101,12 @@ async function SideBarContainer() {
       href: '/dashboard/hse',
       icon: <GraduationCap size={sizeIcons} />,
       position: 9,
-      // regex: /^\/dashboard\/hse(\/|$)/,
     },
-    // {
-    //   name: 'HSE',
-    //   href: '/dashboard/hse',
-    //   icon: <HardHat size={sizeIcons} />,
-    //   position: 9,
-    // },
     {
       name: 'Ayuda',
       href: '/dashboard/help',
       icon: <HelpCircle size={sizeIcons} />,
       position: 10,
-      // regex: /^\/dashboard\/help(\/|$)/,
     },
   ];
 
@@ -228,15 +125,13 @@ async function SideBarContainer() {
           link.name.toLowerCase() !== 'operaciones' &&
           link.name.toLowerCase() !== 'mantenimiento' &&
           link.name.toLowerCase() !== 'documentación'
-        // link.name.toLowerCase() !== 'dashboard'
       );
       return;
     }
 
     userData?.modulos?.length === 0
       ? (liksToShow = Allinks)
-      : // TODO esta linea se tiene que sacar porque por defecto tiene que tener todos los modulos activos
-        userData?.modulos?.map((mod: string) => {
+      : userData?.modulos?.map((mod: string) => {
           Allinks.filter((link) => {
             link.name.toLowerCase() === mod.toLowerCase() && liksToShow.push(link);
           });

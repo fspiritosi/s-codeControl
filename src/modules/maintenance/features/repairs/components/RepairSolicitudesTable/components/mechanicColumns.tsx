@@ -45,7 +45,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { criticidad, labels, statuses } from '../data';
 import RepairModal from './RepairModal';
-import { DataTableColumnHeader } from './data-table-column-header';
+import { DataTableColumnHeader } from '@/shared/components/data-table';
 
 export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
   {

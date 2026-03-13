@@ -1,10 +1,8 @@
 'use client';
 import { Button } from '@/shared/components/ui/button';
-import { BaseDataTable } from '@/shared/components/data-table/base/data-table';
-import { DataTableColumnHeader } from '@/shared/components/data-table/base/data-table-column-header';
+import { DataTable, DataTableColumnHeader } from '@/shared/components/data-table';
 import { createFilterOptions } from '@/shared/components/utils/utils';
 import { ColumnDef } from '@tanstack/react-table';
-import Cookies from 'js-cookie';
 import { fetchAllTags } from '../../actions.server';
 type Area = Awaited<ReturnType<typeof fetchAllTags>>[0];
 export interface AreaTableProp {
@@ -74,13 +72,10 @@ interface TagTableProp {
   setMode: (mode: 'create' | 'edit') => void;
 }
 function TagTable({ tags, selectedTag, setSelectedTag, setMode }: TagTableProp) {
-  const cookies = Cookies.get('areaTable');
   const handleEdit = (tag: TagTableProp['tags'][number]) => {
     setSelectedTag(tag);
     setMode('edit');
   };
-
-  const savedVisibility = cookies ? JSON.parse(cookies) : {};
 
   const names = createFilterOptions(tags, (tag) => tag.name);
   const colors = createFilterOptions(tags, (tag) => tag.color || '');
@@ -90,31 +85,29 @@ function TagTable({ tags, selectedTag, setSelectedTag, setMode }: TagTableProp) 
     <div className="flex flex-col gap-4 p-4 pt-0">
       <h2 className="text-xl font-bold ">Etiquetas</h2>
 
-      <BaseDataTable
-        columns={getTagColums(handleEdit)}
-        data={tags}
-        savedVisibility={savedVisibility}
+      <DataTable
+        columns={getTagColums(handleEdit) as ColumnDef<Record<string, unknown>>[]}
+        data={tags as unknown as Record<string, unknown>[]}
         tableId="tagTable"
-        toolbarOptions={{
-          initialVisibleFilters: ['Nombre', 'Color', 'Activo'],
-          filterableColumns: [
-            {
-              columnId: 'Nombre',
-              title: 'Nombre',
-              options: names,
-            },
-            {
-              columnId: 'Color',
-              title: 'Color',
-              options: colors,
-            },
-            {
-              columnId: 'Activo',
-              title: 'Activo',
-              options: isActive,
-            },
-          ],
-        }}
+        showFilterToggle
+        initialFilterVisibility={{ Nombre: true, Color: true, Activo: true }}
+        facetedFilters={[
+          {
+            columnId: 'Nombre',
+            title: 'Nombre',
+            options: names,
+          },
+          {
+            columnId: 'Color',
+            title: 'Color',
+            options: colors,
+          },
+          {
+            columnId: 'Activo',
+            title: 'Activo',
+            options: isActive,
+          },
+        ]}
       />
     </div>
   );

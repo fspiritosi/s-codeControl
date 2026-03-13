@@ -6,11 +6,11 @@ import { CompanyDocumentsType, useLoggedUserStore } from '@/shared/store/loggedU
 import cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { ExpiredColums } from '@/modules/dashboard/features/tables/components/columns';
-import { ColumnsMonthly } from '@/modules/dashboard/features/tables/components/columnsMonthly';
-import { DataTable } from '@/modules/company/features/detail/components/data-table';
+import { ExpiredColums } from '@/modules/documents/shared/columns/ExpiredColumns';
+import { ColumnsMonthly } from '@/modules/documents/shared/columns/ColumnsMonthly';
+import { DataTable } from '@/shared/components/data-table';
 import { columnsDocuments } from '@/modules/company/features/detail/components/document-columns';
-import { ExpiredDataTable } from '@/modules/dashboard/features/tables/components/data-table';
+import { ExpiredDataTable } from '@/shared/components/documents/ExpiredDataTable';
 import TypesDocumentsView from '@/modules/documents/features/types/components/TypesDocumentsView';
 import EquipmentDocumentsTable from './EquipmentDocumentsTable';
 
@@ -306,12 +306,12 @@ function TabsDocuments({
             </CardContent>
             <TabsContent value="permanentes">
               <div className="p-4">
-                <DataTable isDocuments data={documentCompany || []} columns={columnsDocuments} />
+                <DataTable data={documentCompany || []} columns={columnsDocuments} searchColumn="fullname" searchPlaceholder="Filtrar Nombre" showSearch />
               </div>
             </TabsContent>
             <TabsContent value="mensuales">
               <div className="p-4">
-                <DataTable isDocuments data={documentCompanyMensual || []} columns={columnsDocuments} />
+                <DataTable data={documentCompanyMensual || []} columns={columnsDocuments} searchColumn="fullname" searchPlaceholder="Filtrar Nombre" showSearch />
               </div>
             </TabsContent>
           </Tabs>

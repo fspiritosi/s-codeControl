@@ -1,6 +1,6 @@
 'use client';
 
-import { DataTableColumnHeader } from '@/modules/hse/features/checklist/components/tables/data-table-column-header';
+import { DataTableColumnHeader } from '@/shared/components/data-table';
 import { Badge } from '@/shared/components/ui/badge';
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';

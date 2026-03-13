@@ -39,7 +39,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useLoggedUserStore } from "@/shared/store/loggedUser"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { DataTablePagination } from "@/modules/dashboard/features/tables/components/data-table-pagination"
+import { DataTablePagination } from "@/shared/components/data-table"
 
 interface DataEquipmentProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any
@@ -672,7 +672,7 @@ export function EquipmentTable<TData, TValue>({ columns, data, role }: DataEquip
           </TableBody>
         </Table>
       </div>
-      <DataTablePagination table={table} />
+      <DataTablePagination table={table} totalRows={table.getFilteredRowModel().rows.length} />
     </div>
   )
 }
