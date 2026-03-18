@@ -13,11 +13,11 @@ import {
   Truck,
   Users,
   Wrench,
-  HardHat,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CardTitle } from '@/shared/components/ui/card';
+import { CompanySwitcher } from '@/shared/components/layout/CompanySwitcher';
 
 export default function SideBar({ Allinks, role }: { Allinks: any; role: string }) {
   const isAuditor = role === 'Auditor';
@@ -66,12 +66,6 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
       icon: <Calendar size={sizeIcons} />,
       regex: /^\/dashboard\/operations(\/|$)/,
     },
-    // {
-    //   name: 'HSE',
-    //   href: '/dashboard/hse',
-    //   icon: <HardHat size={sizeIcons} />,
-    //   regex: /^\/dashboard\/hse(\/|$)/,
-    // },
     {
       name: 'Mantenimiento',
       href: '/dashboard/maintenance',
@@ -105,20 +99,20 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
       return matchLength > bestMatch.matchLength ? { link, matchLength } : bestMatch;
     },
     { link: null, matchLength: 0 }
-  ).link.name;
+  )?.link?.name;
 
   return (
     <div
       key={role}
-      className={`relative top-0 left-0 h-full bg-white dark:bg-muted/50 transition-width duration-500 ${isActive ? 'w-16' : 'w-56'} sticky top-0 h-screen`}
+      className={`relative top-0 left-0 flex flex-col bg-white dark:bg-muted/50 transition-width duration-500 ${isActive ? 'w-16' : 'w-56'} sticky top-0 h-screen`}
     >
-      <div className={cn('flex items-center p-2 justify-center')}>
-        <span className="text-white text-xl flex items-center gap-2 relative overflow-hidden">
-          <img src="/logo-azul.png" alt="codeControl logo" className="size-11 relative block" />
-          <CardTitle className="relative block text-black">CodeControl</CardTitle>
-        </span>
+      {/* Company Switcher - top */}
+      <div className="pt-3 pb-2">
+        <CompanySwitcher collapsed={isActive} />
       </div>
-      <ul className="mt-6">
+
+      {/* Navigation links */}
+      <ul className="flex-1 overflow-y-auto mt-2">
         {Allinks.map((link: any) => (
           <Link
             key={link.name}
@@ -138,6 +132,12 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
           </Link>
         ))}
       </ul>
+
+      {/* Logo - bottom */}
+      <div className={cn('flex items-center p-3 border-t', isActive ? 'justify-center' : 'justify-center gap-2')}>
+        <img src="/logo-azul.png" alt="codeControl logo" className="size-8" />
+        {!isActive && <CardTitle className="text-black text-sm">CodeControl</CardTitle>}
+      </div>
     </div>
   );
 }

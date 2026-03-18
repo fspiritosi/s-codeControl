@@ -36,7 +36,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
 
   setActualCompany: (company: Company[0]) => {
     set({ actualCompany: company });
-    cookies.set('actualComp', company.id);
+    cookies.set('actualComp', company.id, { path: '/' });
 
     // Trigger side effects on other stores
     useCountriesStore.getState().documentTypes(company?.id);

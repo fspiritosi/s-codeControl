@@ -6,6 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **CodeControl** — Multi-tenant SaaS for managing employees, equipment, documents, daily reports, HSE/training, repair requests, and organizational diagrams. Built with Next.js 14 (App Router) + Supabase + TypeScript.
 
+## Git Rules
+
+- Nunca hagas un push de sin que me lo indique.
+- Cuando una tarea impacta en mas de 5 archivos o en mas de 100 lineas de codigo, podes hacer el commit ni bien terminas de probar que todo funciona. Cuando sea menor a estos valores, se hacen cuando te lo indique el usuario.
+
 ## Common Commands
 
 ```bash

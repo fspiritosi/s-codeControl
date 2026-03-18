@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import { useAuthStore } from './authStore';
 import { useCompanyStore } from './companyStore';
 import { useDocumentStore } from './documentStore';
+import Cookies from 'js-cookie';
 
 type AuthUser = { id: string; email?: string; role?: string; [key: string]: any } | null;
 
@@ -28,7 +29,6 @@ export default function InitState({
     router.refresh();
   }, [role]);
 
-  let selectedCompany: Company;
   useEffect(() => {
     if (!initState.current) {
       // 1. Auth store
@@ -47,35 +47,51 @@ export default function InitState({
       }
       useCompanyStore.setState({ allCompanies: companies });
 
-      const savedCompany = localStorage.getItem('company_id') || '';
+      // 3. Determine which company to activate
+      // Priority: cookie > localStorage > by_defect > first owned > first shared
+      const cookieCompanyId = Cookies.get('actualComp');
 
-      if (savedCompany) {
-        const company = share_company_users?.find(
-          (company: any) => company.company_id.id === JSON.parse(savedCompany)
-        )?.company_id;
-
-        if (company) {
+      // Check if cookie points to a valid company
+      if (cookieCompanyId) {
+        const ownedMatch = companies?.find((c: any) => c.id === cookieCompanyId);
+        const sharedMatch = share_company_users?.find(
+          (sc: any) => sc.company_id === cookieCompanyId || sc.company?.id === cookieCompanyId
+        );
+        if (ownedMatch) {
+          useCompanyStore.getState().setActualCompany(ownedMatch);
+          initState.current = true;
+          return;
+        }
+        if (sharedMatch) {
+          const company = sharedMatch.company ?? sharedMatch.company_id;
           useCompanyStore.getState().setActualCompany(company);
+          initState.current = true;
           return;
         }
       }
 
-      const defaultCompany = useCompanyStore.getState()?.allCompanies?.filter((company) => company.by_defect) ?? [];
-
-      selectedCompany = defaultCompany.length ? defaultCompany : (useCompanyStore.getState()?.allCompanies ?? []);
-
-      if (companies?.length > 1) {
-        if (selectedCompany) {
-          useCompanyStore.getState()?.setActualCompany(selectedCompany[0]);
+      // Check localStorage (for shared company selections)
+      const savedCompany = localStorage.getItem('company_id') || '';
+      if (savedCompany) {
+        const company = share_company_users?.find(
+          (sc: any) => sc.company_id?.id === JSON.parse(savedCompany)
+        )?.company_id;
+        if (company) {
+          useCompanyStore.getState().setActualCompany(company);
+          initState.current = true;
+          return;
         }
       }
 
-      if (companies?.length === 1) {
-        useCompanyStore.getState()?.setActualCompany(companies[0]);
-      }
-
-      if ((!companies || companies.length === 0) && share_company_users?.length! > 0) {
-        useCompanyStore.getState()?.setActualCompany(share_company_users?.[0]?.company_id);
+      // Fall back to by_defect company, then first owned, then first shared
+      const defaultCompany = companies?.filter((c: any) => c.by_defect)?.[0];
+      if (defaultCompany) {
+        useCompanyStore.getState().setActualCompany(defaultCompany);
+      } else if (companies?.length > 0) {
+        useCompanyStore.getState().setActualCompany(companies[0]);
+      } else if (share_company_users?.length > 0) {
+        const company = share_company_users[0].company ?? share_company_users[0].company_id;
+        useCompanyStore.getState().setActualCompany(company);
       }
     }
 
