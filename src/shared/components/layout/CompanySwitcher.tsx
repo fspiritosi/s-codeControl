@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avat
 import { Check, ChevronsUpDown, Plus, Loader } from 'lucide-react';
 import Cookies from 'js-cookie';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import type { Company } from '@/shared/zodSchemas/schemas';
 
@@ -16,6 +17,7 @@ export function CompanySwitcher({ collapsed }: { collapsed: boolean }) {
   const setActualCompany = useLoggedUserStore((state) => state.setActualCompany);
   const setNewDefectCompany = useLoggedUserStore((state) => state.setNewDefectCompany);
 
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -46,9 +48,8 @@ export function CompanySwitcher({ collapsed }: { collapsed: boolean }) {
     setNewDefectCompany(company as Company[0]);
     setActualCompany(company as Company[0]);
     setOpen(false);
-    // Small delay to ensure cookie is set before navigation
-    await new Promise((r) => setTimeout(r, 100));
-    location.replace('/dashboard');
+    router.refresh();
+    router.push('/dashboard');
   };
 
   if (!actualCompany) {

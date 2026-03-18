@@ -166,30 +166,3 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
     }
   },
 }));
-
-// Polling replacement for real-time subscriptions
-let companyPollInterval: NodeJS.Timeout | null = null;
-
-function startCompanyPolling() {
-  if (companyPollInterval) return;
-  companyPollInterval = setInterval(() => {
-    const { useAuthStore } = require('./authStore');
-    const profileId = useAuthStore.getState().profile?.[0]?.id;
-    if (profileId) {
-      useCompanyStore.getState().howManyCompanies(profileId);
-    }
-  }, 30000);
-}
-
-function stopCompanyPolling() {
-  if (companyPollInterval) {
-    clearInterval(companyPollInterval);
-    companyPollInterval = null;
-  }
-}
-
-if (typeof window !== 'undefined') {
-  startCompanyPolling();
-}
-
-export { startCompanyPolling, stopCompanyPolling };

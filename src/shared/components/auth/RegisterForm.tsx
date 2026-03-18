@@ -14,7 +14,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { CloseEyeIcon } from '@/shared/components/common/svg/closeEye';
-import { Loader } from '@/shared/components/common/svg/loader';
+import { Loader as LoaderIcon } from 'lucide-react';
 import { EyeIcon } from '@/shared/components/common/svg/openEye';
 import { Toggle } from '@/shared/components/ui/toggle';
 
@@ -156,7 +156,7 @@ export function RegisterForm() {
 
           <div className="flex w-full justify-center flex-col items-center gap-5">
             <Button className="w-[100%] sm:w-[80%] lg:w-[60%] self-center" type="submit" disabled={showLoader}>
-              {showLoader ? <Loader /> : 'Ingresar'}
+              {showLoader ? <LoaderIcon className="size-4 animate-spin" /> : 'Ingresar'}
             </Button>
             <p className="text-[0.9rem]">
               ¿Ya tienes una cuenta?{' '}

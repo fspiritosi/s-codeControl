@@ -16,7 +16,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 import { GoogleIcon } from '@/shared/components/common/svg/google';
-import { Loader } from '@/shared/components/common/svg/loader';
+import { Loader as LoaderIcon } from 'lucide-react';
 import { Separator } from '@/shared/components/ui/separator';
 
 export function LoginForm() {
@@ -123,7 +123,7 @@ export function LoginForm() {
               disabled={showLoader}
               variant="default"
             >
-              {showLoader ? <Loader /> : 'Iniciar sesión'}
+              {showLoader ? <LoaderIcon className="size-4 animate-spin" /> : 'Iniciar sesión'}
             </Button>
             <Link href="/register" className="text-[0.8rem] ">
               ¿No tienes una cuenta? <span className="text-blue-400 ml-1">Créate una aquí</span>

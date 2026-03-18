@@ -19,19 +19,18 @@ export default async function DashboardComponent() {
   // const data2 = await fetchAllEquipmentJUSTEXAMPLE();
   // const data3 = await fetchAllRepairsJUSTEXAMPLE();
   return (
-    <div className="">
-      <section className="grid sm:grid-cols-2 grid-cols-1 gap-6 mx-7">
-        {false && <CardsGrid />}
-        {/* <CardTitle className="text-[2vw]">Bienvenido a tu dashboard</CardTitle> */}
+    <div className="px-6">
+      <section className="mb-4">
+        <CardsGrid />
       </section>
       <Tabs defaultValue="Principal" className="w-full">
-        <TabsList className="ml-6">
+        <TabsList>
           <TabsTrigger value="Principal">Principal</TabsTrigger>
           {/* <TabsTrigger value="Empleados">Empleados</TabsTrigger> */}
           {/* <TabsTrigger value="Mantenimiento">Mantenimiento</TabsTrigger> */}
         </TabsList>
         <TabsContent className="w-full" value="Principal">
-          <section className="md:mx-7 grid grid-cols-1 mt-6 xl:grid-cols-4 gap-3 mb-4 ">
+          <section className="grid grid-cols-1 mt-6 xl:grid-cols-4 gap-3 mb-4">
             <section className="flex flex-col gap-4 w-full">
               <ResoursesChart />
               <MissingDocumentList />

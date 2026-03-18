@@ -657,11 +657,15 @@ export function EmployeesTable<TData, TValue>({ columns, data, role }: DataTable
                           ) : cell.column.id === "status" ? (
                             <Badge
                               variant={
-                                cell.getValue() === "Completo"
-                                  ? "success"
-                                  : cell.getValue() === "Completo con doc vencida"
-                                    ? "yellow"
-                                    : "destructive"
+                                (
+                                  {
+                                    Avalado: "success",
+                                    Completo: "success",
+                                    Incompleto: "yellow",
+                                    "No avalado": "destructive",
+                                    "Completo con doc vencida": "yellow",
+                                  } as Record<string, "success" | "yellow" | "destructive">
+                                )[cell.getValue() as string] ?? "destructive"
                               }
                             >
                               {cell.getValue() as React.ReactNode}

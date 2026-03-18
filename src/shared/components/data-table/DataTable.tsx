@@ -14,6 +14,7 @@ import {
 } from '@tanstack/react-table';
 
 import { cn } from '@/shared/lib/utils';
+import { EmptyState } from '@/shared/components/common/EmptyState';
 import {
   Table,
   TableBody,
@@ -97,9 +98,8 @@ function DataTableBody<TData, TValue = unknown>({
             <TableRow>
               <TableCell
                 colSpan={columns.length}
-                className="h-24 text-center"
               >
-                {emptyMessage}
+                <EmptyState title={emptyMessage} />
               </TableCell>
             </TableRow>
           )}
@@ -235,12 +235,14 @@ function DataTableServerSide<TData extends Record<string, unknown>, TValue = unk
         rowClassName={rowClassName}
       />
 
-      <DataTablePagination
-        table={table}
-        totalRows={totalRows}
-        pageSizeOptions={pageSizeOptions}
-        showRowSelection={showRowSelection && enableRowSelection}
-      />
+      {totalRows > 0 && (
+        <DataTablePagination
+          table={table}
+          totalRows={totalRows}
+          pageSizeOptions={pageSizeOptions}
+          showRowSelection={showRowSelection && enableRowSelection}
+        />
+      )}
     </div>
   );
 }
@@ -363,12 +365,14 @@ function DataTableClientSide<TData extends Record<string, unknown>, TValue = unk
         rowClassName={rowClassName}
       />
 
-      <DataTablePagination
-        table={table}
-        totalRows={totalRows}
-        pageSizeOptions={pageSizeOptions}
-        showRowSelection={showRowSelection && enableRowSelection}
-      />
+      {totalRows > 0 && (
+        <DataTablePagination
+          table={table}
+          totalRows={totalRows}
+          pageSizeOptions={pageSizeOptions}
+          showRowSelection={showRowSelection && enableRowSelection}
+        />
+      )}
     </div>
   );
 }

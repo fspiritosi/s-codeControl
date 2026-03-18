@@ -104,7 +104,7 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
   return (
     <div
       key={role}
-      className={`relative top-0 left-0 flex flex-col bg-white dark:bg-muted/50 transition-width duration-500 ${isActive ? 'w-16' : 'w-56'} sticky top-0 h-screen`}
+      className={`relative top-0 left-0 flex flex-col bg-white dark:bg-muted/50 border-r border-border/50 transition-width duration-500 ease-out ${isActive ? 'w-16' : 'w-56'} sticky top-0 h-screen`}
     >
       {/* Company Switcher - top */}
       <div className="pt-3 pb-2">
@@ -125,9 +125,9 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
               isActive ? 'ml-0' : 'ml-4'
             )}
           >
-            <div className="flex items-center overflow-hidden">
+            <div className={cn('flex items-center overflow-hidden', link.name === activeLink ? 'text-primary' : 'text-foreground')}>
               <span className="relative">{Allinks33.find((link2) => link2.name === link.name)?.icon}</span>
-              <span className="ml-6 text-black relative block">{link.name}</span>
+              <span className="ml-6 relative block">{link.name}</span>
             </div>
           </Link>
         ))}
@@ -136,7 +136,7 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
       {/* Logo - bottom */}
       <div className={cn('flex items-center p-3 border-t', isActive ? 'justify-center' : 'justify-center gap-2')}>
         <img src="/logo-azul.png" alt="codeControl logo" className="size-8" />
-        {!isActive && <CardTitle className="text-black text-sm">CodeControl</CardTitle>}
+        {!isActive && <CardTitle className="text-foreground text-sm">CodeControl</CardTitle>}
       </div>
     </div>
   );

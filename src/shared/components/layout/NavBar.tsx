@@ -73,10 +73,10 @@ export default function NavBar() {
   };
 
   return (
-    <nav className=" flex flex-shrink items-center justify-end sm:justify-between  text-white pr-4 py-4 mb-2">
-      <div className=" items-center hidden sm:flex gap-6">
-        <button onClick={handleCloseSidebar} className="text-white relative w-fit ml-7 ">
-          <HamburgerMenuIcon className="size-8 text-black font-bold" />
+    <nav className="flex flex-shrink items-center justify-end sm:justify-between pr-4 py-4 mb-2">
+      <div className="items-center hidden sm:flex gap-6">
+        <button onClick={handleCloseSidebar} className="relative w-fit ml-7" aria-label="Abrir/cerrar menú lateral">
+          <HamburgerMenuIcon className="size-7 text-foreground" />
         </button>
       </div>
       <div className="flex gap-8 items-center">
@@ -88,7 +88,7 @@ export default function NavBar() {
           </Link>
         ) : null}
         <DropdownMenu>
-          <DropdownMenuTrigger>
+          <DropdownMenuTrigger aria-label="Notificaciones">
             <div className="relative">
               {notifications?.length ? (
                 <DotFilledIcon className="text-blue-600 absolute size-7 top-[-8px] right-[-10px] p-0" />
@@ -96,7 +96,7 @@ export default function NavBar() {
                 false
               )}
 
-              <BellIcon className="text-black cursor-pointer size-5 dark:text-white" />
+              <BellIcon className="text-foreground cursor-pointer size-5" />
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="center" className="min-w-[400px] bg-transparent border-none shadow-none">
@@ -200,10 +200,18 @@ export default function NavBar() {
         <ModeToggle />
         <div className="flex-shrink justify-center items-center flex">
           <DropdownMenu>
-            <DropdownMenuTrigger className="cursor-pointer" asChild>
+            <DropdownMenuTrigger className="cursor-pointer" asChild aria-label="Menú de usuario">
               <Avatar className="size-9">
                 <AvatarImage src={typeof avatarUrl === 'object' ? avatarUrl.avatar : ''} />
-                <AvatarFallback>CN</AvatarFallback>
+                <AvatarFallback>
+                  {typeof avatarUrl === 'object' && avatarUrl.fullname
+                    ? avatarUrl.fullname
+                        .split(' ')
+                        .slice(0, 2)
+                        .map((w: string) => w.charAt(0).toUpperCase())
+                        .join('')
+                    : 'U'}
+                </AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

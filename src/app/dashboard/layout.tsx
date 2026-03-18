@@ -1,9 +1,8 @@
 // import { AlertComponent } from '@/shared/components/common/AlertComponent'
 import NavBar from '@/shared/components/layout/NavBar';
 import SideBarContainer from '@/shared/components/layout/SideBarContainer';
-import { Inter } from 'next/font/google';
+import { DashboardBreadcrumbs } from '@/shared/components/layout/DashboardBreadcrumbs';
 import '../globals.css';
-const font = Inter({ subsets: ['latin'] });
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,7 +13,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <div className="border-r border-b border-muted/50">
         <NavBar />
       </div>
-      <div >{children}</div>
+      <div className="overflow-y-auto">
+        <div className="px-6 py-2">
+          <DashboardBreadcrumbs />
+        </div>
+        <div className="animate-fade-in">
+          {children}
+        </div>
+      </div>
     </div>
   );
 }

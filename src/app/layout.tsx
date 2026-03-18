@@ -3,10 +3,9 @@ import { ThemeProvider } from '@/shared/components/common/theme-provider';
 import { Toaster as Sonner } from '@/shared/components/ui/sonner';
 import { Toaster } from '@/shared/components/ui/toaster';
 import type { Metadata } from 'next';
-import { Inter, Poppins } from 'next/font/google';
+import { Poppins } from 'next/font/google';
 
 import './globals.css';
-const inter = Inter({ subsets: ['latin'] });
 const popinsFont = Poppins({
   subsets: ['latin'],
   weight: ['400', '600', '700'],
@@ -22,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es">
       <body className={popinsFont.className}>
         <AuthProvider>
-          <ThemeProvider attribute="class" defaultTheme="ligth" enableSystem disableTransitionOnChange>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
             <div>
               <Toaster />
               <Sonner richColors={true} />

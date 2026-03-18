@@ -388,6 +388,21 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
   {
     accessorKey: 'status',
     header: 'Estado',
+    cell: ({ row }) => {
+      const statusVariants: Record<string, 'success' | 'yellow' | 'destructive'> = {
+        Avalado: 'success',
+        Completo: 'success',
+        Incompleto: 'yellow',
+        'No avalado': 'destructive',
+        'Completo con doc vencida': 'yellow',
+      };
+      const status = row.original.status as string | undefined;
+      return (
+        <Badge variant={statusVariants[status ?? ''] ?? 'destructive'}>
+          {status}
+        </Badge>
+      );
+    },
   },
   {
     accessorKey: 'type',

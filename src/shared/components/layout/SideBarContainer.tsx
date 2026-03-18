@@ -19,18 +19,14 @@ import SideBar from '@/shared/components/layout/Sidebar';
 
 async function SideBarContainer() {
   const user = await fetchCurrentUser();
-  const userData: any = await verifyUserRoleInCompany();
 
-  // Fetch profile by id (replaces supabase .from('profile').eq('credential_id', ...))
-  const credentialUser = user?.id
-    ? await prisma.profile.findMany({ where: { id: user.id } })
-    : [];
-
-  // Fetch owned companies with relations (replaces supabase .from('company') query)
-  const companies = await fetchCompaniesByOwner(user?.id || '');
-
-  // Fetch shared companies (replaces supabase .from('share_company_users') query)
-  const share_company_users = await fetchSharedCompaniesByProfile(user?.id || '');
+  // Run independent queries in parallel
+  const [userData, credentialUser, companies, share_company_users] = await Promise.all([
+    verifyUserRoleInCompany(),
+    user?.id ? prisma.profile.findMany({ where: { id: user.id } }) : Promise.resolve([]),
+    fetchCompaniesByOwner(user?.id || ''),
+    fetchSharedCompaniesByProfile(user?.id || ''),
+  ]) as [any, any[], any[], any[]];
 
   let role: any;
 
