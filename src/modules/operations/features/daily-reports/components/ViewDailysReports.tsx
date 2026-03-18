@@ -115,7 +115,7 @@ export default function ViewDailysReports() {
       }
       const data = await response.json();
 
-      setDailyReports(data.dailyReports);
+      setDailyReports(data?.data?.dailyReports ?? data?.dailyReports ?? []);
     } catch (error) {
       console.error("Error fetching reports:", error);
       toast({

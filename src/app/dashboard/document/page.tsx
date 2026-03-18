@@ -18,9 +18,12 @@ export default async function page() {
   const user = await supabase.auth.getUser();
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const cookiesStore = await cookies();
-  const userShared = await prisma.share_company_users.findMany({
-    where: { profile_id: user?.data?.user?.id || '' },
-  });
+  const userId = user?.data?.user?.id;
+  const userShared = userId
+    ? await prisma.share_company_users.findMany({
+        where: { profile_id: userId },
+      })
+    : [];
   const role: string | null = userShared?.[0]?.role || null;
   const actualCompany = cookiesStore.get('actualComp')?.value;
 

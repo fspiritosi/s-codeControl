@@ -14,9 +14,10 @@ export default async function RepairSolicitudes({
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const coockiesStore = await cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
-  const { repair_solicitudes } = await fetch(`${URL}/api/repair_solicitud?actual=${company_id}`).then((res) =>
+  const repairRes = await fetch(`${URL}/api/repair_solicitud?actual=${company_id}`).then((res) =>
     res.json()
   );
+  const repair_solicitudes = repairRes?.data?.repair_solicitudes ?? repairRes?.repair_solicitudes ?? [];
 
   const Allrepairs = default_equipment_id
     ? (repair_solicitudes as RepairsSolicituds).filter((repair) => repair.equipment_id.id === default_equipment_id)

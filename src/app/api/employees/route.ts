@@ -1,5 +1,6 @@
 import { prisma } from '@/shared/lib/prisma';
 import { apiSuccess, apiError } from '@/shared/lib/api-response';
+import { serializeBigInt } from '@/shared/lib/utils';
 import { NextRequest } from 'next/server';
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
     const employees = await prisma.employees.findMany({
       where: { company_id },
     });
-    return apiSuccess({ employees });
+    return apiSuccess({ employees: serializeBigInt(employees) });
   } catch (error) {
     console.error(error);
     return apiError('Failed to fetch employees', 500);

@@ -18,14 +18,17 @@ async function EmployesDiagram() {
   } = await supabase.auth.getUser();
   const coockiesStore = await cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
-  const { employees } = await fetch(`${URL}/api/employees?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
+  const employeesRes = await fetch(`${URL}/api/employees?actual=${company_id}&user=${user?.id}`).then((e) => e.json());
+  const employees = employeesRes?.data?.employees ?? employeesRes?.employees ?? [];
 
   const activeEmploees = setEmployeesToShow(employees?.filter((e: any) => e.is_active));
 
-  const { data: diagrams } = await fetch(`${URL}/api/employees/diagrams`).then((e) => e.json());
-  const { data: diagrams_types } = await fetch(
+  const diagramsRes = await fetch(`${URL}/api/employees/diagrams`).then((e) => e.json());
+  const diagrams = diagramsRes?.data?.diagrams ?? diagramsRes?.diagrams ?? [];
+  const diagramsTypesRes = await fetch(
     `${URL}/api/employees/diagrams/tipos?actual=${company_id}&user=${user?.id}`
   ).then((e) => e.json());
+  const diagrams_types = diagramsTypesRes?.data?.diagrams_types ?? diagramsTypesRes?.diagrams_types ?? [];
 
   const employees2 = await fetchAllActivesEmployees();
   const diagrams2 = await fetchDiagrams();

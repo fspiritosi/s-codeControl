@@ -24,12 +24,28 @@ export const fetchAllEquipmentWithRelations = async () => {
       },
       orderBy: { domain: 'asc' },
     });
-    return data;
+    return data.map(remapVehicle);
   } catch (error) {
     console.error('Error fetching vehicles:', error);
     return [];
   }
 };
+
+// Remap Prisma relation names to match VehicleWithBrand interface
+function remapVehicle(v: any) {
+  const { brand_rel, model_rel, type_rel, type_of_vehicle_rel, contractor_equipment, ...rest } = v;
+  return {
+    ...rest,
+    brand: brand_rel ?? null,
+    model: model_rel ?? null,
+    type: type_rel ?? null,
+    types_of_vehicles: type_of_vehicle_rel ?? null,
+    contractor_equipment: contractor_equipment?.map((ce: any) => ({
+      ...ce,
+      contractor_id: ce.contractor ?? ce.contractor_id ?? null,
+    })) ?? [],
+  };
+}
 
 export const fetchAllEquipment = async (company_equipment_id?: string) => {
   const { companyId } = await getActionContext();
@@ -69,7 +85,7 @@ export const fetchAllEquipment = async (company_equipment_id?: string) => {
       });
 
       const equipments = data?.[0]?.customer?.contractor_equipment;
-      const allEquipments = equipments?.map((equipment) => equipment.vehicle);
+      const allEquipments = equipments?.map((equipment) => remapVehicle(equipment.vehicle));
       return allEquipments || [];
     } catch (error) {
       console.error('Error fetching equipment:', error);
@@ -90,7 +106,7 @@ export const fetchAllEquipment = async (company_equipment_id?: string) => {
         },
       },
     });
-    return data;
+    return data.map(remapVehicle);
   } catch (error) {
     console.error('Error fetching equipment:', error);
     return [];

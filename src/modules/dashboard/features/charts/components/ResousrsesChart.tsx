@@ -57,8 +57,10 @@ export function ResoursesChart() {
 
   useEffect(() => {
     async function getResources() {
-      const { employees } = await fetch(`${URL}/api/employees?actual=${company_id}`).then((e) => e.json());
-      const { equipments } = await fetch(`${URL}/api/equipment?actual=${company_id}`).then((e) => e.json());
+      const res1 = await fetch(`${URL}/api/employees?actual=${company_id}`).then((e) => e.json());
+      const employees = res1?.data?.employees ?? res1?.employees ?? [];
+      const res2 = await fetch(`${URL}/api/equipment?actual=${company_id}`).then((e) => e.json());
+      const equipments = res2?.data?.equipments ?? res2?.equipments ?? [];
 
       setData({
         totalResourses: employees?.length + equipments?.length,

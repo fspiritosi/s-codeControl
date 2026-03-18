@@ -97,15 +97,17 @@ export function useDailyReport({ reportData, allReport }: DailyReportProps) {
   };
 
   async function fetchEmployees() {
-    const { employees } = await fetch(`${URL}/api/employees/?actual=${company_id}`).then((e) => e.json());
+    const res = await fetch(`${URL}/api/employees/?actual=${company_id}`).then((e) => e.json());
+    const employees = res?.data?.employees ?? res?.employees ?? [];
     setEmployees(employees);
     return employees;
   }
 
   async function fetchCustomers() {
-    const { customers, error } = await fetch(`${URL}/api/company/customers/?actual=${company_id}`).then((e) =>
+    const res = await fetch(`${URL}/api/company/customers/?actual=${company_id}`).then((e) =>
       e.json()
     );
+    const customers = res?.data?.customers ?? res?.customers ?? [];
     const activeCustomers = customers.filter((customer: Customers) => customer.is_active);
     setIsLoading(false);
     setCustomers(activeCustomers);
@@ -128,20 +130,23 @@ export function useDailyReport({ reportData, allReport }: DailyReportProps) {
   }
 
   async function fetchServices() {
-    const { services } = await fetch(`${URL}/api/services?actual=${company_id}`).then((e) => e.json());
+    const res = await fetch(`${URL}/api/services?actual=${company_id}`).then((e) => e.json());
+    const services = res?.data?.services ?? res?.services ?? [];
     const activeServices = services.filter((service: Services) => service.is_active);
     setServices(activeServices);
     return services;
   }
 
   async function fetchItems() {
-    const { items } = await fetch(`${URL}/api/services/items/report?actual=${company_id}`).then((e) => e.json());
+    const res = await fetch(`${URL}/api/services/items/report?actual=${company_id}`).then((e) => e.json());
+    const items = res?.data?.items ?? res?.items ?? [];
     setItems(items);
     return items;
   }
 
   async function fetchDiagrams() {
-    const { data: diagrams } = await fetch(`${URL}/api/employees/diagrams`).then((e) => e.json());
+    const res = await fetch(`${URL}/api/employees/diagrams`).then((e) => e.json());
+    const diagrams = res?.data?.diagrams ?? res?.data ?? res?.diagrams ?? [];
     setDiagram(diagrams);
     return diagrams;
   }

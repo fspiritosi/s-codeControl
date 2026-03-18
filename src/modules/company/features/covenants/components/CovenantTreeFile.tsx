@@ -11,16 +11,16 @@ export default async function CovenantTreeFile() {
     include: { covenants: { include: { categories: true } } },
   });
 
-  function formatData(input: Guild[] | null): FormattedOutput {
+  function formatData(input: any[] | null): FormattedOutput {
     return input?.map((guild) => ({
       name: guild.name,
       type: 'sindicato',
       id: guild.id,
-      children: guild.covenant.map((covenant) => ({
+      children: (guild.covenants ?? guild.covenant ?? []).map((covenant: any) => ({
         name: covenant.name,
         type: 'convenio',
         id: covenant.id,
-        children: covenant.category.map((category) => ({
+        children: (covenant.categories ?? covenant.category ?? []).map((category: any) => ({
           name: category.name,
           type: 'categoria',
           id: category.id,

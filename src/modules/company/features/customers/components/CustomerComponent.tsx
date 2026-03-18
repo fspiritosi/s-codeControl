@@ -65,8 +65,8 @@ export default function ClientRegister({ id, equipment }: { id: string; equipmen
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
 
   const fetchItems = async () => {
-    const { items } = await fetch(`${URL}/api/services/items/report?actual=${actualCompany}`).then((e) => e.json());
-    setItems(items);
+    const res = await fetch(`${URL}/api/services/items/report?actual=${actualCompany}`).then((e) => e.json());
+    setItems(res?.data?.items ?? res?.items ?? []);
   };
 
   const handleCloseModal = () => {
@@ -90,14 +90,15 @@ export default function ClientRegister({ id, equipment }: { id: string; equipmen
     setUserId(user);
   };
   const fetchemploy = async () => {
-    const { employees } = await fetch(`${URL}/api/employees/table?actual=${actualCompany}&user=${userId}`).then((e) =>
+    const res = await fetch(`${URL}/api/employees/table?actual=${actualCompany}&user=${userId}`).then((e) =>
       e.json()
     );
-    setEmploy(employees);
+    setEmploy(res?.data?.employees ?? res?.employees ?? []);
   };
 
   const fetchServices = async () => {
-    const { services } = await fetch(`${URL}/api/services?actual=${actualCompany}`).then((e) => e.json());
+    const resServices = await fetch(`${URL}/api/services?actual=${actualCompany}`).then((e) => e.json());
+    const services = resServices?.data?.services ?? resServices?.services ?? [];
     const filteredServices = services.filter(
       (service: any) => service.customer_id.toString() === id && service.is_active === true
     );

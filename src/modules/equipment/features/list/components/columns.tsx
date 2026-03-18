@@ -404,7 +404,7 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
     accessorKey: 'types_of_vehicles',
     header: 'Tipos de vehiculos',
     cell: ({ row }) => {
-      return <Badge>{row.original.types_of_vehicles.name as string}</Badge>;
+      return <Badge>{row.original.types_of_vehicles?.name as string}</Badge>;
     },
   },
 
@@ -462,10 +462,11 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
         'en reparacion': { color: 'bg-yellow-500', icon: RiToolsFill },
       };
 
+      const config = row.original?.condition ? conditionConfig[row.original.condition] : null;
       return (
         <Badge variant={variants[row.original?.condition ?? 'default'] as 'default'}>
-          {row.original?.condition &&
-            React.createElement(conditionConfig[row.original?.condition]?.icon, { className: 'mr-2 size-4' })}
+          {config?.icon &&
+            React.createElement(config.icon, { className: 'mr-2 size-4' })}
           {row.original.condition}
         </Badge>
       );
@@ -498,11 +499,11 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
     accessorKey: 'model',
     header: 'Modelo',
     cell: ({ row }) => {
-      return <div>{row.original.model.name}</div>;
+      return <div>{row.original.model?.name}</div>;
     },
     filterFn: (row, columnId, filterValue) => {
       //Filtrar por modelo
-      if (row.original.model.name.toLowerCase().includes(filterValue.toLowerCase())) {
+      if (row.original.model?.name?.toLowerCase().includes(filterValue.toLowerCase())) {
         return true;
       } else {
         return false;

@@ -36,10 +36,12 @@ async function RepairTypes({
   } = await supabase.auth.getUser();
   const coockiesStore = await cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
-  const { types_of_repairs } = await fetch(`${URL}/api/repairs?actual=${company_id}`).then((res) => res.json());
-  const { equipments } = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) =>
+  const repairsRes = await fetch(`${URL}/api/repairs?actual=${company_id}`).then((res) => res.json());
+  const types_of_repairs = repairsRes?.data?.types_of_repairs ?? repairsRes?.types_of_repairs ?? [];
+  const equipmentRes = await fetch(`${URL}/api/equipment?actual=${company_id}&user=${user?.id}`).then((e) =>
     e.json()
   );
+  const equipments = equipmentRes?.data?.equipments ?? equipmentRes?.equipments ?? [];
   const vehiclesFormatted = equipment_id
     ? setVehiclesToShow(equipments.filter((e: any) => e.id === equipment_id)) || []
     : setVehiclesToShow(equipments) || [];

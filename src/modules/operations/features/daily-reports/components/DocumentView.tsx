@@ -49,7 +49,8 @@ export default function DocumentView({ documentUrl, row, rowId, customerName, co
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const { data } = await fetch(`${URL}/api/company?actual=${company_id}`).then(res => res.json())
+                const res = await fetch(`${URL}/api/company?actual=${company_id}`).then(res => res.json())
+                const data = res?.data ?? res ?? null
                 setDocumentData(data)
                 setIsLoading(false)
             } catch (error) {
