@@ -254,51 +254,55 @@ export const getOpenRepairsSolicitudesByArrayClientSide = async (
   return (data ?? []) as unknown as RepairRequestWithVehicle[];
 };
 
-export const formatEmployeeDocuments = (doc: EmployeeDocumentWithContractors) => {
+export const formatEmployeeDocuments = (doc: any) => {
+  // Support both Prisma relation names and legacy Supabase names
+  const emp = doc.employee ?? doc.applies;
+  const docType = doc.document_type ?? doc.id_document_types;
   return {
     date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
-    allocated_to: doc.applies?.contractor_employee?.map((doc: any) => doc.contractors?.name).join(', '),
-    documentName: doc.id_document_types?.name,
+    allocated_to: emp?.contractor_employee?.map((ce: any) => ce.contractor?.name ?? ce.contractors?.name).join(', '),
+    documentName: docType?.name,
     state: doc.state,
-    multiresource: doc.id_document_types?.multiresource ? 'Si' : 'No',
-    isItMonthly: doc.id_document_types?.is_it_montlhy,
+    multiresource: docType?.multiresource ? 'Si' : 'No',
+    isItMonthly: docType?.is_it_montlhy,
     validity: doc.validity,
-    mandatory: doc.id_document_types?.mandatory ? 'Si' : 'No',
+    mandatory: docType?.mandatory ? 'Si' : 'No',
     id: doc.id,
-    resource: `${doc.applies?.lastname?.charAt(0)?.toUpperCase()}${doc?.applies?.lastname.slice(
-      1
-    )} ${doc.applies?.firstname?.charAt(0)?.toUpperCase()}${doc?.applies?.firstname.slice(1)}`,
-    document_number: doc.applies?.document_number,
-    employee_id: doc.applies?.id,
+    resource: `${emp?.lastname?.charAt(0)?.toUpperCase()}${emp?.lastname?.slice(1) ?? ''} ${emp?.firstname?.charAt(0)?.toUpperCase()}${emp?.firstname?.slice(1) ?? ''}`,
+    document_number: emp?.document_number,
+    employee_id: emp?.id,
     document_url: doc.document_path,
-    is_active: doc.applies?.is_active,
+    is_active: emp?.is_active,
     period: doc.period,
-    applies: doc.id_document_types?.applies,
-    id_document_types: doc.id_document_types?.id,
+    applies: docType?.applies,
+    id_document_types: docType?.id,
     intern_number: null,
-    termination_date:doc.applies.termination_date
+    termination_date: emp?.termination_date,
   };
 };
 
-export const formatVehiculesDocuments = (doc: EquipmentDocumentDetailed) => {
+export const formatVehiculesDocuments = (doc: any) => {
+  // Support both Prisma relation names and legacy Supabase names
+  const veh = doc.vehicle ?? doc.applies;
+  const docType = doc.document_type ?? doc.id_document_types;
   return {
     date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
-    allocated_to: doc.applies?.type_of_vehicle?.name,
-    documentName: doc.id_document_types?.name,
+    allocated_to: veh?.type_of_vehicle_rel?.name ?? veh?.type_of_vehicle?.name,
+    documentName: docType?.name,
     state: doc.state,
-    multiresource: doc.id_document_types?.multiresource ? 'Si' : 'No',
-    isItMonthly: doc.id_document_types?.is_it_montlhy,
+    multiresource: docType?.multiresource ? 'Si' : 'No',
+    isItMonthly: docType?.is_it_montlhy,
     validity: doc.validity,
-    mandatory: doc.id_document_types?.mandatory ? 'Si' : 'No',
+    mandatory: docType?.mandatory ? 'Si' : 'No',
     id: doc.id,
-    resource: `${doc.applies?.domain}`,
-    vehicle_id: doc.applies?.id,
-    is_active: doc.applies?.is_active,
+    resource: `${veh?.domain}`,
+    vehicle_id: veh?.id,
+    is_active: veh?.is_active,
     period: doc.period,
-    applies: doc.id_document_types?.applies,
-    resource_id: doc.applies?.id,
-    id_document_types: doc.id_document_types?.id,
-    intern_number: `${doc.applies?.intern_number}`,
-    serie: doc.applies?.serie,
+    applies: docType?.applies,
+    resource_id: veh?.id,
+    id_document_types: docType?.id,
+    intern_number: `${veh?.intern_number}`,
+    serie: veh?.serie,
   };
 };

@@ -8,7 +8,7 @@ async function EmployeesTable() {
   // const documentsToShow = useLoggedUserStore((state) => state.documentsToShow);
   // const setShowLastMonthDocuments = useLoggedUserStore((state) => state.setShowLastMonthDocuments);
   const data = await getNextMonthExpiringDocumentsEmployees();
-  const formatedData = data.map((d) => formatEmployeeDocuments(d as unknown as EmployeeDocumentWithContractors)).filter((e) => e.validity !== '');
+  const formatedData = data.map((d) => formatEmployeeDocuments(d)).filter((e) => e.validity !== '');
 
 
   return (

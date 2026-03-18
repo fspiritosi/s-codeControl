@@ -10,7 +10,7 @@ async function DocumentsTable() {
   // const setShowLastMonthDocuments = useLoggedUserStore((state) => state.setShowLastMonthDocuments);
 
   const data = await getNextMonthExpiringDocumentsVehicles();
-  const formatedData = (data ?? []).map((d) => formatVehiculesDocuments(d as unknown as EquipmentDocumentDetailed)).filter((e) => e.validity !== '');
+  const formatedData = (data ?? []).map((d) => formatVehiculesDocuments(d)).filter((e) => e.validity !== '');
 
   return (
     <div className="px-4 pb-4">
