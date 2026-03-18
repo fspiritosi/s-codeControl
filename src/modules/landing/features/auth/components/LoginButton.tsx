@@ -50,7 +50,7 @@ export const LoginButton = () => {
         loading: 'Iniciando Sesión...',
         success: '¡Bienvenido!',
         error: (error) => {
-          return error;
+          return error?.message || 'Error al iniciar sesión';
         },
       }
     );
