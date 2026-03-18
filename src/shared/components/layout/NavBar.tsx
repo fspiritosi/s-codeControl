@@ -69,7 +69,7 @@ export default function NavBar() {
     }
   };
 
-  const totalCompanies = [sharedCompanies?.map((company) => company.company_id), allCompanies].flat();
+  const totalCompanies = [sharedCompanies?.map((company: any) => company.company ?? company.company_id), allCompanies].flat();
 
   const [isOpen, setIsOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
@@ -98,7 +98,7 @@ export default function NavBar() {
   };
   const [open, setOpen] = useState(false);
   const [showNewTeamDialog, setShowNewTeamDialog] = useState(false);
-  const actualCompanyId = cookie.get('actualCompanyId');
+  const actualCompanyId = cookie.get('actualComp');
 
   const markAllAsRead = useLoggedUserStore((state) => state.markAllAsRead);
 

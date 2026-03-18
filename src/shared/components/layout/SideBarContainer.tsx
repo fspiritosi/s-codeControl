@@ -35,7 +35,16 @@ async function SideBarContainer() {
   let role: any;
 
   const cookiesStore = await cookies();
-  const actualCompany = cookiesStore?.get('actualComp')?.value;
+  let actualCompany = cookiesStore?.get('actualComp')?.value;
+
+  // If no actualComp cookie, fall back to first owned or shared company
+  if (!actualCompany) {
+    if (companies?.length > 0) {
+      actualCompany = (companies[0] as any).id;
+    } else if (share_company_users?.length > 0) {
+      actualCompany = (share_company_users[0] as any).company_id;
+    }
+  }
 
   if (actualCompany) {
     const ownedCompany = companies?.find((company: any) => company.id === actualCompany);

@@ -49,9 +49,10 @@ export function LoginForm() {
     try {
       setShowLoader(true);
       await login(credentials);
+      toast.success('Inicio de sesión exitoso');
       router.push('/dashboard');
-    } catch (error: AuthError | any) {
-      toast.error(error.message);
+    } catch (error: any) {
+      toast.error(error?.message || 'Error al iniciar sesión');
     } finally {
       setShowLoader(false);
     }
