@@ -2,8 +2,6 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/shared/lib/prisma';
 
-export const runtime = 'nodejs';
-
 export async function proxy(req: NextRequest) {
   const response = NextResponse.next({
     request: {
