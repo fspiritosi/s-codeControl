@@ -179,7 +179,9 @@ export default function NavBar() {
                     <CommandGroup key={group.label} heading={group.label}>
                       {group?.teams?.map((team, index) => (
                         <CommandItem
-                          key={crypto.randomUUID()}
+                          key={team?.value ?? index}
+                          value={team?.label ?? ''}
+                          disabled={false}
                           onSelect={() => {
                             const company = totalCompanies.find((companyItem) => companyItem?.id === team?.value);
                             if (company) {
@@ -187,7 +189,7 @@ export default function NavBar() {
                             }
                             setOpen(false);
                           }}
-                          className="text-sm"
+                          className="text-sm cursor-pointer"
                         >
                           <Avatar className="mr-2 h-5 w-5 object-contain ">
                             <AvatarImage src={team.logo} alt={team.label} className="size-5 rounded-full object-contain" />
