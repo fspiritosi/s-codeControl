@@ -258,14 +258,16 @@ export const formatEmployeeDocuments = (doc: any) => {
   // Support both Prisma relation names and legacy Supabase names
   const emp = doc.employee ?? doc.applies;
   const docType = doc.document_type ?? doc.id_document_types;
+  const validityVal = doc.validity instanceof Date ? doc.validity.toISOString() : doc.validity;
   return {
     date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
+    created_at: doc.created_at,
     allocated_to: emp?.contractor_employee?.map((ce: any) => ce.contractor?.name ?? ce.contractors?.name).join(', '),
     documentName: docType?.name,
     state: doc.state,
     multiresource: docType?.multiresource ? 'Si' : 'No',
     isItMonthly: docType?.is_it_montlhy,
-    validity: doc.validity,
+    validity: validityVal,
     mandatory: docType?.mandatory ? 'Si' : 'No',
     id: doc.id,
     resource: `${emp?.lastname?.charAt(0)?.toUpperCase()}${emp?.lastname?.slice(1) ?? ''} ${emp?.firstname?.charAt(0)?.toUpperCase()}${emp?.firstname?.slice(1) ?? ''}`,
@@ -285,14 +287,16 @@ export const formatVehiculesDocuments = (doc: any) => {
   // Support both Prisma relation names and legacy Supabase names
   const veh = doc.vehicle ?? doc.applies;
   const docType = doc.document_type ?? doc.id_document_types;
+  const validityVal = doc.validity instanceof Date ? doc.validity.toISOString() : doc.validity;
   return {
     date: format(new Date(doc.created_at), 'dd/MM/yyyy'),
+    created_at: doc.created_at,
     allocated_to: veh?.type_of_vehicle_rel?.name ?? veh?.type_of_vehicle?.name,
     documentName: docType?.name,
     state: doc.state,
     multiresource: docType?.multiresource ? 'Si' : 'No',
     isItMonthly: docType?.is_it_montlhy,
-    validity: doc.validity,
+    validity: validityVal,
     mandatory: docType?.mandatory ? 'Si' : 'No',
     id: doc.id,
     resource: `${veh?.domain}`,
