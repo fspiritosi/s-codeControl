@@ -51,7 +51,7 @@ const EmployeePage = async ({ searchParams }: { searchParams: Promise<DataTableS
               <DocumentNav onlyEmployees />
             </div>
           ),
-          component: <EmployeeDocumentsTabs />,
+          component: <EmployeeDocumentsTabs searchParams={resolvedSearchParams} />,
         },
       },
       {

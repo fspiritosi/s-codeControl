@@ -2,9 +2,16 @@
 import { prisma } from '@/shared/lib/prisma';
 import { supabaseServer } from '@/shared/lib/supabase/server';
 import { getActionContext } from '@/shared/lib/server-action-context';
-import { getActualRole } from '@/shared/lib/utils';
+import { getActualRole, formatEmployeeDocuments } from '@/shared/lib/utils';
 import { startOfDay, endOfDay, addMonths } from 'date-fns';
 import type { Prisma } from '@/generated/prisma/client';
+import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import {
+  parseSearchParams,
+  stateToPrismaParams,
+  buildSearchWhere,
+  buildFiltersWhere,
+} from '@/shared/components/common/DataTable/helpers';
 
 // Document-related queries
 
@@ -810,3 +817,264 @@ export const fetchDocumentEquipmentForCompany = async (companyId: string) => {
     return [];
   }
 };
+
+// ============================================================================
+// PAGINATED / FACETS / EXPORT — New DataTable server-side actions
+// ============================================================================
+
+/** Column map for employee document filters */
+const employeeDocColumnMap: Record<string, string> = {
+  state: 'state',
+  documentName: 'document_type.name',
+  mandatory: 'document_type.mandatory',
+};
+
+/** Map front-end sort column names to Prisma orderBy objects */
+function mapEmployeeDocOrderBy(sortBy: string | null | undefined, sortOrder: string | null | undefined): Record<string, unknown> | undefined {
+  if (!sortBy) return undefined;
+  const order = sortOrder ?? 'asc';
+  switch (sortBy) {
+    case 'resource': return { employee: { lastname: order } };
+    case 'documentName': return { document_type: { name: order } };
+    case 'validity': return { validity: order };
+    case 'date': return { created_at: order };
+    case 'state': return { state: order };
+    default: return { [sortBy]: order };
+  }
+}
+
+/** Shared include clause for employee document paginated/export queries */
+const employeeDocPaginatedInclude = {
+  document_type: true,
+  employee: {
+    include: {
+      contractor_employee: {
+        include: { contractor: true },
+      },
+    },
+  },
+} as const;
+
+/**
+ * Build the monthly/permanent filter for the document_type relation.
+ */
+function buildDocTypeMonthlyFilter(monthly?: boolean) {
+  if (monthly) {
+    return { is_it_montlhy: true };
+  }
+  return { NOT: { is_it_montlhy: true } };
+}
+
+/**
+ * Build the combined `where` clause for employee documents.
+ */
+function buildEmployeeDocumentsWhere(
+  state: ReturnType<typeof parseSearchParams>,
+  companyId: string,
+  options?: { monthly?: boolean }
+) {
+  // 1. Base where — always scope to active employees + active doc types
+  const docTypeFilter: Record<string, unknown> = {
+    is_active: true,
+    ...buildDocTypeMonthlyFilter(options?.monthly),
+  };
+
+  const baseWhere: Record<string, unknown> = {
+    employee: { is: { company_id: companyId, is_active: true } },
+    document_type: { is: docTypeFilter },
+  };
+
+  // 2. Global search (OR across employee firstname, lastname, document_type name)
+  if (state.search) {
+    baseWhere.OR = [
+      { employee: { is: { firstname: { contains: state.search, mode: 'insensitive' } } } },
+      { employee: { is: { lastname: { contains: state.search, mode: 'insensitive' } } } },
+      { document_type: { is: { name: { contains: state.search, mode: 'insensitive' } } } },
+    ];
+  }
+
+  // 3. Faceted filters: state (direct on documents_employees)
+  const stateFilter = state.filters.state;
+  if (stateFilter?.length) {
+    baseWhere.state = stateFilter.length === 1 ? stateFilter[0] : { in: stateFilter };
+  }
+
+  // 4. Filter by mandatory (boolean on document_type relation)
+  const mandatoryFilter = state.filters.mandatory;
+  if (mandatoryFilter?.length) {
+    const mandatoryBool = mandatoryFilter.includes('Si') ? true : mandatoryFilter.includes('No') ? false : undefined;
+    if (mandatoryBool !== undefined) {
+      (baseWhere.document_type as any).is.mandatory = mandatoryBool;
+    }
+  }
+
+  // 5. Filter by documentName (name on document_type relation)
+  const docNameFilter = state.filters.documentName;
+  if (docNameFilter?.length) {
+    (baseWhere.document_type as any).is.name = docNameFilter.length === 1 ? docNameFilter[0] : { in: docNameFilter };
+  }
+
+  return baseWhere;
+}
+
+/**
+ * Paginated employee documents query for the new DataTable.
+ * Returns `{ data, total }` where data is the current page (formatted) and total is the full count.
+ */
+export async function getEmployeeDocumentsPaginated(
+  searchParams: DataTableSearchParams,
+  options?: { monthly?: boolean }
+) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return { data: [], total: 0 };
+
+  try {
+    const state = parseSearchParams(searchParams);
+    const { skip, take } = stateToPrismaParams(state);
+
+    const where = buildEmployeeDocumentsWhere(state, companyId, options);
+    const mappedOrderBy = mapEmployeeDocOrderBy(state.sortBy, state.sortOrder) ?? { created_at: 'desc' };
+
+    const [data, total] = await Promise.all([
+      prisma.documents_employees.findMany({
+        where,
+        include: employeeDocPaginatedInclude,
+        skip,
+        take,
+        orderBy: mappedOrderBy,
+      }),
+      prisma.documents_employees.count({ where }),
+    ]);
+
+    const formattedData = data.map(formatEmployeeDocuments);
+
+    return { data: formattedData, total };
+  } catch (error) {
+    console.error('Error in getEmployeeDocumentsPaginated:', error);
+    return { data: [], total: 0 };
+  }
+}
+
+/**
+ * Facet counts for employee document filter options.
+ * Returns a record keyed by field name, each containing an array of { value, count }.
+ */
+export async function getEmployeeDocumentFacets(
+  options?: { monthly?: boolean }
+): Promise<Record<string, { value: string; count: number }[]>> {
+  const { companyId } = await getActionContext();
+  if (!companyId) return {};
+
+  try {
+    const docTypeFilter: Record<string, unknown> = {
+      is_active: true,
+      ...buildDocTypeMonthlyFilter(options?.monthly),
+    };
+
+    const baseWhere = {
+      employee: { is: { company_id: companyId, is_active: true } },
+      document_type: { is: docTypeFilter },
+    };
+
+    // Group by state — don't filter nulls in where (enum field gotcha)
+    const stateCounts = await (prisma.documents_employees.groupBy as any)({
+      by: ['state'],
+      where: baseWhere,
+      _count: { _all: true },
+    });
+
+    // Count mandatory vs non-mandatory via separate counts
+    const [mandatoryCount, nonMandatoryCount] = await Promise.all([
+      prisma.documents_employees.count({
+        where: {
+          ...baseWhere,
+          document_type: { is: { ...docTypeFilter, mandatory: true } },
+        },
+      }),
+      prisma.documents_employees.count({
+        where: {
+          ...baseWhere,
+          document_type: { is: { ...docTypeFilter, mandatory: false } },
+        },
+      }),
+    ]);
+
+    // Get document names with counts
+    const docNameCounts = await prisma.documents_employees.groupBy({
+      by: ['id_document_types'],
+      where: baseWhere,
+      _count: { _all: true },
+    });
+
+    // Resolve document type IDs to names
+    const docTypeIds = (docNameCounts as any[])
+      .map((r: any) => r.id_document_types)
+      .filter((id: any): id is string => id !== null);
+
+    const docTypeRecords = docTypeIds.length > 0
+      ? await prisma.document_types.findMany({
+          where: { id: { in: docTypeIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+
+    const docTypeNameMap = new Map(docTypeRecords.map((dt) => [dt.id, dt.name]));
+
+    // Helper to convert groupBy result to facet array
+    const toFacetArray = (counts: any[], field: string) =>
+      counts
+        .filter((item) => item[field] != null && item[field] !== '')
+        .map((item) => ({
+          value: String(item[field]),
+          count: item._count?._all ?? item._count ?? 0,
+        }));
+
+    // Build mandatory facet
+    const mandatoryFacets: { value: string; count: number }[] = [];
+    if (mandatoryCount > 0) mandatoryFacets.push({ value: 'Si', count: mandatoryCount });
+    if (nonMandatoryCount > 0) mandatoryFacets.push({ value: 'No', count: nonMandatoryCount });
+
+    return {
+      state: toFacetArray(stateCounts, 'state'),
+      mandatory: mandatoryFacets,
+      documentName: (docNameCounts as any[])
+        .filter((r: any) => r.id_document_types !== null)
+        .map((r: any) => ({
+          value: docTypeNameMap.get(r.id_document_types!) ?? r.id_document_types!,
+          count: r._count?._all ?? r._count ?? 0,
+        })),
+    };
+  } catch (error) {
+    console.error('Error in getEmployeeDocumentFacets:', error);
+    return {};
+  }
+}
+
+/**
+ * Same query as getEmployeeDocumentsPaginated but WITHOUT pagination (skip/take).
+ * Used for Excel export with current filters applied.
+ */
+export async function getAllEmployeeDocumentsForExport(
+  searchParams: DataTableSearchParams,
+  options?: { monthly?: boolean }
+) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return [];
+
+  try {
+    const state = parseSearchParams(searchParams);
+    const where = buildEmployeeDocumentsWhere(state, companyId, options);
+    const mappedOrderBy = mapEmployeeDocOrderBy(state.sortBy, state.sortOrder) ?? { created_at: 'desc' };
+
+    const data = await prisma.documents_employees.findMany({
+      where,
+      include: employeeDocPaginatedInclude,
+      orderBy: mappedOrderBy,
+    });
+
+    return data.map(formatEmployeeDocuments);
+  } catch (error) {
+    console.error('Error in getAllEmployeeDocumentsForExport:', error);
+    return [];
+  }
+}

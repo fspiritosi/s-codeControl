@@ -12,8 +12,10 @@ import EmployeeDocumentsTabs from '@/modules/documents/features/list/components/
 import EquipmentTabs from '@/modules/documents/features/list/components/EquipmentTabs';
 import TypesDocumentAction from '@/modules/documents/features/types/components/TypesDocumentAction';
 import TypesDocumentsView from '@/modules/documents/features/types/components/TypesDocumentsView';
+import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
 
-export default async function page() {
+export default async function page({ searchParams }: { searchParams: Promise<DataTableSearchParams> }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = await supabaseServer();
   const user = await supabase.auth.getUser();
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -59,7 +61,7 @@ export default async function page() {
               <DocumentNav onlyEmployees onlyEquipment />
             </div>
           ),
-          component: <EmployeeDocumentsTabs />,
+          component: <EmployeeDocumentsTabs searchParams={resolvedSearchParams} />,
         },
       },
       {
