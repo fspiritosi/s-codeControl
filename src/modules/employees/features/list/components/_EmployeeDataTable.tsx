@@ -160,6 +160,11 @@ export function _EmployeeDataTable({ data, totalRows, searchParams }: Props) {
           guild: (val: unknown, row: any) => row?.guild_rel?.name ?? String(val ?? ''),
           covenants: (val: unknown, row: any) => row?.covenants_rel?.name ?? String(val ?? ''),
           category: (val: unknown, row: any) => row?.category_rel?.name ?? String(val ?? ''),
+          hierarchical_position: (val: unknown, row: any) => row?.hierarchy_rel?.name ?? String(val ?? ''),
+          birthplace: (val: unknown, row: any) => row?.birthplace_rel?.name ?? String(val ?? ''),
+          workflow_diagram: (val: unknown, row: any) => row?.workflow_diagram_rel?.name ?? String(val ?? ''),
+          province: (val: unknown, row: any) => row?.province_rel?.name ?? String(val ?? ''),
+          city: (val: unknown, row: any) => row?.city_rel?.name ?? String(val ?? ''),
           allocated_to: (_val: unknown, row: any) => {
             const contractors = row?.contractor_employee;
             if (!contractors || !Array.isArray(contractors) || contractors.length === 0) {
