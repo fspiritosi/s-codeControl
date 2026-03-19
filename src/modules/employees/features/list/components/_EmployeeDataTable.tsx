@@ -22,7 +22,7 @@ interface Props {
 }
 
 // All available filters — faceted ones get server counts, text ones use contains
-const FILTER_DEFINITIONS: { columnId: string; title: string; type: 'faceted' | 'text' }[] = [
+const FILTER_DEFINITIONS: { columnId: string; title: string; type: 'faceted' | 'text' | 'dateRange' }[] = [
   { columnId: 'status', title: 'Estado', type: 'faceted' },
   { columnId: 'type_of_contract', title: 'Tipo de contrato', type: 'faceted' },
   { columnId: 'document_type', title: 'Tipo de documento', type: 'faceted' },
@@ -37,6 +37,21 @@ const FILTER_DEFINITIONS: { columnId: string; title: string; type: 'faceted' | '
   { columnId: 'workflow_diagram', title: 'Diagrama de trabajo', type: 'text' },
   { columnId: 'province', title: 'Provincia', type: 'text' },
   { columnId: 'city', title: 'Ciudad', type: 'text' },
+  { columnId: 'cuil', title: 'CUIL', type: 'text' },
+  { columnId: 'document_number', title: 'Nro. documento', type: 'text' },
+  { columnId: 'email', title: 'Email', type: 'text' },
+  { columnId: 'lastname', title: 'Apellido', type: 'text' },
+  { columnId: 'firstname', title: 'Nombre', type: 'text' },
+  { columnId: 'phone', title: 'Teléfono', type: 'text' },
+  { columnId: 'street', title: 'Calle', type: 'text' },
+  { columnId: 'file', title: 'Legajo', type: 'text' },
+  { columnId: 'normal_hours', title: 'Horas normales', type: 'text' },
+  { columnId: 'guild', title: 'Gremio', type: 'text' },
+  { columnId: 'covenants', title: 'Convenio', type: 'text' },
+  { columnId: 'category', title: 'Categoría', type: 'text' },
+  { columnId: 'birthplace', title: 'Lugar de nacimiento', type: 'text' },
+  { columnId: 'born_date', title: 'Fecha de nacimiento', type: 'dateRange' },
+  { columnId: 'date_of_admission', title: 'Fecha de ingreso', type: 'dateRange' },
 ];
 
 // Filters visible by default (the rest are available via the filter toggle)
@@ -69,11 +84,10 @@ export function _EmployeeDataTable({ data, totalRows, searchParams }: Props) {
   const facetedFilters: DataTableFacetedFilterConfig[] = useMemo(() => {
     return FILTER_DEFINITIONS.map((def) => {
       if (def.type === 'text') {
-        return {
-          columnId: def.columnId,
-          title: def.title,
-          type: 'text' as const,
-        };
+        return { columnId: def.columnId, title: def.title, type: 'text' as const };
+      }
+      if (def.type === 'dateRange') {
+        return { columnId: def.columnId, title: def.title, type: 'dateRange' as const };
       }
       const facet = buildFacetConfig(facets?.[def.columnId]);
       return {

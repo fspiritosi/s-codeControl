@@ -108,6 +108,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                 return (
                   <CommandItem
                     key={option.value}
+                    value={option.value}
                     onSelect={() => {
                       if (isSelected) {
                         selectedValues.delete(option.value);
@@ -149,6 +150,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                 <CommandSeparator />
                 <CommandGroup>
                   <CommandItem
+                    value="__clear__"
                     onSelect={() => column?.setFilterValue(undefined)}
                     className="justify-center text-center"
                     data-testid={`filter-clear-${column?.id}`}
