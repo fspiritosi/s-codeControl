@@ -10,8 +10,10 @@ import EmployeeDocumentsTabs from '@/modules/documents/features/list/components/
 import EmployeeListTabs from '@/modules/documents/features/list/components/EmployeeListTabs';
 import TypesDocumentAction from '@/modules/documents/features/types/components/TypesDocumentAction';
 import TypesDocumentsView from '@/modules/documents/features/types/components/TypesDocumentsView';
+import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
 
-const EmployeePage = async () => {
+const EmployeePage = async ({ searchParams }: { searchParams: Promise<DataTableSearchParams> }) => {
+  const resolvedSearchParams = await searchParams;
   const viewData = {
     defaultValue: 'employees',
     tabsValues: [
@@ -33,7 +35,7 @@ const EmployeePage = async () => {
               </Link>
             </div>
           ),
-          component: <EmployeeListTabs actives inactives />,
+          component: <EmployeeListTabs actives inactives searchParams={resolvedSearchParams} />,
         },
       },
       {
