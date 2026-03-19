@@ -194,6 +194,11 @@ Estas notas aplican a TODAS las migraciones futuras:
   cell: ({ row }) => row.original.hierarchy_rel?.name ?? row.getValue('hierarchical_position')
   ```
 
+#### `command.tsx` y cmdk v1
+- El `command.tsx` de shadcn viejo usa `data-[disabled]` que matchea cualquier valor — en cmdk v1 todos los items tienen `data-disabled=""` por defecto, causando que se vean disabled
+- **Siempre usar** `data-[disabled=true]` y `data-[selected=true]` en CommandItem
+- Si los filtros faceted se ven disabled/grayed-out, verificar el `command.tsx` del proyecto
+
 #### Filtros: configuración completa
 - Definir TODOS los filtros disponibles como un array `FILTER_DEFINITIONS`
 - Usar `showFilterToggle={true}` para que el usuario elija cuáles ver
