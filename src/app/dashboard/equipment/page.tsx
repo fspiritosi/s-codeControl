@@ -6,7 +6,6 @@ import { buttonVariants } from '@/shared/components/ui/button';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import EquipmentTabs from '@/modules/documents/features/list/components/EquipmentTabs';
-import TypesDocumentAction from '@/modules/documents/features/types/components/TypesDocumentAction';
 import TypesDocumentsView from '@/modules/documents/features/types/components/TypesDocumentsView';
 import EquipmentListTabs from '@/modules/equipment/features/list/components/EquipmentListTabs';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
@@ -61,8 +60,7 @@ export default async function Equipment({ searchParams }: { searchParams: Promis
           title: 'Tipos de documentos',
           buttonActioRestricted: [''],
           description: 'Tipos de documentos auditables',
-          buttonAction: <TypesDocumentAction optionChildrenProp="Equipos" />,
-          component: <TypesDocumentsView equipos />,
+          component: <TypesDocumentsView equipos searchParams={resolvedSearchParams} />,
         },
       },
       {

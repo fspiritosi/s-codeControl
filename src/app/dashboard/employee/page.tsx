@@ -8,7 +8,6 @@ import { Suspense } from 'react';
 import CovenantTreeFile from '@/modules/company/features/covenants/components/CovenantTreeFile';
 import EmployeeDocumentsTabs from '@/modules/documents/features/list/components/EmployeeDocumentsTabs';
 import EmployeeListTabs from '@/modules/documents/features/list/components/EmployeeListTabs';
-import TypesDocumentAction from '@/modules/documents/features/types/components/TypesDocumentAction';
 import TypesDocumentsView from '@/modules/documents/features/types/components/TypesDocumentsView';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
 
@@ -73,8 +72,7 @@ const EmployeePage = async ({ searchParams }: { searchParams: Promise<DataTableS
           title: 'Tipos de documentos',
           description: 'Tipos de documentos auditables',
           buttonActioRestricted: [''],
-          buttonAction: <TypesDocumentAction optionChildrenProp="Persona" />,
-          component: <TypesDocumentsView personas />,
+          component: <TypesDocumentsView personas searchParams={resolvedSearchParams} />,
         },
       },
       {

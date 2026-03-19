@@ -10,7 +10,6 @@ import { Suspense } from 'react';
 import CompanyTabs from '@/modules/documents/features/list/components/CompanyTabs';
 import EmployeeDocumentsTabs from '@/modules/documents/features/list/components/EmployeeDocumentsTabs';
 import EquipmentTabs from '@/modules/documents/features/list/components/EquipmentTabs';
-import TypesDocumentAction from '@/modules/documents/features/types/components/TypesDocumentAction';
 import TypesDocumentsView from '@/modules/documents/features/types/components/TypesDocumentsView';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
 
@@ -104,8 +103,7 @@ export default async function page({ searchParams }: { searchParams: Promise<Dat
           title: 'Tipos de documentos',
           description: 'Tipos de documentos auditables',
           buttonActioRestricted: [''],
-          buttonAction: <TypesDocumentAction optionChildrenProp="all" />,
-          component: <TypesDocumentsView equipos empresa personas />,
+          component: <TypesDocumentsView equipos empresa personas searchParams={resolvedSearchParams} />,
         },
       },
       // {

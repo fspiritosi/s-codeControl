@@ -12,7 +12,6 @@ import PortalEmployeeWrapper from '@/modules/company/features/portal/components/
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import TypesDocumentAction from '@/modules/documents/features/types/components/TypesDocumentAction';
 import Contacts from '@/modules/company/features/contacts/components/Contact';
 import CovenantTreeFile from '@/modules/company/features/covenants/components/CovenantTreeFile';
 import Customers from '@/modules/company/features/customers/components/Customers';
@@ -48,11 +47,6 @@ export default async function CompanyPage() {
           title: 'Documentos de la empresa',
           description: 'Lista de documentos a nombre de la empresa',
           buttonActioRestricted: [''],
-          buttonAction: (
-            <div className="flex gap-4 flex-wrap pl-6">
-              <TypesDocumentAction optionChildrenProp="Empresa" />
-            </div>
-          ),
           component: <DocumentTabComponent />,
         },
       },

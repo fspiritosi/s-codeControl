@@ -1,4 +1,3 @@
-import NewDocumentType from '@/modules/documents/features/types/components/NewDocumentType';
 import { Label } from '@/shared/components/ui/label';
 import { Separator } from '@/shared/components/ui/separator';
 

@@ -1,5 +1,5 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
-import { EditModal } from '@/modules/documents/features/types/components/EditDocumenTypeModal';
+// EditModal removed — document types now use DocumentTypeFormModal
 import { Button } from '@/shared/components/ui/button';
 
 interface DocumentsTableProps {
@@ -44,7 +44,7 @@ const DocumentsTable = ({ data, filters, children, onToggleActive }: DocumentsTa
           </TableCell>
           <TableCell className="text-center">
             <div className="flex gap-2 justify-center">
-              <EditModal Equipo={doc} />
+              {/* Edit handled by DocumentTypeFormModal via DataTable */}
               {onToggleActive && !doc.is_active && (
                 <Button
                   variant="success"
