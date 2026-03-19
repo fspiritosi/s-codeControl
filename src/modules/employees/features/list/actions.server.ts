@@ -399,12 +399,18 @@ export async function getEmployeesPaginated(searchParams: DataTableSearchParams)
  * Facet counts for employee filter options.
  * Returns a record keyed by field name, each containing an array of { value, count }.
  */
-export async function getEmployeeFacets(): Promise<Record<string, { value: string; count: number }[]>> {
+export async function getEmployeeFacets(): Promise<Record<string, { value: string; count: number; label?: string }[]>> {
   const { companyId } = await getActionContext();
   if (!companyId) return {};
 
   try {
     const baseWhere = { company_id: companyId, is_active: true };
+
+    // Helper to group by a single field — no null filter in where (fails on enum fields)
+    const groupByField = async (field: string) => {
+      const result = await (prisma.employees.groupBy as any)({ by: [field], where: baseWhere, _count: { _all: true } });
+      return result;
+    };
 
     const [
       statusCounts,
@@ -412,24 +418,26 @@ export async function getEmployeeFacets(): Promise<Record<string, { value: strin
       documentTypeCounts,
       genderCounts,
       nationalityCounts,
+      maritalStatusCounts,
+      levelOfEducationCounts,
+      affiliateStatusCounts,
+      hierarchyCounts,
     ] = await Promise.all([
-      prisma.employees.groupBy({ by: ['status'], where: baseWhere, _count: true }),
-      prisma.employees.groupBy({ by: ['type_of_contract'], where: baseWhere, _count: true }),
-      prisma.employees.groupBy({ by: ['document_type'], where: baseWhere, _count: true }),
-      prisma.employees.groupBy({ by: ['gender'], where: baseWhere, _count: true }),
-      prisma.employees.groupBy({ by: ['nationality'], where: baseWhere, _count: true }),
+      groupByField('status'),
+      groupByField('type_of_contract'),
+      groupByField('document_type'),
+      groupByField('gender'),
+      groupByField('nationality'),
+      groupByField('marital_status'),
+      groupByField('level_of_education'),
+      groupByField('affiliate_status'),
+      groupByField('hierarchical_position'),
     ]);
 
-    // For hierarchical_position (UUID FK), get distinct values with counts and resolve names
-    const hierarchyCounts = await prisma.employees.groupBy({
-      by: ['hierarchical_position'],
-      where: { ...baseWhere, hierarchical_position: { not: null } },
-      _count: true,
-    });
-
-    const hierarchyIds = hierarchyCounts
-      .map((r) => r.hierarchical_position)
-      .filter((id): id is string => id !== null);
+    // Resolve hierarchical_position UUIDs to names
+    const hierarchyIds = (hierarchyCounts as any[])
+      .map((r: any) => r.hierarchical_position)
+      .filter((id: any): id is string => id !== null);
 
     const hierarchyRecords = hierarchyIds.length > 0
       ? await prisma.hierarchy.findMany({
@@ -440,29 +448,29 @@ export async function getEmployeeFacets(): Promise<Record<string, { value: strin
 
     const hierarchyNameMap = new Map(hierarchyRecords.map((h) => [h.id, h.name]));
 
-    // Build result
-    const toFacetArray = <T>(
-      counts: { _count: number }[],
-      getValue: (item: T) => string | null | undefined,
-    ) =>
-      (counts as unknown as T[])
-        .filter((item) => getValue(item) != null)
+    // Helper to convert groupBy result to facet array
+    const toFacetArray = (counts: any[], field: string) =>
+      counts
+        .filter((item) => item[field] != null && item[field] !== '')
         .map((item) => ({
-          value: String(getValue(item)),
-          count: (item as unknown as { _count: number })._count,
+          value: String(item[field]),
+          count: item._count?._all ?? item._count ?? 0,
         }));
 
     return {
-      status: toFacetArray(statusCounts, (r: (typeof statusCounts)[number]) => r.status),
-      type_of_contract: toFacetArray(typeOfContractCounts, (r: (typeof typeOfContractCounts)[number]) => r.type_of_contract),
-      document_type: toFacetArray(documentTypeCounts, (r: (typeof documentTypeCounts)[number]) => r.document_type),
-      gender: toFacetArray(genderCounts, (r: (typeof genderCounts)[number]) => r.gender),
-      nationality: toFacetArray(nationalityCounts, (r: (typeof nationalityCounts)[number]) => r.nationality),
-      hierarchical_position: hierarchyCounts
-        .filter((r) => r.hierarchical_position !== null)
-        .map((r) => ({
+      status: toFacetArray(statusCounts, 'status'),
+      type_of_contract: toFacetArray(typeOfContractCounts, 'type_of_contract'),
+      document_type: toFacetArray(documentTypeCounts, 'document_type'),
+      gender: toFacetArray(genderCounts, 'gender'),
+      nationality: toFacetArray(nationalityCounts, 'nationality'),
+      marital_status: toFacetArray(maritalStatusCounts, 'marital_status'),
+      level_of_education: toFacetArray(levelOfEducationCounts, 'level_of_education'),
+      affiliate_status: toFacetArray(affiliateStatusCounts, 'affiliate_status'),
+      hierarchical_position: (hierarchyCounts as any[])
+        .filter((r: any) => r.hierarchical_position !== null)
+        .map((r: any) => ({
           value: r.hierarchical_position!,
-          count: r._count,
+          count: r._count?._all ?? r._count ?? 0,
           label: hierarchyNameMap.get(r.hierarchical_position!) ?? r.hierarchical_position!,
         })),
     };

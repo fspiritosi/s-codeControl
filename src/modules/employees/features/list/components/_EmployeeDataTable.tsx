@@ -21,6 +21,34 @@ interface Props {
   searchParams: DataTableSearchParams;
 }
 
+// All available filters — faceted ones get server counts, text ones use contains
+const FILTER_DEFINITIONS: { columnId: string; title: string; type: 'faceted' | 'text' }[] = [
+  { columnId: 'status', title: 'Estado', type: 'faceted' },
+  { columnId: 'type_of_contract', title: 'Tipo de contrato', type: 'faceted' },
+  { columnId: 'document_type', title: 'Tipo de documento', type: 'faceted' },
+  { columnId: 'gender', title: 'Género', type: 'faceted' },
+  { columnId: 'nationality', title: 'Nacionalidad', type: 'faceted' },
+  { columnId: 'hierarchical_position', title: 'Posición jerárquica', type: 'faceted' },
+  { columnId: 'marital_status', title: 'Estado civil', type: 'faceted' },
+  { columnId: 'level_of_education', title: 'Nivel de estudios', type: 'faceted' },
+  { columnId: 'affiliate_status', title: 'Estado afiliación', type: 'faceted' },
+  { columnId: 'allocated_to', title: 'Afectado a', type: 'text' },
+  { columnId: 'company_position', title: 'Posición en empresa', type: 'text' },
+  { columnId: 'workflow_diagram', title: 'Diagrama de trabajo', type: 'text' },
+  { columnId: 'province', title: 'Provincia', type: 'text' },
+  { columnId: 'city', title: 'Ciudad', type: 'text' },
+];
+
+// Filters visible by default (the rest are available via the filter toggle)
+const DEFAULT_VISIBLE_FILTERS = new Set([
+  'status',
+  'type_of_contract',
+  'document_type',
+  'gender',
+  'nationality',
+  'hierarchical_position',
+]);
+
 export function _EmployeeDataTable({ data, totalRows, searchParams }: Props) {
   const [facets, setFacets] = useState<Record<string, FacetEntry[]> | null>(null);
 
@@ -28,14 +56,10 @@ export function _EmployeeDataTable({ data, totalRows, searchParams }: Props) {
     getEmployeeFacets().then(setFacets).catch(console.error);
   }, []);
 
-  /**
-   * Convert a facet array into { options, externalCounts } for DataTableFacetedFilterConfig.
-   * If entries have a `label` field (e.g. hierarchical_position), use it; otherwise use `value` as label.
-   */
   const buildFacetConfig = (
     entries: FacetEntry[] | undefined,
   ): { options: { value: string; label: string }[]; externalCounts: Map<string, number> } => {
-    if (!entries) return { options: [], externalCounts: new Map() };
+    if (!entries || entries.length === 0) return { options: [], externalCounts: new Map() };
     return {
       options: entries.map((e) => ({ value: e.value, label: e.label ?? e.value })),
       externalCounts: new Map(entries.map((e) => [e.value, e.count])),
@@ -43,61 +67,34 @@ export function _EmployeeDataTable({ data, totalRows, searchParams }: Props) {
   };
 
   const facetedFilters: DataTableFacetedFilterConfig[] = useMemo(() => {
-    const status = buildFacetConfig(facets?.status);
-    const typeOfContract = buildFacetConfig(facets?.type_of_contract);
-    const documentType = buildFacetConfig(facets?.document_type);
-    const gender = buildFacetConfig(facets?.gender);
-    const nationality = buildFacetConfig(facets?.nationality);
-    const hierarchicalPosition = buildFacetConfig(facets?.hierarchical_position);
-
-    return [
-      {
-        columnId: 'status',
-        title: 'Estado',
+    return FILTER_DEFINITIONS.map((def) => {
+      if (def.type === 'text') {
+        return {
+          columnId: def.columnId,
+          title: def.title,
+          type: 'text' as const,
+        };
+      }
+      const facet = buildFacetConfig(facets?.[def.columnId]);
+      return {
+        columnId: def.columnId,
+        title: def.title,
         type: 'faceted' as const,
-        options: status.options,
-        externalCounts: status.externalCounts,
-      },
-      {
-        columnId: 'type_of_contract',
-        title: 'Tipo de contrato',
-        type: 'faceted' as const,
-        options: typeOfContract.options,
-        externalCounts: typeOfContract.externalCounts,
-      },
-      {
-        columnId: 'document_type',
-        title: 'Tipo de documento',
-        type: 'faceted' as const,
-        options: documentType.options,
-        externalCounts: documentType.externalCounts,
-      },
-      {
-        columnId: 'gender',
-        title: 'Genero',
-        type: 'faceted' as const,
-        options: gender.options,
-        externalCounts: gender.externalCounts,
-      },
-      {
-        columnId: 'nationality',
-        title: 'Nacionalidad',
-        type: 'faceted' as const,
-        options: nationality.options,
-        externalCounts: nationality.externalCounts,
-      },
-      {
-        columnId: 'hierarchical_position',
-        title: 'Posicion jerarquica',
-        type: 'faceted' as const,
-        options: hierarchicalPosition.options,
-        externalCounts: hierarchicalPosition.externalCounts,
-      },
-    ];
+        options: facet.options,
+        externalCounts: facet.externalCounts,
+      };
+    });
   }, [facets]);
 
+  const initialFilterVisibility = useMemo(() => {
+    const visibility: Record<string, boolean> = {};
+    for (const def of FILTER_DEFINITIONS) {
+      visibility[def.columnId] = DEFAULT_VISIBLE_FILTERS.has(def.columnId);
+    }
+    return visibility;
+  }, []);
+
   const initialColumnVisibility = useMemo(() => {
-    // Define which columns should be VISIBLE; all others are hidden
     const visibleColumns = new Set([
       'full_name',
       'status',
@@ -111,13 +108,10 @@ export function _EmployeeDataTable({ data, totalRows, searchParams }: Props) {
       'allocated_to',
     ]);
 
-    // Build visibility record: all columns from employeeColumns that are NOT in visibleColumns → false
     const visibility: Record<string, boolean> = {};
     for (const col of employeeColumns) {
       const colId = (col as any).accessorKey ?? (col as any).id;
-      if (!colId) continue;
-      // Skip non-hideable columns (actions)
-      if (colId === 'actions') continue;
+      if (!colId || colId === 'actions') continue;
       if (!visibleColumns.has(colId)) {
         visibility[colId] = false;
       }
@@ -137,6 +131,8 @@ export function _EmployeeDataTable({ data, totalRows, searchParams }: Props) {
       showSearch={true}
       emptyMessage="No se encontraron empleados."
       facetedFilters={facetedFilters}
+      showFilterToggle={true}
+      initialFilterVisibility={initialFilterVisibility}
       initialColumnVisibility={initialColumnVisibility}
       exportConfig={{
         fetchAllData: () => getAllEmployeesForExport(searchParams),
