@@ -77,7 +77,7 @@ export default async function page({ searchParams }: { searchParams: Promise<Dat
             <DocumentNav onlyEmployees onlyEquipment />
           </div>
           ),
-          component: <EquipmentTabs />,
+          component: <EquipmentTabs searchParams={resolvedSearchParams} />,
         },
       },
       {

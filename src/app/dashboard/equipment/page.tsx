@@ -9,7 +9,10 @@ import EquipmentTabs from '@/modules/documents/features/list/components/Equipmen
 import TypesDocumentAction from '@/modules/documents/features/types/components/TypesDocumentAction';
 import TypesDocumentsView from '@/modules/documents/features/types/components/TypesDocumentsView';
 import EquipmentListTabs from '@/modules/equipment/features/list/components/EquipmentListTabs';
-export default async function Equipment() {
+import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
+
+export default async function Equipment({ searchParams }: { searchParams: Promise<DataTableSearchParams> }) {
+  const resolvedSearchParams = await searchParams;
   const viewData = {
     defaultValue: 'equipos',
     tabsValues: [
@@ -47,7 +50,7 @@ export default async function Equipment() {
               <DocumentNav onlyEquipment />
             </div>
           ),
-          component: <EquipmentTabs />,
+          component: <EquipmentTabs searchParams={resolvedSearchParams} />,
         },
       },
       {

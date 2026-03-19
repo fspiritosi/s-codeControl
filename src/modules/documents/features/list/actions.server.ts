@@ -2,7 +2,7 @@
 import { prisma } from '@/shared/lib/prisma';
 import { supabaseServer } from '@/shared/lib/supabase/server';
 import { getActionContext } from '@/shared/lib/server-action-context';
-import { getActualRole, formatEmployeeDocuments } from '@/shared/lib/utils';
+import { getActualRole, formatEmployeeDocuments, formatVehiculesDocuments } from '@/shared/lib/utils';
 import { startOfDay, endOfDay, addMonths } from 'date-fns';
 import type { Prisma } from '@/generated/prisma/client';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
@@ -1075,6 +1075,251 @@ export async function getAllEmployeeDocumentsForExport(
     return data.map(formatEmployeeDocuments);
   } catch (error) {
     console.error('Error in getAllEmployeeDocumentsForExport:', error);
+    return [];
+  }
+}
+
+// ============================================================================
+// EQUIPMENT DOCUMENTS — Paginated / Facets / Export
+// ============================================================================
+
+/** Shared include clause for equipment document paginated/export queries */
+const equipmentDocPaginatedInclude = {
+  document_type: true,
+  vehicle: {
+    include: {
+      type_rel: true,
+      type_of_vehicle_rel: true,
+      model_rel: true,
+      brand_rel: true,
+    },
+  },
+} as const;
+
+/** Map front-end sort column names to Prisma orderBy objects for equipment docs */
+function mapEquipmentDocOrderBy(sortBy: string | null | undefined, sortOrder: string | null | undefined): Record<string, unknown> | undefined {
+  if (!sortBy) return undefined;
+  const order = sortOrder ?? 'asc';
+  switch (sortBy) {
+    case 'resource': return { vehicle: { domain: order } };
+    case 'intern_number': return { vehicle: { intern_number: order } };
+    case 'documentName': return { document_type: { name: order } };
+    case 'validity': return { validity: order };
+    case 'date': return { created_at: order };
+    case 'state': return { state: order };
+    default: return { [sortBy]: order };
+  }
+}
+
+/**
+ * Build the combined `where` clause for equipment documents.
+ */
+function buildEquipmentDocumentsWhere(
+  state: ReturnType<typeof parseSearchParams>,
+  companyId: string,
+  options?: { monthly?: boolean }
+) {
+  const docTypeFilter: Record<string, unknown> = {
+    is_active: true,
+    ...buildDocTypeMonthlyFilter(options?.monthly),
+  };
+
+  const baseWhere: Record<string, unknown> = {
+    vehicle: { is: { company_id: companyId, is_active: true } },
+    document_type: { is: docTypeFilter },
+  };
+
+  // Global search (OR across vehicle domain, intern_number, document_type name)
+  if (state.search) {
+    baseWhere.OR = [
+      { vehicle: { is: { domain: { contains: state.search, mode: 'insensitive' } } } },
+      { vehicle: { is: { intern_number: { contains: state.search, mode: 'insensitive' } } } },
+      { document_type: { is: { name: { contains: state.search, mode: 'insensitive' } } } },
+    ];
+  }
+
+  // Faceted filter: state
+  const stateFilter = state.filters.state;
+  if (stateFilter?.length) {
+    baseWhere.state = stateFilter.length === 1 ? stateFilter[0] : { in: stateFilter };
+  }
+
+  // Filter by mandatory (boolean on document_type relation)
+  const mandatoryFilter = state.filters.mandatory;
+  if (mandatoryFilter?.length) {
+    const mandatoryBool = mandatoryFilter.includes('Si') ? true : mandatoryFilter.includes('No') ? false : undefined;
+    if (mandatoryBool !== undefined) {
+      (baseWhere.document_type as any).is.mandatory = mandatoryBool;
+    }
+  }
+
+  // Filter by documentName (name on document_type relation)
+  const docNameFilter = state.filters.documentName;
+  if (docNameFilter?.length) {
+    (baseWhere.document_type as any).is.name = docNameFilter.length === 1 ? docNameFilter[0] : { in: docNameFilter };
+  }
+
+  return baseWhere;
+}
+
+/**
+ * Paginated equipment documents query for the new DataTable.
+ * Returns `{ data, total }` where data is the current page (formatted) and total is the full count.
+ */
+export async function getEquipmentDocumentsPaginated(
+  searchParams: DataTableSearchParams,
+  options?: { monthly?: boolean }
+) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return { data: [], total: 0 };
+
+  try {
+    const state = parseSearchParams(searchParams);
+    const { skip, take } = stateToPrismaParams(state);
+
+    const where = buildEquipmentDocumentsWhere(state, companyId, options);
+    const mappedOrderBy = mapEquipmentDocOrderBy(state.sortBy, state.sortOrder) ?? { created_at: 'desc' };
+
+    const [data, total] = await Promise.all([
+      prisma.documents_equipment.findMany({
+        where,
+        include: equipmentDocPaginatedInclude,
+        skip,
+        take,
+        orderBy: mappedOrderBy,
+      }),
+      prisma.documents_equipment.count({ where }),
+    ]);
+
+    const formattedData = data.map(formatVehiculesDocuments);
+
+    return { data: formattedData, total };
+  } catch (error) {
+    console.error('Error in getEquipmentDocumentsPaginated:', error);
+    return { data: [], total: 0 };
+  }
+}
+
+/**
+ * Facet counts for equipment document filter options.
+ * Returns a record keyed by field name, each containing an array of { value, count }.
+ */
+export async function getEquipmentDocumentFacets(
+  options?: { monthly?: boolean }
+): Promise<Record<string, { value: string; count: number }[]>> {
+  const { companyId } = await getActionContext();
+  if (!companyId) return {};
+
+  try {
+    const docTypeFilter: Record<string, unknown> = {
+      is_active: true,
+      ...buildDocTypeMonthlyFilter(options?.monthly),
+    };
+
+    const baseWhere = {
+      vehicle: { is: { company_id: companyId, is_active: true } },
+      document_type: { is: docTypeFilter },
+    };
+
+    // Group by state — don't filter nulls in where (enum field gotcha)
+    const stateCounts = await (prisma.documents_equipment.groupBy as any)({
+      by: ['state'],
+      where: baseWhere,
+      _count: { _all: true },
+    });
+
+    // Count mandatory vs non-mandatory via separate counts
+    const [mandatoryCount, nonMandatoryCount] = await Promise.all([
+      prisma.documents_equipment.count({
+        where: {
+          ...baseWhere,
+          document_type: { is: { ...docTypeFilter, mandatory: true } },
+        },
+      }),
+      prisma.documents_equipment.count({
+        where: {
+          ...baseWhere,
+          document_type: { is: { ...docTypeFilter, mandatory: false } },
+        },
+      }),
+    ]);
+
+    // Get document names with counts
+    const docNameCounts = await prisma.documents_equipment.groupBy({
+      by: ['id_document_types'],
+      where: baseWhere,
+      _count: { _all: true },
+    });
+
+    // Resolve document type IDs to names
+    const docTypeIds = (docNameCounts as any[])
+      .map((r: any) => r.id_document_types)
+      .filter((id: any): id is string => id !== null);
+
+    const docTypeRecords = docTypeIds.length > 0
+      ? await prisma.document_types.findMany({
+          where: { id: { in: docTypeIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+
+    const docTypeNameMap = new Map(docTypeRecords.map((dt) => [dt.id, dt.name]));
+
+    // Helper to convert groupBy result to facet array
+    const toFacetArray = (counts: any[], field: string) =>
+      counts
+        .filter((item) => item[field] != null && item[field] !== '')
+        .map((item) => ({
+          value: String(item[field]),
+          count: item._count?._all ?? item._count ?? 0,
+        }));
+
+    // Build mandatory facet
+    const mandatoryFacets: { value: string; count: number }[] = [];
+    if (mandatoryCount > 0) mandatoryFacets.push({ value: 'Si', count: mandatoryCount });
+    if (nonMandatoryCount > 0) mandatoryFacets.push({ value: 'No', count: nonMandatoryCount });
+
+    return {
+      state: toFacetArray(stateCounts, 'state'),
+      mandatory: mandatoryFacets,
+      documentName: (docNameCounts as any[])
+        .filter((r: any) => r.id_document_types !== null)
+        .map((r: any) => ({
+          value: docTypeNameMap.get(r.id_document_types!) ?? r.id_document_types!,
+          count: r._count?._all ?? r._count ?? 0,
+        })),
+    };
+  } catch (error) {
+    console.error('Error in getEquipmentDocumentFacets:', error);
+    return {};
+  }
+}
+
+/**
+ * Same query as getEquipmentDocumentsPaginated but WITHOUT pagination (skip/take).
+ * Used for Excel export with current filters applied.
+ */
+export async function getAllEquipmentDocumentsForExport(
+  searchParams: DataTableSearchParams,
+  options?: { monthly?: boolean }
+) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return [];
+
+  try {
+    const state = parseSearchParams(searchParams);
+    const where = buildEquipmentDocumentsWhere(state, companyId, options);
+    const mappedOrderBy = mapEquipmentDocOrderBy(state.sortBy, state.sortOrder) ?? { created_at: 'desc' };
+
+    const data = await prisma.documents_equipment.findMany({
+      where,
+      include: equipmentDocPaginatedInclude,
+      orderBy: mappedOrderBy,
+    });
+
+    return data.map(formatVehiculesDocuments);
+  } catch (error) {
+    console.error('Error in getAllEquipmentDocumentsForExport:', error);
     return [];
   }
 }
