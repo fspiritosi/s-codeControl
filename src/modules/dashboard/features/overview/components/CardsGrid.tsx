@@ -3,9 +3,14 @@ import { Badge } from '@/shared/components/ui/badge';
 import { Users, Truck, FileText, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { getDashboardCounts } from '@/modules/dashboard/features/overview/actions.server';
+import { format, addMonths } from 'date-fns';
 
 async function CardsGrid() {
   const counts = await getDashboardCounts();
+
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const in30Days = format(addMonths(new Date(), 1), 'yyyy-MM-dd');
+  const yesterday = format(new Date(Date.now() - 86400000), 'yyyy-MM-dd');
 
   const cards = [
     {
@@ -34,7 +39,7 @@ async function CardsGrid() {
       borderColor: 'border-l-yellow-500',
       iconColor: 'text-yellow-500',
       badge: 'yellow' as const,
-      href: '/dashboard/document',
+      href: `/dashboard/document?validity_from=${today}&validity_to=${in30Days}`,
     },
     {
       title: 'Docs Equipos por vencer',
@@ -44,7 +49,7 @@ async function CardsGrid() {
       borderColor: 'border-l-yellow-500',
       iconColor: 'text-yellow-500',
       badge: 'yellow' as const,
-      href: '/dashboard/document',
+      href: `/dashboard/equipment?validity_from=${today}&validity_to=${in30Days}`,
     },
     {
       title: 'Docs Empleados vencidos',
@@ -53,7 +58,7 @@ async function CardsGrid() {
       borderColor: 'border-l-red-500',
       iconColor: 'text-red-500',
       badge: 'destructive' as const,
-      href: '/dashboard/document',
+      href: `/dashboard/document?validity_to=${yesterday}`,
     },
     {
       title: 'Docs Equipos vencidos',
@@ -62,7 +67,7 @@ async function CardsGrid() {
       borderColor: 'border-l-red-500',
       iconColor: 'text-red-500',
       badge: 'destructive' as const,
-      href: '/dashboard/document',
+      href: `/dashboard/equipment?validity_to=${yesterday}`,
     },
   ];
 
