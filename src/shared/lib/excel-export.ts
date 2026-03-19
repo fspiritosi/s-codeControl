@@ -285,6 +285,14 @@ export async function exportToExcel<T extends Record<string, unknown>>(
         }
       }
 
+      // BigInt (from Prisma int8) is not supported by ExcelJS — convert to Number
+      if (typeof value === 'bigint') {
+        value = Number(value);
+      }
+      // Arrays and remaining objects — stringify as fallback
+      if (value !== null && value !== undefined && typeof value === 'object' && !(value instanceof Date)) {
+        value = Array.isArray(value) ? value.map(String).join(', ') : '';
+      }
       cell.value = (value as string | number | boolean | Date | null) ?? '';
       cell.alignment = { vertical: 'middle' };
       cell.border = {
