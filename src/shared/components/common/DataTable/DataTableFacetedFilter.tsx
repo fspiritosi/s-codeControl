@@ -24,21 +24,6 @@ import { Separator } from '@/shared/components/ui/separator';
 
 import type { DataTableFacetedFilterProps } from './types';
 
-/**
- * Filtro faceteado multi-select para columnas del DataTable
- *
- * @example
- * ```tsx
- * <DataTableFacetedFilter
- *   column={table.getColumn('status')}
- *   title="Estado"
- *   options={[
- *     { value: 'PENDING', label: 'Pendiente', icon: Clock },
- *     { value: 'APPROVED', label: 'Aprobado', icon: CheckCircle },
- *   ]}
- * />
- * ```
- */
 export function DataTableFacetedFilter<TData, TValue>({
   column,
   title,
@@ -47,6 +32,23 @@ export function DataTableFacetedFilter<TData, TValue>({
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const facets = externalCounts ?? column?.getFacetedUniqueValues();
   const selectedValues = new Set(column?.getFilterValue() as string[]);
+  const [search, setSearch] = React.useState('');
+
+  // Filter options: by externalCounts (if provided) and by local search
+  const visibleOptions = React.useMemo(() => {
+    let filtered = externalCounts
+      ? options.filter((opt) => (externalCounts.get(opt.value) ?? 0) > 0)
+      : options;
+
+    if (search) {
+      const q = search.toLowerCase();
+      filtered = filtered.filter(
+        (opt) => opt.label.toLowerCase().includes(q) || opt.value.toLowerCase().includes(q)
+      );
+    }
+
+    return filtered;
+  }, [options, externalCounts, search]);
 
   return (
     <Popover>
@@ -95,15 +97,18 @@ export function DataTableFacetedFilter<TData, TValue>({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" align="start">
-        <Command>
-          <CommandInput placeholder={`Buscar ${title.toLowerCase()}...`} />
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder={`Buscar ${title.toLowerCase()}...`}
+            value={search}
+            onValueChange={setSearch}
+          />
           <CommandList>
-            <CommandEmpty>Sin resultados.</CommandEmpty>
+            {visibleOptions.length === 0 && (
+              <CommandEmpty>Sin resultados.</CommandEmpty>
+            )}
             <CommandGroup>
-              {(externalCounts
-                ? options.filter((opt) => (externalCounts.get(opt.value) ?? 0) > 0)
-                : options
-              ).map((option) => {
+              {visibleOptions.map((option) => {
                 const isSelected = selectedValues.has(option.value);
                 return (
                   <CommandItem
