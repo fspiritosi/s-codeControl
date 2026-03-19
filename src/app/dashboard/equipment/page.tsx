@@ -34,7 +34,7 @@ export default async function Equipment({ searchParams }: { searchParams: Promis
               </Link>
             </div>
           ),
-          component: <EquipmentListTabs />,
+          component: <EquipmentListTabs searchParams={resolvedSearchParams} />,
         },
       },
       {
