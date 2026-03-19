@@ -165,9 +165,51 @@ Este plan sirve como template. Para migrar cualquier otra tabla (equipos, docume
    - Retornar `{ data, total }`
 3. **Columnas** — siempre necesitan `meta: { title }`, acciones en componente separado
 4. **Wrappers** — siempre: Server Component (fetch) + Client Component (`'use client'`, facets, `<DataTable>`)
-5. **Los filtros faceted** cambian por tabla, pero el patrón es idéntico: `groupBy` en Prisma, retornar `Map<string, number>`
+5. **Los filtros faceted** cambian por tabla, pero el patrón es idéntico: `groupBy` en Prisma, retornar `{ value, count }[]`
 6. **El export config** siempre necesita `fetchAllData` (sin paginación) + `options` + `formatters` opcionales
 7. **Priorizar base_erp** sobre la implementación actual cuando hay diferencias
+
+### 2.5 Lecciones aprendidas (empleados)
+
+Estas notas aplican a TODAS las migraciones futuras:
+
+#### Prisma `groupBy` con enums
+- **NO usar** `{ [field]: { not: null } }` en el `where` del `groupBy` — falla con campos de tipo enum en Prisma 7+
+- En su lugar, ejecutar `groupBy` sin filtro de null en el where y **filtrar nulls/vacíos en el resultado** con `.filter(item => item[field] != null && item[field] !== '')`
+
+#### Formato `_count` en Prisma 7
+- `groupBy({ _count: { _all: true } })` retorna `{ _count: { _all: number } }`, no `{ _count: number }`
+- Siempre acceder como: `item._count?._all ?? item._count ?? 0` para compatibilidad
+
+#### Campos computados (ej: `full_name`)
+- Prisma no tiene campos calculados. Si la tabla no tiene un campo `full_name`, usar `accessorFn` en la columna:
+  ```ts
+  { id: 'full_name', accessorFn: (row) => `${row.lastname ?? ''} ${row.firstname ?? ''}`.trim() }
+  ```
+- Los campos con `accessorFn` necesitan `id` explícito
+
+#### Campos FK que muestran UUID (ej: `hierarchical_position`)
+- Si una columna muestra un UUID en vez del nombre, agregar un cell renderer que lea la relación:
+  ```ts
+  cell: ({ row }) => row.original.hierarchy_rel?.name ?? row.getValue('hierarchical_position')
+  ```
+
+#### Filtros: configuración completa
+- Definir TODOS los filtros disponibles como un array `FILTER_DEFINITIONS`
+- Usar `showFilterToggle={true}` para que el usuario elija cuáles ver
+- Definir `initialFilterVisibility` con solo los filtros principales visibles por defecto
+- Los filtros faceted necesitan `options` + `externalCounts` del server
+- Para columnas de texto libre (ej: `company_position`, `allocated_to`), usar `type: 'text'` en vez de faceted
+
+#### Patrón del client wrapper (`_XxxDataTable.tsx`)
+- Cargar facets con `useEffect` + server action
+- Construir `facetedFilters` con `useMemo` dependiente de los facets
+- Los filtros se renderizan SOLO si la columna existe en TanStack (`table.getColumn(columnId)`)
+- Las columnas hidden siguen registradas en TanStack, así que sus filtros funcionan
+
+#### Page → searchParams
+- El page de Next.js debe recibir `searchParams` como prop y pasarlos al server component
+- En Next.js 15+, `searchParams` es una Promise: `const resolved = await searchParams`
 
 ---
 
