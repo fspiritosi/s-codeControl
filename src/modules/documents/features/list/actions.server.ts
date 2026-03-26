@@ -173,7 +173,23 @@ export const getDocumentEmployeesById = async (id: string) => {
         },
       },
     });
-    return data;
+    // Normalize Prisma relation names to match what the detail page expects
+    return data.map((doc: any) => ({
+      ...doc,
+      document_types: doc.document_type,
+      applies: doc.employee
+        ? {
+            ...doc.employee,
+            company_id: doc.employee.company,
+            city: doc.employee.city_rel,
+            province: doc.employee.province_rel,
+            contractor_employee: doc.employee.contractor_employee?.map((ce: any) => ({
+              ...ce,
+              contractors: ce.contractor,
+            })),
+          }
+        : null,
+    }));
   } catch (error) {
     console.error('Error fetching document employees by id:', error);
     return [];
@@ -198,7 +214,20 @@ export const getDocumentEquipmentById = async (id: string) => {
         },
       },
     });
-    return data;
+    // Normalize Prisma relation names to match what the detail page expects
+    return data.map((doc: any) => ({
+      ...doc,
+      document_types: doc.document_type,
+      applies: doc.vehicle
+        ? {
+            ...doc.vehicle,
+            company_id: doc.vehicle.company,
+            brand: doc.vehicle.brand_rel,
+            model: doc.vehicle.model_rel,
+            type_of_vehicle: doc.vehicle.type_of_vehicle_rel,
+          }
+        : null,
+    }));
   } catch (error) {
     console.error('Error fetching document equipment by id:', error);
     return [];
