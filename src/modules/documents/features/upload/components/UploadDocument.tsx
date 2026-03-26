@@ -1,4 +1,5 @@
 'use client';
+import { toast } from 'sonner';
 import { Button } from '@/shared/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/shared/components/ui/command';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
@@ -129,10 +130,12 @@ function UploadDocument({
       form.reset();
       setSelectedFile(undefined);
       setSelectedDocumentType(undefined);
+      toast.success('Documento cargado correctamente');
       router.refresh();
       document.getElementById('close-create-document-modal')?.click();
-    } catch (error) {
-      console.error('error', error);
+    } catch (error: any) {
+      console.error('Error al cargar documento:', error);
+      toast.error('Error al cargar el documento', { description: error?.message || 'Intenta nuevamente' });
     }
   }
   const [selectedFileName, setSelectedFileName] = useState<string>('');
