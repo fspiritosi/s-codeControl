@@ -119,12 +119,23 @@ export const updateDocumentByAppliesAndType = async (
         where: { applies: appliesId, id_document_types: documentTypeId },
         data: updateData as any,
       });
+      // If no existing record was found, create one (upsert logic)
+      if (data.count === 0) {
+        await prisma.documents_employees.create({
+          data: { applies: appliesId, id_document_types: documentTypeId, ...updateData } as any,
+        });
+      }
       return { data, error: null };
     } else {
       const data = await prisma.documents_equipment.updateMany({
         where: { applies: appliesId, id_document_types: documentTypeId },
         data: updateData as any,
       });
+      if (data.count === 0) {
+        await prisma.documents_equipment.create({
+          data: { applies: appliesId, id_document_types: documentTypeId, ...updateData } as any,
+        });
+      }
       return { data, error: null };
     }
   } catch (error) {
