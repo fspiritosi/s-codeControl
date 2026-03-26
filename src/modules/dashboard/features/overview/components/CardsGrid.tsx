@@ -39,7 +39,7 @@ async function CardsGrid() {
       borderColor: 'border-l-yellow-500',
       iconColor: 'text-yellow-500',
       badge: 'yellow' as const,
-      href: `/dashboard/document?validity_from=${today}&validity_to=${in30Days}`,
+      href: `/dashboard/document?tab=employees&validity_from=${today}&validity_to=${in30Days}`,
     },
     {
       title: 'Docs Equipos por vencer',
@@ -49,7 +49,7 @@ async function CardsGrid() {
       borderColor: 'border-l-yellow-500',
       iconColor: 'text-yellow-500',
       badge: 'yellow' as const,
-      href: `/dashboard/equipment?validity_from=${today}&validity_to=${in30Days}`,
+      href: `/dashboard/document?tab=equipment&validity_from=${today}&validity_to=${in30Days}`,
     },
     {
       title: 'Docs Empleados vencidos',
@@ -58,7 +58,7 @@ async function CardsGrid() {
       borderColor: 'border-l-red-500',
       iconColor: 'text-red-500',
       badge: 'destructive' as const,
-      href: `/dashboard/document?validity_to=${yesterday}`,
+      href: `/dashboard/document?tab=employees&validity_to=${yesterday}`,
     },
     {
       title: 'Docs Equipos vencidos',
@@ -67,7 +67,7 @@ async function CardsGrid() {
       borderColor: 'border-l-red-500',
       iconColor: 'text-red-500',
       badge: 'destructive' as const,
-      href: `/dashboard/equipment?validity_to=${yesterday}`,
+      href: `/dashboard/document?tab=equipment&validity_to=${yesterday}`,
     },
   ];
 
