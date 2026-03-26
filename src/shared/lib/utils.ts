@@ -197,7 +197,7 @@ export const uploadDocument = async (
         rest
       );
       if (error) {
-        return [];
+        throw new Error(typeof error === 'string' ? error : 'Error al actualizar documentos');
       }
     } else {
       const { applies, ...rest } = dataToUpdate;
@@ -208,7 +208,7 @@ export const uploadDocument = async (
         rest
       );
       if (error) {
-        return [];
+        throw new Error(typeof error === 'string' ? error : 'Error al actualizar documento');
       }
     }
   } else {
@@ -220,7 +220,7 @@ export const uploadDocument = async (
       }));
       const { error } = await insertMultipleDocuments(tableName, dataToInsert);
       if (error) {
-        return [];
+        throw new Error(typeof error === 'string' ? error : 'Error al insertar documentos');
       }
     } else {
       const { error } = await insertSingleDocumentEmployee({
@@ -228,7 +228,7 @@ export const uploadDocument = async (
         state: 'presentado',
       });
       if (error) {
-        return [];
+        throw new Error(typeof error === 'string' ? error : 'Error al insertar documento');
       }
     }
   }
