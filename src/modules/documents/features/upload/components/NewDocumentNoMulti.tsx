@@ -7,7 +7,10 @@ import {
   AlertDialog,
   AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogDescription,
   AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/shared/components/ui/alert-dialog';
 import { Button } from '@/shared/components/ui/button';
@@ -49,6 +52,10 @@ async function NewDocumentNoMulti({
         <Button>Documento No Multirecurso</Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="w-full">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Cargar documento</AlertDialogTitle>
+          <AlertDialogDescription className="sr-only">Subir un documento no multirecurso</AlertDialogDescription>
+        </AlertDialogHeader>
         <InfoComponent
           iconSize="lg"
           size="sm"
