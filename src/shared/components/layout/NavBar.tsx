@@ -1,20 +1,13 @@
 'use client';
-import { logout } from '@/modules/landing/features/auth/actions/login.actions';
 import { ModeToggle } from '@/shared/components/ui/ToogleDarkButton';
-import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
 import { Button, buttonVariants } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/shared/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
-import { updateProfileAvatar as updateProfileAvatarAction } from '@/shared/actions/auth';
-import { cn } from '@/shared/lib/utils';
 import { useLoggedUserStore } from '@/shared/store/loggedUser';
 import {
   BellIcon,
@@ -27,50 +20,58 @@ import {
 } from '@radix-ui/react-icons';
 import { formatRelative } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Check, Loader } from 'lucide-react';
+import { Check } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
-import { UpdateUserPasswordForm } from '@/shared/components/auth/UpdateUserPasswordForm';
-import { UploadImage } from '@/shared/components/common/UploadImage';
-import { AlertDialogHeader } from '@/shared/components/ui/alert-dialog';
-import { FormControl, FormField, FormItem, FormMessage } from '@/shared/components/ui/form';
-import { Separator } from '@/shared/components/ui/separator';
+import { NavUser } from './NavUser';
+
+function capitalizeWords(text: string | undefined) {
+  if (!text) return '(no disponible)';
+  return text
+    .split(' ')
+    .map((w) => w.charAt(0)?.toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function NotificationMessage({ notification }: { notification: any }) {
+  const docName = notification?.document?.documentName || '(no disponible)';
+  const resource = capitalizeWords(notification?.document?.resource);
+  const isEmployee = notification.reference === 'employee';
+  const resourceLabel = isEmployee ? 'empleado' : 'vehiculo con patente';
+
+  const messages: Record<string, string> = {
+    aprobado: `El documento ${docName}, del ${resourceLabel} ${resource} ha sido aprobado`,
+    rechazado: `El documento ${docName}, del ${resourceLabel} ${resource} ha sido rechazado`,
+    vencimiento: `El documento ${docName}, del ${resourceLabel} ${resource} ha vencido`,
+  };
+
+  return (
+    <p className="text-sm font-medium leading-none first-letter:uppercase">
+      {messages[notification?.category] || notification?.description}
+    </p>
+  );
+}
+
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  rechazado: <ExclamationTriangleIcon className="text-yellow-800" />,
+  aprobado: <CheckCircledIcon className="text-green-800" />,
+  vencimiento: <LapTimerIcon className="text-red-800" />,
+  noticia: <EnvelopeOpenIcon className="text-blue-800" />,
+  advertencia: <ExclamationTriangleIcon className="text-yellow-800" />,
+};
+
 export default function NavBar() {
-  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   const actualUser = useLoggedUserStore((state) => state.profile);
   const notifications = useLoggedUserStore((state) => state.notifications);
-  const avatarUrl = actualUser && actualUser.length > 0 ? actualUser[0] : '';
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-    }
-  };
-
-  const router = useRouter();
-  const { control, formState, setValue } = useForm();
-
-  const updateProfileAvatar = async (imageUrl: string) => {
-    try {
-      const { error } = await updateProfileAvatarAction(actualUser[0].id || '', imageUrl);
-      if (error) {
-        throw new Error(error);
-      }
-    } catch (error) {
-      console.error('Error al actualizar la URL de la imagen:', error);
-    }
-  };
-
   const markAllAsRead = useLoggedUserStore((state) => state.markAllAsRead);
 
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const handleCloseSidebar = () => {
     useLoggedUserStore.getState().toggleSidebar();
   };
+
+  const isAdmin =
+    actualUser?.[0]?.role === 'Admin' ||
+    actualUser?.[0]?.role === 'Super Admin' ||
+    actualUser?.[0]?.role === 'Developer';
 
   return (
     <nav className="flex flex-shrink items-center justify-end sm:justify-between pr-4 py-4 mb-2">
@@ -79,23 +80,20 @@ export default function NavBar() {
           <HamburgerMenuIcon className="size-7 text-foreground" />
         </button>
       </div>
-      <div className="flex gap-8 items-center">
-        {actualUser?.[0]?.role === 'Admin' ||
-        actualUser?.[0]?.role === 'Super Admin' ||
-        actualUser?.[0]?.role === 'Developer' ? (
+      <div className="flex gap-4 items-center">
+        {isAdmin && (
           <Link href="/admin/panel">
             <Button variant="default">Panel</Button>
           </Link>
-        ) : null}
+        )}
+
+        {/* Notificaciones */}
         <DropdownMenu>
           <DropdownMenuTrigger aria-label="Notificaciones">
             <div className="relative">
-              {notifications?.length ? (
+              {notifications?.length > 0 && (
                 <DotFilledIcon className="text-blue-600 absolute size-7 top-[-8px] right-[-10px] p-0" />
-              ) : (
-                false
               )}
-
               <BellIcon className="text-foreground cursor-pointer size-5" />
             </div>
           </DropdownMenuTrigger>
@@ -103,81 +101,36 @@ export default function NavBar() {
             <Card className="w-[600px]">
               <CardHeader>
                 <CardTitle>Notificaciones</CardTitle>
-                {notifications?.length ? (
-                  <CardDescription>Tienes {notifications?.length} notificaciones pendientes</CardDescription>
-                ) : (
-                  false
+                {notifications?.length > 0 && (
+                  <CardDescription>Tienes {notifications.length} notificaciones pendientes</CardDescription>
                 )}
                 <DropdownMenuSeparator className="mb-3" />
               </CardHeader>
               <CardContent className="grid gap-6 max-h-[40vh] overflow-auto">
                 {notifications?.length > 0 ? (
                   <div>
-                    {notifications?.map((notification, index) => (
+                    {notifications.map((notification: any) => (
                       <div
-                        key={crypto.randomUUID()}
-                        className="mb-4 grid grid-cols-[25px_1fr] pb-4 last:mb-0 last:pb-0 items-center  gap-2"
+                        key={notification.id}
+                        className="mb-4 grid grid-cols-[25px_1fr] pb-4 last:mb-0 last:pb-0 items-center gap-2"
                       >
-                        {notification?.category === 'rechazado' && (
-                          <ExclamationTriangleIcon className="text-yellow-800" />
-                        )}
-                        {notification?.category === 'aprobado' && <CheckCircledIcon className="text-green-800" />}
-                        {notification?.category === 'vencimiento' && <LapTimerIcon className="text-red-800" />}
-                        {notification?.category === 'noticia' && <EnvelopeOpenIcon className="text-blue-800" />}
-                        {notification?.category === 'advertencia' && (
-                          <ExclamationTriangleIcon className="text-yellow-800" />
-                        )}
-
+                        {CATEGORY_ICONS[notification?.category]}
                         <div className="space-y-1 flex justify-between items-center gap-2">
                           <div>
-                            <p className="text-sm font-medium leading-none first-letter:uppercase">
-                              {notification?.category === 'aprobado' &&
-                                `El documento ${notification?.document?.documentName || '(no disponible)'}, del ${
-                                  notification.reference === 'employee' ? 'empleado' : 'vehiculo con patente'
-                                } ${
-                                  notification?.document?.resource
-                                    ?.split(' ')
-                                    ?.map((word) => word.charAt(0)?.toUpperCase() + word.slice(1).toLowerCase())
-                                    .join(' ') || '(no disponible)'
-                                } ha sido aprobado`}
-                              {notification?.category === 'rechazado' &&
-                                `El documento ${notification?.document?.documentName || '(no disponible)'}, del ${
-                                  notification.reference === 'employee' ? 'empleado' : 'vehiculo con patente'
-                                } ${
-                                  notification.reference === 'employee'
-                                    ? notification?.document?.resource
-                                        .split(' ')
-                                        ?.map((word) => word.charAt(0)?.toUpperCase() + word.slice(1).toLowerCase())
-                                        .join(' ') || '(no disponible)'
-                                    : notification?.document?.resource
-                                        .split(' ')
-                                        ?.map((word) => word.charAt(0)?.toUpperCase() + word.slice(1)?.toUpperCase())
-                                        .join(' ') || '(no disponible)'
-                                } ha sido rechazado`}
-                              {notification?.category === 'vencimiento' &&
-                                `El documento ${notification?.document?.documentName || '(no disponible)'}, del ${
-                                  notification.reference === 'employee' ? 'empleado' : 'vehiculo con patente'
-                                } ${
-                                  notification?.document?.resource
-                                    .split(' ')
-                                    ?.map((word) => word.charAt(0)?.toUpperCase() + word.slice(1).toLowerCase())
-                                    .join(' ') || '(no disponible)'
-                                } ha vencido`}
-                            </p>
-
+                            <NotificationMessage notification={notification} />
                             <CardDescription>
-                              {notification?.description.length > 50
-                                ? notification?.description.substring(0, 50) + '...'
+                              {notification?.description?.length > 50
+                                ? notification.description.substring(0, 50) + '...'
                                 : notification?.description}
                             </CardDescription>
-                            <p className="text-sm text-muted-foreground/70 first-letter:">
+                            <p className="text-sm text-muted-foreground/70">
                               {notification?.created_at &&
-                                formatRelative(new Date(notification?.created_at), new Date(), { locale: es })}
+                                formatRelative(new Date(notification.created_at), new Date(), { locale: es })}
                             </p>
                           </div>
                           <Link
                             className={[buttonVariants({ variant: 'outline' }), 'w-20'].join(' ')}
-                            href={`/dashboard/document/${notification?.document?.id}`}
+                            href={`/dashboard/document/${notification?.document?.id}?resource=${notification?.reference === 'employee' ? 'Persona' : 'Equipos'}`}
                           >
                             Ver
                           </Link>
@@ -191,96 +144,15 @@ export default function NavBar() {
               </CardContent>
               <CardFooter>
                 <Button onClick={() => markAllAsRead()} className="w-full">
-                  <Check className="mr-2 h-4 w-4" onClick={() => markAllAsRead()} /> Marcar todos como leido
+                  <Check className="mr-2 h-4 w-4" /> Marcar todos como leido
                 </Button>
               </CardFooter>
             </Card>
           </DropdownMenuContent>
         </DropdownMenu>
+
         <ModeToggle />
-        <div className="flex-shrink justify-center items-center flex">
-          <DropdownMenu>
-            <DropdownMenuTrigger className="cursor-pointer" asChild aria-label="Menú de usuario">
-              <Avatar className="size-9">
-                <AvatarImage src={typeof avatarUrl === 'object' ? avatarUrl.avatar : ''} />
-                <AvatarFallback>
-                  {typeof avatarUrl === 'object' && avatarUrl.fullname
-                    ? avatarUrl.fullname
-                        .split(' ')
-                        .slice(0, 2)
-                        .map((w: string) => w.charAt(0).toUpperCase())
-                        .join('')
-                    : 'U'}
-                </AvatarFallback>
-              </Avatar>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    {typeof avatarUrl === 'object' ? avatarUrl.fullname : ''}
-                  </p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {typeof avatarUrl === 'object' ? avatarUrl.email : ''}
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => setShowDeleteDialog(true)}>Editar perfil</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                <Button variant={'destructive'} className="w-full">
-                  Cerrar Sesión
-                </Button>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-            <DialogContent className="sm:max-w-[500px] ">
-              <AlertDialogHeader>
-                <DialogTitle>Editar perfil</DialogTitle>
-                <DialogDescription>Aqui se haran cambios en tu perfil</DialogDescription>
-              </AlertDialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="w-[300px] flex  gap-2">
-                  <FormProvider {...useForm()}>
-                    <FormField
-                      control={control}
-                      name="company_logo"
-                      render={({ field }) => (
-                        <FormItem className=" max-w-[600px] flex flex-col justify-center">
-                          <FormControl>
-                            <div className="flex lg:items-center flex-wrap md:flex-nowrap flex-col lg:flex-row gap-8">
-                              <UploadImage
-                                companyId={actualCompany?.id as string}
-                                labelInput="Avatar"
-                                imageBucket="avatar"
-                                desciption="Sube tu avatar"
-                                style={{ width: '300px' }}
-                                // onImageChange={(imageUrl: string) =>
-                                //   setValue('profile', imageUrl)
-                                // }
-                                onImageChange={async (imageUrl) => {
-                                  setValue('profile', imageUrl);
-                                  await updateProfileAvatar(imageUrl); // Llama a la función para actualizar la URL
-                                }}
-                                // onUploadSuccess={onUploadSuccess}
-                                inputStyle={{ width: '150px' }}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </FormProvider>
-                </div>
-                <Separator className="my-4" />
-                <UpdateUserPasswordForm />
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+        <NavUser />
       </div>
     </nav>
   );
