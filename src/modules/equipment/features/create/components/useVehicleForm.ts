@@ -7,7 +7,7 @@ import { useLoggedUserStore } from '@/shared/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toPng } from 'html-to-image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -128,8 +128,10 @@ export function useVehicleForm(
     return () => { stopCustomersPolling(); };
   }, [fetchContractors, startCustomersPolling, stopCustomersPolling]);
 
-  const contractorCompanies = useCountriesStore((state) =>
-    state.customers?.filter((company: any) => company.company_id.toString() === actualCompany?.id && company.is_active)
+  const allCustomers = useCountriesStore((state) => state.customers);
+  const contractorCompanies = useMemo(
+    () => allCustomers?.filter((company: any) => company.company_id.toString() === actualCompany?.id && company.is_active),
+    [allCustomers, actualCompany?.id]
   );
 
   const types = data.tipe_of_vehicles?.map((e) => e.name);

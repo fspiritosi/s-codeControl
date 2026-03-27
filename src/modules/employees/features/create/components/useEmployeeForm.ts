@@ -17,7 +17,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { PostgrestError } from '@supabase/supabase-js';
 import { addMonths, format } from 'date-fns';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -32,7 +32,7 @@ import { Province } from '@/modules/employees/shared/types';
 import { getPersonalDataFields, getContactDataFields, getLaboralDataFields } from './fieldDefinitions';
 
 export function useEmployeeFormLogic(user: any, guild: any, covenants: any, categories: any) {
-  const profile = useLoggedUserStore((state) => state);
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   const searchParams = useSearchParams();
   const accion = searchParams.get('action');
   const employees = useLoggedUserStore((state) => state.active_and_inactive_employees);
@@ -46,10 +46,13 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
   const countryOptions = useCountriesStore((state) => state.countries);
   const hierarchyOptions = useCountriesStore((state) => state.hierarchy);
   const workDiagramOptions = useCountriesStore((state) => state.workDiagram);
-  const contractorCompanies = useCountriesStore((state) =>
-    state.customers?.filter(
-      (company: any) => company.company_id.toString() === profile?.actualCompany?.id && company.is_active
-    )
+  const allCustomers = useCountriesStore((state) => state.customers);
+  const contractorCompanies = useMemo(
+    () =>
+      allCustomers?.filter(
+        (company: any) => company.company_id.toString() === actualCompany?.id && company.is_active
+      ),
+    [allCustomers, actualCompany?.id]
   );
   const setActivesEmployees = useLoggedUserStore((state) => state.setActivesEmployees);
   const { updateEmployee, createEmployee } = useEmployeesData();
@@ -120,7 +123,10 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
     if (provinceId) {
       fetchCityValues(provinceId);
     }
+  }, [provinceId]);
 
+  const errorKeys = Object.keys(form.formState.errors).sort().join(',');
+  useEffect(() => {
     const { errors } = form.formState;
     const acordeon1: string[] = [];
     const acordeon2: string[] = [];
@@ -140,7 +146,7 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
     setAccordion1Errors(acordeon1.length > 0);
     setAccordion2Errors(acordeon2.length > 0);
     setAccordion3Errors(acordeon3.length > 0);
-  }, [form.formState.errors, provinceId, employees, user]);
+  }, [errorKeys]);
 
   const handleProvinceChange = (name: any) => {
     const provId = provincesOptions.find((province: Province) => province.name.trim() === name)?.id;
@@ -148,13 +154,13 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
   };
 
   async function onCreate(values: z.infer<typeof accordionSchema>) {
-    const isDuplicatedCuil = await validateDuplicatedCuil(values.cuil, profile?.actualCompany?.id);
+    const isDuplicatedCuil = await validateDuplicatedCuil(values.cuil, actualCompany?.id);
     if (!isDuplicatedCuil) {
       toast.error('Ya existe un empleado con este CUIL en la empresa');
       return;
     }
 
-    const isDuplicatedFile = await getAllFiles(values.file, profile?.actualCompany?.id);
+    const isDuplicatedFile = await getAllFiles(values.file, actualCompany?.id);
     if (!isDuplicatedFile) {
       toast.error('Ya existe un empleado con este legajo en la empresa');
       return;
@@ -236,13 +242,13 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
   }
 
   async function onUpdate(values: z.infer<typeof accordionSchema>) {
-    const isDuplicatedCuil = await validateDuplicatedCuilForUpdate(values.cuil, user?.id, profile?.actualCompany?.id);
+    const isDuplicatedCuil = await validateDuplicatedCuilForUpdate(values.cuil, user?.id, actualCompany?.id);
     if (!isDuplicatedCuil) {
       toast.error('Ya existe otro empleado con este CUIL en la empresa');
       return;
     }
 
-    const isDuplicatedFile = await getAllFilesForUpdate(values.file, user?.id, profile?.actualCompany?.id);
+    const isDuplicatedFile = await getAllFilesForUpdate(values.file, user?.id, actualCompany?.id);
     if (!isDuplicatedFile) {
       toast.error('Ya existe otro empleado con este legajo en la empresa');
       return;

@@ -3,7 +3,6 @@ import RepairTypes from '@/modules/maintenance/features/repairs/components/Repai
 import { Card, CardFooter } from '@/shared/components/ui/card';
 import { TabsContent } from '@/shared/components/ui/tabs';
 import { cn } from '@/shared/lib/utils';
-import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { prisma } from '@/shared/lib/prisma';
 import { getRole } from '@/shared/lib/utils/getRole';
@@ -11,7 +10,6 @@ import VehiclesForm, { generic } from '@/modules/equipment/features/create/compo
 
 export default async function EquipmentFormAction({ searchParams: searchParamsPromise }: { searchParams: Promise<any> }) {
   const searchParams = await searchParamsPromise;
-  revalidatePath('/dashboard/equipment/action');
 
   const cookiesStore = await cookies();
   const company_id = cookiesStore.get('actualComp');
@@ -54,7 +52,7 @@ export default async function EquipmentFormAction({ searchParams: searchParamsPr
       },
     });
 
-    brand_vehicles = await prisma.brand_vehicles.findMany({
+    const brandData = await prisma.brand_vehicles.findMany({
       where: {
         OR: [
           { company_id: company_id?.value },
@@ -62,6 +60,8 @@ export default async function EquipmentFormAction({ searchParams: searchParamsPr
         ],
       },
     });
+    // Convert BigInt id to string for JSON serialization
+    brand_vehicles = brandData.map((b) => ({ ...b, id: String(b.id) }));
   } catch (error) {
     console.error(error);
   }
