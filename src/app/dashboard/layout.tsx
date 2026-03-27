@@ -13,9 +13,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <NavBar />
       </div>
       <div className="overflow-y-auto">
-        <div className="animate-fade-in px-6 py-6">
-          {children}
-        </div>
+        <div className="animate-fade-in px-6  pb-6">{children}</div>
       </div>
     </div>
   );

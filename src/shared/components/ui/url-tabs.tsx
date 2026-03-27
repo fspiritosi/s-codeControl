@@ -1,8 +1,8 @@
 'use client';
 
-import * as React from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
+import { useRouter, useSearchParams } from 'next/navigation';
+import * as React from 'react';
 
 import { cn } from '@/shared/lib/utils';
 
@@ -124,11 +124,7 @@ function UrlTabs({
 
       // Copiar todos los params actuales excepto los que se resetean
       searchParams.forEach((val, key) => {
-        if (
-          key !== paramName &&
-          !resetParams.includes(key) &&
-          !preserveParams.includes(key)
-        ) {
+        if (key !== paramName && !resetParams.includes(key) && !preserveParams.includes(key)) {
           newParams.set(key, val);
         }
       });
@@ -138,9 +134,7 @@ function UrlTabs({
 
       // Construir URL
       const queryString = newParams.toString();
-      const url = baseUrl
-        ? `${baseUrl}${queryString ? `?${queryString}` : ''}`
-        : `?${queryString}`;
+      const url = baseUrl ? `${baseUrl}${queryString ? `?${queryString}` : ''}` : `?${queryString}`;
 
       // Navegar
       if (replace) {
@@ -152,17 +146,7 @@ function UrlTabs({
       // Callback adicional
       onTabChange?.(value);
     },
-    [
-      paramName,
-      preserveParams,
-      resetParams,
-      baseUrl,
-      replace,
-      disableUrlNavigation,
-      router,
-      searchParams,
-      onTabChange,
-    ]
+    [paramName, preserveParams, resetParams, baseUrl, replace, disableUrlNavigation, router, searchParams, onTabChange]
   );
 
   return (
@@ -181,15 +165,12 @@ function UrlTabs({
 // SUB-COMPONENTS (re-export con alias)
 // ============================================
 
-function UrlTabsList({
-  className,
-  ...props
-}: React.ComponentProps<typeof TabsPrimitive.List>) {
+function UrlTabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.List>) {
   return (
     <TabsPrimitive.List
       data-slot="url-tabs-list"
       className={cn(
-        'bg-muted text-muted-foreground inline-flex h-10 w-fit items-center justify-center rounded-lg p-1 gap-1',
+        'bg-primary/10 text-muted-foreground inline-flex h-10 w-full items-center rounded-lg p-1 gap-1',
         className
       )}
       {...props}
@@ -197,19 +178,16 @@ function UrlTabsList({
   );
 }
 
-function UrlTabsTrigger({
-  className,
-  ...props
-}: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+function UrlTabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
   return (
     <TabsPrimitive.Trigger
       data-slot="url-tabs-trigger"
       className={cn(
-        "inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-all",
-        "text-muted-foreground hover:text-foreground",
-        "data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        "disabled:pointer-events-none disabled:opacity-50",
+        'inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-all',
+        'text-muted-foreground hover:text-foreground',
+        'data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'disabled:pointer-events-none disabled:opacity-50',
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
@@ -218,16 +196,9 @@ function UrlTabsTrigger({
   );
 }
 
-function UrlTabsContent({
-  className,
-  ...props
-}: React.ComponentProps<typeof TabsPrimitive.Content>) {
+function UrlTabsContent({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Content>) {
   return (
-    <TabsPrimitive.Content
-      data-slot="url-tabs-content"
-      className={cn('flex-1 outline-none', className)}
-      {...props}
-    />
+    <TabsPrimitive.Content data-slot="url-tabs-content" className={cn('flex-1 outline-none', className)} {...props} />
   );
 }
 
@@ -235,5 +206,5 @@ function UrlTabsContent({
 // EXPORTS
 // ============================================
 
-export { UrlTabs, UrlTabsList, UrlTabsTrigger, UrlTabsContent };
+export { UrlTabs, UrlTabsContent, UrlTabsList, UrlTabsTrigger };
 export type { UrlTabsProps };

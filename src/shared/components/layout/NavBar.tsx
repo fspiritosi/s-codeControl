@@ -75,7 +75,7 @@ export default function NavBar() {
     actualUser?.[0]?.role === 'Developer';
 
   return (
-    <nav className="flex flex-shrink items-center justify-end sm:justify-between pr-4 py-4 mb-2">
+    <nav className="flex flex-shrink items-center justify-end sm:justify-between pr-4 py-4 ">
       <div className="items-center hidden sm:flex gap-6">
         <button onClick={handleCloseSidebar} className="relative w-fit ml-7" aria-label="Abrir/cerrar menú lateral">
           <HamburgerMenuIcon className="size-7 text-foreground" />
