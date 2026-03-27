@@ -17,7 +17,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <div className="px-6 py-2">
           <DashboardBreadcrumbs />
         </div>
-        <div className="animate-fade-in">
+        <div className="animate-fade-in px-6 pb-6">
           {children}
         </div>
       </div>
