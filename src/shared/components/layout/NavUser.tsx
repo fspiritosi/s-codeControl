@@ -64,10 +64,13 @@ export function NavUser() {
         <DropdownMenuTrigger className="cursor-pointer outline-none" asChild aria-label="Menú de usuario">
           <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted transition-colors">
             <Avatar className="size-8 rounded-lg">
-              <AvatarImage src={avatar} alt={fullname} />
+              <AvatarImage src={avatar} alt={fullname} className="object-cover" />
               <AvatarFallback className="rounded-lg text-xs">{initials}</AvatarFallback>
             </Avatar>
-            <span className="hidden sm:inline text-sm font-medium truncate max-w-[120px]">{initials}</span>
+            <div className="hidden sm:grid flex-1 text-left text-sm leading-tight">
+              <span className="truncate font-medium max-w-[150px]">{fullname}</span>
+              <span className="truncate text-xs text-muted-foreground max-w-[150px]">{email}</span>
+            </div>
             <ChevronsUpDown className="hidden sm:inline size-4 text-muted-foreground" />
           </button>
         </DropdownMenuTrigger>
