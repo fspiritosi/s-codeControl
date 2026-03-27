@@ -170,8 +170,9 @@ function stopEmployeePolling() {
   }
 }
 
-if (typeof window !== 'undefined') {
-  startEmployeePolling();
-}
+// Polling disabled — data is fetched on-demand by server components
+// if (typeof window !== 'undefined') {
+//   startEmployeePolling();
+// }
 
 export { startEmployeePolling, stopEmployeePolling };

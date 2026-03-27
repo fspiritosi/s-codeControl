@@ -23,31 +23,16 @@ export const useUiStore = create<UiState>((set, get) => ({
 
   allNotifications: async () => {
     const { useCompanyStore } = require('./companyStore');
-    const { useDocumentStore } = require('./documentStore');
     const companyId = useCompanyStore.getState().actualCompany?.id;
+    if (!companyId) return;
 
     const notifications = await fetchNotificationsByCompany(companyId);
 
-    await useDocumentStore.getState().documetsFetch();
-
-    const allDocumentsToShow = useDocumentStore.getState().allDocumentsToShow;
-
-    const document = notifications?.map((doc: any) => {
-      const findDocument =
-        allDocumentsToShow?.employees?.find((document: any) => document.id === doc.document_id) ||
-        allDocumentsToShow?.vehicles?.find((document: any) => document.id === doc.document_id);
-      if (findDocument) {
-        return { ...doc, document: findDocument };
-      } else {
-        return doc;
-      }
-    });
-
-    const tipedData = document?.sort(
+    const sorted = notifications?.sort(
       (a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     ) as Notifications[];
 
-    set({ notifications: tipedData });
+    set({ notifications: sorted });
   },
 
   markAllAsRead: async () => {

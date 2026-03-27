@@ -2,7 +2,6 @@ import { SharedUser } from '@/shared/types/types';
 import { Company, SharedCompanies } from '@/shared/zodSchemas/schemas';
 import cookies from 'js-cookie';
 import { create } from 'zustand';
-import { useCountriesStore } from './countries';
 import { resetCompanyDefect, setCompanyAsDefect } from '@/modules/company/features/detail/actions.server';
 import { fetchCompaniesByOwner, fetchSharedCompaniesByProfile } from '@/modules/company/features/list/actions.server';
 import { fetchSharedUsersByCompany } from '@/modules/company/features/users/actions.server';
@@ -38,20 +37,9 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
     set({ actualCompany: company });
     cookies.set('actualComp', company.id, { path: '/' });
 
-    // Trigger side effects on other stores
-    useCountriesStore.getState().documentTypes(company?.id);
-
-    const { useEmployeeStore } = require('./employeeStore');
-    const { useDocumentStore } = require('./documentStore');
-    const { useVehicleStore } = require('./vehicleStore');
-    const { useUiStore } = require('./uiStore');
-    const { useAuthStore } = require('./authStore');
-
-    useEmployeeStore.getState().setActivesEmployees();
-    useVehicleStore.getState().fetchVehicles();
-    useDocumentStore.getState().documetsFetch();
-    useUiStore.getState().allNotifications();
+    // Only fetch auth/permission essentials — no DB data in stores
     get().FetchSharedUsers();
+    const { useAuthStore } = require('./authStore');
     useAuthStore.getState().handleActualCompanyRole();
   },
 
@@ -69,11 +57,9 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
       const user = share_company_users?.find((e: any) => e.profile_id === id);
 
       const { useAuthStore } = require('./authStore');
-      const { useDocumentStore } = require('./documentStore');
 
       if (user?.role) {
         useAuthStore.getState().setRoleActualCompany(user?.role);
-        await useDocumentStore.getState().documetsFetch();
       } else {
         useAuthStore.getState().setRoleActualCompany(undefined);
       }

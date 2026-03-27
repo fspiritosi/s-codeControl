@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from './authStore';
 import { useCompanyStore } from './companyStore';
-import { useDocumentStore } from './documentStore';
 import Cookies from 'js-cookie';
 
 type AuthUser = { id: string; email?: string; role?: string; [key: string]: any } | null;
@@ -41,7 +40,6 @@ export default function InitState({
       const userRole = share_company_users?.find((e: any) => e.profile_id === user?.id);
       if (userRole?.role) {
         useAuthStore.setState({ roleActualCompany: user?.role as any });
-        useDocumentStore.getState().documetsFetch();
       } else {
         useAuthStore.setState({ roleActualCompany: undefined as any });
       }

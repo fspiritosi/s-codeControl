@@ -120,6 +120,10 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
   const provinceId = provincesOptions?.find((province: Province) => province.name.trim() === user?.province)?.id;
 
   useEffect(() => {
+    useCountriesStore.getState().initCatalogs();
+  }, []);
+
+  useEffect(() => {
     if (provinceId) {
       fetchCityValues(provinceId);
     }

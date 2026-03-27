@@ -31,6 +31,7 @@ interface State {
   companyDocumentTypes: Equipo
   fetchContractors: () => void
   fetchContacts: () => void
+  initCatalogs: () => void
   startCustomersPolling: () => void
   stopCustomersPolling: () => void
   startContactsPolling: () => void
@@ -113,6 +114,17 @@ export const useCountriesStore = create<State>((set, get) => ({
   fetchContractors,
   fetchContacts,
 
+  initCatalogs: async () => {
+    const state = get();
+    // Only fetch if not already loaded
+    if (!state.countries.length) fetchCountrys();
+    if (!state.provinces.length) fetchProvinces();
+    if (!state.hierarchy.length) fetchHierarchyFn();
+    if (!state.workDiagram.length) fetchworkDiagram();
+    if (!state.customers.length) fetchContractors();
+    if (!state.contacts.length) fetchContacts();
+  },
+
   // Polling replacement for real-time subscriptions
   startCustomersPolling: () => {
     if (customersPollInterval) return;
@@ -143,12 +155,12 @@ export const useCountriesStore = create<State>((set, get) => ({
   },
 }));
 
-// Initialize data fetches after store creation
-if (typeof window !== 'undefined') {
-  fetchContractors();
-  fetchContacts();
-  fetchworkDiagram();
-  fetchHierarchyFn();
-  fetchCountrys();
-  fetchProvinces();
-}
+// Catalog fetches disabled on module load — loaded on-demand by components that need them
+// if (typeof window !== 'undefined') {
+//   fetchContractors();
+//   fetchContacts();
+//   fetchworkDiagram();
+//   fetchHierarchyFn();
+//   fetchCountrys();
+//   fetchProvinces();
+// }

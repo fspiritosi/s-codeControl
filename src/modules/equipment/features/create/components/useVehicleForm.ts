@@ -45,6 +45,7 @@ export function useVehicleForm(
   const loggedUser = useLoggedUserStore((state) => state.credentialUser?.id);
 
   useEffect(() => {
+    useCountriesStore.getState().initCatalogs();
     if (vehicle && vehicle.type_of_vehicle === 'Vehículos') setHideInput(true);
     if (vehicle && vehicle.type_of_vehicle === 'Otros') setHideInput(false);
     if (!vehicle) setHideInput(false);
