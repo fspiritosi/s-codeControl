@@ -1,11 +1,12 @@
-import CardsGrid from '@/modules/dashboard/features/overview/components/CardsGrid';
+import CardsGrid, { CardsGridSkeleton } from '@/modules/dashboard/features/overview/components/CardsGrid';
+import { Suspense } from 'react';
 
 export default async function DashboardComponent() {
   return (
-    <div className="px-6">
-      <section className="mb-4">
+    <section>
+      <Suspense fallback={<CardsGridSkeleton />}>
         <CardsGrid />
-      </section>
-    </div>
+      </Suspense>
+    </section>
   );
 }
