@@ -1,7 +1,6 @@
 // import { AlertComponent } from '@/shared/components/common/AlertComponent'
 import NavBar from '@/shared/components/layout/NavBar';
 import SideBarContainer from '@/shared/components/layout/SideBarContainer';
-import { DashboardBreadcrumbs } from '@/shared/components/layout/DashboardBreadcrumbs';
 import '../globals.css';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -14,10 +13,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <NavBar />
       </div>
       <div className="overflow-y-auto">
-        <div className="px-6 py-2">
-          <DashboardBreadcrumbs />
-        </div>
-        <div className="animate-fade-in px-6 pb-6">
+        <div className="animate-fade-in px-6 py-6">
           {children}
         </div>
       </div>

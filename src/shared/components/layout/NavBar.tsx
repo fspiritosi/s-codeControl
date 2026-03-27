@@ -22,6 +22,7 @@ import { formatRelative } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Check } from 'lucide-react';
 import Link from 'next/link';
+import { DashboardBreadcrumbs } from './DashboardBreadcrumbs';
 import { NavUser } from './NavUser';
 
 function capitalizeWords(text: string | undefined) {
@@ -79,6 +80,7 @@ export default function NavBar() {
         <button onClick={handleCloseSidebar} className="relative w-fit ml-7" aria-label="Abrir/cerrar menú lateral">
           <HamburgerMenuIcon className="size-7 text-foreground" />
         </button>
+        <DashboardBreadcrumbs />
       </div>
       <div className="flex gap-4 items-center">
         {isAdmin && (
