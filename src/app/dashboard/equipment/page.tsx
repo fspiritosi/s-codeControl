@@ -27,7 +27,7 @@ export default async function Equipment({
   return (
     <Suspense fallback={<PageTableSkeleton />}>
       <UrlTabs value={currentTab} paramName="tab" baseUrl="/dashboard/equipment">
-        <UrlTabsList className="mx-6 mt-4">
+        <UrlTabsList>
           <UrlTabsTrigger value="equipos">Equipos</UrlTabsTrigger>
           <UrlTabsTrigger value="documents">Documentos de equipos</UrlTabsTrigger>
           <UrlTabsTrigger value="types">Tipos de documentos</UrlTabsTrigger>

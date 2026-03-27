@@ -28,7 +28,7 @@ export default async function EmployeePage({
   return (
     <Suspense fallback={<PageTableSkeleton />}>
       <UrlTabs value={currentTab} paramName="tab" baseUrl="/dashboard/employee">
-        <UrlTabsList className="mx-6 mt-4">
+        <UrlTabsList>
           <UrlTabsTrigger value="employees">Empleados</UrlTabsTrigger>
           <UrlTabsTrigger value="documents">Documentos de empleados</UrlTabsTrigger>
           <UrlTabsTrigger value="diagrams">Diagramas</UrlTabsTrigger>

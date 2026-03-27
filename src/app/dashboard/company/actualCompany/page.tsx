@@ -36,7 +36,7 @@ export default async function CompanyPage({
   return (
     <Suspense fallback={<CompanySkeleton />}>
       <UrlTabs value={currentTab} paramName="tab" baseUrl="/dashboard/company/actualCompany">
-        <UrlTabsList className="mx-6 mt-4">
+        <UrlTabsList>
           <UrlTabsTrigger value="general">General</UrlTabsTrigger>
           <UrlTabsTrigger value="documentacion">Documentación</UrlTabsTrigger>
           <UrlTabsTrigger value="users">Usuarios</UrlTabsTrigger>
