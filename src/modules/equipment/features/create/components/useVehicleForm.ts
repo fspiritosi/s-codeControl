@@ -119,15 +119,7 @@ export function useVehicleForm(
     return () => clearInterval(interval);
   }, []);
 
-  const fetchContractors = useCountriesStore((state) => state.fetchContractors);
-  const startCustomersPolling = useCountriesStore((state) => state.startCustomersPolling);
-  const stopCustomersPolling = useCountriesStore((state) => state.stopCustomersPolling);
-
-  useEffect(() => {
-    fetchContractors();
-    startCustomersPolling();
-    return () => { stopCustomersPolling(); };
-  }, [fetchContractors, startCustomersPolling, stopCustomersPolling]);
+  // Contractors loaded via initCatalogs() above
 
   const allCustomers = useCountriesStore((state) => state.customers);
   const contractorCompanies = useMemo(
