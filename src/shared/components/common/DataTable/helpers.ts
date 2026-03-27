@@ -181,6 +181,8 @@ export function buildFiltersWhere(
   Object.entries(filters).forEach(([columnId, values]) => {
     // Ignorar los params _from/_to aquí: se procesan con buildDateRangeFiltersWhere
     if (columnId.endsWith('_from') || columnId.endsWith('_to')) return;
+    // Ignorar params de navegación que no son filtros de DB
+    if (columnId === 'tab') return;
     // Ignorar columnas excluidas (ej. columnas de texto que se procesan con buildTextFiltersWhere)
     if (excluded.has(columnId)) return;
 
