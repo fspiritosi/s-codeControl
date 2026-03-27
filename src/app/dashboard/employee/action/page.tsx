@@ -61,6 +61,13 @@ export default async function EmployeeFormAction({ searchParams: searchParamsPro
     // Convert BigInt FK fields to strings to avoid serialization errors
     const normalized = employees.map((emp: any) => ({
       ...emp,
+      // Normalize date fields to yyyy-MM-dd strings (Prisma returns Date objects)
+      date_of_admission: emp.date_of_admission instanceof Date
+        ? emp.date_of_admission.toISOString().split('T')[0]
+        : emp.date_of_admission,
+      born_date: emp.born_date instanceof Date
+        ? emp.born_date.toISOString().split('T')[0]
+        : emp.born_date,
       province: emp.province_rel,
       city: emp.city_rel,
       hierarchical_position: emp.hierarchy_rel,
