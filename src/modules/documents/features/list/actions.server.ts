@@ -11,6 +11,7 @@ import {
   stateToPrismaParams,
   buildSearchWhere,
   buildFiltersWhere,
+  buildDateRangeFiltersWhere,
 } from '@/shared/components/common/DataTable/helpers';
 
 // Document-related queries
@@ -943,6 +944,16 @@ function buildEmployeeDocumentsWhere(
     (baseWhere.document_type as any).is.name = docNameFilter.length === 1 ? docNameFilter[0] : { in: docNameFilter };
   }
 
+  // 6. Date range filter for validity (field is String, not DateTime)
+  const validityFrom = state.filters.validity_from?.[0];
+  const validityTo = state.filters.validity_to?.[0];
+  if (validityFrom || validityTo) {
+    const validityFilter: Record<string, string> = {};
+    if (validityFrom) validityFilter.gte = validityFrom;
+    if (validityTo) validityFilter.lte = validityTo;
+    baseWhere.validity = validityFilter;
+  }
+
   return baseWhere;
 }
 
@@ -1186,6 +1197,16 @@ function buildEquipmentDocumentsWhere(
   const docNameFilter = state.filters.documentName;
   if (docNameFilter?.length) {
     (baseWhere.document_type as any).is.name = docNameFilter.length === 1 ? docNameFilter[0] : { in: docNameFilter };
+  }
+
+  // Date range filter for validity (field is String, not DateTime)
+  const validityFrom = state.filters.validity_from?.[0];
+  const validityTo = state.filters.validity_to?.[0];
+  if (validityFrom || validityTo) {
+    const validityFilter: Record<string, string> = {};
+    if (validityFrom) validityFilter.gte = validityFrom;
+    if (validityTo) validityFilter.lte = validityTo;
+    baseWhere.validity = validityFilter;
   }
 
   return baseWhere;
