@@ -6,7 +6,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AuthError } from 'next-auth';
 
-export async function login(formData: FormData) {
+export async function login(formData: FormData): Promise<string | null> {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
 
@@ -25,12 +25,12 @@ export async function login(formData: FormData) {
           return 'Error al iniciar sesion';
       }
     }
-    // NextAuth throws a NEXT_REDIRECT on success, re-throw it
-    if (error?.digest?.includes('NEXT_REDIRECT')) throw error;
+    // NextAuth may throw NEXT_REDIRECT — not an actual error
+    if (error?.digest?.includes('NEXT_REDIRECT')) return null;
     return 'Error al iniciar sesion';
   }
 
-  redirect('/dashboard');
+  return null;
 }
 
 export async function logout() {
