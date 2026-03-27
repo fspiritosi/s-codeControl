@@ -567,8 +567,8 @@ export function FormDisplay({ campos }: MailDisplayProps) {
                         <SelectLabel>Dominios</SelectLabel>
 
                         {vehicles
-                          .filter((e) => e.domain)
-                          .map((e) => {
+                          .filter((e: any) => e.domain)
+                          .map((e: any) => {
                             return (
                               <SelectItem key={e.domain} value={e.domain}>
                                 {e.domain}
@@ -583,8 +583,8 @@ export function FormDisplay({ campos }: MailDisplayProps) {
                       <SelectGroup key={i}>
                         <SelectLabel>Numero de serie</SelectLabel>
                         {vehicles
-                          .filter((e) => e.serie)
-                          .map((e) => {
+                          .filter((e: any) => e.serie)
+                          .map((e: any) => {
                             return (
                               <SelectItem key={e.serie} value={e.serie}>
                                 {e.serie}
@@ -599,8 +599,8 @@ export function FormDisplay({ campos }: MailDisplayProps) {
                       <SelectGroup key={i}>
                         <SelectLabel>Numero interno</SelectLabel>
                         {vehicles
-                          .filter((e) => e.intern_number)
-                          .map((e) => {
+                          .filter((e: any) => e.intern_number)
+                          .map((e: any) => {
                             return (
                               <SelectItem key={e.intern_number} value={e.intern_number}>
                                 {e.intern_number}

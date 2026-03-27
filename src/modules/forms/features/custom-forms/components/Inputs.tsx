@@ -584,8 +584,8 @@ export const PredefinedSelectField: React.FC<FieldComponentProps> = ({ campo, fo
                   <SelectGroup key={i}>
                     <SelectLabel>Numero de serie</SelectLabel>
                     {vehicles
-                      .filter((e) => e.serie)
-                      .map((e) => {
+                      .filter((e: any) => e.serie)
+                      .map((e: any) => {
                         return (
                           <SelectItem key={e.serie} value={e.serie}>
                             {e.serie}
@@ -600,8 +600,8 @@ export const PredefinedSelectField: React.FC<FieldComponentProps> = ({ campo, fo
                   <SelectGroup key={i}>
                     <SelectLabel>Numero interno</SelectLabel>
                     {vehicles
-                      .filter((e) => e.intern_number)
-                      .map((e) => {
+                      .filter((e: any) => e.intern_number)
+                      .map((e: any) => {
                         return (
                           <SelectItem key={e.intern_number} value={e.intern_number}>
                             {e.intern_number}
