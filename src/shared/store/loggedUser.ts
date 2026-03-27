@@ -1,30 +1,24 @@
 /**
  * FACADE STORE - Backward compatibility layer
  *
- * This file re-exports a composed store from the new domain stores.
- * All 91 files that import `useLoggedUserStore` continue working unchanged.
+ * This file re-exports a composed store from the domain stores.
+ * Only auth, company, and UI state remain global.
+ * Employee, document, and vehicle data are fetched on-demand by server components.
  *
- * New code should import directly from the domain stores:
+ * Domain stores:
  *   - useAuthStore     (src/store/authStore.ts)
  *   - useCompanyStore  (src/store/companyStore.ts)
- *   - useEmployeeStore (src/store/employeeStore.ts)
- *   - useDocumentStore (src/store/documentStore.ts)
- *   - useVehicleStore  (src/store/vehicleStore.ts)
  *   - useUiStore       (src/store/uiStore.ts)
  */
 
 import { Notifications, SharedUser, profileUser } from '@/shared/types/types';
-import { Company, SharedCompanies, Vehicle } from '@/shared/zodSchemas/schemas';
+import { Company, SharedCompanies } from '@/shared/zodSchemas/schemas';
 
 type AuthUser = { id: string; email?: string; [key: string]: any } | null;
 import { create } from 'zustand';
 import { useAuthStore } from './authStore';
 import { useCompanyStore } from './companyStore';
-import { CompanyDocumentsType } from './documentStore';
-import { useDocumentStore } from './documentStore';
-import { useEmployeeStore } from './employeeStore';
 import { useUiStore } from './uiStore';
-import { useVehicleStore } from './vehicleStore';
 
 // Re-export CompanyDocumentsType for backward compatibility
 export type { CompanyDocumentsType } from './documentStore';
@@ -37,107 +31,76 @@ export { useEmployeeStore } from './employeeStore';
 export { useUiStore } from './uiStore';
 export { useVehicleStore } from './vehicleStore';
 
-interface Document {
-  date: string;
-  allocated_to: string;
-  documentName: string;
-  multiresource: string;
-  validity: string;
-  id: string;
-  resource: string;
-  state: string;
-  document_path?: string;
-  is_active: boolean;
-  document_number?: string;
-  isItMonthly: boolean;
-  applies: string;
-  mandatory: string;
-  serie?: string | null;
-}
-
 interface State {
+  // Auth
   credentialUser: AuthUser;
   profile: profileUser[];
-  showNoCompanyAlert: boolean;
-  showMultiplesCompaniesAlert: boolean;
+  codeControlRole: string;
+  roleActualCompany: string;
+  loggedUser: () => void;
+
+  // Company
   allCompanies: Company;
   actualCompany: Company[0] | null;
-  setActualCompany: (company: Company[0]) => void;
-  employees: any;
-  active_and_inactive_employees: any;
-  setEmployees: (employees: any) => void;
-  isLoading: boolean;
-  employeesToShow: any;
-  setInactiveEmployees: () => void;
-  setActivesEmployees: () => void;
-  showDeletedEmployees: boolean;
-  setShowDeletedEmployees: (showDeletedEmployees: boolean) => void;
-  vehicles: Vehicle;
-  setNewDefectCompany: (company: Company[0]) => void;
   sharedCompanies: SharedCompanies;
-  endorsedEmployees: () => void;
-  noEndorsedEmployees: () => void;
-  allDocumentsToShow: {
-    employees: Document[];
-    vehicles: Document[];
-  };
-  documentsToShow: {
-    employees: Document[];
-    vehicles: Document[];
-  };
-  Alldocuments: {
-    employees: Document[];
-    vehicles: Document[];
-  };
-  lastMonthDocuments: {
-    employees: Document[];
-    vehicles: Document[];
-  };
-  showLastMonthDocuments: boolean;
-  setShowLastMonthDocuments: () => void;
-  pendingDocuments: {
-    employees: Document[];
-    vehicles: Document[];
-  };
+  sharedUsers: SharedUser[];
+  showNoCompanyAlert: boolean;
+  showMultiplesCompaniesAlert: boolean;
+  setActualCompany: (company: Company[0]) => void;
+  setNewDefectCompany: (company: Company[0]) => void;
+  resetDefectCompanies: (company: Company[0]) => void;
+  FetchSharedUsers: () => void;
+
+  // UI
   notifications: Notifications[];
   markAllAsRead: () => void;
-  resetDefectCompanies: (company: Company[0]) => void;
-  sharedUsers: SharedUser[];
+  active_sidebar: boolean;
+  toggleSidebar: () => void;
+
+  // Legacy stubs — kept to avoid runtime errors in unmigrated consumers
+  isLoading: boolean;
+  employees: any;
+  active_and_inactive_employees: any;
+  employeesToShow: any;
+  vehicles: any;
   vehiclesToShow: any;
+  allDocumentsToShow: { employees: any[]; vehicles: any[] };
+  documentsToShow: { employees: any[]; vehicles: any[] };
+  Alldocuments: { employees: any[]; vehicles: any[] };
+  lastMonthDocuments: { employees: any[]; vehicles: any[] };
+  pendingDocuments: { employees: any[]; vehicles: any[] };
+  companyDocuments: any[];
+  DrawerEmployees: any[] | null;
+  DrawerVehicles: any[] | null;
+  showDeletedEmployees: boolean;
+  showLastMonthDocuments: boolean;
+  // Legacy no-op functions
+  setEmployees: (employees: any) => void;
+  setActivesEmployees: () => void;
+  setInactiveEmployees: () => void;
+  setShowDeletedEmployees: (v: boolean) => void;
+  endorsedEmployees: () => void;
+  noEndorsedEmployees: () => void;
+  getEmployees: (active: boolean) => void;
+  documentDrawerEmployees: (document: string) => void;
+  fetchVehicles: () => void;
   setActivesVehicles: () => void;
   endorsedVehicles: () => void;
   noEndorsedVehicles: () => void;
   setVehicleTypes: (type: string) => void;
-  fetchVehicles: () => void;
-  documetsFetch: () => void;
-  getEmployees: (active: boolean) => void;
-  loggedUser: () => void;
-  documentDrawerEmployees: (document: string) => void;
-  DrawerEmployees: any[] | null;
-  FetchSharedUsers: () => void;
-  DrawerVehicles: any[] | null;
   documentDrawerVehicles: (id: string) => void;
-  companyDocuments: CompanyDocumentsType[];
-  codeControlRole: string;
-  roleActualCompany: string;
-  active_sidebar: boolean;
-  toggleSidebar: () => void;
+  documetsFetch: () => void;
+  setShowLastMonthDocuments: () => void;
   cleanup: () => void;
 }
 
-/**
- * Legacy facade store that composes all domain stores.
- * Components using `useLoggedUserStore(state => state.someField)` will
- * continue to work because this store subscribes to all sub-stores and
- * merges their state.
- */
+const emptyDocs = { employees: [], vehicles: [] };
+const noop = () => {};
+
 export const useLoggedUserStore = create<State>((set, get) => {
   const buildState = (): Partial<State> => {
     const auth = useAuthStore.getState();
     const company = useCompanyStore.getState();
-    const employee = useEmployeeStore.getState();
-    const doc = useDocumentStore.getState();
-    const vehicle = useVehicleStore.getState();
     const ui = useUiStore.getState();
 
     return {
@@ -160,52 +123,46 @@ export const useLoggedUserStore = create<State>((set, get) => {
       setNewDefectCompany: company.setNewDefectCompany,
       resetDefectCompanies: company.resetDefectCompanies,
 
-      // Employee
-      employees: employee.employees,
-      employeesToShow: employee.employeesToShow,
-      active_and_inactive_employees: employee.active_and_inactive_employees,
-      showDeletedEmployees: employee.showDeletedEmployees,
-      DrawerEmployees: employee.DrawerEmployees,
-      setEmployees: employee.setEmployees,
-      setActivesEmployees: employee.setActivesEmployees,
-      setInactiveEmployees: employee.setInactiveEmployees,
-      setShowDeletedEmployees: employee.setShowDeletedEmployees,
-      endorsedEmployees: employee.endorsedEmployees,
-      noEndorsedEmployees: employee.noEndorsedEmployees,
-      getEmployees: employee.getEmployees,
-      documentDrawerEmployees: employee.documentDrawerEmployees,
-
-      // Document
-      allDocumentsToShow: doc.allDocumentsToShow,
-      documentsToShow: doc.documentsToShow,
-      Alldocuments: doc.Alldocuments,
-      lastMonthDocuments: doc.lastMonthDocuments,
-      showLastMonthDocuments: doc.showLastMonthDocuments,
-      pendingDocuments: doc.pendingDocuments,
-      companyDocuments: doc.companyDocuments,
-      documetsFetch: doc.documetsFetch,
-      setShowLastMonthDocuments: doc.setShowLastMonthDocuments,
-
-      // Vehicle
-      vehicles: vehicle.vehicles,
-      vehiclesToShow: vehicle.vehiclesToShow,
-      DrawerVehicles: vehicle.DrawerVehicles,
-      fetchVehicles: vehicle.fetchVehicles,
-      setActivesVehicles: vehicle.setActivesVehicles,
-      endorsedVehicles: vehicle.endorsedVehicles,
-      noEndorsedVehicles: vehicle.noEndorsedVehicles,
-      setVehicleTypes: vehicle.setVehicleTypes,
-      documentDrawerVehicles: vehicle.documentDrawerVehicles,
-
       // UI
       active_sidebar: ui.active_sidebar,
       notifications: ui.notifications,
       toggleSidebar: ui.toggleSidebar,
       markAllAsRead: ui.markAllAsRead,
 
-      // Legacy
+      // Legacy stubs — return empty data, no-op functions
       isLoading: false,
-      cleanup: () => {},
+      employees: [],
+      active_and_inactive_employees: [],
+      employeesToShow: [],
+      vehicles: [],
+      vehiclesToShow: [],
+      allDocumentsToShow: emptyDocs,
+      documentsToShow: emptyDocs,
+      Alldocuments: emptyDocs,
+      lastMonthDocuments: emptyDocs,
+      pendingDocuments: emptyDocs,
+      companyDocuments: [],
+      DrawerEmployees: null,
+      DrawerVehicles: null,
+      showDeletedEmployees: false,
+      showLastMonthDocuments: false,
+      setEmployees: noop,
+      setActivesEmployees: noop,
+      setInactiveEmployees: noop,
+      setShowDeletedEmployees: noop,
+      endorsedEmployees: noop,
+      noEndorsedEmployees: noop,
+      getEmployees: noop,
+      documentDrawerEmployees: noop,
+      fetchVehicles: noop,
+      setActivesVehicles: noop,
+      endorsedVehicles: noop,
+      noEndorsedVehicles: noop,
+      setVehicleTypes: noop,
+      documentDrawerVehicles: noop,
+      documetsFetch: noop,
+      setShowLastMonthDocuments: noop,
+      cleanup: noop,
     };
   };
 
@@ -213,14 +170,10 @@ export const useLoggedUserStore = create<State>((set, get) => {
     set(buildState());
   };
 
-  // Subscribe to changes in all domain stores
+  // Subscribe only to stores that still hold global state
   useAuthStore.subscribe(syncState);
   useCompanyStore.subscribe(syncState);
-  useEmployeeStore.subscribe(syncState);
-  useDocumentStore.subscribe(syncState);
-  useVehicleStore.subscribe(syncState);
   useUiStore.subscribe(syncState);
 
-  // Return initial state directly (not via get() which is undefined during init in Zustand 5)
   return buildState() as State;
 });

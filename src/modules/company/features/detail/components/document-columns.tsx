@@ -136,13 +136,11 @@ export const columnsDocuments: ColumnDef<SharedUser>[] = [
         const handlePrivateChange = async (selected: string) => {
           toast.promise(
             async () => {
-              const documetsFetch = useLoggedUserStore?.getState?.().documetsFetch;
               const { error } = await updateDocumentTypePrivate(row.original.id, selected === 'Privado');
 
               if (error) {
                 throw new Error(handleSupabaseError(error));
               }
-              documetsFetch();
               router.refresh();
             },
             {
