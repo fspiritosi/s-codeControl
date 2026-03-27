@@ -2,8 +2,10 @@
 
 import { logout } from '@/modules/landing/features/auth/actions/login.actions';
 import { updateProfileAvatar as updateProfileAvatarAction } from '@/shared/actions/auth';
+import { UpdateUserPasswordForm } from '@/shared/components/auth/UpdateUserPasswordForm';
+import { UploadImage } from '@/shared/components/common/UploadImage';
+import { AlertDialogHeader } from '@/shared/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
-import { Button } from '@/shared/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/shared/components/ui/dialog';
 import {
   DropdownMenu,
@@ -15,11 +17,8 @@ import {
 } from '@/shared/components/ui/dropdown-menu';
 import { FormControl, FormField, FormItem, FormMessage } from '@/shared/components/ui/form';
 import { Separator } from '@/shared/components/ui/separator';
-import { AlertDialogHeader } from '@/shared/components/ui/alert-dialog';
-import { UpdateUserPasswordForm } from '@/shared/components/auth/UpdateUserPasswordForm';
-import { UploadImage } from '@/shared/components/common/UploadImage';
 import { useLoggedUserStore } from '@/shared/store/loggedUser';
-import { LogOut, Settings, ChevronsUpDown } from 'lucide-react';
+import { ChevronsUpDown, LogOut, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 

@@ -5,7 +5,7 @@ import { fetchCurrentUser } from '@/shared/actions/auth';
 
 export interface Session {
   user: { id: string; email: string } | null;
-  profile: { id: string; fullname: string | null; avatar: string | null; role: string | null } | null;
+  profile: { id: string; fullname: string | null; avatar: string | null; role: string | null; email: string | null } | null;
   company: { id: string; company_name: string | null; owner_id: string | null } | null;
   role: string | null;
   modules: string[];
@@ -39,7 +39,7 @@ export const getSession = cache(async (): Promise<Session> => {
   const [profile, companies, sharedEntries] = await Promise.all([
     prisma.profile.findUnique({
       where: { id: user.id },
-      select: { id: true, fullname: true, avatar: true, role: true },
+      select: { id: true, fullname: true, avatar: true, role: true, email: true },
     }),
     prisma.company.findMany({
       where: { owner_id: user.id },
