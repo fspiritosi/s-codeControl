@@ -1,4 +1,5 @@
 'use client';
+import FieldRenderer from '@/modules/forms/features/custom-forms/components/formUtils/fieldRenderer';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Calendar } from '@/shared/components/ui/calendar';
@@ -27,7 +28,6 @@ import { CalendarIcon } from '@radix-ui/react-icons';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import React, { useState } from 'react';
-import FieldRenderer from '@/modules/forms/features/custom-forms/components/formUtils/fieldRenderer';
 
 export const SectionField: React.FC<FieldComponentProps> = ({ campo, form, index, completObjet }) => {
   if (!form) {
@@ -568,8 +568,8 @@ export const PredefinedSelectField: React.FC<FieldComponentProps> = ({ campo, fo
                     <SelectLabel>Dominios</SelectLabel>
 
                     {vehicles
-                      ?.filter((e) => e.domain)
-                      ?.map((e) => {
+                      ?.filter((e: any) => e.domain)
+                      ?.map((e: any) => {
                         return (
                           <SelectItem key={e.domain} value={e.domain}>
                             {e.domain}
