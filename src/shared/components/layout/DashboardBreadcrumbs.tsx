@@ -18,6 +18,7 @@ const labelMap: Record<string, string> = {
   employee: 'Empleados',
   equipment: 'Equipos',
   document: 'Documentación',
+  products: 'Productos',
   operations: 'Operaciones',
   maintenance: 'Mantenimiento',
   forms: 'Formularios',
