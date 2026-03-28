@@ -1,4 +1,6 @@
 import PurchaseOrdersList from '@/modules/purchasing/features/purchase-orders/list/components/PurchaseOrdersList';
+import InvoicesList from '@/modules/purchasing/features/invoices/list/components/InvoicesList';
+import ReceivingNotesList from '@/modules/purchasing/features/receiving-notes/list/components/ReceivingNotesList';
 import PageTableSkeleton from '@/shared/components/common/Skeletons/PageTableSkeleton';
 import { buttonVariants } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
@@ -48,19 +50,29 @@ export default async function PurchasingPage({
 
         <UrlTabsContent value="invoices">
           <Card>
-            <CardHeader>
-              <CardTitle>Facturas de compra</CardTitle>
-              <CardDescription>Próximamente</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Facturas de compra</CardTitle>
+                <CardDescription>Registro de facturas de proveedores</CardDescription>
+              </div>
             </CardHeader>
+            <CardContent>
+              <InvoicesList searchParams={resolved} />
+            </CardContent>
           </Card>
         </UrlTabsContent>
 
         <UrlTabsContent value="receiving">
           <Card>
-            <CardHeader>
-              <CardTitle>Remitos de recepción</CardTitle>
-              <CardDescription>Próximamente</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Remitos de recepción</CardTitle>
+                <CardDescription>Recepción de materiales en almacén</CardDescription>
+              </div>
             </CardHeader>
+            <CardContent>
+              <ReceivingNotesList searchParams={resolved} />
+            </CardContent>
           </Card>
         </UrlTabsContent>
       </UrlTabs>
