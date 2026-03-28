@@ -9,6 +9,7 @@ import {
   HelpCircle,
   LayoutDashboard,
   Package,
+  ShoppingCart,
   Truck,
   UserSearch,
   Users,
@@ -28,11 +29,12 @@ const ALL_LINKS = [
   { name: 'Productos', href: '/dashboard/products', icon: <Package size={sizeIcons} />, position: 6 },
   { name: 'Proveedores', href: '/dashboard/suppliers', icon: <UserSearch size={sizeIcons} />, position: 7 },
   { name: 'Almacenes', href: '/dashboard/warehouse', icon: <Warehouse size={sizeIcons} />, position: 8 },
-  { name: 'Mantenimiento', href: '/dashboard/maintenance', icon: <Wrench size={sizeIcons} />, position: 9 },
-  { name: 'Formularios', href: '/dashboard/forms', icon: <ClipboardList size={sizeIcons} />, position: 10 },
-  { name: 'Operaciones', href: '/dashboard/operations', icon: <Calendar size={sizeIcons} />, position: 11 },
-  { name: 'HSE', href: '/dashboard/hse', icon: <GraduationCap size={sizeIcons} />, position: 12 },
-  { name: 'Ayuda', href: '/dashboard/help', icon: <HelpCircle size={sizeIcons} />, position: 13 },
+  { name: 'Compras', href: '/dashboard/purchasing', icon: <ShoppingCart size={sizeIcons} />, position: 9 },
+  { name: 'Mantenimiento', href: '/dashboard/maintenance', icon: <Wrench size={sizeIcons} />, position: 10 },
+  { name: 'Formularios', href: '/dashboard/forms', icon: <ClipboardList size={sizeIcons} />, position: 11 },
+  { name: 'Operaciones', href: '/dashboard/operations', icon: <Calendar size={sizeIcons} />, position: 12 },
+  { name: 'HSE', href: '/dashboard/hse', icon: <GraduationCap size={sizeIcons} />, position: 13 },
+  { name: 'Ayuda', href: '/dashboard/help', icon: <HelpCircle size={sizeIcons} />, position: 14 },
 ];
 
 const GUEST_HIDDEN = new Set(['empresa', 'operaciones', 'mantenimiento', 'documentación']);
