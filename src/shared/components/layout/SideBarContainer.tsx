@@ -12,6 +12,7 @@ import {
   Truck,
   UserSearch,
   Users,
+  Warehouse,
   Wrench,
 } from 'lucide-react';
 import SideBar from '@/shared/components/layout/Sidebar';
@@ -26,11 +27,12 @@ const ALL_LINKS = [
   { name: 'Documentación', href: '/dashboard/document', icon: <FileText size={sizeIcons} />, position: 5 },
   { name: 'Productos', href: '/dashboard/products', icon: <Package size={sizeIcons} />, position: 6 },
   { name: 'Proveedores', href: '/dashboard/suppliers', icon: <UserSearch size={sizeIcons} />, position: 7 },
-  { name: 'Mantenimiento', href: '/dashboard/maintenance', icon: <Wrench size={sizeIcons} />, position: 8 },
-  { name: 'Formularios', href: '/dashboard/forms', icon: <ClipboardList size={sizeIcons} />, position: 9 },
-  { name: 'Operaciones', href: '/dashboard/operations', icon: <Calendar size={sizeIcons} />, position: 10 },
-  { name: 'HSE', href: '/dashboard/hse', icon: <GraduationCap size={sizeIcons} />, position: 11 },
-  { name: 'Ayuda', href: '/dashboard/help', icon: <HelpCircle size={sizeIcons} />, position: 12 },
+  { name: 'Almacenes', href: '/dashboard/warehouse', icon: <Warehouse size={sizeIcons} />, position: 8 },
+  { name: 'Mantenimiento', href: '/dashboard/maintenance', icon: <Wrench size={sizeIcons} />, position: 9 },
+  { name: 'Formularios', href: '/dashboard/forms', icon: <ClipboardList size={sizeIcons} />, position: 10 },
+  { name: 'Operaciones', href: '/dashboard/operations', icon: <Calendar size={sizeIcons} />, position: 11 },
+  { name: 'HSE', href: '/dashboard/hse', icon: <GraduationCap size={sizeIcons} />, position: 12 },
+  { name: 'Ayuda', href: '/dashboard/help', icon: <HelpCircle size={sizeIcons} />, position: 13 },
 ];
 
 const GUEST_HIDDEN = new Set(['empresa', 'operaciones', 'mantenimiento', 'documentación']);

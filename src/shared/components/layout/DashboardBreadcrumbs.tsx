@@ -20,6 +20,7 @@ const labelMap: Record<string, string> = {
   document: 'Documentación',
   products: 'Productos',
   suppliers: 'Proveedores',
+  warehouse: 'Almacenes',
   operations: 'Operaciones',
   maintenance: 'Mantenimiento',
   forms: 'Formularios',
