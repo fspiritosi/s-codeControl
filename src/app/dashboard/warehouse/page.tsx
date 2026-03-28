@@ -1,5 +1,6 @@
 import WarehousesList from '@/modules/warehouse/features/list/components/WarehousesList';
 import MovementsList from '@/modules/warehouse/features/movements/components/MovementsList';
+import ProductsList from '@/modules/products/features/list/components/ProductsList';
 import PageTableSkeleton from '@/shared/components/common/Skeletons/PageTableSkeleton';
 import { buttonVariants } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
@@ -8,7 +9,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
 
-const VALID_TABS = ['warehouses', 'movements'] as const;
+const VALID_TABS = ['warehouses', 'products', 'movements'] as const;
 type WarehouseTab = (typeof VALID_TABS)[number];
 
 export default async function WarehousePage({
@@ -26,6 +27,7 @@ export default async function WarehousePage({
       <UrlTabs value={currentTab} paramName="tab" baseUrl="/dashboard/warehouse">
         <UrlTabsList>
           <UrlTabsTrigger value="warehouses">Almacenes</UrlTabsTrigger>
+          <UrlTabsTrigger value="products">Productos</UrlTabsTrigger>
           <UrlTabsTrigger value="movements">Movimientos de stock</UrlTabsTrigger>
         </UrlTabsList>
 
@@ -42,6 +44,23 @@ export default async function WarehousePage({
             </CardHeader>
             <CardContent>
               <WarehousesList searchParams={resolved} />
+            </CardContent>
+          </Card>
+        </UrlTabsContent>
+
+        <UrlTabsContent value="products">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Productos</CardTitle>
+                <CardDescription>Catálogo de productos, servicios y materiales</CardDescription>
+              </div>
+              <Link href="/dashboard/products/new" className={buttonVariants({ variant: 'default' })}>
+                Nuevo producto
+              </Link>
+            </CardHeader>
+            <CardContent>
+              <ProductsList searchParams={resolved} />
             </CardContent>
           </Card>
         </UrlTabsContent>
