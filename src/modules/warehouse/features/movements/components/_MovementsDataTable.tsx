@@ -8,7 +8,11 @@ import { getMovementTypeFacets } from '@/modules/warehouse/features/list/actions
 import { STOCK_MOVEMENT_TYPE_LABELS } from '@/modules/warehouse/shared/types';
 
 const FILTER_CONFIG: DataTableFacetedFilterConfig[] = [
+  { columnId: 'date', title: 'Fecha', type: 'dateRange' },
   { columnId: 'type', title: 'Tipo', type: 'faceted' },
+  { columnId: 'product', title: 'Producto', type: 'text' },
+  { columnId: 'warehouse', title: 'Almacén', type: 'text' },
+  { columnId: 'notes', title: 'Notas', type: 'text' },
 ];
 
 interface Props {

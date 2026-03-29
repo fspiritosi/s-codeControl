@@ -8,8 +8,12 @@ import { getSupplierFacets, getAllSuppliersForExport } from '../actions.server';
 import { TAX_CONDITION_LABELS, SUPPLIER_STATUS_LABELS } from '@/modules/suppliers/shared/types';
 
 const FILTER_CONFIG: DataTableFacetedFilterConfig[] = [
-  { columnId: 'status', title: 'Estado', type: 'faceted' },
+  { columnId: 'business_name', title: 'Razón Social', type: 'text' },
+  { columnId: 'tax_id', title: 'CUIT', type: 'text' },
   { columnId: 'tax_condition', title: 'Condición IVA', type: 'faceted' },
+  { columnId: 'email', title: 'Email', type: 'text' },
+  { columnId: 'phone', title: 'Teléfono', type: 'text' },
+  { columnId: 'status', title: 'Estado', type: 'faceted' },
 ];
 
 interface Props {

@@ -8,7 +8,9 @@ import { getWarehouseFacets } from '../actions.server';
 import { WAREHOUSE_TYPE_LABELS } from '@/modules/warehouse/shared/types';
 
 const FILTER_CONFIG: DataTableFacetedFilterConfig[] = [
+  { columnId: 'name', title: 'Nombre', type: 'text' },
   { columnId: 'type', title: 'Tipo', type: 'faceted' },
+  { columnId: 'city', title: 'Ubicación', type: 'text' },
 ];
 
 interface Props {

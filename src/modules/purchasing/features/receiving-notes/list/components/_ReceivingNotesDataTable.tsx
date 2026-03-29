@@ -8,6 +8,10 @@ import { getReceivingNoteFacets } from '../actions.server';
 import { RECEIVING_NOTE_STATUS_LABELS } from '@/modules/purchasing/shared/types';
 
 const FILTER_CONFIG: DataTableFacetedFilterConfig[] = [
+  { columnId: 'full_number', title: 'Número', type: 'text' },
+  { columnId: 'supplier', title: 'Proveedor', type: 'text' },
+  { columnId: 'warehouse', title: 'Almacén', type: 'text' },
+  { columnId: 'reception_date', title: 'Fecha recepción', type: 'dateRange' },
   { columnId: 'status', title: 'Estado', type: 'faceted' },
 ];
 

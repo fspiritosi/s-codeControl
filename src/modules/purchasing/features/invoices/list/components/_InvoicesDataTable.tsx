@@ -8,8 +8,11 @@ import { getInvoiceFacets } from '../actions.server';
 import { INVOICE_STATUS_LABELS, VOUCHER_TYPE_LABELS } from '@/modules/purchasing/shared/types';
 
 const FILTER_CONFIG: DataTableFacetedFilterConfig[] = [
-  { columnId: 'status', title: 'Estado', type: 'faceted' },
+  { columnId: 'full_number', title: 'Número', type: 'text' },
   { columnId: 'voucher_type', title: 'Tipo', type: 'faceted' },
+  { columnId: 'supplier', title: 'Proveedor', type: 'text' },
+  { columnId: 'issue_date', title: 'Fecha', type: 'dateRange' },
+  { columnId: 'status', title: 'Estado', type: 'faceted' },
 ];
 
 interface Props {

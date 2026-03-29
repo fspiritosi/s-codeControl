@@ -8,6 +8,9 @@ import { getPurchaseOrderFacets } from '../actions.server';
 import { PO_STATUS_LABELS, PO_INVOICING_STATUS_LABELS } from '@/modules/purchasing/shared/types';
 
 const FILTER_CONFIG: DataTableFacetedFilterConfig[] = [
+  { columnId: 'full_number', title: 'Número', type: 'text' },
+  { columnId: 'supplier', title: 'Proveedor', type: 'text' },
+  { columnId: 'issue_date', title: 'Fecha', type: 'dateRange' },
   { columnId: 'status', title: 'Estado', type: 'faceted' },
   { columnId: 'invoicing_status', title: 'Facturación', type: 'faceted' },
 ];

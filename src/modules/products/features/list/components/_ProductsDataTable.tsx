@@ -8,9 +8,11 @@ import { getProductFacets, getAllProductsForExport } from '../actions.server';
 import { PRODUCT_TYPE_LABELS, PRODUCT_STATUS_LABELS } from '@/modules/products/shared/types';
 
 const FILTER_CONFIG: DataTableFacetedFilterConfig[] = [
-  { columnId: 'type', title: 'Tipo', type: 'faceted' },
-  { columnId: 'status', title: 'Estado', type: 'faceted' },
+  { columnId: 'code', title: 'Código', type: 'text' },
   { columnId: 'name', title: 'Nombre', type: 'text' },
+  { columnId: 'type', title: 'Tipo', type: 'faceted' },
+  { columnId: 'unit_of_measure', title: 'Unidad', type: 'text' },
+  { columnId: 'status', title: 'Estado', type: 'faceted' },
 ];
 
 interface Props {
