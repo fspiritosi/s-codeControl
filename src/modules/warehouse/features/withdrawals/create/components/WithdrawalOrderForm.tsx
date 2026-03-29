@@ -150,7 +150,7 @@ export default function WithdrawalOrderForm({ warehouses, employees, vehicles }:
                         </Select>
                       </TableCell>
                       <TableCell><Input className="h-8 text-sm" {...form.register(`lines.${index}.description`)} /></TableCell>
-                      <TableCell><Input className="h-8 text-sm" type="number" step="0.001" min="0" {...form.register(`lines.${index}.quantity`, { valueAsNumber: true })} /></TableCell>
+                      <TableCell><Input className="h-8 text-sm" type="number" step="1" min="1" {...form.register(`lines.${index}.quantity`, { valueAsNumber: true })} /></TableCell>
                       <TableCell><Input className="h-8 text-sm" placeholder="Notas" {...form.register(`lines.${index}.notes`)} /></TableCell>
                       <TableCell>{fields.length > 1 && <Button type="button" variant="ghost" size="icon" className="size-7" onClick={() => remove(index)}><Trash2 className="size-3.5 text-destructive" /></Button>}</TableCell>
                     </TableRow>
