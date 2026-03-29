@@ -1,10 +1,11 @@
 'use client';
 
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { receivingNoteSchema } from '@/modules/purchasing/shared/validators';
 import { createReceivingNote } from '@/modules/purchasing/features/receiving-notes/list/actions.server';
+import { getApprovedOrdersBySupplier, getPurchaseOrderLinesForReceiving } from '@/modules/purchasing/features/purchase-orders/list/actions.server';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
@@ -14,7 +15,8 @@ import { Textarea } from '@/shared/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, LinkIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 type FormValues = z.infer<typeof receivingNoteSchema>;
 
@@ -26,39 +28,56 @@ interface Props {
 
 export default function ReceivingNoteForm({ suppliers, products, warehouses }: Props) {
   const router = useRouter();
+  const [availableOrders, setAvailableOrders] = useState<any[]>([]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(receivingNoteSchema),
     defaultValues: {
-      supplier_id: '',
-      warehouse_id: '',
+      supplier_id: '', warehouse_id: '',
       reception_date: new Date().toISOString().split('T')[0],
-      purchase_order_id: '',
-      purchase_invoice_id: '',
-      notes: '',
+      purchase_order_id: '', purchase_invoice_id: '', notes: '',
       lines: [{ product_id: '', description: '', quantity: 1, notes: '' }],
     },
   });
 
-  const { fields, append, remove } = useFieldArray({ control: form.control, name: 'lines' });
+  const { fields, append, remove, replace } = useFieldArray({ control: form.control, name: 'lines' });
+  const watchedSupplier = useWatch({ control: form.control, name: 'supplier_id' });
 
-  const handleProductSelect = (index: number, productId: string) => {
-    const product = products.find((p) => p.id === productId);
-    if (product) {
-      form.setValue(`lines.${index}.description`, product.name);
+  useEffect(() => {
+    if (watchedSupplier) {
+      getApprovedOrdersBySupplier(watchedSupplier)
+        .then((orders) => setAvailableOrders(orders.map((o: any) => ({ ...o, total: Number(o.total) }))));
+    } else {
+      setAvailableOrders([]);
+    }
+  }, [watchedSupplier]);
+
+  const handleOrderSelect = async (orderId: string) => {
+    if (!orderId) return;
+    form.setValue('purchase_order_id', orderId);
+    const lines = await getPurchaseOrderLinesForReceiving(orderId);
+    if (lines.length > 0) {
+      replace(lines.map((l) => ({
+        product_id: l.product?.id || '',
+        description: l.description,
+        quantity: l.pending_qty,
+        purchase_order_line_id: l.id,
+        notes: '',
+      })));
     }
   };
 
+  const handleProductSelect = (index: number, productId: string) => {
+    const product = products.find((p) => p.id === productId);
+    if (product) form.setValue(`lines.${index}.description`, product.name);
+  };
+
   const onSubmit = async (values: FormValues) => {
-    toast.promise(
-      async () => {
-        const result = await createReceivingNote(values as any);
-        if (result.error) throw new Error(result.error);
-        router.push('/dashboard/purchasing?tab=receiving');
-        router.refresh();
-      },
-      { loading: 'Creando remito...', success: 'Remito creado', error: (e) => e?.message || 'Error' }
-    );
+    toast.promise(async () => {
+      const result = await createReceivingNote(values as any);
+      if (result.error) throw new Error(result.error);
+      router.push('/dashboard/purchasing?tab=receiving'); router.refresh();
+    }, { loading: 'Creando remito...', success: 'Remito creado', error: (e) => e?.message || 'Error' });
   };
 
   return (
@@ -68,45 +87,41 @@ export default function ReceivingNoteForm({ suppliers, products, warehouses }: P
           <CardHeader><CardTitle>Datos de recepción</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <FormField control={form.control} name="supplier_id" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Proveedor *</FormLabel>
+              <FormItem><FormLabel>Proveedor *</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                  <SelectContent>
-                    {suppliers.map((s) => <SelectItem key={s.id} value={s.id}>{s.business_name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
+                  <SelectContent>{suppliers.map((s) => <SelectItem key={s.id} value={s.id}>{s.business_name}</SelectItem>)}</SelectContent>
+                </Select><FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="warehouse_id" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Almacén destino *</FormLabel>
+              <FormItem><FormLabel>Almacén destino *</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                  <SelectContent>
-                    {warehouses.map((w) => <SelectItem key={w.id} value={w.id}>{w.name} ({w.code})</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
+                  <SelectContent>{warehouses.map((w) => <SelectItem key={w.id} value={w.id}>{w.name} ({w.code})</SelectItem>)}</SelectContent>
+                </Select><FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="reception_date" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Fecha de recepción *</FormLabel>
-                <FormControl><Input type="date" {...field} /></FormControl>
-                <FormMessage />
-              </FormItem>
+              <FormItem><FormLabel>Fecha de recepción *</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="notes" render={({ field }) => (
-              <FormItem className="lg:col-span-3">
-                <FormLabel>Notas</FormLabel>
-                <FormControl><Textarea placeholder="Observaciones" rows={2} {...field} /></FormControl>
-                <FormMessage />
-              </FormItem>
+              <FormItem className="lg:col-span-3"><FormLabel>Notas</FormLabel><FormControl><Textarea placeholder="Observaciones" rows={2} {...field} /></FormControl><FormMessage /></FormItem>
             )} />
           </CardContent>
         </Card>
+
+        {availableOrders.length > 0 && (
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><LinkIcon className="size-4" /> Vincular a Orden de Compra</CardTitle></CardHeader>
+            <CardContent>
+              <Select onValueChange={handleOrderSelect} value={form.watch('purchase_order_id') || ''}>
+                <SelectTrigger><SelectValue placeholder="Seleccionar OC (opcional — carga productos pendientes de recibir)" /></SelectTrigger>
+                <SelectContent>
+                  {availableOrders.map((o) => <SelectItem key={o.id} value={o.id}>{o.full_number} — ${o.total.toFixed(2)}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -117,15 +132,11 @@ export default function ReceivingNoteForm({ suppliers, products, warehouses }: P
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[200px]">Producto</TableHead>
-                  <TableHead>Descripción</TableHead>
-                  <TableHead className="w-[100px]">Cantidad</TableHead>
-                  <TableHead>Notas</TableHead>
-                  <TableHead className="w-[40px]"></TableHead>
-                </TableRow>
-              </TableHeader>
+              <TableHeader><TableRow>
+                <TableHead className="w-[200px]">Producto</TableHead><TableHead>Descripción</TableHead>
+                <TableHead className="w-[100px]">Cantidad</TableHead><TableHead>Notas</TableHead>
+                <TableHead className="w-[40px]"></TableHead>
+              </TableRow></TableHeader>
               <TableBody>
                 {fields.map((field, index) => (
                   <TableRow key={field.id}>
@@ -143,17 +154,13 @@ export default function ReceivingNoteForm({ suppliers, products, warehouses }: P
                 ))}
               </TableBody>
             </Table>
-            {form.formState.errors.lines?.message && (
-              <p className="text-sm text-destructive mt-2">{form.formState.errors.lines.message}</p>
-            )}
+            {form.formState.errors.lines?.message && <p className="text-sm text-destructive mt-2">{form.formState.errors.lines.message}</p>}
           </CardContent>
         </Card>
 
         <div className="flex justify-end gap-4">
           <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? 'Creando...' : 'Crear remito'}
-          </Button>
+          <Button type="submit" disabled={form.formState.isSubmitting}>{form.formState.isSubmitting ? 'Creando...' : 'Crear remito'}</Button>
         </div>
       </form>
     </Form>

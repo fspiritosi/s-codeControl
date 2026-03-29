@@ -107,6 +107,42 @@ export async function getPurchaseOrderLinesForReceiving(orderId: string) {
     .filter((l) => l.pending_qty > 0);
 }
 
+export async function getApprovedOrdersBySupplier(supplierId: string) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return [];
+
+  return prisma.purchase_orders.findMany({
+    where: {
+      company_id: companyId,
+      supplier_id: supplierId,
+      status: { in: ['APPROVED', 'PARTIALLY_RECEIVED'] },
+    },
+    select: { id: true, full_number: true, total: true, issue_date: true },
+    orderBy: { created_at: 'desc' },
+  });
+}
+
+export async function getPurchaseOrderLinesForInvoicing(orderId: string) {
+  const lines = await prisma.purchase_order_lines.findMany({
+    where: { order_id: orderId },
+    include: { product: { select: { id: true, code: true, name: true } } },
+  });
+
+  return lines
+    .map((l) => ({
+      ...l,
+      quantity: Number(l.quantity),
+      invoiced_qty: Number(l.invoiced_qty),
+      pending_qty: Number(l.quantity) - Number(l.invoiced_qty),
+      unit_cost: Number(l.unit_cost),
+      vat_rate: Number(l.vat_rate),
+      vat_amount: Number(l.vat_amount),
+      subtotal: Number(l.subtotal),
+      total: Number(l.total),
+    }))
+    .filter((l) => l.pending_qty > 0);
+}
+
 // ============================================================
 // MUTATIONS
 // ============================================================
