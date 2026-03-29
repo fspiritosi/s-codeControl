@@ -1,0 +1,1 @@
+ALTER TABLE "model_vehicles" ADD COLUMN IF NOT EXISTS "company_id" uuid REFERENCES "company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
