@@ -47,6 +47,7 @@ export function InvoicesDataTable({ data, totalRows, searchParams }: Props) {
       searchPlaceholder="Buscar por número o proveedor..."
       facetedFilters={facetedFilters}
       tableId="purchase-invoices"
+      showFilterToggle
     />
   );
 }

@@ -45,6 +45,7 @@ export function ReceivingNotesDataTable({ data, totalRows, searchParams }: Props
       searchPlaceholder="Buscar por número o proveedor..."
       facetedFilters={facetedFilters}
       tableId="receiving-notes"
+      showFilterToggle
     />
   );
 }

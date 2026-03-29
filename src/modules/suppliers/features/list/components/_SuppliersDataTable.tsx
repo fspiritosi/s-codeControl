@@ -48,6 +48,7 @@ export function SuppliersDataTable({ data, totalRows, searchParams }: Props) {
       searchPlaceholder="Buscar por razón social, nombre o CUIT..."
       facetedFilters={facetedFilters}
       tableId="suppliers-list"
+      showFilterToggle
       exportConfig={{
         fetchAllData: () => getAllSuppliersForExport(),
         options: {

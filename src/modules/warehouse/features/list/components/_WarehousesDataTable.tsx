@@ -45,6 +45,7 @@ export function WarehousesDataTable({ data, totalRows, searchParams }: Props) {
       searchPlaceholder="Buscar por nombre o código..."
       facetedFilters={facetedFilters}
       tableId="warehouses-list"
+      showFilterToggle
     />
   );
 }

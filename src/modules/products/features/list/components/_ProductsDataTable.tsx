@@ -51,6 +51,7 @@ export function ProductsDataTable({ data, totalRows, searchParams }: Props) {
       searchPlaceholder="Buscar por nombre, código o marca..."
       facetedFilters={facetedFilters}
       tableId="products-list"
+      showFilterToggle
       exportConfig={{
         fetchAllData: () => getAllProductsForExport(),
         options: {

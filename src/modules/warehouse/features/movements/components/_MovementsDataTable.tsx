@@ -45,6 +45,7 @@ export function MovementsDataTable({ data, totalRows, searchParams }: Props) {
       searchPlaceholder="Buscar por producto, almacén o notas..."
       facetedFilters={facetedFilters}
       tableId="stock-movements"
+      showFilterToggle
     />
   );
 }

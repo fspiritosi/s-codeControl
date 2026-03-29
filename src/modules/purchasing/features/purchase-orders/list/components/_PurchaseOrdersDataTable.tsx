@@ -47,6 +47,7 @@ export function PurchaseOrdersDataTable({ data, totalRows, searchParams }: Props
       searchPlaceholder="Buscar por número o proveedor..."
       facetedFilters={facetedFilters}
       tableId="purchase-orders"
+      showFilterToggle
     />
   );
 }
