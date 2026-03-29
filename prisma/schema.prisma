@@ -288,6 +288,7 @@ model company {
   purchase_order_installments purchase_order_installments[]
   purchase_invoices      purchase_invoices[]
   receiving_notes        receiving_notes[]
+  withdrawal_orders      withdrawal_orders[]
 }
 
 model industry_type {
@@ -364,6 +365,7 @@ model employees {
   category_employee                category_employee[]
   dailyreportemployeerelations     dailyreportemployeerelations[]
   repair_solicitudes               repair_solicitudes[]
+  withdrawal_orders                withdrawal_orders[]
   repairlogs                       repairlogs[]
   diagrams_logs                    diagrams_logs[]
   employee_material_progress       employee_material_progress[]
@@ -467,6 +469,7 @@ model vehicles {
   assing_customer               assing_customer[]
   dailyreportequipmentrelations dailyreportequipmentrelations[]
   repair_solicitudes            repair_solicitudes[]
+  withdrawal_orders             withdrawal_orders[]
 }
 
 model work_diagram {
@@ -1396,6 +1399,15 @@ enum stock_movement_type {
   RETURN
   PRODUCTION
   LOSS
+  WITHDRAWAL
+}
+
+enum withdrawal_order_status {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  COMPLETED
+  CANCELLED
 }
 
 enum voucher_type {
@@ -1471,11 +1483,12 @@ model products {
   updated_at      DateTime       @default(now()) @updatedAt @db.Timestamptz
 
   company              company                 @relation(fields: [company_id], references: [id])
-  warehouse_stocks     warehouse_stocks[]
-  stock_movements      stock_movements[]
-  purchase_order_lines purchase_order_lines[]
+  warehouse_stocks       warehouse_stocks[]
+  stock_movements        stock_movements[]
+  purchase_order_lines   purchase_order_lines[]
   purchase_invoice_lines purchase_invoice_lines[]
-  receiving_note_lines receiving_note_lines[]
+  receiving_note_lines   receiving_note_lines[]
+  withdrawal_order_lines withdrawal_order_lines[]
 
   @@unique([company_id, code])
 }
@@ -1536,10 +1549,11 @@ model warehouses {
   created_at  DateTime       @default(now()) @db.Timestamptz
   updated_at  DateTime       @default(now()) @updatedAt @db.Timestamptz
 
-  company         company            @relation(fields: [company_id], references: [id])
-  stocks          warehouse_stocks[]
-  movements       stock_movements[]
-  receiving_notes receiving_notes[]
+  company           company              @relation(fields: [company_id], references: [id])
+  stocks            warehouse_stocks[]
+  movements         stock_movements[]
+  receiving_notes   receiving_notes[]
+  withdrawal_orders withdrawal_orders[]
 
   @@unique([company_id, code])
 }
@@ -1762,4 +1776,49 @@ model receiving_note_lines {
   receiving_note      receiving_notes       @relation(fields: [receiving_note_id], references: [id], onDelete: Cascade)
   product             products              @relation(fields: [product_id], references: [id])
   purchase_order_line purchase_order_lines? @relation(fields: [purchase_order_line_id], references: [id])
+}
+
+// ============================================================
+// MODELS — Órdenes de Retiro de Materiales
+// ============================================================
+
+model withdrawal_orders {
+  id            String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id    String                   @db.Uuid
+  warehouse_id  String                   @db.Uuid
+  number        Int
+  full_number   String
+  request_date  DateTime                 @db.Date
+  notes         String?
+  status        withdrawal_order_status  @default(DRAFT)
+  approved_by   String?
+  approved_at   DateTime?                @db.Timestamptz
+  completed_at  DateTime?                @db.Timestamptz
+  // Opcional: quién retira y para qué equipo
+  employee_id   String?                  @db.Uuid
+  vehicle_id    String?                  @db.Uuid
+  created_by    String?
+  created_at    DateTime                 @default(now()) @db.Timestamptz
+  updated_at    DateTime                 @default(now()) @updatedAt @db.Timestamptz
+
+  company   company                  @relation(fields: [company_id], references: [id])
+  warehouse warehouses               @relation(fields: [warehouse_id], references: [id])
+  employee  employees?               @relation(fields: [employee_id], references: [id])
+  vehicle   vehicles?                @relation(fields: [vehicle_id], references: [id])
+  lines     withdrawal_order_lines[]
+
+  @@unique([company_id, number])
+  @@index([company_id, status])
+}
+
+model withdrawal_order_lines {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_id   String  @db.Uuid
+  product_id String  @db.Uuid
+  description String
+  quantity   Decimal @db.Decimal(12, 3)
+  notes      String?
+
+  order   withdrawal_orders @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  product products          @relation(fields: [product_id], references: [id])
 }

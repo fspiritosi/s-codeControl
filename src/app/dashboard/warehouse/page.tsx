@@ -1,5 +1,6 @@
 import WarehousesList from '@/modules/warehouse/features/list/components/WarehousesList';
 import MovementsList from '@/modules/warehouse/features/movements/components/MovementsList';
+import WithdrawalsList from '@/modules/warehouse/features/withdrawals/list/components/WithdrawalsList';
 import ProductsList from '@/modules/products/features/list/components/ProductsList';
 import PageTableSkeleton from '@/shared/components/common/Skeletons/PageTableSkeleton';
 import { buttonVariants } from '@/shared/components/ui/button';
@@ -9,7 +10,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
 
-const VALID_TABS = ['warehouses', 'products', 'movements'] as const;
+const VALID_TABS = ['warehouses', 'products', 'withdrawals', 'movements'] as const;
 type WarehouseTab = (typeof VALID_TABS)[number];
 
 export default async function WarehousePage({
@@ -28,6 +29,7 @@ export default async function WarehousePage({
         <UrlTabsList>
           <UrlTabsTrigger value="warehouses">Almacenes</UrlTabsTrigger>
           <UrlTabsTrigger value="products">Productos</UrlTabsTrigger>
+          <UrlTabsTrigger value="withdrawals">Retiros</UrlTabsTrigger>
           <UrlTabsTrigger value="movements">Movimientos de stock</UrlTabsTrigger>
         </UrlTabsList>
 
@@ -61,6 +63,23 @@ export default async function WarehousePage({
             </CardHeader>
             <CardContent>
               <ProductsList searchParams={resolved} />
+            </CardContent>
+          </Card>
+        </UrlTabsContent>
+
+        <UrlTabsContent value="withdrawals">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Órdenes de retiro</CardTitle>
+                <CardDescription>Retiro de materiales del almacén</CardDescription>
+              </div>
+              <Link href="/dashboard/warehouse/withdrawals/new" className={buttonVariants({ variant: 'default' })}>
+                Nueva orden de retiro
+              </Link>
+            </CardHeader>
+            <CardContent>
+              <WithdrawalsList searchParams={resolved} />
             </CardContent>
           </Card>
         </UrlTabsContent>
