@@ -56,6 +56,7 @@ export const STOCK_MOVEMENT_TYPE_LABELS: Record<string, string> = {
   RETURN: 'Devolución',
   PRODUCTION: 'Producción',
   LOSS: 'Pérdida',
+  WITHDRAWAL: 'Retiro',
 };
 
 export const MOVEMENT_TYPE_COLORS: Record<string, string> = {
@@ -67,4 +68,5 @@ export const MOVEMENT_TYPE_COLORS: Record<string, string> = {
   RETURN: 'text-purple-700 bg-purple-50 border-purple-200',
   PRODUCTION: 'text-indigo-700 bg-indigo-50 border-indigo-200',
   LOSS: 'text-red-700 bg-red-50 border-red-200',
+  WITHDRAWAL: 'text-amber-700 bg-amber-50 border-amber-200',
 };
