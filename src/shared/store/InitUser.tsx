@@ -22,10 +22,14 @@ export default function InitState({
   role: string;
 }) {
   const initState = useRef(false);
+  const prevRole = useRef<string | undefined>(undefined);
   const router = useRouter();
 
   useEffect(() => {
-    router.refresh();
+    if (prevRole.current !== undefined && prevRole.current !== role) {
+      router.refresh();
+    }
+    prevRole.current = role;
   }, [role]);
 
   useEffect(() => {

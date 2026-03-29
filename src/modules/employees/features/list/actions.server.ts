@@ -216,8 +216,12 @@ export const fetchEmployeesForInitStore = async (companyId: string, active: bool
 };
 
 export const fetchAllCustomers = async () => {
+  const { companyId } = await getActionContext();
+  if (!companyId) return [];
   try {
-    const data = await prisma.customers.findMany();
+    const data = await prisma.customers.findMany({
+      where: { company_id: companyId },
+    });
     return data ?? [];
   } catch (error) {
     console.error('Error fetching customers:', error);

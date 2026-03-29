@@ -1,25 +1,22 @@
 'use server';
 import { prisma } from '@/shared/lib/prisma';
-import { supabaseServer } from '@/shared/lib/supabase/server';
 import { getActionContext } from '@/shared/lib/server-action-context';
-import { getActualRole } from '@/shared/lib/utils';
+import { getSession } from '@/shared/lib/session';
 
 // --- Queries ---
 
 export const fetchFormsAnswersByFormId = async (formId: string) => {
   const { companyId } = await getActionContext();
 
-  const supabase = await supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const role = await getActualRole(companyId as string, user?.id as string);
+  const session = await getSession();
+  const role = session.role;
+  const userId = session.user?.id;
 
   if (role === 'Invitado') {
     try {
       const share_company_users = await prisma.share_company_users.findMany({
         where: {
-          profile_id: user?.id || '',
+          profile_id: userId || '',
           company_id: companyId || '',
         },
         include: {

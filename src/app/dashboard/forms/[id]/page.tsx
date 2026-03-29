@@ -4,9 +4,20 @@ import BackButton from '@/shared/components/common/BackButton';
 import Viewcomponent from '@/shared/components/common/ViewComponent';
 import { PDFPreviewDialog } from '@/shared/components/pdf/PDFPreviewDialog';
 
-import { TransporteSPANAYCHKHYS01 } from '@/modules/hse/features/checklist/components/pdf/generators/TransporteSPANAYCHKHYS01';
-import { TransporteSPANAYCHKHYS03 } from '@/modules/hse/features/checklist/components/pdf/generators/TransporteSPANAYCHKHYS03';
-import { TransporteSPANAYCHKHYS04 } from '@/modules/hse/features/checklist/components/pdf/generators/TransporteSPANAYCHKHYS04';
+import dynamic from 'next/dynamic';
+
+const TransporteSPANAYCHKHYS01 = dynamic(
+  () => import('@/modules/hse/features/checklist/components/pdf/generators/TransporteSPANAYCHKHYS01').then(m => m.TransporteSPANAYCHKHYS01),
+  { ssr: false }
+);
+const TransporteSPANAYCHKHYS03 = dynamic(
+  () => import('@/modules/hse/features/checklist/components/pdf/generators/TransporteSPANAYCHKHYS03').then(m => m.TransporteSPANAYCHKHYS03),
+  { ssr: false }
+);
+const TransporteSPANAYCHKHYS04 = dynamic(
+  () => import('@/modules/hse/features/checklist/components/pdf/generators/TransporteSPANAYCHKHYS04').then(m => m.TransporteSPANAYCHKHYS04),
+  { ssr: false }
+);
 import { buttonVariants } from '@/shared/components/ui/button';
 import Link from 'next/link';
 import CheckListAnwersTable from '@/modules/forms/features/custom-forms/components/CheckListAnwersTable';

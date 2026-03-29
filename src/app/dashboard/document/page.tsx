@@ -1,11 +1,10 @@
 import DocumentNav from '@/shared/components/common/DocumentNav';
 import PageTableSkeleton from '@/shared/components/common/Skeletons/PageTableSkeleton';
-import { prisma } from '@/shared/lib/prisma';
-import { supabaseServer } from '@/shared/lib/supabase/server';
+import { getSession } from '@/shared/lib/session';
+import { fetchCompanyDocuments } from '@/modules/company/features/detail/actions.server';
 import { CompanyDocumentsType } from '@/shared/store/loggedUser';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { UrlTabs, UrlTabsContent, UrlTabsList, UrlTabsTrigger } from '@/shared/components/ui/url-tabs';
-import { cookies } from 'next/headers';
 import { Suspense } from 'react';
 import CompanyTabs from '@/modules/documents/features/list/components/CompanyTabs';
 import EmployeeDocumentsTabs from '@/modules/documents/features/list/components/EmployeeDocumentsTabs';
@@ -26,31 +25,22 @@ export default async function DocumentPage({
     ? (resolved.tab as DocumentTab)
     : 'employees';
 
-  const supabase = await supabaseServer();
-  const user = await supabase.auth.getUser();
-  const cookiesStore = await cookies();
-  const userId = user?.data?.user?.id;
-  const userShared = userId
-    ? await prisma.share_company_users.findMany({
-        where: { profile_id: userId },
-      })
-    : [];
-  const role: string | null = userShared?.[0]?.role || null;
-  const actualCompany = cookiesStore.get('actualComp')?.value;
+  // Parallel: session + company documents
+  const [session, documentsRaw] = await Promise.all([
+    getSession(),
+    fetchCompanyDocuments(),
+  ]);
 
-  const documents_company_raw = await prisma.documents_company.findMany({
-    where: { applies: actualCompany || '' },
-    include: { document_type: true, user: true },
-  });
-  const documents_company = documents_company_raw.map((doc) => ({
+  const documents = documentsRaw.map((doc: any) => ({
     ...doc,
     id_document_types: doc.document_type,
     user_id: doc.user,
   }));
 
-  const typedDataCompany: CompanyDocumentsType[] | null = documents_company as unknown as CompanyDocumentsType[] | null;
-  const companyData =
-    role === 'Invitado' ? typedDataCompany?.filter((e) => !e.id_document_types.private) : typedDataCompany;
+  const typedData = documents as unknown as CompanyDocumentsType[] | null;
+  const companyData = session.role === 'Invitado'
+    ? typedData?.filter((e) => !e.id_document_types.private)
+    : typedData;
 
   return (
     <Suspense fallback={<PageTableSkeleton />}>

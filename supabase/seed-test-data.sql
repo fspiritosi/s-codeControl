@@ -6,11 +6,17 @@ BEGIN;
 
 -- ============================================================
 -- 1. Auth users (necesario para que supabase.auth.getUser() funcione)
+--    GoTrue requiere que los campos varchar sean '' en lugar de NULL
 -- ============================================================
 INSERT INTO auth.users (
   id, instance_id, aud, role, email, encrypted_password,
-  email_confirmed_at, created_at, updated_at, confirmation_token,
-  raw_app_meta_data, raw_user_meta_data, is_super_admin
+  email_confirmed_at, created_at, updated_at,
+  confirmation_token, recovery_token,
+  email_change, email_change_token_new, email_change_token_current,
+  email_change_confirm_status,
+  phone_change, phone_change_token, reauthentication_token,
+  raw_app_meta_data, raw_user_meta_data,
+  is_super_admin, is_sso_user, is_anonymous
 ) VALUES
   (
     '74b282e3-703f-4fe2-84eb-f30bcddaacd5',
@@ -18,10 +24,14 @@ INSERT INTO auth.users (
     'authenticated', 'authenticated',
     'ventas@codecontrol.com.ar',
     crypt('@Masha0911', gen_salt('bf')),
-    now(), now(), now(), '',
+    now(), now(), now(),
+    '', '',
+    '', '', '',
+    0,
+    '', '', '',
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"Fabricio Spiritosi"}',
-    false
+    false, false, false
   ),
   (
     '463b65c3-7cde-498d-ad39-a3e7e1b66f20',
@@ -29,10 +39,14 @@ INSERT INTO auth.users (
     'authenticated', 'authenticated',
     'fspiritosi@codecontrol.com.ar',
     crypt('@Masha0911', gen_salt('bf')),
-    now(), now(), now(), '',
+    now(), now(), now(),
+    '', '',
+    '', '', '',
+    0,
+    '', '', '',
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"Fabricio Spiritosi"}',
-    false
+    false, false, false
   )
 ON CONFLICT (id) DO NOTHING;
 
@@ -57,7 +71,52 @@ INSERT INTO auth.identities (
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
--- 2. share_company_users (necesario para /dashboard/document)
+-- 2. Profiles (tabla pública vinculada a auth.users)
+-- ============================================================
+INSERT INTO profile (id, credential_id, email, fullname, role) VALUES
+  (
+    '74b282e3-703f-4fe2-84eb-f30bcddaacd5',
+    '74b282e3-703f-4fe2-84eb-f30bcddaacd5',
+    'ventas@codecontrol.com.ar',
+    'Fabricio Spiritosi',
+    'Propietario'
+  ),
+  (
+    '463b65c3-7cde-498d-ad39-a3e7e1b66f20',
+    '463b65c3-7cde-498d-ad39-a3e7e1b66f20',
+    'fspiritosi@codecontrol.com.ar',
+    'Fabricio Spiritosi',
+    'Admin'
+  )
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- 3. Company
+-- ============================================================
+INSERT INTO company (
+  id, company_name, description, website, contact_email, contact_phone,
+  address, city, country, industry, company_cuit, province_id, owner_id, by_defect, is_active
+) VALUES (
+  '5136966a-41d3-4026-8b0c-5dc7a477a61b',
+  'CODECONTROL SAS',
+  'Empresa de desarrollo de software para gestión de flotas y personal',
+  'https://codecontrol.com.ar',
+  'ventas@codecontrol.com.ar',
+  '3512345678',
+  'Av. Colón 1234',
+  (SELECT id FROM cities WHERE name = 'Córdoba' LIMIT 1),
+  'Argentina',
+  'Tecnología e Informática',
+  '30-71234567-9',
+  5,
+  '74b282e3-703f-4fe2-84eb-f30bcddaacd5',
+  true,
+  true
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- 4. share_company_users (asocia usuarios a la empresa con roles y módulos)
 -- ============================================================
 INSERT INTO share_company_users (profile_id, company_id, role, modules) VALUES
   (
@@ -75,7 +134,7 @@ INSERT INTO share_company_users (profile_id, company_id, role, modules) VALUES
 ON CONFLICT DO NOTHING;
 
 -- ============================================================
--- 3. types_of_repairs (necesario para /dashboard/maintenance)
+-- 5. types_of_repairs (necesario para /dashboard/maintenance)
 -- ============================================================
 INSERT INTO types_of_repairs (name, description, company_id, is_active, criticity, type_of_maintenance) VALUES
   ('Cambio de aceite', 'Cambio de aceite de motor y filtro', '5136966a-41d3-4026-8b0c-5dc7a477a61b', true, 'Baja', 'Preventivo'),
@@ -93,7 +152,7 @@ INSERT INTO types_of_repairs (name, description, company_id, is_active, criticit
 ON CONFLICT DO NOTHING;
 
 -- ============================================================
--- 4. Catálogos de vehículos
+-- 6. Catálogos de vehículos
 -- ============================================================
 
 -- Tipos de vehículo
@@ -120,22 +179,22 @@ INSERT INTO brand_vehicles (name, company_id, is_active) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 -- Modelos de vehículo (referenciando marcas por subquery)
-INSERT INTO model_vehicles (name, brand, company_id, is_active) VALUES
-  ('Hilux', (SELECT id FROM brand_vehicles WHERE name = 'Toyota' LIMIT 1), '5136966a-41d3-4026-8b0c-5dc7a477a61b', true),
-  ('Corolla', (SELECT id FROM brand_vehicles WHERE name = 'Toyota' LIMIT 1), '5136966a-41d3-4026-8b0c-5dc7a477a61b', true),
-  ('Ranger', (SELECT id FROM brand_vehicles WHERE name = 'Ford' LIMIT 1), '5136966a-41d3-4026-8b0c-5dc7a477a61b', true),
-  ('F-100', (SELECT id FROM brand_vehicles WHERE name = 'Ford' LIMIT 1), '5136966a-41d3-4026-8b0c-5dc7a477a61b', true),
-  ('Amarok', (SELECT id FROM brand_vehicles WHERE name = 'Volkswagen' LIMIT 1), '5136966a-41d3-4026-8b0c-5dc7a477a61b', true),
-  ('Gol Trend', (SELECT id FROM brand_vehicles WHERE name = 'Volkswagen' LIMIT 1), '5136966a-41d3-4026-8b0c-5dc7a477a61b', true),
-  ('S10', (SELECT id FROM brand_vehicles WHERE name = 'Chevrolet' LIMIT 1), '5136966a-41d3-4026-8b0c-5dc7a477a61b', true),
-  ('Cruze', (SELECT id FROM brand_vehicles WHERE name = 'Chevrolet' LIMIT 1), '5136966a-41d3-4026-8b0c-5dc7a477a61b', true),
-  ('Sprinter', (SELECT id FROM brand_vehicles WHERE name = 'Mercedes-Benz' LIMIT 1), '5136966a-41d3-4026-8b0c-5dc7a477a61b', true),
-  ('Atego 1726', (SELECT id FROM brand_vehicles WHERE name = 'Mercedes-Benz' LIMIT 1), '5136966a-41d3-4026-8b0c-5dc7a477a61b', true),
-  ('Daily 70C17', (SELECT id FROM brand_vehicles WHERE name = 'Iveco' LIMIT 1), '5136966a-41d3-4026-8b0c-5dc7a477a61b', true),
-  ('Tector 170E22', (SELECT id FROM brand_vehicles WHERE name = 'Iveco' LIMIT 1), '5136966a-41d3-4026-8b0c-5dc7a477a61b', true),
-  ('R450', (SELECT id FROM brand_vehicles WHERE name = 'Scania' LIMIT 1), '5136966a-41d3-4026-8b0c-5dc7a477a61b', true),
-  ('Kangoo', (SELECT id FROM brand_vehicles WHERE name = 'Renault' LIMIT 1), '5136966a-41d3-4026-8b0c-5dc7a477a61b', true),
-  ('Master', (SELECT id FROM brand_vehicles WHERE name = 'Renault' LIMIT 1), '5136966a-41d3-4026-8b0c-5dc7a477a61b', true)
+INSERT INTO model_vehicles (name, brand, is_active) VALUES
+  ('Hilux', (SELECT id FROM brand_vehicles WHERE name = 'Toyota' LIMIT 1), true),
+  ('Corolla', (SELECT id FROM brand_vehicles WHERE name = 'Toyota' LIMIT 1), true),
+  ('Ranger', (SELECT id FROM brand_vehicles WHERE name = 'Ford' LIMIT 1), true),
+  ('F-100', (SELECT id FROM brand_vehicles WHERE name = 'Ford' LIMIT 1), true),
+  ('Amarok', (SELECT id FROM brand_vehicles WHERE name = 'Volkswagen' LIMIT 1), true),
+  ('Gol Trend', (SELECT id FROM brand_vehicles WHERE name = 'Volkswagen' LIMIT 1), true),
+  ('S10', (SELECT id FROM brand_vehicles WHERE name = 'Chevrolet' LIMIT 1), true),
+  ('Cruze', (SELECT id FROM brand_vehicles WHERE name = 'Chevrolet' LIMIT 1), true),
+  ('Sprinter', (SELECT id FROM brand_vehicles WHERE name = 'Mercedes-Benz' LIMIT 1), true),
+  ('Atego 1726', (SELECT id FROM brand_vehicles WHERE name = 'Mercedes-Benz' LIMIT 1), true),
+  ('Daily 70C17', (SELECT id FROM brand_vehicles WHERE name = 'Iveco' LIMIT 1), true),
+  ('Tector 170E22', (SELECT id FROM brand_vehicles WHERE name = 'Iveco' LIMIT 1), true),
+  ('R450', (SELECT id FROM brand_vehicles WHERE name = 'Scania' LIMIT 1), true),
+  ('Kangoo', (SELECT id FROM brand_vehicles WHERE name = 'Renault' LIMIT 1), true),
+  ('Master', (SELECT id FROM brand_vehicles WHERE name = 'Renault' LIMIT 1), true)
 ON CONFLICT DO NOTHING;
 
 -- Tipos de uso de equipo
@@ -149,7 +208,7 @@ INSERT INTO type (name, company_id, is_active) VALUES
 ON CONFLICT DO NOTHING;
 
 -- ============================================================
--- 5. Vehículos de prueba
+-- 7. Vehículos de prueba
 -- ============================================================
 INSERT INTO vehicles (
   picture, type_of_vehicle, domain, chassis, engine, serie, intern_number,
@@ -208,7 +267,7 @@ INSERT INTO vehicles (
     (SELECT id FROM model_vehicles WHERE name = 'Tector 170E22' LIMIT 1),
     true, '5136966a-41d3-4026-8b0c-5dc7a477a61b',
     (SELECT id FROM type WHERE name = 'Transporte de carga' LIMIT 1),
-    'Avalado', 'en reparacion', '185000'
+    'Avalado', 'en reparación', '185000'
   ),
   (
     '',

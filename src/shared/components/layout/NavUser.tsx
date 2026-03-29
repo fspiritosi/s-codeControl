@@ -26,7 +26,8 @@ export function NavUser() {
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   const actualUser = useLoggedUserStore((state) => state.profile);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const { control, setValue } = useForm();
+  const formMethods = useForm();
+  const { control, setValue } = formMethods;
 
   const user = actualUser?.[0];
   const fullname = user?.fullname || '';
@@ -107,7 +108,7 @@ export function NavUser() {
           </AlertDialogHeader>
           <div className="grid gap-4 py-4">
             <div className="w-[300px] flex gap-2">
-              <FormProvider {...useForm()}>
+              <FormProvider {...formMethods}>
                 <FormField
                   control={control}
                   name="company_logo"

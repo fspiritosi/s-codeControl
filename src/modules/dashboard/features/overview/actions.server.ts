@@ -57,15 +57,15 @@ async function fetchDashboardCounts(companyId: string) {
   return { totalEmployees, totalEquipment, employeesExpiring, equipmentExpiring, employeesExpired, equipmentExpired };
 }
 
-export async function getDashboardCounts() {
-  const { companyId } = await getActionContext();
-  if (!companyId) return EMPTY_COUNTS;
-
-  const getCachedCounts = unstable_cache(
+const getCachedCountsForCompany = (companyId: string) =>
+  unstable_cache(
     () => fetchDashboardCounts(companyId),
     [`dashboard-counts-${companyId}`],
     { revalidate: 60, tags: [`dashboard-${companyId}`] }
   );
 
-  return getCachedCounts();
+export async function getDashboardCounts() {
+  const { companyId } = await getActionContext();
+  if (!companyId) return EMPTY_COUNTS;
+  return getCachedCountsForCompany(companyId)();
 }

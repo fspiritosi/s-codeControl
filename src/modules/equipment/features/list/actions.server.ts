@@ -1,8 +1,7 @@
 'use server';
 import { prisma } from '@/shared/lib/prisma';
-import { supabaseServer } from '@/shared/lib/supabase/server';
 import { getActionContext } from '@/shared/lib/server-action-context';
-import { getActualRole } from '@/shared/lib/utils';
+import { getSession } from '@/shared/lib/session';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
 import {
   parseSearchParams,
@@ -58,17 +57,15 @@ export const fetchAllEquipment = async (company_equipment_id?: string) => {
   const { companyId } = await getActionContext();
   if (!companyId && !company_equipment_id) return [];
 
-  const supabase = await supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const role = await getActualRole(companyId as string, user?.id as string);
+  const session = await getSession();
+  const role = session.role;
+  const userId = session.user?.id;
 
   if (role === 'Invitado') {
     try {
       const data = await prisma.share_company_users.findMany({
         where: {
-          profile_id: user?.id || '',
+          profile_id: userId || '',
           company_id: (companyId ?? company_equipment_id) || '',
         },
         include: {

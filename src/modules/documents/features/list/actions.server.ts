@@ -1,8 +1,8 @@
 'use server';
 import { prisma } from '@/shared/lib/prisma';
-import { supabaseServer } from '@/shared/lib/supabase/server';
 import { getActionContext } from '@/shared/lib/server-action-context';
-import { getActualRole, formatEmployeeDocuments, formatVehiculesDocuments } from '@/shared/lib/utils';
+import { getSession } from '@/shared/lib/session';
+import { formatEmployeeDocuments, formatVehiculesDocuments } from '@/shared/lib/utils';
 import { startOfDay, endOfDay, addMonths } from 'date-fns';
 import type { Prisma } from '@/generated/prisma/client';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
@@ -272,11 +272,7 @@ export const fetchEmployeeMonthlyDocumentsByEmployeeId = async (employeeId: stri
   const { companyId } = await getActionContext();
   if (!companyId) return [];
 
-  const supabase = await supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const role = await getActualRole(companyId as string, user?.id as string);
+  const { role } = await getSession();
 
   try {
     if (role === 'Invitado') {
@@ -330,11 +326,7 @@ export const fetchEmployeePermanentDocumentsByEmployeeId = async (employeeId: st
   const { companyId } = await getActionContext();
   if (!companyId) return [];
 
-  const supabase = await supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const role = await getActualRole(companyId as string, user?.id as string);
+  const { role } = await getSession();
 
 
   try {
@@ -421,11 +413,7 @@ export const fetchMonthlyDocumentsByEquipmentId = async (equipmentId: string) =>
   const { companyId } = await getActionContext();
   if (!companyId) return [];
 
-  const supabase = await supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const role = await getActualRole(companyId as string, user?.id as string);
+  const { role } = await getSession();
 
   try {
     if (role === 'Invitado') {
@@ -514,11 +502,7 @@ export const fetchPermanentDocumentsByEquipmentId = async (equipmentId: string) 
   const { companyId } = await getActionContext();
   if (!companyId) return [];
 
-  const supabase = await supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const role = await getActualRole(companyId as string, user?.id as string);
+  const { role } = await getSession();
 
   try {
     if (role === 'Invitado') {

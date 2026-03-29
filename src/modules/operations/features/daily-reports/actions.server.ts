@@ -1,7 +1,10 @@
 'use server';
 import { prisma } from '@/shared/lib/prisma';
+import { getActionContext } from '@/shared/lib/server-action-context';
 
 export const fetchDailyReportRowById = async (id: string) => {
+  const { companyId } = await getActionContext();
+  if (!companyId) return null;
   try {
     const data = await prisma.dailyreportrows.findUnique({ where: { id } });
     return data;
@@ -12,6 +15,8 @@ export const fetchDailyReportRowById = async (id: string) => {
 };
 
 export const updateDailyReportRow = async (id: string, updateData: Record<string, unknown>) => {
+  const { companyId } = await getActionContext();
+  if (!companyId) return { data: null, error: 'Unauthorized' };
   try {
     const data = await prisma.dailyreportrows.update({
       where: { id },
