@@ -2,8 +2,63 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu';
 import { INVOICE_STATUS_LABELS, VOUCHER_TYPE_LABELS } from '@/modules/purchasing/shared/types';
+import { confirmPurchaseInvoice } from '../actions.server';
 import { format } from 'date-fns';
+import { MoreHorizontal, Eye, CheckCircle } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+
+function ActionsCell({ row }: { row: any }) {
+  const router = useRouter();
+  const status = row.original.status;
+  const id = row.original.id;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="size-8">
+          <MoreHorizontal className="size-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <Link href={`/dashboard/purchasing/invoices/${id}`}>
+            <Eye className="size-4 mr-2" /> Ver detalle
+          </Link>
+        </DropdownMenuItem>
+        {status === 'DRAFT' && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => {
+                toast.promise(
+                  async () => {
+                    const result = await confirmPurchaseInvoice(id);
+                    if (result.error) throw new Error(result.error);
+                    router.refresh();
+                  },
+                  { loading: 'Confirmando...', success: 'Factura confirmada', error: (e) => e.message }
+                );
+              }}
+            >
+              <CheckCircle className="size-4 mr-2" /> Confirmar
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export const invoiceColumns: ColumnDef<any>[] = [
   {
@@ -49,5 +104,10 @@ export const invoiceColumns: ColumnDef<any>[] = [
       return <Badge variant={variant as any}>{INVOICE_STATUS_LABELS[s] || s}</Badge>;
     },
     filterFn: 'equals',
+  },
+  {
+    id: 'actions',
+    header: '',
+    cell: ({ row }) => <ActionsCell row={row} />,
   },
 ];
