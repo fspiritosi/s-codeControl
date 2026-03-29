@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
@@ -177,42 +177,74 @@ export default function WarehouseDetail({ warehouse, stocks, products, warehouse
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Stock en este almacén</CardTitle>
-          <CardDescription>{stocks.length} productos</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {stocks.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Producto</TableHead>
-                  <TableHead>Código</TableHead>
-                  <TableHead className="text-right">Cantidad</TableHead>
-                  <TableHead className="text-right">Reservado</TableHead>
-                  <TableHead className="text-right">Disponible</TableHead>
-                  <TableHead>Unidad</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {stocks.map((stock) => (
-                  <TableRow key={stock.id}>
-                    <TableCell className="font-medium">{stock.product?.name}</TableCell>
-                    <TableCell className="font-mono text-sm">{stock.product?.code}</TableCell>
-                    <TableCell className="text-right">{stock.quantity}</TableCell>
-                    <TableCell className="text-right">{stock.reserved_qty}</TableCell>
-                    <TableCell className="text-right font-medium">{stock.available_qty}</TableCell>
-                    <TableCell>{stock.product?.unit_of_measure}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <p className="text-muted-foreground text-center py-8">No hay stock registrado en este almacén</p>
-          )}
-        </CardContent>
-      </Card>
+      <StockTable stocks={stocks} />
     </div>
+  );
+}
+
+function StockTable({ stocks }: { stocks: any[] }) {
+  const [search, setSearch] = useState('');
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return stocks;
+    const term = search.toLowerCase();
+    return stocks.filter(
+      (s) =>
+        s.product?.name?.toLowerCase().includes(term) ||
+        s.product?.code?.toLowerCase().includes(term)
+    );
+  }, [stocks, search]);
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Stock en este almacén</CardTitle>
+          <CardDescription>
+            {filtered.length === stocks.length
+              ? `${stocks.length} productos`
+              : `${filtered.length} de ${stocks.length} productos`}
+          </CardDescription>
+        </div>
+        <Input
+          placeholder="Buscar por nombre o código..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="max-w-xs"
+        />
+      </CardHeader>
+      <CardContent>
+        {filtered.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Producto</TableHead>
+                <TableHead>Código</TableHead>
+                <TableHead className="text-right">Cantidad</TableHead>
+                <TableHead className="text-right">Reservado</TableHead>
+                <TableHead className="text-right">Disponible</TableHead>
+                <TableHead>Unidad</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((stock) => (
+                <TableRow key={stock.id}>
+                  <TableCell className="font-medium">{stock.product?.name}</TableCell>
+                  <TableCell className="font-mono text-sm">{stock.product?.code}</TableCell>
+                  <TableCell className="text-right">{stock.quantity}</TableCell>
+                  <TableCell className="text-right">{stock.reserved_qty}</TableCell>
+                  <TableCell className="text-right font-medium">{stock.available_qty}</TableCell>
+                  <TableCell>{stock.product?.unit_of_measure}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : stocks.length > 0 ? (
+          <p className="text-muted-foreground text-center py-8">No se encontraron productos con "{search}"</p>
+        ) : (
+          <p className="text-muted-foreground text-center py-8">No hay stock registrado en este almacén</p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
