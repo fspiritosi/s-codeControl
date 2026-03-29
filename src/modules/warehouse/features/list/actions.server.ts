@@ -106,6 +106,15 @@ export async function createWarehouse(data: Record<string, unknown>) {
   }
 }
 
+export async function getWarehouseById(id: string) {
+  return prisma.warehouses.findUnique({
+    where: { id },
+    include: {
+      _count: { select: { stocks: true, movements: true } },
+    },
+  });
+}
+
 export async function updateWarehouse(id: string, data: Record<string, unknown>) {
   try {
     const warehouse = await prisma.warehouses.update({

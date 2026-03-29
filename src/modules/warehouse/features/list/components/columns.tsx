@@ -2,7 +2,9 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/shared/components/ui/badge';
+import { buttonVariants } from '@/shared/components/ui/button';
 import { WAREHOUSE_TYPE_LABELS, type Warehouse } from '@/modules/warehouse/shared/types';
+import Link from 'next/link';
 
 export const warehouseColumns: ColumnDef<Warehouse>[] = [
   {
@@ -10,10 +12,10 @@ export const warehouseColumns: ColumnDef<Warehouse>[] = [
     header: 'Almacén',
     meta: { title: 'Almacén' },
     cell: ({ row }) => (
-      <div>
+      <Link href={`/dashboard/warehouse/${row.original.id}`} className="hover:underline">
         <p className="font-medium">{row.original.name}</p>
         <p className="text-xs text-muted-foreground font-mono">{row.original.code}</p>
-      </div>
+      </Link>
     ),
   },
   {
@@ -54,6 +56,15 @@ export const warehouseColumns: ColumnDef<Warehouse>[] = [
       <Badge variant={row.original.is_active ? 'default' : 'secondary'}>
         {row.original.is_active ? 'Activo' : 'Inactivo'}
       </Badge>
+    ),
+  },
+  {
+    id: 'actions',
+    header: '',
+    cell: ({ row }) => (
+      <Link href={`/dashboard/warehouse/${row.original.id}`} className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+        Ver stock
+      </Link>
     ),
   },
 ];
