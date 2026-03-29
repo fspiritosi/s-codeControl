@@ -24,7 +24,7 @@ enum affiliate_status_enum {
 enum condition_enum {
   operativo
   no_operativo           @map("no operativo")
-  en_reparacion          @map("en reparacion")
+  en_reparacion          @map("en reparación")
   operativo_condicionado @map("operativo condicionado")
 }
 
