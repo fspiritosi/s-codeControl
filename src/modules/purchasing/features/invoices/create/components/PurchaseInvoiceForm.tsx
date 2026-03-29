@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { purchaseInvoiceSchema } from '@/modules/purchasing/shared/validators';
 import { VOUCHER_TYPE_LABELS } from '@/modules/purchasing/shared/types';
 import { createPurchaseInvoice } from '@/modules/purchasing/features/invoices/list/actions.server';
-import { getApprovedOrdersBySupplier, getPurchaseOrderLinesForInvoicing } from '@/modules/purchasing/features/purchase-orders/list/actions.server';
+import { getOrdersForInvoicing, getPurchaseOrderLinesForInvoicing } from '@/modules/purchasing/features/purchase-orders/list/actions.server';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
@@ -45,7 +45,7 @@ export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
 
   useEffect(() => {
     if (watchedSupplier) {
-      getApprovedOrdersBySupplier(watchedSupplier)
+      getOrdersForInvoicing(watchedSupplier)
         .then((orders) => setAvailableOrders(orders.map((o: any) => ({ ...o, total: Number(o.total) }))));
     } else {
       setAvailableOrders([]);

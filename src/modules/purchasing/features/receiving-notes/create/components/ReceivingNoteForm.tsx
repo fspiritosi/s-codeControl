@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { receivingNoteSchema } from '@/modules/purchasing/shared/validators';
 import { createReceivingNote } from '@/modules/purchasing/features/receiving-notes/list/actions.server';
-import { getApprovedOrdersBySupplier, getPurchaseOrderLinesForReceiving } from '@/modules/purchasing/features/purchase-orders/list/actions.server';
+import { getOrdersForReceiving, getPurchaseOrderLinesForReceiving } from '@/modules/purchasing/features/purchase-orders/list/actions.server';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
@@ -45,7 +45,7 @@ export default function ReceivingNoteForm({ suppliers, products, warehouses }: P
 
   useEffect(() => {
     if (watchedSupplier) {
-      getApprovedOrdersBySupplier(watchedSupplier)
+      getOrdersForReceiving(watchedSupplier)
         .then((orders) => setAvailableOrders(orders.map((o: any) => ({ ...o, total: Number(o.total) }))));
     } else {
       setAvailableOrders([]);

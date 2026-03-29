@@ -107,7 +107,7 @@ export async function getPurchaseOrderLinesForReceiving(orderId: string) {
     .filter((l) => l.pending_qty > 0);
 }
 
-export async function getApprovedOrdersBySupplier(supplierId: string) {
+export async function getOrdersForReceiving(supplierId: string) {
   const { companyId } = await getActionContext();
   if (!companyId) return [];
 
@@ -118,6 +118,22 @@ export async function getApprovedOrdersBySupplier(supplierId: string) {
       status: { in: ['APPROVED', 'PARTIALLY_RECEIVED'] },
     },
     select: { id: true, full_number: true, total: true, issue_date: true },
+    orderBy: { created_at: 'desc' },
+  });
+}
+
+export async function getOrdersForInvoicing(supplierId: string) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return [];
+
+  return prisma.purchase_orders.findMany({
+    where: {
+      company_id: companyId,
+      supplier_id: supplierId,
+      status: { in: ['APPROVED', 'PARTIALLY_RECEIVED', 'COMPLETED'] },
+      invoicing_status: { in: ['NOT_INVOICED', 'PARTIALLY_INVOICED'] },
+    },
+    select: { id: true, full_number: true, total: true, issue_date: true, status: true, invoicing_status: true },
     orderBy: { created_at: 'desc' },
   });
 }
