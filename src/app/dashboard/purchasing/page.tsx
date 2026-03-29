@@ -55,6 +55,9 @@ export default async function PurchasingPage({
                 <CardTitle>Facturas de compra</CardTitle>
                 <CardDescription>Registro de facturas de proveedores</CardDescription>
               </div>
+              <Link href="/dashboard/purchasing/invoices/new" className={buttonVariants({ variant: 'default' })}>
+                Nueva factura
+              </Link>
             </CardHeader>
             <CardContent>
               <InvoicesList searchParams={resolved} />
@@ -69,6 +72,9 @@ export default async function PurchasingPage({
                 <CardTitle>Remitos de recepción</CardTitle>
                 <CardDescription>Recepción de materiales en almacén</CardDescription>
               </div>
+              <Link href="/dashboard/purchasing/receiving/new" className={buttonVariants({ variant: 'default' })}>
+                Nuevo remito
+              </Link>
             </CardHeader>
             <CardContent>
               <ReceivingNotesList searchParams={resolved} />
