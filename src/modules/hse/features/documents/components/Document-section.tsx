@@ -23,7 +23,7 @@ import { storage } from '@/shared/lib/storage';
 import Cookies from 'js-cookie';
 import { Calendar, Download, Eye, FileText, LayoutGrid, List, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 // Componente para la vista de cuadrícula
 const DocumentGrid = ({
@@ -491,7 +491,8 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags, 
         }
       });
   };
-  // const filteredDocuments = useMemo(() => {
+
+  // const filteredDocumentsOld = useMemo(() => {
   //   return documents.filter(doc => {
   //     // Filtro por tags
   //     const matchesTags = selectedTags.length === 0 ||
@@ -509,6 +510,11 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags, 
   const expiredDocuments = documents.filter((doc) => doc.status === 'vencido');
   const currentTabDocuments =
     tab === 'active' ? activeDocuments : tab === 'drafts' ? draftDocuments : tab === 'expired' ? expiredDocuments : [];
+
+  const filteredDocuments = useMemo(
+    () => filterAndSortDocuments(currentTabDocuments),
+    [currentTabDocuments, searchTerm, selectedTags, selectedDocTypes, sortBy, sortOrder]
+  );
 
   const handleDownload = async (file_path: string, file_name: string) => {
     try {
@@ -770,10 +776,10 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags, 
           </div>
 
           {/* Renderizado según vista */}
-          {filterAndSortDocuments(currentTabDocuments).length > 0 ? (
+          {filteredDocuments.length > 0 ? (
             viewMode === 'grid' ? (
               <DocumentGrid
-                documents={filterAndSortDocuments(currentTabDocuments)}
+                documents={filteredDocuments}
                 allTags={allTags}
                 getStatusColor={getStatusColor}
                 getStatusText={getStatusText}
@@ -789,7 +795,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags, 
               />
             ) : (
               <DocumentList
-                documents={filterAndSortDocuments(currentTabDocuments)}
+                documents={filteredDocuments}
                 allTags={allTags}
                 getStatusColor={getStatusColor}
                 getStatusText={getStatusText}

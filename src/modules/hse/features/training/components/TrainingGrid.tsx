@@ -80,9 +80,9 @@ export function TrainingGrid({
               <CardTitle className="text-lg">{training.title}</CardTitle>
               <CardDescription className="line-clamp-2">{training.description}</CardDescription>
               <div className="flex flex-wrap gap-1 mt-2">
-                {tags.map((tag, index: number) => (
+                {tags.map((tag: any) => (
                   <Badge
-                    key={index}
+                    key={tag?.id || tag?.name}
                     variant="outline"
                     className="flex items-center gap-1 text-xs"
                     style={{ backgroundColor: tag?.color || '#ccc' }}

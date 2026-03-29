@@ -521,7 +521,7 @@ export function TrainingEvaluation({
             className="space-y-3"
           >
             {questions[currentQuestion].options.map((option: string, index: number) => (
-              <div key={index} className="flex items-center space-x-2">
+              <div key={`${questions[currentQuestion].id}-opt-${index}`} className="flex items-center space-x-2">
                 <RadioGroupItem value={index.toString()} id={`option-${index}`} />
                 <Label
                   htmlFor={`option-${index}`}
@@ -550,7 +550,7 @@ export function TrainingEvaluation({
         <div className="flex gap-2 flex-wrap justify-center">
           {questions.map((question: Question, index: number) => (
             <Button
-              key={index}
+              key={question.id || index}
               variant={currentQuestion === index ? 'default' : answers[index] !== -1 ? 'secondary' : 'outline'}
               size="sm"
               onClick={() => setCurrentQuestion(index)}

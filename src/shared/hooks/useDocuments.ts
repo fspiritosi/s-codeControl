@@ -10,7 +10,7 @@ import { fetchAllDocumentTypes, fetchDocumentEmployeesByDocNumber, fetchEquipmen
 
 export const useDocument = () => {
   const { errorTranslate } = useEdgeFunctions();
-  const { actualCompany } = useLoggedUserStore();
+  const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   const url = process.env.NEXT_PUBLIC_PROJECT_URL;
 
   return {

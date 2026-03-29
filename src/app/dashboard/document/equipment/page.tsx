@@ -7,7 +7,7 @@ import { ColumnsMonthly } from '@/modules/documents/shared/columns/ColumnsMonthl
 import { ExpiredDataTable } from '@/shared/components/documents/ExpiredDataTable';
 
 function page() {
-  const { allDocumentsToShow } = useLoggedUserStore();
+  const allDocumentsToShow = useLoggedUserStore((state) => state.allDocumentsToShow);
 
   return (
     <Tabs defaultValue="permanentes">
