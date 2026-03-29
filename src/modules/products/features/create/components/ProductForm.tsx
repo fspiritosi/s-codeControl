@@ -57,7 +57,7 @@ export default function ProductForm({ product }: Props) {
           : await createProduct(values as any);
 
         if (result.error) throw new Error(result.error);
-        router.push('/dashboard/products');
+        router.push('/dashboard/warehouse?tab=products');
         router.refresh();
       },
       {

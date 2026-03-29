@@ -154,8 +154,8 @@ export async function createProduct(data: Record<string, unknown>) {
       },
     });
 
-    revalidatePath('/dashboard/products');
-    return { data: product, error: null };
+    revalidatePath('/dashboard/warehouse');
+    return { data: { id: product.id, code: product.code, name: product.name }, error: null };
   } catch (error) {
     console.error('Error creating product:', error);
     return { data: null, error: String(error) };
@@ -186,8 +186,8 @@ export async function updateProduct(id: string, data: Record<string, unknown>) {
       },
     });
 
-    revalidatePath('/dashboard/products');
-    return { data: product, error: null };
+    revalidatePath('/dashboard/warehouse');
+    return { data: { id: product.id, code: product.code, name: product.name }, error: null };
   } catch (error) {
     console.error('Error updating product:', error);
     return { data: null, error: String(error) };
@@ -204,7 +204,7 @@ export async function deleteProduct(id: string) {
       data: { status: 'INACTIVE' },
     });
 
-    revalidatePath('/dashboard/products');
+    revalidatePath('/dashboard/warehouse');
     return { error: null };
   } catch (error) {
     console.error('Error deleting product:', error);
