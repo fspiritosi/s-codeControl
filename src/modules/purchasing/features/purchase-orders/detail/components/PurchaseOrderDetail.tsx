@@ -17,6 +17,7 @@ import { Send, CheckCircle, XCircle, Ban } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import BackButton from '@/shared/components/common/BackButton';
+import { PurchaseOrderPDFButton } from './PurchaseOrderPDFButton';
 
 interface Props {
   order: any;
@@ -54,6 +55,7 @@ export default function PurchaseOrderDetail({ order }: Props) {
           </div>
         </div>
         <div className="flex gap-2">
+          <PurchaseOrderPDFButton order={order} />
           {status === 'DRAFT' && (
             <Button size="sm" onClick={() => handleAction(() => submitForApproval(order.id), 'Enviada a aprobación')}>
               <Send className="size-4 mr-1" /> Enviar a aprobación

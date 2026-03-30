@@ -13,6 +13,7 @@ import { Send, CheckCircle, XCircle, Ban, PackageCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import BackButton from '@/shared/components/common/BackButton';
+import { WithdrawalOrderPDFButton } from './WithdrawalOrderPDFButton';
 
 const STATUS_LABELS: Record<string, string> = { DRAFT: 'Borrador', PENDING_APPROVAL: 'Pendiente', APPROVED: 'Aprobada', COMPLETED: 'Completada', CANCELLED: 'Cancelada' };
 const STATUS_COLORS: Record<string, string> = { DRAFT: 'secondary', PENDING_APPROVAL: 'yellow', APPROVED: 'default', COMPLETED: 'success', CANCELLED: 'destructive' };
@@ -37,6 +38,7 @@ export default function WithdrawalOrderDetail({ order }: { order: any }) {
           </div>
         </div>
         <div className="flex gap-2">
+          <WithdrawalOrderPDFButton orderId={order.id} />
           {status === 'DRAFT' && <Button size="sm" onClick={() => handleAction(() => submitWithdrawalForApproval(order.id), 'Enviada a aprobación')}><Send className="size-4 mr-1" /> Enviar a aprobación</Button>}
           {status === 'PENDING_APPROVAL' && <>
             <Button size="sm" onClick={() => handleAction(() => approveWithdrawalOrder(order.id), 'Aprobada')}><CheckCircle className="size-4 mr-1" /> Aprobar</Button>
