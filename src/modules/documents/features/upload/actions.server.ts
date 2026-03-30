@@ -1,6 +1,11 @@
 'use server';
 import { prisma } from '@/shared/lib/prisma';
 import { storageServer } from '@/shared/lib/storage-server';
+import {
+  filterDocumentTypesForEmployee,
+  filterDocumentTypesForEquipment,
+  type DocumentCondition,
+} from '@/shared/lib/documentConditions';
 
 export const insertDocumentsEmployees = async (docs: any[]) => {
   try {
@@ -263,6 +268,89 @@ export const selectDocumentsByPath = async (
     }
   } catch (error) {
     console.error('Error selecting documents by path:', error);
+    return [];
+  }
+};
+
+/**
+ * Obtiene tipos de documento filtrados por condiciones para un empleado específico.
+ * Evalúa condiciones condicionales y devuelve solo los tipos que aplican.
+ */
+export const fetchDocumentTypesForEmployee = async (
+  employeeId: string,
+  companyId: string,
+  multiresource?: boolean
+) => {
+  try {
+    // Obtener datos del empleado necesarios para evaluar condiciones
+    const employee = await prisma.employees.findUnique({
+      where: { id: employeeId },
+      select: {
+        gender: true,
+        type_of_contract: true,
+        hierarchical_position: true,
+        category_id: true,
+        covenants_id: true,
+        guild_id: true,
+      },
+    });
+    if (!employee) return [];
+
+    const where: any = {
+      applies: 'Persona',
+      is_active: true,
+      OR: [{ company_id: companyId }, { company_id: null }],
+    };
+    if (multiresource !== undefined) {
+      where.multiresource = multiresource;
+    }
+    const docTypes = await prisma.document_types.findMany({ where });
+
+    return filterDocumentTypesForEmployee(docTypes, employee as Record<string, any>, (dt) => ({
+      conditions: (dt.conditions ?? []) as unknown as DocumentCondition[],
+      isConditional: dt.special,
+    }));
+  } catch (error) {
+    console.error('Error fetching document types for employee:', error);
+    return [];
+  }
+};
+
+/**
+ * Obtiene tipos de documento filtrados por condiciones para un equipo específico.
+ * Evalúa condiciones condicionales y devuelve solo los tipos que aplican.
+ */
+export const fetchDocumentTypesForEquipment = async (
+  vehicleId: string,
+  companyId: string,
+  multiresource?: boolean
+) => {
+  try {
+    const vehicle = await prisma.vehicles.findUnique({
+      where: { id: vehicleId },
+      select: {
+        brand: true,
+        type_of_vehicle: true,
+      },
+    });
+    if (!vehicle) return [];
+
+    const where: any = {
+      applies: 'Equipos',
+      is_active: true,
+      OR: [{ company_id: companyId }, { company_id: null }],
+    };
+    if (multiresource !== undefined) {
+      where.multiresource = multiresource;
+    }
+    const docTypes = await prisma.document_types.findMany({ where });
+
+    return filterDocumentTypesForEquipment(docTypes, vehicle as Record<string, any>, (dt) => ({
+      conditions: (dt.conditions ?? []) as unknown as DocumentCondition[],
+      isConditional: dt.special,
+    }));
+  } catch (error) {
+    console.error('Error fetching document types for equipment:', error);
     return [];
   }
 };

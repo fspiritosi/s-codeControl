@@ -14,6 +14,8 @@ import { formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { format as formatDateFn } from 'date-fns';
 import { Suspense } from 'react';
+import { getConditionsForApplies } from '@/shared/config/documentConditions';
+import type { DocumentCondition } from '@/shared/lib/documentConditions';
 
 type EntityType = 'employee' | 'equipment';
 
@@ -504,10 +506,20 @@ function ShowDocument({
                         <TableRow>
                           <TableCell>
                             {doc?.id_document_types?.special && (
-                              <CardDescription>
-                                Este documento tiene consideraciones especiales a tener en cuenta (
-                                {doc?.id_document_types?.description})
-                              </CardDescription>
+                              <div className="space-y-1">
+                                <CardDescription className="font-semibold">
+                                  Documento condicional
+                                </CardDescription>
+                                {doc?.id_document_types?.description && (
+                                  <CardDescription>
+                                    {doc?.id_document_types?.description}
+                                  </CardDescription>
+                                )}
+                                <ConditionsSummary
+                                  conditions={(doc?.id_document_types?.conditions as unknown as DocumentCondition[]) ?? []}
+                                  applies={doc?.id_document_types?.applies as 'Persona' | 'Equipos' | 'Empresa'}
+                                />
+                              </div>
                             )}
                           </TableCell>
                         </TableRow>
@@ -569,6 +581,45 @@ function ShowDocument({
         </div>
       </Card>
     </section>
+  );
+}
+
+function ConditionsSummary({
+  conditions,
+  applies,
+}: {
+  conditions: DocumentCondition[];
+  applies: 'Persona' | 'Equipos' | 'Empresa';
+}) {
+  const activeConditions = conditions?.filter((c) => c.values?.length > 0) ?? [];
+  if (activeConditions.length === 0) {
+    return (
+      <CardDescription className="text-yellow-600 dark:text-yellow-400 text-xs">
+        Sin condiciones configuradas (aplica a todos)
+      </CardDescription>
+    );
+  }
+  const fieldConfigs = getConditionsForApplies(applies);
+  return (
+    <div className="space-y-0.5">
+      <CardDescription className="text-xs font-medium">Aplica a:</CardDescription>
+      {activeConditions.map((cond) => {
+        const config = fieldConfigs.find((f) => f.field === cond.field);
+        const label = config?.label ?? cond.field;
+        const valueLabels = cond.values.map((v) => {
+          if (config?.type === 'enum') {
+            const opt = config.enumValues?.find((e) => e.value === v);
+            return opt?.label ?? v;
+          }
+          return v;
+        });
+        return (
+          <CardDescription key={cond.field} className="text-xs">
+            <span className="font-medium">{label}:</span> {valueLabels.join(', ')}
+          </CardDescription>
+        );
+      })}
+    </div>
   );
 }
 

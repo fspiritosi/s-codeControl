@@ -155,6 +155,64 @@ export const fetchAllCategories = async () => {
   }
 };
 
+// --- Catálogos para condiciones de documentos ---
+
+export const fetchAllGuilds = async () => {
+  try {
+    const data = await prisma.guild.findMany({
+      where: { is_active: true },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+    return data.map((g) => ({ id: g.id, name: g.name ?? '' }));
+  } catch (error) {
+    console.error('Error fetching guilds:', error);
+    return [];
+  }
+};
+
+export const fetchAllCovenants = async () => {
+  try {
+    const data = await prisma.covenant.findMany({
+      where: { is_active: true },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+    return data.map((c) => ({ id: c.id, name: c.name ?? '' }));
+  } catch (error) {
+    console.error('Error fetching covenants:', error);
+    return [];
+  }
+};
+
+export const fetchAllBrandVehicles = async () => {
+  try {
+    const data = await prisma.brand_vehicles.findMany({
+      where: { is_active: true },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+    return data.map((b) => ({ id: String(b.id), name: b.name ?? '' }));
+  } catch (error) {
+    console.error('Error fetching brand vehicles:', error);
+    return [];
+  }
+};
+
+export const fetchAllHierarchies = async () => {
+  try {
+    const data = await prisma.hierarchy.findMany({
+      where: { is_active: true },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+    return data.map((h) => ({ id: h.id, name: h.name }));
+  } catch (error) {
+    console.error('Error fetching hierarchies:', error);
+    return [];
+  }
+};
+
 // --- From company/mutations.ts ---
 
 export const logErrorMessage = async (message: string, path: string) => {

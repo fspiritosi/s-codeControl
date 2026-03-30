@@ -57,7 +57,7 @@ const FilterHeader = ({ filters, docOptions, onFilterChange }: FilterHeaderProps
     <TableHead className="w-[130px] text-center" align="center">
       <Select key={filters.special} value={filters.special} onValueChange={(value) => onFilterChange('special', value)}>
         <SelectTrigger className="w-[150px]">
-          <SelectValue placeholder="Es especial?" />
+          <SelectValue placeholder="Condicional" />
         </SelectTrigger>
         <SelectContent>
           {docOptions.special.map((option, index) => (

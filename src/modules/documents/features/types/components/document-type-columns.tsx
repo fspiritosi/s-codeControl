@@ -77,7 +77,25 @@ export function getDocumentTypeColumns(onEdit?: (id: string) => void): ColumnDef
     accessorKey: 'special',
     meta: { title: 'Condicional' },
     header: ({ column }) => <DataTableColumnHeader column={column} title="Condicional" />,
-    cell: ({ row }) => <BooleanCell value={row.original.special} />,
+    cell: ({ row }) => {
+      const isSpecial = row.original.special;
+      if (!isSpecial) return <span>No</span>;
+      const conditions = (row.original.conditions as any[]) ?? [];
+      const activeCount = conditions.reduce(
+        (acc: number, c: any) => acc + (Array.isArray(c?.values) ? c.values.length : 0),
+        0
+      );
+      return (
+        <div className="flex items-center gap-1.5">
+          <span>Si</span>
+          {activeCount > 0 && (
+            <Badge variant="secondary" className="text-xs">
+              {activeCount}
+            </Badge>
+          )}
+        </div>
+      );
+    },
   },
   {
     accessorKey: 'down_document',

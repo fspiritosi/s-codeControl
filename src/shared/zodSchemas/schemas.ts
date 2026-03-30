@@ -792,18 +792,9 @@ export const EquipoSchema = z
       conditions: z
         .array(
           z.object({
-            ids: z.array(z.string()),
+            field: z.string(),
             values: z.array(z.string()),
-            is_relation: z.boolean(),
-            property_key: z.string(),
-            filter_column: z.string(),
-            relation_type: z.string(),
-            property_label: z.string(),
-            relation_table: z.string(),
-            reference_values: z.array(z.object({ id: z.string(), value: z.string() })),
-            is_array_relation: z.boolean(),
-            column_on_relation: z.string(),
-            column_on_employees: z.string(),
+            type: z.enum(['enum', 'relation']),
           })
         )
         .optional(),

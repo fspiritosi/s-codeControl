@@ -3,10 +3,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Building2, Truck, User, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+
+import type { DocumentCondition } from '@/shared/lib/documentConditions';
 
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
@@ -123,6 +125,7 @@ export function DocumentTypeFormModal({
 }: Props) {
   const router = useRouter();
   const isEditing = !!editId;
+  const [conditions, setConditions] = useState<DocumentCondition[]>([]);
 
   const form = useForm<DocumentTypeFormData>({
     resolver: zodResolver(documentTypeSchema),
@@ -174,6 +177,16 @@ export function DocumentTypeFormModal({
             special: docType.special,
             description: docType.description ?? '',
           });
+          // Parse conditions from DB (stored as Json[])
+          const dbConditions = (docType.conditions as any[]) ?? [];
+          const parsed: DocumentCondition[] = dbConditions
+            .filter((c) => c && typeof c === 'object' && c.field && Array.isArray(c.values))
+            .map((c) => ({
+              field: c.field as string,
+              values: c.values as string[],
+              type: (c.type as 'enum' | 'relation') ?? 'relation',
+            }));
+          setConditions(parsed);
         }
       });
     } else {
@@ -189,6 +202,7 @@ export function DocumentTypeFormModal({
         special: false,
         description: '',
       });
+      setConditions([]);
     }
   }, [open, editId, appliesFilter, reset]);
 
@@ -208,6 +222,7 @@ export function DocumentTypeFormModal({
       setValue('explired', false);
       setValue('special', false);
       setValue('multiresource', false);
+      setConditions([]);
     }
   }, [downDocument, setValue]);
 
@@ -225,9 +240,14 @@ export function DocumentTypeFormModal({
   }, [explired, setValue]);
 
   async function onSubmit(data: DocumentTypeFormData) {
+    // Filter out conditions with empty values before saving
+    const activeConditions = data.special
+      ? conditions.filter((c) => c.values.length > 0)
+      : [];
+
     const payload = {
       ...data,
-      conditions: [],
+      conditions: activeConditions,
     };
 
     if (isEditing && editId) {
@@ -385,12 +405,18 @@ export function DocumentTypeFormModal({
                 />
               </div>
 
-              {/* Condiciones (solo si special está activo y applies no es Empresa) */}
-              {special && applies !== 'Empresa' && (
-                <div className="space-y-2">
-                  <Label>Condiciones especiales</Label>
-                  <ConditionsSection applies={applies} />
-                </div>
+              {/* Condiciones (solo si applies no es Empresa) */}
+              {applies !== 'Empresa' && (
+                <ConditionsSection
+                  applies={applies}
+                  isConditional={special}
+                  onConditionalChange={(value) => {
+                    setValue('special', value);
+                    if (!value) setConditions([]);
+                  }}
+                  conditions={conditions}
+                  onConditionsChange={setConditions}
+                />
               )}
             </div>
           </div>

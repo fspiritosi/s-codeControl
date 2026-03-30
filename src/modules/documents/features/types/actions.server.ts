@@ -24,7 +24,7 @@ export interface CreateDocumentTypeInput {
   multiresource: boolean;
   special: boolean;
   description?: string;
-  conditions?: { property: string; values: string[]; label: string }[];
+  conditions?: { field: string; values: string[]; type: 'enum' | 'relation' }[];
 }
 
 // ============================================
@@ -256,6 +256,9 @@ export async function createDocumentType(input: CreateDocumentTypeInput) {
     const multiresource = input.applies === 'Empresa' ? false : input.multiresource;
     const down_document = input.applies === 'Empresa' ? false : input.down_document;
 
+    // If not conditional, force conditions to empty
+    const conditions = input.special ? (input.conditions ?? []) : [];
+
     const created = await prisma.document_types.create({
       data: {
         name: input.name,
@@ -270,7 +273,7 @@ export async function createDocumentType(input: CreateDocumentTypeInput) {
         is_it_montlhy: input.is_it_montlhy,
         down_document,
         multiresource,
-        conditions: input.conditions ?? [],
+        conditions,
       },
     });
 
@@ -314,6 +317,9 @@ export async function updateDocumentType(
     const multiresource = input.applies === 'Empresa' ? false : input.multiresource;
     const down_document = input.applies === 'Empresa' ? false : input.down_document;
 
+    // If not conditional, force conditions to empty
+    const conditions = input.special ? (input.conditions ?? []) : [];
+
     await prisma.document_types.update({
       where: { id },
       data: {
@@ -327,7 +333,7 @@ export async function updateDocumentType(
         is_it_montlhy: input.is_it_montlhy,
         down_document,
         multiresource,
-        conditions: input.conditions ?? [],
+        conditions,
       },
     });
 
