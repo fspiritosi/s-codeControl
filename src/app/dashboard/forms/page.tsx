@@ -3,6 +3,8 @@ import { fetchCustomForms } from '@/modules/forms/features/custom-forms/actions.
 import ChecklistTable from '@/modules/hse/features/checklist/components/ListOfChecklist';
 import Viewcomponent from '@/shared/components/common/ViewComponent';
 import { ReportModal } from '@/modules/forms/features/custom-forms/components/ReportModal';
+import { Suspense } from 'react';
+import PageTableSkeleton from '@/shared/components/common/Skeletons/PageTableSkeleton';
 async function MantenimientoPage() {
   const checklists = await fetchCustomForms();
   const vehicles = await fetchAllEquipment();
@@ -49,9 +51,11 @@ async function MantenimientoPage() {
   };
 
   return (
-    <div className="h-full">
-      <Viewcomponent viewData={viewData} />
-    </div>
+    <Suspense fallback={<PageTableSkeleton />}>
+      <div className="h-full">
+        <Viewcomponent viewData={viewData} />
+      </div>
+    </Suspense>
   );
 }
 

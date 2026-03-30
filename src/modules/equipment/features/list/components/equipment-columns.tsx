@@ -9,6 +9,9 @@ import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { RiToolsFill } from 'react-icons/ri';
 import { EquipmentRowActions } from './EquipmentRowActions';
 
+/** Normaliza valores de enum Prisma: reemplaza _ por espacio */
+const fmt = (v: string) => v.replaceAll('_', ' ');
+
 const statusVariantMap: Record<string, 'success' | 'yellow' | 'destructive'> = {
   Avalado: 'success',
   Completo: 'success',
@@ -78,8 +81,9 @@ export const equipmentColumns: ColumnDef<any>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Estado" />,
     cell: ({ row }) => {
       const status = row.original.status as string | undefined;
+      const label = status ? fmt(status) : '';
       return (
-        <Badge variant={statusVariantMap[status ?? ''] ?? 'destructive'}>{status}</Badge>
+        <Badge variant={statusVariantMap[label] ?? 'destructive'}>{label}</Badge>
       );
     },
     enableSorting: true,
@@ -157,12 +161,13 @@ export const equipmentColumns: ColumnDef<any>[] = [
     header: 'Condicion',
     cell: ({ row }) => {
       const condition = row.original?.condition as string | undefined;
-      const variant = (conditionVariants[condition ?? ''] ?? 'default') as any;
-      const config = condition ? conditionConfig[condition] : null;
+      const label = condition ? fmt(condition) : '';
+      const variant = (conditionVariants[label] ?? 'default') as any;
+      const config = label ? conditionConfig[label] : null;
       return (
         <Badge variant={variant}>
           {config?.icon && React.createElement(config.icon, { className: 'mr-2 size-4' })}
-          {condition}
+          {label}
         </Badge>
       );
     },

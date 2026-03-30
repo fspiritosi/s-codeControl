@@ -34,13 +34,13 @@ export const statuses = [
     color: 'text-gray-600',
   },
   {
-    value: 'Esperando repuestos',
+    value: 'Esperando_repuestos',
     label: 'Esperando repuestos',
     icon: CircleIcon,
     color: 'text-yellow-600',
   },
   {
-    value: 'En reparación',
+    value: 'En_reparacion',
     label: 'En reparación',
     icon: StopwatchIcon,
     color: 'text-blue-600',

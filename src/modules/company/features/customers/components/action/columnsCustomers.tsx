@@ -422,6 +422,10 @@ export const columns: ColumnDef<Colum>[] = [
   {
     accessorKey: 'status',
     header: 'Estado',
+    cell: ({ row }) => {
+      const value = row.getValue('status') as string;
+      return value ? value.replaceAll('_', ' ') : '';
+    },
   },
   {
     accessorKey: 'email',
@@ -450,6 +454,10 @@ export const columns: ColumnDef<Colum>[] = [
   {
     accessorKey: 'type_of_contract',
     header: 'Tipo de contrato',
+    cell: ({ row }) => {
+      const value = row.getValue('type_of_contract') as string;
+      return value ? value.replaceAll('_', ' ') : '';
+    },
   },
   // {
   //   accessorKey: 'allocated_to',
@@ -502,10 +510,18 @@ export const columns: ColumnDef<Colum>[] = [
   {
     accessorKey: 'gender',
     header: 'Género',
+    cell: ({ row }) => {
+      const value = row.getValue('gender') as string;
+      return value ? value.replaceAll('_', ' ') : '';
+    },
   },
   {
     accessorKey: 'marital_status',
     header: 'Estado civil',
+    cell: ({ row }) => {
+      const value = row.getValue('marital_status') as string;
+      return value ? value.replaceAll('_', ' ') : '';
+    },
   },
   {
     accessorKey: 'level_of_education',
@@ -546,6 +562,10 @@ export const columns: ColumnDef<Colum>[] = [
   {
     accessorKey: 'affiliate_status',
     header: 'Estado de afiliado',
+    cell: ({ row }) => {
+      const value = row.getValue('affiliate_status') as string;
+      return value ? value.replaceAll('_', ' ') : '';
+    },
   },
   {
     accessorKey: 'city',

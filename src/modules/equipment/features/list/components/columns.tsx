@@ -397,9 +397,10 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
         'Completo con doc vencida': 'yellow',
       };
       const status = row.original.status as string | undefined;
+      const label = status ? status.replaceAll('_', ' ') : '';
       return (
-        <Badge variant={statusVariants[status ?? ''] ?? 'destructive'}>
-          {status}
+        <Badge variant={statusVariants[label] ?? 'destructive'}>
+          {label}
         </Badge>
       );
     },
@@ -477,12 +478,13 @@ export const EquipmentColums: ColumnDef<Colum>[] = [
         'en reparacion': { color: 'bg-yellow-500', icon: RiToolsFill },
       };
 
-      const config = row.original?.condition ? conditionConfig[row.original.condition] : null;
+      const condition = row.original?.condition ? (row.original.condition as string).replaceAll('_', ' ') : '';
+      const config = condition ? (conditionConfig as Record<string, any>)[condition] : null;
       return (
-        <Badge variant={variants[row.original?.condition ?? 'default'] as 'default'}>
+        <Badge variant={(variants as Record<string, string>)[condition || 'default'] as 'default'}>
           {config?.icon &&
             React.createElement(config.icon, { className: 'mr-2 size-4' })}
-          {row.original.condition}
+          {condition}
         </Badge>
       );
     },

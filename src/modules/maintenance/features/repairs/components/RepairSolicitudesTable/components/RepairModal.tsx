@@ -185,7 +185,7 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
             </div>
             <div className="grid gap-2">
               <Label>Estado</Label>
-              <Badge className="w-fit">{row.original.status}</Badge>
+              <Badge className="w-fit">{(row.original.status as string)?.replaceAll('_', ' ')}</Badge>
             </div>
             <div className="grid gap-2">
               <Label>Chasis</Label>

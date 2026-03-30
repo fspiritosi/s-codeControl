@@ -464,6 +464,10 @@ export const EmployeesListColumns: ColumnDef<Colum>[] = [
   {
     accessorKey: 'status',
     header: 'Estado',
+    cell: ({ row }: { row: any }) => {
+      const value = row.getValue('status') as string;
+      return value ? value.replaceAll('_', ' ') : '';
+    },
   },
   {
     accessorKey: 'picture',
@@ -553,6 +557,10 @@ export const EmployeesListColumns: ColumnDef<Colum>[] = [
   {
     accessorKey: 'type_of_contract',
     header: 'Tipo de contrato',
+    cell: ({ row }: { row: any }) => {
+      const value = row.getValue('type_of_contract') as string;
+      return value ? value.replaceAll('_', ' ') : '';
+    },
   },
   {
     accessorKey: 'allocated_to',

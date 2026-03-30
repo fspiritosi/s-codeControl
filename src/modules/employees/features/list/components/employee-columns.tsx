@@ -7,6 +7,9 @@ import { format } from 'date-fns';
 import Link from 'next/link';
 import { EmployeeRowActions } from './EmployeeRowActions';
 
+/** Normaliza valores de enum Prisma: reemplaza _ por espacio */
+const fmt = (v: string) => v.replaceAll('_', ' ');
+
 const statusVariantMap: Record<string, 'success' | 'yellow' | 'destructive'> = {
   Avalado: 'success',
   Completo: 'success',
@@ -42,9 +45,10 @@ export const employeeColumns: ColumnDef<any>[] = [
     meta: { title: 'Estado' },
     header: ({ column }) => <DataTableColumnHeader column={column} title="Estado" />,
     cell: ({ row }) => {
-      const value = row.getValue('status') as string;
-      const variant = statusVariantMap[value] ?? 'destructive';
-      return <Badge variant={variant}>{value}</Badge>;
+      const raw = row.getValue('status') as string;
+      const label = raw ? fmt(raw) : '';
+      const variant = statusVariantMap[label] ?? 'destructive';
+      return <Badge variant={variant}>{label}</Badge>;
     },
     filterFn: (row, id, value) => {
       if (Array.isArray(value)) return value.includes(row.getValue(id));
@@ -169,6 +173,10 @@ export const employeeColumns: ColumnDef<any>[] = [
     accessorKey: 'type_of_contract',
     meta: { title: 'Tipo de contrato' },
     header: 'Tipo de contrato',
+    cell: ({ row }) => {
+      const value = row.getValue('type_of_contract') as string;
+      return value ? fmt(value) : '';
+    },
   },
   {
     accessorKey: 'allocated_to',

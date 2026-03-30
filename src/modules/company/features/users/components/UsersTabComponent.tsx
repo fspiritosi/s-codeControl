@@ -33,13 +33,13 @@ export default async function UsersTabComponent() {
   const sharedUsers =
     company_users?.map((user: any) => {
       return {
-        email: user.profile_id?.email,
-        fullname: user.profile_id.fullname,
+        email: user.profile?.email,
+        fullname: user.profile?.fullname,
         role: user?.role,
         alta: user.created_at,
         id: user.id,
-        img: user.profile_id.avatar || '',
-        customerName: user.customer_id?.name,
+        img: user.profile?.avatar || '',
+        customerName: user.customer?.name,
       };
     }) || [];
 

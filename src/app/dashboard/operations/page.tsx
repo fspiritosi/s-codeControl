@@ -2,7 +2,10 @@ import Create from '@/modules/operations/features/daily-reports/components/Creat
 import DailyReportDetail from '@/modules/operations/features/daily-reports/components/DailyReportDetail';
 import ViewDailyReports from '@/modules/operations/features/daily-reports/components/ViewDailysReports';
 import Viewcomponent from '@/shared/components/common/ViewComponent';
-function OperationsPage() {
+import { Suspense } from 'react';
+import DayliReportSkeleton from '@/shared/components/common/Skeletons/DayliReportSkeleton';
+
+async function OperationsPage() {
   const viewData = {
     defaultValue: 'dailyReportsTable',
     tabsValues: [
@@ -34,9 +37,11 @@ function OperationsPage() {
   };
 
   return (
-    <div className="h-full">
-      <Viewcomponent viewData={viewData} />
-    </div>
+    <Suspense fallback={<DayliReportSkeleton />}>
+      <div className="h-full">
+        <Viewcomponent viewData={viewData} />
+      </div>
+    </Suspense>
   );
 }
 

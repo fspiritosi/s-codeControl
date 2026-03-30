@@ -680,7 +680,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                 <div className="grid gap-2">
                   <Label>Estado</Label>
                   <Badge className="w-fit" variant={'outline'}>
-                    {row.original.status}
+                    {(row.original.status as string)?.replaceAll('_', ' ')}
                   </Badge>
                 </div>
                 <div className="grid gap-2">

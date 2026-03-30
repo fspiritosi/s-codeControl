@@ -9,6 +9,8 @@ import { DocumentsSection } from '@/modules/hse/features/documents/components/Do
 import { DocumentUploadDialog } from '@/modules/hse/features/documents/components/Document-upload-dialog';
 import DocTypeTab from '@/modules/hse/features/documents/components/doc_types/DocTypeTab';
 import { cookies } from 'next/headers';
+import { Suspense } from 'react';
+import PageTableSkeleton from '@/shared/components/common/Skeletons/PageTableSkeleton';
 
 export type TagType = {
   color: string | null;
@@ -141,9 +143,11 @@ async function HSEPage() {
   };
 
   return (
-    <div className="h-full">
-      <Viewcomponent viewData={viewData} />
-    </div>
+    <Suspense fallback={<PageTableSkeleton />}>
+      <div className="h-full">
+        <Viewcomponent viewData={viewData} />
+      </div>
+    </Suspense>
   );
 }
 
