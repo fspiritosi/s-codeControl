@@ -326,4 +326,161 @@ INSERT INTO vehicles (
   )
 ON CONFLICT DO NOTHING;
 
+-- ============================================================
+-- 8. Proveedores
+-- ============================================================
+INSERT INTO suppliers (
+  company_id, code, business_name, trade_name, tax_id, tax_condition,
+  email, phone, address, city, province, zip_code, country,
+  payment_term_days, credit_limit, contact_name, contact_phone, contact_email,
+  status, notes
+) VALUES
+  (
+    '5136966a-41d3-4026-8b0c-5dc7a477a61b',
+    'PROV-001', 'LUBRICANTES DEL SUR SRL', 'Lubrisur',
+    '30-65432109-8', 'RESPONSABLE_INSCRIPTO',
+    'ventas@lubrisur.com.ar', '351-4567890',
+    'Ruta Nacional 36 Km 8', 'Córdoba', 'Córdoba', '5000', 'Argentina',
+    30, 500000.00,
+    'Martín Gómez', '351-155678901', 'mgomez@lubrisur.com.ar',
+    'ACTIVE', 'Proveedor principal de lubricantes y filtros'
+  ),
+  (
+    '5136966a-41d3-4026-8b0c-5dc7a477a61b',
+    'PROV-002', 'NEUMÁTICOS ARGENTINOS SA', 'NeumaArg',
+    '30-71098765-4', 'RESPONSABLE_INSCRIPTO',
+    'pedidos@neumaarg.com.ar', '11-43210987',
+    'Av. Juan B. Justo 3200', 'Ciudad Autónoma de Buenos Aires', 'Ciudad Autónoma de Buenos Aires', '1414', 'Argentina',
+    45, 1000000.00,
+    'Laura Méndez', '11-156789012', 'lmendez@neumaarg.com.ar',
+    'ACTIVE', 'Distribuidor oficial Bridgestone y Firestone'
+  ),
+  (
+    '5136966a-41d3-4026-8b0c-5dc7a477a61b',
+    'PROV-003', 'FERRETERÍA INDUSTRIAL MENDOZA', NULL,
+    '20-28765432-1', 'MONOTRIBUTISTA',
+    'contacto@ferremendoza.com.ar', '261-4321098',
+    'Calle San Martín 850', 'Mendoza', 'Mendoza', '5500', 'Argentina',
+    15, NULL,
+    'Carlos Ruiz', '261-153456789', 'cruiz@ferremendoza.com.ar',
+    'ACTIVE', 'Tornillería, bulones y elementos de fijación'
+  ),
+  (
+    '5136966a-41d3-4026-8b0c-5dc7a477a61b',
+    'PROV-004', 'REPUESTOS ROSARIO SA', 'RepRos',
+    '30-60987654-2', 'RESPONSABLE_INSCRIPTO',
+    'ventas@repros.com.ar', '341-4567890',
+    'Bv. Oroño 2100', 'Rosario', 'Santa Fe', '2000', 'Argentina',
+    60, 750000.00,
+    'Ana Pereyra', '341-157890123', 'apereyra@repros.com.ar',
+    'ACTIVE', 'Repuestos originales y alternativos para camiones'
+  )
+ON CONFLICT DO NOTHING;
+
+-- ============================================================
+-- 9. Productos
+-- ============================================================
+INSERT INTO products (
+  company_id, code, name, description, type, unit_of_measure,
+  cost_price, sale_price, vat_rate, track_stock, min_stock, max_stock,
+  brand, status
+) VALUES
+  (
+    '5136966a-41d3-4026-8b0c-5dc7a477a61b',
+    'LUB-001', 'Aceite Motor 15W-40 x 20L',
+    'Aceite mineral para motores diésel de alta exigencia, balde 20 litros',
+    'PRODUCT', 'UN',
+    18500.00, 27500.00, 21, true, 5, 30,
+    'YPF', 'ACTIVE'
+  ),
+  (
+    '5136966a-41d3-4026-8b0c-5dc7a477a61b',
+    'LUB-002', 'Aceite Hidráulico AW 68 x 20L',
+    'Aceite hidráulico antidesgaste ISO 68, balde 20 litros',
+    'PRODUCT', 'UN',
+    16000.00, 24000.00, 21, true, 3, 20,
+    'Shell', 'ACTIVE'
+  ),
+  (
+    '5136966a-41d3-4026-8b0c-5dc7a477a61b',
+    'FIL-001', 'Filtro de Aceite Motor',
+    'Filtro de aceite para motores diésel, línea pesada',
+    'PRODUCT', 'UN',
+    3500.00, 5800.00, 21, true, 10, 50,
+    'Mann Filter', 'ACTIVE'
+  ),
+  (
+    '5136966a-41d3-4026-8b0c-5dc7a477a61b',
+    'FIL-002', 'Filtro de Aire',
+    'Filtro de aire primario para camiones',
+    'PRODUCT', 'UN',
+    8200.00, 13500.00, 21, true, 8, 40,
+    'Donaldson', 'ACTIVE'
+  ),
+  (
+    '5136966a-41d3-4026-8b0c-5dc7a477a61b',
+    'FIL-003', 'Filtro de Combustible',
+    'Filtro separador de agua/combustible para diésel',
+    'PRODUCT', 'UN',
+    6100.00, 9800.00, 21, true, 10, 40,
+    'Parker Racor', 'ACTIVE'
+  ),
+  (
+    '5136966a-41d3-4026-8b0c-5dc7a477a61b',
+    'NEU-001', 'Neumático 295/80 R22.5 Dirección',
+    'Neumático radial para eje direccional de camión',
+    'PRODUCT', 'UN',
+    285000.00, 380000.00, 21, true, 4, 16,
+    'Bridgestone', 'ACTIVE'
+  ),
+  (
+    '5136966a-41d3-4026-8b0c-5dc7a477a61b',
+    'NEU-002', 'Neumático 245/70 R16 Camioneta',
+    'Neumático all-terrain para camionetas',
+    'PRODUCT', 'UN',
+    145000.00, 195000.00, 21, true, 8, 24,
+    'Firestone', 'ACTIVE'
+  ),
+  (
+    '5136966a-41d3-4026-8b0c-5dc7a477a61b',
+    'REP-001', 'Pastillas de Freno Delanteras',
+    'Juego de pastillas de freno para camioneta',
+    'PRODUCT', 'JGO',
+    12000.00, 19500.00, 21, true, 6, 30,
+    'Fremax', 'ACTIVE'
+  ),
+  (
+    '5136966a-41d3-4026-8b0c-5dc7a477a61b',
+    'REP-002', 'Correa de Distribución',
+    'Kit de distribución completo (correa + tensor + bomba de agua)',
+    'PRODUCT', 'KIT',
+    45000.00, 72000.00, 21, true, 2, 10,
+    'Gates', 'ACTIVE'
+  ),
+  (
+    '5136966a-41d3-4026-8b0c-5dc7a477a61b',
+    'FER-001', 'Bulones Rueda M22x1.5',
+    'Bulón de rueda para camión, paso 1.5mm',
+    'PRODUCT', 'UN',
+    1800.00, 3200.00, 21, true, 20, 100,
+    'Bimetallic', 'ACTIVE'
+  ),
+  (
+    '5136966a-41d3-4026-8b0c-5dc7a477a61b',
+    'SRV-001', 'Service Completo Camioneta',
+    'Mano de obra service 10.000 km para camioneta (no incluye repuestos)',
+    'SERVICE', 'UN',
+    25000.00, 45000.00, 21, false, NULL, NULL,
+    NULL, 'ACTIVE'
+  ),
+  (
+    '5136966a-41d3-4026-8b0c-5dc7a477a61b',
+    'CON-001', 'Grasa Litio Multiuso x 1Kg',
+    'Grasa de litio para rodamientos y articulaciones',
+    'CONSUMABLE', 'UN',
+    4500.00, 7200.00, 21, true, 5, 25,
+    'YPF', 'ACTIVE'
+  )
+ON CONFLICT DO NOTHING;
+
 COMMIT;
