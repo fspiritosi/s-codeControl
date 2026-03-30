@@ -2,7 +2,7 @@
 
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
-import { startOfDay, endOfDay, addMonths } from 'date-fns';
+import { startOfDay, endOfDay, addMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { unstable_cache } from 'next/cache';
 import {
   checkDocumentAppliesToEmployee,
@@ -180,4 +180,184 @@ export async function getDashboardCounts() {
   const { companyId } = await getActionContext();
   if (!companyId) return EMPTY_COUNTS;
   return getCachedCountsForCompany(companyId)();
+}
+
+// ============================================================
+// Purchasing Dashboard Counts
+// ============================================================
+
+export type PurchasingCounts = {
+  ocPendingApproval: number;
+  ocWithoutReceiving: number;
+  invoicesPendingPayment: number;
+  committedAmount: number;
+};
+
+const EMPTY_PURCHASING: PurchasingCounts = {
+  ocPendingApproval: 0,
+  ocWithoutReceiving: 0,
+  invoicesPendingPayment: 0,
+  committedAmount: 0,
+};
+
+async function fetchPurchasingDashboardCounts(companyId: string): Promise<PurchasingCounts> {
+  const [ocPendingApproval, ocWithoutReceiving, invoicesPendingPayment, committedAgg] =
+    await Promise.all([
+      prisma.purchase_orders.count({
+        where: { company_id: companyId, status: 'PENDING_APPROVAL' },
+      }),
+      prisma.purchase_orders.count({
+        where: { company_id: companyId, status: { in: ['APPROVED', 'PARTIALLY_RECEIVED'] } },
+      }),
+      prisma.purchase_invoices.count({
+        where: { company_id: companyId, status: { notIn: ['PAID', 'CANCELLED'] } },
+      }),
+      prisma.purchase_orders.aggregate({
+        _sum: { total: true },
+        where: {
+          company_id: companyId,
+          status: { in: ['PENDING_APPROVAL', 'APPROVED', 'PARTIALLY_RECEIVED'] },
+        },
+      }),
+    ]);
+
+  return {
+    ocPendingApproval,
+    ocWithoutReceiving,
+    invoicesPendingPayment,
+    committedAmount: Number(committedAgg._sum.total ?? 0),
+  };
+}
+
+const getCachedPurchasingCounts = (companyId: string) =>
+  unstable_cache(
+    () => fetchPurchasingDashboardCounts(companyId),
+    [`dashboard-purchasing-${companyId}`],
+    { revalidate: 60, tags: [`dashboard-purchasing-${companyId}`] }
+  );
+
+export async function getDashboardPurchasingCounts(): Promise<PurchasingCounts> {
+  const { companyId } = await getActionContext();
+  if (!companyId) return EMPTY_PURCHASING;
+  return getCachedPurchasingCounts(companyId)();
+}
+
+// ============================================================
+// Warehouse Dashboard Counts
+// ============================================================
+
+export type WarehouseCounts = {
+  productsLowStock: number;
+  ormPending: number;
+  movementsThisMonth: number;
+};
+
+const EMPTY_WAREHOUSE: WarehouseCounts = {
+  productsLowStock: 0,
+  ormPending: 0,
+  movementsThisMonth: 0,
+};
+
+async function fetchWarehouseDashboardCounts(companyId: string): Promise<WarehouseCounts> {
+  const now = new Date();
+  const monthStart = startOfMonth(now);
+  const monthEnd = endOfMonth(now);
+
+  const [lowStockResult, ormPending, movementsThisMonth] = await Promise.all([
+    prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(DISTINCT p.id) as count
+      FROM products p
+      JOIN warehouse_stocks ws ON ws.product_id = p.id
+      WHERE p.company_id = ${companyId}::uuid
+        AND p.track_stock = true
+        AND p.status = 'ACTIVE'
+        AND p.min_stock > 0
+        AND ws.quantity < p.min_stock
+    `,
+    prisma.withdrawal_orders.count({
+      where: {
+        company_id: companyId,
+        status: { in: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED'] },
+      },
+    }),
+    prisma.stock_movements.count({
+      where: {
+        company_id: companyId,
+        date: { gte: monthStart, lte: monthEnd },
+      },
+    }),
+  ]);
+
+  return {
+    productsLowStock: Number(lowStockResult[0]?.count ?? 0),
+    ormPending,
+    movementsThisMonth,
+  };
+}
+
+const getCachedWarehouseCounts = (companyId: string) =>
+  unstable_cache(
+    () => fetchWarehouseDashboardCounts(companyId),
+    [`dashboard-warehouse-${companyId}`],
+    { revalidate: 60, tags: [`dashboard-warehouse-${companyId}`] }
+  );
+
+export async function getDashboardWarehouseCounts(): Promise<WarehouseCounts> {
+  const { companyId } = await getActionContext();
+  if (!companyId) return EMPTY_WAREHOUSE;
+  return getCachedWarehouseCounts(companyId)();
+}
+
+// ============================================================
+// Supplier Dashboard Counts
+// ============================================================
+
+export type SupplierCounts = {
+  activeSuppliers: number;
+  creditExceeded: number;
+};
+
+const EMPTY_SUPPLIERS: SupplierCounts = {
+  activeSuppliers: 0,
+  creditExceeded: 0,
+};
+
+async function fetchSupplierDashboardCounts(companyId: string): Promise<SupplierCounts> {
+  const [activeSuppliers, creditResult] = await Promise.all([
+    prisma.suppliers.count({
+      where: { company_id: companyId, status: 'ACTIVE' },
+    }),
+    prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(*) as count
+      FROM suppliers s
+      WHERE s.company_id = ${companyId}::uuid
+        AND s.status = 'ACTIVE'
+        AND s.credit_limit IS NOT NULL
+        AND s.credit_limit > 0
+        AND (
+          SELECT COALESCE(SUM(po.total), 0)
+          FROM purchase_orders po
+          WHERE po.supplier_id = s.id
+            AND po.status IN ('PENDING_APPROVAL', 'APPROVED', 'PARTIALLY_RECEIVED')
+        ) > s.credit_limit
+    `,
+  ]);
+
+  return {
+    activeSuppliers,
+    creditExceeded: Number(creditResult[0]?.count ?? 0),
+  };
+}
+
+const getCachedSupplierCounts = (companyId: string) =>
+  unstable_cache(
+    () => fetchSupplierDashboardCounts(companyId),
+    [`dashboard-suppliers-${companyId}`],
+    { revalidate: 60, tags: [`dashboard-suppliers-${companyId}`] }
+  );
+
+export async function getDashboardSupplierCounts(): Promise<SupplierCounts> {
+  const { companyId } = await getActionContext();
+  if (!companyId) return EMPTY_SUPPLIERS;
+  return getCachedSupplierCounts(companyId)();
 }
