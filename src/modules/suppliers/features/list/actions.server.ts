@@ -94,10 +94,15 @@ export async function getAllSuppliersForExport() {
   const { companyId } = await getActionContext();
   if (!companyId) return [];
 
-  return prisma.suppliers.findMany({
+  const data = await prisma.suppliers.findMany({
     where: { company_id: companyId },
     orderBy: { business_name: 'asc' },
   });
+
+  return data.map((s) => ({
+    ...s,
+    credit_limit: s.credit_limit ? Number(s.credit_limit) : null,
+  }));
 }
 
 export async function createSupplier(data: Record<string, unknown>) {
@@ -139,7 +144,7 @@ export async function createSupplier(data: Record<string, unknown>) {
       },
     });
 
-    revalidatePath('/dashboard/suppliers');
+    revalidatePath('/dashboard/purchasing');
     return { data: supplier, error: null };
   } catch (error: any) {
     if (error?.code === 'P2002') {
@@ -180,7 +185,7 @@ export async function updateSupplier(id: string, data: Record<string, unknown>) 
       },
     });
 
-    revalidatePath('/dashboard/suppliers');
+    revalidatePath('/dashboard/purchasing');
     return { data: supplier, error: null };
   } catch (error: any) {
     if (error?.code === 'P2002') {
@@ -197,7 +202,7 @@ export async function deleteSupplier(id: string) {
       where: { id },
       data: { status: 'INACTIVE' },
     });
-    revalidatePath('/dashboard/suppliers');
+    revalidatePath('/dashboard/purchasing');
     return { error: null };
   } catch (error) {
     console.error('Error deleting supplier:', error);

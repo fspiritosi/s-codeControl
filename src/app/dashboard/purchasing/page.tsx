@@ -1,6 +1,7 @@
 import PurchaseOrdersList from '@/modules/purchasing/features/purchase-orders/list/components/PurchaseOrdersList';
 import InvoicesList from '@/modules/purchasing/features/invoices/list/components/InvoicesList';
 import ReceivingNotesList from '@/modules/purchasing/features/receiving-notes/list/components/ReceivingNotesList';
+import SuppliersList from '@/modules/suppliers/features/list/components/SuppliersList';
 import PageTableSkeleton from '@/shared/components/common/Skeletons/PageTableSkeleton';
 import { buttonVariants } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
@@ -9,7 +10,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
 
-const VALID_TABS = ['orders', 'invoices', 'receiving'] as const;
+const VALID_TABS = ['orders', 'invoices', 'receiving', 'suppliers'] as const;
 type PurchasingTab = (typeof VALID_TABS)[number];
 
 export default async function PurchasingPage({
@@ -29,6 +30,7 @@ export default async function PurchasingPage({
           <UrlTabsTrigger value="orders">Órdenes de compra</UrlTabsTrigger>
           <UrlTabsTrigger value="invoices">Facturas</UrlTabsTrigger>
           <UrlTabsTrigger value="receiving">Remitos de recepción</UrlTabsTrigger>
+          <UrlTabsTrigger value="suppliers">Proveedores</UrlTabsTrigger>
         </UrlTabsList>
 
         <UrlTabsContent value="orders">
@@ -78,6 +80,23 @@ export default async function PurchasingPage({
             </CardHeader>
             <CardContent>
               <ReceivingNotesList searchParams={resolved} />
+            </CardContent>
+          </Card>
+        </UrlTabsContent>
+
+        <UrlTabsContent value="suppliers">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Proveedores</CardTitle>
+                <CardDescription>Gestión de proveedores de la empresa</CardDescription>
+              </div>
+              <Link href="/dashboard/suppliers/new" className={buttonVariants({ variant: 'default' })}>
+                Nuevo proveedor
+              </Link>
+            </CardHeader>
+            <CardContent>
+              <SuppliersList searchParams={resolved} />
             </CardContent>
           </Card>
         </UrlTabsContent>

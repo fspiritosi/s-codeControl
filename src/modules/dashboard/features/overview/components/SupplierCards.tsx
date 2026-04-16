@@ -16,7 +16,7 @@ export default async function SupplierCards() {
       borderColor: 'border-l-green-500',
       iconColor: 'text-green-500',
       badge: 'success' as const,
-      href: '/dashboard/suppliers',
+      href: '/dashboard/purchasing?tab=suppliers',
     },
     {
       title: 'Crédito excedido',
@@ -25,7 +25,7 @@ export default async function SupplierCards() {
       borderColor: counts.creditExceeded > 0 ? 'border-l-red-500' : 'border-l-muted',
       iconColor: counts.creditExceeded > 0 ? 'text-red-500' : 'text-muted-foreground',
       badge: (counts.creditExceeded > 0 ? 'destructive' : 'secondary') as 'destructive' | 'secondary',
-      href: '/dashboard/suppliers',
+      href: '/dashboard/purchasing?tab=suppliers',
     },
   ];
 
