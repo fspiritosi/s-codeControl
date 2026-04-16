@@ -87,6 +87,9 @@ enum modulos {
   ayuda
   operaciones
   formularios
+  proveedores
+  almacenes
+  compras
 }
 
 enum nationality_enum {
@@ -216,7 +219,7 @@ model profile {
   fullname      String?
   role          String?
   modulos       modulos[]
-  password_hash String?       @db.Text
+  password_hash String?   @db.Text
 
   role_rel                    roles?                @relation(fields: [role], references: [name])
   owned_companies             company[]             @relation("company_owner")
@@ -280,15 +283,15 @@ model company {
   documentsCompanies     documents_company[]
 
   // Almacenes y Compras
-  products               products[]
-  suppliers              suppliers[]
-  warehouses             warehouses[]
-  stock_movements        stock_movements[]
-  purchase_orders        purchase_orders[]
+  products                    products[]
+  suppliers                   suppliers[]
+  warehouses                  warehouses[]
+  stock_movements             stock_movements[]
+  purchase_orders             purchase_orders[]
   purchase_order_installments purchase_order_installments[]
-  purchase_invoices      purchase_invoices[]
-  receiving_notes        receiving_notes[]
-  withdrawal_orders      withdrawal_orders[]
+  purchase_invoices           purchase_invoices[]
+  receiving_notes             receiving_notes[]
+  withdrawal_orders           withdrawal_orders[]
 }
 
 model industry_type {
@@ -1303,7 +1306,7 @@ model hse_document_type_assignmente {
 // ============================================================
 
 model Account {
-  id                String  @id @default(cuid())
+  id                String   @id @default(cuid())
   userId            String
   type              String
   provider          String
@@ -1458,6 +1461,12 @@ enum receiving_note_status {
   CANCELLED
 }
 
+enum purchase_invoice_receiving_status {
+  NOT_RECEIVED
+  PARTIALLY_RECEIVED
+  FULLY_RECEIVED
+}
+
 // ============================================================
 // MODELS — Productos
 // ============================================================
@@ -1482,7 +1491,7 @@ model products {
   created_at      DateTime       @default(now()) @db.Timestamptz
   updated_at      DateTime       @default(now()) @updatedAt @db.Timestamptz
 
-  company              company                 @relation(fields: [company_id], references: [id])
+  company                company                  @relation(fields: [company_id], references: [id])
   warehouse_stocks       warehouse_stocks[]
   stock_movements        stock_movements[]
   purchase_order_lines   purchase_order_lines[]
@@ -1498,35 +1507,35 @@ model products {
 // ============================================================
 
 model suppliers {
-  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  company_id         String                 @db.Uuid
-  code               String
-  business_name      String
-  trade_name         String?
-  tax_id             String
-  tax_condition      supplier_tax_condition
-  email              String?
-  phone              String?
-  website            String?
-  address            String?
-  city               String?
-  province           String?
-  zip_code           String?
-  country            String                 @default("Argentina")
-  payment_term_days  Int                    @default(0)
-  credit_limit       Decimal?               @db.Decimal(12, 2)
-  contact_name       String?
-  contact_phone      String?
-  contact_email      String?
-  status             supplier_status        @default(ACTIVE)
-  notes              String?
-  created_at         DateTime               @default(now()) @db.Timestamptz
-  updated_at         DateTime               @default(now()) @updatedAt @db.Timestamptz
+  id                String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id        String                 @db.Uuid
+  code              String
+  business_name     String
+  trade_name        String?
+  tax_id            String
+  tax_condition     supplier_tax_condition
+  email             String?
+  phone             String?
+  website           String?
+  address           String?
+  city              String?
+  province          String?
+  zip_code          String?
+  country           String                 @default("Argentina")
+  payment_term_days Int                    @default(0)
+  credit_limit      Decimal?               @db.Decimal(12, 2)
+  contact_name      String?
+  contact_phone     String?
+  contact_email     String?
+  status            supplier_status        @default(ACTIVE)
+  notes             String?
+  created_at        DateTime               @default(now()) @db.Timestamptz
+  updated_at        DateTime               @default(now()) @updatedAt @db.Timestamptz
 
-  company            company                @relation(fields: [company_id], references: [id])
-  purchase_orders    purchase_orders[]
-  purchase_invoices  purchase_invoices[]
-  receiving_notes    receiving_notes[]
+  company           company             @relation(fields: [company_id], references: [id])
+  purchase_orders   purchase_orders[]
+  purchase_invoices purchase_invoices[]
+  receiving_notes   receiving_notes[]
 
   @@unique([company_id, code])
   @@unique([company_id, tax_id])
@@ -1537,19 +1546,19 @@ model suppliers {
 // ============================================================
 
 model warehouses {
-  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  company_id  String         @db.Uuid
-  code        String
-  name        String
-  type        warehouse_type @default(MAIN)
-  address     String?
-  city        String?
-  province    String?
-  is_active   Boolean        @default(true)
-  created_at  DateTime       @default(now()) @db.Timestamptz
-  updated_at  DateTime       @default(now()) @updatedAt @db.Timestamptz
+  id         String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id String         @db.Uuid
+  code       String
+  name       String
+  type       warehouse_type @default(MAIN)
+  address    String?
+  city       String?
+  province   String?
+  is_active  Boolean        @default(true)
+  created_at DateTime       @default(now()) @db.Timestamptz
+  updated_at DateTime       @default(now()) @updatedAt @db.Timestamptz
 
-  company           company              @relation(fields: [company_id], references: [id])
+  company           company             @relation(fields: [company_id], references: [id])
   stocks            warehouse_stocks[]
   movements         stock_movements[]
   receiving_notes   receiving_notes[]
@@ -1611,19 +1620,19 @@ model purchase_orders {
   vat_amount             Decimal                         @default(0) @db.Decimal(12, 2)
   total                  Decimal                         @default(0) @db.Decimal(12, 2)
   notes                  String?
-  status                 purchase_order_status            @default(DRAFT)
-  invoicing_status       purchase_order_invoicing_status  @default(NOT_INVOICED)
+  status                 purchase_order_status           @default(DRAFT)
+  invoicing_status       purchase_order_invoicing_status @default(NOT_INVOICED)
   approved_by            String?
   approved_at            DateTime?                       @db.Timestamptz
   created_by             String?
   created_at             DateTime                        @default(now()) @db.Timestamptz
   updated_at             DateTime                        @default(now()) @updatedAt @db.Timestamptz
 
-  company      company                      @relation(fields: [company_id], references: [id])
-  supplier     suppliers                    @relation(fields: [supplier_id], references: [id])
-  lines        purchase_order_lines[]
-  installments purchase_order_installments[]
-  receiving_notes receiving_notes[]
+  company           company                       @relation(fields: [company_id], references: [id])
+  supplier          suppliers                     @relation(fields: [supplier_id], references: [id])
+  lines             purchase_order_lines[]
+  installments      purchase_order_installments[]
+  receiving_notes   receiving_notes[]
   purchase_invoices purchase_invoices[]
 
   @@unique([company_id, number])
@@ -1631,40 +1640,40 @@ model purchase_orders {
 }
 
 model purchase_order_lines {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  order_id     String   @db.Uuid
-  product_id   String?  @db.Uuid
+  id           String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_id     String  @db.Uuid
+  product_id   String? @db.Uuid
   description  String
-  quantity     Decimal  @db.Decimal(12, 3)
-  unit_cost    Decimal  @db.Decimal(12, 2)
-  vat_rate     Decimal  @db.Decimal(5, 2)
-  vat_amount   Decimal  @db.Decimal(12, 2)
-  subtotal     Decimal  @db.Decimal(12, 2)
-  total        Decimal  @db.Decimal(12, 2)
-  received_qty Decimal  @default(0) @db.Decimal(12, 3)
-  invoiced_qty Decimal  @default(0) @db.Decimal(12, 3)
+  quantity     Decimal @db.Decimal(12, 3)
+  unit_cost    Decimal @db.Decimal(12, 2)
+  vat_rate     Decimal @db.Decimal(5, 2)
+  vat_amount   Decimal @db.Decimal(12, 2)
+  subtotal     Decimal @db.Decimal(12, 2)
+  total        Decimal @db.Decimal(12, 2)
+  received_qty Decimal @default(0) @db.Decimal(12, 3)
+  invoiced_qty Decimal @default(0) @db.Decimal(12, 3)
 
-  order                purchase_orders        @relation(fields: [order_id], references: [id], onDelete: Cascade)
-  product              products?              @relation(fields: [product_id], references: [id])
-  receiving_note_lines receiving_note_lines[]
+  order                  purchase_orders          @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  product                products?                @relation(fields: [product_id], references: [id])
+  receiving_note_lines   receiving_note_lines[]
   purchase_invoice_lines purchase_invoice_lines[]
 }
 
 model purchase_order_installments {
-  id                  String                              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  company_id          String                              @db.Uuid
-  order_id            String                              @db.Uuid
+  id                  String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id          String                            @db.Uuid
+  order_id            String                            @db.Uuid
   number              Int
-  due_date            DateTime                            @db.Date
-  amount              Decimal                             @db.Decimal(12, 2)
-  status              purchase_order_installment_status   @default(PENDING)
-  purchase_invoice_id String?                             @db.Uuid
+  due_date            DateTime                          @db.Date
+  amount              Decimal                           @db.Decimal(12, 2)
+  status              purchase_order_installment_status @default(PENDING)
+  purchase_invoice_id String?                           @db.Uuid
   notes               String?
-  created_at          DateTime                            @default(now()) @db.Timestamptz
-  updated_at          DateTime                            @default(now()) @updatedAt @db.Timestamptz
+  created_at          DateTime                          @default(now()) @db.Timestamptz
+  updated_at          DateTime                          @default(now()) @updatedAt @db.Timestamptz
 
-  company          company           @relation(fields: [company_id], references: [id])
-  order            purchase_orders   @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  company          company            @relation(fields: [company_id], references: [id])
+  order            purchase_orders    @relation(fields: [order_id], references: [id], onDelete: Cascade)
   purchase_invoice purchase_invoices? @relation(fields: [purchase_invoice_id], references: [id])
 
   @@unique([order_id, number])
@@ -1676,35 +1685,36 @@ model purchase_order_installments {
 // ============================================================
 
 model purchase_invoices {
-  id                  String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  company_id          String                  @db.Uuid
-  supplier_id         String                  @db.Uuid
+  id                  String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id          String                            @db.Uuid
+  supplier_id         String                            @db.Uuid
   voucher_type        voucher_type
   point_of_sale       String
   number              String
   full_number         String
-  issue_date          DateTime                @db.Timestamptz
-  due_date            DateTime?               @db.Timestamptz
+  issue_date          DateTime                          @db.Timestamptz
+  due_date            DateTime?                         @db.Timestamptz
   cae                 String?
-  subtotal            Decimal                 @default(0) @db.Decimal(12, 2)
-  vat_amount          Decimal                 @default(0) @db.Decimal(12, 2)
-  other_taxes         Decimal                 @default(0) @db.Decimal(12, 2)
-  total               Decimal                 @default(0) @db.Decimal(12, 2)
+  subtotal            Decimal                           @default(0) @db.Decimal(12, 2)
+  vat_amount          Decimal                           @default(0) @db.Decimal(12, 2)
+  other_taxes         Decimal                           @default(0) @db.Decimal(12, 2)
+  total               Decimal                           @default(0) @db.Decimal(12, 2)
   notes               String?
-  status              purchase_invoice_status @default(DRAFT)
+  status              purchase_invoice_status           @default(DRAFT)
+  receiving_status    purchase_invoice_receiving_status @default(NOT_RECEIVED)
   document_url        String?
   document_key        String?
-  original_invoice_id String?                 @db.Uuid
-  purchase_order_id   String?                 @db.Uuid
+  original_invoice_id String?                           @db.Uuid
+  purchase_order_id   String?                           @db.Uuid
   created_by          String?
-  created_at          DateTime                @default(now()) @db.Timestamptz
-  updated_at          DateTime                @default(now()) @updatedAt @db.Timestamptz
+  created_at          DateTime                          @default(now()) @db.Timestamptz
+  updated_at          DateTime                          @default(now()) @updatedAt @db.Timestamptz
 
-  company          company                      @relation(fields: [company_id], references: [id])
-  supplier         suppliers                    @relation(fields: [supplier_id], references: [id])
-  purchase_order   purchase_orders?             @relation(fields: [purchase_order_id], references: [id])
-  original_invoice purchase_invoices?           @relation("purchase_invoice_credit_notes", fields: [original_invoice_id], references: [id])
-  credit_notes     purchase_invoices[]          @relation("purchase_invoice_credit_notes")
+  company          company                       @relation(fields: [company_id], references: [id])
+  supplier         suppliers                     @relation(fields: [supplier_id], references: [id])
+  purchase_order   purchase_orders?              @relation(fields: [purchase_order_id], references: [id])
+  original_invoice purchase_invoices?            @relation("purchase_invoice_credit_notes", fields: [original_invoice_id], references: [id])
+  credit_notes     purchase_invoices[]           @relation("purchase_invoice_credit_notes")
   lines            purchase_invoice_lines[]
   installments     purchase_order_installments[]
   receiving_notes  receiving_notes[]
@@ -1725,10 +1735,12 @@ model purchase_invoice_lines {
   subtotal               Decimal @db.Decimal(12, 2)
   total                  Decimal @db.Decimal(12, 2)
   purchase_order_line_id String? @db.Uuid
+  received_qty           Decimal @default(0) @db.Decimal(12, 3)
 
-  invoice             purchase_invoices     @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
-  product             products?             @relation(fields: [product_id], references: [id])
-  purchase_order_line purchase_order_lines? @relation(fields: [purchase_order_line_id], references: [id])
+  invoice              purchase_invoices      @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  product              products?              @relation(fields: [product_id], references: [id])
+  purchase_order_line  purchase_order_lines?  @relation(fields: [purchase_order_line_id], references: [id])
+  receiving_note_lines receiving_note_lines[]
 }
 
 // ============================================================
@@ -1736,26 +1748,26 @@ model purchase_invoice_lines {
 // ============================================================
 
 model receiving_notes {
-  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  company_id          String               @db.Uuid
-  supplier_id         String               @db.Uuid
-  warehouse_id        String               @db.Uuid
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id          String                @db.Uuid
+  supplier_id         String                @db.Uuid
+  warehouse_id        String                @db.Uuid
   number              Int
   full_number         String
-  purchase_order_id   String?              @db.Uuid
-  purchase_invoice_id String?              @db.Uuid
-  reception_date      DateTime             @db.Date
+  purchase_order_id   String?               @db.Uuid
+  purchase_invoice_id String?               @db.Uuid
+  reception_date      DateTime              @db.Date
   notes               String?
   status              receiving_note_status @default(DRAFT)
   created_by          String?
-  created_at          DateTime             @default(now()) @db.Timestamptz
-  updated_at          DateTime             @default(now()) @updatedAt @db.Timestamptz
+  created_at          DateTime              @default(now()) @db.Timestamptz
+  updated_at          DateTime              @default(now()) @updatedAt @db.Timestamptz
 
-  company          company           @relation(fields: [company_id], references: [id])
-  supplier         suppliers         @relation(fields: [supplier_id], references: [id])
-  warehouse        warehouses        @relation(fields: [warehouse_id], references: [id])
-  purchase_order   purchase_orders?  @relation(fields: [purchase_order_id], references: [id])
-  purchase_invoice purchase_invoices? @relation(fields: [purchase_invoice_id], references: [id])
+  company          company                @relation(fields: [company_id], references: [id])
+  supplier         suppliers              @relation(fields: [supplier_id], references: [id])
+  warehouse        warehouses             @relation(fields: [warehouse_id], references: [id])
+  purchase_order   purchase_orders?       @relation(fields: [purchase_order_id], references: [id])
+  purchase_invoice purchase_invoices?     @relation(fields: [purchase_invoice_id], references: [id])
   lines            receiving_note_lines[]
 
   @@unique([company_id, number])
@@ -1765,17 +1777,21 @@ model receiving_notes {
 }
 
 model receiving_note_lines {
-  id                     String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  receiving_note_id      String  @db.Uuid
-  product_id             String  @db.Uuid
-  description            String
-  quantity               Decimal @db.Decimal(12, 3)
-  purchase_order_line_id String? @db.Uuid
-  notes                  String?
+  id                       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  receiving_note_id        String  @db.Uuid
+  product_id               String  @db.Uuid
+  description              String
+  quantity                 Decimal @db.Decimal(12, 3)
+  purchase_order_line_id   String? @db.Uuid
+  purchase_invoice_line_id String? @db.Uuid
+  notes                    String?
 
-  receiving_note      receiving_notes       @relation(fields: [receiving_note_id], references: [id], onDelete: Cascade)
-  product             products              @relation(fields: [product_id], references: [id])
-  purchase_order_line purchase_order_lines? @relation(fields: [purchase_order_line_id], references: [id])
+  receiving_note        receiving_notes         @relation(fields: [receiving_note_id], references: [id], onDelete: Cascade)
+  product               products                @relation(fields: [product_id], references: [id])
+  purchase_order_line   purchase_order_lines?   @relation(fields: [purchase_order_line_id], references: [id])
+  purchase_invoice_line purchase_invoice_lines? @relation(fields: [purchase_invoice_line_id], references: [id])
+
+  @@index([purchase_invoice_line_id])
 }
 
 // ============================================================
@@ -1783,23 +1799,23 @@ model receiving_note_lines {
 // ============================================================
 
 model withdrawal_orders {
-  id            String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  company_id    String                   @db.Uuid
-  warehouse_id  String                   @db.Uuid
-  number        Int
-  full_number   String
-  request_date  DateTime                 @db.Date
-  notes         String?
-  status        withdrawal_order_status  @default(DRAFT)
-  approved_by   String?
-  approved_at   DateTime?                @db.Timestamptz
-  completed_at  DateTime?                @db.Timestamptz
+  id           String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id   String                  @db.Uuid
+  warehouse_id String                  @db.Uuid
+  number       Int
+  full_number  String
+  request_date DateTime                @db.Date
+  notes        String?
+  status       withdrawal_order_status @default(DRAFT)
+  approved_by  String?
+  approved_at  DateTime?               @db.Timestamptz
+  completed_at DateTime?               @db.Timestamptz
   // Opcional: quién retira y para qué equipo
-  employee_id   String?                  @db.Uuid
-  vehicle_id    String?                  @db.Uuid
-  created_by    String?
-  created_at    DateTime                 @default(now()) @db.Timestamptz
-  updated_at    DateTime                 @default(now()) @updatedAt @db.Timestamptz
+  employee_id  String?                 @db.Uuid
+  vehicle_id   String?                 @db.Uuid
+  created_by   String?
+  created_at   DateTime                @default(now()) @db.Timestamptz
+  updated_at   DateTime                @default(now()) @updatedAt @db.Timestamptz
 
   company   company                  @relation(fields: [company_id], references: [id])
   warehouse warehouses               @relation(fields: [warehouse_id], references: [id])
@@ -1812,12 +1828,12 @@ model withdrawal_orders {
 }
 
 model withdrawal_order_lines {
-  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  order_id   String  @db.Uuid
-  product_id String  @db.Uuid
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_id    String  @db.Uuid
+  product_id  String  @db.Uuid
   description String
-  quantity   Decimal @db.Decimal(12, 3)
-  notes      String?
+  quantity    Decimal @db.Decimal(12, 3)
+  notes       String?
 
   order   withdrawal_orders @relation(fields: [order_id], references: [id], onDelete: Cascade)
   product products          @relation(fields: [product_id], references: [id])

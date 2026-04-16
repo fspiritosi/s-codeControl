@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { receivingNoteSchema } from '@/modules/purchasing/shared/validators';
 import { createReceivingNote } from '@/modules/purchasing/features/receiving-notes/list/actions.server';
 import { getOrdersForReceiving, getPurchaseOrderLinesForReceiving } from '@/modules/purchasing/features/purchase-orders/list/actions.server';
+import { getInvoicesForReceiving, getInvoiceLinesForReceiving } from '@/modules/purchasing/features/invoices/list/actions.server';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
@@ -15,10 +16,12 @@ import { Textarea } from '@/shared/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, LinkIcon } from 'lucide-react';
+import { Plus, Trash2, LinkIcon, FileText, ShoppingCart } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { cn } from '@/shared/lib/utils';
 
 type FormValues = z.infer<typeof receivingNoteSchema>;
+type SourceType = 'order' | 'invoice' | null;
 
 interface Props {
   suppliers: { id: string; code: string; business_name: string }[];
@@ -29,6 +32,8 @@ interface Props {
 export default function ReceivingNoteForm({ suppliers, products, warehouses }: Props) {
   const router = useRouter();
   const [availableOrders, setAvailableOrders] = useState<any[]>([]);
+  const [availableInvoices, setAvailableInvoices] = useState<any[]>([]);
+  const [sourceType, setSourceType] = useState<SourceType>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(receivingNoteSchema),
@@ -45,16 +50,40 @@ export default function ReceivingNoteForm({ suppliers, products, warehouses }: P
 
   useEffect(() => {
     if (watchedSupplier) {
-      getOrdersForReceiving(watchedSupplier)
-        .then((orders) => setAvailableOrders(orders.map((o: any) => ({ ...o, total: Number(o.total) }))));
+      Promise.all([
+        getOrdersForReceiving(watchedSupplier),
+        getInvoicesForReceiving(watchedSupplier),
+      ]).then(([orders, invoices]) => {
+        setAvailableOrders(orders.map((o: any) => ({ ...o, total: Number(o.total) })));
+        setAvailableInvoices(invoices.map((inv: any) => ({ ...inv, total: Number(inv.total) })));
+      });
     } else {
       setAvailableOrders([]);
+      setAvailableInvoices([]);
     }
-  }, [watchedSupplier]);
+    // Reset source selection when supplier changes
+    setSourceType(null);
+    form.setValue('purchase_order_id', '');
+    form.setValue('purchase_invoice_id', '');
+    replace([{ product_id: '', description: '', quantity: 1, notes: '' }]);
+  }, [watchedSupplier]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const clearSourceSelection = () => {
+    form.setValue('purchase_order_id', '');
+    form.setValue('purchase_invoice_id', '');
+    replace([{ product_id: '', description: '', quantity: 1, notes: '' }]);
+  };
+
+  const handleSourceTypeChange = (type: SourceType) => {
+    if (type === sourceType) return;
+    clearSourceSelection();
+    setSourceType(type);
+  };
 
   const handleOrderSelect = async (orderId: string) => {
     if (!orderId) return;
     form.setValue('purchase_order_id', orderId);
+    form.setValue('purchase_invoice_id', '');
     const lines = await getPurchaseOrderLinesForReceiving(orderId);
     if (lines.length > 0) {
       replace(lines.map((l) => ({
@@ -62,6 +91,22 @@ export default function ReceivingNoteForm({ suppliers, products, warehouses }: P
         description: l.description,
         quantity: l.pending_qty,
         purchase_order_line_id: l.id,
+        notes: '',
+      })));
+    }
+  };
+
+  const handleInvoiceSelect = async (invoiceId: string) => {
+    if (!invoiceId) return;
+    form.setValue('purchase_invoice_id', invoiceId);
+    form.setValue('purchase_order_id', '');
+    const lines = await getInvoiceLinesForReceiving(invoiceId);
+    if (lines.length > 0) {
+      replace(lines.map((l) => ({
+        product_id: l.product?.id || '',
+        description: l.description,
+        quantity: l.pending_qty,
+        purchase_invoice_line_id: l.id,
         notes: '',
       })));
     }
@@ -109,16 +154,66 @@ export default function ReceivingNoteForm({ suppliers, products, warehouses }: P
           </CardContent>
         </Card>
 
-        {availableOrders.length > 0 && (
+        {(availableOrders.length > 0 || availableInvoices.length > 0) && (
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><LinkIcon className="size-4" /> Vincular a Orden de Compra</CardTitle></CardHeader>
-            <CardContent>
-              <Select onValueChange={handleOrderSelect} value={form.watch('purchase_order_id') || ''}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar OC (opcional — carga productos pendientes de recibir)" /></SelectTrigger>
-                <SelectContent>
-                  {availableOrders.map((o) => <SelectItem key={o.id} value={o.id}>{o.full_number} — ${o.total.toFixed(2)}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <CardHeader><CardTitle className="flex items-center gap-2"><LinkIcon className="size-4" /> Vincular documento de origen</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                {availableOrders.length > 0 && (
+                  <Button
+                    type="button"
+                    variant={sourceType === 'order' ? 'default' : 'outline'}
+                    size="sm"
+                    className={cn('gap-2', sourceType === 'order' && 'pointer-events-none')}
+                    onClick={() => handleSourceTypeChange('order')}
+                  >
+                    <ShoppingCart className="size-4" /> Orden de Compra ({availableOrders.length})
+                  </Button>
+                )}
+                {availableInvoices.length > 0 && (
+                  <Button
+                    type="button"
+                    variant={sourceType === 'invoice' ? 'default' : 'outline'}
+                    size="sm"
+                    className={cn('gap-2', sourceType === 'invoice' && 'pointer-events-none')}
+                    onClick={() => handleSourceTypeChange('invoice')}
+                  >
+                    <FileText className="size-4" /> Factura ({availableInvoices.length})
+                  </Button>
+                )}
+                {sourceType && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { clearSourceSelection(); setSourceType(null); }}
+                  >
+                    Limpiar
+                  </Button>
+                )}
+              </div>
+
+              {sourceType === 'order' && (
+                <Select onValueChange={handleOrderSelect} value={form.watch('purchase_order_id') || ''}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar OC (carga productos pendientes de recibir)" /></SelectTrigger>
+                  <SelectContent>
+                    {availableOrders.map((o) => <SelectItem key={o.id} value={o.id}>{o.full_number} — ${o.total.toFixed(2)}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {sourceType === 'invoice' && (
+                <Select onValueChange={handleInvoiceSelect} value={form.watch('purchase_invoice_id') || ''}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar factura (carga productos pendientes de recibir)" /></SelectTrigger>
+                  <SelectContent>
+                    {availableInvoices.map((inv) => (
+                      <SelectItem key={inv.id} value={inv.id}>
+                        {inv.full_number} — {inv.voucher_type.replace(/_/g, ' ')} — ${inv.total.toFixed(2)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </CardContent>
           </Card>
         )}

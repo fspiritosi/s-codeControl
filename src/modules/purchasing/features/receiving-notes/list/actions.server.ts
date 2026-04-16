@@ -6,6 +6,7 @@ import type { DataTableSearchParams } from '@/shared/components/common/DataTable
 import { parseSearchParams, stateToPrismaParams, buildFiltersWhere } from '@/shared/components/common/DataTable/helpers';
 import { revalidatePath } from 'next/cache';
 import { updatePurchaseOrderStatus } from '@/modules/purchasing/features/purchase-orders/list/actions.server';
+import { updatePurchaseInvoiceReceivingStatus } from '@/modules/purchasing/features/invoices/list/actions.server';
 
 export async function getReceivingNotesPaginated(searchParams: DataTableSearchParams) {
   const { companyId } = await getActionContext();
@@ -71,7 +72,7 @@ export async function createReceivingNote(data: {
   purchase_order_id?: string;
   purchase_invoice_id?: string;
   notes?: string;
-  lines: { product_id: string; description: string; quantity: number; purchase_order_line_id?: string; notes?: string }[];
+  lines: { product_id: string; description: string; quantity: number; purchase_order_line_id?: string; purchase_invoice_line_id?: string; notes?: string }[];
 }) {
   const { companyId } = await getActionContext();
   if (!companyId) throw new Error('No company selected');
@@ -102,6 +103,7 @@ export async function createReceivingNote(data: {
             description: l.description,
             quantity: l.quantity,
             purchase_order_line_id: l.purchase_order_line_id || null,
+            purchase_invoice_line_id: l.purchase_invoice_line_id || null,
             notes: l.notes || null,
           })),
         },
@@ -202,6 +204,16 @@ export async function confirmReceivingNote(id: string) {
           })
         );
       }
+
+      // 2d. Increment receivedQty on invoice line if linked
+      if (line.purchase_invoice_line_id) {
+        operations.push(
+          prisma.purchase_invoice_lines.update({
+            where: { id: line.purchase_invoice_line_id },
+            data: { received_qty: { increment: Number(line.quantity) } },
+          })
+        );
+      }
     }
 
     await prisma.$transaction(operations);
@@ -209,6 +221,11 @@ export async function confirmReceivingNote(id: string) {
     // 3. Update PO status if linked
     if (note.purchase_order_id) {
       await updatePurchaseOrderStatus(note.purchase_order_id);
+    }
+
+    // 4. Update invoice receiving status if linked
+    if (note.purchase_invoice_id) {
+      await updatePurchaseInvoiceReceivingStatus(note.purchase_invoice_id);
     }
 
     revalidatePath('/dashboard/purchasing');
@@ -287,12 +304,26 @@ export async function cancelReceivingNote(id: string) {
           })
         );
       }
+
+      // Decrement receivedQty on invoice line
+      if (line.purchase_invoice_line_id) {
+        operations.push(
+          prisma.purchase_invoice_lines.update({
+            where: { id: line.purchase_invoice_line_id },
+            data: { received_qty: { decrement: Number(line.quantity) } },
+          })
+        );
+      }
     }
 
     await prisma.$transaction(operations);
 
     if (note.purchase_order_id) {
       await updatePurchaseOrderStatus(note.purchase_order_id);
+    }
+
+    if (note.purchase_invoice_id) {
+      await updatePurchaseInvoiceReceivingStatus(note.purchase_invoice_id);
     }
 
     revalidatePath('/dashboard/purchasing');

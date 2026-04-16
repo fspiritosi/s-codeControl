@@ -48,3 +48,15 @@ export const RECEIVING_NOTE_STATUS_LABELS: Record<string, string> = {
   CONFIRMED: 'Confirmado',
   CANCELLED: 'Anulado',
 };
+
+export const INVOICE_RECEIVING_STATUS_LABELS: Record<string, string> = {
+  NOT_RECEIVED: 'Sin recibir',
+  PARTIALLY_RECEIVED: 'Recibida parcialmente',
+  FULLY_RECEIVED: 'Recibida totalmente',
+};
+
+export const INVOICE_RECEIVING_STATUS_COLORS: Record<string, string> = {
+  NOT_RECEIVED: 'secondary',
+  PARTIALLY_RECEIVED: 'outline',
+  FULLY_RECEIVED: 'success',
+};

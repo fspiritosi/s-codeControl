@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
-import { INVOICE_STATUS_LABELS, VOUCHER_TYPE_LABELS } from '@/modules/purchasing/shared/types';
+import { INVOICE_STATUS_LABELS, VOUCHER_TYPE_LABELS, INVOICE_RECEIVING_STATUS_LABELS, INVOICE_RECEIVING_STATUS_COLORS } from '@/modules/purchasing/shared/types';
 import { confirmPurchaseInvoice } from '../actions.server';
 import { format } from 'date-fns';
 import { MoreHorizontal, Eye, CheckCircle } from 'lucide-react';
@@ -102,6 +102,18 @@ export const invoiceColumns: ColumnDef<any>[] = [
       const s = row.original.status;
       const variant = s === 'CONFIRMED' ? 'default' : s === 'PAID' ? 'success' : s === 'CANCELLED' ? 'destructive' : 'secondary';
       return <Badge variant={variant as any}>{INVOICE_STATUS_LABELS[s] || s}</Badge>;
+    },
+    filterFn: 'equals',
+  },
+  {
+    accessorKey: 'receiving_status',
+    header: 'Recepción',
+    meta: { title: 'Recepción' },
+    cell: ({ row }) => {
+      const s = row.original.receiving_status;
+      if (!s || s === 'NOT_RECEIVED') return <Badge variant="secondary">{INVOICE_RECEIVING_STATUS_LABELS[s] || 'Sin recibir'}</Badge>;
+      const variant = INVOICE_RECEIVING_STATUS_COLORS[s] || 'secondary';
+      return <Badge variant={variant as any}>{INVOICE_RECEIVING_STATUS_LABELS[s] || s}</Badge>;
     },
     filterFn: 'equals',
   },

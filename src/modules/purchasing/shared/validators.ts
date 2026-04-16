@@ -58,6 +58,7 @@ export const receivingNoteLineSchema = z.object({
   description: z.string().min(1, 'La descripción es requerida'),
   quantity: z.coerce.number().positive('Cantidad debe ser mayor a 0'),
   purchase_order_line_id: z.string().uuid().optional().or(z.literal('')),
+  purchase_invoice_line_id: z.string().uuid().optional().or(z.literal('')),
   notes: z.string().optional().or(z.literal('')),
 });
 

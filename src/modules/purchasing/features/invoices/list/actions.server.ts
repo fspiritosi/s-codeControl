@@ -23,7 +23,7 @@ export async function getPurchaseInvoicesPaginated(searchParams: DataTableSearch
       ];
     }
 
-    const filtersWhere = buildFiltersWhere(state.filters, { status: 'status', voucher_type: 'voucher_type' });
+    const filtersWhere = buildFiltersWhere(state.filters, { status: 'status', voucher_type: 'voucher_type', receiving_status: 'receiving_status' });
     Object.assign(where, filtersWhere);
 
     const [data, total] = await Promise.all([
@@ -52,14 +52,16 @@ export async function getInvoiceFacets(): Promise<Record<string, { value: string
   if (!companyId) return {};
 
   try {
-    const [statusGroups, typeGroups] = await Promise.all([
+    const [statusGroups, typeGroups, receivingGroups] = await Promise.all([
       prisma.purchase_invoices.groupBy({ by: ['status'], where: { company_id: companyId }, _count: true }),
       prisma.purchase_invoices.groupBy({ by: ['voucher_type'], where: { company_id: companyId }, _count: true }),
+      prisma.purchase_invoices.groupBy({ by: ['receiving_status'], where: { company_id: companyId }, _count: true }),
     ]);
 
     return {
       status: statusGroups.map((g) => ({ value: g.status, count: g._count })),
       voucher_type: typeGroups.map((g) => ({ value: g.voucher_type, count: g._count })),
+      receiving_status: receivingGroups.map((g) => ({ value: g.receiving_status, count: g._count })),
     };
   } catch (error) {
     return {};
@@ -125,7 +127,10 @@ export async function createPurchaseInvoice(data: {
     });
 
     revalidatePath('/dashboard/purchasing');
-    return { data: invoice, error: null };
+    return {
+      data: { ...invoice, subtotal: Number(invoice.subtotal), vat_amount: Number(invoice.vat_amount), other_taxes: Number(invoice.other_taxes), total: Number(invoice.total) },
+      error: null,
+    };
   } catch (error: any) {
     if (error?.code === 'P2002') {
       return { data: null, error: 'Ya existe una factura con ese número para este proveedor' };
@@ -184,4 +189,88 @@ export async function confirmPurchaseInvoice(id: string) {
     console.error('Error confirming invoice:', error);
     return { error: String(error) };
   }
+}
+
+// ============================================================
+// Receiving support — queries para remitos de recepción
+// ============================================================
+
+export async function getInvoicesForReceiving(supplierId: string) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return [];
+
+  const invoices = await prisma.purchase_invoices.findMany({
+    where: {
+      company_id: companyId,
+      supplier_id: supplierId,
+      status: 'CONFIRMED',
+      receiving_status: { in: ['NOT_RECEIVED', 'PARTIALLY_RECEIVED'] },
+      voucher_type: {
+        in: ['FACTURA_A', 'FACTURA_B', 'FACTURA_C', 'NOTA_DEBITO_A', 'NOTA_DEBITO_B', 'NOTA_DEBITO_C'] as any,
+      },
+    },
+    select: {
+      id: true,
+      full_number: true,
+      total: true,
+      issue_date: true,
+      voucher_type: true,
+    },
+    orderBy: { created_at: 'desc' },
+  });
+
+  return invoices.map((inv) => ({ ...inv, total: Number(inv.total) }));
+}
+
+export async function getInvoiceLinesForReceiving(invoiceId: string) {
+  const lines = await prisma.purchase_invoice_lines.findMany({
+    where: { invoice_id: invoiceId },
+    include: {
+      product: {
+        select: { id: true, code: true, name: true, unit_of_measure: true, track_stock: true },
+      },
+    },
+  });
+
+  return lines
+    .filter((l) => l.product?.track_stock)
+    .map((l) => ({
+      id: l.id,
+      product_id: l.product_id,
+      product: l.product,
+      description: l.description,
+      quantity: Number(l.quantity),
+      received_qty: Number(l.received_qty),
+      pending_qty: Number(l.quantity) - Number(l.received_qty),
+      unit_cost: Number(l.unit_cost),
+      vat_rate: Number(l.vat_rate),
+      purchase_order_line_id: l.purchase_order_line_id,
+    }))
+    .filter((l) => l.pending_qty > 0);
+}
+
+export async function updatePurchaseInvoiceReceivingStatus(invoiceId: string) {
+  const lines = await prisma.purchase_invoice_lines.findMany({
+    where: { invoice_id: invoiceId },
+    include: { product: { select: { track_stock: true } } },
+  });
+
+  const trackableLines = lines.filter((l) => l.product?.track_stock);
+  if (trackableLines.length === 0) return;
+
+  const allReceived = trackableLines.every(
+    (l) => Number(l.received_qty) >= Number(l.quantity)
+  );
+  const someReceived = trackableLines.some(
+    (l) => Number(l.received_qty) > 0
+  );
+
+  let newStatus: 'NOT_RECEIVED' | 'PARTIALLY_RECEIVED' | 'FULLY_RECEIVED' = 'NOT_RECEIVED';
+  if (allReceived) newStatus = 'FULLY_RECEIVED';
+  else if (someReceived) newStatus = 'PARTIALLY_RECEIVED';
+
+  await prisma.purchase_invoices.update({
+    where: { id: invoiceId },
+    data: { receiving_status: newStatus },
+  });
 }
