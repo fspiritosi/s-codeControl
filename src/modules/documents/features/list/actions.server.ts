@@ -922,13 +922,46 @@ function buildEmployeeDocumentsWhere(
     }
   }
 
-  // 5. Filter by documentName (name on document_type relation)
+  // 5. Filter by documentName (name on document_type relation — substring match)
   const docNameFilter = state.filters.documentName;
   if (docNameFilter?.length) {
-    (baseWhere.document_type as any).is.name = docNameFilter.length === 1 ? docNameFilter[0] : { in: docNameFilter };
+    (baseWhere.document_type as any).is.name = { contains: docNameFilter[0], mode: 'insensitive' };
   }
 
-  // 6. Date range filter for validity (field is String, not DateTime)
+  // 6. Filter by resource (employee lastname + firstname — substring match)
+  const resourceFilter = state.filters.resource;
+  if (resourceFilter?.length) {
+    const term = resourceFilter[0];
+    baseWhere.employee = {
+      ...(baseWhere.employee as any),
+      is: {
+        ...((baseWhere.employee as any)?.is ?? {}),
+        OR: [
+          { lastname: { contains: term, mode: 'insensitive' } },
+          { firstname: { contains: term, mode: 'insensitive' } },
+        ],
+      },
+    };
+  }
+
+  // 7. Filter by allocated_to (contractor name — substring match)
+  const allocatedFilter = state.filters.allocated_to;
+  if (allocatedFilter?.length) {
+    const term = allocatedFilter[0];
+    baseWhere.employee = {
+      ...(baseWhere.employee as any),
+      is: {
+        ...((baseWhere.employee as any)?.is ?? {}),
+        contractor_employee: {
+          some: {
+            contractor: { name: { contains: term, mode: 'insensitive' } },
+          },
+        },
+      },
+    };
+  }
+
+  // 8. Date range filter for validity (field is String, not DateTime)
   const validityFrom = state.filters.validity_from?.[0];
   const validityTo = state.filters.validity_to?.[0];
   if (validityFrom || validityTo) {
@@ -1177,10 +1210,36 @@ function buildEquipmentDocumentsWhere(
     }
   }
 
-  // Filter by documentName (name on document_type relation)
+  // Filter by documentName (name on document_type relation — substring match)
   const docNameFilter = state.filters.documentName;
   if (docNameFilter?.length) {
-    (baseWhere.document_type as any).is.name = docNameFilter.length === 1 ? docNameFilter[0] : { in: docNameFilter };
+    (baseWhere.document_type as any).is.name = { contains: docNameFilter[0], mode: 'insensitive' };
+  }
+
+  // Filter by resource (vehicle domain — substring match)
+  const resourceFilter = state.filters.resource;
+  if (resourceFilter?.length) {
+    const term = resourceFilter[0];
+    baseWhere.vehicle = {
+      ...(baseWhere.vehicle as any),
+      is: {
+        ...((baseWhere.vehicle as any)?.is ?? {}),
+        domain: { contains: term, mode: 'insensitive' },
+      },
+    };
+  }
+
+  // Filter by allocated_to (type_of_vehicle name — substring match)
+  const allocatedFilter = state.filters.allocated_to;
+  if (allocatedFilter?.length) {
+    const term = allocatedFilter[0];
+    baseWhere.vehicle = {
+      ...(baseWhere.vehicle as any),
+      is: {
+        ...((baseWhere.vehicle as any)?.is ?? {}),
+        type_of_vehicle_rel: { name: { contains: term, mode: 'insensitive' } },
+      },
+    };
   }
 
   // Date range filter for validity (field is String, not DateTime)
