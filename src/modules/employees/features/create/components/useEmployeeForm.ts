@@ -21,7 +21,7 @@ import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { insertDocumentsEmployees } from '@/modules/documents/features/upload/actions.server';
+import { insertDocumentsEmployees, fetchExistingDocumentTypes } from '@/modules/documents/features/upload/actions.server';
 import {
   updateEmployeeByDocNumber,
   deactivateEmployee,
@@ -201,6 +201,14 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
 
         try {
           const applies = await createEmployee(finalValues);
+          const employeeId = applies?.[0]?.id ?? '';
+
+          const { data: existingTypes } = await fetchExistingDocumentTypes(
+            'documents_employees',
+            employeeId
+          );
+          const existingTypesSet = new Set(existingTypes);
+
           const documentsMissing: {
             applies: string;
             id_document_types: string;
@@ -208,16 +216,20 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
             user_id: string | undefined;
           }[] = [];
 
-          mandatoryDocuments?.Persona?.forEach(async (document: any) => {
-            documentsMissing.push({
-              applies: applies?.[0]?.id ?? '',
-              id_document_types: document.id,
-              validity: null,
-              user_id: loggedUser,
-            });
+          mandatoryDocuments?.Persona?.forEach((document: any) => {
+            if (!existingTypesSet.has(document.id)) {
+              documentsMissing.push({
+                applies: employeeId,
+                id_document_types: document.id,
+                validity: null,
+                user_id: loggedUser,
+              });
+            }
           });
 
-          const { error } = await insertDocumentsEmployees(documentsMissing);
+          const { error } = documentsMissing.length > 0
+            ? await insertDocumentsEmployees(documentsMissing)
+            : { error: null };
 
           if (error) {
             throw new Error(handleSupabaseError(error));

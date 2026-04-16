@@ -19,8 +19,8 @@ import { es } from 'date-fns/locale';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { storage } from '@/shared/lib/storage';
-import { updateDocumentByAppliesAndType } from '@/modules/documents/features/manage/actions.server';
-import { fetchDocumentTypesByAppliesForClient, insertSingleDocumentEmployee, insertSingleDocumentEquipment } from '@/modules/documents/features/upload/actions.server';
+import { updateDocumentByAppliesAndType, updateDocumentById } from '@/modules/documents/features/manage/actions.server';
+import { fetchDocumentTypesByAppliesForClient, insertSingleDocumentEmployee, insertSingleDocumentEquipment, findExistingDocument } from '@/modules/documents/features/upload/actions.server';
 import { Badge } from '@/shared/components/ui/badge';
 import { Calendar } from '@/shared/components/ui/calendar';
 import { Input } from '@/shared/components/ui/input';
@@ -219,17 +219,36 @@ export default function MultiResourceDocument({
               throw new Error(handleSupabaseError(error));
             }
           } else {
-            const insertFn = tableName === 'documents_employees' ? insertSingleDocumentEmployee : insertSingleDocumentEquipment;
-            const { error } = await insertFn({
-              ...tableEntries[index],
-              state: 'presentado',
-              document_path: uploadPath,
-              validity: tableEntries[index].validity ?? null,
-              period: tableEntries[index].period || null,
-            });
+            const existing = await findExistingDocument(
+              tableName as 'documents_employees' | 'documents_equipment',
+              id,
+              values.id_document_types,
+              tableEntries[index].period || null
+            );
 
-            if (error) {
-              throw new Error(handleSupabaseError(error));
+            if (existing.data) {
+              const { error } = await updateDocumentById(
+                tableName as 'documents_employees' | 'documents_equipment',
+                existing.data.id,
+                {
+                  ...tableEntries[index],
+                  state: 'presentado',
+                  document_path: uploadPath,
+                  validity: tableEntries[index].validity ?? null,
+                  period: tableEntries[index].period || null,
+                }
+              );
+              if (error) throw new Error(handleSupabaseError(error));
+            } else {
+              const insertFn = tableName === 'documents_employees' ? insertSingleDocumentEmployee : insertSingleDocumentEquipment;
+              const { error } = await insertFn({
+                ...tableEntries[index],
+                state: 'presentado',
+                document_path: uploadPath,
+                validity: tableEntries[index].validity ?? null,
+                period: tableEntries[index].period || null,
+              });
+              if (error) throw new Error(handleSupabaseError(error));
             }
           }
         }

@@ -7,7 +7,8 @@ import { supabaseServer } from './supabase/server';
 import { storage } from './storage';
 import { formatDocumentTypeName } from './utils/utils';
 import { updateDocumentByAppliesAndType, updateDocumentsByAppliesArrayAndType } from '@/modules/documents/features/manage/actions.server';
-import { insertMultipleDocuments, insertSingleDocumentEmployee, fetchRepairSolicitudesByArrayAndType } from '@/modules/documents/features/upload/actions.server';
+import { insertMultipleDocuments, insertSingleDocumentEmployee, insertSingleDocumentEquipment, findExistingDocument, fetchRepairSolicitudesByArrayAndType } from '@/modules/documents/features/upload/actions.server';
+import { updateDocumentById } from '@/modules/documents/features/manage/actions.server';
 import { fetchDocumentsByDocumentTypeId } from '@/modules/documents/features/list/actions.server';
 // eslint-disable-next-line react-hooks/rules-of-hooks
 export function cn(...inputs: ClassValue[]) {
@@ -214,21 +215,64 @@ export const uploadDocument = async (
   } else {
     if (multipleResources) {
       const { applies, ...rest } = dataToUpdate;
-      const dataToInsert = applies.map((apply: any) => ({
-        ...rest,
-        applies: apply,
-      }));
-      const { error } = await insertMultipleDocuments(tableName, dataToInsert);
-      if (error) {
-        throw new Error(typeof error === 'string' ? error : 'Error al insertar documentos');
+      const toInsert: Record<string, unknown>[] = [];
+
+      for (const apply of applies) {
+        const existing = await findExistingDocument(
+          tableName,
+          apply,
+          rest.id_document_types,
+          rest.period ?? null
+        );
+        if (existing.data) {
+          await updateDocumentById(tableName, existing.data.id, {
+            ...rest,
+            applies: apply,
+            state: 'presentado',
+          });
+        } else {
+          toInsert.push({ ...rest, applies: apply, state: 'presentado' });
+        }
+      }
+
+      if (toInsert.length > 0) {
+        const { error } = await insertMultipleDocuments(tableName, toInsert);
+        if (error) {
+          throw new Error(typeof error === 'string' ? error : 'Error al insertar documentos');
+        }
       }
     } else {
-      const { error } = await insertSingleDocumentEmployee({
-        ...dataToUpdate,
-        state: 'presentado',
-      });
-      if (error) {
-        throw new Error(typeof error === 'string' ? error : 'Error al insertar documento');
+      const existing = await findExistingDocument(
+        tableName,
+        dataToUpdate.applies,
+        dataToUpdate.id_document_types,
+        dataToUpdate.period ?? null
+      );
+
+      if (existing.data) {
+        const { error } = await updateDocumentById(tableName, existing.data.id, {
+          document_path: dataToUpdate.document_path,
+          state: 'presentado',
+          validity: dataToUpdate.validity ?? null,
+          period: dataToUpdate.period ?? null,
+          created_at: dataToUpdate.created_at,
+          user_id: dataToUpdate.user_id,
+        });
+        if (error) {
+          throw new Error(typeof error === 'string' ? error : 'Error al actualizar documento');
+        }
+      } else {
+        const insertFn =
+          tableName === 'documents_employees'
+            ? insertSingleDocumentEmployee
+            : insertSingleDocumentEquipment;
+        const { error } = await insertFn({
+          ...dataToUpdate,
+          state: 'presentado',
+        });
+        if (error) {
+          throw new Error(typeof error === 'string' ? error : 'Error al insertar documento');
+        }
       }
     }
   }

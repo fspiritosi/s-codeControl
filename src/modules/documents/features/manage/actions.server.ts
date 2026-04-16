@@ -114,30 +114,52 @@ export const updateDocumentByAppliesAndType = async (
   updateData: Record<string, unknown>
 ) => {
   try {
-    if (tableName === 'documents_employees') {
-      const data = await prisma.documents_employees.updateMany({
-        where: { applies: appliesId, id_document_types: documentTypeId },
-        data: updateData as any,
-      });
-      // If no existing record was found, create one (upsert logic)
-      if (data.count === 0) {
-        await prisma.documents_employees.create({
-          data: { applies: appliesId, id_document_types: documentTypeId, ...updateData } as any,
-        });
-      }
-      return { data, error: null };
-    } else {
-      const data = await prisma.documents_equipment.updateMany({
-        where: { applies: appliesId, id_document_types: documentTypeId },
-        data: updateData as any,
-      });
-      if (data.count === 0) {
-        await prisma.documents_equipment.create({
-          data: { applies: appliesId, id_document_types: documentTypeId, ...updateData } as any,
-        });
-      }
-      return { data, error: null };
+    const where: Record<string, unknown> = {
+      applies: appliesId,
+      id_document_types: documentTypeId,
+    };
+    // Para documentos mensuales, incluir period en el filtro
+    if (updateData.period !== undefined && updateData.period !== null) {
+      where.period = updateData.period;
     }
+
+    const model =
+      tableName === 'documents_employees'
+        ? prisma.documents_employees
+        : prisma.documents_equipment;
+
+    const rows = await (model as any).findMany({
+      where,
+      select: { id: true, document_path: true, created_at: true },
+      orderBy: { created_at: 'desc' },
+    });
+
+    if (rows.length === 0) {
+      // No existe: crear (mantener fallback actual)
+      await (model as any).create({
+        data: { applies: appliesId, id_document_types: documentTypeId, ...updateData } as any,
+      });
+      return { data: { count: 1 }, error: null };
+    }
+
+    // Seleccionar ganadora: prioridad a la que tiene document_path, sino la más reciente
+    const winner = rows.find((r: any) => r.document_path !== null) ?? rows[0];
+
+    // Actualizar solo la ganadora
+    const data = await (model as any).update({
+      where: { id: winner.id },
+      data: updateData as any,
+    });
+
+    // Eliminar sobrantes (duplicados)
+    const surplusIds = rows.filter((r: any) => r.id !== winner.id).map((r: any) => r.id);
+    if (surplusIds.length > 0) {
+      await (model as any).deleteMany({
+        where: { id: { in: surplusIds } },
+      });
+    }
+
+    return { data, error: null };
   } catch (error) {
     console.error('Error updating document by applies and type:', error);
     return { data: null, error: String(error) };
@@ -151,19 +173,16 @@ export const updateDocumentsByAppliesArrayAndType = async (
   updateData: Record<string, unknown>
 ) => {
   try {
-    if (tableName === 'documents_employees') {
-      const data = await prisma.documents_employees.updateMany({
-        where: { applies: { in: appliesIds }, id_document_types: documentTypeId },
-        data: updateData as any,
-      });
-      return { data, error: null };
-    } else {
-      const data = await prisma.documents_equipment.updateMany({
-        where: { applies: { in: appliesIds }, id_document_types: documentTypeId },
-        data: updateData as any,
-      });
-      return { data, error: null };
+    for (const appliesId of appliesIds) {
+      const { error } = await updateDocumentByAppliesAndType(
+        tableName,
+        appliesId,
+        documentTypeId,
+        updateData
+      );
+      if (error) return { data: null, error };
     }
+    return { data: { count: appliesIds.length }, error: null };
   } catch (error) {
     console.error('Error updating documents by applies array and type:', error);
     return { data: null, error: String(error) };

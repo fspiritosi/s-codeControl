@@ -355,6 +355,70 @@ export const fetchDocumentTypesForEquipment = async (
   }
 };
 
+export const findExistingDocument = async (
+  tableName: 'documents_employees' | 'documents_equipment',
+  appliesId: string,
+  documentTypeId: string,
+  period?: string | null
+): Promise<{ data: { id: string; document_path: string | null } | null; error: string | null }> => {
+  try {
+    const where: Record<string, unknown> = {
+      applies: appliesId,
+      id_document_types: documentTypeId,
+    };
+    if (period !== undefined && period !== null) {
+      where.period = period;
+    }
+
+    const model =
+      tableName === 'documents_employees'
+        ? prisma.documents_employees
+        : prisma.documents_equipment;
+
+    const rows = await (model as any).findMany({
+      where,
+      select: { id: true, document_path: true, created_at: true },
+      orderBy: { created_at: 'desc' },
+    });
+
+    if (rows.length === 0) return { data: null, error: null };
+
+    const winner = rows.find((r: any) => r.document_path !== null) ?? rows[0];
+    return { data: { id: winner.id, document_path: winner.document_path }, error: null };
+  } catch (error) {
+    console.error('Error finding existing document:', error);
+    return { data: null, error: String(error) };
+  }
+};
+
+export const fetchExistingDocumentTypes = async (
+  tableName: 'documents_employees' | 'documents_equipment',
+  appliesId: string
+): Promise<{ data: string[]; error: string | null }> => {
+  try {
+    const model =
+      tableName === 'documents_employees'
+        ? prisma.documents_employees
+        : prisma.documents_equipment;
+
+    const rows = await (model as any).findMany({
+      where: { applies: appliesId },
+      select: { id_document_types: true },
+    });
+
+    const types = [
+      ...new Set(
+        rows.map((r: any) => r.id_document_types).filter((t: any): t is string => t !== null)
+      ),
+    ] as string[];
+
+    return { data: types, error: null };
+  } catch (error) {
+    console.error('Error fetching existing document types:', error);
+    return { data: [], error: String(error) };
+  }
+};
+
 export const fetchRepairSolicitudesByArrayAndType = async (
   vehiclesIds: string[],
   repairTypeId: string,

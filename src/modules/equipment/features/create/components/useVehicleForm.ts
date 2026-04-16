@@ -11,7 +11,7 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { insertDocumentsEquipment } from '@/modules/documents/features/upload/actions.server';
+import { insertDocumentsEquipment, fetchExistingDocumentTypes } from '@/modules/documents/features/upload/actions.server';
 import {
   insertVehicle,
   updateVehicleByIdAndCompany,
@@ -152,12 +152,24 @@ export function useVehicleForm(
               kilometer: values.kilometer || 0,
             });
           if (error) throw new Error(handleSupabaseError(error));
+          const vehicleId = vehicleData?.id || '';
+
+          const { data: existingTypes } = await fetchExistingDocumentTypes(
+            'documents_equipment',
+            vehicleId
+          );
+          const existingTypesSet = new Set(existingTypes);
+
           const documentsMissing: { applies: string; id_document_types: string; validity: string | null; user_id: string | undefined }[] = [];
           mandatoryDocuments?.Equipos?.forEach((document: any) => {
-            documentsMissing.push({ applies: vehicleData?.id || '', id_document_types: document.id, validity: null, user_id: loggedUser });
+            if (!existingTypesSet.has(document.id)) {
+              documentsMissing.push({ applies: vehicleId, id_document_types: document.id, validity: null, user_id: loggedUser });
+            }
           });
-          const { error: documentError } = await insertDocumentsEquipment(documentsMissing);
-          if (documentError) throw new Error(handleSupabaseError(documentError));
+          if (documentsMissing.length > 0) {
+            const { error: documentError } = await insertDocumentsEquipment(documentsMissing);
+            if (documentError) throw new Error(handleSupabaseError(documentError));
+          }
           const id = vehicleData?.id;
           const fileExtension = imageFile?.name.split('.').pop();
           if (imageFile && id) {
