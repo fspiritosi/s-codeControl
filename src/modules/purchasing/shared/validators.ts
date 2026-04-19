@@ -34,6 +34,8 @@ export const purchaseInvoiceLineSchema = z.object({
   unit_cost: z.coerce.number().min(0),
   vat_rate: z.coerce.number().min(0).max(100).default(21),
   purchase_order_line_id: z.string().uuid().optional().or(z.literal('')),
+  order_id: z.string().uuid().optional().or(z.literal('')),
+  order_full_number: z.string().optional().or(z.literal('')),
 });
 
 export const purchaseInvoiceSchema = z.object({
@@ -46,6 +48,7 @@ export const purchaseInvoiceSchema = z.object({
   cae: z.string().optional().or(z.literal('')),
   notes: z.string().optional().or(z.literal('')),
   purchase_order_id: z.string().uuid().optional().or(z.literal('')),
+  purchase_order_ids: z.array(z.string().uuid()).optional().default([]),
   lines: z.array(purchaseInvoiceLineSchema).min(1, 'Debe agregar al menos una línea'),
 });
 

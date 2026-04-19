@@ -6,19 +6,35 @@ import { z } from 'zod';
 import { purchaseInvoiceSchema } from '@/modules/purchasing/shared/validators';
 import { VOUCHER_TYPE_LABELS } from '@/modules/purchasing/shared/types';
 import { createPurchaseInvoice } from '@/modules/purchasing/features/invoices/list/actions.server';
-import { getOrdersForInvoicing, getPurchaseOrderLinesForInvoicing } from '@/modules/purchasing/features/purchase-orders/list/actions.server';
+import {
+  getOrdersForInvoicing,
+  getPurchaseOrderLinesForInvoicingBulk,
+} from '@/modules/purchasing/features/purchase-orders/list/actions.server';
+import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
+import { MultiSelectCombobox } from '@/shared/components/ui/multi-select-combobox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, LinkIcon } from 'lucide-react';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 
 type FormValues = z.infer<typeof purchaseInvoiceSchema>;
+
+type LineField = {
+  product_id?: string;
+  description: string;
+  quantity: number;
+  unit_cost: number;
+  vat_rate: number;
+  purchase_order_line_id?: string;
+  order_id?: string;
+  order_full_number?: string;
+};
 
 interface Props {
   suppliers: { id: string; code: string; business_name: string }[];
@@ -35,6 +51,7 @@ export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
       supplier_id: '', voucher_type: 'FACTURA_A', point_of_sale: '0001', number: '',
       issue_date: new Date().toISOString().split('T')[0], due_date: '', cae: '', notes: '',
       purchase_order_id: '',
+      purchase_order_ids: [],
       lines: [{ product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21 }],
     },
   });
@@ -42,6 +59,10 @@ export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
   const { fields, append, remove, replace } = useFieldArray({ control: form.control, name: 'lines' });
   const watchedLines = useWatch({ control: form.control, name: 'lines' });
   const watchedSupplier = useWatch({ control: form.control, name: 'supplier_id' });
+  const watchedOrderIds = (useWatch({ control: form.control, name: 'purchase_order_ids' }) as string[]) || [];
+
+  // Índice line_id → order_id para poder filtrar al deseleccionar OCs
+  const poLineToOrderRef = useRef<Map<string, string>>(new Map());
 
   useEffect(() => {
     if (watchedSupplier) {
@@ -50,19 +71,65 @@ export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
     } else {
       setAvailableOrders([]);
     }
+    // Reset de OCs + remoción de líneas que venían de OC (preservar manuales)
+    form.setValue('purchase_order_ids', []);
+    poLineToOrderRef.current.clear();
+    const currentLines = form.getValues('lines') as LineField[];
+    const manualOnly = currentLines.filter((l) => !l.purchase_order_line_id);
+    replace(manualOnly.length > 0 ? manualOnly : [
+      { product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21 },
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchedSupplier]);
 
-  const handleOrderSelect = async (orderId: string) => {
-    if (!orderId) return;
-    form.setValue('purchase_order_id', orderId);
-    const lines = await getPurchaseOrderLinesForInvoicing(orderId);
-    if (lines.length > 0) {
-      replace(lines.map((l) => ({
-        product_id: l.product?.id || '', description: l.description,
-        quantity: l.pending_qty, unit_cost: l.unit_cost, vat_rate: l.vat_rate,
-        purchase_order_line_id: l.id,
-      })));
+  const handleOrdersChange = async (newIds: string[]) => {
+    const oldIds = (form.getValues('purchase_order_ids') as string[]) || [];
+    const addedIds = newIds.filter((id) => !oldIds.includes(id));
+    const removedIds = oldIds.filter((id) => !newIds.includes(id));
+
+    // 1) Remover líneas de OCs deseleccionadas (preservar manuales y de otras OCs)
+    if (removedIds.length > 0) {
+      const currentLines = form.getValues('lines') as LineField[];
+      const keep = currentLines.filter((l) => {
+        if (!l.purchase_order_line_id) return true; // manual
+        const ord = l.order_id ?? poLineToOrderRef.current.get(l.purchase_order_line_id);
+        return ord ? !removedIds.includes(ord) : true;
+      });
+      replace(keep.length > 0 ? keep : [
+        { product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21 },
+      ]);
+      for (const [lineId, ord] of Array.from(poLineToOrderRef.current.entries())) {
+        if (removedIds.includes(ord)) poLineToOrderRef.current.delete(lineId);
+      }
     }
+
+    // 2) Agregar líneas de OCs nuevas (append, no replace)
+    if (addedIds.length > 0) {
+      const bulkLines = await getPurchaseOrderLinesForInvoicingBulk(addedIds);
+      const currentLines = form.getValues('lines') as LineField[];
+      const hasOnlyPlaceholder =
+        currentLines.length === 1 &&
+        !currentLines[0].purchase_order_line_id &&
+        !currentLines[0].product_id &&
+        !currentLines[0].description;
+      if (hasOnlyPlaceholder) replace([]);
+
+      for (const l of bulkLines) {
+        poLineToOrderRef.current.set(l.id, l.order_id);
+        append({
+          product_id: l.product?.id || '',
+          description: l.description,
+          quantity: l.pending_qty,
+          unit_cost: l.unit_cost,
+          vat_rate: l.vat_rate,
+          purchase_order_line_id: l.id,
+          order_id: l.order_id,
+          order_full_number: l.order_full_number,
+        } as LineField);
+      }
+    }
+
+    form.setValue('purchase_order_ids', newIds, { shouldDirty: true });
   };
 
   const totals = useMemo(() => {
@@ -85,7 +152,27 @@ export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
 
   const onSubmit = async (values: FormValues) => {
     toast.promise(async () => {
-      const result = await createPurchaseInvoice(values as any);
+      // Sanitizar líneas: descartar order_id/order_full_number (son solo UI)
+      const lines = (values.lines as LineField[]).map((l) => ({
+        product_id: l.product_id,
+        description: l.description,
+        quantity: l.quantity,
+        unit_cost: l.unit_cost,
+        vat_rate: l.vat_rate,
+        purchase_order_line_id: l.purchase_order_line_id || undefined,
+      }));
+      const result = await createPurchaseInvoice({
+        supplier_id: values.supplier_id,
+        voucher_type: values.voucher_type,
+        point_of_sale: values.point_of_sale,
+        number: values.number,
+        issue_date: values.issue_date,
+        due_date: values.due_date,
+        cae: values.cae,
+        notes: values.notes,
+        purchase_order_ids: values.purchase_order_ids || [],
+        lines,
+      } as any);
       if (result.error) throw new Error(result.error);
       router.push('/dashboard/purchasing?tab=invoices'); router.refresh();
     }, { loading: 'Creando factura...', success: 'Factura creada', error: (e) => e?.message || 'Error' });
@@ -131,14 +218,29 @@ export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
 
         {availableOrders.length > 0 && (
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><LinkIcon className="size-4" /> Vincular a Orden de Compra</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LinkIcon className="size-4" /> Vincular a Órdenes de Compra
+              </CardTitle>
+            </CardHeader>
             <CardContent>
-              <Select onValueChange={handleOrderSelect} value={form.watch('purchase_order_id') || ''}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar OC (opcional — carga líneas pendientes de facturar)" /></SelectTrigger>
-                <SelectContent>
-                  {availableOrders.map((o) => <SelectItem key={o.id} value={o.id}>{o.full_number} — ${o.total.toFixed(2)}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <MultiSelectCombobox
+                options={availableOrders.map((o) => ({
+                  label: `${o.full_number} — $${o.total.toFixed(2)}`,
+                  value: o.id,
+                }))}
+                placeholder="Seleccionar OCs (opcional — carga líneas pendientes de facturar)"
+                emptyMessage="No hay OCs facturables para este proveedor"
+                selectedValues={watchedOrderIds}
+                onChange={handleOrdersChange}
+                showSelectAll
+              />
+              {watchedOrderIds.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  {watchedOrderIds.length} OC{watchedOrderIds.length > 1 ? 's' : ''} seleccionada
+                  {watchedOrderIds.length > 1 ? 's' : ''}. Puede editar cantidades por línea.
+                </p>
+              )}
             </CardContent>
           </Card>
         )}
@@ -153,7 +255,9 @@ export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
           <CardContent>
             <Table>
               <TableHeader><TableRow>
-                <TableHead className="w-[180px]">Producto</TableHead><TableHead>Descripción</TableHead>
+                <TableHead className="w-[180px]">Producto</TableHead>
+                <TableHead className="w-[110px]">OC</TableHead>
+                <TableHead>Descripción</TableHead>
                 <TableHead className="w-[90px]">Cant.</TableHead><TableHead className="w-[110px]">Costo</TableHead>
                 <TableHead className="w-[70px]">IVA%</TableHead><TableHead className="w-[110px] text-right">Subtotal</TableHead>
                 <TableHead className="w-[40px]"></TableHead>
@@ -161,6 +265,7 @@ export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
               <TableBody>
                 {fields.map((field, index) => {
                   const lineSubtotal = (watchedLines?.[index]?.quantity || 0) * (watchedLines?.[index]?.unit_cost || 0);
+                  const orderLabel = (field as unknown as LineField).order_full_number;
                   return (
                     <TableRow key={field.id}>
                       <TableCell>
@@ -168,6 +273,13 @@ export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
                           <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                           <SelectContent>{products.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
                         </Select>
+                      </TableCell>
+                      <TableCell>
+                        {orderLabel ? (
+                          <Badge variant="outline" className="font-mono text-xs">{orderLabel}</Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell><Input className="h-8 text-sm" {...form.register(`lines.${index}.description`)} /></TableCell>
                       <TableCell><Input className="h-8 text-sm" type="number" step="1" min="1" {...form.register(`lines.${index}.quantity`, { valueAsNumber: true })} /></TableCell>

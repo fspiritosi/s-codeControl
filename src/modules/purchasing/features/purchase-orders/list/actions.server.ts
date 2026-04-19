@@ -76,16 +76,42 @@ export async function getPurchaseOrderFacets(): Promise<Record<string, { value: 
 }
 
 export async function getPurchaseOrderById(id: string) {
-  return prisma.purchase_orders.findUnique({
+  const order = await prisma.purchase_orders.findUnique({
     where: { id },
     include: {
       supplier: true,
       lines: { include: { product: { select: { code: true, name: true, unit_of_measure: true } } } },
       installments: true,
       receiving_notes: { select: { id: true, full_number: true, status: true, reception_date: true } },
-      purchase_invoices: { select: { id: true, full_number: true, status: true, total: true } },
     },
   });
+
+  if (!order) return null;
+
+  // Merge facturas: FK legacy + derivadas por líneas (multi-OC)
+  const linkedInvoices = await getInvoicesByOrderId(id);
+
+  return {
+    ...order,
+    subtotal: Number(order.subtotal),
+    vat_amount: Number(order.vat_amount),
+    total: Number(order.total),
+    supplier: order.supplier
+      ? { ...order.supplier, credit_limit: order.supplier.credit_limit ? Number(order.supplier.credit_limit) : null }
+      : null,
+    lines: order.lines.map((l) => ({
+      ...l,
+      quantity: Number(l.quantity),
+      unit_cost: Number(l.unit_cost),
+      vat_rate: Number(l.vat_rate),
+      vat_amount: Number(l.vat_amount),
+      subtotal: Number(l.subtotal),
+      total: Number(l.total),
+      received_qty: Number(l.received_qty),
+      invoiced_qty: Number(l.invoiced_qty),
+    })),
+    purchase_invoices: linkedInvoices,
+  };
 }
 
 export async function getPurchaseOrderLinesForReceiving(orderId: string) {
@@ -111,7 +137,7 @@ export async function getOrdersForReceiving(supplierId: string) {
   const { companyId } = await getActionContext();
   if (!companyId) return [];
 
-  return prisma.purchase_orders.findMany({
+  const orders = await prisma.purchase_orders.findMany({
     where: {
       company_id: companyId,
       supplier_id: supplierId,
@@ -120,13 +146,15 @@ export async function getOrdersForReceiving(supplierId: string) {
     select: { id: true, full_number: true, total: true, issue_date: true },
     orderBy: { created_at: 'desc' },
   });
+
+  return orders.map((o) => ({ ...o, total: Number(o.total) }));
 }
 
 export async function getOrdersForInvoicing(supplierId: string) {
   const { companyId } = await getActionContext();
   if (!companyId) return [];
 
-  return prisma.purchase_orders.findMany({
+  const orders = await prisma.purchase_orders.findMany({
     where: {
       company_id: companyId,
       supplier_id: supplierId,
@@ -136,6 +164,8 @@ export async function getOrdersForInvoicing(supplierId: string) {
     select: { id: true, full_number: true, total: true, issue_date: true, status: true, invoicing_status: true },
     orderBy: { created_at: 'desc' },
   });
+
+  return orders.map((o) => ({ ...o, total: Number(o.total) }));
 }
 
 export async function getPurchaseOrderLinesForInvoicing(orderId: string) {
@@ -157,6 +187,55 @@ export async function getPurchaseOrderLinesForInvoicing(orderId: string) {
       total: Number(l.total),
     }))
     .filter((l) => l.pending_qty > 0);
+}
+
+export async function getPurchaseOrderLinesForInvoicingBulk(orderIds: string[]) {
+  if (orderIds.length === 0) return [];
+
+  const lines = await prisma.purchase_order_lines.findMany({
+    where: { order_id: { in: orderIds } },
+    include: {
+      product: { select: { id: true, code: true, name: true } },
+      order: { select: { id: true, full_number: true } },
+    },
+  });
+
+  return lines
+    .map((l) => ({
+      ...l,
+      quantity: Number(l.quantity),
+      invoiced_qty: Number(l.invoiced_qty),
+      pending_qty: Number(l.quantity) - Number(l.invoiced_qty),
+      unit_cost: Number(l.unit_cost),
+      vat_rate: Number(l.vat_rate),
+      vat_amount: Number(l.vat_amount),
+      subtotal: Number(l.subtotal),
+      total: Number(l.total),
+      order_id: l.order_id,
+      order_full_number: l.order?.full_number ?? '',
+    }))
+    .filter((l) => l.pending_qty > 0);
+}
+
+/**
+ * Devuelve las facturas asociadas a una OC, uniendo:
+ *  - Las que tienen la FK legacy `purchase_order_id = orderId`
+ *  - Las multi-OC que tienen líneas con `purchase_order_line.order_id = orderId`
+ */
+export async function getInvoicesByOrderId(orderId: string) {
+  const invoices = await prisma.purchase_invoices.findMany({
+    where: {
+      OR: [
+        { purchase_order_id: orderId },
+        { lines: { some: { purchase_order_line: { order_id: orderId } } } },
+      ],
+    },
+    select: { id: true, full_number: true, status: true, total: true },
+    distinct: ['id'],
+    orderBy: { created_at: 'desc' },
+  });
+
+  return invoices.map((inv) => ({ ...inv, total: Number(inv.total) }));
 }
 
 // ============================================================

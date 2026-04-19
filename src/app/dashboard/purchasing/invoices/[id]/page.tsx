@@ -15,8 +15,13 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     where: { id },
     include: {
       supplier: { select: { business_name: true, tax_id: true } },
-      lines: { include: { product: { select: { code: true, name: true } } } },
-      purchase_order: { select: { full_number: true } },
+      lines: {
+        include: {
+          product: { select: { code: true, name: true } },
+          purchase_order_line: { select: { order: { select: { id: true, full_number: true } } } },
+        },
+      },
+      purchase_order: { select: { id: true, full_number: true } },
     },
   });
 
@@ -24,16 +29,29 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
   const statusVariant = invoice.status === 'CONFIRMED' ? 'default' : invoice.status === 'PAID' ? 'success' : invoice.status === 'CANCELLED' ? 'destructive' : 'secondary';
 
+  // Derivar OCs asociadas: FK legacy + derivadas por líneas (multi-OC)
+  const linkedOrdersMap = new Map<string, string>();
+  if (invoice.purchase_order) {
+    linkedOrdersMap.set(invoice.purchase_order.id, invoice.purchase_order.full_number);
+  }
+  for (const l of invoice.lines) {
+    const o = l.purchase_order_line?.order;
+    if (o) linkedOrdersMap.set(o.id, o.full_number);
+  }
+  const linkedOrders = Array.from(linkedOrdersMap.entries()).map(([id, full_number]) => ({ id, full_number }));
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold">{invoice.full_number}</h1>
           <p className="text-muted-foreground">{invoice.supplier?.business_name} — {invoice.supplier?.tax_id}</p>
-          <div className="flex gap-2 mt-2">
+          <div className="flex flex-wrap gap-2 mt-2">
             <Badge variant="outline">{VOUCHER_TYPE_LABELS[invoice.voucher_type] || invoice.voucher_type}</Badge>
             <Badge variant={statusVariant as any}>{INVOICE_STATUS_LABELS[invoice.status] || invoice.status}</Badge>
-            {invoice.purchase_order && <Badge variant="outline">OC: {invoice.purchase_order.full_number}</Badge>}
+            {linkedOrders.map((o) => (
+              <Badge key={o.id} variant="outline">OC: {o.full_number}</Badge>
+            ))}
           </div>
         </div>
         <BackButton />
@@ -77,6 +95,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               <TableRow>
                 <TableHead>Producto</TableHead>
                 <TableHead>Descripción</TableHead>
+                {linkedOrders.length > 1 && <TableHead>OC</TableHead>}
                 <TableHead className="text-right">Cantidad</TableHead>
                 <TableHead className="text-right">Costo unit.</TableHead>
                 <TableHead className="text-right">IVA</TableHead>
@@ -89,6 +108,15 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                 <TableRow key={line.id}>
                   <TableCell className="font-mono text-xs">{line.product?.code || '-'}</TableCell>
                   <TableCell>{line.description}</TableCell>
+                  {linkedOrders.length > 1 && (
+                    <TableCell>
+                      {line.purchase_order_line?.order ? (
+                        <Badge variant="outline">{line.purchase_order_line.order.full_number}</Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">-</span>
+                      )}
+                    </TableCell>
+                  )}
                   <TableCell className="text-right">{Number(line.quantity)}</TableCell>
                   <TableCell className="text-right">${Number(line.unit_cost).toFixed(2)}</TableCell>
                   <TableCell className="text-right">{Number(line.vat_rate)}%</TableCell>

@@ -78,6 +78,7 @@ export async function createPurchaseInvoice(data: {
   cae?: string;
   notes?: string;
   purchase_order_id?: string;
+  purchase_order_ids?: string[];
   lines: { product_id?: string; description: string; quantity: number; unit_cost: number; vat_rate: number; purchase_order_line_id?: string }[];
 }) {
   const { companyId } = await getActionContext();
@@ -106,6 +107,16 @@ export async function createPurchaseInvoice(data: {
     const vatAmount = lines.reduce((s, l) => s + l.vat_amount, 0);
     const total = lines.reduce((s, l) => s + l.total, 0);
 
+    // Derivar la OC primaria:
+    // - Si viene purchase_order_ids: usarlo (null si hay 0 o >1)
+    // - Si no, fallback al legacy purchase_order_id
+    let primaryOrderId: string | null = null;
+    if (Array.isArray(data.purchase_order_ids)) {
+      primaryOrderId = data.purchase_order_ids.length === 1 ? data.purchase_order_ids[0] : null;
+    } else if (data.purchase_order_id) {
+      primaryOrderId = data.purchase_order_id;
+    }
+
     const invoice = await prisma.purchase_invoices.create({
       data: {
         company_id: companyId,
@@ -118,7 +129,7 @@ export async function createPurchaseInvoice(data: {
         due_date: data.due_date ? new Date(data.due_date) : null,
         cae: data.cae || null,
         notes: data.notes || null,
-        purchase_order_id: data.purchase_order_id || null,
+        purchase_order_id: primaryOrderId,
         subtotal,
         vat_amount: vatAmount,
         total,
@@ -142,45 +153,92 @@ export async function createPurchaseInvoice(data: {
 
 export async function confirmPurchaseInvoice(id: string) {
   try {
-    await prisma.purchase_invoices.update({
-      where: { id, status: 'DRAFT' },
-      data: { status: 'CONFIRMED' },
-    });
-
-    // Update linked PO invoicing status if applicable
+    // Traer factura con líneas + relación a línea de OC (para conocer order_id)
     const invoice = await prisma.purchase_invoices.findUnique({
       where: { id },
-      include: { lines: true },
+      include: {
+        lines: {
+          include: {
+            purchase_order_line: { select: { id: true, order_id: true, quantity: true, invoiced_qty: true } },
+          },
+        },
+      },
     });
 
-    if (invoice?.purchase_order_id) {
-      const poLines = await prisma.purchase_order_lines.findMany({
-        where: { order_id: invoice.purchase_order_id },
-      });
+    if (!invoice) {
+      return { error: 'Factura no encontrada' };
+    }
+    if (invoice.status !== 'DRAFT') {
+      return { error: 'La factura no está en estado borrador' };
+    }
 
-      // Increment invoicedQty on linked PO lines
-      for (const invLine of invoice.lines) {
-        if (invLine.purchase_order_line_id) {
-          await prisma.purchase_order_lines.update({
-            where: { id: invLine.purchase_order_line_id },
-            data: { invoiced_qty: { increment: Number(invLine.quantity) } },
-          });
-        }
+    // Derivar todas las OCs afectadas a partir de las líneas
+    const affectedOrderIds = new Set<string>();
+    for (const l of invoice.lines) {
+      if (l.purchase_order_line?.order_id) {
+        affectedOrderIds.add(l.purchase_order_line.order_id);
+      }
+    }
+
+    // Transacción 1: marcar CONFIRMED + incrementar invoiced_qty con CLAMP defensivo
+    const ops: any[] = [
+      prisma.purchase_invoices.update({
+        where: { id, status: 'DRAFT' },
+        data: { status: 'CONFIRMED' },
+      }),
+    ];
+
+    for (const invLine of invoice.lines) {
+      const pol = invLine.purchase_order_line;
+      if (!pol) continue;
+
+      const ordered = Number(pol.quantity);
+      const alreadyInvoiced = Number(pol.invoiced_qty);
+      const pending = Math.max(0, ordered - alreadyInvoiced);
+      const wanted = Number(invLine.quantity);
+      const increment = Math.max(0, Math.min(wanted, pending));
+
+      if (increment < wanted) {
+        console.warn(
+          `[confirmPurchaseInvoice] Clamp applied on PO line ${pol.id}: wanted=${wanted}, pending=${pending}, increment=${increment}`
+        );
       }
 
-      // Update PO invoicing status
-      const updatedLines = await prisma.purchase_order_lines.findMany({
-        where: { order_id: invoice.purchase_order_id },
-      });
-      const allInvoiced = updatedLines.every((l) => Number(l.invoiced_qty) >= Number(l.quantity));
-      const someInvoiced = updatedLines.some((l) => Number(l.invoiced_qty) > 0);
+      if (increment > 0) {
+        ops.push(
+          prisma.purchase_order_lines.update({
+            where: { id: pol.id },
+            data: { invoiced_qty: { increment } },
+          })
+        );
+      }
+    }
 
-      await prisma.purchase_orders.update({
-        where: { id: invoice.purchase_order_id },
-        data: {
-          invoicing_status: allInvoiced ? 'FULLY_INVOICED' : someInvoiced ? 'PARTIALLY_INVOICED' : 'NOT_INVOICED',
-        },
+    await prisma.$transaction(ops);
+
+    // Recalcular invoicing_status de todas las OCs afectadas
+    // Primero leemos los valores actualizados (queries read-only en paralelo),
+    // luego construimos las updates como PrismaPromise[] para la transacción.
+    if (affectedOrderIds.size > 0) {
+      const orderIds = Array.from(affectedOrderIds);
+      const linesByOrder = await Promise.all(
+        orderIds.map((orderId) =>
+          prisma.purchase_order_lines.findMany({ where: { order_id: orderId } })
+        )
+      );
+
+      const statusOps = orderIds.map((orderId, idx) => {
+        const updatedLines = linesByOrder[idx];
+        const allInvoiced = updatedLines.every((l) => Number(l.invoiced_qty) >= Number(l.quantity));
+        const someInvoiced = updatedLines.some((l) => Number(l.invoiced_qty) > 0);
+        const newStatus = allInvoiced ? 'FULLY_INVOICED' : someInvoiced ? 'PARTIALLY_INVOICED' : 'NOT_INVOICED';
+        return prisma.purchase_orders.update({
+          where: { id: orderId },
+          data: { invoicing_status: newStatus },
+        });
       });
+
+      await prisma.$transaction(statusOps);
     }
 
     revalidatePath('/dashboard/purchasing');
