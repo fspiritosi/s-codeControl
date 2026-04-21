@@ -33,19 +33,21 @@ const ALL_LINKS = [
   { name: 'Ayuda', href: '/dashboard/help', icon: <HelpCircle size={sizeIcons} />, position: 12 },
 ];
 
-const GUEST_HIDDEN = new Set(['empresa', 'operaciones', 'mantenimiento', 'documentación']);
+const GUEST_HIDDEN = new Set(['empresa', 'operaciones', 'mantenimiento', 'documentacion']);
+
+const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
 function filterLinksByRole(role: string | null, modules: string[]) {
   if (role === 'owner') return ALL_LINKS;
 
   if (role === 'Invitado') {
-    return ALL_LINKS.filter((link) => !GUEST_HIDDEN.has(link.name.toLowerCase()));
+    return ALL_LINKS.filter((link) => !GUEST_HIDDEN.has(normalize(link.name)));
   }
 
   if (modules.length === 0) return ALL_LINKS;
 
-  const modulesLower = new Set(modules.map((m) => m.toLowerCase()));
-  return ALL_LINKS.filter((link) => modulesLower.has(link.name.toLowerCase()));
+  const modulesNorm = new Set(modules.map(normalize));
+  return ALL_LINKS.filter((link) => modulesNorm.has(normalize(link.name)));
 }
 
 async function SideBarContainer() {
