@@ -1,8 +1,8 @@
-import RepairsSkeleton from '@/components/Skeletons/RepairsSkeleton';
-import RepairTypes from '@/components/Tipos_de_reparaciones/RepairTypes';
-import Viewcomponent from '@/components/ViewComponent';
+import RepairsSkeleton from '@/shared/components/common/Skeletons/RepairsSkeleton';
+import RepairTypes from '@/modules/maintenance/features/repairs/components/RepairTypes';
+import Viewcomponent from '@/shared/components/common/ViewComponent';
 import { Suspense } from 'react';
-function MantenimientoPage() {
+async function MantenimientoPage() {
   const viewData = {
     defaultValue: 'type_of_repairs',
     tabsValues: [

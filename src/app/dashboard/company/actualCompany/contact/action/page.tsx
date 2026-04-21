@@ -1,11 +1,12 @@
-import { cn } from '@/lib/utils';
-import BackButton from '../../../../../../components/BackButton';
-import ContactComponent from '../../../../../../components/ContactComponent';
-export default async function CustomerFormAction({ searchParams, params }: { searchParams: any; params: any }) {
+import { cn } from '@/shared/lib/utils';
+import BackButton from '@/shared/components/common/BackButton';
+import ContactComponent from '@/modules/company/features/contacts/components/ContactComponent';
+export default async function CustomerFormAction({ searchParams }: { searchParams: Promise<any> }) {
+  const resolvedSearchParams = await searchParams;
   // const { data } = await supabase
   //   .from('customers')
   //   .select('*')
-  //   .eq('id', searchParams.id)
+  //   .eq('id', resolvedSearchParams.id)
   // revalidatePath('/dashboard/company/customer/action')
 
   return (
@@ -17,10 +18,10 @@ export default async function CustomerFormAction({ searchParams, params }: { sea
       <div
         className={cn(
           'col-span-6 flex flex-col justify-between overflow-hidden',
-          searchParams.action === 'new' && 'col-span-8'
+          resolvedSearchParams.action === 'new' && 'col-span-8'
         )}
       >
-        <ContactComponent id={searchParams.id} />
+        <ContactComponent id={resolvedSearchParams.id} />
       </div>
     </section>
   );

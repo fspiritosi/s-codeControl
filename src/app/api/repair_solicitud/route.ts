@@ -1,86 +1,117 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/shared/lib/prisma';
+import { apiSuccess, apiError } from '@/shared/lib/api-response';
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const supabase = supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
 
   try {
-    let { data, error } = await supabase
-      .from('repair_solicitudes')
-      .select(
-        '*,user_id(*),employee_id(*),equipment_id(*,type(*),brand(*),model(*)),reparation_type(*),repairlogs(*,modified_by_employee(*),modified_by_user(*))'
-      )
-      .eq('equipment_id.company_id', company_id || '')
-      .not('equipment_id', 'is', null);
+    const dataRaw = await prisma.repair_solicitudes.findMany({
+      where: {
+        equipment: {
+          company_id: company_id || '',
+        },
+      },
+      include: {
+        user: true,
+        employee: true,
+        equipment: {
+          include: {
+            type_rel: true,
+            brand_rel: true,
+            model_rel: true,
+          },
+        },
+        reparation_type_rel: true,
+        repairlogs: {
+          include: {
+            employee: true,
+            user: true,
+          },
+        },
+      },
+    });
 
-    const repair_solicitudes = data ?? [{}];
+    // Remap to match previous response shape
+    const repair_solicitudes = dataRaw.map((rs: any) => {
+      const { user, employee, equipment, reparation_type_rel, repairlogs, ...rest } = rs;
+      return {
+        ...rest,
+        user_id: user,
+        employee_id: employee,
+        equipment_id: equipment
+          ? {
+              ...equipment,
+              type: equipment.type_rel,
+              brand: equipment.brand_rel,
+              model: equipment.model_rel,
+            }
+          : null,
+        reparation_type: reparation_type_rel,
+        repairlogs: repairlogs.map((rl: any) => {
+          const { employee: rlEmployee, user: rlUser, ...rlRest } = rl;
+          return {
+            ...rlRest,
+            modified_by_employee: rlEmployee,
+            modified_by_user: rlUser,
+          };
+        }),
+      };
+    });
 
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
-    return Response.json({ repair_solicitudes });
+    return apiSuccess({ repair_solicitudes });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    return apiError('Failed to fetch repair solicitudes', 500);
   }
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = supabaseServer();
   const body = await request.json();
 
   try {
-    const { data: repair_solicitudes, error } = await supabase.from('repair_solicitudes').insert(body).select();
+    const repair_solicitudes = await prisma.repair_solicitudes.create({
+      data: body,
+    });
 
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
-    return Response.json({ repair_solicitudes: repair_solicitudes ?? {} });
+    return apiSuccess({ repair_solicitudes: repair_solicitudes ?? {} }, 201);
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    return apiError('Failed to create repair solicitud', 500);
   }
 }
 
 export async function PUT(request: NextRequest) {
-  const supabase = supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const id = searchParams.get('id');
   const body = await request.json();
 
   try {
-    const { data: repair_solicitudes, error } = await supabase
-      .from('repair_solicitudes')
-      .update(body)
-      .eq('id', id || '');
+    const repair_solicitudes = await prisma.repair_solicitudes.update({
+      where: { id: id || '' },
+      data: body,
+    });
 
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
-    return Response.json({ repair_solicitudes });
+    return apiSuccess({ repair_solicitudes });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    return apiError('Failed to update repair solicitud', 500);
   }
 }
 
 export async function DELETE(request: NextRequest) {
-  const supabase = supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const id = searchParams.get('id');
 
-  //console.log('keloke', id);
-
   try {
-    const { data: repair_solicitudes, error } = await supabase
-      .from('repair_solicitudes')
-      .delete()
-      .eq('id', id || '');
+    const repair_solicitudes = await prisma.repair_solicitudes.delete({
+      where: { id: id || '' },
+    });
 
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
-    return Response.json({ repair_solicitudes });
+    return apiSuccess({ repair_solicitudes });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    return apiError('Failed to delete repair solicitud', 500);
   }
 }

@@ -1,4 +1,4 @@
-import { TrainingEvaluation } from '@/components/Capacitaciones/training-evaluation';
+import { TrainingEvaluation } from '@/modules/hse/features/training/components/training-evaluation';
 
 const mockTraining = {
   id: '1',
@@ -11,7 +11,7 @@ const mockTraining = {
 
 const mockAnswers = [1, 1, 2, 1, 2]; // Respuestas del empleado
 
-export default function ReviewPage({ params }: { params: { id: string; employeeId: string } }) {
+export default function ReviewPage({ params }: { params: Promise<{ id: string; employeeId: string }> }) {
   return (
     <div className="min-h-screen">
       <TrainingEvaluation

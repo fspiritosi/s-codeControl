@@ -1,11 +1,11 @@
-import RenderBanner from '@/components/RenderBanner';
-import { CardDescription, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import RenderBanner from '@/shared/components/auth/RenderBanner';
+import { CardDescription, CardTitle } from '@/shared/components/ui/card';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
 import Image from 'next/image';
 import Link from 'next/link';
-import { RegisterButton } from './componentsRegister/RegisterButton';
-// import { RegisterForm } from '@/components/RegisterForm'
+import { RegisterButton } from '@/modules/landing/features/auth/components/RegisterButton';
+// import { RegisterForm } from '@/shared/components/auth/RegisterForm'
 
 export default function Register() {
   return (

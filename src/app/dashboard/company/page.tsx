@@ -1,13 +1,12 @@
 'use client';
-import ModalCompany from '@/components/ModalCompany';
-import { useCompanyData } from '@/hooks/useCompanyData';
-import { useLoggedUserStore } from '@/store/loggedUser';
-import { company } from '@/types/types';
+import ModalCompany from '@/modules/company/features/detail/components/ModalCompany';
+import { useCompanyData } from '@/shared/hooks/useCompanyData';
+import { useLoggedUserStore } from '@/shared/store/loggedUser';
+import { company } from '@/shared/types/types';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Modal from 'react-modal';
-import { supabase } from '../../../../supabase/supabase';
-import { CardsGrid } from '../../../components/CardsGrid';
+import { CardsGrid } from '@/shared/components/common/CardsGrid';
 
 function setupModalAppElement() {
   if (window.document) {
@@ -21,30 +20,9 @@ export default function allCompany() {
 
   useEffect(() => {
     setupModalAppElement();
-    supabase
-      .channel('custom-all-channel')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'company' }, (payload) => {
-        fetchCompanies();
-      })
-      .subscribe();
-
-    // return () => {
-    //   subscription.unsubscribe()
-    // }
-  }, []);
-
-  useEffect(() => {
-    const channels = supabase
-      .channel('custom-all-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'storage', table: 'objects' },
-
-        (payload) => {
-          fetchCompanies();
-        }
-      )
-      .subscribe();
+    fetchCompanies();
+    const interval = setInterval(fetchCompanies, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const [modalIsOpen, setModalIsOpen] = useState(false);

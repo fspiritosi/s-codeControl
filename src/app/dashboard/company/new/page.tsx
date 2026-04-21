@@ -1,44 +1,37 @@
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardDescription, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { supabaseServer } from '@/lib/supabase/server';
+import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/alert';
+import { Card, CardDescription, CardTitle } from '@/shared/components/ui/card';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import { Textarea } from '@/shared/components/ui/textarea';
+import { auth } from '@/auth';
+import { prisma } from '@/shared/lib/prisma';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/lib/utils';
 import { InfoCircledIcon } from '@radix-ui/react-icons';
-import { revalidatePath } from 'next/cache';
-import CityInput from './components/CityInput';
-import CreateCompanyButton from './components/CreateCompanyButton';
+import { redirect } from 'next/navigation';
+import CityInput from '@/modules/company/features/create/components/CityInput';
+import CreateCompanyButton from '@/modules/company/features/create/components/CreateCompanyButton';
 export default async function companyRegister() {
-  const supabase = supabaseServer();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const session = await auth();
+  if (!session?.user) redirect('/login');
 
-  const { data } = await supabase
-    .from('profile')
-    .select('*')
-    .eq('email', session?.user.email || '');
+  const profileId = session.user.profileId;
 
-  const { data: Companies, error } = await supabase
-    .from('company')
-    .select(`*`)
-    .eq('owner_id', data?.[0]?.id || '');
+  const Companies = profileId
+    ? await prisma.company.findMany({ where: { owner_id: profileId } })
+    : [];
 
-  let { data: share_company_users, error: sharedError } = await supabase
-    .from('share_company_users')
-    .select(`*`)
-    .eq('profile_id', data?.[0]?.id || '');
-  revalidatePath('/dashboard/company/new');
+  const share_company_users = profileId
+    ? await prisma.share_company_users.findMany({ where: { profile_id: profileId } })
+    : [];
 
   const showAlert = !Companies?.[0] && !share_company_users?.[0];
 
-  let { data: provinces, error: provincesError } = await supabase.from('provinces').select('*');
+  const provinces = await prisma.provinces.findMany();
 
-  let { data: industry_type, error: industryError } = await supabase.from('industry_type').select('*');
+  const industry_type = await prisma.industry_type.findMany();
 
   return (
     <section className={cn('md:mx-7')}>

@@ -1,26 +1,23 @@
-import { supabaseServer } from '@/lib/supabase/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/shared/lib/prisma';
+import { apiSuccess, apiError } from '@/shared/lib/api-response';
+import { NextRequest } from 'next/server';
 
 export async function POST(request: NextRequest) {
-  const supabase = supabaseServer();
   const { rowId, employees } = await request.json();
 
   try {
-    let { data: dailyreportemployeerelations, error } = await supabase
-      .from('dailyreportemployeerelations' as any)
-      .select(`*`)
-      .eq('daily_report_row_id', rowId)
-      .in('employee_id', employees);
-
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
+    const dailyreportemployeerelations = await prisma.dailyreportemployeerelations.findMany({
+      where: {
+        daily_report_row_id: rowId,
+        employee_id: { in: employees },
+      },
+    });
 
     const exists = dailyreportemployeerelations && dailyreportemployeerelations.length > 0;
 
-    return NextResponse.json({ exists });
+    return apiSuccess({ exists });
   } catch (error) {
     console.error('Error checking relation employee:', error);
-    return NextResponse.json({ error: 'Failed to check relation employee' }, { status: 500 });
+    return apiError('Failed to check relation employee', 500);
   }
 }

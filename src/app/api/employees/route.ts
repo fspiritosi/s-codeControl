@@ -1,23 +1,20 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/shared/lib/prisma';
+import { apiSuccess, apiError } from '@/shared/lib/api-response';
+import { serializeBigInt } from '@/shared/lib/utils';
 import { NextRequest } from 'next/server';
 export async function GET(request: NextRequest) {
-  const supabase = supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
-  const user_id = searchParams.get('user');
-  // console.log(user_id); //AQUI ME QUEDE
   if (!company_id) {
-    return Response.json({ error: 'company_id is required' });
+    return apiError('company_id is required', 400);
   }
   try {
-    let { data: employees, error } = await supabase.from('employees').select('*').eq('company_id', company_id);
-    //console.log(employees)
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
-    return Response.json({ employees });
+    const employees = await prisma.employees.findMany({
+      where: { company_id },
+    });
+    return apiSuccess({ employees: serializeBigInt(employees) });
   } catch (error) {
-    console.log(error);
-    return Response.json({ error });
+    console.error(error);
+    return apiError('Failed to fetch employees', 500);
   }
 }

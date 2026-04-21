@@ -1,8 +1,8 @@
-import DashboardComponent from '@/components/Dashboard/DashboardComponent';
-import DashboardSkeleton from '@/components/Skeletons/DashboardSkeleton';
+import DashboardComponent from '@/modules/dashboard/features/overview/components/DashboardComponent';
+import DashboardSkeleton from '@/shared/components/common/Skeletons/DashboardSkeleton';
 import { Suspense } from 'react';
-import WelcomeComponent from './welcome-component';
-import { getRole } from '@/lib/utils/getRole';
+import WelcomeComponent from '@/modules/dashboard/features/overview/components/welcome-component';
+import { getRole } from '@/shared/lib/utils/getRole';
 
 export default async function Home() {
   const role = await getRole();

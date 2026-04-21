@@ -1,15 +1,13 @@
-import {
-  fetchAllEquipment,
-  fetchAnswerById,
-  fetchSingEmployee,
-  findEmployeeByFullName,
-} from '@/app/server/GET/actions';
-import DynamicFormWrapper from '@/components/CheckList/DynamicFormWrapper';
+import { fetchSingEmployee } from '@/modules/employees/features/detail/actions.server';
+import { findEmployeeByFullName } from '@/modules/employees/features/list/actions.server';
+import { fetchAllEquipment } from '@/modules/equipment/features/list/actions.server';
+import { fetchAnswerById } from '@/modules/forms/features/answers/actions.server';
+import DynamicFormWrapper from '@/modules/hse/features/checklist/components/DynamicFormWrapper';
 
-async function page({ params }: { params: { id: string } }) {
-  // console.log('params', params);
-  const answer = await fetchAnswerById(params.id);
-  const equipments = (await fetchAllEquipment()).map((equipment) => ({
+async function page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const answer = await fetchAnswerById(id);
+  const equipments = (await fetchAllEquipment()).map((equipment: any) => ({
     label: equipment.domain
       ? `${equipment.domain} - ${equipment.intern_number}`
       : `${equipment.serie} - ${equipment.intern_number}`,
@@ -27,7 +25,7 @@ async function page({ params }: { params: { id: string } }) {
   if (choferName) {
     const data = await findEmployeeByFullName(choferName);
     if (data?.id) {
-      const singEmployee = await fetchSingEmployee(data?.id);
+      const singEmployee = await fetchSingEmployee(data?.id as string);
       singurl = singEmployee  || ''
     }
   }
@@ -36,10 +34,10 @@ async function page({ params }: { params: { id: string } }) {
   return (
     <div className="px-7">
       <DynamicFormWrapper
-        formType={answer[0].form_id.name as any} // or "dynamic"
+        formType={(answer[0] as any).form?.name} // or "dynamic"
         equipments={equipments}
-        form_Info={[answer[0]?.form_id]}
-        defaultAnswer={answer}
+        form_Info={[(answer[0] as any)?.form]}
+        defaultAnswer={answer as any}
         singurl={singurl}
       />
     </div>

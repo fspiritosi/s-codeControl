@@ -1,20 +1,24 @@
-import { fetchAllEquipment, fetchCustomForms } from '@/app/server/GET/actions';
-import QrActionSelector from '@/components/QR/AcctionSelector';
-import { supabaseServer } from '@/lib/supabase/server';
-import { setVehiclesToShow } from '@/lib/utils/utils';
-import { TypeOfRepair } from '@/types/types';
+import { fetchAllEquipment } from '@/modules/equipment/features/list/actions.server';
+import { fetchCustomForms } from '@/modules/forms/features/custom-forms/actions.server';
+import QrActionSelector from '@/modules/equipment/features/qr/components/AcctionSelector';
+import { prisma } from '@/shared/lib/prisma';
+// TODO: Phase 8 — migrate auth to NextAuth
+import { supabaseServer } from '@/shared/lib/supabase/server';
+import { setVehiclesToShow } from '@/shared/lib/utils/utils';
+import { TypeOfRepair } from '@/shared/types/types';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export default async function Home({
   params,
 }: {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }) {
-  const cookiesStore = cookies();
-  const supabase = supabaseServer();
+  const { id } = await params;
+  const cookiesStore = await cookies();
+  const supabase = await supabaseServer();
   const employee = cookiesStore.get('empleado_id')?.value;
   const empleado_name = cookiesStore.get('empleado_name')?.value;
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -28,7 +32,7 @@ export default async function Home({
   }
 
   let role: any;
-  const { equipments } = await fetch(`${URL}/api/equipment/${params.id}`).then((e) => e.json());
+  const { equipments } = await fetch(`${URL}/api/equipment/${id}`).then((e) => e.json());
 
   if (user?.id) {
     const { shared_user } = await fetch(
@@ -41,19 +45,36 @@ export default async function Home({
     res.json()
   );
 
-  const { data, error } = await supabase
-    .from('repair_solicitudes')
-    .select(
-      '*,user_id(*),employee_id(*),equipment_id(*,type(*),brand(*),model(*)),reparation_type(*),repairlogs(*,modified_by_employee(*),modified_by_user(*))'
-    )
-    .eq('equipment_id', params.id)
-    .in('state', ['Pendiente', 'Esperando repuestos', 'En reparación']);
+  const data = await prisma.repair_solicitudes.findMany({
+    where: {
+      equipment_id: id,
+      state: { in: ['Pendiente', 'Esperando_repuestos', 'En_reparacion'] },
+    },
+    include: {
+      user: true,
+      employee: true,
+      equipment: {
+        include: {
+          type_rel: true,
+          brand_rel: true,
+          model_rel: true,
+        },
+      },
+      reparation_type_rel: true,
+      repairlogs: {
+        include: {
+          employee: true,
+          user: true,
+        },
+      },
+    },
+  });
 
   const vehiclesFormatted = setVehiclesToShow(equipments || []) || [];
 
-  const checklists = await fetchCustomForms(equipments[0].company_id);
+  const checklists = (await fetchCustomForms(equipments[0].company_id)) as unknown as CheckListWithAnswer[];
 
-  const equipmentsForComboBox = (await fetchAllEquipment(equipments[0].company_id)).map((equipment) => ({
+  const equipmentsForComboBox = (await fetchAllEquipment(equipments[0].company_id)).map((equipment: any) => ({
     label: equipment.domain
       ? `${equipment.domain} - ${equipment.intern_number}`
       : `${equipment.serie} - ${equipment.intern_number}`,
@@ -66,7 +87,7 @@ export default async function Home({
     intern_number: equipment.intern_number,
     vehicle_type: equipment.type.name,
   }));
-  const currentEquipment = equipmentsForComboBox.find((equipment) => equipment.value === params.id);
+  const currentEquipment = equipmentsForComboBox.find((equipment: any) => equipment.value === id);
 
   return (
     <QrActionSelector
@@ -74,7 +95,7 @@ export default async function Home({
       employee_id={employee}
       equipment={vehiclesFormatted}
       tipo_de_mantenimiento={types_of_repairs as TypeOfRepair}
-      default_equipment_id={params.id}
+      default_equipment_id={id}
       role={role}
       pendingRequests={data as any}
       checkList={

@@ -1,34 +1,45 @@
-import { Select } from '@/components/ui/select';
-// import { description } from '@/components/Graficos/RepairsChart';
-import { supabaseServer } from '@/lib/supabase/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/shared/lib/prisma';
+import { apiSuccess, apiError } from '@/shared/lib/api-response';
+import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const supabase = supabaseServer();
   const searchParams = request.nextUrl.searchParams;
-  const company_id = searchParams.get('actual'); // ID de la compañía
+  const company_id = searchParams.get('actual');
   try {
-    // Obtener todas las filas del parte diario filtradas por company_id
-    let { data: dailyreportrows, error } = await supabase.from('dailyreportrows' as any)
-    .select(`*,daily_report_id(date,company_id),customer_id(name), service_id(service_name), item_id(item_name)`)
-    // .eq('daily_report_id.company_id', company_id);
-    .eq('daily_report_id.company_id', company_id)
-    .not('daily_report_id', 'is', null);
-    
-    
-    // .or(`employees.company_id.eq.${company_id},vehicles.company_id.eq.${company_id}`);
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
-    return new Response(JSON.stringify({ dailyreportrows }), { status: 200 });
+    const dailyreportrowsRaw = await prisma.dailyreportrows.findMany({
+      where: {
+        daily_report: {
+          is: { company_id: company_id as string },
+        },
+      },
+      include: {
+        daily_report: { select: { date: true, company_id: true } },
+        customer: { select: { name: true } },
+        service: { select: { service_name: true } },
+        item: { select: { item_name: true } },
+      },
+    });
+
+    // Remap to match previous Supabase response shape
+    const dailyreportrows = dailyreportrowsRaw.map((row: any) => {
+      const { daily_report, customer, service, item, ...rest } = row;
+      return {
+        ...rest,
+        daily_report_id: daily_report,
+        customer_id: customer,
+        service_id: service,
+        item_id: item,
+      };
+    });
+
+    return apiSuccess({ dailyreportrows });
   } catch (error) {
     console.error('Error fetching daily report rows:', error);
-    return new Response(JSON.stringify({ error: (error as any).message }), { status: 500 });
+    return apiError((error as any).message, 500);
   }
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = supabaseServer();
   try {
     const { daily_report_id, customer_id, service_id, item_id, working_day, start_time, end_time, description } =
       await request.json();
@@ -50,33 +61,23 @@ export async function POST(request: NextRequest) {
       insertData.end_time = end_time;
     }
 
-    let { data, error } = await supabase
-      .from('dailyreportrows' as any)
-      .insert([insertData])
-      .select();
+    const data = await prisma.dailyreportrows.create({
+      data: insertData,
+    });
 
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
-    return new Response(JSON.stringify({ data }), { status: 201 });
+    return apiSuccess({ data: [data] }, 201);
   } catch (error) {
     console.error('Error inserting daily report row:', error);
-    return new Response(JSON.stringify({ error: (error as any).message }), { status: 500 });
+    return apiError((error as any).message, 500);
   }
 }
 
-
 export async function PUT(request: NextRequest) {
-  const supabase = supabaseServer();
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
   const updateData = await request.json();
-  // console.log('Update data:', updateData);
-  // console.log('ID:', id);
   if (!id) {
-    return new NextResponse(JSON.stringify({ error: 'ID is required for updating the daily report row.' }), {
-      status: 400,
-    });
+    return apiError('ID is required for updating the daily report row.', 400);
   }
 
   try {
@@ -91,46 +92,28 @@ export async function PUT(request: NextRequest) {
       updateFields.end_time = null;
     }
 
-    const { data, error } = await supabase
-      .from('dailyreportrows' as any)
-      .update(updateFields)
-      .eq('id', id);
+    const data = await prisma.dailyreportrows.update({
+      where: { id },
+      data: updateFields,
+    });
 
-    if (error) {
-      console.error('Error from Supabase:', error);
-      return new NextResponse(
-        JSON.stringify({
-          error: error.message || 'Error desconocido',
-          details: error.details || null,
-          hint: error.hint || null,
-        }),
-        { status: 500 }
-      );
-    }
-
-    return new NextResponse(JSON.stringify({ data }), { status: 200 });
+    return apiSuccess({ data });
   } catch (error) {
     console.error('Error inesperado al actualizar la fila de reporte diario:', error);
-    return new NextResponse(JSON.stringify({ error: (error as any).message || 'Unexpected error occurred.' }), {
-      status: 500,
-    });
+    return apiError((error as any).message || 'Unexpected error occurred.', 500);
   }
 }
 
 export async function DELETE(request: NextRequest) {
-  const supabase = supabaseServer();
   const { id } = await request.json();
   try {
-    let { data, error } = await supabase
-      .from('dailyreportrows' as any)
-      .delete()
-      .eq('id', id);
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
-    return new Response(JSON.stringify({ data }), { status: 200 });
+    const data = await prisma.dailyreportrows.delete({
+      where: { id },
+    });
+
+    return apiSuccess({ data });
   } catch (error) {
     console.error('Error deleting daily report row:', error);
-    return new Response(JSON.stringify({ error: (error as any).message }), { status: 500 });
+    return apiError((error as any).message, 500);
   }
 }

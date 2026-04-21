@@ -1,27 +1,25 @@
-import { supabaseServer } from '@/lib/supabase/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/shared/lib/prisma';
+import { apiSuccess, apiError } from '@/shared/lib/api-response';
+import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const supabase = supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const userId = searchParams.get('user');
 
   try {
     // Verificar si el userId está presente en los parámetros de búsqueda
     if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+      return apiError('User ID is required', 400);
     }
 
     // Obtener el perfil del usuario
-    const { data: ownerUser, error: profileError } = await supabase.from('profile').select('*').eq('id', userId);
+    const ownerUser = await prisma.profile.findMany({
+      where: { id: userId },
+    });
 
-    if (profileError) {
-      throw new Error(JSON.stringify(profileError));
-    }
-
-    return NextResponse.json({ data: ownerUser });
+    return apiSuccess({ data: ownerUser });
   } catch (error) {
     console.error('Error fetching user profile:', error);
-    return NextResponse.json({ error: (error as any).message }, { status: 500 });
+    return apiError((error as any).message, 500);
   }
 }

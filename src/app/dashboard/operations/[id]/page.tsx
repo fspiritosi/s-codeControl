@@ -1,6 +1,6 @@
 'use client';
 
-import { TrainingEvaluation } from '@/components/Capacitaciones/training-evaluation';
+import { TrainingEvaluation } from '@/modules/hse/features/training/components/training-evaluation';
 
 const mockTraining = {
   id: '1',
@@ -11,7 +11,7 @@ const mockTraining = {
   },
 };
 
-export default function EvaluationPage({ params }: { params: { id: string } }) {
+export default function EvaluationPage({ params }: { params: Promise<{ id: string }> }) {
   return (
     <div className="min-h-screen">
       <TrainingEvaluation training={mockTraining} mode="take" />

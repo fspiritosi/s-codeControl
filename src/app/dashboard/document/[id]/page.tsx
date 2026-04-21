@@ -1,29 +1,31 @@
-import BackButton from '@/components/BackButton';
-import DeleteDocument from '@/components/DeleteDocument';
-import ReplaceDocument from '@/components/ReplaceDocument';
-import UpdateDocuments from '@/components/UpdateDocuments';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabaseServer } from '@/lib/supabase/server';
-import { cn } from '@/lib/utils';
+import BackButton from '@/shared/components/common/BackButton';
+import DeleteDocument from '@/modules/documents/features/manage/components/DeleteDocument';
+import ReplaceDocument from '@/modules/documents/features/manage/components/ReplaceDocument';
+import UpdateDocuments from '@/modules/documents/features/manage/components/UpdateDocuments';
+import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
+import { Badge } from '@/shared/components/ui/badge';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Skeleton } from '@/shared/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { storageServer } from '@/shared/lib/storage-server';
+import { cn } from '@/shared/lib/utils';
 import { formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
-import moment from 'moment';
+import { format as formatDateFn } from 'date-fns';
 import { Suspense } from 'react';
-import DownloadButton from '../documentComponents/DownloadButton';
-import { getRole } from '@/lib/utils/getRole';
-import { getDocumentEmployeesById, getDocumentEquipmentById } from '@/app/server/GET/actions';
+import DownloadButton from '@/modules/documents/features/list/components/DownloadButton';
+import { getRole } from '@/shared/lib/utils/getRole';
+import { getDocumentEmployeesById, getDocumentEquipmentById } from '@/modules/documents/features/list/actions.server';
 export default async function page({
   params,
   searchParams,
 }: {
-  params: { id: string };
-  searchParams: { resource: string };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ resource: string }>;
 }) {
+  const { id } = await params;
+  const resolvedSearchParams = await searchParams;
   let documents_employees: any[] | null = [];
   let resource = '';
   let documentName = '';
@@ -31,19 +33,17 @@ export default async function page({
   let document: any[] | null = [];
   let documentType: string | null = null;
   let resourceType: string | null = null;
-  const supabase = supabaseServer();
-
   const role = await getRole();
-  
-  if(searchParams.resource === 'Persona'){
-    const documents_employee = await getDocumentEmployeesById(params.id);
+
+  if(resolvedSearchParams.resource === 'Persona'){
+    const documents_employee = await getDocumentEmployeesById(id);
     document = documents_employee;
     resourceType = 'documentos-empleados';
     resource = 'employee';
   }
 
-  if(searchParams.resource === 'Equipos'){
-    const documents_equipment = await getDocumentEquipmentById(params.id);
+  if(resolvedSearchParams.resource === 'Equipos'){
+    const documents_equipment = await getDocumentEquipmentById(id);
     document = documents_equipment;
     resourceType = 'documentos-equipos';
     resource = 'vehicle';
@@ -57,10 +57,10 @@ export default async function page({
   //   search: `document-${documentType ?? ''}-${resorceId ?? ''}`,
   // });
 
-  const { data: url } = supabase.storage.from('document_files').getPublicUrl(document?.[0]?.document_path);
+  const publicUrl = await storageServer.getPublicUrl('document_files', document?.[0]?.document_path);
 
   documentName = document?.[0]?.document_path;
-  documentUrl = url.publicUrl;
+  documentUrl = publicUrl;
   documents_employees = document;
   
   // Detectar extensión del archivo desde document_path en lugar de documentUrl
@@ -499,7 +499,7 @@ export default async function page({
                           <TableCell>
                             <CardDescription>
                               {documents_employees?.[0]?.document_types?.explired
-                                ? 'Vence el ' + moment(documents_employees?.[0]?.validity).format('DD/MM/YYYY')
+                                ? 'Vence el ' + formatDateFn(new Date(documents_employees?.[0]?.validity), 'dd/MM/yyyy')
                                 : 'No tiene vencimiento'}
                             </CardDescription>
                           </TableCell>
@@ -551,14 +551,14 @@ export default async function page({
                     </CardDescription>
                     <div className="w-full flex justify-evenly flex-wrap">
                       <UpdateDocuments
-                        id={params.id}
+                        id={id}
                         resource={resource}
                         documentName={documentName}
                         expires={documents_employees?.[0]?.document_types?.explired}
                         montly={documents_employees?.[0]?.document_types?.is_it_montlhy}
                       />
                       <ReplaceDocument
-                        id={params.id}
+                        id={id}
                         resource={resource}
                         documentName={documentName}
                         expires={documents_employees?.[0]?.validity}
@@ -566,7 +566,7 @@ export default async function page({
                         appliesId={document?.[0]?.id}
                       />
                       <DeleteDocument
-                        id={params.id}
+                        id={id}
                         resource={resource}
                         documentName={documentName}
                         expires={documents_employees?.[0]?.document_types?.explired}

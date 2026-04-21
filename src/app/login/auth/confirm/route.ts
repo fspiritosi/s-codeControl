@@ -1,4 +1,13 @@
-import { supabaseServer } from '@/lib/supabase/server';
+/**
+ * Legacy Supabase OTP verification route.
+ *
+ * This handles email confirmation and magic link verification via Supabase.
+ * Kept for backward compatibility with existing password reset flows.
+ *
+ * TODO: Phase 8+ — Replace with custom token-based verification once
+ * password recovery is fully migrated away from Supabase.
+ */
+import { supabaseServer } from '@/shared/lib/supabase/server';
 import { type EmailOtpType } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 
@@ -14,7 +23,7 @@ export async function GET(request: NextRequest) {
   redirectTo.searchParams.delete('type');
 
   if (token_hash && type) {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
 
     const { error } = await supabase.auth.verifyOtp({
       type,

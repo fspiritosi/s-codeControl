@@ -1,64 +1,72 @@
-import DocumentEquipmentComponent from '@/components/DocumentEquipmentComponent';
-import RepairTypes from '@/components/Tipos_de_reparaciones/RepairTypes';
-import { Card, CardFooter } from '@/components/ui/card';
-import { TabsContent } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
-import { revalidatePath } from 'next/cache';
+import DocumentEquipmentComponent from '@/modules/documents/features/manage/components/DocumentEquipmentComponent';
+import RepairTypes from '@/modules/maintenance/features/repairs/components/RepairTypes';
+import { Card, CardFooter } from '@/shared/components/ui/card';
+import { TabsContent } from '@/shared/components/ui/tabs';
+import { cn } from '@/shared/lib/utils';
 import { cookies } from 'next/headers';
-// import { supabase } from '../../../../../supabase/supabase';
-import { supabaseServer } from '@/lib/supabase/server';
-import { getRole } from '@/lib/utils/getRole';
-import VehiclesForm, { generic } from '../../../../components/VehiclesForm';
+import { prisma } from '@/shared/lib/prisma';
+import { getRole } from '@/shared/lib/utils/getRole';
+import VehiclesForm, { generic } from '@/modules/equipment/features/create/components/VehiclesForm';
 
-export default async function EquipmentFormAction({ searchParams }: { searchParams: any }) {
-  const supabase = supabaseServer();
-  // const { data } = await supabase
-  //   .from('documents_equipment')
-  //   .select('*,id_document_types(*)')
-  //   .eq('applies', searchParams.id);
+export default async function EquipmentFormAction({ searchParams: searchParamsPromise }: { searchParams: Promise<any> }) {
+  const searchParams = await searchParamsPromise;
 
-  revalidatePath('/dashboard/equipment/action');
-
-  const cookiesStore = cookies();
+  const cookiesStore = await cookies();
   const company_id = cookiesStore.get('actualComp');
 
   let vehicle;
 
-  //console.log(searchParams.id, 'searchParams.id');
-
   if (searchParams.id) {
-    //const newVehicle = await fetchEquipmentById(searchParams.id);
-    const { data: vehicleData, error } = await supabase
-      .from('vehicles')
-      .select('*, brand_vehicles(name), model_vehicles(name),types_of_vehicles(name),type(name)')
-      .eq('id', searchParams.id);
-    // .eq('company_id', actualCompany?.value);
+    try {
+      const vehicleData = await prisma.vehicles.findMany({
+        where: { id: searchParams.id },
+        include: {
+          brand_rel: { select: { name: true } },
+          model_rel: { select: { name: true } },
+          type_of_vehicle_rel: { select: { name: true } },
+          type_rel: { select: { name: true } },
+        },
+      });
 
-    if (error) console.log('eroor', error);
-
-    vehicle = vehicleData?.map((item: any) => ({
-      ...item,
-      type_of_vehicle: item.types_of_vehicles.name,
-      brand: item.brand_vehicles.name,
-      model: item.model_vehicles.name,
-      type: item.type.name,
-    }));
-    console.log('vehicle-old-fetch', vehicle);
-    //console.log('vehicle-new-fetch', newVehicle);
+      vehicle = vehicleData?.map((item: any) => ({
+        ...item,
+        type_of_vehicle: item.type_of_vehicle_rel?.name,
+        brand: item.brand_rel?.name,
+        model: item.model_rel?.name,
+        type: item.type_rel?.name,
+      }));
+    } catch (error) {
+      console.error(error);
+    }
   }
 
-  let { data: types, error } = await supabase
-    .from('type')
-    .select('*')
-    .or(`company_id.eq.${company_id?.value},company_id.is.null`);
+  let types: any[] = [];
+  let brand_vehicles: any[] = [];
+  try {
+    types = await prisma.type.findMany({
+      where: {
+        OR: [
+          { company_id: company_id?.value },
+          { company_id: null },
+        ],
+      },
+    });
 
-  let { data: brand_vehicles, error: errorError } = await supabase
-    .from('brand_vehicles')
-    .select('*')
-    .or(`company_id.eq.${company_id?.value},company_id.is.null`);
+    const brandData = await prisma.brand_vehicles.findMany({
+      where: {
+        OR: [
+          { company_id: company_id?.value },
+          { company_id: null },
+        ],
+      },
+    });
+    // Convert BigInt id to string for JSON serialization
+    brand_vehicles = brandData.map((b) => ({ ...b, id: String(b.id) }));
+  } catch (error) {
+    console.error(error);
+  }
 
   const role = await getRole();
-  console.log('role action equipment', role);
   return (
     <section className="grid grid-cols-1 xl:grid-cols-8 gap-3 md:mx-7 py-4">
       <Card

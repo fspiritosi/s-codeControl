@@ -1,14 +1,14 @@
-import { supabase } from '../../../../supabase/supabase';
-import CardTable from '../components/tableCard';
+import { prisma } from '@/shared/lib/prisma';
+import CardTable from '@/modules/admin/features/tables/components/TableCard';
 
 export default async function TablasPage() {
-  let { data: diagrams, error } = await supabase.from('work-diagram').select('*');
+  const diagrams = await prisma.work_diagram.findMany();
 
-  let { data: industry_type } = await supabase.from('industry_type').select('*');
+  const industry_type = await prisma.industry_type.findMany();
 
-  let { data: hierarchy } = await supabase.from('hierarchy').select('*');
+  const hierarchy = await prisma.hierarchy.findMany();
 
-  let { data: types_of_vehicles } = await supabase.from('types_of_vehicles').select('*');
+  const types_of_vehicles = await prisma.types_of_vehicles.findMany();
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">

@@ -1,30 +1,34 @@
-import { supabaseServer } from '@/lib/supabase/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/shared/lib/prisma';
+import { apiSuccess, apiError } from '@/shared/lib/api-response';
+import { NextRequest } from 'next/server';
 
-export async function GET(request: NextRequest, context: any) {
-  const supabase = supabaseServer();
-  const { params } = context;
-  //   const searchParams = request.nextUrl.searchParams;
-  //   const company_id = searchParams.get('actual');
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   try {
-    let { data: equipments, error } = await supabase
-      .from('vehicles')
-      .select(
-        `*,
-          types_of_vehicles(name),
-          brand_vehicles(name),
-          model_vehicles(name)`
-      )
-      .eq('id', params.id);
+    const vehiclesRaw = await prisma.vehicles.findMany({
+      where: { id },
+      include: {
+        type_of_vehicle_rel: { select: { name: true } },
+        brand_rel: { select: { name: true } },
+        model_rel: { select: { name: true } },
+      },
+    });
 
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
+    // Remap to match previous response shape
+    const equipments = vehiclesRaw.map((v: any) => {
+      const { type_of_vehicle_rel, brand_rel, model_rel, ...rest } = v;
+      return {
+        ...rest,
+        types_of_vehicles: type_of_vehicle_rel,
+        brand_vehicles: brand_rel,
+        model_vehicles: model_rel,
+      };
+    });
 
-    return NextResponse.json({ equipments });
+    return apiSuccess({ equipments });
   } catch (error) {
     console.error('Error fetching equipments:', error);
-    return NextResponse.json({ error: ['An error occurred while fetching equipments'] });
+    return apiError('An error occurred while fetching equipments', 500);
   }
 }

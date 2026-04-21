@@ -1,9 +1,9 @@
 'use server';
 
 import nodemailer from 'nodemailer';
-import { renderDocumentEmailTemplate, renderHelpEmailTemplate } from '@/lib/emailTemplates';
-import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase/server';
+import { renderDocumentEmailTemplate, renderHelpEmailTemplate } from '@/shared/lib/emailTemplates';
+import { apiSuccess, apiError } from '@/shared/lib/api-response';
+import { prisma } from '@/shared/lib/prisma';
 
 // Validar variables de entorno requeridas
 const requiredEnvVars = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS'];
@@ -42,12 +42,10 @@ type EmailRequest = {
 };
 
 export async function POST(request: Request) {
-  const supabase = supabaseServer();
-  
   // Declarar variables que necesitamos en todo el ámbito
   let toEmail = 'diegodac77@gmail.com';
   let emailSubject = 'Mensaje de CodeControl';
-  
+
   try {
     const requestData: EmailRequest = await request.json();
     const { to, subject, userEmail, react, reason, body, html, text } = requestData;
@@ -59,17 +57,17 @@ export async function POST(request: Request) {
     // Si se usa el sistema de templates
     if (react && body) {
       let emailHtml: string;
-      
+
       if (react === 'help') {
         // Plantilla de ayuda - usamos 'reason' si está disponible, si no, usamos un string vacío
-        emailHtml = renderHelpEmailTemplate({ 
-          userEmail, 
+        emailHtml = renderHelpEmailTemplate({
+          userEmail,
           reason: requestData.reason || '',
-          body: body as any 
+          body: body as any
         });
       } else {
         // Plantilla de documento - pasamos el body completo
-        
+
         emailHtml = renderDocumentEmailTemplate(userEmail, body as any);
       }
 
@@ -86,30 +84,29 @@ export async function POST(request: Request) {
       };
 
       const info = await transporter.sendMail(mailOptions);
-      
+
       // Guardar en la base de datos
-      const { error: dbError } = await supabase
-        .from('sent_emails'as any)
-        .insert({
-          subject: subject || 'Mensaje de CodeControl',
-          recipient: toEmail,
-          status: info.accepted?.length ? 'sent' : 'failed',
-          template_name: react || null,
-          content: emailHtml,
-          error_message: info.rejected?.length ? 'Algunos destinatarios fueron rechazados' : null,
-          metadata: {
-            message_id: info.messageId || '',
-            accepted: info.accepted || [],
-            rejected: info.rejected || []
+      try {
+        await prisma.sent_emails.create({
+          data: {
+            subject: subject || 'Mensaje de CodeControl',
+            recipient: toEmail,
+            status: info.accepted?.length ? 'sent' : 'failed',
+            template_name: react || null,
+            content: emailHtml,
+            error_message: info.rejected?.length ? 'Algunos destinatarios fueron rechazados' : null,
+            metadata: {
+              message_id: info.messageId || '',
+              accepted: info.accepted || [],
+              rejected: info.rejected || []
+            }
           }
         });
-
-      if (dbError) {
+      } catch (dbError) {
         console.error('Error al guardar el registro de envío:', dbError);
       }
 
-      return NextResponse.json({ 
-        success: true,
+      return apiSuccess({
         messageId: info.messageId || '',
         accepted: info.accepted || [],
         rejected: info.rejected || []
@@ -127,67 +124,61 @@ export async function POST(request: Request) {
       };
 
       const info = await transporter.sendMail(mailOptions);
-      
+
       // Guardar en la base de datos
-      const { error: dbError } = await supabase
-        .from('sent_emails'as any)
-        .insert({
-          subject: subject || 'Mensaje de CodeControl',
-          recipient: toEmail,
-          status: info.accepted?.length ? 'sent' : 'failed',
-          template_name: null,
-          content: html || text || null,
-          error_message: info.rejected?.length ? 'Algunos destinatarios fueron rechazados' : null,
-          metadata: {
-            message_id: info.messageId || '',
-            accepted: info.accepted || [],
-            rejected: info.rejected || []
+      try {
+        await prisma.sent_emails.create({
+          data: {
+            subject: subject || 'Mensaje de CodeControl',
+            recipient: toEmail,
+            status: info.accepted?.length ? 'sent' : 'failed',
+            template_name: null,
+            content: html || text || null,
+            error_message: info.rejected?.length ? 'Algunos destinatarios fueron rechazados' : null,
+            metadata: {
+              message_id: info.messageId || '',
+              accepted: info.accepted || [],
+              rejected: info.rejected || []
+            }
           }
         });
-
-      if (dbError) {
+      } catch (dbError) {
         console.error('Error al guardar el registro de envío:', dbError);
       }
 
-      return NextResponse.json({ 
-        success: true,
+      return apiSuccess({
         messageId: info.messageId || '',
         accepted: info.accepted || [],
         rejected: info.rejected || []
       });
     }
 
-    return NextResponse.json(
-      { error: 'Se requiere un template o contenido HTML/Texto' },
-      { status: 400 }
-    );
+    return apiError('Se requiere un template o contenido HTML/Texto', 400);
   } catch (error: unknown) {
     console.error('Error al enviar el correo:', error);
     const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-    
+
     // Registrar el error en la base de datos
     if (toEmail) {
-      await supabase
-        .from('sent_emails'as any)
-        .insert({
-          subject: emailSubject,
-          recipient: toEmail,
-          status: 'failed',
-          template_name: null,
-          content: null,
-          error_message: errorMessage,
-          metadata: {
-            error: error instanceof Error ? error.stack : null
+      try {
+        await prisma.sent_emails.create({
+          data: {
+            subject: emailSubject,
+            recipient: toEmail,
+            status: 'failed',
+            template_name: null,
+            content: null,
+            error_message: errorMessage,
+            metadata: {
+              error: error instanceof Error ? error.stack : null
+            }
           }
         });
+      } catch (dbError) {
+        console.error('Error al guardar el registro de error:', dbError);
+      }
     }
 
-    return NextResponse.json(
-      { 
-        error: 'Error al enviar el correo',
-        message: errorMessage,
-      },
-      { status: 500 }
-    );
+    return apiError(`Error al enviar el correo: ${errorMessage}`, 500);
   }
 }

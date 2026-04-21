@@ -1,31 +1,17 @@
-import { fetchCustomFormById, fetchFormsAnswersByFormId } from '@/app/server/GET/actions';
-import BackButton from '@/components/BackButton';
-import Viewcomponent from '@/components/ViewComponent';
-import { PDFPreviewDialog } from '@/components/pdf-preview-dialog';
-
-import { TransporteSPANAYCHKHYS01 } from '@/components/pdf/generators/TransporteSPANAYCHKHYS01';
-import { TransporteSPANAYCHKHYS03 } from '@/components/pdf/generators/TransporteSPANAYCHKHYS03';
-import { TransporteSPANAYCHKHYS04 } from '@/components/pdf/generators/TransporteSPANAYCHKHYS04';
-import { buttonVariants } from '@/components/ui/button';
+import { fetchFormsAnswersByFormId } from '@/modules/forms/features/answers/actions.server';
+import { fetchCustomFormById } from '@/modules/forms/features/custom-forms/actions.server';
+import BackButton from '@/shared/components/common/BackButton';
+import Viewcomponent from '@/shared/components/common/ViewComponent';
+import { PDFPreviewDialog } from '@/shared/components/pdf/PDFPreviewDialog';
+import { buttonVariants } from '@/shared/components/ui/button';
 import Link from 'next/link';
-import CheckListAnwersTable from '../components/CheckListAnwersTable';
+import CheckListAnwersTable from '@/modules/forms/features/custom-forms/components/CheckListAnwersTable';
+import { FormPreview } from './FormDetailClient';
 
-const renderForm = (activeFormType: string) => {
-  switch (activeFormType) {
-    case 'Transporte SP-ANAY - CHK - HYS - 01':
-      return <TransporteSPANAYCHKHYS01 title="CHECK LIST MANTENIMIENTO VEHICULAR" description="Pdf vacio" preview />;
-    case 'Transporte SP-ANAY - CHK - HYS - 03':
-      return <TransporteSPANAYCHKHYS03 title="CHECK LIST INSPECCION VEHICULAR" description="Pdf vacio" preview />;
-    case 'Transporte SP-ANAY - CHK - HYS - 04':
-      return <TransporteSPANAYCHKHYS04 title="INSPERCION DIARIA DE VEHICULO" description="Pdf vacio" preview />;
-    default:
-      return <div>No hay formulario seleccionado</div>;
-  }
-};
-
-async function page({ params }: { params: { id: string } }) {
-  const answers = await fetchFormsAnswersByFormId(params.id);
-  const formInfo = await fetchCustomFormById(params.id);
+async function page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const answers = await fetchFormsAnswersByFormId(id);
+  const formInfo = await fetchCustomFormById(id);
   const formName = formInfo[0].name;
 
   const viewData = {
@@ -44,17 +30,19 @@ async function page({ params }: { params: { id: string } }) {
                 title={formName}
                 description="Vista previa del formulario vacío"
               >
-                <div className="h-full w-full bg-white">{renderForm(formName)}</div>
+                <div className="h-full w-full bg-white">
+                  <FormPreview formName={formName} />
+                </div>
               </PDFPreviewDialog>
-              <Link className={buttonVariants({ variant: 'default' })} href={`/dashboard/forms/${params.id}/new`}>
+              <Link className={buttonVariants({ variant: 'default' })} href={`/dashboard/forms/${id}/new`}>
                 Nueva respuesta
               </Link>
             </div>
           ),
           title: formName,
-          description: `${(answers[0]?.form_id?.form as any)?.description ?? ''}`,
+          description: `${((answers[0] as unknown as CheckListAnswerWithForm)?.form_id?.form as Record<string, unknown>)?.description ?? ''}`,
           buttonActioRestricted: [''],
-          component: <CheckListAnwersTable answers={answers} />,
+          component: <CheckListAnwersTable answers={answers as unknown as CheckListAnswerWithForm[]} />,
         },
       },
     ],
