@@ -32,18 +32,23 @@ export default async function Home({
   }
 
   let role: any;
-  const { equipments } = await fetch(`${URL}/api/equipment/${id}`).then((e) => e.json());
+  const equipmentRes = await fetch(`${URL}/api/equipment/${id}`).then((e) => e.json());
+  const equipments = equipmentRes?.data?.equipments ?? equipmentRes?.equipments ?? [];
+
+  if (!equipments.length) {
+    redirect('/maintenance');
+  }
 
   if (user?.id) {
-    const { shared_user } = await fetch(
+    const sharedRes = await fetch(
       `${URL}/api/shared_company_role?company_id=${equipments[0].company_id}&profile_id=${user?.id}`
     ).then((e) => e.json());
+    const shared_user = sharedRes?.data?.shared_user ?? sharedRes?.shared_user ?? [];
 
     role = shared_user?.[0]?.role;
   }
-  const { types_of_repairs } = await fetch(`${URL}/api/repairs?actual=${equipments[0].company_id}`).then((res) =>
-    res.json()
-  );
+  const repairsRes = await fetch(`${URL}/api/repairs?actual=${equipments[0].company_id}`).then((res) => res.json());
+  const types_of_repairs = repairsRes?.data?.types_of_repairs ?? repairsRes?.types_of_repairs ?? [];
 
   const data = await prisma.repair_solicitudes.findMany({
     where: {

@@ -120,7 +120,7 @@ export function useDailyReport({ reportData, allReport }: DailyReportProps) {
         throw new Error(`Error en la solicitud: ${response.statusText}`);
       }
       const data = await response.json();
-      const eq = data.equipments;
+      const eq = data?.data?.equipments ?? data?.equipments ?? [];
       const activeEquipment = eq.filter((e: Equipment) => e.is_active);
       setEquipment(activeEquipment);
       return eq;
