@@ -47,7 +47,7 @@ export async function PATCH(request: NextRequest, context: any) {
       data: { condition: body.condition },
     });
 
-    return apiSuccess({ vehicles });
+    return apiSuccess({ vehicles: serializeBigInt(vehicles) });
   } catch (error) {
     console.error(error);
     return apiError('Failed to update vehicle condition', 500);

@@ -1,5 +1,6 @@
 import { prisma } from '@/shared/lib/prisma';
 import { apiSuccess, apiError } from '@/shared/lib/api-response';
+import { serializeBigInt } from '@/shared/lib/utils';
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       };
     });
 
-    return apiSuccess({ equipments });
+    return apiSuccess({ equipments: serializeBigInt(equipments) });
   } catch (error) {
     console.error('Error fetching equipments:', error);
     return apiError('An error occurred while fetching equipments', 500);
