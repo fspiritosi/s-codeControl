@@ -105,9 +105,41 @@ export async function getAllSuppliersForExport() {
   }));
 }
 
+function formatCuit(taxId: string) {
+  const clean = taxId.replace(/-/g, '');
+  if (clean.length === 11) {
+    return `${clean.slice(0, 2)}-${clean.slice(2, 10)}-${clean.slice(10)}`;
+  }
+  return taxId;
+}
+
+async function buildCuitConflictMessage(
+  companyId: string,
+  taxId: string,
+  excludeId?: string
+) {
+  const normalized = taxId.replace(/-/g, '');
+  const conflict = await prisma.suppliers.findFirst({
+    where: {
+      company_id: companyId,
+      tax_id: normalized,
+      ...(excludeId ? { NOT: { id: excludeId } } : {}),
+    },
+    select: { code: true, business_name: true },
+  });
+
+  if (!conflict) {
+    return `Ya existe un proveedor con el CUIT ${formatCuit(normalized)} en esta empresa`;
+  }
+
+  return `El CUIT ${formatCuit(normalized)} ya está registrado para el proveedor ${conflict.code} - ${conflict.business_name}`;
+}
+
 export async function createSupplier(data: Record<string, unknown>) {
   const { companyId } = await getActionContext();
   if (!companyId) throw new Error('No company selected');
+
+  const normalizedTaxId = (data.tax_id as string).replace(/-/g, '');
 
   try {
     const lastSupplier = await prisma.suppliers.findFirst({
@@ -125,7 +157,7 @@ export async function createSupplier(data: Record<string, unknown>) {
         code,
         business_name: data.business_name as string,
         trade_name: (data.trade_name as string) || null,
-        tax_id: (data.tax_id as string).replace(/-/g, ''),
+        tax_id: normalizedTaxId,
         tax_condition: data.tax_condition as any,
         email: (data.email as string) || null,
         phone: (data.phone as string) || null,
@@ -148,7 +180,8 @@ export async function createSupplier(data: Record<string, unknown>) {
     return { data: supplier, error: null };
   } catch (error: any) {
     if (error?.code === 'P2002') {
-      return { data: null, error: 'Ya existe un proveedor con ese CUIT en esta empresa' };
+      const message = await buildCuitConflictMessage(companyId, normalizedTaxId);
+      return { data: null, error: message };
     }
     console.error('Error creating supplier:', error);
     return { data: null, error: String(error) };
@@ -159,13 +192,15 @@ export async function updateSupplier(id: string, data: Record<string, unknown>) 
   const { companyId } = await getActionContext();
   if (!companyId) throw new Error('No company selected');
 
+  const normalizedTaxId = (data.tax_id as string)?.replace(/-/g, '');
+
   try {
     const supplier = await prisma.suppliers.update({
       where: { id },
       data: {
         business_name: data.business_name as string,
         trade_name: (data.trade_name as string) || null,
-        tax_id: (data.tax_id as string)?.replace(/-/g, ''),
+        tax_id: normalizedTaxId,
         tax_condition: data.tax_condition as any,
         email: (data.email as string) || null,
         phone: (data.phone as string) || null,
@@ -186,14 +221,32 @@ export async function updateSupplier(id: string, data: Record<string, unknown>) 
     });
 
     revalidatePath('/dashboard/purchasing');
+    revalidatePath(`/dashboard/suppliers/${id}`);
     return { data: supplier, error: null };
   } catch (error: any) {
-    if (error?.code === 'P2002') {
-      return { data: null, error: 'Ya existe un proveedor con ese CUIT en esta empresa' };
+    if (error?.code === 'P2002' && normalizedTaxId) {
+      const message = await buildCuitConflictMessage(companyId, normalizedTaxId, id);
+      return { data: null, error: message };
     }
     console.error('Error updating supplier:', error);
     return { data: null, error: String(error) };
   }
+}
+
+export async function getSupplierById(id: string) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return null;
+
+  const supplier = await prisma.suppliers.findFirst({
+    where: { id, company_id: companyId },
+  });
+
+  if (!supplier) return null;
+
+  return {
+    ...supplier,
+    credit_limit: supplier.credit_limit ? Number(supplier.credit_limit) : null,
+  };
 }
 
 export async function deleteSupplier(id: string) {

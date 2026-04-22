@@ -2,7 +2,17 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu';
 import { TAX_CONDITION_LABELS, SUPPLIER_STATUS_LABELS, type Supplier } from '@/modules/suppliers/shared/types';
+import { MoreHorizontal, Eye, Pencil } from 'lucide-react';
+import Link from 'next/link';
 
 function formatCuit(cuit: string) {
   const clean = cuit.replace(/-/g, '');
@@ -12,18 +22,46 @@ function formatCuit(cuit: string) {
   return cuit;
 }
 
+function ActionsCell({ id }: { id: string }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="size-8">
+          <MoreHorizontal className="size-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <Link href={`/dashboard/suppliers/${id}`}>
+            <Eye className="size-4 mr-2" /> Ver detalle
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href={`/dashboard/suppliers/${id}/edit`}>
+            <Pencil className="size-4 mr-2" /> Editar
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export const supplierColumns: ColumnDef<Supplier>[] = [
   {
     accessorKey: 'business_name',
     header: 'Razón Social',
     meta: { title: 'Razón Social' },
     cell: ({ row }) => (
-      <div>
+      <Link
+        href={`/dashboard/suppliers/${row.original.id}`}
+        className="block hover:underline"
+      >
         <p className="font-medium">{row.original.business_name}</p>
         {row.original.trade_name && (
           <p className="text-xs text-muted-foreground">{row.original.trade_name}</p>
         )}
-      </div>
+      </Link>
     ),
   },
   {
@@ -78,5 +116,10 @@ export const supplierColumns: ColumnDef<Supplier>[] = [
       );
     },
     filterFn: 'equals',
+  },
+  {
+    id: 'actions',
+    header: '',
+    cell: ({ row }) => <ActionsCell id={row.original.id} />,
   },
 ];

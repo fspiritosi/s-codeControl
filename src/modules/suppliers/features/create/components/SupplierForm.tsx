@@ -57,7 +57,10 @@ export default function SupplierForm({ supplier }: Props) {
           : await createSupplier(values as any);
 
         if (result.error) throw new Error(result.error);
-        router.push('/dashboard/purchasing?tab=suppliers');
+        const destination = isEditing
+          ? `/dashboard/suppliers/${supplier.id}`
+          : '/dashboard/purchasing?tab=suppliers';
+        router.push(destination);
         router.refresh();
       },
       {
