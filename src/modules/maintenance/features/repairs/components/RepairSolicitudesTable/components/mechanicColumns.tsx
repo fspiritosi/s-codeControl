@@ -281,7 +281,9 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
             formatImages(file, row.original.domain ?? row.original.serie, index)
           );
 
-          const mechanic_images = mechanic_imagesData.map((e) => e?.url);
+          const mechanic_images = mechanic_imagesData
+            .map((e) => e?.url)
+            .filter((u): u is string => typeof u === 'string');
           const vehicle_id = row.original.vehicle_id;
           const mechanic_description = form.getValues('mechanic_description');
 
@@ -338,7 +340,9 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
           formatImages(file, row.original.domain ?? row.original.serie, index)
         );
 
-        const mechanic_images = mechanic_imagesData.map((e) => e?.url);
+        const mechanic_images = mechanic_imagesData
+          .map((e) => e?.url)
+          .filter((u): u is string => typeof u === 'string');
 
         await updateRepairSolicitude(row.original.id, {
           mechanic_images,
