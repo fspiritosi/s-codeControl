@@ -1,6 +1,7 @@
 import { prisma } from '@/shared/lib/prisma';
 import { apiSuccess, apiError } from '@/shared/lib/api-response';
 import { serializeBigInt } from '@/shared/lib/utils';
+import { recalculateVehicleCondition } from '@/modules/maintenance/features/repairs/actions.server';
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -74,12 +75,23 @@ export async function POST(request: NextRequest) {
   try {
     if (Array.isArray(body)) {
       const result = await prisma.repair_solicitudes.createMany({ data: body });
+
+      // Recalcular condition de cada vehículo afectado (único por equipment_id)
+      const affectedVehicleIds = Array.from(
+        new Set(body.map((r: any) => r.equipment_id).filter(Boolean))
+      );
+      await Promise.all(affectedVehicleIds.map((id) => recalculateVehicleCondition(id as string)));
+
       return apiSuccess({ repair_solicitudes: { count: result.count } }, 201);
     }
 
     const repair_solicitudes = await prisma.repair_solicitudes.create({
       data: body,
     });
+
+    if (repair_solicitudes.equipment_id) {
+      await recalculateVehicleCondition(repair_solicitudes.equipment_id);
+    }
 
     return apiSuccess({ repair_solicitudes: serializeBigInt(repair_solicitudes ?? {}) }, 201);
   } catch (error) {
@@ -99,6 +111,11 @@ export async function PUT(request: NextRequest) {
       data: body,
     });
 
+    // Si cambió el state, recalcular la condición del vehículo
+    if (body?.state && repair_solicitudes.equipment_id) {
+      await recalculateVehicleCondition(repair_solicitudes.equipment_id);
+    }
+
     return apiSuccess({ repair_solicitudes: serializeBigInt(repair_solicitudes) });
   } catch (error) {
     console.error(error);
@@ -114,6 +131,11 @@ export async function DELETE(request: NextRequest) {
     const repair_solicitudes = await prisma.repair_solicitudes.delete({
       where: { id: id || '' },
     });
+
+    // Al eliminar una solicitud, recalcular condition del vehículo afectado
+    if (repair_solicitudes.equipment_id) {
+      await recalculateVehicleCondition(repair_solicitudes.equipment_id);
+    }
 
     return apiSuccess({ repair_solicitudes: serializeBigInt(repair_solicitudes) });
   } catch (error) {

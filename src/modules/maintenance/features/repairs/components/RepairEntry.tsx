@@ -247,23 +247,10 @@ export default function RepairNewEntry({
             })
           );
 
-          // Verificar la criticidad de todas las reparaciones
-          const hasHighCriticity = allRepairs.some((e) => {
-            const repair = tipo_de_mantenimiento.find((repair) => repair.id === e.repair);
-            return repair?.criticity === 'Alta';
-          });
-
-          const hasMediumCriticity = allRepairs.some((e) => {
-            const repair = tipo_de_mantenimiento.find((repair) => repair.id === e.repair);
-            return repair?.criticity === 'Media';
-          });
-
-          if (hasHighCriticity && condition !== 'no operativo' && condition !== 'en reparación') {
-            await updateVehicleById(vehicle_id?.id || '', { condition: 'no operativo', kilometer: allRepairs[0].kilometer });
-          } else if (hasMediumCriticity && condition !== 'no operativo' && condition !== 'en reparación') {
-            await updateVehicleById(vehicle_id?.id || '', { condition: 'operativo condicionado', kilometer: allRepairs[0].kilometer });
-          } else {
-            await updateVehicleById(vehicle_id?.id || '', { kilometer: allRepairs[0].kilometer });
+          // Actualizar solo el kilometraje; la condición se recalcula en el backend
+          // a partir de las solicitudes abiertas (ver recalculateVehicleCondition).
+          if (vehicle_id?.id && allRepairs[0].kilometer) {
+            await updateVehicleById(vehicle_id.id, { kilometer: allRepairs[0].kilometer });
           }
 
           const res = await fetch(`${URL}/api/repair_solicitud`, {

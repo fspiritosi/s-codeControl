@@ -183,28 +183,13 @@ export default function RepairNewEntryMultiple({
             kilometer: repair.kilometer,
           }));
 
-          // Verificar la criticidad de las reparaciones y actualizar la condición del equipo en la base de datos
+          // Actualizar solo el kilometraje de cada equipo; la condición la recalcula
+          // el backend en función de las solicitudes abiertas (recalculateVehicleCondition).
           for (const equipmentId of selectedEquipmentIds) {
             const repairsForEquipment = data.filter((repair) => repair.equipment_id === equipmentId);
-            const currentEquipmentKilometer = equipment.find((equip) => equip.id === equipmentId)?.kilometer;
-
-            const hasHighCriticity = repairsForEquipment.some((e) => {
-              const repair = tipo_de_mantenimiento.find((repair) => repair.id === e.reparation_type);
-              return repair?.criticity === 'Alta';
-            });
-
-            const hasMediumCriticity = repairsForEquipment.some((e) => {
-              const repair = tipo_de_mantenimiento.find((repair) => repair.id === e.reparation_type);
-              return repair?.criticity === 'Media';
-            });
-
-            const equipmentItem = equipment.find((equip) => equip.id === equipmentId);
-            const condition = equipmentItem?.condition;
-
-            if (hasHighCriticity && condition !== 'no operativo' && condition !== 'en reparación') {
-              await updateVehicleById(equipmentId, { condition: 'no operativo', kilometer: currentEquipmentKilometer });
-            } else if (hasMediumCriticity && condition !== 'no operativo' && condition !== 'en reparación') {
-              await updateVehicleById(equipmentId, { condition: 'operativo condicionado', kilometer: currentEquipmentKilometer });
+            const lastKilometer = repairsForEquipment.at(-1)?.kilometer;
+            if (lastKilometer) {
+              await updateVehicleById(equipmentId, { kilometer: lastKilometer });
             }
           }
 

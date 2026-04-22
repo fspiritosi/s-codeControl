@@ -143,9 +143,63 @@ export const updateRepairSolicitude = async (
       where: { id },
       data: updateData as any,
     });
+
+    // Si cambió el state, recalcular la condición del vehículo
+    if (updateData.state && data.equipment_id) {
+      await recalculateVehicleCondition(data.equipment_id);
+    }
+
     return { data, error: null };
   } catch (error) {
     console.error('Error updating repair solicitude:', error);
     return { data: null, error: String(error) };
+  }
+};
+
+const OPEN_STATES = ['Pendiente', 'Esperando_repuestos', 'En_reparacion'] as const;
+
+/**
+ * Recalcula la condición del vehículo en función de sus solicitudes de reparación abiertas.
+ * - Si hay alguna abierta con criticidad Alta → 'no operativo'
+ * - Sino si hay alguna abierta con criticidad Media → 'operativo condicionado'
+ * - Sino → 'operativo'
+ *
+ * Respeta el estado 'en reparación' (no lo pisa) para no interferir con el flujo del mecánico.
+ */
+export const recalculateVehicleCondition = async (vehicleId: string) => {
+  try {
+    const openRepairs = await prisma.repair_solicitudes.findMany({
+      where: {
+        equipment_id: vehicleId,
+        state: { in: OPEN_STATES as any },
+      },
+      include: { reparation_type_rel: { select: { criticity: true } } },
+    });
+
+    const hasHigh = openRepairs.some((r) => r.reparation_type_rel?.criticity === 'Alta');
+    const hasMedium = openRepairs.some((r) => r.reparation_type_rel?.criticity === 'Media');
+
+    const vehicle = await prisma.vehicles.findUnique({
+      where: { id: vehicleId },
+      select: { condition: true },
+    });
+    if (!vehicle) return;
+
+    // No pisar 'en_reparacion' — ese estado lo maneja el mecánico
+    if (vehicle.condition === 'en_reparacion') return;
+
+    let newCondition: 'no_operativo' | 'operativo_condicionado' | 'operativo';
+    if (hasHigh) newCondition = 'no_operativo';
+    else if (hasMedium) newCondition = 'operativo_condicionado';
+    else newCondition = 'operativo';
+
+    if (newCondition === vehicle.condition) return;
+
+    await prisma.vehicles.update({
+      where: { id: vehicleId },
+      data: { condition: newCondition },
+    });
+  } catch (error) {
+    console.error('Error recalculating vehicle condition:', error);
   }
 };
