@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { ColumnDef } from '@tanstack/react-table';
+import { ColumnDef, ColumnFiltersState } from '@tanstack/react-table';
+import { useSearchParams } from 'next/navigation';
 import { DataTable } from '@/shared/components/data-table';
 import type { DataTableFacetedFilterConfig } from '@/shared/components/data-table';
 import { criticidad, statuses } from './data';
@@ -11,10 +12,21 @@ interface RepairSolicitudesClientProps<TData extends Record<string, unknown>> {
   columns: ColumnDef<TData, any>[];
 }
 
+const VALID_STATES = new Set(statuses.map((s) => s.value));
+
 export function RepairSolicitudesClient<TData extends Record<string, unknown>>({
   data,
   columns,
 }: RepairSolicitudesClientProps<TData>) {
+  const searchParams = useSearchParams();
+
+  const initialColumnFilters = useMemo<ColumnFiltersState>(() => {
+    const stateParam = searchParams.get('state');
+    if (!stateParam) return [];
+    const values = stateParam.split(',').filter((v) => VALID_STATES.has(v));
+    return values.length > 0 ? [{ id: 'state', value: values }] : [];
+  }, [searchParams]);
+
   const facetedFilters = useMemo(() => {
     // Build dynamic options for equipment and title from data
     const equipmentSet = new Set<string>();
@@ -59,6 +71,7 @@ export function RepairSolicitudesClient<TData extends Record<string, unknown>>({
         data={data}
         emptyMessage="Sin resultados."
         facetedFilters={facetedFilters}
+        initialColumnFilters={initialColumnFilters}
         showSearch={true}
         searchColumn="intern_number"
         searchPlaceholder="Filtrar por numero interno..."
