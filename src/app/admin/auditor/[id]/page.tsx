@@ -1,25 +1,27 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-import ApproveDocModal from '@/components/ApproveDocModal';
-import DenyDocModal from '@/components/DenyDocModal';
-import { Skeleton } from '@/components/ui/skeleton';
+import ApproveDocModal from '@/modules/documents/features/manage/components/ApproveDocModal';
+import DenyDocModal from '@/modules/documents/features/manage/components/DenyDocModal';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 
 //imports de la vista copiada
 
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/shared/components/ui/badge';
 
-import DownloadButton from '@/app/dashboard/document/documentComponents/DownloadButton';
-import BackButton from '@/components/BackButton';
-import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
-import { cn } from '@/lib/utils';
+import DownloadButton from '@/modules/documents/features/list/components/DownloadButton';
+import BackButton from '@/shared/components/common/BackButton';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/ui/table';
+import { cn } from '@/shared/lib/utils';
 import { Suspense } from 'react';
-import { supabase } from '../../../../../supabase/supabase';
+import { storage } from '@/shared/lib/storage';
+import { prisma } from '@/shared/lib/prisma';
 
-export default async function page({ params }: { params: { id: string } }) {
+export default async function page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   let documents_employees: any[] | null = [];
   // const [userEmail, setUserEmail] = useState<string | ''>('')
   let resource = '';
@@ -30,54 +32,108 @@ export default async function page({ params }: { params: { id: string } }) {
   let documentType: string | null = null;
   let resourceType: string | null = null;
 
-  let { data: documents_employee } = await supabase
-    .from('documents_employees')
-    .select(
-      `
-    *,
-    document_types(*),
-    applies(*,
-      city(name),
-      province(name),
-      contractor_employee(
-        customers(
-          *
-          )
-          ),
-          company_id(*,province_id(name),owner_id(*))
-          )
-          `
-    )
-    .eq('id', params.id);
+  const documents_employee = await prisma.documents_employees.findMany({
+    where: { id },
+    include: {
+      document_type: true,
+      employee: {
+        include: {
+          city_rel: { select: { name: true } },
+          province_rel: { select: { name: true } },
+          contractor_employee: {
+            include: { contractor: true },
+          },
+          company: {
+            include: {
+              province_rel: { select: { name: true } },
+              owner: true,
+            },
+          },
+        },
+      },
+    },
+  });
 
   if (documents_employee?.length === 0) {
-    let { data: documents_vehicle } = await supabase
-      .from('documents_equipment')
-      .select(
-        `
-      *,
-      document_types(*),
-      applies(*,brand(name),model(name),type_of_vehicle(name), company_id(*,province_id(name),owner_id(*)))`
-      )
-      .eq('id', params.id);
+    const documents_vehicle = await prisma.documents_equipment.findMany({
+      where: { id },
+      include: {
+        document_type: true,
+        vehicle: {
+          include: {
+            brand_rel: { select: { name: true } },
+            model_rel: { select: { name: true } },
+            type_of_vehicle_rel: { select: { name: true } },
+            company: {
+              include: {
+                province_rel: { select: { name: true } },
+                owner: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
-    document = documents_vehicle;
+    document = documents_vehicle as any;
     resourceType = 'documentos-equipos';
     resource = 'vehicle';
   } else {
-    document = documents_employee;
+    document = documents_employee as any;
     resourceType = 'documentos-empleados';
     resource = 'employee';
   }
-  const sharedUsersEmail = document?.[0]?.applies?.company_id.owner_id.email; //->
+  // Reshape Prisma data to match the old Supabase shape used in the template
+  const reshapeEmployee = (doc: any) => ({
+    ...doc,
+    document_types: doc.document_type,
+    applies: {
+      ...doc.employee,
+      city: doc.employee?.city_rel,
+      province: doc.employee?.province_rel,
+      company_id: {
+        ...doc.employee?.company,
+        province_id: doc.employee?.company?.province_rel,
+        owner_id: doc.employee?.company?.owner,
+      },
+    },
+  });
+  const reshapeVehicle = (doc: any) => ({
+    ...doc,
+    document_types: doc.document_type,
+    applies: {
+      ...doc.vehicle,
+      brand: doc.vehicle?.brand_rel,
+      model: doc.vehicle?.model_rel,
+      type_of_vehicle: doc.vehicle?.type_of_vehicle_rel,
+      company_id: {
+        ...doc.vehicle?.company,
+        province_id: doc.vehicle?.company?.province_rel,
+        owner_id: doc.vehicle?.company?.owner,
+      },
+    },
+  });
 
-  const { data: sharedCompanies, error } = await supabase
-    .from('share_company_users')
-    .select('*,profile_id(email),company_id(company_name)')
-    .eq('company_id', document?.[0]?.applies?.company_id.id)
-    .neq('role', 'Invitado');
+  if (resource === 'vehicle') {
+    document = document?.map(reshapeVehicle) ?? null;
+  } else {
+    document = document?.map(reshapeEmployee) ?? null;
+  }
 
-  const email = sharedCompanies?.map((company: any) => company.profile_id.email);
+  const sharedUsersEmail = document?.[0]?.applies?.company_id?.owner_id?.email;
+
+  const sharedCompanies = await prisma.share_company_users.findMany({
+    where: {
+      company_id: document?.[0]?.applies?.company_id?.id || '',
+      role: { not: 'Invitado' },
+    },
+    include: {
+      profile: { select: { email: true } },
+      customer: { select: { name: true } },
+    },
+  });
+
+  const email = sharedCompanies?.map((company: any) => company.profile?.email);
   email?.push(sharedUsersEmail);
 
   //! incluir al dueño inicialmente
@@ -85,14 +141,14 @@ export default async function page({ params }: { params: { id: string } }) {
   documentType = document?.[0]?.document_types?.id;
 
   const resorceId = document?.[0]?.applies?.id;
-  const { data } = await supabase.storage.from('document_files').list(resourceType, {
+  const data = await storage.list('document_files', resourceType ?? undefined, {
     search: `document-${documentType}-${resorceId}`,
   });
 
-  const { data: url } = supabase.storage.from('document_files').getPublicUrl(document?.[0]?.document_path);
+  const publicUrl = storage.getPublicUrl('document_files', document?.[0]?.document_path);
 
   documentName = document?.[0]?.document_path;
-  documentUrl = url.publicUrl;
+  documentUrl = publicUrl;
   documents_employees = document;
 
   const expireInLastMonth = () => {
@@ -582,9 +638,9 @@ export default async function page({ params }: { params: { id: string } }) {
                   <div className="p-3 text-center space-y-3">
                     <CardDescription>Aqui podras auditar el documento que se le solicita al empleado</CardDescription>
                     <div className="w-full flex justify-evenly">
-                      <ApproveDocModal id={params.id} resource={resource} />
+                      <ApproveDocModal id={id} resource={resource} />
                       <DenyDocModal
-                        id={params.id}
+                        id={id}
                         resource={resource}
                         userEmail={email as string[]}
                         emailInfo={userAndDocumentInfo}

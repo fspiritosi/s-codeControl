@@ -1,119 +1,114 @@
-import DocumentNav from '@/components/DocumentNav';
-import PageTableSkeleton from '@/components/Skeletons/PageTableSkeleton';
-import Viewcomponent from '@/components/ViewComponent';
-import { supabaseServer } from '@/lib/supabase/server';
-import { CompanyDocumentsType } from '@/store/loggedUser';
-import { cookies } from 'next/headers';
+import DocumentNav from '@/shared/components/common/DocumentNav';
+import PageTableSkeleton from '@/shared/components/common/Skeletons/PageTableSkeleton';
+import { getSession } from '@/shared/lib/session';
+import { fetchCompanyDocuments } from '@/modules/company/features/detail/actions.server';
+import { CompanyDocumentsType } from '@/shared/store/loggedUser';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { UrlTabs, UrlTabsContent, UrlTabsList, UrlTabsTrigger } from '@/shared/components/ui/url-tabs';
 import { Suspense } from 'react';
-import CompanyTabs from './documentComponents/CompanyTabs';
-import EmployeeDocumentsTabs from './documentComponents/EmployeeDocumentsTabs';
-import EquipmentTabs from './documentComponents/EquipmentTabs';
-import TypesDocumentAction from './documentComponents/TypesDocumentAction';
-import TypesDocumentsView from './documentComponents/TypesDocumentsView';
+import CompanyTabs from '@/modules/documents/features/list/components/CompanyTabs';
+import EmployeeDocumentsTabs from '@/modules/documents/features/list/components/EmployeeDocumentsTabs';
+import EquipmentTabs from '@/modules/documents/features/list/components/EquipmentTabs';
+import TypesDocumentsView from '@/modules/documents/features/types/components/TypesDocumentsView';
+import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
 
-export default async function page() {
-  const supabase = supabaseServer();
-  const user = await supabase.auth.getUser();
-  const URL = process.env.NEXT_PUBLIC_BASE_URL;
-  const cookiesStore = cookies();
-  const { data: userShared } = await supabase
-    .from('share_company_users')
-    .select('*')
-    .eq('profile_id', user?.data?.user?.id || '');
-  const role: string | null = userShared?.[0]?.role || null;
-  const actualCompany = cookiesStore.get('actualComp')?.value;
+const VALID_TABS = ['employees', 'equipment', 'company', 'types'] as const;
+type DocumentTab = (typeof VALID_TABS)[number];
 
-  let { data: documents_company, error: documents_company_error } = await supabase
-    .from('documents_company')
-    .select('*,id_document_types(*),user_id(*)')
-    .eq('applies', actualCompany || '');
+export default async function DocumentPage({
+  searchParams,
+}: {
+  searchParams: Promise<DataTableSearchParams & { tab?: string }>;
+}) {
+  const resolved = await searchParams;
+  const currentTab: DocumentTab = VALID_TABS.includes(resolved.tab as DocumentTab)
+    ? (resolved.tab as DocumentTab)
+    : 'employees';
 
-  const typedDataCompany: CompanyDocumentsType[] | null = documents_company as CompanyDocumentsType[] | null;
+  // Parallel: session + company documents
+  const [session, documentsRaw] = await Promise.all([
+    getSession(),
+    fetchCompanyDocuments(),
+  ]);
 
-  const companyData =
-    role === 'Invitado' ? typedDataCompany?.filter((e) => !e.id_document_types.private) : typedDataCompany;
+  const documents = documentsRaw.map((doc: any) => ({
+    ...doc,
+    id_document_types: doc.document_type,
+    user_id: doc.user,
+  }));
 
-  const viewData = {
-    defaultValue: 'Documentos de empleados',
-    tabsValues: [
-      {
-        value: 'Documentos de empleados',
-        name: 'Documentos de empleados',
-        restricted: [''],
-        content: {
-          title: 'Documentos cargados',
-          description: 'Aquí encontrarás todos los documentos de tus empleados',
-          buttonActioRestricted: [''],
-          buttonAction: (
-            <div className="flex gap-4 flex-wrap pl-6">
-              <DocumentNav onlyEmployees onlyEquipment />
-            </div>
-          ),
-          component: <EmployeeDocumentsTabs />,
-        },
-      },
-      {
-        value: 'Documentos de equipos',
-        name: 'Documentos de equipos',
-        restricted: [''],
-        content: {
-          title: 'Documentos cargados',
-          description: 'Aquí encontrarás todos los documentos de tus equipos',
-          buttonActioRestricted: [''],
-          buttonAction: (
-            <div className="flex gap-4 flex-wrap pl-6">
-            <DocumentNav onlyEmployees onlyEquipment />
-          </div>
-          ),
-          component: <EquipmentTabs />,
-        },
-      },
-      {
-        value: 'Documentos de empresa',
-        name: 'Documentos de empresa',
-        restricted: [''],
-        content: {
-          title: 'Documentos cargados',
-          description: 'Aquí encontrarás todos los documentos de tus empresa',
-          buttonActioRestricted: [''],
-          buttonAction: (
-            <div className="flex gap-4 flex-wrap pl-6">
-              <DocumentNav onlyEmployees onlyEquipment />
-            </div>
-          ),
-          component: <CompanyTabs companyData={companyData as any} />,
-        },
-      },
-      {
-        value: 'Tipos de documentos',
-        name: 'Tipos de documentos',
-        restricted: ['Invitado'],
-        content: {
-          title: 'Tipos de documentos',
-          description: 'Tipos de documentos auditables',
-          buttonActioRestricted: [''],
-          buttonAction: <TypesDocumentAction optionChildrenProp="all" />,
-          component: <TypesDocumentsView equipos empresa personas />,
-        },
-      },
-      // {
-      //   value: 'forms',
-      //   name: 'Formularios',
-      //   restricted: [],
-      //   content: {
-      //     title: 'Formularios',
-      //     description: 'Formularios de documentos',
-      //     buttonActioRestricted: [''],
-      //     // buttonAction: <TypesDocumentAction optionChildrenProp="Personas" />,
-      //     component: <CreatedForm />,
-      //   },
-      // },
-    ],
-  };
+  const typedData = documents as unknown as CompanyDocumentsType[] | null;
+  const companyData = session.role === 'Invitado'
+    ? typedData?.filter((e) => !e.id_document_types.private)
+    : typedData;
 
   return (
     <Suspense fallback={<PageTableSkeleton />}>
-      <Viewcomponent viewData={viewData} />
+      <UrlTabs value={currentTab} paramName="tab" baseUrl="/dashboard/document">
+        <UrlTabsList>
+          <UrlTabsTrigger value="employees">Documentos de empleados</UrlTabsTrigger>
+          <UrlTabsTrigger value="equipment">Documentos de equipos</UrlTabsTrigger>
+          <UrlTabsTrigger value="company">Documentos de empresa</UrlTabsTrigger>
+          <UrlTabsTrigger value="types">Tipos de documentos</UrlTabsTrigger>
+        </UrlTabsList>
+
+        <UrlTabsContent value="employees">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Documentos cargados</CardTitle>
+                <CardDescription>Aquí encontrarás todos los documentos de tus empleados</CardDescription>
+              </div>
+              <DocumentNav onlyEmployees onlyEquipment />
+            </CardHeader>
+            <CardContent>
+              <EmployeeDocumentsTabs searchParams={resolved} />
+            </CardContent>
+          </Card>
+        </UrlTabsContent>
+
+        <UrlTabsContent value="equipment">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Documentos cargados</CardTitle>
+                <CardDescription>Aquí encontrarás todos los documentos de tus equipos</CardDescription>
+              </div>
+              <DocumentNav onlyEmployees onlyEquipment />
+            </CardHeader>
+            <CardContent>
+              <EquipmentTabs searchParams={resolved} />
+            </CardContent>
+          </Card>
+        </UrlTabsContent>
+
+        <UrlTabsContent value="company">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Documentos cargados</CardTitle>
+                <CardDescription>Aquí encontrarás todos los documentos de tu empresa</CardDescription>
+              </div>
+              <DocumentNav onlyEmployees onlyEquipment />
+            </CardHeader>
+            <CardContent>
+              <CompanyTabs companyData={companyData as any} />
+            </CardContent>
+          </Card>
+        </UrlTabsContent>
+
+        <UrlTabsContent value="types">
+          <Card>
+            <CardHeader>
+              <CardTitle>Tipos de documentos</CardTitle>
+              <CardDescription>Tipos de documentos auditables</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TypesDocumentsView equipos empresa personas searchParams={resolved} />
+            </CardContent>
+          </Card>
+        </UrlTabsContent>
+      </UrlTabs>
     </Suspense>
   );
 }

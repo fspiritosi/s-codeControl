@@ -1,6 +1,5 @@
-import NewDocumentType from '@/components/NewDocumentType';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
+import { Label } from '@/shared/components/ui/label';
+import { Separator } from '@/shared/components/ui/separator';
 
 export default function page() {
   return (

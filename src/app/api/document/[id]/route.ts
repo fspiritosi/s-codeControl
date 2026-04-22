@@ -1,18 +1,18 @@
-import { supabaseServer } from '@/lib/supabase/server';
-import { PostgrestError } from '@supabase/supabase-js';
+import { prisma } from '@/shared/lib/prisma';
+import { apiSuccess, apiError } from '@/shared/lib/api-response';
+import { serializeBigInt } from '@/shared/lib/utils';
 import { NextRequest } from 'next/server';
+
 type response = {
-  document: any[] | null | PostgrestError;
+  document: any | null;
   resourceType: string | null;
   resource: string | null;
 };
-export async function GET(request: NextRequest, context: any) {
-  const { params } = context;
-  const searchParams = request.nextUrl.searchParams;
-  const user_id = searchParams.get('user');
-  const resource = searchParams.get('resource');
 
-  const documentId = params.id;
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: documentId } = await params;
+  const searchParams = request.nextUrl.searchParams;
+  const resource = searchParams.get('resource');
 
   let response: response = {
     document: null,
@@ -48,71 +48,131 @@ export async function GET(request: NextRequest, context: any) {
       };
     }
 
-    return Response.json({ response });
+    return apiSuccess({ response: serializeBigInt(response) });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    return apiError('Failed to fetch document', 500);
   }
 }
 
 const getEmployeeDocument = async (documentId: string) => {
-  const supabase = supabaseServer();
-  let { data: documents_employee, error } = await supabase
-    .from('documents_employees')
-    .select(
-      `
-    *,
-    document_types(*),
-    applies(*,
-      city(name),
-      province(name),
-      contractor_employee(
-        customers(
-          *
-          )
-          ),
-          company_id(*,province_id(name))
-          )
-          `
-    )
-    .eq('id', documentId);
+  try {
+    const doc = await prisma.documents_employees.findUnique({
+      where: { id: documentId },
+      include: {
+        document_type: true,
+        employee: {
+          include: {
+            city_rel: { select: { name: true } },
+            province_rel: { select: { name: true } },
+            contractor_employee: {
+              include: {
+                contractor: true,
+              },
+            },
+            company: {
+              include: {
+                province_rel: { select: { name: true } },
+              },
+            },
+          },
+        },
+      },
+    });
 
-  if (error) {
+    if (!doc) return null;
+
+    // Remap to match previous response shape
+    const { employee, document_type, ...rest } = doc;
+    return {
+      ...rest,
+      document_types: document_type,
+      applies: employee
+        ? {
+            ...employee,
+            city: employee.city_rel,
+            province: employee.province_rel,
+            contractor_employee: employee.contractor_employee.map((ce: any) => ({
+              customers: ce.contractor,
+            })),
+            company_id: employee.company
+              ? {
+                  ...employee.company,
+                  province_id: employee.company.province_rel,
+                }
+              : null,
+          }
+        : null,
+    };
+  } catch (error) {
     return error;
   }
-
-  return documents_employee?.[0];
 };
 
 const getEquipmentDocument = async (documentId: string) => {
-  const supabase = supabaseServer();
+  try {
+    const doc = await prisma.documents_equipment.findUnique({
+      where: { id: documentId },
+      include: {
+        document_type: true,
+        vehicle: {
+          include: {
+            brand_rel: { select: { name: true } },
+            model_rel: { select: { name: true } },
+            type_of_vehicle_rel: { select: { name: true } },
+            company: {
+              include: {
+                province_rel: { select: { name: true } },
+              },
+            },
+          },
+        },
+      },
+    });
 
-  let { data: documents_vehicle, error } = await supabase
-    .from('documents_equipment')
-    .select(
-      `
-    *,
-    document_types(*),
-    applies(*,brand(name),model(name),type_of_vehicle(name), company_id(*,province_id(name)))`
-    )
-    .eq('id', documentId);
+    if (!doc) return null;
 
-  if (error) {
+    const { vehicle, document_type, ...rest } = doc;
+    return {
+      ...rest,
+      document_types: document_type,
+      applies: vehicle
+        ? {
+            ...vehicle,
+            brand: vehicle.brand_rel,
+            model: vehicle.model_rel,
+            type_of_vehicle: vehicle.type_of_vehicle_rel,
+            company_id: vehicle.company
+              ? {
+                  ...vehicle.company,
+                  province_id: vehicle.company.province_rel,
+                }
+              : null,
+          }
+        : null,
+    };
+  } catch (error) {
     return error;
   }
-
-  return documents_vehicle?.[0];
 };
 
 const getCompanyDocument = async (documentId: string) => {
-  const supabase = supabaseServer();
-  let { data: documents_company, error } = await supabase
-    .from('documents_company')
-    .select(`*,document_types:id_document_types(*)`)
-    .eq('id', documentId);
+  try {
+    const doc = await prisma.documents_company.findUnique({
+      where: { id: documentId },
+      include: {
+        document_type: true,
+      },
+    });
 
-  if (error) {
+    if (!doc) return null;
+
+    const { document_type, ...rest } = doc;
+    return {
+      ...rest,
+      document_types: document_type,
+    };
+  } catch (error) {
     return error;
   }
-
-  return documents_company?.[0];
 };

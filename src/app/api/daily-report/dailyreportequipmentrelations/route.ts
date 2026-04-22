@@ -1,132 +1,94 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from './../../../../lib/supabase/server';
+import { prisma } from '@/shared/lib/prisma';
+import { apiSuccess, apiError } from '@/shared/lib/api-response';
+import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const supabase = supabaseServer();
-  const searchParams = request.nextUrl.searchParams;
-  const company_id = searchParams.get('actual');
   try {
-    let { data: dailyreportequipmentrelations, error } = await supabase
-      .from('dailyreportequipmentrelations')
-      .select(`*`);
+    const dailyreportequipmentrelations = await prisma.dailyreportequipmentrelations.findMany();
 
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
-    return Response.json({ dailyreportequipmentrelations });
-  } catch (error) {}
+    return apiSuccess({ dailyreportequipmentrelations });
+  } catch (error) {
+    console.error(error);
+    return apiError('Failed to fetch equipment relations', 500);
+  }
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = supabaseServer();
-  const searchParams = request.nextUrl.searchParams;
-  const companyId = searchParams.get('actual');
-
   try {
     const body = await request.json();
-    //console.log('Cuerpo de la solicitud:', body); // Verificar el cuerpo de la solicitud
 
     // Asegúrate de que body es un array
     if (!Array.isArray(body)) {
-      throw new Error('El cuerpo de la solicitud debe ser un array');
+      return apiError('El cuerpo de la solicitud debe ser un array', 400);
     }
 
     // Iterar sobre el array y procesar cada objeto
-    const insertData = body.map(({ daily_report_row_id, equipment_id }) => ({
+    const insertData = body.map(({ daily_report_row_id, equipment_id }: any) => ({
       daily_report_row_id,
       equipment_id,
     }));
 
-    //console.log('Datos a insertar:', insertData);
+    await prisma.dailyreportequipmentrelations.createMany({
+      data: insertData,
+    });
 
-    let { data, error } = await supabase.from('dailyreportequipmentrelations').insert(insertData);
-
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
-
-    return NextResponse.json({ data });
+    return apiSuccess(null, 201);
   } catch (error) {
     console.error('Error:', error);
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return apiError((error as Error).message, 500);
   }
 }
 
 export async function PUT(request: NextRequest) {
-  const supabase = supabaseServer();
-  const searchParams = request.nextUrl.searchParams;
-  const companyId = searchParams.get('actual');
   const { id, ...updateData } = await request.json();
 
   // Verificar que el ID esté presente
   if (!id) {
-    return new Response(JSON.stringify({ error: 'ID is required for updating the daily report equipment relation.' }), {
-      status: 400,
-    });
+    return apiError('ID is required for updating the daily report equipment relation.', 400);
   }
 
   // Verificar que haya datos para actualizar
   if (Object.keys(updateData).length === 0) {
-    return new Response(JSON.stringify({ error: 'No data provided for update.' }), { status: 400 });
+    return apiError('No data provided for update.', 400);
   }
 
   try {
-    // Intentar actualizar la fila en la base de datos
-    const { data, error } = await supabase.from('dailyreportequipmentrelations').update(updateData).eq('id', id);
-
-    // Manejo de errores de Supabase
-    if (error) {
-      console.error('Error from Supabase:', error);
-      return new Response(
-        JSON.stringify({
-          error: error.message || 'Error desconocido',
-          details: error.details || null,
-          hint: error.hint || null,
-        }),
-        { status: 500 }
-      );
-    }
-
-    // Devolver los datos actualizados
-    return new Response(JSON.stringify({ data }), { status: 200 });
-  } catch (error) {
-    // Manejo de errores inesperados
-    console.error('Error inesperado al actualizar la relación de equipo del reporte diario:', error);
-    return new Response(JSON.stringify({ error: (error as any).message || 'Unexpected error occurred.' }), {
-      status: 500,
+    const data = await prisma.dailyreportequipmentrelations.update({
+      where: { id },
+      data: updateData,
     });
+
+    return apiSuccess({ data });
+  } catch (error) {
+    console.error('Error inesperado al actualizar la relación de equipo del reporte diario:', error);
+    return apiError((error as any).message || 'Unexpected error occurred.', 500);
   }
 }
 
 export async function DELETE(request: NextRequest) {
-  const supabase = supabaseServer();
   try {
     const body = await request.json();
     const { daily_report_row_id, equipment } = body;
 
     if (!Array.isArray(equipment)) {
-      throw new Error('El cuerpo de la solicitud debe contener un array de equipos');
+      return apiError('El cuerpo de la solicitud debe contener un array de equipos', 400);
     }
 
     const deletePromises = equipment.map(async (equip: any) => {
       const { equipment_id } = equip;
-      return supabase
-        .from('dailyreportequipmentrelations')
-        .delete()
-        .eq('daily_report_row_id', daily_report_row_id)
-        .eq('equipment_id', equipment_id);
+      return prisma.dailyreportequipmentrelations.deleteMany({
+        where: {
+          daily_report_row_id,
+          equipment_id,
+        },
+      });
     });
 
-    const results = await Promise.all(deletePromises);
+    await Promise.all(deletePromises);
 
-    const errors = results.filter((result) => result.error);
-    if (errors.length > 0) {
-      throw new Error(JSON.stringify(errors.map((error) => error.error)));
-    }
-
-    return NextResponse.json({ data: 'Relaciones eliminadas correctamente' });
+    return apiSuccess({ data: 'Relaciones eliminadas correctamente' });
   } catch (error) {
     console.error('Error al eliminar las relaciones:', error);
-    return NextResponse.json({ error: 'Error al eliminar las relaciones' }, { status: 500 });
+    return apiError('Error al eliminar las relaciones', 500);
   }
 }

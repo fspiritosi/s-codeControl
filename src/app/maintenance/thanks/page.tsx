@@ -1,6 +1,6 @@
 'use client';
-import { buttonVariants } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
+import { buttonVariants } from '@/shared/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/shared/components/ui/card';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle } from 'lucide-react';
 import Image from 'next/image';

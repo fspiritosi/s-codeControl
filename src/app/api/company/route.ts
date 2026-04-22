@@ -1,23 +1,27 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/shared/lib/prisma';
+import { serializeBigInt } from '@/shared/lib/utils';
+import { apiSuccess, apiError } from '@/shared/lib/api-response';
 import { NextRequest } from 'next/server';
+
 export async function GET(request: NextRequest) {
-  const supabase = supabaseServer();
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
-  const user_id = searchParams.get('user');
   try {
-    let { data: companies, error } = await supabase
-      .from('company')
-      .select('*,city(name)')
-      .eq('id', company_id || '');
+    const companies = await prisma.company.findMany({
+      where: { id: company_id || '' },
+      include: { city_rel: { select: { name: true } } },
+    });
 
-    const data = companies;
+    // Map to match previous response shape: city_rel -> city(name)
+    const data = companies.map((c: any) => {
+      const { city_rel, ...rest } = c;
+      return { ...rest, city: city_rel ? { name: city_rel.name } : null };
+    });
 
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
-    return Response.json({ data });
+    return apiSuccess(serializeBigInt(data));
   } catch (error) {
-    console.log(error);
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error('API /api/company error:', errMsg);
+    return apiError(`Failed to fetch companies: ${errMsg}`, 500);
   }
 }

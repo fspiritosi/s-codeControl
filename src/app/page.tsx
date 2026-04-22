@@ -1,10 +1,4 @@
-import Landing from '@/components/landing_components/Landing';
-
-// export const metadata: Metadata = {
-//   title: 'Free Next.js Template for Startup and SaaS',
-//   description: 'This is Home for Startup Nextjs Template',
-//   // other metadata
-// };
+import Landing from '@/modules/landing/features/home/components/Landing';
 
 export default function Home() {
   return <Landing />;

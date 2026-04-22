@@ -1,8 +1,11 @@
-import Create from '@/components/DailyReport/Create';
-import DailyReportDetail from '@/components/DailyReport/DailyReportDetail';
-import ViewDailyReports from '@/components/DailyReport/ViewDailysReports';
-import Viewcomponent from '@/components/ViewComponent';
-function OperationsPage() {
+import Create from '@/modules/operations/features/daily-reports/components/Create';
+import DailyReportDetail from '@/modules/operations/features/daily-reports/components/DailyReportDetail';
+import ViewDailyReports from '@/modules/operations/features/daily-reports/components/ViewDailysReports';
+import Viewcomponent from '@/shared/components/common/ViewComponent';
+import { Suspense } from 'react';
+import DayliReportSkeleton from '@/shared/components/common/Skeletons/DayliReportSkeleton';
+
+async function OperationsPage() {
   const viewData = {
     defaultValue: 'dailyReportsTable',
     tabsValues: [
@@ -34,9 +37,11 @@ function OperationsPage() {
   };
 
   return (
-    <div className="h-full">
-      <Viewcomponent viewData={viewData} />
-    </div>
+    <Suspense fallback={<DayliReportSkeleton />}>
+      <div className="h-full">
+        <Viewcomponent viewData={viewData} />
+      </div>
+    </Suspense>
   );
 }
 

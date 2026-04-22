@@ -1,37 +1,56 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/shared/lib/prisma';
+import { apiSuccess, apiError } from '@/shared/lib/api-response';
 import { NextRequest } from 'next/server';
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = supabaseServer();
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
-  const id = params.id;
 
   try {
-    let { data: documents, error } = await supabase
-      .from('documents_employees')
-      .select(
-        `*,
-    employees:employees(*,contractor_employee(
-      customers(
-        *
-      )
-    )),
-    document_types:document_types(*)
-  `
-      )
-      .not('employees', 'is', null)
-      .eq('employees.company_id', company_id || '')
-      .eq('employees.is_active', true)
-      .eq('document_types.is_active', true)
-      .eq('id', id);
+    const documents = await prisma.documents_employees.findMany({
+      where: {
+        id,
+        employee: {
+          is: { company_id: company_id || '', is_active: true },
+        },
+        document_type: {
+          is: { is_active: true },
+        },
+      },
+      include: {
+        employee: {
+          include: {
+            contractor_employee: {
+              include: {
+                contractor: true,
+              },
+            },
+          },
+        },
+        document_type: true,
+      },
+    });
 
-    const data = documents;
+    // Remap to match previous response shape
+    const data = documents.map((d: any) => {
+      const { employee, document_type, ...rest } = d;
+      return {
+        ...rest,
+        employees: employee
+          ? {
+              ...employee,
+              contractor_employee: employee.contractor_employee.map((ce: any) => ({
+                customers: ce.contractor,
+              })),
+            }
+          : null,
+        document_types: document_type,
+      };
+    });
 
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
-    return Response.json({ data });
+    return apiSuccess({ data });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    return apiError('Failed to fetch employee document', 500);
   }
 }

@@ -1,4 +1,4 @@
-import { ReportAnIssue } from '@/components/ReportAnIssue';
+import { ReportAnIssue } from '@/shared/components/common/ReportAnIssue';
 
 export default function page() {
   //  return <VehicleInspectionForm />;

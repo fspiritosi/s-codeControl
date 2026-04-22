@@ -1,8 +1,8 @@
-import { fetchAllTags, fetchTrainingById } from '@/components/Capacitaciones/actions/actions';
-import TrainingDetail from '@/components/Capacitaciones/trainin-detail-wrapper';
+import { fetchAllTags, fetchTrainingById } from '@/modules/hse/features/training/actions.server';
+import TrainingDetail from '@/modules/hse/features/training/components/trainin-detail-wrapper';
 
-export default async function TrainingDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default async function TrainingDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   try {
     const training = await fetchTrainingById(id);

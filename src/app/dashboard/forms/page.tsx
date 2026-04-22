@@ -1,7 +1,10 @@
-import { fetchAllEquipment, fetchCustomForms } from '@/app/server/GET/actions';
-import ChecklistTable from '@/components/CheckList/ListOfChecklist';
-import Viewcomponent from '@/components/ViewComponent';
-import { ReportModal } from './components/ReportModal';
+import { fetchAllEquipment } from '@/modules/equipment/features/list/actions.server';
+import { fetchCustomForms } from '@/modules/forms/features/custom-forms/actions.server';
+import ChecklistTable from '@/modules/hse/features/checklist/components/ListOfChecklist';
+import Viewcomponent from '@/shared/components/common/ViewComponent';
+import { ReportModal } from '@/modules/forms/features/custom-forms/components/ReportModal';
+import { Suspense } from 'react';
+import PageTableSkeleton from '@/shared/components/common/Skeletons/PageTableSkeleton';
 async function MantenimientoPage() {
   const checklists = await fetchCustomForms();
   const vehicles = await fetchAllEquipment();
@@ -18,8 +21,8 @@ async function MantenimientoPage() {
           title: 'Tipos de checklist',
           description: 'Aqui encontraras los checkList de mantenimiento',
           buttonActioRestricted: ['Invitado'],
-          buttonAction: <ReportModal vehicles={vehicles} checklists={checklists} />,
-          component: <ChecklistTable checklists={checklists} />,
+          buttonAction: <ReportModal vehicles={vehicles as unknown as VehicleWithBrand[]} checklists={checklists as unknown as CheckListWithAnswer[]} />,
+          component: <ChecklistTable checklists={checklists as unknown as CheckListWithAnswer[]} />,
         },
       },
       // {
@@ -48,9 +51,11 @@ async function MantenimientoPage() {
   };
 
   return (
-    <div className="h-full">
-      <Viewcomponent viewData={viewData} />
-    </div>
+    <Suspense fallback={<PageTableSkeleton />}>
+      <div className="h-full">
+        <Viewcomponent viewData={viewData} />
+      </div>
+    </Suspense>
   );
 }
 

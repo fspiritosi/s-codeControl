@@ -1,22 +1,33 @@
 'use client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { handleSupabaseError } from '@/lib/errorHandler';
-import { supabaseBrowser } from '@/lib/supabase/browser';
-import { validarCUIL } from '@/lib/utils';
+import { Button } from '@/shared/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/shared/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
+import { Input } from '@/shared/components/ui/input';
+import { handleSupabaseError } from '@/shared/lib/errorHandler';
+// TODO: Phase 8+ — Remove supabase import once auth calls (.signOut, .signInWithPassword) are replaced
+import { supabaseBrowser } from '@/shared/lib/supabase/browser';
+import { fetchProfileBySupabaseUserId } from '@/shared/actions/auth';
+import { fetchEmployeeByCuil } from '@/shared/actions/catalogs';
+import { validarCUIL } from '@/shared/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import cookies from 'js-cookie';
 import { ArrowLeft, Clipboard } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-export default function CodeControlLogin() {
+export default function CodeControlLoginPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Cargando...</div>}>
+      <CodeControlLogin />
+    </Suspense>
+  );
+}
+
+function CodeControlLogin() {
   const [step, setStep] = useState('selection');
   const [loginType, setLoginType] = useState<'empleado' | 'invitado' | ''>('');
   const supabase = supabaseBrowser();
@@ -86,17 +97,14 @@ export default function CodeControlLogin() {
           if (error) {
             throw new Error(handleSupabaseError(error.message));
           }
-          const { data: empleado } = await supabase.from("profile").select().eq("id", data.user.id);
-          cookies.set('empleado_name', `${empleado?.[0].fullname || ''}`, { expires: 1 / 24 });
+          const empleado = await fetchProfileBySupabaseUserId(data.user.id);
+          cookies.set('empleado_name', `${empleado?.[0]?.fullname || ''}`, { expires: 1 / 24 });
           router.push(`/maintenance/${equipment_id}`);
         } else {
-          const { data, error } = await supabase
-            .from('employees')
-            .select()
-            .eq('cuil', cuil || '');
+          const employeeData = await fetchEmployeeByCuil(cuil || '');
 
-          if (data && data.length > 0) {
-            const empleado = data[0];
+          if (employeeData && employeeData.length > 0) {
+            const empleado = employeeData[0];
             //Setear una cookie con el id del empleado que se borre en 1 hora
             cookies.set('empleado_id', empleado.id, { expires: 1 / 24 });
             cookies.set('empleado_name', `${empleado.firstname} ${empleado.lastname}`, { expires: 1 / 24 });

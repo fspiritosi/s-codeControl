@@ -1,0 +1,441 @@
+'use server';
+import { prisma } from '@/shared/lib/prisma';
+import { storageServer } from '@/shared/lib/storage-server';
+import {
+  filterDocumentTypesForEmployee,
+  filterDocumentTypesForEquipment,
+  type DocumentCondition,
+} from '@/shared/lib/documentConditions';
+
+export const insertDocumentsEmployees = async (docs: any[]) => {
+  try {
+    const data = await prisma.documents_employees.createMany({ data: docs });
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error inserting documents employees:', error);
+    return { data: null, error: String(error) };
+  }
+};
+
+export const insertDocumentsEquipment = async (docs: any[]) => {
+  try {
+    const data = await prisma.documents_equipment.createMany({ data: docs });
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error inserting documents equipment:', error);
+    return { data: null, error: String(error) };
+  }
+};
+
+export const insertSingleDocumentEmployee = async (doc: Record<string, unknown>) => {
+  try {
+    const data = await prisma.documents_employees.create({ data: doc as any });
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error inserting single document employee:', error);
+    return { data: null, error: String(error) };
+  }
+};
+
+export const insertSingleDocumentEquipment = async (doc: Record<string, unknown>) => {
+  try {
+    const data = await prisma.documents_equipment.create({ data: doc as any });
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error inserting single document equipment:', error);
+    return { data: null, error: String(error) };
+  }
+};
+
+export const insertMultipleDocuments = async (
+  tableName: 'documents_employees' | 'documents_equipment',
+  docs: Record<string, unknown>[]
+) => {
+  try {
+    if (tableName === 'documents_employees') {
+      const data = await prisma.documents_employees.createMany({ data: docs as any });
+      return { data, error: null };
+    } else {
+      const data = await prisma.documents_equipment.createMany({ data: docs as any });
+      return { data, error: null };
+    }
+  } catch (error) {
+    console.error('Error inserting multiple documents:', error);
+    return { data: null, error: String(error) };
+  }
+};
+
+export const insertDocumentAlerts = async (
+  tableName: 'documents_employees' | 'documents_equipment',
+  alerts: Record<string, unknown>[]
+) => {
+  try {
+    if (tableName === 'documents_employees') {
+      const data = await prisma.documents_employees.createMany({ data: alerts as any });
+      return { data, error: null };
+    } else {
+      const data = await prisma.documents_equipment.createMany({ data: alerts as any });
+      return { data, error: null };
+    }
+  } catch (error) {
+    console.error('Error inserting document alerts:', error);
+    return { data: null, error: String(error) };
+  }
+};
+
+// Insert document alerts (supports documents_company too)
+export const insertDocumentAlertsGeneric = async (
+  tableName: 'documents_employees' | 'documents_equipment' | 'documents_company',
+  alerts: Record<string, unknown>[]
+) => {
+  try {
+    if (tableName === 'documents_employees') {
+      const data = await prisma.documents_employees.createMany({ data: alerts as any });
+      return { data, error: null };
+    } else if (tableName === 'documents_equipment') {
+      const data = await prisma.documents_equipment.createMany({ data: alerts as any });
+      return { data, error: null };
+    } else {
+      const data = await prisma.documents_company.createMany({ data: alerts as any });
+      return { data, error: null };
+    }
+  } catch (error) {
+    console.error('Error inserting document alerts:', error);
+    return { data: null, error: String(error) };
+  }
+};
+
+// Fetch document alerts (pending, with null document_path) by type and applies list
+export const fetchDocumentAlertsByTypeAndApplies = async (
+  tableName: 'documents_employees' | 'documents_equipment' | 'documents_company',
+  documentTypeId: string,
+  appliesIds: string[]
+) => {
+  try {
+    const where = {
+      id_document_types: documentTypeId,
+      applies: { in: appliesIds },
+    };
+    if (tableName === 'documents_employees') {
+      const data = await prisma.documents_employees.findMany({ where, select: { id: true, applies: true } });
+      return { data, error: null };
+    } else if (tableName === 'documents_equipment') {
+      const data = await prisma.documents_equipment.findMany({ where, select: { id: true, applies: true } });
+      return { data, error: null };
+    } else {
+      const data = await prisma.documents_company.findMany({ where, select: { id: true, applies: true } });
+      return { data, error: null };
+    }
+  } catch (error) {
+    console.error('Error fetching document alerts:', error);
+    return { data: null, error: String(error) };
+  }
+};
+
+// Fetch pending alerts (document_path is null) by type and applies list
+export const fetchPendingAlertsByTypeAndApplies = async (
+  tableName: 'documents_employees' | 'documents_equipment' | 'documents_company',
+  documentTypeId: string,
+  appliesIds: string[]
+) => {
+  try {
+    const where = {
+      id_document_types: documentTypeId,
+      applies: { in: appliesIds },
+      document_path: null as any,
+    };
+    if (tableName === 'documents_employees') {
+      const data = await prisma.documents_employees.findMany({ where, select: { id: true } });
+      return { data, error: null };
+    } else if (tableName === 'documents_equipment') {
+      const data = await prisma.documents_equipment.findMany({ where, select: { id: true } });
+      return { data, error: null };
+    } else {
+      const data = await prisma.documents_company.findMany({ where, select: { id: true } });
+      return { data, error: null };
+    }
+  } catch (error) {
+    console.error('Error fetching pending alerts:', error);
+    return { data: null, error: String(error) };
+  }
+};
+
+// Delete document alerts by IDs
+export const deleteDocumentAlertsByIds = async (
+  tableName: 'documents_employees' | 'documents_equipment' | 'documents_company',
+  ids: string[]
+) => {
+  try {
+    if (tableName === 'documents_employees') {
+      await prisma.documents_employees.deleteMany({ where: { id: { in: ids } } });
+    } else if (tableName === 'documents_equipment') {
+      await prisma.documents_equipment.deleteMany({ where: { id: { in: ids } } });
+    } else {
+      await prisma.documents_company.deleteMany({ where: { id: { in: ids } } });
+    }
+    return { error: null };
+  } catch (error) {
+    console.error('Error deleting document alerts:', error);
+    return { error: String(error) };
+  }
+};
+
+// Delete all pending alerts (document_path is null) by document type
+export const deleteAllPendingAlertsByType = async (
+  tableName: 'documents_employees' | 'documents_equipment' | 'documents_company',
+  documentTypeId: string
+) => {
+  try {
+    const where = { id_document_types: documentTypeId, document_path: null as any };
+    if (tableName === 'documents_employees') {
+      await prisma.documents_employees.deleteMany({ where });
+    } else if (tableName === 'documents_equipment') {
+      await prisma.documents_equipment.deleteMany({ where });
+    } else {
+      await prisma.documents_company.deleteMany({ where });
+    }
+    return { error: null };
+  } catch (error) {
+    console.error('Error deleting pending alerts:', error);
+    return { error: String(error) };
+  }
+};
+
+// Delete pending alerts by IDs (only those with null document_path)
+export const deletePendingAlertsByIds = async (
+  tableName: 'documents_employees' | 'documents_equipment' | 'documents_company',
+  ids: string[]
+) => {
+  try {
+    const where = { id: { in: ids }, document_path: null as any };
+    if (tableName === 'documents_employees') {
+      await prisma.documents_employees.deleteMany({ where });
+    } else if (tableName === 'documents_equipment') {
+      await prisma.documents_equipment.deleteMany({ where });
+    } else {
+      await prisma.documents_company.deleteMany({ where });
+    }
+    return { error: null };
+  } catch (error) {
+    console.error('Error deleting pending alerts by ids:', error);
+    return { error: String(error) };
+  }
+};
+
+export const removeDocumentFile = async (bucket: string, paths: string[]) => {
+  try {
+    await storageServer.remove(bucket as any, paths);
+    return { error: null };
+  } catch (error) {
+    console.error('Error removing document file:', error);
+    return { error: String(error) };
+  }
+};
+
+export const fetchDocumentTypesByAppliesForClient = async (
+  applies: string,
+  companyId: string,
+  multiresource?: boolean
+) => {
+  try {
+    const where: any = {
+      applies,
+      is_active: true,
+      OR: [{ company_id: companyId }, { company_id: null }],
+    };
+    if (multiresource !== undefined) {
+      where.multiresource = multiresource;
+    }
+    const data = await prisma.document_types.findMany({ where });
+    return data;
+  } catch (error) {
+    console.error('Error fetching document types by applies:', error);
+    return [];
+  }
+};
+
+export const selectDocumentsByPath = async (
+  tableName: 'documents_employees' | 'documents_equipment' | 'documents_company',
+  documentPath: string
+) => {
+  try {
+    if (tableName === 'documents_employees') {
+      return await prisma.documents_employees.findMany({ where: { document_path: documentPath } });
+    } else if (tableName === 'documents_equipment') {
+      return await prisma.documents_equipment.findMany({ where: { document_path: documentPath } });
+    } else {
+      return await prisma.documents_company.findMany({ where: { document_path: documentPath } });
+    }
+  } catch (error) {
+    console.error('Error selecting documents by path:', error);
+    return [];
+  }
+};
+
+/**
+ * Obtiene tipos de documento filtrados por condiciones para un empleado específico.
+ * Evalúa condiciones condicionales y devuelve solo los tipos que aplican.
+ */
+export const fetchDocumentTypesForEmployee = async (
+  employeeId: string,
+  companyId: string,
+  multiresource?: boolean
+) => {
+  try {
+    // Obtener datos del empleado necesarios para evaluar condiciones
+    const employee = await prisma.employees.findUnique({
+      where: { id: employeeId },
+      select: {
+        gender: true,
+        type_of_contract: true,
+        hierarchical_position: true,
+        category_id: true,
+        covenants_id: true,
+        guild_id: true,
+      },
+    });
+    if (!employee) return [];
+
+    const where: any = {
+      applies: 'Persona',
+      is_active: true,
+      OR: [{ company_id: companyId }, { company_id: null }],
+    };
+    if (multiresource !== undefined) {
+      where.multiresource = multiresource;
+    }
+    const docTypes = await prisma.document_types.findMany({ where });
+
+    return filterDocumentTypesForEmployee(docTypes, employee as Record<string, any>, (dt) => ({
+      conditions: (dt.conditions ?? []) as unknown as DocumentCondition[],
+      isConditional: dt.special,
+    }));
+  } catch (error) {
+    console.error('Error fetching document types for employee:', error);
+    return [];
+  }
+};
+
+/**
+ * Obtiene tipos de documento filtrados por condiciones para un equipo específico.
+ * Evalúa condiciones condicionales y devuelve solo los tipos que aplican.
+ */
+export const fetchDocumentTypesForEquipment = async (
+  vehicleId: string,
+  companyId: string,
+  multiresource?: boolean
+) => {
+  try {
+    const vehicle = await prisma.vehicles.findUnique({
+      where: { id: vehicleId },
+      select: {
+        brand: true,
+        type_of_vehicle: true,
+      },
+    });
+    if (!vehicle) return [];
+
+    const where: any = {
+      applies: 'Equipos',
+      is_active: true,
+      OR: [{ company_id: companyId }, { company_id: null }],
+    };
+    if (multiresource !== undefined) {
+      where.multiresource = multiresource;
+    }
+    const docTypes = await prisma.document_types.findMany({ where });
+
+    return filterDocumentTypesForEquipment(docTypes, vehicle as Record<string, any>, (dt) => ({
+      conditions: (dt.conditions ?? []) as unknown as DocumentCondition[],
+      isConditional: dt.special,
+    }));
+  } catch (error) {
+    console.error('Error fetching document types for equipment:', error);
+    return [];
+  }
+};
+
+export const findExistingDocument = async (
+  tableName: 'documents_employees' | 'documents_equipment',
+  appliesId: string,
+  documentTypeId: string,
+  period?: string | null
+): Promise<{ data: { id: string; document_path: string | null } | null; error: string | null }> => {
+  try {
+    const where: Record<string, unknown> = {
+      applies: appliesId,
+      id_document_types: documentTypeId,
+    };
+    if (period !== undefined && period !== null) {
+      where.period = period;
+    }
+
+    const model =
+      tableName === 'documents_employees'
+        ? prisma.documents_employees
+        : prisma.documents_equipment;
+
+    const rows = await (model as any).findMany({
+      where,
+      select: { id: true, document_path: true, created_at: true },
+      orderBy: { created_at: 'desc' },
+    });
+
+    if (rows.length === 0) return { data: null, error: null };
+
+    const winner = rows.find((r: any) => r.document_path !== null) ?? rows[0];
+    return { data: { id: winner.id, document_path: winner.document_path }, error: null };
+  } catch (error) {
+    console.error('Error finding existing document:', error);
+    return { data: null, error: String(error) };
+  }
+};
+
+export const fetchExistingDocumentTypes = async (
+  tableName: 'documents_employees' | 'documents_equipment',
+  appliesId: string
+): Promise<{ data: string[]; error: string | null }> => {
+  try {
+    const model =
+      tableName === 'documents_employees'
+        ? prisma.documents_employees
+        : prisma.documents_equipment;
+
+    const rows = await (model as any).findMany({
+      where: { applies: appliesId },
+      select: { id_document_types: true },
+    });
+
+    const types = [
+      ...new Set(
+        rows.map((r: any) => r.id_document_types).filter((t: any): t is string => t !== null)
+      ),
+    ] as string[];
+
+    return { data: types, error: null };
+  } catch (error) {
+    console.error('Error fetching existing document types:', error);
+    return { data: [], error: String(error) };
+  }
+};
+
+export const fetchRepairSolicitudesByArrayAndType = async (
+  vehiclesIds: string[],
+  repairTypeId: string,
+  states: string[]
+) => {
+  try {
+    const data = await prisma.repair_solicitudes.findMany({
+      where: {
+        equipment_id: { in: vehiclesIds },
+        reparation_type: repairTypeId,
+        state: { in: states as any },
+      },
+      include: { equipment: true },
+    });
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching repair solicitudes:', error);
+    return [];
+  }
+};

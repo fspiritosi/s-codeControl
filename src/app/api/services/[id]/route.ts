@@ -1,25 +1,22 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { prisma } from '@/shared/lib/prisma';
+import { apiSuccess, apiError } from '@/shared/lib/api-response';
 import { NextRequest } from 'next/server';
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = supabaseServer();
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const searchParams = request.nextUrl.searchParams;
   const company_id = searchParams.get('actual');
-  const user_id = searchParams.get('user');
-  const id = params.id;
-  // console.log(id); //AQUI ME QUEDE
 
   try {
-    let { data: service, error } = await supabase
-      .from('service_items')
-      .select(`*`)
-      .eq('company_id', company_id || '')
-      .eq('id', id);
+    const service = await prisma.service_items.findMany({
+      where: {
+        company_id: company_id || '',
+        id,
+      },
+    });
 
-    if (error) {
-      throw new Error(JSON.stringify(error));
-    }
-    return Response.json({ service });
+    return apiSuccess({ service });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    return apiError('Failed to fetch service', 500);
   }
 }

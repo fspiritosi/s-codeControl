@@ -1,11 +1,11 @@
-export const createFilterOptions = <T extends any>(
+import type { DataTableFilterOption } from '@/shared/components/data-table/types';
+
+export const createFilterOptions = <T,>(
   data: T[] | undefined,
   accessor: (item: T) => any,
-  icon?: React.ComponentType<{ className?: string }>
-) => {
+): DataTableFilterOption[] => {
   return Array.from(new Set(data?.map(accessor).filter(Boolean))).map((value) => ({
     label: typeof value === 'string' ? value.replaceAll('_', ' ') : value || '',
     value: value || '',
-    icon,
   }));
 };

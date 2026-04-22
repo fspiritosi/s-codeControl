@@ -1,52 +1,51 @@
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardDescription, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabaseServer } from '@/lib/supabase/server';
+import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/alert';
+import { Card, CardDescription, CardTitle } from '@/shared/components/ui/card';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import { prisma } from '@/shared/lib/prisma';
+import { fetchCurrentUser } from '@/shared/actions/auth';
 
-import { Checkbox } from '@/components/ui/checkbox';
-import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Textarea } from '@/shared/components/ui/textarea';
+import { cn } from '@/shared/lib/utils';
 import { InfoCircledIcon } from '@radix-ui/react-icons';
-import { revalidatePath } from 'next/cache';
-import CityInput from '../new/components/CityInput';
-import EditCompanyButton from '../new/components/EditCompanyButton';
-export default async function companyRegister({ params }: { params: { id: string } }) {
-  const supabase = supabaseServer();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+import { redirect } from 'next/navigation';
+import CityInput from '@/modules/company/features/create/components/CityInput';
+import EditCompanyButton from '@/modules/company/features/create/components/EditCompanyButton';
+export default async function companyRegister({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const user = await fetchCurrentUser();
+  if (!user?.id) redirect('/login');
 
-  const { data } = await supabase
-    .from('profile')
-    .select('*')
-    .eq('email', session?.user.email || '');
+  const Companies = await prisma.company.findMany({
+    where: { owner_id: user.id },
+  });
 
-  const { data: Companies, error } = await supabase
-    .from('company')
-    .select(`*`)
-    .eq('owner_id', data?.[0]?.id || '');
+  const companyData = await prisma.company.findFirst({
+    where: { owner_id: user.id, id },
+    include: {
+      city_rel: true,
+      province_rel: true,
+    },
+  });
 
-  const { data: companyData, error: companyError } = await supabase
-    .from('company')
-    .select('*,city(*),province_id(*)')
-    .eq('owner_id', data?.[0]?.id || '')
-    .eq('id', params.id)
-    .single();
+  // Reshape to match old Supabase shape
+  const companyDataShaped = companyData ? {
+    ...companyData,
+    city: companyData.city_rel,
+    province_id: companyData.province_rel,
+  } : null;
 
-  let { data: share_company_users, error: sharedError } = await supabase
-    .from('share_company_users')
-    .select(`*`)
-    .eq('profile_id', data?.[0]?.id || '');
-
-  revalidatePath('/dashboard/company/new');
+  const share_company_users = await prisma.share_company_users.findMany({
+    where: { profile_id: user.id },
+  });
 
   const showAlert = !Companies?.[0] && !share_company_users?.[0];
 
-  let { data: provinces, error: provincesError } = await supabase.from('provinces').select('*');
+  const provinces = await prisma.provinces.findMany();
 
-  let { data: industry_type, error: industryError } = await supabase.from('industry_type').select('*');
+  const industry_type = await prisma.industry_type.findMany();
 
   return (
     <section className={cn('md:mx-7')}>
@@ -69,8 +68,8 @@ export default async function companyRegister({ params }: { params: { id: string
               <div>
                 <Label htmlFor="company_name">Nombre de la compañía</Label>
                 <Input
-                  defaultValue={companyData?.company_name}
-                  value={companyData?.company_name}
+                  defaultValue={companyDataShaped?.company_name}
+                  value={companyDataShaped?.company_name}
                   id="company_name"
                   name="company_name"
                   className="max-w-[350px] w-[300px]"
@@ -81,7 +80,7 @@ export default async function companyRegister({ params }: { params: { id: string
               <div>
                 <Label htmlFor="company_cuit">CUIT de la compañía</Label>
                 <Input
-                  defaultValue={companyData?.company_cuit}
+                  defaultValue={companyDataShaped?.company_cuit}
                   name="company_cuit"
                   id="company_cuit"
                   className="max-w-[350px] w-[300px]"
@@ -92,7 +91,7 @@ export default async function companyRegister({ params }: { params: { id: string
               <div>
                 <Label htmlFor="website">Sitio Web</Label>
                 <Input
-                  defaultValue={companyData?.website || ''}
+                  defaultValue={companyDataShaped?.website || ''}
                   id="website"
                   name="website"
                   className="max-w-[350px] w-[300px]"
@@ -105,7 +104,7 @@ export default async function companyRegister({ params }: { params: { id: string
               <div>
                 <Label htmlFor="contact_email">Email</Label>
                 <Input
-                  defaultValue={companyData?.contact_email}
+                  defaultValue={companyDataShaped?.contact_email}
                   id="contact_email"
                   name="contact_email"
                   className="max-w-[350px] w-[300px]"
@@ -116,7 +115,7 @@ export default async function companyRegister({ params }: { params: { id: string
               <div>
                 <Label htmlFor="contact_phone">Número de teléfono</Label>
                 <Input
-                  defaultValue={companyData?.contact_phone}
+                  defaultValue={companyDataShaped?.contact_phone}
                   id="contact_phone"
                   name="contact_phone"
                   className="max-w-[350px] w-[300px]"
@@ -127,7 +126,7 @@ export default async function companyRegister({ params }: { params: { id: string
               <div>
                 <Label htmlFor="address">Dirección</Label>
                 <Input
-                  defaultValue={companyData?.address}
+                  defaultValue={companyDataShaped?.address}
                   id="address"
                   name="address"
                   className="max-w-[350px] w-[300px]"
@@ -137,7 +136,7 @@ export default async function companyRegister({ params }: { params: { id: string
               </div>
               <div>
                 <Label htmlFor="country">Seleccione un país</Label>
-                <Select defaultValue={companyData?.country} name="country">
+                <Select defaultValue={companyDataShaped?.country} name="country">
                   <SelectTrigger id="country" name="country" className="max-w-[350px]  w-[300px]">
                     <SelectValue placeholder="Seleccionar país" />
                   </SelectTrigger>
@@ -150,12 +149,12 @@ export default async function companyRegister({ params }: { params: { id: string
               </div>
               <CityInput
                 provinces={provinces}
-                defaultProvince={companyData?.province_id}
-                defaultCity={companyData?.city}
+                defaultProvince={companyDataShaped?.province_id}
+                defaultCity={companyDataShaped?.city}
               />
               <div>
                 <Label htmlFor="industry">Seleccione una Industria</Label>
-                <Select defaultValue={companyData?.industry} name="industry">
+                <Select defaultValue={companyDataShaped?.industry} name="industry">
                   <SelectTrigger id="industry" name="industry" className="max-w-[350px] w-[300px]">
                     <SelectValue id="industry" placeholder="Seleccionar Industria" />
                   </SelectTrigger>
@@ -174,7 +173,7 @@ export default async function companyRegister({ params }: { params: { id: string
                 <Label htmlFor="description">Descripción</Label>
                 <Textarea
                   // disabled={!formEnabledProp}
-                  defaultValue={companyData?.description}
+                  defaultValue={companyDataShaped?.description}
                   id="description"
                   name="description"
                   className="max-w-[350px] w-[300px]"
@@ -188,7 +187,7 @@ export default async function companyRegister({ params }: { params: { id: string
                 <Checkbox id="by_defect" name="by_defect" />
               </div>
             </div>
-            <EditCompanyButton defaultImage={companyData?.company_logo} />
+            <EditCompanyButton defaultImage={companyDataShaped?.company_logo} />
           </form>
         </div>
       </Card>
