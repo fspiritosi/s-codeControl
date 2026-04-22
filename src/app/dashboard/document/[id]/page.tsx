@@ -14,6 +14,7 @@ import { formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { format as formatDateFn } from 'date-fns';
 import { Suspense } from 'react';
+import { notFound } from 'next/navigation';
 import DownloadButton from '@/modules/documents/features/list/components/DownloadButton';
 import { getRole } from '@/shared/lib/utils/getRole';
 import { getDocumentEmployeesById, getDocumentEquipmentById } from '@/modules/documents/features/list/actions.server';
@@ -49,17 +50,18 @@ export default async function page({
     resource = 'vehicle';
   }
 
+  if (!document || document.length === 0) {
+    notFound();
+  }
 
   documentType = document?.[0]?.document_types?.id;
 
-  //const resorceId = document?.[0]?.applies?.id;
-  // const { data } = await supabase.storage.from('document_files').list(resourceType, {
-  //   search: `document-${documentType ?? ''}-${resorceId ?? ''}`,
-  // });
+  const documentPathValue = document?.[0]?.document_path;
+  const publicUrl = documentPathValue
+    ? await storageServer.getPublicUrl('document_files', documentPathValue)
+    : '';
 
-  const publicUrl = await storageServer.getPublicUrl('document_files', document?.[0]?.document_path);
-
-  documentName = document?.[0]?.document_path;
+  documentName = documentPathValue ?? '';
   documentUrl = publicUrl;
   documents_employees = document;
   
@@ -499,7 +501,10 @@ export default async function page({
                           <TableCell>
                             <CardDescription>
                               {documents_employees?.[0]?.document_types?.explired
-                                ? 'Vence el ' + formatDateFn(new Date(documents_employees?.[0]?.validity), 'dd/MM/yyyy')
+                                ? documents_employees?.[0]?.validity
+                                  ? 'Vence el ' +
+                                    formatDateFn(new Date(documents_employees[0].validity), 'dd/MM/yyyy')
+                                  : 'Sin fecha de vencimiento'
                                 : 'No tiene vencimiento'}
                             </CardDescription>
                           </TableCell>
