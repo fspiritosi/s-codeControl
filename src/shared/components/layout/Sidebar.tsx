@@ -53,9 +53,9 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
               isActive ? 'ml-0' : 'ml-4'
             )}
           >
-            <div className={cn('flex items-center overflow-hidden', link.name === activeLink ? 'text-primary' : 'text-foreground')}>
-              <span className="relative">{link.icon}</span>
-              <span className="ml-6 relative block">{link.name}</span>
+            <div className={cn('flex items-center overflow-hidden min-w-0', link.name === activeLink ? 'text-primary' : 'text-foreground')}>
+              <span className="relative shrink-0">{link.icon}</span>
+              <span className="ml-3 relative block text-sm truncate">{link.name}</span>
             </div>
           </Link>
         ))}
