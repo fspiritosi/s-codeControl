@@ -1,5 +1,6 @@
 import { prisma } from '@/shared/lib/prisma';
 import { apiSuccess, apiError } from '@/shared/lib/api-response';
+import { serializeBigInt } from '@/shared/lib/utils';
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return { ...rest, city: city_rel ? { name: city_rel.name } : null };
     });
 
-    return apiSuccess({ data });
+    return apiSuccess({ data: serializeBigInt(data) });
   } catch (error) {
     console.error(error);
     return apiError('Failed to fetch company', 500);

@@ -1,5 +1,6 @@
 import { prisma } from '@/shared/lib/prisma';
 import { apiSuccess, apiError } from '@/shared/lib/api-response';
+import { serializeBigInt } from '@/shared/lib/utils';
 import { NextRequest } from 'next/server';
 
 type response = {
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       };
     }
 
-    return apiSuccess({ response });
+    return apiSuccess({ response: serializeBigInt(response) });
   } catch (error) {
     console.error(error);
     return apiError('Failed to fetch document', 500);

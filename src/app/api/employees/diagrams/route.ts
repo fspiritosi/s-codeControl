@@ -1,5 +1,6 @@
 import { prisma } from '@/shared/lib/prisma';
 import { apiSuccess, apiError } from '@/shared/lib/api-response';
+import { serializeBigInt } from '@/shared/lib/utils';
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
         return { ...rest, diagram_type: diagram_type_rel };
       });
 
-      return apiSuccess({ data });
+      return apiSuccess({ data: serializeBigInt(data) });
     } catch (error) {
       console.error(error);
       return apiError('Failed to fetch employee diagrams', 500);
