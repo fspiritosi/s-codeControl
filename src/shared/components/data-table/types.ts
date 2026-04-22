@@ -1,4 +1,4 @@
-import type { Column, ColumnDef, Row, Table } from '@tanstack/react-table';
+import type { Column, ColumnDef, ColumnFiltersState, Row, Table } from '@tanstack/react-table';
 import type { LucideIcon } from 'lucide-react';
 
 // ============================================================================
@@ -127,6 +127,7 @@ export interface DataTableProps<TData, TValue = unknown> {
   searchPlaceholder?: string;
   searchColumn?: string;
   showSearch?: boolean;
+  initialColumnFilters?: ColumnFiltersState;
 
   // --- Columnas ---
   showColumnToggle?: boolean;

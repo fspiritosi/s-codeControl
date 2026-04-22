@@ -266,6 +266,7 @@ function DataTableClientSide<TData extends Record<string, unknown>, TValue = unk
   toolbarActions,
   showSearch = false,
   initialColumnVisibility = {},
+  initialColumnFilters,
   tableId,
   showFilterToggle = false,
   initialFilterVisibility = {},
@@ -285,7 +286,9 @@ function DataTableClientSide<TData extends Record<string, unknown>, TValue = unk
     pageSize: 10,
   });
   const [clientSorting, setClientSorting] = React.useState<SortingState>([]);
-  const [clientColumnFilters, setClientColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [clientColumnFilters, setClientColumnFilters] = React.useState<ColumnFiltersState>(
+    initialColumnFilters ?? []
+  );
 
   const table = useReactTable({
     data,

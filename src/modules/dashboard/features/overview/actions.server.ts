@@ -361,3 +361,61 @@ export async function getDashboardSupplierCounts(): Promise<SupplierCounts> {
   if (!companyId) return EMPTY_SUPPLIERS;
   return getCachedSupplierCounts(companyId)();
 }
+
+// ============================================================
+// Maintenance Dashboard Counts
+// ============================================================
+
+export type MaintenanceCounts = {
+  pending: number;
+  equipmentInRepair: number;
+  scheduled: number;
+  waitingParts: number;
+};
+
+const EMPTY_MAINTENANCE: MaintenanceCounts = {
+  pending: 0,
+  equipmentInRepair: 0,
+  scheduled: 0,
+  waitingParts: 0,
+};
+
+async function fetchMaintenanceDashboardCounts(companyId: string): Promise<MaintenanceCounts> {
+  const equipmentScope = { equipment: { is: { company_id: companyId } } };
+
+  const [pending, equipmentInRepairGroups, scheduled, waitingParts] = await Promise.all([
+    prisma.repair_solicitudes.count({
+      where: { ...equipmentScope, state: 'Pendiente' },
+    }),
+    prisma.repair_solicitudes.groupBy({
+      by: ['equipment_id'],
+      where: { ...equipmentScope, state: 'En_reparacion' },
+    }),
+    prisma.repair_solicitudes.count({
+      where: { ...equipmentScope, state: 'Programado' },
+    }),
+    prisma.repair_solicitudes.count({
+      where: { ...equipmentScope, state: 'Esperando_repuestos' },
+    }),
+  ]);
+
+  return {
+    pending,
+    equipmentInRepair: equipmentInRepairGroups.length,
+    scheduled,
+    waitingParts,
+  };
+}
+
+const getCachedMaintenanceCounts = (companyId: string) =>
+  unstable_cache(
+    () => fetchMaintenanceDashboardCounts(companyId),
+    [`dashboard-maintenance-${companyId}`],
+    { revalidate: 60, tags: [`dashboard-maintenance-${companyId}`] }
+  );
+
+export async function getDashboardMaintenanceCounts(): Promise<MaintenanceCounts> {
+  const { companyId } = await getActionContext();
+  if (!companyId) return EMPTY_MAINTENANCE;
+  return getCachedMaintenanceCounts(companyId)();
+}

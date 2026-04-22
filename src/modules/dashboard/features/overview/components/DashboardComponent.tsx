@@ -1,4 +1,7 @@
 import CardsGrid, { CardsGridSkeleton } from '@/modules/dashboard/features/overview/components/CardsGrid';
+import MaintenanceCards, {
+  MaintenanceCardsSkeleton,
+} from '@/modules/dashboard/features/overview/components/MaintenanceCards';
 import PurchasingCards, {
   PurchasingCardsSkeleton,
 } from '@/modules/dashboard/features/overview/components/PurchasingCards';
@@ -17,6 +20,13 @@ export default async function DashboardComponent() {
         <h3 className="text-lg font-semibold mb-3">Empleados y Equipos</h3>
         <Suspense fallback={<CardsGridSkeleton />}>
           <CardsGrid />
+        </Suspense>
+      </div>
+
+      <div>
+        <h3 className="text-lg font-semibold mb-3">Mantenimiento</h3>
+        <Suspense fallback={<MaintenanceCardsSkeleton />}>
+          <MaintenanceCards />
         </Suspense>
       </div>
 
