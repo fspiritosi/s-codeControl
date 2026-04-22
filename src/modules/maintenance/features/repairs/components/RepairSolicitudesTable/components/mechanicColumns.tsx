@@ -14,7 +14,6 @@ import { Separator } from '@/shared/components/ui/separator';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { handleSupabaseError } from '@/shared/lib/errorHandler';
 import { storage } from '@/shared/lib/storage';
-import { updateVehicleById } from '@/modules/equipment/features/create/actions.server';
 import { fetchRepairSolicitudesByEquipment, updateRepairSolicitude } from '@/modules/maintenance/features/repairs/actions.server';
 import { cn } from '@/shared/lib/utils';
 import { formatDocumentTypeName } from '@/shared/lib/utils/utils';
@@ -307,59 +306,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
             throw new Error(handleSupabaseError(error));
           }
 
-          const pendingRepairs = repairSolicitudes
-            .filter((e: any) => !endingStates.includes(e.state))
-            .filter((e: any) => e.id !== row.original.id);
-
-
-          let newStatus = '';
-
-          // Si la reparación actualizada es un estado de cierre
-          if (endingStates.includes(status)) {
-            // Si no hay más reparaciones pendientes, el vehículo está operativo
-            if (pendingRepairs.length === 0) {
-              newStatus = 'operativo';
-            } else {
-              // Si hay otras reparaciones pendientes, calcular el estado basado en ellas
-              if (pendingRepairs.some((e: any) => e.state === 'En reparación')) {
-                //   '2 en reparacion (Es un estado de cierre y hay más reparaciones pendientes (en estado de repuestos o en reparacion))'
-                // );
-                newStatus = 'en reparación';
-              } else if (pendingRepairs.some((e: any) => e.reparation_type.criticity === 'Alta')) {
-                newStatus = 'no operativo';
-                //   pendingRepairs.find((e: any) => e.reparation_type.criticity === 'Alta'),
-                //   'reparacion pendiente de criticidad alta'
-                // );
-              } else if (pendingRepairs.some((e: any) => e.reparation_type.criticity === 'Media')) {
-                newStatus = 'operativo condicionado';
-              } else {
-                newStatus = 'operativo';
-              }
-            }
-          } else {
-            // Si la reparación actualizada no es un estado de cierre, calcular el estado basado en todas las reparaciones pendientes incluyendo la actualizada
-            const allPendingRepairs = [
-              ...pendingRepairs,
-              { state: status, reparation_type: { criticity: row.original.priority } },
-            ];
-            if (allPendingRepairs.some((e: any) => e.state === 'En reparación')) {
-              //   '6 en reparacion (No es un estado de cierre y hay más reparaciones pendientes (en estado de repuestos o en reparacion))'
-              // );
-              newStatus = 'en reparación';
-            } else if (allPendingRepairs.some((e: any) => e.reparation_type.criticity === 'Alta')) {
-              newStatus = 'no operativo';
-              //   '7 no operativo (No es un estado de cierre y hay otra reparación pendiente de criticidad alta)'
-              // );
-            } else if (allPendingRepairs.some((e: any) => e.reparation_type.criticity === 'Media')) {
-              newStatus = 'operativo condicionado';
-              //   '8 operativo condicionado (No es un estado de cierre y hay otra reparación pendiente de criticidad media)'
-              // );
-            } else {
-              newStatus = 'operativo';
-            }
-          }
-
-          await updateVehicleById(vehicle_id, { condition: newStatus });
+          // El backend recalcula vehicle.condition automáticamente al actualizar state
         } else if (shouldUpdateStatus) {
           await saveNewStatus();
         } else if (shouldUpdateFiles) {
@@ -369,10 +316,9 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
       };
 
       const saveNewStatus = async () => {
-        const vehicle_id = row.original.vehicle_id;
         const mechanic_description = form.getValues('mechanic_description');
 
-        const { data, error } = await updateRepairSolicitude(row.original.id, {
+        const { error } = await updateRepairSolicitude(row.original.id, {
           state: status,
           mechanic_description,
           kilometer: form.getValues('kilometer'),
@@ -383,59 +329,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
           throw new Error(handleSupabaseError(error));
         }
 
-        const pendingRepairs = repairSolicitudes
-          .filter((e: any) => !endingStates.includes(e.state))
-          .filter((e: any) => e.id !== row.original.id);
-
-
-        let newStatus = '';
-
-        // Si la reparación actualizada es un estado de cierre
-        if (endingStates.includes(status)) {
-          // Si no hay más reparaciones pendientes, el vehículo está operativo
-          if (pendingRepairs.length === 0) {
-            newStatus = 'operativo';
-          } else {
-            // Si hay otras reparaciones pendientes, calcular el estado basado en ellas
-            if (pendingRepairs.some((e: any) => e.state === 'En reparación')) {
-              //   '2 en reparacion (Es un estado de cierre y hay más reparaciones pendientes (en estado de repuestos o en reparacion))'
-              // );
-              newStatus = 'en reparación';
-            } else if (pendingRepairs.some((e: any) => e.reparation_type.criticity === 'Alta')) {
-              newStatus = 'no operativo';
-              //   pendingRepairs.find((e: any) => e.reparation_type.criticity === 'Alta'),
-              //   'reparacion pendiente de criticidad alta'
-              // );
-            } else if (pendingRepairs.some((e: any) => e.reparation_type.criticity === 'Media')) {
-              newStatus = 'operativo condicionado';
-            } else {
-              newStatus = 'operativo';
-            }
-          }
-        } else {
-          // Si la reparación actualizada no es un estado de cierre, calcular el estado basado en todas las reparaciones pendientes incluyendo la actualizada
-          const allPendingRepairs = [
-            ...pendingRepairs,
-            { state: status, reparation_type: { criticity: row.original.priority } },
-          ];
-          if (allPendingRepairs.some((e: any) => e.state === 'En reparación')) {
-            //   '6 en reparacion (No es un estado de cierre y hay más reparaciones pendientes (en estado de repuestos o en reparacion))'
-            // );
-            newStatus = 'en reparación';
-          } else if (allPendingRepairs.some((e: any) => e.reparation_type.criticity === 'Alta')) {
-            newStatus = 'no operativo';
-            //   '7 no operativo (No es un estado de cierre y hay otra reparación pendiente de criticidad alta)'
-            // );
-          } else if (allPendingRepairs.some((e: any) => e.reparation_type.criticity === 'Media')) {
-            newStatus = 'operativo condicionado';
-            //   '8 operativo condicionado (No es un estado de cierre y hay otra reparación pendiente de criticidad media)'
-            // );
-          } else {
-            newStatus = 'operativo';
-          }
-        }
-
-        await updateVehicleById(vehicle_id, { condition: newStatus });
+        // El backend recalcula vehicle.condition automáticamente
       };
 
 
