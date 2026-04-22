@@ -209,13 +209,17 @@ export default function RepairNewEntryMultiple({
           }
 
           // Enviar las reparaciones a la API
-          await fetch(`${URL}/api/repair_solicitud`, {
+          const res = await fetch(`${URL}/api/repair_solicitud`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify(data),
           });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({ error: 'Error desconocido' }));
+            throw new Error(body?.error ?? 'No se pudo crear la solicitud');
+          }
 
           // Refrescar la página y limpiar el formulario
           router.refresh();

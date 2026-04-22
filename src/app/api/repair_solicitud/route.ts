@@ -72,13 +72,18 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
 
   try {
+    if (Array.isArray(body)) {
+      const result = await prisma.repair_solicitudes.createMany({ data: body });
+      return apiSuccess({ repair_solicitudes: { count: result.count } }, 201);
+    }
+
     const repair_solicitudes = await prisma.repair_solicitudes.create({
       data: body,
     });
 
     return apiSuccess({ repair_solicitudes: serializeBigInt(repair_solicitudes ?? {}) }, 201);
   } catch (error) {
-    console.error(error);
+    console.error('Error creating repair solicitud:', error);
     return apiError('Failed to create repair solicitud', 500);
   }
 }

@@ -266,13 +266,17 @@ export default function RepairNewEntry({
             await updateVehicleById(vehicle_id?.id || '', { kilometer: allRepairs[0].kilometer });
           }
 
-          await fetch(`${URL}/api/repair_solicitud`, {
+          const res = await fetch(`${URL}/api/repair_solicitud`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify(data),
           });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({ error: 'Error desconocido' }));
+            throw new Error(body?.error ?? 'No se pudo crear la solicitud');
+          }
 
           allRepairs.forEach(async (e) => {
             e.files
