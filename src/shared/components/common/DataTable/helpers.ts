@@ -176,6 +176,7 @@ export function buildFiltersWhere(
   options?: { exclude?: string[] }
 ) {
   const excluded = new Set(options?.exclude ?? []);
+  const hasAllowlist = Object.keys(columnMap).length > 0;
   const where: Record<string, unknown> = {};
 
   Object.entries(filters).forEach(([columnId, values]) => {
@@ -185,6 +186,9 @@ export function buildFiltersWhere(
     if (columnId === 'tab') return;
     // Ignorar columnas excluidas (ej. columnas de texto que se procesan con buildTextFiltersWhere)
     if (excluded.has(columnId)) return;
+    // Si hay columnMap definido, tratarlo como allowlist: ignorar columnas no mapeadas
+    // para evitar que query params ajenos (ej. de otra tab) rompan la query de Prisma.
+    if (hasAllowlist && !(columnId in columnMap)) return;
 
     if (values.length > 0) {
       const field = columnMap[columnId] || columnId;
